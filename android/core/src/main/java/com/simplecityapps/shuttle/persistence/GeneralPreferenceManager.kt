@@ -333,6 +333,17 @@ class GeneralPreferenceManager(
         }
 
     var mediaImportFrequency: Int = sharedPreferences.getString("pref_media_rescan_frequency", "0")?.toInt() ?: 0
+
+    // Songs imported via MediaStore before ReplayGain tags were read for them have null ReplayGain values that look
+    // just like untagged files, so the first MediaStore import after the upgrade reads every file once and then sets this
+    var mediaStoreReplayGainBackfilled: Boolean
+        set(value) {
+            sharedPreferences.put("media_store_replay_gain_backfilled", value)
+        }
+        get() {
+            return sharedPreferences.get("media_store_replay_gain_backfilled", false)
+        }
+
     var lastMediaImportDate: Date?
         set(value) {
             sharedPreferences.put("pref_media_last_rescan_date", value?.time)

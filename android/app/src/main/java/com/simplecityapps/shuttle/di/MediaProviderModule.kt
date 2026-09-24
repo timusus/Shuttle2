@@ -7,6 +7,7 @@ import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStor
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreReplayGainReader
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -44,6 +45,7 @@ class MediaProviderModule {
     @Singleton
     fun provideMediaStoreSongProvider(
         @ApplicationContext context: Context,
-        replayGainReader: MediaStoreReplayGainReader
-    ): MediaStoreMediaProvider = MediaStoreMediaProvider(context, replayGainReader)
+        replayGainReader: MediaStoreReplayGainReader,
+        preferenceManager: GeneralPreferenceManager
+    ): MediaStoreMediaProvider = MediaStoreMediaProvider(context, replayGainReader, preferenceManager)
 }

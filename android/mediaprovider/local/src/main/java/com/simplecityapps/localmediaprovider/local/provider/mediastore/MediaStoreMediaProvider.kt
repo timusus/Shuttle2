@@ -12,16 +12,15 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
-import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import kotlin.math.abs
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
@@ -31,13 +30,14 @@ import kotlinx.datetime.LocalDate
 
 class MediaStoreMediaProvider(
     private val context: Context,
-    private val replayGainReader: MediaStoreReplayGainReader
+    private val replayGainReader: MediaStoreReplayGainReader,
+    private val preferenceManager: GeneralPreferenceManager
 ) : MediaProvider {
     override val type = MediaProviderType.MediaStore
 
     // Songs
 
-    override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
         val rawSongs = mutableListOf<Song>()
         val projection =
             mutableListOf(
@@ -143,10 +143,9 @@ class MediaStoreMediaProvider(
         }
 
         var songs = mutableListOf<Song>()
-        rawSongs.asFlow()
-            .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { song ->
-                song.withReplayGainTags(replayGainReader)
-            }
+        val backfillReplayGain = !preferenceManager.mediaStoreReplayGainBackfilled
+        rawSongs
+            .withReplayGainTags(existingSongs, replayGainReader, readUnchanged = backfillReplayGain)
             .collectIndexed { index, song ->
                 songs.add(song)
                 emit(
@@ -200,6 +199,10 @@ class MediaStoreMediaProvider(
             }
         }
         emit(FlowEvent.Success(songs))
+        // Only once the importer has handled the result, so an import cancelled part way through backfills again next time
+        if (backfillReplayGain) {
+            preferenceManager.mediaStoreReplayGainBackfilled = true
+        }
     }
 
     data class MediaStoreSong(

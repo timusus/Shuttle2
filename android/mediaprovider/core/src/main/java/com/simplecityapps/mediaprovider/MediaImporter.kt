@@ -197,7 +197,7 @@ class MediaImporter(
                 .firstOrNull()
                 .orEmpty()
 
-        mediaProvider.findSongs().collect { event ->
+        mediaProvider.findSongs(existingSongs).collect { event ->
             when (event) {
                 is FlowEvent.Progress -> {
                     emit(

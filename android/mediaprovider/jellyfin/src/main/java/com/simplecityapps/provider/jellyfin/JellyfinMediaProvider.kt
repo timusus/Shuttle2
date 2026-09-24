@@ -41,7 +41,7 @@ class JellyfinMediaProvider(
 ) : MediaProvider {
     override val type = MediaProviderType.Jellyfin
 
-    override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> {
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> {
         val address =
             authenticationManager.getAddress() ?: run {
                 return flowOf(FlowEvent.Failure(context.getString(R.string.media_provider_address_missing)))

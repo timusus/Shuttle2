@@ -39,7 +39,7 @@ class TaglibMediaProvider(
 ) : MediaProvider {
     override val type = MediaProviderType.Shuttle
 
-    override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
         getDocumentTrees()?.let { trees ->
             val nodes =
                 trees

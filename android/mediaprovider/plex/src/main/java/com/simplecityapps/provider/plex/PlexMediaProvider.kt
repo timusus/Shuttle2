@@ -28,7 +28,7 @@ class PlexMediaProvider(
     override val type: MediaProviderType
         get() = MediaProviderType.Plex
 
-    override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> {
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> {
         val address =
             authenticationManager.getAddress() ?: run {
                 return flowOf(FlowEvent.Failure("Plex address unknown"))

@@ -10,7 +10,10 @@ import kotlinx.coroutines.flow.Flow
 interface MediaProvider {
     val type: MediaProviderType
 
-    fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>>
+    /**
+     * @param existingSongs the songs this provider imported last time, so it can skip expensive work for files that haven't changed
+     */
+    fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>>
 
     fun findPlaylists(
         existingPlaylists: List<Playlist>,
