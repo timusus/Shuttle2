@@ -7,6 +7,7 @@ import com.simplecityapps.playback.spec.PlaybackHarness.Companion.BYTES_PER_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_2S_MS
+import com.simplecityapps.playback.spec.PlaybackHarness.Companion.resourceUri
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unreadableSong
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unresolvableSong
@@ -359,6 +360,27 @@ class PlaybackSpecTest {
 
         ended.first() shouldBe song(2)
         harness.audioOutput().size.shouldBeBetween((TONE_2S_MS - 50) * BYTES_PER_MS, (TONE_2S_MS + 50) * BYTES_PER_MS)
+    }
+
+    @Test
+    fun `RS-25 a tag edit with shuffle on keeps each song at its shuffled position`() {
+        val songs = (1L..5L).map { song(it) }
+        val shuffled = listOf(songs[0], songs[3], songs[1], songs[4], songs[2])
+        harness.run {
+            queue.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
+            queue.setQueue(songs, shuffled, 0)
+        }
+        val before = queue.queueStateFlow.value.items.map { it.uid }
+
+        playback.updateQueueSongs(listOf(songs[1].copy(name = "Renamed"), songs[3].copy(path = resourceUri(TONE_1S))))
+        harness.idle()
+
+        val items = queue.queueStateFlow.value.items
+        items.map { it.uid } shouldBe before
+        items.map { it.song.id } shouldBe shuffled.map { it.id }
+        items[2].song.name shouldBe "Renamed"
+        items[1].song.path shouldBe resourceUri(TONE_1S)
+        queue.getQueue(QueueManager.ShuffleMode.Off).map { it.song.id } shouldBe songs.map { it.id }
     }
 
     @Test

@@ -298,11 +298,17 @@ class QueueManager(
         if (songsById.isEmpty()) return
         playerThread.run {
             batch {
+                val shuffled = shuffledIndices()
                 entries().forEachIndexed { index, entry ->
                     val updated = songsById[entry.song.id]
                     if (updated != null && updated != entry.song) {
                         player.replaceMediaItem(index, songUriResolver.toMediaItem(QueueEntry(entry.uid, updated)))
                     }
+                }
+                // An item whose file changed is replaced by removing and re-adding it, which moves it to the end of
+                // the shuffled order, so the order is put back.
+                if (shuffledIndices() != shuffled) {
+                    player.setShuffleOrder(S2ShuffleOrder(shuffled.toIntArray()))
                 }
             }
         }

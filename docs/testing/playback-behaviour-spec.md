@@ -77,6 +77,9 @@ that can load plays; up to 15 songs in a row are tried before playback stops, pa
 loaded (after a failure, or a restore), when another song is made current (from the queue screen or a media
 controller) and played, then it plays from its start, not from the other song's position. (#345) — JVM.
 
+**RS-25: a tag edit keeps the shuffled order.** Given shuffle on, when a tag edit changes queued songs (their tags,
+or the file a song plays from), then each song keeps its place in the shuffled and unshuffled queue. (#345) — JVM.
+
 **RS-29: playback and queue calls work from any thread.** Given a song playing, when a caller off the main thread
 reads the progress or duration, pauses, or removes a queue item, then the read returns the last published state and
 each change takes effect on the main thread, without an error. (#345) — JVM.
