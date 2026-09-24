@@ -95,6 +95,28 @@ call `setMediaItems` once with the finished list; there is no sign that chunking
 sizes, but it would be the first mitigation to reach for if a real device run (this spike is JVM/Robolectric
 only) shows it over 16 ms.
 
+**From setting the queue to playing.** `.../spec/LargeQueueStartTimingTest.kt` (`@Ignore`d, run manually) times the
+whole path, `QueueManager` and `PlaybackManager` over the real player with WAV files, from the queue change until
+the state is Playing, one run each after a warm-up. Lazy preparation (production's `ExoPlayer.Builder` default, and
+the harness's since #345 step 1a) against every item prepared as it joins the playlist; S2's media sources report a
+single window, which lazy preparation needs (`LazyPreparationTest`). Robolectric numbers, ms:
+
+| Scenario | Preparation | 300 | 1k | 2k | 5k | 10k |
+|---|---|---|---|---|---|---|
+| Set the queue, play | lazy | 20 | 28 | 48 | 97 | 188 |
+| | eager | 231 | 3,321 | 14,086 | — | — |
+| Restore (middle item, 1 s in), play | lazy | 13 | 15 | 43 | 81 | 158 |
+| | eager | 216 | 3,289 | 14,079 | — | — |
+| Add all to a playing queue | lazy | 1 | 3 | 5 | 12 | 27 |
+| | eager | 0 | 2 | 4 | — | — |
+| Shuffle all, play | lazy | 11 | 14 | 32 | 95 | 174 |
+| | eager | 209 | 3,288 | 14,025 | — | — |
+
+Lazy grows linearly, about 19 µs an item at 10k. Eager grows with the square of the queue (2x the items, over 4x
+the time) and at 5k items runs the test JVM's 512 MB heap out of memory, so it stops at 2k. Adding to a playing
+queue is fast either way because the song already playing keeps playing; eager preparation of the added items
+happens afterwards, on the playback thread.
+
 ## 4. Routes compared
 
 **A: refactor in place.** Replace LoadCoordinator with a full playlist inside ExoPlayerPlayback, then fold QueueManager into it, then the session, then Cast. Each step ships, but every intermediate state keeps a Playback interface shaped around one next item and two queue owners. That is exactly the seam where the 44 fixes landed.
