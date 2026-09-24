@@ -70,8 +70,10 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
         intent: Intent
     ): String? = when (action) {
         "PLAY_ALL" -> {
+            val album = intent.getStringExtra("album")
             val songs = songRepository.getSongs(SongQuery.All()).firstOrNull().orEmpty()
-            check(songs.isNotEmpty()) { "the library has no songs; seed and import first" }
+                .filter { song -> album == null || song.album == album }
+            check(songs.isNotEmpty()) { if (album == null) "the library has no songs; seed and import first" else "no songs on album '$album'" }
             val index = intent.getIntExtra("index", 0).coerceIn(0, songs.size - 1)
             val result = playSongs(songs, index)
             check(result is PlaySongs.Result.Success) { "playback failed: $result" }

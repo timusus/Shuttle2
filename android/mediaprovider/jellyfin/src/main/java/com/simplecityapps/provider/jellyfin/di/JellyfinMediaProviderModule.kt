@@ -3,15 +3,18 @@ package com.simplecityapps.provider.jellyfin.di
 import android.content.Context
 import androidx.core.content.getSystemService
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.jellyfin.BuildConfig
 import com.simplecityapps.provider.jellyfin.CredentialStore
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
+import com.simplecityapps.provider.jellyfin.JellyfinPlaybackReporter
 import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.LoginCredentials
+import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
@@ -20,6 +23,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.IntoSet
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
@@ -101,4 +105,14 @@ open class JellyfinMediaProviderModule {
         authenticationManager: JellyfinAuthenticationManager,
         transcodeService: JellyfinTranscodeService
     ): JellyfinMediaInfoProvider = JellyfinMediaInfoProvider(authenticationManager, transcodeService)
+
+    @Provides
+    @Singleton
+    fun providePlaybackReportingService(
+        @Named("JellyfinRetrofit") retrofit: Retrofit
+    ): PlaybackReportingService = retrofit.create()
+
+    @Provides
+    @IntoSet
+    fun providePlaybackReporter(reporter: JellyfinPlaybackReporter): PlaybackReporter = reporter
 }

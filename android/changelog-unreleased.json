@@ -24,6 +24,10 @@
     {
       "text": "On Android 14 and later, a new USB DAC direct output option in Playback settings sends songs to a USB DAC at their own sample rate as 16-bit audio, without resampling, mixing in other sounds, or applying the equaliser and ReplayGain",
       "commits": []
+    },
+    {
+      "text": "Songs you play from Jellyfin, Emby or Plex now show in your server's now playing and count towards its play history, so scrobbling plugins can pick them up. You can turn this off in Media settings",
+      "commits": []
     }
   ],
   "improvements": [
@@ -101,7 +105,7 @@
     },
     {
       "text": "The notification and progress bar now show the new song right away when one track ends and the next starts, instead of briefly showing the old one",
-  "commits": []
+      "commits": []
     },
     {
       "text": "Song, album and artist artwork now updates after you change it, whether it's embedded in the file, a cover image in the folder or on your Jellyfin or Emby server, once the library rescans or syncs. Newly added local artwork now also replaces artwork that was previously shown from S2's online artwork lookup",

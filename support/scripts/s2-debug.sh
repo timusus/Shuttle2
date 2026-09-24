@@ -2,7 +2,7 @@
 # Drive the debug build's playback and queue over adb, through DebugPlaybackReceiver
 # (android/app/src/debug). No UI taps: each action is one broadcast. See the debug-receivers skill.
 #
-#   support/scripts/s2-debug.sh PLAY_ALL [--ei index 2]   queue every library song, play from index
+#   support/scripts/s2-debug.sh PLAY_ALL [--ei index 2] [--es album "'Name'"]  queue every library song (or one album's), play from index
 #   support/scripts/s2-debug.sh PLAY | PAUSE | NEXT | PREV
 #   support/scripts/s2-debug.sh SEEK --el ms 20000
 #   support/scripts/s2-debug.sh REMOVE_QUEUE_ITEM --ei position 0

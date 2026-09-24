@@ -7,6 +7,12 @@
         android:summary="@string/pref_media_provider_summary"
         android:title="@string/pref_media_provider_title"
         app:iconSpaceReserved="false" />
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="pref_report_playback"
+        android:summary="@string/pref_report_playback_summary"
+        android:title="@string/pref_report_playback_title"
+        app:iconSpaceReserved="false" />
     <Preference
         android:key="pref_media_rescan"
         android:summary="@string/pref_media_rescan_summary"

@@ -19,7 +19,7 @@ failing.
 
 | Action | Extras | Does |
 |---|---|---|
-| `PLAY_ALL` | `[--ei index N]` | Queue every library song (`SongRepository`, `SongQuery.All()`) and play from index N, via the `PlaySongs` use case the song list uses |
+| `PLAY_ALL` | `[--ei index N] [--es album NAME]` | Queue every library song (`SongRepository`, `SongQuery.All()`), or only album NAME's, and play from index N, via the `PlaySongs` use case the song list uses |
 | `PLAY` / `PAUSE` | | `PlaybackManager.play()` / `pause()` |
 | `NEXT` / `PREV` | | `skipToNext()` / `skipToPrev()` (`PREV` restarts the track past 2 s, as the UI does) |
 | `SEEK` | `--el ms 20000` | `seekTo(ms)` |

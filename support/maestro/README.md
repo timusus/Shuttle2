@@ -13,6 +13,7 @@ checks/flows, stop) in one call -- see its `--help` or `.claude/skills/emulator-
 | `support/scripts/checks/restore-position.sh` | receivers | Seek 0:20, play 5 s, force-stop, relaunch, play: resumes at ~0:25 | ~12 s |
 | `support/scripts/checks/folder-art.sh` | receivers + taps | One-song album with a magenta `cover.jpg` and no embedded art: Library > Albums shows the cover (artwork pixel check); removes the album after | ~20 s |
 | `support/scripts/checks/open-queue-by-taps.sh` | receivers + `open-queue-by-taps.yaml` | Mini player -> full player -> "Up Next" opens the queue | 30-75 s (Maestro driver start-up varies) |
+| `support/scripts/checks/remote-reporting.sh <server>` | receivers + server API | Jellyfin/Emby/Plex sessions show the song playing at an advancing position, then paused; a play-through counts once on Plex. Needs `seed-remote-provider.sh <server>` instead of the fixture, so `run-all.sh` skips it | ~45 s |
 
 `support/scripts/checks/run-all.sh` runs them all. Each prints `PASS <name> in Ns` or
 `FAIL <name>: <reason>` with the last `DUMP_STATE`, and exits non-zero on failure.

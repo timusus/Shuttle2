@@ -44,7 +44,7 @@ suspend fun UserService.authenticate(
         "username" to username,
         "pw" to password
     ),
-    "MediaBrowser Client=\"Shuttle2.0\", Device=\"$deviceName\", DeviceId=\"$deviceId\", Version=\"$version\""
+    mediaBrowserAuthorization(deviceId, deviceName, version)
 )
 
 /** The signed-in user, including their current `Policy` — used to refresh permissions that may have changed server-side. */

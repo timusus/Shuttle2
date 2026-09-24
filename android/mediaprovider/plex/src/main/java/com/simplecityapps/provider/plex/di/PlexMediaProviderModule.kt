@@ -3,12 +3,15 @@ package com.simplecityapps.provider.plex.di
 import android.content.Context
 import androidx.core.content.getSystemService
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.plex.CredentialStore
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
+import com.simplecityapps.provider.plex.PlexPlaybackReporter
 import com.simplecityapps.provider.plex.http.ItemsService
+import com.simplecityapps.provider.plex.http.PlaybackReportingService
 import com.simplecityapps.provider.plex.http.PlexClientHeaderInterceptor
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
@@ -18,6 +21,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.IntoSet
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
@@ -84,4 +88,14 @@ open class PlexMediaProviderModule {
     @Provides
     @Singleton
     fun providePlexMediaPathProvider(authenticationManager: PlexAuthenticationManager): PlexMediaInfoProvider = PlexMediaInfoProvider(authenticationManager)
+
+    @Provides
+    @Singleton
+    fun providePlaybackReportingService(
+        @Named("PlexRetrofit") retrofit: Retrofit
+    ): PlaybackReportingService = retrofit.create()
+
+    @Provides
+    @IntoSet
+    fun providePlaybackReporter(reporter: PlexPlaybackReporter): PlaybackReporter = reporter
 }

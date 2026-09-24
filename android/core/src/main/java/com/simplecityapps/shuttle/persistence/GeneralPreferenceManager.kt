@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import java.util.Date
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import stateFlowForBoolean
 import stateFlowForMappedValue
 
 class GeneralPreferenceManager(
@@ -293,6 +294,22 @@ class GeneralPreferenceManager(
         get() {
             return sharedPreferences.get("pref_retain_shuffle_on_new_queue", false)
         }
+
+    // Media provider
+
+    var reportPlaybackToServer: Boolean
+        set(value) {
+            sharedPreferences.put("pref_report_playback", value)
+        }
+        get() {
+            return sharedPreferences.get("pref_report_playback", true)
+        }
+
+    fun reportPlaybackToServer(scope: CoroutineScope): StateFlow<Boolean> = sharedPreferences.stateFlowForBoolean(
+        key = "pref_report_playback",
+        default = true,
+        scope = scope
+    )
 
     var allLibraryTabs: List<LibraryTab>
         set(value) {

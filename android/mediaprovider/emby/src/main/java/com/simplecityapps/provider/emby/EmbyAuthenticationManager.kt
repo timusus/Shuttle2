@@ -10,6 +10,7 @@ import com.simplecityapps.provider.emby.http.LoginCredentials
 import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.provider.emby.http.authenticate
 import com.simplecityapps.provider.emby.http.me
+import com.simplecityapps.provider.emby.http.mediaBrowserAuthorization
 import java.util.UUID
 import timber.log.Timber
 
@@ -31,6 +32,13 @@ class EmbyAuthenticationManager(
     }
 
     fun getAddress(): String? = credentialStore.address
+
+    /** The `X-Emby-Authorization` header value identifying this client. */
+    fun clientAuthorizationHeader(): String = mediaBrowserAuthorization(
+        deviceId = clientIdentity.id,
+        deviceName = clientIdentity.deviceName,
+        version = clientIdentity.version
+    )
 
     suspend fun authenticate(
         address: String,

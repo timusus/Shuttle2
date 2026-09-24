@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.appinitializers.CrashReportingInitializer
 import com.simplecityapps.shuttle.appinitializers.DownloadsInitializer
 import com.simplecityapps.shuttle.appinitializers.MediaProviderInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackInitializer
+import com.simplecityapps.shuttle.appinitializers.PlaybackReportingInitializer
 import com.simplecityapps.shuttle.appinitializers.RemoteConfigInitializer
 import com.simplecityapps.shuttle.appinitializers.ShortcutInitializer
 import com.simplecityapps.shuttle.appinitializers.TimberInitializer
@@ -35,6 +36,10 @@ abstract class AppModuleBinds {
     @Binds
     @IntoSet
     abstract fun providePlaybackInitializer(bind: PlaybackInitializer): AppInitializer
+
+    @Binds
+    @IntoSet
+    abstract fun providePlaybackReportingInitializer(bind: PlaybackReportingInitializer): AppInitializer
 
     @Binds
     @IntoSet

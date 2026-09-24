@@ -3,15 +3,18 @@ package com.simplecityapps.provider.emby.di
 import android.content.Context
 import androidx.core.content.getSystemService
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.emby.BuildConfig
 import com.simplecityapps.provider.emby.CredentialStore
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
 import com.simplecityapps.provider.emby.EmbyMediaProvider
+import com.simplecityapps.provider.emby.EmbyPlaybackReporter
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.provider.emby.http.ItemsService
 import com.simplecityapps.provider.emby.http.LoginCredentials
+import com.simplecityapps.provider.emby.http.PlaybackReportingService
 import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
@@ -20,6 +23,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.IntoSet
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
@@ -101,4 +105,14 @@ open class EmbyMediaProviderModule {
         authenticationManager: EmbyAuthenticationManager,
         embyTranscodeService: EmbyTranscodeService
     ): EmbyMediaInfoProvider = EmbyMediaInfoProvider(authenticationManager, embyTranscodeService)
+
+    @Provides
+    @Singleton
+    fun providePlaybackReportingService(
+        @Named("EmbyRetrofit") retrofit: Retrofit
+    ): PlaybackReportingService = retrofit.create()
+
+    @Provides
+    @IntoSet
+    fun providePlaybackReporter(reporter: EmbyPlaybackReporter): PlaybackReporter = reporter
 }
