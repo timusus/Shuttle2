@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.appcompat.widget.SwitchCompat
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.net.toUri
@@ -106,38 +107,6 @@ class SongListFragment :
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState
-                    .collect { state ->
-                        if (state.isSelecting) {
-                            onBackPressedCallback?.isEnabled = true
-
-                            contextualToolbarHelper.show()
-
-                            val count = state.selectedSongs.size
-                            contextualToolbarHelper.contextualToolbar?.title =
-                                Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
-                                    .put("count", count)
-                                    .format()
-                            contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
-                                TagEditorMenuSanitiser.sanitise(
-                                    menu,
-                                    state.selectedSongs
-                                        .map { it.mediaProvider }
-                                        .distinct(),
-                                )
-                            }
-                        } else {
-                            onBackPressedCallback?.isEnabled = false
-                            contextualToolbarHelper.hide()
-                        }
-
-                        updateToolbarMenuSortOrder(state.sortOrder)
-                    }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.events.collect { event ->
                     when (event) {
                         is SongListUiEvent.AddedToQueue -> {
@@ -184,6 +153,39 @@ class SongListFragment :
 
         composeView.setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+            // Drives the native Toolbar from the exact same uiState read that renders the
+            // Compose song list's checkboxes, in the same composition pass. Two independent
+            // collectors of the same StateFlow (this one used to be a separate
+            // repeatOnLifecycle collect{}) are not guaranteed to observe every intermediate
+            // emission in lockstep, which could leave the toolbar and the selection visibly
+            // out of step (#344).
+            LaunchedEffect(uiState) {
+                if (uiState.isSelecting) {
+                    onBackPressedCallback?.isEnabled = true
+
+                    contextualToolbarHelper.show()
+
+                    val count = uiState.selectedSongs.size
+                    contextualToolbarHelper.contextualToolbar?.title =
+                        Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
+                            .put("count", count)
+                            .format()
+                    contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
+                        TagEditorMenuSanitiser.sanitise(
+                            menu,
+                            uiState.selectedSongs
+                                .map { it.mediaProvider }
+                                .distinct(),
+                        )
+                    }
+                } else {
+                    onBackPressedCallback?.isEnabled = false
+                    contextualToolbarHelper.hide()
+                }
+
+                updateToolbarMenuSortOrder(uiState.sortOrder)
+            }
 
             val theme by preferenceManager.theme(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
             val accent by preferenceManager.accent(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()

@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
 import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.testing.MainDispatcherRule
+import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -170,6 +171,31 @@ class SongListIntegrationTest {
         // as happens when it plays/pauses (#224).
         fakeSongRepository.setSongs(listOf(song.copy(playCount = 1)))
 
+        robot.assertSelectionMarkDisplayed()
+    }
+
+    @Test
+    fun `selection stays consistent with isSelecting across back-to-back playback mutations`() {
+        val song = createSong(id = 1, name = "Keep Toolbar In Step", playCount = 0)
+        fakeSongRepository.setSongs(listOf(song))
+        fakeImportState.setState(importComplete())
+
+        val viewModel = createViewModel()
+        robot.setContentWithViewModel(viewModel)
+
+        robot.longClick("Keep Toolbar In Step")
+        robot.assertSelectionMarkDisplayed()
+        viewModel.uiState.value.isSelecting shouldBe true
+
+        // A pause writes the playback position, then a track change can immediately increment
+        // play count - two rapid re-emissions of the same underlying song (#344).
+        fakeSongRepository.setSongs(listOf(song.copy(playCount = 0, playbackPosition = 42)))
+        fakeSongRepository.setSongs(listOf(song.copy(playCount = 1, playbackPosition = 0)))
+
+        // The toolbar (SongListFragment) reads isSelecting from this same uiState value to
+        // decide whether to show itself - if selectedSongs and isSelecting ever disagreed here,
+        // the toolbar and the checkbox below would disagree too.
+        viewModel.uiState.value.isSelecting shouldBe true
         robot.assertSelectionMarkDisplayed()
     }
 
