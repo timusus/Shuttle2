@@ -1,7 +1,5 @@
 package com.simplecityapps.playback
 
-import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
-import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
 import com.simplecityapps.playback.exoplayer.ResolvedMedia
 import com.simplecityapps.playback.fakes.FakeAudioFocusHelper
@@ -122,7 +120,6 @@ class PlaybackManagerAudioFocusTest {
         val localPlayback =
             ExoPlayerPlayback(
                 playerFactory = playerFactory,
-                replayGainAudioProcessor = ReplayGainAudioProcessor(ReplayGainMode.Off, 0.0),
                 mediaResolver = { song -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false) }
             )
         val remotePlayback = FakePlayback("Remote", events = events)

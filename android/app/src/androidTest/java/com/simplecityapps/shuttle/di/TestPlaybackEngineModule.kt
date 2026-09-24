@@ -63,14 +63,13 @@ class TestPlaybackEngineModule {
     ): PlayerFactory = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor)
 
     // One instance: PlaybackManager starts on it and CastSessionManager switches back to it when a
-    // Cast session ends, so its settings and ReplayGain tracker state stay with a single owner.
+    // Cast session ends, so its settings stay with a single owner.
     @Singleton
     @Provides
     fun provideExoPlayerPlayback(
         playerFactory: PlayerFactory,
-        replayGainAudioProcessor: ReplayGainAudioProcessor,
         mediaInfoProvider: AggregateMediaInfoProvider
-    ): ExoPlayerPlayback = ExoPlayerPlayback(playerFactory, replayGainAudioProcessor, MediaInfoMediaResolver(mediaInfoProvider))
+    ): ExoPlayerPlayback = ExoPlayerPlayback(playerFactory, MediaInfoMediaResolver(mediaInfoProvider))
 
     @Singleton
     @Provides

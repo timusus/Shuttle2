@@ -44,7 +44,7 @@
       "commits": []
     },
     {
-      "text": "ReplayGain now sets each song's volume before it starts playing, so the level no longer jumps a moment into the song",
+      "text": "ReplayGain now sets each song's volume before it starts playing, so the level no longer jumps a moment into the song, including when a FLAC song follows an MP3 or the other way round",
       "commits": []
     },
     {

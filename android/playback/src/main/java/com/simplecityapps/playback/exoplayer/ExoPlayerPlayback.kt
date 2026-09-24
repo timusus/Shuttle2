@@ -7,7 +7,6 @@ import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.chromecast.CastPlayback
 import com.simplecityapps.playback.dsp.replaygain.ReplayGain
-import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.replayGain
 import com.simplecityapps.playback.mediasession.toRepeatMode
 import com.simplecityapps.playback.queue.QueueManager
@@ -16,7 +15,6 @@ import timber.log.Timber
 
 class ExoPlayerPlayback(
     private val playerFactory: PlayerFactory,
-    private val replayGainAudioProcessor: ReplayGainAudioProcessor,
     private val mediaResolver: MediaResolver
 ) : Playback {
     override var callback: Playback.Callback? = null
@@ -24,8 +22,6 @@ class ExoPlayerPlayback(
     override var isReleased: Boolean = true
 
     private var isPlaybackReady = false
-
-    private val replayGainTracker get() = replayGainAudioProcessor.streamTracker
 
     private val eventListener by lazy {
         object : AudioPlayer.Listener {
@@ -71,8 +67,6 @@ class ExoPlayerPlayback(
             override fun onMediaItemTransition(reason: Int) {
                 val transitionReason = reason.toTransitionReason()
                 Timber.v("onMediaItemTransition(reason: ${reason.toTransitionReason()})")
-
-                player?.let { player -> replayGainTracker.setPlayingIndex(player.currentMediaItemIndex) }
 
                 when (transitionReason) {
                     TransitionReason.Repeat -> callback?.onTrackEnded(true)
@@ -139,9 +133,6 @@ class ExoPlayerPlayback(
 
         val media = mediaResolver.resolve(current)
         player.addListener(eventListener)
-        // Tell the ReplayGain processor about the new item before the player starts decoding it.
-        replayGainTracker.setPlaylist(listOf(current.replayGain))
-        replayGainTracker.setPlayingIndex(0)
         player.setMediaItem(playerItem(media, current.replayGain))
         player.seekTo(seekPosition.toLong())
         player.prepare()
@@ -177,7 +168,6 @@ class ExoPlayerPlayback(
         val playedCount = player.currentMediaItemIndex
         if (playedCount > 0) {
             player.removeMediaItems(0, playedCount)
-            replayGainTracker.removeLeadingItems(playedCount)
         }
 
         val count = player.mediaItemCount
@@ -200,20 +190,6 @@ class ExoPlayerPlayback(
         nextItem?.let {
             player.addMediaItem(nextItem)
         }
-
-        syncReplayGainPlaylist(player)
-    }
-
-    /**
-     * Mirrors the player's playlist into the ReplayGain tracker, so the gain for the pre-buffered
-     * next item is known before its audio reaches the processor.
-     */
-    private fun syncReplayGainPlaylist(player: AudioPlayer) {
-        replayGainTracker.setPlaylist(
-            (0 until player.mediaItemCount).map { index ->
-                player.getMediaItemAt(index).replayGain
-            }
-        )
     }
 
     override fun play() {
@@ -257,7 +233,6 @@ class ExoPlayerPlayback(
     override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {
         settings = settings.copy(repeatMode = repeatMode.toRepeatMode())
         player?.repeatMode = settings.repeatMode
-        replayGainTracker.setRepeatMode(settings.repeatMode)
     }
 
     override fun setAudioSessionId(id: Int) {

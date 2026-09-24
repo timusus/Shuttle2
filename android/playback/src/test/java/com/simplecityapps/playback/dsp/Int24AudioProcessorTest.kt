@@ -3,7 +3,6 @@ package com.simplecityapps.playback.dsp
 import androidx.media3.common.C
 import androidx.media3.common.audio.AudioProcessor
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
-import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MAX_VALUE
@@ -44,7 +43,6 @@ class Int24AudioProcessorTest {
     @Test
     fun `replay gain does not overrun the output buffer for 24 bit PCM`() {
         val processor = ReplayGainAudioProcessor(mode = ReplayGainMode.Track, preAmpGain = 6.0)
-        processor.streamTracker.setPlaylist(listOf(ReplayGain(trackGain = -3.0, albumGain = null)))
         processor.configure(AudioProcessor.AudioFormat(SAMPLE_RATE, CHANNEL_COUNT, C.ENCODING_PCM_24BIT))
         processor.flush(AudioProcessor.StreamMetadata.DEFAULT)
 

@@ -16,34 +16,29 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 
 /**
- * Builds [ExoAudioPlayer]s with the extension renderers (FLAC, Opus) enabled, the audio sink
- * chain ([ReplayGainAudioSink] around a [DefaultAudioSink] running the equalizer and ReplayGain
- * processors), and a [StreamSniffingMediaSourceFactory] so extensionless HLS streams play.
+ * Builds [ExoAudioPlayer]s with the extension renderers (FLAC, Opus) enabled, a [DefaultAudioSink]
+ * running the equalizer and ReplayGain processors, and a [StreamSniffingMediaSourceFactory] so
+ * extensionless HLS streams play.
  */
 class ExoPlayerFactory(
     private val context: Context,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor
 ) : PlayerFactory {
-    private val replayGainTracker get() = replayGainAudioProcessor.streamTracker
-
     private val renderersFactory by lazy {
         object : DefaultRenderersFactory(context) {
+            @Suppress("DEPRECATION")
             override fun buildAudioSink(
                 context: Context,
                 enableFloatOutput: Boolean,
                 enableAudioOutputPlaybackParams: Boolean
-            ): AudioSink = ReplayGainAudioSink(
-                @Suppress("DEPRECATION")
-                DefaultAudioSink.Builder(context)
-                    // PCM output only, never passthrough, so every stream runs through the processors.
-                    .setAudioCapabilities(AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES)
-                    .setEnableFloatOutput(enableFloatOutput)
-                    .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParams)
-                    .setAudioProcessors(arrayOf(equalizerAudioProcessor, replayGainAudioProcessor))
-                    .build(),
-                replayGainTracker
-            )
+            ): AudioSink = DefaultAudioSink.Builder(context)
+                // PCM output only, never passthrough, so every stream runs through the processors.
+                .setAudioCapabilities(AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES)
+                .setEnableFloatOutput(enableFloatOutput)
+                .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParams)
+                .setAudioProcessors(arrayOf(equalizerAudioProcessor, replayGainAudioProcessor))
+                .build()
         }.apply {
             setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
         }
@@ -187,8 +182,10 @@ class ExoAudioPlayer(private val player: ExoPlayer) : AudioPlayer {
 }
 
 /**
- * The [MediaItem] ExoPlayer queues for this item. [toPlayerItem] must give back an equal item:
- * [ExoPlayerPlayback.loadNext] compares the queued next item with the one it wants.
+ * The [MediaItem] ExoPlayer queues for this item. Its tag carries the [ReplayGain], which
+ * [ReplayGainAudioProcessor] reads back when the audio sink starts the item's stream. [toPlayerItem]
+ * must give back an equal item: [ExoPlayerPlayback.loadNext] compares the queued next item with
+ * the one it wants.
  */
 internal fun PlayerItem.toMediaItem(): MediaItem = MediaItem.Builder()
     .setMimeType(mimeType)

@@ -5,8 +5,6 @@ import androidx.media3.common.Player
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.dsp.replaygain.ReplayGain
-import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
-import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.fakes.FakePlayer
 import com.simplecityapps.playback.fakes.FakePlayerFactory
 import com.simplecityapps.playback.queue.QueueManager
@@ -23,13 +21,10 @@ import org.junit.Test
  */
 class ExoPlayerPlaybackTest {
     private val playerFactory = FakePlayerFactory()
-    private val replayGainAudioProcessor = ReplayGainAudioProcessor(ReplayGainMode.Off, 0.0)
-    private val replayGainTracker = replayGainAudioProcessor.streamTracker
     private val callbackEvents = mutableListOf<String>()
     private val playback =
         ExoPlayerPlayback(
             playerFactory = playerFactory,
-            replayGainAudioProcessor = replayGainAudioProcessor,
             mediaResolver = { song -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = song.path.startsWith("http")) }
         ).apply {
             callback =
@@ -355,52 +350,6 @@ class ExoPlayerPlaybackTest {
                 ReplayGain(trackGain = -8.5, albumGain = -7.0),
                 ReplayGain(trackGain = 3.2, albumGain = null)
             )
-    }
-
-    @Test
-    fun `the ReplayGain tracker follows the replaced next item across a gapless transition`() = runTest {
-        val loud = createSong("loud", replayGainTrack = -8.5, replayGainAlbum = -7.0)
-        val quiet = createSong("quiet", replayGainTrack = 3.2, replayGainAlbum = null)
-        load(loud, next = songB)
-        playback.loadNext(quiet)
-        // The sink starts the loaded item.
-        replayGainTracker.onSinkRestarted()
-        replayGainTracker.onSinkConfigured()
-        replayGainTracker.onSinkBufferHandled()
-        replayGainTracker.onProcessorFlushed()
-        replayGainTracker.currentReplayGain() shouldBe ReplayGain(trackGain = -8.5, albumGain = -7.0)
-
-        // The renderer moves on to the next item before the player reports the transition.
-        replayGainTracker.onSinkConfigured()
-        replayGainTracker.onSinkBufferHandled()
-        replayGainTracker.onProcessorFlushed()
-
-        replayGainTracker.currentReplayGain() shouldBe ReplayGain(trackGain = 3.2, albumGain = null)
-    }
-
-    @Test
-    fun `the ReplayGain tracker stays on the playing item when played items are dropped`() = runTest {
-        val first = createSong("first", replayGainTrack = -1.0)
-        val second = createSong("second", replayGainTrack = -2.0)
-        val third = createSong("third", replayGainTrack = -3.0)
-        load(first, next = second)
-        replayGainTracker.onSinkRestarted()
-        replayGainTracker.onSinkConfigured()
-        replayGainTracker.onSinkBufferHandled()
-        replayGainTracker.onProcessorFlushed()
-        // The sink reaches the second item, then the player reports the transition.
-        replayGainTracker.onSinkConfigured()
-        replayGainTracker.onSinkBufferHandled()
-        replayGainTracker.onProcessorFlushed()
-        player.playToEnd()
-
-        playback.loadNext(third)
-
-        replayGainTracker.currentReplayGain() shouldBe ReplayGain(trackGain = -2.0, albumGain = null)
-        replayGainTracker.onSinkConfigured()
-        replayGainTracker.onSinkBufferHandled()
-        replayGainTracker.onProcessorFlushed()
-        replayGainTracker.currentReplayGain() shouldBe ReplayGain(trackGain = -3.0, albumGain = null)
     }
 
     @Test
