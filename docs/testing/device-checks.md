@@ -72,7 +72,7 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] Unplug the DAC mid-track. Playback continues (or pauses) on the phone speaker with no crash; replug and it goes direct again.
 
 ### Open audio files from other apps (#186)
-- [ ] Open an MP3 and a FLAC from a file manager and from a messaging app attachment. Each plays in S2.
+- [x] Open an MP3 and a FLAC from a file manager and from a messaging app attachment. Each plays in S2. — automated: `emu-verify.sh --check open-file-intent`
 - [ ] After opening a file, force-stop and reopen S2. The queue restores without errors, and the opened file is skipped with a message if it can no longer be read.
 
 ### M3U playlist sync (#168), needs a real SAF folder
