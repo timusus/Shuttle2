@@ -48,7 +48,7 @@ private val _events = MutableSharedFlow<UiEvent>()
 val events: SharedFlow<UiEvent> = _events.asSharedFlow()
 ```
 
-Toasts, snackbars, navigation triggers — collected with `repeatOnLifecycle(STARTED)` in the Fragment.
+Toasts, snackbars, navigation triggers — collected in the route composable (a `LaunchedEffect` over the flow, with `repeatOnLifecycle(STARTED)`).
 
 Events are **typed by what happened**, not by what the UI should display:
 
@@ -60,7 +60,7 @@ sealed interface SongListUiEvent {
 }
 ```
 
-The Fragment maps events to user-facing text using string resources. The ViewModel never resolves string resources — it doesn't have a `Context`.
+The route composable maps events to user-facing text using string resources. The ViewModel never resolves string resources — it doesn't have a `Context`.
 
 **Why:** Google recommends reducing events to state to guarantee delivery across config changes. But in this app, all events are user-triggered button taps — they can only happen when the UI is STARTED, so there's no window where an event fires and nobody's listening. Reducing to state would add a `userMessage` field, an `onMessageShown()` callback, and a `LaunchedEffect` per screen — real boilerplate for zero practical benefit. Revisit if we move to full Compose navigation where config change timing is different.
 
@@ -177,8 +177,8 @@ If a use case is shared across ViewModels, great. If it has only one consumer, t
 
 ViewModels extend `ViewModel()`, never `AndroidViewModel`. They have no `Application`, `Context`, or Android resource access. All dependencies are injected as interfaces.
 
-Things that need `Context` belong in the Fragment:
-- String resource resolution (the Fragment maps typed events to user-facing text)
+Things that need `Context` belong in the route composable's effect collector:
+- String resource resolution (the collector maps typed events to user-facing text)
 - File system operations (`DocumentFile`, `ContentResolver`)
 - System services
 
@@ -195,23 +195,9 @@ Things that need `Context` belong in the Fragment:
 
 ---
 
-## MVP → Compose Migration Principles
+## MVP → Compose Rebuild Principles
 
-Apply these when migrating a screen from the legacy MVP/Presenter/ViewBinder architecture to Compose/ViewModel.
-
-### 9. Fragment stays as a thin lifecycle host
-
-The Fragment wrapper remains. It does six things that aren't trivially replaceable in Compose:
-- Toolbar and contextual toolbar integration (`findToolbarHost()`)
-- Fragment-based dialogs (`TagEditorAlertDialog`, `CreatePlaylistDialogFragment`, `SongInfoDialogFragment`)
-- Navigation (`findNavController()` with Safe Args)
-- `PlaylistMenuPresenter` lifecycle (`bindView`/`unbindView`)
-- Options menus (`onCreateOptionsMenu`, `onOptionsItemSelected`)
-- Context-dependent operations (file deletion via `DocumentFile`, string resource resolution for events)
-
-**The boundary:** ViewModel owns all business logic and state derivation. Fragment wires Compose content, collects events, resolves strings from resources, and delegates to Fragment-only APIs. The ViewModel never calls Fragment APIs and never holds a `Context` — it emits typed events, and the Fragment reacts.
-
-**Why:** Replacing all of these at once is a rewrite, not a migration. The Fragment layer is thin and mechanical — it's the last thing to remove, when the app moves to Compose navigation.
+Apply these when rebuilding a legacy MVP/Presenter/ViewBinder screen as a Compose destination in the app shell ([app-shell.md](app-shell.md)). There is no Fragment host: principles 9 (Fragment as a thin lifecycle host) and 12 (no Fragment base class) were deleted with it, and the remaining numbers are kept so existing references stay valid.
 
 ### 10. Individual callback lambdas, not action sealed classes
 
@@ -228,7 +214,7 @@ SongList(
 
 Don't collapse these into `onAction: (SongAction) -> Unit`.
 
-**Why:** Individual lambdas are standard Compose convention. They make each composable's contract explicit — you can see at a glance what user interactions it supports. A sealed interface hides this behind indirection and forces the composable to know about action types it doesn't use. The verbosity is at the Fragment-level call site, which is boilerplate anyway.
+**Why:** Individual lambdas are standard Compose convention. They make each composable's contract explicit — you can see at a glance what user interactions it supports. A sealed interface hides this behind indirection and forces the composable to know about action types it doesn't use. The verbosity is at the route composable's call site, which is boilerplate anyway.
 
 ### 11. User-controlled view settings are combine inputs
 
@@ -243,21 +229,15 @@ fun setViewMode(mode: ViewMode) {
 }
 ```
 
-The UiState includes the current view mode. The Compose screen renders `LazyColumn` or `LazyVerticalGrid` based on it. The Fragment handles the toolbar menu toggle.
+The UiState includes the current view mode. The Compose screen renders `LazyColumn` or `LazyVerticalGrid` based on it. The toggle is an action in the destination's `TopAppBar`, wired to `setViewMode`.
 
 Inject `preferenceManager` as an interface (e.g. `ArtistListPreferences`) rather than the concrete `GeneralPreferenceManager`, so the ViewModel is testable with a fake. Follow the `SortPreferences` / `FakeSortPreferences` pattern.
 
 **Why:** Same as principle #2 — the combine lambda is the single place where state is assembled. View mode is just another input.
 
-### 12. No Fragment base class
+### 13. Test-first build order
 
-Every migrated Fragment repeats ~15 lines of boilerplate: `PlaylistMenuPresenter` inject/bind/unbind, `PreferenceManager` inject, theme/accent collection, event collection with `repeatOnLifecycle`. Don't extract a base class.
-
-**Why:** Base classes hide behaviour and make each Fragment harder to understand in isolation. The boilerplate is small and will be deleted when the app moves to Compose navigation. Copy-paste is fine for code with a limited lifespan.
-
-### 13. Test-first migration order
-
-Migrations follow this sequence. Tests come before implementation at each layer. See [testing-strategy.md](testing-strategy.md) for the full testing approach, fake design, and fixture suite.
+Rebuilding a screen follows this sequence. Tests come before implementation at each layer. See [testing-strategy.md](testing-strategy.md) for the full testing approach, fake design, and fixture suite.
 
 1. **Study the old screen** — understand every state it can be in, every interaction it supports. This is the specification.
 2. **Define the contract** — write the `UiState` data class and the Composable function signature (empty body).
@@ -265,9 +245,9 @@ Migrations follow this sequence. Tests come before implementation at each layer.
 4. **Implement the Composable** — make the UI tests pass.
 5. **Write UI integration tests** — render with a real ViewModel backed by fakes at the system boundary (fake repositories, fake import observer). These verify state derivation through the UI: set up fake data → assert on what's visible. Add focused ViewModel unit tests only for behaviour that's hard to observe through the UI.
 6. **Implement the ViewModel** — make the integration tests pass.
-7. **Wire up in Fragment** — mechanical callback wiring and event collection.
+7. **Register the destination** — add the route to the shell's entry provider, wire its lambdas to the navigator, collect its effects in the route composable, and delete the old screen's Fragment, presenter and layouts.
 
-**Why:** There's no test infrastructure that spans MVP Fragment → Compose. The old screen has no Compose tests (it's ViewBinders and RecyclerView). You can't write a characterization test that works against both implementations. But the Compose UI tests don't test the Fragment or ViewModel anyway — they test the Composable in isolation by rendering a ViewState and asserting on what's visible. This means you can write them before implementing anything — you just need the ViewState data class and the Composable signature. The tests become the specification for the migration.
+**Why:** There's no test infrastructure that spans MVP Fragment → Compose. The old screen has no Compose tests (it's ViewBinders and RecyclerView). You can't write a characterization test that works against both implementations. But the Compose UI tests don't test the route wiring or ViewModel anyway — they test the Composable in isolation by rendering a ViewState and asserting on what's visible. This means you can write them before implementing anything — you just need the ViewState data class and the Composable signature. The tests become the specification for the migration.
 
 ### 14. Test layers and boundaries
 
@@ -316,6 +296,6 @@ fun `setSortOrder persists to preferences`() = runTest {
 
 All test layers use fakes for `PlaybackOperations`, `QueueOperations`, and repositories. No mockk in ViewModel or integration tests — the ViewModel has no Android dependencies, so construction is just `SongListViewModel(fakeRepo, fakePlayback, fakeQueue, ...)`.
 
-The Fragment is thin enough (~50 lines of callback wiring and event collection) that it doesn't need its own tests.
+The route composable is thin enough (callback wiring and event collection) that it doesn't need its own tests.
 
 **Why:** Fakes at boundaries test real behaviour. Mocks of internal collaborators test assumptions about APIs — they break when you refactor internals, even if behaviour is unchanged. UI integration tests with fakes give the highest confidence with the least coupling. See [testing-strategy.md](testing-strategy.md) for fake design and the full fixture suite.

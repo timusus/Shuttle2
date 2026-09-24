@@ -2,32 +2,47 @@
 
 Status: design, 2026-09-25. Nothing here is built yet.
 
-One Compose `MainActivity` with a Navigation Compose `NavHost` inside a shell layout replaces
+One Compose `MainActivity` with a Navigation 3 `NavDisplay` inside a shell layout replaces
 `MainActivity`'s XML, `MainFragment`/`MainPresenter`, `MultiSheetView`, `CustomBottomSheetBehavior`,
 `res/navigation/main.xml` and `launch.xml`, `bottom_nav_menu.xml` and `BottomDrawerSettingsFragment`.
-Until a screen migrates, its Fragment is a destination hosted with `AndroidFragment`; when it
-migrates it becomes a plain `composable<Route>` and the Fragment is deleted. No flags, no parallel
-app. The shell owns navigation chrome and the player surface; destinations own everything else,
-including their top bars.
+The app moves to Compose in a single cutover: every screen is rebuilt as a Compose destination,
+and every Fragment, presenter, XML layout and nav graph is deleted. The shell never hosts a
+Fragment; there are no bridges between old and new. The shell owns navigation chrome and the player
+surface; destinations own everything else, including their top bars.
 
-## API baseline (checked against the Gradle cache, not docs)
+## Release freeze
+
+- Nothing intermediate ships. Releases are frozen until the whole app is Compose and the parity
+  gate (section 6, step 8) passes.
+- No transition period: MVP screens are not kept working beside Compose ones, and nothing is hosted.
+- Work lands on `main`, untagged. An urgent fix during the freeze is branched from the last release
+  tag, tagged from that branch, and cherry-picked to `main` if it still applies.
+- The redesign (Material 3 Expressive, artwork theming) happens in the same pass, not after it.
+- Onboarding and library sources are redesigned in
+  [`redesign-inventory.md`](redesign-inventory.md), which also carries the parity checklist. This
+  doc treats them as ordinary destinations.
+
+## API baseline
+
+Checked against the Gradle cache and Google Maven (`maven-metadata.xml` and the AARs' bytecode for
+opt-in annotations), 2026-09-25.
 
 | API | Artifact / version | Status |
 |---|---|---|
+| `NavDisplay`, `SceneStrategy`, `SinglePaneSceneStrategy`, `DialogSceneStrategy` | `androidx.navigation3:navigation3-ui` 1.2.0 | stable, no opt-in; not cached, not a dependency |
+| `NavKey`, `NavBackStack`, `rememberNavBackStack`, `entryProvider`, `rememberSaveableStateHolderNavEntryDecorator` | `androidx.navigation3:navigation3-runtime` 1.2.0 | stable, no opt-in; not a dependency |
+| `rememberViewModelStoreNavEntryDecorator` | `androidx.lifecycle:lifecycle-viewmodel-navigation3` 2.11.0 | stable; matches the catalog's lifecycle 2.11.0 |
+| `ListDetailSceneStrategy`, `SupportingPaneSceneStrategy` | `androidx.compose.material3.adaptive:adaptive-navigation3` 1.3.0 | stable artifact, but the classes are `@ExperimentalMaterial3AdaptiveApi` |
+| `currentWindowAdaptiveInfoV2()`, `Posture` | material3-adaptive 1.3.0 | stable; cached, not a dependency |
+| `hiltViewModel()` with assisted `creationCallback` | `androidx.hilt:hilt-lifecycle-viewmodel-compose` 1.4.0 | stable; cached, not a direct dependency |
 | `AnchoredDraggableState`, `anchoredDraggable`, `DraggableAnchors` | foundation 1.12.1 (BOM 2026.09.00) | stable |
 | `PredictiveBackHandler`, `BackHandler` | activity-compose 1.13.0 | stable |
-| `LargeFlexibleTopAppBar`, `MediumFlexibleTopAppBar` | material3 1.4.0 (BOM) | public, no opt-in |
-| `TopAppBarDefaults.exitUntilCollapsedScrollBehavior` / `pinnedScrollBehavior` | material3 1.4.0 | `@ExperimentalMaterial3Api` |
-| `WideNavigationRail`, `ModalWideNavigationRail`, `ShortNavigationBar` | material3 1.4.0 | public, no opt-in |
-| `currentWindowAdaptiveInfoV2()`, `Posture` | material3-adaptive 1.3.0 | stable; **not a dependency yet** |
-| `ListDetailPaneScaffold` | material3-adaptive-layout 1.3.0 | `@ExperimentalMaterial3AdaptiveApi`; not a dependency |
-| `NavHost`, type-safe `composable<T>`, `toRoute()` | navigation-compose 2.9.8 | stable; only transitive today (via hilt-navigation-compose) |
-| `AndroidFragment<T>()` | `androidx.fragment:fragment-compose` 1.9.0 | stable; **not a dependency**, not in the local cache |
-| `@Serializable` routes | Kotlin serialization plugin + `kotlinx-serialization-core` | **not in the catalog** |
-| MaterialKolor (`material-kolor`) | 5.0.1 in Podcasts | **not a dependency**; only `material-color-utilities` is cached |
+| `MaterialExpressiveTheme`, `MotionScheme`, `LargeFlexibleTopAppBar`, `WideNavigationRail`, `ShortNavigationBar` | material3 1.4.0 (BOM) | public, no opt-in |
+| `TopAppBarDefaults.exitUntilCollapsedScrollBehavior` | material3 1.4.0 | `@ExperimentalMaterial3Api` |
+| `@Serializable` routes | Kotlin serialization plugin + `kotlinx-serialization-core` | **not in the catalog**; `NavBackStack` saving needs it |
+| MaterialKolor (`material-kolor`) | 5.0.1 in Podcasts | **not a dependency** |
 
-Slice 1 adds navigation-compose (explicit, aligned with navigation-fragment 2.9.8 while that lives),
-fragment-compose and the serialization plugin. Adaptive and MaterialKolor come with their slices.
+Nothing here needs the pre-releases (navigation3 1.3.0-alpha01, adaptive 1.4.0-alpha02).
 
 ## 1. Player state model
 
@@ -96,34 +111,35 @@ pattern, the class is private):
   towards NowPlaying.
 - `onPreFling` up while the sheet is not at Queue, and `onPostFling`: `settle(velocity)`.
 
-While the queue is the hosted `QueueFragment`, the source is a `RecyclerView` in `AndroidFragment`.
-Interop goes through the `AndroidView` holder (a `NestedScrollingParent3`); the `RecyclerView` should
-walk past the `FragmentContainerView`, which declines nested scroll. The spike proves it first.
+The queue is a Compose `LazyColumn` from the start, so the handoff is Compose-native end to end.
+The one conflict to prove is drag-to-reorder: a long-press drag on a row must not leak into the
+sheet's connection (step 4 checks it).
 
 ### Predictive back
 
 `PredictiveBackHandler(enabled = level > Mini)` steps down one level per gesture:
-Queue → NowPlaying → Mini, then the handler disables and the `NavHost` pops. During the gesture the
+Queue → NowPlaying → Mini, then the handler disables and `NavDisplay` pops. During the gesture the
 handler drives the same state (`anchoredDrag { dragTo(lerp(current, lower, progress)) }`), so the
 nav bar, mini fade and scrim follow the finger for free. Commit animates to the lower anchor; cancel
 animates back. Back never reaches Hidden.
 
-Ordering risk: the newest enabled callback runs first, and hosted fragments (library multi-select
-back) can register after the sheet. Keying the handler on `level` re-registers it whenever the sheet
-leaves Mini. The spike checks that back with a Library selection and Now Playing open steps the sheet.
+Ordering risk: the newest enabled handler runs first. `NavDisplay` and screen handlers (library
+multi-select back) register inside the content, and a screen can enable its handler after the sheet
+has. Keying the sheet's handler on `level` re-registers it whenever the sheet leaves Mini. The spike
+checks that back with a selection active and Now Playing open steps the sheet, not the selection.
 
 ### State restoration
 
 The state is `rememberSaveable(saver = AnchoredDraggableState.Saver())`, so the level survives
 rotation, fold/unfold and process death. Anchors are recomputed from the new size with
-`updateAnchors(anchors, newTarget = state.targetValue)`. Hosted player fragments save themselves
-through `AndroidFragment`'s saved state.
+`updateAnchors(anchors, newTarget = state.targetValue)`. The back stacks are `rememberNavBackStack`,
+saved through the `@Serializable` route keys.
 
 ### Hidden when nothing is queued
 
 `ShellViewModel` (replacing `MainPresenter`) exposes `hasQueue` from `QueueManager.queueStateFlow`.
 Empty queue: anchors `{Hidden}` only, padding drops to `N`. Non-empty: `{Mini, NowPlaying, Queue}`,
-animating to Mini. Hidden is not user-reachable (decision 4). On cold start the saved level stands
+animating to Mini. Hidden is not user-reachable (decision 3). On cold start the saved level stands
 until the first queue emission, so a restoring queue never flashes the mini player.
 
 ## 2. Adaptive layout
@@ -138,24 +154,29 @@ Tiers come from the Podcasts `LayoutTier` (Compact < 600 dp, Regular 600–839, 
 | Mini player | sheet at Mini, over the nav bar | sheet at Mini, bottom of the content pane (not under the rail) | strip at the bottom of the content pane when the player pane is collapsed |
 | Now playing | sheet, full shell | sheet over the content pane; rail stays visible and live | **persistent trailing pane**, 360 dp (400 dp ≥ 1200 dp) |
 | Queue | sheet level Queue | sheet level Queue | inside the pane: "Up next" pushes now playing up, same visual as the sheet |
-| Library list-detail | single pane | single pane, wider grids | single pane, wider grids |
+| Library list-detail | single pane | single pane | list-detail scene when the content area allows (below) |
 
 No `NavigationSuiteScaffold`: it has no slot for a sheet between content and nav bar, nor for a
-nav bar that tracks a drag. The shell lays out rail, content and pane itself, like Podcasts'
-`CastNavigationSuiteScaffold`. A nav tap with the sheet above Mini settles it to Mini, then navigates.
+nav bar that tracks a drag. The shell lays out rail, `NavDisplay` and player pane itself, like
+Podcasts' `CastNavigationSuiteScaffold`. A nav tap with the sheet above Mini settles it to Mini,
+then navigates.
 
 ### The player pane on wide windows
 
 Wide windows keep browsing context: the player is a supporting pane, not a sheet over the library.
 `PlayerLevel` still holds the state; the pane renders it as Mini = collapsed to the strip,
 NowPlaying = pane showing now playing, Queue = pane showing the queue. No `AnchoredDraggableState`
-gestures drive the pane; its queue push is an `animateFloatAsState` on the level.
+gestures drive the pane; its queue push is an `animateFloatAsState` on the level. The pane sits
+beside `NavDisplay`, not in it as a `SupportingPaneSceneStrategy` scene: scenes are built from back
+stack entries, and the player is not a route (section 4).
 
 ### List-detail
 
-No `ListDetailPaneScaffold`: experimental, a second navigator beside the `NavHost`, no use for hosted
-fragments, and with the player pane it would squeeze rail + list + detail + player under 1200 dp.
-Library grids widen instead. Revisit once library and detail are Compose (decision 6).
+`ListDetailSceneStrategy` (adaptive-navigation3) shows a list entry and its detail side by side
+when there is room, else single pane, driven by the one back stack. Library tabs carry `listPane()`
+metadata, detail routes `detailPane()`; the opt-in stays in the shell. Its pane directive comes from
+the **content area** (window minus rail minus player pane), not the window, or at 840–1200 dp it
+would squeeze rail + list + detail + player (decision 5).
 
 ### Postures
 
@@ -187,118 +208,111 @@ inset through the bar's default `windowInsets`.
 - **Top-level and list screens** (Home, Library, Search, Playlists, Settings): `LargeFlexibleTopAppBar`
   with title and subtitle (for example the library count), `exitUntilCollapsedScrollBehavior`
   connected to the screen's list. This is a collapsing *bar*, not a hero.
-- **Artwork detail** (album, artist, and later genre and playlist): the existing `DetailScaffold`:
-  pinned small bar, artwork as a list item. No collapsing hero; the NestedScrollConnection and
-  graphics-layer attempts failed and are not retried.
+- **Artwork detail** (album, artist, genre, playlist): the existing `DetailScaffold`: pinned small
+  bar, artwork as a list item. No collapsing hero; the NestedScrollConnection and graphics-layer
+  attempts failed and are not retried.
 - **Multi-select**: the destination swaps its bar to a contextual bar with `AnimatedContent` keyed on
   `selectedCount > 0`. Selection is screen state in the UiState, not shell state.
 
-### Hosted fragments during the transition
+### The risk: Library
 
-Every destination fragment already draws its own `Toolbar` (Home, Search, Library, the detail and
-settings screens, EQ; album and artist detail draw theirs in `DetailScaffold`). The `HostedFragment`
-wrapper adds `statusBarsPadding()` so they look as they do today under `fitsSystemWindows`.
-`ToolbarHost` stays private to `LibraryFragment` and dies with it; the shell never lends a toolbar.
-
-### The risk, and the spike
-
-The risk is not hosted fragments; it is the first Compose screen that replaces a `ToolbarHost`:
-Library. Its tabs share one bar and one contextual bar (#344 ownership bug), its options menus come
-from each tab, and the collapsing bar must follow whichever page's list is scrolling. Mixing that
-with edge-to-edge, hosted neighbours and predictive back between Fragment and Compose destinations
-is where this can go wrong.
-
-**Spike (slice 0, not landed):** a branch with the shell, a rough sheet hosting `QueueFragment`, and:
-1. hosted `HomeFragment` (View toolbar + `statusBarsPadding`) under `enableEdgeToEdge()`;
-2. `AlbumDetail` as a plain `composable<AlbumRoute>` (DetailScaffold) reached from Home, loading by key;
-3. a Compose Library prototype: `LargeFlexibleTopAppBar` over a `HorizontalPager` of the existing
-   Songs and Albums composables (their ViewModels, no fragments), with the contextual bar swap and
-   per-page `nestedScroll(scrollBehavior.nestedScrollConnection)`.
-
-Pass: the bar follows the visible page; the contextual bar counts and clears per page; no double
-status inset; predictive back animates both ways across Compose/Fragment; hosted `findNavController()`
-resolves (section 4); the queue list hands scroll to the sheet; `nav/*.yaml` and
-`library-multiselect-back.yaml` pass. Findings amend this doc before slice 1 is briefed.
+Library's tabs share one bar and one contextual bar (the #344 ownership bug), each tab brings its
+own options menu, and the collapsing bar must follow whichever page is scrolling. Design: one
+`LargeFlexibleTopAppBar` over a `HorizontalPager`, per-page `nestedScroll(…)`, the contextual bar and
+actions read from the visible page's UiState. `ToolbarHost` and `ComposeContextualToolbarHelper` are
+deleted, not ported. Step 5A proves the bar follows the page and the selection counts per page.
 
 ## 4. Navigation
 
-### Routes
+Navigation 3, not Navigation Compose. Navigation Compose was only chosen to host Fragments
+(`AndroidFragment` destinations, a `findNavController()` shim: both rejected now). Navigation 3's
+back stack is an app-owned, snapshot-backed list of keys, so per-tab stacks and the start-tab rule
+are plain list code with plain tests; scenes give list-detail from the same stack; runtime, UI and
+ViewModel integration are all stable.
 
-Navigation Compose 2.9 with `@Serializable` routes in `ui/shell/Routes.kt`. Routes carry keys, never
+### Routes and entries
+
+`@Serializable` route keys implementing `NavKey`, in `ui/shell/Routes.kt`. Routes carry keys, never
 Parcelable models:
 
 ```kotlin
-@Serializable data object HomeRoute   // likewise LibraryRoute, SearchRoute
-@Serializable data class AlbumRoute(val albumKey: String?, val albumArtistKey: String?)  // AlbumGroupKey
-@Serializable data class AlbumArtistRoute(val albumArtistKey: String?)
-@Serializable data class PlaylistRoute(val id: Long)   // GenreRoute(name: String) likewise
-@Serializable data class SmartPlaylistRoute(val id: SmartPlaylistId)  // enum of the built-ins
-@Serializable data object SettingsRoute   // + one per preference screen, EqualizerRoute
-@Serializable data class OnboardingRoute(val isOnboarding: Boolean)
+@Serializable data object HomeRoute : NavKey   // likewise LibraryRoute, SearchRoute
+@Serializable data class AlbumRoute(val albumKey: String?, val albumArtistKey: String?) : NavKey  // AlbumGroupKey
+@Serializable data class AlbumArtistRoute(val albumArtistKey: String?) : NavKey
+@Serializable data class PlaylistRoute(val id: Long) : NavKey   // GenreRoute(name: String) likewise
+@Serializable data class SmartPlaylistRoute(val id: SmartPlaylistId) : NavKey  // enum of the built-ins
+@Serializable data object SettingsRoute : NavKey   // + one per settings screen, EqualizerRoute
+// onboarding and library-source routes: see redesign-inventory.md
 ```
 
-Detail screens load their model by key (`SavedStateHandle.toRoute<AlbumRoute>()` then the
-repository). The five detail fragments that read a Parcelable today switch to key lookup in slice 1;
-that code is what their Compose versions use, so it is not throwaway. `AlbumGroupKey` is two
-nullable strings and the route mirrors it; an album with no group key cannot open detail today either.
+`NavDisplay(backStack, entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator(),
+rememberViewModelStoreNavEntryDecorator()), sceneStrategy = listDetail then single pane,
+entryProvider = entryProvider { entry<AlbumRoute> { key -> AlbumDetailRoute(key, navigator) } … })`.
+Each entry gets its own `ViewModelStore`, cleared when the entry leaves the stack.
 
-Top-level tabs keep separate back stacks with the standard
-`navigate(tab) { popUpTo(start) { saveState = true }; launchSingleTop = true; restoreState = true }`.
-The start destination (Onboarding, else Home or Library by `showHomeOnLaunch`) is computed in
-`MainActivity.onCreate` from preferences, as now.
+ViewModels receive their key by Hilt assisted injection:
+`hiltViewModel<AlbumDetailViewModel, AlbumDetailViewModel.Factory> { it.create(key) }`, then load
+from the repository. No `SavedStateHandle.toRoute()`, no Safe Args. `AlbumGroupKey` is two nullable
+strings and the route mirrors it; an album with no group key cannot open detail today either.
 
-**Hosted fragments keep `findNavController()`.** The shell calls
-`Navigation.setViewNavController(contentView, navController)`; `NavHostFragment.findNavController()`
-falls back to walking the fragment's view parents, which reach it through the `AndroidFragment`
-container. `popBackStack()` and `currentDestination` keep working. The ~30
-`navigate(R.id.action_…, bundle)` calls become `navigate(AlbumRoute(…))`, and
-`currentDestination?.id == R.id.x` becomes `currentDestination?.hasRoute<X>()`. Migrated Compose
-screens take lambdas (`onOpenAlbum`) and never see a controller. Safe Args and its Gradle plugin go
-when the six `navArgs()` users switch to route keys.
+### Back stacks and the navigator
 
-`BottomDrawerSettingsFragment` is a `<dialog>` destination whose `findNavController()` would resolve
-through the dialog window, not the shell. It becomes a Compose `ModalBottomSheet` owned by the shell
-(Shuffle all, Sleep timer, Equalizer, Settings) in slice 1; on rail tiers the same entries are the
-rail's secondary items.
+`AppNavigator` (in `ui/shell/`) owns one `NavBackStack` per top-level tab, each from
+`rememberNavBackStack(tabRoot)`, and the selected tab. `NavDisplay` shows the start tab's stack
+followed by the selected tab's, so back at the root of a non-start tab returns to the start tab, as
+`NavigationUI` does today; re-selecting a tab restores its stack; re-selecting the current tab pops
+it to its root. Its API is `open(route)`, `selectTab(tab)`, `back()`. Screens never see it: route
+composables take lambdas (`onOpenAlbum`) that the entry provider wires to it. The rules are unit
+tests on the navigator, with no Compose.
+
+The start tab (Home or Library by `showHomeOnLaunch`) and whether onboarding comes first are
+computed in `MainActivity.onCreate` from preferences, as now.
+
+The settings drawer (`BottomDrawerSettingsFragment`, a `<dialog>` destination today) becomes a
+shell-owned `ModalBottomSheet` (Shuffle all, Sleep timer, Equalizer, Settings); on rail tiers the
+same entries are the rail's secondary items. Screen dialogs (tag editor, song info, create playlist,
+delete confirmations) are Compose dialogs owned by the screen that raises them; `DialogSceneStrategy`
+is only for a dialog that must survive as its own back stack entry, and none does yet.
 
 **The player is not a route.** `PlayerLevel` is shell state: it overlays every route and must not
 pop with the back stack. Anything that wants to open the player sends an intent extra the shell maps
 to a level.
 
-### Deep links and shortcuts
+### Activity, deep links and shortcuts
 
-No URI deep links exist and none are added; later, `navDeepLink<AlbumRoute>(basePath)` is the
-mechanism. `MainActivity` keeps its intents as is (`MEDIA_PLAY_FROM_SEARCH` starts the service,
-`VIEW` plays through the media session, `MUSIC_PLAYER`/`APP_MUSIC` launch). `ShortcutHandlerActivity`
-and the toggle-playback shortcut only start the service, so they are unchanged.
+`MainActivity` becomes a `FragmentActivity`-based Compose activity with no Fragment destinations:
+mediarouter's Cast button shows its chooser as a `DialogFragment` and needs a `FragmentActivity`.
+No URI deep links exist and none are added; navigation3 1.2's `DeepLinkMatcher` is the mechanism
+later. `MainActivity` keeps its intents as is (`MEDIA_PLAY_FROM_SEARCH` starts the service, `VIEW`
+plays through the media session, `MUSIC_PLAYER`/`APP_MUSIC` launch). `ShortcutHandlerActivity` and
+the toggle-playback shortcut only start the service, so they are unchanged.
 
-Android Auto, Cast and the widgets are untouched: they talk to `:android:playback`
-(`MediaBrowserServiceCompat`, media session, Cast session), never to the UI.
+Android Auto, Cast and the widgets are untouched: they talk to `:android:playback`, never the UI.
 
 ### Edge-to-edge (#242)
 
-The shell resolves #242 at the root: `enableEdgeToEdge()`, `activity_main.xml` and its root
-`fitsSystemWindows` are deleted. Insets are split by owner:
+The shell closes #242 at the root: `enableEdgeToEdge()`, and `activity_main.xml` with its
+`fitsSystemWindows` is deleted. With no View screens left there is no per-fragment inset work.
+Insets are split by owner:
 
 | Inset | Owner |
 |---|---|
-| status bar | the destination's top bar; hosted fragments via the wrapper's `statusBarsPadding()` |
+| status bar | the destination's top bar |
 | navigation bar | the nav bar or rail; with the nav bar slid away, the sheet's own bottom padding |
 | IME | destination content (`imePadding()`) |
 | display cutout, rail side | the rail and the pane |
 
-This drops #242's "shared inset helper for ~55 View fragments": hosted fragments get parity, not
-edge-to-edge, and each goes truly edge-to-edge when it becomes Compose (decision 3).
+## 5. Theming
 
-## 5. Theming hook
-
-`AppTheme` (base theme + accent, `ui/theme/Theme.kt`) wraps the whole shell. The artwork scheme is a
-second, nested `MaterialTheme` around specific subtrees, never a swap of the root scheme:
+`AppTheme` (`ui/theme/Theme.kt`) becomes a `MaterialExpressiveTheme` with
+`MotionScheme.expressive()`, the user's base theme and accent, and the redesign's typography and
+shapes. It wraps the whole shell. The artwork scheme is a second, nested `MaterialTheme` around
+specific subtrees, never a swap of the root scheme:
 
 ```
 AppTheme(theme, accent)                       ← user's accent, everywhere
  └─ AppShell
-     ├─ NavHost
+     ├─ NavDisplay
      │   └─ AlbumRoute → ArtworkTheme(seed = album art)   ← detail screens, own seed
      └─ PlayerSurface
          └─ ArtworkTheme(seed = now-playing art)          ← mini, now playing, queue, pane
@@ -311,101 +325,91 @@ MaterialKolor dynamic scheme from the seed in the current light/dark mode, and
 extracts, so colours go old → new, never old → default → new. The now-playing seed comes from
 `ShellViewModel` (current song → artwork key → seed); detail screens extract in their ViewModel.
 
-**Recommendation (owner decision 1): player surface and artwork detail screens only**, with a
-setting "Colour from artwork", default on. Not the whole app: every track change would recolour
-the library the user is browsing and override the accent they chose; animating the root scheme
-recomposes every colour reader; and hosted View fragments read XML theme attributes, so a whole-app
-scheme cannot even reach them until the last Fragment is gone. The player's artwork theme only
-becomes possible once the player surface is Compose (slice 3).
+**Recommendation (decision 1): player surface and artwork detail screens only**, with a setting
+"Colour from artwork", default on. Not the whole app: every track change would recolour the library
+the user is browsing and override the accent they chose, and animating the root scheme recomposes
+every colour reader.
 
-## 6. Slice plan
+## 6. Build order
 
-**Slice 0, spike (branch only):** section 3's spike, which also covers the two shell checks
-(`setViewNavController` resolution, `RecyclerView` → sheet nested scroll). Output: edits to this doc.
+One cutover in eight steps. Each is verifiable on its own and lands on `main`; none is released.
+From step 2, `main` runs the new shell and an unbuilt destination is a `NotBuiltYet(route)`
+placeholder entry. Each step deletes the legacy code it replaces (Fragments, presenters, contracts,
+layouts, menus) in the same change and moves its Maestro flows to test tags (`testTagsAsResourceId`).
 
-### Slice 1: Compose shell hosting every current fragment
-
-The smallest slice with no throwaway: it deletes the old shell outright and every line it adds is the
-final shell, except the two bridges named below, each with a deletion trigger.
-
-- `MainActivity` stays an `AppCompatActivity` (the fragments need it) and calls
-  `enableEdgeToEdge()` then `setContent { AppTheme { AppShell(startRoute) } }`. `SnowfallView` becomes
-  an `AndroidView` overlay in the shell.
-- `NavHost` with a `composable<Route>` for every destination in `main.xml` and `launch.xml`, each
-  `HostedFragment<XFragment>(arguments)`, including album and artist detail: their content is
-  already Compose, but their Fragments still own dialogs and the playlist menu (principle 9).
-- `PlayerSheet`: the full section 1 state model (levels, fractions, nested scroll, predictive back,
-  restoration, Hidden) with `MiniPlaybackFragment`, `PlaybackFragment` and `QueueFragment` hosted
-  in it. `ShortNavigationBar` on every width for now.
-- `ShellViewModel` takes over `MainPresenter`: queue visibility, changelog, trial and thank-you
-  dialogs, review prompt, crash-reporting nag (as one-off effects).
-- Settings drawer → Compose `ModalBottomSheet`.
-- Navigation call sites rewritten to routes; detail fragments load by key.
-- **Bridge 1, `PlayerSheetHost`**: `PlaybackFragment` and `QueueFragment` call
-  `findParentMultiSheetView()` today. They get `(requireActivity() as PlayerSheetHost)` exposing
-  `level: StateFlow<PlayerLevel>` and `goTo(level)`. Deleted in slice 3.
-- **Bridge 2, `HostedFragment`**: `AndroidFragment` plus `statusBarsPadding()` plus the shell's
-  bottom padding (`N + M * r`, today's `navHostFragment` bottom margin). Deleted with the last Fragment.
-- Deleted: `MainFragment`, `MainPresenter`/`MainContract`, `MultiSheetView`,
-  `CustomBottomSheetBehavior`, `fragment_main.xml`, `activity_main.xml`, `main.xml`, `launch.xml`,
-  `bottom_nav_menu.xml`, `BottomDrawerSettingsFragment` and its layout, the
-  `BottomNavigationView.setupWithNavController` extension.
-- `docs/architecture/compose-viewmodel-udf.md` principles 9, 12 and step 7 of 13 are rewritten
-  (section 8 below).
-
-Verification:
-- Unit: `PlayerSheetGeometry`; `ShellViewModel` (empty queue → Hidden, first emission, dialogs);
-  route round-trips through `toRoute()`.
-- Robolectric robot tests on `AppShell` with fake destinations: per-tab back stacks; mini tap →
-  NowPlaying; peek → Queue; back steps Queue → NowPlaying → Mini → pop; empty queue hides the sheet;
-  `StateRestorationTester` keeps the level.
-- `unit-test` and `lint` green; `InstrumentedTest`, `NavigationSmokeTest`, `SmokeTestSuite` updated
-  (they find `onboardingNavHostFragment` and `bottomNavigationView` by id).
-- Emulator (`emulator-check`): every `support/maestro` flow plus a new `sheet-levels-back.yaml`;
-  View-id flows keep working because the player is still hosted fragments.
-- `docs/testing/device-checks.md`: sheet predictive back, 3-button and gesture nav, light and dark.
-
-### Follow-up slices, in order
-
-2. **Adaptive chrome.** material3-adaptive 1.3.0; port `LayoutTier`/`FoldPosture`; `WideNavigationRail`
-   on Regular/Wide; the Wide player pane; tier-change level mapping; tabletop split and book posture.
-   Verify on the emulator's foldable and tablet profiles.
-3. **Player surface to Compose.** Mini player, Now Playing and Queue (`LazyColumn` with reorder)
-   composables and ViewModels; the sheet's nested scroll becomes Compose-native. Deletes the three
-   player Fragments and `PlayerSheetHost`. Maestro flows move from View ids to test tags
-   (`testTagsAsResourceId`).
-4. **Artwork theming** on the player surface and detail screens (section 5); adds MaterialKolor.
-5. **Library** as a Compose destination with the spike's top bar; deletes `LibraryFragment`, the tab
-   Fragments, `ToolbarHost`, `findToolbarHost`, `ComposeContextualToolbarHelper`.
-6. **Remaining screens**, one per slice, via `migrate-screen`: Album and Artist detail (drop the
-   Fragment hosts), Home, Search, Genre/Playlist/Smart playlist detail, Equalizer, Settings, Onboarding.
-7. **Last Fragment gone:** `MainActivity` becomes a `ComponentActivity`; drop `HostedFragment`,
-   fragment-compose, navigation-fragment, navigation-ui, Safe Args, AppCompat themes.
+1. **Build deps and design system.** Catalog: navigation3 runtime and ui,
+   lifecycle-viewmodel-navigation3, material3-adaptive (adaptive, layout, navigation3),
+   hilt-lifecycle-viewmodel-compose, the serialization plugin and core, MaterialKolor. `AppTheme` on
+   `MaterialExpressiveTheme` with the redesign's type and shape scales; `ArtworkTheme`; shared
+   components in `ui/components/` (list rows, artwork, top bars, contextual bar, empty and loading
+   states). Verify: lint, colour-extraction unit tests, Robolectric component tests, light and dark.
+2. **Shell and player sheet.** First a branch-only spike covering just the sheet drag, the scroll
+   handoff from a stub `LazyColumn` queue, and predictive back (with section 1's ordering case);
+   findings amend this doc. Then `setContent { AppTheme { AppShell(start) } }`: `NavDisplay` with
+   placeholder entries, `AppNavigator`, the section 1 state model with placeholder player content,
+   adaptive chrome (rail, player pane, tier mapping, postures), the list-detail scene, the settings
+   sheet, edge-to-edge, and `ShellViewModel` taking over `MainPresenter` (queue visibility,
+   changelog, trial and thank-you dialogs, review prompt, crash-reporting nag). Deletes the old shell.
+   Verify: unit tests for `PlayerSheetGeometry`, `ShellViewModel`, `AppNavigator`; Robolectric robot
+   tests on `AppShell` (mini tap → NowPlaying, peek → Queue, back Queue → NowPlaying → Mini → pop,
+   empty queue hides the sheet, `StateRestorationTester`); a new `sheet-levels-back.yaml` on the
+   emulator's phone, foldable and tablet profiles.
+3. **Player.** Mini player and Now Playing (with the tabletop split) on ViewModels over the playback
+   flows, player artwork theming, sleep timer and playback menu actions, the Cast button. Deletes the
+   playback Fragments and presenters. Verify: UDF test layers (principle 14); `playback-controls`,
+   `repeat-modes` and `sleep-timer` flows.
+4. **Queue.** `LazyColumn` with drag-to-reorder, remove and play-next, in the sheet and the pane.
+   Deletes `QueueFragment`, its presenter and binders. Verify: UDF test layers; reorder never moves
+   the sheet; `queue-actions`, `queue-shuffle` and `open-queue-by-taps` flows.
+5. **Screens,** after a short serial 5.0 for the shared song actions every group uses (playlist menu
+   as a use case and Compose menu; tag editor, song info and create-playlist dialogs). Then groups
+   with disjoint files, one worker each:
+   - A. Library: pager and top bar (section 3); songs, albums, artists, genres, playlists lists.
+   - B. Detail: album, artist, genre, playlist, smart playlist.
+   - C. Home and Search. D. Equalizer.
+   - E. Onboarding and library sources, per `redesign-inventory.md`.
+   Verify per group: UDF test layers; its `nav/*.yaml`, multi-select and list flows; its
+   `NotBuiltYet` entries gone.
+6. **Settings.** `androidx.preference` is Fragment-based, so settings are rebuilt: Compose setting
+   rows (switch, list, slider, link) over the existing preference managers, one route per screen.
+   Deletes every `PreferenceFragmentCompat`, the preference XMLs and the dependency. Verify: a
+   ViewModel test per screen that each change writes its preference; `settings-*` flows.
+7. **Delete the legacy.** Remove `:android:recyclerview-adapter`, `BasePresenter`/`BaseContract`,
+   the ViewBinders, unused layouts, menus, drawables and strings, navigation-fragment, navigation-ui,
+   Safe Args, hilt-navigation-compose, and the AppCompat XML themes beyond the launch theme. Verify:
+   build, lint with `UnusedResources` clean, unit tests; no `Fragment()`, `Presenter` or `R.layout`
+   left outside an agreed keep list; APK size against the last release.
+8. **Parity gate, then tag.** Every Maestro flow green on phone, foldable and tablet profiles; the
+   `redesign-inventory.md` checklist ticked; the `docs/testing/device-checks.md` batch done on the
+   owner's device (predictive back, 3-button and gesture nav, light and dark, Cast, Android Auto).
+   Only then is a release tagged.
 
 ## 7. Open decisions for the owner
 
 1. **Artwork theming scope.** Recommend player surface + artwork detail screens, behind a
    default-on setting; not the whole app (section 5).
-2. **Player on wide windows.** Recommend the persistent trailing pane. Alternative: the same sheet at
-   every width, simpler but covers the library on tablets and unfolded foldables.
-3. **#242 scope.** Recommend closing it through the shell: hosted fragments get status-bar padding
-   (today's look), no per-fragment inset helper; each screen goes edge-to-edge when it migrates.
-4. **Swipe the mini player away** (to Hidden, clearing or stopping the queue). Recommend no; keep
+2. **Player on wide windows.** Recommend the persistent trailing pane beside `NavDisplay`.
+   Alternative: the same sheet at every width, simpler but covers the library on tablets and
+   unfolded foldables. (A supporting-pane scene is rejected in section 2.)
+3. **Swipe the mini player away** (to Hidden, clearing or stopping the queue). Recommend no; keep
    Hidden programmatic, as today.
-5. **Fourth nav item.** Recommend keeping the settings bottom sheet on compact for parity, with the
+4. **Fourth nav item.** Recommend keeping the settings bottom sheet on compact for parity, with the
    entries as rail secondary items on wider tiers. Alternative: Settings as a top-level tab.
-6. **Navigation 3.** Recommend staying on Navigation Compose 2.9 for the transition (hosted
-   fragments, `findNavController()` bridge, NavHost predictive back). Reconsider Navigation 3 with
-   adaptive scenes, and list-detail with it, after slice 7.
-7. **`MaterialExpressiveTheme` and motion scheme.** Recommend adopting in slice 5 with the first
-   `LargeFlexibleTopAppBar` screen, not in the shell slice, so it is judged on a real screen.
+5. **List-detail beside the player pane.** Between 840 dp and roughly 1200 dp the content area is too
+   narrow for two panes while the player pane is open. Recommend single pane there, two panes only
+   when the content area is ≥ 840 dp. Alternative: collapse the player pane to its strip while a
+   detail is open.
 
 ## 8. Changes to the UDF principles
 
-- **Principle 9** becomes: only unmigrated screens have a Fragment, as a `HostedFragment`
-  destination; a migrated screen is a `composable<Route>`. Fragment duties move: options menu → the
-  `TopAppBar` actions; navigation → lambdas wired to the `NavHost`; dialogs → Compose (a legacy
-  `DialogFragment` may use the activity's fragment manager); `PlaylistMenuPresenter` → a use case
-  and Compose menu; Context work → the route composable's effect collector.
-- **Principle 12** keeps "no base class"; the boilerplate moves to the route entry composable.
-- **Principle 13, step 7** becomes "register the destination, rewrite callers, delete the Fragment".
+Made in [`compose-viewmodel-udf.md`](compose-viewmodel-udf.md) with this doc:
+
+- **Principle 9** (Fragment stays as a thin lifecycle host) is **deleted**. Its duties are gone or
+  moved: toolbar and options menus → the destination's `TopAppBar`; navigation → lambdas the entry
+  provider wires to `AppNavigator`; dialogs → Compose dialogs owned by the screen;
+  `PlaylistMenuPresenter` → a use case and a Compose menu; Context work → the route's effect collector.
+- **Principle 12** (no Fragment base class) is **deleted**: no Fragments are left to share one.
+- **Principle 13** becomes a test-first *build* order; step 7 becomes "register the route in the
+  entry provider, wire it to the navigator, collect effects, delete the old screen's code".
+- Principles 10 and 11, and the effect and `Context` notes in 4 and 8b, name the route composable
+  instead of the Fragment. Numbering is kept so existing references stay valid.
