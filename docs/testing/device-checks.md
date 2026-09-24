@@ -38,6 +38,10 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] Gapless auto-advance still works after reordering the queue, turning shuffle on, and removing the next track.
 - [ ] A slow Jellyfin transcode or Cast load (weak Wi-Fi, large FLAC) that takes more than 30 s still plays that track instead of skipping it.
 
+### Next-track ownership (#315)
+- [ ] Jellyfin: let an album play through; every transition is gapless, and ReplayGain is right on each track.
+- [ ] On a slow server, skip and then immediately reorder the queue: the track that plays next is the new next song, not the old one.
+
 ### Widgets (after the WidgetManager migration)
 - [ ] Each widget size shows the current song, artwork and play/pause state, and updates on skip, pause and resume.
 - [ ] The widget controls (play/pause, next, previous) work while the app is in the background and after a force-stop.
