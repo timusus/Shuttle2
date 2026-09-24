@@ -23,9 +23,10 @@ import org.junit.Test
 class PlaybackManagerTrackEndedTest {
     private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
     private val preferences = PlaybackPreferenceManager(FakeSharedPreferences(), Moshi.Builder().build())
+    private val playback = FakePlayback("A")
     private val playbackManager =
         testPlaybackManager(
-            exoplayerPlayback = FakePlayback("A"),
+            exoplayerPlayback = playback,
             queueManager = queueManager,
             playbackPreferenceManager = preferences
         )
@@ -80,5 +81,18 @@ class PlaybackManagerTrackEndedTest {
         preferences.playbackPosition shouldBe 175_000
         queueManager.getCurrentItem()?.song?.id shouldBe 2L
         queueManager.getRepeatMode() shouldBe QueueManager.RepeatMode.Off
+    }
+
+    @Test
+    fun `a non-gapless track end publishes the new track's progress, not the old track's`() {
+        runBlocking { queueManager.setQueue(listOf(testSong(1, duration = 180_000), testSong(2, duration = 200_000))) }
+        // The playback still reports the old track's near-end position; the load it's about to start
+        // hasn't completed yet.
+        playback.progressMs = 179_000
+        playback.durationMs = 180_000
+
+        playbackManager.onTrackEnded(trackWentToNext = false)
+
+        playbackManager.progressFlow.value shouldBe PlaybackProgress(0, 200_000)
     }
 }

@@ -29,8 +29,6 @@ abstract class AudioFocusHelperBase(
 
     internal var playbackDelayed = false
 
-    internal var playbackNowAuthorized = false
-
     override var listener: AudioFocusHelper.Listener? = null
 
     override var enabled: Boolean = true
@@ -53,7 +51,7 @@ abstract class AudioFocusHelperBase(
                     resumeOnFocusGain = false
                     playbackDelayed = false
                 }
-                pause()
+                pauseForFocusLoss()
             }
 
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
@@ -61,7 +59,7 @@ abstract class AudioFocusHelperBase(
                     resumeOnFocusGain = isPlaying
                     playbackDelayed = false
                 }
-                pause()
+                pauseForFocusLoss()
             }
 
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
@@ -82,9 +80,23 @@ abstract class AudioFocusHelperBase(
         }
     }
 
-    fun pause() {
+    fun pauseForFocusLoss() {
         if (enabled) {
-            listener?.pause()
+            listener?.pauseForFocusLoss()
+        }
+    }
+
+    /**
+     * Interprets an Api26 [AudioManager.requestAudioFocus] result: a delayed result means the eventual
+     * focus gain should resume playback, anything else means the request is settled now. Pulled up from
+     * the Api26 subclass so it's unit-testable without a real AudioFocusRequest.
+     *
+     * @return true if focus was granted immediately
+     */
+    internal fun onFocusRequestResult(result: Int?): Boolean {
+        synchronized(focusLock) {
+            playbackDelayed = result == AudioManager.AUDIOFOCUS_REQUEST_DELAYED
+            return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         }
     }
 }

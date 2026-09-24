@@ -25,25 +25,7 @@ class AudioFocusHelperApi26(context: Context) : AudioFocusHelperBase(context) {
     override fun requestAudioFocus(): Boolean {
         if (!enabled) return true
 
-        val result = audioManager?.requestAudioFocus(focusRequest)
-        synchronized(focusLock) {
-            when (result) {
-                AudioManager.AUDIOFOCUS_REQUEST_FAILED -> playbackNowAuthorized = false
-
-                AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> {
-                    playbackNowAuthorized = true
-                    return true
-                }
-
-                AudioManager.AUDIOFOCUS_REQUEST_DELAYED -> {
-                    playbackDelayed = true
-                    playbackNowAuthorized = false
-                }
-
-                else -> playbackNowAuthorized = false
-            }
-            return false
-        }
+        return onFocusRequestResult(audioManager?.requestAudioFocus(focusRequest))
     }
 
     override fun abandonAudioFocus() {

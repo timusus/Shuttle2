@@ -9,7 +9,7 @@ sealed class PlaybackState {
         override fun toString(): String = "Playing"
     }
 
-    object Paused : PlaybackState()
-
-    override fun toString(): String = "Paused"
+    object Paused : PlaybackState() {
+        override fun toString(): String = "Paused"
+    }
 }

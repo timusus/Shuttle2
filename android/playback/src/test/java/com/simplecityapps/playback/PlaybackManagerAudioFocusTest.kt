@@ -21,7 +21,9 @@ import org.junit.Test
 
 /**
  * PlaybackManager registers itself as the AudioFocusHelper.Listener, so a transient focus loss
- * ducks the volume, a full loss pauses, and regaining focus restores the volume and resumes.
+ * ducks the volume, a full loss pauses, and regaining focus restores the volume and resumes. A
+ * user-driven pause abandons focus, unlike a focus-loss pause, which keeps it so it can be notified
+ * of the regain.
  */
 class PlaybackManagerAudioFocusTest {
     private val events = mutableListOf<String>()
@@ -71,11 +73,20 @@ class PlaybackManagerAudioFocusTest {
     }
 
     @Test
-    fun `pausing keeps audio focus`() {
+    fun `pausing abandons audio focus`() {
         playbackManager.play()
         playbackManager.pause()
 
-        audioFocusHelper.abandons shouldBe 0
+        audioFocusHelper.abandons shouldBe 1
+    }
+
+    @Test
+    fun `resuming after a user pause re-requests audio focus`() {
+        playbackManager.play()
+        playbackManager.pause()
+        playbackManager.play()
+
+        audioFocusHelper.requests shouldBe 2
     }
 
     @Test
@@ -86,10 +97,14 @@ class PlaybackManagerAudioFocusTest {
     }
 
     @Test
-    fun `a full focus loss pauses playback`() {
-        audioFocusHelper.listener!!.pause()
+    fun `a full focus loss pauses playback without abandoning focus`() {
+        playbackManager.play()
+        events.clear()
+
+        audioFocusHelper.listener!!.pauseForFocusLoss()
 
         events shouldBe listOf("A pause")
+        audioFocusHelper.abandons shouldBe 0
     }
 
     @Test

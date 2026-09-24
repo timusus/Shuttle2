@@ -23,7 +23,12 @@ interface AudioFocusHelper {
 
         fun restoreVolumeAndPlay()
 
-        fun pause()
+        /**
+         * Focus was lost (fully or transiently) and playback must pause. Distinct from a user-driven
+         * pause: the listener must not abandon audio focus here, so it keeps receiving focus-change
+         * callbacks and can resume on regain.
+         */
+        fun pauseForFocusLoss()
 
         fun duck()
     }

@@ -154,7 +154,7 @@ class PlaybackManager(
     override fun togglePlayback() {
         when (playbackState()) {
             is PlaybackState.Loading, PlaybackState.Playing -> {
-                playback.pause()
+                pause()
             }
 
             else -> {
@@ -586,12 +586,16 @@ class PlaybackManager(
             loadCoordinator.requestNext()
             // The playback is already on the new track, so its own position is the one to anchor.
             reanchor()
+            updateProgress()
         } else {
-            // The skip anchors at the new track's start while it loads.
+            // The skip anchors at the new track's start while it loads. updateProgress() would read the
+            // playback's own position, which still reports the old track until the load completes, so
+            // the new track's progress is published from the load-aware position instead.
             skipToNext(false)
+            queueManager.getCurrentItem()?.song?.duration?.let { duration ->
+                _progressFlow.value = PlaybackProgress(getProgress() ?: 0, duration)
+            }
         }
-
-        updateProgress()
     }
 
     override fun onPositionDiscontinuity() {
@@ -612,10 +616,19 @@ class PlaybackManager(
         loadCoordinator.requestNext()
     }
 
-    // AudioFocusHelper.Listener Implementation
+    // PlaybackOperations Implementation
 
+    /** A user- or system-driven pause, distinct from [pauseForFocusLoss]: this one gives up audio focus. */
     override fun pause() {
         Timber.v("pause()")
+        playback.pause()
+        audioFocusHelper.abandonAudioFocus()
+    }
+
+    // AudioFocusHelper.Listener Implementation
+
+    override fun pauseForFocusLoss() {
+        Timber.v("pauseForFocusLoss()")
         playback.pause()
     }
 

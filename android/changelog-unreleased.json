@@ -82,6 +82,14 @@
     {
       "text": "Fixed Jellyfin and Emby songs that the server converts for your phone, such as WMA or AIFF files, failing to play",
       "commits": []
+    },
+    {
+      "text": "Pausing now releases audio focus, so other apps can play sound again without you closing S2 first",
+      "commits": []
+    },
+    {
+      "text": "The notification and progress bar now show the new song right away when one track ends and the next starts, instead of briefly showing the old one",
+      "commits": []
     }
   ]
 }
