@@ -29,6 +29,7 @@
                 <action android:name="com.simplecityapps.shuttle.debug.PREV" />
                 <action android:name="com.simplecityapps.shuttle.debug.SEEK" />
                 <action android:name="com.simplecityapps.shuttle.debug.REMOVE_QUEUE_ITEM" />
+                <action android:name="com.simplecityapps.shuttle.debug.REORDER_QUEUE" />
                 <action android:name="com.simplecityapps.shuttle.debug.SHUFFLE" />
                 <action android:name="com.simplecityapps.shuttle.debug.REPEAT" />
                 <action android:name="com.simplecityapps.shuttle.debug.SPEED" />

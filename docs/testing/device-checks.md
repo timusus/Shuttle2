@@ -30,7 +30,7 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] Disconnect Bluetooth while playing. Playback pauses.
 
 ### Next-track preparation and slow loads (#300)
-- [ ] Gapless auto-advance still works after reordering the queue, turning shuffle on, and removing the next track.
+- [x] Gapless auto-advance still works after reordering the queue, turning shuffle on, and removing the next track. — automated: `emu-verify.sh --check gapless-after-edits`
 - [ ] A slow Jellyfin transcode or Cast load (weak Wi-Fi, large FLAC) that takes more than 30 s still plays that track instead of skipping it.
 
 ### Next-track ownership (#315)

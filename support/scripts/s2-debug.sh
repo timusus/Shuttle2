@@ -6,6 +6,7 @@
 #   support/scripts/s2-debug.sh PLAY | PAUSE | NEXT | PREV
 #   support/scripts/s2-debug.sh SEEK --el ms 20000
 #   support/scripts/s2-debug.sh REMOVE_QUEUE_ITEM --ei position 0
+#   support/scripts/s2-debug.sh REORDER_QUEUE --ei from 3 --ei to 1  move a queue item (shuffle-aware order)
 #   support/scripts/s2-debug.sh SHUFFLE [--ez enabled true]  toggle, or set
 #   support/scripts/s2-debug.sh REPEAT [--es mode off|all|one] toggle (Off -> All -> One), or set
 #   support/scripts/s2-debug.sh SPEED --ef multiplier 1.5  set the playback speed

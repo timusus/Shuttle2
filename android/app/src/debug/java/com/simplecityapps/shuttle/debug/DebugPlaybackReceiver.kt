@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -111,6 +112,17 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             queueItem.song.name
         }
 
+        "REORDER_QUEUE" -> {
+            val from = intent.getIntExtra("from", -1)
+            val to = intent.getIntExtra("to", -1)
+            val size = queueManager.getSize()
+            require(from in 0 until size && to in 0 until size) { "--ei from and --ei to must be within the queue (size $size)" }
+            // The queue screen's drag-to-reorder path (QueueManager.move), in the order getQueue()/DUMP_STATE's
+            // queueTitles present -- shuffle-aware, same as the "Up Next" list.
+            queueManager.move(from, to)
+            "moved $from -> $to"
+        }
+
         "SHUFFLE" -> {
             if (intent.hasExtra("enabled")) {
                 val mode = if (intent.getBooleanExtra("enabled", false)) QueueManager.ShuffleMode.On else QueueManager.ShuffleMode.Off
@@ -174,6 +186,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             put("queuePosition", queueManager.getCurrentPosition() ?: JSONObject.NULL)
             put("queueSize", queueManager.getSize())
             put("title", currentSong?.name ?: JSONObject.NULL)
+            put("queueTitles", JSONArray(queueManager.getQueue().map { it.song.name }))
             put("shuffle", queueManager.getShuffleMode().name)
             put("repeat", queueManager.getRepeatMode().name)
             put("speed", playbackManager.getPlaybackSpeed())
