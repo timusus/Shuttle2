@@ -1,0 +1,21 @@
+# Opens Settings > Playback and, on Android 14+ where BitPerfectOutput's AudioMixerAttributes API
+# exists, toggles "USB DAC direct output" and screenshots it; below that, the row is hidden
+# (PlaybackPreferenceFragment gates it on Build.VERSION_CODES.UPSIDE_DOWN_CAKE) so this only
+# asserts its absence. support/scripts/checks/settings-usb-dac-direct-output.sh drives the
+# before/after preference value and playback-progress assertions via the debug receivers, and runs
+# this flow twice (on, then off) on API 34+.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: nav/open-settings.yaml
+- tapOn: "Playback"
+- runFlow:
+    when:
+      visible: "USB DAC direct output"
+    commands:
+      - tapOn: "USB DAC direct output"
+      - takeScreenshot: settings-usb-dac-direct-output
+- runFlow:
+    when:
+      notVisible: "USB DAC direct output"
+    commands:
+      - assertNotVisible: "USB DAC direct output"

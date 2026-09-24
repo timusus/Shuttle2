@@ -74,6 +74,9 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] Open an MP3 and a FLAC from a file manager and from a messaging app attachment. Each plays in S2.
 - [ ] After opening a file, force-stop and reopen S2. The queue restores without errors, and the opened file is skipped with a message if it can no longer be read.
 
+### M3U playlist sync (#168), needs a real SAF folder
+- [ ] With a Shuttle/Taglib folder containing an .m3u (including a line S2 can't resolve), remove a song from that playlist in-app. The .m3u loses only that song's entry; the unresolved line is still there.
+
 ### Playback reporting (#191)
 - [ ] Play a Jellyfin song, then an Emby song. Each server's dashboard shows it as now playing with a moving position, and clears it on pause/stop.
 - [ ] Play a Plex song to the end. It shows in Plex's now playing and is marked played afterwards.
