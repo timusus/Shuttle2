@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 apply plugin: 'com.android.library'
 
 android {
-    compileSdk 36
+    compileSdk 37
 
     defaultConfig {
         minSdkVersion 23

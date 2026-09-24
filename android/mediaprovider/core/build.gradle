@@ -6,7 +6,7 @@ apply plugin: 'dagger.hilt.android.plugin'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
-    compileSdk 36
+    compileSdk 37
 
     defaultConfig {
         minSdkVersion 23

@@ -8,7 +8,7 @@ ksp {
 }
 
 android {
-    compileSdk 36
+    compileSdk 37
 
     defaultConfig {
         minSdkVersion 23
