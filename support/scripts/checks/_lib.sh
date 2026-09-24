@@ -117,6 +117,18 @@ setup_taglib_provider() {
     # The Maestro flow's own "Song import complete" wait already confirms the UI-visible import;
     # cross-check the library actually holds the fixture's songs (not a fixed sleep -- polls DUMP_STATE).
     wait_for 15 "not s['libraryImporting'] and s['librarySongCount'] >= 5"
+    # #371: the Shuttle playlist import (taglib.m3u) sometimes finds zero songs to match against on
+    # this very first pass and skips creating the playlist, even though the songs themselves import
+    # correctly every time. A plain reimport always succeeds once the songs are already in place, so
+    # retry it (bounded, polling DUMP_STATE -- not a fixed sleep) rather than block every m3u/playlist
+    # check on that race.
+    local attempt
+    for attempt in 1 2 3; do
+        [ "$(state libraryPlaylistCount)" -ge 2 ] && return 0
+        s2 IMPORT >/dev/null
+        wait_for 15 "not s['libraryImporting']"
+    done
+    [ "$(state libraryPlaylistCount)" -ge 2 ] || fail "the Shuttle/TagLib 'taglib' playlist never appeared after ${attempt} import(s) -- see #371"
 }
 
 # The open queue sheet's song titles, top to bottom, comma-separated. The dump also holds the

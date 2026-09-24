@@ -6,6 +6,8 @@ import android.content.Intent
 import android.media.AudioManager
 import android.util.Log
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.NoisyReceiver
 import com.simplecityapps.playback.PlaybackManager
@@ -47,6 +49,9 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var mediaImporter: MediaImporter
+
+    @Inject
+    lateinit var playlistRepository: PlaylistRepository
 
     @Inject
     lateinit var playSongs: PlaySongs
@@ -197,6 +202,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             put("pendingLoad", pendingLoad())
             put("libraryImporting", mediaImporter.isImporting)
             put("librarySongCount", songRepository.getSongs(SongQuery.All()).firstOrNull()?.size ?: JSONObject.NULL)
+            put("libraryPlaylistCount", playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).firstOrNull()?.size ?: JSONObject.NULL)
         }
     }
 
