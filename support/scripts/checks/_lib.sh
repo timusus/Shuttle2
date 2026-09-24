@@ -91,3 +91,29 @@ restore_playback_fixture() {
     "${CHECKS_ROOT}/support/scripts/remote-emu.sh" reset >/dev/null
     "${CHECKS_ROOT}/support/scripts/seed-test-media.sh" playback --skip-onboarding >/dev/null
 }
+
+# The open queue sheet's song titles, top to bottom, comma-separated. The dump also holds the
+# full player and library behind the sheet; the sheet's nodes come first, from "Up Next" to the
+# player's "Now Playing".
+queue_titles() {
+    "${CHECKS_ROOT}/support/scripts/remote-emu.sh" dump-texts \
+        | python3 -c '
+import re, sys
+titles, inside = [], False
+for line in sys.stdin:
+    if line.startswith("text=\"Up Next\""):
+        inside = True
+    elif line.startswith("text=\"Now Playing\""):
+        inside = False  # read on to the end: an early exit would SIGPIPE dump-texts
+    elif inside:
+        m = re.match(r"text=\"(Playback \w+)\" ", line)
+        if m:
+            titles.append(m.group(1))
+print(",".join(titles))'
+}
+
+# screenshot <name>: the screen as it is now, to ${SHOTS:-tmp/maestro}/<name>.png.
+screenshot() {
+    mkdir -p "${SHOTS:-${CHECKS_ROOT}/tmp/maestro}"
+    adb_retry exec-out screencap -p >"${SHOTS:-${CHECKS_ROOT}/tmp/maestro}/$1.png"
+}

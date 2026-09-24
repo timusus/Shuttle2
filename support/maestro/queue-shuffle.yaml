@@ -1,0 +1,10 @@
+# Turn shuffle on from the full player by a tap, then open the queue. Setup
+# (support/scripts/checks/queue-shuffle.sh): the `playback` fixture queued in order from
+# "Playback One" and paused. The wrapper reads the queue order off the open queue sheet.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: nav/open-now-playing.yaml
+- tapOn: "Shuffle"
+- tapOn: "Up Next"
+- assertVisible: "Playback One"
+- takeScreenshot: c-shuffled-queue

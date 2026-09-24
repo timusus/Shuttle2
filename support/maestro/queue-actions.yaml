@@ -1,0 +1,41 @@
+# Queue actions by taps. Setup (support/scripts/checks/queue-actions.sh): the `playback` fixture
+# queued in order from "Playback One" (One..Five) and paused. From Library > Songs: "Play Next" on
+# Playback Four, "Add to Queue" on Playback Two; then on the queue sheet: remove Playback Three
+# (long-press menu) and drag Playback Five by its handle up to second place. The wrapper reads the
+# resulting order off the sheet.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    file: nav/open-library-tab.yaml
+    env:
+      TAB: Songs
+- scrollUntilVisible:
+    element:
+      text: "Playback Two"
+    direction: DOWN
+# Songs are in title order (Five, Four, One, Three, Two), all on screen: the menus by index.
+- tapOn:
+    text: "Song context menu"
+    index: 1
+- tapOn: "Play Next"
+- tapOn:
+    text: "Song context menu"
+    index: 4
+- tapOn: "Add to Queue"
+- tapOn:
+    id: ".*titleTextView"
+    text: "Playback One"
+- tapOn: "Up Next"
+- assertVisible: "1 of 7"
+- takeScreenshot: d-queue-after-play-next-and-add
+- longPressOn: "Playback Three"
+- tapOn: "Remove from Queue"
+- assertVisible: "1 of 6"
+- takeScreenshot: d-queue-after-remove
+# The queue's rows are 180 px tall from y=324 on the lane's 1280x2856 Pixel 9 Pro, drag handles at
+# the right edge: row 4 (Playback Five) is centred at ~40%, row 1 at ~21%.
+- swipe:
+    start: "94%, 40%"
+    end: "94%, 20%"
+    duration: 2000
+- takeScreenshot: d-queue-after-drag
