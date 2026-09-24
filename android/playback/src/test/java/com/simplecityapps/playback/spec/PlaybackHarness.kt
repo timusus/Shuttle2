@@ -150,6 +150,9 @@ class PlaybackHarness(
 
     val playbackOperations: PlaybackOperations
 
+    /** The player the app plays through, which the media session publishes. */
+    val appPlayer: Player
+
     /** How many times the player's playlist has changed: each change is a timeline rebuild, costing time in the queue's length. */
     var playlistChanges = 0
         private set
@@ -178,6 +181,7 @@ class PlaybackHarness(
         )
         val cast = castQueue(player)
         val active = activePlayer(player)
+        appPlayer = active
         val queueManager = QueueManager(player, GeneralPreferenceManager(FakeSharedPreferences()), songUriResolver, buildContext, active)
         queueOperations = queueManager
         playbackOperations =
