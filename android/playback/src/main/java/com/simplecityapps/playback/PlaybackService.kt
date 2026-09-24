@@ -2,9 +2,7 @@ package com.simplecityapps.playback
 
 import android.app.PendingIntent
 import android.content.Intent
-import android.content.pm.ServiceInfo
 import android.graphics.Bitmap
-import android.os.Build
 import android.util.LruCache
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
@@ -15,6 +13,8 @@ import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PackageValidator
 import com.simplecityapps.playback.mediasession.ArtworkBitmapLoader
@@ -32,7 +32,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import timber.log.Timber
 
 /**
@@ -42,6 +42,7 @@ import timber.log.Timber
  * [SessionPlayer] and [SessionCallback].
  *
  * The app's widget and shortcuts start the service with one of the actions below, which it handles itself.
+ * [ForegroundStarts] keeps a start in the foreground until its command has run, as the app starts too.
  */
 @UnstableApi
 @AndroidEntryPoint
@@ -78,6 +79,8 @@ class PlaybackService : MediaLibraryService() {
 
     private lateinit var callback: SessionCallback
 
+    private lateinit var foregroundStarts: ForegroundStarts
+
     override fun onCreate() {
         super.onCreate()
         Timber.v("onCreate()")
@@ -107,8 +110,16 @@ class PlaybackService : MediaLibraryService() {
             .setMediaButtonPreferences(callback.mediaButtonPreferences(queueOperations.getShuffleMode(), queueOperations.getRepeatMode()))
             .setSessionActivity(PendingIntent.getActivity(this, 1, (applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
             .build()
+        foregroundStarts = ForegroundStarts(this, sessionPlayer, coroutineScope, NOTIFICATION_ID) {
+            // Under the notification's id, so Media3's own notification replaces it.
+            NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_stat_name)
+                .setContentTitle(getString(com.simplecityapps.core.R.string.loading))
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .build()
+        }
         addSession(session)
-
         callback.launchMediaButtonUpdates(session)
     }
 
@@ -120,52 +131,17 @@ class PlaybackService : MediaLibraryService() {
         startId: Int
     ): Int {
         val result = super.onStartCommand(intent, flags, startId)
-        val action = intent?.action ?: return result
-        if (action !in actions) return result
-
-        Timber.v("onStartCommand() action: $action")
-        // The widget and shortcuts start the service in the foreground; Media3 only goes there once it has a
-        // notification to show, which it may not have yet, or at all for a paused player.
-        startForegroundIfNotAlready()
-
-        coroutineScope.launch {
-            // A command given as the app starts acts on the saved queue, not the empty one before it's restored.
-            queueOperations.queueStateFlow.awaitRestored()
-            when (action) {
-                ACTION_START -> Unit
-                ACTION_TOGGLE_PLAYBACK -> playbackOperations.togglePlayback()
-                ACTION_SKIP_PREV -> playbackOperations.skipToPrev()
-                ACTION_SKIP_NEXT -> playbackOperations.skipToNext(ignoreRepeat = true)
-                ACTION_TOGGLE_SHUFFLE -> queueOperations.toggleShuffleMode()
-                ACTION_TOGGLE_REPEAT -> queueOperations.toggleRepeatMode()
-            }
-        }
+        if (intent != null) handleStart(intent, foregroundStarts, playbackOperations, queueOperations)
         return result
     }
 
-    /**
-     * Meets a foreground start's obligation to call startForeground, with a placeholder under the notification's id
-     * that Media3's own notification then replaces (or removes, stopping the foreground state, if it shows none).
-     */
-    private fun startForegroundIfNotAlready() {
-        if (isPlaybackOngoing) return
-        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_name)
-            .setContentTitle(getString(com.simplecityapps.core.R.string.loading))
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .build()
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
-            } else {
-                startForeground(NOTIFICATION_ID, notification)
-            }
-        } catch (e: IllegalStateException) {
-            // ForegroundServiceStartNotAllowedException (API 31+): started with startService from the background.
-            Timber.w(e, "Unable to start the service in the foreground")
-        }
-        triggerNotificationUpdate()
+    override fun onUpdateNotificationAsync(
+        session: MediaSession,
+        startInForegroundRequired: Boolean
+    ): ListenableFuture<Void?> = if (foregroundStarts.mayUpdateNotification(startInForegroundRequired)) {
+        super.onUpdateNotificationAsync(session, startInForegroundRequired)
+    } else {
+        Futures.immediateVoidFuture()
     }
 
     override fun onDestroy() {
@@ -187,6 +163,41 @@ class PlaybackService : MediaLibraryService() {
         const val ACTION_TOGGLE_REPEAT: String = "com.simplecityapps.playback.repeat"
 
         private val actions = setOf(ACTION_START, ACTION_TOGGLE_PLAYBACK, ACTION_SKIP_PREV, ACTION_SKIP_NEXT, ACTION_TOGGLE_SHUFFLE, ACTION_TOGGLE_REPEAT)
+
+        /**
+         * Runs one of the actions above, or keeps the service in the foreground for a play button's start, whose play
+         * Media3 runs. A command given as the app starts acts on the saved queue, not the empty one before it's
+         * restored.
+         */
+        internal fun handleStart(
+            intent: Intent,
+            foregroundStarts: ForegroundStarts,
+            playbackOperations: PlaybackOperations,
+            queueOperations: QueueOperations
+        ) {
+            val action = intent.action
+            when {
+                ForegroundStarts.isPlayButton(intent) -> foregroundStarts.start {
+                    queueOperations.queueStateFlow.awaitRestored()
+                    delay(ForegroundStarts.MEDIA_BUTTON_SETTLE_MS)
+                }
+
+                action in actions -> {
+                    Timber.v("onStartCommand() action: $action")
+                    foregroundStarts.start {
+                        queueOperations.queueStateFlow.awaitRestored()
+                        when (action) {
+                            ACTION_START -> Unit
+                            ACTION_TOGGLE_PLAYBACK -> playbackOperations.togglePlayback()
+                            ACTION_SKIP_PREV -> playbackOperations.skipToPrev()
+                            ACTION_SKIP_NEXT -> playbackOperations.skipToNext(ignoreRepeat = true)
+                            ACTION_TOGGLE_SHUFFLE -> queueOperations.toggleShuffleMode()
+                            ACTION_TOGGLE_REPEAT -> queueOperations.toggleRepeatMode()
+                        }
+                    }
+                }
+            }
+        }
 
         // The channel and id the app's own notification used, so a user's settings for the channel carry over.
         const val NOTIFICATION_CHANNEL_ID = "2"

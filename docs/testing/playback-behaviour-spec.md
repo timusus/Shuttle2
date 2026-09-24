@@ -224,6 +224,14 @@ remove, move or clear the queue's items, but it can control playback and ask to 
 a trusted controller can do all of it. (#345) — JVM (`spec/MediaSessionSpecTest`); a real third-party app is
 device-only: *Media session through Media3*.
 
+**RS-48: a cold start in the foreground stays there until its command has run.** Given S2 not running, when the
+widget, a shortcut or a headset's play button starts the playback service in the foreground, then it's in the
+foreground straight away (with Media3's notification, or a placeholder under the same id) and stays there while the
+saved queue is restored, even while Media3 has no notification to show; once the queue plays, Media3's notification
+takes the foreground over, and a command that doesn't play leaves the foreground once it has run. (#345) — JVM
+(`spec/ForegroundStartSpecTest`, over a test service with PlaybackService's start handling, as PlaybackService itself
+needs Hilt); API 31+ with the app dead is device-only: *Media session through Media3*.
+
 ## Commits with no rule
 
 Mechanism only, with no behaviour of their own to hold (the design doc's section 4 list, plus thread-safety and
