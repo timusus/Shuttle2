@@ -328,6 +328,39 @@ class LoadCoordinatorTest {
     }
 
     @Test
+    fun `a load satisfies a next-item request made before it`() = runTest {
+        // The load passes its own next item, so preparing it again afterwards is redundant.
+        val coordinator = coordinator()
+        runCurrent()
+        nextSong = testSong(2)
+        coordinator.requestNext()
+        coordinator.load(1)
+        runCurrent()
+
+        fake.completeLoad()
+        runCurrent()
+
+        events shouldBe listOf("A load Song1 seek 0")
+    }
+
+    @Test
+    fun `a load started while a next-item request waits satisfies it`() = runTest {
+        val coordinator = coordinator()
+        runCurrent()
+        coordinator.load(1)
+        coordinator.requestNext()
+        runCurrent()
+
+        coordinator.load(2)
+        runCurrent()
+        fake.completeLoad()
+        fake.completeLoad()
+        runCurrent()
+
+        events shouldBe listOf("A load Song1 seek 0", "A load Song2 seek 0")
+    }
+
+    @Test
     fun `a next-item request resumes when the pending load is cancelled`() = runTest {
         val coordinator = coordinator()
         runCurrent()

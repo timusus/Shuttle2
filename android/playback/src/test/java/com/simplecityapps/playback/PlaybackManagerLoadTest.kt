@@ -59,7 +59,7 @@ class PlaybackManagerLoadTest {
         playbackManager.load { result = it }
         repeat(15) { playback.failLoad() }
 
-        events.count { it.contains("load") } shouldBe 15
+        events.count { it.startsWith("A load ") } shouldBe 15
         result!!.isFailure shouldBe true
         // Every attempt skipped forward, but the final failure resets the queue position back to
         // the item that was current when load() was first called.

@@ -23,7 +23,8 @@ import timber.log.Timber
  * Next-item preparation is a request, not a command: [requestNext] signals a single consumer, which
  * waits for any pending load to finish, then reads the next song and the active playback at that
  * moment. Requests made while one is in flight are conflated, so the last one wins and loadNext
- * calls never overlap or finish out of order.
+ * calls never overlap or finish out of order. A load passes its own next item, so it satisfies any
+ * request made before it started.
  *
  * Emits on [parentScope]'s dispatcher, which the load and next-item coroutines run on.
  *
@@ -77,11 +78,16 @@ class LoadCoordinator(
 
     private val nextRequests = Channel<Unit>(Channel.CONFLATED)
 
+    /** Whether a next-item request has been made since the last load started. */
+    private var nextRequested = false
+
     init {
         scope.launch {
             for (request in nextRequests) {
                 // A pending load passes its own next item, and replaces the playlist this would edit.
                 isLoading.first { !it }
+                if (!nextRequested) continue
+                nextRequested = false
                 try {
                     activePlayback().loadNext(nextSong())
                 } catch (e: CancellationException) {
@@ -107,6 +113,7 @@ class LoadCoordinator(
         completion: (Result<Any?>) -> Unit
     ) {
         val token = ++latestToken
+        nextRequested = false
         loadJob?.cancel()
         setPendingLoad(PendingLoad(token, positionMs))
         loadJob =
@@ -182,6 +189,7 @@ class LoadCoordinator(
 
     /** Asks for the active playback's next item to be brought in line with [nextSong]. */
     fun requestNext() {
+        nextRequested = true
         nextRequests.trySend(Unit)
     }
 

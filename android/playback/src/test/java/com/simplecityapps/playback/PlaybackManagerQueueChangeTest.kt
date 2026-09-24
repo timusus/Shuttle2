@@ -19,7 +19,8 @@ import org.junit.Test
  * the new order. Modes already set when the manager is built are not handled as changes. Clearing the queue keeps the current item when
  * playback is active, otherwise clears everything, abandoning any load in progress. Removing the
  * current item loads the next one (carrying on if it was playing), and removing any item
- * re-prepares the next one.
+ * re-prepares the next one. Every queue change re-prepares the next item once, whether made through
+ * the manager or on the queue directly, except where a load follows, since the load passes its own.
  */
 class PlaybackManagerQueueChangeTest {
     private val events = mutableListOf<String>()
@@ -180,7 +181,8 @@ class PlaybackManagerQueueChangeTest {
         playbackManager.removeQueueItem(queueManager.getCurrentItem()!!)
         playback.completeLoad()
 
-        events shouldBe listOf("A pause")
+        // The emptied queue has no next item to prepare.
+        events shouldBe listOf("A pause", "A loadNext null")
         queueManager.getQueue().shouldBeEmpty()
     }
 
@@ -201,6 +203,56 @@ class PlaybackManagerQueueChangeTest {
         playbackManager.removeQueueItem(queueManager.getQueue()[1])
 
         events shouldBe listOf("A loadNext Song3")
+    }
+
+    @Test
+    fun `a change made directly on the queue prepares the next item`() {
+        queueManager.move(2, 1)
+
+        events shouldBe listOf("A loadNext Song3")
+    }
+
+    @Test
+    fun `moving an item prepares the next item once`() {
+        playbackManager.moveQueueItem(2, 1)
+
+        events shouldBe listOf("A loadNext Song3")
+    }
+
+    @Test
+    fun `adding to the queue prepares the next item once`() {
+        runBlocking { playbackManager.playNext(listOf(createSong(4))) }
+
+        events shouldBe listOf("A loadNext Song4")
+    }
+
+    @Test
+    fun `a skip prepares the next item through its load alone`() {
+        playbackManager.skipToNext()
+        playback.completeLoad()
+
+        events shouldBe listOf("A load Song2 seek 0", "A play")
+    }
+
+    @Test
+    fun `a retry after a failed load prepares the next item through its load alone`() {
+        playbackManager.load { }
+        playback.failLoad()
+        playback.completeLoad()
+
+        events shouldBe listOf("A load Song1 seek 0", "A load Song2 seek 0")
+    }
+
+    @Test
+    fun `a queue change during a load prepares the next item once the load completes`() {
+        playbackManager.skipToNext()
+        playbackManager.moveQueueItem(0, 2)
+
+        events shouldBe listOf("A load Song2 seek 0")
+
+        playback.completeLoad()
+
+        events shouldBe listOf("A load Song2 seek 0", "A play", "A loadNext Song3")
     }
 
     private fun createSong(id: Long) = Song(

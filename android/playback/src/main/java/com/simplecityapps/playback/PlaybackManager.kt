@@ -98,6 +98,12 @@ class PlaybackManager(
      */
     private var seekedLoad: LoadCoordinator.PendingLoad? = null
 
+    /** How many [queueOperation]s are running. */
+    private var queueOperationDepth = 0
+
+    /** Whether the running [queueOperation] changed the queue since it last started a load. */
+    private var nextRequestDeferred = false
+
     private val _positionAnchorFlow = MutableStateFlow(positionAnchor())
 
     /**
@@ -130,9 +136,10 @@ class PlaybackManager(
     /**
      * Keeps the playback's repeat mode and next item in line with the queue's. Each flow is compared
      * against a snapshot taken here, which [attachInitialPlayback][PlaybackSwitcher.attachInitialPlayback]
-     * has already applied, so only later changes are handled. Shuffle is read from the queue state rather
-     * than [QueueManager.shuffleModeFlow], which changes before a reshuffle, so the next item is only
-     * prepared once the new order is in place.
+     * has already applied, so only later changes are handled. Any change to the items, the current item
+     * or the shuffle mode re-prepares the next item. Shuffle is read from the queue state rather than
+     * [QueueManager.shuffleModeFlow], which changes before a reshuffle, so the next item is only prepared
+     * once the new order is in place.
      */
     private fun collectQueueChanges(
         scope: CoroutineScope,
@@ -145,8 +152,32 @@ class PlaybackManager(
             onRepeatChanged(current)
         }
         scope.launchCollectingChanges(queueManager.queueStateFlow, queueState, context) { previous, current ->
-            if (current.shuffleMode != previous.shuffleMode) {
-                onShuffleChanged()
+            if (current.contentVersion != previous.contentVersion ||
+                current.currentItem != previous.currentItem ||
+                current.currentPosition != previous.currentPosition ||
+                current.shuffleMode != previous.shuffleMode
+            ) {
+                onQueueChanged()
+            }
+        }
+    }
+
+    /**
+     * Runs a queue operation, re-preparing the next item once for every queue change it makes, when it
+     * finishes, rather than once per change. A load it starts passes its own next item, so changes made
+     * before that load need no preparation of their own. Queue changes are collected inline on the main
+     * thread, so they arrive while [block] runs. Operations may nest, and suspend; a change made elsewhere
+     * while one is suspended is deferred with it.
+     */
+    private inline fun queueOperation(block: () -> Unit) {
+        queueOperationDepth++
+        try {
+            block()
+        } finally {
+            queueOperationDepth--
+            if (queueOperationDepth == 0 && nextRequestDeferred) {
+                nextRequestDeferred = false
+                loadCoordinator.requestNext()
             }
         }
     }
@@ -201,8 +232,10 @@ class PlaybackManager(
                 if (queueManager.getCurrentPosition() != queueManager.getSize() - 1 && attempt < 15) {
                     queueManager.getNext()?.let { nextQueueItem ->
                         if (nextQueueItem != queueManager.getCurrentItem()) {
-                            queueManager.skipToNext(true)
-                            attemptLoad(nextQueueItem.song, queueManager.getNext()?.song, 0, attempt + 1, completion)
+                            queueOperation {
+                                queueManager.skipToNext(true)
+                                attemptLoad(nextQueueItem.song, queueManager.getNext()?.song, 0, attempt + 1, completion)
+                            }
                         } else {
                             completion(Result.failure(error))
                         }
@@ -229,13 +262,14 @@ class PlaybackManager(
         seekPosition: Int,
         completion: (Result<Any?>) -> Unit
     ) {
+        nextRequestDeferred = false
         loadCoordinator.load(playback, current, next, seekPosition, completion)
     }
 
     override suspend fun shuffle(
         songs: List<Song>,
         completion: (Result<Any?>) -> Unit
-    ) {
+    ) = queueOperation {
         queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
         if (queueManager.setQueue(songs, songs.shuffled(), 0)) {
             load(0, completion)
@@ -290,7 +324,7 @@ class PlaybackManager(
     override fun skipToNext(
         ignoreRepeat: Boolean,
         completion: ((Result<Any?>) -> Unit)?
-    ) {
+    ) = queueOperation {
         if (queueManager.skipToNext(ignoreRepeat)) {
             queueManager.getCurrentItem()?.let { currentQueueItem ->
                 loadPlayback(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
@@ -305,7 +339,7 @@ class PlaybackManager(
     override fun skipToPrev(
         force: Boolean,
         completion: ((Result<Any?>) -> Unit)?
-    ) {
+    ) = queueOperation {
         // While a load is pending the playback still reports the track being replaced.
         val position = loadCoordinator.pendingLoad?.positionMs ?: playback.getProgress() ?: 0
         if (force || position < 2000) {
@@ -322,7 +356,7 @@ class PlaybackManager(
         }
     }
 
-    override fun skipTo(position: Int) {
+    override fun skipTo(position: Int) = queueOperation {
         if (queueManager.getCurrentPosition() != position) {
             queueManager.skipTo(position)
             queueManager.getCurrentItem()?.let { currentQueueItem ->
@@ -365,7 +399,7 @@ class PlaybackManager(
         updateProgress()
     }
 
-    override suspend fun addToQueue(songs: List<Song>) {
+    override suspend fun addToQueue(songs: List<Song>) = queueOperation {
         if (queueManager.getQueue().isEmpty()) {
             if (queueManager.setQueue(songs)) {
                 load { result ->
@@ -375,23 +409,20 @@ class PlaybackManager(
             }
         } else {
             queueManager.addToQueue(songs)
-            loadCoordinator.requestNext()
         }
     }
 
     override fun moveQueueItem(
         from: Int,
         to: Int
-    ) {
+    ) = queueOperation {
         queueManager.move(from, to)
-        loadCoordinator.requestNext()
     }
 
-    override fun removeQueueItem(queueItem: QueueItem) {
+    override fun removeQueueItem(queueItem: QueueItem) = queueOperation {
         if (queueManager.getCurrentItem() != queueItem) {
             queueManager.remove(listOf(queueItem))
-            loadCoordinator.requestNext()
-            return
+            return@queueOperation
         }
         val wasPlaying = playbackState().let { it == PlaybackState.Playing || it == PlaybackState.Loading }
         queueManager.skipToNext(true)
@@ -401,7 +432,7 @@ class PlaybackManager(
             // The last item was removed: nothing to load, and nothing a pending load should play.
             loadCoordinator.cancel()
             pause()
-            return
+            return@queueOperation
         }
         // The player follows the queue onto the new current item, carrying on if it was playing.
         loadPlayback(newCurrentItem.song, queueManager.getNext()?.song, 0) { result ->
@@ -410,7 +441,7 @@ class PlaybackManager(
         }
     }
 
-    override fun clearQueue() {
+    override fun clearQueue() = queueOperation {
         if (playback.playBackState() == PlaybackState.Playing) {
             queueManager.getCurrentItem()?.let { currentItem ->
                 queueManager.remove(queueManager.getQueue() - currentItem)
@@ -420,10 +451,9 @@ class PlaybackManager(
             loadCoordinator.cancel()
             queueManager.clear()
         }
-        loadCoordinator.requestNext()
     }
 
-    override suspend fun playNext(songs: List<Song>) {
+    override suspend fun playNext(songs: List<Song>) = queueOperation {
         if (queueManager.getQueue().isEmpty()) {
             if (queueManager.setQueue(songs)) {
                 load { result ->
@@ -433,7 +463,6 @@ class PlaybackManager(
             }
         } else {
             queueManager.addToNext(songs)
-            loadCoordinator.requestNext()
         }
     }
 
@@ -583,7 +612,6 @@ class PlaybackManager(
 
         if (trackWentToNext) {
             queueManager.skipToNext()
-            loadCoordinator.requestNext()
             // The playback is already on the new track, so its own position is the one to anchor.
             reanchor()
             updateProgress()
@@ -612,8 +640,13 @@ class PlaybackManager(
         }
     }
 
-    private fun onShuffleChanged() {
-        loadCoordinator.requestNext()
+    /** Re-prepares the next item, once the running [queueOperation] finishes if there is one. */
+    private fun onQueueChanged() {
+        if (queueOperationDepth > 0) {
+            nextRequestDeferred = true
+        } else {
+            loadCoordinator.requestNext()
+        }
     }
 
     // PlaybackOperations Implementation
