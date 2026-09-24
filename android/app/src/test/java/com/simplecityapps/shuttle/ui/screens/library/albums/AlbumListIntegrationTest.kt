@@ -24,6 +24,7 @@ import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlin.random.Random
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -154,7 +155,7 @@ class AlbumListIntegrationTest {
         val albums = (1..8).map { createAlbum(name = "Album $it", albumArtist = "Artist $it") }
         fakeAlbumRepository.setAlbums(albums)
         fakeImportState.setState(importComplete())
-        val viewModel = createViewModel()
+        val viewModel = createViewModel(random = Random(42))
         robot.setContentWithViewModel(viewModel)
 
         viewModel.setSortOrder(AlbumSortOrder.Random)
@@ -171,7 +172,9 @@ class AlbumListIntegrationTest {
         val albums = (1..8).map { createAlbum(name = "Album $it", albumArtist = "Artist $it") }
         fakeAlbumRepository.setAlbums(albums)
         fakeImportState.setState(importComplete())
-        val viewModel = createViewModel()
+        // A fixed-seed Random rather than the production Random.Default: with 8 albums, two
+        // real random draws collide on the resulting order about 1 in 40000 runs (#306).
+        val viewModel = createViewModel(random = Random(42))
         robot.setContentWithViewModel(viewModel)
 
         viewModel.setSortOrder(AlbumSortOrder.Random)
@@ -199,7 +202,7 @@ class AlbumListIntegrationTest {
 
     // endregion
 
-    private fun createViewModel(): AlbumListViewModel = AlbumListViewModel(
+    private fun createViewModel(random: Random = Random.Default): AlbumListViewModel = AlbumListViewModel(
         albumRepository = fakeAlbumRepository,
         songRepository = fakeSongRepository,
         playbackManager = FakePlaybackManager(),
@@ -217,5 +220,6 @@ class AlbumListIntegrationTest {
         sortPreferenceManager = fakeSortPreferences,
         viewModePreferenceManager = fakeViewModePreferences,
         mediaImportObserver = fakeImportState,
+        random = random,
     )
 }

@@ -50,6 +50,7 @@ class AlbumListViewModel @Inject constructor(
     private val sortPreferenceManager: SortPreferences,
     private val viewModePreferenceManager: AlbumListPreferences,
     mediaImportObserver: SongImportStateProvider,
+    private val random: Random,
 ) : ViewModel() {
 
     private val selectionState = SelectionState<Album>()
@@ -60,7 +61,7 @@ class AlbumListViewModel @Inject constructor(
     // Not persisted: a fresh app process starts with a new shuffle even if Random remains the
     // selected sort order. Only reassigned when the user (re)selects Random, so library
     // re-emissions (scans, play counts) while on this screen don't reshuffle the list.
-    private val _randomSeed = MutableStateFlow(Random.nextLong())
+    private val _randomSeed = MutableStateFlow(random.nextLong())
 
     val uiState: StateFlow<AlbumListUiState> = combine(
         albumRepository.getAlbums(AlbumQuery.All()),
@@ -190,7 +191,7 @@ class AlbumListViewModel @Inject constructor(
     fun setSortOrder(sortOrder: AlbumSortOrder) {
         sortPreferenceManager.sortOrderAlbumList = sortOrder
         if (sortOrder == AlbumSortOrder.Random) {
-            _randomSeed.value = Random.nextLong()
+            _randomSeed.value = random.nextLong()
         }
         _sortOrder.value = sortOrder
     }

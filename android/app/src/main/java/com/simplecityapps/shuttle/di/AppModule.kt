@@ -69,6 +69,9 @@ class AppModule {
     fun provideRandomSeed(): Long = Random().nextLong()
 
     @Provides
+    fun provideRandom(): kotlin.random.Random = kotlin.random.Random.Default
+
+    @Provides
     fun provideAddToPlaylist(
         playlistRepository: PlaylistRepository,
         songRepository: SongRepository,
