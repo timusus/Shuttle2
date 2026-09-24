@@ -169,6 +169,12 @@ own, the stream being resolved before the song is sent; a window of songs goes o
 resolved, starting from the current song at its position, and the rest follows in order. (#345) — JVM
 (`chromecast/CastQueueTest`); the real transcode is device-only: *Cast*.
 
+**RS-39: casting to the end of the queue ends it as playing locally does.** Given the receiver playing the last song
+with repeat off, when it plays that song to its end (a Cast receiver goes idle rather than reporting an end), then the
+song is reported as ended and playback pauses there, as it does locally; a receiver stopped from elsewhere, idle on
+any song but the last, or idle while a new queue is on its way, ends nothing. (#345) — JVM (`spec/CastSpecTest`);
+the receiver's idle reason is device-only: *Cast*.
+
 ## Commits with no rule
 
 Mechanism only, with no behaviour of their own to hold (the design doc's section 4 list, plus thread-safety and

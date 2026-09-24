@@ -34,8 +34,13 @@ class CastQueue(
     /** The player that holds the whole queue, and plays it when not casting. */
     private val localPlayer: Player,
     private val converter: CastMediaItemConverter,
-    private val streams: CastStreams
+    private val streams: CastStreams,
+    /** Whether the receiver went idle because its item played to the end (not stopped, interrupted or failing). */
+    private val receiverPlayedOut: () -> Boolean
 ) : CastPlayer.TransferCallback {
+    /** Called with the last song of the queue when the receiver has played it to its end, with nothing to repeat. */
+    var onPlayedOut: ((Song) -> Unit)? = null
+
     private var castPlayer: Player? = null
 
     private val handler = Handler(localPlayer.applicationLooper)
@@ -62,6 +67,9 @@ class CastQueue(
     /** The ids of the songs [resolving] resolves. */
     private var resolvingIds: Set<Long> = emptySet()
 
+    /** The uid of the entry the receiver was last playing or buffering, to tell what it went idle on. */
+    private var playingUid: Long? = null
+
     /** Follows the queue while [player], built around this and [localPlayer], is casting. */
     fun attach(player: Player) {
         castPlayer = player
@@ -87,6 +95,23 @@ class CastQueue(
 
                 override fun onPlayerError(error: PlaybackException) {
                     if (player.isRemote) pending = false
+                }
+
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    if (player.isRemote && playbackState == Player.STATE_IDLE && playedOut()) {
+                        playingUid = null
+                        localPlayer.currentMediaItem?.queueEntryOrNull?.song?.let { song -> onPlayedOut?.invoke(song) }
+                    }
+                }
+
+                // After the state change above, so an item that goes idle is still the one last playing.
+                override fun onEvents(
+                    player: Player,
+                    events: Player.Events
+                ) {
+                    if (player.isRemote && player.playbackState in PLAYING_STATES) {
+                        playingUid = player.currentUid()
+                    }
                 }
             }
         )
@@ -198,6 +223,19 @@ class CastQueue(
         }
     }
 
+    /**
+     * Whether the receiver went idle having played the queue out: it played S2's current item, the last with nothing
+     * to repeat, to its end, rather than being stopped, failing or loading, and nothing sent to it is on its way.
+     */
+    private fun playedOut(): Boolean {
+        if (pending || transfer != null || resolving?.isActive == true) return false
+        val uid = playingUid ?: return false
+        return uid == localPlayer.currentMediaItem?.queueEntryOrNull?.uid &&
+            localPlayer.repeatMode == Player.REPEAT_MODE_OFF &&
+            !localPlayer.hasNextMediaItem() &&
+            receiverPlayedOut()
+    }
+
     /** Forgets what the receiver was sent, and stops resolving for it. */
     private fun reset() {
         sent = emptyList()
@@ -207,6 +245,7 @@ class CastQueue(
         resolving?.cancel()
         resolving = null
         resolvingIds = emptySet()
+        playingUid = null
     }
 
     /** Syncs once the current batch of player events has been handled, however many there are. */
@@ -341,6 +380,9 @@ class CastQueue(
     companion object {
         /** How many streams are resolved before the receiver is sent more. */
         private const val RESOLVE_BATCH = 10
+
+        /** The states a receiver is in while it plays an item, or is about to. */
+        private val PLAYING_STATES = setOf(Player.STATE_BUFFERING, Player.STATE_READY)
 
         /** The uids of this player's entries, in the order it plays them. */
         fun Player.playOrder(): List<Long> {

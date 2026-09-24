@@ -47,7 +47,7 @@ class CastQueueTest {
 
     private val converter = CastMediaItemConverter({ "10.0.0.2" }, streams, "Unknown")
 
-    private val castQueue = CastQueue(local, converter, streams)
+    private val castQueue = CastQueue(local, converter, streams) { false }
 
     @After
     fun tearDown() {

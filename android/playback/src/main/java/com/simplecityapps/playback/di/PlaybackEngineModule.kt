@@ -16,6 +16,7 @@ import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
 import com.simplecityapps.playback.chromecast.CastMediaItemConverter
 import com.simplecityapps.playback.chromecast.CastQueue
+import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.chromecast.CastStreams
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
@@ -104,10 +105,11 @@ class PlaybackEngineModule {
     @Singleton
     @Provides
     fun provideCastQueue(
+        @ApplicationContext context: Context,
         exoPlayer: ExoPlayer,
         converter: CastMediaItemConverter,
         streams: CastStreams
-    ): CastQueue = CastQueue(exoPlayer, converter, streams)
+    ): CastQueue = CastQueue(exoPlayer, converter, streams) { CastSessionManager.receiverPlayedOut(context) }
 
     // The player the app plays through: the ExoPlayer, or a Cast receiver while a Cast session is up. Built on the main
     // thread, as Cast requires.
@@ -147,8 +149,9 @@ class PlaybackEngineModule {
         playbackPreferenceManager: PlaybackPreferenceManager,
         audioEffectSessionManager: AudioEffectSessionManager,
         @AppCoroutineScope coroutineScope: CoroutineScope,
-        audioManager: AudioManager?
-    ): PlaybackManager = PlaybackManager(queueManager, player, localPlayer, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, audioManager)
+        audioManager: AudioManager?,
+        castQueue: CastQueue
+    ): PlaybackManager = PlaybackManager(queueManager, player, localPlayer, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, audioManager, castQueue)
 
     @Provides
     fun providePlaybackOperations(playbackManager: PlaybackManager): PlaybackOperations = playbackManager

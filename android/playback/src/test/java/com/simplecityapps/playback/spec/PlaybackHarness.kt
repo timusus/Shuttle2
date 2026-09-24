@@ -15,6 +15,7 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
+import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.engine.SongUriResolver
@@ -73,7 +74,9 @@ class PlaybackHarness(
     /** Whether the player prepares only the items around the current one, as production's does. Off only to measure the cost of preparing every item. */
     lazyPreparation: Boolean = true,
     /** The player the app plays through, around the local player: the local player itself, as when not casting. */
-    activePlayer: (ExoPlayer) -> Player = { it }
+    activePlayer: (ExoPlayer) -> Player = { it },
+    /** What keeps a Cast receiver in line, around the local player: none, as when there's no Cast. Built before [activePlayer]. */
+    castQueue: (ExoPlayer) -> CastQueue? = { null }
 ) {
     val context: Context = RuntimeEnvironment.getApplication()
 
@@ -166,6 +169,7 @@ class PlaybackHarness(
                 }
             }
         )
+        val cast = castQueue(player)
         val active = activePlayer(player)
         val queueManager = QueueManager(player, GeneralPreferenceManager(FakeSharedPreferences()), songUriResolver, buildContext, active)
         queueOperations = queueManager
@@ -178,7 +182,8 @@ class PlaybackHarness(
                 playbackPreferenceManager = playbackPreferenceManager,
                 audioEffectSessionManager = audioEffectSessionManager,
                 appCoroutineScope = scope,
-                audioManager = audioManager
+                audioManager = audioManager,
+                castQueue = cast
             )
     }
 

@@ -93,7 +93,8 @@ class TestPlaybackEngineModule {
         playbackPreferenceManager,
         audioEffectSessionManager,
         coroutineScope,
-        audioManager
+        audioManager,
+        castQueue = null
     )
 
     @Provides

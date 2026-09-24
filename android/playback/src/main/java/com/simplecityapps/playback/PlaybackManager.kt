@@ -12,6 +12,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
+import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.chromecast.isRemote
 import com.simplecityapps.playback.engine.PlayerThread
 import com.simplecityapps.playback.engine.SongUriResolver.Companion.isDirect
@@ -62,6 +63,8 @@ class PlaybackManager(
     private val audioEffectSessionManager: AudioEffectSessionManager,
     private val appCoroutineScope: CoroutineScope,
     audioManager: AudioManager?,
+    /** Keeps a Cast receiver's queue in line, and says when it has played the queue out; null when there's no Cast. */
+    castQueue: CastQueue?,
     /** The anchor clock, on the `SystemClock.elapsedRealtime` timebase media controllers expect. */
     private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime
 ) : PlaybackOperations,
@@ -139,6 +142,8 @@ class PlaybackManager(
     init {
         audioFocusHelper.listener = this
         audioFocusHelper.enabled = !isRemote
+        // A Cast receiver never reports an end of its own, so the Cast queue says when it played the queue out.
+        castQueue?.onPlayedOut = { song -> onPlayedOut(song) }
 
         val audioSessionId = audioManager?.generateAudioSessionId() ?: C.AUDIO_SESSION_ID_UNSET
         if (audioSessionId > 0) {
@@ -274,20 +279,24 @@ class PlaybackManager(
 
             Player.STATE_IDLE -> readyUid = null
 
-            Player.STATE_ENDED -> {
-                // The last item played to its end, with nothing to repeat, or the current last item was removed.
-                completePendingLoad(Result.failure(IllegalStateException("Nothing to load")))
-                if (!switching) {
-                    if (!playlistChanged) {
-                        currentEntry?.let { entry -> _trackEndedFlow.tryEmit(entry.song) }
-                    }
-                    if (player.playWhenReady) {
-                        pause()
-                    }
-                }
-            }
+            // The last item played to its end, with nothing to repeat, or the current last item was removed.
+            Player.STATE_ENDED -> onPlayedOut(currentEntry?.song?.takeIf { !playlistChanged })
         }
         publishState()
+    }
+
+    /**
+     * Nothing is left to play: [song], the last item, played to its end (null when the current last item was
+     * removed instead). Pauses there, unless playback is moving between devices.
+     */
+    private fun onPlayedOut(song: Song?) {
+        completePendingLoad(Result.failure(IllegalStateException("Nothing to load")))
+        if (!switching) {
+            song?.let(_trackEndedFlow::tryEmit)
+            if (player.playWhenReady) {
+                pause()
+            }
+        }
     }
 
     /**

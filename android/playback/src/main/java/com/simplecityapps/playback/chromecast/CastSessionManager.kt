@@ -1,6 +1,7 @@
 package com.simplecityapps.playback.chromecast
 
 import android.content.Context
+import com.google.android.gms.cast.MediaStatus
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
@@ -99,6 +100,19 @@ constructor(
     private fun startHttpServer() {
         if (!httpServer.isAlive) {
             httpServer.start()
+        }
+    }
+
+    companion object {
+        /**
+         * Whether the Cast receiver has gone idle because its item played to the end, rather than being stopped,
+         * interrupted or failing: Media3's Cast player reports all of those as idle.
+         */
+        fun receiverPlayedOut(context: Context): Boolean = try {
+            CastContext.getSharedInstance(context).sessionManager.currentCastSession?.remoteMediaClient?.mediaStatus?.idleReason ==
+                MediaStatus.IDLE_REASON_FINISHED
+        } catch (e: Exception) {
+            false
         }
     }
 }
