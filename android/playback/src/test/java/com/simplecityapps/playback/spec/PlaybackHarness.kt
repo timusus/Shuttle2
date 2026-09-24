@@ -1,6 +1,7 @@
 package com.simplecityapps.playback.spec
 
 import android.content.Context
+import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Looper
@@ -103,8 +104,14 @@ class PlaybackHarness(
 
     private fun MutableList<Write>.hasPlayed(track: AudioTrack) = any { it.track === track && it.whilePlaying }
 
+    /** The format of the last audio written to an AudioTrack, or null before any. */
+    @Volatile
+    var audioOutputFormat: AudioFormat? = null
+        private set
+
     private val audioDataListener =
-        ShadowAudioTrack.OnAudioDataWrittenListener { track, audioData, _ ->
+        ShadowAudioTrack.OnAudioDataWrittenListener { track, audioData, format ->
+            audioOutputFormat = format
             synchronized(writes) {
                 val write = Write(track, audioData.copyOf(), track.playbackHeadPosition, track.playState == AudioTrack.PLAYSTATE_PLAYING)
                 writes.forEach { earlier ->
