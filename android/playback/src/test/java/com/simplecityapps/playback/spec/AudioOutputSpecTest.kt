@@ -1,13 +1,16 @@
 package com.simplecityapps.playback.spec
 
+import com.simplecityapps.playback.capture.Wav
+import com.simplecityapps.playback.capture.maxStep
+import com.simplecityapps.playback.capture.playToEnd
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.BYTES_PER_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_2S_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.shuttle.model.Song
+import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.ints.shouldBeBetween
-import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -21,8 +24,6 @@ import org.robolectric.RobolectricTestRunner
  * The spec's rules about the audio that comes out (docs/testing/playback-behaviour-spec.md), on the real
  * ExoPlayer and audio sink with the production EQ and ReplayGain processors, observed as the PCM written to the
  * AudioTrack. The test files are a sine at half scale, so an untouched peak is about 16384.
- *
- * RS-17 (24-bit PCM) is device-only: Robolectric's AudioTrack has no minimum buffer size for 24-bit PCM.
  */
 @RunWith(RobolectricTestRunner::class)
 class AudioOutputSpecTest {
@@ -69,6 +70,26 @@ class AudioOutputSpecTest {
         samples.peak(boundary, samples.size).shouldBeBetween(QUARTER_SCALE - TOLERANCE, QUARTER_SCALE + TOLERANCE)
     }
 
+    /**
+     * The song is a 24-bit WAV, which reaches the sink as the same 24-bit PCM the FLAC decoder would hand it; the FLAC
+     * decoder itself is a native library, so decoding 24-bit FLAC stays device-only.
+     */
+    @Test
+    fun `RS-17 a 24-bit song with EQ and ReplayGain on plays to its end cleanly`() {
+        val harness = harness(replayGainMode = ReplayGainMode.Track, equalizerEnabled = true)
+        harness.equalizer.preset = Equalizer.Presets.bassBoost
+        // Near full scale, so the boost and the gain both push it into the limits.
+        val song = Wav.tones(100.0 to 0.45, 1_000.0 to 0.45, frames = HIGH_RES_RATE, sampleRate = HIGH_RES_RATE, channelCount = 2, bitsPerSample = 24)
+
+        val output = harness.playToEnd(listOf(song.song(id = 1, replayGainTrack = 6.0)))
+
+        output.sampleRate shouldBe HIGH_RES_RATE
+        output.channelCount shouldBe 2
+        output.frameCount shouldBe song.frameCount
+        // A sample that overflowed and wrapped round steps by nearly twice full scale; this signal steps by about 0.1 at most.
+        (0 until 2).maxOf { channel -> output.channel(channel).maxStep() } shouldBeLessThan 0.25
+    }
+
     @Test
     fun `RS-18 a boosted EQ preset leaves headroom rather than clipping`() {
         val harness = harness(equalizerEnabled = true)
@@ -109,6 +130,9 @@ class AudioOutputSpecTest {
         const val HALF_SCALE = 16_384
         const val QUARTER_SCALE = 8_192
         const val TOLERANCE = 400
+
+        /** 96 kHz, as a 24-bit download often is. */
+        const val HIGH_RES_RATE = 96_000
 
         /** Samples in 10 ms of the 16 kHz test files. */
         const val FIRST_10_MS = 160

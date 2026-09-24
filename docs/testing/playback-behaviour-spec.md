@@ -134,8 +134,8 @@ the gain applies from its first sample, not after the first buffers. (b3490b18) 
 then each plays at its own gain, switching exactly at the song boundary, with no gap. (cb76a79f) — JVM.
 
 **RS-17: 24-bit audio plays cleanly.** Given a 24-bit song with EQ and ReplayGain on, then it plays to its end without
-noise or failure. (4ad26a26) — device-only: *Audio*, 24-bit FLAC with EQ and ReplayGain on. Robolectric's
-AudioTrack has no minimum buffer size for 24-bit PCM, so the player fails before any audio is written.
+noise or failure. (4ad26a26) — JVM, with a 24-bit WAV: every frame comes out, with no wrapped samples. Decoding
+24-bit FLAC (a native decoder) stays device-only: *Audio*, 24-bit FLAC with EQ and ReplayGain on.
 
 **RS-18: a boosted EQ doesn't clip.** Given an EQ preset that boosts every band by 12 dB, then the output keeps
 headroom instead of clipping. (f8e529c2) — JVM. The audio session half (a system EQ app stays attached when the
