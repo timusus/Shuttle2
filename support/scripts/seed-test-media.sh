@@ -96,7 +96,7 @@ generate_track() {
         -metadata title="$title" -metadata artist="$artist" -metadata album_artist="$album_artist" \
         -metadata album="$album" -metadata track="${track}/${tracktotal}" \
         -metadata disc="${disc}/${disctotal}" -metadata date="$date" -metadata genre="$genre" \
-        "${rg_args[@]}" \
+        ${rg_args[@]+"${rg_args[@]}"} \
         "${codec_args[@]}" -y "$out" >/dev/null
 }
 
