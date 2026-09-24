@@ -21,6 +21,9 @@ support/scripts/remote-emu.sh stop              # ALWAYS, even on failure
 ```
 
 - Every command in the foreground. A headless worker that backgrounds a wait ends its run (#303).
+- Never start a local `emulator` or hand-roll `sleep`/`getprop sys.boot_completed` loops: `start`
+  already waits for boot (up to 300 s) and fails loudly. Those loops were the top source of 10-minute
+  Bash timeouts in the Sep 2026 token sweep.
 - If a command fails with "device offline"/"device not found" mid-run, the tunnel dropped:
   `s2-debug.sh` and `checks/*.sh` already reconnect and retry once on their own; for a raw `adb`
   call run `support/scripts/remote-emu.sh reconnect` yourself first (no reboot, lease kept).
