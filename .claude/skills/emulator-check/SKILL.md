@@ -13,8 +13,33 @@ minutes for the same ground.
 
 ## Run it
 
+One call, in the foreground, with a generous timeout:
+
 ```bash
-./gradlew :android:app:assembleDebug            # once, FOREGROUND; skip if an APK for HEAD exists
+support/scripts/emu-verify.sh                   # builds/reuses the APK, runs the full check suite
+support/scripts/emu-verify.sh --check open-queue-by-taps --flow support/maestro/nav/open-settings.yaml
+support/scripts/emu-verify.sh --apk /tmp/s2-apk/<sha>.apk --no-seed --check rapid-skip
+```
+
+It starts a lane, installs, seeds the `playback` fixture, runs the named `--check`/`--flow` args
+(repeatable; `checks/run-all.sh` if neither is given), and always stops the lane on exit (trap),
+even on failure or Ctrl-C, unless `--keep`. Full command output goes to the log file it prints, not
+stdout; stdout stays to one line per setup step plus one PASS/FAIL line per check/flow. `--help`
+for the rest of the flags (`--apk`, `--no-seed`, `--keep`).
+
+- Run the whole script in the foreground. A headless worker that backgrounds it ends its run (#303).
+- Never start a local `emulator` or hand-roll `sleep`/`getprop sys.boot_completed` loops: `start`
+  (which `emu-verify.sh` calls) already waits for boot (up to 300 s) and fails loudly. Those loops
+  were the top source of 10-minute Bash timeouts in the Sep 2026 token sweep.
+- Another job building in the same worktree? Pass `--apk <path>` to skip Gradle there.
+- Lane 1 often belongs to another project; `emu-verify.sh` (via `remote-emu.sh start`) picks a free one.
+
+### Manual fallback
+
+For a one-off command outside `emu-verify.sh` (a raw `adb` call, a different fixture, leaving the
+lane up to poke at by hand):
+
+```bash
 support/scripts/remote-emu.sh start && eval "$(support/scripts/remote-emu.sh env)"
 support/scripts/remote-emu.sh reset && support/scripts/remote-emu.sh install   # [N] <apk> for a prebuilt one
 support/scripts/seed-test-media.sh playback --skip-onboarding
@@ -22,16 +47,9 @@ support/scripts/checks/run-all.sh               # PASS/FAIL per check, non-zero 
 support/scripts/remote-emu.sh stop              # ALWAYS, even on failure
 ```
 
-- Every command in the foreground. A headless worker that backgrounds a wait ends its run (#303).
-- Never start a local `emulator` or hand-roll `sleep`/`getprop sys.boot_completed` loops: `start`
-  already waits for boot (up to 300 s) and fails loudly. Those loops were the top source of 10-minute
-  Bash timeouts in the Sep 2026 token sweep.
-- If a command fails with "device offline"/"device not found" mid-run, the tunnel dropped:
-  `s2-debug.sh` and `checks/*.sh` already reconnect and retry once on their own; for a raw `adb`
-  call run `support/scripts/remote-emu.sh reconnect` yourself first (no reboot, lease kept).
-- Another job building in the same worktree? Copy the APK to /tmp and `install <apk>`; never run a
-  second Gradle there.
-- Lane 1 often belongs to another project; `start` picks a free lane.
+If a command fails with "device offline"/"device not found" mid-run, the tunnel dropped:
+`s2-debug.sh` and `checks/*.sh` already reconnect and retry once on their own; for a raw `adb` call
+run `support/scripts/remote-emu.sh reconnect` yourself first (no reboot, lease kept).
 
 ## Pieces
 
@@ -51,9 +69,11 @@ It only talks to the Mac's adb server on 5037, so pass `--device "$(support/scri
 1. A new `support/scripts/checks/<name>.sh`, sourcing `_lib.sh`: set up state with `s2`, wait with
    `wait_for <secs> "<python expr on s>"`, then assert with `state <field>`, and finish with `pass` or `fail "<why>"`.
    `run-all.sh` picks it up automatically.
-2. Only if taps are the subject: add `support/maestro/<name>.yaml`, starting with `launchApp: stopApp: true`
-   and selecting by visible text. Call it from the wrapper (see `open-queue-by-taps.sh`). Each `maestro test`
-   costs 10–20 s to start, so use one flow per check.
+2. Only if taps are the subject: add `support/maestro/<name>.yaml`, reusing `support/maestro/nav/`
+   subflows via `runFlow` for common navigation (see `support/maestro/README.md`) and selecting by
+   visible text otherwise. Call it from the wrapper (see `open-queue-by-taps.sh`), or run it
+   directly with `emu-verify.sh --flow support/maestro/<name>.yaml`. Each `maestro test` costs
+   10–20 s to start, so use one flow per check.
 3. Pause playback (`s2-debug.sh PAUSE`) before any uiautomator or Maestro step. While music plays the UI
    never goes idle and dumps fail.
 4. Prefer adding a check that proves the fix over one-off manual steps, so the next change is covered too.

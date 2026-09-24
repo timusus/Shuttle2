@@ -3,7 +3,8 @@
 Scripted end-to-end checks against the debug build on a device or a WSL lane
 (`support/scripts/remote-emu.sh`). Playback state is set up and asserted through the debug
 receivers (`support/scripts/s2-debug.sh`, the `debug-receivers` skill); Maestro drives only what
-has to be tapped.
+has to be tapped. `support/scripts/emu-verify.sh` runs a lane end to end (start, install, seed,
+checks/flows, stop) in one call -- see its `--help` or `.claude/skills/emulator-check/SKILL.md`.
 
 | Check | Driver | What it proves | Time on a lane |
 |---|---|---|---|
@@ -52,6 +53,50 @@ maestro --device "$(support/scripts/remote-emu.sh serial)" test --test-output-di
 - Pause before a UI flow. While music plays the progress bar keeps the UI from ever going idle,
   and uiautomator-based tools (`remote-emu.sh tap-text`, `~/.claude/scripts/adb`) fail on it.
 - Start from `launchApp: stopApp: true` so an earlier run's screen doesn't leak in; the cold launch
-  restores the queue the wrapper left.
-- Select by visible text, as the user sees it. `takeScreenshot` paths must stay inside the
-  output directory.
+  restores the queue the wrapper left. `nav/launch-fresh.yaml` does exactly this -- reuse it via
+  `runFlow` rather than repeating the `launchApp` step.
+- Select by visible text, as the user sees it, except where a nav item has no label (the Settings
+  overflow icon) -- there, select by `id:` instead (a regex against the Android resource id).
+  `takeScreenshot` paths must stay inside the output directory.
+- Reuse a `nav/` subflow with `runFlow` instead of re-typing common navigation. Each one starts
+  with `runFlow: launch-fresh.yaml`, so it's safe to run standalone (`--flow`) or nested inside
+  another flow (`runFlow`) regardless of what screen the app was left on -- at the cost of a cold
+  relaunch each time it's entered, which is cheap next to Maestro's own ~10-20 s driver start-up.
+
+## `nav/` subflows
+
+Reusable navigation, each runnable standalone (`maestro test support/maestro/nav/<name>.yaml`) or
+via `runFlow: nav/<name>.yaml` from another flow (a relative `runFlow` path resolves against the
+*calling* flow's own directory, so a flow inside `nav/` refers to its siblings by bare filename,
+e.g. `runFlow: open-now-playing.yaml`).
+
+| Flow | What it does | Params |
+|---|---|---|
+| `nav/launch-fresh.yaml` | Cold launch (`stopApp: true`). The building block every other nav flow starts with. | none |
+| `nav/open-now-playing.yaml` | Launch fresh, then open the full-screen player from the mini player (selects by id, since the title is the current track). | none |
+| `nav/open-queue.yaml` | Open the full player, then tap "Up Next" to open the queue sheet. | none |
+| `nav/open-library-tab.yaml` | Tap the Library bottom-nav item, then a sub-tab by name. | `TAB`: `Genres`\|`Playlists`\|`Artists`\|`Albums`\|`Songs` |
+| `nav/open-settings.yaml` | Tap the bottom-nav overflow sheet (by id, no label), then "Settings". | none |
+| `nav/search.yaml` | Open Search and type a query into the auto-focused search field. | `QUERY`: text to type |
+
+Pass a param with `-e` on the CLI (`maestro test -e TAB=Albums support/maestro/nav/open-library-tab.yaml`)
+or `env:` from a parent flow's `runFlow` step:
+
+```yaml
+- runFlow:
+    file: nav/open-library-tab.yaml
+    env:
+      TAB: Albums
+```
+
+`support/maestro/open-queue-by-taps.yaml` is a worked example: it composes `nav/open-queue.yaml`
+plus one assertion and a screenshot, instead of hand-rolling the mini-player and "Up Next" taps.
+
+## Adding a new check that uses them
+
+1. Write the flow (or reuse a `nav/` one via `runFlow`) under `support/maestro/`.
+2. Write a `support/scripts/checks/<name>.sh` wrapper (see `open-queue-by-taps.sh`): set up
+   playback state with the receivers, pause, then run `maestro test --device "$(remote-emu.sh
+   serial)"` against the flow, `fail` on a non-zero exit.
+3. `run-all.sh` picks it up automatically; run it directly with `support/scripts/emu-verify.sh
+   --check <name>`, or run just the flow with `--flow support/maestro/<path>.yaml`.

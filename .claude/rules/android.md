@@ -61,6 +61,11 @@ emulator or losing the lease; it's a fast no-op if the tunnel is already healthy
 and `checks/_lib.sh` call it automatically through their shared `adb_retry` wrapper (one
 reconnect, one retry, then a clear failure) — you only need it by hand for a raw `adb` call.
 
+**One-shot verification:** `support/scripts/emu-verify.sh` runs start/install/reset/seed, the named
+checks or Maestro flows (or the full suite), and stop as a single foreground call -- see the
+`emulator-check` skill. The steps below are what it automates; use them directly only for a
+one-off command it doesn't cover (a different fixture, a raw `adb` call, leaving the lane up).
+
 **Standard start state for validation:** a lane that's been reused inherits stale app data and
 media from a previous run. Before validating a UI or playback change, reset the lane and reseed
 known media instead of hand-rolling ffmpeg + adb push + a manual onboarding pass:

@@ -1,0 +1,9 @@
+# Switch to a Library sub-tab (Genres, Playlists, Artists, Albums or Songs) by its visible text.
+# Taps the Library bottom-nav item first, since a sub-tab is only visible there.
+#
+# Pass the tab with `-e TAB=Albums` (maestro test) or `env: {TAB: Albums}` (runFlow).
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: launch-fresh.yaml
+- tapOn: "Library"
+- tapOn: "${TAB}"

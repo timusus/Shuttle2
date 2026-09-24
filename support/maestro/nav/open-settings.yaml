@@ -1,0 +1,8 @@
+# Open Settings from the bottom-nav overflow sheet. That nav item has no visible label (an icon
+# only), so it's selected by id instead of text.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: launch-fresh.yaml
+- tapOn:
+    id: ".*bottomSheetFragment"
+- tapOn: "Settings"

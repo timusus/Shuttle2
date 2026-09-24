@@ -1,0 +1,9 @@
+# Open Search and type a query. The search field auto-focuses on open.
+#
+# Pass the query with `-e QUERY=foo` (maestro test) or `env: {QUERY: foo}` (runFlow).
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: launch-fresh.yaml
+- tapOn: "Search"
+- tapOn: "Search Music"
+- inputText: "${QUERY}"

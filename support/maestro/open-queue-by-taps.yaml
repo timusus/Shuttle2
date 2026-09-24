@@ -1,13 +1,9 @@
-# Open the queue from the mini player by taps alone: mini player -> full player -> "Up Next".
-# Setup (support/scripts/checks/open-queue-by-taps.sh): the `playback` fixture queued with
-# PLAY_ALL and paused. The cold launch restores that queue, so the app opens on the library with
-# the mini player showing "Playback One", whatever screen an earlier run left it on.
+# Open the queue from the mini player by taps alone, via the reusable support/maestro/nav/
+# subflows. Setup (support/scripts/checks/open-queue-by-taps.sh): the `playback` fixture queued
+# with PLAY_ALL and paused, so nav/launch-fresh.yaml's cold launch restores that queue and the
+# mini player shows "Playback One".
 appId: com.simplecityapps.shuttle.dev
 ---
-- launchApp:
-    stopApp: true
-- assertVisible: "Playback One"
-- tapOn: "Playback One"
-- tapOn: "Up Next"
+- runFlow: nav/open-queue.yaml
 - assertVisible: "Playback Five"
 - takeScreenshot: open-queue-by-taps

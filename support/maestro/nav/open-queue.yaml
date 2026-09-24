@@ -1,0 +1,5 @@
+# Open the queue sheet ("Up Next") from the full player.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: open-now-playing.yaml
+- tapOn: "Up Next"

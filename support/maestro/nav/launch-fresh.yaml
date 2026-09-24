@@ -1,0 +1,7 @@
+# Cold launch: stop any running instance and start fresh, so a subflow that runs standalone (or
+# after an earlier check left the UI on some other screen) starts from a known state -- the
+# library screen, mini player showing whatever queue was last persisted.
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    stopApp: true
