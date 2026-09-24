@@ -26,8 +26,8 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] The notification can be dismissed while paused, with no crash.
 - [x] Resume playback from a headset/Bluetooth media button after the service has stopped. — automated: `emu-verify.sh --check media-buttons`
 - [ ] Resume playback from the notification after the service has stopped.
-- [x] Unplug headphones while playing. Playback pauses. — automated: `emu-verify.sh --check becoming-noisy`
-- [ ] Disconnect Bluetooth while playing. Playback pauses.
+- [ ] RS-53: unplug wired headphones while playing. Playback pauses. (The emulator check went with S2's own noisy receiver in #345 step 3; ExoPlayer handles it now.)
+- [ ] RS-53: disconnect Bluetooth while playing. Playback pauses.
 
 ### Next-track preparation and slow loads (#300)
 - [x] Gapless auto-advance still works after reordering the queue, turning shuffle on, and removing the next track. — automated: `emu-verify.sh --check gapless-after-edits`
@@ -129,6 +129,18 @@ notification is Media3's own, with shuffle and repeat as its extra buttons.
 - [ ] A third-party controller app (e.g. "Media Controller Test" or any media remote app) connected to S2: it can play, pause and skip, but clearing, adding to or reordering the queue from it does nothing, and it can't browse S2's library (RS-47).
 - [ ] An app on the old session library (the same controller test app in its MediaControllerCompat mode) plays a song by its media id and plays a search, and an empty search plays every song (RS-46; Robolectric can't route a platform MediaController to the session).
 - [ ] A 10,000-song queue: the notification and lock screen stay responsive when the queue changes (docs/architecture/media3-playback-design.md, "10k queue spike").
+
+## Audio focus (#345 step 3)
+
+ExoPlayer handles audio focus now, in place of S2's own helper. Rules in `docs/testing/playback-behaviour-spec.md`.
+
+- [ ] RS-50: while playing, take a phone call. Playback pauses; end the call and it resumes by itself.
+- [ ] RS-50: while playing, take a phone call and pause S2 from its notification during the call. End the call: S2 stays paused.
+- [ ] RS-50: while S2 is held paused by a call, check the notification and lock screen show a play button, and pressing play during the call does no harm.
+- [ ] RS-51: with navigation (Google Maps) giving spoken directions, S2's volume drops during each prompt and comes back after it, without pausing.
+- [ ] RS-52: while playing, start another music app (e.g. YouTube Music). S2 pauses and stays paused after the other app stops.
+- [ ] RS-54: during a phone call, press play in S2. It starts playing straight away (it used to wait until the call ended). Check how that sounds on the call and whether that's acceptable.
+- [ ] Cast: duck while casting (a navigation prompt), then switch back to the phone. Local playback is at full volume.
 
 ## Behaviour spec, device-only rules
 

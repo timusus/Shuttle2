@@ -5,7 +5,8 @@ What playback must do, as seen by the user, one rule per behaviour. Each rule co
 the Media3 refactor (#345, `docs/architecture/media3-playback-design.md`) must keep every one.
 
 Each JVM rule has one test named with its RS id, in `android/playback/src/test/java/com/simplecityapps/playback/spec/`:
-`PlaybackSpecTest` for queue and transport rules, `AudioOutputSpecTest` for the audio that comes out; a Cast rule
+`PlaybackSpecTest` for queue and transport rules, `AudioOutputSpecTest` for the audio that comes out,
+`AudioFocusSpecTest` for other apps taking audio focus and headphones being unplugged; a Cast rule
 names its test, in `chromecast/` or `spec/CastSpecTest`; a media session rule is in `spec/MediaSessionSpecTest`, driven
 through a Media3 `MediaBrowser` connected to the session. The tests run
 the real `PlaybackManager` and `QueueManager` over a real ExoPlayer whose playlist is the queue, built by the
@@ -150,6 +151,37 @@ transcode is HLS with AAC, which needs the server and a device decoder.
 track, or a setting changed while paused), then a new AudioTrack opens at the new format without skipping, including
 at a track's last millisecond. (9e2c3b84, c8f4df6b, 6b80d191) — device-only: *USB DAC direct output* and *Behaviour
 spec, device-only rules*.
+
+## Audio focus and headphones
+
+ExoPlayer handles audio focus (`setAudioAttributes(music, handleAudioFocus = true)`) and unplugged headphones
+(`setHandleAudioBecomingNoisy(true)`) since #345 step 3; S2's own focus helper and noisy receiver are gone. The
+harness plays the platform's part: `changeAudioFocus` hands the player the focus change another app causes, and
+`unplugHeadphones` sends the becoming-noisy broadcast.
+
+**RS-50: a short interruption pauses, and playback resumes when it ends.** Given a song playing, when another app
+takes focus for a moment (a phone call, a voice assistant), then playback shows paused; when the app gives focus
+back, it plays on from where it was. If the user pauses during the interruption, it stays paused after it ends:
+pausing gives focus up, so the end of the interruption can't reach the player. (#345) — JVM. The same as before
+step 3, now Media3's behaviour.
+
+**RS-51: a navigation prompt ducks playback, without pausing it.** Given a song playing, when another app takes focus
+and allows ducking (a navigation prompt, a notification sound), then playback carries on playing, at a lower volume
+until focus returns. (#345) — JVM for playing on; the volume (Media3 ducks to 20%, as S2 did) is device-only:
+*Audio focus (#345 step 3)*.
+
+**RS-52: another music app taking over pauses playback for good.** Given a song playing, when another app takes focus
+permanently (another music app starts), then playback pauses, gives focus up and doesn't resume by itself. (#345) —
+JVM. New in step 3: S2 now gives focus up at this point, where it used to hold on to it while paused.
+
+**RS-53: unplugging headphones pauses playback.** Given a song playing, when headphones are unplugged (or a Bluetooth
+headset disconnects), then playback pauses and gives up audio focus. (#345) — JVM for the broadcast; a real unplug and
+a Bluetooth disconnect are device-only: *Service and notification*.
+
+**RS-54: pressing play during a phone call.** Given a phone call in progress, when the user presses play, then S2
+starts playing straight away, alongside the call as the system allows. (#345) — device-only: *Audio focus (#345 step
+3)*. Changed on purpose in step 3: S2 used to wait for the call to end and start then. Media3 takes a delayed focus
+grant as focus, and doesn't let an app wait for one.
 
 ## Cast
 
