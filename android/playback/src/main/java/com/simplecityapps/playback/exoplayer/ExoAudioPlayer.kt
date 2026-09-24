@@ -82,7 +82,7 @@ class ExoAudioPlayer(private val player: ExoPlayer) : AudioPlayer {
 
     override val mediaItemCount: Int get() = player.mediaItemCount
 
-    override val currentWindowIndex: Int get() = player.currentMediaItemIndex
+    override val currentMediaItemIndex: Int get() = player.currentMediaItemIndex
 
     override val contentPosition: Long get() = player.contentPosition
 
@@ -184,20 +184,24 @@ class ExoAudioPlayer(private val player: ExoPlayer) : AudioPlayer {
     override fun release() {
         player.release()
     }
+}
 
-    private fun PlayerItem.toMediaItem(): MediaItem = MediaItem.Builder()
-        .setMimeType(mimeType)
-        .setUri(uri)
-        .setTag(replayGain)
-        .build()
+/**
+ * The [MediaItem] ExoPlayer queues for this item. [toPlayerItem] must give back an equal item:
+ * [ExoPlayerPlayback.loadNext] compares the queued next item with the one it wants.
+ */
+internal fun PlayerItem.toMediaItem(): MediaItem = MediaItem.Builder()
+    .setMimeType(mimeType)
+    .setUri(uri)
+    .setTag(replayGain)
+    .build()
 
-    /** Every item in the playlist was built by [toMediaItem], so it always has a local configuration. */
-    private fun MediaItem.toPlayerItem(): PlayerItem {
-        val properties = checkNotNull(localConfiguration) { "MediaItem has no local configuration" }
-        return PlayerItem(
-            uri = properties.uri.toString(),
-            mimeType = properties.mimeType,
-            replayGain = properties.tag as? ReplayGain
-        )
-    }
+/** Every item in the playlist was built by [toMediaItem], so it always has a local configuration. */
+internal fun MediaItem.toPlayerItem(): PlayerItem {
+    val properties = checkNotNull(localConfiguration) { "MediaItem has no local configuration" }
+    return PlayerItem(
+        uri = properties.uri.toString(),
+        mimeType = properties.mimeType,
+        replayGain = properties.tag as? ReplayGain
+    )
 }

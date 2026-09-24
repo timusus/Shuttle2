@@ -10,7 +10,11 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGain
  * constants, passed through unchanged.
  */
 interface AudioPlayer {
-    /** The player events [ExoPlayerPlayback] reacts to. */
+    /**
+     * The player events [ExoPlayerPlayback] reacts to. As in Media3, a command that changes state
+     * (`setMediaItem`, `seekTo`, `prepare`, a `playWhenReady` change) calls the listeners before it
+     * returns, and an event raised by a listener's own command is delivered after the current one.
+     */
     interface Listener {
         fun onPlayWhenReadyChanged(playWhenReady: Boolean)
 
@@ -34,7 +38,7 @@ interface AudioPlayer {
     var audioSessionId: Int
 
     val mediaItemCount: Int
-    val currentWindowIndex: Int
+    val currentMediaItemIndex: Int
     val contentPosition: Long
 
     /** The duration of the current item, or `C.TIME_UNSET`. */

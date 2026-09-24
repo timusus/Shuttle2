@@ -71,7 +71,7 @@ class ExoPlayerPlayback(
                 val transitionReason = reason.toTransitionReason()
                 Timber.v("onMediaItemTransition(reason: ${reason.toTransitionReason()})")
 
-                player?.let { player -> replayGainTracker.setPlayingIndex(player.currentWindowIndex) }
+                player?.let { player -> replayGainTracker.setPlayingIndex(player.currentMediaItemIndex) }
 
                 when (transitionReason) {
                     TransitionReason.Repeat -> callback?.onTrackEnded(true)
@@ -172,7 +172,7 @@ class ExoPlayerPlayback(
             }
 
         val count = player.mediaItemCount
-        val currentIndex = player.currentWindowIndex
+        val currentIndex = player.currentMediaItemIndex
 
         // Shortcut if the track is already next, and last, in the playlist
         val nextIndex = currentIndex + 1

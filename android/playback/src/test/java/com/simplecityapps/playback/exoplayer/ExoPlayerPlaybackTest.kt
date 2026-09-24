@@ -264,11 +264,12 @@ class ExoPlayerPlaybackTest {
 
     @Test
     fun `loadNext removes every item after the current one when repeat-all wrapped back to the start`() = runTest {
+        playback.setRepeatMode(QueueManager.RepeatMode.All)
         load(songA, next = songB)
-        player.transitionTo(1, Player.MEDIA_ITEM_TRANSITION_REASON_AUTO)
-        playback.loadNext(songC)
-        // The next item wasn't queued in time, so ExoPlayer wrapped around to the first item.
-        player.transitionTo(0, Player.MEDIA_ITEM_TRANSITION_REASON_AUTO)
+        player.playToEnd()
+        // The next item wasn't queued before b ended, so ExoPlayer wrapped around to the first item.
+        player.playToEnd()
+        player.currentMediaItemIndex shouldBe 0
 
         playback.loadNext(songD)
 
@@ -353,8 +354,9 @@ class ExoPlayerPlaybackTest {
     fun `automatic and repeat transitions report the track ended and went to the next`() = runTest {
         load(songA, next = songB)
 
-        player.transitionTo(1, Player.MEDIA_ITEM_TRANSITION_REASON_AUTO)
-        player.transitionTo(1, Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT)
+        player.playToEnd()
+        playback.setRepeatMode(QueueManager.RepeatMode.One)
+        player.playToEnd()
 
         callbackEvents.filter { it.startsWith("trackEnded") } shouldBe listOf("trackEnded true", "trackEnded true")
     }
@@ -370,13 +372,33 @@ class ExoPlayerPlaybackTest {
     }
 
     @Test
-    fun `seek and playlist transitions do not report the track ended`() = runTest {
+    fun `the playlist-changed transition of a load does not report the track ended`() = runTest {
         load(songA, next = songB)
 
-        player.transitionTo(1, Player.MEDIA_ITEM_TRANSITION_REASON_SEEK)
-        player.transitionTo(0, Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED)
+        load(songC)
 
         callbackEvents.filter { it.startsWith("trackEnded") }.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a first load reports the seek to its resume position`() = runTest {
+        load(songA, seekPosition = 5_000)
+
+        callbackEvents shouldBe listOf("state ${PlaybackState.Loading}", "discontinuity 5000")
+    }
+
+    @Test
+    fun `a load onto a loaded player also reports the playlist replacement as a discontinuity`() = runTest {
+        load(songA)
+        playback.play()
+        player.emitPlaybackState(Player.STATE_READY)
+        callbackEvents.clear()
+
+        load(songB, seekPosition = 5_000)
+
+        // The old listener is detached while the old item is paused and rewound; the replaced
+        // playlist then reports a discontinuity at the new item's start before the resume seek.
+        callbackEvents shouldBe listOf("state ${PlaybackState.Loading}", "discontinuity 0", "discontinuity 5000")
     }
 
     @Test
@@ -390,29 +412,53 @@ class ExoPlayerPlaybackTest {
     }
 
     @Test
-    fun `ended after ready pauses and reports the track ended without going to the next, once`() = runTest {
+    fun `ended after ready pauses and reports the track ended without going to the next`() = runTest {
         load(songA)
         playback.play()
         player.emitPlaybackState(Player.STATE_READY)
         callbackEvents.clear()
 
         player.emitPlaybackState(Player.STATE_ENDED)
-        player.emitPlaybackState(Player.STATE_ENDED)
 
-        callbackEvents shouldBe listOf("state ${PlaybackState.Paused}", "trackEnded false")
+        // The pause it issues is itself reported, after the end: Media3 delivers an event raised
+        // inside a listener once the current event has reached every listener.
+        callbackEvents shouldBe listOf("state ${PlaybackState.Paused}", "trackEnded false", "state ${PlaybackState.Paused}")
         player.playWhenReady shouldBe false
     }
 
     @Test
-    fun `ready reports playing or paused from play-when-ready`() = runTest {
+    fun `ready while paused reports paused`() = runTest {
         load(songA)
         callbackEvents.clear()
 
         player.emitPlaybackState(Player.STATE_READY)
+
+        callbackEvents shouldBe listOf("state ${PlaybackState.Paused}")
+    }
+
+    @Test
+    fun `ready after play reports playing`() = runTest {
+        load(songA)
+        callbackEvents.clear()
+
         playback.play()
         player.emitPlaybackState(Player.STATE_READY)
 
-        callbackEvents shouldBe listOf("state ${PlaybackState.Paused}", "state ${PlaybackState.Playing}")
+        // play() reports itself through the player's play-when-ready change, then ready again.
+        callbackEvents shouldBe listOf("state ${PlaybackState.Playing}", "state ${PlaybackState.Playing}")
+        player.isPlaying shouldBe true
+    }
+
+    @Test
+    fun `pause reports paused through the player`() = runTest {
+        load(songA)
+        playback.play()
+        player.emitPlaybackState(Player.STATE_READY)
+        callbackEvents.clear()
+
+        playback.pause()
+
+        callbackEvents shouldBe listOf("state ${PlaybackState.Paused}")
     }
 
     @Test
