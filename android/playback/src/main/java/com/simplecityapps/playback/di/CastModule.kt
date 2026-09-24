@@ -2,6 +2,7 @@ package com.simplecityapps.playback.di
 
 import android.content.Context
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.chromecast.CastService
 import com.simplecityapps.playback.chromecast.CastSessionManager
@@ -21,8 +22,9 @@ class CastModule {
     fun provideCastService(
         @ApplicationContext context: Context,
         songRepository: SongRepository,
-        artworkImageLoader: ArtworkImageLoader
-    ): CastService = CastService(context, songRepository, artworkImageLoader)
+        artworkImageLoader: ArtworkImageLoader,
+        mediaInfoProvider: AggregateMediaInfoProvider
+    ): CastService = CastService(context, songRepository, artworkImageLoader, mediaInfoProvider)
 
     @Singleton
     @Provides

@@ -71,7 +71,9 @@ class PlaybackHarness(
     /** Where queue entries are built. Inline by default, so a queue change completes within the call that makes it. */
     buildContext: CoroutineContext = EmptyCoroutineContext,
     /** Whether the player prepares only the items around the current one, as production's does. Off only to measure the cost of preparing every item. */
-    lazyPreparation: Boolean = true
+    lazyPreparation: Boolean = true,
+    /** The player the app plays through, around the local player: the local player itself, as when not casting. */
+    activePlayer: (ExoPlayer) -> Player = { it }
 ) {
     val context: Context = RuntimeEnvironment.getApplication()
 
@@ -118,6 +120,8 @@ class PlaybackHarness(
 
     val playbackPreferenceManager = PlaybackPreferenceManager(FakeSharedPreferences(), Moshi.Builder().build())
 
+    val audioEffectSessionManager = AudioEffectSessionManager(context)
+
     /** The production focus helper, counting what it's asked to do. */
     val audioFocus = CountingAudioFocusHelper(AudioFocusHelperApi26(context))
 
@@ -162,15 +166,17 @@ class PlaybackHarness(
                 }
             }
         )
-        val queueManager = QueueManager(player, GeneralPreferenceManager(FakeSharedPreferences()), songUriResolver, buildContext)
+        val active = activePlayer(player)
+        val queueManager = QueueManager(player, GeneralPreferenceManager(FakeSharedPreferences()), songUriResolver, buildContext, active)
         queueOperations = queueManager
         playbackOperations =
             PlaybackManager(
                 queueManager = queueManager,
-                player = player,
+                player = active,
+                localPlayer = player,
                 audioFocusHelper = audioFocus,
                 playbackPreferenceManager = playbackPreferenceManager,
-                audioEffectSessionManager = AudioEffectSessionManager(context),
+                audioEffectSessionManager = audioEffectSessionManager,
                 appCoroutineScope = scope,
                 audioManager = audioManager
             )

@@ -37,7 +37,14 @@ fun QueueEntry.toMediaItem(): MediaItem = MediaItem.Builder()
 
 /** The entry [toMediaItem] tagged this item with. Every item in the playlist was built by it. */
 val MediaItem.queueEntry: QueueEntry
-    get() = checkNotNull(localConfiguration?.tag as? QueueEntry) { "MediaItem $mediaId has no queue entry" }
+    get() = checkNotNull(queueEntryOrNull) { "MediaItem $mediaId has no queue entry" }
+
+/**
+ * The entry this item is tagged with, if any. A Cast receiver's playlist can hold items with none: one it hasn't
+ * reported in full yet, or one another sender queued.
+ */
+val MediaItem.queueEntryOrNull: QueueEntry?
+    get() = localConfiguration?.tag as? QueueEntry
 
 /** A path is either an absolute file path or a URI. */
 fun Song.uri(): Uri = if (path.startsWith("/")) Uri.fromFile(java.io.File(path)) else Uri.parse(path)

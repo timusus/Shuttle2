@@ -154,6 +154,7 @@ kotlinx-coroutinesPlayServices = { module = "org.jetbrains.kotlinx:kotlinx-corou
 kotlinx-coroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref ="kotlinx-coroutines-test"}
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary-android" }
+media3-cast = { module = "androidx.media3:media3-cast", version.ref = "media3" }
 media3-database = { module = "androidx.media3:media3-database", version.ref = "media3" }
 media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
 media3-exoplayerHls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3" }

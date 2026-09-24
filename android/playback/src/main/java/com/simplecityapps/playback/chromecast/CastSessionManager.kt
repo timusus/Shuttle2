@@ -8,10 +8,8 @@ import javax.inject.Inject
 import timber.log.Timber
 
 /**
- * Keeps the local [HttpServer] a Cast receiver streams from running while a Cast session is up.
- *
- * Playback stays on the local player during a session for now: handing the queue to a Cast player comes back with
- * the Media3 Cast player (#345).
+ * Whether Cast is available, and keeps the local [HttpServer] a Cast receiver streams from running while a Cast
+ * session is up. Moving playback to and from the receiver is the Cast player's (see [CastQueue]).
  */
 class CastSessionManager
 @Inject

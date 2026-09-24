@@ -3,6 +3,7 @@ package com.simplecityapps.playback
 import android.media.AudioManager
 import android.os.SystemClock
 import androidx.media3.common.C
+import androidx.media3.common.DeviceInfo
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.PlaybackParameters
@@ -11,6 +12,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
+import com.simplecityapps.playback.chromecast.isRemote
 import com.simplecityapps.playback.engine.PlayerThread
 import com.simplecityapps.playback.engine.SongUriResolver.Companion.isDirect
 import com.simplecityapps.playback.engine.isResolutionFailure
@@ -18,7 +20,7 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.queueEntry
+import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.model.Song
 import kotlin.math.max
 import kotlinx.coroutines.CoroutineScope
@@ -43,15 +45,21 @@ import timber.log.Timber
  * queue. Adds what the player doesn't do itself: audio focus, the saved position to resume from, skipping past songs
  * that fail to load, and the events the app records (track ends, pauses, failures).
  *
+ * [player] plays locally, or on a Cast receiver while a Cast session is up: a Cast player around [localPlayer] switches
+ * between the two, handing the queue and position over (see [com.simplecityapps.playback.chromecast.CastQueue]). Only
+ * local playback takes audio focus and opens an audio effect session.
+ *
  * Callable from any thread, on [PlayerThread]'s rule: a call that changes playback runs on the main thread, where the
  * player lives, straight away if made there, else posted to it; a read made off it returns the last published state.
  */
 class PlaybackManager(
     private val queueManager: QueueManager,
-    private val player: ExoPlayer,
+    private val player: Player,
+    /** The local player: [player] itself, or the one a Cast player plays through when not casting. */
+    private val localPlayer: ExoPlayer,
     private val audioFocusHelper: AudioFocusHelper,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
-    audioEffectSessionManager: AudioEffectSessionManager,
+    private val audioEffectSessionManager: AudioEffectSessionManager,
     private val appCoroutineScope: CoroutineScope,
     audioManager: AudioManager?,
     /** The anchor clock, on the `SystemClock.elapsedRealtime` timebase media controllers expect. */
@@ -82,6 +90,15 @@ class PlaybackManager(
     private var playlistChanged = false
 
     private var progressJob: Job? = null
+
+    /** Whether [player] is playing on a Cast receiver, as of the last player event. */
+    private var isRemote = player.isRemote
+
+    /**
+     * Whether playback just moved between this device and a Cast receiver, and the player it moved to isn't ready yet.
+     * Until it is, what the player reports is the handover, not playback.
+     */
+    private var switching = false
 
     private val _playbackStateFlow = MutableStateFlow(derivedState())
 
@@ -121,13 +138,13 @@ class PlaybackManager(
 
     init {
         audioFocusHelper.listener = this
-        audioFocusHelper.enabled = true
+        audioFocusHelper.enabled = !isRemote
 
         val audioSessionId = audioManager?.generateAudioSessionId() ?: C.AUDIO_SESSION_ID_UNSET
         if (audioSessionId > 0) {
-            player.audioSessionId = audioSessionId
+            localPlayer.audioSessionId = audioSessionId
         }
-        audioEffectSessionManager.bindTo(player.audioSessionId)
+        audioEffectSessionManager.bindTo(if (isRemote) C.AUDIO_SESSION_ID_UNSET else localPlayer.audioSessionId)
 
         // Individual callbacks, not onEvents: they arrive within the player call that caused them, so state
         // published here is current by the time that call returns.
@@ -137,6 +154,7 @@ class PlaybackManager(
                     timeline: Timeline,
                     reason: Int
                 ) {
+                    checkDevice()
                     if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) {
                         playlistChanged = true
                     }
@@ -151,6 +169,7 @@ class PlaybackManager(
                 }
 
                 override fun onPlaybackStateChanged(playbackState: Int) {
+                    checkDevice()
                     onPlayerStateChanged(playbackState)
                 }
 
@@ -158,6 +177,7 @@ class PlaybackManager(
                     playWhenReady: Boolean,
                     reason: Int
                 ) {
+                    checkDevice()
                     publishState()
                 }
 
@@ -165,11 +185,12 @@ class PlaybackManager(
                     mediaItem: MediaItem?,
                     reason: Int
                 ) {
+                    checkDevice()
                     mediaItem?.let(::applyWakeMode)
                     if (isPlayingOn(reason) && player.playerError == null) {
-                        readyUid = mediaItem?.queueEntry?.uid
+                        readyUid = mediaItem?.queueEntryOrNull?.uid
                     }
-                    onCurrentItemChanged(mediaItem?.queueEntry?.uid, reason)
+                    onCurrentItemChanged(mediaItem?.queueEntryOrNull?.uid, reason)
                     publishState()
                     publishProgress()
                 }
@@ -179,6 +200,7 @@ class PlaybackManager(
                     newPosition: Player.PositionInfo,
                     reason: Int
                 ) {
+                    checkDevice()
                     if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
                         oldPosition.mediaItem?.let(::onTrackEnded)
                     }
@@ -187,11 +209,18 @@ class PlaybackManager(
                 }
 
                 override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
+                    checkDevice()
                     reanchor()
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
+                    checkDevice()
+                    switching = false
                     onError(error)
+                }
+
+                override fun onDeviceInfoChanged(deviceInfo: DeviceInfo) {
+                    checkDevice()
                 }
             }
         )
@@ -205,13 +234,37 @@ class PlaybackManager(
     private fun isPlayingOn(reason: Int) = reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO || reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT
 
     private val currentEntry: QueueEntry?
-        get() = player.currentMediaItem?.queueEntry
+        get() = player.currentMediaItem?.queueEntryOrNull
 
     // Player events
+
+    /**
+     * Playback moving between this device and a Cast receiver shows first in whichever event the switch raises first,
+     * so every event checks for it. Casting gives up audio focus and closes the audio effect session; coming back takes
+     * them up again. Coming back saves the position the receiver was at, which the local player now holds, in case
+     * the app is gone before playback pauses again; the local position of a receiver that never reported one is
+     * kept, and a position of zero is never saved for it.
+     */
+    private fun checkDevice() {
+        val remote = player.isRemote
+        if (remote == isRemote) return
+        isRemote = remote
+        Timber.v(if (remote) "Playing on a Cast receiver" else "Playing locally")
+        switching = true
+        if (remote) {
+            audioFocusHelper.abandonAudioFocus()
+        }
+        audioFocusHelper.enabled = !remote
+        audioEffectSessionManager.bindTo(if (remote) C.AUDIO_SESSION_ID_UNSET else localPlayer.audioSessionId)
+        if (!remote && currentEntry != null) {
+            player.currentPosition.takeIf { it > 0 }?.let { playbackPreferenceManager.playbackPosition = it.toInt() }
+        }
+    }
 
     private fun onPlayerStateChanged(playbackState: Int) {
         when (playbackState) {
             Player.STATE_READY -> {
+                switching = false
                 readyUid = currentEntry?.uid
                 loadFailures = 0
                 completePendingLoad(Result.success(pendingLoad?.attempt == 1))
@@ -224,11 +277,13 @@ class PlaybackManager(
             Player.STATE_ENDED -> {
                 // The last item played to its end, with nothing to repeat, or the current last item was removed.
                 completePendingLoad(Result.failure(IllegalStateException("Nothing to load")))
-                if (!playlistChanged) {
-                    player.currentMediaItem?.let { item -> _trackEndedFlow.tryEmit(item.queueEntry.song) }
-                }
-                if (player.playWhenReady) {
-                    pause()
+                if (!switching) {
+                    if (!playlistChanged) {
+                        currentEntry?.let { entry -> _trackEndedFlow.tryEmit(entry.song) }
+                    }
+                    if (player.playWhenReady) {
+                        pause()
+                    }
                 }
             }
         }
@@ -245,16 +300,17 @@ class PlaybackManager(
     ) {
         val previousUid = currentUid
         currentUid = uid
-        if (uid != previousUid && previousUid != null && reason != Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
+        if (uid != previousUid && previousUid != null && reason != Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && !switching) {
             playbackPreferenceManager.playbackPosition = null
         }
     }
 
     /** An item played to its end and the player moved on (to the next item, or back to its start on repeat). */
     private fun onTrackEnded(item: MediaItem) {
-        Timber.v("onTrackEnded(${item.queueEntry.song.name})")
+        val entry = item.queueEntryOrNull ?: return
+        Timber.v("onTrackEnded(${entry.song.name})")
         playbackPreferenceManager.playbackPosition = 0
-        _trackEndedFlow.tryEmit(item.queueEntry.song)
+        _trackEndedFlow.tryEmit(entry.song)
     }
 
     /**
@@ -265,7 +321,7 @@ class PlaybackManager(
      */
     private fun onError(error: PlaybackException) {
         val failedIndex = error.failedIndex() ?: player.currentMediaItemIndex
-        val failedEntry = player.currentTimeline.takeIf { failedIndex < it.windowCount }?.let { player.getMediaItemAt(failedIndex).queueEntry }
+        val failedEntry = player.currentTimeline.takeIf { failedIndex < it.windowCount }?.let { player.getMediaItemAt(failedIndex).queueEntryOrNull }
         Timber.e(error, "Playback failed for ${failedEntry?.song?.name}")
 
         if (!error.isResolutionFailure()) {
@@ -286,10 +342,10 @@ class PlaybackManager(
         pause()
     }
 
-    /** The playlist index of the item [this] failed on, if it says. */
+    /** The playlist index of the item [this] failed on, if it says: only the local player does. */
     private fun PlaybackException.failedIndex(): Int? {
         val periodUid = (this as? ExoPlaybackException)?.mediaPeriodId?.periodUid ?: return null
-        val timeline = player.currentTimeline
+        val timeline = localPlayer.currentTimeline
         val periodIndex = timeline.getIndexOfPeriod(periodUid).takeIf { it != C.INDEX_UNSET } ?: return null
         return timeline.getPeriod(periodIndex, Timeline.Period()).windowIndex
     }
@@ -301,8 +357,8 @@ class PlaybackManager(
     }
 
     private fun applyWakeMode(item: MediaItem) {
-        val isRemote = item.localConfiguration?.uri?.let { !it.isDirect() || it.scheme == "http" || it.scheme == "https" } == true
-        player.setWakeMode(if (isRemote) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
+        val streams = item.localConfiguration?.uri?.let { !it.isDirect() || it.scheme == "http" || it.scheme == "https" } == true
+        localPlayer.setWakeMode(if (streams) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
     }
 
     // Derived state
@@ -319,7 +375,7 @@ class PlaybackManager(
         val previous = _playbackStateFlow.value
         _playbackStateFlow.value = state
         reanchor()
-        if (state != previous && state is PlaybackState.Paused) {
+        if (state != previous && state is PlaybackState.Paused && !switching) {
             savePausePosition()
         }
         monitorProgress(state is PlaybackState.Playing || state is PlaybackState.Loading)
@@ -359,14 +415,14 @@ class PlaybackManager(
 
     /**
      * Saves where playback paused as the position to resume from. With no position, the saved one is cleared, so
-     * the next position is saved straight away.
+     * the next position is saved straight away. Nothing is saved while playback is on something not in the queue, as
+     * a Cast receiver can be.
      */
     private fun savePausePosition() {
+        val song = currentEntry?.song ?: return
         val position = getProgress()
         playbackPreferenceManager.playbackPosition = position
-        currentEntry?.song?.let { song ->
-            _pausePositionFlow.tryEmit(SongPosition(song, position ?: 0))
-        }
+        _pausePositionFlow.tryEmit(SongPosition(song, position ?: 0))
     }
 
     // PlaybackOperations
@@ -555,18 +611,16 @@ class PlaybackManager(
      * if playback was playing; removing the last item left stops playback.
      */
     override fun removeQueueItem(queueItem: QueueItem) = playerThread.run {
-        val entries = List(player.mediaItemCount) { player.getMediaItemAt(it).queueEntry }
-        val index = entries.indexOfFirst { it.uid == queueItem.uid }
-        if (index != -1 && index == player.currentMediaItemIndex) {
-            if (entries.size == 1) {
+        val queue = queueManager.getQueue()
+        if (queue.none { it.uid == queueItem.uid }) return@run
+        if (queueItem.uid == queueManager.getCurrentItem()?.uid) {
+            if (queue.size == 1) {
                 pause()
             } else {
-                player.seekTo(player.currentTimeline.getNextWindowIndex(index, Player.REPEAT_MODE_ALL, player.shuffleModeEnabled), 0)
+                queueManager.getNext(ignoreRepeat = true)?.let(queueManager::setCurrentItem)
             }
         }
-        if (index != -1) {
-            queueManager.remove(listOf(queueItem))
-        }
+        queueManager.remove(listOf(queueItem))
     }
 
     /** Clears the queue; while playing, the current item stays and plays on. */

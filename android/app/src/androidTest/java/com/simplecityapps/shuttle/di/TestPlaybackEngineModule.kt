@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.di
 
 import android.content.Context
 import android.media.AudioManager
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.playback.AudioEffectSessionManager
@@ -68,11 +69,17 @@ class TestPlaybackEngineModule {
         songUriResolver: SongUriResolver
     ): ExoPlayer = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver).create()
 
+    // No Cast player in tests: the app plays through the ExoPlayer itself.
+    @Singleton
+    @Provides
+    fun providePlayer(exoPlayer: ExoPlayer): Player = exoPlayer
+
     @Singleton
     @Provides
     fun providePlaybackManager(
         queueManager: QueueManager,
-        player: ExoPlayer,
+        player: Player,
+        localPlayer: ExoPlayer,
         audioFocusHelper: AudioFocusHelper,
         playbackPreferenceManager: PlaybackPreferenceManager,
         audioEffectSessionManager: AudioEffectSessionManager,
@@ -81,6 +88,7 @@ class TestPlaybackEngineModule {
     ): PlaybackManager = PlaybackManager(
         queueManager,
         player,
+        localPlayer,
         audioFocusHelper,
         playbackPreferenceManager,
         audioEffectSessionManager,

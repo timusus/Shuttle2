@@ -3,6 +3,9 @@ package com.simplecityapps.playback.di
 import android.content.Context
 import android.media.AudioManager
 import android.os.Build
+import androidx.media3.cast.CastPlayer
+import androidx.media3.cast.RemoteCastPlayer
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.playback.AudioEffectSessionManager
@@ -11,6 +14,8 @@ import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
+import com.simplecityapps.playback.chromecast.CastMediaItemConverter
+import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.engine.SongUriResolver
@@ -77,7 +82,7 @@ class PlaybackEngineModule {
     @Provides
     fun provideSongUriResolver(mediaInfoProvider: AggregateMediaInfoProvider): SongUriResolver = SongUriResolver(MediaInfoMediaResolver(mediaInfoProvider))
 
-    // The one player: it owns the queue and plays it. It lives on the main looper.
+    // The local player: it owns the queue, and plays it when not casting. It lives on the main looper.
     @Singleton
     @Provides
     fun provideExoPlayer(
@@ -87,6 +92,35 @@ class PlaybackEngineModule {
         audioTrackMonitor: AudioTrackMonitor,
         songUriResolver: SongUriResolver
     ): ExoPlayer = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver).create()
+
+    @Singleton
+    @Provides
+    fun provideCastMediaItemConverter(
+        @ApplicationContext context: Context
+    ): CastMediaItemConverter = CastMediaItemConverter(CastMediaItemConverter.wifiAddress(context), context.getString(com.simplecityapps.core.R.string.unknown))
+
+    @Singleton
+    @Provides
+    fun provideCastQueue(
+        exoPlayer: ExoPlayer,
+        converter: CastMediaItemConverter
+    ): CastQueue = CastQueue(exoPlayer, converter)
+
+    // The player the app plays through: the ExoPlayer, or a Cast receiver while a Cast session is up. Built on the main
+    // thread, as Cast requires.
+    @Singleton
+    @Provides
+    fun providePlayer(
+        @ApplicationContext context: Context,
+        exoPlayer: ExoPlayer,
+        converter: CastMediaItemConverter,
+        castQueue: CastQueue
+    ): Player = CastPlayer.Builder(context)
+        .setLocalPlayer(exoPlayer)
+        .setRemotePlayer(RemoteCastPlayer.Builder(context).setMediaItemConverter(converter).build())
+        .setTransferCallback(castQueue)
+        .build()
+        .also(castQueue::attach)
 
     @Singleton
     @Provides
@@ -104,13 +138,14 @@ class PlaybackEngineModule {
     @Provides
     fun providePlaybackManager(
         queueManager: QueueManager,
-        player: ExoPlayer,
+        player: Player,
+        localPlayer: ExoPlayer,
         audioFocusHelper: AudioFocusHelper,
         playbackPreferenceManager: PlaybackPreferenceManager,
         audioEffectSessionManager: AudioEffectSessionManager,
         @AppCoroutineScope coroutineScope: CoroutineScope,
         audioManager: AudioManager?
-    ): PlaybackManager = PlaybackManager(queueManager, player, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, audioManager)
+    ): PlaybackManager = PlaybackManager(queueManager, player, localPlayer, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, audioManager)
 
     @Provides
     fun providePlaybackOperations(playbackManager: PlaybackManager): PlaybackOperations = playbackManager

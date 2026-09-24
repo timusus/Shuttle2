@@ -19,6 +19,9 @@ class HttpServer(private val castService: CastService) : NanoHTTPD(5000) {
             when (uri.lastPathSegment) {
                 "audio" -> {
                     return runBlocking {
+                        castService.getRemoteAudioUrl(songId)?.let { url ->
+                            return@runBlocking redirect(url)
+                        }
                         castService.getAudio(songId)?.let { audioStream ->
                             serveAudio(session.headers, audioStream.stream, audioStream.length, audioStream.mimeType)
                         } ?: newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
@@ -89,6 +92,10 @@ class HttpServer(private val castService: CastService) : NanoHTTPD(5000) {
         }
 
         return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
+    }
+
+    private fun redirect(url: String): Response = newFixedLengthResponse(Response.Status.TEMPORARY_REDIRECT, "text/html", "").apply {
+        addHeader("Location", url)
     }
 
     private fun serveArtwork(

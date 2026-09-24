@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.media.AudioManager
 import android.util.LruCache
 import androidx.core.content.getSystemService
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
@@ -47,9 +48,10 @@ class PlaybackModule {
     @Provides
     fun provideQueueManager(
         player: ExoPlayer,
+        activePlayer: Player,
         preferenceManager: GeneralPreferenceManager,
         songUriResolver: SongUriResolver
-    ): QueueManager = QueueManager(player, preferenceManager, songUriResolver)
+    ): QueueManager = QueueManager(player, preferenceManager, songUriResolver, activePlayer = activePlayer)
 
     @Provides
     fun provideQueueOperations(queueManager: QueueManager): QueueOperations = queueManager

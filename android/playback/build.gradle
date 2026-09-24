@@ -60,6 +60,7 @@ dependencies {
     implementation libs.nanohttpd.webserver
 
     // Media3 ExoPlayer
+    implementation(libs.media3.cast)
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.exoplayerHls)
 
