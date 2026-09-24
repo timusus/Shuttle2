@@ -12,8 +12,7 @@ import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.PlaybackWatcher
-import com.simplecityapps.playback.PlaybackWatcherCallback
+import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -24,6 +23,7 @@ import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlin.math.abs
@@ -43,12 +43,12 @@ import timber.log.Timber
  * the main thread is handled before the call that made it returns, as the callbacks it replaced were. That
  * matters for the playback position, which [PlaybackOperations] reads back from the preferences.
  *
- * A track end is an event, collected from [PlaybackOperations.trackEndedFlow] to record the song as played;
- * [PlaybackOperations] saves the position it leaves behind itself.
+ * Track ends and pauses are events, collected from [PlaybackOperations.trackEndedFlow] and
+ * [PlaybackOperations.pausePositionFlow] to record each song's own position. [PlaybackOperations] saves the
+ * position to resume from on both itself, since it must be saved before the call reporting them returns.
  *
- * Pausing stays on [PlaybackWatcherCallback]: it saves the position at that moment, read live from the
- * playback and queue, so it must run inside the call that reports it, and a
- * [kotlinx.coroutines.flow.StateFlow] can merge a pause into whatever follows it.
+ * Also starts the playback components that run for the life of the app: Cast session handling, the media
+ * session and the noisy-audio receiver.
  */
 class PlaybackInitializer
 @Inject
@@ -56,15 +56,13 @@ constructor(
     @ApplicationContext private val context: Context,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackOperations,
-    private val playbackWatcher: PlaybackWatcher,
     private val queueManager: QueueOperations,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
-    @Suppress("unused") private val castSessionManager: CastSessionManager,
-    @Suppress("unused") private val mediaSessionManager: MediaSessionManager,
-    @Suppress("unused") private val noiseManager: NoiseManager,
+    private val castSessionManager: Lazy<CastSessionManager>,
+    private val mediaSessionManager: Lazy<MediaSessionManager>,
+    private val noiseManager: Lazy<NoiseManager>,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
-) : AppInitializer,
-    PlaybackWatcherCallback {
+) : AppInitializer {
     private var initTime = 0L
 
     @SuppressLint("BinaryOperationInTimber")
@@ -72,9 +70,9 @@ constructor(
         initTime = System.currentTimeMillis()
         Timber.v("PlaybackInitializer.init()")
 
-        playbackWatcher.addCallback(this)
+        startPlaybackComponents()
         collectPlaybackState()
-        collectTrackEnds()
+        collectSongPositions()
 
         val shuffleMode = playbackPreferenceManager.shuffleMode
         val repeatMode = playbackPreferenceManager.repeatMode
@@ -87,6 +85,13 @@ constructor(
 
             restoreQueue(queuePosition = queuePosition, seekPosition = seekPosition)
         }
+    }
+
+    /** Each starts itself when it's created, so creating it here is what starts it. */
+    private fun startPlaybackComponents() {
+        castSessionManager.get()
+        mediaSessionManager.get()
+        noiseManager.get()
     }
 
     private suspend fun restoreQueue(
@@ -175,9 +180,12 @@ constructor(
         }
     }
 
-    private fun collectTrackEnds() {
+    private fun collectSongPositions() {
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
             playbackManager.trackEndedFlow.collect { song -> recordPlayedThrough(song) }
+        }
+        appCoroutineScope.launch(Dispatchers.Main.immediate) {
+            playbackManager.pausePositionFlow.collect { songPosition -> saveSongPosition(songPosition) }
         }
     }
 
@@ -216,10 +224,10 @@ constructor(
 
     /**
      * Saves the playback position to preferences. A [force]d save (a discontinuity from
-     * [PlaybackOperations.positionAnchorFlow], or a pause) always writes; otherwise the write is throttled
+     * [PlaybackOperations.positionAnchorFlow]) always writes; otherwise the write is throttled
      * to once the position has drifted at least a second in either direction from the saved one, so a
      * seek backwards or a restart is caught as readily as normal forward playback. The saved position is
-     * read back rather than remembered, since [PlaybackOperations] saves one itself when a track ends.
+     * read back rather than remembered, since [PlaybackOperations] saves one itself on a pause or track end.
      */
     private fun saveProgress(
         position: Int,
@@ -231,32 +239,10 @@ constructor(
         }
     }
 
-    /** Clears the saved position, so the next position is saved straight away. */
-    private fun clearProgress() {
-        playbackPreferenceManager.playbackPosition = null
-    }
-
-    // PlaybackWatcherCallback Implementation
-
-    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        // Playing is handled from playbackStateFlow. Pausing stays here: it reads the position and current song
-        // live, so it must run before the call that reported it moves on (e.g. switchToPlayback() pauses the
-        // old playback, then replaces it and reads the saved position back).
-        if (playbackState is PlaybackState.Paused) {
-            val position = playbackManager.getProgress()
-            if (position != null) {
-                saveProgress(position, force = true)
-            } else {
-                clearProgress()
-            }
-
-            queueManager.getCurrentItem()?.song?.let { song ->
-                val playbackPosition = position ?: 0
-                appCoroutineScope.launch {
-                    withContext(Dispatchers.IO) {
-                        songRepository.setPlaybackPosition(song, playbackPosition)
-                    }
-                }
+    private fun saveSongPosition(songPosition: SongPosition) {
+        appCoroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                songRepository.setPlaybackPosition(songPosition.song, songPosition.positionMs)
             }
         }
     }

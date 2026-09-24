@@ -9,14 +9,15 @@ import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PositionAnchor
+import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.testing.MainDispatcherRule
 import com.squareup.moshi.Moshi
+import dagger.Lazy
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
@@ -40,7 +41,7 @@ class PlaybackInitializerTest {
     private val playbackManager = FakePlaybackManager()
     private val songRepository = FakeSongRepository()
     private val queueManager = FakeQueueManager()
-    private val playbackWatcher = PlaybackWatcher()
+    private val startedComponents = mutableListOf<String>()
     private val preferences = PlaybackPreferenceManager(
         application.getSharedPreferences("playback_initializer_test", Context.MODE_PRIVATE),
         Moshi.Builder().build()
@@ -51,12 +52,20 @@ class PlaybackInitializerTest {
         context = application,
         songRepository = songRepository,
         playbackManager = playbackManager,
-        playbackWatcher = playbackWatcher,
         queueManager = queueManager,
         playbackPreferenceManager = preferences,
-        castSessionManager = mockk(relaxed = true),
-        mediaSessionManager = mockk(relaxed = true),
-        noiseManager = mockk(relaxed = true),
+        castSessionManager = Lazy {
+            startedComponents += "cast"
+            mockk(relaxed = true)
+        },
+        mediaSessionManager = Lazy {
+            startedComponents += "media session"
+            mockk(relaxed = true)
+        },
+        noiseManager = Lazy {
+            startedComponents += "noise"
+            mockk(relaxed = true)
+        },
         appCoroutineScope = appCoroutineScope
     )
 
@@ -198,14 +207,22 @@ class PlaybackInitializerTest {
     }
 
     @Test
-    fun `pausing with no position clears the saved one, so the next progress is saved straight away`() {
+    fun `init starts the playback components that run for the life of the app`() {
+        startedComponents shouldBe emptyList()
+
+        initializer.init(application)
+
+        startedComponents shouldBe listOf("cast", "media session", "noise")
+    }
+
+    @Test
+    fun `a cleared saved position lets the next progress be saved straight away`() {
         initializer.init(application)
         playbackManager.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
         preferences.playbackPosition shouldBe 65_000
 
-        // The fake playback manager reports no position.
-        playbackWatcher.onPlaybackStateChanged(PlaybackState.Paused)
-        preferences.playbackPosition shouldBe null
+        // The playback manager clears it on a pause with no position.
+        preferences.playbackPosition = null
 
         // Under a second from the cleared position: with no saved position there's nothing to throttle against.
         playbackManager.progressFlow.value = PlaybackProgress(position = 65_500, duration = 200_000)
@@ -238,6 +255,18 @@ class PlaybackInitializerTest {
         awaitUntil { songRepository.playCountIncrements.isNotEmpty() }
         songRepository.playbackPositions.toList() shouldBe listOf(4L to 200_000)
         songRepository.playCountIncrements.toList() shouldBe listOf(4L)
+    }
+
+    @Test
+    fun `a pause records the song's position`() {
+        initializer.init(application)
+        val pausedSong = createSong(id = 5, duration = 200_000)
+
+        playbackManager.pausePositionFlow.tryEmit(SongPosition(pausedSong, 42_000))
+
+        awaitUntil { songRepository.playbackPositions.isNotEmpty() }
+        songRepository.playbackPositions.toList() shouldBe listOf(5L to 42_000)
+        songRepository.playCountIncrements.toList() shouldBe emptyList()
     }
 
     /** Waits for a write the initializer hands off to [kotlinx.coroutines.Dispatchers.IO]. */

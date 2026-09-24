@@ -76,12 +76,11 @@ class PlaybackInitializerPlaybackManagerTest {
             context = application,
             songRepository = FakeSongRepository(),
             playbackManager = playbackManager,
-            playbackWatcher = playbackWatcher,
             queueManager = queueManager,
             playbackPreferenceManager = preferences,
-            castSessionManager = mockk(relaxed = true),
-            mediaSessionManager = mockk(relaxed = true),
-            noiseManager = mockk(relaxed = true),
+            castSessionManager = { mockk(relaxed = true) },
+            mediaSessionManager = { mockk(relaxed = true) },
+            noiseManager = { mockk(relaxed = true) },
             appCoroutineScope = appCoroutineScope
         )
 

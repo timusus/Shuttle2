@@ -21,6 +21,13 @@ interface PlaybackOperations {
      */
     val trackEndedFlow: SharedFlow<Song>
 
+    /**
+     * The current song and the position playback paused at (0 if it has none), emitted each time playback
+     * reports a pause, once that position has been saved as the one to resume from. An event, like
+     * [trackEndedFlow].
+     */
+    val pausePositionFlow: SharedFlow<SongPosition>
+
     fun load(seekPosition: Int? = null, completion: (Result<Boolean>) -> Unit)
     fun play(attempt: Int = 1)
     fun pause()

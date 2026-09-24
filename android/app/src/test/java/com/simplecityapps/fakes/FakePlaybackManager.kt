@@ -5,6 +5,7 @@ import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PositionAnchor
+import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -15,6 +16,7 @@ class FakePlaybackManager : PlaybackOperations {
     override val progressFlow = MutableStateFlow<PlaybackProgress?>(null)
     override val positionAnchorFlow = MutableStateFlow(PositionAnchor(PlaybackState.Paused, positionMs = null, elapsedRealtimeMs = 0, speed = 1f))
     override val trackEndedFlow = MutableSharedFlow<Song>(extraBufferCapacity = 64)
+    override val pausePositionFlow = MutableSharedFlow<SongPosition>(extraBufferCapacity = 64)
 
     var addedToQueue = mutableListOf<Song>()
     var playedNext = mutableListOf<Song>()

@@ -112,11 +112,16 @@ class PlaybackManager(
 
     /**
      * Buffered so an emit from the main thread never suspends or fails. Collectors run on the main thread
-     * too, so only one that has fallen [TRACK_ENDED_BUFFER] track ends behind could lose the oldest.
+     * too, so only one that has fallen [EVENT_BUFFER] events behind could lose the oldest.
      */
-    private val _trackEndedFlow = MutableSharedFlow<Song>(extraBufferCapacity = TRACK_ENDED_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _trackEndedFlow = MutableSharedFlow<Song>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     override val trackEndedFlow: SharedFlow<Song> = _trackEndedFlow.asSharedFlow()
+
+    /** Buffered like [_trackEndedFlow]. */
+    private val _pausePositionFlow = MutableSharedFlow<SongPosition>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    override val pausePositionFlow: SharedFlow<SongPosition> = _pausePositionFlow.asSharedFlow()
 
     init {
         audioFocusHelper.listener = this
@@ -539,6 +544,9 @@ class PlaybackManager(
         Timber.v("onPlaybackStateChanged(playbackState: $playbackState)")
         _playbackStateFlow.value = playbackState
         reanchor()
+        if (playbackState is PlaybackState.Paused) {
+            savePausePosition()
+        }
         playbackWatcher.onPlaybackStateChanged(playbackState)
 
         when (playbackState) {
@@ -549,6 +557,20 @@ class PlaybackManager(
             else -> {
                 monitorProgress(false)
             }
+        }
+    }
+
+    /**
+     * Saves where playback paused as the position to resume from, before the call reporting the pause
+     * returns: a switch pauses the old playback, then reads the saved position back to resume the new one
+     * from. Mid-load, that's the position the load will start at. With no position, the saved one is
+     * cleared, so the next position is saved straight away.
+     */
+    private fun savePausePosition() {
+        val position = getProgress()
+        playbackPreferenceManager.playbackPosition = position
+        queueManager.getCurrentItem()?.song?.let { song ->
+            _pausePositionFlow.tryEmit(SongPosition(song, position ?: 0))
         }
     }
 
@@ -615,6 +637,6 @@ class PlaybackManager(
     }
 }
 
-private const val TRACK_ENDED_BUFFER = 64
+private const val EVENT_BUFFER = 64
 
 private fun Song.getStartPosition(): Int? = if (type == Song.Type.Podcast || type == Song.Type.Audiobook) max(0, playbackPosition - 5000) else null
