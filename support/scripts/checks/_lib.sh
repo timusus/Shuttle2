@@ -49,6 +49,9 @@ state() { s2 DUMP_STATE | python3 -c 'import json,sys; print(json.load(sys.stdin
 fail() {
     echo "FAIL ${CHECK_NAME}: $*" >&2
     echo "  last state: $(s2 DUMP_STATE 2>/dev/null || echo unavailable)" >&2
+    # Marks that this check failed via fail() (not a bare `set -e` death), so run-all.sh knows not
+    # to print its own "FAIL <name> (exit N)" line on top of this one.
+    [ -n "${FAIL_MARKER_DIR:-}" ] && : > "${FAIL_MARKER_DIR}/${CHECK_NAME}.failed"
     exit 1
 }
 
