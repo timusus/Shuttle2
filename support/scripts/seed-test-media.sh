@@ -10,6 +10,9 @@
 #     playlist-basic  5 songs plus an .m3u playlist referencing them
 #     playback        one album of 5 x 60 s tracks, long enough for playback checks (seek, skip,
 #                     remove the current item) to finish before a track ends on its own
+#     gapless         one album of 5 x 12 s sine tones played back to back: an MP3, two
+#                     FLAC-in-Matroska (.mka) tracks and two native FLACs, so gapless transitions
+#                     cross MP3 -> FLAC, Matroska -> Matroska and Matroska -> FLAC
 #
 #     --skip-onboarding   also write the debug app's prefs so it opens straight to the library
 #                         with the local (MediaStore) provider selected, skipping onboarding
@@ -40,6 +43,7 @@ Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding]
   playlist-basic  5 songs plus an .m3u playlist referencing them
   playback        one album of 5 x 60 s tracks, long enough for playback checks (seek, skip,
                   remove the current item) to finish before a track ends on its own
+  gapless         one album of 5 x 12 s tones: MP3, two FLAC-in-Matroska, two native FLAC
 
   --skip-onboarding   write debug-app prefs so it opens straight to the library with the local
                       provider selected (needs the debug APK already installed)
@@ -54,7 +58,7 @@ FIXTURE="${1:-}"
 case "$FIXTURE" in
     -h|--help) usage; exit 0 ;;
     "") usage >&2; exit 2 ;;
-    two-disc|many-tracks|playlist-basic|playback) ;;
+    two-disc|many-tracks|playlist-basic|playback|gapless) ;;
     *) echo "seed-test-media: unknown fixture '$FIXTURE'" >&2; usage >&2; exit 2 ;;
 esac
 shift
@@ -89,6 +93,28 @@ generate_track() {
         -metadata album="$album" -metadata track="${track}/${tracktotal}" \
         -metadata disc="${disc}/${disctotal}" -metadata date="$date" -metadata genre="$genre" \
         "${codec_args[@]}" -y "$out" >/dev/null
+}
+
+# generate_tone <outfile> <frequency> <title> <track> <codec args...>: a 12 s stereo sine tone, so a
+# gap or glitch at a transition shows as a break in an otherwise steady signal.
+generate_tone() {
+    local out="$1" frequency="$2" title="$3" track="$4"
+    shift 4
+    [ -f "$out" ] && return 0
+    ffmpeg -nostdin -loglevel error -f lavfi -i "sine=frequency=${frequency}:sample_rate=44100:duration=12" -ac 2 \
+        -metadata title="$title" -metadata artist="Gapless Artist" -metadata album_artist="Gapless Artist" \
+        -metadata album="Gapless Album" -metadata track="${track}/5" -metadata date="2023" \
+        "$@" -y "$out" >/dev/null
+}
+
+build_gapless() {
+    local dir="$1"
+    mkdir -p "$dir"
+    generate_tone "${dir}/gapless1.mp3" 330 "Gapless One Mp3" 1 -c:a libmp3lame -b:a 128k
+    generate_tone "${dir}/gapless2.mka" 440 "Gapless Two Mka" 2 -c:a flac
+    generate_tone "${dir}/gapless3.mka" 550 "Gapless Three Mka" 3 -c:a flac
+    generate_tone "${dir}/gapless4.flac" 660 "Gapless Four Flac" 4 -c:a flac
+    generate_tone "${dir}/gapless5.flac" 770 "Gapless Five Flac" 5 -c:a flac
 }
 
 build_two_disc() {
@@ -147,6 +173,7 @@ case "$FIXTURE" in
     many-tracks) build_many_tracks "$FIXTURE_DIR" ;;
     playlist-basic) build_playlist_basic "$FIXTURE_DIR" ;;
     playback) build_playback "$FIXTURE_DIR" ;;
+    gapless) build_gapless "$FIXTURE_DIR" ;;
 esac
 
 # The app only imports MediaStore tracks into its own library on: walking through onboarding's
