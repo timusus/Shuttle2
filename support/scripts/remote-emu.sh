@@ -19,6 +19,8 @@
 #                                  APK, install that without building (build once, install per lane)
 #   remote-emu.sh serial [N]       print the lane's serial on the Mac's own adb server
 #                                  (localhost:1560N), for Maestro, installDebug and ~/.claude/scripts/adb
+#   remote-emu.sh reconnect [N]    re-open the tunnel + adb connect for an already-leased lane
+#                                  (no reboot, lease kept); no-op if the tunnel is already healthy
 #   remote-emu.sh reset [N]        clear the debug app's data and the seeded test media on the lane
 #   remote-emu.sh ui-prep [N]      disable window/transition/animator animations on the lane
 #   remote-emu.sh tap-text <text> [--desc] [--index N]
@@ -345,6 +347,35 @@ cmd_install() {
     radb install -r "$apk"
 }
 
+# Re-establishes the tunnel (and the direct adbd tunnel + adb connect) for a lane this session (or
+# REMOTE_EMU_LANE) already holds, without touching the emulator or the lease. Quick no-op when the
+# tunnel already answers -- callers like adb_retry (checks/_lib.sh) run this on every detected drop,
+# so it must not do a full boot-wait each time.
+cmd_reconnect() {
+    LANE="$(resolve_lane "${1:-}")"
+    local serial; serial="$(serial_of "$LANE")"
+    local primary_ok=0 direct_ok=0
+    if tunnel_pid "$LANE" >/dev/null \
+        && ANDROID_ADB_SERVER_PORT="$(local_port "$LANE")" adb devices | grep -q "^${serial}[[:space:]]*device"; then
+        primary_ok=1
+    fi
+    if tunnel_pid "$LANE" "$(direct_pid_file "$LANE")" >/dev/null \
+        && local_adb devices | grep -q "^$(direct_serial "$LANE")[[:space:]]*device"; then
+        direct_ok=1
+    fi
+    if [ "$primary_ok" -eq 1 ] && [ "$direct_ok" -eq 1 ]; then
+        echo "remote-emu: lane $LANE tunnel healthy, nothing to do"
+        return 0
+    fi
+    echo "remote-emu: lane $LANE tunnel down or stale; reconnecting (no reboot, lease kept) ..."
+    open_tunnel "$LANE"
+    if ! ANDROID_ADB_SERVER_PORT="$(local_port "$LANE")" adb devices | grep -q "^${serial}[[:space:]]*device"; then
+        echo "remote-emu: lane $LANE still not reachable after reconnect" >&2
+        exit 1
+    fi
+    echo "remote-emu: lane $LANE reconnected"
+}
+
 cmd_serial() {
     LANE="$(resolve_lane "${1:-}")"
     direct_serial "$LANE"
@@ -580,6 +611,7 @@ case "${1:-}" in
     install) shift; cmd_install "$@" ;;
     serial) cmd_serial "${2:-}" ;;
     env) cmd_env "${2:-}" ;;
+    reconnect) cmd_reconnect "${2:-}" ;;
     reset) cmd_reset "${2:-}" ;;
     ui-prep) cmd_ui_prep "${2:-}" ;;
     tap-text) shift; cmd_tap_text "$@" ;;

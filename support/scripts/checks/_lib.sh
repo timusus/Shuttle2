@@ -14,6 +14,35 @@ CHECK_START=$(date +%s)
 
 s2() { "${CHECKS_ROOT}/support/scripts/s2-debug.sh" "$@"; }
 
+# adb_retry <adb args...>: runs `adb "$@"`; on a dropped-tunnel failure (device offline/not found)
+# it reconnects the lane once via `remote-emu.sh reconnect` and retries the command once before
+# giving up with a clear message. A no-op lane (local emulator, no `start` in this session) just
+# fails the retry the same way the plain command would. Shared with s2-debug.sh, which sources
+# this file for it. stdout is buffered to a temp file and only emitted for the attempt that is
+# kept, so a command that writes partial output before failing (e.g. `adb exec-out screencap`
+# dropping mid-transfer) never has a failed attempt's bytes mixed into the retry's.
+adb_retry() {
+    local errfile outfile status=0
+    errfile="$(mktemp)"
+    outfile="$(mktemp)"
+    adb "$@" >"$outfile" 2>"$errfile" || status=$?
+    if [ "$status" -ne 0 ] && grep -qiE 'device .*(offline|not found)|no devices/emulators found' "$errfile"; then
+        echo "adb-retry: adb call failed, reconnecting the lane ..." >&2
+        "${CHECKS_ROOT}/support/scripts/remote-emu.sh" reconnect >&2 || true
+        status=0
+        adb "$@" >"$outfile" 2>"$errfile" || status=$?
+        if [ "$status" -ne 0 ]; then
+            echo "adb-retry: still failing after reconnect:" >&2
+        fi
+    fi
+    if [ "$status" -ne 0 ]; then
+        cat "$errfile" >&2
+    fi
+    cat "$outfile"
+    rm -f "$errfile" "$outfile"
+    return "$status"
+}
+
 # The field of the current DUMP_STATE, as JSON renders it (strings unquoted, null as None).
 state() { s2 DUMP_STATE | python3 -c 'import json,sys; print(json.load(sys.stdin)[sys.argv[1]])' "$1"; }
 

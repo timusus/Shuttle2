@@ -21,7 +21,11 @@
 # within S2_DEBUG_TIMEOUT seconds (10).
 set -euo pipefail
 
-APP_ID="com.simplecityapps.shuttle.dev"
+# adb_retry: shared with support/scripts/checks/_lib.sh -- reconnects a dropped WSL-lane tunnel
+# once (support/scripts/remote-emu.sh reconnect) and retries the adb call once before failing.
+# shellcheck source=support/scripts/checks/_lib.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/checks/_lib.sh"
+
 PREFIX="com.simplecityapps.shuttle.debug."
 TIMEOUT="${S2_DEBUG_TIMEOUT:-10}"
 
@@ -30,15 +34,15 @@ action="${1:-}"
 shift
 
 if [ "$action" = "IMPORT" ]; then
-    adb shell am broadcast -f 32 -a "${PREFIX}ACTION_IMPORT_MEDIA" -p "$APP_ID" >/dev/null
+    adb_retry shell am broadcast -f 32 -a "${PREFIX}ACTION_IMPORT_MEDIA" -p "$APP_ID" >/dev/null
     echo "s2-debug: IMPORT sent (the import runs in the background; give it a few seconds)"
     exit 0
 fi
 
 # A marker line in the log buffer, so only this broadcast's reply is read back.
 marker="s2-debug-$$-$(date +%s)"
-adb shell log -t S2DebugMark "$marker"
-adb shell am broadcast -f 32 -a "${PREFIX}${action}" -p "$APP_ID" "$@" >/dev/null
+adb_retry shell log -t S2DebugMark "$marker"
+adb_retry shell am broadcast -f 32 -a "${PREFIX}${action}" -p "$APP_ID" "$@" >/dev/null
 
 deadline=$(($(date +%s) + TIMEOUT))
 while :; do

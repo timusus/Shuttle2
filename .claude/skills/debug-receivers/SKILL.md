@@ -13,7 +13,9 @@ broadcast, waits for the receiver's reply on logcat tag `S2Debug`, prints it, an
 an error or when no reply arrives within `S2_DEBUG_TIMEOUT` seconds (10). It honours
 `ANDROID_SERIAL` / `ANDROID_ADB_SERVER_PORT`, so on a WSL lane `eval "$(support/scripts/remote-emu.sh env)"`
 first. Broadcasts carry `FLAG_INCLUDE_STOPPED_PACKAGES`, so they also reach (and start) the app
-after `am force-stop`.
+after `am force-stop`. If the WSL lane's tunnel drops mid-run ("device offline"/"device not
+found"), the wrapper reconnects it once via `remote-emu.sh reconnect` and retries once before
+failing.
 
 | Action | Extras | Does |
 |---|---|---|

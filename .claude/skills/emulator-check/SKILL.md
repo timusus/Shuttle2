@@ -21,6 +21,9 @@ support/scripts/remote-emu.sh stop              # ALWAYS, even on failure
 ```
 
 - Every command in the foreground. A headless worker that backgrounds a wait ends its run (#303).
+- If a command fails with "device offline"/"device not found" mid-run, the tunnel dropped:
+  `s2-debug.sh` and `checks/*.sh` already reconnect and retry once on their own; for a raw `adb`
+  call run `support/scripts/remote-emu.sh reconnect` yourself first (no reboot, lease kept).
 - Another job building in the same worktree? Copy the APK to /tmp and `install <apk>`; never run a
   second Gradle there.
 - Lane 1 often belongs to another project; `start` picks a free lane.

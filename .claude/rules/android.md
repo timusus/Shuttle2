@@ -52,8 +52,14 @@ Commit message format, module scopes and changelog upkeep are in the root `CLAUD
 Prefer a headless Pixel 9 Pro AVD on the owner's desktop (WSL2, KVM) over a local AVD: the 32 GB
 Mac starves a local emulator whenever it's loaded (Xcode, other sessions). Launcher:
 `support/scripts/remote-emu.sh` (`status` / `start [N]` / `env` / `install [N] [apk]` /
-`serial [N]` / `reset [N]` / `ui-prep [N]` / `tap-text` / `dump-texts` / `seed-music [dir]` /
-`lockscreen on|off` / `stop [N|--all]`).
+`serial [N]` / `reconnect [N]` / `reset [N]` / `ui-prep [N]` / `tap-text` / `dump-texts` /
+`seed-music [dir]` / `lockscreen on|off` / `stop [N|--all]`).
+
+**If the tunnel drops mid-run** (adb reports "device offline" or "device not found"):
+`remote-emu.sh reconnect` re-opens the tunnel for this session's lane without rebooting the
+emulator or losing the lease; it's a fast no-op if the tunnel is already healthy. `s2-debug.sh`
+and `checks/_lib.sh` call it automatically through their shared `adb_retry` wrapper (one
+reconnect, one retry, then a clear failure) — you only need it by hand for a raw `adb` call.
 
 **Standard start state for validation:** a lane that's been reused inherits stale app data and
 media from a previous run. Before validating a UI or playback change, reset the lane and reseed
