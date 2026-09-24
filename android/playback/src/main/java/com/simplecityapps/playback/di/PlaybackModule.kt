@@ -18,6 +18,7 @@ import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
 import com.simplecityapps.playback.androidauto.MediaIdHelper
+import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.mediasession.UriSongResolver
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -119,12 +120,11 @@ class PlaybackModule {
     @Singleton
     @Provides
     fun provideBitPerfectOutput(
-        @ApplicationContext context: Context,
         audioManager: AudioManager?,
         playbackPreferenceManager: PlaybackPreferenceManager,
-        queueManager: QueueManager,
+        audioTrackMonitor: AudioTrackMonitor,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): BitPerfectOutput = BitPerfectOutput(context, audioManager, playbackPreferenceManager, queueManager, appCoroutineScope)
+    ): BitPerfectOutput = BitPerfectOutput(audioManager, playbackPreferenceManager, audioTrackMonitor, appCoroutineScope)
 
     @Singleton
     @Provides

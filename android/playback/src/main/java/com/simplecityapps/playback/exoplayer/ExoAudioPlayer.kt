@@ -9,21 +9,24 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.audio.AudioCapabilities
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
+import com.simplecityapps.playback.OutputFormat
 import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 
 /**
  * Builds [ExoAudioPlayer]s with the extension renderers (FLAC, Opus) enabled, a [DefaultAudioSink]
  * running the equalizer and ReplayGain processors, and a [StreamSniffingMediaSourceFactory] so
- * extensionless HLS streams play.
+ * extensionless HLS streams play. Each player reports the AudioTracks it opens to [audioTrackMonitor].
  */
 class ExoPlayerFactory(
     private val context: Context,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
-    private val replayGainAudioProcessor: ReplayGainAudioProcessor
+    private val replayGainAudioProcessor: ReplayGainAudioProcessor,
+    private val audioTrackMonitor: AudioTrackMonitor
 ) : PlayerFactory {
     private val renderersFactory by lazy {
         object : DefaultRenderersFactory(context) {
@@ -47,13 +50,39 @@ class ExoPlayerFactory(
     override fun create(): AudioPlayer = ExoAudioPlayer(
         ExoPlayer.Builder(context, renderersFactory)
             .setMediaSourceFactory(StreamSniffingMediaSourceFactory(DefaultDataSource.Factory(context)))
-            .build()
+            .build(),
+        audioTrackMonitor
     )
 }
 
-/** Forwards each [AudioPlayer] call to [player], mapping [PlayerItem]s to and from [MediaItem]s. */
-class ExoAudioPlayer(private val player: ExoPlayer) : AudioPlayer {
+/**
+ * Forwards each [AudioPlayer] call to [player], mapping [PlayerItem]s to and from [MediaItem]s, and reports the
+ * AudioTracks its audio sink opens to [audioTrackMonitor].
+ */
+class ExoAudioPlayer(
+    private val player: ExoPlayer,
+    private val audioTrackMonitor: AudioTrackMonitor
+) : AudioPlayer,
+    AudioTrackMonitor.Owner {
     private val exoListeners = mutableMapOf<AudioPlayer.Listener, Player.Listener>()
+
+    init {
+        player.addAnalyticsListener(
+            object : AnalyticsListener {
+                override fun onAudioTrackInitialized(
+                    eventTime: AnalyticsListener.EventTime,
+                    audioTrackConfig: AudioSink.AudioTrackConfig
+                ) {
+                    audioTrackMonitor.onAudioTrackInitialized(this@ExoAudioPlayer, audioTrackConfig.toOutputFormat())
+                }
+            }
+        )
+    }
+
+    /** A seek to where it's playing: the sink releases its AudioTrack on each flush and opens a new one. */
+    override fun reopenAudioTrack() {
+        player.seekTo(player.currentPosition)
+    }
 
     override var playWhenReady: Boolean
         get() = player.playWhenReady
@@ -177,9 +206,17 @@ class ExoAudioPlayer(private val player: ExoPlayer) : AudioPlayer {
     }
 
     override fun release() {
+        audioTrackMonitor.onReleased(this)
         player.release()
     }
 }
+
+/** The channel config is an `AudioFormat.CHANNEL_OUT_*` mask, one bit per channel. */
+internal fun AudioSink.AudioTrackConfig.toOutputFormat() = OutputFormat(
+    sampleRate = sampleRate,
+    channelCount = Integer.bitCount(channelConfig),
+    encoding = encoding
+)
 
 /**
  * The [MediaItem] ExoPlayer queues for this item. Its tag carries the [ReplayGain], which

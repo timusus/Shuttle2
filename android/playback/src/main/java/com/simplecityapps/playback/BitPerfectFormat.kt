@@ -1,7 +1,5 @@
 package com.simplecityapps.playback
 
-import android.media.AudioFormat
-
 /** A mixer configuration a USB audio device offers (an [android.media.AudioMixerAttributes]), reduced to what matching needs. */
 data class MixerFormat(
     val sampleRate: Int,
@@ -10,27 +8,15 @@ data class MixerFormat(
     val isBitPerfect: Boolean
 )
 
-/** The PCM stream the player writes to its AudioTrack for a song. */
+/**
+ * The PCM stream the player writes to its AudioTrack, as the audio sink reports it. With float output off, the
+ * sink converts every bit depth to 16-bit after the app's processors, so [encoding] is 16-bit PCM.
+ */
 data class OutputFormat(
     val sampleRate: Int,
     val channelCount: Int,
     val encoding: Int
-) {
-    companion object {
-        /**
-         * ExoPlayer's audio sink converts decoded PCM of any bit depth to 16-bit before the app's processors,
-         * since float output is off, so the AudioTrack is always 16-bit at the source's sample rate and
-         * channel count. Null when either is unknown.
-         */
-        fun of(
-            sampleRate: Int?,
-            channelCount: Int?
-        ): OutputFormat? {
-            if (sampleRate == null || sampleRate <= 0 || channelCount == null || channelCount <= 0) return null
-            return OutputFormat(sampleRate, channelCount, AudioFormat.ENCODING_PCM_16BIT)
-        }
-    }
-}
+)
 
 /**
  * The bit-perfect mixer format that carries [output] unchanged, or null when the device offers none. Only an

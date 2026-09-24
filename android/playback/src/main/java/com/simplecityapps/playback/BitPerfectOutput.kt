@@ -1,22 +1,16 @@
 package com.simplecityapps.playback
 
-import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.media.AudioMixerAttributes
-import android.media.MediaExtractor
-import android.media.MediaFormat
-import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.RequiresApi
+import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.shuttle.model.Song
-import java.io.File
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,28 +22,25 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
- * Opt-in bit-perfect output to USB DACs on Android 14+ (API 34): while the preference is on and a USB audio
- * device is connected, asks the platform to open that device's output with a bit-perfect mixer in the
- * current song's format, so it reaches the DAC without being resampled or mixed with other sounds.
+ * Opt-in direct output to USB DACs on Android 14+ (API 34): while the preference is on and a USB audio device is
+ * connected, asks the platform to open that device's output with a bit-perfect mixer in the format the player
+ * writes, so the stream reaches the DAC at its own sample rate without being resampled or mixed with other
+ * sounds.
  *
- * Follows the current song from [QueueOperations.queueStateFlow], so the mixer format changes with it, and
- * clears the preference when it's turned off, the device goes away, or the song's format isn't one the device
- * offers bit-perfect (it then plays through the normal mixer). A no-op below API 34, while the preference is
- * off, and without a USB device. Remote songs are left alone, since a server may transcode them to a format
- * other than the one their metadata describes.
+ * Follows the format of the AudioTrack the player actually opened, from [AudioTrackMonitor], and when the
+ * preferred mixer changes has the player open a new AudioTrack, since one keeps the output it was opened on.
+ * Clears the preference when it's turned off, the device goes away, or the device offers no bit-perfect mixer
+ * in the player's format (it then plays through the normal mixer). A no-op below API 34, while the preference
+ * is off, and without a USB device.
  */
 class BitPerfectOutput(
-    private val context: Context,
     private val audioManager: AudioManager?,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
-    private val queueManager: QueueOperations,
+    private val audioTrackMonitor: AudioTrackMonitor,
     appCoroutineScope: CoroutineScope
 ) {
     /** The device and mixer attributes last set, so they can be cleared. Only touched on the main thread. */
@@ -72,20 +63,21 @@ class BitPerfectOutput(
             if (!enabled) {
                 flowOf(null)
             } else {
-                combine(
-                    usbOutputDevices(audioManager),
-                    queueManager.queueStateFlow.map { queueState -> queueState.currentItem?.song }.distinctUntilChangedBy { song -> song?.id to song?.path }
-                ) { devices, song -> devices.firstOrNull() to song }
-                    .mapLatest { (device, song) ->
-                        if (device == null || song == null || song.mediaProvider.remote) {
-                            null
-                        } else {
-                            outputFormatOf(song)?.let { output -> bitPerfectAttributes(audioManager, device, output) }?.let { attributes -> device to attributes }
-                        }
+                combine(usbOutputDevices(audioManager), audioTrackMonitor.format) { devices, output ->
+                    val device = devices.firstOrNull()
+                    if (device == null || output == null) {
+                        null
+                    } else {
+                        bitPerfectAttributes(audioManager, device, output)?.let { attributes -> device to attributes }
                     }
+                }
             }
         }
 
+    /**
+     * Prefers [target]'s mixer, or none, and has the player open a new AudioTrack when that changes what it
+     * plays through.
+     */
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     private fun apply(
         audioManager: AudioManager,
@@ -94,19 +86,22 @@ class BitPerfectOutput(
         val current = applied
         if (current?.first?.id == target?.first?.id && current?.second == target?.second) return
 
-        if (current != null && current.first.id != target?.first?.id) {
-            try {
-                audioManager.clearPreferredMixerAttributes(MEDIA_ATTRIBUTES, current.first)
-                Timber.i("Bit-perfect output cleared for ${current.first.productName}")
-            } catch (e: Exception) {
-                // The device may already be gone, which clears it anyway
-                Timber.w(e, "Failed to clear preferred mixer attributes")
-            }
+        applied = target?.takeIf { (device, attributes) -> setPreferred(audioManager, device, attributes) }
+        if (current != null && current.first.id != applied?.first?.id) {
+            clearPreferred(audioManager, current.first)
         }
-        applied = null
 
-        target ?: return
-        val (device, attributes) = target
+        if (applied != current) {
+            audioTrackMonitor.reopenAudioTrack()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private fun setPreferred(
+        audioManager: AudioManager,
+        device: AudioDeviceInfo,
+        attributes: AudioMixerAttributes
+    ): Boolean {
         val success =
             try {
                 audioManager.setPreferredMixerAttributes(MEDIA_ATTRIBUTES, device, attributes)
@@ -115,10 +110,24 @@ class BitPerfectOutput(
                 false
             }
         if (success) {
-            applied = target
             Timber.i("Bit-perfect output set for ${device.productName}: ${attributes.format}")
         } else {
             Timber.w("Bit-perfect output refused for ${device.productName}: ${attributes.format}")
+        }
+        return success
+    }
+
+    @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    private fun clearPreferred(
+        audioManager: AudioManager,
+        device: AudioDeviceInfo
+    ) {
+        try {
+            audioManager.clearPreferredMixerAttributes(MEDIA_ATTRIBUTES, device)
+            Timber.i("Bit-perfect output cleared for ${device.productName}")
+        } catch (e: Exception) {
+            // The device may already be gone, which clears it anyway
+            Timber.w(e, "Failed to clear preferred mixer attributes")
         }
     }
 
@@ -137,28 +146,6 @@ class BitPerfectOutput(
         }
         return supported[formats.indexOf(selected)]
     }
-
-    /** The song's output format from its metadata, or read from the file when the library doesn't have it. */
-    private suspend fun outputFormatOf(song: Song): OutputFormat? = OutputFormat.of(song.sampleRate, song.channelCount)
-        ?: withContext(Dispatchers.IO) {
-            val extractor = MediaExtractor()
-            try {
-                if (song.path.startsWith("/")) {
-                    extractor.setDataSource(File(song.path).path)
-                } else {
-                    extractor.setDataSource(context, Uri.parse(song.path), null)
-                }
-                (0 until extractor.trackCount)
-                    .map { index -> extractor.getTrackFormat(index) }
-                    .firstOrNull { format -> format.getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
-                    ?.let { format -> OutputFormat.of(format.getInteger(MediaFormat.KEY_SAMPLE_RATE), format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)) }
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to read the audio format of ${song.path}")
-                null
-            } finally {
-                extractor.release()
-            }
-        }
 
     /** The connected USB audio outputs, updated as devices come and go. */
     private fun usbOutputDevices(audioManager: AudioManager): Flow<List<AudioDeviceInfo>> = callbackFlow {

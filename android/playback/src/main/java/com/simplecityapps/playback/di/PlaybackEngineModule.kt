@@ -14,6 +14,7 @@ import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
+import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
@@ -70,12 +71,17 @@ class PlaybackEngineModule {
         )
     )
 
+    @Singleton
+    @Provides
+    fun provideAudioTrackMonitor(): AudioTrackMonitor = AudioTrackMonitor()
+
     @Provides
     fun providePlayerFactory(
         @ApplicationContext context: Context,
         equalizerAudioProcessor: EqualizerAudioProcessor,
-        replayGainAudioProcessor: ReplayGainAudioProcessor
-    ): PlayerFactory = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor)
+        replayGainAudioProcessor: ReplayGainAudioProcessor,
+        audioTrackMonitor: AudioTrackMonitor
+    ): PlayerFactory = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor)
 
     // One instance: PlaybackManager starts on it and CastSessionManager switches back to it when a
     // Cast session ends, so its settings stay with a single owner.

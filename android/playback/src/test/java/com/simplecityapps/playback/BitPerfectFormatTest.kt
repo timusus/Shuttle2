@@ -15,19 +15,6 @@ class BitPerfectFormatTest {
     ) = MixerFormat(sampleRate, channelCount, encoding, isBitPerfect = true)
 
     @Test
-    fun `the output format is 16-bit at the source's rate and channel count`() {
-        OutputFormat.of(96_000, 2) shouldBe OutputFormat(96_000, 2, AudioFormat.ENCODING_PCM_16BIT)
-    }
-
-    @Test
-    fun `the output format is unknown without a sample rate or channel count`() {
-        OutputFormat.of(null, 2) shouldBe null
-        OutputFormat.of(44_100, null) shouldBe null
-        OutputFormat.of(0, 2) shouldBe null
-        OutputFormat.of(44_100, 0) shouldBe null
-    }
-
-    @Test
     fun `selects the bit-perfect format matching the output exactly`() {
         val candidates = listOf(bitPerfect(48_000), bitPerfect(44_100), bitPerfect(96_000))
 
