@@ -5,9 +5,11 @@ description: Verify an S2 change on the WSL desktop emulator in minutes — buil
 
 # Emulator check
 
-Scripted, repeatable verification on a `remote-emu.sh` lane. Drive state with adb broadcasts, tap
-only when the UI is the subject. A full run of the existing checks takes about 95 s; a UI-driven
-worker used to take 40+ minutes for the same ground.
+Scripted, repeatable verification on a `remote-emu.sh` lane. Drive state with adb broadcasts; for
+anything the UI must show or be tapped, write or reuse a Maestro flow — not ad-hoc `tap-text`,
+uiautomator dumps or screenshot-and-look loops, which cost many turns and don't survive for the
+next change. A full run of the existing checks takes about 95 s; a UI-driven worker used to take 40+
+minutes for the same ground.
 
 ## Run it
 
