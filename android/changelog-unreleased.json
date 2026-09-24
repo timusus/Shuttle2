@@ -47,7 +47,7 @@
     },
     {
       "text": "Playlists imported from an .m3u file now stay in sync with that file when you add, remove or reorder songs",
-      "commits": ["bfb70826"]
+      "commits": ["234486a7"]
     }
   ],
   "improvements": [
