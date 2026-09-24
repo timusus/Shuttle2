@@ -253,12 +253,17 @@ fi
 # The taglib fixture lives outside REMOTE_ROOT (a folder the Shuttle/TagLib provider's SAF picker
 # selects directly) and is never MediaStore-scanned: it's meant to be read by the TagLib provider
 # only, so scanning it into MediaStore too would double-import each file as two different Songs.
+# A .nomedia marker keeps Android's own background media scanner (which walks standard media
+# directories like Music/ independently of our explicit scan_file calls) from indexing it anyway.
 if [ "$FIXTURE" = "taglib" ]; then
     REMOTE_DIR="/sdcard/Music/taglib-seed"
 else
     REMOTE_DIR="${REMOTE_ROOT}/${FIXTURE}"
 fi
 radb shell mkdir -p "$REMOTE_DIR"
+if [ "$FIXTURE" = "taglib" ]; then
+    radb shell "touch ${REMOTE_DIR}/.nomedia"
+fi
 file_count=0
 for f in "$FIXTURE_DIR"/*; do
     radb push "$f" "${REMOTE_DIR}/$(basename "$f")" >/dev/null
