@@ -6,14 +6,6 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 
 ## Playback refactor (#250), S0–S7 and the callbacks → flows work
 
-### Cast
-- [ ] While playing, switch local → Cast. Playback continues on the Cast device from the same position.
-- [ ] While playing on Cast, switch back to local. Playback continues locally from the same position.
-- [ ] Toggle local → Cast → local quickly. It ends up on local and playing, from the right position, with no double audio.
-- [ ] Skip to the next track and switch to Cast at once. The new track starts at 0:00 on Cast, not at the old track's position.
-- [ ] While paused, switch local → Cast. It stays paused on Cast at the same position.
-- [ ] Duck (e.g. a navigation prompt) while local, then switch to Cast and back. Volume is normal and nothing is stuck ducked.
-
 ### Position and restore
 - [ ] Pause mid-track, force-stop the app, reopen it. It resumes at the paused position.
 - [ ] Let a track finish into the next one, force-stop, reopen. It resumes on the new track near 0:00.
@@ -80,6 +72,28 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 ### Playback reporting (#191)
 - [ ] Play a Jellyfin song, then an Emby song. Each server's dashboard shows it as now playing with a moving position, and clears it on pause/stop.
 - [ ] Play a Plex song to the end. It shows in Plex's now playing and is marked played afterwards.
+
+## Cast through Media3's Cast player (#345)
+
+The Cast player now plays the queue on the receiver itself: a window of up to 100 items around the current one, in
+play order. Coming back to the phone always lands paused, at the receiver's position.
+
+- [ ] Cast a local file while playing. It carries on on the receiver from the same position, with title, artist, album and artwork showing.
+- [ ] While paused, switch to Cast. It stays paused on the receiver at the same position.
+- [ ] Cast a Jellyfin song (then an Emby and a Plex one). It plays on the receiver, seeks, and moves on to the next song.
+- [ ] Cast a Jellyfin song with transcoding forced (a low streaming bitrate). It still plays.
+- [ ] Turn shuffle on while casting, then skip a few times. The receiver plays the songs S2's queue shows as next, in that order; turning shuffle off goes back to queue order.
+- [ ] Cast a queue of 1,000+ songs from the middle. It starts playing within a few seconds; skip forward past 90 songs and back; the receiver keeps up, and skipping back 10 still works.
+- [ ] Add, remove and move songs in the queue while casting. The receiver's next songs follow; the song playing carries on (a brief restart of it is known).
+- [ ] Mid-track, switch local → Cast, then Cast → local. Each lands on the same song within a second or two of the position; on the phone it's paused.
+- [ ] Skip to the next track and switch to Cast at once. The new track starts at 0:00 on the receiver.
+- [ ] Toggle local → Cast → local quickly. It ends up paused on the phone at the right position, with no double audio.
+- [ ] Let a song end on the receiver. The next one plays, and S2's now playing, notification and lock screen follow it.
+- [ ] While casting, the notification and lock screen controls (play, pause, skip, seek) control the receiver, and there's only one S2 media notification.
+- [ ] Disconnect by turning the receiver off or leaving Wi-Fi mid-track. The phone comes back paused at about the last position, and force-stopping and reopening S2 resumes there.
+- [ ] With a system EQ app attached, switch to Cast. The EQ app detaches; switch back and it reattaches (RS-21 below).
+- [ ] Duck (e.g. a navigation prompt) while local, then switch to Cast and back. Volume is normal and nothing is stuck ducked.
+- [ ] Force-stop S2 while casting, reopen it, and reconnect. Playback on the receiver picks up S2's queue (it reloads the current song).
 
 ## Behaviour spec, device-only rules
 
