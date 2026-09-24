@@ -1,0 +1,21 @@
+# The media notification's play button, and its shuffle and repeat buttons, tapped in the expanded
+# notification shade; the second half of notification-controls.yaml. Setup
+# (support/scripts/checks/notification-controls.sh): paused at the start of "Playback Two", shuffle
+# and repeat off, the shade expanded. Pause follows play within one step, so the song can't end
+# first; shuffle and repeat are tapped paused, where the screen settles.
+appId: com.simplecityapps.shuttle.dev
+---
+- assertVisible: "Playback Two"
+- tapOn:
+    text: "Play"
+    waitToSettleTimeoutMs: 500
+- assertVisible: "Pause"
+- tapOn:
+    text: "Pause"
+    waitToSettleTimeoutMs: 500
+- assertVisible: "Play"
+- tapOn: "Shuffle off"
+- assertVisible: "Shuffle on"
+- tapOn: "Repeat off"
+- assertVisible: "Repeat all"
+- takeScreenshot: a-notification-shuffle-repeat-on

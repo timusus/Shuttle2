@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The media notification's controls (support/maestro/notification-controls.yaml), tapped in the
+# The media notification's controls (support/maestro/notification-controls*.yaml), tapped in the
 # expanded shade: it shows "Playback Two" by "Playback Artist"; previous, pause, play and next
 # work from it; shuffle and repeat toggle there and the app follows. Then the other way round:
 # shuffle and repeat set in the app show on the notification's buttons.
@@ -18,9 +18,17 @@ wait_for 5 "s['state'] == 'Paused' and s['title'] == 'Playback Two' and s['posit
 adb_retry shell cmd statusbar expand-notifications >/dev/null
 out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
 mkdir -p "$out"
-MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-    "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
-    "${CHECKS_ROOT}/support/maestro/notification-controls.yaml" || fail "the Maestro flow failed (output in ${out})"
+run_flow() {
+    MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
+        "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
+        "${CHECKS_ROOT}/support/maestro/$1.yaml" || fail "the Maestro flow $1 failed (output in ${out})"
+}
+run_flow notification-controls
+wait_for 5 "s['state'] == 'Paused' and s['title'] == 'Playback Two'"
+# Back to 0:00, so the song can't end while play is being tapped.
+s2 SEEK --el ms 0 >/dev/null
+wait_for 5 "s['state'] == 'Paused' and s['title'] == 'Playback Two' and s['positionMs'] < 1000"
+run_flow notification-controls-play
 wait_for 5 "s['state'] == 'Paused' and s['title'] == 'Playback Two' and s['shuffle'] == 'On' and s['repeat'] == 'All'"
 
 # Set in the app, shown on the notification.

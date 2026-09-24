@@ -6,8 +6,10 @@
 #
 # Previous comes first, at 0:00, so it goes back a song rather than restarting this one (past 2 s it
 # restarts), and like the app's own previous button it plays. The taps don't wait for the screen to
-# settle: while music plays the seek bar never does, and the default wait runs to ~40 s a tap. The
-# wrapper then checks the app's state matches.
+# settle: while music plays the seek bar never does. Even so, the step after a song starts playing
+# takes up to ~35 s, so no song plays for more than one such step here (the fixture's are 59 s):
+# play is tapped in notification-controls-play.yaml, after the wrapper has gone back to 0:00.
+# The wrapper then checks the app's state matches.
 appId: com.simplecityapps.shuttle.dev
 ---
 - assertVisible: "Playback Two"
@@ -23,19 +25,11 @@ appId: com.simplecityapps.shuttle.dev
     waitToSettleTimeoutMs: 500
 - assertVisible: "Play"
 - tapOn:
-    text: "Play"
-    waitToSettleTimeoutMs: 500
-- assertVisible: "Pause"
-- tapOn:
     text: "Next track"
     waitToSettleTimeoutMs: 500
 - assertVisible: "Playback Two"
+- assertVisible: "Pause"
 - tapOn:
     text: "Pause"
     waitToSettleTimeoutMs: 500
 - assertVisible: "Play"
-- tapOn: "Shuffle off"
-- assertVisible: "Shuffle on"
-- tapOn: "Repeat off"
-- assertVisible: "Repeat all"
-- takeScreenshot: a-notification-shuffle-repeat-on
