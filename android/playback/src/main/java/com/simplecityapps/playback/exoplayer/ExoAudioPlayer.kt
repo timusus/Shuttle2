@@ -1,6 +1,7 @@
 package com.simplecityapps.playback.exoplayer
 
 import android.content.Context
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.PlaybackParameters
@@ -83,10 +84,14 @@ class ExoAudioPlayer(
      * A seek: the sink releases its AudioTrack on each flush and opens a new one. ExoPlayer ignores a seek to the
      * millisecond it's already at while ready or buffering, so this seeks 1 ms ahead. Ahead rather than behind:
      * while playing, [ExoPlayer.getCurrentPosition] extrapolates past the position the playback thread last
-     * recorded, so a seek to it, or to 1 ms before it, can land on that position and be dropped.
+     * recorded, so a seek to it, or to 1 ms before it, can land on that position and be dropped. At the last
+     * millisecond it seeks 1 ms behind instead, since a seek to the duration ends the item.
      */
     override fun reopenAudioTrack() {
-        player.seekTo(player.currentPosition + 1)
+        val position = player.currentPosition
+        val duration = player.duration
+        val atEnd = duration != C.TIME_UNSET && position + 1 >= duration
+        player.seekTo(if (atEnd) (position - 1).coerceAtLeast(0) else position + 1)
     }
 
     override var playWhenReady: Boolean
