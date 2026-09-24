@@ -7,6 +7,7 @@ import androidx.media3.common.audio.AudioProcessor.UnhandledAudioFormatException
 import androidx.media3.common.audio.BaseAudioProcessor
 import com.simplecityapps.playback.dsp.equalizer.BandProcessor
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
 import com.simplecityapps.playback.dsp.equalizer.toNyquistBand
 import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
@@ -21,17 +22,47 @@ private const val ANALYSIS_MIN_FREQUENCY = 20.0
 /** Number of log-spaced points between [ANALYSIS_MIN_FREQUENCY] and Nyquist used to find the peak. */
 private const val ANALYSIS_POINT_COUNT = 512
 
+/**
+ * Applies the selected [preset] to 16 and 24 bit PCM.
+ *
+ * [enabled] and [preset] are set on the main thread and read on the playback thread. Each change
+ * publishes one immutable [Settings] snapshot through a volatile field, so the audio thread sees a
+ * change whole, and picks it up from its next buffer. The band filters are built from the snapshot
+ * on the playback thread and only ever touched there.
+ */
 class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
-    var bandProcessors = emptyList<BandProcessor>()
+    /** What the audio thread applies. [bands] are copies: the custom preset's bands are edited in place. */
+    private class Settings(
+        val enabled: Boolean,
+        val bands: List<EqualizerBand>
+    )
 
+    @Volatile
+    private var settings = Settings(enabled, Equalizer.Presets.flat.snapshot())
+
+    /** Set on the main thread. The band gains are captured when it's set; edits made after that apply once it's set again. */
     var preset: Equalizer.Presets.Preset = Equalizer.Presets.flat
         set(value) {
             field = value
-            updateBandProcessors()
+            settings = Settings(settings.enabled, value.snapshot())
         }
 
     // Maximum allowed gain/cut for each band
     val maxBandGain = 12
+
+    var enabled: Boolean
+        get() = settings.enabled
+        set(value) {
+            settings = Settings(value, settings.bands)
+
+            Timber.v("Equalizer enabled: $value")
+        }
+
+    /** The filters for [filteredBands] at the current output format. Playback thread only. */
+    private var bandProcessors = emptyList<BandProcessor>()
+
+    /** The bands [bandProcessors] were built from, or null when they need building. Playback thread only. */
+    private var filteredBands: List<EqualizerBand>? = null
 
     /**
      * Linear pre-attenuation applied to the filtered signal, equal to the inverse of the peak
@@ -44,32 +75,27 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
      * the measured peak means no steady tone can come out louder than it went in, so the
      * ReplayGain stage that follows keeps the headroom it started with.
      *
-     * Recomputed only when the preset or the audio format changes - never per buffer.
+     * Recomputed only when the preset or the audio format changes - never per buffer. Playback
+     * thread only.
      */
     internal var attenuation: Float = 1f
         private set
 
-    var enabled: Boolean = enabled
-        set(value) {
-            field = value
-
-            Timber.v("Equalizer enabled: $value")
-        }
-
-    private fun updateBandProcessors() {
+    private fun updateBandProcessors(bands: List<EqualizerBand>) {
         if (outputAudioFormat.channelCount <= 0) {
             return
         }
 
+        filteredBands = bands
         bandProcessors =
-            preset.bands.map { band ->
+            bands.map { band ->
                 BandProcessor(
                     band.toNyquistBand(),
                     sampleRate = outputAudioFormat.sampleRate,
                     channelCount = outputAudioFormat.channelCount,
                     referenceGain = 0.0
                 )
-            }.toList()
+            }
 
         attenuation = calculateAttenuation(outputAudioFormat.sampleRate)
     }
@@ -109,20 +135,31 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
             throw UnhandledAudioFormatException(inputAudioFormat)
         }
 
-        updateBandProcessors()
-
         return inputAudioFormat
     }
 
+    /** The output format takes effect here, so the filters are rebuilt for it (which also clears their history). */
     override fun onFlush(streamMetadata: AudioProcessor.StreamMetadata) {
         super.onFlush(streamMetadata)
 
         Timber.v("onFlush() called")
-        updateBandProcessors()
+        updateBandProcessors(settings.bands)
+    }
+
+    override fun onReset() {
+        super.onReset()
+        filteredBands = null
+        bandProcessors = emptyList()
+        attenuation = 1f
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
-        if (enabled) {
+        val settings = settings
+        if (settings.enabled) {
+            if (settings.bands !== filteredBands) {
+                updateBandProcessors(settings.bands)
+            }
+            val bandProcessors = bandProcessors
             val size = inputBuffer.remaining()
             val buffer = replaceOutputBuffer(size)
             val preAttenuation = attenuation
@@ -177,3 +214,5 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
         }
     }
 }
+
+private fun Equalizer.Presets.Preset.snapshot(): List<EqualizerBand> = bands.map { band -> EqualizerBand(band.centerFrequency, band.gain) }

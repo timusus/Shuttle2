@@ -39,10 +39,7 @@ class PlaybackEngineModule {
     @Singleton
     @Provides
     fun provideEqualizer(playbackPreferenceManager: PlaybackPreferenceManager): EqualizerAudioProcessor = EqualizerAudioProcessor(playbackPreferenceManager.equalizerEnabled).apply {
-        // Restore current eq
-        preset = playbackPreferenceManager.preset
-
-        // Restore custom eq bands
+        // Restore custom eq bands first: setting the preset captures its band gains
         playbackPreferenceManager.customPresetBands?.forEach { restoredBand ->
             Equalizer.Presets.custom.bands.forEach { customBand ->
                 if (customBand.centerFrequency == restoredBand.centerFrequency) {
@@ -50,6 +47,9 @@ class PlaybackEngineModule {
                 }
             }
         }
+
+        // Restore current eq
+        preset = playbackPreferenceManager.preset
     }
 
     @Singleton

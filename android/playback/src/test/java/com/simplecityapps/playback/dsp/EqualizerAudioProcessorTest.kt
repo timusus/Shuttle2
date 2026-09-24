@@ -9,6 +9,7 @@ import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.comparables.shouldBeLessThanOrEqualTo
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.PI
@@ -127,6 +128,43 @@ class EqualizerAudioProcessorTest {
 
         equalizer.attenuation shouldBe 1f
         output.toList() shouldBe input.toList()
+    }
+
+    @Test
+    fun `a preset set during playback applies from the next buffer`() {
+        val equalizer = equalizerWithAllBandsAt(12.0, sampleRate = 44100)
+
+        equalizer.preset = Equalizer.Presets.flat
+        val input = whiteNoise(44100)
+        val output = equalizer.process(input)
+
+        equalizer.attenuation shouldBe 1f
+        output.toList() shouldBe input.toList()
+    }
+
+    @Test
+    fun `custom band edits apply only once the preset is set again`() {
+        val equalizer = equalizerWithAllBandsAt(0.0, sampleRate = 44100)
+        val input = whiteNoise(44100)
+
+        // The presenter edits the custom preset's bands in place, then sets the preset.
+        Equalizer.Presets.custom.bands.forEach { band -> band.gain = 12.0 }
+        equalizer.process(input).toList() shouldBe input.toList()
+
+        equalizer.preset = Equalizer.Presets.custom
+        equalizer.process(input).toList() shouldNotBe input.toList()
+        equalizer.attenuation shouldBeLessThan 1f
+    }
+
+    @Test
+    fun `enabling during playback applies from the next buffer`() {
+        val equalizer = equalizerWithAllBandsAt(12.0, sampleRate = 44100).also { processor -> processor.enabled = false }
+        val input = whiteNoise(44100)
+        equalizer.process(input).toList() shouldBe input.toList()
+
+        equalizer.enabled = true
+
+        equalizer.process(input).toList() shouldNotBe input.toList()
     }
 
     @Test
