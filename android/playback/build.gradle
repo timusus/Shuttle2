@@ -5,7 +5,7 @@ apply plugin: 'dagger.hilt.android.plugin'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
-    compileSdk 37
+    compileSdk = 37
 
     defaultConfig {
         minSdkVersion 23
@@ -13,8 +13,8 @@ android {
         consumerProguardFiles("consumer-rules.pro")
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     namespace = 'com.simplecityapps.playback'
 

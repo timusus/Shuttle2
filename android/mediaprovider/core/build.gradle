@@ -6,13 +6,13 @@ apply plugin: 'dagger.hilt.android.plugin'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
-    compileSdk 37
+    compileSdk = 37
 
     defaultConfig {
         minSdkVersion 23
         targetSdkVersion 36
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
         consumerProguardFiles "consumer-rules.pro"
     }

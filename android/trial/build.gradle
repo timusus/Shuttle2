@@ -6,18 +6,18 @@ plugins {
 }
 
 android {
-    compileSdk 37
+    compileSdk = 37
 
     defaultConfig {
         minSdkVersion 23
         targetSdkVersion 36
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     namespace = 'com.simplecityapps.trial'
 
