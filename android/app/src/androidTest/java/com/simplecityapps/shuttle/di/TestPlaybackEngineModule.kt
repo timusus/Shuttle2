@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.ProgressTicker
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.di.PlaybackEngineModule
@@ -91,4 +92,7 @@ class TestPlaybackEngineModule {
         playback,
         audioManager
     )
+
+    @Provides
+    fun providePlaybackOperations(playbackManager: PlaybackManager): PlaybackOperations = playbackManager
 }
