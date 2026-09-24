@@ -97,6 +97,8 @@ class CastSpecTest {
         harness.idle()
 
         receiver.songIds shouldBe (1L..5L).toList()
+        receiver.sentItems.map { it.media?.contentUrl } shouldBe (1L..5L).map { "http://10.0.0.2:5000/${streams.key}/songs/$it/audio" }
+        receiver.sentItems.map { it.media?.contentType }.distinct() shouldBe listOf("audio/wav")
         receiver.currentMediaItemIndex shouldBe 2
         receiver.currentPosition shouldBe 1_000L
         receiver.playWhenReady shouldBe true
