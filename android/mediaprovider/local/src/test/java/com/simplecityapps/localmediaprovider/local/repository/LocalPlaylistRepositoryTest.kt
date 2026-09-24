@@ -32,7 +32,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `songs not in the library are left out of playlist writes`() = runTest {
-        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao())
+        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
         val (first, second) = insertSongs("First", "Second")
         val openedFile = first.copy(id = -5, path = "content://downloads/1")
 
@@ -47,7 +47,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `a playlist whose songs can't be added isn't created`() = runTest {
-        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao())
+        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
         val (song) = insertSongs("Song")
 
         shouldThrow<SQLiteConstraintException> {
