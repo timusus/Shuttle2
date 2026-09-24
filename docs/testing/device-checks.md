@@ -7,7 +7,7 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 ## Playback refactor (#250), S0–S7 and the callbacks → flows work
 
 ### Position and restore
-- [ ] Pause mid-track, force-stop the app, reopen it. It resumes at the paused position.
+- [x] Pause mid-track, force-stop the app, reopen it. It resumes at the paused position. — automated: `emu-verify.sh --check restore-position`
 - [ ] Let a track finish into the next one, force-stop, reopen. It resumes on the new track near 0:00.
 - [ ] Skip and pause right away, before the new track is audible, then force-stop and reopen. It resumes on the new track at 0:00.
 - [ ] Podcasts and audiobooks resume about 5 s before where they stopped.
@@ -17,8 +17,8 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] A sleep timer with "play to end" lets the current track finish, then pauses.
 
 ### Repeat, shuffle and speed
-- [ ] Repeat one, repeat all and off each behave correctly at the end of a track and the end of the queue.
-- [ ] Turn shuffle on mid-queue. The next track comes from the shuffled order.
+- [x] Repeat one, repeat all and off each behave correctly at the end of a track and the end of the queue. — automated: `emu-verify.sh --check repeat-modes`
+- [x] Turn shuffle on mid-queue. The next track comes from the shuffled order. — automated: `emu-verify.sh --check queue-shuffle`
 - [ ] Set playback speed ≠ 1.0×, then change repeat mode. The speed doesn't reset.
 
 ### Service and notification
