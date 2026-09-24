@@ -58,7 +58,7 @@ class LocalArtworkVersionTest {
         File(albumFolder, "notes.txt").writeText("ccc")
         val song = File(albumFolder, "song.mp3").apply { writeText("dddd") }
 
-        FolderImageReader().imagesNear(song.path).map { image -> image.name to image.size } shouldContainExactlyInAnyOrder
+        FolderImageReader(sharedStorageListsImages = true).imagesNear(song.path).map { image -> image.name to image.size } shouldContainExactlyInAnyOrder
             listOf("cover.JPG" to 2L, "artist.png" to 1L)
     }
 
@@ -70,6 +70,32 @@ class LocalArtworkVersionTest {
             setLastModified(1_234_000)
         }
 
-        FolderImageReader().imagesNear(File(folder, "song.mp3").path).single().lastModified shouldBe 1_234_000
+        FolderImageReader(sharedStorageListsImages = true).imagesNear(File(folder, "song.mp3").path).single().lastModified shouldBe 1_234_000
+    }
+
+    @Test
+    fun `without image listings, the reader reports the song's folder itself`() {
+        val artistFolder = temporaryFolder.newFolder("Artist")
+        val albumFolder = File(artistFolder, "Album").apply { mkdirs() }
+        File(artistFolder, "artist.png").writeText("a")
+        File(albumFolder, "cover.jpg").writeText("bb")
+        albumFolder.setLastModified(5_000)
+
+        FolderImageReader(sharedStorageListsImages = false).imagesNear(File(albumFolder, "song.mp3").path) shouldBe
+            listOf(FolderImage(name = "Album/", lastModified = 5_000, size = 0))
+    }
+
+    @Test
+    fun `without image listings, the version changes when a file lands in the song's folder`() {
+        val folder = temporaryFolder.newFolder("Album")
+        val song = File(folder, "song.mp3").path
+        folder.setLastModified(5_000)
+        val before = localArtworkVersion(1_000, FolderImageReader(sharedStorageListsImages = false).imagesNear(song))
+
+        File(folder, "cover.jpg").writeText("a")
+        folder.setLastModified(6_000)
+        val after = localArtworkVersion(1_000, FolderImageReader(sharedStorageListsImages = false).imagesNear(song))
+
+        before shouldNotBe after
     }
 }

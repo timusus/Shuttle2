@@ -3,6 +3,7 @@ package au.com.simplecityapps.shuttle.imageloading.glide.module
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.ConnectivityManager
+import android.os.Build
 import android.util.Log
 import androidx.annotation.Keep
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DirectoryAlbumArtistLocalArtworkModelLoader
@@ -10,6 +11,8 @@ import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DirectoryAl
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DirectorySongLocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkProvider
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.MediaStoreAlbumLocalArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.MediaStoreSongLocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibAlbumLocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibSongLocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.provider.RemoteArtworkAlbumArtistModelLoader
@@ -108,9 +111,13 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         // Local
 
+        // Android 13+ grants a music player only READ_MEDIA_AUDIO, so listing a shared storage folder leaves its images out
+        val sharedStorageListsImages = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+
         val directorySongLocalArtworkModelLoaderFactory =
             DirectorySongLocalArtworkModelLoader.Factory(
-                context = context
+                context = context,
+                sharedStorageListsImages = sharedStorageListsImages
             )
         registry.append(
             Song::class.java,
@@ -132,7 +139,8 @@ class ImageLoaderGlideModule : AppGlideModule() {
         val directoryAlbumLocalArtworkModelLoaderFactory =
             DirectoryAlbumLocalArtworkModelLoader.Factory(
                 context = context,
-                songRepository = entryPoint.provideSongRepository()
+                songRepository = entryPoint.provideSongRepository(),
+                sharedStorageListsImages = sharedStorageListsImages
             )
         registry.append(
             Album::class.java,
@@ -143,7 +151,8 @@ class ImageLoaderGlideModule : AppGlideModule() {
         val directoryAlbumArtistLocalArtworkModelLoaderFactory =
             DirectoryAlbumArtistLocalArtworkModelLoader.Factory(
                 context = context,
-                songRepository = entryPoint.provideSongRepository()
+                songRepository = entryPoint.provideSongRepository(),
+                sharedStorageListsImages = sharedStorageListsImages
             )
         registry.append(
             AlbumArtist::class.java,
@@ -162,6 +171,24 @@ class ImageLoaderGlideModule : AppGlideModule() {
             InputStream::class.java,
             tagLibAlbumLocalArtworkModelLoaderFactory
         )
+
+        // Where the app can't list folder images, MediaProvider can: after embedded art (read at full size by TagLib), fall back
+        // to MediaStore's audio thumbnail, which is the folder image when the song has no embedded art
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registry.append(
+                Song::class.java,
+                InputStream::class.java,
+                MediaStoreSongLocalArtworkModelLoader.Factory(context = context)
+            )
+            registry.append(
+                Album::class.java,
+                InputStream::class.java,
+                MediaStoreAlbumLocalArtworkModelLoader.Factory(
+                    context = context,
+                    songRepository = entryPoint.provideSongRepository()
+                )
+            )
+        }
 
         // Remote
         registry.append(

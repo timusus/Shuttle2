@@ -56,7 +56,7 @@ run `support/scripts/remote-emu.sh reconnect` yourself first (no reboot, lease k
 | Need | Use |
 |---|---|
 | Play, pause, skip, seek, remove from queue, shuffle/repeat, reimport, read state as JSON | `support/scripts/s2-debug.sh <ACTION>` (the `debug-receivers` skill) |
-| Ready-made checks | `support/scripts/checks/*.sh` (queue-remove-current, rapid-skip, restore-position, open-queue-by-taps) |
+| Ready-made checks | `support/scripts/checks/*.sh` (queue-remove-current, rapid-skip, restore-position, open-queue-by-taps, folder-art) |
 | Taps where the UI is the subject | a Maestro flow in `support/maestro/`, run by a `checks/` wrapper that sets up state first |
 | One-off taps, dumps, screenshots | `remote-emu.sh tap-text` / `dump-texts`, or the `android-device` skill with the `env` exports |
 | Notification / lock screen | `adb shell cmd statusbar expand-notifications`, `remote-emu.sh lockscreen on` |

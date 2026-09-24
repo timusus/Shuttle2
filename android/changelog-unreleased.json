@@ -100,6 +100,10 @@
       "commits": []
     },
     {
+      "text": "Album art from a cover image in the song's folder, such as cover.jpg or folder.jpg, now shows on Android 13 and later when using the Android media scanner",
+      "commits": []
+    },
+    {
       "text": "Recently Added no longer fills up with every Jellyfin, Emby and Plex song after each sync",
       "commits": []
     },

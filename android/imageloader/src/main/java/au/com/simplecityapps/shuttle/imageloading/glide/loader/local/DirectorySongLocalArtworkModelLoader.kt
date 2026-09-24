@@ -16,7 +16,8 @@ import java.util.regex.Pattern
 
 class DirectorySongLocalArtworkModelLoader(
     private val context: Context,
-    private val localArtworkModelLoader: LocalArtworkModelLoader
+    private val localArtworkModelLoader: LocalArtworkModelLoader,
+    private val sharedStorageListsImages: Boolean
 ) : ModelLoader<Song, InputStream> {
     override fun buildLoadData(
         model: Song,
@@ -25,10 +26,13 @@ class DirectorySongLocalArtworkModelLoader(
         options: Options
     ): ModelLoader.LoadData<InputStream>? = localArtworkModelLoader.buildLoadData(DirectorySongLocalArtworkProvider(context, model), width, height, options)
 
-    override fun handles(model: Song): Boolean = true
+    override fun handles(model: Song): Boolean = canListFolderImages(listOf(model.mediaProvider), sharedStorageListsImages)
 
-    class Factory(val context: Context) : ModelLoaderFactory<Song, InputStream> {
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> = DirectorySongLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader)
+    class Factory(
+        private val context: Context,
+        private val sharedStorageListsImages: Boolean
+    ) : ModelLoaderFactory<Song, InputStream> {
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> = DirectorySongLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader, sharedStorageListsImages)
 
         override fun teardown() {
         }

@@ -71,7 +71,7 @@ class MediaStoreMediaProvider(
             )
 
         songCursor?.use {
-            val folderImageReader = FolderImageReader()
+            val folderImageReader = FolderImageReader(sharedStorageListsImages = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
             val discNumberColumnIndex =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     songCursor.getColumnIndex(MediaStore.Audio.Media.DISC_NUMBER)

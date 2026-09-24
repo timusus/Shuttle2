@@ -21,7 +21,8 @@ import kotlinx.coroutines.runBlocking
 class DirectoryAlbumLocalArtworkModelLoader(
     private val context: Context,
     private val localArtworkModelLoader: LocalArtworkModelLoader,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val sharedStorageListsImages: Boolean
 ) : ModelLoader<Album, InputStream> {
     override fun buildLoadData(
         model: Album,
@@ -30,13 +31,14 @@ class DirectoryAlbumLocalArtworkModelLoader(
         options: Options
     ): ModelLoader.LoadData<InputStream> = localArtworkModelLoader.buildLoadData(DirectoryAlbumLocalArtworkProvider(context, model, songRepository), width, height, options)
 
-    override fun handles(model: Album): Boolean = true
+    override fun handles(model: Album): Boolean = canListFolderImages(model.mediaProviders, sharedStorageListsImages)
 
     class Factory(
         private val context: Context,
-        private val songRepository: SongRepository
+        private val songRepository: SongRepository,
+        private val sharedStorageListsImages: Boolean
     ) : ModelLoaderFactory<Album, InputStream> {
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Album, InputStream> = DirectoryAlbumLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader, songRepository)
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Album, InputStream> = DirectoryAlbumLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader, songRepository, sharedStorageListsImages)
 
         override fun teardown() {
         }

@@ -27,12 +27,19 @@ fun localArtworkVersion(
 
 /**
  * Lists the images in a song's folder and the folder above it, reading each folder once per scan.
+ *
+ * Where shared storage listings leave images out (Android 13+, where the app holds only READ_MEDIA_AUDIO), the image
+ * loader gets folder art from MediaStore's audio thumbnail instead, and the song's folder itself stands in for its images:
+ * the folder's modified time changes whenever an image is added to, removed from or renamed in it.
  */
-class FolderImageReader {
+class FolderImageReader(private val sharedStorageListsImages: Boolean) {
     private val imagesByFolder = HashMap<String, List<FolderImage>>()
 
     fun imagesNear(songPath: String): List<FolderImage> {
         val folder = File(songPath).parentFile ?: return emptyList()
+        if (!sharedStorageListsImages) {
+            return imagesByFolder.getOrPut(folder.path) { listOf(FolderImage("${folder.name}/", folder.lastModified(), 0)) }
+        }
         return images(folder) + folder.parentFile?.let { images(it) }.orEmpty()
     }
 
