@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.plex
 
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.plex.http.AuthenticatedCredentials
 import com.simplecityapps.provider.plex.http.AuthenticationResult
@@ -14,6 +15,8 @@ import org.junit.Test
 class PlexAuthenticationTest {
     private val credentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456")
 
+    private val clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.24", deviceName = "Pixel")
+
     private val authenticationManager = PlexAuthenticationManager(
         userService = object : UserService {
             override suspend fun authenticateImpl(
@@ -24,7 +27,8 @@ class PlexAuthenticationTest {
         },
         credentialStore = CredentialStore(SecurePreferenceManager(FakeSharedPreferences())).apply {
             address = "http://plex.local:32400"
-        }
+        },
+        clientIdentity = clientIdentity
     )
 
     @Test
@@ -33,7 +37,7 @@ class PlexAuthenticationTest {
 
         path shouldBe "http://plex.local:32400/library/parts/42/file.mp3" +
             "?X-Plex-Token=token123" +
-            "&X-Plex-Client-Identifier=s2-music-payer" +
+            "&X-Plex-Client-Identifier=${clientIdentity.id}" +
             "&X-Plex-Device=Android"
     }
 

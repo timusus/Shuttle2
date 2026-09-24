@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.jellyfin
 
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.HttpStatusCode
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
@@ -15,10 +16,9 @@ import timber.log.Timber
 
 class JellyfinAuthenticationManager(
     private val userService: UserService,
-    private val credentialStore: CredentialStore
+    private val credentialStore: CredentialStore,
+    private val clientIdentity: ClientIdentity
 ) {
-    private val deviceId = UUID.randomUUID().toString()
-
     fun getLoginCredentials(): LoginCredentials? = credentialStore.loginCredentials
 
     fun setLoginCredentials(loginCredentials: LoginCredentials?) {
@@ -34,7 +34,12 @@ class JellyfinAuthenticationManager(
     fun getAddress(): String? = credentialStore.address
 
     /** The `Authorization` header value for requests made with [authenticatedCredentials]. */
-    fun authorizationHeader(authenticatedCredentials: AuthenticatedCredentials): String = mediaBrowserAuthorization(deviceId, authenticatedCredentials.accessToken)
+    fun authorizationHeader(authenticatedCredentials: AuthenticatedCredentials): String = mediaBrowserAuthorization(
+        deviceId = clientIdentity.id,
+        token = authenticatedCredentials.accessToken,
+        deviceName = clientIdentity.deviceName,
+        version = clientIdentity.version
+    )
 
     suspend fun authenticate(
         address: String,
@@ -46,7 +51,9 @@ class JellyfinAuthenticationManager(
                 url = address,
                 username = loginCredentials.username,
                 password = loginCredentials.password,
-                deviceId = deviceId
+                deviceId = clientIdentity.id,
+                deviceName = clientIdentity.deviceName,
+                version = clientIdentity.version
             )
 
         return when (authenticationResult) {
@@ -111,7 +118,7 @@ class JellyfinAuthenticationManager(
             "/Audio/$itemId" +
             "/universal" +
             "?UserId=${authenticatedCredentials.userId}" +
-            "&DeviceId=$deviceId" +
+            "&DeviceId=${clientIdentity.id}" +
             "&PlaySessionId=${UUID.randomUUID()}" +
             "&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg" +
             "&TranscodingContainer=ts" +

@@ -144,4 +144,14 @@ class SecurePreferenceManager(private val sharedPreferences: SharedPreferences) 
         get() {
             return sharedPreferences.getString("plex_host", null)
         }
+
+    // Client identity
+
+    var clientId: String?
+        set(value) {
+            sharedPreferences.put("client_id", value)
+        }
+        get() {
+            return sharedPreferences.getString("client_id", null)
+        }
 }

@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.plex
 
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.plex.http.AuthenticatedCredentials
 import com.simplecityapps.provider.plex.http.AuthenticationResult
@@ -24,6 +25,8 @@ class PlexMediaInfoProviderTest {
         address = "http://plex.local:32400"
     }
 
+    private val clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.24", deviceName = "Pixel")
+
     private val authenticationManager = PlexAuthenticationManager(
         userService = object : UserService {
             override suspend fun authenticateImpl(
@@ -32,7 +35,8 @@ class PlexMediaInfoProviderTest {
                 password: String
             ): NetworkResult<AuthenticationResult> = error("not called")
         },
-        credentialStore = credentialStore
+        credentialStore = credentialStore,
+        clientIdentity = clientIdentity
     )
 
     private val provider = PlexMediaInfoProvider(authenticationManager)
@@ -46,7 +50,7 @@ class PlexMediaInfoProviderTest {
 
         path shouldBe "http://plex.local:32400/library/parts/42/file.mp3" +
             "?X-Plex-Token=token123" +
-            "&X-Plex-Client-Identifier=s2-music-payer" +
+            "&X-Plex-Client-Identifier=${clientIdentity.id}" +
             "&X-Plex-Device=Android"
     }
 

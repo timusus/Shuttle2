@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.emby
 
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.emby.http.AuthenticatedCredentials
 import com.simplecityapps.provider.emby.http.AuthenticationResult
@@ -39,7 +40,8 @@ class EmbyMediaInfoProviderTest {
                 token: String
             ): NetworkResult<User> = error("not called")
         },
-        credentialStore = credentialStore
+        credentialStore = credentialStore,
+        clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice")
     )
 
     private val provider = EmbyMediaInfoProvider(

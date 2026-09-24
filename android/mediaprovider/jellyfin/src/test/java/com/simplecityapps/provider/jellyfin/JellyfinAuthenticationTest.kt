@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.jellyfin
 
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.jellyfin.http.AuthenticatedCredentials
 import com.simplecityapps.provider.jellyfin.http.AuthenticationResult
@@ -25,6 +26,8 @@ class JellyfinAuthenticationTest {
         address = "http://jellyfin.local:8096"
     }
 
+    private val clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.24", deviceName = "Pixel")
+
     private val authenticationManager = JellyfinAuthenticationManager(
         userService = object : UserService {
             override suspend fun authenticateImpl(
@@ -38,7 +41,8 @@ class JellyfinAuthenticationTest {
                 authorization: String
             ): NetworkResult<User> = meResult
         },
-        credentialStore = credentialStore
+        credentialStore = credentialStore,
+        clientIdentity = clientIdentity
     )
 
     @Test
@@ -49,12 +53,17 @@ class JellyfinAuthenticationTest {
 
     @Test
     fun `sign-in header has no token`() {
-        mediaBrowserAuthorization(deviceId = "device-1", deviceName = "Pixel") shouldNotContain "Token="
+        mediaBrowserAuthorization(deviceId = "device-1", deviceName = "Pixel", version = "1.0") shouldNotContain "Token="
     }
 
     @Test
     fun `authorization header for credentials uses the access token`() {
         authenticationManager.authorizationHeader(credentials) shouldContain "Token=\"token123\""
+    }
+
+    @Test
+    fun `authorization header carries the persisted client identity's device id`() {
+        authenticationManager.authorizationHeader(credentials) shouldContain "DeviceId=\"${clientIdentity.id}\""
     }
 
     @Test

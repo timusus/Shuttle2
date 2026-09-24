@@ -41,8 +41,6 @@ dependencies {
 
     ksp libs.moshi.kotlinCodegen
 
-    implementation libs.jaredrummler.androidDeviceNames
-
     implementation libs.hilt
     ksp libs.hilt.compiler
 

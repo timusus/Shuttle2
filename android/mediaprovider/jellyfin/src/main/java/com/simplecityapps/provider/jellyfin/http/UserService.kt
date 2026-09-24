@@ -35,14 +35,16 @@ suspend fun UserService.authenticate(
     url: String,
     username: String,
     password: String,
-    deviceId: String
+    deviceId: String,
+    deviceName: String,
+    version: String
 ): NetworkResult<AuthenticationResult> = authenticateImpl(
     "$url/Users/AuthenticateByName",
     mapOf(
         "username" to username,
         "pw" to password
     ),
-    mediaBrowserAuthorization(deviceId)
+    mediaBrowserAuthorization(deviceId, deviceName = deviceName, version = version)
 )
 
 /** The signed-in user, including their current `Policy` — used to refresh permissions that may have changed server-side. */

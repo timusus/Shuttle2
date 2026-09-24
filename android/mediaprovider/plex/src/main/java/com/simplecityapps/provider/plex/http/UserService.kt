@@ -10,8 +10,7 @@ interface UserService {
     @POST
     @Headers(
         "Accept: application/json",
-        "Content-Type: application/json",
-        "X-Plex-Client-Identifier: Shuttle Music Player"
+        "Content-Type: application/json"
     )
     suspend fun authenticateImpl(
         @Url url: String,

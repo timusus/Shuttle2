@@ -2,6 +2,7 @@ package com.simplecityapps.provider.jellyfin.di
 
 import android.content.Context
 import androidx.core.content.getSystemService
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.jellyfin.BuildConfig
 import com.simplecityapps.provider.jellyfin.CredentialStore
@@ -82,8 +83,9 @@ open class JellyfinMediaProviderModule {
     @Singleton
     fun provideJellyfinAuthenticationManager(
         userService: UserService,
-        credentialStore: CredentialStore
-    ): JellyfinAuthenticationManager = JellyfinAuthenticationManager(userService, credentialStore)
+        credentialStore: CredentialStore,
+        clientIdentity: ClientIdentity
+    ): JellyfinAuthenticationManager = JellyfinAuthenticationManager(userService, credentialStore, clientIdentity)
 
     @Provides
     @Singleton

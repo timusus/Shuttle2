@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.emby
 
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.emby.http.AuthenticatedCredentials
 import com.simplecityapps.provider.emby.http.AuthenticationResult
@@ -23,6 +24,8 @@ class EmbyAuthenticationTest {
         address = "http://emby.local:8096"
     }
 
+    private val clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.24", deviceName = "Pixel")
+
     private val authenticationManager = EmbyAuthenticationManager(
         userService = object : UserService {
             override suspend fun authenticateImpl(
@@ -36,7 +39,8 @@ class EmbyAuthenticationTest {
                 token: String
             ): NetworkResult<User> = meResult
         },
-        credentialStore = credentialStore
+        credentialStore = credentialStore,
+        clientIdentity = clientIdentity
     )
 
     @Test
@@ -45,6 +49,13 @@ class EmbyAuthenticationTest {
 
         path shouldContain "&api_key=token123"
         path shouldContain "http://emby.local:8096/emby/Audio/item789/universal?UserId=user456"
+    }
+
+    @Test
+    fun `stream url carries the persisted client identity's device id`() {
+        val path = authenticationManager.buildEmbyPath("item789", credentials)!!
+
+        path shouldContain "&DeviceId=${clientIdentity.id}"
     }
 
     @Test

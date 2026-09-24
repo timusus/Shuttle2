@@ -2,12 +2,14 @@ package com.simplecityapps.provider.plex.di
 
 import android.content.Context
 import androidx.core.content.getSystemService
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.plex.CredentialStore
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.provider.plex.http.ItemsService
+import com.simplecityapps.provider.plex.http.PlexClientHeaderInterceptor
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
@@ -33,7 +35,8 @@ open class PlexMediaProviderModule {
     fun provideRetrofit(
         @ApplicationContext context: Context,
         okHttpClient: OkHttpClient,
-        moshi: Moshi
+        moshi: Moshi,
+        clientIdentity: ClientIdentity
     ): Retrofit = Retrofit.Builder()
         .baseUrl("http://localhost/") // unused
         .addCallAdapterFactory(NetworkResultAdapterFactory(context.getSystemService()))
@@ -42,6 +45,7 @@ open class PlexMediaProviderModule {
             okHttpClient
                 .newBuilder()
                 .readTimeout(90, TimeUnit.SECONDS)
+                .addInterceptor(PlexClientHeaderInterceptor(clientIdentity))
                 .build()
         )
         .build()
@@ -66,8 +70,9 @@ open class PlexMediaProviderModule {
     @Singleton
     fun providePlexAuthenticationManager(
         userService: UserService,
-        credentialStore: CredentialStore
-    ): PlexAuthenticationManager = PlexAuthenticationManager(userService, credentialStore)
+        credentialStore: CredentialStore,
+        clientIdentity: ClientIdentity
+    ): PlexAuthenticationManager = PlexAuthenticationManager(userService, credentialStore, clientIdentity)
 
     @Provides
     @Singleton

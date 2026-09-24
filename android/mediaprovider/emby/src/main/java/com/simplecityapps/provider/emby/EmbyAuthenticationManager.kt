@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.emby
 
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.HttpStatusCode
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
@@ -14,10 +15,9 @@ import timber.log.Timber
 
 class EmbyAuthenticationManager(
     private val userService: UserService,
-    private val credentialStore: CredentialStore
+    private val credentialStore: CredentialStore,
+    private val clientIdentity: ClientIdentity
 ) {
-    private val deviceId = UUID.randomUUID().toString()
-
     fun getLoginCredentials(): LoginCredentials? = credentialStore.loginCredentials
 
     fun setLoginCredentials(loginCredentials: LoginCredentials?) {
@@ -42,7 +42,9 @@ class EmbyAuthenticationManager(
                 url = address,
                 username = loginCredentials.username,
                 password = loginCredentials.password,
-                deviceId = deviceId
+                deviceId = clientIdentity.id,
+                deviceName = clientIdentity.deviceName,
+                version = clientIdentity.version
             )
 
         return when (authenticationResult) {
@@ -107,7 +109,7 @@ class EmbyAuthenticationManager(
             "/Audio/$itemId" +
             "/universal" +
             "?UserId=${authenticatedCredentials.userId}" +
-            "&DeviceId=$deviceId" +
+            "&DeviceId=${clientIdentity.id}" +
             "&PlaySessionId=${UUID.randomUUID()}" +
             "&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg" +
             "&TranscodingContainer=ts" +

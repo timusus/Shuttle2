@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.jellyfin
 
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.jellyfin.http.AuthenticatedCredentials
 import com.simplecityapps.provider.jellyfin.http.AuthenticationResult
@@ -39,7 +40,8 @@ class JellyfinMediaInfoProviderTest {
                 authorization: String
             ): NetworkResult<User> = error("not called")
         },
-        credentialStore = credentialStore
+        credentialStore = credentialStore,
+        clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice")
     )
 
     private val provider = JellyfinMediaInfoProvider(

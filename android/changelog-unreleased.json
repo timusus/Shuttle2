@@ -104,6 +104,10 @@
       "commits": []
     },
     {
+      "text": "S2 now appears as a single device on your Jellyfin, Emby and Plex servers, instead of a new device each time the app starts",
+      "commits": []
+    },
+    {
       "text": "Recently Added no longer fills up with every Jellyfin, Emby and Plex song after each sync",
       "commits": []
     },

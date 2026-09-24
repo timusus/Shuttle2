@@ -1,6 +1,5 @@
 package com.simplecityapps.provider.emby.http
 
-import com.jaredrummler.android.device.DeviceName
 import com.simplecityapps.networking.retrofit.NetworkResult
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -37,13 +36,8 @@ suspend fun UserService.authenticate(
     username: String,
     password: String,
     deviceId: String,
-    deviceName: String =
-        try {
-            DeviceName.getDeviceName()
-        } catch (e: Exception) {
-            "Unknown"
-        },
-    version: String = "1.0"
+    deviceName: String,
+    version: String
 ): NetworkResult<AuthenticationResult> = authenticateImpl(
     "$url/Users/AuthenticateByName",
     mapOf(

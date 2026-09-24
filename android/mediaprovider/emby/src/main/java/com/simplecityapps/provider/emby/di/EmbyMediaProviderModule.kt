@@ -2,6 +2,7 @@ package com.simplecityapps.provider.emby.di
 
 import android.content.Context
 import androidx.core.content.getSystemService
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.emby.BuildConfig
 import com.simplecityapps.provider.emby.CredentialStore
@@ -82,8 +83,9 @@ open class EmbyMediaProviderModule {
     @Singleton
     fun provideEmbyAuthenticationManager(
         userService: UserService,
-        credentialStore: CredentialStore
-    ): EmbyAuthenticationManager = EmbyAuthenticationManager(userService, credentialStore)
+        credentialStore: CredentialStore,
+        clientIdentity: ClientIdentity
+    ): EmbyAuthenticationManager = EmbyAuthenticationManager(userService, credentialStore, clientIdentity)
 
     @Provides
     @Singleton

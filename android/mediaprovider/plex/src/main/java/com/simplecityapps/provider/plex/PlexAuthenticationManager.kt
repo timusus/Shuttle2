@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.plex
 
+import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.HttpStatusCode
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
@@ -13,7 +14,8 @@ import timber.log.Timber
 
 class PlexAuthenticationManager(
     private val userService: UserService,
-    private val credentialStore: CredentialStore
+    private val credentialStore: CredentialStore,
+    private val clientIdentity: ClientIdentity
 ) {
     fun getLoginCredentials(): LoginCredentials? = credentialStore.loginCredentials
 
@@ -70,7 +72,7 @@ class PlexAuthenticationManager(
 
         return "${credentialStore.address}${song.externalId}" +
             "?X-Plex-Token=${authenticatedCredentials.accessToken}" +
-            "&X-Plex-Client-Identifier=s2-music-payer" +
+            "&X-Plex-Client-Identifier=${clientIdentity.id}" +
             "&X-Plex-Device=Android"
     }
 }
