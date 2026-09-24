@@ -13,6 +13,12 @@ checks/flows, stop) in one call -- see its `--help` or `.claude/skills/emulator-
 | `support/scripts/checks/restore-position.sh` | receivers | Seek 0:20, play 5 s, force-stop, relaunch, play: resumes at ~0:25 | ~12 s |
 | `support/scripts/checks/folder-art.sh` | receivers + taps | One-song album with a magenta `cover.jpg` and no embedded art: Library > Albums shows the cover (artwork pixel check); removes the album after | ~20 s |
 | `support/scripts/checks/open-queue-by-taps.sh` | receivers + `open-queue-by-taps.yaml` | Mini player -> full player -> "Up Next" opens the queue | 30-75 s (Maestro driver start-up varies) |
+| `support/scripts/checks/playback-controls.sh` | receivers + `playback-controls.yaml` | Play a song from Library > Songs: mini player and notification show it; pause, resume, skip next, skip previous (restart past 2 s), seek by tapping the seek bar; a PREV at the start goes back a song | ~90 s |
+| `support/scripts/checks/queue-shuffle.sh` | receivers + `queue-shuffle.yaml` | A tap on Shuffle keeps the current song first and shuffles the rest on the queue sheet; next plays the second song shown; shuffle off restores the order | ~45-75 s |
+| `support/scripts/checks/queue-actions.sh` | receivers + `queue-actions.yaml` | Play Next and Add to Queue from Songs, Remove from Queue and drag-to-reorder on the queue sheet; the sheet and the player agree on the order | ~100 s |
+| `support/scripts/checks/repeat-modes.sh` | receivers + `repeat-modes.yaml` | Two taps on Repeat set repeat one (the last song restarts); repeat all wraps round to the first song; repeat off ends the queue | ~45 s |
+| `support/scripts/checks/restore-queue.sh` | receivers + `nav/open-queue.yaml` | An edited queue, mid-song, survives a force-stop: relaunched paused on the same song and position, same queue on the sheet | ~40 s |
+| `support/scripts/checks/sleep-timer.sh` | receivers + `sleep-timer.yaml` | Set a 5-minute sleep timer from the player's menu, see it count down, stop it | ~50 s |
 | `support/scripts/checks/remote-reporting.sh <server>` | receivers + server API | Jellyfin/Emby/Plex sessions show the song playing at an advancing position, then paused; a play-through counts once on Plex. Needs `seed-remote-provider.sh <server>` instead of the fixture, so `run-all.sh` skips it | ~45 s |
 
 `support/scripts/checks/run-all.sh` runs them all. Each prints `PASS <name> in Ns` or

@@ -1,0 +1,10 @@
+# Cycle repeat by taps on the full player: Off -> All -> One. Setup
+# (support/scripts/checks/repeat-modes.sh): the `playback` fixture queued, on its last song,
+# repeat off, paused. The wrapper then plays out the last song under each mode.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: nav/open-now-playing.yaml
+- tapOn: "Repeat"
+- takeScreenshot: e-repeat-all
+- tapOn: "Repeat"
+- takeScreenshot: e-repeat-one
