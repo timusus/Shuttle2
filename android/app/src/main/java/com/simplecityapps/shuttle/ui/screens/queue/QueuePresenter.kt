@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.queue
 
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
@@ -37,11 +36,7 @@ interface QueueContract {
     }
 
     interface View {
-        fun setData(
-            queue: List<QueueItem>,
-            progress: Float,
-            playbackState: PlaybackState
-        )
+        fun setData(queue: List<QueueItem>)
 
         fun toggleEmptyView(empty: Boolean)
 
@@ -89,11 +84,7 @@ constructor(
         if (forceClear) {
             view?.clearData()
         }
-        view?.setData(
-            queue = queueState.items,
-            progress = (playbackManager.getProgress() ?: 0) / (queueState.currentItem?.song?.duration?.toFloat() ?: Float.MAX_VALUE),
-            playbackState = playbackManager.playbackState()
-        )
+        view?.setData(queueState.items)
     }
 
     private fun updateQueuePosition(
@@ -171,7 +162,8 @@ constructor(
      * A restore or a queue change rebuilds the list and scrolls to the current item, unless the change
      * was a user's drag, which the list already shows. A position change only refreshes the current item.
      * Whether anything but a drag happened is read from [QueueState.nonMoveContentVersion], so a change
-     * merged with a later drag into one emission still rebuilds the list.
+     * merged with a later drag into one emission still rebuilds the list. A song's data being edited in
+     * place (`songDataVersion`) rebuilds the list without touching scroll position or current index.
      */
     private fun onQueueStateChanged(
         previous: QueueState,
@@ -183,6 +175,8 @@ constructor(
             updateQueue(current, force)
             updateQueuePosition(current, force)
             updateMiniPlayerVisibility(current.items.isEmpty())
+        } else if (current.songDataVersion != previous.songDataVersion) {
+            updateQueue(current, forceClear = false)
         } else if (current.currentItem != previous.currentItem || current.currentPosition != previous.currentPosition) {
             updateQueue(current, forceClear = false) // Currently required in order to update current item
             updateQueuePosition(current, forceScrollUpdate = false)

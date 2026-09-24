@@ -28,7 +28,8 @@ class SessionQueueUpdatesTest {
             baseline = queueManager.queueStateFlow.value,
             context = UnconfinedTestDispatcher(testScheduler),
             onQueueChanged = { events += "queue" },
-            onCurrentItemChanged = { events += "currentItem ${queueManager.getCurrentItem()?.song?.id}" }
+            onCurrentItemChanged = { events += "currentItem ${queueManager.getCurrentItem()?.song?.id}" },
+            onCurrentSongChanged = { events += "currentSong ${queueManager.getCurrentItem()?.song?.name}" }
         )
     }
 
@@ -77,6 +78,36 @@ class SessionQueueUpdatesTest {
         launchUpdates()
 
         queueManager.setRepeatMode(QueueManager.RepeatMode.All)
+
+        events.shouldBeEmpty()
+    }
+
+    @Test
+    fun `editing the current song's data updates the song only`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2)))
+        launchUpdates()
+
+        queueManager.updateSongs(listOf(testSong(1).copy(name = "New Name")))
+
+        events shouldBe listOf("queue", "currentSong New Name")
+    }
+
+    @Test
+    fun `editing a queued song that isn't current updates the queue only`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2)))
+        launchUpdates()
+
+        queueManager.updateSongs(listOf(testSong(2).copy(name = "New Name")))
+
+        events shouldBe listOf("queue")
+    }
+
+    @Test
+    fun `editing an unrelated song is a no-op`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2)))
+        launchUpdates()
+
+        queueManager.updateSongs(listOf(testSong(3).copy(name = "New Name")))
 
         events.shouldBeEmpty()
     }

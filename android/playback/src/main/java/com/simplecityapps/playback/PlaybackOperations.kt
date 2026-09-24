@@ -47,6 +47,9 @@ interface PlaybackOperations {
     fun moveQueueItem(from: Int, to: Int)
     fun removeQueueItem(queueItem: QueueItem)
     fun clearQueue()
+
+    /** Replaces the song data of any queue item whose song id matches one of [songs], without reloading playback. */
+    fun updateQueueSongs(songs: List<Song>)
     fun getPlayback(): Playback
     fun switchToPlayback(playback: Playback)
 }

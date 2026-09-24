@@ -98,6 +98,10 @@
     {
       "text": "Recently Added no longer fills up with every Jellyfin, Emby and Plex song after each sync",
       "commits": []
+    },
+    {
+      "text": "Editing a song's tags now updates its title, artist and album everywhere it's already showing, including the queue, now playing, mini player and notification, without interrupting playback",
+      "commits": []
     }
   ]
 }

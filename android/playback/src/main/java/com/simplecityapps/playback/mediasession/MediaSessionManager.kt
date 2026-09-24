@@ -307,7 +307,8 @@ constructor(
             baseline = queueState,
             context = Dispatchers.Main.immediate,
             onQueueChanged = ::updateQueue,
-            onCurrentItemChanged = ::updateCurrentQueueItem
+            onCurrentItemChanged = ::updateCurrentQueueItem,
+            onCurrentSongChanged = ::updateMetadata
         )
 
         // Main.immediate, so the current anchor is applied straight away when constructed on the main thread.
@@ -446,21 +447,26 @@ constructor(
 /**
  * Collects [queueStateFlow], comparing each state with the last one handled, starting from [baseline].
  *
- * [onQueueChanged] runs when the queue's contents change, and [onCurrentItemChanged] when the current item or
- * position does; both run, in that order, when the queue is restored.
+ * [onQueueChanged] runs when the queue's contents change (including a song's data being replaced in
+ * place), [onCurrentItemChanged] when the current item or position does, and [onCurrentSongChanged] when
+ * the current item's song data changes without the item itself changing; the first two run, in that
+ * order, when the queue is restored.
  */
 internal fun CoroutineScope.launchSessionQueueUpdates(
     queueStateFlow: StateFlow<QueueState>,
     baseline: QueueState,
     context: CoroutineContext,
     onQueueChanged: () -> Unit,
-    onCurrentItemChanged: () -> Unit
+    onCurrentItemChanged: () -> Unit,
+    onCurrentSongChanged: () -> Unit
 ): Job = launchCollectingChanges(queueStateFlow, baseline, context) { previous, current ->
     val restored = current.isRestored && !previous.isRestored
-    if (restored || current.contentVersion != previous.contentVersion) {
+    if (restored || current.contentVersion != previous.contentVersion || current.songDataVersion != previous.songDataVersion) {
         onQueueChanged()
     }
     if (restored || current.currentItem != previous.currentItem || current.currentPosition != previous.currentPosition) {
         onCurrentItemChanged()
+    } else if (current.currentItem?.song != previous.currentItem?.song) {
+        onCurrentSongChanged()
     }
 }

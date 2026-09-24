@@ -23,6 +23,13 @@ interface QueueOperations {
     fun skipTo(position: Int)
     fun addToQueue(songs: List<Song>)
     fun addToNext(songs: List<Song>)
+
+    /**
+     * Replaces the song data of any queue item whose song id matches one of [songs], preserving the
+     * item's uid, position and current status. Publishes [QueueState.songDataVersion] rather than
+     * [QueueState.contentVersion], so this doesn't trigger a reload of the current item.
+     */
+    fun updateSongs(songs: List<Song>)
     fun move(from: Int, to: Int)
     fun remove(items: List<QueueItem>)
     fun remove(song: Song)

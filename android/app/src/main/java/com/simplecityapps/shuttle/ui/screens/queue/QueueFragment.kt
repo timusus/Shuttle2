@@ -20,7 +20,6 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 import com.simplecityapps.shuttle.R
@@ -230,12 +229,8 @@ class QueueFragment :
 
     // QueueContract.View Implementation
 
-    override fun setData(
-        queue: List<QueueItem>,
-        progress: Float,
-        playbackState: PlaybackState
-    ) {
-        val queueItems = queue.map { queueItem -> QueueBinder(queueItem, playbackState, progress, imageLoader, playbackManager, queueBinderListener) }
+    override fun setData(queue: List<QueueItem>) {
+        val queueItems = queue.map { queueItem -> QueueBinder(queueItem, imageLoader, playbackManager, queueBinderListener) }
         adapter?.update(
             newList = queueItems
         ) {

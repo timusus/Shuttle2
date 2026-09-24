@@ -4,7 +4,6 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
-import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
@@ -65,6 +64,16 @@ class QueuePresenterTest {
     }
 
     @Test
+    fun `a song data change rebuilds the list without touching position or scroll`() {
+        bindWithQueue()
+
+        val state = queueManager.queueStateFlow.value
+        queueManager.queueStateFlow.value = state.copy(songDataVersion = state.songDataVersion + 1)
+
+        view.events shouldBe listOf("data 3")
+    }
+
+    @Test
     fun `the restore rebuilds the list and forces the scroll`() {
         queueManager.queueStateFlow.value = QueueState(items, currentItem = items[0], currentPosition = 0, isRestored = false)
         presenter.bindView(view)
@@ -114,11 +123,7 @@ class QueuePresenterTest {
     private class RecordingView : QueueContract.View {
         val events = mutableListOf<String>()
 
-        override fun setData(
-            queue: List<QueueItem>,
-            progress: Float,
-            playbackState: PlaybackState
-        ) {
+        override fun setData(queue: List<QueueItem>) {
             events += "data ${queue.size}"
         }
 

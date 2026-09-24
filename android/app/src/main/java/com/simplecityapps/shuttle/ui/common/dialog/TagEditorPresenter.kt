@@ -8,6 +8,7 @@ import com.simplecityapps.localmediaprovider.local.provider.TagLibProperty
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -124,7 +125,8 @@ constructor(
     @ApplicationContext private val context: Context,
     private val kTagLib: KTagLib,
     private val fileScanner: FileScanner,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val playbackManager: PlaybackOperations
 ) : BasePresenter<TagEditorContract.View>(),
     TagEditorContract.Presenter {
     private lateinit var uneditables: List<Pair<com.simplecityapps.shuttle.model.Song, AudioFile?>>
@@ -240,7 +242,7 @@ constructor(
             val result =
                 withContext(Dispatchers.IO) {
                     editables.mapIndexed { index, (song, _) ->
-                        songRepository.update(
+                        val updatedSong =
                             song.copy(
                                 name = if (data.titleField.hasChanged) data.titleField.currentValue else song.name,
                                 album = if (data.albumField.hasChanged) data.albumField.currentValue else song.album,
@@ -252,7 +254,7 @@ constructor(
                                 disc = if (data.discField.hasChanged) data.discField.currentValue?.toIntOrNull() else song.disc,
                                 lyrics = if (data.lyricsField.hasChanged) data.lyricsField.currentValue else song.lyrics
                             )
-                        )
+                        songRepository.update(updatedSong)
 
                         val uri = Uri.parse(song.path)
                         if (song.path.startsWith("content://")) {
@@ -264,7 +266,7 @@ constructor(
                                             withContext(Dispatchers.Main) {
                                                 view?.setLoading(TagEditorContract.LoadingState.WritingTags(index, editables.size))
                                             }
-                                            return@mapIndexed song to kTagLib.writeMetadata(pfd.detachFd(), metadata, uri.lastPathSegment)
+                                            return@mapIndexed updatedSong to kTagLib.writeMetadata(pfd.detachFd(), metadata, uri.lastPathSegment)
                                         }
                                     } catch (e: IllegalStateException) {
                                         Timber.e(e, "Failed to update tags")
@@ -281,9 +283,11 @@ constructor(
                             view?.setLoading(TagEditorContract.LoadingState.WritingTags(index, editables.size))
                         }
 
-                        return@mapIndexed song to false
+                        return@mapIndexed updatedSong to false
                     }
                 }
+
+            playbackManager.updateQueueSongs(result.map { it.first })
 
             val total = uneditables.size + editables.size // All of the songs the user wanted to edit
             val failureCount = result.filter { !it.second }.size // Songs that we tried to edit, but failed

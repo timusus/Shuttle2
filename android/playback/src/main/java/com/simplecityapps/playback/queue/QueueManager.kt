@@ -89,6 +89,8 @@ class QueueManager(
 
     private var queueNonMoveContentVersion = 0L
 
+    private var queueSongDataVersion = 0L
+
     /**
      * The queue as the active shuffle mode presents it, with the current item and position.
      * Republished whenever the items or the current position change, whenever the shuffle mode or
@@ -375,6 +377,25 @@ class QueueManager(
         notifyQueueChanged()
     }
 
+    override fun updateSongs(songs: List<Song>) {
+        val songsById = songs.associateBy { it.id }
+        if (songsById.isEmpty()) return
+
+        val queueChanged = queue.updateSongs(songsById)
+
+        val current = currentItem
+        val updatedCurrentSong = current?.let { songsById[it.song.id] }
+        val currentChanged = updatedCurrentSong != null && updatedCurrentSong != current.song
+        if (currentChanged) {
+            currentItem = current.clone(song = updatedCurrentSong!!)
+        }
+
+        if (!queueChanged && !currentChanged) return
+
+        queueSongDataVersion++
+        publishQueueState()
+    }
+
     /** Records that the items changed, and whether it was only a [move], then publishes the new state. */
     private fun notifyQueueChanged(isMove: Boolean = false) {
         queueContentVersion++
@@ -398,6 +419,7 @@ class QueueManager(
             version = queueStateVersion,
             contentVersion = queueContentVersion,
             nonMoveContentVersion = queueNonMoveContentVersion,
+            songDataVersion = queueSongDataVersion,
             isRestored = hasRestoredQueue,
             shuffleMode = shuffleMode
         )
@@ -493,6 +515,26 @@ class QueueManager(
         ) {
             val list = get(shuffleMode)
             list.add(to, list.removeAt(from))
+        }
+
+        /** Replaces the song data of any item whose song id is in [songsById]. Returns true if any item changed. */
+        fun updateSongs(songsById: Map<Long, Song>): Boolean {
+            var changed = false
+
+            fun update(list: MutableList<QueueItem>) {
+                for (i in list.indices) {
+                    val item = list[i]
+                    val updatedSong = songsById[item.song.id] ?: continue
+                    if (updatedSong != item.song) {
+                        list[i] = item.clone(song = updatedSong)
+                        changed = true
+                    }
+                }
+            }
+
+            update(baseList)
+            update(shuffleList)
+            return changed
         }
 
         fun size(): Int = baseList.size

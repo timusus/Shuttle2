@@ -244,6 +244,15 @@ class PlaybackManagerQueueChangeTest {
     }
 
     @Test
+    fun `updating a queued song's data does not prepare or reload anything`() {
+        playbackManager.updateQueueSongs(listOf(createSong(1).copy(name = "New Name"), createSong(2).copy(name = "Other Name")))
+
+        events.shouldBeEmpty()
+        queueManager.getCurrentItem()!!.song.name shouldBe "New Name"
+        queueManager.getQueue().map { it.song.name } shouldBe listOf("New Name", "Other Name", "Song3")
+    }
+
+    @Test
     fun `a queue change during a load prepares the next item once the load completes`() {
         playbackManager.skipToNext()
         playbackManager.moveQueueItem(0, 2)

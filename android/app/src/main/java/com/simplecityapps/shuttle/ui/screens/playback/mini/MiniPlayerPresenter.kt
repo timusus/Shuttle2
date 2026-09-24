@@ -33,7 +33,10 @@ constructor(
             progress?.let { this.view?.setProgress(progress.position, progress.duration) }
         }
         collectChanges(queueManager.queueStateFlow, queueState) { previous, current ->
-            if (current.currentItem != previous.currentItem || current.currentPosition != previous.currentPosition) {
+            if (current.currentItem != previous.currentItem ||
+                current.currentPosition != previous.currentPosition ||
+                current.currentItem?.song != previous.currentItem?.song
+            ) {
                 this.view?.setCurrentSong(current.currentItem?.song)
             }
         }

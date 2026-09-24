@@ -296,7 +296,8 @@ internal fun CoroutineScope.launchPlaybackNotificationUpdates(
         launchCollectingChanges(queueStateFlow, queueState) { previous, current ->
             val changed = current.contentVersion != previous.contentVersion ||
                 current.currentItem != previous.currentItem ||
-                current.currentPosition != previous.currentPosition
+                current.currentPosition != previous.currentPosition ||
+                current.currentItem?.song != previous.currentItem?.song
             if (changed && current.items.isNotEmpty()) {
                 displayPlaybackNotification()
             }

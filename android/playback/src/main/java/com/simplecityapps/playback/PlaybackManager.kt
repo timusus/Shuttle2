@@ -459,6 +459,10 @@ class PlaybackManager(
         }
     }
 
+    override fun updateQueueSongs(songs: List<Song>) {
+        queueManager.updateSongs(songs)
+    }
+
     override suspend fun playNext(songs: List<Song>) = queueOperation {
         if (queueManager.getQueue().isEmpty()) {
             if (queueManager.setQueue(songs)) {

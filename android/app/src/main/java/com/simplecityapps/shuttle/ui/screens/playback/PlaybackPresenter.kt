@@ -85,11 +85,12 @@ constructor(
         current: QueueState
     ) {
         val restored = current.isRestored && !previous.isRestored
-        if (restored || current.contentVersion != previous.contentVersion) {
+        if (restored || current.contentVersion != previous.contentVersion || current.songDataVersion != previous.songDataVersion) {
             updateQueue(current.items)
         }
         val positionChanged = current.currentItem != previous.currentItem || current.currentPosition != previous.currentPosition
-        if (restored || positionChanged) {
+        val currentSongChanged = positionChanged || current.currentItem?.song != previous.currentItem?.song
+        if (restored || currentSongChanged) {
             updateCurrentSong(current.currentItem?.song)
             updateQueuePosition(current.currentPosition, current.items.size)
         }

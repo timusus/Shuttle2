@@ -6,6 +6,7 @@ import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.clone
 import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.testing.MainDispatcherRule
@@ -67,6 +68,19 @@ class MiniPlayerPresenterTest {
         queueManager.queueStateFlow.value = state.copy(items = state.items + createSong(id = 2).toQueueItem(false), contentVersion = 1)
 
         view.events shouldBe listOf("song Come Together")
+    }
+
+    @Test
+    fun `editing the current song's data reaches the view`() {
+        setCurrent(song)
+        presenter.bindView(view)
+        view.events.clear()
+
+        val edited = song.copy(name = "New Name")
+        val state = queueManager.queueStateFlow.value
+        queueManager.queueStateFlow.value = state.copy(currentItem = state.currentItem!!.clone(song = edited), songDataVersion = state.songDataVersion + 1)
+
+        view.events shouldBe listOf("song New Name")
     }
 
     @Test

@@ -34,8 +34,6 @@ import kotlinx.coroutines.launch
 
 class QueueBinder(
     val queueItem: QueueItem,
-    var playbackState: PlaybackState,
-    var progress: Float,
     val imageLoader: ArtworkImageLoader,
     val playbackManager: PlaybackOperations,
     val listener: Listener
@@ -70,7 +68,7 @@ class QueueBinder(
 
     override fun areContentsTheSame(other: Any): Boolean {
         (other as? QueueBinder)?.let {
-            return queueItem.isCurrent == other.queueItem.isCurrent
+            return queueItem.isCurrent == other.queueItem.isCurrent && queueItem.song == other.queueItem.song
         }
 
         return true

@@ -53,6 +53,7 @@ class QueueManagerStateFlowTest {
         if (current.contentVersion != previous.contentVersion) {
             add(if (current.nonMoveContentVersion == previous.nonMoveContentVersion) "queueChanged Move" else "queueChanged")
         }
+        if (current.songDataVersion != previous.songDataVersion) add("songDataChanged")
         if (current.currentPosition != previous.currentPosition) add("positionChanged ${previous.currentPosition} -> ${current.currentPosition}")
         if (current.isRestored != previous.isRestored) add("restored ${current.isRestored}")
     }.joinToString(", ").ifEmpty { "republished" }
@@ -265,6 +266,49 @@ class QueueManagerStateFlowTest {
         val afterAdd = queueManager.queueStateFlow.value
         afterAdd.contentVersion shouldBe afterMove.contentVersion + 1
         afterAdd.nonMoveContentVersion shouldBe afterMove.nonMoveContentVersion + 1
+    }
+
+    @Test
+    fun `updating songs replaces matching items in place, keeping order and current index`() = runTest {
+        setQueueOf(1, 2, 3)
+        queueManager.skipToNext()
+        events.clear()
+
+        queueManager.updateSongs(listOf(testSong(2).copy(name = "New Name"), testSong(3).copy(name = "Other Name")))
+
+        ids() shouldBe listOf(1L, 2L, 3L)
+        queueManager.queueStateFlow.value.items.map { it.song.name } shouldBe listOf("Song1", "New Name", "Other Name")
+        queueManager.queueStateFlow.value.currentItem!!.song.name shouldBe "New Name"
+        queueManager.queueStateFlow.value.currentPosition shouldBe 1
+        events shouldBe listOf("songDataChanged")
+        mismatches shouldBe emptyList()
+    }
+
+    @Test
+    fun `updating songs doesn't bump the content version`() = runTest {
+        setQueueOf(1, 2, 3)
+        val before = queueManager.queueStateFlow.value
+
+        queueManager.updateSongs(listOf(testSong(1).copy(name = "New Name")))
+        val after = queueManager.queueStateFlow.value
+
+        after.contentVersion shouldBe before.contentVersion
+        after.nonMoveContentVersion shouldBe before.nonMoveContentVersion
+        after.songDataVersion shouldBe before.songDataVersion + 1
+        // Same uid, so equal despite the song data differing: consumers that gate on identity alone
+        // (e.g. PlaybackManager's reload trigger) don't see this as a change.
+        after.currentItem shouldBe before.currentItem
+    }
+
+    @Test
+    fun `updating a song that isn't in the queue is a no-op`() = runTest {
+        setQueueOf(1, 2, 3)
+        val before = queueManager.queueStateFlow.value
+
+        queueManager.updateSongs(listOf(testSong(4).copy(name = "New Name")))
+
+        queueManager.queueStateFlow.value shouldBe before
+        events shouldBe emptyList()
     }
 
     @Test

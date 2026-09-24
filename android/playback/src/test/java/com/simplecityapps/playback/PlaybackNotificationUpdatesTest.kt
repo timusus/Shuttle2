@@ -116,4 +116,24 @@ class PlaybackNotificationUpdatesTest {
 
         displays shouldBe 0
     }
+
+    @Test
+    fun `displays when the current song's data is edited`() = runTest {
+        setQueueOf(1, 2)
+        launchUpdates()
+
+        queueManager.updateSongs(listOf(testSong(1).copy(name = "New Name")))
+
+        displays shouldBe 1
+    }
+
+    @Test
+    fun `editing a queued song that isn't current isn't displayed`() = runTest {
+        setQueueOf(1, 2)
+        launchUpdates()
+
+        queueManager.updateSongs(listOf(testSong(2).copy(name = "New Name")))
+
+        displays shouldBe 0
+    }
 }

@@ -58,6 +58,7 @@ class FakePlaybackManager : PlaybackOperations {
     override fun moveQueueItem(from: Int, to: Int) {}
     override fun removeQueueItem(queueItem: QueueItem) {}
     override fun clearQueue() {}
+    override fun updateQueueSongs(songs: List<Song>) {}
     override fun getPlayback(): Playback = error("Not implemented in fake")
     override fun switchToPlayback(playback: Playback) {}
 }
