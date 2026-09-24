@@ -133,6 +133,8 @@ class LargeQueueSpikeTest {
 
     private fun newPlayer(): ExoPlayer = TestExoPlayerBuilder(context)
         .setClock(FakeClock(true))
+        // As production's ExoPlayer.Builder does by default: only the items around the current one are prepared.
+        .setUseLazyPreparation(true)
         .build()
         .also(players::add)
 

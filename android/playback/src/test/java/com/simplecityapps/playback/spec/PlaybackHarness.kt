@@ -144,6 +144,8 @@ class PlaybackHarness(
             ExoPlayerFactory(context, equalizer, replayGain, AudioTrackMonitor(), songUriResolver) { renderersFactory, mediaSourceFactory ->
                 TestExoPlayerBuilder(context)
                     .setClock(FakeClock(true))
+                    // As production's ExoPlayer.Builder does by default: only the items around the current one are prepared.
+                    .setUseLazyPreparation(true)
                     .setRenderersFactory(renderersFactory)
                     .setMediaSourceFactory(mediaSourceFactory)
                     .build()

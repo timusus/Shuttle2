@@ -7,7 +7,7 @@ the Media3 refactor (#345, `docs/architecture/media3-playback-design.md`) must k
 Each JVM rule has one test named with its RS id, in `android/playback/src/test/java/com/simplecityapps/playback/spec/`:
 `PlaybackSpecTest` for queue and transport rules, `AudioOutputSpecTest` for the audio that comes out. The tests run
 the real `PlaybackManager` and `QueueManager` over a real ExoPlayer whose playlist is the queue, built by the
-production `ExoPlayerFactory` (fake clock, production renderers, audio sink and
+production `ExoPlayerFactory` (fake clock, lazy preparation as in production, production renderers, audio sink and
 EQ/ReplayGain processors, WAV files from the test resources). They call only
 `PlaybackOperations` and `QueueOperations` and observe their flows, the PCM written to the AudioTrack, and audio
 focus. A rule the JVM can't run is **device-only** and points at its check in `docs/testing/device-checks.md`.
