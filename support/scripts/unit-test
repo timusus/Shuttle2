@@ -24,8 +24,59 @@ if command -v build-brief >/dev/null 2>&1; then
   GRADLE_RUNNER=(build-brief ./gradlew)
 fi
 
-run_gradle() {
-  "${GRADLE_RUNNER[@]}" "$@"
+# Parse the TEST-*.xml files written since ${marker} and print each failed/
+# errored testcase's class.method, assertion message and first project
+# stack frame (see #334). Silently does nothing without python3.
+report_test_failures() {
+  local marker="$1"
+  command -v python3 >/dev/null 2>&1 || return 0
+
+  local xml_files=()
+  while IFS= read -r -d '' f; do
+    xml_files+=("${f}")
+  done < <(find "${REPO_ROOT}" -path '*/build/test-results/*/TEST-*.xml' -newer "${marker}" -print0 2>/dev/null)
+
+  [ "${#xml_files[@]}" -eq 0 ] && return 0
+
+  echo
+  echo "Failed tests:"
+  python3 "${SCRIPT_DIR}/unit-test-report.py" "${xml_files[@]}"
+}
+
+# Run Gradle (via build-brief when available), retry once with plain
+# ./gradlew if build-brief's own output parser breaks (see #335), then
+# report any failed testcases found in fresh TEST-*.xml files (see #334).
+# Preserves Gradle's exit code.
+run_and_report() {
+  local marker outfile rc
+  marker="$(mktemp -t unit-test-marker)"
+  outfile="$(mktemp -t unit-test-output)"
+
+  set +e
+  "${GRADLE_RUNNER[@]}" "$@" 2>&1 | tee "${outfile}"
+  rc=${PIPESTATUS[0]}
+  set -e
+
+  # Only a tool flake if no fresh TEST-*.xml records a failure: a real test
+  # failure can mention these exceptions too, and must not trigger a re-run.
+  if [ "${rc}" -ne 0 ] && [ "${GRADLE_RUNNER[0]}" = "build-brief" ] \
+      && grep -qE 'EOFException|NoSuchFileException' "${outfile}" \
+      && ! find "${REPO_ROOT}" -path '*/build/test-results/*/TEST-*.xml' -newer "${marker}" \
+        -exec grep -lqE '<(failure|error)[ >]' {} + 2>/dev/null; then
+    echo "build-brief's output parser failed (EOFException/NoSuchFileException, not a test failure); re-running with plain ./gradlew" >&2
+    set +e
+    ./gradlew "$@" 2>&1 | tee "${outfile}"
+    rc=${PIPESTATUS[0]}
+    set -e
+  fi
+
+  if [ "${rc}" -ne 0 ]; then
+    # A crash in the report must not replace Gradle's exit code.
+    report_test_failures "${marker}" || true
+  fi
+
+  rm -f "${marker}" "${outfile}"
+  return "${rc}"
 }
 
 function finish() {
@@ -126,8 +177,8 @@ resolve_module() {
 }
 
 if [ "$#" -eq 0 ]; then
-  run_gradle testDebugUnitTest
-  exit 0
+  run_and_report testDebugUnitTest
+  exit $?
 fi
 
 modules=()
@@ -156,8 +207,12 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "${#modules[@]}" -eq 0 ]; then
-  run_gradle testDebugUnitTest ${tests_filter:+--tests "${tests_filter}"}
-  exit 0
+  whole_project_args=(testDebugUnitTest)
+  if [ -n "${tests_filter}" ]; then
+    whole_project_args+=(--tests "${tests_filter}")
+  fi
+  run_and_report "${whole_project_args[@]}"
+  exit $?
 fi
 
 tasks=()
@@ -171,4 +226,5 @@ if [ -n "${tests_filter}" ]; then
   gradle_args+=(--tests "${tests_filter}")
 fi
 
-run_gradle "${gradle_args[@]}"
+run_and_report "${gradle_args[@]}"
+exit $?
