@@ -1,0 +1,41 @@
+# The media notification's controls, tapped in the expanded notification shade (Media3's
+# notification, shown as the system's media player). Setup
+# (support/scripts/checks/notification-controls.sh): the `playback` fixture queued, paused at the
+# start of "Playback Two", shuffle and repeat off, the shade expanded. Buttons are selected by
+# their content descriptions, as TalkBack reads them.
+#
+# Previous comes first, at 0:00, so it goes back a song rather than restarting this one (past 2 s it
+# restarts), and like the app's own previous button it plays. The taps don't wait for the screen to
+# settle: while music plays the seek bar never does, and the default wait runs to ~40 s a tap. The
+# wrapper then checks the app's state matches.
+appId: com.simplecityapps.shuttle.dev
+---
+- assertVisible: "Playback Two"
+- assertVisible: "Playback Artist"
+- tapOn:
+    text: "Previous track"
+    waitToSettleTimeoutMs: 500
+- assertVisible: "Playback One"
+- assertVisible: "Pause"
+- takeScreenshot: a-notification-playing
+- tapOn:
+    text: "Pause"
+    waitToSettleTimeoutMs: 500
+- assertVisible: "Play"
+- tapOn:
+    text: "Play"
+    waitToSettleTimeoutMs: 500
+- assertVisible: "Pause"
+- tapOn:
+    text: "Next track"
+    waitToSettleTimeoutMs: 500
+- assertVisible: "Playback Two"
+- tapOn:
+    text: "Pause"
+    waitToSettleTimeoutMs: 500
+- assertVisible: "Play"
+- tapOn: "Shuffle off"
+- assertVisible: "Shuffle on"
+- tapOn: "Repeat off"
+- assertVisible: "Repeat all"
+- takeScreenshot: a-notification-shuffle-repeat-on

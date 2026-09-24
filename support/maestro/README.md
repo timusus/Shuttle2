@@ -19,6 +19,7 @@ checks/flows, stop) in one call -- see its `--help` or `.claude/skills/emulator-
 | `support/scripts/checks/repeat-modes.sh` | receivers + `repeat-modes.yaml` | Two taps on Repeat set repeat one (the last song restarts); repeat all wraps round to the first song; repeat off ends the queue | ~45 s |
 | `support/scripts/checks/restore-queue.sh` | receivers + `nav/open-queue.yaml` | An edited queue, mid-song, survives a force-stop: relaunched paused on the same song and position, same queue on the sheet | ~40 s |
 | `support/scripts/checks/sleep-timer.sh` | receivers + `sleep-timer.yaml` | Set a 5-minute sleep timer from the player's menu, see it count down, stop it | ~50 s |
+| `support/scripts/checks/notification-controls.sh` | receivers + `notification-controls.yaml` | In the expanded shade, the media notification shows the song and artist; previous, pause, play and next work from it; its shuffle and repeat buttons toggle the app's, and the app's show on them | ~105 s |
 | `support/scripts/checks/remote-reporting.sh <server>` | receivers + server API | Jellyfin/Emby/Plex sessions show the song playing at an advancing position, then paused; a play-through counts once on Plex. Needs `seed-remote-provider.sh <server>` instead of the fixture, so `run-all.sh` skips it | ~45 s |
 
 `support/scripts/checks/run-all.sh` runs them all. Each prints `PASS <name> in Ns` or
