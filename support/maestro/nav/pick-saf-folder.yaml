@@ -1,0 +1,36 @@
+# Given the system SAF folder picker (DocumentsUI) is already open -- S2's "Add Directory" button
+# (DirectorySelectionFragment) launches it with ACTION_OPEN_DOCUMENT_TREE -- picks the folder named
+# ${FOLDER_NAME} directly under "Music" on primary storage and grants access. The caller pushes
+# that folder with `adb push` first (support/scripts/seed-test-media.sh taglib); this subflow only
+# drives the picker UI.
+#
+# On this repo's default lane image (android-36 google_atd), the picker opens straight into
+# Internal storage's root file grid, so most of the steps below are no-ops there. They're kept for
+# an image that instead opens into the roots drawer, or (older images) needs "Show internal
+# storage" surfaced from the overflow menu before "Internal storage" appears as a root at all.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    when:
+      visible: "More options"
+      notVisible: "Music"
+    commands:
+      - tapOn: "More options"
+      - runFlow:
+          when:
+            visible: "Show internal storage"
+          commands:
+            - tapOn: "Show internal storage"
+- runFlow:
+    when:
+      visible: "Internal storage"
+    commands:
+      - tapOn: "Internal storage"
+- tapOn: "Music"
+- tapOn: "${FOLDER_NAME}"
+- tapOn: "USE THIS FOLDER"
+- runFlow:
+    when:
+      visible: "ALLOW"
+    commands:
+      - tapOn: "ALLOW"

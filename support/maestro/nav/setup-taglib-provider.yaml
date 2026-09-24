@@ -1,0 +1,24 @@
+# Adds the Shuttle (TagLib) local provider pointed at the folder named ${FOLDER_NAME} under Music
+# (support/scripts/seed-test-media.sh taglib pushes it there first) and waits for the import to
+# finish, observed via the UI's own "Song import complete" screen -- not a fixed sleep.
+# support/scripts/checks/_lib.sh's setup_taglib_provider wraps this: it also seeds the fixture and
+# cross-checks completion against DUMP_STATE's librarySongCount before returning. Starts from a
+# fresh launch so it runs standalone; navigation matches nav/open-settings.yaml plus
+# DirectorySelectionFragment/MediaProviderSelectionFragment's screens (Settings -> Media -> Media
+# providers -> Add Media Provider -> S2 Media Provider -> Add Directory -> [system picker] -> Done
+# -> Next).
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: open-settings.yaml
+- tapOn: "Media"
+- tapOn: "Media providers"
+- tapOn: "ADD MEDIA PROVIDER"
+- tapOn: "S2 Media Provider"
+- tapOn: "ADD DIRECTORY"
+- runFlow: pick-saf-folder.yaml
+- tapOn: "DONE"
+- tapOn: "NEXT"
+- extendedWaitUntil:
+    visible: "Song import complete"
+    timeout: 30000
+- tapOn: "CLOSE"

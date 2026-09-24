@@ -15,6 +15,10 @@
 #                     cross MP3 -> FLAC, Matroska -> Matroska and Matroska -> FLAC
 #     podcast         one 60 s track pushed under a path containing "podcast", so Song.type
 #                     resolves to Type.Podcast (Song.kt matches on path, not a MediaStore flag)
+#     taglib          5 x 60 s tracks plus an .m3u listing the first 3 plus one line that can't
+#                     resolve to any of them, pushed to a folder meant for the Shuttle (TagLib)
+#                     provider's SAF picker (support/maestro/nav/pick-saf-folder.yaml), not scanned
+#                     into MediaStore -- see setup_taglib_provider in support/scripts/checks/_lib.sh
 #
 #     --skip-onboarding   also write the debug app's prefs so it opens straight to the library
 #                         with the local (MediaStore) provider selected, skipping onboarding
@@ -47,6 +51,8 @@ Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding]
                   remove the current item) to finish before a track ends on its own
   gapless         one album of 5 x 12 s tones: MP3, two FLAC-in-Matroska, two native FLAC
   podcast         one 60 s track under a "podcast" path, so it resolves to Song.Type.Podcast
+  taglib          5 x 60 s tracks + an .m3u (3 of them plus one unresolvable line), for the
+                  Shuttle (TagLib) provider's SAF picker -- not scanned into MediaStore
 
   --skip-onboarding   write debug-app prefs so it opens straight to the library with the local
                       provider selected (needs the debug APK already installed)
@@ -61,7 +67,7 @@ FIXTURE="${1:-}"
 case "$FIXTURE" in
     -h|--help) usage; exit 0 ;;
     "") usage >&2; exit 2 ;;
-    two-disc|many-tracks|playlist-basic|playback|gapless|podcast) ;;
+    two-disc|many-tracks|playlist-basic|playback|gapless|podcast|taglib) ;;
     *) echo "seed-test-media: unknown fixture '$FIXTURE'" >&2; usage >&2; exit 2 ;;
 esac
 shift
@@ -182,6 +188,30 @@ build_podcast() {
         "Podcast Artist" "Podcast Album" 1 1 1 1 "2022" "Spoken Word" 60
 }
 
+# 5 x 60 s tracks (long enough for playback checks, like build_playback) plus an .m3u that lists
+# the first 3 by filename and one line ("missing-track.mp3") that doesn't match any file, so the
+# TagLib provider's playlist import keeps it as an unresolved entry (LocalPlaylistRepository).
+build_taglib() {
+    local dir="$1" i
+    mkdir -p "$dir"
+    local songs=("One" "Two" "Three" "Four" "Five")
+    for i in 1 2 3 4 5; do
+        generate_track "${dir}/taglib${i}.mp3" mp3 "Taglib ${songs[$((i - 1))]}" "Taglib Artist" \
+            "Taglib Artist" "Taglib Album" "$i" 5 1 1 "2024" "Ambient" 60
+    done
+    cat > "${dir}/taglib.m3u" <<'EOF'
+#EXTM3U
+#EXTINF:60, Taglib Artist - Taglib One
+taglib1.mp3
+#EXTINF:60, Taglib Artist - Taglib Two
+taglib2.mp3
+#EXTINF:60, Taglib Artist - Taglib Three
+taglib3.mp3
+#EXTINF:180, Unknown Artist - Missing Track
+missing-track.mp3
+EOF
+}
+
 FIXTURE_DIR="${CACHE_ROOT}/${FIXTURE}"
 mkdir -p "$FIXTURE_DIR"
 echo "seed-test-media: generating '${FIXTURE}' fixture in ${FIXTURE_DIR} (cached files reused) ..."
@@ -192,6 +222,7 @@ case "$FIXTURE" in
     playback) build_playback "$FIXTURE_DIR" ;;
     gapless) build_gapless "$FIXTURE_DIR" ;;
     podcast) build_podcast "$FIXTURE_DIR" ;;
+    taglib) build_taglib "$FIXTURE_DIR" ;;
 esac
 
 # The app only imports MediaStore tracks into its own library on: walking through onboarding's
@@ -219,7 +250,14 @@ EOF
     sleep 3
 fi
 
-REMOTE_DIR="${REMOTE_ROOT}/${FIXTURE}"
+# The taglib fixture lives outside REMOTE_ROOT (a folder the Shuttle/TagLib provider's SAF picker
+# selects directly) and is never MediaStore-scanned: it's meant to be read by the TagLib provider
+# only, so scanning it into MediaStore too would double-import each file as two different Songs.
+if [ "$FIXTURE" = "taglib" ]; then
+    REMOTE_DIR="/sdcard/Music/taglib-seed"
+else
+    REMOTE_DIR="${REMOTE_ROOT}/${FIXTURE}"
+fi
 radb shell mkdir -p "$REMOTE_DIR"
 file_count=0
 for f in "$FIXTURE_DIR"/*; do
@@ -228,14 +266,16 @@ for f in "$FIXTURE_DIR"/*; do
 done
 echo "seed-test-media: pushed ${file_count} file(s) to ${REMOTE_DIR}"
 
-# scan_volume only registers pending placeholder rows for new files (title/duration/is_music stay
-# NULL) -- the metadata extractor only runs per-file via scan_file (MediaStore.scanFile()'s
-# underlying call), so each pushed file needs its own scan to be indexed with real tags.
-echo "seed-test-media: scanning each pushed file so MediaStore extracts its tags ..."
-for f in "$FIXTURE_DIR"/*; do
-    radb shell content call --uri content://media/ --method scan_file \
-        --arg "${REMOTE_DIR}/$(basename "$f")" >/dev/null 2>&1 || true
-done
+if [ "$FIXTURE" != "taglib" ]; then
+    # scan_volume only registers pending placeholder rows for new files (title/duration/is_music
+    # stay NULL) -- the metadata extractor only runs per-file via scan_file (MediaStore.scanFile()'s
+    # underlying call), so each pushed file needs its own scan to be indexed with real tags.
+    echo "seed-test-media: scanning each pushed file so MediaStore extracts its tags ..."
+    for f in "$FIXTURE_DIR"/*; do
+        radb shell content call --uri content://media/ --method scan_file \
+            --arg "${REMOTE_DIR}/$(basename "$f")" >/dev/null 2>&1 || true
+    done
+fi
 
 # _data holds the MediaStore-resolved path (e.g. /storage/emulated/0/...), which does not share
 # a prefix with /sdcard/... (a symlink) -- match on the fixture's path suffix instead.

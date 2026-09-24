@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.util.Log
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.NoisyReceiver
 import com.simplecityapps.playback.PlaybackManager
@@ -43,6 +44,9 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var songRepository: SongRepository
+
+    @Inject
+    lateinit var mediaImporter: MediaImporter
 
     @Inject
     lateinit var playSongs: PlaySongs
@@ -174,7 +178,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
         else -> throw IllegalArgumentException("unknown action")
     }
 
-    private fun dumpState(): JSONObject {
+    private suspend fun dumpState(): JSONObject {
         val currentSong = queueManager.getCurrentItem()?.song
         return JSONObject().apply {
             put("state", playbackManager.playbackState().toString())
@@ -191,6 +195,8 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             put("repeat", queueManager.getRepeatMode().name)
             put("speed", playbackManager.getPlaybackSpeed())
             put("pendingLoad", pendingLoad())
+            put("libraryImporting", mediaImporter.isImporting)
+            put("librarySongCount", songRepository.getSongs(SongQuery.All()).firstOrNull()?.size ?: JSONObject.NULL)
         }
     }
 
