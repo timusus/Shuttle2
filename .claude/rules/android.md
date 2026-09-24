@@ -51,9 +51,18 @@ Commit message format, module scopes and changelog upkeep are in the root `CLAUD
 
 Prefer a headless Pixel 9 Pro AVD on the owner's desktop (WSL2, KVM) over a local AVD: the 32 GB
 Mac starves a local emulator whenever it's loaded (Xcode, other sessions). Launcher:
-`support/scripts/remote-emu.sh` (`status` / `start [N]` / `env` / `install [N] [apk]` /
+`support/scripts/remote-emu.sh` (`status` / `start [N] [--api 36|37]` / `env` / `install [N] [apk]` /
 `serial [N]` / `reconnect [N]` / `reset [N]` / `ui-prep [N]` / `tap-text` / `dump-texts` /
 `seed-music [dir]` / `lockscreen on|off` / `stop [N|--all]`).
+
+Default lane image is `android-36 google_atd x86_64` (no Play services, fewer system apps),
+right-sized to 2560 MB / 3 cores -- an idle lane costs noticeably less CPU than the old full
+`google_apis` API 37 image at 4096 MB / 4 cores. `start --api 37` boots that full image instead,
+for anything that needs Play services or a system app ATD strips out. `start` runs `ui-prep`
+itself once the device has booted, so a raw `start` gets animations disabled without a separate
+call. A lease is reclaimed on the next `start`/pick not just when its console port has no
+listener, but also when its recorded owner process is gone from this Mac -- so a headless worker
+that dies mid-run no longer strands its lane.
 
 **If the tunnel drops mid-run** (adb reports "device offline" or "device not found"):
 `remote-emu.sh reconnect` re-opens the tunnel for this session's lane without rebooting the
@@ -132,11 +141,11 @@ near the bottom edge** — it triggers the system home gesture; every screen in 
 by tap.
 
 - `remote-emu.sh ui-prep [N]` sets `window_animation_scale`/`transition_animation_scale`/
-  `animator_duration_scale` to 0 on the lane. Run it once per lane after `start`, before the first
-  `tap-text`/`dump-texts` call. Even with animations off, `uiautomator dump` fails with "could not
-  get idle state" while music plays (the progress bar keeps ticking): `tap-text`/`dump-texts` give
-  up after two such failures and say to pause. Run them in the foreground like any other emulator
-  command.
+  `animator_duration_scale` to 0 on the lane; `start` already runs it once the device has booted,
+  so this is only needed by hand if something re-enables animations later. Even with animations
+  off, `uiautomator dump` fails with "could not get idle state" while music plays (the progress bar
+  keeps ticking): `tap-text`/`dump-texts` give up after two such failures and say to pause. Run
+  them in the foreground like any other emulator command.
 - `remote-emu.sh seed-music [dir]` generates ~6 short mp3s plus one 6-minute track (ffmpeg,
   distinct title/artist/album tags across 2 albums), pushes them to `/sdcard/Music/emu-seed`, and
   scans each file into MediaStore. The app's own library still needs a manual Settings -> Media ->
