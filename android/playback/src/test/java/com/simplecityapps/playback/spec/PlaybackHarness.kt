@@ -34,6 +34,9 @@ import com.squareup.moshi.Moshi
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
+import java.net.URI
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -227,6 +230,12 @@ class PlaybackHarness(
         /** Bytes of output per millisecond of the 16-bit test files: 16 kHz, mono, 2 bytes a sample. */
         const val BYTES_PER_MS = 32
 
+        /** Two minutes: more than the player buffers ahead (50 s, plus up to a 1 MB load chunk). */
+        const val LONG_SONG_MS = 120_000
+
+        private const val SAMPLE_RATE = 16_000
+        private const val WAV_HEADER_SIZE = 44
+
         /** A file URI nothing can be read from. */
         const val MISSING_FILE_URI = "file:///nonexistent/missing.wav"
 
@@ -246,6 +255,34 @@ class PlaybackHarness(
                 },
             replayGainTrack: Double? = null
         ): Song = testSong(id = id, path = resourceUri(file), mimeType = "audio/wav", duration = durationMs, replayGainTrack = replayGainTrack)
+
+        /**
+         * A song [durationMs] long, of silence in the test files' format, written to a temporary file: long enough that the
+         * player buffers only part of it, so a seek far enough ahead reads the file again.
+         */
+        fun longSong(
+            id: Long,
+            durationMs: Int = LONG_SONG_MS
+        ): Song {
+            val dataSize = durationMs * BYTES_PER_MS
+            val header =
+                ByteBuffer.allocate(WAV_HEADER_SIZE).order(ByteOrder.LITTLE_ENDIAN).apply {
+                    put("RIFF".toByteArray()).putInt(WAV_HEADER_SIZE - 8 + dataSize).put("WAVE".toByteArray())
+                    put("fmt ".toByteArray()).putInt(16).putShort(1).putShort(1).putInt(SAMPLE_RATE).putInt(SAMPLE_RATE * 2).putShort(2).putShort(16)
+                    put("data".toByteArray()).putInt(dataSize)
+                }
+            val file = File.createTempFile("long-song-$id", ".wav").apply { deleteOnExit() }
+            file.outputStream().use { output ->
+                output.write(header.array())
+                output.write(ByteArray(dataSize))
+            }
+            return testSong(id = id, path = file.toURI().toString(), mimeType = "audio/wav", duration = durationMs)
+        }
+
+        /** Deletes [song]'s file, as when a file is deleted or its storage removed while it plays. */
+        fun deleteFile(song: Song) {
+            File(URI(song.path)).delete()
+        }
 
         /** A song whose file can't be read, as when an opened file's URI grant has lapsed. */
         fun unreadableSong(id: Long): Song = testSong(id = id, path = MISSING_FILE_URI, mimeType = "audio/wav", duration = TONE_2S_MS)

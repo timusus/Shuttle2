@@ -4,10 +4,13 @@ import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.BYTES_PER_MS
+import com.simplecityapps.playback.spec.PlaybackHarness.Companion.LONG_SONG_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_2S_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_3S
+import com.simplecityapps.playback.spec.PlaybackHarness.Companion.deleteFile
+import com.simplecityapps.playback.spec.PlaybackHarness.Companion.longSong
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.resourceUri
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unreadableSong
@@ -547,6 +550,36 @@ class PlaybackSpecTest {
 
         queue.queueStateFlow.value.currentItem?.song?.id shouldBe 2L
         playback.getProgress()!!.shouldBeBetween(0, 100)
+    }
+
+    @Test
+    fun `RS-34 a seek on a song reached by playing on shows it playing, not loading`() {
+        startPlaying(listOf(song(1, file = TONE_1S), song(2, file = TONE_3S)))
+        harness.runUntil { queue.queueStateFlow.value.currentItem?.song?.id == 2L && (playback.getProgress() ?: 0) > 0 }
+        val states = harness.record(playback.playbackStateFlow)
+
+        playback.seekTo(1_500)
+        harness.runUntil { (playback.getProgress() ?: 0) > 1_600 }
+
+        states shouldNotContain PlaybackState.Loading
+        playback.playbackStateFlow.value shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `RS-34 a song reached by playing on that fails once playing stops playback`() {
+        val failing = longSong(2)
+        val failures = harness.record(playback.playbackFailureFlow)
+        startPlaying(listOf(song(1, file = TONE_1S), failing, song(3)))
+        harness.runUntil { queue.queueStateFlow.value.currentItem?.song == failing && (playback.getProgress() ?: 0) > 0 }
+
+        deleteFile(failing)
+        playback.seekTo(LONG_SONG_MS - 10_000)
+        harness.runUntil { failures.isNotEmpty() }
+        harness.idle()
+
+        failures shouldBe listOf(failing)
+        queue.queueStateFlow.value.currentItem?.song shouldBe failing
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
     }
 
     private fun offMainThread(

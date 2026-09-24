@@ -60,7 +60,10 @@ class PlaybackManager(
     AudioFocusHelper.Listener {
     private val playerThread = PlayerThread(player)
 
-    /** The uid of the entry that last became ready to play; while the current one hasn't, it's loading. */
+    /**
+     * The uid of the entry that last became ready to play, or that playback moved on to by playing out the one
+     * before (it's already buffered); while the current one hasn't, it's loading.
+     */
     private var readyUid: Long? = null
 
     /** The completion of the last [load] (or skip), called once the item is ready to play or has failed. */
@@ -163,6 +166,9 @@ class PlaybackManager(
                     reason: Int
                 ) {
                     mediaItem?.let(::applyWakeMode)
+                    if (isPlayingOn(reason) && player.playerError == null) {
+                        readyUid = mediaItem?.queueEntry?.uid
+                    }
                     onCurrentItemChanged(mediaItem?.queueEntry?.uid, reason)
                     publishState()
                     publishProgress()
@@ -190,6 +196,13 @@ class PlaybackManager(
             }
         )
     }
+
+    /**
+     * Whether a transition is playback moving on to the next item (or back to the start on repeat). The item it moves
+     * on to is ready, as the player only moves on to an item once it's prepared and raises no new ready state for
+     * it, unless the item failed to load: then the player moves on to it to report the failure.
+     */
+    private fun isPlayingOn(reason: Int) = reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO || reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT
 
     private val currentEntry: QueueEntry?
         get() = player.currentMediaItem?.queueEntry

@@ -110,6 +110,11 @@ the current song in both the shuffled and the unshuffled queue, in the order cho
 **RS-33: previous goes back early, else restarts.** Given a song playing, when previous is pressed within its first
 2 seconds, then the song before it becomes current; after 2 seconds, the song restarts instead. (#345) — JVM.
 
+**RS-34: a song reached by playing on is playing, not loading.** Given a song that playback moved on to by playing
+out the one before, when the user seeks in it (or it rebuffers), then it shows as playing, not loading; and when it
+fails once playing (its file deleted or its stream dropped), then playback stops on it, paused, rather than skipping
+ahead as if it had failed to load (RS-23). (#345) — JVM.
+
 ## Audio output
 
 **RS-15: ReplayGain from the first sample.** Given ReplayGain on and a song with a track gain, when it starts, then
