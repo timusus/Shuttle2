@@ -74,6 +74,10 @@ recorded owner PID is only ever reclaimed by the "nothing listening" rule.
 emulator or losing the lease; it's a fast no-op if the tunnel is already healthy. `s2-debug.sh`
 and `checks/_lib.sh` call it automatically through their shared `adb_retry` wrapper (one
 reconnect, one retry, then a clear failure) — you only need it by hand for a raw `adb` call.
+A tunnel failure names the check that failed (`port-busy` with the holder, `ssh-exited`,
+`listen-timeout`, or `adb-handshake`: the forward is up but the lane's adbd never answered, after
+three connects) and prints the tail of `$TMPDIR/remote-emu/tunnel-N[-adbd].log`, which records
+the ssh command, each failed connect, every close and how ssh exited (#342).
 
 **One-shot verification:** `support/scripts/emu-verify.sh` runs start/install/reset/seed, the named
 checks or Maestro flows (or the full suite), and stop as a single foreground call -- see the
