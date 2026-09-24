@@ -15,6 +15,19 @@ RESULT_PATH=${RESULT_PATH:-${BUILD_PATH}/Artifacts}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
+# build-brief condenses Gradle's console output (a 400+ line log becomes a
+# handful of lines) while keeping the exit code and, for compile failures,
+# the file:line and message; fall back to plain ./gradlew when it's not on
+# PATH.
+GRADLE_RUNNER=(./gradlew)
+if command -v build-brief >/dev/null 2>&1; then
+  GRADLE_RUNNER=(build-brief ./gradlew)
+fi
+
+run_gradle() {
+  "${GRADLE_RUNNER[@]}" "$@"
+}
+
 function finish() {
   # Do any work necessary even if script this fails
   echo "Finished"
@@ -113,7 +126,7 @@ resolve_module() {
 }
 
 if [ "$#" -eq 0 ]; then
-  ./gradlew testDebugUnitTest
+  run_gradle testDebugUnitTest
   exit 0
 fi
 
@@ -143,7 +156,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "${#modules[@]}" -eq 0 ]; then
-  ./gradlew testDebugUnitTest ${tests_filter:+--tests "${tests_filter}"}
+  run_gradle testDebugUnitTest ${tests_filter:+--tests "${tests_filter}"}
   exit 0
 fi
 
@@ -158,4 +171,4 @@ if [ -n "${tests_filter}" ]; then
   gradle_args+=(--tests "${tests_filter}")
 fi
 
-./gradlew "${gradle_args[@]}"
+run_gradle "${gradle_args[@]}"

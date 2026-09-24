@@ -109,6 +109,17 @@ radb() { ANDROID_ADB_SERVER_PORT="$(local_port "$LANE")" adb -s "$(serial_of "$L
 
 fallback() { echo "remote-emu: $* -- fall back to the local AVD" >&2; exit 3; }
 
+# build-brief condenses Gradle's console output when it's on PATH, keeping the
+# exit code and, on a compile failure, the file:line and message; falls back
+# to plain ./gradlew otherwise.
+run_gradle() {
+  if command -v build-brief >/dev/null 2>&1; then
+    build-brief ./gradlew "$@"
+  else
+    ./gradlew "$@"
+  fi
+}
+
 check_available() {
     ssh -o ConnectTimeout=5 -o BatchMode=yes "$BOX" true 2>/dev/null \
         || fallback "$BOX is not reachable within 5 s"
@@ -341,7 +352,7 @@ cmd_install() {
     if [ -z "$apk" ]; then
         apk="android/app/build/outputs/apk/debug/app-debug.apk"
         [ -f gradlew ] || { echo "remote-emu: run from the repo root" >&2; exit 2; }
-        ./gradlew :android:app:assembleDebug -q
+        run_gradle :android:app:assembleDebug -q
     fi
     [ -f "$apk" ] || { echo "remote-emu: no APK at $apk" >&2; exit 1; }
     radb install -r "$apk"

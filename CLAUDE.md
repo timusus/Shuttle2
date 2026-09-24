@@ -33,6 +33,11 @@ S2 Music Player — an Android app for local music playback and streaming via Je
 
 All commands run from the repository root.
 
+`support/scripts/unit-test` and `remote-emu.sh install` run Gradle through
+[`build-brief`](https://bb.staticvar.dev/) when it's on PATH (`brew install static-var/tap/build-brief`),
+condensing the console output while keeping the exit code and compile-error file:line; they fall
+back to plain `./gradlew` when it isn't installed.
+
 ```bash
 # Build debug APK
 ./gradlew :android:app:assembleDebug
