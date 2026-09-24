@@ -79,9 +79,14 @@ class ExoAudioPlayer(
         )
     }
 
-    /** A seek to where it's playing: the sink releases its AudioTrack on each flush and opens a new one. */
+    /**
+     * A seek: the sink releases its AudioTrack on each flush and opens a new one. ExoPlayer ignores a seek to the
+     * millisecond it's already at while ready or buffering, so this seeks 1 ms ahead. Ahead rather than behind:
+     * while playing, [ExoPlayer.getCurrentPosition] extrapolates past the position the playback thread last
+     * recorded, so a seek to it, or to 1 ms before it, can land on that position and be dropped.
+     */
     override fun reopenAudioTrack() {
-        player.seekTo(player.currentPosition)
+        player.seekTo(player.currentPosition + 1)
     }
 
     override var playWhenReady: Boolean
