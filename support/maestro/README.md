@@ -11,6 +11,7 @@ checks/flows, stop) in one call -- see its `--help` or `.claude/skills/emulator-
 | `support/scripts/checks/queue-remove-current.sh` | receivers | Removing the playing item plays the next track from its start, no stall | ~4 s |
 | `support/scripts/checks/rapid-skip.sh` | receivers | Three back-to-back NEXTs settle on track 4, playing, no load pending | ~3 s |
 | `support/scripts/checks/restore-position.sh` | receivers | Seek 0:20, play 5 s, force-stop, relaunch, play: resumes at ~0:25 | ~12 s |
+| `support/scripts/checks/folder-art.sh` | receivers + taps | One-song album with a magenta `cover.jpg` and no embedded art: Library > Albums shows the cover (artwork pixel check); removes the album after | ~20 s |
 | `support/scripts/checks/open-queue-by-taps.sh` | receivers + `open-queue-by-taps.yaml` | Mini player -> full player -> "Up Next" opens the queue | 30-75 s (Maestro driver start-up varies) |
 
 `support/scripts/checks/run-all.sh` runs them all. Each prints `PASS <name> in Ns` or
