@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # #222: dragging the fast scroller thumb to the bottom of a long Songs list doesn't crash. Needs
-# the many-tracks fixture seeded (48 songs) -- seeded here so the check is self-contained; this is
-# the last check to grow the library before no-crashes.sh runs, which doesn't care about library
-# size, so there's no need to restore the `playback` fixture afterward. Maestro's `swipe:`
-# primitive doesn't reliably engage
-# the thumb's drag gesture (confirmed by hand), so the drag itself is driven by raw
+# the many-tracks fixture seeded (48 songs) -- seeded here so the check is self-contained, then the
+# library is restored back to just `playback` so later checks' start_playback (queueSize == 5)
+# still holds, in run-all's order or run singly afterward. Maestro's `swipe:` primitive doesn't
+# reliably engage the thumb's drag gesture (confirmed by hand), so the drag itself is driven by raw
 # `adb shell input swipe` calls at a spread of starting heights -- one of them always lands on the
 # thumb's small touch target and walks the list down, the same way a real drag would. Maestro
 # handles navigation and before/after screenshots; this script checks the list actually moved and
@@ -22,6 +21,9 @@ s2 PAUSE >/dev/null 2>&1 || true
 "${CHECKS_ROOT}/support/scripts/seed-test-media.sh" many-tracks >/dev/null
 s2 IMPORT >/dev/null
 sleep 5
+# The raw adb calls below unset ANDROID_ADB_SERVER_PORT; the reset and reseed need it back.
+adb_server_port="${ANDROID_ADB_SERVER_PORT:-}"
+trap '[ -z "$adb_server_port" ] || export ANDROID_ADB_SERVER_PORT="$adb_server_port"; restore_playback_fixture' EXIT
 
 out="${CHECKS_ROOT}/tmp/maestro"
 mkdir -p "$out"
