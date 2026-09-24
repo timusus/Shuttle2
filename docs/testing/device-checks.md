@@ -94,6 +94,7 @@ play order. Coming back to the phone always lands paused, at the receiver's posi
 - [ ] With a system EQ app attached, switch to Cast. The EQ app detaches; switch back and it reattaches (RS-21 below).
 - [ ] Duck (e.g. a navigation prompt) while local, then switch to Cast and back. Volume is normal and nothing is stuck ducked.
 - [ ] Force-stop S2 while casting, reopen it, and reconnect. Playback on the receiver picks up S2's queue (it reloads the current song).
+- [ ] While casting a Jellyfin song, from a laptop on the same Wi-Fi, `curl -i http://<phone-ip>:5000/songs/<id>/audio` and the same with a made-up first path segment. Both answer 403 with no `Location` header (RS-37). The receiver's own URL (from `adb logcat` or the receiver's debug console) carries a 32-character key and plays; after disconnecting and casting again, the old URL answers 403.
 
 ## Behaviour spec, device-only rules
 

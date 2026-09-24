@@ -16,6 +16,7 @@ import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
 import com.simplecityapps.playback.chromecast.CastMediaItemConverter
 import com.simplecityapps.playback.chromecast.CastQueue
+import com.simplecityapps.playback.chromecast.CastStreams
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.engine.SongUriResolver
@@ -96,8 +97,9 @@ class PlaybackEngineModule {
     @Singleton
     @Provides
     fun provideCastMediaItemConverter(
-        @ApplicationContext context: Context
-    ): CastMediaItemConverter = CastMediaItemConverter(CastMediaItemConverter.wifiAddress(context), context.getString(com.simplecityapps.core.R.string.unknown))
+        @ApplicationContext context: Context,
+        streams: CastStreams
+    ): CastMediaItemConverter = CastMediaItemConverter(CastMediaItemConverter.wifiAddress(context), streams, context.getString(com.simplecityapps.core.R.string.unknown))
 
     @Singleton
     @Provides

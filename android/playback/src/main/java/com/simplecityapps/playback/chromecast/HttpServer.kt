@@ -1,6 +1,5 @@
 package com.simplecityapps.playback.chromecast
 
-import android.net.Uri
 import fi.iki.elonen.NanoHTTPD
 import java.io.ByteArrayInputStream
 import java.io.IOException
@@ -8,36 +7,46 @@ import java.io.InputStream
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
-class HttpServer(private val castService: CastService) : NanoHTTPD(5000) {
+/**
+ * Serves a Cast receiver each song at `/<key>/songs/<id>/audio` and its artwork at `/<key>/songs/<id>/artwork`, and
+ * refuses (403) any request without the session's key (see [CastStreams]).
+ *
+ * A remote-provider song is a redirect to its server's stream rather than a proxy of it: a transcoded Jellyfin or Emby
+ * stream is an HLS playlist whose segments the receiver resolves against the server's URL, which a proxy would have to
+ * rewrite, and every byte would otherwise pass through the phone, and stop when it sleeps. The redirect's URL holds
+ * the provider's credential, so only a holder of the key, which rides in the queue sent to the receiver, can read it.
+ */
+class HttpServer(
+    private val castService: CastService,
+    private val streams: CastStreams,
+    port: Int = CastMediaItemConverter.PORT
+) : NanoHTTPD(port) {
     override fun serve(session: IHTTPSession): Response {
-        val uri = Uri.parse(session.uri)
-
-        val paths = uri.pathSegments
-        if (paths.contains("songs")) {
-            val songId = paths[paths.indexOf("songs") + 1].toLong()
-
-            when (uri.lastPathSegment) {
-                "audio" -> {
-                    return runBlocking {
-                        castService.getRemoteAudioUrl(songId)?.let { url ->
-                            return@runBlocking redirect(url)
-                        }
-                        castService.getAudio(songId)?.let { audioStream ->
-                            serveAudio(session.headers, audioStream.stream, audioStream.length, audioStream.mimeType)
-                        } ?: newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
-                    }
-                }
-
-                "artwork" -> {
-                    return runBlocking {
-                        castService.getArtwork(songId)?.let { byteArray ->
-                            serveArtwork(ByteArrayInputStream(byteArray), "image/jpeg", byteArray.size.toLong())
-                        } ?: newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
-                    }
-                }
-            }
+        val paths = session.uri.trim('/').split('/')
+        if (!streams.isValid(paths.firstOrNull())) {
+            return newFixedLengthResponse(Response.Status.FORBIDDEN, "text/html", "Forbidden")
         }
-        return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/html", "Invalid request url")
+        val songId = paths.takeIf { it.size == 4 && it[1] == "songs" }?.get(2)?.toLongOrNull()
+            ?: return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/html", "Invalid request url")
+
+        return when (paths[3]) {
+            "audio" -> runBlocking {
+                castService.getRemoteAudioUrl(songId)?.let { url ->
+                    return@runBlocking redirect(url)
+                }
+                castService.getAudio(songId)?.let { audioStream ->
+                    serveAudio(session.headers, audioStream.stream, audioStream.length, audioStream.mimeType)
+                } ?: newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
+            }
+
+            "artwork" -> runBlocking {
+                castService.getArtwork(songId)?.let { byteArray ->
+                    serveArtwork(ByteArrayInputStream(byteArray), "image/jpeg", byteArray.size.toLong())
+                } ?: newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
+            }
+
+            else -> newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/html", "Invalid request url")
+        }
     }
 
     private fun serveAudio(

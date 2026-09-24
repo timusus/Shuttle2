@@ -9,6 +9,7 @@ import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.playback.queue.toMediaItem
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,7 +17,9 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class CastMediaItemConverterTest {
-    private val converter = CastMediaItemConverter(hostAddress = { "192.168.1.20" }, unknown = "Unknown")
+    private val streams = CastStreams()
+
+    private val converter = CastMediaItemConverter(hostAddress = { "192.168.1.20" }, streams = streams, unknown = "Unknown")
 
     private val song = testSong(7, name = "Title", mimeType = "audio/flac", duration = 215_000)
         .copy(artists = listOf("Artist"), album = "Album")
@@ -30,7 +33,7 @@ class CastMediaItemConverterTest {
     fun `an entry streams from the phone's server, with its metadata`() {
         val media = converter.toMediaQueueItem(QueueEntry(uid = 42, song = song).toMediaItem()).media!!
 
-        media.contentUrl shouldBe "http://192.168.1.20:5000/songs/7/audio"
+        media.contentUrl shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/audio"
         media.streamType shouldBe MediaInfo.STREAM_TYPE_BUFFERED
         media.contentType shouldBe "audio/flac"
         media.streamDuration shouldBe 215_000L
@@ -39,7 +42,19 @@ class CastMediaItemConverterTest {
         metadata.getString(MediaMetadata.KEY_ARTIST) shouldBe "Artist"
         metadata.getString(MediaMetadata.KEY_ALBUM_TITLE) shouldBe "Album"
         metadata.getString(MediaMetadata.KEY_TITLE) shouldBe "Title"
-        metadata.images.single().url.toString() shouldBe "http://192.168.1.20:5000/songs/7/artwork"
+        metadata.images.single().url.toString() shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/artwork"
+    }
+
+    @Test
+    fun `a new session's items carry its new key`() {
+        val before = converter.toMediaQueueItem(QueueEntry(uid = 1, song = song).toMediaItem()).media!!.contentUrl!!
+        streams.newSession()
+
+        val after = converter.toMediaQueueItem(QueueEntry(uid = 1, song = song).toMediaItem()).media!!
+
+        after.contentUrl shouldNotBe before
+        after.contentUrl shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/audio"
+        after.metadata!!.images.single().url.toString() shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/artwork"
     }
 
     @Test
@@ -77,7 +92,7 @@ class CastMediaItemConverterTest {
         val reported = converter.toMediaItem(queueItem)
 
         reported.queueEntryOrNull.shouldBeNull()
-        reported.localConfiguration!!.uri.toString() shouldBe "http://192.168.1.20:5000/songs/7/audio"
+        reported.localConfiguration!!.uri.toString() shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/audio"
     }
 
     @Test

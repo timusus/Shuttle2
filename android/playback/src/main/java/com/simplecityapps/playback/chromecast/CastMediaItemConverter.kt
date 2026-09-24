@@ -15,9 +15,10 @@ import java.util.concurrent.ConcurrentHashMap
 import org.json.JSONObject
 
 /**
- * Turns queue items into what a Cast receiver loads, and back. Every song streams from the phone's [HttpServer]: a
- * local song as its file, a remote-provider song as a redirect to its server's stream, resolved when the receiver
- * fetches it (see [CastService.getAudio]), so sending a queue never waits on a server.
+ * Turns queue items into what a Cast receiver loads, and back. Every song streams from the phone's [HttpServer], at a
+ * URL carrying the session's key (see [CastStreams]): a local song as its file, a remote-provider song as a redirect
+ * to its server's stream, resolved when the receiver fetches it (see [CastService.getAudio]), so sending a queue never
+ * waits on a server.
  *
  * Each entry's content id is its stream URL with the entry's uid as the fragment, which HTTP never sends: Media3 keys
  * the items it sent by content id, so two entries for the same song must differ. The uid also rides in the custom
@@ -27,6 +28,8 @@ import org.json.JSONObject
 class CastMediaItemConverter(
     /** The phone's address on the network the receiver streams from. */
     private val hostAddress: () -> String,
+    /** The session key every URL carries. */
+    private val streams: CastStreams,
     /** Stands in for a missing artist, album or title. */
     private val unknown: String
 ) : MediaItemConverter {
@@ -38,14 +41,15 @@ class CastMediaItemConverter(
         sent[entry.uid] = mediaItem
 
         val host = hostAddress()
+        val key = streams.key
         val metadata =
             MediaMetadata(MediaMetadata.MEDIA_TYPE_MUSIC_TRACK).apply {
                 putString(MediaMetadata.KEY_ARTIST, song.friendlyArtistName ?: unknown)
                 putString(MediaMetadata.KEY_ALBUM_TITLE, song.album ?: unknown)
                 putString(MediaMetadata.KEY_TITLE, song.name ?: unknown)
-                addImage(WebImage(Uri.parse(artworkUrl(host, song.id))))
+                addImage(WebImage(Uri.parse(artworkUrl(host, key, song.id))))
             }
-        val url = audioUrl(host, song.id)
+        val url = audioUrl(host, key, song.id)
         val mediaInfo =
             MediaInfo.Builder("$url#${entry.uid}")
                 .setContentUrl(url)
@@ -85,13 +89,15 @@ class CastMediaItemConverter(
 
         fun audioUrl(
             host: String,
+            key: String,
             songId: Long
-        ) = "http://$host:$PORT/songs/$songId/audio"
+        ) = "http://$host:$PORT/$key/songs/$songId/audio"
 
         fun artworkUrl(
             host: String,
+            key: String,
             songId: Long
-        ) = "http://$host:$PORT/songs/$songId/artwork"
+        ) = "http://$host:$PORT/$key/songs/$songId/artwork"
 
         /** The dotted form of a [WifiManager] IPv4 address, whose first octet is its lowest byte. */
         fun formatIpAddress(address: Int): String = "%d.%d.%d.%d".format(

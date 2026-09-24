@@ -36,7 +36,7 @@ class CastQueueTest {
             override fun getDeviceInfo(): DeviceInfo = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE).build()
         }
 
-    private val castQueue = CastQueue(local, CastMediaItemConverter({ "10.0.0.2" }, "Unknown"))
+    private val castQueue = CastQueue(local, CastMediaItemConverter({ "10.0.0.2" }, CastStreams(), "Unknown"))
 
     @After
     fun tearDown() {

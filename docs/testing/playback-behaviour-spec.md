@@ -5,7 +5,8 @@ What playback must do, as seen by the user, one rule per behaviour. Each rule co
 the Media3 refactor (#345, `docs/architecture/media3-playback-design.md`) must keep every one.
 
 Each JVM rule has one test named with its RS id, in `android/playback/src/test/java/com/simplecityapps/playback/spec/`:
-`PlaybackSpecTest` for queue and transport rules, `AudioOutputSpecTest` for the audio that comes out. The tests run
+`PlaybackSpecTest` for queue and transport rules, `AudioOutputSpecTest` for the audio that comes out, `CastSpecTest`
+for casting (a Cast rule about the phone's stream server is tested by `chromecast/HttpServerTest`). The tests run
 the real `PlaybackManager` and `QueueManager` over a real ExoPlayer whose playlist is the queue, built by the
 production `ExoPlayerFactory` (fake clock, lazy preparation as in production, production renderers, audio sink and
 EQ/ReplayGain processors, WAV files from the test resources). They call only
@@ -156,6 +157,11 @@ re-anchors on a real jump (a seek, from this or another sender), the playback st
 between local and Cast, a superseded switch never overrides a newer one, the audio effect session is closed while
 casting, and Previous with no reported position restarts the song. (b1a2a27d, 9dfbf8ac, 22a03157, 42cd7f03,
 a3dd7b59, e48e3be2) — device-only: *Cast* and *Behaviour spec, device-only rules*.
+
+**RS-37: only the Cast session can read what the phone serves it.** Given a Cast session, when anything asks the
+phone's stream server for a song's audio or artwork without that session's key, whether a local file or a
+remote-provider song whose stream URL holds the provider's credential, then it's refused (403) and nothing is
+redirected; a new session gets a new key. (#345) — JVM (`chromecast/HttpServerTest`).
 
 ## Commits with no rule
 

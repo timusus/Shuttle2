@@ -9,13 +9,14 @@ import timber.log.Timber
 
 /**
  * Whether Cast is available, and keeps the local [HttpServer] a Cast receiver streams from running while a Cast
- * session is up. Moving playback to and from the receiver is the Cast player's (see [CastQueue]).
+ * session is up, with a new key for its URLs each session (a resumed one keeps its key). Moving playback to and from the receiver is the Cast player's (see [CastQueue]).
  */
 class CastSessionManager
 @Inject
 constructor(
     applicationContext: Context,
-    private val httpServer: HttpServer
+    private val httpServer: HttpServer,
+    private val streams: CastStreams
 ) : SessionManagerListener<CastSession> {
     var isAvailable: Boolean = false
         private set
@@ -33,6 +34,7 @@ constructor(
 
     override fun onSessionStarting(castSession: CastSession) {
         Timber.d("onSessionStarting")
+        streams.newSession()
         startHttpServer()
     }
 

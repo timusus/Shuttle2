@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.chromecast.CastService
 import com.simplecityapps.playback.chromecast.CastSessionManager
+import com.simplecityapps.playback.chromecast.CastStreams
 import com.simplecityapps.playback.chromecast.HttpServer
 import dagger.Module
 import dagger.Provides
@@ -28,12 +29,20 @@ class CastModule {
 
     @Singleton
     @Provides
-    fun provideHttpServer(castService: CastService): HttpServer = HttpServer(castService)
+    fun provideCastStreams(): CastStreams = CastStreams()
+
+    @Singleton
+    @Provides
+    fun provideHttpServer(
+        castService: CastService,
+        streams: CastStreams
+    ): HttpServer = HttpServer(castService, streams)
 
     @Singleton
     @Provides
     fun provideCastSessionManager(
         @ApplicationContext context: Context,
-        httpServer: HttpServer
-    ): CastSessionManager = CastSessionManager(context, httpServer)
+        httpServer: HttpServer,
+        streams: CastStreams
+    ): CastSessionManager = CastSessionManager(context, httpServer, streams)
 }
