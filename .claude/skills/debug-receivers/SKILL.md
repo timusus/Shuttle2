@@ -24,6 +24,7 @@ failing.
 | `NEXT` / `PREV` | | `skipToNext()` / `skipToPrev()` (`PREV` restarts the track past 2 s, as the UI does) |
 | `SEEK` | `--el ms 20000` | `seekTo(ms)` |
 | `REMOVE_QUEUE_ITEM` | `--ei position N` | `PlaybackManager.removeQueueItem`, the queue screen's "Remove from Queue" path. N indexes the queue in its displayed (shuffle-aware) order |
+| `REMOVE_PLAYLIST_SONG` | `--es playlist NAME --es song TITLE` | `PlaylistRepository.removeFromPlaylist`, the playlist detail screen's per-row "Remove" path (`PlaylistDetailPresenter.remove`) |
 | `REORDER_QUEUE` | `--ei from N --ei to N` | `QueueManager.move(from, to)`, the queue screen's drag-to-reorder path. Both indices are in the displayed (shuffle-aware) order |
 | `SHUFFLE` | `[--ez enabled true\|false]` | Toggle, or set, the shuffle mode |
 | `REPEAT` | `[--es mode off\|all\|one]` | Toggle (Off → All → One), or set, the repeat mode |

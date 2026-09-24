@@ -121,6 +121,22 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             queueItem.song.name
         }
 
+        "REMOVE_PLAYLIST_SONG" -> {
+            val playlistName = intent.getStringExtra("playlist")
+            val songTitle = intent.getStringExtra("song")
+            requireNotNull(playlistName) { "missing --es playlist <name>" }
+            requireNotNull(songTitle) { "missing --es song <title>" }
+            val playlist = playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).firstOrNull()
+                ?.firstOrNull { it.name == playlistName }
+                ?: throw IllegalArgumentException("no playlist named '$playlistName'")
+            val playlistSong = playlistRepository.getSongsForPlaylist(playlist).firstOrNull()
+                ?.firstOrNull { it.song.name == songTitle }
+                ?: throw IllegalArgumentException("no song titled '$songTitle' in playlist '$playlistName'")
+            // The playlist screen's per-row "Remove" path (PlaylistDetailPresenter.remove).
+            playlistRepository.removeFromPlaylist(playlist, listOf(playlistSong))
+            "removed '$songTitle' from '$playlistName'"
+        }
+
         "REORDER_QUEUE" -> {
             val from = intent.getIntExtra("from", -1)
             val to = intent.getIntExtra("to", -1)

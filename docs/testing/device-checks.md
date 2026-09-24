@@ -77,7 +77,7 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] After opening a file, force-stop and reopen S2. The queue restores without errors, and the opened file is skipped with a message if it can no longer be read.
 
 ### M3U playlist sync (#168), needs a real SAF folder
-- [ ] With a Shuttle/Taglib folder containing an .m3u (including a line S2 can't resolve), remove a song from that playlist in-app. The .m3u loses only that song's entry; the unresolved line is still there.
+- [x] With a Shuttle/Taglib folder containing an .m3u (including a line S2 can't resolve), remove a song from that playlist in-app. The .m3u loses only that song's entry; the unresolved line is still there. — automated: `emu-verify.sh --check m3u-sync` (removal driven via debug broadcast, not the UI gesture — see #383)
 
 ### Playback reporting (#191)
 - [x] Jellyfin and Emby each show a song S2 plays as now playing with a moving position, then paused on pause. — automated: `emu-verify.sh --remote jellyfin --check remote-reporting` (and `--remote emby`)
