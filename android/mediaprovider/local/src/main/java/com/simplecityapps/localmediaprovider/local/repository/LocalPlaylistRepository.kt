@@ -4,12 +4,17 @@ import android.content.Context
 import android.net.Uri
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistSongJoinDao
+import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
+import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
+import com.simplecityapps.mediaprovider.M3uEntryMatcher
+import com.simplecityapps.mediaprovider.M3uParser
 import com.simplecityapps.mediaprovider.M3uWriter
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.comparator
+import com.simplecityapps.shuttle.model.Entry
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
@@ -44,9 +49,11 @@ class LocalPlaylistRepository(
     private val context: Context,
     private val scope: CoroutineScope,
     private val playlistDataDao: PlaylistDataDao,
-    private val playlistSongJoinDao: PlaylistSongJoinDao
+    private val playlistSongJoinDao: PlaylistSongJoinDao,
+    private val songDataDao: SongDataDao
 ) : PlaylistRepository {
     private val m3uWriter = M3uWriter()
+    private val m3uParser = M3uParser()
 
     private val playlistsRelay: StateFlow<List<Playlist>?> by lazy {
         playlistDataDao
@@ -255,19 +262,67 @@ class LocalPlaylistRepository(
             return
         }
         val uri = Uri.parse(playlist.externalId)
-        try {
-            val songs = getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song }
-            val outputStream = context.contentResolver.openOutputStream(uri, "wt")
-            if (outputStream == null) {
-                Timber.w("Could not open output stream to sync m3u file for playlist '${playlist.name}' at $uri")
-                return
+        withContext(Dispatchers.IO) {
+            try {
+                val songs = getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song }
+                val preservedEntries = readPreservedEntries(uri, songs)
+                val outputStream = context.contentResolver.openOutputStream(uri, "wt")
+                if (outputStream == null) {
+                    Timber.w("Could not open output stream to sync m3u file for playlist '${playlist.name}' at $uri")
+                    return@withContext
+                }
+                outputStream.use { it.write(m3uWriter.write(songs, preservedEntries).toByteArray(Charsets.UTF_8)) }
+            } catch (e: IOException) {
+                Timber.e(e, "Failed to sync m3u file for playlist '${playlist.name}' at $uri")
+            } catch (e: SecurityException) {
+                Timber.e(e, "Failed to sync m3u file for playlist '${playlist.name}' at $uri (permission denied)")
             }
-            outputStream.use { it.write(m3uWriter.write(songs).toByteArray(Charsets.UTF_8)) }
-        } catch (e: IOException) {
-            Timber.e(e, "Failed to sync m3u file for playlist '${playlist.name}' at $uri")
-        } catch (e: SecurityException) {
-            Timber.e(e, "Failed to sync m3u file for playlist '${playlist.name}' at $uri (permission denied)")
         }
+    }
+
+    /**
+     * Groups entries from the existing m3u file that don't resolve to any library song (moved,
+     * unscanned, or a remote URL the importer never turned into a [PlaylistSong]) by the nearest
+     * preceding entry that resolves to a song still in [songs], so [M3uWriter] can reinsert them
+     * at roughly their original position instead of silently dropping them on rewrite. An entry
+     * whose resolved song is no longer in [songs] (removed from the playlist, or since blacklisted)
+     * doesn't itself update the anchor, so later unresolved entries cascade back to the previous
+     * surviving anchor. Returns an empty map if the file can no longer be read (moved, permission
+     * revoked) - the rewrite then reflects only the resolved songs, as before this fix.
+     */
+    private suspend fun readPreservedEntries(
+        uri: Uri,
+        songs: List<Song>
+    ): Map<Long?, List<Entry>> {
+        val entries =
+            try {
+                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    m3uParser.parse(path = uri.toString(), fileName = uri.lastPathSegment.orEmpty(), inputStream = inputStream).entries
+                }
+            } catch (e: IOException) {
+                Timber.w(e, "Could not read existing m3u file to preserve unresolved entries at $uri")
+                null
+            } catch (e: SecurityException) {
+                Timber.w(e, "Could not read existing m3u file to preserve unresolved entries at $uri (permission denied)")
+                null
+            } ?: return emptyMap()
+
+        val sanitisedSongPaths = M3uEntryMatcher.sanitisedPathsByFilename(songDataDao.get().map { it.toSong() })
+        val songIdsInPlaylist = songs.map { it.id }.toSet()
+
+        val preservedEntriesByAnchor = mutableMapOf<Long?, MutableList<Entry>>()
+        var anchor: Long? = null
+        entries.forEach { entry ->
+            val matchedSong = M3uEntryMatcher.match(entry, sanitisedSongPaths)
+            if (matchedSong != null) {
+                if (matchedSong.id in songIdsInPlaylist) {
+                    anchor = matchedSong.id
+                }
+            } else {
+                preservedEntriesByAnchor.getOrPut(anchor) { mutableListOf() }.add(entry)
+            }
+        }
+        return preservedEntriesByAnchor
     }
 }
 

@@ -3,7 +3,7 @@
   "features": [
     {
       "text": "Select multiple songs in a playlist at once, to add them to the queue, a playlist or edit their tags together",
-      "commits": ["37f9eb21"]
+      "commits": ["2eaa82f5"]
     },
     {
       "text": "Browse your music by folder in a new Folders library tab, which you can turn on in Appearance settings",
@@ -47,7 +47,7 @@
     },
     {
       "text": "Playlists imported from an .m3u file now stay in sync with that file when you add, remove or reorder songs",
-      "commits": []
+      "commits": ["bfb70826"]
     }
   ],
   "improvements": [

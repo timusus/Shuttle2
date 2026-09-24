@@ -1,11 +1,11 @@
 package com.simplecityapps.localmediaprovider.local.provider.taglib
 
 import android.content.Context
-import android.net.Uri
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.FolderImage
 import com.simplecityapps.localmediaprovider.local.provider.toSong
 import com.simplecityapps.mediaprovider.FlowEvent
+import com.simplecityapps.mediaprovider.M3uEntryMatcher
 import com.simplecityapps.mediaprovider.M3uParser
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
@@ -94,7 +94,7 @@ class TaglibMediaProvider(
         existingPlaylists: List<Playlist>,
         existingSongs: List<Song>
     ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {
-        val sanitisedSongPaths = existingSongs.associateBy { Uri.decode(it.path.substringAfterLast('/')).substringAfterLast(':') }
+        val sanitisedSongPaths = M3uEntryMatcher.sanitisedPathsByFilename(existingSongs)
 
         getDocumentTrees()?.flatMap { tree -> tree.getLeaves() }?.let { nodes ->
             val m3uPlaylists =
@@ -127,23 +127,7 @@ class TaglibMediaProvider(
                                 )
                             )
 
-                            sanitisedSongPaths.keys.firstOrNull { songPath ->
-                                when {
-                                    songPath.equals(entry.location, ignoreCase = true) -> {
-                                        true
-                                    }
-
-                                    songPath.length > entry.location.length -> {
-                                        songPath.contains(other = entry.location, ignoreCase = true)
-                                    }
-
-                                    else -> {
-                                        entry.location.contains(other = songPath, ignoreCase = true)
-                                    }
-                                }
-                            }?.let { matchingPath ->
-                                sanitisedSongPaths[matchingPath]
-                            }
+                            M3uEntryMatcher.match(entry, sanitisedSongPaths)
                         }
                     if (songs.isNotEmpty()) {
                         val updateData =

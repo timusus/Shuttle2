@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongData
 import com.simplecityapps.mediaprovider.M3uParser
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -33,7 +34,8 @@ class LocalPlaylistRepositoryM3uSyncTest {
         context = context,
         scope = CoroutineScope(Dispatchers.Unconfined),
         playlistDataDao = database.playlistDataDao(),
-        playlistSongJoinDao = database.playlistSongJoinDataDao()
+        playlistSongJoinDao = database.playlistSongJoinDataDao(),
+        songDataDao = database.songDataDao()
     )
 
     @After
@@ -41,8 +43,11 @@ class LocalPlaylistRepositoryM3uSyncTest {
         database.close()
     }
 
-    private fun createSong(path: String) = Song(
-        id = 1,
+    private fun createSong(
+        path: String,
+        id: Long = 1
+    ) = Song(
+        id = id,
         name = "Test Song",
         albumArtist = "Test Artist",
         artists = listOf("Test Artist"),
@@ -123,6 +128,43 @@ class LocalPlaylistRepositoryM3uSyncTest {
 
         // Should not throw despite there being no file to write to.
         repository.addToPlaylist(playlist, listOf(song.copy(id = songId)))
+    }
+
+    @Test
+    fun `removeFromPlaylist preserves entries that don't resolve to a library song`() = runTest {
+        val file = File.createTempFile("playlist", ".m3u").apply { deleteOnExit() }
+        file.writeText(
+            """
+            #EXTM3U
+
+            #EXTINF:180, Test Artist - Song 1
+            /music/song1.mp3
+
+            #EXTINF:200, Unknown Artist - Unresolved
+            /music/unresolved.mp3
+
+            #EXTINF:190, Test Artist - Song 2
+            /music/song2.mp3
+
+            """.trimIndent()
+        )
+        val song1 = createSong(path = "/music/song1.mp3", id = 1)
+        val song1Id = insertSong(song1)
+        val song2 = createSong(path = "/music/song2.mp3", id = 2)
+        val song2Id = insertSong(song2)
+        val playlist = createM3uPlaylist(externalId = Uri.fromFile(file).toString())
+        database.playlistSongJoinDataDao().insert(
+            listOf(
+                PlaylistSongJoin(playlistId = playlist.id, songId = song1Id, sortOrder = 0),
+                PlaylistSongJoin(playlistId = playlist.id, songId = song2Id, sortOrder = 1)
+            )
+        )
+        val song1PlaylistSong = repository.getSongsForPlaylist(playlist).first().first { it.song.id == song1Id }
+
+        repository.removeFromPlaylist(playlist, listOf(song1PlaylistSong))
+
+        val parsed = M3uParser().parse(path = file.path, fileName = file.name, inputStream = file.inputStream())
+        parsed.entries.map { it.location } shouldBe listOf("/music/unresolved.mp3", "/music/song2.mp3")
     }
 
     @Test

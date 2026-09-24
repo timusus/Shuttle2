@@ -61,7 +61,7 @@ class RepositoryModule {
         @ApplicationContext context: Context,
         database: MediaDatabase,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): PlaylistRepository = LocalPlaylistRepository(context, appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao())
+    ): PlaylistRepository = LocalPlaylistRepository(context, appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
 
     @Provides
     @Singleton

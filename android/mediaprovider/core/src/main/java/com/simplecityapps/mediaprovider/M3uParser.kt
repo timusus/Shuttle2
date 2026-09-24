@@ -18,6 +18,7 @@ class M3uParser {
             var duration: Int? = null
             var artist: String? = null
             var track: String? = null
+            var extinfLine: String? = null
             while (line != null) {
                 when {
                     line.isBlank() -> {
@@ -25,6 +26,7 @@ class M3uParser {
 
                     line.startsWith("#") -> {
                         if (line.startsWith("#EXTINF:")) {
+                            extinfLine = line
                             duration = line.substringAfter("#EXTINF:").substringBefore(',').toIntOrNull()
                             val remainder = line.substringAfter(',')
                             artist = remainder.substringBefore('-').trim()
@@ -33,10 +35,11 @@ class M3uParser {
                     }
 
                     else -> {
-                        entries.add(Entry(line.sanitise(), duration, artist, track))
+                        entries.add(Entry(line.sanitise(), duration, artist, track, rawLines = listOfNotNull(extinfLine, line)))
                         duration = null
                         artist = null
                         track = null
+                        extinfLine = null
                     }
                 }
                 line = reader.readLine()?.trim()
