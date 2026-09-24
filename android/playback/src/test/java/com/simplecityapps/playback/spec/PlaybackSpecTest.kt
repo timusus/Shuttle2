@@ -101,6 +101,7 @@ class PlaybackSpecTest {
         harness.idle()
 
         audioManager.lastAbandonedAudioFocusRequest.shouldNotBeNull()
+        harness.audioFocus.abandons shouldBe 1
         playback.playbackStateFlow.value shouldBe PlaybackState.Paused
     }
 
