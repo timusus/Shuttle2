@@ -2,12 +2,14 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -152,6 +154,14 @@ class AlbumDetailRobot(private val rule: ComposeContentTestRule) {
 
     fun assertTopBarTitleNotDisplayed(text: String) {
         rule.onNode(hasText(text) and hasAnyAncestor(hasTestTag("detail-top-bar-title"))).assertDoesNotExist()
+    }
+
+    fun assertArtworkDisplayed() {
+        rule.onNodeWithContentDescription("Artwork").assertIsDisplayed()
+    }
+
+    fun assertSongRowCount(expected: Int) {
+        rule.onAllNodesWithTag("detail-song-row").assertCountEquals(expected)
     }
 
     // -- Interactions --

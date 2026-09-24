@@ -249,6 +249,33 @@ class AlbumArtistDetailTest {
         robot.lastAlbumSongClicked shouldBe (abbeyRoadSongs[1] to abbeyRoadSongs)
     }
 
+    @Test
+    fun `expanded album stays expanded when songs and albums are re-emitted with new instances`() {
+        val songs = listOf(createSong(id = 1, name = "Come Together", album = "Abbey Road"))
+        val album = albumFor(songs)
+        robot.setContent(
+            readyAlbumArtistDetail(
+                albums = listOf(album),
+                songs = songs,
+                expandedAlbums = setOfNotNull(album.groupKey),
+            )
+        )
+        robot.assertAlbumTrackDisplayed("Come Together")
+
+        // Simulate a rescan: the repository re-emits new list/model instances with the same data.
+        val rescannedSongs = listOf(createSong(id = 1, name = "Come Together", album = "Abbey Road"))
+        val rescannedAlbum = albumFor(rescannedSongs)
+        robot.updateContent(
+            readyAlbumArtistDetail(
+                albums = listOf(rescannedAlbum),
+                songs = rescannedSongs,
+                expandedAlbums = setOfNotNull(rescannedAlbum.groupKey),
+            )
+        )
+
+        robot.assertAlbumTrackDisplayed("Come Together")
+    }
+
     // endregion
 
     // region Song callbacks

@@ -1,7 +1,9 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollToIndexAction
@@ -67,6 +69,8 @@ class AlbumArtistDetailRobot(private val rule: ComposeContentTestRule) {
     var lastAlbumCreatePlaylistDialog: Album? = null
         private set
 
+    private var renderedUiState: MutableState<AlbumArtistDetailUiState>? = null
+
     // -- Content setup --
 
     fun setContent(
@@ -74,6 +78,11 @@ class AlbumArtistDetailRobot(private val rule: ComposeContentTestRule) {
         playlists: List<Playlist> = emptyList(),
     ) {
         renderContent(uiState = uiState, playlists = playlists)
+    }
+
+    /** Pushes a new [uiState] into the existing composition, as a re-emitted StateFlow value would. */
+    fun updateContent(uiState: AlbumArtistDetailUiState) {
+        renderedUiState?.value = uiState
     }
 
     fun setContentWithViewModel(
@@ -92,8 +101,11 @@ class AlbumArtistDetailRobot(private val rule: ComposeContentTestRule) {
         playlists: List<Playlist>,
     ) {
         resetCallbacks()
+        val state = mutableStateOf(uiState)
+        renderedUiState = state
         rule.setContent {
-            renderComposable(uiState, playlists)
+            val current by state
+            renderComposable(current, playlists)
         }
     }
 

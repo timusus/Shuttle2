@@ -131,6 +131,32 @@ class AlbumDetailTest {
         robot.assertCurrentSongNotHighlighted()
     }
 
+    @Test
+    fun `ready state shows hero artwork and album title`() {
+        robot.setContent(
+            readyAlbumDetail(
+                album = createAlbum(name = "Abbey Road"),
+                songs = listOf(createSong(name = "Come Together")),
+            )
+        )
+        robot.assertTextDisplayed("Abbey Road")
+        robot.assertArtworkDisplayed()
+    }
+
+    @Test
+    fun `ready state renders a song row per song`() {
+        robot.setContent(
+            readyAlbumDetail(
+                songs = listOf(
+                    createSong(id = 1, name = "Come Together", track = 1),
+                    createSong(id = 2, name = "Something", track = 2),
+                    createSong(id = 3, name = "Here Comes the Sun", track = 3),
+                ),
+            )
+        )
+        robot.assertSongRowCount(3)
+    }
+
     // endregion
 
     // region Callbacks
@@ -141,6 +167,15 @@ class AlbumDetailTest {
         robot.setContent(readyAlbumDetail(songs = listOf(song)))
         robot.clickText("Click Me")
         robot.lastSongClicked shouldBe song
+    }
+
+    @Test
+    fun `each song row is independently clickable`() {
+        val first = createSong(id = 1, name = "First Song", track = 1)
+        val second = createSong(id = 2, name = "Second Song", track = 2)
+        robot.setContent(readyAlbumDetail(songs = listOf(first, second)))
+        robot.clickText("Second Song")
+        robot.lastSongClicked shouldBe second
     }
 
     // endregion
