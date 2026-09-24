@@ -10,10 +10,12 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.RenderersFactory
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.audio.AudioCapabilities
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
+import androidx.media3.exoplayer.source.MediaSource
 import com.simplecityapps.playback.OutputFormat
 import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
@@ -27,7 +29,11 @@ class ExoPlayerFactory(
     private val context: Context,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor,
-    private val audioTrackMonitor: AudioTrackMonitor
+    private val audioTrackMonitor: AudioTrackMonitor,
+    /** Builds the ExoPlayer around these renderers and sources. A test builds it on a fake clock. */
+    private val buildPlayer: (RenderersFactory, MediaSource.Factory) -> ExoPlayer = { renderersFactory, mediaSourceFactory ->
+        ExoPlayer.Builder(context, renderersFactory).setMediaSourceFactory(mediaSourceFactory).build()
+    }
 ) : PlayerFactory {
     private val renderersFactory by lazy {
         object : DefaultRenderersFactory(context) {
@@ -49,9 +55,7 @@ class ExoPlayerFactory(
     }
 
     override fun create(): AudioPlayer = ExoAudioPlayer(
-        ExoPlayer.Builder(context, renderersFactory)
-            .setMediaSourceFactory(StreamSniffingMediaSourceFactory(DefaultDataSource.Factory(context)))
-            .build(),
+        buildPlayer(renderersFactory, StreamSniffingMediaSourceFactory(DefaultDataSource.Factory(context))),
         audioTrackMonitor
     )
 }

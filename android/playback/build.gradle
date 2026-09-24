@@ -76,4 +76,7 @@ dependencies {
     testImplementation libs.kotest
     testImplementation(libs.kotlinx.coroutinesTest)
     testImplementation libs.robolectric
+    // The real ExoPlayer on the JVM: TestExoPlayerBuilder, FakeClock, TestPlayerRunHelper
+    testImplementation(libs.media3.testUtils)
+    testImplementation(libs.media3.testUtilsRobolectric)
 }

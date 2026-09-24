@@ -157,6 +157,8 @@ leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", ve
 media3-database = { module = "androidx.media3:media3-database", version.ref = "media3" }
 media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
 media3-exoplayerHls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3" }
+media3-testUtils = { module = "androidx.media3:media3-test-utils", version.ref = "media3" }
+media3-testUtilsRobolectric = { module = "androidx.media3:media3-test-utils-robolectric", version.ref = "media3" }
 mikepenz-aboutlibrariesCore = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
 moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-adapters = { module = "com.squareup.moshi:moshi-adapters", version.ref = "moshi-adapters" }
