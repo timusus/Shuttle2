@@ -26,14 +26,16 @@ import kotlinx.coroutines.cancel
  * library of [songs], [albums] and [playlists] to browse. Tests drive it as another app does, through a
  * [MediaBrowser] connected to the session ([connect]), and observe the playback stack as the spec tests do.
  *
- * The saved queue counts as restored unless [restored] is false, as it is while the app starts.
+ * The saved queue counts as restored unless [restored] is false, as it is while the app starts. Controllers are trusted
+ * (as the system, Android Auto and S2 itself are) unless [trusted] is false, as another installed app isn't.
  */
 class SessionHarness(
     val playback: PlaybackHarness = PlaybackHarness(),
     songs: List<Song> = emptyList(),
     albums: List<Album> = emptyList(),
     playlists: Map<Playlist, List<Song>> = emptyMap(),
-    restored: Boolean = true
+    restored: Boolean = true,
+    trusted: Boolean = true
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
@@ -61,7 +63,7 @@ class SessionHarness(
                 songRepository = songRepository,
                 genreRepository = FakeGenreRepository()
             )
-        val callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, scope) { false }
+        val callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, scope) { trusted }
         val player = SessionPlayer(playback.appPlayer, playback.playbackOperations, playback.queueOperations, scope)
         session = MediaLibrarySession.Builder(context, player, callback).setId("session-${sessions++}").build()
         callback.launchMediaButtonUpdates(session)

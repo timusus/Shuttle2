@@ -1,7 +1,9 @@
 package com.simplecityapps.playback.spec
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaBrowser
 import androidx.media3.session.SessionResult
@@ -150,11 +152,79 @@ class MediaSessionSpecTest {
         harness.playback.runUntil { browser.mediaButtonPreferences.map { it.icon } == listOf(CommandButton.ICON_SHUFFLE_ON, CommandButton.ICON_REPEAT_ONE) }
     }
 
+    @Test
+    fun `RS-46 a voice search plays what it finds, and a search for nothing plays every song`() {
+        val songs = listOf(song(1), song(2), song(3))
+        val harness = sessionHarness(songs = songs)
+        val queue = harness.playback.queueOperations
+        val browser = harness.connect()
+
+        playRequest(harness, browser, searchItem("Song2"))
+        queue.getQueue().map { it.song } shouldBe listOf(songs[1])
+
+        // "Play music": a blank query, or an item that names nothing at all.
+        playRequest(harness, browser, searchItem("  "))
+        queue.getQueue().map { it.song } shouldBe songs
+        harness.playback.run { queue.setQueue(listOf(songs[0])) }
+        playRequest(harness, browser, MediaItem.Builder().build())
+        queue.getQueue().map { it.song } shouldBe songs
+
+        // Adding a search or a file to the queue adds the songs they name, as playing them would.
+        browser.addMediaItem(searchItem("Song3"))
+        harness.playback.runUntil { queue.getQueue().size == 4 }
+        browser.addMediaItem(MediaItem.Builder().setRequestMetadata(MediaItem.RequestMetadata.Builder().setMediaUri(Uri.parse(songs[0].path)).build()).build())
+        harness.playback.runUntil { queue.getQueue().size == 5 }
+        queue.getQueue().map { it.song } shouldBe songs + songs[2] + songs[0]
+    }
+
+    @Test
+    fun `RS-47 an app that isn't trusted can play and control playback but can't browse or change the queue`() {
+        val songs = listOf(song(1), song(2), song(3))
+        val harness = sessionHarness(songs = songs, trusted = false)
+        val queue = harness.playback.queueOperations
+        val browser = harness.connect()
+
+        val root = harness.await(browser.getLibraryRoot(null)).value!!
+        children(harness, browser, root.mediaId).shouldBeEmpty()
+        browser.isCommandAvailable(Player.COMMAND_CHANGE_MEDIA_ITEMS) shouldBe false
+        browser.isCommandAvailable(Player.COMMAND_SET_MEDIA_ITEM) shouldBe true
+        browser.isCommandAvailable(Player.COMMAND_PLAY_PAUSE) shouldBe true
+
+        playRequest(harness, browser, searchItem("Song2"))
+        queue.getQueue().map { it.song } shouldBe listOf(songs[1])
+
+        browser.clearMediaItems()
+        browser.addMediaItem(searchItem("Song3"))
+        harness.playback.idle()
+        queue.getQueue().map { it.song } shouldBe listOf(songs[1])
+
+        // A trusted controller (the system, Android Auto) can.
+        val trusted = sessionHarness(songs = songs)
+        trusted.playback.run { trusted.playback.queueOperations.setQueue(songs) }
+        trusted.connect().clearMediaItems()
+        trusted.playback.runUntil { trusted.playback.queueOperations.getQueue().isEmpty() }
+    }
+
     private fun sessionHarness(
         songs: List<Song> = emptyList(),
         albums: List<Album> = emptyList(),
-        restored: Boolean = true
-    ) = SessionHarness(songs = songs, albums = albums, restored = restored).also { harnesses += it }
+        restored: Boolean = true,
+        trusted: Boolean = true
+    ) = SessionHarness(songs = songs, albums = albums, restored = restored, trusted = trusted).also { harnesses += it }
+
+    /** Asks the session to play [item], as a voice search or another app does, and waits for it to play. */
+    private fun playRequest(
+        harness: SessionHarness,
+        browser: MediaBrowser,
+        item: MediaItem
+    ) {
+        browser.setMediaItem(item)
+        browser.prepare()
+        browser.play()
+        harness.playback.runUntil { harness.playback.playbackOperations.playbackStateFlow.value == PlaybackState.Playing }
+        browser.pause()
+        harness.playback.runUntil { harness.playback.playbackOperations.playbackStateFlow.value == PlaybackState.Paused }
+    }
 
     private fun children(
         harness: SessionHarness,
@@ -174,6 +244,8 @@ class MediaSessionSpecTest {
     }
 
     private companion object {
+        fun searchItem(query: String): MediaItem = MediaItem.Builder().setRequestMetadata(MediaItem.RequestMetadata.Builder().setSearchQuery(query).build()).build()
+
         fun albumSong(
             id: Long,
             track: Int

@@ -211,6 +211,19 @@ device-only: *Media session through Media3*.
 and repeat buttons, when one is pressed, then shuffle toggles and repeat goes off, all, one, and each button's icon
 follows the mode, whichever way it changed. (#345) — JVM (`spec/MediaSessionSpecTest`).
 
+**RS-46: a voice search plays what it finds, and a search for nothing plays every song.** Given a library, when a
+controller asks to play a search, then the songs it finds play; a blank search, or a request that names nothing, plays
+every song; and adding a search or a file to the queue adds the songs it names. (#345) — JVM
+(`spec/MediaSessionSpecTest`); an app on the old session library (`MediaControllerCompat` play-from-id and
+play-from-search) is device-only, as Robolectric's platform `MediaController` never reaches the session: *Media session
+through Media3*.
+
+**RS-47: an app that isn't trusted can play but can't browse or change the queue.** Given a controller that isn't the
+system, S2 or a caller the app knows (Android Auto), when it connects, then its browse root is empty and it can't add,
+remove, move or clear the queue's items, but it can control playback and ask to play a media id, a file or a search;
+a trusted controller can do all of it. (#345) — JVM (`spec/MediaSessionSpecTest`); a real third-party app is
+device-only: *Media session through Media3*.
+
 ## Commits with no rule
 
 Mechanism only, with no behaviour of their own to hold (the design doc's section 4 list, plus thread-safety and

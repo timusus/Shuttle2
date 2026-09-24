@@ -42,7 +42,10 @@ import timber.log.Timber
  * A request to play something sets the queue through [QueueOperations] before the session touches the player, then
  * hands the session the player's own items, which [SessionPlayer] recognises and leaves alone.
  *
- * [isKnownCaller] says whether a controller that isn't [trusted][ControllerInfo.isTrusted] may browse the library.
+ * [isTrustedCaller] says whether a controller may browse the library and edit the queue: the system, S2 itself, and
+ * the callers the app knows (Android Auto). The service is exported, so any other app can connect, and gets the
+ * transport controls and requests to play something (a media id, a URI or a search, as the old session had), but
+ * not the queue's contents.
  */
 class SessionCallback(
     private val context: Context,
@@ -50,9 +53,10 @@ class SessionCallback(
     private val mediaIdHelper: MediaIdHelper,
     private val queueOperations: QueueOperations,
     private val scope: CoroutineScope,
-    private val isKnownCaller: (ControllerInfo) -> Boolean
+    private val isTrustedCaller: (ControllerInfo) -> Boolean
 ) : MediaLibrarySession.Callback {
     override fun onConnect(session: MediaSession, controller: ControllerInfo): MediaSession.ConnectionResult = MediaSession.ConnectionResult.AcceptedResultBuilder(session)
+        .setAvailablePlayerCommands(if (isTrustedCaller(controller)) MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS else untrustedPlayerCommands)
         .setAvailableSessionCommands(
             MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
                 .add(TOGGLE_SHUFFLE)
@@ -116,15 +120,13 @@ class SessionCallback(
 
     // Browsing
 
-    private fun mayBrowse(browser: ControllerInfo): Boolean = browser.isTrusted || isKnownCaller(browser)
-
     /** The browse tree's root for a controller allowed to browse; any other gets a root with nothing under it. */
     override fun onGetLibraryRoot(
         session: MediaLibrarySession,
         browser: ControllerInfo,
         params: LibraryParams?
     ): ListenableFuture<LibraryResult<MediaItem>> = Futures.immediateFuture(
-        LibraryResult.ofItem(if (mayBrowse(browser)) MediaIdHelper.root else emptyRoot, params)
+        LibraryResult.ofItem(if (isTrustedCaller(browser)) MediaIdHelper.root else emptyRoot, params)
     )
 
     override fun onGetChildren(
@@ -135,7 +137,7 @@ class SessionCallback(
         pageSize: Int,
         params: LibraryParams?
     ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
-        if (!mayBrowse(browser) || parentId == EMPTY_ROOT_ID) return Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.of(), params))
+        if (!isTrustedCaller(browser) || parentId == EMPTY_ROOT_ID) return Futures.immediateFuture(LibraryResult.ofItemList(ImmutableList.of(), params))
         return scope.listenableFuture {
             LibraryResult.ofItemList(mediaIdHelper.getChildren(parentId).page(page, pageSize), params)
         }
@@ -146,7 +148,7 @@ class SessionCallback(
         browser: ControllerInfo,
         mediaId: String
     ): ListenableFuture<LibraryResult<MediaItem>> {
-        if (!mayBrowse(browser)) return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
+        if (!isTrustedCaller(browser)) return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
         return scope.listenableFuture {
             mediaIdHelper.getItem(mediaId)?.let { item -> LibraryResult.ofItem(item, null) } ?: LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
         }
@@ -159,7 +161,7 @@ class SessionCallback(
         query: String,
         params: LibraryParams?
     ): ListenableFuture<LibraryResult<Void>> {
-        if (!mayBrowse(browser)) return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
+        if (!isTrustedCaller(browser)) return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
         return scope.listenableFuture {
             val results = mediaIdHelper.search(query)
             session.notifySearchResultChanged(browser, query, results.size, params)
@@ -175,7 +177,7 @@ class SessionCallback(
         pageSize: Int,
         params: LibraryParams?
     ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> {
-        if (!mayBrowse(browser)) return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
+        if (!isTrustedCaller(browser)) return Futures.immediateFuture(LibraryResult.ofError(SessionError.ERROR_PERMISSION_DENIED))
         return scope.listenableFuture {
             LibraryResult.ofItemList(mediaIdHelper.search(query).page(page, pageSize), params)
         }
@@ -203,13 +205,13 @@ class SessionCallback(
         currentItems(mediaSession.player)
     }
 
-    /** Resolves each item to its song, tagged as a queue entry, for [SessionPlayer] to add to the queue. */
+    /** Resolves each item to its songs, as [onSetMediaItems] does, tagged as queue entries for [SessionPlayer] to add. */
     override fun onAddMediaItems(
         mediaSession: MediaSession,
         controller: ControllerInfo,
         mediaItems: List<MediaItem>
     ): ListenableFuture<List<MediaItem>> = scope.listenableFuture {
-        mediaItems.mapNotNull { item -> songFor(item) }.map { song -> song.toQueueEntry().toMediaItem() }
+        mediaItems.flatMap { item -> songsFor(item) }.map { song -> song.toQueueEntry().toMediaItem() }
     }
 
     /**
@@ -228,16 +230,28 @@ class SessionCallback(
 
     private suspend fun resolve(mediaItems: List<MediaItem>, startIndex: Int): PlayQueue? {
         val item = mediaItems.singleOrNull()
-        if (item != null) {
-            val request = item.requestMetadata
-            return when {
-                request.searchQuery != null -> PlayQueue(playRequests.songsForSearch(request.searchQuery, request.extras), 0)
-                request.mediaUri != null -> playRequests.songForUri(request.mediaUri!!, mimeType = null)?.let { song -> PlayQueue(listOf(song), 0) }
-                item.mediaId != MediaItem.DEFAULT_MEDIA_ID -> playRequests.songsForMediaId(item.mediaId)
-                else -> null
-            }
+        if (item != null && item.mediaId != MediaItem.DEFAULT_MEDIA_ID && item.requestMetadata.searchQuery == null && item.requestMetadata.mediaUri == null) {
+            return playRequests.songsForMediaId(item.mediaId)
         }
-        return PlayQueue(mediaItems.mapNotNull { songFor(it) }, startIndex.takeIf { it != C.INDEX_UNSET } ?: 0)
+        if (item != null) return PlayQueue(songsFor(item), 0)
+        val songs = mediaItems.map { songsFor(it) }
+        val start = startIndex.takeIf { it != C.INDEX_UNSET }?.coerceIn(0, songs.size) ?: 0
+        return PlayQueue(songs.flatten(), songs.take(start).sumOf { it.size })
+    }
+
+    /**
+     * The songs [item] asks for on its own: those a search finds, the file at a URI, or the song a media id names (not
+     * the album or playlist it's in). An item that names nothing is a search with no query, as a voice search for
+     * "music" arrives, which finds every song.
+     */
+    private suspend fun songsFor(item: MediaItem): List<Song> {
+        val request = item.requestMetadata
+        return when {
+            request.searchQuery != null -> playRequests.songsForSearch(request.searchQuery, request.extras)
+            request.mediaUri != null -> listOfNotNull(playRequests.songForUri(request.mediaUri!!, mimeType = null))
+            item.mediaId != MediaItem.DEFAULT_MEDIA_ID -> listOfNotNull(songFor(item))
+            else -> playRequests.songsForSearch(null, request.extras)
+        }
     }
 
     /** The song a playable media id names on its own: the song itself, not the album or playlist it's in. */
@@ -252,6 +266,11 @@ class SessionCallback(
     companion object {
         val TOGGLE_SHUFFLE = SessionCommand("com.simplecityapps.shuttle.shuffle", Bundle.EMPTY)
         val TOGGLE_REPEAT = SessionCommand("com.simplecityapps.shuttle.repeat", Bundle.EMPTY)
+
+        /** What a controller that isn't trusted may do: everything but change the queue's contents. */
+        private val untrustedPlayerCommands: Player.Commands = MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon()
+            .remove(Player.COMMAND_CHANGE_MEDIA_ITEMS)
+            .build()
 
         private const val EMPTY_ROOT_ID = "EMPTY_ROOT"
 

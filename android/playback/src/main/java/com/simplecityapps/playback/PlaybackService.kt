@@ -99,7 +99,7 @@ class PlaybackService : MediaLibraryService() {
         setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_AFTER_STOP_OR_ERROR)
 
         callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, coroutineScope) { controller ->
-            runCatching { packageValidator.isKnownCaller(controller.packageName, controller.uid) }.getOrDefault(false)
+            controller.isTrusted || runCatching { packageValidator.isKnownCaller(controller.packageName, controller.uid) }.getOrDefault(false)
         }
         val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope)
         session = MediaLibrarySession.Builder(this, sessionPlayer, callback)
