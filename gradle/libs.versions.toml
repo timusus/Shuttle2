@@ -46,6 +46,10 @@ lifecycle-runtime-ktx = "2.11.0"
 lifecycle-viewmodel-compose = "2.11.0"
 logging-interceptor = "5.5.0"
 material = "1.14.0"
+# Pinned over the compose BOM (1.4.0) for the Material 3 Expressive components; see
+# docs/design/design-language.md. Move to the first 1.5.0 beta/RC when it appears.
+material3 = "1.5.0-alpha29"
+materialkolor = "5.0.1"
 media3 = "1.11.1"
 mockk = "1.14.11"
 moshi = "1.15.2"
@@ -58,7 +62,6 @@ navigation-ui-ktx = "2.9.8"
 okhttp = "5.5.0"
 okhttp3-integration = "5.0.9"
 palette-ktx = "1.0.0"
-paparazzi = "2.0.0-alpha05"
 phrase = "1.2.0"
 play-services-cast-framework = "22.3.1"
 preference-ktx = "1.2.1"
@@ -67,17 +70,17 @@ recyclerview-fastscroll = "2.0.1"
 review = "2.0.2"
 room-compiler = "2.8.3"
 robolectric = "4.17"
+roborazzi = "1.75.0"
 runner = "1.7.0"
 security-crypto = "1.1.0"
 semver4j = "3.1.0"
-test-parameter-injector = "1.23"
 timber = "5.0.1"
 viewpager2 = "1.1.0"
 work-runtime-ktx = "2.11.2"
 
 [libraries]
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
-androidx-activity-compose = { module = "androidx.activity:activity-compose"}
+androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity" }
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose" }
@@ -100,7 +103,7 @@ androidx-lifecycle-common-java8 = { module = "androidx.lifecycle:lifecycle-commo
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle-viewmodel-compose" }
 androidx-material = { module = "androidx.compose.material:material" }
-androidx-material3 = { module = "androidx.compose.material3:material3" }
+androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 androidx-navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigation-ui-ktx" }
 androidx-navigation-safe-args-gradle-plugin = { module = "androidx.navigation:navigation-safe-args-gradle-plugin", version.ref = "navigation-safe-args-gradle-plugin" }
 androidx-navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigation-ui-ktx" }
@@ -122,7 +125,6 @@ androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview
 androidx-viewpager2 = { module = "androidx.viewpager2:viewpager2", version.ref = "viewpager2" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work-runtime-ktx" }
 billingclient-billingKtx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing-ktx" }
-cashapp-paparazzi = { module = "app.cash.paparazzi:paparazzi", version.ref = "paparazzi" }
 compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "compose-lint-checks" }
 compose-preview-scanner = { module = "io.github.sergio-sastre.ComposablePreviewScanner:android", version.ref = "composable-preview-scanner" }
 design-fluentSystemIcons = { module = "com.microsoft.design:fluent-system-icons", version.ref = "fluent-system-icons" }
@@ -160,6 +162,7 @@ media3-exoplayerHls = { module = "androidx.media3:media3-exoplayer-hls", version
 media3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
 media3-testUtils = { module = "androidx.media3:media3-test-utils", version.ref = "media3" }
 media3-testUtilsRobolectric = { module = "androidx.media3:media3-test-utils-robolectric", version.ref = "media3" }
+materialkolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
 mikepenz-aboutlibrariesCore = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
 moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-adapters = { module = "com.squareup.moshi:moshi-adapters", version.ref = "moshi-adapters" }
@@ -171,10 +174,12 @@ okhttp3-loggingInterceptor = { module = "com.squareup.okhttp3:logging-intercepto
 okhttp3-okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 relex-circleindicator = { module = "me.relex:circleindicator", version.ref = "circleindicator" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
+roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
+roborazzi-composePreviewScannerSupport = { module = "io.github.takahirom.roborazzi:roborazzi-compose-preview-scanner-support", version.ref = "roborazzi" }
 retrofit2-converterMoshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converter-moshi" }
 retrofit2-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "converter-moshi" }
 square-phrase = { module = "com.squareup.phrase:phrase", version.ref = "phrase" }
-test-parameter-injector = { module = "com.google.testparameterinjector:test-parameter-injector", version.ref = "test-parameter-injector" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 timusus-ktaglib = { module = "com.simplecityapps:ktaglib", version.ref = "ktaglib" }
 timusus-recyclerViewFastScroll = { module = "com.simplecityapps:recyclerview-fastscroll", version.ref = "recyclerview-fastscroll" }
@@ -191,4 +196,4 @@ firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt-android" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }

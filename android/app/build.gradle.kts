@@ -9,7 +9,7 @@ plugins {
     id("com.google.firebase.crashlytics")
     id("com.google.devtools.ksp")
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.paparazzi)
+    alias(libs.plugins.roborazzi)
 }
 
 android {
@@ -18,7 +18,8 @@ android {
 
     defaultConfig {
         applicationId = "com.simplecityapps.shuttle"
-        minSdk = 23
+        // 24: Compose 1.13, which material3 1.5.0-alpha29 brings in, no longer supports API 23.
+        minSdk = 24
         targetSdk = 36
         versionName = versionName()
         versionCode = versionCode()
@@ -121,8 +122,9 @@ android {
         implementation(libs.androidx.activity.ktx)
         implementation(libs.androidx.activity.compose)
         implementation(libs.androidx.hilt.navigation.compose)
-        testImplementation(libs.cashapp.paparazzi)
-        testImplementation(libs.test.parameter.injector)
+        testImplementation(libs.roborazzi)
+        testImplementation(libs.roborazzi.compose)
+        testImplementation(libs.roborazzi.composePreviewScannerSupport)
         testImplementation(libs.compose.preview.scanner)
         implementation(libs.kotlinx.collections.immutable)
         implementation(libs.kotlinx.datetime)
@@ -139,6 +141,9 @@ android {
 
         // Shuttle Core
         implementation(project(":android:core"))
+
+        // Design system (S2Theme, components, and the debug-only catalogue screen)
+        implementation(project(":android:designsystem"))
 
         // Shuttle Networking
         implementation(project(":android:networking"))
@@ -369,6 +374,11 @@ fun getVersionFromGitTag(): Pair<Int, String> {
 fun versionName(): String = findProperty("versionName")?.toString() ?: getVersionFromGitTag().second
 
 fun versionCode(): Int = findProperty("versionCode")?.toString()?.toIntOrNull() ?: getVersionFromGitTag().first
+
+// The @Snapshot preview tests record into the LFS-tracked goldens beside them.
+roborazzi {
+    outputDir.set(file("src/test/snapshots/images"))
+}
 
 class MissingEnvVarException(private val name: String) : Exception() {
     override val message: String

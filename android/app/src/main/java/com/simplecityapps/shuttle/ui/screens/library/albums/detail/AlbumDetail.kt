@@ -248,7 +248,7 @@ internal fun DetailHeroImage(
 /**
  * Artwork loaded through Glide, with a flat surface standing in under inspection mode.
  *
- * Previews and Paparazzi snapshots never load an image, and Glide's placeholder drawables resolve a
+ * Previews and snapshot tests never load an image, and Glide's placeholder drawables resolve a
  * theme attribute that layoutlib cannot inflate, so the request is skipped entirely there.
  */
 @OptIn(ExperimentalGlideComposeApi::class)

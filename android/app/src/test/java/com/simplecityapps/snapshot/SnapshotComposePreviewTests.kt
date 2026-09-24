@@ -1,24 +1,61 @@
 package com.simplecityapps.snapshot
 
-import com.google.testing.junit.testparameterinjector.TestParameter
-import com.google.testing.junit.testparameterinjector.TestParameterInjector
-import org.junit.Rule
+import com.github.takahirom.roborazzi.RoborazziOptions
+import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.inspectionMode
+import com.github.takahirom.roborazzi.roborazziSystemPropertyOutputDirectory
+import com.github.takahirom.roborazzi.toRoborazziComposeOptions
+import com.simplecityapps.shuttle.ui.snapshot.Snapshot
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
+import org.robolectric.annotation.GraphicsMode
+import sergio.sastre.composable.preview.scanner.android.AndroidComposablePreviewScanner
 import sergio.sastre.composable.preview.scanner.android.AndroidPreviewInfo
 import sergio.sastre.composable.preview.scanner.core.preview.ComposablePreview
+import sergio.sastre.composable.preview.scanner.core.preview.getAnnotation
 
-@RunWith(TestParameterInjector::class)
+/**
+ * Screenshots every `@Snapshot`-annotated `@Preview` in the app with Roborazzi.
+ *
+ * `./gradlew :android:app:recordRoborazziDebug` records the goldens into src/test/snapshots/images;
+ * `verifyRoborazziDebug` compares against them.
+ */
+@RunWith(ParameterizedRobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class SnapshotComposePreviewTests(
-    @param:TestParameter(valuesProvider = ComposePreviewProvider::class)
-    val preview: ComposablePreview<AndroidPreviewInfo>
+    private val preview: ComposablePreview<AndroidPreviewInfo>
 ) {
-
-    @get:Rule
-    val paparazzi = PaparazziPreviewRule.createFor(preview)
 
     @Test
     fun previewTests() {
-        paparazzi.snapshot { preview() }
+        val snapshot = requireNotNull(preview.getAnnotation<Snapshot>())
+        preview.captureRoboImage(
+            filePath = "${roborazziSystemPropertyOutputDirectory()}/${preview.screenshotName()}.png",
+            roborazziOptions = RoborazziOptions(
+                captureType = RoborazziOptions.CaptureType.Screenshot(),
+                compareOptions = RoborazziOptions.CompareOptions(
+                    changeThreshold = snapshot.maxPercentDifference.toFloat() / 100f
+                )
+            ),
+            // Inspection mode, as in Android Studio: previews skip their image loads.
+            roborazziComposeOptions = preview.toRoborazziComposeOptions().builder().inspectionMode(true).build()
+        )
+    }
+
+    companion object {
+        @JvmStatic
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        fun previews(): List<ComposablePreview<AndroidPreviewInfo>> = AndroidComposablePreviewScanner()
+            .scanPackageTrees("com.simplecityapps.shuttle.ui")
+            .includePrivatePreviews()
+            .includeAnnotationInfoForAllOf(Snapshot::class.java)
+            .getPreviews()
+            .filter { preview -> preview.getAnnotation<Snapshot>() != null }
+
+        private fun ComposablePreview<AndroidPreviewInfo>.screenshotName(): String {
+            val index = previewIndex?.let { "_$it" }.orEmpty()
+            return "${declaringClass.substringAfterLast('.')}_$methodName$index"
+        }
     }
 }

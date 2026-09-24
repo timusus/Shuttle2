@@ -104,8 +104,8 @@ Hilt with `@HiltAndroidApp`, `@AndroidEntryPoint`. DI modules in `app/di/`: AppM
 
 ## Build Configuration
 
-- **Kotlin 2.x**, **Java 17** (with core library desugaring for API 23+)
-- **Min SDK 23**, Target/Compile SDK 36
+- **Kotlin 2.x**, **Java 17** (with core library desugaring)
+- **Min SDK 24** (Compose 1.13), Target/Compile SDK 36
 - **ExoPlayer**: AndroidX Media3 (`media3` in the catalog); the FLAC/Opus decoders are local AARs in `android/app/libs`, rebuilt with `support/scripts/build-media3-decoders.sh`
 - **Version catalog**: `gradle/libs.versions.toml`
 - **Versioning**: Date-based from git tags (`vYYMMDDNN` → version code `YYMMDDNN`, version name `YYYY.MM.DD`)
