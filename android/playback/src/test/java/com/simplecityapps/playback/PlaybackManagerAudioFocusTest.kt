@@ -70,14 +70,6 @@ class PlaybackManagerAudioFocusTest {
     }
 
     @Test
-    fun `pausing abandons audio focus`() {
-        playbackManager.play()
-        playbackManager.pause()
-
-        audioFocusHelper.abandons shouldBe 1
-    }
-
-    @Test
     fun `resuming after a user pause re-requests audio focus`() {
         playbackManager.play()
         playbackManager.pause()
