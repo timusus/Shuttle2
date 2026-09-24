@@ -283,6 +283,37 @@ class PlaybackManagerPositionAnchorTest {
     }
 
     @Test
+    fun `a seek from a load's completion anchors at the seek, not the load's start`() = runTest {
+        // A switch's completion seeks to the saved position; the loaded playback reports its own.
+        queueManager.setQueue(listOf(testSong(1), testSong(2)))
+        createPlaybackManager()
+        var anchorAfterSeek: PositionAnchor? = null
+        playbackManager.load(3_000) {
+            playbackManager.seekTo(10_000)
+            anchorAfterSeek = playbackManager.positionAnchorFlow.value
+        }
+        now = 22_000
+
+        playback.completeLoad()
+
+        anchorAfterSeek shouldBe anchor(PlaybackState.Paused, positionMs = 10_000, elapsedRealtimeMs = 22_000)
+    }
+
+    @Test
+    fun `playing reported from a load's completion is anchored as playing`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2)))
+        createPlaybackManager()
+        playbackManager.load(0) { enter(PlaybackState.Playing) }
+        playback.progressMs = 0
+        now = 22_000
+        val anchorsBeforeCompletion = anchors.size
+
+        playback.completeLoad()
+
+        anchors.drop(anchorsBeforeCompletion) shouldBe listOf(anchor(PlaybackState.Playing, positionMs = 0, elapsedRealtimeMs = 22_000))
+    }
+
+    @Test
     fun `a superseded load's completion keeps the later track's start position`() = runTest {
         queueManager.setQueue(listOf(testSong(1), testSong(2), testSong(3)))
         playback.progressMs = 170_000

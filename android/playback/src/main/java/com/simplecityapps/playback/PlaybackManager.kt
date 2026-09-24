@@ -341,7 +341,7 @@ class PlaybackManager(
         completion: ((Result<Any?>) -> Unit)?
     ) = queueOperation {
         // While a load is pending the playback still reports the track being replaced.
-        val position = loadCoordinator.pendingLoad?.positionMs ?: playback.getProgress() ?: 0
+        val position = getProgress() ?: 0
         if (force || position < 2000) {
             queueManager.skipToPrevious()
             queueManager.getCurrentItem()?.let { currentQueueItem ->
@@ -529,14 +529,15 @@ class PlaybackManager(
 
     /**
      * While a load is pending, a playing state is anchored as loading, so controllers hold the new
-     * item's start position instead of advancing it through a load that plays nothing.
+     * item's start position instead of advancing it through a load that plays nothing. Once the load's
+     * completion is being delivered, the playback has loaded, so reports its own state and position.
      */
     private fun positionAnchor(): PositionAnchor {
-        val pendingLoad = loadCoordinator.pendingLoad
+        val loadingPositionMs = loadCoordinator.loadingPositionMs
         val playbackState = _playbackStateFlow.value
         return PositionAnchor(
-            state = if (pendingLoad != null && playbackState == PlaybackState.Playing) PlaybackState.Loading else playbackState,
-            positionMs = pendingLoad?.positionMs ?: playback.getProgress(),
+            state = if (loadingPositionMs != null && playbackState == PlaybackState.Playing) PlaybackState.Loading else playbackState,
+            positionMs = loadingPositionMs ?: playback.getProgress(),
             elapsedRealtimeMs = elapsedRealtime(),
             speed = playback.getPlaybackSpeed()
         )

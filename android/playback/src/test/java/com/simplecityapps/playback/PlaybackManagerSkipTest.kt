@@ -107,6 +107,20 @@ class PlaybackManagerSkipTest {
     }
 
     @Test
+    fun `skipToPrev from a load's completion goes by the loaded track's position`() {
+        // The load has completed, so the playback reports where it is, here moved past 2s by a seek.
+        playbackManager.load(0) {
+            playbackManager.seekTo(10_000)
+            playbackManager.skipToPrev()
+        }
+
+        playback.completeLoad()
+
+        queueManager.getCurrentItem()!!.song.id shouldBe 2L
+        events shouldBe listOf("A load Song2 seek 0", "A seek 10000", "A seek 0")
+    }
+
+    @Test
     fun `onTrackEnded with auto-advance only loads the next item, it does not call play`() {
         playback.callback!!.onTrackEnded(trackWentToNext = true)
 
