@@ -23,6 +23,8 @@ S2 Music Player — an Android app for local music playback and streaming via Je
 - Anything Sonnet or GLM wrote gets a fresh-context `reviewer` pass before it lands.
 - Use `/delegate-verbose` before a Gradle test sweep, instrumented run or lint sweep, so the raw output
   never enters the orchestrator's context.
+- In an interactive session, anything over ~2 minutes (builds, emulator runs) goes through
+  `support/scripts/longjob.sh start <name> -- <cmd>` and one `longjob.sh wait`, not a foreground call.
 - `/note` a finding the moment it appears so it survives `/clear` and compaction. Then, if context is
   comfortably under ~150k, the fix is small and verifiable, and it does not touch files a running worker
   owns, fix it in the same session and close the issue in the landing commit.
@@ -40,11 +42,7 @@ All commands run from the repository root.
 # Or via script:
 ./support/scripts/unit-test
 
-# Run a single module's tests
-./gradlew :android:playback:testDebugUnitTest
-# Or via script, using a short module name or Gradle path (multiple modules
-# and --tests <filter> are supported too):
-./support/scripts/unit-test playback
+# One module / filter (short name or Gradle path; see the `check` skill)
 ./support/scripts/unit-test playback --tests '*QueueManager*'
 
 # Run instrumented tests (Gradle Managed Device — auto-provisions emulator)
@@ -74,6 +72,9 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 - **`:android:mediaprovider:local`** — Local MediaStore/TagLib provider implementation
 - **`:android:mediaprovider:jellyfin|emby|plex`** — Remote streaming provider implementations
 - **`:android:data`** — Room database, Parcelable data models
+- **`:android:downloads`** — Offline downloads of remote-provider songs
+- **`:android:saf`** — Storage Access Framework helpers
+- **`:android:recyclerview-adapter`** — ViewBinder-based RecyclerView adapter used by legacy MVP screens
 - **`:android:core`** — Shared utilities, logging, Hilt setup
 - **`:android:networking`** — Retrofit + OkHttp + Moshi network layer
 - **`:android:imageloader`** — Glide image loading
@@ -94,7 +95,7 @@ Repository pattern backed by Room database. MediaProvider implementations (local
 
 ### DI
 
-Hilt with `@HiltAndroidApp`, `@AndroidEntryPoint`. DI modules in `app/di/`: AppModule, RepositoryModule, MediaProviderModule, ImageLoaderModule.
+Hilt with `@HiltAndroidApp`, `@AndroidEntryPoint`. DI modules in `app/di/`: AppModule, DatabaseModule, RepositoryModule, MediaProviderModule, ImageLoaderModule.
 
 ## Build Configuration
 
@@ -132,78 +133,5 @@ support/scripts/lint -F
 
 ## Testing
 
-### Compose UI Characterisation Tests
-
-Robolectric-based Compose tests that verify observable UI behaviour. These allow safe rearchitecting of Compose screens and ViewModels — if the UI still looks right, the tests pass.
-
-**Run them:**
-```bash
-./gradlew :android:app:testDebugUnitTest --tests "com.simplecityapps.shuttle.ui.screens.library.songs.SongListTest"
-./gradlew :android:app:testDebugUnitTest --tests "com.simplecityapps.shuttle.ui.screens.library.genres.GenreListTest"
-```
-
-**Configuration:** `android/app/src/test/resources/robolectric.properties` sets `sdk=34`, `graphics=NATIVE`, and `application=android.app.Application` (bypasses Hilt app init for fast, isolated tests).
-
-### Robot Pattern
-
-Each Compose screen has a **robot** that encapsulates selectors and interaction mechanics. Tests express *what* they verify, not *how* to find Compose nodes. When the implementation changes (test tags, content descriptions, layout structure), update the robot — not every test.
-
-**Files per screen:**
-```
-songs/
-  SongListTest.kt        # test cases
-  SongListRobot.kt       # selector/interaction encapsulation
-  SongListScenarios.kt   # ViewState factories
-```
-
-**Robot responsibilities:**
-- `setContent(viewState)` — renders the composable with callback captures
-- `assertTextDisplayed(text)` / `assertTextNotDisplayed(text)` — hides node selectors
-- `openContextMenu()` — hides content description selectors
-- `clickText(text)` / `clickMenuItem(text)` — interaction primitives
-- Callback capture fields (`lastAddedToQueue`, `lastDeleted`, etc.) — avoid verbose lambda setup in tests
-
-**Robot boundaries — keep it thin:**
-- The robot hides *selectors* (content descriptions, test tags, node matchers)
-- The robot does NOT hide *behaviour* — tests compose primitives to describe what they verify
-- Assertions use user-visible text, not implementation details
-- No screen-specific compound assertions like `assertContextMenuComplete()` — tests list what they expect
-
-**Example test:**
-```kotlin
-@Test
-fun `context menu invokes onAddToQueue`() {
-    val song = createSong(name = "Queue Me")
-    robot.setContent(readySongList(songs = listOf(song)))
-    robot.openContextMenu()
-    robot.clickMenuItem("Add to Queue")
-    robot.lastAddedToQueue shouldBe song
-}
-```
-
-### Scenario Factories
-
-Top-level functions that construct `ViewState` with sensible defaults. Reduce boilerplate without hiding what matters.
-
-```kotlin
-// SongListScenarios.kt
-readySongList(songs = listOf(createSong(name = "My Song")))
-scanningSongList(Progress(50, 200))
-emptySongList()
-loadingSongList  // val, not a function — Loading has no parameters
-```
-
-### Model Factories
-
-`createSong()`, `createGenre()`, `createPlaylist()` in `app/src/test/.../creationFunctions.kt`. All parameters have defaults — override only what matters for the test.
-
-### Adding a New Screen's Tests
-
-1. Create `*Robot.kt` — constructor takes `ComposeContentTestRule`, provides `setContent()`, selectors, callback captures
-2. Create `*Scenarios.kt` — top-level functions for each ViewState variant
-3. Create `*Test.kt` — `@RunWith(RobolectricTestRunner::class)`, instantiate robot from `composeTestRule`
-4. Add model factories to `creationFunctions.kt` if needed
-
-### Known Robolectric Limitations
-
-- **FastScroller + DropdownMenu:** The `FastScroller` overlay causes `DropdownMenu` popups to be immediately dismissed under Robolectric. Context menu tests that need dropdowns should render the list *item* composable directly (e.g. `GenreListItem`) rather than the full list. The robot encapsulates this — see `GenreListRobot.setItemContent()`.
+Compose UI characterisation tests (Robolectric, Robot pattern, scenario and model factories, known
+Robolectric limitations) are documented in `.claude/rules/testing.md`, which loads when you touch test sources.
