@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Signs the debug app in to a Jellyfin or Emby test server without typing a password, then imports
-# its library. Uses the server's API key as the access token and the `shuttle-test` user's Id.
+# Signs the debug app in to a Jellyfin, Emby or Plex test server without typing a password, then
+# imports its library. Uses the server's API key (Jellyfin/Emby) or plex.tv token (Plex) as the
+# access token; Jellyfin/Emby also look up the `shuttle-test` user's Id, Plex doesn't need one.
 #
-# Usage: support/scripts/seed-remote-provider.sh [jellyfin|emby]
+# Usage: support/scripts/seed-remote-provider.sh [jellyfin|emby|plex]
 # Reads ~/.config/s2-test/<server>.env (URL=, API_KEY=). The key is never printed and never appears
 # on a command line: curl reads the auth header from a process substitution and the device-side
 # shell reads it from stdin.
@@ -23,9 +24,9 @@ INCLUDE_STOPPED=0x20
 
 server="${1:-}"
 case "$server" in
-    jellyfin | emby) ;;
+    jellyfin | emby | plex) ;;
     *)
-        echo "Usage: support/scripts/seed-remote-provider.sh [jellyfin|emby]" >&2
+        echo "Usage: support/scripts/seed-remote-provider.sh [jellyfin|emby|plex]" >&2
         exit 2
         ;;
 esac
@@ -51,15 +52,21 @@ auth_header() {
     fi
 }
 
-echo "seed-remote-provider: looking up user '$TEST_USER' on $server ($URL) ..."
-user_id=$(curl -sf -m 20 -H @<(auth_header) "$URL/Users" |
-    python3 -c "import sys,json; print(next(u['Id'] for u in json.load(sys.stdin) if u['Name']=='$TEST_USER'))") ||
-    { echo "seed-remote-provider: could not find user '$TEST_USER' (server unreachable or key rejected?)" >&2; exit 1; }
+# Plex API calls only need the token; DebugRemoteProviderReceiver still stores a user_id for
+# parity with the Jellyfin/Emby credential shape, but never reads it back, so no lookup is needed.
+if [ "$server" = plex ]; then
+    user_id="debug"
+else
+    echo "seed-remote-provider: looking up user '$TEST_USER' on $server ($URL) ..."
+    user_id=$(curl -sf -m 20 -H @<(auth_header) "$URL/Users" |
+        python3 -c "import sys,json; print(next(u['Id'] for u in json.load(sys.stdin) if u['Name']=='$TEST_USER'))") ||
+        { echo "seed-remote-provider: could not find user '$TEST_USER' (server unreachable or key rejected?)" >&2; exit 1; }
+fi
 
 # MainActivity gates the library on the storage-read permission even with onboarding marked done.
 radb shell pm grant "$DEBUG_APP_ID" android.permission.READ_MEDIA_AUDIO >/dev/null 2>&1 || true
 
-echo "seed-remote-provider: signing the debug app in to $server as $TEST_USER ..."
+echo "seed-remote-provider: signing the debug app in to $server ..."
 printf '%s\n' "$API_KEY" | radb shell "read -r key; am broadcast -f $INCLUDE_STOPPED -a $RECEIVER_ACTION -p $DEBUG_APP_ID \
     --es provider $server --es address '$URL' --es user_id $user_id --es access_token \"\$key\"" >/dev/null
 

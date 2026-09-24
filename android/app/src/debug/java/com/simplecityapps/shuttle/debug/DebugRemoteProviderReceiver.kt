@@ -11,6 +11,9 @@ import com.simplecityapps.provider.emby.http.AuthenticatedCredentials as EmbyAut
 import com.simplecityapps.provider.jellyfin.CredentialStore as JellyfinCredentialStore
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.jellyfin.http.AuthenticatedCredentials as JellyfinAuthenticatedCredentials
+import com.simplecityapps.provider.plex.CredentialStore as PlexCredentialStore
+import com.simplecityapps.provider.plex.PlexMediaProvider
+import com.simplecityapps.provider.plex.http.AuthenticatedCredentials as PlexAuthenticatedCredentials
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -18,13 +21,17 @@ import javax.inject.Inject
 import timber.log.Timber
 
 /**
- * Debug-build-only: lets `support/scripts/seed-remote-provider.sh` sign the app in to a Jellyfin or
- * Emby server with an existing access token (or API key) via `adb shell am broadcast`, so an
- * emulator run never needs a password typed into the UI. Stores the address and credentials,
+ * Debug-build-only: lets `support/scripts/seed-remote-provider.sh` sign the app in to a Jellyfin,
+ * Emby or Plex server with an existing access token (or API key) via `adb shell am broadcast`, so
+ * an emulator run never needs a password typed into the UI. Stores the address and credentials,
  * enables the provider, and marks onboarding done; the script then triggers an import through
  * [DebugMediaImportReceiver].
  *
- * Extras: `provider` (`jellyfin` or `emby`), `address`, `user_id`, `access_token`.
+ * Extras: `provider` (`jellyfin`, `emby` or `plex`), `address`, `user_id`, `access_token`. `user_id`
+ * is required for all three providers even though Plex's [PlexMediaProvider] never reads it back
+ * (unlike Jellyfin/Emby, Plex API calls only need the token) -- it's just stored alongside the
+ * token for parity with [com.simplecityapps.provider.plex.CredentialStore.authenticatedCredentials],
+ * so the seed script can pass a placeholder instead of looking one up.
  */
 @AndroidEntryPoint
 class DebugRemoteProviderReceiver : BroadcastReceiver() {
@@ -35,10 +42,16 @@ class DebugRemoteProviderReceiver : BroadcastReceiver() {
     lateinit var embyCredentialStore: EmbyCredentialStore
 
     @Inject
+    lateinit var plexCredentialStore: PlexCredentialStore
+
+    @Inject
     lateinit var jellyfinMediaProvider: JellyfinMediaProvider
 
     @Inject
     lateinit var embyMediaProvider: EmbyMediaProvider
+
+    @Inject
+    lateinit var plexMediaProvider: PlexMediaProvider
 
     @Inject
     lateinit var mediaImporter: MediaImporter
@@ -76,8 +89,15 @@ class DebugRemoteProviderReceiver : BroadcastReceiver() {
                 MediaProviderType.Emby
             }
 
+            "plex" -> {
+                plexCredentialStore.address = address
+                plexCredentialStore.authenticatedCredentials = PlexAuthenticatedCredentials(accessToken, userId)
+                mediaImporter.mediaProviders += plexMediaProvider
+                MediaProviderType.Plex
+            }
+
             else -> {
-                Timber.e("DebugRemoteProviderReceiver: provider must be jellyfin or emby")
+                Timber.e("DebugRemoteProviderReceiver: provider must be jellyfin, emby or plex")
                 return
             }
         }
