@@ -1,9 +1,12 @@
 package com.simplecityapps.playback.spec
 
 import android.content.Context
+import android.content.Intent
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
+import android.os.Build
+import android.os.Handler
 import android.os.Looper
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
@@ -11,12 +14,12 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.test.utils.FakeClock
 import androidx.media3.test.utils.TestExoPlayerBuilder
 import androidx.media3.test.utils.robolectric.RobolectricUtil
+import androidx.media3.test.utils.robolectric.TestPlayerRunHelper
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.audiofocus.AudioFocusHelper
-import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
 import com.simplecityapps.playback.chromecast.CastQueue
+import com.simplecityapps.playback.chromecast.isRemote
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.engine.SongUriResolver
@@ -40,6 +43,7 @@ import java.io.IOException
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
@@ -53,6 +57,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Implementation
+import org.robolectric.annotation.Implements
+import org.robolectric.shadow.api.Shadow
+import org.robolectric.shadows.ShadowAudioManager
 import org.robolectric.shadows.ShadowAudioTrack
 
 /**
@@ -62,11 +70,12 @@ import org.robolectric.shadows.ShadowAudioTrack
  *
  * Tests drive it only through [playbackOperations] and [queueOperations] and observe their flows, plus what the
  * platform sees: the audio written to the AudioTrack ([audioOutput]) and the audio focus requests on
- * [audioManager] (and [audioFocus], which counts the focus calls). Nothing here reaches into the engine, so the
- * tests hold across the Media3 refactor (#345).
+ * [audioManager] (and [audioFocus], which counts them). Nothing here reaches into the engine, so the tests hold
+ * across the Media3 refactor (#345).
  *
  * Everything runs on the Robolectric main looper, as it does on the main thread in production. [runUntil] turns
  * that looper (and so the player, whose clock advances whenever its threads are idle) until a condition holds.
+ * The player takes and gives up audio focus on its playback thread, which [idle] waits for.
  */
 class PlaybackHarness(
     replayGainMode: ReplayGainMode = ReplayGainMode.Off,
@@ -133,8 +142,8 @@ class PlaybackHarness(
 
     val audioEffectSessionManager = AudioEffectSessionManager(context)
 
-    /** The production focus helper, counting what it's asked to do. */
-    val audioFocus = CountingAudioFocusHelper(AudioFocusHelperApi26(context))
+    /** The audio focus the player asks [audioManager] for and gives up. */
+    val audioFocus: AudioFocusCounts
 
     // A song's path is the URI it plays from. An unresolvable one fails as a remote song does when its server can't be reached.
     private val songUriResolver =
@@ -153,6 +162,9 @@ class PlaybackHarness(
 
     /** The player the app plays through, which the media session publishes. */
     val appPlayer: Player
+
+    /** Whether the player changed whether it plays, or stopped, since the playback thread last caught up: either moves audio focus. */
+    private var focusMayChange = false
 
     /** How many times the player's playlist has changed: each change is a timeline rebuild, costing time in the queue's length. */
     var playlistChanges = 0
@@ -178,11 +190,25 @@ class PlaybackHarness(
                 ) {
                     if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) playlistChanges++
                 }
+
+                override fun onPlayWhenReadyChanged(
+                    playWhenReady: Boolean,
+                    reason: Int
+                ) {
+                    focusMayChange = true
+                }
+
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    // A stopped player gives focus up; buffering and ready leave it as it is.
+                    if (playbackState == Player.STATE_IDLE) focusMayChange = true
+                }
             }
         )
         val cast = castQueue(player)
         val active = activePlayer(player)
         appPlayer = active
+        audioEffectSessionManager.attach(active, player)
+        audioFocus = AudioFocusCounts(Shadow.extract(audioManager), active)
         val queueManager = QueueManager(player, PlaybackSettings(SettingsStore(FakeSharedPreferences())), songUriResolver, buildContext, active)
         queueOperations = queueManager
         playbackOperations =
@@ -190,11 +216,8 @@ class PlaybackHarness(
                 queueManager = queueManager,
                 player = active,
                 localPlayer = player,
-                audioFocusHelper = audioFocus,
                 playbackPreferenceManager = playbackPreferenceManager,
-                audioEffectSessionManager = audioEffectSessionManager,
                 appCoroutineScope = scope,
-                audioManager = audioManager,
                 castQueue = cast
             )
     }
@@ -205,9 +228,25 @@ class PlaybackHarness(
     /** Starts a suspending operation on the main thread, as a UI caller does, running it until it first suspends. */
     fun launch(block: suspend () -> Unit): Job = scope.launch(start = CoroutineStart.UNDISPATCHED) { block() }
 
-    /** Runs the main looper's due tasks, without letting playback time pass. */
+    /**
+     * Runs the main looper's due tasks, and what they hand the playback thread (such as taking or giving up audio
+     * focus), without letting playback time pass.
+     */
     fun idle() {
         shadowOf(Looper.getMainLooper()).idle()
+        // Waiting on the playback thread turns the player's clock, which would play on what's playing.
+        if (!appPlayer.isPlaying && !player.isPlaying) awaitFocusChange()
+    }
+
+    /**
+     * Lets the playback thread take or give up audio focus for the last change to whether the player plays, if there's
+     * been one since the last wait.
+     */
+    private fun awaitFocusChange() {
+        if (focusMayChange) {
+            focusMayChange = false
+            TestPlayerRunHelper.runUntilPendingCommandsAreFullyHandled(player)
+        }
     }
 
     /** Turns the main looper, playing the player on, until [condition] holds. Fails after [timeoutMs] of wall time. */
@@ -216,6 +255,26 @@ class PlaybackHarness(
         condition: () -> Boolean
     ) {
         RobolectricUtil.runMainLooperUntil({ condition() }, timeoutMs, androidx.media3.common.util.Clock.DEFAULT)
+        awaitFocusChange()
+    }
+
+    /**
+     * Another app taking audio focus or giving it back ([focusChange] is one of AudioManager's `AUDIOFOCUS_` changes),
+     * as the platform tells the player: on its playback thread, where it asked to be told.
+     */
+    fun changeAudioFocus(focusChange: Int) {
+        val request = checkNotNull(shadowOf(audioManager).lastAudioFocusRequest) { "The player hasn't asked for audio focus" }
+        Handler(player.playbackLooper).post { request.listener.onAudioFocusChange(focusChange) }
+        focusMayChange = true
+        awaitFocusChange()
+        shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    /** Headphones unplugged: the platform's becoming-noisy broadcast. */
+    fun unplugHeadphones() {
+        context.sendBroadcast(Intent(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
+        runUntil { !player.playWhenReady }
+        idle()
     }
 
     /** Every value [flow] emits from now on, collected on the main thread as production consumers do. */
@@ -244,7 +303,7 @@ class PlaybackHarness(
         ShadowAudioTrack.removeAudioDataListener(audioDataListener)
         scope.cancel()
         player.release()
-        idle()
+        shadowOf(Looper.getMainLooper()).idle()
     }
 
     companion object {
@@ -325,21 +384,35 @@ class PlaybackHarness(
     }
 }
 
-/** Forwards to [delegate], counting focus requests and abandons. */
-class CountingAudioFocusHelper(private val delegate: AudioFocusHelper) : AudioFocusHelper by delegate {
-    var requests = 0
-        private set
+/** The audio focus requests and abandons [shadow] has seen, as the player plays through [appPlayer]. */
+class AudioFocusCounts(
+    private val shadow: CountingShadowAudioManager,
+    private val appPlayer: Player
+) {
+    val requests: Int get() = shadow.requests.get()
 
-    var abandons = 0
-        private set
+    val abandons: Int get() = shadow.abandons.get()
 
-    override fun requestAudioFocus(): Boolean {
-        requests++
-        return delegate.requestAudioFocus()
+    /** Whether playing would take focus: it's the local player's, and while the app plays on a Cast receiver, it's stopped. */
+    val enabled: Boolean get() = !appPlayer.isRemote
+}
+
+/** Robolectric's audio manager, counting focus requests and abandons (made on the player's playback thread). */
+@Implements(AudioManager::class)
+class CountingShadowAudioManager : ShadowAudioManager() {
+    val requests = AtomicInteger()
+
+    val abandons = AtomicInteger()
+
+    @Implementation(minSdk = Build.VERSION_CODES.O)
+    override fun requestAudioFocus(audioFocusRequest: android.media.AudioFocusRequest): Int {
+        requests.incrementAndGet()
+        return super.requestAudioFocus(audioFocusRequest)
     }
 
-    override fun abandonAudioFocus() {
-        abandons++
-        delegate.abandonAudioFocus()
+    @Implementation(minSdk = Build.VERSION_CODES.O)
+    override fun abandonAudioFocusRequest(audioFocusRequest: android.media.AudioFocusRequest): Int {
+        abandons.incrementAndGet()
+        return super.abandonAudioFocusRequest(audioFocusRequest)
     }
 }

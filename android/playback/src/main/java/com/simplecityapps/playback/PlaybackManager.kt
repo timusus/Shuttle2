@@ -1,6 +1,5 @@
 package com.simplecityapps.playback
 
-import android.media.AudioManager
 import android.os.SystemClock
 import androidx.media3.common.C
 import androidx.media3.common.DeviceInfo
@@ -11,7 +10,6 @@ import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
-import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.chromecast.isRemote
 import com.simplecityapps.playback.engine.PlayerThread
@@ -43,12 +41,12 @@ import timber.log.Timber
 /**
  * Playback, as a thin layer over [player], whose playlist is the queue (see [QueueManager]). Every flow is derived
  * from the player's events and state; nothing here keeps its own copy of the position, the current item or the
- * queue. Adds what the player doesn't do itself: audio focus, the saved position to resume from, skipping past songs
- * that fail to load, and the events the app records (track ends, pauses, failures).
+ * queue. Adds what the player doesn't do itself: the saved position to resume from, skipping past songs that fail to
+ * load, and the events the app records (track ends, pauses, failures). The player handles audio focus and headphones
+ * being unplugged itself (see [com.simplecityapps.playback.exoplayer.ExoPlayerFactory]).
  *
  * [player] plays locally, or on a Cast receiver while a Cast session is up: a Cast player around [localPlayer] switches
- * between the two, handing the queue and position over (see [com.simplecityapps.playback.chromecast.CastQueue]). Only
- * local playback takes audio focus and opens an audio effect session.
+ * between the two, handing the queue and position over (see [com.simplecityapps.playback.chromecast.CastQueue]).
  *
  * Callable from any thread, on [PlayerThread]'s rule: a call that changes playback runs on the main thread, where the
  * player lives, straight away if made there, else posted to it; a read made off it returns the last published state.
@@ -58,17 +56,13 @@ class PlaybackManager(
     private val player: Player,
     /** The local player: [player] itself, or the one a Cast player plays through when not casting. */
     private val localPlayer: ExoPlayer,
-    private val audioFocusHelper: AudioFocusHelper,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
-    private val audioEffectSessionManager: AudioEffectSessionManager,
     private val appCoroutineScope: CoroutineScope,
-    audioManager: AudioManager?,
     /** Keeps a Cast receiver's queue in line, and says when it has played the queue out; null when there's no Cast. */
     castQueue: CastQueue?,
     /** The anchor clock, on the `SystemClock.elapsedRealtime` timebase media controllers expect. */
     private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime
-) : PlaybackOperations,
-    AudioFocusHelper.Listener {
+) : PlaybackOperations {
     private val playerThread = PlayerThread(player)
 
     /**
@@ -140,16 +134,8 @@ class PlaybackManager(
     override val playbackFailureFlow: SharedFlow<Song> = _playbackFailureFlow.asSharedFlow()
 
     init {
-        audioFocusHelper.listener = this
-        audioFocusHelper.enabled = !isRemote
         // A Cast receiver never reports an end of its own, so the Cast queue says when it played the queue out.
         castQueue?.onPlayedOut = { song -> onPlayedOut(song) }
-
-        val audioSessionId = audioManager?.generateAudioSessionId() ?: C.AUDIO_SESSION_ID_UNSET
-        if (audioSessionId > 0) {
-            localPlayer.audioSessionId = audioSessionId
-        }
-        audioEffectSessionManager.bindTo(if (isRemote) C.AUDIO_SESSION_ID_UNSET else localPlayer.audioSessionId)
 
         // Individual callbacks, not onEvents: they arrive within the player call that caused them, so state
         // published here is current by the time that call returns.
@@ -182,6 +168,12 @@ class PlaybackManager(
                     playWhenReady: Boolean,
                     reason: Int
                 ) {
+                    checkDevice()
+                    publishState()
+                }
+
+                // A transient audio focus loss holds playback off without changing whether it's set to play.
+                override fun onPlaybackSuppressionReasonChanged(playbackSuppressionReason: Int) {
                     checkDevice()
                     publishState()
                 }
@@ -245,8 +237,7 @@ class PlaybackManager(
 
     /**
      * Playback moving between this device and a Cast receiver shows first in whichever event the switch raises first,
-     * so every event checks for it. Casting gives up audio focus and closes the audio effect session; coming back takes
-     * them up again. Coming back saves the position the receiver was at, which the local player now holds, in case
+     * so every event checks for it. Coming back saves the position the receiver was at, which the local player now holds, in case
      * the app is gone before playback pauses again; the local position of a receiver that never reported one is
      * kept, and a position of zero is never saved for it.
      */
@@ -256,11 +247,6 @@ class PlaybackManager(
         isRemote = remote
         Timber.v(if (remote) "Playing on a Cast receiver" else "Playing locally")
         switching = true
-        if (remote) {
-            audioFocusHelper.abandonAudioFocus()
-        }
-        audioFocusHelper.enabled = !remote
-        audioEffectSessionManager.bindTo(if (remote) C.AUDIO_SESSION_ID_UNSET else localPlayer.audioSessionId)
         if (!remote && currentEntry != null) {
             player.currentPosition.takeIf { it > 0 }?.let { playbackPreferenceManager.playbackPosition = it.toInt() }
         }
@@ -372,9 +358,14 @@ class PlaybackManager(
 
     // Derived state
 
+    /**
+     * Playing only while the player is set to play and nothing holds it off: while another app has audio focus for a
+     * while (a phone call, a navigation prompt), playback is paused until it gives focus back.
+     */
     private fun derivedState(): PlaybackState = when {
         pendingLoad != null -> PlaybackState.Loading
         player.playbackState == Player.STATE_BUFFERING && readyUid != currentEntry?.uid -> PlaybackState.Loading
+        player.playbackSuppressionReason != Player.PLAYBACK_SUPPRESSION_REASON_NONE -> PlaybackState.Paused
         player.playWhenReady && (player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING) -> PlaybackState.Playing
         else -> PlaybackState.Paused
     }
@@ -484,10 +475,6 @@ class PlaybackManager(
             Timber.w("Failed to play: Queue empty.")
             return
         }
-        if (!audioFocusHelper.requestAudioFocus()) {
-            Timber.w("play() failed, audio focus request denied.")
-            return
-        }
         when {
             player.playbackState == Player.STATE_IDLE -> {
                 var startPosition = playbackPreferenceManager.playbackPosition ?: currentEntry?.song?.getStartPosition() ?: 0
@@ -508,11 +495,10 @@ class PlaybackManager(
         return positionMs > duration - NEAR_END_MS
     }
 
-    /** A user- or system-driven pause, distinct from [pauseForFocusLoss]: this one gives up audio focus. */
+    /** A user- or system-driven pause. It gives up audio focus (see [com.simplecityapps.playback.exoplayer.ExoPlayerFactory]). */
     override fun pause() = playerThread.run {
         Timber.v("pause()")
         player.playWhenReady = false
-        audioFocusHelper.abandonAudioFocus()
     }
 
     /** Pauses if playing or loading to play; otherwise plays, including a song still loading paused (a restore's). */
@@ -647,22 +633,6 @@ class PlaybackManager(
         queueManager.updateSongs(songs)
     }
 
-    // AudioFocusHelper.Listener
-
-    override fun pauseForFocusLoss() = playerThread.run {
-        Timber.v("pauseForFocusLoss()")
-        player.playWhenReady = false
-    }
-
-    override fun restoreVolumeAndPlay() = playerThread.run {
-        player.volume = 1f
-        play()
-    }
-
-    override fun duck() = playerThread.run {
-        player.volume = DUCK_VOLUME
-    }
-
     private data class PendingLoad(
         val completion: (Result<Boolean>) -> Unit,
         val attempt: Int = 1
@@ -675,7 +645,6 @@ class PlaybackManager(
         private const val PROGRESS_INTERVAL_MS = 100L
         private const val NEAR_END_MS = 200
         private const val RESTART_THRESHOLD_MS = 2_000
-        private const val DUCK_VOLUME = 0.2f
     }
 }
 

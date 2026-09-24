@@ -12,8 +12,7 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.BitPerfectOutput
-import com.simplecityapps.playback.NoiseManager
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.engine.SongUriResolver
@@ -83,14 +82,6 @@ class PlaybackModule {
 
     @Singleton
     @Provides
-    fun provideNoiseManager(
-        @ApplicationContext context: Context,
-        playbackManager: PlaybackManager,
-        @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): NoiseManager = NoiseManager(context, playbackManager, appCoroutineScope)
-
-    @Singleton
-    @Provides
     fun provideBitPerfectOutput(
         audioManager: AudioManager?,
         playbackSettings: PlaybackSettings,
@@ -103,7 +94,7 @@ class PlaybackModule {
     @Singleton
     @Provides
     fun provideSleepTimer(
-        playbackManager: PlaybackManager,
+        playbackOperations: PlaybackOperations,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): SleepTimer = SleepTimer(playbackManager, appCoroutineScope)
+    ): SleepTimer = SleepTimer(playbackOperations, appCoroutineScope)
 }

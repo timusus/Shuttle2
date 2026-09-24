@@ -12,6 +12,7 @@ import com.simplecityapps.playback.chromecast.FakeReceiver
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlin.coroutines.EmptyCoroutineContext
@@ -123,6 +124,12 @@ class CastSpecTest {
 
         harness.audioFocus.enabled shouldBe true
         harness.audioEffectSessionManager.sessionId shouldBe sessionId
+
+        val requests = harness.audioFocus.requests
+        playback.play()
+        harness.idle()
+
+        harness.audioFocus.requests shouldBeGreaterThan requests
     }
 
     @Test

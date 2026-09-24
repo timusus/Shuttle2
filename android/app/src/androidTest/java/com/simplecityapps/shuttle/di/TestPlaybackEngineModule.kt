@@ -1,14 +1,11 @@
 package com.simplecityapps.shuttle.di
 
 import android.content.Context
-import android.media.AudioManager
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
-import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.di.PlaybackEngineModule
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
@@ -19,7 +16,6 @@ import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.shuttle.fake.FakeAudioFocusHelper
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -34,10 +30,6 @@ import kotlinx.coroutines.CoroutineScope
     replaces = [PlaybackEngineModule::class]
 )
 class TestPlaybackEngineModule {
-
-    @Singleton
-    @Provides
-    fun provideAudioFocusHelper(): AudioFocusHelper = FakeAudioFocusHelper()
 
     @Singleton
     @Provides
@@ -80,20 +72,14 @@ class TestPlaybackEngineModule {
         queueManager: QueueManager,
         player: Player,
         localPlayer: ExoPlayer,
-        audioFocusHelper: AudioFocusHelper,
         playbackPreferenceManager: PlaybackPreferenceManager,
-        audioEffectSessionManager: AudioEffectSessionManager,
-        @AppCoroutineScope coroutineScope: CoroutineScope,
-        audioManager: AudioManager?
+        @AppCoroutineScope coroutineScope: CoroutineScope
     ): PlaybackManager = PlaybackManager(
         queueManager,
         player,
         localPlayer,
-        audioFocusHelper,
         playbackPreferenceManager,
-        audioEffectSessionManager,
         coroutineScope,
-        audioManager,
         castQueue = null
     )
 

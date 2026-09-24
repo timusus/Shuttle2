@@ -1,8 +1,6 @@
 package com.simplecityapps.playback.di
 
 import android.content.Context
-import android.media.AudioManager
-import android.os.Build
 import androidx.media3.cast.CastPlayer
 import androidx.media3.cast.RemoteCastPlayer
 import androidx.media3.common.Player
@@ -11,9 +9,6 @@ import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.audiofocus.AudioFocusHelper
-import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
-import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
 import com.simplecityapps.playback.chromecast.CastMediaItemConverter
 import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.chromecast.CastSessionManager
@@ -123,25 +118,15 @@ class PlaybackEngineModule {
         @ApplicationContext context: Context,
         exoPlayer: ExoPlayer,
         converter: CastMediaItemConverter,
-        castQueue: CastQueue
+        castQueue: CastQueue,
+        audioEffectSessionManager: AudioEffectSessionManager
     ): Player = CastPlayer.Builder(context)
         .setLocalPlayer(exoPlayer)
         .setRemotePlayer(RemoteCastPlayer.Builder(context).setMediaItemConverter(converter).build())
         .setTransferCallback(castQueue)
         .build()
         .also(castQueue::attach)
-
-    @Singleton
-    @Provides
-    fun provideAudioFocusHelper(
-        @ApplicationContext context: Context
-    ): AudioFocusHelper {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return AudioFocusHelperApi26(context)
-        } else {
-            return AudioFocusHelperApi21(context)
-        }
-    }
+        .also { player -> audioEffectSessionManager.attach(player, exoPlayer) }
 
     @Singleton
     @Provides
@@ -149,13 +134,10 @@ class PlaybackEngineModule {
         queueManager: QueueManager,
         player: Player,
         localPlayer: ExoPlayer,
-        audioFocusHelper: AudioFocusHelper,
         playbackPreferenceManager: PlaybackPreferenceManager,
-        audioEffectSessionManager: AudioEffectSessionManager,
         @AppCoroutineScope coroutineScope: CoroutineScope,
-        audioManager: AudioManager?,
         castQueue: CastQueue
-    ): PlaybackManager = PlaybackManager(queueManager, player, localPlayer, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, audioManager, castQueue)
+    ): PlaybackManager = PlaybackManager(queueManager, player, localPlayer, playbackPreferenceManager, coroutineScope, castQueue)
 
     @Provides
     fun providePlaybackOperations(playbackManager: PlaybackManager): PlaybackOperations = playbackManager

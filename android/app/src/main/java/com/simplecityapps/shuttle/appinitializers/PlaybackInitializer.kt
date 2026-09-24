@@ -9,7 +9,6 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.BitPerfectOutput
-import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
@@ -61,7 +60,6 @@ constructor(
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val castSessionManager: Lazy<CastSessionManager>,
     private val playRequests: Lazy<PlayRequests>,
-    private val noiseManager: Lazy<NoiseManager>,
     private val bitPerfectOutput: Lazy<BitPerfectOutput>,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : AppInitializer {
@@ -107,7 +105,6 @@ constructor(
     private fun startPlaybackComponents() {
         castSessionManager.get()
         playRequests.get().launchPlaybackFailureMessages()
-        noiseManager.get()
         bitPerfectOutput.get()
     }
 

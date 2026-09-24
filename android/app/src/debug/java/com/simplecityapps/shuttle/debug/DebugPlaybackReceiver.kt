@@ -3,13 +3,11 @@ package com.simplecityapps.shuttle.debug
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.media.AudioManager
 import android.util.Log
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.NoisyReceiver
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -185,13 +183,6 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             val playToEnd = intent.getBooleanExtra("play_to_end", false)
             sleepTimer.startTimer(seconds * 1000L, playToEnd)
             "${seconds}s, playToEnd=$playToEnd"
-        }
-
-        "BECOMING_NOISY" -> null.also {
-            // Runs the same NoisyReceiver.onReceive the real (protected, un-broadcastable in a
-            // debug build) ACTION_AUDIO_BECOMING_NOISY registration handles, rather than a copy of
-            // its pause-on-noisy logic. NoisyReceiver ignores its context argument.
-            NoisyReceiver(playbackManager).onReceive(null, Intent(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
         }
 
         "DUMP_STATE" -> dumpState().toString()

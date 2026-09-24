@@ -2,6 +2,7 @@ package com.simplecityapps.playback.exoplayer
 
 import android.content.Context
 import android.os.Looper
+import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultDataSource
@@ -24,6 +25,10 @@ import com.simplecityapps.playback.engine.SongUriResolver
  * running the equalizer and ReplayGain processors, and a [StreamSniffingMediaSourceFactory] so extensionless HLS
  * streams play, reading through [songUriResolver] so remote songs resolve their stream when they're opened. The
  * player reports the AudioTracks it opens to [audioTrackMonitor].
+ *
+ * The player handles audio focus and headphones being unplugged itself: it pauses when unplugged and on a permanent
+ * focus loss, holds off on a transient loss until focus comes back, and ducks while another app may play over it. A
+ * pause gives focus up (see [giveUpFocusOnPause]).
  */
 class ExoPlayerFactory(
     private val context: Context,
@@ -62,6 +67,8 @@ class ExoPlayerFactory(
         val mediaSourceFactory = StreamSniffingMediaSourceFactory(songUriResolver.dataSourceFactory(DefaultDataSource.Factory(context)))
             .setLoadErrorHandlingPolicy(S2LoadErrorHandlingPolicy())
         val player = buildPlayer(renderersFactory, mediaSourceFactory)
+        player.setHandleAudioBecomingNoisy(true)
+        player.giveUpFocusOnPause()
         val owner = AudioTrackReopener(player)
         player.addAnalyticsListener(
             object : AnalyticsListener {
@@ -104,3 +111,32 @@ internal fun AudioSink.AudioTrackConfig.toOutputFormat() = OutputFormat(
     channelCount = Integer.bitCount(channelConfig),
     encoding = encoding
 )
+
+private val MUSIC: AudioAttributes = AudioAttributes.Builder()
+    .setUsage(C.USAGE_MEDIA)
+    .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+    .build()
+
+/**
+ * Gives audio focus up when the player stops being set to play. The player keeps focus through a pause of its own, but
+ * a pause (by the user, by headphones being unplugged, or by playback ending or failing) should let another app play.
+ * Turning focus handling off gives focus up; turning it straight back on doesn't take it again until the player is next
+ * set to play, and then before playback starts. A transient focus loss doesn't change whether the player is set to
+ * play, so playback still resumes when focus comes back.
+ */
+private fun ExoPlayer.giveUpFocusOnPause() {
+    setAudioAttributes(MUSIC, true)
+    addListener(
+        object : Player.Listener {
+            override fun onPlayWhenReadyChanged(
+                playWhenReady: Boolean,
+                reason: Int
+            ) {
+                if (!playWhenReady) {
+                    setAudioAttributes(MUSIC, false)
+                    setAudioAttributes(MUSIC, true)
+                }
+            }
+        }
+    )
+}
