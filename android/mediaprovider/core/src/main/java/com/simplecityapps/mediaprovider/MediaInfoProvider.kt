@@ -20,6 +20,18 @@ interface MediaInfoProvider {
      * provider can't produce one (e.g. auth failure).
      */
     suspend fun downloadUri(song: Song): Uri?
+
+    /**
+     * A fallback download URL for [path] (a `Song.path`), used when [downloadUri]'s URL was
+     * rejected by the server with the given [responseCode] (401 or 403). A 403 persists the
+     * change, so later downloads for this provider go straight to the fallback; a 401 does not,
+     * since it can also mean the cached session expired rather than a permission change. Null when
+     * this provider isn't the one that produced [path], or has no distinct fallback to offer.
+     */
+    suspend fun downloadFallbackUri(
+        path: String,
+        responseCode: Int
+    ): Uri?
 }
 
 class AggregateMediaInfoProvider(val providers: MutableSet<MediaInfoProvider> = mutableSetOf()) : MediaInfoProvider {
@@ -45,6 +57,11 @@ class AggregateMediaInfoProvider(val providers: MutableSet<MediaInfoProvider> = 
     // Local songs are already on disk, so there's nothing to download; only a remote provider
     // (matched below by scheme) can produce a download URL.
     override suspend fun downloadUri(song: Song): Uri? = providers.firstOrNull { it.handles(uriFor(song)) }?.downloadUri(song)
+
+    override suspend fun downloadFallbackUri(
+        path: String,
+        responseCode: Int
+    ): Uri? = providers.firstOrNull { it.handles(Uri.parse(path)) }?.downloadFallbackUri(path, responseCode)
 
     // MediaStore songs carry raw file paths, which may contain '#' or '?', so they're built as
     // file URIs rather than parsed. Everything else (content://, emby://, jellyfin://, plex://)

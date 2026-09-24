@@ -57,4 +57,27 @@ constructor(
         val itemId = Uri.parse(song.path).pathSegments.last()
         return embyAuthenticationManager.buildDownloadPath(itemId, authenticatedCredentials)?.toUri()
     }
+
+    override suspend fun downloadFallbackUri(
+        path: String,
+        responseCode: Int
+    ): Uri? = buildFallbackPathString(path, responseCode)?.toUri()
+
+    /**
+     * String form of [downloadFallbackUri]'s path, kept separate so tests can assert on it without
+     * pulling Robolectric into this module for `Uri.parse`. A 403 means the server has actually
+     * revoked download permission, so it's persisted; a 401 can also mean the cached session
+     * expired, so it isn't.
+     */
+    internal suspend fun buildFallbackPathString(
+        path: String,
+        responseCode: Int
+    ): String? {
+        val authenticatedCredentials = embyAuthenticationManager.getAuthenticatedCredentials() ?: return null
+        if (responseCode == 403) {
+            embyAuthenticationManager.disableDownloadPermission()
+        }
+        val itemId = path.substringAfterLast('/')
+        return embyAuthenticationManager.buildStreamPath(itemId, authenticatedCredentials)
+    }
 }

@@ -77,6 +77,12 @@ private class FakeSongDownloadManager : SongDownloadManager {
         uri: Uri
     ) = Unit
 
+    override fun download(
+        path: String,
+        mimeType: String,
+        uri: Uri
+    ) = Unit
+
     override fun remove(song: Song) = Unit
 
     override fun removeAll() = Unit

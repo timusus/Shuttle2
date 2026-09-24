@@ -114,6 +114,10 @@
     {
       "text": "When none of the next songs will load, playback now stops on the last one tried instead of jumping back to where it started and looking like it is still playing. Previous on Chromecast restarts the song when its position is unknown",
       "commits": []
+    },
+    {
+      "text": "Offline downloads from Jellyfin/Emby no longer fail when the server admin disables downloading",
+      "commits": []
     }
   ]
 }

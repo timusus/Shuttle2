@@ -10,15 +10,20 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
+/**
+ * Exercises [PlexMediaInfoProvider] itself (not just [PlexAuthenticationManager.buildPlexPath],
+ * already covered by [PlexAuthenticationTest]). Asserts on [PlexMediaInfoProvider.buildDownloadPathString]
+ * rather than [PlexMediaInfoProvider.downloadUri] directly, since the latter calls `String.toUri()`,
+ * which needs a mocked `android.net.Uri` and would pull Robolectric into this module for nothing else.
+ */
 class PlexMediaInfoProviderTest {
+    private val credentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456")
+
     private val credentialStore = CredentialStore(SecurePreferenceManager(FakeSharedPreferences())).apply {
         address = "http://plex.local:32400"
-        authenticatedCredentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456")
     }
+
     private val authenticationManager = PlexAuthenticationManager(
         userService = object : UserService {
             override suspend fun authenticateImpl(
@@ -29,13 +34,34 @@ class PlexMediaInfoProviderTest {
         },
         credentialStore = credentialStore
     )
+
     private val provider = PlexMediaInfoProvider(authenticationManager)
 
     @Test
-    fun `download uri is the same original part-file url used for streaming`() = runTest {
+    fun `download path is the same original part-file url used for streaming`() = runTest {
+        credentialStore.authenticatedCredentials = credentials
         val song = song(externalId = "/library/parts/42/file.mp3")
 
-        provider.downloadUri(song) shouldBe provider.getMediaInfo(song).path
+        val path = provider.buildDownloadPathString(song)!!
+
+        path shouldBe "http://plex.local:32400/library/parts/42/file.mp3" +
+            "?X-Plex-Token=token123" +
+            "&X-Plex-Client-Identifier=s2-music-payer" +
+            "&X-Plex-Device=Android"
+    }
+
+    @Test
+    fun `download path is null when not authenticated`() = runTest {
+        val song = song(externalId = "/library/parts/42/file.mp3")
+
+        provider.buildDownloadPathString(song) shouldBe null
+    }
+
+    @Test
+    fun `downloadFallbackUri is always null since plex has no separate download permission`() = runTest {
+        credentialStore.authenticatedCredentials = credentials
+
+        provider.downloadFallbackUri("plex://item/107898", 403) shouldBe null
     }
 
     private fun song(externalId: String?) = Song(

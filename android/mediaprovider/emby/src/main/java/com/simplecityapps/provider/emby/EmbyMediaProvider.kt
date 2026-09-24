@@ -111,16 +111,15 @@ class EmbyMediaProvider(
         }
     }
 
-    private suspend fun authenticate(address: String): AuthenticatedCredentials? = (
-        authenticationManager.getAuthenticatedCredentials()
-            ?: authenticationManager.getLoginCredentials()
-                ?.let { loginCredentials ->
-                    authenticationManager.authenticate(
-                        address,
-                        loginCredentials
-                    ).getOrNull()
-                }
-        )
+    private suspend fun authenticate(address: String): AuthenticatedCredentials? = authenticationManager.getAuthenticatedCredentials()
+        ?.let { cachedCredentials -> authenticationManager.refreshDownloadPermission(address, cachedCredentials) }
+        ?: authenticationManager.getLoginCredentials()
+            ?.let { loginCredentials ->
+                authenticationManager.authenticate(
+                    address,
+                    loginCredentials
+                ).getOrNull()
+            }
 
     private fun queryItems(
         address: String,

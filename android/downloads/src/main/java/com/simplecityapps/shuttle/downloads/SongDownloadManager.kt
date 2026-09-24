@@ -20,6 +20,13 @@ interface SongDownloadManager {
         uri: Uri
     )
 
+    /** Downloads the song at [path] from [uri], e.g. to retry a failed download with a fallback URL. */
+    fun download(
+        path: String,
+        mimeType: String,
+        uri: Uri
+    )
+
     fun remove(song: Song)
 
     fun removeAll()
@@ -46,8 +53,14 @@ class DefaultSongDownloadManager @Inject constructor(
     override fun download(
         song: Song,
         uri: Uri
+    ) = download(song.path, song.mimeType, uri)
+
+    override fun download(
+        path: String,
+        mimeType: String,
+        uri: Uri
     ) = send("download") {
-        DownloadService.sendAddDownload(context, SongDownloadService::class.java, downloadRequest(song, uri), true)
+        DownloadService.sendAddDownload(context, SongDownloadService::class.java, downloadRequest(path, mimeType, uri), true)
     }
 
     override fun remove(song: Song) = send("remove") {

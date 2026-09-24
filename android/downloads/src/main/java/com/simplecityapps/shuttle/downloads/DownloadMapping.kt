@@ -5,21 +5,21 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.media3.exoplayer.scheduler.Requirements
-import com.simplecityapps.shuttle.model.Song
 
 /**
- * A request to download [song] from [uri]. Both the request id and the cache key are the song's
- * path, never the URL: the URL changes on every call and carries a token, so keying on it would
- * orphan the download the next time the token rotates.
+ * A request to download [path] (`Song.path`) from [uri]. Both the request id and the cache key
+ * are the song's path, never the URL: the URL changes on every call and carries a token, so
+ * keying on it would orphan the download the next time the token rotates.
  */
 @UnstableApi
 internal fun downloadRequest(
-    song: Song,
+    path: String,
+    mimeType: String,
     uri: Uri
-): DownloadRequest = DownloadRequest.Builder(song.path, uri)
+): DownloadRequest = DownloadRequest.Builder(path, uri)
     // An audio mime type keeps DownloadManager on its progressive downloader, whatever the URL looks like.
-    .setMimeType(song.mimeType)
-    .setCustomCacheKey(song.path)
+    .setMimeType(mimeType)
+    .setCustomCacheKey(path)
     .build()
 
 /** Wi-Fi only waits for an unmetered network; otherwise any network will do. */

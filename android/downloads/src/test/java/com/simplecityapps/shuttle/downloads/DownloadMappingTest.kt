@@ -17,7 +17,7 @@ class DownloadMappingTest {
     @Test
     fun `a request is keyed by the song path, not the tokenised stream URL`() {
         val song = song(path = "jellyfin://item/abc123")
-        val request = downloadRequest(song, Uri.parse("https://server/Audio/abc123/universal?api_key=secret"))
+        val request = downloadRequest(song.path, song.mimeType, Uri.parse("https://server/Audio/abc123/universal?api_key=secret"))
 
         request.id shouldBe "jellyfin://item/abc123"
         request.customCacheKey shouldBe "jellyfin://item/abc123"

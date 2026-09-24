@@ -21,6 +21,11 @@ class AggregateMediaInfoProviderTest {
         ): MediaInfo = MediaInfo(Uri.parse("https://$scheme.example/stream"), song.mimeType, isRemote = true)
 
         override suspend fun downloadUri(song: Song): Uri = Uri.parse("https://$scheme.example/download")
+
+        override suspend fun downloadFallbackUri(
+            path: String,
+            responseCode: Int
+        ): Uri = Uri.parse("https://$scheme.example/fallback")
     }
 
     private val provider = AggregateMediaInfoProvider(
@@ -61,6 +66,11 @@ class AggregateMediaInfoProviderTest {
     @Test
     fun `local songs have no download uri`() = runTest {
         provider.downloadUri(createSong("/storage/emulated/0/Music/Track #1.mp3")) shouldBe null
+    }
+
+    @Test
+    fun `fallback uri reaches the provider for its scheme`() = runTest {
+        provider.downloadFallbackUri("jellyfin://item/107898", 403).toString() shouldBe "https://jellyfin.example/fallback"
     }
 
     private fun createSong(path: String) = Song(

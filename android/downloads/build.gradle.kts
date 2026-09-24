@@ -36,6 +36,7 @@ dependencies {
     // Shuttle Core
     implementation(project(":android:core"))
     implementation(project(":android:data"))
+    implementation(project(":android:mediaprovider:core"))
 
     // Media3: DownloadManager, DownloadService and the SimpleCache index database
     implementation(libs.media3.exoplayer)
