@@ -142,6 +142,10 @@
     {
       "text": "A song no longer loses its selection mark in the Songs list when it starts or stops playing",
       "commits": []
+    },
+    {
+      "text": "Fixed a crash when fast-scrolling to the bottom of the Songs list",
+      "commits": []
     }
   ]
 }
