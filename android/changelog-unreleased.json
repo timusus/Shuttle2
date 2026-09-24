@@ -146,6 +146,10 @@
     {
       "text": "Fixed a crash when fast-scrolling to the bottom of the Songs list",
       "commits": []
+    },
+    {
+      "text": "The back button now exits multi-select mode on the Songs, Albums and Artists tabs instead of leaving the library",
+      "commits": []
     }
   ]
 }

@@ -10,6 +10,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.addCallback
 import androidx.appcompat.widget.SwitchCompat
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
@@ -63,10 +65,17 @@ class AlbumArtistListFragment :
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
+    private var onBackPressedCallback: OnBackPressedCallback? = null
+
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        onBackPressedCallback = requireActivity().onBackPressedDispatcher
+            .addCallback(this, false) {
+                viewModel.clearSelection()
+            }
 
         setHasOptionsMenu(true)
     }
@@ -98,12 +107,12 @@ class AlbumArtistListFragment :
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState
                     .collect { state ->
-                        val count = state.selectedArtists.size
-                        if (count == 0) {
-                            contextualToolbarHelper.hide()
-                        } else {
+                        if (state.isSelecting) {
+                            onBackPressedCallback?.isEnabled = true
+
                             contextualToolbarHelper.show()
 
+                            val count = state.selectedArtists.size
                             contextualToolbarHelper.contextualToolbar?.title =
                                 Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
                                     .put("count", count)
@@ -116,6 +125,9 @@ class AlbumArtistListFragment :
                                         .distinct(),
                                 )
                             }
+                        } else {
+                            onBackPressedCallback?.isEnabled = false
+                            contextualToolbarHelper.hide()
                         }
 
                         updateToolbarMenuViewMode(state.viewMode)
