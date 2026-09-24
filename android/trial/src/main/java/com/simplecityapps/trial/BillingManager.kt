@@ -232,17 +232,14 @@ class BillingManager(
 
     @Synchronized
     private fun processPurchases(purchases: List<Purchase>) {
-        if (billingState.value == BillingState.Paid ||
-            paidVersionSkus.intersect(purchases.flatMap { purchase -> purchase.products })
-                .isNotEmpty()
-        ) {
+        if (billingState.value == BillingState.Paid || purchases.grantPaidVersion(paidVersionSkus)) {
             billingState.value = BillingState.Paid
         } else {
             billingState.value = BillingState.Unpaid
         }
 
         purchases
-            .filterNot { purchase -> purchase.isAcknowledged }
+            .needingAcknowledgement()
             .forEach {
                 acknowledgePurchase(it.purchaseToken)
             }
@@ -259,4 +256,20 @@ class BillingManager(
             Timber.d("acknowledgePurchase: $responseCode $debugMessage")
         }
     }
+}
+
+/**
+ * True if any purchase is a completed purchase of a paid product. A PENDING purchase (e.g. a cash payment
+ * that hasn't been made yet) grants nothing; Play calls the purchases listener again once it completes.
+ */
+internal fun List<Purchase>.grantPaidVersion(paidProductIds: Collection<String>): Boolean = any { purchase ->
+    purchase.purchaseState == Purchase.PurchaseState.PURCHASED && purchase.products.any { it in paidProductIds }
+}
+
+/**
+ * Completed purchases that haven't been acknowledged yet. Only PURCHASED purchases can be acknowledged;
+ * Play refunds any that stay unacknowledged for three days.
+ */
+internal fun List<Purchase>.needingAcknowledgement(): List<Purchase> = filter { purchase ->
+    purchase.purchaseState == Purchase.PurchaseState.PURCHASED && !purchase.isAcknowledged
 }
