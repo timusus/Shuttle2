@@ -58,11 +58,16 @@ Mac starves a local emulator whenever it's loaded (Xcode, other sessions). Launc
 Default lane image is `android-36 google_atd x86_64` (no Play services, fewer system apps),
 right-sized to 2560 MB / 3 cores -- an idle lane costs noticeably less CPU than the old full
 `google_apis` API 37 image at 4096 MB / 4 cores. `start --api 37` boots that full image instead,
-for anything that needs Play services or a system app ATD strips out. `start` runs `ui-prep`
-itself once the device has booted, so a raw `start` gets animations disabled without a separate
-call. A lease is reclaimed on the next `start`/pick not just when its console port has no
-listener, but also when its recorded owner process is gone from this Mac -- so a headless worker
-that dies mid-run no longer strands its lane.
+for anything that needs Play services or a system app ATD strips out. `start` in a session that
+already holds a live lane reuses it; an explicit `--api` naming a different image than the one
+running fails with instructions instead of rebooting it -- `stop`, then `start --api N`. `start`
+runs `ui-prep` itself once the device has booted, so a raw `start` gets animations disabled
+without a separate call; if that fails it warns and the lane is still ready. A lease is reclaimed
+on the next `start`/pick not just when its console port has no listener, but also when its
+recorded owner process is gone from this Mac -- so a headless worker that dies mid-run no longer
+strands its lane. The owner is the nearest Claude Code session process above the caller (never
+the `claude remote-control` supervisor), or the calling shell outside Claude; a lease with no
+recorded owner PID is only ever reclaimed by the "nothing listening" rule.
 
 **If the tunnel drops mid-run** (adb reports "device offline" or "device not found"):
 `remote-emu.sh reconnect` re-opens the tunnel for this session's lane without rebooting the
