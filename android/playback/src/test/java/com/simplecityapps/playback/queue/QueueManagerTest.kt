@@ -90,6 +90,37 @@ class QueueManagerTest {
         shuffleQueue.subList(shuffleIndexOfCurrent + 1, shuffleIndexOfCurrent + 3) shouldBe listOf(4L, 5L)
     }
 
+    @Test
+    fun `a restored shuffle queue keeps its order and position when a song is queued twice`() {
+        runBlocking { queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false) }
+
+        runBlocking {
+            queueManager.setQueue(
+                songs = listOf(createSong(1), createSong(2), createSong(1), createSong(3)),
+                shuffleSongs = listOf(createSong(1), createSong(3), createSong(2), createSong(1)),
+                position = 2
+            )
+        }
+
+        queueManager.getQueue(QueueManager.ShuffleMode.On).map { it.song.id } shouldBe listOf(1L, 3L, 2L, 1L)
+        queueManager.getQueue(QueueManager.ShuffleMode.Off).map { it.song.id } shouldBe listOf(1L, 2L, 1L, 3L)
+        queueManager.getCurrentPosition() shouldBe 2
+        queueManager.getCurrentItem()!!.song.id shouldBe 2L
+    }
+
+    @Test
+    fun `setting the saved queue again with shuffle on puts the position in the shuffle queue`() {
+        val songs = listOf(createSong(1), createSong(2), createSong(3))
+        val shuffleSongs = listOf(createSong(3), createSong(1), createSong(2))
+        runBlocking { queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false) }
+        runBlocking { queueManager.setQueue(songs = songs, shuffleSongs = shuffleSongs, position = 0) }
+
+        runBlocking { queueManager.setQueue(songs = songs, shuffleSongs = shuffleSongs, position = 1) }
+
+        queueManager.getCurrentPosition() shouldBe 1
+        queueManager.getCurrentItem()!!.song.id shouldBe 1L
+    }
+
     private fun createSong(id: Long) = Song(
         id = id,
         name = "Song $id",

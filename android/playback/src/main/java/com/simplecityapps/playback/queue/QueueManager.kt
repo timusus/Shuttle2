@@ -143,15 +143,15 @@ class QueueManager(
             currentItem = baseQueue[position]
 
             if (shuffleSongs != null) {
-                val existingShuffleQueue = getQueue(ShuffleMode.On)
-                if (existingQueueChanged || (existingShuffleQueue.size != shuffleSongs.size || shuffleSongs.map { it.id } != existingShuffleQueue.map { it.song.id })) {
-                    val queueOrderMap = shuffleSongs.withIndex().associate { songId -> songId.value.id to songId.index }
-                    val shuffleQueue = baseQueue.sortedBy { queueItem -> queueOrderMap[queueItem.song.id] }
+                var shuffleQueue = getQueue(ShuffleMode.On).toList()
+                if (existingQueueChanged || (shuffleQueue.size != shuffleSongs.size || shuffleSongs.map { it.id } != shuffleQueue.map { it.song.id })) {
+                    shuffleQueue = baseQueue.inOrderOf(shuffleSongs)
                     queue.setShuffleQueue(shuffleQueue)
-                    if (shuffleMode == ShuffleMode.On) {
-                        currentItem = shuffleQueue[position]
-                    }
                     shuffleQueueChanged = true
+                }
+                // With shuffle on, the position is in the shuffle queue.
+                if (shuffleMode == ShuffleMode.On) {
+                    currentItem = shuffleQueue[position]
                 }
             } else {
                 queue.generateShuffleQueue(currentItem)
@@ -177,6 +177,22 @@ class QueueManager(
         }
 
         return queue.size() != 0
+    }
+
+    /**
+     * These items in the order of [songs], which holds the same songs. A song queued more than once is matched
+     * occurrence by occurrence, so each copy takes its own place in that order.
+     */
+    private fun List<QueueItem>.inOrderOf(songs: List<Song>): List<QueueItem> {
+        val orderById = songs.withIndex().groupBy(keySelector = { (_, song) -> song.id }, valueTransform = { (index, _) -> index })
+        val occurrences = mutableMapOf<Long, Int>()
+        return map { queueItem ->
+            val occurrence = occurrences.getOrDefault(queueItem.song.id, 0)
+            occurrences[queueItem.song.id] = occurrence + 1
+            queueItem to orderById[queueItem.song.id]?.getOrNull(occurrence)
+        }
+            .sortedBy { (_, order) -> order }
+            .map { (queueItem, _) -> queueItem }
     }
 
     override fun setCurrentItem(currentItem: QueueItem) {
