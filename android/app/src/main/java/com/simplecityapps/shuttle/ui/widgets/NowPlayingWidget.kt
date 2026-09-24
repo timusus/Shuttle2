@@ -98,8 +98,9 @@ private val fallbackColors =
         dark = ShuttleTheme.dark.copy(primary = Color(0xFF9ECAFF))
     )
 
+/** Visible to tests, which render it directly with a fixed [state] and [layout] instead of the live widget state. */
 @Composable
-private fun NowPlayingContent(
+internal fun NowPlayingContent(
     state: NowPlayingWidgetState,
     layout: WidgetLayout
 ) {
