@@ -68,11 +68,12 @@ dependencies {
     ksp libs.moshi.kotlinCodegen
 
     implementation(project(':android:data'))
+    // Song.date is a kotlinx.datetime.LocalDate; building a Song for an opened file needs it
+    implementation libs.kotlinx.datetime
 
     // Testing
     testImplementation libs.junit
     testImplementation libs.kotest
-    testImplementation(libs.kotlinx.datetime)
     testImplementation(libs.kotlinx.coroutinesTest)
     testImplementation libs.robolectric
 }

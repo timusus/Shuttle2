@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.NavHostFragment
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.simplecityapps.playback.PlaybackService
+import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -38,6 +39,9 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var remoteConfig: FirebaseRemoteConfig
+
+    @Inject
+    lateinit var mediaSessionManager: MediaSessionManager
 
     @Inject
     @AppCoroutineScope
@@ -69,6 +73,10 @@ class MainActivity : AppCompatActivity() {
         navController.graph = graph
 
         handleSearchQuery(intent)
+        // Not on recreation, or on a relaunch from recents, which redeliver the intent that opened the file
+        if (savedInstanceState == null && intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == 0) {
+            handleViewIntent(intent)
+        }
 
         billingManager.queryPurchases()
 
@@ -92,6 +100,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
 
         handleSearchQuery(intent)
+        handleViewIntent(intent)
     }
 
     // Private
@@ -124,5 +133,18 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Plays an audio file another app opened with us. The read grant that comes with a content:// URI
+     * belongs to this app and lasts while this activity's task does, so the media session can open it.
+     */
+    private fun handleViewIntent(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_VIEW) return
+        val uri = intent.data ?: return
+        mediaSessionManager.mediaSession.controller.transportControls.playFromUri(
+            uri,
+            Bundle().apply { putString(MediaSessionManager.EXTRA_MIME_TYPE, intent.type) }
+        )
     }
 }

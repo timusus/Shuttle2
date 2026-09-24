@@ -4,11 +4,13 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.util.LruCache
+import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
 import androidx.media.session.MediaButtonReceiver
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -28,6 +30,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
@@ -42,6 +45,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flowOn
@@ -56,6 +60,7 @@ constructor(
     private val playbackManager: PlaybackOperations,
     private val queueManager: QueueOperations,
     private val mediaIdHelper: MediaIdHelper,
+    private val uriSongResolver: UriSongResolver,
     private val artistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
@@ -139,17 +144,65 @@ constructor(
                 appCoroutineScope.launch {
                     mediaId?.let {
                         mediaIdHelper.getPlayQueue(mediaId)?.let { playQueue ->
-                            if (queueManager.setQueue(songs = playQueue.songs, position = playQueue.position)) {
-                                playbackManager.load { result ->
-                                    result.onSuccess {
-                                        if (playWhenReady) {
-                                            playbackManager.play()
-                                        }
-                                    }
-                                    result.onFailure { error -> Timber.e(error, "Failed to load playback after onPlayFromMediaId") }
-                                }
+                            playQueue(songs = playQueue.songs, position = playQueue.position, playWhenReady = playWhenReady, source = "onPlayFromMediaId")
+                        }
+                    }
+                }
+            }
+
+            override fun onPlayFromUri(
+                uri: Uri?,
+                extras: Bundle?
+            ) {
+                Timber.v("onPlayFromUri()")
+                playFromUri(playWhenReady = true, uri = uri, extras = extras)
+            }
+
+            override fun onPrepareFromUri(
+                uri: Uri?,
+                extras: Bundle?
+            ) {
+                Timber.v("onPrepareFromUri()")
+                playFromUri(playWhenReady = false, uri = uri, extras = extras)
+            }
+
+            /** Plays the file at [uri] (e.g. one opened from a file manager) on its own, replacing the queue. */
+            private fun playFromUri(
+                playWhenReady: Boolean,
+                uri: Uri?,
+                extras: Bundle?
+            ) {
+                uri ?: return
+                appCoroutineScope.launch {
+                    val song = uriSongResolver.resolve(uri, extras?.getString(EXTRA_MIME_TYPE))
+                    if (song == null) {
+                        Timber.w("Can't play $uri: it can't be read")
+                        Toast.makeText(context, com.simplecityapps.core.R.string.open_file_failed, Toast.LENGTH_LONG).show()
+                        return@launch
+                    }
+                    playQueue(songs = listOf(song), position = 0, playWhenReady = playWhenReady, source = "onPlayFromUri")
+                }
+            }
+
+            /**
+             * Replaces the queue with [songs] and loads it. Waits for the saved queue to be restored first, so a
+             * request arriving as the app starts isn't overwritten by the restore.
+             */
+            private suspend fun playQueue(
+                songs: List<Song>,
+                position: Int,
+                playWhenReady: Boolean,
+                source: String
+            ) {
+                queueManager.queueStateFlow.first { queueState -> queueState.isRestored }
+                if (queueManager.setQueue(songs = songs, position = position)) {
+                    playbackManager.load { result ->
+                        result.onSuccess {
+                            if (playWhenReady) {
+                                playbackManager.play()
                             }
                         }
+                        result.onFailure { error -> Timber.e(error, "Failed to load playback after $source") }
                     }
                 }
             }
@@ -235,16 +288,7 @@ constructor(
                 appCoroutineScope.launch {
                     flow.firstOrNull()?.let { songs ->
                         if (songs.isNotEmpty()) {
-                            if (queueManager.setQueue(songs)) {
-                                playbackManager.load { result ->
-                                    result.onSuccess {
-                                        if (playWhenReady) {
-                                            playbackManager.play()
-                                        }
-                                    }
-                                    result.onFailure { error -> Timber.e(error, "Failed to load songs") }
-                                }
-                            }
+                            playQueue(songs = songs, position = 0, playWhenReady = playWhenReady, source = "onPlayFromSearch")
                         } else {
                             Timber.v("Search query $query with focus $mediaFocus yielded no results")
                         }
@@ -384,6 +428,9 @@ constructor(
 
     companion object {
         const val ACTION_SHUFFLE = "com.simplecityapps.shuttle.shuffle"
+
+        /** Optional [Bundle] extra for playFromUri: the MIME type the caller gave for the URI, used when its provider reports none. */
+        const val EXTRA_MIME_TYPE = "com.simplecityapps.shuttle.mime_type"
     }
 }
 

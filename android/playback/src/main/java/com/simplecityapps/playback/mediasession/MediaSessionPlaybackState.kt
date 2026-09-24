@@ -48,6 +48,8 @@ const val SESSION_PLAYBACK_ACTIONS: Long = (
         or PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
         or PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID
         or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
+        or PlaybackStateCompat.ACTION_PREPARE_FROM_URI
+        or PlaybackStateCompat.ACTION_PLAY_FROM_URI
     )
 
 fun MediaSessionPlaybackState.toPublishedPlaybackState() = PublishedPlaybackState(

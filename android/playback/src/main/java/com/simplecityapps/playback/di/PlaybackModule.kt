@@ -18,6 +18,7 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.mediasession.MediaSessionManager
+import com.simplecityapps.playback.mediasession.UriSongResolver
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
@@ -59,6 +60,12 @@ class PlaybackModule {
     ): MediaIdHelper = MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository)
 
     @Provides
+    fun provideUriSongResolver(
+        @ApplicationContext context: Context,
+        songRepository: SongRepository
+    ): UriSongResolver = UriSongResolver(context, songRepository)
+
+    @Provides
     fun provideAudioManager(
         @ApplicationContext context: Context
     ): AudioManager? = context.getSystemService()
@@ -82,13 +89,15 @@ class PlaybackModule {
         artworkImageLoader: ArtworkImageLoader,
         artworkCache: LruCache<String, Bitmap?>,
         preferenceManager: GeneralPreferenceManager,
-        mediaIdHelper: MediaIdHelper
+        mediaIdHelper: MediaIdHelper,
+        uriSongResolver: UriSongResolver
     ): MediaSessionManager = MediaSessionManager(
         context,
         appCoroutineScope,
         playbackManager,
         queueManager,
         mediaIdHelper,
+        uriSongResolver,
         artistRepository,
         albumRepository,
         songRepository,

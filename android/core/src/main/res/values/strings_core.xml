@@ -26,4 +26,6 @@
     <string name="eq_preset_vocal_boost">Vocal boost</string>
     <!-- Shown on equalizer screen. EQ Preset Vocal reduction-->
     <string name="eq_preset_vocal_Reduce">Vocal reduction</string>
+    <!-- Shown when another app asks S2 to play an audio file it can't read -->
+    <string name="open_file_failed">Couldn\'t open this file</string>
 </resources>

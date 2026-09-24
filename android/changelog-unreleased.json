@@ -16,6 +16,10 @@
     {
       "text": "Reverse a playlist's sort order from the sort menu",
       "commits": []
+    },
+    {
+      "text": "Open audio files from your file manager, downloads or messages in S2 to play them, and pick S2 as your default music app",
+      "commits": []
     }
   ],
   "improvements": [
