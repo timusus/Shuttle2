@@ -18,16 +18,14 @@ sealed class AlbumQuery(
             predicate = { album -> album.groupKey?.albumArtistGroupKey == key }
         )
 
-    class AlbumGroupKey(private val albumGroupKey: com.simplecityapps.shuttle.model.AlbumGroupKey?, sortOrder: AlbumSortOrder = AlbumSortOrder.Default) :
+    class AlbumGroupKey(private val albumGroupKey: com.simplecityapps.shuttle.model.AlbumGroupKey?) :
         AlbumQuery(
-            predicate = { album -> album.groupKey == albumGroupKey },
-            sortOrder = sortOrder
+            predicate = { album -> album.groupKey == albumGroupKey }
         )
 
-    class AlbumGroupKeys(val albums: List<AlbumGroupKey>, sortOrder: AlbumSortOrder = AlbumSortOrder.Default) :
+    class AlbumGroupKeys(val albums: List<AlbumGroupKey>) :
         AlbumQuery(
-            predicate = { album -> albums.any { it.predicate(album) } },
-            sortOrder = sortOrder
+            predicate = { album -> albums.any { it.predicate(album) } }
         )
 
     class Search(val query: String) :
