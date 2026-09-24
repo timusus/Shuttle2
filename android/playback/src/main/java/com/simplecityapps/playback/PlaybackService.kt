@@ -8,9 +8,7 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
 import android.support.v4.media.MediaBrowserCompat
 import androidx.media.MediaBrowserServiceCompat
 import androidx.media.session.MediaButtonReceiver
@@ -53,13 +51,13 @@ class PlaybackService : MediaBrowserServiceCompat() {
     @Inject
     lateinit var audioFocusHelper: AudioFocusHelper
 
-    private var foregroundNotificationHandler: Handler? = null
-
-    private var delayedShutdownHandler: Handler? = null
-
     private val packageValidator: PackageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    private val delayedStopForeground = DelayedAction(coroutineScope)
+
+    private val delayedShutdown = DelayedAction(coroutineScope)
 
     private var pendingStartCommands = mutableListOf<Intent>()
 
@@ -71,9 +69,6 @@ class PlaybackService : MediaBrowserServiceCompat() {
         super.onCreate()
 
         Timber.v("onCreate()")
-
-        foregroundNotificationHandler = Handler(Looper.getMainLooper())
-        delayedShutdownHandler = Handler(Looper.getMainLooper())
 
         // Main.immediate, so a change made on the main thread is handled before the call that made it returns,
         // as the callbacks these replaced were. The service reacts to a change before the notification does.
@@ -106,7 +101,7 @@ class PlaybackService : MediaBrowserServiceCompat() {
 
         // Cancel any pending shutdown
         Timber.v("Cancelling delayed shutdown")
-        delayedShutdownHandler?.removeCallbacksAndMessages(null)
+        delayedShutdown.cancel()
 
         // Intent is only null if this service is being re-created due to process death
         intent?.let {
@@ -183,8 +178,8 @@ class PlaybackService : MediaBrowserServiceCompat() {
         // Cancelled after pausing, so the notification shows playback as paused.
         notificationUpdates?.cancel()
 
-        foregroundNotificationHandler?.removeCallbacksAndMessages(null)
-        delayedShutdownHandler?.removeCallbacksAndMessages(null)
+        delayedStopForeground.cancel()
+        delayedShutdown.cancel()
 
         coroutineScope.cancel()
 
@@ -224,8 +219,7 @@ class PlaybackService : MediaBrowserServiceCompat() {
 
     private fun postDelayedShutdown(delay: Long = 15 * 1000L) {
         Timber.v("postDelayedShutdown(delay: $delay)")
-        delayedShutdownHandler?.removeCallbacksAndMessages(null)
-        delayedShutdownHandler?.postDelayed({
+        delayedShutdown.schedule(delay) {
             if (playbackManager.playbackState() !is PlaybackState.Loading && playbackManager.playbackState() !is PlaybackState.Playing) {
                 Timber.v("Stopping service due to ${delay}ms shutdown timer")
                 if (queueManager.getQueue().isEmpty()) {
@@ -233,27 +227,27 @@ class PlaybackService : MediaBrowserServiceCompat() {
                 }
                 stopSelf()
             }
-        }, delay)
+        }
     }
 
     // State Changes
 
     private fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        // We use the foreground notification handler here to slightly delay the call to stopForeground().
+        // stopForeground() is slightly delayed here.
         // This appears to be necessary in order to allow our notification to become dismissable if pause() is called via onStartCommand() to this service.
         // Presumably, there is an issue in calling stopForeground() too soon after startForeground() which causes the notification to be stuck in the 'ongoing' state and not able to be dismissed.
 
-        foregroundNotificationHandler?.removeCallbacksAndMessages(null)
+        delayedStopForeground.cancel()
 
         Timber.v("Cancelling delayed shutdown")
-        delayedShutdownHandler?.removeCallbacksAndMessages(null)
+        delayedShutdown.cancel()
 
         if (playbackState is PlaybackState.Paused) {
             // If we're paused due to a transient loss of audio focus (like a phone call), then don't stop the foreground service.
             // THis prevents an issue On API 31+, where the system will crash the app if we try to start the foreground service from an audio focus change.
             // We may as well keep the service running if we intend to resume playback.
             if (!audioFocusHelper.resumeOnFocusGain) {
-                foregroundNotificationHandler?.postDelayed({
+                delayedStopForeground.schedule(150) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                         Timber.v("stopForeground()")
                         stopForeground(Service.STOP_FOREGROUND_DETACH)
@@ -262,7 +256,7 @@ class PlaybackService : MediaBrowserServiceCompat() {
                         stopForeground(true)
                         notificationManager.displayPlaybackNotification()
                     }
-                }, 150)
+                }
 
                 postDelayedShutdown()
             }
