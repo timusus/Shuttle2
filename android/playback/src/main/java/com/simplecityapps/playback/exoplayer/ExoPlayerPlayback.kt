@@ -84,7 +84,11 @@ class ExoPlayerPlayback(
 
             override fun onPositionDiscontinuity(reason: Int) {
                 Timber.v("onPositionDiscontinuity(reason: $reason)")
-                callback?.onPositionDiscontinuity()
+                // Playing through to the next item isn't a jump: onMediaItemTransition, which Media3 calls
+                // right after, reports it as a track end once the new item's position is current.
+                if (reason != Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+                    callback?.onPositionDiscontinuity()
+                }
             }
 
             override fun onPlayerError(error: Exception) {

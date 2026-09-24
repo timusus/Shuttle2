@@ -438,6 +438,20 @@ class ExoPlayerPlaybackTest {
     }
 
     @Test
+    fun `automatic and repeat transitions report only the track end, not a discontinuity at the next item's start`() = runTest {
+        load(songA, next = songB)
+        callbackEvents.clear()
+
+        player.playToEnd()
+        playback.setRepeatMode(QueueManager.RepeatMode.One)
+        player.playToEnd()
+
+        // Media3 reports the transition's discontinuity first. Forwarded, it published the next item's
+        // position while the queue still held the finished one, which reads as a seek back to its start.
+        callbackEvents shouldBe listOf("trackEnded true", "trackEnded true")
+    }
+
+    @Test
     fun `a position discontinuity is reported with the new position readable`() = runTest {
         load(songA)
         callbackEvents.clear()
