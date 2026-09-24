@@ -80,6 +80,9 @@ constructor(
         val repeatMode = playbackPreferenceManager.repeatMode
         val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
         val queuePosition = playbackPreferenceManager.queuePosition
+        // A request to play something waits for the restore only so long (see MediaSessionManager), then sets its
+        // own queue, and a restore finishing after that mustn't replace it.
+        val initialContentVersion = queueManager.queueStateFlow.value.contentVersion
 
         appCoroutineScope.launch {
             // Set however the restore ends: requests to play something else wait for it (see
@@ -88,7 +91,12 @@ constructor(
                 queueManager.setShuffleMode(shuffleMode, reshuffle = false)
                 queueManager.setRepeatMode(repeatMode)
 
-                restoreQueue(shuffleMode = shuffleMode, queuePosition = queuePosition, seekPosition = seekPosition)
+                restoreQueue(
+                    shuffleMode = shuffleMode,
+                    queuePosition = queuePosition,
+                    seekPosition = seekPosition,
+                    initialContentVersion = initialContentVersion
+                )
             } finally {
                 queueManager.hasRestoredQueue = true
             }
@@ -103,11 +111,18 @@ constructor(
         bitPerfectOutput.get()
     }
 
+    /**
+     * Leaves the queue and playback alone if the queue changes from [initialContentVersion] other than by this
+     * restore: something else was played before the restore finished.
+     */
     private suspend fun restoreQueue(
         shuffleMode: QueueManager.ShuffleMode,
         queuePosition: Int?,
-        seekPosition: Int
+        seekPosition: Int,
+        initialContentVersion: Long
     ) {
+        var restoredContentVersion = initialContentVersion
+
         val queueRestoreStartTime = System.currentTimeMillis()
         var restoredSeekPosition = seekPosition
         queuePosition?.let {
@@ -135,11 +150,14 @@ constructor(
                             restoredSeekPosition = 0
                         }
                         withContext(Dispatchers.Main) {
-                            queueManager.setQueue(
+                            // A request's setQueue can't come between the check and the set, and one that follows
+                            // it leaves the queue at another version.
+                            queueManager.setQueueIfContentVersion(
+                                contentVersion = initialContentVersion,
                                 songs = songs,
                                 shuffleSongs = shuffleSongs,
                                 position = restoredPosition.position
-                            )
+                            )?.let { contentVersion -> restoredContentVersion = contentVersion }
                         }
                     } else {
                         Timber.w("Queue restoration failed: none of the saved songs are in the library")
@@ -152,11 +170,19 @@ constructor(
 
         Timber.v("Queue restored in ${System.currentTimeMillis() - queueRestoreStartTime}ms (Time since app init: ${System.currentTimeMillis() - initTime}ms)")
 
-        if (restoredSeekPosition != seekPosition) {
-            // It's what a reload reads back as the position to resume from.
-            playbackPreferenceManager.playbackPosition = restoredSeekPosition
+        // On the main thread, where the check and the load can't have anything that sets the queue between them.
+        withContext(Dispatchers.Main) {
+            if (queueManager.queueStateFlow.value.contentVersion != restoredContentVersion) {
+                Timber.w("The queue was set while it was being restored; the saved queue is dropped")
+                return@withContext
+            }
+
+            if (restoredSeekPosition != seekPosition) {
+                // It's what a reload reads back as the position to resume from.
+                playbackPreferenceManager.playbackPosition = restoredSeekPosition
+            }
+            playbackManager.load(restoredSeekPosition) {}
         }
-        playbackManager.load(restoredSeekPosition) {}
     }
 
     /**

@@ -6,7 +6,12 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import java.util.concurrent.CountDownLatch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.junit.Before
 import org.junit.Test
 
@@ -119,6 +124,73 @@ class QueueManagerTest {
 
         queueManager.getCurrentPosition() shouldBe 1
         queueManager.getCurrentItem()!!.song.id shouldBe 1L
+    }
+
+    @Test
+    fun `a set conditional on the content version waits for a set in progress, then leaves its queue alone`() {
+        val contentVersion = queueManager.queueStateFlow.value.contentVersion
+        val requestSongs = GatedSongs(listOf(createSong(7), createSong(8)))
+
+        runBlocking {
+            val request = launch(Dispatchers.Default) { queueManager.setQueue(requestSongs) }
+            requestSongs.awaitEntered()
+
+            val restore = async {
+                queueManager.setQueueIfContentVersion(contentVersion, listOf(createSong(4), createSong(5)), null, 0)
+            }
+            yield()
+            requestSongs.release()
+
+            request.join()
+            restore.await() shouldBe null
+        }
+
+        queueManager.getQueue().map { it.song.id } shouldBe listOf(7L, 8L)
+    }
+
+    @Test
+    fun `a set made while another is in progress starts once that one has finished`() {
+        val contentVersion = queueManager.queueStateFlow.value.contentVersion
+        val restoreSongs = GatedSongs(listOf(createSong(4), createSong(5)))
+
+        runBlocking {
+            val restore = async(Dispatchers.Default) {
+                queueManager.setQueueIfContentVersion(contentVersion, restoreSongs, null, 0)
+            }
+            restoreSongs.awaitEntered()
+
+            val request = launch { queueManager.setQueue(listOf(createSong(7), createSong(8))) }
+            yield()
+            restoreSongs.release()
+
+            restore.await() shouldNotBe null
+            request.join()
+        }
+
+        queueManager.getQueue().map { it.song.id } shouldBe listOf(7L, 8L)
+    }
+
+    /**
+     * Songs whose first iteration, which [QueueManager.setQueue] does on [Dispatchers.IO], waits for [release]: it
+     * holds a set in progress there.
+     */
+    private class GatedSongs(private val songs: List<Song>) : AbstractList<Song>() {
+        private val entered = CountDownLatch(1)
+        private val released = CountDownLatch(1)
+
+        override val size: Int get() = songs.size
+
+        override fun get(index: Int): Song = songs[index]
+
+        override fun iterator(): Iterator<Song> {
+            entered.countDown()
+            released.await()
+            return super.iterator()
+        }
+
+        fun awaitEntered() = entered.await()
+
+        fun release() = released.countDown()
     }
 
     private fun createSong(id: Long) = Song(

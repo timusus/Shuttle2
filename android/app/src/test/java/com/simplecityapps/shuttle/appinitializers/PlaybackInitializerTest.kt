@@ -24,11 +24,13 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import java.util.Collections
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.flow
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
@@ -382,6 +384,29 @@ class PlaybackInitializerTest {
         } finally {
             failingScope.cancel()
         }
+    }
+
+    @Test
+    fun `a restore finishing after something else was played leaves that queue and its playback alone`() {
+        val songsLoaded = CompletableDeferred<Unit>()
+        val slowRepository = mockk<SongRepository> {
+            every { getSongs(any()) } returns flow {
+                songsLoaded.await()
+                emit(songs)
+            }
+        }
+        preferences.queueIds = "1,2,3"
+        preferences.queuePosition = 1
+        preferences.playbackPosition = 30_000
+        createInitializer(slowRepository, appCoroutineScope).init(application)
+
+        // A request that gave up waiting for the restore sets its own queue.
+        publishQueue(listOf(createSong(id = 9)), currentPosition = 0, contentVersion = 1)
+        songsLoaded.complete(Unit)
+
+        awaitUntil { queueManager.hasRestoredQueue }
+        queueManager.lastSetQueue shouldBe null
+        playbackManager.loadedPositions shouldBe emptyList()
     }
 
     /** Waits for a write the initializer hands off to [kotlinx.coroutines.Dispatchers.IO]. */

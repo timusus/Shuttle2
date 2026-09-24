@@ -6,6 +6,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -79,6 +81,15 @@ class QueueManager(
 
     private val queue = Queue()
 
+    /**
+     * Held by each mutation that suspends ([setQueue], [setShuffleMode]), so none starts until the one before has
+     * finished: each suspends into [Dispatchers.IO] partway through, where another could otherwise begin and be
+     * overwritten by the rest of the first. The mutations that don't suspend can't take it; they run on the main
+     * thread, as [setQueueIfContentVersion]'s check does, so they can't come between that check and the set it
+     * allows starting. Nothing that holds it calls out to code that could come back in and wait for it.
+     */
+    private val mutex = Mutex()
+
     private var currentItem: QueueItem? = null
 
     private val _queueState = MutableStateFlow(QueueState.Empty)
@@ -117,6 +128,26 @@ class QueueManager(
         songs: List<Song>,
         shuffleSongs: List<Song>?,
         position: Int
+    ): Boolean = mutex.withLock { setQueueLocked(songs, shuffleSongs, position) }
+
+    override suspend fun setQueueIfContentVersion(
+        contentVersion: Long,
+        songs: List<Song>,
+        shuffleSongs: List<Song>?,
+        position: Int
+    ): Long? = mutex.withLock {
+        if (queueContentVersion != contentVersion) {
+            return@withLock null
+        }
+        setQueueLocked(songs, shuffleSongs, position)
+        queueContentVersion
+    }
+
+    /** [setQueue], with [mutex] held. */
+    private suspend fun setQueueLocked(
+        songs: List<Song>,
+        shuffleSongs: List<Song>?,
+        position: Int
     ): Boolean {
         if (position < 0 || position >= songs.size) {
             Timber.e("Invalid queue position: $position (songs.size: ${songs.size})")
@@ -124,7 +155,7 @@ class QueueManager(
         }
 
         if (shuffleSongs == null && !preferenceManager.retainShuffleOnNewQueue) {
-            setShuffleMode(ShuffleMode.Off, reshuffle = false)
+            setShuffleModeLocked(ShuffleMode.Off, reshuffle = false)
         }
 
         var existingQueueChanged = false
@@ -299,6 +330,12 @@ class QueueManager(
     override suspend fun setShuffleMode(
         shuffleMode: ShuffleMode,
         reshuffle: Boolean
+    ) = mutex.withLock { setShuffleModeLocked(shuffleMode, reshuffle) }
+
+    /** [setShuffleMode], with [mutex] held. */
+    private suspend fun setShuffleModeLocked(
+        shuffleMode: ShuffleMode,
+        reshuffle: Boolean
     ) {
         if (this.shuffleMode != shuffleMode) {
             this.shuffleMode = shuffleMode
@@ -321,10 +358,10 @@ class QueueManager(
 
     override fun getShuffleMode(): ShuffleMode = shuffleMode
 
-    override suspend fun toggleShuffleMode() {
+    override suspend fun toggleShuffleMode() = mutex.withLock {
         when (shuffleMode) {
-            ShuffleMode.Off -> setShuffleMode(ShuffleMode.On, reshuffle = true)
-            ShuffleMode.On -> setShuffleMode(ShuffleMode.Off, reshuffle = false)
+            ShuffleMode.Off -> setShuffleModeLocked(ShuffleMode.On, reshuffle = true)
+            ShuffleMode.On -> setShuffleModeLocked(ShuffleMode.Off, reshuffle = false)
         }
     }
 

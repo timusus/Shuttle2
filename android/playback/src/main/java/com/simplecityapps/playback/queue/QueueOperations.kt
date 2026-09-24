@@ -10,6 +10,14 @@ interface QueueOperations {
     val repeatModeFlow: StateFlow<QueueManager.RepeatMode>
 
     suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>? = null, position: Int = 0): Boolean
+
+    /**
+     * [setQueue], only if the queue's [QueueState.contentVersion] is still [contentVersion]: the check and the set
+     * are one step, which no other [setQueue] can come between.
+     *
+     * @return the content version the queue is left at, or null if it had changed and was left alone.
+     */
+    suspend fun setQueueIfContentVersion(contentVersion: Long, songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Long?
     fun getQueue(): List<QueueItem>
     fun getQueue(shuffleMode: QueueManager.ShuffleMode): List<QueueItem>
     fun getCurrentItem(): QueueItem?

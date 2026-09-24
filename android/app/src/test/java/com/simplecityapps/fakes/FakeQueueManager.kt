@@ -28,6 +28,13 @@ class FakeQueueManager : QueueOperations {
         lastSetQueuePosition = position
         return setQueueResult
     }
+
+    /** Leaves [queueStateFlow] as it is, so the content version a set leaves is the one it was set at. */
+    override suspend fun setQueueIfContentVersion(contentVersion: Long, songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Long? {
+        if (queueStateFlow.value.contentVersion != contentVersion) return null
+        setQueue(songs, shuffleSongs, position)
+        return contentVersion
+    }
     override fun getQueue(): List<QueueItem> = queueStateFlow.value.items
     override fun getQueue(shuffleMode: QueueManager.ShuffleMode): List<QueueItem> = queueStateFlow.value.items
     override fun getCurrentItem(): QueueItem? = queueStateFlow.value.currentItem
