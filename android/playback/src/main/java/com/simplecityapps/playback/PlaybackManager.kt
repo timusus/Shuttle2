@@ -196,7 +196,8 @@ class PlaybackManager(
 
     /**
      * Loads the current queue. The boolean in [Result] indicates whether the current queue item successfully loaded.
-     * Note: If the current queue item fails to load, the next item in the queue is attempted
+     * Note: If the current queue item fails to load, the next item in the queue is attempted. If every attempt
+     * fails, the queue stays on the last item attempted and playback is left stopped.
      */
     override fun load(
         seekPosition: Int?,
@@ -206,9 +207,7 @@ class PlaybackManager(
         // Some players (ExoPlayer/ChromeCast) like to be loaded on the main thread
         queueManager.getCurrentItem()?.let { currentQueueItem ->
             attemptLoad(currentQueueItem.song, seekPosition ?: currentQueueItem.song.getStartPosition() ?: 0) { result ->
-                result.onFailure {
-                    queueManager.setCurrentItem(currentQueueItem)
-                }
+                result.onFailure { stopAfterFailure() }
                 completion(result)
             }
         } ?: Timber.e("Load failed - no current queue item")
@@ -300,7 +299,8 @@ class PlaybackManager(
                         result.onFailure { exception -> Timber.e(exception, "play() failed") }
                     }
                 } else {
-                    Timber.e("play() failed. Exceeded max number of attempts (2)")
+                    Timber.w("play() failed: the playback is still released after 2 reloads")
+                    stopAfterFailure()
                 }
             } else {
                 val loadingPositionMs = loadCoordinator.loadingPositionMs
@@ -318,6 +318,16 @@ class PlaybackManager(
         } else {
             Timber.w("play() failed, audio focus request denied.")
         }
+    }
+
+    /**
+     * Leaves playback stopped after it failed to start, giving up the audio focus play() may have taken. A
+     * playback whose load failed may never report a state of its own (Cast reports Loading and nothing after),
+     * so the state it's left in is published here, and the UI doesn't go on showing it as playing.
+     */
+    private fun stopAfterFailure() {
+        pause()
+        onPlaybackStateChanged(playback.playBackState())
     }
 
     /** Whether [positionMs] is within 200ms of the end of the current queue item's song, if its length is known. */
@@ -345,9 +355,11 @@ class PlaybackManager(
         force: Boolean,
         completion: ((Result<Any?>) -> Unit)?
     ) = queueOperation {
-        // While a load is pending the playback still reports the track being replaced.
-        val position = getProgress() ?: 0
-        if (force || position < 2000) {
+        // While a load is pending the playback still reports the track being replaced. An unknown position
+        // (a Cast playback whose session has no remote media client, e.g. while suspended) may be mid-track,
+        // so it restarts the current track rather than skipping.
+        val position = getProgress()
+        if (force || (position != null && position < 2000)) {
             queueManager.skipToPrevious()
             queueManager.getCurrentItem()?.let { currentQueueItem ->
                 loadPlayback(currentQueueItem.song, 0) { result ->

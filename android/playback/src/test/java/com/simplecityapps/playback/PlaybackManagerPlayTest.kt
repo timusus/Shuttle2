@@ -15,7 +15,8 @@ import org.junit.Test
 
 /**
  * play() reloads a released playback before resuming, up to 2 attempts, resetting the seek
- * position to zero if it's within 200ms of the end of the song it reloads. An already-loaded playback seeks to
+ * position to zero if it's within 200ms of the end of the song it reloads. If it's still released
+ * after that, it gives up and pauses. An already-loaded playback seeks to
  * zero instead of reloading when resumed near the end.
  */
 class PlaybackManagerPlayTest {
@@ -52,8 +53,7 @@ class PlaybackManagerPlayTest {
     }
 
     @Test
-    fun `play gives up after 2 reload attempts while the playback remains released`() {
-        // Pins current behaviour; see #250
+    fun `play gives up after 2 reload attempts while the playback remains released, and pauses`() {
         val playback = FakePlayback("A", events = events, resetReleasedOnLoad = false)
         createPlaybackManager(playback)
         playback.isReleased = true
@@ -63,8 +63,8 @@ class PlaybackManagerPlayTest {
         playback.completeLoad()
         playback.completeLoad()
 
-        events.count { it.contains(" load ") } shouldBe 2
-        events.none { it == "A play" } shouldBe true
+        events.filterNot { it.contains("loadNext") } shouldBe listOf("A load Song seek 0", "A load Song seek 0", "A pause")
+        playbackManager.playbackStateFlow.value shouldBe PlaybackState.Paused
     }
 
     @Test

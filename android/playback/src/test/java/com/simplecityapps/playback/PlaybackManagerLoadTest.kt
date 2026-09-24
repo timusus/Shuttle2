@@ -16,8 +16,8 @@ import org.junit.Test
 
 /**
  * On load failure, PlaybackManager retries with the next queue item, up to 15 attempts, unless
- * the failed item was already the last one in the queue. If every attempt fails, the queue
- * position is reset to wherever it was when load() was first called. A slow load that outlasts
+ * the failed item was already the last one in the queue. If every attempt fails, the queue stays
+ * on the last item attempted and playback is left paused, publishing that state. A slow load that outlasts
  * the load timeout is neither failed nor skipped: whatever it reports later is handled as usual.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -112,11 +112,11 @@ class PlaybackManagerLoadTest {
     }
 
     @Test
-    fun `load stops retrying after 15 attempts and reverts to the original queue position`() {
-        // Pins current behaviour; see #250
+    fun `load stops retrying after 15 attempts, stays on the last item attempted and pauses`() {
         runBlocking { queueManager.setQueue((1L..20L).map { testSong(it) }) }
+        // A Cast playback reports Loading and nothing after a failed load.
+        playback.callback!!.onPlaybackStateChanged(PlaybackState.Loading)
         events.clear()
-        val originalItem = queueManager.getCurrentItem()
 
         var result: Result<Boolean>? = null
         playbackManager.load { result = it }
@@ -124,9 +124,9 @@ class PlaybackManagerLoadTest {
 
         events.count { it.startsWith("A load ") } shouldBe 15
         result!!.isFailure shouldBe true
-        // Every attempt skipped forward, but the final failure resets the queue position back to
-        // the item that was current when load() was first called.
-        queueManager.getCurrentItem() shouldBe originalItem
+        queueManager.getCurrentItem()!!.song.id shouldBe 15L
+        events.last() shouldBe "A pause"
+        playbackManager.playbackStateFlow.value shouldBe PlaybackState.Paused
     }
 
     @Test
@@ -139,7 +139,7 @@ class PlaybackManagerLoadTest {
         playbackManager.load { result = it }
         playback.failLoad()
 
-        events shouldBe listOf("A load Song3 seek 0")
+        events shouldBe listOf("A load Song3 seek 0", "A pause")
         result!!.isFailure shouldBe true
         queueManager.getCurrentItem()!!.song.id shouldBe 3L
     }

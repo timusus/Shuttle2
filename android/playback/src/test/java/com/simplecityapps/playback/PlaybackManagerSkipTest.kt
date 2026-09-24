@@ -14,7 +14,7 @@ import org.junit.Test
 
 /**
  * skipToPrev() re-starts the current track (seeks to zero) when more than 2s of progress has
- * elapsed, and only actually skips to the previous queue item within the first 2s, or when
+ * elapsed or the progress is unknown, and only actually skips to the previous queue item within the first 2s, or when
  * forced. onTrackEnded() takes a lighter path (loadNext only) when the player already auto
  * advanced; otherwise it drives a full skip.
  */
@@ -66,14 +66,15 @@ class PlaybackManagerSkipTest {
     }
 
     @Test
-    fun `skipToPrev treats unknown progress as within 2s and skips to the previous item`() {
-        // Pins current behaviour; see #250
+    fun `skipToPrev with unknown progress restarts the current item instead of skipping`() {
+        // Only a Cast playback reports no position, when its session has no remote media client (e.g.
+        // suspended), which can happen mid-track.
         playback.progressMs = null
 
         playbackManager.skipToPrev()
 
-        queueManager.getCurrentItem()!!.song.id shouldBe 1L
-        events shouldBe listOf("A load Song1 seek 0")
+        queueManager.getCurrentItem()!!.song.id shouldBe 2L
+        events shouldBe listOf("A seek 0")
     }
 
     @Test
