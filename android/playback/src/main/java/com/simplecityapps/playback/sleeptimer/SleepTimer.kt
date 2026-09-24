@@ -2,34 +2,29 @@ package com.simplecityapps.playback.sleeptimer
 
 import android.os.SystemClock
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.PlaybackWatcher
-import com.simplecityapps.playback.PlaybackWatcherCallback
-import com.simplecityapps.shuttle.model.Song
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
  * Pauses playback once a delay has elapsed, or, when playing to the end, at the first track end after it.
- * The countdown runs on [context] in [appCoroutineScope]; a track end is an event, so the play-to-end wait
- * listens for it on [playbackWatcher].
+ * The countdown runs on [context] in [appCoroutineScope]; the play-to-end wait then collects
+ * [PlaybackOperations.trackEndedFlow], which replays nothing, so only a track end after the deadline counts.
  */
 class SleepTimer(
     private val playbackManager: PlaybackOperations,
-    private val playbackWatcher: PlaybackWatcher,
     private val appCoroutineScope: CoroutineScope,
     private val context: CoroutineContext = Dispatchers.Main.immediate,
     /** The clock [timeRemaining] is measured on, in milliseconds. */
     private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime
-) : PlaybackWatcherCallback {
+) {
     private var timerJob: Job? = null
-
-    private var playToEnd: Boolean = false
 
     private var startTime: Long? = null
 
@@ -48,21 +43,18 @@ class SleepTimer(
         Timber.v("startTimer() called.. Delay: ${delay}ms")
 
         timerJob?.cancel()
-        playbackWatcher.removeCallback(this)
 
         startTime = elapsedRealtime()
         this.delay = delay
-
-        this.playToEnd = playToEnd
 
         timerJob =
             appCoroutineScope.launch(context) {
                 delay(delay)
                 if (playToEnd) {
-                    playbackWatcher.addCallback(this@SleepTimer)
-                } else {
-                    sleep()
+                    val song = playbackManager.trackEndedFlow.first()
+                    Timber.v("Track ended after the deadline: ${song.name}")
                 }
+                sleep()
             }
     }
 
@@ -74,9 +66,7 @@ class SleepTimer(
         timerJob?.cancel()
         timerJob = null
         delay = 0L
-        playbackWatcher.removeCallback(this)
         startTime = null
-        playToEnd = false
     }
 
     /**
@@ -94,14 +84,5 @@ class SleepTimer(
         Timber.v("sleep() called")
         playbackManager.pause()
         stopTimer()
-    }
-
-    // PlaybackWatcherCallback Implementation
-
-    override fun onTrackEnded(song: Song) {
-        Timber.v("onPlaybackComplete, playToEnd: $playToEnd, timeRemaining: ${timeRemaining()}")
-        if (playToEnd && timeRemaining() == 0L) {
-            sleep()
-        }
     }
 }

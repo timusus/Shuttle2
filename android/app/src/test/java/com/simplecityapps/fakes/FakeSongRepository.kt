@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import java.util.Collections
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -14,6 +15,12 @@ class FakeSongRepository : SongRepository {
     fun setSongs(value: List<Song>) {
         songs.value = value
     }
+
+    /** Every [setPlaybackPosition] call as (song id, position), in order. Written from whichever thread calls it. */
+    val playbackPositions: MutableList<Pair<Long, Int>> = Collections.synchronizedList(mutableListOf())
+
+    /** The id of every song passed to [incrementPlayCount], in order. */
+    val playCountIncrements: MutableList<Long> = Collections.synchronizedList(mutableListOf())
 
     /** When true, [getSongs] applies the query's predicate, like the real repository. Off by default: most tests ignore queries. */
     var applyQueryPredicates: Boolean = false
@@ -31,7 +38,13 @@ class FakeSongRepository : SongRepository {
     override suspend fun update(songs: List<Song>) {}
     override suspend fun removeAll(mediaProviderType: MediaProviderType) {}
     override suspend fun insertUpdateAndDelete(inserts: List<Song>, updates: List<Song>, deletes: List<Song>, mediaProviderType: MediaProviderType): Triple<Int, Int, Int> = Triple(0, 0, 0)
-    override suspend fun incrementPlayCount(song: Song) {}
-    override suspend fun setPlaybackPosition(song: Song, playbackPosition: Int) {}
+    override suspend fun incrementPlayCount(song: Song) {
+        playCountIncrements += song.id
+    }
+
+    override suspend fun setPlaybackPosition(song: Song, playbackPosition: Int) {
+        playbackPositions += song.id to playbackPosition
+    }
+
     override suspend fun clearExcludeList() {}
 }

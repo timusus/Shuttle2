@@ -2,6 +2,7 @@ package com.simplecityapps.playback
 
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.model.Song
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 interface PlaybackOperations {
@@ -13,6 +14,12 @@ interface PlaybackOperations {
 
     /** Where playback was at the last discontinuity, for consumers that extrapolate position between anchors. */
     val positionAnchorFlow: StateFlow<PositionAnchor>
+
+    /**
+     * Each song that plays to its end, emitted before the queue moves on. An event, not state: nothing is
+     * replayed to a new collector, and a collector on the main thread sees every one.
+     */
+    val trackEndedFlow: SharedFlow<Song>
 
     fun load(seekPosition: Int? = null, completion: (Result<Boolean>) -> Unit)
     fun play(attempt: Int = 1)

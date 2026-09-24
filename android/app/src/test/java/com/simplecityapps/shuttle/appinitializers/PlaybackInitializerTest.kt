@@ -38,6 +38,7 @@ class PlaybackInitializerTest {
 
     private val application: Application = RuntimeEnvironment.getApplication()
     private val playbackManager = FakePlaybackManager()
+    private val songRepository = FakeSongRepository()
     private val queueManager = FakeQueueManager()
     private val playbackWatcher = PlaybackWatcher()
     private val preferences = PlaybackPreferenceManager(
@@ -48,7 +49,7 @@ class PlaybackInitializerTest {
 
     private val initializer = PlaybackInitializer(
         context = application,
-        songRepository = FakeSongRepository(),
+        songRepository = songRepository,
         playbackManager = playbackManager,
         playbackWatcher = playbackWatcher,
         queueManager = queueManager,
@@ -212,22 +213,40 @@ class PlaybackInitializerTest {
     }
 
     @Test
-    fun `onTrackEnded saves 0 only when the queue has a next item to move to`() {
+    fun `progress is throttled against the saved position, even one the playback manager saved`() {
         initializer.init(application)
         playbackManager.progressFlow.value = PlaybackProgress(position = 195_000, duration = 200_000)
         preferences.playbackPosition shouldBe 195_000
 
-        val endedSong = songs[0]
-        queueManager.nextItem = null
-        playbackWatcher.onTrackEnded(endedSong)
+        // A track end resets the saved position to 0 for the next track.
+        preferences.playbackPosition = 0
 
-        // No next item to move to - the position of the song that just finished is left alone.
-        preferences.playbackPosition shouldBe 195_000
-
-        queueManager.nextItem = songs[1].toQueueItem(isCurrent = false)
-        playbackWatcher.onTrackEnded(endedSong)
-
+        playbackManager.progressFlow.value = PlaybackProgress(position = 400, duration = 200_000)
         preferences.playbackPosition shouldBe 0
+
+        playbackManager.progressFlow.value = PlaybackProgress(position = 1_200, duration = 200_000)
+        preferences.playbackPosition shouldBe 1_200
+    }
+
+    @Test
+    fun `a track end records the song as played through`() {
+        initializer.init(application)
+        val endedSong = createSong(id = 4, duration = 200_000)
+
+        playbackManager.trackEndedFlow.tryEmit(endedSong)
+
+        awaitUntil { songRepository.playCountIncrements.isNotEmpty() }
+        songRepository.playbackPositions.toList() shouldBe listOf(4L to 200_000)
+        songRepository.playCountIncrements.toList() shouldBe listOf(4L)
+    }
+
+    /** Waits for a write the initializer hands off to [kotlinx.coroutines.Dispatchers.IO]. */
+    private fun awaitUntil(condition: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + 5_000
+        while (!condition()) {
+            check(System.currentTimeMillis() < deadline) { "Timed out waiting for the condition" }
+            Thread.sleep(10)
+        }
     }
 
     private fun publishQueue(

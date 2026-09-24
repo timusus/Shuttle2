@@ -12,8 +12,12 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 
@@ -105,6 +109,14 @@ class PlaybackManager(
      * progress tick.
      */
     override val positionAnchorFlow: StateFlow<PositionAnchor> = _positionAnchorFlow.asStateFlow()
+
+    /**
+     * Buffered so an emit from the main thread never suspends or fails. Collectors run on the main thread
+     * too, so only one that has fallen [TRACK_ENDED_BUFFER] track ends behind could lose the oldest.
+     */
+    private val _trackEndedFlow = MutableSharedFlow<Song>(extraBufferCapacity = TRACK_ENDED_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    override val trackEndedFlow: SharedFlow<Song> = _trackEndedFlow.asSharedFlow()
 
     init {
         audioFocusHelper.listener = this
@@ -543,8 +555,16 @@ class PlaybackManager(
     override fun onTrackEnded(trackWentToNext: Boolean) {
         Timber.v("onTrackChanged(trackWentToNext: $trackWentToNext)")
 
+        // Only if the queue is about to move on is 0 the right position for what will be the current item;
+        // otherwise (e.g. the last track with repeat off) it stays on the song that just finished, and so
+        // does its saved position.
+        if (queueManager.getNext() != null) {
+            playbackPreferenceManager.playbackPosition = 0
+        }
+
         queueManager.getCurrentItem()?.let { currentQueueItem ->
             playbackWatcher.onTrackEnded(currentQueueItem.song)
+            _trackEndedFlow.tryEmit(currentQueueItem.song)
         } ?: Timber.e("onTrackChanged() called, but current queue item is null")
 
         if (trackWentToNext) {
@@ -594,5 +614,7 @@ class PlaybackManager(
         playback.setVolume(0.2f)
     }
 }
+
+private const val TRACK_ENDED_BUFFER = 64
 
 private fun Song.getStartPosition(): Int? = if (type == Song.Type.Podcast || type == Song.Type.Audiobook) max(0, playbackPosition - 5000) else null

@@ -43,8 +43,11 @@ import timber.log.Timber
  * the main thread is handled before the call that made it returns, as the callbacks it replaced were. That
  * matters for the playback position, which [PlaybackOperations] reads back from the preferences.
  *
- * Pausing and track completion stay on [PlaybackWatcherCallback]: they save the position at that moment,
- * read live from the playback and queue, so they must run inside the call that reports them, and a
+ * A track end is an event, collected from [PlaybackOperations.trackEndedFlow] to record the song as played;
+ * [PlaybackOperations] saves the position it leaves behind itself.
+ *
+ * Pausing stays on [PlaybackWatcherCallback]: it saves the position at that moment, read live from the
+ * playback and queue, so it must run inside the call that reports it, and a
  * [kotlinx.coroutines.flow.StateFlow] can merge a pause into whatever follows it.
  */
 class PlaybackInitializer
@@ -62,9 +65,6 @@ constructor(
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : AppInitializer,
     PlaybackWatcherCallback {
-    /** The last position saved to preferences, so a save can be throttled by how far it's drifted. */
-    private var lastSavedPosition: Int? = null
-
     private var initTime = 0L
 
     @SuppressLint("BinaryOperationInTimber")
@@ -74,6 +74,7 @@ constructor(
 
         playbackWatcher.addCallback(this)
         collectPlaybackState()
+        collectTrackEnds()
 
         val shuffleMode = playbackPreferenceManager.shuffleMode
         val repeatMode = playbackPreferenceManager.repeatMode
@@ -174,6 +175,12 @@ constructor(
         }
     }
 
+    private fun collectTrackEnds() {
+        appCoroutineScope.launch(Dispatchers.Main.immediate) {
+            playbackManager.trackEndedFlow.collect { song -> recordPlayedThrough(song) }
+        }
+    }
+
     private fun onQueueStateChanged(
         previous: QueueState,
         current: QueueState
@@ -209,25 +216,24 @@ constructor(
 
     /**
      * Saves the playback position to preferences. A [force]d save (a discontinuity from
-     * [PlaybackOperations.positionAnchorFlow], a pause, or a track change) always writes; otherwise the
-     * write is throttled to once the position has drifted at least a second in either direction, so a
-     * seek backwards or a restart is caught as readily as normal forward playback.
+     * [PlaybackOperations.positionAnchorFlow], or a pause) always writes; otherwise the write is throttled
+     * to once the position has drifted at least a second in either direction from the saved one, so a
+     * seek backwards or a restart is caught as readily as normal forward playback. The saved position is
+     * read back rather than remembered, since [PlaybackOperations] saves one itself when a track ends.
      */
     private fun saveProgress(
         position: Int,
         force: Boolean
     ) {
-        val last = lastSavedPosition
-        if (force || last == null || abs(position - last) >= 1000) {
+        val saved = playbackPreferenceManager.playbackPosition
+        if (force || saved == null || abs(position - saved) >= 1000) {
             playbackPreferenceManager.playbackPosition = position
-            lastSavedPosition = position
         }
     }
 
-    /** Clears the saved position, and the throttle's baseline with it, so the next position is saved straight away. */
+    /** Clears the saved position, so the next position is saved straight away. */
     private fun clearProgress() {
         playbackPreferenceManager.playbackPosition = null
-        lastSavedPosition = null
     }
 
     // PlaybackWatcherCallback Implementation
@@ -255,16 +261,7 @@ constructor(
         }
     }
 
-    @SuppressLint("CheckResult")
-    override fun onTrackEnded(song: Song) {
-        // The queue hasn't advanced yet at this point, so getNext() predicts whether it's about to -
-        // matching the check PlaybackManager itself makes before it moves on. Only then is 0 the right
-        // position for what's now the current item; otherwise (e.g. the last track with repeat off) the
-        // queue stays on the song that just finished, and its saved position should stay too.
-        if (queueManager.getNext() != null) {
-            saveProgress(0, force = true)
-        }
-
+    private fun recordPlayedThrough(song: Song) {
         appCoroutineScope.launch {
             withContext(Dispatchers.IO) {
                 songRepository.setPlaybackPosition(song, song.duration)
