@@ -52,6 +52,7 @@ class ContextualToolbarHelper<T>(
         selectedItemsByKey.values.toList().forEach { item -> callback?.onItemUpdated(item = item, isSelected = false) }
         selectedItemsByKey.clear()
         isActive = false
+        updateCount()
     }
 
     private fun addOrRemoveItem(item: T) {

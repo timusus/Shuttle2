@@ -71,4 +71,26 @@ class ContextualToolbarHelperTest {
         helper.isActive shouldBe false
         helper.selectedItems shouldBe emptyList()
     }
+
+    @Test
+    fun `hide notifies callback that the count dropped to zero`() {
+        val helper = helper()
+        val counts = mutableListOf<Int>()
+        helper.callback = object : ContextualToolbarHelper.Callback<Item> {
+            override fun onCountChanged(count: Int) {
+                counts.add(count)
+            }
+
+            override fun onItemUpdated(
+                item: Item,
+                isSelected: Boolean
+            ) = Unit
+        }
+        helper.handleLongClick(Item(id = 1, sortOrder = 0))
+        helper.handleLongClick(Item(id = 2, sortOrder = 1))
+
+        helper.hide()
+
+        counts.last() shouldBe 0
+    }
 }
