@@ -40,6 +40,10 @@
   ],
   "improvements": [
     {
+      "text": "More local album art filenames are now recognised, including albumart.jpg, front.jpg and artwork.jpg",
+      "commits": []
+    },
+    {
       "text": "Rebuilt the home screen widgets. They resize freely, show bigger artwork on larger sizes, follow your system theme and wallpaper colours, and add previous, shuffle and repeat buttons. The background opacity is adjustable in Settings, Widgets",
       "commits": []
     }
