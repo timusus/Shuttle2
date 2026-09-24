@@ -53,10 +53,14 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
       title, playback isn't affected.
 
 ### Audio (still outstanding from earlier stages)
-- [ ] ReplayGain (track and album modes) sounds right.
-- [ ] Gapless playback across an album with no gaps between tracks.
-- [ ] EQ presets and custom bands apply, and survive a skip and a Cast round-trip.
-- [ ] 24-bit FLAC plays cleanly.
+- [x] ReplayGain track and album modes change the level by the tagged gain, within ±0.5 dB. — automated: `ReplayGainLevelTest`
+- [ ] ReplayGain sounds right by ear (final listening pass).
+- [x] Gapless joins with the EQ off: no inserted silence or discontinuity. — automated: `GaplessJoinTest`
+- [ ] Gapless joins with the EQ on have no click (#365; its test is ignored until fixed), and a real FLAC album plays gapless by ear.
+- [x] EQ bands boost/cut by the set amount (±1 dB) and still apply after a skip. — automated: `EqualizerResponseTest`
+- [ ] The EQ survives a Cast round-trip.
+- [x] 24-bit PCM goes through EQ and ReplayGain to the end cleanly. — automated: `AudioOutputSpecTest` (RS-17, 24-bit WAV)
+- [ ] A real 24-bit FLAC plays cleanly (FLAC decoding is native, device-only).
 - [x] Jellyfin streaming: play, skip, seek and resume after a force-stop. — automated: `emu-verify.sh --remote jellyfin --check remote-playback`
 
 ## Ported PRs (Sep 2026)
@@ -108,7 +112,7 @@ play order. Coming back to the phone always lands paused, at the receiver's posi
 
 The rules in `docs/testing/playback-behaviour-spec.md` the JVM can't run.
 
-- [ ] RS-17: with the EQ on (any non-flat preset) and ReplayGain on, a 24-bit FLAC plays to its end cleanly, with no noise or skip.
+- [ ] RS-17: with the EQ on (any non-flat preset) and ReplayGain on, a 24-bit FLAC plays to its end cleanly, with no noise or skip. (The 24-bit PCM path is covered by `AudioOutputSpecTest`; this row is for native FLAC decoding.)
 - [ ] RS-18: with a system EQ app (e.g. Wavelet) attached, change a setting that rebuilds the player (turn USB DAC direct output on and off) and skip. The EQ app keeps applying.
 - [ ] RS-19: play a song from the "S2 Transcode Test" album on Jellyfin and then Emby with transcoding forced (a low streaming bitrate). Each plays, seeks, and advances to the next song.
 - [ ] RS-20: with USB DAC direct output on, seek to the last second of a track and change the output format (turn the setting off and on) just as it ends. The next track plays from its start, with no skip past it.
