@@ -22,7 +22,7 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [x] Set playback speed ≠ 1.0×, then change repeat mode. The speed doesn't reset. — automated: `emu-verify.sh --check speed-survives-repeat`
 
 ### Service and notification
-- [x] Pause, leave the app in the background. The service stops on its own, with no crash. — automated: `emu-verify.sh --check service-stop`
+- [x] Pause, then swipe S2 away in Recents. The service stops and the notification goes, with no crash. — automated: `emu-verify.sh --check service-stop`
 - [ ] The notification can be dismissed while paused, with no crash.
 - [x] Resume playback from a headset/Bluetooth media button after the service has stopped. — automated: `emu-verify.sh --check media-buttons`
 - [ ] Resume playback from the notification after the service has stopped.

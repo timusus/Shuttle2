@@ -120,8 +120,17 @@ service_running() {
     adb_retry shell dumpsys activity services "$APP_ID" 2>/dev/null | grep -q "PlaybackService"
 }
 
-# wait_for_service_stop <seconds>: polls dumpsys activity services until PlaybackService is gone
-# (PlaybackService.postDelayedShutdown's own timer, not a fixed sleep).
+# remove_app_task: removes the app's task, as swiping it away in Recents does (`am stack remove` on
+# its task id). Paused, that's where Media3 stops PlaybackService (MediaSessionService.onTaskRemoved);
+# otherwise it keeps a paused session alive for resumption.
+remove_app_task() {
+    local task
+    task="$(adb_retry shell am stack list | sed -n "s/.*taskId=\([0-9]*\): ${APP_ID}\/.*/\1/p" | head -1)"
+    [ -n "$task" ] || fail "no task found for ${APP_ID}"
+    adb_retry shell am stack remove "$task" >/dev/null
+}
+
+# wait_for_service_stop <seconds>: polls dumpsys activity services until PlaybackService is gone.
 wait_for_service_stop() {
     local timeout="$1" deadline=$(($(date +%s) + $1))
     while service_running; do
