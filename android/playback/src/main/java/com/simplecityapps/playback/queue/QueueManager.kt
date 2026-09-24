@@ -157,7 +157,7 @@ class QueueManager(
 
     /** New queue entries for [songs], built off the main thread. */
     private suspend fun buildItems(songs: List<Song>): List<MediaItem> = withContext(buildContext) {
-        songs.map { song -> songUriResolver.toMediaItem(song.toQueueEntry()) }
+        songs.map { song -> song.toQueueEntry().toMediaItem() }
     }
 
     /**
@@ -208,6 +208,7 @@ class QueueManager(
                     player.seekTo(index, 0)
                 }
             } else {
+                songUriResolver.queued(items)
                 player.setMediaItems(items, index, 0)
             }
             player.setShuffleOrder(shuffleOrder)
@@ -283,15 +284,19 @@ class QueueManager(
 
     /** Adds [songs] to the end of the queue: the end of the unshuffled order, and the end of the shuffled order. */
     override fun addToQueue(songs: List<Song>) {
-        val items = songs.map { song -> songUriResolver.toMediaItem(song.toQueueEntry()) }
-        playerThread.run { player.addMediaItems(items) }
+        val items = songs.map { song -> song.toQueueEntry().toMediaItem() }
+        playerThread.run {
+            songUriResolver.queued(items)
+            player.addMediaItems(items)
+        }
     }
 
     /** Adds [songs] after the current item, in both the unshuffled and the shuffled order. */
     override fun addToNext(songs: List<Song>) {
-        val items = songs.map { song -> songUriResolver.toMediaItem(song.toQueueEntry()) }
+        val items = songs.map { song -> song.toQueueEntry().toMediaItem() }
         playerThread.run {
             batch {
+                songUriResolver.queued(items)
                 val current = player.currentMediaItemIndex.takeIf { player.mediaItemCount > 0 }
                 val insertAt = (current ?: -1) + 1
                 val shuffled = shuffledIndices()
@@ -324,7 +329,9 @@ class QueueManager(
         val shuffled = shuffledIndices()
         entries().zip(songs).forEachIndexed { index, (entry, song) ->
             if (song != entry.song) {
-                player.replaceMediaItem(index, songUriResolver.toMediaItem(QueueEntry(entry.uid, song)))
+                val item = QueueEntry(entry.uid, song).toMediaItem()
+                songUriResolver.queued(listOf(item))
+                player.replaceMediaItem(index, item)
             }
         }
         // An item whose file changed is replaced by removing and re-adding it, which moves it to the end of the
@@ -446,6 +453,7 @@ class QueueManager(
     private fun publish() {
         if (batchDepth > 0) return
         val entries = entries()
+        songUriResolver.retainOnly(entries)
         val current = player.currentMediaItemIndex.takeIf { entries.isNotEmpty() }
         val base = entries.mapIndexed { index, entry -> entry.toQueueItem(isCurrent = index == current) }
         val shuffled = shuffledIndices().map { base[it] }

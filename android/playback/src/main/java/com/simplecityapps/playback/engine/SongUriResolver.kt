@@ -10,7 +10,7 @@ import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
 import com.simplecityapps.playback.exoplayer.MediaResolver
 import com.simplecityapps.playback.queue.QueueEntry
-import com.simplecityapps.playback.queue.toMediaItem
+import com.simplecityapps.playback.queue.queueEntry
 import com.simplecityapps.playback.queue.uri
 import com.simplecityapps.shuttle.model.Song
 import java.io.IOException
@@ -21,9 +21,9 @@ import kotlinx.coroutines.runBlocking
  * Resolves a remote song's own URI (`jellyfin://`, `emby://`, `plex://`) to the URL it streams from, only when the
  * player opens it, so building a queue never waits on a server.
  *
- * [toMediaItem] records which song each URI belongs to. [dataSourceFactory]'s data sources then ask [mediaResolver]
- * for that song's stream when they open its URI, on the player's loading thread. File, content and http(s) URIs
- * open as they are.
+ * [queued] records which song each URI belongs to, and [retainOnly] forgets the songs the playlist no longer holds.
+ * [dataSourceFactory]'s data sources then ask [mediaResolver] for that song's stream when they open its URI, on the
+ * player's loading thread. File, content and http(s) URIs open as they are.
  */
 class SongUriResolver(
     private val mediaResolver: MediaResolver
@@ -33,15 +33,24 @@ class SongUriResolver(
     /** Each URI's stream, once resolved, so a seek or retry doesn't ask the server again. */
     private val resolvedUris = ConcurrentHashMap<String, Uri>()
 
-    /** The [MediaItem] the player queues for [entry], whose URI this resolver can open. */
-    fun toMediaItem(entry: QueueEntry): MediaItem {
-        val uri = entry.song.uri()
-        if (!uri.isDirect()) {
-            songs[uri.toString()] = entry.song
-            // A newly queued item resolves afresh, as a stream URL can carry a token that expires.
-            resolvedUris.remove(uri.toString())
+    /** Records the songs [items] play, so the player can open them. Call it before they join the playlist. */
+    fun queued(items: List<MediaItem>) {
+        items.forEach { item ->
+            val song = item.queueEntry.song
+            val uri = song.uri()
+            if (!uri.isDirect()) {
+                songs[uri.toString()] = song
+                // A newly queued item resolves afresh, as a stream URL can carry a token that expires.
+                resolvedUris.remove(uri.toString())
+            }
         }
-        return entry.toMediaItem()
+    }
+
+    /** Forgets every song but those [playlist] holds, so what's recorded stays bounded by the playlist. */
+    fun retainOnly(playlist: List<QueueEntry>) {
+        val keep = playlist.mapTo(HashSet()) { entry -> entry.song.uri().toString() }
+        songs.keys.retainAll(keep)
+        resolvedUris.keys.retainAll(keep)
     }
 
     fun dataSourceFactory(upstream: DataSource.Factory): DataSource.Factory = ResolvingDataSource.Factory(upstream) { dataSpec -> resolve(dataSpec) }
