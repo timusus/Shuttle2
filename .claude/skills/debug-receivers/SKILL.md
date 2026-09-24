@@ -30,7 +30,6 @@ failing.
 | `REPEAT` | `[--es mode off\|all\|one]` | Toggle (Off → All → One), or set, the repeat mode |
 | `SPEED` | `--ef multiplier 1.5` | `PlaybackManager.setPlaybackSpeed(multiplier)` |
 | `SLEEP_TIMER` | `--el seconds 3 [--ez play_to_end true\|false]` | `SleepTimer.startTimer`, the same timer the Sleep Timer dialog starts |
-| `BECOMING_NOISY` | | Runs `NoisyReceiver.onReceive` directly with `ACTION_AUDIO_BECOMING_NOISY` — `AUDIO_BECOMING_NOISY` is a protected broadcast `adb` can't send |
 | `DUMP_STATE` | | Print the state as one JSON line (below) |
 | `DOWNLOAD_SONG` | `[--el song_id N]` | `DebugDownloadReceiver`: download a song for offline use (default: the first remote song) from its current stream URI, keyed by `song.path` |
 | `REMOVE_DOWNLOAD` | `[--el song_id N]` | Remove that song's download |

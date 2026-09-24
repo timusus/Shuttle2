@@ -12,7 +12,6 @@
 #   support/scripts/s2-debug.sh REPEAT [--es mode off|all|one] toggle (Off -> All -> One), or set
 #   support/scripts/s2-debug.sh SPEED --ef multiplier 1.5  set the playback speed
 #   support/scripts/s2-debug.sh SLEEP_TIMER --el seconds 3 [--ez play_to_end true]  start the sleep timer
-#   support/scripts/s2-debug.sh BECOMING_NOISY             runs the real AUDIO_BECOMING_NOISY handler
 #   support/scripts/s2-debug.sh DUMP_STATE                 print the state as one JSON line
 #   support/scripts/s2-debug.sh IMPORT                     reimport the library from MediaStore
 #
