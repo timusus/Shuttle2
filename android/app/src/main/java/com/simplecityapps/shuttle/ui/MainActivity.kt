@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui
 
 import android.Manifest
-import android.app.ForegroundServiceStartNotAllowedException
+import android.app.SearchManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -11,8 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.NavHostFragment
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
-import com.simplecityapps.playback.PlaybackService
-import com.simplecityapps.playback.mediasession.MediaSessionManager
+import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -24,7 +23,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
-import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -41,7 +39,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var remoteConfig: FirebaseRemoteConfig
 
     @Inject
-    lateinit var mediaSessionManager: MediaSessionManager
+    lateinit var playRequests: PlayRequests
 
     @Inject
     @AppCoroutineScope
@@ -113,38 +111,20 @@ class MainActivity : AppCompatActivity() {
         Manifest.permission.READ_EXTERNAL_STORAGE
     }
 
+    /** Plays what a voice search (e.g. Assistant's "play X on S2") asks for. */
     private fun handleSearchQuery(intent: Intent?) {
         if (intent?.action == MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
-            try {
-                ContextCompat.startForegroundService(
-                    this,
-                    Intent(this, PlaybackService::class.java).apply {
-                        action = PlaybackService.ACTION_SEARCH
-                        intent.extras?.let { extras ->
-                            putExtras(extras)
-                        }
-                    }
-                )
-            } catch (e: IllegalStateException) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
-                    Timber.w(e, "Cannot start foreground service from search query - app may be in restricted state")
-                } else {
-                    throw e
-                }
-            }
+            playRequests.playFromSearch(intent.getStringExtra(SearchManager.QUERY), intent.extras)
         }
     }
 
     /**
      * Plays an audio file another app opened with us. The read grant that comes with a content:// URI
-     * belongs to this app and lasts while this activity's task does, so the media session can open it.
+     * belongs to this app and lasts while this activity's task does, so playback can open it.
      */
     private fun handleViewIntent(intent: Intent?) {
         if (intent?.action != Intent.ACTION_VIEW) return
         val uri = intent.data ?: return
-        mediaSessionManager.mediaSession.controller.transportControls.playFromUri(
-            uri,
-            Bundle().apply { putString(MediaSessionManager.EXTRA_MIME_TYPE, intent.type) }
-        )
+        playRequests.playFromUri(uri, intent.type)
     }
 }

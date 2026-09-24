@@ -14,6 +14,12 @@
     <string name="shuffle_on">Shuffle on</string>
     <!-- Text shown on shuffle button, Shuffle mode off-->
     <string name="shuffle_off">Shuffle off</string>
+    <!-- Text shown on the playback notification's repeat button, repeat mode off-->
+    <string name="repeat_off">Repeat off</string>
+    <!-- Text shown on the playback notification's repeat button, repeating the whole queue-->
+    <string name="repeat_all">Repeat all</string>
+    <!-- Text shown on the playback notification's repeat button, repeating the current song-->
+    <string name="repeat_one">Repeat one</string>
     <!-- Shown on equalizer screen. EQ Preset Flat-->
     <string name="eq_preset_flat">Flat</string>
     <!-- Shown on equalizer screen. EQ Preset Custom-->

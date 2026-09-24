@@ -202,9 +202,6 @@ android {
         // ViewPager Circle Indicator
         implementation(libs.relex.circleindicator)
 
-        // AndroidX Media
-        implementation(libs.androidx.media)
-
         // AndroidX Preference
         implementation(libs.androidx.preference.ktx)
 

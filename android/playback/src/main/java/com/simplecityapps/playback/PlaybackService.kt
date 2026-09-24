@@ -1,359 +1,195 @@
 package com.simplecityapps.playback
 
-import android.app.ForegroundServiceStartNotAllowedException
-import android.app.Notification
-import android.app.SearchManager
-import android.app.Service
+import android.app.PendingIntent
 import android.content.Intent
-import android.content.ServiceConnection
+import android.content.pm.ServiceInfo
+import android.graphics.Bitmap
 import android.os.Build
-import android.os.Bundle
-import android.os.IBinder
-import android.support.v4.media.MediaBrowserCompat
-import androidx.media.MediaBrowserServiceCompat
-import androidx.media.session.MediaButtonReceiver
+import android.util.LruCache
+import androidx.core.app.NotificationChannelCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.session.DefaultMediaNotificationProvider
+import androidx.media3.session.MediaLibraryService
+import androidx.media3.session.MediaSession
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PackageValidator
-import com.simplecityapps.playback.audiofocus.AudioFocusHelper
-import com.simplecityapps.playback.mediasession.MediaSessionManager
+import com.simplecityapps.playback.mediasession.ArtworkBitmapLoader
+import com.simplecityapps.playback.mediasession.PlayRequests
+import com.simplecityapps.playback.mediasession.SessionCallback
+import com.simplecityapps.playback.mediasession.SessionPlayer
+import com.simplecityapps.playback.mediasession.awaitRestored
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.playback.queue.QueueState
-import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
+import com.simplecityapps.playback.queue.queueEntryOrNull
+import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+/**
+ * Publishes the app's player as a media library session: the notification, the lock screen, Android Auto's browse
+ * tree, Bluetooth and headset buttons, Assistant, and playback resumption all go through it. Media3 runs the
+ * notification and the foreground state; commands from controllers reach the queue and playback through
+ * [SessionPlayer] and [SessionCallback].
+ *
+ * The app's widget and shortcuts start the service with one of the actions below, which it handles itself.
+ */
+@UnstableApi
 @AndroidEntryPoint
-class PlaybackService : MediaBrowserServiceCompat() {
+class PlaybackService : MediaLibraryService() {
     @Inject
-    lateinit var playbackManager: PlaybackOperations
+    lateinit var player: Player
 
     @Inject
-    lateinit var queueManager: QueueOperations
+    lateinit var playbackOperations: PlaybackOperations
 
     @Inject
-    lateinit var mediaSessionManager: MediaSessionManager
+    lateinit var queueOperations: QueueOperations
 
     @Inject
-    lateinit var notificationManager: PlaybackNotificationManager
+    lateinit var playRequests: PlayRequests
 
     @Inject
     lateinit var mediaIdHelper: MediaIdHelper
 
     @Inject
-    lateinit var audioFocusHelper: AudioFocusHelper
+    lateinit var artworkImageLoader: ArtworkImageLoader
+
+    @Inject
+    lateinit var artworkCache: LruCache<String, Bitmap?>
+
+    @Inject
+    lateinit var preferenceManager: GeneralPreferenceManager
 
     private val packageValidator: PackageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
 
-    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
-    private val delayedStopForeground = DelayedAction(coroutineScope)
+    private lateinit var session: MediaLibrarySession
 
-    private val delayedShutdown = DelayedAction(coroutineScope)
-
-    private var pendingStartCommands = mutableListOf<Intent>()
-
-    private var stateUpdates: Job? = null
-
-    private var notificationUpdates: Job? = null
+    private lateinit var callback: SessionCallback
 
     override fun onCreate() {
         super.onCreate()
-
         Timber.v("onCreate()")
 
-        // Main.immediate, so a change made on the main thread is handled before the call that made it returns,
-        // as the callbacks these replaced were. The service reacts to a change before the notification does.
-        stateUpdates = coroutineScope.launchServiceStateUpdates(
-            playbackStateFlow = playbackManager.playbackStateFlow,
-            queueStateFlow = queueManager.queueStateFlow,
-            context = Dispatchers.Main.immediate,
-            onPlaybackStateChanged = ::onPlaybackStateChanged,
-            onQueueCleared = ::onQueueCleared,
-            onQueueRestored = ::onQueueRestored
+        NotificationManagerCompat.from(this).createNotificationChannel(
+            NotificationChannelCompat.Builder(NOTIFICATION_CHANNEL_ID, NotificationManagerCompat.IMPORTANCE_LOW)
+                .setName(getString(R.string.playback_notification_channel_name))
+                .setShowBadge(false)
+                .build()
         )
-        notificationUpdates = notificationManager.launchUpdates(coroutineScope)
+        setMediaNotificationProvider(
+            DefaultMediaNotificationProvider.Builder(this)
+                .setChannelId(NOTIFICATION_CHANNEL_ID)
+                .setChannelName(R.string.playback_notification_channel_name)
+                .setNotificationId(NOTIFICATION_ID)
+                .build()
+                .apply { setSmallIcon(R.drawable.ic_stat_name) }
+        )
+        setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_AFTER_STOP_OR_ERROR)
 
-        sessionToken = mediaSessionManager.mediaSession.sessionToken
+        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, coroutineScope) { controller ->
+            runCatching { packageValidator.isKnownCaller(controller.packageName, controller.uid) }.getOrDefault(false)
+        }
+        val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope)
+        session = MediaLibrarySession.Builder(this, sessionPlayer, callback)
+            .setBitmapLoader(ArtworkBitmapLoader(this, artworkImageLoader, artworkCache, preferenceManager) { player.currentMediaItem?.queueEntryOrNull?.song })
+            .setMediaButtonPreferences(callback.mediaButtonPreferences(queueOperations.getShuffleMode(), queueOperations.getRepeatMode()))
+            .setSessionActivity(PendingIntent.getActivity(this, 1, (applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
+            .build()
+        addSession(session)
+
+        callback.launchMediaButtonUpdates(session)
     }
+
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession = session
 
     override fun onStartCommand(
         intent: Intent?,
         flags: Int,
         startId: Int
     ): Int {
-        super.onStartCommand(intent, flags, startId)
+        val result = super.onStartCommand(intent, flags, startId)
+        val action = intent?.action ?: return result
+        if (action !in actions) return result
 
-        Timber.v("onStartCommand() action: ${intent?.action}")
+        Timber.v("onStartCommand() action: $action")
+        // The widget and shortcuts start the service in the foreground; Media3 only goes there once it has a
+        // notification to show, which it may not have yet, or at all for a paused player.
+        startForegroundIfNotAlready()
 
-        if (intent == null && (playbackManager.playbackState() != PlaybackState.Loading && playbackManager.playbackState() != PlaybackState.Playing)) {
-            stopForeground(true)
-            return START_NOT_STICKY
-        }
-
-        // Cancel any pending shutdown
-        Timber.v("Cancelling delayed shutdown")
-        delayedShutdown.cancel()
-
-        // Intent is only null if this service is being re-created due to process death
-        intent?.let {
-            when (intent.action) {
-                ACTION_NOTIFICATION_DISMISS -> {
-                    // The user has swiped away the notification. This is only possible when the service is no longer running in the foreground.
-                    // We still need to call startForeground() in case this was started via startForegroundService().
-                    Timber.v("Stopping due to notification dismiss")
-                    val notification = if (queueManager.getQueue().isEmpty()) {
-                        notificationManager.displayQueueEmptyNotification()
-                    } else {
-                        notificationManager.displayPlaybackNotification()
-                    }
-                    startForegroundSafely(notification)
-                    stopSelf()
-                    return START_NOT_STICKY
-                }
+        coroutineScope.launch {
+            // A command given as the app starts acts on the saved queue, not the empty one before it's restored.
+            queueOperations.queueStateFlow.awaitRestored()
+            when (action) {
+                ACTION_START -> Unit
+                ACTION_TOGGLE_PLAYBACK -> playbackOperations.togglePlayback()
+                ACTION_SKIP_PREV -> playbackOperations.skipToPrev()
+                ACTION_SKIP_NEXT -> playbackOperations.skipToNext(ignoreRepeat = true)
+                ACTION_TOGGLE_SHUFFLE -> queueOperations.toggleShuffleMode()
+                ACTION_TOGGLE_REPEAT -> queueOperations.toggleRepeatMode()
             }
+        }
+        return result
+    }
 
-            if (queueManager.hasRestoredQueue) {
-                // The queue is restored, so we know if it's empty or not. Proceed to handle the command
-                if (queueManager.getQueue().isEmpty()) {
-                    Timber.v("startForeground() called. Showing notification: Queue Empty")
-                    /*
-                        a) We can't just stopSelf() here. If we were called via startForegroundService(), we must show a foreground notification.
-                        b) The user is now stuck with a non-dismissable 'empty queue' notification.
-
-                       We'll allow 10 seconds, so we're not calling stopSelf() before Google ANR's us.
-                       This also gives S2 time to respond to pending commands. For example, if the command is 'loadFromSearch', we don't want to stop the service
-                       and allow the process to be killed while that we're in the middle of executing that command.
-                     */
-                    startForegroundSafely(notificationManager.displayQueueEmptyNotification())
-                    postDelayedShutdown(10000)
-                } else {
-                    Timber.v("startForeground() called. Showing notification: Playback")
-                    startForegroundSafely(notificationManager.displayPlaybackNotification())
-                }
-                processCommand(intent)
+    /**
+     * Meets a foreground start's obligation to call startForeground, with a placeholder under the notification's id
+     * that Media3's own notification then replaces (or removes, stopping the foreground state, if it shows none).
+     */
+    private fun startForegroundIfNotAlready() {
+        if (isPlaybackOngoing) return
+        val notification = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_stat_name)
+            .setContentTitle(getString(com.simplecityapps.core.R.string.loading))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .build()
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
             } else {
-                Timber.v("startForeground() called. Showing notification: Loading")
-                startForegroundSafely(notificationManager.displayLoadingNotification())
-                pendingStartCommands.add(intent)
+                startForeground(NOTIFICATION_ID, notification)
             }
+        } catch (e: IllegalStateException) {
+            // ForegroundServiceStartNotAllowedException (API 31+): started with startService from the background.
+            Timber.w(e, "Unable to start the service in the foreground")
         }
-
-        return START_STICKY
-    }
-
-    override fun onBind(intent: Intent?): IBinder? {
-        // For Android auto, need to call super, or onGetRoot won't be called.
-        return if ("android.media.browse.MediaBrowserService" == intent?.action) {
-            super.onBind(intent)
-        } else {
-            null
-        }
-    }
-
-    override fun stopService(name: Intent?): Boolean {
-        Timber.v("stopService() $name")
-        return super.stopService(name)
-    }
-
-    override fun unbindService(conn: ServiceConnection) {
-        Timber.v("unbindService()")
-        super.unbindService(conn)
+        triggerNotificationUpdate()
     }
 
     override fun onDestroy() {
         Timber.v("onDestroy()")
-
-        stateUpdates?.cancel()
-        playbackManager.pause()
-
-        // Cancelled after pausing, so the notification shows playback as paused.
-        notificationUpdates?.cancel()
-
-        delayedStopForeground.cancel()
-        delayedShutdown.cancel()
-
+        playbackOperations.pause()
         coroutineScope.cancel()
-
+        // The player is the app's, and outlives the service; only the session goes.
+        session.release()
         super.onDestroy()
     }
 
-    // Private
-
-    private fun startForegroundSafely(notification: Notification) {
-        try {
-            startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notification)
-        } catch (e: IllegalStateException) {
-            // ForegroundServiceStartNotAllowedException (API 31+) extends IllegalStateException
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
-                Timber.w(e, "Unable to start foreground service - likely started from background context (e.g., media button broadcast)")
-                // Still display the notification even if we can't start foreground
-                notificationManager.notify(notification)
-            } else {
-                throw e
-            }
-        }
-    }
-
-    private fun processCommand(intent: Intent) {
-        Timber.v("processCommand()")
-        MediaButtonReceiver.handleIntent(mediaSessionManager.mediaSession, intent)
-
-        when (intent.action) {
-            ACTION_TOGGLE_PLAYBACK -> playbackManager.togglePlayback()
-            ACTION_SKIP_PREV -> playbackManager.skipToPrev()
-            ACTION_SKIP_NEXT -> playbackManager.skipToNext(ignoreRepeat = true)
-            ACTION_TOGGLE_SHUFFLE -> coroutineScope.launch { queueManager.toggleShuffleMode() }
-            ACTION_TOGGLE_REPEAT -> queueManager.toggleRepeatMode()
-            ACTION_SEARCH -> mediaSessionManager.mediaSession.controller?.transportControls?.playFromSearch(intent.extras?.getString(SearchManager.QUERY), Bundle())
-        }
-    }
-
-    private fun postDelayedShutdown(delay: Long = 15 * 1000L) {
-        Timber.v("postDelayedShutdown(delay: $delay)")
-        delayedShutdown.schedule(delay) {
-            if (playbackManager.playbackState() !is PlaybackState.Loading && playbackManager.playbackState() !is PlaybackState.Playing) {
-                Timber.v("Stopping service due to ${delay}ms shutdown timer")
-                if (queueManager.getQueue().isEmpty()) {
-                    notificationManager.removeNotification()
-                }
-                stopSelf()
-            }
-        }
-    }
-
-    // State Changes
-
-    private fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        // stopForeground() is slightly delayed here.
-        // This appears to be necessary in order to allow our notification to become dismissable if pause() is called via onStartCommand() to this service.
-        // Presumably, there is an issue in calling stopForeground() too soon after startForeground() which causes the notification to be stuck in the 'ongoing' state and not able to be dismissed.
-
-        delayedStopForeground.cancel()
-
-        Timber.v("Cancelling delayed shutdown")
-        delayedShutdown.cancel()
-
-        if (playbackState is PlaybackState.Paused) {
-            // If we're paused due to a transient loss of audio focus (like a phone call), then don't stop the foreground service.
-            // THis prevents an issue On API 31+, where the system will crash the app if we try to start the foreground service from an audio focus change.
-            // We may as well keep the service running if we intend to resume playback.
-            if (!audioFocusHelper.resumeOnFocusGain) {
-                delayedStopForeground.schedule(150) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        Timber.v("stopForeground()")
-                        stopForeground(Service.STOP_FOREGROUND_DETACH)
-                    } else {
-                        Timber.v("stopForeground()")
-                        stopForeground(true)
-                        notificationManager.displayPlaybackNotification()
-                    }
-                }
-
-                postDelayedShutdown()
-            }
-        }
-    }
-
-    private fun onQueueRestored() {
-        if (pendingStartCommands.isNotEmpty()) {
-            if (queueManager.getQueue().isEmpty()) {
-                Timber.v("Queue empty")
-                stopForeground(true)
-                notificationManager.displayQueueEmptyNotification()
-                postDelayedShutdown()
-            }
-
-            pendingStartCommands.forEach { pendingStartCommand ->
-                processCommand(pendingStartCommand)
-            }
-            pendingStartCommands.clear()
-        }
-    }
-
-    private fun onQueueCleared() {
-        Timber.v("Queue cleared, stopForeground() called")
-        // This should only occur if the user manually clears their queue, while playback is paused
-        stopForeground(true)
-        notificationManager.removeNotification()
-        stopSelf()
-    }
-
-    // MediaBrowserService Implementation
-
-    override fun onLoadChildren(
-        parentId: String,
-        result: Result<MutableList<MediaBrowserCompat.MediaItem>>
-    ) {
-        if ("EMPTY_ROOT" == parentId) {
-            result.sendResult(mutableListOf())
-        } else {
-            result.detach()
-            Timber.v("MediaId: $parentId")
-            coroutineScope.launch {
-                result.sendResult(mediaIdHelper.getChildren(parentId).toMutableList())
-            }
-        }
-    }
-
-    override fun onGetRoot(
-        clientPackageName: String,
-        clientUid: Int,
-        rootHints: Bundle?
-    ): BrowserRoot? = if (packageValidator.isKnownCaller(clientPackageName, clientUid)) {
-        BrowserRoot("media:/root/", null)
-    } else {
-        Timber.v("OnGetRoot: Browsing NOT ALLOWED for unknown caller. Returning empty browser root so all apps can use MediaController. $clientPackageName")
-        BrowserRoot("EMPTY_ROOT", null)
-    }
-
-    // Static
-
     companion object {
+        /** Starts the service in the foreground, for playback that has started in the app. */
+        const val ACTION_START: String = "com.simplecityapps.playback.start"
         const val ACTION_TOGGLE_PLAYBACK: String = "com.simplecityapps.playback.toggle"
         const val ACTION_SKIP_PREV: String = "com.simplecityapps.playback.prev"
         const val ACTION_SKIP_NEXT: String = "com.simplecityapps.playback.next"
         const val ACTION_TOGGLE_SHUFFLE: String = "com.simplecityapps.playback.shuffle"
         const val ACTION_TOGGLE_REPEAT: String = "com.simplecityapps.playback.repeat"
-        const val ACTION_SEARCH: String = "com.simplecityapps.playback.search"
-        const val ACTION_NOTIFICATION_DISMISS: String = "com.simplecityapps.playback.notification.dismiss"
-    }
-}
 
-/**
- * Reports each change after launch to the playback state, the queue's contents leaving it empty, and the queue
- * being restored, in that order when one change covers more than one. The queue is restored after it's set,
- * so a merged change reports the queue before the restore, as the callbacks these replaced did.
- */
-internal fun CoroutineScope.launchServiceStateUpdates(
-    playbackStateFlow: StateFlow<PlaybackState>,
-    queueStateFlow: StateFlow<QueueState>,
-    context: CoroutineContext,
-    onPlaybackStateChanged: (PlaybackState) -> Unit,
-    onQueueCleared: () -> Unit,
-    onQueueRestored: () -> Unit
-): Job {
-    val playbackState = playbackStateFlow.value
-    val queueState = queueStateFlow.value
-    return launch(context) {
-        launchCollectingChanges(playbackStateFlow, playbackState) { _, current ->
-            onPlaybackStateChanged(current)
-        }
-        launchCollectingChanges(queueStateFlow, queueState) { previous, current ->
-            if (current.contentVersion != previous.contentVersion && current.items.isEmpty()) {
-                onQueueCleared()
-            }
-            if (current.isRestored && !previous.isRestored) {
-                onQueueRestored()
-            }
-        }
+        private val actions = setOf(ACTION_START, ACTION_TOGGLE_PLAYBACK, ACTION_SKIP_PREV, ACTION_SKIP_NEXT, ACTION_TOGGLE_SHUFFLE, ACTION_TOGGLE_REPEAT)
+
+        // The channel and id the app's own notification used, so a user's settings for the channel carry over.
+        const val NOTIFICATION_CHANNEL_ID = "2"
+        const val NOTIFICATION_ID = 1
     }
 }

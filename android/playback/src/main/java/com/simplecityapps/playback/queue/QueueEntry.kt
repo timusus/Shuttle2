@@ -2,6 +2,7 @@ package com.simplecityapps.playback.queue
 
 import android.net.Uri
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.dsp.replaygain.replayGain
@@ -27,12 +28,30 @@ fun QueueEntry.toQueueItem(isCurrent: Boolean): QueueItem = QueueItem(uid, song,
  * The [MediaItem] the player queues for this entry. Its URI is the song's own path: a remote song's `jellyfin://`,
  * `emby://` or `plex://` URI is resolved to a stream URL only when the player opens it
  * (see [com.simplecityapps.playback.engine.SongUriResolver]).
+ *
+ * Its metadata is what the media session shows (the notification, the lock screen, Android Auto). It carries no
+ * artwork URI: artwork is loaded by song (see [com.simplecityapps.playback.mediasession.ArtworkBitmapLoader]).
  */
 fun QueueEntry.toMediaItem(): MediaItem = MediaItem.Builder()
     .setMediaId(song.id.toString())
     .setUri(song.uri())
     .setMimeType(MimeTypes.normalizeMimeType(song.mimeType))
+    .setMediaMetadata(song.toMediaMetadata())
     .setTag(this)
+    .build()
+
+/** What a media session shows for this song. */
+internal fun Song.toMediaMetadata(): MediaMetadata = MediaMetadata.Builder()
+    .setTitle(name)
+    .setArtist(friendlyArtistName ?: albumArtist)
+    .setAlbumTitle(album)
+    .setAlbumArtist(albumArtist)
+    .setTrackNumber(track)
+    .setDiscNumber(disc)
+    .setDurationMs(duration.toLong().takeIf { it > 0 })
+    .setIsBrowsable(false)
+    .setIsPlayable(true)
+    .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
     .build()
 
 /** The entry [toMediaItem] tagged this item with. Every item in the playlist was built by it. */

@@ -25,10 +25,8 @@ import android.content.pm.PackageInfo.REQUESTED_PERMISSION_GRANTED
 import android.content.pm.PackageManager
 import android.content.res.XmlResourceParser
 import android.os.Process
-import android.support.v4.media.session.MediaSessionCompat
 import android.util.Base64
 import androidx.annotation.XmlRes
-import androidx.media.MediaBrowserServiceCompat
 import com.simplecityapps.playback.BuildConfig
 import java.io.IOException
 import java.security.MessageDigest
@@ -37,7 +35,7 @@ import org.xmlpull.v1.XmlPullParserException
 import timber.log.Timber
 
 /**
- * Validates that the calling package is authorized to browse a [MediaBrowserServiceCompat].
+ * Validates that the calling package is authorized to browse a media library ([androidx.media3.session.MediaLibraryService]).
  *
  * The list of allowed signing certificates and their corresponding package names is defined in
  * res/xml/allowed_media_browser_callers.xml.
@@ -70,8 +68,8 @@ class PackageValidator(
     }
 
     /**
-     * Checks whether the caller attempting to connect to a [MediaBrowserServiceCompat] is known.
-     * See [MusicService.onGetRoot] for where this is utilized.
+     * Checks whether the caller attempting to connect to a media library ([androidx.media3.session.MediaLibraryService]) is known.
+     * See [com.simplecityapps.playback.mediasession.SessionCallback.onGetLibraryRoot] for where this is utilized.
      *
      * @param callingPackage The package name of the caller.
      * @param callingUid The user id of the caller.
@@ -133,7 +131,7 @@ class PackageValidator(
                 /*
                  * MEDIA_CONTENT_CONTROL permission is only available to system applications, and
                  * while it isn't required to allow these apps to connect to a
-                 * MediaBrowserServiceCompat, allowing this ensures optimal compatability with apps
+                 * media library service, allowing this ensures optimal compatability with apps
                  * such as Android TV and the Google Assistant.
                  */
                 callerPackageInfo.permissions.contains(MEDIA_CONTENT_CONTROL) -> true
@@ -141,9 +139,9 @@ class PackageValidator(
                 /*
                  * This last permission can be specifically granted to apps, and, in addition to
                  * allowing them to retrieve notifications, it also allows them to connect to an
-                 * active MediaSessionCompat.
+                 * active media session.
                  * As with the above, it's not required to allow apps holding this permission to
-                 * connect to your MediaBrowserServiceCompat, but it does allow easy comparability
+                 * connect to your media library service, but it does allow easy comparability
                  * with apps such as Wear OS.
                  */
                 callerPackageInfo.permissions.contains(BIND_NOTIFICATION_LISTENER_SERVICE) -> true
@@ -179,7 +177,7 @@ class PackageValidator(
     /**
      * Builds a [CallerPackageInfo] for a given package that can be used for all the
      * various checks that are performed before allowing an app to connect to a
-     * [MediaBrowserServiceCompat].
+     * media library ([androidx.media3.session.MediaLibraryService]).
      */
     private fun buildCallerInfo(callingPackage: String): CallerPackageInfo? {
         val packageInfo = getPackageInfo(callingPackage) ?: return null

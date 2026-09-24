@@ -19,6 +19,13 @@ android {
     namespace = 'com.simplecityapps.playback'
 
     buildFeatures.buildConfig = true
+
+    testOptions {
+        unitTests {
+            // The media session's buttons and notification read the app's strings.
+            includeAndroidResources = true
+        }
+    }
 }
 
 kotlin {
@@ -43,9 +50,6 @@ dependencies {
     // Shuttle Image Loader
     implementation project(path: ':android:imageloader')
 
-    // AndroidX Media
-    implementation libs.androidx.media
-
     // AndroidX DocumentFile
     implementation libs.androidx.documentfile
 
@@ -63,6 +67,7 @@ dependencies {
     implementation(libs.media3.cast)
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.exoplayerHls)
+    implementation(libs.media3.session)
 
     // Moshi
     implementation libs.moshi.kotlin

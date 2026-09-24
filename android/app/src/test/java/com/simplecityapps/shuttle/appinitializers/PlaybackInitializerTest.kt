@@ -70,8 +70,8 @@ class PlaybackInitializerTest {
             startedComponents += "cast"
             mockk(relaxed = true)
         },
-        mediaSessionManager = Lazy {
-            startedComponents += "media session"
+        playRequests = Lazy {
+            startedComponents += "play requests"
             mockk(relaxed = true)
         },
         noiseManager = Lazy {
@@ -228,7 +228,7 @@ class PlaybackInitializerTest {
 
         initializer.init(application)
 
-        startedComponents shouldBe listOf("cast", "media session", "noise", "bit-perfect")
+        startedComponents shouldBe listOf("cast", "play requests", "noise", "bit-perfect")
     }
 
     @Test

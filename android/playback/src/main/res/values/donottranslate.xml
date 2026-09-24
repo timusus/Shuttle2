@@ -2,6 +2,9 @@
 <resources>
     <string name="cast_app_id">23027CFD</string>
 
+    <!-- The playback notification's channel, as the system's notification settings name it -->
+    <string name="playback_notification_channel_name">S2</string>
+
     <string name="allowed_caller_log">
         Caller has a valid certificate, but its package doesn\'t match any expected package for the
         given certificate. To allow this caller, add the following to the allowed callers list:\n

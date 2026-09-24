@@ -15,7 +15,7 @@ import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.chromecast.CastSessionManager
-import com.simplecityapps.playback.mediasession.MediaSessionManager
+import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
@@ -60,7 +60,7 @@ constructor(
     private val queueManager: QueueOperations,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val castSessionManager: Lazy<CastSessionManager>,
-    private val mediaSessionManager: Lazy<MediaSessionManager>,
+    private val playRequests: Lazy<PlayRequests>,
     private val noiseManager: Lazy<NoiseManager>,
     private val bitPerfectOutput: Lazy<BitPerfectOutput>,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
@@ -80,13 +80,13 @@ constructor(
         val repeatMode = playbackPreferenceManager.repeatMode
         val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
         val queuePosition = playbackPreferenceManager.queuePosition
-        // A request to play something waits for the restore only so long (see MediaSessionManager), then sets its
+        // A request to play something waits for the restore only so long (see PlayRequests), then sets its
         // own queue, and a restore finishing after that mustn't replace it.
         val initialContentVersion = queueManager.queueStateFlow.value.contentVersion
 
         appCoroutineScope.launch {
             // Set however the restore ends: requests to play something else wait for it (see
-            // MediaSessionManager), so a restore that throws mustn't leave them waiting.
+            // PlayRequests), so a restore that throws mustn't leave them waiting.
             try {
                 queueManager.setShuffleMode(shuffleMode, reshuffle = false)
                 queueManager.setRepeatMode(repeatMode)
@@ -106,7 +106,7 @@ constructor(
     /** Each starts itself when it's created, so creating it here is what starts it. */
     private fun startPlaybackComponents() {
         castSessionManager.get()
-        mediaSessionManager.get()
+        playRequests.get().launchPlaybackFailureMessages()
         noiseManager.get()
         bitPerfectOutput.get()
     }
@@ -260,7 +260,7 @@ constructor(
 
     private fun startPlaybackService() {
         try {
-            ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java))
+            ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java).setAction(PlaybackService.ACTION_START))
         } catch (e: IllegalStateException) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
                 Timber.w(e, "Cannot start foreground service from background - likely audio focus regained while app in background")

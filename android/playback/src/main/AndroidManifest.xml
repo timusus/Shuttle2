@@ -17,13 +17,14 @@
             android:foregroundServiceType="mediaPlayback"
             >
             <intent-filter>
-                <action android:name="android.intent.action.MEDIA_BUTTON" />
+                <action android:name="androidx.media3.session.MediaLibraryService" />
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
 
+        <!-- Media buttons with no session active (a headset's play after a reboot) start the service to resume playback -->
         <receiver
-            android:name="androidx.media.session.MediaButtonReceiver"
+            android:name="androidx.media3.session.MediaButtonReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />

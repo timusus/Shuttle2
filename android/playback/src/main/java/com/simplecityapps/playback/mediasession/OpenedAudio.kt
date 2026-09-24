@@ -4,8 +4,8 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 
 /**
- * What could be learned about an audio file another app asked us to play (an ACTION_VIEW intent, or
- * [android.support.v4.media.session.MediaControllerCompat.TransportControls.playFromUri]).
+ * What could be learned about an audio file another app asked us to play (an ACTION_VIEW intent, or a media
+ * controller's request to play a URI).
  *
  * @param uri the URI as given.
  * @param filePath the file's absolute path, when the URI is a file:// URI or its provider reports one.
