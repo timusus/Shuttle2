@@ -1,5 +1,6 @@
 # #225 regression check: long-press an item on Songs and Albums to enter multi-select, then
-# verify the system back button clears the selection instead of leaving the Library tab.
+# verify the system back button clears the selection instead of leaving the Library tab. Also
+# checks that switching tabs mid-selection clears it.
 appId: com.simplecityapps.shuttle.dev
 ---
 - runFlow:
@@ -15,6 +16,13 @@ appId: com.simplecityapps.shuttle.dev
 - back
 - assertNotVisible: "1 selected"
 - assertVisible: "Playback One"
+# Switching tabs mid-selection clears the selection and resets the toolbar
+- longPressOn: "Playback One"
+- assertVisible: "1 selected"
+- tapOn: "Albums"
+- assertNotVisible: "1 selected"
+- tapOn: "Songs"
+- assertNotVisible: "1 selected"
 - tapOn: "Library"
 - tapOn: "Albums"
 - scrollUntilVisible:

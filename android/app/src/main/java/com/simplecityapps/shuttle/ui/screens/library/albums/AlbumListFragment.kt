@@ -102,35 +102,17 @@ class AlbumListFragment :
 
         contextualToolbarHelper = ComposeContextualToolbarHelper(viewModel::clearSelection)
 
-        updateContextualToolbar()
-
+        // RESUMED, not STARTED: ViewPager2 keeps off-screen tabs STARTED, and only the visible tab
+        // may drive the toolbars all library tabs share (#344).
         viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 viewModel.uiState
                     .collect { state ->
-                        if (state.isSelecting) {
-                            onBackPressedCallback?.isEnabled = true
-
-                            contextualToolbarHelper.show()
-
-                            val count = state.selectedAlbums.size
-                            contextualToolbarHelper.contextualToolbar?.title =
-                                Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
-                                    .put("count", count)
-                                    .format()
-                            contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
-                                TagEditorMenuSanitiser.sanitise(
-                                    menu,
-                                    state.selectedAlbums
-                                        .flatMap { it.mediaProviders }
-                                        .distinct(),
-                                )
-                            }
-                        } else {
-                            onBackPressedCallback?.isEnabled = false
-                            contextualToolbarHelper.hide()
-                        }
-
+                        onBackPressedCallback?.isEnabled = state.isSelecting
+                        contextualToolbarHelper.render(
+                            selectedCount = state.selectedAlbums.size,
+                            mediaProviders = state.selectedAlbums.flatMap { it.mediaProviders }.distinct(),
+                        )
                         updateToolbarMenuViewMode(state.viewMode)
                         updateToolbarMenuSortOrder(state.sortOrder)
                     }
@@ -251,6 +233,13 @@ class AlbumListFragment :
         findToolbarHost()?.apply {
             contextualToolbar?.setOnMenuItemClickListener(null)
         }
+
+        // ViewPager2 hides a page's menu before pausing it, so this is a swipe to another tab
+        // rather than the whole Library screen pausing.
+        if (!isMenuVisible) {
+            onBackPressedCallback?.isEnabled = false
+            contextualToolbarHelper.onPageLeft()
+        }
     }
 
     override fun onDestroyView() {
@@ -346,10 +335,6 @@ class AlbumListFragment :
             }
             contextualToolbarHelper.contextualToolbar = contextualToolbar
             contextualToolbarHelper.toolbar = toolbar
-
-            if (viewModel.uiState.value.isSelecting) {
-                contextualToolbarHelper.show()
-            }
         }
     }
 

@@ -1,4 +1,6 @@
-# #224 setup half: cold-launch onto the Songs tab and long-press a song to select it. The
+# #224 setup half: cold-launch, visit the Albums tab, then go to the Songs tab and long-press a
+# song to select it. Visiting Albums first creates its page, which stays alive off-screen and
+# re-emits on play/pause; before #344 that re-emission hid the Songs selection toolbar. The
 # wrapper (support/scripts/checks/song-selected-across-play-pause.sh) then drives play/pause via
 # the debug receivers and runs song-still-selected.yaml, without relaunching, to prove the
 # selection survives.
@@ -7,7 +9,9 @@ appId: com.simplecityapps.shuttle.dev
 - runFlow:
     file: nav/open-library-tab.yaml
     env:
-      TAB: Songs
+      TAB: Albums
+- assertVisible: "Playback Album"
+- tapOn: "Songs"
 - scrollUntilVisible:
     element:
       text: "Playback One"
