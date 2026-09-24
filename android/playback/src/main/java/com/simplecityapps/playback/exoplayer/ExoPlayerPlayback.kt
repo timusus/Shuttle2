@@ -1,6 +1,7 @@
 package com.simplecityapps.playback.exoplayer
 
 import androidx.media3.common.C
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackState
@@ -324,12 +325,16 @@ class ExoPlayerPlayback(
         else -> TransitionReason.Unknown
     }
 
+    /**
+     * Normalises the mime type the way Media3's MediaItem does, so the item [AudioPlayer.getMediaItemAt]
+     * hands back equals the one queued, and [loadNext] recognises an already queued next item.
+     */
     private fun playerItem(
         media: ResolvedMedia,
         replayGain: ReplayGain
     ): PlayerItem = PlayerItem(
         uri = media.uri,
-        mimeType = media.mimeType,
+        mimeType = media.mimeType?.let(MimeTypes::normalizeMimeType),
         replayGain = replayGain
     )
 }

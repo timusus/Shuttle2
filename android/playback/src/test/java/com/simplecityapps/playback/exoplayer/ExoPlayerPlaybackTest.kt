@@ -312,6 +312,17 @@ class ExoPlayerPlaybackTest {
     }
 
     @Test
+    fun `loadNext recognises a queued next item whose mime type the player normalised`() = runTest {
+        val flac = createSong("x", mimeType = "audio/x-flac")
+        load(songA, next = flac)
+        player.commands.clear()
+
+        playback.loadNext(flac)
+
+        player.commands.shouldBeEmpty()
+    }
+
+    @Test
     fun `repeat one queues nothing after the current item`() = runTest {
         playback.setRepeatMode(QueueManager.RepeatMode.One)
 
@@ -533,6 +544,7 @@ class ExoPlayerPlaybackTest {
     private fun createSong(
         name: String,
         path: String = "/music/$name.flac",
+        mimeType: String = "audio/flac",
         replayGainTrack: Double? = null,
         replayGainAlbum: Double? = null
     ) = Song(
@@ -548,7 +560,7 @@ class ExoPlayerPlaybackTest {
         genres = emptyList(),
         path = path,
         size = 0,
-        mimeType = "audio/flac",
+        mimeType = mimeType,
         lastModified = null,
         lastPlayed = null,
         lastCompleted = null,
