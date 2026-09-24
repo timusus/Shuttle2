@@ -181,8 +181,8 @@ class PlaybackManagerQueueChangeTest {
         playbackManager.removeQueueItem(queueManager.getCurrentItem()!!)
         playback.completeLoad()
 
-        // The emptied queue has no next item to prepare.
-        events shouldBe listOf("A pause", "A loadNext null")
+        // Nothing is loaded for the emptied queue, so no next item is prepared either.
+        events shouldBe listOf("A pause")
         queueManager.getQueue().shouldBeEmpty()
     }
 
