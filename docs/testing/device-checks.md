@@ -109,6 +109,22 @@ play order. Coming back to the phone always lands paused, at the receiver's posi
 - [ ] Cast the last two songs of a queue with repeat off and let them play out. The receiver stops after the last, S2 shows it paused on that song, and the play count of both goes up (RS-39). Stop the receiver from the Google Home app mid-song instead: S2 doesn't count it as played.
 - [ ] With repeat-all on, cast a queue of 150+ songs from about 5 from the end and let it play past the last song (or skip there). The receiver goes on to the first song of the queue without stopping, and S2 shows it; do the same with a 3-song queue (RS-40).
 
+## Media session through Media3 (#345)
+
+The media session, notification and Android Auto browsing now go through Media3's session library. The
+notification is Media3's own, with shuffle and repeat as its extra buttons.
+
+- [ ] Android Auto (DHU): browse Artists, Albums, Playlists and a song list; play a song. Its album plays from that song, and the queue view lists the queue and skips to a chosen item (RS-42, RS-43).
+- [ ] Android Auto (DHU): Shuffle All plays, and search ("play <song>") finds and plays the song.
+- [ ] Lock screen: title, artist and artwork show; play, pause, skip and seek work; the shuffle and repeat buttons change the modes and their icons follow (RS-45).
+- [ ] Notification: the same controls work, the artwork shows, and there's only one S2 media notification. Paused, it can be swiped away.
+- [ ] With Settings, "Media session artwork" turned off, the lock screen shows no artwork.
+- [ ] Bluetooth headset: play/pause, next and previous (single, double and triple press) act on S2.
+- [ ] Widget: play/pause, next and previous work with the app open, and with the app force-stopped (the service starts in the foreground without a crash).
+- [ ] Resumption after reboot: after a reboot, the system's media resumption controls (quick settings) show the last song; play resumes the saved queue at that song (RS-44). The same with a headset's play button.
+- [ ] Assistant: "play <artist> on S2" and "play <song> on S2" play the right songs, with S2 closed and open.
+- [ ] A 10,000-song queue: the notification and lock screen stay responsive when the queue changes (docs/architecture/media3-playback-design.md, "10k queue spike").
+
 ## Behaviour spec, device-only rules
 
 The rules in `docs/testing/playback-behaviour-spec.md` the JVM can't run.

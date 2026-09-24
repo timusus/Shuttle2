@@ -6,7 +6,8 @@ the Media3 refactor (#345, `docs/architecture/media3-playback-design.md`) must k
 
 Each JVM rule has one test named with its RS id, in `android/playback/src/test/java/com/simplecityapps/playback/spec/`:
 `PlaybackSpecTest` for queue and transport rules, `AudioOutputSpecTest` for the audio that comes out; a Cast rule
-names its test, in `chromecast/` or `spec/CastSpecTest`. The tests run
+names its test, in `chromecast/` or `spec/CastSpecTest`; a media session rule is in `spec/MediaSessionSpecTest`, driven
+through a Media3 `MediaBrowser` connected to the session. The tests run
 the real `PlaybackManager` and `QueueManager` over a real ExoPlayer whose playlist is the queue, built by the
 production `ExoPlayerFactory` (fake clock, lazy preparation as in production, production renderers, audio sink and
 EQ/ReplayGain processors, WAV files from the test resources). They call only
@@ -180,6 +181,35 @@ receiver nears the end of the queue, then the songs from the start of the queue 
 last, so it plays on round without a gap and S2's current song follows it; a receiver holding the whole queue repeats
 it by itself, and turning repeat off sends the window again, ending at the queue's last song. (#345) — JVM
 (`chromecast/CastWindowTest`, `spec/CastSpecTest`).
+
+## Media session
+
+What another app (Android Auto, a Bluetooth headset, the notification and lock screen, Assistant) sees and can do
+through the media session. Each test connects a `MediaBrowser` to the session over the real playback stack.
+
+**RS-41: a controller's play, pause, seek and skip act as the app's own buttons do.** Given a queue, when a controller
+plays, pauses, seeks, skips next or previous, or picks an item from the queue it sees, then playback does the same as
+the app's own controls: playing takes audio focus, and next skips even with repeat-one on. (#345) — JVM
+(`spec/MediaSessionSpecTest`); headset buttons, the notification and the lock screen are device-only: *Media session
+through Media3*.
+
+**RS-42: the browse tree lists the library.** Given a library, when a controller browses the session, then the root
+lists Artists, Albums, Playlists and Shuffle All, an album lists its songs as playable, search finds songs by name, and
+an id that names nothing has no children. (#345) — JVM (`spec/MediaSessionSpecTest`); Android Auto is device-only:
+*Media session through Media3*.
+
+**RS-43: playing a browsed song plays its album from that song.** Given a song browsed within an album, when a
+controller plays it, then the album is queued and plays from that song, and the controller sees the queue as it is.
+(#345) — JVM (`spec/MediaSessionSpecTest`).
+
+**RS-44: play with nothing loaded resumes the saved queue.** Given the app starting (a headset's play button, the
+system's resumption controls) with the saved queue still being restored, when a controller plays, then once the queue
+is restored it plays from the saved song. (#345) — JVM (`spec/MediaSessionSpecTest`); resumption after a reboot is
+device-only: *Media session through Media3*.
+
+**RS-45: the shuffle and repeat buttons change the modes and show the ones they're in.** Given the session's shuffle
+and repeat buttons, when one is pressed, then shuffle toggles and repeat goes off, all, one, and each button's icon
+follows the mode, whichever way it changed. (#345) — JVM (`spec/MediaSessionSpecTest`).
 
 ## Commits with no rule
 

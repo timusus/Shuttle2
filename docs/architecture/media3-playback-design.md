@@ -117,6 +117,33 @@ the time) and at 5k items runs the test JVM's 512 MB heap out of memory, so it s
 queue is fast either way because the song already playing keeps playing; eager preparation of the added items
 happens afterwards, on the playback thread.
 
+**Through the media session (#345 step 2).** `.../spec/LargeQueueSessionSpikeTest.kt` (`@Ignore`d, run manually)
+puts the `MediaLibrarySession` the playback service builds over the same stack, with a 10k queue, and measures the
+main-thread cost of the session and what a remote controller is sent (androidx/media #57, #94). Robolectric, median
+of 5:
+
+| Measure | 10k |
+|---|---|
+| Set the queue: no session / session / session + a connected controller | 41 / 66 / 49 ms |
+| Add one song: no session / session / session + a connected controller | 13 / 36 / 29 ms |
+| A controller connecting (in-process) | 1.0 ms |
+| Bundling the timeline's windows and periods for a remote controller | 9.0 ms |
+| Window bundles, total (one at most 272 B) / period bundles, total | 2,649 KB / 429 KB |
+| The timeline bundle itself (the windows go by a binder of their own) | 39 KB |
+
+The session adds about 15 to 25 ms to each change of a 10k queue (runs vary, and a connected controller adds nothing
+measurable), whatever the change. That's the platform session's copy of the queue (`MediaSessionLegacyStub`
+converts every item to a legacy queue item on each timeline change, for Android Auto's queue view and other legacy
+controllers), which Media3 trims to what fits in one binder transaction, so the queue can't overflow one (#94). A
+Media3 controller in another process gets the timeline in chunks (`BundleListRetriever`), 3 MB of bundles at 10k
+that would never fit one 1 MB transaction, costing the session about 9 ms of bundling per change for each such
+controller. Connecting is cheap: the connection carries the timeline by binder, not inline.
+
+**Conclusion.** No mitigation: the cost is per queue change, not per song played (a track change isn't a timeline
+change), and a 10k queue changes when the user changes it. The smallest fix, if a device shows a queue edit costing
+frames, is to publish no legacy queue (take `COMMAND_GET_TIMELINE` from the platform session's controller), at the
+price of Android Auto's queue view; a windowed timeline would break the one-queue model this design rests on.
+
 ## 4. Routes compared
 
 **A: refactor in place.** Replace LoadCoordinator with a full playlist inside ExoPlayerPlayback, then fold QueueManager into it, then the session, then Cast. Each step ships, but every intermediate state keeps a Playback interface shaped around one next item and two queue owners. That is exactly the seam where the 44 fixes landed.
