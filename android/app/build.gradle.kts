@@ -148,6 +148,7 @@ android {
 
         // Shuttle
         implementation(project(":android:data"))
+        implementation(project(":android:downloads"))
         implementation(project(":android:mediaprovider:core"))
         implementation(project(":android:mediaprovider:local"))
         implementation(project(":android:mediaprovider:emby"))

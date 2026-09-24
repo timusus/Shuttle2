@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.MediaImportObserver
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializer
 import com.simplecityapps.shuttle.appinitializers.CrashReportingInitializer
+import com.simplecityapps.shuttle.appinitializers.DownloadsInitializer
 import com.simplecityapps.shuttle.appinitializers.MediaProviderInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackInitializer
 import com.simplecityapps.shuttle.appinitializers.RemoteConfigInitializer
@@ -54,4 +55,8 @@ abstract class AppModuleBinds {
     @Binds
     @IntoSet
     abstract fun provideShortcutInitializer(bind: ShortcutInitializer): AppInitializer
+
+    @Binds
+    @IntoSet
+    abstract fun provideDownloadsInitializer(bind: DownloadsInitializer): AppInitializer
 }

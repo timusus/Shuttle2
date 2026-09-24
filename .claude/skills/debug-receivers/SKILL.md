@@ -1,11 +1,11 @@
 ---
 name: debug-receivers
-description: Drive the S2 debug build's playback and queue over ADB broadcasts — play the whole library, play/pause, skip, seek, remove a queue item, toggle shuffle/repeat, dump playback state as JSON, reimport the library. Use when checking playback on an emulator or device without tapping through the UI, or when you need the exact `am broadcast` syntax.
+description: Drive the S2 debug build's playback and queue over ADB broadcasts — play the whole library, play/pause, skip, seek, remove a queue item, toggle shuffle/repeat, dump playback state as JSON, reimport the library, download or remove a song offline and dump the downloads. Use when checking playback on an emulator or device without tapping through the UI, or when you need the exact `am broadcast` syntax.
 ---
 
 # Debug Broadcast Receivers
 
-Debug-only receivers in `android/app/src/debug/` (never in release). Both are exported but guarded
+Debug-only receivers in `android/app/src/debug/` (never in release). All are exported but guarded
 by `android.permission.DUMP`, which `adb shell` holds and third-party apps don't.
 
 **Use the wrapper**, `support/scripts/s2-debug.sh <ACTION> [am broadcast extras]`. It sends the
@@ -25,6 +25,10 @@ after `am force-stop`.
 | `SHUFFLE` | `[--ez enabled true\|false]` | Toggle, or set, the shuffle mode |
 | `REPEAT` | `[--es mode off\|all\|one]` | Toggle (Off → All → One), or set, the repeat mode |
 | `DUMP_STATE` | | Print the state as one JSON line (below) |
+| `DOWNLOAD_SONG` | `[--el song_id N]` | `DebugDownloadReceiver`: download a song for offline use (default: the first remote song) from its current stream URI, keyed by `song.path` |
+| `REMOVE_DOWNLOAD` | `[--el song_id N]` | Remove that song's download |
+| `DOWNLOAD_WIFI_ONLY` | `--ez enabled true\|false` | Set the Wi-Fi-only download preference (default true); pushed to the DownloadManager's requirements |
+| `DUMP_DOWNLOADS` | | One JSON line: `wifiOnly`, `cacheFiles`/`cacheBytes` under `filesDir/downloads`, and `downloads` (`path`, `state`, `progress`, `bytesDownloaded`, `contentLength`) |
 | `IMPORT` | | Wrapper-only alias for `DebugMediaImportReceiver`: reimport the library from MediaStore. Fire-and-forget; give it a few seconds |
 
 Replies: `<ACTION> ok[: detail]` (e.g. `PLAY_ALL ok: 5 songs from index 0`,
