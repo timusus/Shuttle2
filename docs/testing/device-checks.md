@@ -70,7 +70,8 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] With a Shuttle/Taglib folder containing an .m3u (including a line S2 can't resolve), remove a song from that playlist in-app. The .m3u loses only that song's entry; the unresolved line is still there.
 
 ### Playback reporting (#191)
-- [x] Play a Jellyfin song, then an Emby song. Each server's dashboard shows it as now playing with a moving position, and clears it on pause/stop. — automated: `emu-verify.sh --remote jellyfin --check remote-reporting` (and `--remote emby`)
+- [x] Jellyfin and Emby each show a song S2 plays as now playing with a moving position, then paused on pause. — automated: `emu-verify.sh --remote jellyfin --check remote-reporting` (and `--remote emby`)
+- [ ] Play a Jellyfin song, then an Emby song, in one session. The Jellyfin dashboard clears it when S2 moves to Emby, and each dashboard clears it on stop.
 - [x] Play a Plex song to the end. It shows in Plex's now playing and is marked played afterwards. — automated: `emu-verify.sh --remote plex --check remote-reporting`
 
 ## Cast through Media3's Cast player (#345)
