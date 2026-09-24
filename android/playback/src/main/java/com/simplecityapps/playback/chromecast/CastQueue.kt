@@ -138,6 +138,7 @@ class CastQueue(
 
                 override fun onRepeatModeChanged(repeatMode: Int) {
                     castPlayer?.takeIf { it.isRemote }?.repeatMode = repeatMode
+                    requestSync()
                 }
             }
         )
@@ -263,11 +264,12 @@ class CastQueue(
         val known = sent.takeIf { remote.holdsSent() }.orEmpty()
         val order = localPlayer.playOrder()
         val current = localPlayer.currentMediaItem?.queueEntryOrNull?.uid
-        var step = CastWindow.plan(known, remote.currentMediaItemIndex, order, current)
+        val repeatAll = localPlayer.repeatMode == Player.REPEAT_MODE_ALL
+        var step = CastWindow.plan(known, remote.currentMediaItemIndex, order, current, repeatAll)
         if (step is CastWindow.Step.Seek) {
             remoteUid = current
             remote.seekTo(step.index, 0)
-            step = CastWindow.plan(known, step.index, order, current)
+            step = CastWindow.plan(known, step.index, order, current, repeatAll)
         }
         when (step) {
             CastWindow.Step.Keep, is CastWindow.Step.Seek -> Unit

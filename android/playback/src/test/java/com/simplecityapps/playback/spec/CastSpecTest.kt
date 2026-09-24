@@ -9,6 +9,7 @@ import com.simplecityapps.playback.chromecast.CastWindow.SIZE
 import com.simplecityapps.playback.chromecast.FakeCastPlayer
 import com.simplecityapps.playback.chromecast.FakeMediaInfoProvider
 import com.simplecityapps.playback.chromecast.FakeReceiver
+import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
@@ -170,6 +171,42 @@ class CastSpecTest {
         receiver.songIds.size shouldBe receiver.songIds.distinct().size
         (receiver.currentMediaItemIndex <= SIZE - BEFORE) shouldBe true
         receiver.songIds shouldBe (receiver.songIds.first()..150L).toList()
+    }
+
+    @Test
+    fun `RS-40 under repeat-all, the receiver plays on from the last song to the first`() {
+        harness.run { queue.setQueue(songs(150), position = 145) }
+        queue.setRepeatMode(QueueManager.RepeatMode.All)
+        var loaded = false
+        playback.load { loaded = true }
+        harness.runUntil { loaded && playback.playbackStateFlow.value == PlaybackState.Paused }
+        playback.play()
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
+
+        connect()
+
+        receiver.songIds shouldBe (136L..150L) + (1L..85L)
+        repeat(5) {
+            receiver.playOnToNext()
+            settle()
+        }
+        currentSongId shouldBe 1L
+        receiver.songIds[receiver.currentMediaItemIndex] shouldBe 1L
+    }
+
+    @Test
+    fun `under repeat-all, a receiver holding the whole queue repeats it by itself`() {
+        start(count = 3)
+        queue.setRepeatMode(QueueManager.RepeatMode.All)
+        connect()
+        receiver.skipTo(2)
+        settle()
+
+        receiver.playOnToNext()
+        settle()
+
+        currentSongId shouldBe 1L
+        receiver.songIds shouldBe listOf(1L, 2L, 3L)
     }
 
     @Test

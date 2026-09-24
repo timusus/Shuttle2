@@ -96,6 +96,7 @@ play order. Coming back to the phone always lands paused, at the receiver's posi
 - [ ] Force-stop S2 while casting, reopen it, and reconnect. Playback on the receiver picks up S2's queue (it reloads the current song).
 - [ ] While casting a Jellyfin song, from a laptop on the same Wi-Fi, `curl -i http://<phone-ip>:5000/songs/<id>/audio` and the same with a made-up first path segment. Both answer 403 with no `Location` header (RS-37). The receiver's own URL (from `adb logcat` or the receiver's debug console) carries a 32-character key and plays; after disconnecting and casting again, the old URL answers 403.
 - [ ] Cast the last two songs of a queue with repeat off and let them play out. The receiver stops after the last, S2 shows it paused on that song, and the play count of both goes up (RS-39). Stop the receiver from the Google Home app mid-song instead: S2 doesn't count it as played.
+- [ ] With repeat-all on, cast a queue of 150+ songs from about 5 from the end and let it play past the last song (or skip there). The receiver goes on to the first song of the queue without stopping, and S2 shows it; do the same with a 3-song queue (RS-40).
 
 ## Behaviour spec, device-only rules
 

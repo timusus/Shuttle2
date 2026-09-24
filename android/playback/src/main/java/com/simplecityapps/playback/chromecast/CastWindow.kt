@@ -50,14 +50,16 @@ object CastWindow {
     /**
      * The next step that brings [sent], what the receiver holds (on its item at [remoteIndex]), in line with
      * [order], the queue in play order, whose current item is [current]. Items after the current one must follow the
-     * queue's; the ones before it only need to exist. A step that changes what the receiver holds is followed by
-     * another plan once it has taken effect.
+     * queue's, wrapping round to its start under [repeatAll]; the ones before it only need to exist. A receiver
+     * holding the whole queue under repeat-all repeats it by itself. A step that changes what the receiver holds is
+     * followed by another plan once it has taken effect.
      */
     fun plan(
         sent: List<Long>,
         remoteIndex: Int,
         order: List<Long>,
-        current: Long?
+        current: Long?,
+        repeatAll: Boolean
     ): Step {
         if (current == null) return Step.Keep
         val orderIndex = order.indexOf(current)
@@ -70,15 +72,37 @@ object CastWindow {
         if (gone.isNotEmpty()) return Step.Remove(gone)
 
         val upcoming = sent.subList(sentIndex, sent.size)
-        if (order.subList(orderIndex, min(order.size, orderIndex + upcoming.size)) != upcoming) return load(order, orderIndex)
+        val remaining = upcoming.size - 1
+        if (upcoming.subList(1, upcoming.size) != following(order, orderIndex, remaining, repeatAll)) return load(order, orderIndex)
         if (remoteIndex != sentIndex) return Step.Seek(sentIndex)
 
+        if (repeatAll && sent.size == order.size && sent.subList(0, sentIndex) == following(order, orderIndex, order.size, true).drop(remaining)) {
+            return Step.Keep
+        }
         if (sentIndex > SIZE - BEFORE) return Step.Remove((0 until sentIndex - BEFORE).toList())
-        val nextUnsent = orderIndex + upcoming.size
-        if (upcoming.size - 1 < LOW_WATER && nextUnsent < order.size) {
-            return Step.Append(order.subList(nextUnsent, min(order.size, orderIndex + SIZE - BEFORE)))
+        if (remaining < LOW_WATER) {
+            val more = following(order, orderIndex, SIZE - BEFORE - 1, repeatAll).drop(remaining)
+            // One the receiver holds before the current item (wrapped round to, or moved) is taken out to go after it.
+            val moreSet = more.toHashSet()
+            val held = (0 until sentIndex).filter { sent[it] in moreSet }
+            if (held.isNotEmpty()) return Step.Remove(held)
+            if (more.isNotEmpty()) return Step.Append(more)
         }
         return Step.Keep
+    }
+
+    /**
+     * Up to [count] items of [order] that play after its item at [index], wrapping round to its start when [cyclic],
+     * but never back round to that item.
+     */
+    private fun following(
+        order: List<Long>,
+        index: Int,
+        count: Int,
+        cyclic: Boolean
+    ): List<Long> {
+        val available = if (cyclic) order.size - 1 else order.lastIndex - index
+        return List(min(count, available)) { order[(index + 1 + it).mod(order.size)] }
     }
 
     private fun load(

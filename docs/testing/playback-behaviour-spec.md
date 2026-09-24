@@ -175,6 +175,12 @@ song is reported as ended and playback pauses there, as it does locally; a recei
 any song but the last, or idle while a new queue is on its way, ends nothing. (#345) — JVM (`spec/CastSpecTest`);
 the receiver's idle reason is device-only: *Cast*.
 
+**RS-40: casting under repeat-all plays on from the last song to the first.** Given repeat-all while casting, when the
+receiver nears the end of the queue, then the songs from the start of the queue (in play order) are sent after the
+last, so it plays on round without a gap and S2's current song follows it; a receiver holding the whole queue repeats
+it by itself, and turning repeat off sends the window again, ending at the queue's last song. (#345) — JVM
+(`chromecast/CastWindowTest`, `spec/CastSpecTest`).
+
 ## Commits with no rule
 
 Mechanism only, with no behaviour of their own to hold (the design doc's section 4 list, plus thread-safety and
