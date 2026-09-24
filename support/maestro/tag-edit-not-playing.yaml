@@ -1,0 +1,19 @@
+# #270: edit a queued-but-not-playing song's title through the batch tag editor -- run right after
+# tag-edit-playing.yaml, continuing from the queue sheet it leaves open, so this needs no
+# navigation of its own. "Taglib Three" is elsewhere in the queue, never the playing item.
+appId: com.simplecityapps.shuttle.dev
+---
+- longPressOn:
+    text: "Taglib Three"
+    waitToSettleTimeoutMs: 500
+- tapOn:
+    text: "Edit Tags"
+    waitToSettleTimeoutMs: 500
+- tapOn:
+    id: ".*titleEditText"
+    waitToSettleTimeoutMs: 500
+- eraseText
+- inputText: "Taglib Three (edited)"
+- tapOn:
+    text: "Save"
+    waitToSettleTimeoutMs: 500

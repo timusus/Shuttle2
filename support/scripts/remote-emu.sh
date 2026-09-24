@@ -592,8 +592,8 @@ cmd_reset() {
     LANE="$(resolve_lane "${1:-}")"
     tunnel_pid "$LANE" >/dev/null || { echo "remote-emu: no tunnel for lane $LANE; run start first" >&2; exit 1; }
     radb shell pm clear "$DEBUG_APP_ID" >/dev/null 2>&1 || true # not installed yet on a fresh lane
-    radb shell rm -rf /sdcard/Music/s2-seed
-    echo "remote-emu: lane $LANE reset -- ${DEBUG_APP_ID} data cleared, /sdcard/Music/s2-seed removed"
+    radb shell rm -rf /sdcard/Music/s2-seed /sdcard/Music/taglib-seed
+    echo "remote-emu: lane $LANE reset -- ${DEBUG_APP_ID} data cleared, /sdcard/Music/s2-seed and /sdcard/Music/taglib-seed removed"
 }
 
 # Assumes $LANE is set and its tunnel is up; shared by cmd_ui_prep and cmd_start (which runs this

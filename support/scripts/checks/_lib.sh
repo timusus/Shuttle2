@@ -122,33 +122,46 @@ setup_taglib_provider() {
     # correctly every time. A plain reimport always succeeds once the songs are already in place, so
     # retry it (bounded, polling DUMP_STATE -- not a fixed sleep) rather than block every m3u/playlist
     # check on that race.
-    local attempt
+    local attempt imports_sent=0
     for attempt in 1 2 3; do
         [ "$(state libraryPlaylistCount)" -ge 2 ] && return 0
         s2 IMPORT >/dev/null
+        imports_sent=$((imports_sent + 1))
         wait_for 15 "not s['libraryImporting']"
     done
-    [ "$(state libraryPlaylistCount)" -ge 2 ] || fail "the Shuttle/TagLib 'taglib' playlist never appeared after ${attempt} import(s) -- see #371"
+    [ "$(state libraryPlaylistCount)" -ge 2 ] || fail "the Shuttle/TagLib 'taglib' playlist never appeared after ${imports_sent} reimport attempt(s) -- see #371"
 }
 
 # The open queue sheet's song titles, top to bottom, comma-separated. The dump also holds the
 # full player and library behind the sheet; the sheet's nodes come first, from "Up Next" to the
-# player's "Now Playing".
+# player's "Now Playing". Each row is title, then an "Artist • Album" subtitle, then a duration; a
+# title is identified structurally (the text node right before a subtitle node), not by fixture
+# name, so this also matches the `taglib` fixture's titles and a tag edit's " (edited)" suffix.
 queue_titles() {
     "${CHECKS_ROOT}/support/scripts/remote-emu.sh" dump-texts \
         | python3 -c '
 import re, sys
-titles, inside = [], False
+titles, inside, prev = [], False, None
 for line in sys.stdin:
     if line.startswith("text=\"Up Next\""):
         inside = True
     elif line.startswith("text=\"Now Playing\""):
         inside = False  # read on to the end: an early exit would SIGPIPE dump-texts
     elif inside:
-        m = re.match(r"text=\"(Playback \w+)\" ", line)
+        m = re.match(r"text=\"([^\"]*)\" ", line)
         if m:
-            titles.append(m.group(1))
+            text = m.group(1)
+            if " • " in text and prev is not None:
+                titles.append(prev)
+            prev = text
 print(",".join(titles))'
+}
+
+# Wakes a display that's gone dark during a shell-side gap between Maestro runs -- this AVD image
+# blanks the screen well within `screen_off_timeout`, so a check with a multi-second wait_for/sleep
+# gap before its next tap needs this first or the tap lands on nothing. A no-op if already on.
+wake_screen() {
+    adb_retry shell input keyevent KEYCODE_WAKEUP >/dev/null
 }
 
 # Whether PlaybackService is currently listed for the debug app in dumpsys.

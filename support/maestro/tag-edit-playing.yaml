@@ -1,0 +1,40 @@
+# #270: edit the currently playing song's title through the batch tag editor. Long-press "Taglib
+# One" (playing, at the top of the queue) opens its popup directly -- queue rows need only a single
+# long-press, unlike the playlist screen's per-row popup (see m3u-sync.yaml's comment on that one)
+# -- "Edit Tags" opens the dialog pre-filled with its title, then Save. Every tap uses
+# waitToSettleTimeoutMs, the same as playback-controls.yaml, because the point of the check is that
+# the edit doesn't interrupt playback, so the flow never pauses first. setup_taglib_provider's own
+# flow leaves the app on Settings > Media (two screens deep), so two `back`s reach the Library tab
+# and its mini player. The wrapper (support/scripts/checks/tag-edit-queued.sh) checks this alone,
+# before support/maestro/tag-edit-not-playing.yaml runs the second edit -- a real SAF tag write is
+# slow enough that both edits together can outlast this 60 s fixture track's remaining runtime.
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    stopApp: false
+- back
+- back
+- extendedWaitUntil:
+    visible:
+      id: ".*titleTextView"
+    timeout: 10000
+- tapOn:
+    id: ".*titleTextView"
+    waitToSettleTimeoutMs: 500
+- tapOn:
+    text: "Up Next"
+    waitToSettleTimeoutMs: 500
+- longPressOn:
+    text: "Taglib One"
+    waitToSettleTimeoutMs: 500
+- tapOn:
+    text: "Edit Tags"
+    waitToSettleTimeoutMs: 500
+- tapOn:
+    id: ".*titleEditText"
+    waitToSettleTimeoutMs: 500
+- eraseText
+- inputText: "Taglib One (edited)"
+- tapOn:
+    text: "Save"
+    waitToSettleTimeoutMs: 500
