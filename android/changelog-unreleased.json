@@ -102,6 +102,10 @@
     {
       "text": "Editing a song's tags now updates its title, artist and album everywhere it's already showing, including the queue, now playing, mini player and notification, without interrupting playback",
       "commits": []
+    },
+    {
+      "text": "The seekbar now follows a seek made from another Chromecast sender even while playback is paused",
+      "commits": []
     }
   ]
 }

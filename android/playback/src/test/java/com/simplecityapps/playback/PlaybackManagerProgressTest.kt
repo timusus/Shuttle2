@@ -33,7 +33,7 @@ class PlaybackManagerProgressTest {
             durationMs = 5_000
         }
 
-    private fun TestScope.createPlaybackManager() {
+    private fun TestScope.createPlaybackManager(): PlaybackManager {
         val playbackManager =
             testPlaybackManager(
                 exoplayerPlayback = playback,
@@ -43,6 +43,7 @@ class PlaybackManagerProgressTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
             playbackManager.progressFlow.filterNotNull().collect { progressEvents += it }
         }
+        return playbackManager
     }
 
     private fun TestScope.advanceBy(millis: Long) {
@@ -116,6 +117,34 @@ class PlaybackManagerProgressTest {
         advanceBy(1_000)
 
         progressEvents.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a discontinuity while paused publishes the new position`() = runTest {
+        // #287: another Cast sender seeking while paused moved the position without the ticker,
+        // which only runs while playing, to publish it.
+        queueManager.setQueue(listOf(testSong(1, duration = 5_000)))
+        createPlaybackManager()
+        enter(PlaybackState.Paused)
+
+        playback.progressMs = 3_000
+        playback.callback!!.onPositionDiscontinuity()
+
+        progressEvents shouldBe listOf(PlaybackProgress(3_000, 5_000))
+    }
+
+    @Test
+    fun `a discontinuity during a pending load publishes the queue item's duration`() = runTest {
+        // The playback still reports the old track's duration until its load completes, so a
+        // discontinuity mid-load must pair the load-aware position with the queue item's duration.
+        queueManager.setQueue(listOf(testSong(1, duration = 5_000), testSong(2, duration = 9_000)))
+        val playbackManager = createPlaybackManager()
+
+        playbackManager.skipToNext()
+        progressEvents.clear()
+        playback.callback!!.onPositionDiscontinuity()
+
+        progressEvents shouldBe listOf(PlaybackProgress(0, 9_000))
     }
 
     @Test

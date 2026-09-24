@@ -73,8 +73,8 @@ class PlaybackManager(
     private val _progressFlow = MutableStateFlow<PlaybackProgress?>(null)
 
     /**
-     * The last published progress; null until the first one. A seek also republishes
-     * [positionAnchorFlow], which is where a position discontinuity is observed.
+     * The last published progress; null until the first one. Also republished on a position
+     * discontinuity, so it moves even while paused (e.g. a seek from another Cast sender).
      */
     override val progressFlow: StateFlow<PlaybackProgress?> = _progressFlow.asStateFlow()
 
@@ -530,10 +530,10 @@ class PlaybackManager(
     }
 
     private fun updateProgress() {
-        playback.getProgress()?.let { position ->
-            (playback.getDuration() ?: queueManager.getCurrentItem()?.song?.duration)?.let { duration ->
-                _progressFlow.value = PlaybackProgress(position, duration)
-            }
+        val position = playback.getProgress()
+        val duration = playback.getDuration() ?: queueManager.getCurrentItem()?.song?.duration
+        if (position != null && duration != null) {
+            _progressFlow.value = PlaybackProgress(position, duration)
         }
     }
 
@@ -637,8 +637,17 @@ class PlaybackManager(
         }
     }
 
+    /**
+     * Republishes [progressFlow] too, whether playing or paused: a seek from another Cast sender
+     * moves the reported position without going through the ticker, which only runs while playing.
+     * Pairs the load-aware position with the queue item's duration, not the playback's, since mid-load
+     * the playback still reports the old track's duration.
+     */
     override fun onPositionDiscontinuity() {
         reanchor()
+        queueManager.getCurrentItem()?.song?.duration?.let { duration ->
+            _progressFlow.value = PlaybackProgress(getProgress() ?: 0, duration)
+        }
     }
 
     // Queue changes
