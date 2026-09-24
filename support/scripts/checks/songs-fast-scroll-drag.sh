@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # #222: dragging the fast scroller thumb to the bottom of a long Songs list doesn't crash. Needs
-# the many-tracks fixture seeded (48 songs). Maestro's `swipe:` primitive doesn't reliably engage
+# the many-tracks fixture seeded (48 songs) -- seeded here so the check is self-contained; this is
+# the last check to grow the library before no-crashes.sh runs, which doesn't care about library
+# size, so there's no need to restore the `playback` fixture afterward. Maestro's `swipe:`
+# primitive doesn't reliably engage
 # the thumb's drag gesture (confirmed by hand), so the drag itself is driven by raw
 # `adb shell input swipe` calls at a spread of starting heights -- one of them always lands on the
 # thumb's small touch target and walks the list down, the same way a real drag would. Maestro
@@ -15,6 +18,11 @@ source "$(dirname "$0")/_lib.sh"
 device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
 APP_ID="com.simplecityapps.shuttle.dev"
 s2 PAUSE >/dev/null 2>&1 || true
+
+"${CHECKS_ROOT}/support/scripts/seed-test-media.sh" many-tracks >/dev/null
+s2 IMPORT >/dev/null
+sleep 5
+
 out="${CHECKS_ROOT}/tmp/maestro"
 mkdir -p "$out"
 MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \

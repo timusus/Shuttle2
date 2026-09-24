@@ -81,3 +81,13 @@ assert_progressing() {
     a="$(state positionMs)"; sleep 1; b="$(state positionMs)"
     [ "$b" -gt "$a" ] || fail "position not advancing (${a} -> ${b} ms)"
 }
+
+# For a check that grows the library beyond the `playback` fixture (extra seeded fixtures, a
+# remote-provider import): wipes the lane's app data/media and reseeds just `playback`, so later
+# checks' start_playback (which asserts queueSize == 5) still holds regardless of run order. Meant
+# to run via `trap restore_playback_fixture EXIT` once the check has actually grown the library, so
+# it also cleans up after a `fail`.
+restore_playback_fixture() {
+    "${CHECKS_ROOT}/support/scripts/remote-emu.sh" reset >/dev/null
+    "${CHECKS_ROOT}/support/scripts/seed-test-media.sh" playback --skip-onboarding >/dev/null
+}

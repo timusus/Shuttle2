@@ -1,0 +1,36 @@
+# Creates a "TestList" playlist (if it doesn't already exist) containing two songs from the
+# many-tracks fixture, via Songs tab's multi-select -> "Add to Playlist" -> "New Playlist". Needed
+# by checks that need a playlist to already exist (playlist-export-m3u, playlists-multiselect-back)
+# -- run this after seeding the many-tracks fixture. Idempotent: skips creation if a "TestList"
+# playlist already exists on the Playlists tab.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    file: open-library-tab.yaml
+    env:
+      TAB: Playlists
+- runFlow:
+    when:
+      notVisible: "TestList"
+    commands:
+      - tapOn: "Library"
+      - tapOn: "Songs"
+      - scrollUntilVisible:
+          element:
+            text: "Artist A Album 1 Track 1"
+          direction: DOWN
+      - longPressOn: "Artist A Album 1 Track 1"
+      - assertVisible: "1 selected"
+      - tapOn: "Artist A Album 1 Track 2"
+      - assertVisible: "2 selected"
+      - tapOn: "More options"
+      - tapOn: "Add to Playlist"
+      - tapOn: "New Playlist"
+      - tapOn: "Playlist Name"
+      - inputText: "TestList"
+      - tapOn: "Save"
+      - runFlow:
+          file: open-library-tab.yaml
+          env:
+            TAB: Playlists
+      - assertVisible: "TestList"

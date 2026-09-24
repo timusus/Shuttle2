@@ -3,12 +3,20 @@
 # assert list order directly, so this wrapper runs the Maestro flow (nav + tap the sort option +
 # screenshot) then asserts the resulting order via a uiautomator dump (remote-emu.sh dump-texts).
 # Needs genres of different sizes seeded: playback (Ambient, 5), two-disc (Rock, 6), many-tracks
-# (Pop, 48) -- run `seed-test-media.sh two-disc` and `many-tracks` (no --skip-onboarding, then
-# `s2-debug.sh IMPORT`) alongside the default `playback` fixture before this check.
+# (Pop, 48) -- seeded here alongside the default `playback` fixture so the check is self-contained,
+# then the library is restored back to just `playback` so later checks' start_playback
+# (queueSize == 5) still holds regardless of run order.
 source "$(dirname "$0")/_lib.sh"
 
 device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
 s2 PAUSE >/dev/null 2>&1 || true
+
+"${CHECKS_ROOT}/support/scripts/seed-test-media.sh" two-disc >/dev/null
+"${CHECKS_ROOT}/support/scripts/seed-test-media.sh" many-tracks >/dev/null
+s2 IMPORT >/dev/null
+sleep 5
+trap restore_playback_fixture EXIT
+
 out="${CHECKS_ROOT}/tmp/maestro"
 mkdir -p "$out"
 MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
