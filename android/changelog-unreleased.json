@@ -89,6 +89,14 @@
     },
     {
       "text": "The notification and progress bar now show the new song right away when one track ends and the next starts, instead of briefly showing the old one",
+  "commits": []
+    },
+    {
+      "text": "Song, album and artist artwork now updates after you change it, whether it's embedded in the file, a cover image in the folder or on your Jellyfin or Emby server, once the library rescans or syncs",
+      "commits": []
+    },
+    {
+      "text": "Recently Added no longer fills up with every Jellyfin, Emby and Plex song after each sync",
       "commits": []
     }
   ]

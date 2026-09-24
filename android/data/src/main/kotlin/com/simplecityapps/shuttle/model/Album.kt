@@ -20,7 +20,9 @@ data class Album(
     val lastSongPlayed: Instant?,
     val lastSongCompleted: Instant?,
     val groupKey: AlbumGroupKey?,
-    val mediaProviders: List<MediaProviderType>
+    val mediaProviders: List<MediaProviderType>,
+    // Changes whenever any of the album's songs' artworkVersion does.
+    val artworkVersion: String? = null
 ) : Parcelable {
     @IgnoredOnParcel
     val friendlyArtistName: String?

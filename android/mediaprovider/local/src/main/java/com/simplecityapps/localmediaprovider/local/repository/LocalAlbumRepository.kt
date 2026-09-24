@@ -38,7 +38,8 @@ class LocalAlbumRepository(
                             lastSongPlayed = songs.mapNotNull { it.lastPlayed }.maxOrNull(),
                             lastSongCompleted = songs.mapNotNull { it.lastCompleted }.maxOrNull(),
                             groupKey = key,
-                            mediaProviders = songs.map { it.mediaProvider }.distinct()
+                            mediaProviders = songs.map { it.mediaProvider }.distinct(),
+                            artworkVersion = songs.combinedArtworkVersion()
                         )
                     }
             }

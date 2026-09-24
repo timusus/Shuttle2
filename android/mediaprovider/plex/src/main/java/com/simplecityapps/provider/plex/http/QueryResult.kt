@@ -33,7 +33,10 @@ data class Metadata(
     @Json(name = "parentTitle") val parentTitle: String,
     @Json(name = "grandparentTitle") val grandparentTitle: String,
     @Json(name = "parentYear") val year: Int?,
-    @Json(name = "Media") val media: List<Media>
+    @Json(name = "Media") val media: List<Media>,
+    // Epoch seconds
+    @Json(name = "addedAt") val addedAt: Long? = null,
+    @Json(name = "updatedAt") val updatedAt: Long? = null
 )
 
 @JsonClass(generateAdapter = true)

@@ -22,5 +22,9 @@ data class Item(
     @Json(name = "IndexNumber") val indexNumber: Int?,
     @Json(name = "ParentIndexNumber") val parentIndexNumber: Int?,
     @Json(name = "ProductionYear") val productionYear: Int?,
-    @Json(name = "Genres") val genres: List<String> = emptyList()
+    @Json(name = "Genres") val genres: List<String> = emptyList(),
+    // Changes whenever the album's image does
+    @Json(name = "AlbumPrimaryImageTag") val albumPrimaryImageTag: String? = null,
+    // Only returned when requested in 'fields'
+    @Json(name = "DateCreated") val dateCreated: String? = null
 )

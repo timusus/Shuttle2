@@ -42,7 +42,8 @@ data class SongData(
     @ColumnInfo(name = "bitRate") var bitRate: Int?,
     @ColumnInfo(name = "bitDepth") var bitDepth: Int?,
     @ColumnInfo(name = "sampleRate") var sampleRate: Int?,
-    @ColumnInfo(name = "channelCount") var channelCount: Int?
+    @ColumnInfo(name = "channelCount") var channelCount: Int?,
+    @ColumnInfo(name = "artworkVersion") var artworkVersion: String? = null
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -76,7 +77,8 @@ fun Song.toSongData(mediaProviderType: MediaProviderType): SongData = SongData(
     bitRate = bitRate,
     bitDepth = bitDepth,
     sampleRate = sampleRate,
-    channelCount = channelCount
+    channelCount = channelCount,
+    artworkVersion = artworkVersion
 ).apply {
     id = this@toSongData.id
 }

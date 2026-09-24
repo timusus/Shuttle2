@@ -122,5 +122,6 @@ fun SongData.toSong(): Song = Song(
     bitRate = bitRate,
     bitDepth = bitDepth,
     sampleRate = sampleRate,
-    channelCount = channelCount
+    channelCount = channelCount,
+    artworkVersion = artworkVersion
 )

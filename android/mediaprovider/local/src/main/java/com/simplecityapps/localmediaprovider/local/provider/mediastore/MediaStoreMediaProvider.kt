@@ -5,6 +5,8 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
+import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
+import com.simplecityapps.localmediaprovider.local.provider.localArtworkVersion
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
@@ -65,6 +67,7 @@ class MediaStoreMediaProvider(
             )
 
         songCursor?.use {
+            val folderImageReader = FolderImageReader()
             val size = songCursor.count
             var progress = 0
             val discNumberColumnIndex =
@@ -79,6 +82,8 @@ class MediaStoreMediaProvider(
                 val discNumberColumnValue =
                     if (discNumberColumnIndex != -1) songCursor.getStringOrNull(discNumberColumnIndex) else null
                 val (disc, track) = decodeDiscTrack(rawTrack, discNumberColumnValue)
+                val path = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
+                val lastModified = songCursor.getLong(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)) * 1000
 
                 val song =
                     Song(
@@ -107,17 +112,10 @@ class MediaStoreMediaProvider(
                         duration = songCursor.getInt(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
                         date = songCursor.getIntOrNull(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR))?.let { LocalDate(it, 1, 1) },
                         genres = emptyList(),
-                        path = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
+                        path = path,
                         size = songCursor.getLong(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),
                         mimeType = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)),
-                        lastModified =
-                            Instant.fromEpochMilliseconds(
-                                songCursor.getLong(
-                                    songCursor.getColumnIndexOrThrow(
-                                        MediaStore.Audio.Media.DATE_MODIFIED
-                                    )
-                                ) * 1000
-                            ),
+                        lastModified = Instant.fromEpochMilliseconds(lastModified),
                         lastPlayed = null,
                         lastCompleted = null,
                         playCount = 0,
@@ -135,7 +133,8 @@ class MediaStoreMediaProvider(
                         bitRate = null,
                         bitDepth = null,
                         sampleRate = null,
-                        channelCount = null
+                        channelCount = null,
+                        artworkVersion = localArtworkVersion(lastModified, folderImageReader.imagesNear(path))
                     )
                 songs.add(song)
                 progress++

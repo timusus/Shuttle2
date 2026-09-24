@@ -63,4 +63,9 @@ dependencies {
     implementation libs.glide.annotations
 
     implementation project(':android:data')
+
+    testImplementation libs.junit
+    testImplementation libs.kotest
+    // Song.date is a kotlinx.datetime.LocalDate
+    testImplementation libs.kotlinx.datetime
 }

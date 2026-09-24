@@ -24,7 +24,8 @@ data class SongDataUpdate(
     @ColumnInfo(name = "replayGainTrack") var replayGainTrack: Double? = null,
     @ColumnInfo(name = "replayGainAlbum") var replayGainAlbum: Double? = null,
     @ColumnInfo(name = "lyrics") var lyrics: String? = null,
-    @ColumnInfo(name = "grouping") var grouping: String? = null
+    @ColumnInfo(name = "grouping") var grouping: String? = null,
+    @ColumnInfo(name = "artworkVersion") var artworkVersion: String? = null
 )
 
 fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
@@ -45,7 +46,8 @@ fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
     replayGainTrack = replayGainTrack,
     replayGainAlbum = replayGainAlbum,
     lyrics = lyrics,
-    grouping = grouping
+    grouping = grouping,
+    artworkVersion = artworkVersion
 )
 
 fun Song.toSongDataUpdate(): SongDataUpdate = toSongData(MediaProviderType.Shuttle).toSongDataUpdate()

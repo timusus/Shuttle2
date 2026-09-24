@@ -7,13 +7,14 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.plex.http.ItemsService
+import com.simplecityapps.provider.plex.http.Metadata
 import com.simplecityapps.provider.plex.http.QueryResult
 import com.simplecityapps.provider.plex.http.items
 import com.simplecityapps.provider.plex.http.sections
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -46,37 +47,7 @@ class PlexMediaProvider(
                                     is NetworkResult.Success<QueryResult> -> {
                                         emit(
                                             FlowEvent.Success(
-                                                queryResult.body.mediaContainer.metadata.orEmpty().map { metadata ->
-                                                    Song(
-                                                        id = metadata.guid.hashCode().toLong(),
-                                                        name = metadata.title,
-                                                        albumArtist = metadata.grandparentTitle,
-                                                        artists = listOf(metadata.grandparentTitle),
-                                                        album = metadata.parentTitle,
-                                                        track = metadata.index ?: 0,
-                                                        disc = metadata.parentIndex ?: 0,
-                                                        duration = metadata.duration.toInt(),
-                                                        date = metadata.year?.let { LocalDate(it, 1, 1) },
-                                                        genres = emptyList(),
-                                                        path = "plex://${metadata.key}",
-                                                        size = metadata.media.firstOrNull()?.parts?.firstOrNull()?.size?.toLong() ?: 0L,
-                                                        mimeType = "Audio/*",
-                                                        lastModified = Clock.System.now(),
-                                                        lastPlayed = null,
-                                                        lastCompleted = null,
-                                                        playCount = 0,
-                                                        playbackPosition = 0,
-                                                        blacklisted = false,
-                                                        externalId = metadata.media.firstOrNull()?.parts?.firstOrNull()?.key,
-                                                        mediaProvider = type,
-                                                        lyrics = null,
-                                                        grouping = null,
-                                                        bitRate = metadata.media.firstOrNull()?.bitrate,
-                                                        bitDepth = null,
-                                                        sampleRate = null,
-                                                        channelCount = metadata.media.firstOrNull()?.audioChannels
-                                                    )
-                                                }
+                                                queryResult.body.mediaContainer.metadata.orEmpty().map { metadata -> metadata.toSong(type) }
                                             )
                                         )
                                     }
@@ -108,3 +79,35 @@ class PlexMediaProvider(
         existingSongs: List<Song>
     ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flowOf(FlowEvent.Success(emptyList()))
 }
+
+internal fun Metadata.toSong(type: MediaProviderType): Song = Song(
+    id = guid.hashCode().toLong(),
+    name = title,
+    albumArtist = grandparentTitle,
+    artists = listOf(grandparentTitle),
+    album = parentTitle,
+    track = index ?: 0,
+    disc = parentIndex ?: 0,
+    duration = duration.toInt(),
+    date = year?.let { LocalDate(it, 1, 1) },
+    genres = emptyList(),
+    path = "plex://$key",
+    size = media.firstOrNull()?.parts?.firstOrNull()?.size?.toLong() ?: 0L,
+    mimeType = "Audio/*",
+    // When the song was added, like the Jellyfin and Emby DateCreated; updatedAt moves on every metadata refresh
+    lastModified = (addedAt ?: updatedAt)?.let { seconds -> Instant.fromEpochSeconds(seconds) },
+    lastPlayed = null,
+    lastCompleted = null,
+    playCount = 0,
+    playbackPosition = 0,
+    blacklisted = false,
+    externalId = media.firstOrNull()?.parts?.firstOrNull()?.key,
+    mediaProvider = type,
+    lyrics = null,
+    grouping = null,
+    bitRate = media.firstOrNull()?.bitrate,
+    bitDepth = null,
+    sampleRate = null,
+    channelCount = media.firstOrNull()?.audioChannels
+    // No artworkVersion: Plex songs have no server artwork loader, only the S2 artwork API, whose cache is keyed by URL
+)

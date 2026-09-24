@@ -11,5 +11,9 @@ class SongDiff(existingData: List<Song>, newData: List<Song>) : Diff<Song>(exist
     override fun update(
         oldData: Song,
         newData: Song
-    ): Song = newData.copy(id = oldData.id)
+    ): Song = newData.copy(
+        id = oldData.id,
+        // A provider with no date for the song keeps the one from its first import, rather than looking newly added
+        lastModified = newData.lastModified ?: oldData.lastModified
+    )
 }

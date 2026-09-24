@@ -20,7 +20,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import kotlin.math.min
-import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -247,34 +247,37 @@ class EmbyMediaProvider(
             }
         }
     }
-
-    private fun Item.toSong(): Song = Song(
-        id = 0,
-        name = name,
-        albumArtist = albumArtist,
-        artists = artists.filter { it.isNotEmpty() },
-        album = album,
-        track = indexNumber,
-        disc = parentIndexNumber,
-        duration = ((runTime ?: 0) / (10 * 1000)).toInt(),
-        date = productionYear?.let { year -> LocalDate(year, 1, 1) },
-        genres = genres,
-        path = "emby://item/$id",
-        size = 0,
-        mimeType = "Audio/*",
-        lastModified = Clock.System.now(),
-        lastPlayed = null,
-        lastCompleted = null,
-        playCount = 0,
-        playbackPosition = 0,
-        blacklisted = false,
-        externalId = id,
-        mediaProvider = MediaProviderType.Emby,
-        lyrics = null,
-        grouping = null,
-        bitRate = null,
-        bitDepth = null,
-        sampleRate = null,
-        channelCount = null
-    )
 }
+
+internal fun Item.toSong(): Song = Song(
+    id = 0,
+    name = name,
+    albumArtist = albumArtist,
+    artists = artists.filter { it.isNotEmpty() },
+    album = album,
+    track = indexNumber,
+    disc = parentIndexNumber,
+    duration = ((runTime ?: 0) / (10 * 1000)).toInt(),
+    date = productionYear?.let { year -> LocalDate(year, 1, 1) },
+    genres = genres,
+    path = "emby://item/$id",
+    size = 0,
+    mimeType = "Audio/*",
+    // The server has no modified date for items; DateCreated (when the song was added) is the closest
+    lastModified = dateCreated?.let { date -> runCatching { Instant.parse(date) }.getOrNull() },
+    lastPlayed = null,
+    lastCompleted = null,
+    playCount = 0,
+    playbackPosition = 0,
+    blacklisted = false,
+    externalId = id,
+    mediaProvider = MediaProviderType.Emby,
+    lyrics = null,
+    grouping = null,
+    bitRate = null,
+    bitDepth = null,
+    sampleRate = null,
+    channelCount = null,
+    // Artwork for songs and albums is the album's primary image
+    artworkVersion = albumPrimaryImageTag
+)

@@ -3,6 +3,7 @@ package com.simplecityapps.localmediaprovider.local.provider.taglib
 import android.content.Context
 import android.net.Uri
 import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.localmediaprovider.local.provider.FolderImage
 import com.simplecityapps.localmediaprovider.local.provider.toSong
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.M3uParser
@@ -10,8 +11,8 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
-import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNode
+import com.simplecityapps.saf.DocumentNodeTree
 import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -39,11 +40,14 @@ class TaglibMediaProvider(
     override val type = MediaProviderType.Shuttle
 
     override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
-        getDocumentNodes()?.let { nodes ->
+        getDocumentTrees()?.let { trees ->
+            val nodes =
+                trees
+                    .flatMap { tree -> tree.leavesWithFolderImages() }
+                    .filter { (node, _) -> node.ext != "m3u" && node.ext != "m3u8" && node.ext != "pls" }
             val songs = mutableListOf<Song>()
-            getAudioFiles(nodes.filter { it.ext != "m3u" && it.ext != "m3u8" && it.ext != "pls" })
-                .collectIndexed { index, audioFile ->
-                    val song = audioFile.toSong(type)
+            getSongs(nodes)
+                .collectIndexed { index, song ->
                     emit(
                         FlowEvent.Progress(
                             MessageProgress(
@@ -65,7 +69,7 @@ class TaglibMediaProvider(
         }
     }
 
-    private suspend fun getDocumentNodes(): List<DocumentNode>? = withContext(Dispatchers.IO) {
+    private suspend fun getDocumentTrees(): List<DocumentNodeTree>? = withContext(Dispatchers.IO) {
         context.contentResolver?.persistedUriPermissions
             ?.filter { uriPermission -> uriPermission.isReadPermission || uriPermission.isWritePermission }
             ?.map { uriPermission ->
@@ -79,14 +83,11 @@ class TaglibMediaProvider(
     }
         ?.merge()
         ?.toList()
-        ?.let { status ->
-            status.flatMap { it.getLeaves() }
-        }
 
-    private fun getAudioFiles(documentNodes: List<DocumentNode>): Flow<AudioFile> = documentNodes
+    private fun getSongs(documentNodes: List<Pair<DocumentNode, List<FolderImage>>>): Flow<Song> = documentNodes
         .asFlow()
-        .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) {
-            fileScanner.getAudioFile(context, kTagLib, it.uri)
+        .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { (node, folderImages) ->
+            fileScanner.getAudioFile(context, kTagLib, node.uri)?.toSong(type, folderImages)
         }.mapNotNull { it }
 
     override fun findPlaylists(
@@ -95,7 +96,7 @@ class TaglibMediaProvider(
     ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {
         val sanitisedSongPaths = existingSongs.associateBy { Uri.decode(it.path.substringAfterLast('/')).substringAfterLast(':') }
 
-        getDocumentNodes()?.let { nodes ->
+        getDocumentTrees()?.flatMap { tree -> tree.getLeaves() }?.let { nodes ->
             val m3uPlaylists =
                 nodes
                     .filter { it.ext == "m3u" || it.ext == "m3u8" }
@@ -163,4 +164,13 @@ class TaglibMediaProvider(
             emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_directories_empty)))
         }
     }
+}
+
+/**
+ * Pairs each audio leaf with the images in its directory and the directory above it, for the song's artwork version.
+ */
+internal fun DocumentNodeTree.leavesWithFolderImages(parentImages: List<FolderImage> = emptyList()): List<Pair<DocumentNode, List<FolderImage>>> {
+    val images = imageNodes.map { node -> FolderImage(node.displayName, node.lastModified, node.size) }
+    return leafNodes.map { leaf -> leaf to images + parentImages } +
+        treeNodes.flatMap { child -> child.leavesWithFolderImages(parentImages = images) }
 }

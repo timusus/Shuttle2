@@ -41,7 +41,10 @@ data class Song(
     val bitRate: Int?,
     val bitDepth: Int?,
     val sampleRate: Int?,
-    val channelCount: Int?
+    val channelCount: Int?,
+    // Opaque token from the song's provider that changes whenever its artwork does; null when the
+    // provider has none. Artwork cache keys include it, so art refreshes on the next sync after a change.
+    val artworkVersion: String? = null
 ) : Parcelable {
     val type: Type
         get() {

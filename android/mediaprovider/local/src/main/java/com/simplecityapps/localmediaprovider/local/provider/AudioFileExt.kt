@@ -8,7 +8,10 @@ import java.util.Locale
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 
-fun AudioFile.toSong(providerType: MediaProviderType): Song = Song(
+fun AudioFile.toSong(
+    providerType: MediaProviderType,
+    folderImages: Collection<FolderImage>
+): Song = Song(
     id = 0,
     name = title,
     artists = artists,
@@ -36,7 +39,8 @@ fun AudioFile.toSong(providerType: MediaProviderType): Song = Song(
     bitRate = bitRate,
     bitDepth = bitDepth,
     sampleRate = sampleRate,
-    channelCount = channelCount
+    channelCount = channelCount,
+    artworkVersion = localArtworkVersion(lastModified, folderImages)
 )
 
 enum class TagLibProperty(val key: String) {

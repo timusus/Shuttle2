@@ -75,9 +75,6 @@ class TagLibSongLocalArtworkModelLoader(
             } catch (e: IllegalStateException) {
                 Timber.v("Failed to retrieve artwork (fd problem)")
                 return null
-            } catch (e: SecurityException) {
-                Timber.v("Failed to retrieve artwork (security problem)")
-                return null
             } catch (e: FileNotFoundException) {
                 Timber.v("Failed to retrieve artwork (file not found)")
                 return null

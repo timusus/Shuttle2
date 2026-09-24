@@ -6,7 +6,9 @@ open class DocumentNode(
     override val uri: Uri,
     open val documentId: String,
     override val displayName: String,
-    open val mimeType: String
+    open val mimeType: String,
+    val lastModified: Long = 0,
+    val size: Long = 0
 ) : FileNode {
     val ext by lazy { displayName.substringAfterLast('.') }
 

@@ -41,7 +41,7 @@ suspend fun ItemsService.audioItems(
     userId: String,
     recursive: Boolean = true,
     itemTypes: String = "Audio",
-    fields: String? = "Genres,ProductionYear",
+    fields: String? = "Genres,ProductionYear,DateCreated",
     limit: Int = 2500,
     startIndex: Int = 0
 ): NetworkResult<QueryResult> = itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields, limit, startIndex)

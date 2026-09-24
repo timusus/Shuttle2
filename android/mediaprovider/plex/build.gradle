@@ -47,4 +47,7 @@ dependencies {
     ksp libs.hilt.compiler
 
     implementation libs.kotlinx.datetime
+
+    testImplementation libs.junit
+    testImplementation libs.kotest
 }

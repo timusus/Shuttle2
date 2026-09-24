@@ -15,6 +15,7 @@ object SafDirectoryHelper {
      * Traverses the contents of [rootUri], building a [DocumentNodeTree] (Trie) representing the directory structure.
      *
      * Leaves are represented by [FileNode], and only those whose mime type starts with 'audio' are included.
+     * Each directory's image files are recorded in [DocumentNodeTree.imageNodes].
      *
      * This task is resource intensive. Should be called from a background thread.
      */
@@ -46,6 +47,11 @@ object SafDirectoryHelper {
                 is DocumentNodeTree -> traverseDocumentNodes(parent.addTreeNode(documentNode), contentResolver, rootUri)
 
                 else -> {
+                    if (documentNode.mimeType.startsWith("image")) {
+                        parent.imageNodes.add(documentNode)
+                        continue
+                    }
+
                     if (documentNode.mimeType.startsWith("audio")) {
                         // Add files with mimetype "audio/*"
                         parent.addLeafNode(documentNode)
@@ -81,7 +87,9 @@ object SafDirectoryHelper {
                 arrayOf(
                     DocumentsContract.Document.COLUMN_DOCUMENT_ID,
                     DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                    DocumentsContract.Document.COLUMN_MIME_TYPE
+                    DocumentsContract.Document.COLUMN_MIME_TYPE,
+                    DocumentsContract.Document.COLUMN_LAST_MODIFIED,
+                    DocumentsContract.Document.COLUMN_SIZE
                 ),
                 null,
                 null,
@@ -107,7 +115,9 @@ object SafDirectoryHelper {
                                     uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
                                     documentId = documentId,
                                     displayName = cursor.getString(1),
-                                    mimeType = mimeType
+                                    mimeType = mimeType,
+                                    lastModified = cursor.getLong(3),
+                                    size = cursor.getLong(4)
                                 )
                             )
                         }
