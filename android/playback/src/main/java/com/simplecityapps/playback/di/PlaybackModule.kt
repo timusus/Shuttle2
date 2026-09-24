@@ -18,7 +18,9 @@ import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
 import com.simplecityapps.playback.androidauto.MediaIdHelper
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
+import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.mediasession.UriSongResolver
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -123,8 +125,10 @@ class PlaybackModule {
         audioManager: AudioManager?,
         playbackPreferenceManager: PlaybackPreferenceManager,
         audioTrackMonitor: AudioTrackMonitor,
+        equalizerAudioProcessor: EqualizerAudioProcessor,
+        replayGainAudioProcessor: ReplayGainAudioProcessor,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): BitPerfectOutput = BitPerfectOutput(audioManager, playbackPreferenceManager, audioTrackMonitor, appCoroutineScope)
+    ): BitPerfectOutput = BitPerfectOutput(audioManager, playbackPreferenceManager, audioTrackMonitor, equalizerAudioProcessor, replayGainAudioProcessor, appCoroutineScope)
 
     @Singleton
     @Provides

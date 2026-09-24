@@ -9,7 +9,9 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.RequiresApi
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
+import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +31,10 @@ import timber.log.Timber
  * Opt-in direct output to USB DACs on Android 14+ (API 34): while the preference is on and a USB audio device is
  * connected, asks the platform to open that device's output with a bit-perfect mixer in the format the player
  * writes, so the stream reaches the DAC at its own sample rate without being resampled or mixed with other
- * sounds.
+ * sounds, and bypasses the equalizer and ReplayGain so they don't change it either.
+ *
+ * The player's output is 16-bit PCM at the song's sample rate and channel count: the audio sink converts
+ * higher bit depths to 16-bit after the app's processors, so a 24-bit song is not carried bit for bit.
  *
  * Follows the format of the AudioTrack the player actually opened, from [AudioTrackMonitor], and when the
  * preferred mixer changes has the player open a new AudioTrack, since one keeps the output it was opened on.
@@ -41,6 +46,8 @@ class BitPerfectOutput(
     private val audioManager: AudioManager?,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val audioTrackMonitor: AudioTrackMonitor,
+    private val equalizerAudioProcessor: EqualizerAudioProcessor,
+    private val replayGainAudioProcessor: ReplayGainAudioProcessor,
     appCoroutineScope: CoroutineScope
 ) {
     /** The device and mixer attributes last set, so they can be cleared. Only touched on the main thread. */
@@ -75,8 +82,8 @@ class BitPerfectOutput(
         }
 
     /**
-     * Prefers [target]'s mixer, or none, and has the player open a new AudioTrack when that changes what it
-     * plays through.
+     * Prefers [target]'s mixer, or none, bypasses the processors while one is in use, and has the player open a
+     * new AudioTrack when that changes what it plays through.
      */
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
     private fun apply(
@@ -91,6 +98,9 @@ class BitPerfectOutput(
             clearPreferred(audioManager, current.first)
         }
 
+        val bypassed = applied != null
+        equalizerAudioProcessor.bypassed = bypassed
+        replayGainAudioProcessor.bypassed = bypassed
         if (applied != current) {
             audioTrackMonitor.reopenAudioTrack()
         }

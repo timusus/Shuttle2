@@ -168,6 +168,18 @@ class EqualizerAudioProcessorTest {
     }
 
     @Test
+    fun `a bypassed equalizer passes audio through unchanged until the bypass ends`() {
+        val equalizer = equalizerWithAllBandsAt(12.0, sampleRate = 44100)
+        val input = whiteNoise(44100)
+
+        equalizer.bypassed = true
+        equalizer.process(input).toList() shouldBe input.toList()
+
+        equalizer.bypassed = false
+        equalizer.process(input).toList() shouldNotBe input.toList()
+    }
+
+    @Test
     fun `24 bit is accepted and 32 bit is rejected`() {
         // The only encodings onConfigure accepts are 16 and 24 bit PCM; float and 8/32 bit throw.
         EqualizerAudioProcessor(enabled = true).configure(AudioProcessor.AudioFormat(44100, CHANNEL_COUNT, C.ENCODING_PCM_24BIT))

@@ -27,6 +27,13 @@ class ReplayGainAudioProcessor(
     @Volatile var mode: ReplayGainMode,
     @Volatile var preAmpGain: Double = 0.0
 ) : BaseAudioProcessor() {
+    /**
+     * Applies no gain, whatever the mode and pre-amp, while [com.simplecityapps.playback.BitPerfectOutput] sends
+     * audio to a USB DAC unchanged. Set on the main thread; applies from the next buffer.
+     */
+    @Volatile
+    var bypassed: Boolean = false
+
     /** The ReplayGain of the stream being processed. Only touched on the playback thread. */
     private var streamReplayGain: ReplayGain? = null
 
@@ -44,7 +51,7 @@ class ReplayGainAudioProcessor(
 
     override fun queueInput(inputBuffer: ByteBuffer) {
         // Read the gain once per buffer - the mode, pre-amp and stream can all change underneath us.
-        val currentGain = gain
+        val currentGain = if (bypassed) 0.0 else gain
         if (currentGain != 0.0) {
             val size = inputBuffer.remaining()
             val buffer = replaceOutputBuffer(size)

@@ -91,6 +91,19 @@ class ReplayGainAudioProcessorTest {
     }
 
     @Test
+    fun `a bypassed processor applies no gain until the bypass ends`() {
+        val processor = ReplayGainAudioProcessor(ReplayGainMode.Track, preAmpGain = 2.0)
+        processor.configure(pcm16Stereo)
+        processor.flush(streamOf(0))
+
+        processor.bypassed = true
+        processor.process(SAMPLE) shouldBe SAMPLE
+
+        processor.bypassed = false
+        processor.process(SAMPLE) shouldBe scaled(SAMPLE, -4.0)
+    }
+
+    @Test
     fun `a flush that doesn't identify an item keeps the stream's gain`() {
         val processor = ReplayGainAudioProcessor(ReplayGainMode.Track)
         processor.configure(pcm16Stereo)

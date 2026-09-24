@@ -111,7 +111,7 @@ class PlaybackPreferenceManager(
             return sharedPreferences.get("equalizer_enabled", false)
         }
 
-    /** Bit-perfect output to USB DACs (Android 14+), set from the playback settings screen. */
+    /** Direct output to USB DACs through a bit-perfect mixer (Android 14+), set from the playback settings screen. */
     var bitPerfectEnabled: Boolean
         set(value) {
             sharedPreferences.put(KEY_BIT_PERFECT_ENABLED, value)

@@ -47,6 +47,13 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
             settings = Settings(settings.enabled, value.snapshot())
         }
 
+    /**
+     * Passes audio through untouched whatever [enabled] says, while [com.simplecityapps.playback.BitPerfectOutput]
+     * sends it to a USB DAC unchanged. Set on the main thread; applies from the next buffer.
+     */
+    @Volatile
+    var bypassed: Boolean = false
+
     // Maximum allowed gain/cut for each band
     val maxBandGain = 12
 
@@ -155,7 +162,7 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
 
     override fun queueInput(inputBuffer: ByteBuffer) {
         val settings = settings
-        if (settings.enabled) {
+        if (settings.enabled && !bypassed) {
             if (settings.bands !== filteredBands) {
                 updateBandProcessors(settings.bands)
             }
