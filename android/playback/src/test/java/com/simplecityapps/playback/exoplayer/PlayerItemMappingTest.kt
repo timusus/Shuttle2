@@ -83,5 +83,10 @@ class PlayerItemMappingTest {
         ): MediaInfo = mediaInfo
 
         override suspend fun downloadUri(song: Song): Uri? = mediaInfo.path
+
+        override suspend fun downloadFallbackUri(
+            path: String,
+            responseCode: Int
+        ): Uri? = null
     }
 }
