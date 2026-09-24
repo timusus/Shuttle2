@@ -33,23 +33,25 @@ opt-in annotations), 2026-09-25.
 | `NavKey`, `NavBackStack`, `rememberNavBackStack`, `entryProvider`, `rememberSaveableStateHolderNavEntryDecorator` | `androidx.navigation3:navigation3-runtime` 1.2.0 | stable, no opt-in; not a dependency |
 | `rememberViewModelStoreNavEntryDecorator` | `androidx.lifecycle:lifecycle-viewmodel-navigation3` 2.11.0 | stable; matches the catalog's lifecycle 2.11.0 |
 | `ListDetailSceneStrategy`, `SupportingPaneSceneStrategy` | `androidx.compose.material3.adaptive:adaptive-navigation3` 1.3.0 | stable artifact, but the classes are `@ExperimentalMaterial3AdaptiveApi` |
-| `currentWindowAdaptiveInfoV2()`, `Posture` | material3-adaptive 1.3.0 | stable; cached, not a dependency |
+| `currentWindowAdaptiveInfoV2()`, `Posture`, `calculatePaneScaffoldDirective` | material3-adaptive 1.3.0 | stable; cached, not a dependency. V2 = `currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true)`, which is deprecated in favour of it; test with `WindowSizeClass.WIDTH_DP_LARGE_LOWER_BOUND` / `WIDTH_DP_EXTRA_LARGE_LOWER_BOUND` (window-core 1.5.0) |
 | `hiltViewModel()` with assisted `creationCallback` | `androidx.hilt:hilt-lifecycle-viewmodel-compose` 1.4.0 | stable; cached, not a direct dependency |
 | `AnchoredDraggableState`, `anchoredDraggable`, `DraggableAnchors` | foundation 1.12.1 (BOM 2026.09.00) | stable |
 | `PredictiveBackHandler`, `BackHandler` | activity-compose 1.13.0 | stable |
-| `MaterialExpressiveTheme`, `MotionScheme`, `LargeFlexibleTopAppBar`, `WideNavigationRail`, `ShortNavigationBar` | material3 1.4.0 (BOM) | public, no opt-in |
+| `MaterialExpressiveTheme`, `MotionScheme`, `LargeFlexibleTopAppBar`, `WideNavigationRail`, `ShortNavigationBar` | material3 1.4.0 (BOM) | public, no opt-in; `MotionScheme.expressive()` is internal in 1.4.0 |
+| `ButtonGroup`, floating toolbars, `MaterialShapes`, `LoadingIndicator`, wavy progress | material3 1.5.0-alpha29 only | see [`design-language.md`](../design/design-language.md) for the pin and opt-ins |
 | `TopAppBarDefaults.exitUntilCollapsedScrollBehavior` | material3 1.4.0 | `@ExperimentalMaterial3Api` |
 | `@Serializable` routes | Kotlin serialization plugin + `kotlinx-serialization-core` | **not in the catalog**; `NavBackStack` saving needs it |
 | MaterialKolor (`material-kolor`) | 5.0.1 in Podcasts | **not a dependency** |
 
-Nothing here needs the pre-releases (navigation3 1.3.0-alpha01, adaptive 1.4.0-alpha02).
+The shell needs no pre-release (navigation3 1.3.0-alpha01, adaptive 1.4.0-alpha02); the design
+system pins material3 1.5.0-alpha29 (owner decision in `design-language.md`).
 
 ## 1. Player state model
 
 ### Levels
 
 `enum class PlayerLevel { Hidden, Mini, NowPlaying, Queue }`. One shell-owned
-`AnchoredDraggableState<PlayerLevel>` drives the sheet on compact and medium widths. Its offset is
+`AnchoredDraggableState<PlayerLevel>` drives the sheet below 1200 dp (section 2). Its offset is
 the sheet's top edge in shell coordinates. Queue is not a second sheet: it is an anchor *above*
 zero, so dragging past Now Playing pushes Now Playing up and pulls the queue panel
 in (the Podcasts `ExpandableSheetScaffold` look, driven by the drag rather than a toggle).
@@ -144,61 +146,77 @@ until the first queue emission, so a restoring queue never flashes the mini play
 
 ## 2. Adaptive layout
 
-Tiers come from the Podcasts `LayoutTier` (Compact < 600 dp, Regular 600–839, Wide ≥ 840) and
-`FoldPosture`, ported into `:android:app` `ui/shell/adaptive/` and derived from
-`currentWindowAdaptiveInfoV2()` at the call site, as Podcasts does. No `isTablet` logic.
+The five M3 width classes come from `currentWindowAdaptiveInfoV2()` (material3-adaptive 1.3.0):
+Compact < 600, Medium 600–839, Expanded 840–1199, Large 1200–1599, Extra-large ≥ 1600. Podcasts'
+`FoldPosture` is ported into `ui/shell/adaptive/`; its `LayoutTier` is not (it stops at 840). No
+`isTablet` logic. Checked 2026-09-25 against the
+[window size classes](https://developer.android.com/develop/ui/compose/layouts/adaptive/window-size-classes)
+and [canonical layouts](https://developer.android.com/develop/ui/compose/layouts/adaptive/canonical-layouts)
+guides (list-detail shows both panes from Expanded; a supporting pane sits alongside from Medium, in
+a sheet on Compact; no two panes at compact height) and 1.3.0's `calculatePaneScaffoldDirective`
+(1 pane at Compact and Medium, 2 at Expanded, 3 from Large; pane width 360 dp, 412 dp at XL):
 
-| | Compact | Regular (medium) | Wide (expanded+) |
+| Width | Navigation | Library | Player |
 |---|---|---|---|
-| Navigation | `ShortNavigationBar`, bottom | `WideNavigationRail`, collapsed | `WideNavigationRail`, expanded, with secondary items (Settings, EQ) |
-| Mini player | sheet at Mini, over the nav bar | sheet at Mini, bottom of the content pane (not under the rail) | strip at the bottom of the content pane when the player pane is collapsed |
-| Now playing | sheet, full shell | sheet over the content pane; rail stays visible and live | **persistent trailing pane**, 360 dp (400 dp ≥ 1200 dp) |
-| Queue | sheet level Queue | sheet level Queue | inside the pane: "Up next" pushes now playing up, same visual as the sheet |
-| Library list-detail | single pane | single pane | list-detail scene when the content area allows (below) |
+| Compact | `ShortNavigationBar` | one pane | sheet: Mini → NowPlaying → Queue |
+| Medium | `WideNavigationRail`, collapsed | one pane | sheet; expanded, player and queue side by side |
+| Expanded | `WideNavigationRail`, collapsed | list-detail, two panes at most | mini player docked at the bottom of the content area; expanded, the player takes the full window as two panes, artwork and controls beside the queue. No persistent player pane |
+| Large, Extra-large | `WideNavigationRail`, collapsed at Large, expanded at XL | list-detail | persistent now-playing/queue supporting pane on the trailing side, 360 dp (412 dp at XL), collapsible |
 
-No `NavigationSuiteScaffold`: it has no slot for a sheet between content and nav bar, nor for a
-nav bar that tracks a drag. The shell lays out rail, `NavDisplay` and player pane itself, like
-Podcasts' `CastNavigationSuiteScaffold`. A nav tap with the sheet above Mini settles it to Mini,
-then navigates.
+The rail stays collapsed at Large because 1200 − 96 (rail) − 360 (pane) leaves 744 dp, two 360 dp
+panes. Compact height (< 480 dp) keeps the library to one pane at any width. No
+`NavigationSuiteScaffold`: it has no slot for a sheet between content and a drag-tracking nav bar,
+nor for a trailing pane; the shell lays out rail, `NavDisplay` and player itself, like Podcasts'
+`CastNavigationSuiteScaffold`. A nav tap with the player above Mini settles it to Mini, then navigates.
 
-### The player pane on wide windows
+### The player by class
 
-Wide windows keep browsing context: the player is a supporting pane, not a sheet over the library.
-`PlayerLevel` still holds the state; the pane renders it as Mini = collapsed to the strip,
-NowPlaying = pane showing now playing, Queue = pane showing the queue. No `AnchoredDraggableState`
-gestures drive the pane; its queue push is an `animateFloatAsState` on the level. The pane sits
-beside `NavDisplay`, not in it as a `SupportingPaneSceneStrategy` scene: scenes are built from back
-stack entries, and the player is not a route (section 4).
+**Below 1200 dp, one sheet** (section 1). Compact anchors are `{Mini, NowPlaying,
+Queue}`. On Medium and Expanded, NowPlaying already shows the queue beside the player, so the
+anchors are `{Mini, NowPlaying}` and a saved Queue level opens NowPlaying with the queue focused.
+On Medium the sheet covers the content pane and the rail stays live; on Expanded the mini player
+docks across the content area and the expanded player covers the whole window, rail included.
+
+**From 1200 dp, a pane**, to keep browsing context. `PlayerLevel` still holds the state; the pane renders Mini =
+collapsed (the docked mini player), NowPlaying = pane on now playing, Queue = pane on the queue. No
+drag gestures drive it; its queue push is an `animateFloatAsState` on the level with the slow
+spatial spec. It sits beside `NavDisplay`, not in it as a `SupportingPaneSceneStrategy` scene:
+scenes are built from back stack entries, and the player is not a route (section 4).
 
 ### List-detail
 
 `ListDetailSceneStrategy` (adaptive-navigation3) shows a list entry and its detail side by side
-when there is room, else single pane, driven by the one back stack. Library tabs carry `listPane()`
-metadata, detail routes `detailPane()`; the opt-in stays in the shell. Its pane directive comes from
-the **content area** (window minus rail minus player pane), not the window, or at 840–1200 dp it
-would squeeze rail + list + detail + player (decision 5).
+when there is room, else single pane, from the one back stack. Library tabs carry `listPane()`
+metadata, detail routes `detailPane()`; the opt-in stays in the shell. The strategy gets the
+shell's directive: `calculatePaneScaffoldDirective(adaptiveInfo)` with `maxHorizontalPartitions`
+capped at 2, and 1 below Expanded or at compact height; the player pane is the third partition,
+outside `NavDisplay`. This resolves decision 5: at 840–1199 dp there is no persistent pane, so
+list-detail has the whole content area; from 1200 dp the pane takes its fixed width.
 
-### Postures
+### Folds and postures
 
-- **Tabletop** (half-opened, horizontal hinge): Now Playing splits at `foldBounds`, artwork above,
-  transport below, nothing interactive in the hinge band; at Queue the queue fills the lower half.
-  A layout inside Now Playing; the level never changes.
-- **Book** (half-opened, vertical hinge): the Wide layout, player pane on the trailing leaf, hinge
-  as the split, whatever the width class.
+A separating fold (`isSeparating`, from `Posture.hingeList`) is the pane boundary at any width;
+nothing interactive sits in the hinge band. An unfolded book-style foldable is Medium in portrait
+and Expanded in landscape, so it gets the sheet, never the pane.
 
-### Size or posture changes mid-drag or with the sheet open
+- **Flat or book** (vertical fold): list and detail split at the fold (the directive excludes the
+  hinge); the expanded player puts artwork and controls on one leaf, the queue on the other.
+- **Tabletop** (horizontal fold): Now Playing splits at the fold, artwork above, transport below;
+  at Queue the queue fills the lower half. The level never changes.
 
-A size change recomputes anchors with `updateAnchors(newAnchors, newTarget = state.targetValue)`,
-which ends any drag in flight and snaps to the level the drag was heading for. Crossing tiers maps
-the level:
+### Size or posture changes mid-drag or with the player open
+
+`updateAnchors(newAnchors, newTarget = state.targetValue)` on a size change ends any drag in
+flight and snaps to the level it was heading for. Crossing classes maps the level:
 
 | From → to | Rule |
 |---|---|
-| sheet → pane (unfold, resize wider) | Mini and NowPlaying → pane open on now playing; Queue → pane on queue |
-| pane → sheet (fold, resize narrower) | always Mini: folding never throws a full-screen sheet over what the user was browsing |
+| sheet → pane (resize to ≥ 1200 dp) | Mini and NowPlaying → pane open on now playing; Queue → pane on queue |
+| pane → sheet (fold, resize below 1200 dp) | always Mini: folding never throws a full-window player over what the user was browsing |
+| Compact ↔ Medium or Expanded | Queue ↔ NowPlaying with the queue focused; other levels unchanged |
 | any posture change | level unchanged; only the now-playing layout changes |
 
-The saveable state sits above the tier branch, so one instance survives the switch.
+The saveable state sits above the class branch, so one instance survives the switch.
 
 ## 3. Top bars
 
@@ -269,7 +287,7 @@ The start tab (Home or Library by `showHomeOnLaunch`) and whether onboarding com
 computed in `MainActivity.onCreate` from preferences, as now.
 
 The settings drawer (`BottomDrawerSettingsFragment`, a `<dialog>` destination today) becomes a
-shell-owned `ModalBottomSheet` (Shuffle all, Sleep timer, Equalizer, Settings); on rail tiers the
+shell-owned `ModalBottomSheet` (Shuffle all, Sleep timer, Equalizer, Settings); on rail widths the
 same entries are the rail's secondary items. Screen dialogs (tag editor, song info, create playlist,
 delete confirmations) are Compose dialogs owned by the screen that raises them; `DialogSceneStrategy`
 is only for a dialog that must survive as its own back stack entry, and none does yet.
@@ -304,9 +322,9 @@ Insets are split by owner:
 
 ## 5. Theming
 
-`AppTheme` (`ui/theme/Theme.kt`) becomes a `MaterialExpressiveTheme` with
-`MotionScheme.expressive()`, the user's base theme and accent, and the redesign's typography and
-shapes. It wraps the whole shell. The artwork scheme is a second, nested `MaterialTheme` around
+`AppTheme` (`ui/theme/Theme.kt`) becomes `S2Theme` in `:android:designsystem`: a
+`MaterialExpressiveTheme` (which applies the expressive motion scheme itself), the user's base theme
+and accent, and the type and shape scales of `design-language.md`. It wraps the whole shell. The artwork scheme is a second, nested `MaterialTheme` around
 specific subtrees, never a swap of the root scheme:
 
 ```
@@ -318,12 +336,10 @@ AppTheme(theme, accent)                       ← user's accent, everywhere
          └─ ArtworkTheme(seed = now-playing art)          ← mini, now playing, queue, pane
 ```
 
-`ArtworkTheme(seed)` ports Podcasts' pieces: `ExtractArtworkColor` (MaterialKolor
-`themeColorOrNull()` on a small Glide bitmap, off the main thread, cached by artwork key), a
-MaterialKolor dynamic scheme from the seed in the current light/dark mode, and
-`rememberAnimatedColorScheme` so track changes crossfade. It keeps the last seed while the next
-extracts, so colours go old → new, never old → default → new. The now-playing seed comes from
-`ShellViewModel` (current song → artwork key → seed); detail screens extract in their ViewModel.
+`ArtworkTheme(seed)` is specified in `design-language.md` §1 (MaterialKolor seed from a small Glide
+bitmap off the main thread, cached by artwork key; crossfade that keeps the last seed until the
+next is ready). The now-playing seed comes from `ShellViewModel` (current song → artwork key →
+seed); detail screens extract in their ViewModel.
 
 **Recommendation (decision 1): player surface and artwork detail screens only**, with a setting
 "Colour from artwork", default on. Not the whole app: every track change would recolour the library
@@ -337,17 +353,19 @@ From step 2, `main` runs the new shell and an unbuilt destination is a `NotBuilt
 placeholder entry. Each step deletes the legacy code it replaces (Fragments, presenters, contracts,
 layouts, menus) in the same change and moves its Maestro flows to test tags (`testTagsAsResourceId`).
 
-1. **Build deps and design system.** Catalog: navigation3 runtime and ui,
-   lifecycle-viewmodel-navigation3, material3-adaptive (adaptive, layout, navigation3),
-   hilt-lifecycle-viewmodel-compose, the serialization plugin and core, MaterialKolor. `AppTheme` on
-   `MaterialExpressiveTheme` with the redesign's type and shape scales; `ArtworkTheme`; shared
-   components in `ui/components/` (list rows, artwork, top bars, contextual bar, empty and loading
-   states). Verify: lint, colour-extraction unit tests, Robolectric component tests, light and dark.
+1. **Build deps, design system and component catalogue, approved by the owner: a gate.** Catalog:
+   navigation3 runtime and ui, lifecycle-viewmodel-navigation3, material3-adaptive (adaptive,
+   layout, navigation3), hilt-lifecycle-viewmodel-compose, the serialization plugin and core,
+   MaterialKolor, material3 1.5.0-alpha29, Roborazzi. The `:android:designsystem` module with
+   `S2Theme`, `ArtworkTheme` and every component, board and catalogue page in
+   [`design-language.md`](../design/design-language.md). Verify: lint, colour-extraction unit tests,
+   `verifyRoborazziDebug`, the approval-hash test. **Gate:** no later step starts until the owner
+   has ticked every component it uses in `docs/design/catalog/index.md`.
 2. **Shell and player sheet.** First a branch-only spike covering just the sheet drag, the scroll
    handoff from a stub `LazyColumn` queue, and predictive back (with section 1's ordering case);
    findings amend this doc. Then `setContent { AppTheme { AppShell(start) } }`: `NavDisplay` with
    placeholder entries, `AppNavigator`, the section 1 state model with placeholder player content,
-   adaptive chrome (rail, player pane, tier mapping, postures), the list-detail scene, the settings
+   adaptive chrome (rail, player pane, class mapping, postures), the list-detail scene, the settings
    sheet, edge-to-edge, and `ShellViewModel` taking over `MainPresenter` (queue visibility,
    changelog, trial and thank-you dialogs, review prompt, crash-reporting nag). Deletes the old shell.
    Verify: unit tests for `PlayerSheetGeometry`, `ShellViewModel`, `AppNavigator`; Robolectric robot
@@ -388,17 +406,15 @@ layouts, menus) in the same change and moves its Maestro flows to test tags (`te
 
 1. **Artwork theming scope.** Recommend player surface + artwork detail screens, behind a
    default-on setting; not the whole app (section 5).
-2. **Player on wide windows.** Recommend the persistent trailing pane beside `NavDisplay`.
-   Alternative: the same sheet at every width, simpler but covers the library on tablets and
-   unfolded foldables. (A supporting-pane scene is rejected in section 2.)
+2. **Player on wide windows.** Resolved by the section 2 rule: the sheet below 1200 dp, a
+   persistent trailing pane from Large up.
 3. **Swipe the mini player away** (to Hidden, clearing or stopping the queue). Recommend no; keep
    Hidden programmatic, as today.
 4. **Fourth nav item.** Recommend keeping the settings bottom sheet on compact for parity, with the
-   entries as rail secondary items on wider tiers. Alternative: Settings as a top-level tab.
-5. **List-detail beside the player pane.** Between 840 dp and roughly 1200 dp the content area is too
-   narrow for two panes while the player pane is open. Recommend single pane there, two panes only
-   when the content area is ≥ 840 dp. Alternative: collapse the player pane to its strip while a
-   detail is open.
+   entries as rail secondary items on wider classes. Alternative: Settings as a top-level tab.
+5. **List-detail beside the player pane.** Resolved by the section 2 rule: at 840–1199 dp there is
+   no persistent pane, so list-detail has two panes; from 1200 dp list, detail and player fit.
+6. **Design system choices** (material3 alpha pin, Roborazzi, selection toolbar): `design-language.md`.
 
 ## 8. Changes to the UDF principles
 
