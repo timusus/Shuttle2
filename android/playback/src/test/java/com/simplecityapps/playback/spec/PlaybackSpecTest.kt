@@ -599,6 +599,25 @@ class PlaybackSpecTest {
     }
 
     @Test
+    fun `RS-49 play-pause while a song is still loading paused plays it, and while it's loading to play pauses it`() {
+        harness.run { queue.setQueue(listOf(song(1), song(2))) }
+
+        // The saved queue's restore loads paused; the widget's play-pause lands before it's ready.
+        playback.load(1_000) {}
+        playback.playbackStateFlow.value shouldBe PlaybackState.Loading
+        playback.togglePlayback()
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
+        queue.queueStateFlow.value.currentItem?.song shouldBe song(1)
+
+        // A skip loads to play: play-pause before it's ready pauses.
+        playback.skipToNext()
+        playback.playbackStateFlow.value shouldBe PlaybackState.Loading
+        playback.togglePlayback()
+        harness.idle()
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Paused }
+    }
+
+    @Test
     fun `RS-36 songs added while a new queue is still being built join it, after it`() {
         val builds = HeldDispatcher()
         val harness = PlaybackHarness(buildContext = builds)

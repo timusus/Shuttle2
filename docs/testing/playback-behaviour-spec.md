@@ -232,6 +232,11 @@ takes the foreground over, and a command that doesn't play leaves the foreground
 (`spec/ForegroundStartSpecTest`, over a test service with PlaybackService's start handling, as PlaybackService itself
 needs Hilt); API 31+ with the app dead is device-only: *Media session through Media3*.
 
+**RS-49: play-pause while a song is loading follows where the load is headed.** Given a song still loading paused (the
+saved queue's restore, as the widget's play-pause cold-starts the app), when play-pause is pressed, then it plays;
+given a song loading to play (a skip), then it pauses. (#345) — JVM (`spec/PlaybackSpecTest`); the widget's cold start
+is on the emulator (`checks/cold-start-widget.sh`).
+
 ## Commits with no rule
 
 Mechanism only, with no behaviour of their own to hold (the design doc's section 4 list, plus thread-safety and

@@ -515,9 +515,11 @@ class PlaybackManager(
         audioFocusHelper.abandonAudioFocus()
     }
 
+    /** Pauses if playing or loading to play; otherwise plays, including a song still loading paused (a restore's). */
     override fun togglePlayback() = playerThread.run {
         when (playbackState()) {
-            is PlaybackState.Loading, PlaybackState.Playing -> pause()
+            is PlaybackState.Playing -> pause()
+            is PlaybackState.Loading -> if (player.playWhenReady) pause() else play()
             else -> play()
         }
     }
