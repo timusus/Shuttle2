@@ -15,6 +15,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -85,6 +87,9 @@ class QueueManager(
      */
     override val queueStateFlow: StateFlow<QueueState> = _queueState.asStateFlow()
 
+    /** Held by each change that builds new queue entries (see [withNewItems]). Fair, so they take turns in order. */
+    private val newItemChanges = Mutex()
+
     /** The unshuffled and shuffled queue [queueStateFlow] last published. */
     @Volatile
     private var lists = Lists(emptyList(), emptyList())
@@ -131,11 +136,8 @@ class QueueManager(
         songs: List<Song>,
         shuffleSongs: List<Song>?,
         position: Int
-    ): Boolean {
-        val items = buildItems(songs)
-        return withContext(Dispatchers.Main.immediate) {
-            applyQueue(songs, items, shuffleSongs, position)
-        }
+    ): Boolean = withNewItems(songs) { items ->
+        applyQueue(songs, items, shuffleSongs, position)
     }
 
     override suspend fun setQueueIfContentVersion(
@@ -143,21 +145,26 @@ class QueueManager(
         songs: List<Song>,
         shuffleSongs: List<Song>?,
         position: Int
-    ): Long? {
-        val items = buildItems(songs)
+    ): Long? = withNewItems(songs) { items ->
         // The check and the change run together on the main thread, so no other change can come between them.
-        return withContext(Dispatchers.Main.immediate) {
-            if (_queueState.value.contentVersion != contentVersion) {
-                return@withContext null
-            }
-            applyQueue(songs, items, shuffleSongs, position)
-            _queueState.value.contentVersion
+        if (_queueState.value.contentVersion != contentVersion) {
+            return@withNewItems null
         }
+        applyQueue(songs, items, shuffleSongs, position)
+        _queueState.value.contentVersion
     }
 
-    /** New queue entries for [songs], built off the main thread. */
-    private suspend fun buildItems(songs: List<Song>): List<MediaItem> = withContext(buildContext) {
-        songs.map { song -> song.toQueueEntry().toMediaItem() }
+    /**
+     * Builds new queue entries for [songs] off the main thread, then runs [change] with them on it. Changes made this
+     * way take turns, so they apply in the order they're made, however long each takes to build: songs added while a
+     * new queue is being built join it rather than the queue it replaces.
+     */
+    private suspend fun <T> withNewItems(
+        songs: List<Song>,
+        change: (List<MediaItem>) -> T
+    ): T = newItemChanges.withLock {
+        val items = withContext(buildContext) { songs.map { song -> song.toQueueEntry().toMediaItem() } }
+        withContext(Dispatchers.Main.immediate) { change(items) }
     }
 
     /**
@@ -282,33 +289,37 @@ class QueueManager(
         getQueue().getOrNull(position)?.let(::setCurrentItem) ?: Timber.e("Couldn't skip to position $position, no associated queue item found")
     }
 
-    /** Adds [songs] to the end of the queue: the end of the unshuffled order, and the end of the shuffled order. */
-    override fun addToQueue(songs: List<Song>) {
-        val items = songs.map { song -> song.toQueueEntry().toMediaItem() }
-        playerThread.run {
-            songUriResolver.queued(items)
-            player.addMediaItems(items)
-        }
+    /**
+     * Adds [songs] to the end of the queue: the end of the unshuffled order, and the end of the shuffled order. Added
+     * to an empty queue, they're set as a new queue, as [setQueue] sets it, and this returns true.
+     */
+    override suspend fun addToQueue(songs: List<Song>): Boolean = withNewItems(songs) { items ->
+        if (player.mediaItemCount == 0) return@withNewItems applyQueue(songs, items, null, 0)
+        songUriResolver.queued(items)
+        player.addMediaItems(items)
+        false
     }
 
-    /** Adds [songs] after the current item, in both the unshuffled and the shuffled order. */
-    override fun addToNext(songs: List<Song>) {
-        val items = songs.map { song -> song.toQueueEntry().toMediaItem() }
-        playerThread.run {
-            batch {
-                songUriResolver.queued(items)
-                val current = player.currentMediaItemIndex.takeIf { player.mediaItemCount > 0 }
-                val insertAt = (current ?: -1) + 1
-                val shuffled = shuffledIndices()
-                player.addMediaItems(insertAt, items)
-                // The shuffled order places the new items right after the current one too.
-                val shifted = shuffled.map { index -> if (index >= insertAt) index + items.size else index }
-                val added = (insertAt until insertAt + items.size).toList()
-                val currentPosition = current?.let { shifted.indexOf(it) } ?: -1
-                val order = shifted.subList(0, currentPosition + 1) + added + shifted.subList(currentPosition + 1, shifted.size)
-                player.setShuffleOrder(S2ShuffleOrder(order.toIntArray()))
-            }
+    /**
+     * Adds [songs] after the current item, in both the unshuffled and the shuffled order. Added to an empty queue,
+     * they're set as a new queue, as [setQueue] sets it, and this returns true.
+     */
+    override suspend fun addToNext(songs: List<Song>): Boolean = withNewItems(songs) { items ->
+        if (player.mediaItemCount == 0) return@withNewItems applyQueue(songs, items, null, 0)
+        batch {
+            songUriResolver.queued(items)
+            val current = player.currentMediaItemIndex
+            val insertAt = current + 1
+            val shuffled = shuffledIndices()
+            player.addMediaItems(insertAt, items)
+            // The shuffled order places the new items right after the current one too.
+            val shifted = shuffled.map { index -> if (index >= insertAt) index + items.size else index }
+            val added = (insertAt until insertAt + items.size).toList()
+            val currentPosition = shifted.indexOf(current)
+            val order = shifted.subList(0, currentPosition + 1) + added + shifted.subList(currentPosition + 1, shifted.size)
+            player.setShuffleOrder(S2ShuffleOrder(order.toIntArray()))
         }
+        false
     }
 
     override fun updateSongs(songs: List<Song>) {

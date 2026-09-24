@@ -46,8 +46,8 @@ class FakeQueueManager : QueueOperations {
     override fun skipToNext(ignoreRepeat: Boolean): Boolean = false
     override fun skipToPrevious() {}
     override fun skipTo(position: Int) {}
-    override fun addToQueue(songs: List<Song>) {}
-    override fun addToNext(songs: List<Song>) {}
+    override suspend fun addToQueue(songs: List<Song>): Boolean = false
+    override suspend fun addToNext(songs: List<Song>): Boolean = false
     override fun updateSongs(songs: List<Song>) {}
     override fun move(from: Int, to: Int) {}
     override fun remove(items: List<QueueItem>) {}

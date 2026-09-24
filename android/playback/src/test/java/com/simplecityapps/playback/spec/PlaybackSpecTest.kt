@@ -24,6 +24,8 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineDispatcher
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -594,6 +596,42 @@ class PlaybackSpecTest {
 
         playback.progressFlow.value shouldBe PlaybackProgress(0, TONE_2S_MS)
         playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+    }
+
+    @Test
+    fun `RS-36 songs added while a new queue is still being built join it, after it`() {
+        val builds = HeldDispatcher()
+        val harness = PlaybackHarness(buildContext = builds)
+        try {
+            harness.launch { harness.queueOperations.setQueue(listOf(song(1))) }
+            builds.runAll()
+
+            harness.launch { harness.queueOperations.setQueue((2L..4L).map { song(it) }) }
+            harness.launch { harness.playbackOperations.addToQueue(listOf(song(5))) }
+            harness.launch { harness.playbackOperations.playNext(listOf(song(6))) }
+            builds.runAll()
+            harness.idle()
+
+            harness.queueOperations.queueStateFlow.value.items.map { it.song.id } shouldBe listOf(2L, 6L, 3L, 4L, 5L)
+        } finally {
+            harness.release()
+        }
+    }
+
+    /** Holds the builds dispatched to it until [runAll], which finishes the latest first. */
+    private class HeldDispatcher : CoroutineDispatcher() {
+        private val tasks = ArrayDeque<Runnable>()
+
+        override fun dispatch(
+            context: CoroutineContext,
+            block: Runnable
+        ) {
+            tasks.addLast(block)
+        }
+
+        fun runAll() {
+            while (tasks.isNotEmpty()) tasks.removeLast().run()
+        }
     }
 
     private fun offMainThread(

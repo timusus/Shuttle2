@@ -37,10 +37,12 @@ import java.io.IOException
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
@@ -65,7 +67,9 @@ import org.robolectric.shadows.ShadowAudioTrack
  */
 class PlaybackHarness(
     replayGainMode: ReplayGainMode = ReplayGainMode.Off,
-    equalizerEnabled: Boolean = false
+    equalizerEnabled: Boolean = false,
+    /** Where queue entries are built. Inline by default, so a queue change completes within the call that makes it. */
+    buildContext: CoroutineContext = EmptyCoroutineContext
 ) {
     val context: Context = RuntimeEnvironment.getApplication()
 
@@ -154,8 +158,7 @@ class PlaybackHarness(
                 }
             }
         )
-        // Entries are built inline, so a queue change completes within the call that makes it.
-        val queueManager = QueueManager(player, GeneralPreferenceManager(FakeSharedPreferences()), songUriResolver, buildContext = EmptyCoroutineContext)
+        val queueManager = QueueManager(player, GeneralPreferenceManager(FakeSharedPreferences()), songUriResolver, buildContext)
         queueOperations = queueManager
         playbackOperations =
             PlaybackManager(
@@ -171,6 +174,9 @@ class PlaybackHarness(
 
     /** Runs a suspending operation to completion, then lets the main looper catch up with what it started. */
     fun <T> run(block: suspend () -> T): T = runBlocking { block() }.also { idle() }
+
+    /** Starts a suspending operation on the main thread, as a UI caller does, running it until it first suspends. */
+    fun launch(block: suspend () -> Unit): Job = scope.launch(start = CoroutineStart.UNDISPATCHED) { block() }
 
     /** Runs the main looper's due tasks, without letting playback time pass. */
     fun idle() {

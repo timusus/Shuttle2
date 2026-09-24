@@ -119,6 +119,10 @@ ahead as if it had failed to load (RS-23). (#345) — JVM.
 paused (a restore), then the published progress carries its real length as soon as it's ready, not only after the
 next seek or play. (#345) — JVM.
 
+**RS-36: queue changes apply in the order they're made.** Given a new queue still being set (a long album or
+playlist played), when songs are added to the queue or played next before it's ready, then they join the new queue,
+after its current song or at its end, rather than the queue it replaces. (#345) — JVM.
+
 ## Audio output
 
 **RS-15: ReplayGain from the first sample.** Given ReplayGain on and a song with a track gain, when it starts, then

@@ -35,8 +35,12 @@ interface QueueOperations {
     fun skipToNext(ignoreRepeat: Boolean = false): Boolean
     fun skipToPrevious()
     fun skipTo(position: Int)
-    fun addToQueue(songs: List<Song>)
-    fun addToNext(songs: List<Song>)
+
+    /** Adds [songs] to the end of the queue. Added to an empty queue, they're set as a new queue, and this returns true. */
+    suspend fun addToQueue(songs: List<Song>): Boolean
+
+    /** Adds [songs] after the current item. Added to an empty queue, they're set as a new queue, and this returns true. */
+    suspend fun addToNext(songs: List<Song>): Boolean
 
     /**
      * Replaces the song data of any queue item whose song id matches one of [songs], preserving the

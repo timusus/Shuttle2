@@ -496,26 +496,17 @@ class PlaybackManager(
         play()
     }
 
-    override suspend fun addToQueue(songs: List<Song>) = withContext(Dispatchers.Main.immediate) {
-        if (player.mediaItemCount == 0) {
-            playNewQueue(songs)
-        } else {
-            queueManager.addToQueue(songs)
-        }
+    override suspend fun addToQueue(songs: List<Song>) {
+        if (queueManager.addToQueue(songs)) playNewQueue()
     }
 
-    override suspend fun playNext(songs: List<Song>) = withContext(Dispatchers.Main.immediate) {
-        if (player.mediaItemCount == 0) {
-            playNewQueue(songs)
-        } else {
-            queueManager.addToNext(songs)
-        }
+    override suspend fun playNext(songs: List<Song>) {
+        if (queueManager.addToNext(songs)) playNewQueue()
     }
 
-    private suspend fun playNewQueue(songs: List<Song>) {
-        if (queueManager.setQueue(songs)) {
-            load { result -> result.onSuccess { play() } }
-        }
+    /** Plays a queue just set by adding songs to an empty one. */
+    private fun playNewQueue() {
+        load { result -> result.onSuccess { play() } }
     }
 
     override suspend fun shuffle(
