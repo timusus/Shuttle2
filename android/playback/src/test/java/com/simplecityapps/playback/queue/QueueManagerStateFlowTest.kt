@@ -5,6 +5,8 @@ import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -56,7 +58,8 @@ class QueueManagerStateFlowTest {
                 items = queueManager.getQueue().toList(),
                 currentItem = queueManager.getCurrentItem(),
                 currentPosition = queueManager.getCurrentPosition(),
-                isRestored = queueManager.hasRestoredQueue
+                isRestored = queueManager.hasRestoredQueue,
+                shuffleMode = queueManager.getShuffleMode()
             )
         if (queueManager.queueStateFlow.value != expected) mismatches += callback
     }
@@ -181,6 +184,7 @@ class QueueManagerStateFlowTest {
 
         queueManager.shuffleModeFlow.value shouldBe QueueManager.ShuffleMode.On
         queueManager.queueStateFlow.value.items shouldBe queueManager.getQueue(QueueManager.ShuffleMode.On)
+        queueManager.queueStateFlow.value.shuffleMode shouldBe QueueManager.ShuffleMode.On
         events.first() shouldBe "shuffleChanged On"
         events[1] shouldBe "queueChanged Unknown"
         mismatches shouldBe emptyList()
@@ -188,7 +192,24 @@ class QueueManagerStateFlowTest {
         queueManager.toggleShuffleMode()
 
         queueManager.shuffleModeFlow.value shouldBe QueueManager.ShuffleMode.Off
+        queueManager.queueStateFlow.value.shuffleMode shouldBe QueueManager.ShuffleMode.Off
         ids() shouldBe listOf(1L, 2L, 3L)
+    }
+
+    @Test
+    fun `the queue state only carries a new shuffle mode once the shuffled order is in place`() = runTest {
+        setQueueOf(1, 2, 3)
+        val published = mutableListOf<QueueState>()
+        val collection = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            queueManager.queueStateFlow.collect { published += it }
+        }
+
+        queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = true)
+        collection.cancel()
+
+        val firstOn = published.first { it.shuffleMode == QueueManager.ShuffleMode.On }
+        firstOn.items shouldBe queueManager.getQueue(QueueManager.ShuffleMode.On)
+        firstOn.items.map { it.song.id }.sorted() shouldBe listOf(1L, 2L, 3L)
     }
 
     @Test

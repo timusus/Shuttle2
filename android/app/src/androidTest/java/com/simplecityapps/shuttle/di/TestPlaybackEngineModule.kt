@@ -19,7 +19,6 @@ import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
 import com.simplecityapps.playback.exoplayer.PlayerFactory
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.fake.FakeAudioFocusHelper
 import com.simplecityapps.shuttle.fake.FakePlayback
 import dagger.Module
@@ -84,7 +83,6 @@ class TestPlaybackEngineModule {
         playbackPreferenceManager: PlaybackPreferenceManager,
         audioEffectSessionManager: AudioEffectSessionManager,
         @AppCoroutineScope coroutineScope: CoroutineScope,
-        queueWatcher: QueueWatcher,
         audioManager: AudioManager?
     ): PlaybackManager = PlaybackManager(
         queueManager,
@@ -95,7 +93,6 @@ class TestPlaybackEngineModule {
         coroutineScope,
         ProgressTicker(coroutineScope),
         playback,
-        queueWatcher,
         audioManager
     )
 }

@@ -68,7 +68,6 @@ class PlaybackInitializerPlaybackManagerTest {
             // A dispatcher nothing advances, so progress never ticks.
             progressTicker = ProgressTicker(CoroutineScope(StandardTestDispatcher())),
             exoplayerPlayback = localPlayback,
-            queueWatcher = queueWatcher,
             audioManager = null
         )
 

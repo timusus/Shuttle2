@@ -4,13 +4,14 @@ import android.media.AudioManager
 import android.os.SystemClock
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.model.Song
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,14 +26,14 @@ class PlaybackManager(
     appCoroutineScope: CoroutineScope,
     private val progressTicker: ProgressTicker,
     exoplayerPlayback: Playback,
-    queueWatcher: QueueWatcher,
     audioManager: AudioManager?,
     /** The anchor clock, on the `SystemClock.elapsedRealtime` timebase media controllers expect. */
-    private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime
+    private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime,
+    /** Where queue changes are collected: on the main thread, and inline when the change is made there. */
+    queueChangeContext: CoroutineContext = Dispatchers.Main.immediate
 ) : PlaybackOperations,
     Playback.Callback,
-    AudioFocusHelper.Listener,
-    QueueChangeCallback {
+    AudioFocusHelper.Listener {
     private val audioSessionId = audioManager?.generateAudioSessionId() ?: -1
 
     /** Owns the active playback, and moves playback between engines (e.g. local <-> Cast). */
@@ -109,7 +110,31 @@ class PlaybackManager(
         audioFocusHelper.listener = this
         playbackSwitcher.attachInitialPlayback()
 
-        queueWatcher.addCallback(this)
+        collectQueueChanges(appCoroutineScope, queueChangeContext)
+    }
+
+    /**
+     * Keeps the playback's repeat mode and next item in line with the queue's. Each flow is compared
+     * against a snapshot taken here, which [attachInitialPlayback][PlaybackSwitcher.attachInitialPlayback]
+     * has already applied, so only later changes are handled. Shuffle is read from the queue state rather
+     * than [QueueManager.shuffleModeFlow], which changes before a reshuffle, so the next item is only
+     * prepared once the new order is in place.
+     */
+    private fun collectQueueChanges(
+        scope: CoroutineScope,
+        context: CoroutineContext
+    ) {
+        val repeatMode = queueManager.repeatModeFlow.value
+        val queueState = queueManager.queueStateFlow.value
+
+        scope.launchCollectingChanges(queueManager.repeatModeFlow, repeatMode, context) { _, current ->
+            onRepeatChanged(current)
+        }
+        scope.launchCollectingChanges(queueManager.queueStateFlow, queueState, context) { previous, current ->
+            if (current.shuffleMode != previous.shuffleMode) {
+                onShuffleChanged()
+            }
+        }
     }
 
     override fun togglePlayback() {
@@ -539,16 +564,17 @@ class PlaybackManager(
         reanchor()
     }
 
-    // QueueChangeCallback Implementation
+    // Queue changes
 
-    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
+    /** Re-applies the repeat mode only: the playback's speed and everything else it holds are left alone. */
+    private fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
         playback.setRepeatMode(repeatMode)
         if (repeatMode != QueueManager.RepeatMode.One) {
             loadCoordinator.requestNext()
         }
     }
 
-    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
+    private fun onShuffleChanged() {
         loadCoordinator.requestNext()
     }
 

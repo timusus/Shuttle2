@@ -11,6 +11,7 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -30,7 +31,9 @@ fun testPlaybackManager(
     appCoroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
     // A dispatcher nothing advances, so progress never ticks unless a test supplies its own ticker.
     progressTicker: ProgressTicker = ProgressTicker(CoroutineScope(StandardTestDispatcher())),
-    elapsedRealtime: () -> Long = { 0L }
+    elapsedRealtime: () -> Long = { 0L },
+    // Queue changes are handled inline, as they are on the main thread in production.
+    queueChangeContext: CoroutineContext = Dispatchers.Unconfined
 ): PlaybackManager = PlaybackManager(
     queueManager = queueManager,
     playbackWatcher = playbackWatcher,
@@ -40,7 +43,7 @@ fun testPlaybackManager(
     appCoroutineScope = appCoroutineScope,
     progressTicker = progressTicker,
     exoplayerPlayback = exoplayerPlayback,
-    queueWatcher = queueWatcher,
     audioManager = null,
-    elapsedRealtime = elapsedRealtime
+    elapsedRealtime = elapsedRealtime,
+    queueChangeContext = queueChangeContext
 )

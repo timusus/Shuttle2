@@ -46,8 +46,8 @@ class QueueManager(
     private val _shuffleModeFlow = MutableStateFlow(ShuffleMode.Off)
 
     /**
-     * The shuffle mode. Backs [getShuffleMode] directly, so the two can't disagree; it changes just
-     * before [QueueChangeCallback.onShuffleChanged] is dispatched.
+     * The shuffle mode. Backs [getShuffleMode] directly, so the two can't disagree; it changes before
+     * a reshuffle generates the new order. [QueueState.shuffleMode] changes once that order is in place.
      */
     override val shuffleModeFlow: StateFlow<ShuffleMode> = _shuffleModeFlow.asStateFlow()
 
@@ -430,7 +430,8 @@ class QueueManager(
             version = queueStateVersion,
             contentVersion = queueContentVersion,
             nonMoveContentVersion = queueNonMoveContentVersion,
-            isRestored = hasRestoredQueue
+            isRestored = hasRestoredQueue,
+            shuffleMode = shuffleMode
         )
     }
 

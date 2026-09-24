@@ -16,7 +16,8 @@ import org.junit.Test
 
 /**
  * A repeat mode change tells the playback to pre-load the next item, except when switching to
- * Repeat One (there's no "next" to preload). Clearing the queue keeps the current item when
+ * Repeat One (there's no "next" to preload), and a shuffle mode change pre-loads the next item of
+ * the new order. Modes already set when the manager is built are not handled as changes. Clearing the queue keeps the current item when
  * playback is active, otherwise clears everything, abandoning any load in progress. Removing the
  * current item loads the next one (carrying on if it was playing), and removing any item
  * re-prepares the next one.
@@ -62,6 +63,37 @@ class PlaybackManagerQueueChangeTest {
         queueManager.setRepeatMode(QueueManager.RepeatMode.One)
 
         events shouldBe listOf("A setRepeatMode One")
+    }
+
+    @Test
+    fun `a repeat mode set before the manager is built is applied once, not handled as a change`() {
+        val queueWatcher = QueueWatcher()
+        val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+        queueManager.setRepeatMode(QueueManager.RepeatMode.All)
+        runBlocking { queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false) }
+        val events = mutableListOf<String>()
+
+        testPlaybackManager(exoplayerPlayback = FakePlayback("B", events = events), queueWatcher = queueWatcher, queueManager = queueManager)
+
+        events shouldBe listOf("B setRepeatMode All")
+    }
+
+    @Test
+    fun `turning shuffle on preloads the next item of the shuffled order`() {
+        runBlocking { queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = true) }
+
+        // Prepared once the reshuffle is in place, not from the order it replaced.
+        events shouldBe listOf("A loadNext ${queueManager.getNext()?.song?.name}")
+    }
+
+    @Test
+    fun `turning shuffle off preloads the next item of the original order`() {
+        runBlocking { queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = true) }
+        events.clear()
+
+        runBlocking { queueManager.setShuffleMode(QueueManager.ShuffleMode.Off, reshuffle = false) }
+
+        events shouldBe listOf("A loadNext ${queueManager.getNext()?.song?.name}")
     }
 
     @Test

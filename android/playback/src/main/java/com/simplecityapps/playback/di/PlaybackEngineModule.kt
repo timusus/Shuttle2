@@ -22,7 +22,6 @@ import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
 import com.simplecityapps.playback.exoplayer.PlayerFactory
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
@@ -114,9 +113,8 @@ class PlaybackEngineModule {
         playbackPreferenceManager: PlaybackPreferenceManager,
         audioEffectSessionManager: AudioEffectSessionManager,
         @AppCoroutineScope coroutineScope: CoroutineScope,
-        queueWatcher: QueueWatcher,
         audioManager: AudioManager?
-    ): PlaybackManager = PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, ProgressTicker(coroutineScope), playback, queueWatcher, audioManager)
+    ): PlaybackManager = PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, ProgressTicker(coroutineScope), playback, audioManager)
 
     @Provides
     fun providePlaybackOperations(playbackManager: PlaybackManager): PlaybackOperations = playbackManager
