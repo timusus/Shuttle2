@@ -2,7 +2,9 @@ package com.simplecityapps.shuttle.di
 
 import android.content.Context
 import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.localmediaprovider.local.provider.mediastore.KTagLibMediaStoreReplayGainReader
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreMediaProvider
+import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreReplayGainReader
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import dagger.Module
@@ -33,7 +35,15 @@ class MediaProviderModule {
 
     @Provides
     @Singleton
+    fun provideMediaStoreReplayGainReader(
+        @ApplicationContext context: Context,
+        kTagLib: KTagLib
+    ): MediaStoreReplayGainReader = KTagLibMediaStoreReplayGainReader(context, kTagLib)
+
+    @Provides
+    @Singleton
     fun provideMediaStoreSongProvider(
-        @ApplicationContext context: Context
-    ): MediaStoreMediaProvider = MediaStoreMediaProvider(context)
+        @ApplicationContext context: Context,
+        replayGainReader: MediaStoreReplayGainReader
+    ): MediaStoreMediaProvider = MediaStoreMediaProvider(context, replayGainReader)
 }

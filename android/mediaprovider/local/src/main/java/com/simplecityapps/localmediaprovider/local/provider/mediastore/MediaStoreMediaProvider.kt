@@ -12,6 +12,7 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
+import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
@@ -20,6 +21,8 @@ import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.isActive
@@ -27,14 +30,15 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 
 class MediaStoreMediaProvider(
-    private val context: Context
+    private val context: Context,
+    private val replayGainReader: MediaStoreReplayGainReader
 ) : MediaProvider {
     override val type = MediaProviderType.MediaStore
 
     // Songs
 
     override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
-        var songs = mutableListOf<Song>()
+        val rawSongs = mutableListOf<Song>()
         val projection =
             mutableListOf(
                 MediaStore.Audio.Media._ID,
@@ -68,8 +72,6 @@ class MediaStoreMediaProvider(
 
         songCursor?.use {
             val folderImageReader = FolderImageReader()
-            val size = songCursor.count
-            var progress = 0
             val discNumberColumnIndex =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     songCursor.getColumnIndex(MediaStore.Audio.Media.DISC_NUMBER)
@@ -136,8 +138,17 @@ class MediaStoreMediaProvider(
                         channelCount = null,
                         artworkVersion = localArtworkVersion(lastModified, folderImageReader.imagesNear(path))
                     )
+                rawSongs.add(song)
+            }
+        }
+
+        var songs = mutableListOf<Song>()
+        rawSongs.asFlow()
+            .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { song ->
+                song.withReplayGainTags(replayGainReader)
+            }
+            .collectIndexed { index, song ->
                 songs.add(song)
-                progress++
                 emit(
                     FlowEvent.Progress(
                         MessageProgress(
@@ -146,12 +157,11 @@ class MediaStoreMediaProvider(
                                     song.friendlyArtistName ?: song.albumArtist,
                                     song.name
                                 ).joinToString(" • "),
-                            progress = Progress(progress, size)
+                            progress = Progress(index + 1, rawSongs.size)
                         )
                     )
                 )
             }
-        }
 
         context.contentResolver.query(
             MediaStore.Audio.Genres.EXTERNAL_CONTENT_URI,
