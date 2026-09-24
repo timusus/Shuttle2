@@ -3,8 +3,10 @@ package com.simplecityapps.localmediaprovider.local.data.room.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
@@ -15,6 +17,31 @@ import kotlinx.coroutines.flow.map
 abstract class PlaylistDataDao {
     @Insert
     abstract suspend fun insert(playlistData: PlaylistData): Long
+
+    @Insert
+    abstract suspend fun insertSongJoins(playlistSongJoins: List<PlaylistSongJoin>)
+
+    /**
+     * Inserts [playlistData] holding the songs with [songIds], in that order, as one transaction: if a song
+     * can't be added, no playlist is left behind either.
+     */
+    @Transaction
+    open suspend fun insert(
+        playlistData: PlaylistData,
+        songIds: List<Long>
+    ): Long {
+        val playlistId = insert(playlistData)
+        insertSongJoins(
+            songIds.mapIndexed { i, songId ->
+                PlaylistSongJoin(
+                    playlistId = playlistId,
+                    songId = songId,
+                    sortOrder = i.toLong()
+                )
+            }
+        )
+        return playlistId
+    }
 
     @Update
     abstract suspend fun update(playlistData: PlaylistData)

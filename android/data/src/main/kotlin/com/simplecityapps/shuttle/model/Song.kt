@@ -89,4 +89,11 @@ data class Song(
     }
 
     fun canBeDeleted(): Boolean = externalId == null
+
+    /**
+     * False for a file opened from another app that isn't in the library: it plays as a transient song with a
+     * negative id, so there's no row to save it against (in a playlist, the saved queue, and so on).
+     */
+    val isInLibrary: Boolean
+        get() = id >= 0
 }

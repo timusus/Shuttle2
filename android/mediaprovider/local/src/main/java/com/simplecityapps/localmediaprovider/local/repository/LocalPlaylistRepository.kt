@@ -90,17 +90,9 @@ class LocalPlaylistRepository(
                     sortOrder = PlaylistSongSortOrder.Position,
                     mediaProviderType = mediaProviderType,
                     externalId = externalId
-                )
+                ),
+                songIds = songs.orEmpty().inLibrary().map { song -> song.id }
             )
-        playlistSongJoinDao.insert(
-            songs.orEmpty().mapIndexed { i, song ->
-                PlaylistSongJoin(
-                    playlistId = playlistId,
-                    songId = song.id,
-                    sortOrder = i.toLong()
-                )
-            }
-        )
         val playlist = playlistDataDao.getPlaylist(playlistId)
         Timber.v("Created playlist: ${playlist.name} with ${playlist.songCount} songs}")
         return playlist
@@ -110,7 +102,7 @@ class LocalPlaylistRepository(
         playlist: Playlist,
         songs: List<Song>
     ) = playlistSongJoinDao.insert(
-        songs.mapIndexed { i, song ->
+        songs.inLibrary().mapIndexed { i, song ->
             PlaylistSongJoin(
                 playlistId = playlist.id,
                 songId = song.id,
@@ -227,3 +219,9 @@ class LocalPlaylistRepository(
         )
     }
 }
+
+/**
+ * The songs that can be saved to a playlist. A file opened from another app that isn't in the library (e.g. from
+ * the queue) has no song row for a playlist to refer to, so it's left out rather than failing the whole write.
+ */
+private fun List<Song>.inLibrary(): List<Song> = filter { song -> song.isInLibrary }
