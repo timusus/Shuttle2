@@ -50,6 +50,10 @@
   ],
   "fixes": [
     {
+      "text": "The home screen's \"Albums released this year\" now shows up to 100 albums instead of stopping at 20",
+      "commits": []
+    },
+    {
       "text": "ReplayGain now works for songs found by the media scanner, after a rescan",
       "commits": []
     },

@@ -118,7 +118,7 @@ constructor(
             val albumsFromThisYear =
                 albumRepository
                     .getAlbums(AlbumQuery.Year(Calendar.getInstance().get(Calendar.YEAR)))
-                    .map { it.take(20) }
+                    .map { it.take(100) }
 
             val unplayedAlbumArtists =
                 albumArtistRepository
