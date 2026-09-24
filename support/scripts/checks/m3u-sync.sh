@@ -19,6 +19,7 @@ s2 REMOVE_PLAYLIST_SONG --es playlist "'taglib'" --es song "'Taglib Two'" >/dev/
 m3u="$(adb_retry shell cat /sdcard/Music/taglib-seed/taglib.m3u)"
 
 echo "$m3u" | grep -q "Taglib Two" && fail "removed song's line is still in the .m3u"
+echo "$m3u" | grep -q "taglib2.mp3" && fail "removed song's path line is still in the .m3u"
 echo "$m3u" | grep -q "Taglib One" || fail "surviving song 'Taglib One' missing from the .m3u"
 echo "$m3u" | grep -q "Taglib Three" || fail "surviving song 'Taglib Three' missing from the .m3u"
 echo "$m3u" | grep -q "missing-track.mp3" || fail "unresolved entry 'missing-track.mp3' was dropped from the .m3u"

@@ -47,8 +47,9 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 ### Tag edits reaching a queued song (#270)
 - [x] With the Shuttle (TagLib) local provider set up (needs a real SAF folder pick, which
       `seed-test-media.sh` deliberately skips by using the MediaStore provider), queue several
-      songs and play one. Edit the playing song's title via the batch tag editor; the queue, now
-      playing, mini player and notification all update without playback interrupting. — automated: `emu-verify.sh --check tag-edit-queued`
+      songs and play one. Edit the playing song's title via the batch tag editor; now playing
+      and the notification update without playback interrupting. — automated: `emu-verify.sh --check tag-edit-queued`
+- [ ] After that edit, the queue sheet and mini player show the new title too.
 - [x] Edit a queued-but-not-playing song's title the same way; the queue screen shows the new
       title, playback isn't affected. — automated: `emu-verify.sh --check tag-edit-queued`
 
