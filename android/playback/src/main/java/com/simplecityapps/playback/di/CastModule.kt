@@ -24,12 +24,12 @@ class CastModule {
         @ApplicationContext context: Context,
         songRepository: SongRepository,
         artworkImageLoader: ArtworkImageLoader,
-        mediaInfoProvider: AggregateMediaInfoProvider
-    ): CastService = CastService(context, songRepository, artworkImageLoader, mediaInfoProvider)
+        streams: CastStreams
+    ): CastService = CastService(context, songRepository, artworkImageLoader, streams)
 
     @Singleton
     @Provides
-    fun provideCastStreams(): CastStreams = CastStreams()
+    fun provideCastStreams(mediaInfoProvider: AggregateMediaInfoProvider): CastStreams = CastStreams(mediaInfoProvider)
 
     @Singleton
     @Provides

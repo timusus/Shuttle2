@@ -9,9 +9,11 @@ import au.com.simplecityapps.shuttle.imageloading.palette.ColorSet
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
@@ -88,9 +90,15 @@ class FakeArtworkImageLoader(private val bytes: ByteArray?) : ArtworkImageLoader
  * Streams a remote-provider song from `https://media.example/<id>?ApiKey=secret-token`, as audio/mpeg, or as
  * [transcodedType] when asked for a Cast-compatible stream; a local song plays its own file.
  */
-class FakeMediaInfoProvider(private val transcodedType: String = "application/x-mpegURL") : MediaInfoProvider {
+class FakeMediaInfoProvider(private val transcodedType: String = TRANSCODED) : MediaInfoProvider {
     /** The songs asked for, with whether a Cast-compatible stream was wanted. */
     val requests = mutableListOf<Pair<Long, Boolean>>()
+
+    /** While set, answers wait for it. */
+    var gate: CompletableDeferred<Unit>? = null
+
+    /** Songs whose stream fails to resolve. */
+    val failing = mutableSetOf<Long>()
 
     override fun handles(uri: Uri): Boolean = true
 
@@ -99,6 +107,8 @@ class FakeMediaInfoProvider(private val transcodedType: String = "application/x-
         castCompatibilityMode: Boolean
     ): MediaInfo {
         synchronized(requests) { requests += song.id to castCompatibilityMode }
+        gate?.await()
+        if (song.id in failing) throw IllegalStateException("No credentials")
         return if (song.mediaProvider.remote) {
             MediaInfo(Uri.parse(remoteUrl(song.id)), if (castCompatibilityMode) transcodedType else "audio/mpeg", isRemote = true)
         } else {
@@ -114,6 +124,11 @@ class FakeMediaInfoProvider(private val transcodedType: String = "application/x-
     ): Uri? = error("not called")
 
     companion object {
+        const val TRANSCODED = "application/x-mpegURL"
+
         fun remoteUrl(songId: Long) = "https://media.example/$songId?ApiKey=secret-token"
     }
 }
+
+/** A [testSong] from a Jellyfin server. */
+fun remoteSong(id: Long) = testSong(id, path = "jellyfin://song/$id").copy(mediaProvider = MediaProviderType.Jellyfin)

@@ -1,13 +1,13 @@
 package com.simplecityapps.playback.chromecast
 
 import com.simplecityapps.playback.fakes.testSong
-import com.simplecityapps.shuttle.model.MediaProviderType
 import fi.iki.elonen.NanoHTTPD
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.coroutines.EmptyCoroutineContext
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -23,7 +23,7 @@ class HttpServerTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private val streams = CastStreams()
+    private val streams = CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext)
 
     private lateinit var localFile: File
 
@@ -33,12 +33,12 @@ class HttpServerTest {
     fun setUp() {
         localFile = folder.newFile("song1.mp3").apply { writeBytes(AUDIO) }
         val local = testSong(1, path = localFile.absolutePath).copy(size = AUDIO.size.toLong())
-        val remote = testSong(2, path = "jellyfin://song/2").copy(mediaProvider = MediaProviderType.Jellyfin)
+        val remote = remoteSong(2)
         val castService = CastService(
             RuntimeEnvironment.getApplication(),
             FakeSongRepository(listOf(local, remote)),
             FakeArtworkImageLoader(ARTWORK),
-            FakeMediaInfoProvider()
+            streams
         )
         server = HttpServer(castService, streams, port = 0).apply { start(NanoHTTPD.SOCKET_READ_TIMEOUT, false) }
     }

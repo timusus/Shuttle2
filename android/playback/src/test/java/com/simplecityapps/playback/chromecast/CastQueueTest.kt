@@ -1,5 +1,6 @@
 package com.simplecityapps.playback.chromecast
 
+import android.os.Looper
 import androidx.media3.common.DeviceInfo
 import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.Player
@@ -15,11 +16,15 @@ import com.simplecityapps.playback.queue.queueEntry
 import com.simplecityapps.playback.queue.toMediaItem
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 
 /** How playback is handed between the local player and a Cast receiver, the receiver played by a second player. */
 @RunWith(RobolectricTestRunner::class)
@@ -36,7 +41,13 @@ class CastQueueTest {
             override fun getDeviceInfo(): DeviceInfo = DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE).build()
         }
 
-    private val castQueue = CastQueue(local, CastMediaItemConverter({ "10.0.0.2" }, CastStreams(), "Unknown"))
+    private val provider = FakeMediaInfoProvider()
+
+    private val streams = CastStreams(provider, EmptyCoroutineContext)
+
+    private val converter = CastMediaItemConverter({ "10.0.0.2" }, streams, "Unknown")
+
+    private val castQueue = CastQueue(local, converter, streams)
 
     @After
     fun tearDown() {
@@ -45,6 +56,10 @@ class CastQueueTest {
     }
 
     private fun queue(size: Int) = (1L..size).map { QueueEntry(uid = it, song = testSong(it)).toMediaItem() }
+
+    private fun remoteQueue(size: Int) = (1L..size).map { QueueEntry(uid = it, song = remoteSong(it)).toMediaItem() }
+
+    private fun idle() = shadowOf(Looper.getMainLooper()).idle()
 
     private fun Player.uids(): List<Long> = List(mediaItemCount) { getMediaItemAt(it).queueEntry.uid }
 
@@ -137,5 +152,49 @@ class CastQueueTest {
 
         local.currentUid shouldBe 5L
         local.currentPosition shouldBe 20_000L
+    }
+
+    @Test
+    fun `RS-38 a remote song is sent once its stream is resolved, as its real type, at the local position`() {
+        castQueue.attach(remote)
+        provider.gate = CompletableDeferred()
+        local.setMediaItems(remoteQueue(30), 5, 40_000)
+
+        castQueue.transferState(local, remote)
+        idle()
+
+        remote.mediaItemCount shouldBe 0
+        provider.requests.first() shouldBe (6L to true)
+
+        provider.gate!!.complete(Unit)
+        idle()
+
+        remote.uids() shouldBe (1L..30L).toList()
+        remote.currentUid shouldBe 6L
+        remote.currentPosition shouldBe 40_000L
+        provider.requests.map { it.first }.toSet() shouldBe (1L..30L).toSet()
+        provider.requests.all { it.second } shouldBe true
+        List(remote.mediaItemCount) { converter.toMediaQueueItem(remote.getMediaItemAt(it)).media!!.contentType }.toSet() shouldBe
+            setOf(FakeMediaInfoProvider.TRANSCODED)
+    }
+
+    @Test
+    fun `a window goes out as far as its streams are resolved, and the rest follows`() {
+        castQueue.attach(remote)
+        (1L..30L).filter { it != 9L }.forEach { runBlocking { streams.resolve(listOf(remoteSong(it))) } }
+        provider.gate = CompletableDeferred()
+        local.setMediaItems(remoteQueue(30), 5, 0)
+
+        castQueue.transferState(local, remote)
+        idle()
+
+        remote.uids() shouldBe (1L..8L).toList()
+        remote.currentUid shouldBe 6L
+
+        provider.gate!!.complete(Unit)
+        idle()
+
+        remote.uids() shouldBe (1L..30L).toList()
+        remote.currentUid shouldBe 6L
     }
 }

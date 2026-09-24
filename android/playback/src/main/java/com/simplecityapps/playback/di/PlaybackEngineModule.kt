@@ -105,8 +105,9 @@ class PlaybackEngineModule {
     @Provides
     fun provideCastQueue(
         exoPlayer: ExoPlayer,
-        converter: CastMediaItemConverter
-    ): CastQueue = CastQueue(exoPlayer, converter)
+        converter: CastMediaItemConverter,
+        streams: CastStreams
+    ): CastQueue = CastQueue(exoPlayer, converter, streams)
 
     // The player the app plays through: the ExoPlayer, or a Cast receiver while a Cast session is up. Built on the main
     // thread, as Cast requires.

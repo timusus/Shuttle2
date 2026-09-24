@@ -16,9 +16,9 @@ import org.json.JSONObject
 
 /**
  * Turns queue items into what a Cast receiver loads, and back. Every song streams from the phone's [HttpServer], at a
- * URL carrying the session's key (see [CastStreams]): a local song as its file, a remote-provider song as a redirect
- * to its server's stream, resolved when the receiver fetches it (see [CastService.getAudio]), so sending a queue never
- * waits on a server.
+ * URL carrying the session's key: a local song as its file, a remote-provider song as a redirect to its server's
+ * stream. A remote-provider song's stream is resolved before it's sent (see [CastStreams]), so it goes out with the
+ * content type the receiver plays it as, and converting never waits on a server.
  *
  * Each entry's content id is its stream URL with the entry's uid as the fragment, which HTTP never sends: Media3 keys
  * the items it sent by content id, so two entries for the same song must differ. The uid also rides in the custom
@@ -28,7 +28,7 @@ import org.json.JSONObject
 class CastMediaItemConverter(
     /** The phone's address on the network the receiver streams from. */
     private val hostAddress: () -> String,
-    /** The session key every URL carries. */
+    /** The session key every URL carries, and each song's resolved content type. */
     private val streams: CastStreams,
     /** Stands in for a missing artist, album or title. */
     private val unknown: String
@@ -54,7 +54,7 @@ class CastMediaItemConverter(
             MediaInfo.Builder("$url#${entry.uid}")
                 .setContentUrl(url)
                 .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
-                .setContentType(song.mimeType)
+                .setContentType(streams.contentType(song))
                 .setStreamDuration(song.duration.toLong())
                 .setMetadata(metadata)
                 .setCustomData(JSONObject().put(KEY_UID, entry.uid))

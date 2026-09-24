@@ -8,7 +8,14 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import com.simplecityapps.playback.queue.queueEntry
 import com.simplecityapps.playback.queue.queueEntryOrNull
+import com.simplecityapps.shuttle.model.Song
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.android.asCoroutineDispatcher
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -18,20 +25,24 @@ import timber.log.Timber
  * The local player always holds the whole queue, and stays S2's queue while casting: [com.simplecityapps.playback.queue.QueueManager]
  * changes it, not the receiver. The receiver holds a [CastWindow] of it in play order, since it has no shuffle order
  * of its own. Changes to the local queue are sent on; the receiver moving on to another item moves the local
- * player's current item with it.
+ * player's current item with it. A remote-provider song is only sent once its stream is resolved (see [CastStreams]),
+ * so a window goes out as far as its streams are, and the rest follows as they resolve.
  *
  * Main thread only, like the players.
  */
 class CastQueue(
     /** The player that holds the whole queue, and plays it when not casting. */
     private val localPlayer: Player,
-    private val converter: CastMediaItemConverter
+    private val converter: CastMediaItemConverter,
+    private val streams: CastStreams
 ) : CastPlayer.TransferCallback {
     private var castPlayer: Player? = null
 
     private val handler = Handler(localPlayer.applicationLooper)
 
-    private val syncRunnable = Runnable { sync() }
+    private val scope = CoroutineScope(SupervisorJob() + handler.asCoroutineDispatcher().immediate)
+
+    private val syncRunnable = Runnable { castPlayer?.takeIf { it.isRemote }?.let(::sync) }
 
     /** The uids of the entries the receiver was sent, in its order. */
     private var sent: List<Long> = emptyList()
@@ -41,6 +52,15 @@ class CastQueue(
 
     /** The uid of the entry the receiver was last known to be on, to tell its own moves from ones sent to it. */
     private var remoteUid: Long? = null
+
+    /** The entry being cast from the local player, and its position there, until the receiver is sent a queue. */
+    private var transfer: Pair<Long, Long>? = null
+
+    /** Resolves the streams of songs about to be sent, then syncs as they're ready. */
+    private var resolving: Job? = null
+
+    /** The ids of the songs [resolving] resolves. */
+    private var resolvingIds: Set<Long> = emptySet()
 
     /** Follows the queue while [player], built around this and [localPlayer], is casting. */
     fun attach(player: Player) {
@@ -109,23 +129,22 @@ class CastQueue(
         }
     }
 
-    /** Sends the window around the current item, at the local position, playing if the local player was. */
+    /**
+     * Sends the window around the current item, at the local position, playing if the local player was: at once, or
+     * once the current song's stream is resolved.
+     */
     private fun toRemote(
         source: Player,
         target: Player
     ) {
-        sent = emptyList()
-        pending = false
-        remoteUid = null
-        val order = source.playOrder()
-        val index = source.currentMediaItem?.queueEntryOrNull?.uid?.let(order::indexOf) ?: -1
-        if (index == -1) return
+        reset()
+        val uid = source.currentMediaItem?.queueEntryOrNull?.uid ?: return
         target.repeatMode = source.repeatMode
         target.playbackParameters = source.playbackParameters
         // The receiver starts playing as it loads if the target plays when ready, so it's set first.
         target.playWhenReady = source.playWhenReady
-        val (uids, windowIndex) = CastWindow.around(order, index)
-        load(target, uids, windowIndex, source.currentPosition)
+        transfer = uid to source.currentPosition
+        sync(target)
     }
 
     /**
@@ -138,9 +157,7 @@ class CastQueue(
     ) {
         val uid = source.currentUid()
         val position = source.currentPosition
-        sent = emptyList()
-        pending = false
-        remoteUid = null
+        reset()
         target.playWhenReady = false
         target.playbackParameters = source.playbackParameters
         val index = uid?.let { target.indexOfUid(it) } ?: -1
@@ -181,6 +198,17 @@ class CastQueue(
         }
     }
 
+    /** Forgets what the receiver was sent, and stops resolving for it. */
+    private fun reset() {
+        sent = emptyList()
+        pending = false
+        remoteUid = null
+        transfer = null
+        resolving?.cancel()
+        resolving = null
+        resolvingIds = emptySet()
+    }
+
     /** Syncs once the current batch of player events has been handled, however many there are. */
     private fun requestSync() {
         if (castPlayer?.isRemote != true) return
@@ -189,8 +217,7 @@ class CastQueue(
     }
 
     /** Takes the next [CastWindow] step towards the local queue, unless the last one is still on its way. */
-    private fun sync() {
-        val remote = castPlayer?.takeIf { it.isRemote } ?: return
+    private fun sync(remote: Player) {
         if (pending) return
         followRemote(remote)
         // A receiver holding other than what it was sent (another sender changed it, or a send failed) is sent afresh.
@@ -207,39 +234,84 @@ class CastQueue(
             CastWindow.Step.Keep, is CastWindow.Step.Seek -> Unit
 
             is CastWindow.Step.Remove -> {
-                runs(step.indices).asReversed().forEach { range -> remote.removeMediaItems(range.first, range.last + 1) }
+                // What was sent is noted first, as a player may report the change before its call returns.
                 val removed = step.indices.toSet()
                 sent = sent.filterIndexed { index, _ -> index !in removed }
                 pending = true
+                runs(step.indices).asReversed().forEach { range -> remote.removeMediaItems(range.first, range.last + 1) }
             }
 
             is CastWindow.Step.Append -> {
-                remote.addMediaItems(localItems(step.uids))
-                sent = sent + step.uids
+                val items = localItems(step.uids)
+                val ready = resolvedRun(items, 0) ?: return
+                val appended = items.subList(0, ready.last + 1)
+                sent = sent + appended.map { it.queueEntry.uid }
                 pending = true
+                remote.addMediaItems(appended)
             }
 
             is CastWindow.Step.Load -> {
-                // The item playing keeps its place in the new window; any other starts from the beginning.
-                val position = if (remote.currentUid() == current) remote.currentPosition else 0
-                load(remote, step.uids, step.index, position)
+                val items = localItems(step.uids)
+                val ready = resolvedRun(items, step.index) ?: return
+                // The item being cast, or the one playing, keeps its place in the new window; any other starts from
+                // the beginning.
+                val position = transfer?.takeIf { it.first == current }?.second
+                    ?: if (remote.currentUid() == current) remote.currentPosition else 0
+                load(remote, items.subList(ready.first, ready.last + 1), step.index - ready.first, position)
             }
         }
     }
 
     private fun load(
         target: Player,
-        uids: List<Long>,
+        items: List<MediaItem>,
         index: Int,
         positionMs: Long
     ) {
-        val items = localItems(uids)
         Timber.v("Sending ${items.size} items to the Cast receiver, at $index")
         converter.retainOnly(items)
-        target.setMediaItems(items, index, positionMs)
-        sent = uids
+        sent = items.map { it.queueEntry.uid }
         pending = true
-        remoteUid = uids.getOrNull(index)
+        remoteUid = sent.getOrNull(index)
+        transfer = null
+        target.setMediaItems(items, index, positionMs)
+    }
+
+    /**
+     * The run of [items] around the one at [index] whose streams are resolved, resolving the rest, nearest first;
+     * null while the one at [index] isn't.
+     */
+    private fun resolvedRun(
+        items: List<MediaItem>,
+        index: Int
+    ): IntRange? {
+        val songs = items.map { it.queueEntry.song }
+        val resolved = songs.map(streams::isResolved)
+        if (!resolved.all { it }) {
+            resolve(songs.subList(index, songs.size) + songs.subList(0, index).asReversed())
+        }
+        if (!resolved[index]) return null
+        var first = index
+        while (first > 0 && resolved[first - 1]) first--
+        var last = index
+        while (last < songs.lastIndex && resolved[last + 1]) last++
+        return first..last
+    }
+
+    /**
+     * Resolves the streams of [songs], the first on its own and the rest a few at a time, syncing as each lot is
+     * ready. A resolve already on its way to the first carries on.
+     */
+    private fun resolve(songs: List<Song>) {
+        if (resolving?.isActive == true && songs.first().id in resolvingIds) return
+        resolving?.cancel()
+        resolvingIds = songs.mapTo(HashSet()) { it.id }
+        resolving = scope.launch {
+            (listOf(songs.take(1)) + songs.drop(1).chunked(RESOLVE_BATCH)).forEach { batch ->
+                streams.resolve(batch)
+                requestSync()
+            }
+        }
     }
 
     /** The local player's items for [uids], in that order. */
@@ -267,6 +339,9 @@ class CastQueue(
         ?: sent.takeIf { holdsSent() }?.getOrNull(currentMediaItemIndex)
 
     companion object {
+        /** How many streams are resolved before the receiver is sent more. */
+        private const val RESOLVE_BATCH = 10
+
         /** The uids of this player's entries, in the order it plays them. */
         fun Player.playOrder(): List<Long> {
             val timeline = currentTimeline

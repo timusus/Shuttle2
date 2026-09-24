@@ -5,8 +5,8 @@ What playback must do, as seen by the user, one rule per behaviour. Each rule co
 the Media3 refactor (#345, `docs/architecture/media3-playback-design.md`) must keep every one.
 
 Each JVM rule has one test named with its RS id, in `android/playback/src/test/java/com/simplecityapps/playback/spec/`:
-`PlaybackSpecTest` for queue and transport rules, `AudioOutputSpecTest` for the audio that comes out, `CastSpecTest`
-for casting (a Cast rule about the phone's stream server is tested by `chromecast/HttpServerTest`). The tests run
+`PlaybackSpecTest` for queue and transport rules, `AudioOutputSpecTest` for the audio that comes out; a Cast rule
+names its test, in `chromecast/` or `spec/CastSpecTest`. The tests run
 the real `PlaybackManager` and `QueueManager` over a real ExoPlayer whose playlist is the queue, built by the
 production `ExoPlayerFactory` (fake clock, lazy preparation as in production, production renderers, audio sink and
 EQ/ReplayGain processors, WAV files from the test resources). They call only
@@ -162,6 +162,12 @@ a3dd7b59, e48e3be2) — device-only: *Cast* and *Behaviour spec, device-only rul
 phone's stream server for a song's audio or artwork without that session's key, whether a local file or a
 remote-provider song whose stream URL holds the provider's credential, then it's refused (403) and nothing is
 redirected; a new session gets a new key. (#345) — JVM (`chromecast/HttpServerTest`).
+
+**RS-38: a remote song is cast as the stream its server sends.** Given a Jellyfin or Emby song the receiver can't play
+as it is, when it's cast, then the receiver is told the type the server transcodes it to (HLS) rather than the file's
+own, the stream being resolved before the song is sent; a window of songs goes out as far as their streams are
+resolved, starting from the current song at its position, and the rest follows in order. (#345) — JVM
+(`chromecast/CastQueueTest`); the real transcode is device-only: *Cast*.
 
 ## Commits with no rule
 

@@ -5,7 +5,6 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.query.SongQuery
 import java.io.File
@@ -24,16 +23,13 @@ class CastService(
     private val context: Context,
     private val songRepository: SongRepository,
     private val artworkImageLoader: ArtworkImageLoader,
-    private val mediaInfoProvider: MediaInfoProvider
+    private val streams: CastStreams
 ) {
     class AudioStream(val stream: InputStream, val length: Long, val mimeType: String)
 
-    /**
-     * Where a remote-provider song streams from, resolved as the receiver asks for it; null for a local song, or one
-     * that isn't in the library.
-     */
+    /** Where a remote-provider song streams from (see [CastStreams]); null for a local song, or one that isn't in the library. */
     suspend fun getRemoteAudioUrl(songId: Long): String? = songRepository.getSongs(SongQuery.SongIds(listOf(songId))).firstOrNull()?.firstOrNull()?.let { song ->
-        mediaInfoProvider.getMediaInfo(song).takeIf { it.isRemote }?.path?.toString()
+        streams.remoteUrl(song)
     }
 
     suspend fun getArtwork(songId: Long): ByteArray? = songRepository.getSongs(SongQuery.SongIds(listOf(songId))).firstOrNull()?.firstOrNull()?.let { song ->

@@ -11,13 +11,15 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class CastMediaItemConverterTest {
-    private val streams = CastStreams()
+    private val streams = CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext)
 
     private val converter = CastMediaItemConverter(hostAddress = { "192.168.1.20" }, streams = streams, unknown = "Unknown")
 
@@ -55,6 +57,17 @@ class CastMediaItemConverterTest {
         after.contentUrl shouldNotBe before
         after.contentUrl shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/audio"
         after.metadata!!.images.single().url.toString() shouldBe "http://192.168.1.20:5000/${streams.key}/songs/7/artwork"
+    }
+
+    @Test
+    fun `a remote song goes out as the type its stream was resolved as`() = runTest {
+        val remote = remoteSong(8)
+        streams.resolve(listOf(remote))
+
+        val media = converter.toMediaQueueItem(QueueEntry(uid = 3, song = remote).toMediaItem()).media!!
+
+        media.contentType shouldBe FakeMediaInfoProvider.TRANSCODED
+        media.contentUrl shouldBe "http://192.168.1.20:5000/${streams.key}/songs/8/audio"
     }
 
     @Test
