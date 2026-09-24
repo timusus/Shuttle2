@@ -44,6 +44,10 @@
       {
       "text": "Export a playlist to an m3u file from the playlist menu",
       "commits": []
+    },
+    {
+      "text": "Playlists imported from an .m3u file now stay in sync with that file when you add, remove or reorder songs",
+      "commits": []
     }
   ],
   "improvements": [

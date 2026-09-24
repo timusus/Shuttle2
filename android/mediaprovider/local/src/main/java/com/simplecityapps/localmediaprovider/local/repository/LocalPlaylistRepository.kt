@@ -1,10 +1,12 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import android.content.Context
+import android.net.Uri
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistSongJoinDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
+import com.simplecityapps.mediaprovider.M3uWriter
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.comparator
@@ -16,6 +18,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.sorting.SongSortOrder
+import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -30,12 +33,21 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+/**
+ * True for playlists imported from a local .m3u file (their [Playlist.externalId] is the file's
+ * SAF document URI, set by `TaglibMediaProvider.findPlaylists`) - the only ones with a file to
+ * keep in sync when their songs change.
+ */
+internal fun Playlist.isM3uSynced(): Boolean = mediaProvider == MediaProviderType.Shuttle && externalId != null
+
 class LocalPlaylistRepository(
     private val context: Context,
     private val scope: CoroutineScope,
     private val playlistDataDao: PlaylistDataDao,
     private val playlistSongJoinDao: PlaylistSongJoinDao
 ) : PlaylistRepository {
+    private val m3uWriter = M3uWriter()
+
     private val playlistsRelay: StateFlow<List<Playlist>?> by lazy {
         playlistDataDao
             .getAll()
@@ -101,31 +113,40 @@ class LocalPlaylistRepository(
     override suspend fun addToPlaylist(
         playlist: Playlist,
         songs: List<Song>
-    ) = playlistSongJoinDao.insert(
-        songs.inLibrary().mapIndexed { i, song ->
-            PlaylistSongJoin(
-                playlistId = playlist.id,
-                songId = song.id,
-                sortOrder = (playlist.songCount + i).toLong()
-            )
-        }
-    )
+    ) {
+        playlistSongJoinDao.insert(
+            songs.inLibrary().mapIndexed { i, song ->
+                PlaylistSongJoin(
+                    playlistId = playlist.id,
+                    songId = song.id,
+                    sortOrder = (playlist.songCount + i).toLong()
+                )
+            }
+        )
+        syncM3uFile(playlist)
+    }
 
     override suspend fun removeFromPlaylist(
         playlist: Playlist,
         playlistSongs: List<PlaylistSong>
-    ) = playlistSongJoinDao.delete(
-        playlistId = playlist.id,
-        playlistSongIds = playlistSongs.map { playlistSong -> playlistSong.id }.toTypedArray()
-    )
+    ) {
+        playlistSongJoinDao.delete(
+            playlistId = playlist.id,
+            playlistSongIds = playlistSongs.map { playlistSong -> playlistSong.id }.toTypedArray()
+        )
+        syncM3uFile(playlist)
+    }
 
     override suspend fun removeSongsFromPlaylist(
         playlist: Playlist,
         songs: List<Song>
-    ) = playlistSongJoinDao.deleteSongs(
-        playlistId = playlist.id,
-        songIds = songs.map { it.id }.toTypedArray()
-    )
+    ) {
+        playlistSongJoinDao.deleteSongs(
+            playlistId = playlist.id,
+            songIds = songs.map { it.id }.toTypedArray()
+        )
+        syncM3uFile(playlist)
+    }
 
     override fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>> = playlistSongJoinDao.getSongsForPlaylist(playlist.id)
         .map { playlistSong ->
@@ -137,7 +158,10 @@ class LocalPlaylistRepository(
 
     override suspend fun deleteAll(mediaProviderType: MediaProviderType) = playlistDataDao.deleteAll(mediaProviderType)
 
-    override suspend fun clearPlaylist(playlist: Playlist) = playlistDataDao.clear(playlist.id)
+    override suspend fun clearPlaylist(playlist: Playlist) {
+        playlistDataDao.clear(playlist.id)
+        syncM3uFile(playlist)
+    }
 
     override suspend fun renamePlaylist(
         playlist: Playlist,
@@ -185,6 +209,7 @@ class LocalPlaylistRepository(
                 }
             }
         )
+        syncM3uFile(playlist)
     }
 
     override suspend fun updatePlaylistMediaProviderType(
@@ -217,6 +242,32 @@ class LocalPlaylistRepository(
                 externalId = externalId
             )
         )
+    }
+
+    /**
+     * Rewrites the source .m3u file for an m3u-imported [playlist] after its songs change, so an
+     * external player sees the same edit. Best-effort: the file may have moved or lost its SAF
+     * grant since import, so failures are logged rather than surfaced - the in-app playlist is
+     * still the source of truth.
+     */
+    private suspend fun syncM3uFile(playlist: Playlist) {
+        if (!playlist.isM3uSynced()) {
+            return
+        }
+        val uri = Uri.parse(playlist.externalId)
+        try {
+            val songs = getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song }
+            val outputStream = context.contentResolver.openOutputStream(uri, "wt")
+            if (outputStream == null) {
+                Timber.w("Could not open output stream to sync m3u file for playlist '${playlist.name}' at $uri")
+                return
+            }
+            outputStream.use { it.write(m3uWriter.write(songs).toByteArray(Charsets.UTF_8)) }
+        } catch (e: IOException) {
+            Timber.e(e, "Failed to sync m3u file for playlist '${playlist.name}' at $uri")
+        } catch (e: SecurityException) {
+            Timber.e(e, "Failed to sync m3u file for playlist '${playlist.name}' at $uri (permission denied)")
+        }
     }
 }
 
