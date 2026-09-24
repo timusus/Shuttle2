@@ -292,7 +292,9 @@ class PlaybackManager(
                 if (attempt <= 2) {
                     Timber.v("Playback released.. reloading.")
                     var startPosition = playbackPreferenceManager.playbackPosition ?: queueManager.getCurrentItem()?.song?.getStartPosition() ?: 0
-                    if (startPosition > (getDuration() ?: Int.MAX_VALUE) - 200) {
+                    // The released playback may report the length of whatever it last held, so check
+                    // against the song being reloaded.
+                    if (isNearEndOfCurrentSong(startPosition)) {
                         startPosition = 0
                     }
                     load(startPosition) { result ->
@@ -307,8 +309,7 @@ class PlaybackManager(
                 if (loadingPositionMs != null) {
                     // The playback still reports the item it's replacing, so check where the load will
                     // start against the item it's loading, and restart the load rather than the old item.
-                    val duration = queueManager.getCurrentItem()?.song?.duration?.takeIf { it > 0 }
-                    if (loadingPositionMs > (duration ?: Int.MAX_VALUE) - 200) {
+                    if (isNearEndOfCurrentSong(loadingPositionMs)) {
                         seekTo(0)
                     }
                 } else if (playback.getProgress() ?: 0 > (playback.getDuration() ?: Int.MAX_VALUE) - 200) {
@@ -319,6 +320,12 @@ class PlaybackManager(
         } else {
             Timber.w("play() failed, audio focus request denied.")
         }
+    }
+
+    /** Whether [positionMs] is within 200ms of the end of the current queue item's song, if its length is known. */
+    private fun isNearEndOfCurrentSong(positionMs: Int): Boolean {
+        val duration = queueManager.getCurrentItem()?.song?.duration?.takeIf { it > 0 } ?: return false
+        return positionMs > duration - 200
     }
 
     override fun skipToNext(

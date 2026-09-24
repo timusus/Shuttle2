@@ -16,7 +16,7 @@ import org.junit.Test
 
 /**
  * play() reloads a released playback before resuming, up to 2 attempts, resetting the seek
- * position to zero if it's within 200ms of the track's end. An already-loaded playback seeks to
+ * position to zero if it's within 200ms of the end of the song it reloads. An already-loaded playback seeks to
  * zero instead of reloading when resumed near the end.
  */
 class PlaybackManagerPlayTest {
@@ -73,13 +73,27 @@ class PlaybackManagerPlayTest {
         val playback = FakePlayback("A", events = events)
         createPlaybackManager(playback)
         playback.isReleased = true
-        playback.durationMs = 5_000
-        playbackPreferenceManager.playbackPosition = 4_850
+        playbackPreferenceManager.playbackPosition = 179_850
         events.clear()
 
         playbackManager.play()
 
         events shouldBe listOf("A load Song seek 0")
+    }
+
+    @Test
+    fun `play reloads at the saved position by the song's length, not the released playback's`() {
+        // The released playback may still report the length of whatever it last held.
+        val playback = FakePlayback("A", events = events)
+        createPlaybackManager(playback)
+        playback.isReleased = true
+        playback.durationMs = 5_000
+        playbackPreferenceManager.playbackPosition = 150_000
+        events.clear()
+
+        playbackManager.play()
+
+        events shouldBe listOf("A load Song seek 150000")
     }
 
     @Test
