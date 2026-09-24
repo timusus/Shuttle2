@@ -96,6 +96,20 @@ one per song, so the time taken doesn't grow with the square of the queue's leng
 reads the progress or duration, pauses, or removes a queue item, then the read returns the last published state and
 each change takes effect on the main thread, without an error. (#345) — JVM.
 
+**RS-30: removing the current song moves on to the next.** Given a queue with a song after the current one, when
+the current song is removed, then the next song becomes current: it plays if the removed song was playing, and waits
+paused at its start if it was paused. (#345) — JVM.
+
+**RS-31: clearing a paused queue empties it.** Given a queue loaded and paused, when the queue is cleared, then it's
+empty and playback stays paused. (Cleared while playing, the current song stays: RS-28.) (#345) — JVM.
+
+**RS-32: play next with shuffle on.** Given shuffle on, when songs are played next, then they come straight after
+the current song in both the shuffled and the unshuffled queue, in the order chosen, and the current song plays on.
+(#345) — JVM.
+
+**RS-33: previous goes back early, else restarts.** Given a song playing, when previous is pressed within its first
+2 seconds, then the song before it becomes current; after 2 seconds, the song restarts instead. (#345) — JVM.
+
 ## Audio output
 
 **RS-15: ReplayGain from the first sample.** Given ReplayGain on and a song with a track gain, when it starts, then

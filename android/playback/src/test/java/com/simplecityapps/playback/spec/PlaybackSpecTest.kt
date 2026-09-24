@@ -7,6 +7,7 @@ import com.simplecityapps.playback.spec.PlaybackHarness.Companion.BYTES_PER_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_2S_MS
+import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_3S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.resourceUri
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unreadableSong
@@ -465,6 +466,87 @@ class PlaybackSpecTest {
         progress.shouldNotBeNull()
         playback.playbackStateFlow.value shouldBe PlaybackState.Paused
         queue.queueStateFlow.value.items.map { it.song.id } shouldBe listOf(1L, 2L)
+    }
+
+    @Test
+    fun `RS-30 removing the playing song plays the next one`() {
+        startPlaying(listOf(song(1), song(2), song(3)))
+
+        playback.removeQueueItem(queue.queueStateFlow.value.currentItem!!)
+        harness.idle()
+
+        queue.queueStateFlow.value.items.map { it.song.id } shouldBe listOf(2L, 3L)
+        queue.queueStateFlow.value.currentItem?.song?.id shouldBe 2L
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing && (playback.getProgress() ?: 0) > 0 }
+    }
+
+    @Test
+    fun `RS-30 removing the paused song makes the next one current, still paused`() {
+        loadPaused(listOf(song(1), song(2), song(3)), positionMs = 1_200)
+
+        playback.removeQueueItem(queue.queueStateFlow.value.currentItem!!)
+        harness.runUntil { playback.playbackStateFlow.value != PlaybackState.Loading }
+
+        queue.queueStateFlow.value.items.map { it.song.id } shouldBe listOf(2L, 3L)
+        queue.queueStateFlow.value.currentItem?.song?.id shouldBe 2L
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        playback.getProgress() shouldBe 0
+    }
+
+    @Test
+    fun `RS-31 clearing the queue while paused empties it`() {
+        loadPaused(listOf(song(1), song(2)))
+
+        playback.clearQueue()
+        harness.idle()
+
+        queue.queueStateFlow.value.items.shouldBeEmpty()
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+    }
+
+    @Test
+    fun `RS-32 songs played next with shuffle on come straight after the current song in both orders`() {
+        val songs = (1L..5L).map { song(it) }
+        val added = (6L..7L).map { song(it) }
+        harness.run { playback.shuffle(songs) {} }
+        val current = queue.queueStateFlow.value.currentItem!!
+        val shuffled = queue.queueStateFlow.value.items
+        val unshuffled = queue.getQueue(QueueManager.ShuffleMode.Off)
+
+        harness.run { playback.playNext(added) }
+
+        val position = shuffled.indexOf(current)
+        queue.queueStateFlow.value.items.map { it.song } shouldBe
+            shuffled.take(position + 1).map { it.song } + added + shuffled.drop(position + 1).map { it.song }
+        val unshuffledPosition = unshuffled.indexOfFirst { it.uid == current.uid }
+        queue.getQueue(QueueManager.ShuffleMode.Off).map { it.song } shouldBe
+            unshuffled.take(unshuffledPosition + 1).map { it.song } + added + unshuffled.drop(unshuffledPosition + 1).map { it.song }
+        queue.queueStateFlow.value.currentItem?.uid shouldBe current.uid
+    }
+
+    @Test
+    fun `RS-33 previous within the first 2 seconds goes back a song`() {
+        startPlaying(listOf(song(1), song(2, file = TONE_3S)))
+        playback.skipToNext()
+        harness.runUntil { queue.queueStateFlow.value.currentItem?.song?.id == 2L && playback.playbackStateFlow.value == PlaybackState.Playing }
+
+        playback.skipToPrev()
+        harness.idle()
+
+        queue.queueStateFlow.value.currentItem?.song?.id shouldBe 1L
+    }
+
+    @Test
+    fun `RS-33 previous after the first 2 seconds restarts the song`() {
+        startPlaying(listOf(song(1), song(2, file = TONE_3S)))
+        playback.skipToNext()
+        harness.runUntil { queue.queueStateFlow.value.currentItem?.song?.id == 2L && (playback.getProgress() ?: 0) > 2_100 }
+
+        playback.skipToPrev()
+        harness.idle()
+
+        queue.queueStateFlow.value.currentItem?.song?.id shouldBe 2L
+        playback.getProgress()!!.shouldBeBetween(0, 100)
     }
 
     private fun offMainThread(

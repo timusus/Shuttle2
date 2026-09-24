@@ -220,6 +220,10 @@ class PlaybackHarness(
         const val TONE_1S = "tone-1s.wav"
         const val TONE_1S_MS = 1_000
 
+        /** 3 s of a 440 Hz sine at half scale, 16 kHz mono 16-bit: long enough to play past the restart threshold. */
+        const val TONE_3S = "tone-3s.wav"
+        const val TONE_3S_MS = 3_000
+
         /** Bytes of output per millisecond of the 16-bit test files: 16 kHz, mono, 2 bytes a sample. */
         const val BYTES_PER_MS = 32
 
@@ -234,7 +238,12 @@ class PlaybackHarness(
         fun song(
             id: Long,
             file: String = TONE_2S,
-            durationMs: Int = if (file == TONE_2S) TONE_2S_MS else TONE_1S_MS,
+            durationMs: Int =
+                when (file) {
+                    TONE_2S -> TONE_2S_MS
+                    TONE_3S -> TONE_3S_MS
+                    else -> TONE_1S_MS
+                },
             replayGainTrack: Double? = null
         ): Song = testSong(id = id, path = resourceUri(file), mimeType = "audio/wav", duration = durationMs, replayGainTrack = replayGainTrack)
 
