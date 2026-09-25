@@ -1,0 +1,67 @@
+package com.simplecityapps.shuttle.ui.screens.library
+
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.LibraryTab
+import io.kotest.matchers.shouldBe
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
+class LibraryViewModelTest {
+
+    private val preferences = GeneralPreferenceManager(
+        ApplicationProvider.getApplicationContext<Context>().getSharedPreferences("library-test", Context.MODE_PRIVATE),
+    )
+
+    @Test
+    fun `defaults to every tab but Folders, opening on Artists`() {
+        val state = LibraryViewModel(preferences).uiState.value
+
+        state.tabs shouldBe LibraryTab.entries - LibraryTab.Folders
+        state.currentTab shouldBe LibraryTab.Artists
+    }
+
+    @Test
+    fun `the selected tab persists across view models`() {
+        LibraryViewModel(preferences).onTabSelected(LibraryTab.Songs)
+
+        LibraryViewModel(preferences).uiState.value.currentTab shouldBe LibraryTab.Songs
+    }
+
+    @Test
+    fun `editing tabs reorders, hides and shows them, and persists the result`() {
+        val viewModel = LibraryViewModel(preferences)
+        val order = listOf(LibraryTab.Folders, LibraryTab.Songs, LibraryTab.Albums, LibraryTab.Artists, LibraryTab.Genres, LibraryTab.Playlists)
+
+        viewModel.onTabsChanged(order, enabled = setOf(LibraryTab.Folders, LibraryTab.Songs, LibraryTab.Artists))
+
+        viewModel.uiState.value.allTabs shouldBe order
+        viewModel.uiState.value.tabs shouldBe listOf(LibraryTab.Folders, LibraryTab.Songs, LibraryTab.Artists)
+        LibraryViewModel(preferences).uiState.value.tabs shouldBe listOf(LibraryTab.Folders, LibraryTab.Songs, LibraryTab.Artists)
+    }
+
+    @Test
+    fun `hiding the current tab falls back to Artists, then to the first shown tab`() {
+        val viewModel = LibraryViewModel(preferences)
+        viewModel.onTabSelected(LibraryTab.Songs)
+
+        viewModel.onTabsChanged(LibraryTab.entries, enabled = setOf(LibraryTab.Albums, LibraryTab.Artists))
+        viewModel.uiState.value.currentTab shouldBe LibraryTab.Artists
+
+        viewModel.onTabsChanged(LibraryTab.entries, enabled = setOf(LibraryTab.Albums))
+        viewModel.uiState.value.currentTab shouldBe LibraryTab.Albums
+    }
+
+    @Test
+    fun `hiding every tab leaves no current tab`() {
+        val viewModel = LibraryViewModel(preferences)
+
+        viewModel.onTabsChanged(LibraryTab.entries, enabled = emptySet())
+
+        viewModel.uiState.value.tabs shouldBe emptyList()
+        viewModel.uiState.value.currentTab shouldBe null
+    }
+}
