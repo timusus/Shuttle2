@@ -403,7 +403,7 @@ layouts, menus) in the same change and moves its Maestro flows to test tags (`te
    `repeat-modes` and `sleep-timer` flows.
 4. **Queue.** `LazyColumn` with drag-to-reorder, remove and play-next, in the sheet and the pane.
    Deletes `QueueFragment`, its presenter and binders. Verify: UDF test layers; reorder never moves
-   the sheet; `queue-actions`, `queue-shuffle` and `open-queue-by-taps` flows.
+   the sheet; `queue-actions` and `queue-shuffle` flows; `AppShellTest`.
 5. **Screens,** after a short serial 5.0 for the shared song actions every group uses (playlist menu
    as a use case and Compose menu; tag editor, song info and create-playlist dialogs). Then groups
    with disjoint files, one worker each:

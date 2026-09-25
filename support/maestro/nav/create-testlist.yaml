@@ -1,6 +1,6 @@
 # Creates a "TestList" playlist (if it doesn't already exist) containing two songs from the
 # many-tracks fixture, via Songs tab's multi-select -> "Add to Playlist" -> "New Playlist". Needed
-# by checks that need a playlist to already exist (playlist-export-m3u, playlists-multiselect-back)
+# by checks that need a playlist to already exist (playlist-export-m3u)
 # -- run this after seeding the many-tracks fixture. Idempotent: skips creation if a "TestList"
 # playlist already exists on the Playlists tab.
 appId: com.simplecityapps.shuttle.dev

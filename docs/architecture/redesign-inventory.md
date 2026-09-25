@@ -33,7 +33,7 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   over a `HorizontalPager`, contextual bar swap on selection (app-shell §3). Tab order and
   visibility move to an "Edit tabs" sheet reached from the Library overflow (drag handles, switches),
   instead of living in Settings > Display. Trial ring leaves the toolbar (§8).
-- Maestro: `nav/open-library-tab`, `library-multiselect-back`.
+- Maestro: `nav/open-library-tab` (`library-multiselect-back` ported to `LibraryScreenTest`, #450).
 
 ### Songs tab (Compose) — Keep
 - Tap plays the visible list from that row; synthetic "Shuffle" first row; long-press multi-select.
@@ -44,8 +44,8 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
 - Multi-select bar: Add to queue, Add to playlist, Edit tags (sanitised per provider).
 - States: loading, "scan in progress" bar, `song_list_empty`.
 - Redesign: already Compose; restyle rows, Shuffle becomes an extended FAB or header button.
-- Maestro: `select-song` + `song-still-selected`, `songs-fast-scroll-drag`, `library-multiselect-back`,
-  `queue-actions` (Play next / Add to queue from this tab), `nav/create-testlist`.
+- Maestro: `queue-actions` (Play next / Add to queue from this tab), `nav/create-testlist`. `select-song` +
+  `song-still-selected`, `songs-fast-scroll-drag` and `library-multiselect-back` ported to JVM tests (#450).
 
 ### Albums tab (Compose) — Keep
 - List or 3-column grid (`pref_album_view_mode`); sort by name, artist, year, Random (reseeded only
@@ -53,7 +53,7 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
 - Menu: Play, Add to queue, Add to playlist, Play next, Exclude, Edit tags (only if every provider
   in the album supports it). Multi-select as Songs.
 - Redesign: adaptive grid column count by width (app-shell §2) instead of fixed 3.
-- Maestro: `library-multiselect-back`.
+- Maestro: none (`library-multiselect-back` ported to `LibraryScreenTest`, #450).
 
 ### Album artists tab (Compose) — Keep
 - List or grid (`pref_artist_view_mode`); **no sort menu**; tap opens detail; multi-select; menu:
@@ -64,7 +64,7 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
 ### Genres tab (Compose) — Keep
 - List only; sort by name or song count (`sort_order_genre_list`); no multi-select; menu: Play,
   Add to queue, Add to playlist, Play next, Exclude, Edit tags.
-- Maestro: `genres-sort-by-song-count`.
+- Maestro: none (`genres-sort-by-song-count` ported to `GenreListIntegrationTest`, #450).
 
 ### Playlists tab (Compose) — Change
 - User playlists (sort by name or date created, `sort_order_playlist_list`) plus two hardcoded smart
@@ -75,7 +75,7 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
 - Redesign: pin a row of auto playlists at the top (Favorites always, Recently added, Most played,
   History), then user playlists; "New playlist" FAB (today a playlist can only be created from an
   "Add to playlist" menu). Rename/clear/delete stay in the row menu.
-- Maestro: `playlists-fast-scroller`, `playlist-export-m3u`, `nav/create-testlist`.
+- Maestro: `playlist-export-m3u`, `nav/create-testlist` (`playlists-fast-scroller` ported to `LibraryScreenTest`, #450).
 
 ### Folders tab (Compose, opt-in) — Keep
 - Drill-down browsing of the local folder tree with back popping one level; falls back to the
@@ -112,7 +112,7 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
 - Song menu adds Remove (from playlist, file kept).
 - Redesign: Compose `LazyColumn` with reorder; show "Sorted by X — switch to custom order to
   reorder" when drag is off; add batch Remove; Export moves to overflow unchanged.
-- Maestro: `playlists-multiselect-back`, `playlist-export-m3u`.
+- Maestro: `playlist-export-m3u` (`playlists-multiselect-back` ported to `PlaylistDetailScreenTest`, #450).
 
 ### Smart playlist detail (MVP) — Change
 - Read-only list; toolbar Shuffle and Add to queue; song menu has queue, Play next, Song info,
@@ -152,7 +152,7 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   forward in repeated steps. **No swipe gesture.** Tap expands; hidden while the queue is empty.
 - Redesign: Compose in the sheet (app-shell slice 3); M3 Expressive wavy `LinearWavyProgressIndicator`
   while playing; optional horizontal swipe to skip (owner decision 9).
-- Maestro: `nav/open-now-playing`, `open-queue-by-taps`, `playback-controls`.
+- Maestro: `nav/open-now-playing`, `playback-controls` (`open-queue-by-taps` ported to `AppShellTest`, #450).
 
 ### Now playing — Change
 - Artwork carousel: **swipe artwork to skip** to that queue position. Play/pause, prev/next with
@@ -168,7 +168,7 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   entry in the overflow (owner decision 2); tabletop split (app-shell §2). Done (#377, #400): the
   overflow's "Playback & sound" sheet sets speed (0.5–2×, pitch kept) and ReplayGain mode and links
   to the Equalizer and Settings > Playback & sound; a speed other than 1× shows as a header chip.
-- Maestro: `playback-controls`, `repeat-modes`, `queue-shuffle`, `sleep-timer`, `nav/open-now-playing`.
+- Maestro: `playback-controls`, `repeat-modes`, `queue-shuffle`, `nav/open-now-playing` (`sleep-timer` ported to `AppShellTest`, #450).
 
 ### Queue — Change
 - Tap a row to play it; drag-to-reorder; **no swipe-to-remove**; long-press row menu: Play next,
@@ -177,7 +177,7 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   No multi-select.
 - Redesign: Compose `LazyColumn` with reorder (app-shell slice 3); add swipe-to-remove with an Undo
   snackbar; keep the row menu; auto-scroll to current on open.
-- Maestro: `queue-actions`, `queue-shuffle`, `open-queue-by-taps`, `nav/open-queue`.
+- Maestro: `queue-actions`, `queue-shuffle`, `nav/open-queue` (`open-queue-by-taps` ported to `AppShellTest`, #450).
 
 ## 5. Actions, dialogs and tools
 
@@ -224,7 +224,7 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
 - Redesign: bottom sheet with M3 Expressive button group of durations plus a custom duration;
   countdown chip on Now Playing. Reached from Now Playing (and the drawer today). Done (#377): the
   running timer's sheet offers "Add 5 min" and Stop; Stop reopens the presets, replacing Set new time.
-- Maestro: `sleep-timer`.
+- Maestro: none (`sleep-timer` ported to `AppShellTest`, #450).
 
 ### Equalizer (`DspFragment`) — Change
 - Master switch (`equalizer_enabled`), presets (editing switches to Custom, persisted), band editor,
@@ -380,8 +380,8 @@ Compose paywall (`ui/screens/paywall/`), which Settings > S2 Pro opens too.
 Note: Remote Config (trial length, pricing tier, snowfall) only refreshes when Firebase Analytics
 is enabled, so the analytics decision changes pricing and trial behaviour too.
 
-Maestro: `paywall-settings.yaml` opens the paywall from Settings > S2 Pro (a debug build is always Pro, so it
-shows the Pro status); the other states are covered by the Roborazzi recordings in `docs/design/paywall/`.
+`SettingsScreenTest` and `PaywallScreenTest` cover opening the paywall from Settings > S2 Pro and the Pro status
+(ported from the `paywall-settings` flow, #450); the other states are covered by the Roborazzi recordings in `docs/design/paywall/`.
 
 ## 9. System surfaces (unaffected)
 

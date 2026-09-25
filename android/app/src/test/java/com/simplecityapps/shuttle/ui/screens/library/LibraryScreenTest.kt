@@ -129,6 +129,22 @@ class LibraryScreenTest {
         robot.selectionCleared shouldBe true
     }
 
+    @Test
+    fun `back with a selection clears it rather than leaving the Library`() {
+        robot.setContent(libraryState(), selectingChrome(selectedCount = 1))
+
+        robot.pressBack()
+
+        robot.selectionCleared shouldBe true
+    }
+
+    @Test
+    fun `without a selection back is left to the back stack`() {
+        robot.setContent(libraryState())
+
+        robot.backIsHandled() shouldBe false
+    }
+
     // -- Pages --
 
     @Test
@@ -141,6 +157,17 @@ class LibraryScreenTest {
 
         robot.clickText("Shuffle")
         robot.shuffleClicked shouldBe true
+    }
+
+    @Test
+    fun `dragging the songs page's fast scroller to the bottom scrolls to the last song`() {
+        val songs = (1..48).map { createSong(id = it.toLong(), name = "Track $it") }
+        robot.setContent(libraryState(currentTab = LibraryTab.Songs), pages = LibraryPageStates(songs = readySongList(songs)))
+
+        robot.dragFastScrollerToBottom()
+
+        robot.assertTextNotDisplayed("Track 1")
+        robot.assertTextDisplayed("Track 48")
     }
 
     @Test
@@ -171,6 +198,12 @@ class LibraryScreenTest {
     fun `the fast scroller sits at the end edge of a grid page too`() {
         val albums = listOf(createAlbum(name = "Phase Garden", albumArtist = "Juniper Static"))
         robot.setContent(libraryState(currentTab = LibraryTab.Albums), pages = LibraryPageStates(albums = readyAlbumList(albums, viewMode = ViewMode.Grid)))
+        robot.assertFastScrollerAtEndEdge()
+    }
+
+    @Test
+    fun `the playlists page has a fast scroller at its end edge too`() {
+        robot.setContent(libraryState(currentTab = LibraryTab.Playlists), pages = LibraryPageStates(playlists = readyPlaylistList(listOf(createPlaylist(name = "Road trip")))))
         robot.assertFastScrollerAtEndEdge()
     }
 

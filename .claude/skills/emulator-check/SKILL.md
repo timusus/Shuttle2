@@ -17,7 +17,7 @@ One call, in the foreground, with a generous timeout:
 
 ```bash
 support/scripts/emu-verify.sh                   # builds/reuses the APK, runs the full check suite
-support/scripts/emu-verify.sh --check open-queue-by-taps --flow support/maestro/nav/open-settings.yaml
+support/scripts/emu-verify.sh --check restore-queue --flow support/maestro/nav/open-settings.yaml
 support/scripts/emu-verify.sh --apk /tmp/s2-apk/<sha>.apk --no-seed --check rapid-skip
 ```
 
@@ -70,7 +70,7 @@ run `support/scripts/remote-emu.sh reconnect` yourself first (no reboot, lease k
 | Need | Use |
 |---|---|
 | Play, pause, skip, seek, remove from queue, shuffle/repeat, reimport, read state as JSON | `support/scripts/s2-debug.sh <ACTION>` (the `debug-receivers` skill) |
-| Ready-made checks | `support/scripts/checks/*.sh` (queue-remove-current, rapid-skip, restore-position, open-queue-by-taps, folder-art) |
+| Ready-made checks | `support/scripts/checks/*.sh` (queue-remove-current, rapid-skip, restore-position, restore-queue, folder-art) |
 | Taps where the UI is the subject | a Maestro flow in `support/maestro/`, run by a `checks/` wrapper that sets up state first |
 | One-off taps, dumps, screenshots | `remote-emu.sh tap-text` / `dump-texts`, or the `android-device` skill with the `env` exports |
 | Notification / lock screen | `adb shell cmd statusbar expand-notifications`, `remote-emu.sh lockscreen on` |
@@ -86,12 +86,14 @@ It only talks to the Mac's adb server on 5037, so pass `--device "$(support/scri
    `run-all.sh` picks it up automatically.
 2. Only if taps are the subject: add `support/maestro/<name>.yaml`, reusing `support/maestro/nav/`
    subflows via `runFlow` for common navigation (see `support/maestro/README.md`) and selecting by
-   visible text otherwise. Call it from the wrapper (see `open-queue-by-taps.sh`), or run it
+   visible text otherwise. Call it from the wrapper (see `restore-queue.sh`), or run it
    directly with `emu-verify.sh --flow support/maestro/<name>.yaml`. Each `maestro test` costs
    10–20 s to start, so use one flow per check.
 3. Pause playback (`s2-debug.sh PAUSE`) before any uiautomator or Maestro step. While music plays the UI
    never goes idle and dumps fail.
 4. Prefer adding a check that proves the fix over one-off manual steps, so the next change is covered too.
+5. A check whose subject is Compose navigation or state, not the device, belongs in a Robolectric test in
+   `:android:app` instead (`support/maestro/CLASSIFICATION.md`).
 
 ## Reporting
 

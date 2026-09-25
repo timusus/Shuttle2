@@ -1,7 +1,10 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
@@ -18,6 +21,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -84,6 +89,8 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
     var newPlaylistClicked = false
         private set
 
+    private var backDispatcher: OnBackPressedDispatcher? = null
+
     // -- Content setup --
 
     fun setContent(
@@ -102,6 +109,7 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
             menu = chrome.menu,
         )
         rule.setContent {
+            backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
             S2Theme {
                 LibraryScreen(
                     uiState = uiState,
@@ -167,6 +175,9 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         check(scroller.left == root.left && scroller.right == root.right) { "fast scroller spans $scroller, page spans $root" }
     }
 
+    /** Whether the screen takes a back press, rather than leaving it to the back stack. */
+    fun backIsHandled(): Boolean = checkNotNull(backDispatcher).hasEnabledCallbacks()
+
     fun assertTabSelected(label: String) {
         tab(label).assertIsSelected()
     }
@@ -190,6 +201,23 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
 
     fun scrollToText(listTag: String, text: String) {
         rule.onNodeWithTag(listTag).performScrollToNode(hasText(text))
+    }
+
+    fun pressBack() {
+        rule.runOnUiThread { checkNotNull(backDispatcher).onBackPressed() }
+        rule.waitForIdle()
+    }
+
+    /** Drags the page's fast scroller thumb from the top of its track to the bottom, in small steps like a finger. */
+    fun dragFastScrollerToBottom() {
+        rule.onNodeWithTag("library-fast-scroller").performTouchInput {
+            val thumb = topRight + Offset(-24.dp.toPx(), 24.dp.toPx())
+            down(thumb)
+            val steps = 40
+            repeat(steps) { moveBy(Offset(0f, (bottom - thumb.y) / steps)) }
+            up()
+        }
+        rule.waitForIdle()
     }
 
     fun openOverflow() {

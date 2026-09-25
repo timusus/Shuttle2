@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
@@ -60,6 +62,8 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
     var exported = false
         private set
 
+    private var backDispatcher: OnBackPressedDispatcher? = null
+
     // -- Content setup --
 
     fun setAlbum(uiState: AlbumDetailUiState) = render {
@@ -117,7 +121,10 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
     }
 
     private fun render(content: @Composable () -> Unit) {
-        rule.setContent { S2Theme { content() } }
+        rule.setContent {
+            backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+            S2Theme { content() }
+        }
         rule.waitForIdle()
     }
 
@@ -167,6 +174,14 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
     }
 
     // -- Interactions --
+
+    /** Whether the screen takes a back press, rather than leaving it to the back stack. */
+    fun backIsHandled(): Boolean = checkNotNull(backDispatcher).hasEnabledCallbacks()
+
+    fun pressBack() {
+        rule.runOnUiThread { checkNotNull(backDispatcher).onBackPressed() }
+        rule.waitForIdle()
+    }
 
     fun clickPlay() = clickText("Play")
 

@@ -22,11 +22,11 @@ The rows are the parity checklist in
 
 | 1.0.10 feature | Compose replacement | Coverage | Gap |
 |---|---|---|---|
-| Tabs: Songs, Albums, Artists, Genres, Playlists, Folders (opt-in); reorder and hide; last tab restored | `screens/library/LibraryScreen`, `LibraryViewModel`, `LibraryPages` | `LibraryScreenTest`, `LibraryViewModelTest`, `LibraryScreenshotTest`; `library-compose` | |
-| Sorts: Songs ×6, Albums ×4 incl. Random, Genres ×2, Playlists ×2 | `SongListViewModel`, `AlbumListViewModel`, `GenreListViewModel`, `PlaylistListViewModel` | `SongListTest`, `AlbumListTest`, `GenreListTest`, `PlaylistListTest`; `genres-sort-by-song-count` | |
+| Tabs: Songs, Albums, Artists, Genres, Playlists, Folders (opt-in); reorder and hide; last tab restored | `screens/library/LibraryScreen`, `LibraryViewModel`, `LibraryPages` | `LibraryScreenTest`, `LibraryViewModelTest`, `LibraryScreenshotTest` | |
+| Sorts: Songs ×6, Albums ×4 incl. Random, Genres ×2, Playlists ×2 | `SongListViewModel`, `AlbumListViewModel`, `GenreListViewModel`, `PlaylistListViewModel` | `SongListTest`, `AlbumListTest`, `GenreListTest`, `PlaylistListTest`, `GenreListIntegrationTest` | |
 | Album and artist list/grid toggle, persisted | `AlbumListViewModel`, `AlbumArtistListViewModel`, `ViewMode` | `AlbumListTest`, `AlbumArtistListTest` | |
-| Fast scroller with section popup | `common/components/FastScroller` | `FastScrollerComputationTest`; `playlists-fast-scroller`, `songs-fast-scroll-drag` | |
-| Multi-select on Songs, Albums, Artists, Playlist detail; back clears selection first | List and detail ViewModels' selection state | `LibraryScreenTest`; `library-multiselect-back`, `playlists-multiselect-back`, `select-song`, `song-still-selected` | |
+| Fast scroller with section popup | `common/components/FastScroller` | `FastScrollerComputationTest`, `LibraryScreenTest` | |
+| Multi-select on Songs, Albums, Artists, Playlist detail; back clears selection first | List and detail ViewModels' selection state | `LibraryScreenTest`, `PlaylistDetailScreenTest`, `SongListIntegrationTest` | |
 | Batch Add to queue, Add to playlist, Edit tags | `actions/EnqueueSongs`, `actions/AddToPlaylist`, `actions/MediaActionHandler` | `EnqueueSongsTest`, `AddToPlaylistTest`, `MediaActionHandlerTest` | |
 | Album detail: disc groups, Shuffle, Queue, Play next, Add to playlist, Edit tags | `screens/library/AlbumDetailScreen`, `albums/detail/AlbumDetail` | `AlbumDetailTest`, `AlbumDetailIntegrationTest`, `AlbumDetailScreenTest` | |
 | Artist detail: inline album expand, Play/Shuffle all, Shuffle albums, Play next, Edit all tags | `AlbumArtistDetailScreen`, `albumartists/detail/AlbumArtistDetail` | `AlbumArtistDetailTest`, `AlbumArtistDetailIntegrationTest`, `AlbumArtistDetailViewModelTest` | |
@@ -50,11 +50,11 @@ The rows are the parity checklist in
 
 | 1.0.10 feature | Compose replacement | Coverage | Gap |
 |---|---|---|---|
-| Search: artists, albums, songs; fuzzy ranking; filter chips persisted; shared-element open | `screens/search/SearchScreen`, `SearchViewModel`, `LibrarySearchIndex` | `SearchScreenTest`, `SearchViewModelTest`, `SearchLibraryTest`, `SearchScreenshotTest`; `shell-home-search` | Shared-element open: #431 |
-| Home sections and Shuffle all (redesigned per owner decision 4) | `screens/home/HomeScreen`, `HomeSections`, `HomeViewModel` | `HomeScreenTest`, `HomeSectionsTest`, `HomeViewModelTest`, `HomeScreenshotTest`; `shell-home-search` | |
-| Mini player: progress, play/pause, skip, long-press seek | `shell/player/MiniPlayer` | `AppShellTest`, `ShellScreenshotTest`; `shell-player`, `playback-controls` | Long-press seek: #430 |
-| Now Playing: artwork swipe skip, shuffle, repeat ×3, seek, long-press seek, audiobook seek buttons, artist/album links, Cast, lyrics, favorite, clear queue | `shell/player/NowPlaying`, `PlayerContent`, `PlayerViewModel` | `PlayerViewModelTest`, `PlayerLevelTest`, `PlayerExtrasScreenshotTest`; `repeat-modes`, `shell-sheet-levels` | Long-press and audiobook seek: #430. Lyrics: #429 |
-| Queue: tap to play, reorder, remove, Play next, scroll to current, save as playlist, clear | `shell/player/QueueList` | `PlayerViewModelTest`, `NewPlaylistFormTest`; `queue-actions`, `queue-shuffle`, `open-queue-by-taps` | |
+| Search: artists, albums, songs; fuzzy ranking; filter chips persisted; shared-element open | `screens/search/SearchScreen`, `SearchViewModel`, `LibrarySearchIndex` | `SearchScreenTest`, `SearchViewModelTest`, `SearchLibraryTest`, `SearchScreenshotTest` | Shared-element open: #431 |
+| Home sections and Shuffle all (redesigned per owner decision 4) | `screens/home/HomeScreen`, `HomeSections`, `HomeViewModel` | `HomeScreenTest`, `HomeSectionsTest`, `HomeViewModelTest`, `HomeScreenshotTest` | |
+| Mini player: progress, play/pause, skip, long-press seek | `shell/player/MiniPlayer` | `AppShellTest`, `ShellScreenshotTest`; `playback-controls` | Long-press seek: #430 |
+| Now Playing: artwork swipe skip, shuffle, repeat ×3, seek, long-press seek, audiobook seek buttons, artist/album links, Cast, lyrics, favorite, clear queue | `shell/player/NowPlaying`, `PlayerContent`, `PlayerViewModel` | `PlayerViewModelTest`, `PlayerLevelTest`, `PlayerExtrasScreenshotTest`, `AppShellTest`; `repeat-modes` | Long-press and audiobook seek: #430. Lyrics: #429 |
+| Queue: tap to play, reorder, remove, Play next, scroll to current, save as playlist, clear | `shell/player/QueueList` | `PlayerViewModelTest`, `NewPlaylistFormTest`, `AppShellTest`; `queue-actions`, `queue-shuffle` | |
 
 ## Sources and settings
 
@@ -66,21 +66,21 @@ The rows are the parity checklist in
 | Rescan now, rescan frequency, last scan date; scan progress and failures | `SettingsCatalog`, `SettingsViewModel`, `SourcesScreen` | `SettingsCatalogTest`, `SettingsViewModelTest` | |
 | Excluded items: view, restore one, clear all | `screens/settings/excluded/ExcludedSongsScreen` | `ExcludedSongsScreenTest`, `ExcludedSongsViewModelTest` | |
 | Jellyfin, Emby, Plex: connect, edit, remember password, errors with retry, remove source, report playback | Compose `ServerSignInDialog` (one form for all three), hosted by `SourcesRoute` | `JellyfinAuthenticationTest`, `EmbyAuthenticationTest`, `*PlaybackReporterTest`, `ServerSignInTest`, `ServerSignInViewModelTest`, `SignInToServerTest` | Compose rebuild: #443 |
-| Theme, pure black, accent, dynamic colour, Home or Library on launch | `SettingsCatalog` | `SettingsCatalogTest`, `S2AppThemeTest`, `ColorSchemesTest`; `settings-compose` | |
+| Theme, pure black, accent, dynamic colour, Home or Library on launch | `SettingsCatalog` | `SettingsCatalogTest`, `S2AppThemeTest`, `ColorSchemesTest`, `SettingsIntegrationTest` | |
 | Artwork: Wi-Fi only, local only, clear cache, download all, media session artwork | `SettingsCatalog` | `SettingsCatalogTest`; `notification-art.sh` | |
 | Widget opacity; both widget sizes update | `SettingsCatalog`, `widgets/NowPlayingWidget` | `NowPlayingWidgetRenderTest`, `NowPlayingWidgetStateTest`, `WidgetLayoutTest`, `WidgetUpdateRequestsTest`; `widget-controls.sh` | |
 | Crash reporting and analytics toggles; Remote Config refreshes | `SettingsCatalog`, Home analytics consent card | `SettingsCatalogTest`, `AnalyticsConsentViewModelTest` | |
 | File logging, copy logs; debug live log in debug builds | `SettingsCatalog` | `SettingsCatalogTest` | Live log: #433 |
-| Changelog reachable; licences | `screens/settings/about/WhatsNewScreen`, `LicencesScreen` | `VersionTest`; `settings-compose` | |
+| Changelog reachable; licences | `screens/settings/about/WhatsNewScreen`, `LicencesScreen` | `VersionTest`, `SettingsScreenTest` | |
 
 ## Purchase, system surfaces
 
 | 1.0.10 feature | Compose replacement | Coverage | Gap |
 |---|---|---|---|
-| Purchase: Lifetime, Annual, Monthly plan cards; thank-you; promo code; review prompt | `screens/paywall/PaywallScreen` (hosted by `PaywallDialogFragment`), `ReviewPrompt` | `PaywallScreenTest`, `PaywallViewModelTest`, `PaywallScreenshotTest`, `ReviewPromptTest`; `paywall-settings` | Thank-you, promo code: #418 |
+| Purchase: Lifetime, Annual, Monthly plan cards; thank-you; promo code; review prompt | `screens/paywall/PaywallScreen` (hosted by `PaywallDialogFragment`), `ReviewPrompt` | `PaywallScreenTest`, `PaywallViewModelTest`, `PaywallScreenshotTest`, `ReviewPromptTest` | Thank-you, promo code: #418 |
 | Grandfathering: 5 legacy product IDs grant Pro | `android/trial` `EntitlementResolver` | `EntitlementResolverTest` | |
 | Server trial: 14 days on first server connection; trial chip in the Library top bar | `android/trial` `EntitlementRepository`, `ServerAccessGate` | `EntitledServerStreamPolicyTest`, `EntitlementResolverTest` | Trial chip: #418 |
-| Paywall entry points: add server, trial end, Settings > S2 Pro | `showPaywallOnRequest` in `MainActivity`, `ServerAccessGate` | `PaywallViewModelTest`, `SourcesViewModelTest`; `paywall-settings` | |
+| Paywall entry points: add server, trial end, Settings > S2 Pro | `showPaywallOnRequest` in `MainActivity`, `ServerAccessGate` | `PaywallViewModelTest`, `SourcesViewModelTest`, `SettingsScreenTest` | |
 | Intents: play-from-search, VIEW audio file, default music app; Toggle playback shortcut | `MainActivity`, `ShortcutManager` | `ShortcutManagerTest`; `open-file-intent.sh`, `media-buttons.sh` | |
 | Android Auto browse and playback; Cast from Now Playing | `android/playback` `PlaybackService`; Cast button in `NowPlaying` | Device checks only | |
 

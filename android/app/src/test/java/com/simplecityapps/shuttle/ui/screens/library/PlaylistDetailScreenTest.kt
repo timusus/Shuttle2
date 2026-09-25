@@ -77,6 +77,23 @@ class PlaylistDetailScreenTest {
     }
 
     @Test
+    fun `back while selecting clears the selection rather than leaving the playlist`() {
+        robot.setPlaylist(readyPlaylistDetail(selectedIds = setOf(10L)))
+
+        robot.pressBack()
+
+        robot.selectionCleared shouldBe true
+        robot.navigatedUp shouldBe false
+    }
+
+    @Test
+    fun `without a selection back is left to the back stack`() {
+        robot.setPlaylist(readyPlaylistDetail())
+
+        robot.backIsHandled() shouldBe false
+    }
+
+    @Test
     fun `while selecting a tap toggles rather than plays`() {
         val state = readyPlaylistDetail(playlist = createPlaylist(id = 7, name = "Road trip", sortOrder = PlaylistSongSortOrder.SongName), selectedIds = setOf(10L))
         robot.setPlaylist(state)
