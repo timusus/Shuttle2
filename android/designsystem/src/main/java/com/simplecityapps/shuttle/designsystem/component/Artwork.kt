@@ -110,14 +110,18 @@ fun Artwork(
             preview != null -> Image(preview, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             image != null -> Box(Modifier.fillMaxSize()) { image() }
             loading -> Unit
-            else -> ArtworkPlaceholderContent(placeholder, size)
+            else -> ArtworkPlaceholderGlyph(placeholder, size)
         }
     }
 }
 
+/**
+ * The [placeholder]'s glyph as [Artwork] draws it: the media type's icon in its `MaterialShapes` container. For an
+ * [Artwork] `image` slot to draw under an image that loads asynchronously, so art that never loads keeps the glyph.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun ArtworkPlaceholderContent(placeholder: ArtworkPlaceholder, size: ArtworkSize) {
+fun ArtworkPlaceholderGlyph(placeholder: ArtworkPlaceholder, size: ArtworkSize) {
     Box(
         modifier = Modifier
             .size(size.dp * 0.7f)

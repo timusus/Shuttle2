@@ -1,8 +1,10 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.annotation.PluralsRes
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalResources
@@ -13,6 +15,7 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
+import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholderGlyph
 import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
@@ -39,7 +42,15 @@ fun LibraryArtwork(
         size = size,
         shape = shape,
         model = model,
-        image = model?.let { { GlideImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) } },
+        image = model?.let {
+            {
+                // The glyph under the image, so art that's still loading or never loads isn't a blank tile (#398).
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    ArtworkPlaceholderGlyph(placeholder, size)
+                    GlideImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                }
+            }
+        },
     )
 }
 

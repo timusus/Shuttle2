@@ -2,8 +2,8 @@
 # (support/scripts/checks/shell-home-search.sh): the `playback` fixture (One..Five) imported, nothing
 # playing, the shell launched on Home. Checks Home shows the library and a Home album opens the
 # library's album screen, opens Search from its top bar, opens an artist result, finds the artist again
-# through a misspelt query, then searches for a song and taps the result to play it. The wrapper
-# checks what's playing.
+# through a misspelt query, opens a genre result, then searches for a song and taps the result to play
+# it. The wrapper checks what's playing.
 appId: com.simplecityapps.shuttle.dev
 ---
 - extendedWaitUntil:
@@ -47,6 +47,20 @@ appId: com.simplecityapps.shuttle.dev
     timeout: 5000
 - assertVisible: "Top result"
 - takeScreenshot: shell-search-typo
+# A genre result opens the library's genre screen. The fixture has no playlists, so playlist results aren't covered.
+- tapOn: "Clear search"
+- tapOn: "Search your library"
+- inputText: "Ambient"
+- extendedWaitUntil:
+    visible: ".*5 songs.*"
+    timeout: 5000
+- takeScreenshot: shell-search-genre
+- tapOn: ".*5 songs.*"
+- extendedWaitUntil:
+    visible: "Navigate up"
+    timeout: 5000
+- assertVisible: "Playback Two"
+- back
 - tapOn: "Clear search"
 - tapOn: "Search your library"
 - inputText: "Playback Three"

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # #377: the Compose shell's Home and Search, driven by taps with Maestro on the debug ShellActivity
 # (support/maestro/shell-home-search.yaml): Home shows the library and a Home album opens its album
-# screen, its search action opens Search, an artist result opens its artist screen, and tapping a song
-# result plays it. Needs the `playback` fixture imported.
+# screen, its search action opens Search, an artist result opens its artist screen, a genre result its
+# genre screen, and tapping a song result plays it. Needs the `playback` fixture imported.
 source "$(dirname "$0")/_lib.sh"
 
 device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
