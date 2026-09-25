@@ -10,8 +10,8 @@ TMP="$(mktemp -d)"
 BUSY_PID=""
 cleanup() {
     local f
-    for f in "$TMP"/remote-emu/*.pid; do [ -f "$f" ] && kill "$(cat "$f")" 2>/dev/null; done
-    [ -n "$BUSY_PID" ] && kill "$BUSY_PID" 2>/dev/null
+    for f in "$TMP"/remote-emu/*.pid; do [ -f "$f" ] && kill "$(cat "$f")" 2>/dev/null; done || true
+    [ -n "$BUSY_PID" ] && { kill "$BUSY_PID" 2>/dev/null || true; }
     rm -rf "$TMP"
 }
 trap cleanup EXIT
