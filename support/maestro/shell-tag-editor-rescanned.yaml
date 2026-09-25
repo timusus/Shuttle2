@@ -1,0 +1,10 @@
+# #388: after shell-tag-editor.yaml writes a non-ASCII title and its wrapper
+# (support/scripts/checks/shell-tag-editor.sh) rescans the library, the Songs tab still shows the title
+# as typed, read back from the file.
+appId: com.simplecityapps.shuttle.dev
+---
+- extendedWaitUntil:
+    visible: "Café — Ünïcødé 日本語"
+    timeout: 15000
+- assertNotVisible: "Taglib One"
+- takeScreenshot: shell-tag-editor-rescanned

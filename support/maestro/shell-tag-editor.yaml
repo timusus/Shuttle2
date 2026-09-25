@@ -2,7 +2,8 @@
 # (support/scripts/checks/shell-tag-editor.sh): the `taglib` fixture (Taglib One..Five) added as the
 # SAF-backed Shuttle provider, since only that provider can write tags, then the shell launched.
 # Opens the first song's info from its row menu on the Songs tab, then selects the song, edits its title
-# from the selection's Edit Tags and checks the list shows the new title once the write lands.
+# from the selection's Edit Tags to a non-ASCII one (#388) and checks the list shows it once the write lands;
+# the wrapper then reads the file back and rescans.
 appId: com.simplecityapps.shuttle.dev
 ---
 - extendedWaitUntil:
@@ -41,7 +42,7 @@ appId: com.simplecityapps.shuttle.dev
 - takeScreenshot: shell-tag-editor
 - tapOn: "Taglib One"
 - eraseText
-- inputText: "Taglib One (edited)"
+- inputText: "Café — Ünïcødé 日本語"
 - tapOn: "Save"
 # The write closes the editor (the title field also reads the new title, so wait for it to go first),
 # then the Songs tab shows the library's update
@@ -49,7 +50,7 @@ appId: com.simplecityapps.shuttle.dev
     notVisible: "Edit Tags"
     timeout: 30000
 - extendedWaitUntil:
-    visible: "Taglib One (edited)"
+    visible: "Café — Ünïcødé 日本語"
     timeout: 10000
 - assertVisible: "Successfully updated 1 song"
 - takeScreenshot: shell-tag-editor-saved
