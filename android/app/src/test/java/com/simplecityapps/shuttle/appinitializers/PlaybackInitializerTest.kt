@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
 import android.content.Context
+import android.os.Looper
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakeQueueManager
@@ -327,6 +328,42 @@ class PlaybackInitializerTest {
         queueManager.lastSetQueue?.map { song -> song.id } shouldBe listOf(1L, 3L, 1L, 4L)
         queueManager.lastSetQueuePosition shouldBe 3
         playbackManager.loadedPositions shouldBe listOf(30_000)
+    }
+
+    @Test
+    fun `a restore that brings back every saved song doesn't save the queue again, and a change after it is saved`() {
+        songRepository.applyQueryPredicates = true
+        songRepository.setSongs(songs)
+        queueManager.publishesRestoredQueue = true
+        preferences.queueIds = "1,2,3"
+        preferences.shuffleQueueIds = "1,2,3"
+        preferences.queuePosition = 1
+
+        initializer.init(application)
+        awaitUntil { queueManager.hasRestoredQueue }
+        shadowOf(Looper.getMainLooper()).idle()
+
+        queueManager.shuffleModeQueueReads shouldBe 0
+        preferences.queuePosition shouldBe 1
+
+        publishQueue(listOf(createSong(id = 3), createSong(id = 1)), currentPosition = 0, contentVersion = queueManager.queueStateFlow.value.contentVersion + 1)
+        preferences.queueIds shouldBe "3,1"
+    }
+
+    @Test
+    fun `a restore that drops songs saves the queue that's left`() {
+        songRepository.applyQueryPredicates = true
+        songRepository.setSongs(listOf(createSong(id = 1), createSong(id = 3)))
+        queueManager.publishesRestoredQueue = true
+        preferences.queueIds = "1,2,3"
+        preferences.shuffleQueueIds = "1,2,3"
+        preferences.queuePosition = 2
+
+        initializer.init(application)
+        awaitUntil { queueManager.hasRestoredQueue }
+        awaitUntil { preferences.queueIds == "1,3" }
+
+        preferences.queuePosition shouldBe 1
     }
 
     @Test

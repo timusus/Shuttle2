@@ -38,11 +38,12 @@ abstract class SongDataDao {
     }
 
     @Transaction
-    @Query("SELECT * FROM songs WHERE id IN (:ids) ORDER BY albumArtist, album, track")
+    @Query("SELECT * FROM songs WHERE id IN (:ids)")
     abstract fun getSongDataByIds(ids: List<Long>): Flow<List<SongData>>
 
     /**
-     * The songs with [ids] (each once, however often it's listed), read by id rather than from the whole library.
+     * The songs with [ids] (each once, however often it's listed, in no particular order), read by id rather than from
+     * the whole library.
      * Queried in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a statement.
      */
     fun getByIds(ids: List<Long>): Flow<List<Song>> {

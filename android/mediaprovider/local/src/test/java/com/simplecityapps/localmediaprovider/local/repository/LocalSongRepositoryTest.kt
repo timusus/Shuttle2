@@ -10,11 +10,13 @@ import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatab
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.sorting.SongSortOrder
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import java.util.Date
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executor
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -76,6 +78,16 @@ class LocalSongRepositoryTest {
 
         repository.getSongs(SongQuery.SongIds(emptyList())).first() shouldBe emptyList()
         songQueries shouldBe emptyList()
+    }
+
+    @Test
+    fun `a library query comes in its sort order`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao())
+        insertSongs(listOf("Cherry", "Apple", "Banana"))
+
+        val sorted = repository.getSongs(SongQuery.All(sortOrder = SongSortOrder.SongName)).filterNotNull().first()
+
+        sorted.map(Song::name) shouldBe listOf("Apple", "Banana", "Cherry")
     }
 
     private suspend fun insertSongs(names: List<String>): List<Song> {

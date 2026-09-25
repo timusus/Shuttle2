@@ -62,6 +62,7 @@ sealed class SongQuery(
         sortOrder = SongSortOrder.Track
     )
 
+    /** The songs with these ids, in no particular order. */
     @Parcelize
     data class SongIds(
         val songIds: List<Long>

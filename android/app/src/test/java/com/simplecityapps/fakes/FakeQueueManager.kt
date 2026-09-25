@@ -4,6 +4,7 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -32,14 +33,28 @@ class FakeQueueManager : QueueOperations {
         return setQueueResult
     }
 
-    /** Leaves [queueStateFlow] as it is, so the content version a set leaves is the one it was set at. */
+    /** Whether [setQueueIfContentVersion] publishes the queue it sets, as the real one does. */
+    var publishesRestoredQueue = false
+
+    /** How many times the queue has been read for a shuffle mode: what saving it takes. */
+    var shuffleModeQueueReads = 0
+        private set
+
+    /**
+     * Leaves [queueStateFlow] as it is, so the content version a set leaves is the one it was set at, unless it
+     * [publishesRestoredQueue].
+     */
     override suspend fun setQueueIfContentVersion(contentVersion: Long, songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Long? {
-        if (queueStateFlow.value.contentVersion != contentVersion) return null
+        val previous = queueStateFlow.value
+        if (previous.contentVersion != contentVersion) return null
         setQueue(songs, shuffleSongs, position)
-        return contentVersion
+        if (!publishesRestoredQueue) return contentVersion
+        val items = songs.mapIndexed { index, song -> song.toQueueItem(isCurrent = index == position) }
+        queueStateFlow.value = QueueState(items = items, currentItem = items[position], currentPosition = position, version = previous.version + 1, contentVersion = contentVersion + 1)
+        return contentVersion + 1
     }
     override fun getQueue(): List<QueueItem> = queueStateFlow.value.items
-    override fun getQueue(shuffleMode: QueueManager.ShuffleMode): List<QueueItem> = queueStateFlow.value.items
+    override fun getQueue(shuffleMode: QueueManager.ShuffleMode): List<QueueItem> = queueStateFlow.value.items.also { shuffleModeQueueReads++ }
     override fun getCurrentItem(): QueueItem? = queueStateFlow.value.currentItem
     override fun getCurrentPosition(): Int? = queueStateFlow.value.currentPosition
     override fun getSize(): Int = queueStateFlow.value.items.size

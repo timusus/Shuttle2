@@ -32,20 +32,20 @@ class LocalSongRepository(
 
     /**
      * Songs by id (a restored queue, a song a controller names) are read by id, so the cost is bounded by how many are
-     * asked for rather than by the library; every other query filters the whole library.
+     * asked for rather than by the library, and come in no particular order, as their callers look them up by id;
+     * every other query filters the whole library, in the query's sort order.
      */
     override fun getSongs(query: SongQuery): Flow<List<Song>?> {
         val songs: Flow<List<Song>?> =
             if (query is SongQuery.SongIds) {
                 songDataDao.getByIds(query.songIds).flowOn(Dispatchers.IO)
             } else {
-                songsRelay.map { songs -> songs?.filter(query.predicate) }
+                songsRelay.map { songs -> songs?.filter(query.predicate)?.sortedWith(query.sortOrder.comparator) }
             }
         return songs.map { result ->
             result
                 ?.filter { song -> query.includeExcluded || !song.blacklisted }
                 ?.filter { song -> query.providerType == null || song.mediaProvider == query.providerType }
-                ?.sortedWith(query.sortOrder.comparator)
         }
     }
 
