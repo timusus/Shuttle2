@@ -3,7 +3,7 @@ package com.simplecityapps.mediaprovider.search
 import java.text.Normalizer
 
 /**
- * Normalises text for search: lowercase, diacritics folded (Björk → bjork), apostrophes and dots dropped inside a
+ * Normalises text for search: lowercase, diacritics folded (Inès → ines), apostrophes and dots dropped inside a
  * word (Don't → dont, R.E.M. → rem), everything else that isn't a letter or digit splits tokens. A word that
  * punctuation splits into parts (AC/DC, Jay-Z) also yields the parts joined (acdc, jayz), at the first part's position.
  */

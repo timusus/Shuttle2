@@ -5,7 +5,9 @@ import kotlin.math.min
 
 /**
  * A query, normalised into tokens. Every token matches as a prefix of some field token, within a typo budget that
- * grows with its length ([typoBudget]). Equal when their tokens are, so "Björk " and "bjork" are the same query.
+ * grows with its length ([typoBudget]). Each typo changes the length by at most one, so a token never matches a field
+ * token more than its budget shorter than itself: "nightj" finds "Nightjar" and "night", "nightjar" finds only
+ * "Nightjar". Equal when their tokens are, so "Inès " and "ines" are the same query.
  */
 class SearchQuery private constructor(internal val tokens: List<String>) {
     val isEmpty: Boolean

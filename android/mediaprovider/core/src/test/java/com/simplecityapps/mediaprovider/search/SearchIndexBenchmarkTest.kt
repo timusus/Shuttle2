@@ -21,13 +21,13 @@ class SearchIndexBenchmarkTest {
     private data class Song(val name: String, val artist: String, val album: String, val genre: String)
 
     private fun library(): List<SearchDocument<Any>> {
-        val artists = List(3_000) { phrase(random.nextInt(1, 3)) } + "Radiohead"
+        val artists = List(3_000) { phrase(random.nextInt(1, 3)) } + "Juniper Static"
         val albums = List(6_000) { phrase(random.nextInt(1, 4)) to artists.random(random) }
         val genres = listOf("Rock", "Pop", "Electronic", "Jazz", "Hip-Hop", "Classical", "Folk", "Metal")
         val songs = List(50_000) {
             val (album, artist) = albums.random(random)
             Song(phrase(random.nextInt(1, 5)), artist, album, genres.random(random))
-        } + Song("Creep", "Radiohead", "Pablo Honey", "Rock")
+        } + Song("Photoperiod", "Juniper Static", "Phase Garden", "Electronic")
         return artists.map { SearchDocument<Any>(it, listOf(SearchField.Name to it)) } +
             albums.map { (album, artist) -> SearchDocument<Any>(album, listOf(SearchField.Name to album, SearchField.Artist to artist)) } +
             songs.map { song ->
@@ -40,7 +40,7 @@ class SearchIndexBenchmarkTest {
     }
 
     /** Every prefix of each query, as typed a key at a time. */
-    private val keystrokes = listOf("radiohead creep", "radohead", "misty velbri", "the kaso", "electronic mo", "zenque")
+    private val keystrokes = listOf("juniper photoperiod", "junpier", "misty velbri", "the kaso", "electronic mo", "zenque")
         .flatMap { query -> (1..query.length).map { query.take(it) } }
 
     @Test
@@ -60,7 +60,7 @@ class SearchIndexBenchmarkTest {
 
         println("SearchIndex benchmark: ${documents.size} documents built in $buildMs ms; ${keystrokes.size} keystrokes averaged $averageMicros µs")
         hits shouldBeGreaterThan 0
-        fresh.search("radohead creep").map { it.item } shouldContain Song("Creep", "Radiohead", "Pablo Honey", "Rock")
+        fresh.search("junpier photoperiod").map { it.item } shouldContain Song("Photoperiod", "Juniper Static", "Phase Garden", "Electronic")
         buildMs shouldBeLessThan 3_000L
         averageMicros shouldBeLessThan 8_000L
     }
