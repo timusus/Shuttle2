@@ -1,0 +1,55 @@
+# #377: the Compose shell's song info and tag editor (debug ShellActivity). Setup
+# (support/scripts/checks/shell-tag-editor.sh): the `taglib` fixture (Taglib One..Five) added as the
+# SAF-backed Shuttle provider, since only that provider can write tags, then the shell launched.
+# Opens the first song's info from its row menu on the Songs tab, then selects the song, edits its title
+# from the selection's Edit Tags and checks the list shows the new title once the write lands.
+appId: com.simplecityapps.shuttle.dev
+---
+- extendedWaitUntil:
+    visible: "Library"
+    timeout: 15000
+- tapOn: "Library"
+- tapOn: "Songs"
+- extendedWaitUntil:
+    visible: "Taglib One"
+    timeout: 10000
+# Song info from the first row's menu; the action sheet scrolls to it
+- tapOn:
+    text: "More options"
+    rightOf: "Taglib Five"
+- scrollUntilVisible:
+    element: "Song Info"
+    direction: DOWN
+- tapOn: "Song Info"
+- extendedWaitUntil:
+    visible: "Play count"
+    timeout: 5000
+- assertVisible: "Taglib Five"
+- takeScreenshot: shell-song-info
+- back
+# Edit Tags from a one-song selection
+- longPressOn: "Taglib One"
+- assertVisible: "1 selected"
+# The selection bar's overflow: the only "More options" above the tabs
+- tapOn:
+    text: "More options"
+    above: "Songs"
+- tapOn: "Edit Tags"
+- extendedWaitUntil:
+    visible: "Taglib One"
+    timeout: 15000
+- takeScreenshot: shell-tag-editor
+- tapOn: "Taglib One"
+- eraseText
+- inputText: "Taglib One (edited)"
+- tapOn: "Save"
+# The write closes the editor (the title field also reads the new title, so wait for it to go first),
+# then the Songs tab shows the library's update
+- extendedWaitUntil:
+    notVisible: "Edit Tags"
+    timeout: 30000
+- extendedWaitUntil:
+    visible: "Taglib One (edited)"
+    timeout: 10000
+- assertVisible: "Successfully updated 1 song"
+- takeScreenshot: shell-tag-editor-saved
