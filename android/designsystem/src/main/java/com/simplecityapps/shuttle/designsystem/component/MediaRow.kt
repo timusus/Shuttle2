@@ -38,6 +38,7 @@ internal fun MediaRow(
     enabled: Boolean = true,
     onLongClick: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
+    dragHandle: (@Composable () -> Unit)? = null,
 ) {
     ListItem(
         selected = selected,
@@ -55,7 +56,7 @@ internal fun MediaRow(
                 }
             }
         },
-        trailingContent = if (meta != null || onMore != null) {
+        trailingContent = if (meta != null || onMore != null || dragHandle != null) {
             {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     meta?.let { Text(it, style = MaterialTheme.typography.labelMedium) }
@@ -67,6 +68,7 @@ internal fun MediaRow(
                             enabled = enabled,
                         )
                     }
+                    dragHandle?.invoke()
                 }
             }
         } else {

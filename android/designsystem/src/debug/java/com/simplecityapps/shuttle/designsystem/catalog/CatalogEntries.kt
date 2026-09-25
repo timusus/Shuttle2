@@ -81,6 +81,13 @@ val CatalogEntries = listOf(
     CatalogEntry("toolbar-selection", "Selection toolbar", listOf("floating, 1 selected", "floating, many with overflow", "overflow open", "docked alternative")) {
         SelectionToolbarBoard(it)
     },
+    CatalogEntry("mini-player", "Mini player", listOf("playing", "paused", "loading", "above the navigation bar")) { MiniPlayerBoard(it) },
+    CatalogEntry("player-controls", "Player controls", listOf("playing", "paused", "buffering", "shuffle on, repeat all", "repeat one")) {
+        PlayerControlsBoard(it)
+    },
+    CatalogEntry("seek-bar", "Seek bar", listOf("playing", "paused", "dragging", "over an hour")) { SeekBarBoard(it) },
+    CatalogEntry("progress", "Playback progress", listOf("playing", "paused", "indeterminate")) { ProgressBoard(it) },
+    CatalogEntry("queue-row", "Queue row", listOf("played", "current", "upcoming", "dragging")) { QueueRowBoard(it) },
     CatalogEntry("row-genre", "Genre row", listOf("default", "selected", "one song")) { GenreRowBoard(it) },
     CatalogEntry("row-folder", "Folder row", listOf("folder", "file", "file without artwork", "selected")) { FolderRowBoard(it) },
     CatalogEntry(

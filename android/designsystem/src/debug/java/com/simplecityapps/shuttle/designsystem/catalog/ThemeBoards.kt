@@ -224,6 +224,7 @@ fun ThemeShapeBoard(width: BoardWidth) {
             BoardSection("Morphs: start, mid, end") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     MorphStrip("Press: circle → square", MaterialShapes.Circle, MaterialShapes.Square)
+                    MorphStrip("Play → pause", MaterialShapes.Cookie9Sided, MaterialShapes.Square)
                     MorphStrip("Loading indicator", MaterialShapes.SoftBurst, MaterialShapes.Cookie9Sided)
                 }
             },

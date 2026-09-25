@@ -29,6 +29,11 @@ existing lines as they are.
 - [ ] `dialog`: [boards](dialog.md) · approved: — · boards hash: —
 - [ ] `snackbar`: [boards](snackbar.md) · approved: — · boards hash: —
 - [ ] `toolbar-selection`: [boards](toolbar-selection.md) · approved: — · boards hash: —
+- [ ] `mini-player`: [boards](mini-player.md) · approved: — · boards hash: —
+- [ ] `player-controls`: [boards](player-controls.md) · approved: — · boards hash: —
+- [ ] `seek-bar`: [boards](seek-bar.md) · approved: — · boards hash: —
+- [ ] `progress`: [boards](progress.md) · approved: — · boards hash: —
+- [ ] `queue-row`: [boards](queue-row.md) · approved: — · boards hash: —
 - [ ] `row-genre`: [boards](row-genre.md) · approved: — · boards hash: —
 - [ ] `row-folder`: [boards](row-folder.md) · approved: — · boards hash: —
 - [ ] `grid-tile`: [boards](grid-tile.md) · approved: — · boards hash: —

@@ -93,7 +93,7 @@ private fun TrackNumber(trackNumber: Int, playing: Boolean) {
 }
 
 @Composable
-private fun SupportingIcon(icon: ImageVector, contentDescription: String, tint: Color = LocalContentColor.current) {
+internal fun SupportingIcon(icon: ImageVector, contentDescription: String, tint: Color = LocalContentColor.current) {
     Icon(icon, contentDescription, Modifier.size(16.dp), tint = tint)
     Spacer(Modifier.width(4.dp))
 }

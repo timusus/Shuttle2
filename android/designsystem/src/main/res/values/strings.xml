@@ -22,4 +22,14 @@
         <item quantity="one">%d selected</item>
         <item quantity="other">%d selected</item>
     </plurals>
+    <string name="ds_play">Play</string>
+    <string name="ds_pause">Pause</string>
+    <string name="ds_previous">Previous</string>
+    <string name="ds_next">Next</string>
+    <string name="ds_shuffle">Shuffle</string>
+    <string name="ds_repeat_off">Repeat off</string>
+    <string name="ds_repeat_all">Repeat all</string>
+    <string name="ds_repeat_one">Repeat one</string>
+    <string name="ds_seek">Seek</string>
+    <string name="ds_reorder">Reorder</string>
 </resources>
