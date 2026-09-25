@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Records the design system catalogue: every board PNG into docs/design/catalog/<id>/, plus the
+# review pages (index.md keeps existing approval lines, <id>.md lists the boards).
+# Boards that no longer exist are removed first, so the folder matches the registry.
+#
+# Usage: support/scripts/catalog [extra gradle args]
+set -euo pipefail
+cd "$(dirname "$0")/../.."
+find docs/design/catalog -name '*.png' -delete 2>/dev/null || true
+./gradlew :android:designsystem:recordRoborazziDebug \
+  --tests '*CatalogScreenshotTest*' --tests '*CatalogPagesTest*' "$@"
+echo "Recorded $(find docs/design/catalog -name '*.png' | wc -l | tr -d ' ') boards ($(du -sh docs/design/catalog | cut -f1)) into docs/design/catalog"
