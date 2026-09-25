@@ -54,7 +54,12 @@ class FakeSongRepository : SongRepository {
     }
     override suspend fun insert(songs: List<Song>, mediaProviderType: MediaProviderType) {}
     override suspend fun update(song: Song): Int = 0
-    override suspend fun update(songs: List<Song>) {}
+    override suspend fun update(songs: List<Song>) {
+        updatedSongs += songs
+    }
+
+    /** Every song passed to [update], in order. */
+    val updatedSongs: MutableList<Song> = Collections.synchronizedList(mutableListOf())
     override suspend fun removeAll(mediaProviderType: MediaProviderType) {}
     override suspend fun insertUpdateAndDelete(inserts: List<Song>, updates: List<Song>, deletes: List<Song>, mediaProviderType: MediaProviderType): Triple<Int, Int, Int> = Triple(0, 0, 0)
     override suspend fun incrementPlayCount(song: Song) {
