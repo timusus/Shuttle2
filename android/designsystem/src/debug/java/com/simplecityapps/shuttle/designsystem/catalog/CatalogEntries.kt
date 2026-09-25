@@ -63,6 +63,13 @@ val CatalogEntries = listOf(
     CatalogEntry("row-album", "Album row", listOf("default", "selected", "no artwork", "long text")) { AlbumRowBoard(it) },
     CatalogEntry("row-artist", "Artist row", listOf("default", "selected", "no image")) { ArtistRowBoard(it) },
     CatalogEntry("row-playlist", "Playlist row", listOf("user", "smart", "empty", "selected")) { PlaylistRowBoard(it) },
+    CatalogEntry("row-genre", "Genre row", listOf("default", "selected", "one song")) { GenreRowBoard(it) },
+    CatalogEntry("row-folder", "Folder row", listOf("folder", "file", "file without artwork", "selected")) { FolderRowBoard(it) },
+    CatalogEntry(
+        "grid-tile",
+        "Grid tile",
+        listOf("album, artist, playlist with the scalloped mask", "playing", "selected", "long text", "placeholder"),
+    ) { GridTileBoard(it) },
     CatalogEntry("section-header", "Section header", listOf("with action", "plain", "sticky letter header")) { SectionHeaderBoard(it) },
     CatalogEntry("state-empty", "Empty state", listOf("with action", "without action")) { EmptyStateBoard(it) },
     CatalogEntry("state-loading", "Loading state", listOf("full screen", "determinate", "inline and pull to refresh")) { LoadingStateBoard(it) },

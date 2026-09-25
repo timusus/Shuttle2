@@ -214,7 +214,11 @@ fun ThemeShapeBoard(width: BoardWidth) {
             BoardSection("MaterialShapes S2 uses (non-content only)") {
                 ShapeSamples(
                     ArtworkPlaceholder.entries.map { it.name to it.polygon.toShape() } +
-                        listOf("Empty" to MaterialShapes.Cookie9Sided.toShape(), "Error" to MaterialShapes.Burst.toShape()),
+                        listOf(
+                            "Playlist mask" to MaterialShapes.Cookie12Sided.toShape(),
+                            "Empty" to MaterialShapes.Cookie9Sided.toShape(),
+                            "Error" to MaterialShapes.Burst.toShape(),
+                        ),
                 )
             },
             BoardSection("Morphs: start, mid, end") {

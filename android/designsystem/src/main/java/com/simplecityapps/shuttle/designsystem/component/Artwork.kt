@@ -38,15 +38,19 @@ enum class ArtworkSize(val dp: Dp) {
     Hero(240.dp),
 }
 
-/** Album and song art is a rounded rectangle; artist images are circles. Never a novelty mask. */
-enum class ArtworkShape { Rounded, Circle }
+/**
+ * Album and song art is a rounded rectangle; artist images are circles. [Scalloped] is the one
+ * `MaterialShapes` mask, an option for playlist art only (a user image or a mosaic, never an album
+ * cover).
+ */
+enum class ArtworkShape { Rounded, Circle, Scalloped }
 
 /** What an artwork stands for, which picks the placeholder shown when there's no image. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 enum class ArtworkPlaceholder(internal val icon: ImageVector, internal val polygon: RoundedPolygon) {
     Song(Icons.Rounded.MusicNote, MaterialShapes.Cookie9Sided),
     Album(Icons.Rounded.Album, MaterialShapes.Cookie12Sided),
-    Artist(Icons.Rounded.Person, MaterialShapes.Circle),
+    Artist(Icons.Rounded.Person, MaterialShapes.Flower),
     Playlist(Icons.AutoMirrored.Rounded.QueueMusic, MaterialShapes.Clover4Leaf),
     SmartPlaylist(Icons.Rounded.AutoAwesome, MaterialShapes.Sunny),
     Genre(Icons.Rounded.LibraryMusic, MaterialShapes.Pentagon),
@@ -107,6 +111,8 @@ private fun ArtworkPlaceholderContent(placeholder: ArtworkPlaceholder, size: Art
 @Composable
 private fun artworkShape(shape: ArtworkShape, size: ArtworkSize): Shape = when (shape) {
     ArtworkShape.Circle -> CircleShape
+
+    ArtworkShape.Scalloped -> MaterialShapes.Cookie12Sided.toShape()
 
     ArtworkShape.Rounded -> when (size) {
         ArtworkSize.Small, ArtworkSize.Medium -> MaterialTheme.shapes.small

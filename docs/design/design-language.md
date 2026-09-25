@@ -75,7 +75,8 @@ screens never see it.
 - **`MaterialShapes` (the 35 polygon shapes) are for non-content only**: artwork placeholders,
   icon containers (settings, empty states), the loading indicator, the favourite toggle. Album
   artwork is always a rounded rectangle and artist images a circle: art is square and a novelty mask
-  crops it. Text never sits in a novelty shape.
+  crops it. The one exception is an option for playlist art (a user image or a mosaic, never an
+  album cover): `ArtworkShape.Scalloped`, a `Cookie12Sided` mask. Text never sits in a novelty shape.
 - **Shape morphing where M3 builds it in**: pressed and checked states of `ButtonGroup`,
   `ToggleButton` and `IconButton` shapes (round → square on press), play ⇄ pause, `LoadingIndicator`.
   Not in lists (per-row animation on scroll), not on scroll position, not on artwork.
