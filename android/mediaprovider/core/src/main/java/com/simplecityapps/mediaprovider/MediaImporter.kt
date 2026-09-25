@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
@@ -68,8 +69,12 @@ class MediaImporter(
     /** Held for the length of an import, so a second [import] finds it taken and returns rather than scanning again. */
     private val importLock = Mutex()
 
-    /** Set by an [import] that finds one already running, so the running import runs one more pass once it's done. */
+    /** Set by every [import] before it tries [importLock], so an import already running runs one more pass once it's done. */
     private val rescanRequested = AtomicBoolean(false)
+
+    /** Test seam: runs after the last pass has found no request pending, just before [importLock] is released. */
+    @VisibleForTesting
+    internal var beforeUnlock: (suspend () -> Unit)? = null
 
     val isImporting: Boolean get() = importLock.isLocked
 
@@ -85,20 +90,36 @@ class MediaImporter(
             return
         }
 
-        if (!importLock.tryLock()) {
-            Timber.v("Import already in progress, requesting a follow-up pass")
-            rescanRequested.set(true)
-            return
-        }
+        rescanRequested.set(true)
 
-        try {
-            do {
-                rescanRequested.set(false)
-                importAll()
-            } while (rescanRequested.get())
-        } finally {
-            importLock.unlock()
+        var failure: Exception? = null
+        // Checked again after each unlock: a request made between the last check and the unlock found the lock still held,
+        // so whichever import sees it next runs it
+        while (rescanRequested.get()) {
+            if (!importLock.tryLock()) {
+                Timber.v("Import already in progress, requesting a follow-up pass")
+                break
+            }
+            try {
+                while (rescanRequested.getAndSet(false)) {
+                    failure =
+                        try {
+                            importAll()
+                            null
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            // Only a request made during this pass runs another, so a failing import doesn't loop
+                            Timber.e(e, "Import failed")
+                            e
+                        }
+                }
+                beforeUnlock?.invoke()
+            } finally {
+                importLock.unlock()
+            }
         }
+        failure?.let { throw it }
     }
 
     private suspend fun importAll() {

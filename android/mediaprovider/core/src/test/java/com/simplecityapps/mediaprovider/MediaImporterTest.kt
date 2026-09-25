@@ -8,7 +8,9 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.shouldBe
 import java.lang.reflect.Proxy
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -51,16 +53,16 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `imports started together scan the providers once`() = runBlocking<Unit> {
+    fun `imports started together while one is running coalesce into one follow-up pass`() = runBlocking<Unit> {
         val returned = Channel<Unit>(Channel.UNLIMITED)
-        repeat(IMPORTS) { launch(Dispatchers.Default) { importer.import().also { returned.send(Unit) } } }
-
-        // Every import but the one holding the scan returns without waiting for it, requesting a follow-up pass
+        launch(Dispatchers.Default) { importer.import().also { returned.send(Unit) } }
         provider.started.receive()
-        repeat(IMPORTS - 1) { returned.receive() }
+
+        // Every import started while the first pass runs returns without waiting for it, requesting a follow-up pass
+        repeat(IMPORTS) { launch(Dispatchers.Default) { importer.import().also { returned.send(Unit) } } }
+        repeat(IMPORTS) { returned.receive() }
         importer.isImporting shouldBe true
 
-        // The requests made while the first pass was running coalesce into exactly one follow-up pass
         provider.gate.trySend(Unit)
         provider.started.receive()
         provider.gate.trySend(Unit)
@@ -116,18 +118,68 @@ class MediaImporterTest {
         importer.isImporting shouldBe false
     }
 
-    /** Counts its scans, signals [started] as each one begins, and holds it open until a [gate] send. */
+    @Test
+    fun `an import requested as the last pass finishes still runs another pass`() = runBlocking<Unit> {
+        repeat(2) { provider.gate.trySend(Unit) }
+        var requested = false
+        // Requested after the running import has found no request pending, but before it releases the lock
+        importer.beforeUnlock = {
+            if (!requested) {
+                requested = true
+                importer.import()
+            }
+        }
+
+        importer.import()
+
+        provider.scans.get() shouldBe 2
+        importer.isImporting shouldBe false
+    }
+
+    @Test
+    fun `an import requested during a pass that fails still runs`() = runBlocking<Unit> {
+        provider.failNext.set(true)
+        val result = CompletableDeferred<Result<Unit>>()
+        launch(Dispatchers.Default) { result.complete(runCatching { importer.import() }) }
+        provider.started.receive()
+
+        importer.import() // requested while the first pass is running
+
+        provider.gate.trySend(Unit) // the first pass fails
+        provider.started.receive() // the requested pass still starts
+        provider.gate.trySend(Unit)
+
+        result.await().isSuccess shouldBe true
+        provider.scans.get() shouldBe 2
+        importer.isImporting shouldBe false
+    }
+
+    @Test
+    fun `a failing import with nothing requested throws rather than retrying`() = runBlocking<Unit> {
+        provider.failNext.set(true)
+        provider.gate.trySend(Unit)
+
+        runCatching { importer.import() }.exceptionOrNull()?.message shouldBe provider.failure.message
+
+        provider.scans.get() shouldBe 1
+        importer.isImporting shouldBe false
+    }
+
+    /** Counts its scans, signals [started] as each one begins, holds it open until a [gate] send, then throws [failure] if [failNext] is set. */
     private class GatedProvider : MediaProvider {
         override val type = MediaProviderType.Shuttle
 
         val scans = AtomicInteger()
         val started = Channel<Unit>(Channel.UNLIMITED)
         val gate = Channel<Unit>(Channel.UNLIMITED)
+        val failNext = AtomicBoolean()
+        val failure = IllegalStateException("Scan failed")
 
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
             scans.incrementAndGet()
             started.send(Unit)
             gate.receive()
+            if (failNext.getAndSet(false)) throw failure
         }
 
         override fun findPlaylists(
