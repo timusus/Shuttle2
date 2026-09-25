@@ -79,6 +79,20 @@
             </intent-filter>
         </activity>
 
+        <!-- The Compose app shell spike (#375, docs/architecture/app-shell.md): Navigation 3,
+             adaptive layouts and the player sheet over placeholder screens. Debug builds only. -->
+        <activity
+            android:name="com.simplecityapps.shuttle.ui.shell.ShellActivity"
+            android:exported="true"
+            android:label="S2 Shell"
+            android:taskAffinity="com.simplecityapps.shuttle.shell"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>
