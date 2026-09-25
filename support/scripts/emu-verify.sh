@@ -7,6 +7,7 @@
 #
 #   support/scripts/emu-verify.sh [--check <name>]... [--flow <path.yaml>]... [--apk <path>]
 #                                  [--no-seed] [--no-reset] [--remote <jellyfin|emby|plex>] [--keep]
+#                                  [--suite [--flows <name,name,...>] [--flow-timeout <secs>]]
 #
 #     --check <name>   run support/scripts/checks/<name>.sh (repeatable)
 #     --flow <path>    run a Maestro flow directly via `maestro test` (repeatable)
@@ -25,9 +26,22 @@
 #                         media, and export S2_REMOTE=<server> so remote checks run instead of
 #                         SKIPping
 #     --keep           leave the lane running instead of stopping it at the end
+#     --suite          run every check in the run-all set (or just --flows) once each, under a
+#                       per-flow timeout, retrying a failed one once, and keep going after a
+#                       failure instead of stopping -- one call for a full device-check batch
+#                       (#448) instead of debugging flows one at a time with no report to show
+#                       for a cut-short run. Writes build/maestro/results.md (flow, pass/fail/
+#                       timeout/skip, duration, screenshot path, last error line), appending a row
+#                       as each flow finishes. Exits non-zero if any flow failed or timed out.
+#                       Not combinable with --check/--flow -- use --flows for a subset.
+#     --flows <a,b>    with --suite, run only these checks (comma-separated names) instead of the
+#                       full run-all set
+#     --flow-timeout <secs>  per-flow timeout for --suite (default 180)
 #
-#   With neither --check nor --flow given: runs support/scripts/checks/run-all.sh (the full local
-#   suite), or with --remote, just the remote checks (remote-reporting, remote-playback).
+#   With neither --check, --flow nor --suite given: runs support/scripts/checks/run-all.sh (the
+#   full local suite) directly, with no per-flow timeout/retry/results.md -- or with --remote,
+#   just the remote checks (remote-reporting, remote-playback). Read build/maestro/results.md
+#   after a --suite run instead of re-running or debugging individual flows by hand.
 #
 # APK: --apk wins; else /tmp/s2-apk/<HEAD sha>.apk is reused if present and the tree is clean;
 # else `assembleDebug` runs once (foreground, quiet) and the result is cached there.
@@ -51,6 +65,9 @@ NO_SEED=0
 NO_RESET=0
 REMOTE=""
 KEEP=0
+SUITE=0
+FLOWS_ARG=""
+FLOW_TIMEOUT=180
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -61,6 +78,9 @@ while [ $# -gt 0 ]; do
         --no-reset) NO_RESET=1; shift ;;
         --remote) REMOTE="${2:?emu-verify: --remote needs jellyfin, emby or plex}"; shift 2 ;;
         --keep) KEEP=1; shift ;;
+        --suite) SUITE=1; shift ;;
+        --flows) FLOWS_ARG="${2:?emu-verify: --flows needs a comma-separated list of check names}"; shift 2 ;;
+        --flow-timeout) FLOW_TIMEOUT="${2:?emu-verify: --flow-timeout needs a number of seconds}"; shift 2 ;;
         -h|--help) usage; exit 0 ;;
         *) echo "emu-verify: unknown argument '$1'" >&2; usage >&2; exit 2 ;;
     esac
@@ -70,6 +90,15 @@ case "$REMOTE" in
     "" | jellyfin | emby | plex) ;;
     *) echo "emu-verify: --remote must be jellyfin, emby or plex" >&2; exit 2 ;;
 esac
+
+if [ -n "$FLOWS_ARG" ] && [ "$SUITE" != 1 ]; then
+    echo "emu-verify: --flows needs --suite" >&2
+    exit 2
+fi
+if [ "$SUITE" = 1 ] && { [ "${#CHECKS[@]}" -gt 0 ] || [ "${#FLOWS[@]}" -gt 0 ]; }; then
+    echo "emu-verify: --suite can't be combined with --check/--flow -- use --flows for a subset" >&2
+    exit 2
+fi
 
 mkdir -p tmp/emu-verify
 LOG="${REPO_ROOT}/tmp/emu-verify/run-$(date +%Y%m%d-%H%M%S)-$$.log"
@@ -194,7 +223,124 @@ run_flow() {
     fi
 }
 
-if [ "${#CHECKS[@]}" -eq 0 ] && [ "${#FLOWS[@]}" -eq 0 ] && [ -n "$REMOTE" ]; then
+# ---- --suite: every check in the run-all set (or --flows), timed, retried once, reported ----
+
+# suite_flow_names: the run-all set in run-all.sh's own order (alphabetical, no-crashes last),
+# minus its own *_test.sh unit tests (run-all_test.sh matches the same `[a-z]*.sh` glob run-all.sh
+# scans but is a stub test of run-all.sh itself, not a device check).
+suite_flow_names() {
+    local f name
+    for f in support/scripts/checks/[a-z]*.sh; do
+        name="$(basename "$f" .sh)"
+        case "$name" in
+            run-all | *_test | no-crashes) continue ;;
+        esac
+        echo "$name"
+    done
+    echo "no-crashes"
+}
+
+# write_result_row <flow> <status> <duration> <screenshot> <last error>: appends one row to
+# $RESULTS_MD, escaping any literal '|' in the free-text fields so the table doesn't break.
+write_result_row() {
+    local name="$1" status="$2" dur="$3" shot="$4" err="$5"
+    shot="${shot//|/\\|}"
+    err="${err//|/\\|}"
+    printf '| %s | %s | %s | %s | %s |\n' "$name" "$status" "$dur" "$shot" "$err" >>"$RESULTS_MD"
+}
+
+# run_suite_flow <name>: runs support/scripts/checks/<name>.sh under $FLOW_TIMEOUT, retrying once
+# on failure or timeout, then appends one row to $RESULTS_MD. Uses the same FAIL_MARKER_DIR
+# convention as run-all.sh (checks/_lib.sh's fail()) to tell a check's own "FAIL name: reason"
+# from a bare `set -e` death, and diffs tmp/maestro's *.png before/after to name any screenshot the
+# flow took (checks/_lib.sh's screenshot() helper writes there by default).
+run_suite_flow() {
+    local name="$1" script="support/scripts/checks/${1}.sh"
+    local attempt status start dur out marker_dir since shots row_status row_err
+
+    if [ ! -x "$script" ]; then
+        write_result_row "$name" "fail" "-" "-" "no such check ($script)"
+        echo "emu-verify: ${name} -- FAILED (no such check, see $RESULTS_MD)" >&2
+        FAILED=$((FAILED + 1))
+        return
+    fi
+
+    for attempt in 1 2; do
+        marker_dir="$(mktemp -d)"
+        since="$(mktemp)"
+        out="$(mktemp)"
+        start=$(date +%s)
+        if [ -n "$TIMEOUT_BIN" ]; then
+            FAIL_MARKER_DIR="$marker_dir" "$TIMEOUT_BIN" "$FLOW_TIMEOUT" "$script" >"$out" 2>&1
+        else
+            FAIL_MARKER_DIR="$marker_dir" "$script" >"$out" 2>&1
+        fi
+        status=$?
+        dur=$(($(date +%s) - start))
+        cat "$out" >>"$LOG"
+
+        if [ "$status" -eq 0 ]; then
+            if grep -q '^SKIP ' "$out"; then row_status="skip"; else row_status="pass"; fi
+            row_err="-"
+        elif [ "$status" -eq 124 ] && [ -n "$TIMEOUT_BIN" ]; then
+            row_status="timeout"
+            row_err="timed out after ${FLOW_TIMEOUT}s"
+        else
+            row_status="fail"
+            row_err="$(grep '^FAIL ' "$out" | tail -1 | sed 's/^FAIL [^:]*: //')"
+            [ -f "${marker_dir}/${name}.failed" ] || row_err="exit ${status}: $(tail -1 "$out")"
+            [ -n "$row_err" ] || row_err="exit ${status}"
+        fi
+        shots="$(find "${REPO_ROOT}/tmp/maestro" -newer "$since" -name '*.png' 2>/dev/null | paste -sd '; ' -)"
+        rm -f "$since" "$out"
+        rm -rf "$marker_dir"
+
+        [ "$row_status" = "pass" ] || [ "$row_status" = "skip" ] && break
+        [ "$attempt" -eq 1 ] && echo "emu-verify: ${name} -- attempt 1 ${row_status}, retrying" >>"$LOG"
+    done
+
+    write_result_row "$name" "$row_status" "${dur}s" "${shots:--}" "$row_err"
+    case "$row_status" in
+        pass | skip) echo "emu-verify: ${name} -- ${row_status} (${dur}s)" ;;
+        *)
+            echo "emu-verify: ${name} -- ${row_status} (${dur}s): ${row_err}" >&2
+            FAILED=$((FAILED + 1))
+            ;;
+    esac
+}
+
+run_suite() {
+    mkdir -p "${REPO_ROOT}/build/maestro"
+    RESULTS_MD="${REPO_ROOT}/build/maestro/results.md"
+    {
+        echo "# Maestro suite results ($(date -u +%Y-%m-%dT%H:%M:%SZ))"
+        echo
+        echo "| Flow | Status | Duration | Screenshot | Last error |"
+        echo "|---|---|---|---|---|"
+    } >"$RESULTS_MD"
+
+    TIMEOUT_BIN=""
+    for _t in timeout gtimeout; do
+        command -v "$_t" >/dev/null 2>&1 && { TIMEOUT_BIN="$_t"; break; }
+    done
+    [ -n "$TIMEOUT_BIN" ] || echo "emu-verify: no 'timeout'/'gtimeout' on PATH -- running --suite with no per-flow timeout" >&2
+
+    local names=() n
+    if [ -n "$FLOWS_ARG" ]; then
+        IFS=',' read -ra names <<<"$FLOWS_ARG"
+    else
+        while IFS= read -r n; do names+=("$n"); done < <(suite_flow_names)
+    fi
+
+    echo "emu-verify: running ${#names[@]} flow(s) in suite mode (timeout ${FLOW_TIMEOUT}s, retry once)"
+    for n in ${names[@]+"${names[@]}"}; do
+        run_suite_flow "$n"
+    done
+}
+
+if [ "$SUITE" = 1 ]; then
+    run_suite
+elif [ "${#CHECKS[@]}" -eq 0 ] && [ "${#FLOWS[@]}" -eq 0 ] && [ -n "$REMOTE" ]; then
     echo "emu-verify: --remote set, running remote checks only"
     for name in remote-reporting remote-playback; do
         run_check "$name"
@@ -214,6 +360,9 @@ else
 fi
 
 ELAPSED=$(($(date +%s) - START_TS))
+if [ "$SUITE" = 1 ]; then
+    echo "emu-verify: results: $RESULTS_MD"
+fi
 if [ "$FAILED" -eq 0 ]; then
     echo "emu-verify: all checks passed (${ELAPSED}s total, log $LOG)"
     exit 0
