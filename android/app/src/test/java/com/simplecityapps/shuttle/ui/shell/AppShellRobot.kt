@@ -382,6 +382,21 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
+    /** Drags the first visible row's handle to the bottom of the queue list and holds it there for [holdMs]. */
+    fun holdFirstQueueRowAtBottom(holdMs: Long) {
+        val list = rule.onNodeWithTag(PlayerTestTags.QueueList).fetchSemanticsNode().boundsInRoot
+        val handle = rule.onAllNodes(hasContentDescription("Reorder") and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueList)), useUnmergedTree = true)[0]
+        val start = handle.fetchSemanticsNode().boundsInRoot.center.y
+        handle.performTouchInput {
+            down(center)
+            val steps = 40
+            repeat(steps) { moveBy(Offset(0f, (list.bottom - 1f - start) / steps)) }
+        }
+        rule.mainClock.advanceTimeBy(holdMs)
+        handle.performTouchInput { up() }
+        rule.waitForIdle()
+    }
+
     private fun queueRow(title: String) = rule.onNode(hasText(title) and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueList)))
 
     fun assertLevel(level: PlayerLevel) {

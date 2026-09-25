@@ -258,6 +258,16 @@ class AppShellTest {
     }
 
     @Test
+    fun `holding a dragged row at the bottom of the queue scrolls it to the end`() {
+        robot.setContent(queue = shellQueue(*Array(30) { "Song ${it + 1}" }))
+        robot.tapMiniPlayer()
+        robot.tapQueuePeek()
+
+        robot.holdFirstQueueRowAtBottom(holdMs = 10_000)
+        robot.calls shouldBe listOf("moveQueueItem(0, after 29)")
+    }
+
+    @Test
     fun `long-pressing a queue row offers Play Next`() {
         robot.setContent()
         robot.tapMiniPlayer()
