@@ -12,6 +12,8 @@ CHECKS="$TMP/support/scripts/checks"
 mkdir -p "$CHECKS" "$TMP/bin"
 cp "$REAL_ROOT/support/scripts/checks/run-all.sh" "$CHECKS/run-all.sh"
 cp "$REAL_ROOT/support/scripts/checks/_lib.sh" "$CHECKS/_lib.sh"
+cp "$REAL_ROOT/support/scripts/checks/_timeout_fallback.sh" "$CHECKS/_timeout_fallback.sh"
+cp "$REAL_ROOT/support/scripts/checks/_suite_names.sh" "$CHECKS/_suite_names.sh"
 chmod +x "$CHECKS/run-all.sh"
 
 # run-all only calls `adb logcat -c ...`, discarding the result either way.

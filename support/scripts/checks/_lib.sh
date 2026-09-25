@@ -12,6 +12,9 @@ APP_ID="com.simplecityapps.shuttle.dev"
 CHECK_NAME="$(basename "$0" .sh)"
 CHECK_START=$(date +%s)
 
+# shellcheck source=support/scripts/checks/_timeout_fallback.sh
+source "$(dirname "${BASH_SOURCE[0]}")/_timeout_fallback.sh"
+
 s2() { "${CHECKS_ROOT}/support/scripts/s2-debug.sh" "$@"; }
 
 # Every adb call below runs under this deadline (#416: a dropped tunnel left a bare `adb` call
@@ -42,33 +45,10 @@ _run_adb() {
         "$_ADB_TIMEOUT_BIN" "$ADB_CALL_TIMEOUT" adb "$@"
         return $?
     fi
-    # No `timeout`/`gtimeout` on PATH: watch the adb call ourselves and kill it (TERM, then KILL
-    # if it ignores that) after ADB_CALL_TIMEOUT, so a dead TCP read still fails instead of hanging
-    # forever (#416). Mirrors `timeout`'s exit-124-on-timeout convention so adb_retry's check below
-    # (and any ADB_CALL_TIMEOUT=<n> override from a caller) works the same either way.
-    adb "$@" &
-    local adb_pid=$!
-    # Each sleep below runs backgrounded with its pid tracked in watchdog_sleep_pid, and the TERM
-    # trap kills it before exiting -- so when the caller kills this subshell after adb finishes
-    # early (the common case), the sleep dies with it instead of running to completion as an
-    # orphan (a plain foreground `sleep` in a killed subshell isn't signalled itself and keeps
-    # running for up to ADB_CALL_TIMEOUT seconds).
-    ( local watchdog_sleep_pid
-      trap 'kill "$watchdog_sleep_pid" 2>/dev/null; exit 0' TERM
-      sleep "$ADB_CALL_TIMEOUT" & watchdog_sleep_pid=$!
-      wait "$watchdog_sleep_pid" 2>/dev/null
-      kill -0 "$adb_pid" 2>/dev/null || exit 0
-      kill -TERM "$adb_pid" 2>/dev/null
-      sleep 2 & watchdog_sleep_pid=$!
-      wait "$watchdog_sleep_pid" 2>/dev/null
-      kill -KILL "$adb_pid" 2>/dev/null ) &
-    local watchdog_pid=$!
-    local status=0
-    wait "$adb_pid" || status=$?
-    kill "$watchdog_pid" 2>/dev/null || true
-    wait "$watchdog_pid" 2>/dev/null || true
-    [ "$status" -ge 128 ] && status=124
-    return "$status"
+    # No `timeout`/`gtimeout` on PATH: fall back to the shared bash watchdog (_timeout_fallback.sh)
+    # so a dead TCP read still fails instead of hanging forever (#416), same as any
+    # ADB_CALL_TIMEOUT=<n> override from a caller.
+    run_with_timeout "$ADB_CALL_TIMEOUT" adb "$@"
 }
 
 adb_retry() {

@@ -13,6 +13,7 @@ trap 'pkill -f "sleep $$\$" 2>/dev/null || true; rm -rf "$TMP"' EXIT
 
 mkdir -p "$TMP/support/scripts/checks" "$TMP/bin" "$TMP/fake-adb"
 cp "$REAL_ROOT/support/scripts/checks/_lib.sh" "$TMP/support/scripts/checks/_lib.sh"
+cp "$REAL_ROOT/support/scripts/checks/_timeout_fallback.sh" "$TMP/support/scripts/checks/_timeout_fallback.sh"
 
 cat >"$TMP/support/scripts/remote-emu.sh" <<'EOF'
 #!/usr/bin/env bash

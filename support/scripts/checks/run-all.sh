@@ -4,6 +4,8 @@
 # Clears the crash/main/system log buffers first so no-crashes.sh, run last, only sees this run.
 set -uo pipefail
 dir="$(dirname "$0")"
+# shellcheck source=support/scripts/checks/_suite_names.sh
+source "$dir/_suite_names.sh"
 smoke=0
 case "${1:-}" in
     "") ;;
@@ -34,9 +36,7 @@ run_check() {
 }
 
 if [ "$smoke" -eq 1 ]; then
-    while read -r name _; do
-        case "$name" in "" | "#"*) continue ;; esac
-        [ "$name" = "no-crashes" ] && continue
+    while IFS= read -r name; do
         if [ -f "$dir/${name}.sh" ]; then
             run_check "$dir/${name}.sh"
         else
@@ -44,15 +44,11 @@ if [ "$smoke" -eq 1 ]; then
             failed_names="${failed_names:+$failed_names }${name}"
             echo "FAIL ${name} (listed in smoke.txt, but there is no ${name}.sh)" >&2
         fi
-    done <"$dir/smoke.txt"
+    done < <(suite_smoke_names "$dir")
 else
-    for check in "$dir"/[a-z]*.sh; do
-        name="$(basename "$check")"
-        [ "$name" = "run-all.sh" ] && continue
-        [ "$name" = "no-crashes.sh" ] && continue
-        case "$name" in *_test.sh) continue ;; esac
-        run_check "$check"
-    done
+    while IFS= read -r name; do
+        run_check "$dir/${name}.sh"
+    done < <(suite_all_names "$dir")
 fi
 run_check "$dir/no-crashes.sh"
 
