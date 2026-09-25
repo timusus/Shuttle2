@@ -57,6 +57,7 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.designsystem.component.previewArtwork
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Playlist
@@ -65,7 +66,6 @@ import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
-import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongMenu
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.snapshot.Snapshot
@@ -328,7 +328,7 @@ private fun albumSubtitle(
             listOf(
                 album.year?.toString(),
                 songsQuantity,
-                album.duration.toHms(),
+                formatDuration(album.duration.toLong()),
             )
         )
         ?.toString()
@@ -491,7 +491,7 @@ internal fun DetailSongRow(
         )
 
         Text(
-            text = song.duration.toHms("--:--"),
+            text = formatDuration(song.duration.toLong(), zeroValue = "--:--"),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

@@ -5,9 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
-import com.simplecityapps.shuttle.ui.common.utils.toHms
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -50,7 +50,7 @@ data class SongInfoRow(
 fun Song.infoRows(): List<SongInfoRow> = listOf(
     SongInfoRow(R.string.song_info_track_title, name),
     SongInfoRow(R.string.song_info_track_number, track?.toString()),
-    SongInfoRow(R.string.song_info_duration, duration.toHms().trim()),
+    SongInfoRow(R.string.song_info_duration, formatDuration(duration.toLong())),
     SongInfoRow(R.string.song_info_album_artist, albumArtist),
     SongInfoRow(R.string.song_info_artists, artists.takeIf { it.isNotEmpty() }?.joinToString(", ")),
     SongInfoRow(R.string.song_info_album, album),

@@ -80,8 +80,14 @@ fun S2SeekBar(
     }
 }
 
-/** "m:ss", or "h:mm:ss" from an hour: how the seek bar and queue rows show a time. */
-fun formatDuration(ms: Long): String {
+/**
+ * "m:ss", or "h:mm:ss" from an hour: how the seek bar and queue rows show a time.
+ * @param zeroValue returned instead, if given, when [ms] is 0.
+ */
+fun formatDuration(ms: Long, zeroValue: String? = null): String {
+    if (ms == 0L && zeroValue != null) {
+        return zeroValue
+    }
     val totalSeconds = ms / 1000
     val hours = totalSeconds / 3600
     val minutes = totalSeconds % 3600 / 60

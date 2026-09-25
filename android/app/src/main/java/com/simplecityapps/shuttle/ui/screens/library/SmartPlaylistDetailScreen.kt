@@ -10,13 +10,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
+import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
-import com.simplecityapps.shuttle.ui.common.utils.toHms
 
 /** A built-in smart playlist (inventory §1): its songs in the playlist's own order, Play / Shuffle, and their actions. */
 @Composable
@@ -38,7 +38,7 @@ fun SmartPlaylistDetailScreen(
     LibraryDetailScaffold(
         state = state,
         title = playlist?.let { stringResource(it.nameResId) } ?: stringResource(com.simplecityapps.core.R.string.unknown),
-        subtitle = playlist?.let { listOf(pluralString(R.plurals.songsPlural, uiState.songs.size), uiState.songs.sumOf { it.duration }.toHms().trim()).joinToString(" · ") },
+        subtitle = playlist?.let { listOf(pluralString(R.plurals.songsPlural, uiState.songs.size), formatDuration(uiState.songs.sumOf { it.duration }.toLong())).joinToString(" · ") },
         artwork = null,
         placeholder = ArtworkPlaceholder.SmartPlaylist,
         onNavigateUp = onNavigateUp,

@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.designsystem.component.AlbumRow
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
+import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
@@ -22,7 +23,6 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
-import com.simplecityapps.shuttle.ui.common.utils.toHms
 
 /** Genre detail (inventory §1): the albums its songs come from, then every song. */
 @Composable
@@ -47,7 +47,7 @@ fun GenreDetailScreen(
     LibraryDetailScaffold(
         state = state,
         title = genre?.name ?: unknown,
-        subtitle = genre?.let { listOf(pluralString(R.plurals.songsPlural, uiState.songs.size), uiState.songs.sumOf { it.duration }.toHms().trim()).joinToString(" · ") },
+        subtitle = genre?.let { listOf(pluralString(R.plurals.songsPlural, uiState.songs.size), formatDuration(uiState.songs.sumOf { it.duration }.toLong())).joinToString(" · ") },
         artwork = null,
         placeholder = ArtworkPlaceholder.Genre,
         onNavigateUp = onNavigateUp,

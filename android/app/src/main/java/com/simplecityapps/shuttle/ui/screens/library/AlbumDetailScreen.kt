@@ -12,6 +12,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -19,7 +20,6 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
-import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
@@ -68,7 +68,7 @@ fun AlbumDetailScreen(
                     subtitle = song.friendlyArtistName.orEmpty(),
                     onClick = { onPlay(songs, songs.indexOf(song)) },
                     trackNumber = song.track,
-                    duration = song.duration.toHms().trim(),
+                    duration = formatDuration(song.duration.toLong()),
                     playing = song.id == uiState.currentSong?.id,
                     onMore = { onSongMore(song) },
                 )
@@ -83,7 +83,7 @@ private fun albumSubtitle(album: Album): String = listOfNotNull(
     album.friendlyArtistName,
     album.year?.toString(),
     pluralString(R.plurals.songsPlural, album.songCount),
-    album.duration.toHms().trim(),
+    formatDuration(album.duration.toLong()),
 ).filter { it.isNotBlank() }.joinToString(" · ")
 
 @Composable

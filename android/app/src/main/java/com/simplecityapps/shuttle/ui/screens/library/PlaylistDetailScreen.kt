@@ -45,6 +45,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
+import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
@@ -55,7 +56,6 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
-import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.squareup.phrase.Phrase
 import sh.calvin.reorderable.ReorderableItem
@@ -119,7 +119,7 @@ fun PlaylistDetailScreen(
         LibraryDetailScaffold(
             state = state,
             title = playlist?.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-            subtitle = playlist?.let { listOf(pluralString(R.plurals.songsPlural, uiState.songs.size), songs.sumOf { it.duration }.toHms().trim()).joinToString(" · ") },
+            subtitle = playlist?.let { listOf(pluralString(R.plurals.songsPlural, uiState.songs.size), formatDuration(songs.sumOf { it.duration }.toLong())).joinToString(" · ") },
             artwork = null,
             placeholder = ArtworkPlaceholder.Playlist,
             onNavigateUp = onNavigateUp,
@@ -156,7 +156,7 @@ fun PlaylistDetailScreen(
                                 onClick = { onPlay(songs, index) },
                                 position = if (playing) QueuePosition.Current else QueuePosition.Upcoming,
                                 artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
-                                duration = song.duration.toHms().trim(),
+                                duration = formatDuration(song.duration.toLong()),
                                 dragging = dragging,
                                 dragHandleModifier = Modifier.draggableHandle(onDragStopped = onMoveFinished),
                                 onLongClick = { onToggleSelected(entry) },

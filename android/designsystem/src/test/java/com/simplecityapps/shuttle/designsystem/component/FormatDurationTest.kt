@@ -17,4 +17,10 @@ class FormatDurationTest {
         assertEquals("1:00:00", formatDuration(3_600_000))
         assertEquals("2:05:09", formatDuration(7_509_000))
     }
+
+    @Test
+    fun `zero duration returns zeroValue when given`() {
+        assertEquals("--:--", formatDuration(0, zeroValue = "--:--"))
+        assertEquals("0:00", formatDuration(0))
+    }
 }

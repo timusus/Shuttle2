@@ -29,6 +29,7 @@ import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
@@ -37,7 +38,6 @@ import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.FastScroller
 import com.simplecityapps.shuttle.ui.common.components.rememberFastScrollableState
-import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.getAlbumFastscrollPopup
@@ -123,7 +123,7 @@ fun LibrarySongRow(
         onClick = onClick,
         modifier = modifier,
         artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
-        duration = song.duration.toHms().trim(),
+        duration = formatDuration(song.duration.toLong()),
         playing = playing,
         selected = selected,
         onLongClick = onLongClick,

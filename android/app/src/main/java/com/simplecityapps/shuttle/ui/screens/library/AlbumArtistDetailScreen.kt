@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
@@ -29,7 +30,6 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
-import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailViewModel
 
@@ -92,7 +92,7 @@ fun AlbumArtistDetailScreen(
                         subtitle = song.friendlyArtistName.orEmpty(),
                         onClick = { onPlay(albumSongs, albumSongs.indexOf(song)) },
                         trackNumber = song.track,
-                        duration = song.duration.toHms().trim(),
+                        duration = formatDuration(song.duration.toLong()),
                         playing = song.id == uiState.currentSong?.id,
                         onMore = { onSongMore(song) },
                     )
@@ -108,7 +108,7 @@ fun AlbumArtistDetailScreen(
                 subtitle = song.album.orEmpty(),
                 onClick = { onPlay(uiState.songs, uiState.songs.indexOf(song)) },
                 artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
-                duration = song.duration.toHms().trim(),
+                duration = formatDuration(song.duration.toLong()),
                 playing = song.id == uiState.currentSong?.id,
                 onMore = { onSongMore(song) },
             )

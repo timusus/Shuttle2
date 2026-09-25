@@ -48,6 +48,7 @@ import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumGroupKey
@@ -58,7 +59,6 @@ import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
-import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumMenu
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.DetailArtwork
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.DetailHeroImage
@@ -596,7 +596,7 @@ private fun AlbumArtistDetailSongItem(
         }
 
         Text(
-            text = song.duration.toHms("--:--"),
+            text = formatDuration(song.duration.toLong(), zeroValue = "--:--"),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
