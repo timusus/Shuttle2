@@ -10,14 +10,14 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import com.simplecityapps.shuttle.designsystem.component.AlbumRow
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
-import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.fixtures.SampleAlbum
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
-import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 import com.simplecityapps.shuttle.ui.screens.library.AlbumArtistRoute
+import com.simplecityapps.shuttle.ui.screens.library.DetailContentState
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
+import com.simplecityapps.shuttle.ui.screens.library.LibraryDetailScaffold
 import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
@@ -27,7 +27,7 @@ import com.simplecityapps.toAlbumArtist
 /**
  * Stand-in screens for the shell's own tests: the real destinations need the Hilt graph, and these tests exercise
  * tabs, list-detail and back stacks rather than any one screen. Home lists the first eight sample albums and Library
- * all of them; an album lists its tracks; an artist lists its albums.
+ * all of them; an album lists its tracks under the library's detail header; an artist lists its albums.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun fakeShellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey> = entryProvider {
@@ -37,11 +37,16 @@ fun fakeShellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey
     entry<SearchRoute> { FakeList("Search", emptyList(), openAlbum) }
     entry<AlbumRoute>(metadata = ListDetailSceneStrategy.detailPane()) { route ->
         val album = SampleLibrary.albums.firstOrNull { it.toAlbum().route == route }
-        DetailScaffold(
+        LibraryDetailScaffold(
+            state = DetailContentState.Ready,
             title = album?.title ?: route.albumKey.orEmpty(),
             subtitle = album?.artist,
+            artwork = album?.toAlbum(),
+            placeholder = ArtworkPlaceholder.Album,
             onNavigateUp = { navigator.back() },
-            hero = { LibraryArtwork(album?.toAlbum(), ArtworkPlaceholder.Album, size = ArtworkSize.Hero) },
+            onPlay = {},
+            onShuffle = {},
+            onMore = {},
         ) {
             items(album?.songs.orEmpty(), key = { it.id }) { song -> SongRow(title = song.title, subtitle = song.artist, onClick = {}, trackNumber = song.track) }
         }
