@@ -7,8 +7,8 @@ import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
-import com.simplecityapps.sampleSongs
 import com.simplecityapps.shuttle.settings.ThemeMode
+import com.simplecityapps.shuttle.ui.preview.sampleSongs
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerBandState
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerScreen
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerUiState

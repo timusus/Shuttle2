@@ -23,11 +23,13 @@ import com.simplecityapps.shuttle.model.removeArticles
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import kotlinx.datetime.LocalDate
 
-// The sample library (:android:fixtures) as the app's models, for @Previews: invented names, and covers drawn through
-// LocalPreviewArtwork. Wrap a preview in `S2Preview(artwork = SampleAppCovers) { }`, or `SampleArtwork { }` inside a
-// preview's own theme. The fixtures are debugImplementation plus releaseCompileOnly: this compiles in main source for
-// the previews, Android Studio renders them from the debug variant, and release builds package none of it (R8 drops
-// this file). Nothing fails the build if live code reaches the fixtures, so only call these from @Preview functions.
+// The sample library (:android:fixtures) as the app's models, for @Previews and unit tests that want realistic
+// names: invented names, and covers drawn through LocalPreviewArtwork. Wrap a preview in
+// `S2Preview(artwork = SampleAppCovers) { }`, or `SampleArtwork { }` inside a preview's own theme. The fixtures are
+// debugImplementation plus releaseCompileOnly: this compiles in main source for the previews, Android Studio renders
+// them from the debug variant, and release builds package none of it (R8 drops this file), but nothing currently
+// catches live code that reaches it (#402) -- only call these from @Preview functions or test code, never from a
+// code path a release build can execute.
 
 /** Covers for the app's [Song]s, [Album]s and [AlbumArtist]s named after sample ones, and for the sample models themselves. */
 object SampleAppCovers : PreviewArtwork {
@@ -124,3 +126,6 @@ fun SamplePlaylist.toPlaylist(id: Long): Playlist = Playlist(
 
 /** Every sample playlist as a [Playlist], ids from 1. */
 fun samplePlaylists(): List<Playlist> = SampleLibrary.playlists.mapIndexed { index, playlist -> playlist.toPlaylist(id = index + 1L) }
+
+/** A queue of [size] sample-library songs (one from each album in turn), for previews and tests that want realistic names. */
+fun sampleSongs(size: Int = 8): List<Song> = SampleLibrary.queue(size).map { it.toSong() }

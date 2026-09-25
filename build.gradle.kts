@@ -21,4 +21,22 @@ subprojects {
         // Robolectric's NATIVE graphics/sqlite modes need more than the 512m default heap.
         maxHeapSize = "2g"
     }
+
+    // #402: :android:fixtures is compileOnly/debug-only; guard every module's release runtime
+    // classpath against resolving it, without needing a signed release build. `matching(...).all`
+    // reacts whenever AGP creates the variant configuration, regardless of afterEvaluate ordering.
+    if (path != ":android:fixtures") {
+        configurations.matching { it.name == "releaseRuntimeClasspath" }.all {
+            val releaseRuntimeClasspath = this
+            val verifyFixturesNotInReleaseClasspath = tasks.register<VerifyFixturesNotInReleaseClasspath>("verifyFixturesNotInReleaseClasspath") {
+                group = "verification"
+                description = "Fails if this module's release runtime classpath resolves :android:fixtures (#402)."
+                modulePath.set(path)
+                rootComponent.set(releaseRuntimeClasspath.incoming.resolutionResult.rootComponent)
+            }
+            tasks.matching { it.name == "check" }.configureEach {
+                dependsOn(verifyFixturesNotInReleaseClasspath)
+            }
+        }
+    }
 }

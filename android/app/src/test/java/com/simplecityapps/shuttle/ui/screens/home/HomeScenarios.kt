@@ -1,9 +1,9 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
-import com.simplecityapps.toAlbum
-import com.simplecityapps.toAlbumArtist
-import com.simplecityapps.toSong
+import com.simplecityapps.shuttle.ui.preview.toAlbum
+import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
+import com.simplecityapps.shuttle.ui.preview.toSong
 
 /** Home over the sample library, so its tiles load the generated covers under `SampleArtworkGlide`. */
 object HomeScenarios {

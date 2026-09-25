@@ -1,8 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.tageditor
 
 import com.simplecityapps.mediaprovider.model.AudioFile
-import com.simplecityapps.sampleSongs
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.preview.sampleSongs
 
 /** The tags [song]'s file holds, matching what the library has for it. */
 fun Song.audioFile(): AudioFile = createAudioFile(

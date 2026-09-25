@@ -85,7 +85,9 @@ albums or songs, and never hand-typed "Artist"/"Album" stand-ins where content i
   contact sheet is
   `docs/design/fake-artwork/contact-sheet.png`.
 - **App models:** `SampleSong.toSong()`, `toAlbum()`, `toAlbumArtist()`, `toGenre()`,
-  `toPlaylist()` and `sampleSongs(n)` in `app/src/test/.../SampleLibraryFactories.kt`.
+  `toPlaylist()` and `sampleSongs(n)` in `app/src/main/.../ui/preview/SamplePreviews.kt` — shared
+  by `@Preview`s and tests. Release compiles against `:android:fixtures` but never packages it
+  (`releaseCompileOnly`); nothing yet catches live code that reaches it at build time (#402).
 - **Artwork through Glide:** call `SampleArtworkGlide.install(context)` in `@Before` and
   `uninstall()` in `@After`. Songs, albums and album artists named after sample ones then
   load their covers synchronously. Nothing else loads, so other content keeps its placeholder.

@@ -3,11 +3,11 @@ package com.simplecityapps.shuttle.ui.screens.search
 import com.simplecityapps.mediaprovider.search.SearchHit
 import com.simplecityapps.mediaprovider.search.SearchQuery
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
-import com.simplecityapps.toAlbum
-import com.simplecityapps.toAlbumArtist
-import com.simplecityapps.toGenre
-import com.simplecityapps.toPlaylist
-import com.simplecityapps.toSong
+import com.simplecityapps.shuttle.ui.preview.toAlbum
+import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
+import com.simplecityapps.shuttle.ui.preview.toGenre
+import com.simplecityapps.shuttle.ui.preview.toPlaylist
+import com.simplecityapps.shuttle.ui.preview.toSong
 
 /** Search over the sample library, so rows load the generated covers under `SampleArtworkGlide`. */
 object SearchScenarios {

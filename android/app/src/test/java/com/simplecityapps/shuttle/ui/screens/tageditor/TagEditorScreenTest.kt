@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.tageditor
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.simplecityapps.sampleSongs
+import com.simplecityapps.shuttle.ui.preview.sampleSongs
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import org.junit.Rule

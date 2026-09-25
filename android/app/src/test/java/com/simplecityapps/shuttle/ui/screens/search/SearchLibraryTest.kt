@@ -7,11 +7,11 @@ import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
-import com.simplecityapps.toAlbum
-import com.simplecityapps.toAlbumArtist
-import com.simplecityapps.toGenre
-import com.simplecityapps.toPlaylist
-import com.simplecityapps.toSong
+import com.simplecityapps.shuttle.ui.preview.toAlbum
+import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
+import com.simplecityapps.shuttle.ui.preview.toGenre
+import com.simplecityapps.shuttle.ui.preview.toPlaylist
+import com.simplecityapps.shuttle.ui.preview.toSong
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly

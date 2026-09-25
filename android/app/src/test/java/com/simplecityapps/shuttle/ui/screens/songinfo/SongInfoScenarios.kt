@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.songinfo
 
-import com.simplecityapps.sampleSongs
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.preview.sampleSongs
 
 /** A sample song as a TagLib-scanned file: a document path, file details and ReplayGain. */
 fun sampleSongWithFileDetails(): Song {

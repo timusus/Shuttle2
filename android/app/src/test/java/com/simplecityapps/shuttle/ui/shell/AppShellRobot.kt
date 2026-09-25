@@ -38,7 +38,6 @@ import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.computeWindowSizeClass
 import com.simplecityapps.createSong
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
-import com.simplecityapps.sampleSongs
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
@@ -50,6 +49,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.preview.sampleSongs
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
