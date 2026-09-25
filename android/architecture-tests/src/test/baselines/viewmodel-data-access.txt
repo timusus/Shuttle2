@@ -4,7 +4,6 @@ com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel -> com.s
 com.simplecityapps.shuttle.ui.screens.home.AnalyticsConsentViewModel -> com.simplecityapps.mediaprovider.repository.songs.SongRepository
 com.simplecityapps.shuttle.ui.screens.library.GenreDetailViewModel -> com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 com.simplecityapps.shuttle.ui.screens.library.GenreDetailViewModel -> com.simplecityapps.mediaprovider.repository.genres.GenreRepository
-com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyViewModel -> com.simplecityapps.mediaprovider.repository.songs.SongRepository
 com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailViewModel -> com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistDetailViewModel -> com.simplecityapps.mediaprovider.repository.songs.SongRepository
 com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailViewModel -> com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
