@@ -162,10 +162,12 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
 - Menu: Cast route button (when Cast available), Sleep timer, Favorite (heart), Lyrics overlay
   (only if lyrics exist), Song info, Edit tags, Clear queue.
 - No rating, no playback-speed control. The trial-expiry speed penalty that used to change playback
-  speed here is removed (§8, decision 6 superseded).
+  speed here is removed (§8, decision 6 superseded). The redesign adds a speed control (#400, below).
 - Redesign: artwork-themed surface (app-shell §5); Expressive `FilledIconButton` shapes that morph
   on press for play/pause; `Slider` with wavy active track; lyrics as a full panel; an Equalizer
-  entry in the overflow (owner decision 2); tabletop split (app-shell §2).
+  entry in the overflow (owner decision 2); tabletop split (app-shell §2). Done (#377, #400): the
+  overflow's "Playback & sound" sheet sets speed (0.5–2×, pitch kept) and ReplayGain mode and links
+  to the Equalizer and Settings > Playback & sound; a speed other than 1× shows as a header chip.
 - Maestro: `playback-controls`, `repeat-modes`, `queue-shuffle`, `sleep-timer`, `nav/open-now-playing`.
 
 ### Queue — Change
@@ -220,7 +222,8 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
 - 5/15/30/60 min, "Play to end of track" switch (`sleepTimerPlayToEnd`); while active: live
   countdown or "waiting for track to end", Stop, Set new time.
 - Redesign: bottom sheet with M3 Expressive button group of durations plus a custom duration;
-  countdown chip on Now Playing. Reached from Now Playing (and the drawer today).
+  countdown chip on Now Playing. Reached from Now Playing (and the drawer today). Done (#377): the
+  running timer's sheet offers "Add 5 min" and Stop; Stop reopens the presets, replacing Set new time.
 - Maestro: `sleep-timer`.
 
 ### Equalizer (`DspFragment`) — Change
@@ -435,7 +438,7 @@ All 12 taken as written on 2026-09-25 (epic #382); each can still be revisited.
 - [ ] Mini player: progress, play/pause, skip, long-press seek
 - [ ] Now Playing: artwork swipe skip, shuffle, repeat ×3, seek, long-press seek, audiobook seek buttons, artist/album links, Cast, lyrics, favorite, clear queue
 - [ ] Queue: tap to play, reorder, remove, Play next, scroll to current, save as playlist, clear
-- [ ] Sleep timer: presets, play to end of track, live countdown, stop
+- [x] Sleep timer: presets, play to end of track, live countdown, stop
 - [ ] EQ: on/off, presets, custom bands, ReplayGain mode, pre-amp, frequency response
 - [ ] USB DAC direct output (API 34+), Keep shuffle on new queue
 - [ ] Permission in context on API 23–32 (`READ_EXTERNAL_STORAGE`) and 33+ (`READ_MEDIA_AUDIO`), incl. permanent denial
