@@ -59,17 +59,17 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 
-/** A queue of [titles], each by "Artist", three minutes long, playing the first. */
+/** A queue of [titles], each on "Phase Garden" by "Juniper Static", three minutes long, playing the first. */
 fun shellQueue(vararg titles: String): PlayerUiState {
     val rows = titles.mapIndexed { index, title ->
         PlayerSong(
             uid = index.toLong(),
             title = title,
-            artist = "Artist",
-            album = "Album",
+            artist = "Juniper Static",
+            album = "Phase Garden",
             durationMs = 180_000,
             position = if (index == 0) QueuePosition.Current else QueuePosition.Upcoming,
-            song = createSong(id = index.toLong(), name = title, albumArtist = "Artist", album = "Album", duration = 180_000),
+            song = createSong(id = index.toLong(), name = title, albumArtist = "Juniper Static", album = "Phase Garden", duration = 180_000),
         )
     }
     return PlayerUiState(hasQueue = rows.isNotEmpty(), current = rows.firstOrNull(), items = rows)

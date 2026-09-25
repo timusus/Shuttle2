@@ -110,8 +110,8 @@ class AppShellTest {
     @Test
     fun `back at Mini pops the destination instead`() {
         robot.setContent()
-        robot.tapText("Album 1")
-        robot.assertTextDisplayed("Track 1")
+        robot.tapText("Phase Garden")
+        robot.assertTextDisplayed("Chlorophyll Loop")
 
         robot.pressBack()
         robot.assertLevel(PlayerLevel.Mini)
@@ -211,7 +211,7 @@ class AppShellTest {
     fun `now playing shows the song and its position`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.assertTextDisplayed("Artist • Album")
+        robot.assertTextDisplayed("Juniper Static • Phase Garden")
         robot.assertTextDisplayed("1:00")
         robot.assertTextDisplayed("3:00")
     }
@@ -305,7 +305,7 @@ class AppShellTest {
 
     @Test
     fun `Go to album in the Now Playing menu opens the album and settles the sheet to Mini`() {
-        val album = createAlbum(name = "Blue Train", albumArtist = "John Coltrane")
+        val album = createAlbum(name = "Slow Bloom", albumArtist = "Ines Quarrow")
         robot.actions.mediaActionResult = { MediaActionResult.Navigate(NavigationTarget.Album(album)) }
         robot.setContent()
         robot.tapMiniPlayer()
@@ -314,12 +314,12 @@ class AppShellTest {
         robot.tapText("Go to album")
         robot.actions.mediaActions.single().shouldBeSongAction<MediaAction.GoToAlbum>("First song")
         robot.assertLevel(PlayerLevel.Mini)
-        robot.assertTextDisplayed("Track 1")
+        robot.assertTextDisplayed("Morning Glory")
     }
 
     @Test
     fun `Go to artist in the Now Playing menu opens the artist and settles the sheet to Mini`() {
-        val artist = createAlbumArtist(name = "John Coltrane")
+        val artist = createAlbumArtist(name = "Ines Quarrow")
         robot.actions.mediaActionResult = { MediaActionResult.Navigate(NavigationTarget.AlbumArtist(artist)) }
         robot.setContent()
         robot.tapMiniPlayer()
@@ -328,7 +328,7 @@ class AppShellTest {
         robot.tapText("Go to artist")
         robot.actions.mediaActions.single().shouldBeSongAction<MediaAction.GoToArtist>("First song")
         robot.assertLevel(PlayerLevel.Mini)
-        robot.assertTextDisplayed("John Coltrane")
+        robot.assertTextDisplayed("Slow Bloom")
     }
 
     @Test

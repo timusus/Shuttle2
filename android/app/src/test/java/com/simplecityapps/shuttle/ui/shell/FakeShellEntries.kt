@@ -9,45 +9,54 @@ import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import com.simplecityapps.shuttle.designsystem.component.AlbumRow
-import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.fixtures.SampleAlbum
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 import com.simplecityapps.shuttle.ui.screens.library.AlbumArtistRoute
+import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
+import com.simplecityapps.shuttle.ui.screens.library.route
+import com.simplecityapps.toAlbum
+import com.simplecityapps.toAlbumArtist
 
 /**
  * Stand-in screens for the shell's own tests: the real destinations need the Hilt graph, and these tests exercise
- * tabs, list-detail and back stacks rather than any one screen. Home and Library list "Album N"; an album lists
- * "Track N"; an artist lists its key over "Album N".
+ * tabs, list-detail and back stacks rather than any one screen. Home lists the first eight sample albums and Library
+ * all of them; an album lists its tracks; an artist lists its albums.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun fakeShellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey> = entryProvider {
-    val openAlbum = { index: Int -> navigator.open(AlbumRoute(albumKey = "album-$index", albumArtistKey = "artist")) }
-    entry<HomeRoute> { FakeList("Recently played", (1..8).toList(), openAlbum) }
-    entry<LibraryRoute>(metadata = ListDetailSceneStrategy.listPane()) { FakeList("Albums", (1..24).toList(), openAlbum) }
+    val openAlbum = { album: SampleAlbum -> navigator.open(album.toAlbum().route) }
+    entry<HomeRoute> { FakeList("Recently played", SampleLibrary.albums.take(8), openAlbum) }
+    entry<LibraryRoute>(metadata = ListDetailSceneStrategy.listPane()) { FakeList("Albums", SampleLibrary.albums, openAlbum) }
     entry<SearchRoute> { FakeList("Search", emptyList(), openAlbum) }
     entry<AlbumRoute>(metadata = ListDetailSceneStrategy.detailPane()) { route ->
+        val album = SampleLibrary.albums.firstOrNull { it.toAlbum().route == route }
         DetailScaffold(
-            title = route.albumKey.orEmpty(),
-            subtitle = null,
+            title = album?.title ?: route.albumKey.orEmpty(),
+            subtitle = album?.artist,
             onNavigateUp = { navigator.back() },
-            hero = { Artwork(ArtworkPlaceholder.Album, size = ArtworkSize.Hero) },
+            hero = { LibraryArtwork(album?.toAlbum(), ArtworkPlaceholder.Album, size = ArtworkSize.Hero) },
         ) {
-            items((1..10).toList(), key = { it }) { track -> SongRow(title = "Track $track", subtitle = "Artist", onClick = {}, trackNumber = track) }
+            items(album?.songs.orEmpty(), key = { it.id }) { song -> SongRow(title = song.title, subtitle = song.artist, onClick = {}, trackNumber = song.track) }
         }
     }
-    entry<AlbumArtistRoute>(metadata = ListDetailSceneStrategy.detailPane()) { route -> FakeList(route.albumArtistKey.orEmpty(), (1..3).toList(), openAlbum) }
+    entry<AlbumArtistRoute>(metadata = ListDetailSceneStrategy.detailPane()) { route ->
+        val artist = SampleLibrary.artists.firstOrNull { it.toAlbumArtist().route == route }
+        FakeList(artist?.name ?: route.albumArtistKey.orEmpty(), artist?.albums.orEmpty(), openAlbum)
+    }
     entry<SettingsRoute> { FakeList("Settings", emptyList(), openAlbum) }
 }
 
 @Composable
-private fun FakeList(header: String, albums: List<Int>, onOpenAlbum: (Int) -> Unit) {
+private fun FakeList(header: String, albums: List<SampleAlbum>, onOpenAlbum: (SampleAlbum) -> Unit) {
     LazyColumn {
         item { SectionHeader(title = header) }
-        items(albums, key = { it }) { index ->
-            AlbumRow(title = "Album $index", artist = "Artist", onClick = { onOpenAlbum(index) }, artwork = { Artwork(ArtworkPlaceholder.Album) })
+        items(albums, key = { it.id }) { album ->
+            AlbumRow(title = album.title, artist = album.artist, onClick = { onOpenAlbum(album) }, artwork = { LibraryArtwork(album.toAlbum(), ArtworkPlaceholder.Album) })
         }
     }
 }

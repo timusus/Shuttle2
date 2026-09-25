@@ -68,7 +68,7 @@ class ShellScreenshotTest {
 
     private fun libraryDetail(prefix: String) {
         robot.tapText("Library")
-        robot.tapText("Album 2")
+        robot.tapText("Night Bus Frequencies")
         shot("$prefix-library-detail")
     }
 
