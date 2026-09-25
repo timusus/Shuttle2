@@ -6,46 +6,24 @@ receivers (`support/scripts/s2-debug.sh`, the `debug-receivers` skill); Maestro 
 has to be tapped. `support/scripts/emu-verify.sh` runs a lane end to end (start, install, seed,
 checks/flows, stop) in one call -- see its `--help` or `.claude/skills/emulator-check/SKILL.md`.
 
-**Running the full batch: `emu-verify.sh --suite` once, then read the results file.** It runs every
-check below once each under a per-flow timeout, retries a failure once, keeps going past one, and
-appends a row (flow, pass/fail/timeout/skip, duration, screenshot, last error) to
-`build/maestro/results.md` as each finishes, so a cut-short run still leaves a report. Don't debug
-flows one at a time by hand -- that's what left #381's two validation runs (84 and 100 minutes)
-with no report to show for them. `--flows <a,b>` narrows to a subset by name; `--flow-timeout <s>`
-overrides the 180s default.
+**What's here and why:** every device-only check (name, its Maestro wrapper if any, and why a JVM
+test can't cover it) is listed in [`CLASSIFICATION.md`](CLASSIFICATION.md), not repeated here --
+that's the one place it's kept in sync as flows are added or ported to Robolectric (#450). This
+file covers how the checks work, how to run them, and how to write a new one.
 
-| Check | Driver | What it proves | Time on a lane |
-|---|---|---|---|
-| `support/scripts/checks/queue-remove-current.sh` | receivers | Removing the playing item plays the next track from its start, no stall | ~4 s |
-| `support/scripts/checks/rapid-skip.sh` | receivers | Three back-to-back NEXTs settle on track 4, playing, no load pending | ~3 s |
-| `support/scripts/checks/restore-position.sh` | receivers | Seek 0:20, play 5 s, force-stop, relaunch, play: resumes at ~0:25 | ~12 s |
-| `support/scripts/checks/folder-art.sh` | receivers + taps | One-song album with a magenta `cover.jpg` and no embedded art: Library > Albums shows the cover (artwork pixel check); removes the album after | ~20 s |
-| `support/scripts/checks/open-queue-by-taps.sh` | receivers + `open-queue-by-taps.yaml` | Mini player -> full player -> "Up Next" opens the queue | 30-75 s (Maestro driver start-up varies) |
-| `support/scripts/checks/shell-sheet-levels.sh` | receivers + `shell-sheet-levels.yaml` | The debug Compose shell (#375, #410): the player sheet goes Mini -> Now Playing -> the queue by the bar's button and by a drag up that then scrolls the artwork away, opens each panel, back closes the panel and steps down to Mini, then pops the destination | ~60 s |
-| `support/scripts/checks/shell-player.sh` | receivers + `shell-player.yaml` | The debug Compose shell's player (#376): expand, play/pause, seek, skip, then swipe a song out of the queue, drag one to the top by its handle and tap one to play it, start and stop a sleep timer and set 1.5x from their panels; playback follows the new order | ~45 s |
-| `support/scripts/checks/library-compose.sh` | receivers + `library-compose.yaml` | The debug Compose shell's library (#377): every default tab, then album, artist and genre detail; a Songs selection added to a new playlist, whose song plays from the playlist | ~60 s |
-| `support/scripts/checks/paywall-settings.sh` | `paywall-settings.yaml` | The debug Compose shell's S2 Pro paywall (#380), from Settings > S2 Pro: a debug build shows the Pro status and benefits, and back returns to Settings | ~30 s |
-| `support/scripts/checks/shell-home-search.sh` | receivers + `shell-home-search.yaml` | The debug Compose shell's Home and Search (#377): Home shows the library and a Home album opens its album screen, its search action opens Search, an artist result opens its artist screen, a genre result its genre screen, and tapping a song result plays it | ~55 s |
-| `support/scripts/checks/shell-tag-editor.sh` | `taglib` provider + `shell-tag-editor.yaml`, `shell-tag-editor-rescanned.yaml` | The debug Compose shell's song info and tag editor (#377): a song's info opens from its row menu, and a non-ASCII title (#388) edited from a one-song selection's Edit Tags shows in the Songs tab once written, reads back from the file and survives a rescan | ~90 s |
-| `support/scripts/checks/playback-controls.sh` | receivers + `playback-controls.yaml` | Play a song from Library > Songs: mini player and notification show it; pause, resume, skip next, skip previous (restart past 2 s), seek by tapping the seek bar; a PREV at the start goes back a song | ~90 s |
-| `support/scripts/checks/queue-shuffle.sh` | receivers + `queue-shuffle.yaml` | A tap on Shuffle keeps the current song first and shuffles the rest on the queue sheet; next plays the second song shown; shuffle off restores the order | ~45-75 s |
-| `support/scripts/checks/queue-actions.sh` | receivers + `queue-actions.yaml` | Play Next and Add to Queue from Songs, Remove from Queue and drag-to-reorder on the queue sheet; the sheet and the player agree on the order | ~100 s |
-| `support/scripts/checks/repeat-modes.sh` | receivers + `repeat-modes.yaml` | Two taps on Repeat set repeat one (the last song restarts); repeat all wraps round to the first song; repeat off ends the queue | ~45 s |
-| `support/scripts/checks/restore-queue.sh` | receivers + `nav/open-queue.yaml` | An edited queue, mid-song, survives a force-stop: relaunched paused on the same song and position, same queue on the sheet | ~40 s |
-| `support/scripts/checks/sleep-timer.sh` | receivers + `sleep-timer.yaml` | Set a 5-minute sleep timer from the player's menu, see it count down, stop it | ~50 s |
-| `support/scripts/checks/notification-controls.sh` | receivers + `notification-controls.yaml`, `notification-controls-play.yaml` | In the expanded shade, the media notification shows the song and artist; previous, pause, play and next work from it; its shuffle and repeat buttons toggle the app's, and the app's show on them | ~105 s |
-| `support/scripts/checks/notification-art.sh` | receivers + pixels | A song with an embedded magenta cover: the media notification's large icon is the artwork, not the 72x72 placeholder, and the shade's media player is tinted by it; removes the album after | ~10 s |
-| `support/scripts/checks/lock-screen-controls.sh` | receivers + adb taps | Locked while playing, the lock screen's media controls show the song and artist; its play/pause button pauses and plays (adb taps: Maestro waits ~40 s per tap while the seek bar moves) | ~15 s |
-| `support/scripts/checks/cold-start-media-button.sh` | receivers + key events | With the app force-stopped, a headset's play (KEYCODE_MEDIA_PLAY, then MEDIA_PLAY_PAUSE) resumes the saved queue where it was paused; the notification is up and foreground 12 s on, with no ForegroundService exception or crash | ~40 s |
-| `support/scripts/checks/cold-start-widget.sh` | receivers + service intent | With the app force-stopped, the widget's play-pause (PlaybackService started in the foreground with the toggle action) resumes the saved queue where it was paused; the notification is up and foreground 12 s on, with no ForegroundService exception; play-pause again pauses
-| `support/scripts/checks/dismiss-paused-notification.sh` | receivers + adb swipe | A minute after pausing, a swipe dismisses the shade's media player; the app keeps running with no crash, and playing again brings the notification back
-| `support/scripts/checks/media-session-controller.sh` | receivers + `cmd media_session` | `dumpsys media_session` lists the session as active with the right state and title, artist and album; system-dispatched play, pause, next and previous act on playback and the session follows
-| `support/scripts/checks/phone-call.sh` | receivers + emulator console (`remote-emu.sh emu gsm call`) | Playing, an incoming call pauses S2, a play while it rings is held off, and hanging up plays on; paused, a call that rings and ends leaves S2 paused; a play while it rings starts when the call ends (API 31+). SKIPs without a dialer (ATD image) | ~25 s |
-| `support/scripts/checks/focus-other-app.sh` | receivers + Google Photos video | Paused, S2 keeps audio focus; Photos playing a video takes it, and when Photos gives it back S2 stays paused at the same position. SKIPs without Photos (ATD image) | ~12 s |
-| `support/scripts/checks/remote-reporting.sh <server>` | receivers + server API | Jellyfin/Emby/Plex sessions show the song playing at an advancing position, then paused; a play-through counts once on Plex. Needs `seed-remote-provider.sh <server>` instead of the fixture, so `run-all.sh` skips it | ~45 s |
+**Running the full batch: `emu-verify.sh --suite` once, then read the results file.** With no
+`--flows`, it runs the device smoke set (`support/scripts/checks/smoke.txt`, one check per surface)
+once each under a per-flow timeout, retries a failure once, keeps going past one, and appends a row
+(flow, pass/fail/timeout/skip, duration, screenshot, last error) to `build/maestro/results.md` as
+each finishes -- so a cut-short run still leaves a report for every flow that finished, plus an
+`interrupted` row for whichever flow was still running when it was cut off. Don't debug flows one
+at a time by hand -- that's what left #381's two validation runs (84 and 100 minutes) with no
+report to show for them. `--all` runs every check in the run-all set instead of just the smoke set;
+`--flows <a,b>` narrows to a subset by name; `--flow-timeout <s>` overrides the 180s default.
 
-`support/scripts/checks/run-all.sh` runs them all. Each prints `PASS <name> in Ns` or
-`FAIL <name>: <reason>` with the last `DUMP_STATE`, and exits non-zero on failure.
+`support/scripts/checks/run-all.sh` runs every check directly (`--smoke` for just the smoke set).
+Each check prints `PASS <name> in Ns` or `FAIL <name>: <reason>` with the last `DUMP_STATE`, and
+exits non-zero on failure.
 
 ## Why most checks are shell, not Maestro
 
@@ -79,7 +57,7 @@ To run a flow by hand:
 
 ```bash
 maestro --device "$(support/scripts/remote-emu.sh serial)" test --test-output-dir tmp/maestro \
-  support/maestro/open-queue-by-taps.yaml
+  support/maestro/queue-shuffle.yaml
 ```
 
 ## Writing a flow
@@ -97,6 +75,11 @@ maestro --device "$(support/scripts/remote-emu.sh serial)" test --test-output-di
   with `runFlow: launch-fresh.yaml`, so it's safe to run standalone (`--flow`) or nested inside
   another flow (`runFlow`) regardless of what screen the app was left on -- at the cost of a cold
   relaunch each time it's entered, which is cheap next to Maestro's own ~10-20 s driver start-up.
+- Before adding a new flow, check `CLASSIFICATION.md`'s criteria: if the behaviour is Compose
+  navigation/state a Robolectric test in `:android:app` can drive, it belongs there instead (see
+  `.claude/rules/testing.md`) -- a new Maestro flow is for what genuinely needs the device (SAF,
+  MediaStore, the playback service and its notification, widgets, shortcuts, Android Auto, voice,
+  intents, rotation, process death).
 
 ## `nav/` subflows
 
@@ -113,6 +96,9 @@ e.g. `runFlow: open-now-playing.yaml`).
 | `nav/open-library-tab.yaml` | Tap the Library bottom-nav item, then a sub-tab by name. | `TAB`: `Genres`\|`Playlists`\|`Artists`\|`Albums`\|`Songs` |
 | `nav/open-settings.yaml` | Open the More sheet, then tap "Settings". | none |
 | `nav/search.yaml` | Open Search and type a query into the auto-focused search field. | `QUERY`: text to type |
+| `nav/create-testlist.yaml` | Create a "TestList" playlist from two `many-tracks` songs, if it doesn't already exist (idempotent). | none |
+| `nav/pick-saf-folder.yaml` | Drive the already-open system SAF folder picker to a named folder under Music and grant access. | `FOLDER_NAME`: folder to pick |
+| `nav/setup-taglib-provider.yaml` | Add a folder under Settings > Sources' "Read these folders directly", then wait for the scan. Wrapped by `checks/_lib.sh`'s `setup_taglib_provider`. | `FOLDER_NAME`: folder to add |
 
 Pass a param with `-e` on the CLI (`maestro test -e TAB=Albums support/maestro/nav/open-library-tab.yaml`)
 or `env:` from a parent flow's `runFlow` step:
@@ -124,14 +110,19 @@ or `env:` from a parent flow's `runFlow` step:
       TAB: Albums
 ```
 
-`support/maestro/open-queue-by-taps.yaml` is a worked example: it composes `nav/open-queue.yaml`
-plus one assertion and a screenshot, instead of hand-rolling the mini-player and "Up Next" taps.
+`support/maestro/queue-shuffle.yaml` is a worked example: it composes `nav/open-now-playing.yaml`
+plus a couple of taps and a screenshot, instead of hand-rolling the player-to-queue navigation.
 
-## Adding a new check that uses them
+## Adding a new check
 
-1. Write the flow (or reuse a `nav/` one via `runFlow`) under `support/maestro/`.
-2. Write a `support/scripts/checks/<name>.sh` wrapper (see `open-queue-by-taps.sh`): set up
+1. Decide UI-only vs. device-only against `CLASSIFICATION.md`'s criteria (above). A UI-only
+   behaviour goes into a Robolectric test instead, not a new flow.
+2. Write the flow (or reuse a `nav/` one via `runFlow`) under `support/maestro/`.
+3. Write a `support/scripts/checks/<name>.sh` wrapper (see `queue-shuffle.sh`): set up
    playback state with the receivers, pause, then run `maestro test --device "$(remote-emu.sh
    serial)"` against the flow, `fail` on a non-zero exit.
-3. `run-all.sh` picks it up automatically; run it directly with `support/scripts/emu-verify.sh
-   --check <name>`, or run just the flow with `--flow support/maestro/<path>.yaml`.
+4. Add a row to `CLASSIFICATION.md`'s "Device-only (kept)" table.
+5. `run-all.sh` and `emu-verify.sh --suite --all` pick it up automatically; run it directly with
+   `support/scripts/emu-verify.sh --check <name>`, or run just the flow with `--flow
+   support/maestro/<path>.yaml`. If it should also run in the default smoke batch, add its name to
+   `support/scripts/checks/smoke.txt`.

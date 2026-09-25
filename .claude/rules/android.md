@@ -91,12 +91,15 @@ seeded this session (#412) -- keep the default (reset every time) for the landin
 **Batch device validation: `emu-verify.sh --suite` once, then read the results file.** For a full
 device-check pass (queued batches like #452), run `support/scripts/emu-verify.sh --suite` (or
 `--suite --flows <a,b>` for a subset) and read `build/maestro/results.md` -- don't debug flows one
-at a time by hand. It runs every check in the run-all set under a per-flow timeout (`--flow-timeout`,
-default 180s), retries a failure once, keeps going past one, and appends a row (flow, pass/fail/
-timeout/skip, duration, screenshot, last error) as each finishes, so a run that gets cut short still
-leaves a report -- #381's two validation runs (84 and 100 minutes) left none. It exits non-zero if
-any flow failed or timed out; a `skip` row (no dialer, no Photos on the ATD image, ...) isn't a
-failure.
+at a time by hand. With no `--flows`, it runs the device smoke set (`smoke.txt`, #450); `--all`
+runs every check in the run-all set instead. Each runs under a per-flow timeout (`--flow-timeout`,
+default 180s, falling back to a bash watchdog when neither `timeout` nor `gtimeout` is on PATH,
+#454), retries a failure once, keeps going past one, and appends a row (flow, pass/fail/timeout/
+skip, duration, screenshot, last error) as each finishes -- plus an `interrupted` row for whatever
+flow was still running if the run itself gets cut short -- so a run that gets cut short still
+leaves a report for every flow, not just the ones that had already finished; #381's two validation
+runs (84 and 100 minutes) left none. It exits non-zero if any flow failed or timed out; a `skip`
+row (no dialer, no Photos on the ATD image, ...) isn't a failure.
 
 **Standard start state for validation:** a lane that's been reused inherits stale app data and
 media from a previous run. Before validating a UI or playback change, reset the lane and reseed
@@ -144,8 +147,9 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
 library, skips, seeks, removes queue items and dumps playback state as JSON over `adb` broadcasts:
 `support/scripts/s2-debug.sh <ACTION>`, documented in the `debug-receivers` skill. Set up state
 with it and tap only when the UI is the thing under test. Ready-made checks (queue removal, rapid
-skip, position restore after a force-stop, opening the queue by taps with Maestro) live in
-`support/scripts/checks/`; `support/maestro/README.md` covers them and how to write more.
+skip, position restore after a force-stop, shuffle and repeat driven by Maestro) live in
+`support/scripts/checks/`; `support/maestro/README.md` covers them and how to write more, and
+`support/maestro/CLASSIFICATION.md` lists which are device-only versus ported to Robolectric (#450).
 
 **Taps, dumps and screenshots once a lane is up: the `android-device` skill.** Its scripts
 (`~/.claude/scripts/adb/`: `tap-by-text.sh`, `find-element.sh`, `screenshot.sh`, `safe-zone.sh`, ...)
