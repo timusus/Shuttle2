@@ -139,10 +139,10 @@ class RecordingPlayerActions(
     }
 
     override fun moveQueueItem(
-        from: Int,
-        to: Int,
+        uid: Long,
+        afterUid: Long?,
     ) {
-        calls += "moveQueueItem($from, $to)"
+        calls += "moveQueueItem($uid, after $afterUid)"
     }
 
     override fun removeQueueItem(uid: Long) {

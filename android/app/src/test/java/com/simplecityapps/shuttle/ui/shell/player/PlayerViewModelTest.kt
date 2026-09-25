@@ -9,6 +9,7 @@ import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueItem
+import com.simplecityapps.playback.queue.clone
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.sleeptimer.SleepTimer
@@ -217,8 +218,8 @@ class PlayerViewModelTest {
         queueManager.queueStateFlow.value = queueOf(songs("One", "Two", "Three", "Four"), current = 1)
 
         viewModel.skipToQueueItem(102)
-        viewModel.moveQueueItem(3, 0)
-        viewModel.moveQueueItem(2, 2)
+        viewModel.moveQueueItem(103, afterUid = null)
+        viewModel.moveQueueItem(102, afterUid = 101)
         viewModel.removeQueueItem(100)
         viewModel.playNext(103)
         viewModel.playNext(100)
@@ -232,6 +233,44 @@ class PlayerViewModelTest {
             "moveQueueItem(3, 2)",
             "moveQueueItem(0, 1)",
         )
+    }
+
+    @Test
+    fun `a move resolves against the live queue, so rows added or removed mid-drag don't shift it`() = runTest {
+        val viewModel = viewModel()
+        val songs = songs("One", "Two", "Three", "Four")
+        // The drag began on One, Two, Three, Four (uids 100-103): One was dragged to follow Three.
+        queueManager.queueStateFlow.value = queueOf(songs)
+        // Before the drop, auto-advance and a removal changed the queue: Two is gone, a new row leads.
+        val live = listOf(QueueItem(uid = 200, song = createSong(id = 9, name = "New"), isCurrent = true)) +
+            queueOf(songs).items.filter { it.uid != 101L }.map { it.clone(isCurrent = false) }
+        queueManager.queueStateFlow.value = QueueState.Empty.copy(items = live, currentItem = live.first(), currentPosition = 0, isRestored = true)
+
+        viewModel.moveQueueItem(100, afterUid = 102)
+
+        // Live order New, One, Three, Four: One moves from 1 to just after Three, 2.
+        playbackManager.calls shouldBe listOf("moveQueueItem(1, 2)")
+    }
+
+    @Test
+    fun `a move is dropped when the dragged row or its new neighbour has left the queue`() = runTest {
+        val viewModel = viewModel()
+        queueManager.queueStateFlow.value = queueOf(songs("One", "Two", "Three"))
+
+        viewModel.moveQueueItem(999, afterUid = 102)
+        viewModel.moveQueueItem(100, afterUid = 999)
+
+        playbackManager.calls shouldBe emptyList<String>()
+    }
+
+    @Test
+    fun `queueMove puts the row just after its neighbour`() {
+        val uids = listOf(1L, 2L, 3L, 4L)
+        queueMove(uids, 1, afterUid = 3) shouldBe (0 to 2)
+        queueMove(uids, 4, afterUid = 1) shouldBe (3 to 1)
+        queueMove(uids, 3, afterUid = null) shouldBe (2 to 0)
+        queueMove(uids, 2, afterUid = 1) shouldBe null
+        queueMove(uids, 1, afterUid = null) shouldBe null
     }
 
     @Test

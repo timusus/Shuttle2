@@ -206,10 +206,10 @@ class PlayerViewModel @Inject constructor(
     }
 
     override fun moveQueueItem(
-        from: Int,
-        to: Int,
+        uid: Long,
+        afterUid: Long?,
     ) {
-        if (from != to) playbackOperations.moveQueueItem(from, to)
+        queueMove(queueOperations.getQueue().map { it.uid }, uid, afterUid)?.let { (from, to) -> playbackOperations.moveQueueItem(from, to) }
     }
 
     override fun removeQueueItem(uid: Long) {
@@ -256,6 +256,25 @@ class PlayerViewModel @Inject constructor(
     private companion object {
         const val SLEEP_TIMER_TICK_MS = 1_000L
     }
+}
+
+/**
+ * The from and to indices that put [uid] just after [afterUid] (at the top when null) in the live
+ * queue [uids], or null when either row has gone or the row is already there.
+ */
+internal fun queueMove(
+    uids: List<Long>,
+    uid: Long,
+    afterUid: Long?,
+): Pair<Int, Int>? {
+    val from = uids.indexOf(uid).takeIf { it >= 0 } ?: return null
+    val to = if (afterUid == null) {
+        0
+    } else {
+        val anchor = uids.indexOf(afterUid).takeIf { it >= 0 } ?: return null
+        if (anchor < from) anchor + 1 else anchor
+    }
+    return (from to to).takeIf { from != to }
 }
 
 internal fun QueueState.toPlayerUiState(): PlayerUiState {

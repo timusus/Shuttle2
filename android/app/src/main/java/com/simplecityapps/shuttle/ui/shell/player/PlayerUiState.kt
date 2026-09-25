@@ -97,9 +97,13 @@ interface PlayerActions {
 
     fun skipToQueueItem(uid: Long)
 
+    /**
+     * Moves the row [uid] to just after the row [afterUid], or to the top when null. Identities rather
+     * than indices, so a queue that changed during the drag still moves the right row.
+     */
     fun moveQueueItem(
-        from: Int,
-        to: Int,
+        uid: Long,
+        afterUid: Long?,
     )
 
     fun removeQueueItem(uid: Long)

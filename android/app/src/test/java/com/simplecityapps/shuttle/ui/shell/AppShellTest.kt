@@ -230,7 +230,7 @@ class AppShellTest {
         robot.tapQueuePeek()
 
         robot.dragQueueRow("First song", rows = 2)
-        robot.calls shouldBe listOf("moveQueueItem(0, 2)")
+        robot.calls shouldBe listOf("moveQueueItem(0, after 2)")
     }
 
     @Test

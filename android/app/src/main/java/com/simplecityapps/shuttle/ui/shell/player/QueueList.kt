@@ -131,7 +131,7 @@ internal fun QueueList(
                             reorder.drag(amount.y)
                         },
                         onDragEnd = {
-                            reorder.end()?.let { (from, to) -> actions.moveQueueItem(from, to) }
+                            reorder.end()?.let { (uid, afterUid) -> actions.moveQueueItem(uid, afterUid) }
                             scope.launch { reorder.settle() }
                         },
                         onDragCancel = { scope.launch { reorder.settle() } },
@@ -231,7 +231,6 @@ internal class QueueReorderState(
 
     private var order by mutableStateOf<List<PlayerSong>?>(null)
     private var baseItems: List<PlayerSong>? = null
-    private var fromIndex = -1
 
     /** The dragged row's top when the drag began, and how far the finger has taken it since. */
     private var startTop = 0f
@@ -253,7 +252,6 @@ internal class QueueReorderState(
         val row = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == uid } ?: return
         baseItems = items
         order = items
-        fromIndex = items.indexOfFirst { it.uid == uid }
         startTop = row.offset.toFloat()
         slotTop = startTop
         dragDistance = 0f
@@ -292,11 +290,17 @@ internal class QueueReorderState(
         return startTop + dragDistance - laidOut
     }
 
-    /** Ends the drag, returning the move to commit, or null if the row came back to where it started. */
-    fun end(): Pair<Int, Int>? {
+    /**
+     * Ends the drag, returning the dragged row and the row it now follows (null at the top), or null
+     * if it came back to where it started. The ViewModel resolves both against the live queue.
+     */
+    fun end(): Pair<Long, Long?>? {
         val uid = draggingUid ?: return null
-        val to = order?.indexOfFirst { it.uid == uid } ?: return null
-        return (fromIndex to to).takeIf { fromIndex >= 0 && to >= 0 && fromIndex != to }
+        val rows = order ?: return null
+        val to = rows.indexOfFirst { it.uid == uid }
+        val from = baseItems?.indexOfFirst { it.uid == uid } ?: return null
+        if (to < 0 || from < 0 || from == to) return null
+        return uid to rows.getOrNull(to - 1)?.uid
     }
 
     /** Springs the dragged row into its slot, then lets go of it. */
