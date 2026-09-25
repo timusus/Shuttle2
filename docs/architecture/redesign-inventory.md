@@ -347,8 +347,10 @@ Decided model (owner, 2026-09-25; detail in [`monetisation.md`](../product/monet
 playback penalty, no nag dialogs.** A 14-day, no-card trial starts at the first server connection;
 the paywall appears only at add-server, trial end and Settings > S2 Pro. All five legacy product
 IDs are grandfathered to Pro forever; new server downloads need Pro, existing downloads keep
-playing. `:android:trial` (#380) has landed with the penalty code deleted; `ServerAccessGate`
-itself is wired in with the paywall UI, not before.
+playing. `:android:trial` (#380) has landed with the penalty code deleted, and `ServerAccessGate`
+is wired in: adding a server after the trial, resolving a server song for playback (local player,
+Cast and Auto alike, in `AggregateMediaInfoProvider`) and downloading from a server all open the
+Compose paywall (`ui/screens/paywall/`), which Settings > S2 Pro opens too.
 
 | Flow | Today | Verdict | Redesign |
 |---|---|---|---|
@@ -367,7 +369,8 @@ itself is wired in with the paywall UI, not before.
 Note: Remote Config (trial length, pricing tier, snowfall) only refreshes when Firebase Analytics
 is enabled, so the analytics decision changes pricing and trial behaviour too.
 
-Maestro: none for any of these (trial state depends on billing; fixtures run as debug).
+Maestro: `paywall-settings.yaml` opens the paywall from Settings > S2 Pro (a debug build is always Pro, so it
+shows the Pro status); the other states are covered by the Roborazzi recordings in `docs/design/paywall/`.
 
 ## 9. System surfaces (unaffected)
 
@@ -458,9 +461,9 @@ All 12 taken as written on 2026-09-25 (epic #382); each can still be revisited.
 - [ ] File logging, copy logs; debug live log reachable in debug builds
 - [ ] Changelog reachable; licences
 - [ ] Purchase (Lifetime, Annual, Monthly plan cards), thank-you, promo code path (visible in Settings > S2 Pro), review prompt
-- [ ] Grandfathering: all 5 legacy product IDs (monthly, yearly, yearly_low, iap_full_version, iap_full_version_low) still grant Pro
+- [x] Grandfathering: all 5 legacy product IDs (monthly, yearly, yearly_low, iap_full_version, iap_full_version_low) still grant Pro
 - [ ] Server trial: starts on first server connection, 14 days no card, trial chip in Library top bar for the last 3 days
-- [ ] Paywall entry points: add-server (before connecting), trial end (on tapping play on a remote song), Settings > S2 Pro
+- [x] Paywall entry points: add-server (before connecting), trial end (on tapping play on a remote song), Settings > S2 Pro
 - [ ] Intents: play-from-search, VIEW audio file, default music app; Toggle playback shortcut
 - [ ] Android Auto browse and playback; Cast connect from Now Playing
 - [ ] Every `support/maestro` flow ported to Compose test tags and green

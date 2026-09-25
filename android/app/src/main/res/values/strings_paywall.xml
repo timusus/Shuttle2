@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Title of the S2 Pro screen, and its row in Settings -->
+    <string name="paywall_title">S2 Pro</string>
+    <!-- Summary of the S2 Pro row in Settings -->
+    <string name="paywall_settings_summary">Stream from Jellyfin, Emby and Plex</string>
+    <!-- S2 Pro screen: status when the user has never had the server trial -->
+    <string name="paywall_status_trial_available">Add a Jellyfin, Emby or Plex server to start a free 14-day trial.</string>
+    <!-- S2 Pro screen: status when the server trial has ended -->
+    <string name="paywall_status_trial_ended">Your free trial has ended. Upgrade to keep streaming from your servers.</string>
+    <!-- S2 Pro screen: status during the trial, e.g. '3 days left in your free trial' -->
+    <plurals name="paywall_status_trial">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> day left in your free trial</item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> days left in your free trial</item>
+    </plurals>
+    <!-- S2 Pro screen: status when the user has Pro -->
+    <string name="paywall_status_pro">You have S2 Pro. Thank you for supporting S2.</string>
+    <!-- S2 Pro screen: heading of the list of what Pro unlocks -->
+    <string name="paywall_benefits_heading">What you get</string>
+    <string name="paywall_benefit_streaming">Stream from Jellyfin, Emby and Plex</string>
+    <string name="paywall_benefit_downloads">Download server songs for offline listening</string>
+    <string name="paywall_benefit_free">Local playback, Chromecast, EQ, Android Auto and downloaded songs stay free</string>
+    <!-- S2 Pro screen: heading of the plans -->
+    <string name="paywall_plans_heading">Choose a plan</string>
+    <string name="paywall_plan_lifetime">Lifetime</string>
+    <string name="paywall_plan_annual">Yearly</string>
+    <string name="paywall_plan_monthly">Monthly</string>
+    <!-- S2 Pro screen: the lifetime plan's price, e.g. '$14.99 once' -->
+    <string name="paywall_price_once"><xliff:g example="$14.99" id="price">{price}</xliff:g> once</string>
+    <!-- S2 Pro screen: badge on the lifetime plan -->
+    <string name="paywall_plan_best_value">Best value</string>
+    <!-- S2 Pro screen: shown instead of a price while prices load -->
+    <string name="paywall_price_loading">Loading price…</string>
+    <!-- S2 Pro screen: shown instead of a price when prices can't be loaded -->
+    <string name="paywall_price_unavailable">Price unavailable</string>
+    <!-- S2 Pro screen: title when Google Play prices can't be loaded -->
+    <string name="paywall_prices_unavailable">Couldn\'t load prices</string>
+    <!-- S2 Pro screen: message when Google Play prices can't be loaded -->
+    <string name="paywall_prices_unavailable_message">Check your connection and that Google Play is signed in.</string>
+    <string name="paywall_retry">Retry</string>
+    <!-- S2 Pro screen: the purchase button -->
+    <string name="paywall_purchase">Get S2 Pro</string>
+    <string name="paywall_restore">Restore purchases</string>
+    <string name="paywall_manage_subscription">Manage subscription</string>
+    <string name="paywall_purchase_failed">Couldn\'t open Google Play. Please try again.</string>
+    <string name="paywall_restored">Your purchase has been restored</string>
+    <string name="paywall_nothing_to_restore">No S2 Pro purchase found for this Google account</string>
+    <string name="paywall_restore_failed">Couldn\'t reach Google Play. Please try again.</string>
+</resources>

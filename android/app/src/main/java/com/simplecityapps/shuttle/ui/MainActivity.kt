@@ -16,7 +16,9 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.view.SnowfallView
-import com.simplecityapps.trial.BillingManager
+import com.simplecityapps.shuttle.ui.screens.paywall.showPaywallOnRequest
+import com.simplecityapps.trial.Billing
+import com.simplecityapps.trial.ServerAccessGate
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -33,7 +35,10 @@ class MainActivity : AppCompatActivity() {
     lateinit var themeManager: ThemeManager
 
     @Inject
-    lateinit var billingManager: BillingManager
+    lateinit var billing: Billing
+
+    @Inject
+    lateinit var serverAccessGate: ServerAccessGate
 
     @Inject
     lateinit var remoteConfig: FirebaseRemoteConfig
@@ -76,7 +81,8 @@ class MainActivity : AppCompatActivity() {
             handleViewIntent(intent)
         }
 
-        billingManager.queryPurchases()
+        billing.queryPurchases()
+        showPaywallOnRequest(serverAccessGate)
 
         snowfallView = findViewById(R.id.snowfallView)
 
@@ -91,7 +97,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
 
-        billingManager.queryPurchases()
+        billing.queryPurchases()
     }
 
     override fun onNewIntent(intent: Intent) {

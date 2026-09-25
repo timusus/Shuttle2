@@ -15,6 +15,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.screens.paywall.PaywallRoute
 import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesScreen
 import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewScreen
@@ -28,6 +29,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
+import com.simplecityapps.trial.PaywallSource
 import kotlinx.serialization.Serializable
 import timber.log.Timber
 
@@ -68,7 +70,11 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
         }
     }
     entry<SettingsRoute> {
-        SettingsRootScreen(onNavigateUp = { navigateUp() }, onOpenDestination = { navigator.open(SettingsDestinationRoute(it)) })
+        SettingsRootScreen(
+            onNavigateUp = { navigateUp() },
+            onOpenDestination = { navigator.open(SettingsDestinationRoute(it)) },
+            onOpenPro = { navigator.open(PaywallRoute(PaywallSource.Settings)) }
+        )
     }
     entry<SettingsDestinationRoute> { route -> SettingsDestinationEntry(route.destination, onNavigateUp = { navigateUp() }, onOpenLink = openLink) }
     entry<EqualizerRoute> { EqualizerEntry(onNavigateUp = { navigateUp() }) }

@@ -5,6 +5,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import com.simplecityapps.shuttle.ui.screens.home.homeEntries
 import com.simplecityapps.shuttle.ui.screens.library.libraryEntries
+import com.simplecityapps.shuttle.ui.screens.paywall.paywallEntries
 import com.simplecityapps.shuttle.ui.screens.search.searchEntries
 import com.simplecityapps.shuttle.ui.screens.settings.settingsEntries
 import com.simplecityapps.shuttle.ui.screens.tageditor.tagEditorEntries
@@ -16,4 +17,5 @@ fun shellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey> = 
     searchEntries(navigator)
     settingsEntries(navigator)
     tagEditorEntries(navigator)
+    paywallEntries(navigator)
 }

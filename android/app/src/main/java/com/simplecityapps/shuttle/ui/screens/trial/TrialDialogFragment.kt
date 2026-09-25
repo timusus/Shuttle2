@@ -16,6 +16,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
+import com.simplecityapps.shuttle.ui.screens.paywall.PaywallDialogFragment
 import com.simplecityapps.trial.Entitlement
 import com.simplecityapps.trial.EntitlementRepository
 import com.simplecityapps.trial.MonetisationAnalytics
@@ -70,7 +71,7 @@ class TrialDialogFragment : DialogFragment() {
         val upgradeButton: Button = view.findViewById(R.id.upgradeButton)
         upgradeButton.setOnClickListener {
             dismiss()
-            PurchaseDialogFragment.newInstance().show(parentFragmentManager)
+            PaywallDialogFragment.show(parentFragmentManager, PaywallSource.valueOf(requireArguments().getString(ARG_SOURCE)!!))
         }
 
         val heading: TextView = view.findViewById(R.id.heading)

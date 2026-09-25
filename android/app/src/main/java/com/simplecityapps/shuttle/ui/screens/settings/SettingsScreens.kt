@@ -16,6 +16,7 @@ import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.PrivacyTip
 import androidx.compose.material.icons.rounded.Storage
+import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.Scaffold
@@ -88,14 +89,28 @@ internal fun SettingsScaffold(
     }
 }
 
-/** The Settings root: one row per [SettingsDestination]. */
+/** The Settings root: the S2 Pro row, then one row per [SettingsDestination]. */
 @Composable
 fun SettingsRootScreen(
     onNavigateUp: () -> Unit,
     onOpenDestination: (SettingsDestination) -> Unit,
+    onOpenPro: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     SettingsScaffold(title = stringResource(R.string.settings_menu_settings), onNavigateUp = onNavigateUp, modifier = modifier) {
+        item {
+            SettingsGroup(
+                rows = listOf { shapes: ListItemShapes ->
+                    LinkSetting(
+                        title = stringResource(R.string.paywall_title),
+                        summary = stringResource(R.string.paywall_settings_summary),
+                        onClick = onOpenPro,
+                        icon = Icons.Rounded.WorkspacePremium,
+                        shapes = shapes
+                    )
+                }
+            )
+        }
         item {
             SettingsGroup(
                 rows = SettingsDestination.entries.map { destination ->
