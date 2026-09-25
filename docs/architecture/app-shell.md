@@ -144,6 +144,106 @@ Empty queue: anchors `{Hidden}` only, padding drops to `N`. Non-empty: `{Mini, N
 animating to Mini. Hidden is not user-reachable (decision 3). On cold start the saved level stands
 until the first queue emission, so a restoring queue never flashes the mini player.
 
+### Content-height Now Playing (#410)
+
+Design exploration, not built. On compact portrait, should Now Playing stop at its content height,
+with the library dimmed above it, and reach full height only when Up Next is pulled up and pushes it
+(the Shuttle Podcasts model)? Podcasts' `ExpandableSheetScaffold` toggles a panel of at most 60% of
+the height with a tween; its content wraps with `weight(1f, fill = false)`, and the whole player
+lives in a `ModalBottomSheet` window. Nothing of that carries over: our sheet is one
+`AnchoredDraggableState` that follows the finger, and Up Next is a list, not a capped panel.
+
+Renders in `docs/design/np-sheet-410/`, recorded by `NowPlayingSheetVariantsScreenshotTest` from
+the preview-only `NowPlayingSheetVariants.kt` (test sources, real player composables, sample
+library, 24 dp status and gesture bars). Each variant `{a-full-level,b-content-height,c-artwork-fill}`
+is shot at `-rest` and `-dragging` (Up Next pulled 64 dp) on `phone` (411×891) and `phone-short`
+(360×640), and at rest on `foldable-folded` (411×826).
+
+| Variant | Now Playing anchor | Phone 411×891 | Short 360×640 | Folded 411×826 |
+|---|---|---|---|---|
+| (A) Full level (today) | 0; spare height spreads into the gaps (#403) | full, 379 dp art | full | full |
+| (B) Content height | window − measured content; full height if under 48 dp of library shows | 52 dp of library under the status bar, a row cut in half; 379 dp art | falls back to (A) | falls back to (A) |
+| (C) Artwork fills | fixed: status bar + 96 dp of library; artwork takes the rest up to full width; full height if the artwork would drop under 240 dp | one library row; 335 dp art | falls back to (A) | 270 dp art |
+
+With today's chrome (header 64, title 72, transport 188 at a 16 dp gap, peek 56, gesture bar 24:
+436 dp), (B) only goes partial on a window at least 887 dp tall at 411 wide, and then shows a strip
+too thin to read as intent. (C) goes partial from 796 dp: every 19.5:9 or taller phone at 411 dp
+wide, and the 411×826 folded window.
+
+**Anchors.** Levels stay Hidden/Mini/NowPlaying/Queue; only the NowPlaying and Queue anchors move.
+The sheet's offset is still its top edge, so `expand`, the scrim (0.32·e) and the nav-bar slide
+(N·e) keep their formulas against the new NowPlaying anchor P, and `queue` runs P → P − travel.
+- (A): P = 0, as now.
+- (B): P = H − content height, which needs a measurement. `onMeasured` → `updateAnchors` a frame
+  later flashes the nominal anchor on first show and on restore; a build would follow M3's
+  `draggableAnchors` layout modifier, which sets the anchors inside measure. The height changes
+  with font scale and window size, not with the song: artwork is square and the title is one
+  line per field, ellipsised.
+- (C): P = status bar + 96 dp: window arithmetic, like the other anchors, with no measurement.
+  Font scale and a taller title shrink the artwork, not P. The full-height fallback is decided
+  from the nominal chrome scaled by `fontScale`, as `NominalGeometry` already is. On windows tall
+  enough for full-width art the surplus goes into the gaps (`stackedGroupGap`), so P stays fixed.
+- Rotation to landscape or a width class change leaves the stacked layout entirely (§2); P only
+  exists for `StackedPlayer`.
+
+**Predictive back.** Unchanged: `PlayerBackHandler` still lerps between the settled level's anchor
+and the one below (Queue → NowPlaying → Mini). In (B) and (C) Queue → NowPlaying visibly lowers
+the sheet's edge back to P, which reads more like a sheet than today's scroll-back.
+
+**State restoration.** The saved level stands. (A) and (C) recompute every anchor from the new
+window size in the same frame. (B) restores at the nominal P until measured unless its anchors are
+set during measure.
+
+**Scrim and nav bar.** In (A) the scrim is covered at NowPlaying. In (B) and (C) it is the user's
+scheme scrim over the destinations and stays visible above the sheet; tapping it collapses to Mini,
+as `PlayerScrim` already does. It is never a drag target: dragging the strip must not scroll the
+library or move the sheet. The nav bar still slides off by N·e and is under the sheet at NowPlaying.
+
+**Artwork colour.** The sheet is `ArtworkTheme(Player)` `surfaceContainer`. A partial sheet gets
+28 dp top corners, which flatten over the last 28 dp as its edge meets the status bar; above it,
+the dimmed user-scheme library makes the edge read as a card in the (light) renders; dark is unchecked. Once
+the sheet passes under the status bar the artwork surface fills it, as in (A).
+
+**Short phones and folded.** Both (B) and (C) fall back to (A) below their thresholds, so short
+phones keep today's player (the `phone-short` renders of all three are identical). Folded, (C)
+keeps a partial sheet with 270 dp art; (B) does not.
+
+**Push or overlay.** Push in all three: the song, transport, Up Next header and list are one rigid
+column that rises with the finger. In (B) and (C) the sheet's edge rises first; once it reaches the
+status bar the song scrolls away under it and the transport stays as the queue's head, as in (A).
+This keeps the one nested-scroll connection and the transport reachable at Queue. An overlaying
+panel (Podcasts) would need a second draggable and would hide the transport.
+
+**TalkBack.** The sheet already has a level `stateDescription` and hides the song or queue with
+`hiddenFromSemantics`. With a partial sheet the library strip is on screen and focusable, so the
+destinations must be hidden from semantics while expand > 0.5, leaving the scrim's "Collapse
+player" action as the only node above the sheet.
+
+**Reorder gestures.** Drag-to-reorder lives on the queue rows' handles and needs Queue, where all
+three variants are the same full-height column. At NowPlaying the first queue row can peek below
+the Up Next header into the gesture bar (in (A) too, at realistic insets); its handle should not
+start a reorder there.
+
+**Recommendation: build (C).** It gives the #410 look (a sheet over one readable library row) on
+the phones most people hold, with anchors that stay pure window arithmetic, so restoration, back
+and rotation keep working as they do. (B) barely differs from (A) on real phones, shows a clipped
+strip where it does differ, and needs measured anchors. Keep (A) on short phones through (C)'s
+fallback.
+
+A build of (C) would touch:
+- `ui/shell/player/PlayerSheetGeometry.kt`: the NowPlaying anchor P and the fractions measured from it.
+- `ui/shell/player/PlayerSheetState.kt`: anchors from P, the fallback decision, `NominalGeometry`.
+- `ui/shell/player/PlayerContent.kt`: `StackedPlayer`'s artwork slot and gaps, `stackedQueueTravel` from P.
+- `ui/shell/player/PlayerSheet.kt`: the sheet's shape and corner flattening, the scrim above a partial sheet.
+- `ui/shell/AppShell.kt`: hiding the destinations from semantics while the sheet covers them.
+- Tests: `PlayerSheetGeometryTest`, `AppShellTest`/`AppShellRobot` (strip, scrim tap, back), and a
+  re-record of `ShellScreenshotTest`.
+
+The np410 test files become characterisation tests if (C) is built: the variant switch goes, the
+test renders the real shell at rest and mid-drag on the three windows, and records into the shell
+screenshots. If #410 is closed without a build, `ui/shell/player/np410/` and
+`docs/design/np-sheet-410/` are deleted in the change that closes it.
+
 ## 2. Adaptive layout
 
 The five M3 width classes come from `currentWindowAdaptiveInfoV2()` (material3-adaptive 1.3.0):
