@@ -2,11 +2,14 @@ package com.simplecityapps.shuttle.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.ViewGroup
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -14,7 +17,7 @@ import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.shuttle.di.AppCoroutineScope
-import com.simplecityapps.shuttle.ui.common.view.SnowfallView
+import com.simplecityapps.shuttle.ui.common.components.Snowfall
 import com.simplecityapps.shuttle.ui.screens.paywall.showPaywallOnRequest
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
@@ -69,6 +72,8 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var reviewPrompt: ReviewPrompt
 
+    private var snowForecast by mutableDoubleStateOf(0.0)
+
     private val musicPermissionRequest =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             sourcesSettings.musicPermissionRequested.value = true
@@ -86,13 +91,13 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             S2AppTheme {
-                ShellRoute()
+                Box {
+                    ShellRoute()
+                    // Over the shell, and blind to touches, so they reach it
+                    Snowfall(forecast = snowForecast)
+                }
             }
         }
-
-        // Over the shell, and blind to touches, so they reach it
-        val snowfallView = SnowfallView(this, null)
-        addContentView(snowfallView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
 
         // No onboarding (#379): ask for the music permission once, on first launch, and scan when it's granted.
         // A later grant goes through Settings > Media > Sources, or the system settings. One already held at startup
@@ -117,7 +122,7 @@ class MainActivity : AppCompatActivity() {
             withTimeout(5000) {
                 remoteConfig.fetchAndActivate().await()
             }
-            snowfallView.post { snowfallView.setForecast(remoteConfig.getDouble("snow_forecast")) }
+            snowForecast = remoteConfig.getDouble("snow_forecast")
         }
     }
 
