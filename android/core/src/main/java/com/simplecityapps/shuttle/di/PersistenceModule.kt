@@ -3,11 +3,11 @@ package com.simplecityapps.shuttle.di
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.preference.PreferenceManager
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
+import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,7 +23,7 @@ class PersistenceModule {
     @Provides
     fun provideSharedPrefs(
         @ApplicationContext context: Context
-    ): SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+    ): SharedPreferences = context.defaultSharedPreferences()
 
     @Singleton
     @Provides
@@ -40,7 +40,7 @@ class PersistenceModule {
             context.getSharedPreferences("encrypted_preferences", Context.MODE_PRIVATE).edit().clear().commit()
             encryptedSharedPreferences = createEncryptedPreferences(context)
         }
-        return SecurePreferenceManager(encryptedSharedPreferences ?: PreferenceManager.getDefaultSharedPreferences(context))
+        return SecurePreferenceManager(encryptedSharedPreferences ?: context.defaultSharedPreferences())
     }
 
     @Synchronized

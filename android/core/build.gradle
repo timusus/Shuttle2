@@ -42,9 +42,6 @@ kotlin {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    // AndroidX Preferences
-    implementation libs.androidx.preference.ktx
-
     // OkHttp Logging Interceptor
     api libs.okhttp3.loggingInterceptor
 
