@@ -8,7 +8,7 @@
 #   support/scripts/emu-verify.sh [--check <name>]... [--flow <path.yaml>]... [--apk <path>]
 #                                  [--no-seed] [--no-reset] [--remote <jellyfin|emby|plex>] [--keep]
 #                                  [--remote-build]
-#                                  [--suite [--flows <name,name,...>] [--flow-timeout <secs>]]
+#                                  [--suite [--all | --flows <name,name,...>] [--flow-timeout <secs>]]
 #
 #     --check <name>   run support/scripts/checks/<name>.sh (repeatable)
 #     --flow <path>    run a Maestro flow directly via `maestro test` (repeatable)
@@ -28,16 +28,21 @@
 #                         media, and export S2_REMOTE=<server> so remote checks run instead of
 #                         SKIPping
 #     --keep           leave the lane running instead of stopping it at the end
-#     --suite          run every check in the run-all set (or just --flows) once each, under a
-#                       per-flow timeout, retrying a failed one once, and keep going after a
-#                       failure instead of stopping -- one call for a full device-check batch
-#                       (#448) instead of debugging flows one at a time with no report to show
-#                       for a cut-short run. Writes build/maestro/results.md (flow, pass/fail/
-#                       timeout/skip, duration, screenshot path, last error line), appending a row
-#                       as each flow finishes. Exits non-zero if any flow failed or timed out.
-#                       Not combinable with --check/--flow -- use --flows for a subset.
+#     --suite          run the device smoke set (support/scripts/checks/smoke.txt, #450) once each,
+#                       under a per-flow timeout, retrying a failed one once, and keep going after a
+#                       failure instead of stopping -- one call for a smoke batch (#448) instead of
+#                       debugging flows one at a time with no report to show for a cut-short run.
+#                       Falls back to a bash watchdog for the per-flow timeout when neither
+#                       `timeout` nor `gtimeout` is on PATH (#454), and writes an `interrupted` row
+#                       for the in-flight flow if the run itself is cut short. Writes
+#                       build/maestro/results.md (flow, pass/fail/timeout/skip/interrupted,
+#                       duration, screenshot path, last error line), appending a row as each flow
+#                       finishes. Exits non-zero if any flow failed or timed out. Not combinable
+#                       with --check/--flow -- use --flows for a subset.
+#     --all            with --suite, run every check in the run-all set instead of just the smoke
+#                       set. Not combinable with --flows.
 #     --flows <a,b>    with --suite, run only these checks (comma-separated names) instead of the
-#                       full run-all set
+#                       smoke set (or, with --all, instead of the full run-all set)
 #     --flow-timeout <secs>  per-flow timeout for --suite (default 180)
 #
 #   With neither --check, --flow nor --suite given: runs support/scripts/checks/run-all.sh (the
@@ -58,6 +63,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "$REPO_ROOT" || exit 1
 
+CHECKS_DIR="${SCRIPT_DIR}/checks"
+# shellcheck source=support/scripts/checks/_suite_names.sh
+source "${CHECKS_DIR}/_suite_names.sh"
+# shellcheck source=support/scripts/checks/_timeout_fallback.sh
+source "${CHECKS_DIR}/_timeout_fallback.sh"
+
 usage() { awk 'NR>1 && /^#/ {sub(/^# ?/, ""); print; next} NR>1 {exit}' "$0"; }
 
 CHECKS=()
@@ -68,6 +79,7 @@ NO_RESET=0
 REMOTE=""
 KEEP=0
 SUITE=0
+ALL=0
 FLOWS_ARG=""
 FLOW_TIMEOUT=180
 REMOTE_BUILD="${S2_REMOTE_BUILD:-0}"
@@ -81,8 +93,9 @@ while [ $# -gt 0 ]; do
         --no-reset) NO_RESET=1; shift ;;
         --remote) REMOTE="${2:?emu-verify: --remote needs jellyfin, emby or plex}"; shift 2 ;;
         --keep) KEEP=1; shift ;;
---remote-build) REMOTE_BUILD=1; shift ;;
+        --remote-build) REMOTE_BUILD=1; shift ;;
         --suite) SUITE=1; shift ;;
+        --all) ALL=1; shift ;;
         --flows) FLOWS_ARG="${2:?emu-verify: --flows needs a comma-separated list of check names}"; shift 2 ;;
         --flow-timeout) FLOW_TIMEOUT="${2:?emu-verify: --flow-timeout needs a number of seconds}"; shift 2 ;;
         -h|--help) usage; exit 0 ;;
@@ -99,6 +112,14 @@ if [ -n "$FLOWS_ARG" ] && [ "$SUITE" != 1 ]; then
     echo "emu-verify: --flows needs --suite" >&2
     exit 2
 fi
+if [ "$ALL" = 1 ] && [ "$SUITE" != 1 ]; then
+    echo "emu-verify: --all needs --suite" >&2
+    exit 2
+fi
+if [ "$ALL" = 1 ] && [ -n "$FLOWS_ARG" ]; then
+    echo "emu-verify: --all can't be combined with --flows" >&2
+    exit 2
+fi
 if [ "$SUITE" = 1 ] && { [ "${#CHECKS[@]}" -gt 0 ] || [ "${#FLOWS[@]}" -gt 0 ]; }; then
     echo "emu-verify: --suite can't be combined with --check/--flow -- use --flows for a subset" >&2
     exit 2
@@ -112,8 +133,25 @@ echo "emu-verify: log: $LOG"
 START_TS=$(date +%s)
 LANE_STARTED=0
 FAILED=0
+# --suite's per-flow state, read by interrupt_current_flow (below) from the EXIT trap: the flow
+# run_suite_flow is currently running, and the results.md path once run_suite has created it (#454).
+CURRENT_SUITE_FLOW=""
+RESULTS_MD=""
+
+# interrupt_current_flow: if the run is cut short (Ctrl-C, a kill) while --suite has a flow
+# in flight, write it an `interrupted` row instead of leaving it out of results.md entirely --
+# previously only a flow that had actually finished got a row, so a cut-short run's last flow
+# silently vanished from the report (#454).
+interrupt_current_flow() {
+    if [ -n "$CURRENT_SUITE_FLOW" ] && [ -n "$RESULTS_MD" ]; then
+        write_result_row "$CURRENT_SUITE_FLOW" "interrupted" "-" "-" "run cut short"
+        echo "emu-verify: ${CURRENT_SUITE_FLOW} -- interrupted" >&2
+        CURRENT_SUITE_FLOW=""
+    fi
+}
 
 cleanup() {
+    interrupt_current_flow
     if [ "$KEEP" = "1" ]; then
         [ "$LANE_STARTED" = "1" ] && echo "emu-verify: --keep set, lane left running (support/scripts/remote-emu.sh stop when done)"
         return
@@ -228,22 +266,8 @@ run_flow() {
     fi
 }
 
-# ---- --suite: every check in the run-all set (or --flows), timed, retried once, reported ----
-
-# suite_flow_names: the run-all set in run-all.sh's own order (alphabetical, no-crashes last),
-# minus its own *_test.sh unit tests (run-all_test.sh matches the same `[a-z]*.sh` glob run-all.sh
-# scans but is a stub test of run-all.sh itself, not a device check).
-suite_flow_names() {
-    local f name
-    for f in support/scripts/checks/[a-z]*.sh; do
-        name="$(basename "$f" .sh)"
-        case "$name" in
-            run-all | *_test | no-crashes) continue ;;
-        esac
-        echo "$name"
-    done
-    echo "no-crashes"
-}
+# ---- --suite: the smoke set by default, --all for the run-all set, or --flows for a subset;
+# each timed, retried once, reported (name enumeration shared with run-all.sh via _suite_names.sh) ----
 
 # write_result_row <flow> <status> <duration> <screenshot> <last error>: appends one row to
 # $RESULTS_MD, escaping any literal '|' in the free-text fields so the table doesn't break.
@@ -270,6 +294,7 @@ run_suite_flow() {
         return
     fi
 
+    CURRENT_SUITE_FLOW="$name"
     for attempt in 1 2; do
         marker_dir="$(mktemp -d)"
         since="$(mktemp)"
@@ -278,7 +303,7 @@ run_suite_flow() {
         if [ -n "$TIMEOUT_BIN" ]; then
             FAIL_MARKER_DIR="$marker_dir" "$TIMEOUT_BIN" "$FLOW_TIMEOUT" "$script" >"$out" 2>&1
         else
-            FAIL_MARKER_DIR="$marker_dir" "$script" >"$out" 2>&1
+            FAIL_MARKER_DIR="$marker_dir" run_with_timeout "$FLOW_TIMEOUT" "$script" >"$out" 2>&1
         fi
         status=$?
         dur=$(($(date +%s) - start))
@@ -287,7 +312,7 @@ run_suite_flow() {
         if [ "$status" -eq 0 ]; then
             if grep -q '^SKIP ' "$out"; then row_status="skip"; else row_status="pass"; fi
             row_err="-"
-        elif [ "$status" -eq 124 ] && [ -n "$TIMEOUT_BIN" ]; then
+        elif [ "$status" -eq 124 ]; then
             row_status="timeout"
             row_err="timed out after ${FLOW_TIMEOUT}s"
         else
@@ -303,6 +328,7 @@ run_suite_flow() {
         [ "$row_status" = "pass" ] || [ "$row_status" = "skip" ] && break
         [ "$attempt" -eq 1 ] && echo "emu-verify: ${name} -- attempt 1 ${row_status}, retrying" >>"$LOG"
     done
+    CURRENT_SUITE_FLOW=""
 
     write_result_row "$name" "$row_status" "${dur}s" "${shots:--}" "$row_err"
     case "$row_status" in
@@ -328,13 +354,17 @@ run_suite() {
     for _t in timeout gtimeout; do
         command -v "$_t" >/dev/null 2>&1 && { TIMEOUT_BIN="$_t"; break; }
     done
-    [ -n "$TIMEOUT_BIN" ] || echo "emu-verify: no 'timeout'/'gtimeout' on PATH -- running --suite with no per-flow timeout" >&2
+    [ -n "$TIMEOUT_BIN" ] || echo "emu-verify: no 'timeout'/'gtimeout' on PATH -- using a bash watchdog fallback for --suite's per-flow timeout" >&2
 
     local names=() n
     if [ -n "$FLOWS_ARG" ]; then
         IFS=',' read -ra names <<<"$FLOWS_ARG"
+    elif [ "$ALL" = 1 ]; then
+        while IFS= read -r n; do names+=("$n"); done < <(suite_all_names "$CHECKS_DIR")
+        names+=("no-crashes")
     else
-        while IFS= read -r n; do names+=("$n"); done < <(suite_flow_names)
+        while IFS= read -r n; do names+=("$n"); done < <(suite_smoke_names "$CHECKS_DIR")
+        names+=("no-crashes")
     fi
 
     echo "emu-verify: running ${#names[@]} flow(s) in suite mode (timeout ${FLOW_TIMEOUT}s, retry once)"
