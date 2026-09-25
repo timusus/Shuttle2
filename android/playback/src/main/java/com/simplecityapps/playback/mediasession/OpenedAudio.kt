@@ -34,15 +34,19 @@ data class OpenedAudio(
      * Matches on the song's path: the URI itself, the file path (MediaStore songs carry file paths), or the
      * SAF document id (songs found through a picked folder carry tree document URIs, which name the same
      * document id under the same authority as a plain document URI for that file).
+     *
+     * The same file can be in the library more than once, a row per provider (#420), so every match is a
+     * candidate and the choice doesn't depend on the library's order (RS-57): a song that isn't excluded first,
+     * then S2's own scan over MediaStore's (the provider order of [MediaProviderType]), then the lowest id.
      */
-    fun findIn(songs: List<Song>): Song? = songs.firstOrNull { song -> song.path == uri }
-        ?: filePath?.let { path -> songs.firstOrNull { song -> song.path == path } }
-        ?: documentId?.let { id ->
-            songs.firstOrNull { song ->
-                val (songAuthority, songDocumentId) = documentUriParts(song.path) ?: return@firstOrNull false
-                songAuthority == authority && songDocumentId == id
-            }
-        }
+    fun findIn(songs: List<Song>): Song? = songs.filter(::isSameFile).minWithOrNull(libraryRowPreference)
+
+    private fun isSameFile(song: Song): Boolean {
+        if (song.path == uri || (filePath != null && song.path == filePath)) return true
+        if (documentId == null) return false
+        val (songAuthority, songDocumentId) = documentUriParts(song.path) ?: return false
+        return songAuthority == authority && songDocumentId == documentId
+    }
 
     /**
      * A song that plays straight from [uri], for a file that isn't in the library. Its id is negative, so it
@@ -80,6 +84,10 @@ data class OpenedAudio(
     )
 
     companion object {
+        /** Which of several library rows for the same file plays it (see [findIn]). */
+        private val libraryRowPreference: Comparator<Song> =
+            compareBy<Song>({ it.blacklisted }, { it.mediaProvider.ordinal }, { it.id })
+
         /** A negative id derived from [uri], so the same file keeps the same id and never collides with a library row. */
         fun transientId(uri: String): Long = -(uri.hashCode().toLong() and 0xFFFFFFFFL) - 1
 

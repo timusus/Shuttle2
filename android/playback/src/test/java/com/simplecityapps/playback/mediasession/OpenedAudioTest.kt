@@ -52,6 +52,41 @@ class OpenedAudioTest {
     }
 
     @Test
+    fun `prefers S2's own row over MediaStore's for a file both providers hold, in any library order`() {
+        val path = "/storage/emulated/0/Music/Artist/Both.mp3"
+        val mediaStoreRow = testSong(id = 3, path = path).copy(mediaProvider = MediaProviderType.MediaStore)
+        val shuttleRow = testSong(id = 7, path = path).copy(mediaProvider = MediaProviderType.Shuttle)
+        val opened = OpenedAudio(uri = "file://$path", filePath = path)
+
+        opened.findIn(listOf(mediaStoreRow, shuttleRow)) shouldBe shuttleRow
+        opened.findIn(listOf(shuttleRow, mediaStoreRow)) shouldBe shuttleRow
+    }
+
+    @Test
+    fun `prefers a row that isn't excluded, whichever criterion matched it`() {
+        val excludedShuttleRow = testSong(id = 1, path = treeSong.path).copy(blacklisted = true)
+        val mediaStoreRow = testSong(id = 9, path = "/storage/emulated/0/Music/Other Song.flac").copy(mediaProvider = MediaProviderType.MediaStore)
+        // A document URI names the tree song by its document id and the MediaStore song by its file path.
+        val opened = OpenedAudio(
+            uri = "content://com.android.externalstorage.documents/document/primary%3AMusic%2FOther%20Song.flac",
+            filePath = "/storage/emulated/0/Music/Other Song.flac",
+            documentId = "primary:Music/Other Song.flac",
+            authority = "com.android.externalstorage.documents"
+        )
+
+        opened.findIn(listOf(excludedShuttleRow, mediaStoreRow)) shouldBe mediaStoreRow
+        opened.findIn(listOf(excludedShuttleRow)) shouldBe excludedShuttleRow
+    }
+
+    @Test
+    fun `breaks a tie within one provider by the lowest id`() {
+        val later = testSong(id = 12, path = "/music/a.mp3")
+        val earlier = testSong(id = 4, path = "/music/a.mp3")
+
+        OpenedAudio(uri = "file:///music/a.mp3", filePath = "/music/a.mp3").findIn(listOf(later, earlier)) shouldBe earlier
+    }
+
+    @Test
     fun `finds nothing for a file outside the library`() {
         val opened = OpenedAudio(uri = "content://com.example.fileprovider/attachments/voice.ogg")
 

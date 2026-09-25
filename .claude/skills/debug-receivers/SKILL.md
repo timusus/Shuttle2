@@ -44,7 +44,8 @@ manifest's intent filter is never delivered, so the wrapper times out on typos.
 `DUMP_STATE` fields: `state` (`PlaybackManager.playbackState()`), `reportedState` (the
 `playbackStateFlow` value), `positionMs` (`getProgress()`), `progressMs` (`progressFlow`),
 `durationMs`, `savedPositionMs` (the persisted resume position), `queuePosition`, `queueSize`,
-`title` (current song), `queueTitles` (every song name in the queue's displayed, shuffle-aware
+`title` (current song), `inLibrary` (false for a file opened from another app that isn't in the library,
+playing as a transient song), `queueTitles` (every song name in the queue's displayed, shuffle-aware
 order -- `queueTitles[queuePosition + 1]` is the item that will auto-advance to next), `shuffle`,
 `repeat`, `speed` (`getPlaybackSpeed()`), `pendingLoad` (a track load in flight; read reflectively
 from `PlaybackManager`'s private `LoadCoordinator`, `null` if that field moves).

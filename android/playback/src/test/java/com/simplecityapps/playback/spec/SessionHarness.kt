@@ -43,6 +43,9 @@ class SessionHarness(
 
     val session: MediaLibrarySession
 
+    /** The requests the session and the app's own entry points (a file opened with the app, a search intent) share. */
+    val playRequests: PlayRequests
+
     init {
         playback.queueOperations.hasRestoredQueue = restored
         val context = playback.context
@@ -50,7 +53,7 @@ class SessionHarness(
         val albumRepository = FakeAlbumRepository(albums)
         val artistRepository = FakeAlbumArtistRepository()
         val mediaIdHelper = MediaIdHelper(FakePlaylistRepository(playlists), artistRepository, albumRepository, songRepository)
-        val playRequests =
+        playRequests =
             PlayRequests(
                 context = context,
                 appCoroutineScope = scope,

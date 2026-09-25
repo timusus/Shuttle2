@@ -74,6 +74,7 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 
 ### Open audio files from other apps (#186)
 - [x] An MP3 opened by a MediaStore content:// URI, and an MP3 and a FLAC opened by file path, each play in S2. — automated: `emu-verify.sh --check open-file-intent`
+- [x] A library song opened by content:// URI and by file path plays as the library song alone, keeps playing after back, and restores after a force-stop; a file outside the library comes back as an empty queue (#425). — automated: `emu-verify.sh --check open-file-intent`
 - [ ] A FLAC by content:// URI, and a real messaging-app attachment (a FileProvider URI with a read grant), each play in S2.
 - [ ] After opening a file, force-stop and reopen S2. The queue restores without errors, and the opened file is skipped with a message if it can no longer be read.
 

@@ -15,6 +15,7 @@ import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -203,6 +204,38 @@ class MediaSessionSpecTest {
         trusted.playback.run { trusted.playback.queueOperations.setQueue(songs) }
         trusted.connect().clearMediaItems()
         trusted.playback.runUntil { trusted.playback.queueOperations.getQueue().isEmpty() }
+    }
+
+    @Test
+    fun `RS-57 a file opened from another app that's in the library plays as its library song, on its own`() {
+        val path = checkNotNull(Uri.parse(PlaybackHarness.resourceUri(PlaybackHarness.TONE_2S)).path)
+        // The same file under both local providers (#420), MediaStore's row first in the library.
+        val mediaStoreRow = song(1).copy(path = path, mediaProvider = MediaProviderType.MediaStore)
+        val shuttleRow = song(2).copy(path = path, mediaProvider = MediaProviderType.Shuttle)
+        val harness = sessionHarness(songs = listOf(mediaStoreRow, shuttleRow, song(3), song(4)))
+        val queue = harness.playback.queueOperations
+        loadPaused(harness, listOf(song(3), song(4)))
+
+        harness.playRequests.playFromUri(Uri.parse("file://$path"), "audio/wav")
+        harness.playback.runUntil { harness.playback.playbackOperations.playbackStateFlow.value == PlaybackState.Playing }
+
+        queue.getQueue().map { it.song } shouldBe listOf(shuttleRow)
+    }
+
+    @Test
+    fun `RS-58 a file opened from another app that isn't in the library plays on its own, outside the library`() {
+        val uri = PlaybackHarness.resourceUri(PlaybackHarness.TONE_3S)
+        val harness = sessionHarness(songs = listOf(song(1), song(2)))
+        val queue = harness.playback.queueOperations
+        loadPaused(harness, listOf(song(1), song(2)))
+
+        harness.playRequests.playFromUri(Uri.parse(uri), "audio/wav")
+        harness.playback.runUntil { harness.playback.playbackOperations.playbackStateFlow.value == PlaybackState.Playing }
+
+        val opened = queue.getQueue().map { it.song }.single()
+        opened.path shouldBe uri
+        opened.isInLibrary shouldBe false
+        opened.name shouldBe "tone-3s"
     }
 
     private fun sessionHarness(
