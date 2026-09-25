@@ -24,7 +24,6 @@
     <string name="paywall_plans_heading">Choose a plan</string>
     <string name="paywall_plan_lifetime">Lifetime</string>
     <string name="paywall_plan_annual">Yearly</string>
-    <string name="paywall_plan_monthly">Monthly</string>
     <!-- S2 Pro screen: the lifetime plan's price, e.g. '$14.99 once' -->
     <string name="paywall_price_once"><xliff:g example="$14.99" id="price">{price}</xliff:g> once</string>
     <!-- S2 Pro screen: badge on the lifetime plan -->

@@ -41,18 +41,17 @@ class PaywallOffersTest {
     }
 
     @Test
-    fun `offers the S2 Pro products lifetime first, one offer per base plan`() {
+    fun `offers the S2 Pro products lifetime first, ignoring any base plan but the annual one`() {
         val offers = listOf(
-            subscription(ProductIds.PRO_SUBSCRIPTION, basePlan("P1M", "$1.49"), basePlan("P1Y", "$5.99"), basePlan("P1Y", "$2.99", offerId = "intro")),
-            oneTime(ProductIds.PRO_LIFETIME, "$14.99"),
+            subscription(ProductIds.PRO_SUBSCRIPTION, basePlan("P1Y", "$3.99"), basePlan("P1M", "$1.49"), basePlan("P1Y", "$2.99", offerId = "intro")),
+            oneTime(ProductIds.PRO_LIFETIME, "$9.99"),
             oneTime(ProductIds.LEGACY_LIFETIME_LOW, "$4.99")
         ).toPaywallOffers()
 
         assertEquals(
             listOf(
-                PaywallOffer(ProductIds.PRO_LIFETIME, PaywallPlan.Lifetime, "$14.99", offerToken = null),
-                PaywallOffer(ProductIds.PRO_SUBSCRIPTION, PaywallPlan.Annual, "$5.99", "token-P1Y-null"),
-                PaywallOffer(ProductIds.PRO_SUBSCRIPTION, PaywallPlan.Monthly, "$1.49", "token-P1M-null")
+                PaywallOffer(ProductIds.PRO_LIFETIME, PaywallPlan.Lifetime, "$9.99", offerToken = null),
+                PaywallOffer(ProductIds.PRO_SUBSCRIPTION, PaywallPlan.Annual, "$3.99", "token-P1Y-null")
             ),
             offers
         )

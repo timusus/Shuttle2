@@ -266,7 +266,6 @@ private val PaywallPlan.title: Int
     get() = when (this) {
         PaywallPlan.Lifetime -> R.string.paywall_plan_lifetime
         PaywallPlan.Annual -> R.string.paywall_plan_annual
-        PaywallPlan.Monthly -> R.string.paywall_plan_monthly
     }
 
 @Composable
@@ -274,7 +273,6 @@ private fun PaywallPlan.priceText(price: String): String {
     val pattern = when (this) {
         PaywallPlan.Lifetime -> R.string.paywall_price_once
         PaywallPlan.Annual -> R.string.purchase_price_annual
-        PaywallPlan.Monthly -> R.string.purchase_price_monthly
     }
     return Phrase.from(stringResource(pattern)).put("price", price).format().toString()
 }

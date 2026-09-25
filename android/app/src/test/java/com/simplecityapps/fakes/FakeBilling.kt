@@ -40,9 +40,8 @@ class FakeBilling(
     }
 
     companion object {
-        val LIFETIME = PaywallOffer("s2_pro_lifetime", PaywallPlan.Lifetime, "$14.99", offerToken = null)
-        val ANNUAL = PaywallOffer("s2_pro", PaywallPlan.Annual, "$5.99", offerToken = "annual")
-        val MONTHLY = PaywallOffer("s2_pro", PaywallPlan.Monthly, "$1.49", offerToken = "monthly")
-        val SAMPLE_OFFERS = listOf(LIFETIME, ANNUAL, MONTHLY)
+        val LIFETIME = PaywallOffer("s2_pro_lifetime", PaywallPlan.Lifetime, "$9.99", offerToken = null)
+        val ANNUAL = PaywallOffer("s2_pro", PaywallPlan.Annual, "$3.99", offerToken = "annual")
+        val SAMPLE_OFFERS = listOf(LIFETIME, ANNUAL)
     }
 }

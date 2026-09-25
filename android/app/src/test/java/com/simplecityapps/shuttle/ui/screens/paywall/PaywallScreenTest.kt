@@ -23,12 +23,11 @@ class PaywallScreenTest {
         robot.assertDisplayed("Add a Jellyfin, Emby or Plex server to start a free 14-day trial.")
         robot.assertDisplayed("What you get")
         robot.assertDisplayed("Stream from Jellyfin, Emby and Plex")
-        robot.assertDisplayed("$14.99 once")
-        robot.assertDisplayed("$5.99 / year")
-        robot.assertDisplayed("$1.49 / month")
+        robot.assertDisplayed("$9.99 once")
+        robot.assertDisplayed("$3.99 / year")
         robot.assertDisplayed("Best value")
         robot.assertPlanSelected("Lifetime")
-        robot.assertPlanNotSelected("Monthly")
+        robot.assertPlanNotSelected("Yearly")
         robot.assertEnabled("Get S2 Pro")
     }
 
@@ -43,10 +42,10 @@ class PaywallScreenTest {
     fun `tapping a plan selects it, and the button buys it`() {
         robot.setContent(PaywallScenarios.free)
 
-        robot.tapPlan("Monthly")
+        robot.tapPlan("Yearly")
         robot.tapText("Get S2 Pro")
 
-        robot.selectedPlans shouldBe listOf(PaywallPlan.Monthly)
+        robot.selectedPlans shouldBe listOf(PaywallPlan.Annual)
         robot.purchases shouldBe 1
     }
 

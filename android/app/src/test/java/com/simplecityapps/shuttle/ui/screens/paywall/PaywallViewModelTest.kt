@@ -63,14 +63,14 @@ class PaywallViewModelTest {
         val viewModel = collectedViewModel()
         viewModel.uiState.value.selectedOffer shouldBe FakeBilling.LIFETIME
 
-        viewModel.onSelectPlan(PaywallPlan.Monthly)
+        viewModel.onSelectPlan(PaywallPlan.Annual)
 
-        viewModel.uiState.value.selectedOffer shouldBe FakeBilling.MONTHLY
+        viewModel.uiState.value.selectedOffer shouldBe FakeBilling.ANNUAL
     }
 
     @Test
     fun `without a lifetime offer the first plan on sale is selected`() = runTest {
-        billing.offers.value = PaywallOffers.Available(listOf(FakeBilling.ANNUAL, FakeBilling.MONTHLY))
+        billing.offers.value = PaywallOffers.Available(listOf(FakeBilling.ANNUAL))
 
         collectedViewModel().uiState.value.selectedOffer shouldBe FakeBilling.ANNUAL
     }
@@ -88,9 +88,9 @@ class PaywallViewModelTest {
 
         // Only the purchase made once prices arrived reaches the screen.
         billing.offers.value = PaywallOffers.Available(FakeBilling.SAMPLE_OFFERS)
-        viewModel.onSelectPlan(PaywallPlan.Monthly)
+        viewModel.onSelectPlan(PaywallPlan.Annual)
         viewModel.onPurchase()
-        viewModel.events.first() shouldBe PaywallUiEvent.LaunchPurchase(FakeBilling.MONTHLY)
+        viewModel.events.first() shouldBe PaywallUiEvent.LaunchPurchase(FakeBilling.ANNUAL)
     }
 
     @Test

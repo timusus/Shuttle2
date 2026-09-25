@@ -13,8 +13,6 @@
     <string name="trial_description_pro">Streaming and downloading from Jellyfin, Emby and Plex is part of S2 Pro. Local playback, Chromecast, EQ and Android Auto stay free.</string>
     <!-- Heading of the 'free trial' dialog when the user has no trial and hasn't upgraded -->
     <string name="trial_heading_pro">S2 Pro</string>
-    <!-- Price of a monthly subscription, e.g. '$1.49 / month' -->
-    <string name="purchase_price_monthly"><xliff:g example="$1.49" id="price">{price}</xliff:g> / month</string>
     <!-- Price of an annual subscription, e.g. '$5.99 / year' -->
     <string name="purchase_price_annual"><xliff:g example="$5.99" id="price">{price}</xliff:g> / year</string>
     <!-- Shown when the user's trial has expired -->

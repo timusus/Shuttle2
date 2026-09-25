@@ -76,7 +76,7 @@ class PaywallRobot(private val rule: ComposeContentTestRule) {
 
     /** For text every plan card shows, like a placeholder price. */
     fun assertShownOnEveryPlan(text: String) {
-        rule.onAllNodesWithText(text).assertCountEquals(3).onFirst().assertIsDisplayed()
+        rule.onAllNodesWithText(text).assertCountEquals(2).onFirst().assertIsDisplayed()
     }
 
     fun assertNotShown(text: String) {

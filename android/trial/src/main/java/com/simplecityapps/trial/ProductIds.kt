@@ -10,9 +10,8 @@ object ProductIds {
     /** One-time purchase of S2 Pro. */
     const val PRO_LIFETIME = "s2_pro_lifetime"
 
-    /** The S2 Pro subscription. Its base plans are [PRO_BASE_PLAN_MONTHLY] and [PRO_BASE_PLAN_ANNUAL]. */
+    /** The S2 Pro subscription. Its only base plan is [PRO_BASE_PLAN_ANNUAL]; there is no monthly plan. */
     const val PRO_SUBSCRIPTION = "s2_pro"
-    const val PRO_BASE_PLAN_MONTHLY = "monthly"
     const val PRO_BASE_PLAN_ANNUAL = "annual"
 
     const val LEGACY_LIFETIME = "s2_iap_full_version"
