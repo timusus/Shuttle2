@@ -159,7 +159,7 @@ Batch F (#443) resolved this list:
 | `AppScope` qualifier | `core/.../di/AppScope.kt` | Deleted (whole file) |
 | `ShellRoute` (function) | `app/.../ui/shell/ShellRoute.kt` | **Live** — called from `MainActivity`; audit was stale |
 | `SourcesSettingsRoute` (only user, `SourcesFragment`, is deleted by #381) | `app/.../ui/screens/settings/SettingsRoutes.kt` | Already gone by the time batch F ran |
-| `increaseTouchableArea` (only user, `QueueBinder`, is deleted by #381) | `app/.../ui/common/view/ViewExt.kt` | Deleted, along with the also-dead `setMargins`; `fadeIn`/`fadeOut` stay (used by `CircularLoadingView`, #445) |
+| `increaseTouchableArea` (only user, `QueueBinder`, is deleted by #381) | `app/.../ui/common/view/ViewExt.kt` | Deleted (whole file) — `setMargins` was also dead, and `fadeIn`/`fadeOut` lost their only caller when upstream #445 deleted `CircularLoadingView` |
 | `spannable` builder | `app/.../ui/common/utils/SpannableExt.kt` | Deleted (whole file — every other builder in it was dead too) |
 | `MaterialGridOverlay` | `app/.../ui/common/components/MaterialGridOverlay.kt` | Deleted (whole file) |
 | `ColorFamily` | `app/.../ui/theme/Theme.kt` | Deleted |
