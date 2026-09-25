@@ -27,9 +27,9 @@ import kotlinx.datetime.LocalDate
 // names: invented names, and covers drawn through LocalPreviewArtwork. Wrap a preview in
 // `S2Preview(artwork = SampleAppCovers) { }`, or `SampleArtwork { }` inside a preview's own theme. The fixtures are
 // debugImplementation plus releaseCompileOnly: this compiles in main source for the previews, Android Studio renders
-// them from the debug variant, and release builds package none of it (R8 drops this file), but nothing currently
-// catches live code that reaches it (#402) -- only call these from @Preview functions or test code, never from a
-// code path a release build can execute.
+// them from the debug variant, and release builds package none of it (R8 drops this file). `check` runs
+// verifyFixturesNotInReleaseClasspath, which fails if any module's release runtime classpath reaches the fixtures;
+// still, only call these from @Preview functions or test code, never from a code path a release build can execute.
 
 /** Covers for the app's [Song]s, [Album]s and [AlbumArtist]s named after sample ones, and for the sample models themselves. */
 object SampleAppCovers : PreviewArtwork {

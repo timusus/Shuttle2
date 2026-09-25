@@ -87,7 +87,8 @@ albums or songs, and never hand-typed "Artist"/"Album" stand-ins where content i
 - **App models:** `SampleSong.toSong()`, `toAlbum()`, `toAlbumArtist()`, `toGenre()`,
   `toPlaylist()` and `sampleSongs(n)` in `app/src/main/.../ui/preview/SamplePreviews.kt` — shared
   by `@Preview`s and tests. Release compiles against `:android:fixtures` but never packages it
-  (`releaseCompileOnly`); nothing yet catches live code that reaches it at build time (#402).
+  (`releaseCompileOnly`); `check` runs `verifyFixturesNotInReleaseClasspath`, which fails if any
+  module's release runtime classpath resolves `:android:fixtures`.
 - **Artwork through Glide:** call `SampleArtworkGlide.install(context)` in `@Before` and
   `uninstall()` in `@After`. Songs, albums and album artists named after sample ones then
   load their covers synchronously. Nothing else loads, so other content keeps its placeholder.
