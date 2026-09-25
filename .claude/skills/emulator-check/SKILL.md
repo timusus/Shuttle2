@@ -70,6 +70,7 @@ run `support/scripts/remote-emu.sh reconnect` yourself first (no reboot, lease k
 | Taps where the UI is the subject | a Maestro flow in `support/maestro/`, run by a `checks/` wrapper that sets up state first |
 | One-off taps, dumps, screenshots | `remote-emu.sh tap-text` / `dump-texts`, or the `android-device` skill with the `env` exports |
 | Notification / lock screen | `adb shell cmd statusbar expand-notifications`, `remote-emu.sh lockscreen on` |
+| Emulator console (incoming call, ...) | `remote-emu.sh emu gsm call 5551234` / `emu gsm cancel 5551234` (runs `adb emu` on the box; the console port isn't tunnelled) |
 
 Maestro: `brew install mobile-dev-inc/tap/maestro` (plain `brew install maestro` is an unrelated app).
 It only talks to the Mac's adb server on 5037, so pass `--device "$(support/scripts/remote-emu.sh serial)"`.

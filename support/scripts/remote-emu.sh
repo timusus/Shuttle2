@@ -34,6 +34,9 @@
 #   remote-emu.sh dump-texts       list every visible text/content-desc, with bounds
 #   remote-emu.sh seed-music [dir] generate + push ~7 tagged mp3s (2 albums) to /sdcard/Music, scan them
 #   remote-emu.sh lockscreen on|off   toggle the lane's lockscreen
+#   remote-emu.sh emu <console command...>
+#                                  run an emulator console command on the lane (`adb emu` on the
+#                                  box, as the console port isn't tunnelled), e.g. `emu gsm call 5551234`
 #   remote-emu.sh stop [N|--all]  kill the lane's emulator and tunnel, drop its lease (idempotent)
 #
 # Typical run, from the repo root:
@@ -766,6 +769,13 @@ cmd_lockscreen() {
     esac
 }
 
+# The console listens on the box only, so `adb emu` from the Mac can't reach it; run it there.
+cmd_emu() {
+    [ "$#" -gt 0 ] || { echo "remote-emu: usage: emu <console command...>" >&2; exit 2; }
+    LANE="$(resolve_lane)"
+    box_adb "-s $(serial_of "$LANE") emu $(printf '%q ' "$@")"
+}
+
 stop_lane() {
     local lane="$1" serial pattern; serial="$(serial_of "$lane")"; pattern="$(emu_pattern "$lane")"
     kill_tunnel "$lane"
@@ -825,6 +835,7 @@ case "${1:-}" in
     dump-texts) cmd_dump_texts ;;
     seed-music) cmd_seed_music "${2:-}" ;;
     lockscreen) cmd_lockscreen "${2:-}" ;;
+    emu) shift; cmd_emu "$@" ;;
     stop) cmd_stop "${2:-}" ;;
-    *) sed -n '2,37p' "$0" >&2; exit 2 ;;
+    *) sed -n '2,40p' "$0" >&2; exit 2 ;;
 esac
