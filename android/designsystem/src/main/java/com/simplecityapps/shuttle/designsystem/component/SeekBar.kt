@@ -80,8 +80,8 @@ fun S2SeekBar(
     }
 }
 
-/** "m:ss", or "h:mm:ss" from an hour. */
-internal fun formatDuration(ms: Long): String {
+/** "m:ss", or "h:mm:ss" from an hour: how the seek bar and queue rows show a time. */
+fun formatDuration(ms: Long): String {
     val totalSeconds = ms / 1000
     val hours = totalSeconds / 3600
     val minutes = totalSeconds % 3600 / 60

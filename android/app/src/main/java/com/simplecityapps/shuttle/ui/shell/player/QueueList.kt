@@ -55,6 +55,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2ActionsSheet
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
+import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import kotlinx.coroutines.launch
 
 /** "Up Next" over the queue, with Clear Queue; at the Now Playing level it is the queue's peek, and [onClick] shows the queue. */
@@ -319,12 +320,3 @@ private fun <T> List<T>.swapped(
     i: Int,
     j: Int,
 ): List<T> = toMutableList().apply { this[i] = this[j].also { this[j] = this[i] } }
-
-/** "m:ss", or "h:mm:ss" from an hour. */
-private fun formatDuration(ms: Long): String {
-    val totalSeconds = ms / 1000
-    val hours = totalSeconds / 3600
-    val minutes = totalSeconds % 3600 / 60
-    val seconds = totalSeconds % 60
-    return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds) else "%d:%02d".format(minutes, seconds)
-}
