@@ -15,8 +15,6 @@ import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -26,12 +24,10 @@ import androidx.navigation3.runtime.entryProvider
 import com.simplecityapps.shuttle.designsystem.component.AlbumRow
 import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
-import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
-import com.simplecityapps.shuttle.designsystem.component.SongRow
-import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
+import com.simplecityapps.shuttle.ui.screens.library.libraryEntries
 import com.simplecityapps.shuttle.ui.screens.settings.settingsEntries
 
 // Placeholder destinations for the shell spike (#375): enough to exercise tabs, list-detail and
@@ -46,19 +42,11 @@ private data class PlaceholderAlbum(
 private val placeholderAlbums = (1..24).map { PlaceholderAlbum(key = "album-$it", title = "Album $it", artist = "Artist ${(it - 1) / 3 + 1}") }
 
 /** Routes each key to its placeholder screen; the navigator stays out of the screens. */
-@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun shellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey> = entryProvider {
     val openAlbum = { album: PlaceholderAlbum -> navigator.open(AlbumRoute(albumKey = album.key, albumArtistKey = album.artist)) }
     entry<HomeRoute> { HomeScreen(onOpenAlbum = openAlbum) }
-    entry<LibraryRoute>(
-        metadata = ListDetailSceneStrategy.listPane(
-            detailPlaceholder = { EmptyState(title = "No album selected", message = "Pick an album to see it here") },
-        ),
-    ) {
-        LibraryScreen(onOpenAlbum = openAlbum)
-    }
+    libraryEntries(navigator)
     entry<SearchRoute> { SearchScreen() }
-    entry<AlbumRoute>(metadata = ListDetailSceneStrategy.detailPane()) { route -> AlbumScreen(route, onNavigateUp = { navigator.back() }) }
     settingsEntries(navigator)
 }
 
@@ -101,13 +89,6 @@ private fun HomeScreen(onOpenAlbum: (PlaceholderAlbum) -> Unit) {
     }
 }
 
-@Composable
-private fun LibraryScreen(onOpenAlbum: (PlaceholderAlbum) -> Unit) {
-    ShellListScreen(title = "Library", subtitle = "${placeholderAlbums.size} albums") {
-        albumItems(placeholderAlbums, onOpenAlbum)
-    }
-}
-
 private fun LazyListScope.albumItems(
     albums: List<PlaceholderAlbum>,
     onOpenAlbum: (PlaceholderAlbum) -> Unit,
@@ -126,24 +107,5 @@ private fun LazyListScope.albumItems(
 private fun SearchScreen() {
     ShellListScreen(title = "Search", subtitle = null) {
         item { EmptyState(title = "Search", message = "Placeholder destination", icon = Icons.Rounded.Search) }
-    }
-}
-
-@Composable
-private fun AlbumScreen(
-    route: AlbumRoute,
-    onNavigateUp: () -> Unit,
-) {
-    val album = placeholderAlbums.firstOrNull { it.key == route.albumKey }
-    DetailScaffold(
-        title = album?.title ?: "Album",
-        subtitle = album?.artist,
-        onNavigateUp = onNavigateUp,
-        hero = { Artwork(ArtworkPlaceholder.Album, size = ArtworkSize.Hero) },
-    ) {
-        item { SectionHeader(title = album?.title ?: "Album") }
-        items((1..10).toList(), key = { it }) { track ->
-            SongRow(title = "Track $track", subtitle = album?.artist.orEmpty(), onClick = {}, trackNumber = track)
-        }
     }
 }

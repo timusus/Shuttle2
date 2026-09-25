@@ -42,6 +42,7 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.material3.rememberWideNavigationRailState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
@@ -105,7 +107,8 @@ import kotlinx.coroutines.launch
  * The Compose app shell (docs/architecture/app-shell.md): navigation bar or rail by width class,
  * a Navigation 3 display with list-detail, and the player as a sheet below 1200 dp or a
  * persistent pane from 1200 dp. The player state sits above the class branch, so one level
- * survives every resize, fold and rotation.
+ * survives every resize, fold and rotation. [entryProvider] maps each route to its screen; tests of
+ * the shell itself swap in screens that need no Hilt graph.
  */
 @Composable
 fun AppShell(
@@ -116,6 +119,7 @@ fun AppShell(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     startTab: ShellTab = ShellTab.Home,
     windowAdaptiveInfo: WindowAdaptiveInfo = currentWindowAdaptiveInfoV2(),
+    entryProvider: (AppNavigator) -> (NavKey) -> NavEntry<NavKey> = ::shellEntryProvider,
 ) {
     val layout = remember(windowAdaptiveInfo) { ShellLayout.from(windowAdaptiveInfo) }
     val navigator = rememberAppNavigator(startTab)
@@ -136,7 +140,12 @@ fun AppShell(
     }
     val onSelectTab: (ShellTab) -> Unit = { tab -> navigate { navigator.selectTab(tab) } }
     val onOpenSettings: () -> Unit = { navigate { navigator.open(SettingsRoute) } }
-    val destinations: @Composable () -> Unit = { ShellNavDisplay(navigator, layout, windowAdaptiveInfo) }
+    // Screens post to the shell's one snackbar host, which sits above the nav bar and mini player.
+    val destinations: @Composable () -> Unit = {
+        CompositionLocalProvider(LocalShellSnackbarHostState provides snackbarHostState) {
+            ShellNavDisplay(navigator, layout, windowAdaptiveInfo, entryProvider)
+        }
+    }
 
     val playerContent = PlayerContent(playerUi, progress, actions)
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
@@ -178,15 +187,16 @@ private fun ShellNavDisplay(
     navigator: AppNavigator,
     layout: ShellLayout,
     windowAdaptiveInfo: WindowAdaptiveInfo,
+    entryProvider: (AppNavigator) -> (NavKey) -> NavEntry<NavKey>,
 ) {
     val directive = remember(layout, windowAdaptiveInfo) { layout.listDetailDirective(windowAdaptiveInfo) }
     val listDetail = rememberListDetailSceneStrategy<NavKey>(directive = directive)
     val saveableState = rememberSaveableStateHolderNavEntryDecorator<NavKey>()
     val viewModelStores = rememberViewModelStoreNavEntryDecorator<NavKey>()
     val decorators = remember(saveableState, viewModelStores) { listOf(saveableState, viewModelStores) }
-    val entryProvider = remember(navigator) { shellEntryProvider(navigator) }
+    val entries = remember(navigator, entryProvider) { entryProvider(navigator) }
     // Every tab's entries stay decorated, so a tab's screens keep their state while another is shown.
-    val entriesByTab = ShellTab.entries.associateWith { tab -> rememberDecoratedNavEntries(navigator.stack(tab), decorators, entryProvider) }
+    val entriesByTab = ShellTab.entries.associateWith { tab -> rememberDecoratedNavEntries(navigator.stack(tab), decorators, entries) }
     NavDisplay(
         entries = navigator.visibleTabs.flatMap { entriesByTab.getValue(it) },
         sceneStrategies = listOf(listDetail, SinglePaneSceneStrategy()),

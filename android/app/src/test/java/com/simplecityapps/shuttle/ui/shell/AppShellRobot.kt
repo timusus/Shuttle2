@@ -188,6 +188,7 @@ class AppShellRobot(
                     actions = actions,
                     snackbarHostState = snackbarHostState,
                     windowAdaptiveInfo = currentWindow,
+                    entryProvider = ::fakeShellEntryProvider,
                 )
             }
         }
