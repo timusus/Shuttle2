@@ -2,6 +2,10 @@
   "since": "v26092301",
   "features": [
     {
+      "text": "S2 has been redesigned: a new Home, Library, Search and Settings, with the player always a tap away. The layout now adapts to tablets and foldables, and the app turns to landscape",
+      "commits": []
+    },
+    {
       "text": "A new Now Playing: scroll past the artwork to your queue, and open the sleep timer and playback speed and sound settings from the bar along the bottom",
       "commits": []
     },

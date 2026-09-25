@@ -4,19 +4,27 @@ import android.app.SearchManager
 import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
+import android.view.ViewGroup
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.fragment.NavHostFragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.play.core.review.ReviewManagerFactory
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.simplecityapps.playback.mediasession.PlayRequests
-import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.common.view.SnowfallView
 import com.simplecityapps.shuttle.ui.screens.paywall.showPaywallOnRequest
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesSettings
+import com.simplecityapps.shuttle.ui.shell.ShellRoute
+import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import com.simplecityapps.trial.Billing
+import com.simplecityapps.trial.EntitlementRepository
 import com.simplecityapps.trial.ServerAccessGate
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -24,7 +32,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
+import timber.log.Timber
 
+/**
+ * The app's only screen: the Compose shell (docs/architecture/app-shell.md). An AppCompatActivity, because the
+ * server sign-in dialogs, the Cast route chooser and the paywall show as dialog fragments over it.
+ */
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     @Inject
@@ -52,7 +65,11 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var sourcesSettings: SourcesSettings
 
-    var snowfallView: SnowfallView? = null
+    @Inject
+    lateinit var entitlementRepository: EntitlementRepository
+
+    @Inject
+    lateinit var reviewPrompt: ReviewPrompt
 
     private val musicPermissionRequest =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -63,16 +80,21 @@ class MainActivity : AppCompatActivity() {
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
+        // The XML theme still styles the dialog fragments shown over the shell.
         themeManager.setTheme(this)
 
-        setContentView(R.layout.activity_main)
+        setContent {
+            S2AppTheme {
+                ShellRoute()
+            }
+        }
 
-        val navHost = supportFragmentManager.findFragmentById(R.id.onboardingNavHostFragment) as NavHostFragment
-        val navController = navHost.navController
-
-        navController.setGraph(R.navigation.launch)
+        // Over the shell, and blind to touches, so they reach it
+        val snowfallView = SnowfallView(this, null)
+        addContentView(snowfallView, ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
 
         // No onboarding (#379): ask for the music permission once, on first launch, and scan when it's granted.
         // A later grant goes through Settings > Media > Sources, or the system settings. One already held at startup
@@ -89,14 +111,16 @@ class MainActivity : AppCompatActivity() {
 
         billing.queryPurchases()
         showPaywallOnRequest(serverAccessGate)
-
-        snowfallView = findViewById(R.id.snowfallView)
+        recordPurchase()
+        if (savedInstanceState == null && reviewPrompt.takeIfDue()) {
+            launchReviewFlow()
+        }
 
         scope.launch {
             withTimeout(5000) {
                 remoteConfig.fetchAndActivate().await()
             }
-            snowfallView?.setForecast(remoteConfig.getDouble("snow_forecast"))
+            snowfallView.post { snowfallView.setForecast(remoteConfig.getDouble("snow_forecast")) }
         }
     }
 
@@ -114,6 +138,26 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Private
+
+    private fun recordPurchase() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                entitlementRepository.entitlement.collect(reviewPrompt::onEntitlement)
+            }
+        }
+    }
+
+    /** Asks Play for its in-app review sheet; Play decides whether it actually shows. */
+    private fun launchReviewFlow() {
+        val reviewManager = ReviewManagerFactory.create(this)
+        reviewManager.requestReviewFlow().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                if (!isFinishing) reviewManager.launchReviewFlow(this, task.result)
+            } else {
+                Timber.e(task.exception ?: Exception("Unknown"), "Failed to launch review flow")
+            }
+        }
+    }
 
     /** Plays what a voice search (e.g. Assistant's "play X on S2") asks for. */
     private fun handleSearchQuery(intent: Intent?) {

@@ -15,6 +15,7 @@ import com.simplecityapps.playback.engine.SongUriResolver
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
@@ -76,12 +77,14 @@ class TestPlaybackEngineModule {
         player: Player,
         localPlayer: ExoPlayer,
         playbackPreferenceManager: PlaybackPreferenceManager,
+        playbackSettings: PlaybackSettings,
         @AppCoroutineScope coroutineScope: CoroutineScope
     ): PlaybackManager = PlaybackManager(
         queueManager,
         player,
         localPlayer,
         playbackPreferenceManager,
+        playbackSettings.playbackSpeed,
         CallMonitor(context.getSystemService()),
         coroutineScope,
         castQueue = null

@@ -30,7 +30,7 @@ maestro_test first-run.yaml
 wait_for 15 "not s['libraryImporting'] and s['librarySongCount'] >= 5"
 
 new_user
-adb_retry shell am start -W -n "${APP_ID}/com.simplecityapps.shuttle.ui.shell.ShellActivity" >/dev/null 2>&1 || fail "could not launch ShellActivity"
+adb_retry shell am start -W -n "${APP_ID}/com.simplecityapps.shuttle.ui.MainActivity" >/dev/null 2>&1 || fail "could not launch MainActivity"
 maestro_test first-run-shell.yaml
 wait_for 15 "not s['libraryImporting'] and s['librarySongCount'] >= 5"
 SHOTS="$out" screenshot first-run-shell-granted

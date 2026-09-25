@@ -29,7 +29,6 @@ object SmokeTestData {
 
     fun setOnboarded(sharedPreferences: SharedPreferences) {
         sharedPreferences.edit()
-            .putBoolean("thank_you_dialog_viewed", true)
             .putBoolean("changelog_show_on_launch", false)
             .commit()
     }

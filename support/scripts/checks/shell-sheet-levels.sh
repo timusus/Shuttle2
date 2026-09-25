@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # #375: the Compose shell's player sheet levels (Mini, Now Playing, Queue), stepped through by taps,
-# one drag and back, with Maestro on the debug ShellActivity. The debug receivers set up the queue;
+# one drag and back, with Maestro on MainActivity. The debug receivers set up the queue;
 # paused first so the UI is idle. Needs the `playback` fixture imported.
 source "$(dirname "$0")/_lib.sh"
 
@@ -8,7 +8,7 @@ device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" seria
 start_playback
 s2 PAUSE >/dev/null
 # A cleared task, so the sheet opens at Mini rather than where a previous run left it.
-adb shell am start -W -f 0x10008000 -n "${APP_ID}/com.simplecityapps.shuttle.ui.shell.ShellActivity" >/dev/null 2>&1 || fail "could not launch ShellActivity"
+adb shell am start -W -f 0x10008000 -n "${APP_ID}/com.simplecityapps.shuttle.ui.MainActivity" >/dev/null 2>&1 || fail "could not launch MainActivity"
 out="${CHECKS_ROOT}/tmp/maestro"
 mkdir -p "$out"
 MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \

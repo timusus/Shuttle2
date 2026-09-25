@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# #377: the Compose shell's Home and Search, driven by taps with Maestro on the debug ShellActivity
+# #377: the Compose shell's Home and Search, driven by taps with Maestro on MainActivity
 # (support/maestro/shell-home-search.yaml): Home shows the library and a Home album opens its album
 # screen, its search action opens Search, an artist result opens its artist screen, a genre result its
 # genre screen, and tapping a song result plays it. Needs the `playback` fixture imported.
@@ -10,7 +10,7 @@ device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" seria
 # to be what starts Playback Three.
 start_playback
 s2 PAUSE >/dev/null
-adb shell am start -W -f 0x10008000 -n "${APP_ID}/com.simplecityapps.shuttle.ui.shell.ShellActivity" >/dev/null 2>&1 || fail "could not launch ShellActivity"
+adb shell am start -W -f 0x10008000 -n "${APP_ID}/com.simplecityapps.shuttle.ui.MainActivity" >/dev/null 2>&1 || fail "could not launch MainActivity"
 out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
 mkdir -p "$out"
 MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \

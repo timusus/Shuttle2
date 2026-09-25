@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# #376: the Compose shell's player, driven by taps with Maestro on the debug ShellActivity
+# #376: the Compose shell's player, driven by taps with Maestro on MainActivity
 # (support/maestro/shell-player.yaml): expand, play/pause, seek, skip, then swipe Five out of the
 # queue, drag Four to the top and tap Three, set and stop a sleep timer, set 1.5x speed, then Go to
 # artist from Now Playing. Playback follows the reordered queue at the new speed.
@@ -11,7 +11,7 @@ device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" seria
 start_playback
 s2 PAUSE >/dev/null
 # A cleared task, so the sheet opens at Mini rather than where a previous run left it.
-adb shell am start -W -f 0x10008000 -n "${APP_ID}/com.simplecityapps.shuttle.ui.shell.ShellActivity" >/dev/null 2>&1 || fail "could not launch ShellActivity"
+adb shell am start -W -f 0x10008000 -n "${APP_ID}/com.simplecityapps.shuttle.ui.MainActivity" >/dev/null 2>&1 || fail "could not launch MainActivity"
 out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
 mkdir -p "$out"
 MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \

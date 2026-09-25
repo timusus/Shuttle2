@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# #377: the Compose shell's song info and tag editor, driven by taps with Maestro on the debug
-# ShellActivity (support/maestro/shell-tag-editor.yaml): a song's info opens from its row menu on the
+# #377: the Compose shell's song info and tag editor, driven by taps with Maestro on
+# MainActivity (support/maestro/shell-tag-editor.yaml): a song's info opens from its row menu on the
 # Songs tab, and its title edited from the selection's Edit Tags shows in the list once written. The
 # new title is non-ASCII (#388), so the check then reads it back from the file and after a rescan. Tag
 # writes need a real SAF-backed TagLib song, so this uses setup_taglib_provider and restores the
@@ -15,7 +15,7 @@ setup_taglib_provider
 trap restore_playback_fixture EXIT
 
 wake_screen
-adb shell am start -W -f 0x10008000 -n "${APP_ID}/com.simplecityapps.shuttle.ui.shell.ShellActivity" >/dev/null 2>&1 || fail "could not launch ShellActivity"
+adb shell am start -W -f 0x10008000 -n "${APP_ID}/com.simplecityapps.shuttle.ui.MainActivity" >/dev/null 2>&1 || fail "could not launch MainActivity"
 MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
     "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
     "${CHECKS_ROOT}/support/maestro/shell-tag-editor.yaml" || fail "the Maestro flow failed (output in ${out})"
