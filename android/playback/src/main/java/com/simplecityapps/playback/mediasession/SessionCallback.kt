@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PlayQueue
+import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.toMediaItem
@@ -52,6 +53,8 @@ class SessionCallback(
     private val playRequests: PlayRequests,
     private val mediaIdHelper: MediaIdHelper,
     private val queueOperations: QueueOperations,
+    /** The song the saved queue was left on, to offer for resumption before the queue is restored. */
+    private val nowPlaying: () -> NowPlayingSnapshot?,
     private val scope: CoroutineScope,
     private val isTrustedCaller: (ControllerInfo) -> Boolean
 ) : MediaLibrarySession.Callback {
@@ -223,12 +226,20 @@ class SessionCallback(
     /**
      * Resumes the saved queue (for a Bluetooth headset's play button, or the system's resumption controls after a
      * reboot): the queue is restored as the app starts, so this waits for that and hands back the player's own items.
+     * Asked only what it would resume (the system's resumption controls, before anything plays), it answers with the
+     * saved song straight away while the queue is still being restored.
      */
     override fun onPlaybackResumption(
         mediaSession: MediaSession,
         controller: ControllerInfo,
         isForPlayback: Boolean
     ): ListenableFuture<MediaItemsWithStartPosition> = scope.listenableFuture {
+        val queue = queueOperations.queueStateFlow.value
+        if (!isForPlayback && !queue.isRestored && queue.items.isEmpty()) {
+            nowPlaying()?.let { snapshot ->
+                return@listenableFuture MediaItemsWithStartPosition(listOf(snapshot.toSong().toQueueEntry().toMediaItem()), 0, snapshot.positionMs.toLong())
+            }
+        }
         queueOperations.queueStateFlow.awaitRestored()
         if (mediaSession.player.mediaItemCount == 0) throw UnsupportedOperationException("No saved queue to resume")
         currentItems(mediaSession.player)

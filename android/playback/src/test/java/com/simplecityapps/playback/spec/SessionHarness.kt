@@ -46,6 +46,9 @@ class SessionHarness(
     /** The requests the session and the app's own entry points (a file opened with the app, a voice search) share. */
     val playRequests: PlayRequests
 
+    /** The session's callback, for what only the system asks it directly (the resumption controls). */
+    val callback: SessionCallback
+
     init {
         playback.queueOperations.hasRestoredQueue = restored
         val context = playback.context
@@ -65,7 +68,7 @@ class SessionHarness(
                 voiceSearchResolver = VoiceSearchResolver(songRepository, playlistRepository),
                 songRepository = songRepository
             )
-        val callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, scope) { trusted }
+        callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, playback.playbackPreferenceManager::nowPlaying, scope) { trusted }
         val player = SessionPlayer(playback.appPlayer, playback.playbackOperations, playback.queueOperations, scope)
         session = MediaLibrarySession.Builder(context, player, callback).setId("session-${sessions++}").build()
         callback.launchMediaButtonUpdates(session)

@@ -121,4 +121,21 @@ class PlaybackPreferenceManager(
                 adapter.fromJson(json)
             }
         }
+
+    private val nowPlayingAdapter: JsonAdapter<NowPlayingSnapshot> by lazy { moshi.adapter(NowPlayingSnapshot::class.java) }
+
+    /**
+     * The song the saved queue position names, saved as the position is; null with no saved queue. Read back with the
+     * position it resumes from: the saved playback position, or the start when the saved song isn't the one that
+     * was playing.
+     */
+    var nowPlaying: NowPlayingSnapshot?
+        set(value) {
+            sharedPreferences.put("now_playing", value?.let(nowPlayingAdapter::toJson) ?: "")
+        }
+        get() {
+            val json = sharedPreferences.get("now_playing", "").ifEmpty { return null }
+            val snapshot = runCatching { nowPlayingAdapter.fromJson(json) }.getOrNull() ?: return null
+            return snapshot.copy(positionMs = if (restoreQueuePositionFromStart) 0 else playbackPosition ?: 0)
+        }
 }

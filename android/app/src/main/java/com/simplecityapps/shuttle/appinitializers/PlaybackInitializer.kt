@@ -17,6 +17,7 @@ import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.mediasession.PlayRequests
+import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
@@ -73,6 +74,9 @@ constructor(
      * would change nothing. Held until the next change to the queue's content is saved, or not. Main thread only.
      */
     private var unchangedRestoredQueue: List<Song>? = null
+
+    /** What [saveNowPlaying] saved last, to leave an unchanged one alone. Main thread only. */
+    private var savedNowPlaying: NowPlayingSnapshot? = null
 
     @SuppressLint("BinaryOperationInTimber")
     override fun init(application: Application) {
@@ -191,6 +195,10 @@ constructor(
                 return@withContext
             }
 
+            if (queueManager.queueStateFlow.value.items.isEmpty()) {
+                // Nothing to show for a queue that's gone.
+                playbackPreferenceManager.nowPlaying = null
+            }
             if (restoredSeekPosition != seekPosition) {
                 // It's what a reload reads back as the position to resume from.
                 playbackPreferenceManager.playbackPosition = restoredSeekPosition
@@ -272,10 +280,24 @@ constructor(
         }
 
         // Which saved song the position names depends on the songs before it too, once some are left out.
-        if (current.contentVersion != previous.contentVersion || current.currentPosition != previous.currentPosition) {
-            val savedPosition = savedQueuePosition(current.items.map { queueItem -> queueItem.song }, current.currentPosition)
+        if (current.contentVersion != previous.contentVersion ||
+            current.currentPosition != previous.currentPosition ||
+            current.songDataVersion != previous.songDataVersion
+        ) {
+            val songs = current.items.map { queueItem -> queueItem.song }
+            val savedPosition = savedQueuePosition(songs, current.currentPosition)
             playbackPreferenceManager.queuePosition = savedPosition?.position
             playbackPreferenceManager.restoreQueuePositionFromStart = savedPosition?.fromStart ?: false
+            saveNowPlaying(savedPosition?.let { songs.filter { song -> song.isInLibrary }[it.position] })
+        }
+    }
+
+    /** Saves [song] as the one the saved position names, unless it's what was saved last. */
+    private fun saveNowPlaying(song: Song?) {
+        val snapshot = song?.let(NowPlayingSnapshot::of)
+        if (snapshot != savedNowPlaying) {
+            savedNowPlaying = snapshot
+            playbackPreferenceManager.nowPlaying = snapshot
         }
     }
 

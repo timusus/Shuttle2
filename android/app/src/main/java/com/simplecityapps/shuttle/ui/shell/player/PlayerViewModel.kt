@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
+import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -53,6 +55,11 @@ fun interface ArtworkSeedSource {
 /** Whether the Cast framework could start on this device. */
 fun interface CastAvailability {
     fun isAvailable(): Boolean
+}
+
+/** The song the saved queue was left on (see [NowPlayingSnapshot]), shown until the queue is restored. */
+fun interface SavedNowPlaying {
+    fun snapshot(): NowPlayingSnapshot?
 }
 
 /** The sleep timer's remembered "play last song to end" choice. */
@@ -84,6 +91,7 @@ class PlayerViewModel @Inject constructor(
     private val replayGainPreference: ReplayGainPreference,
     private val seedSource: ArtworkSeedSource,
     castAvailability: CastAvailability,
+    savedNowPlaying: SavedNowPlaying,
     private val clearQueue: ClearQueue,
     private val restoreQueue: RestoreQueue,
     private val availableMediaActions: AvailableMediaActions,
@@ -92,6 +100,10 @@ class PlayerViewModel @Inject constructor(
 ) : ViewModel(),
     PlayerActions {
     private val castAvailable = castAvailability.isAvailable()
+
+    // Shown on a cold start until the saved queue is restored, then the restored queue's own song takes over.
+    private val savedSnapshot: NowPlayingSnapshot? = savedNowPlaying.snapshot()
+    private val savedSong: PlayerSong? = savedSnapshot?.toPlayerSong()
 
     /** Bumped when the sleep timer is started or stopped here. */
     private val sleepTimerChanges = MutableStateFlow(0)
@@ -154,7 +166,7 @@ class PlayerViewModel @Inject constructor(
             queueOperations.repeatModeFlow,
             extras,
         ) { queue, playback, shuffle, repeat, extras ->
-            queue.toPlayerUiState().copy(
+            queue.toPlayerUiState(savedSong).copy(
                 playing = playback == PlaybackState.Playing,
                 buffering = playback == PlaybackState.Loading,
                 shuffle = shuffle == QueueManager.ShuffleMode.On,
@@ -171,7 +183,7 @@ class PlayerViewModel @Inject constructor(
             // An emptied queue takes the player, and its panel, away.
             state.copy(panel = panel.takeIf { state.hasQueue == true })
         }.distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), queueOperations.queueStateFlow.value.toPlayerUiState())
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), queueOperations.queueStateFlow.value.toPlayerUiState(savedSong))
 
     // The total is the song's own duration, as the queue rows show it; the player's reported duration can differ by a rounding second.
     val progress: StateFlow<PlayerProgress> =
@@ -180,12 +192,27 @@ class PlayerViewModel @Inject constructor(
             when {
                 progress != null -> PlayerProgress(progress.position.toLong(), songDuration ?: progress.duration.toLong())
                 song != null -> PlayerProgress(song.playbackPosition.toLong(), song.duration.toLong())
-                else -> PlayerProgress.Zero
+                else -> savedProgress() ?: PlayerProgress.Zero
             }
         }.distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PlayerProgress.Zero)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), savedProgress() ?: PlayerProgress.Zero)
 
-    override fun togglePlayback() = playbackOperations.togglePlayback()
+    /** Where the saved song was left, while it stands in for a queue not yet restored. */
+    private fun savedProgress(): PlayerProgress? = savedSnapshot
+        ?.takeIf { queueOperations.queueStateFlow.value.isAwaitingRestore }
+        ?.let { snapshot -> PlayerProgress(snapshot.positionMs.toLong(), snapshot.durationMs.toLong()) }
+
+    override fun togglePlayback() {
+        if (savedSnapshot != null && queueOperations.queueStateFlow.value.isAwaitingRestore) {
+            // Nothing is loaded yet: play once the saved queue is restored and loaded.
+            viewModelScope.launch {
+                queueOperations.queueStateFlow.first { queue -> queue.isRestored }
+                playbackOperations.play()
+            }
+        } else {
+            playbackOperations.togglePlayback()
+        }
+    }
 
     override fun skipToNext() = playbackOperations.skipToNext(ignoreRepeat = true)
 
@@ -371,26 +398,43 @@ internal fun queueMove(
     return (from to to).takeIf { from != to }
 }
 
-internal fun QueueState.toPlayerUiState(): PlayerUiState {
-    if (items.isEmpty() && !isRestored) return PlayerUiState.Unknown
+/** Nothing in the queue yet, with the saved queue still to be restored: the saved song stands in for it meanwhile. */
+private val QueueState.isAwaitingRestore: Boolean get() = items.isEmpty() && !isRestored
+
+/** Until the queue is restored, [savedSong] (the song it was left on) stands in for it, when there is one. */
+internal fun QueueState.toPlayerUiState(savedSong: PlayerSong? = null): PlayerUiState {
+    if (isAwaitingRestore) {
+        return savedSong?.let { PlayerUiState(hasQueue = true, current = it, items = listOf(it)) } ?: PlayerUiState.Unknown
+    }
     val currentIndex = currentPosition ?: -1
     val rows = items.mapIndexed { index, item ->
-        PlayerSong(
+        item.song.toPlayerSong(
             uid = item.uid,
-            title = item.song.name.orEmpty(),
-            artist = item.song.friendlyArtistName ?: item.song.albumArtist,
-            album = item.song.album,
-            durationMs = item.song.duration,
             position = when {
                 item.isCurrent -> QueuePosition.Current
                 index < currentIndex -> QueuePosition.Played
                 else -> QueuePosition.Upcoming
             },
-            song = item.song,
         )
     }
     return PlayerUiState(hasQueue = rows.isNotEmpty(), current = rows.firstOrNull { it.position == QueuePosition.Current }, items = rows)
 }
+
+private fun Song.toPlayerSong(
+    uid: Long,
+    position: QueuePosition,
+) = PlayerSong(
+    uid = uid,
+    title = name.orEmpty(),
+    artist = friendlyArtistName ?: albumArtist,
+    album = album,
+    durationMs = duration,
+    position = position,
+    song = this,
+)
+
+/** The saved song, as the current and only row of a queue not yet restored; no queue row has its uid. */
+internal fun NowPlayingSnapshot.toPlayerSong(): PlayerSong = toSong().toPlayerSong(uid = -1, position = QueuePosition.Current)
 
 private fun QueueManager.RepeatMode.toS2RepeatMode(): S2RepeatMode = when (this) {
     QueueManager.RepeatMode.Off -> S2RepeatMode.Off

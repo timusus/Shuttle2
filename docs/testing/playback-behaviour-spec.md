@@ -342,6 +342,23 @@ there (RS-48), waits for the saved queue's restore, and plays the search's songs
 and isn't run again when S2 is reopened from recents. (#424) — JVM (`spec/ForegroundStartSpecTest`); the cold start
 on the emulator (`checks/voice-search.sh`).
 
+## Cold start
+
+**RS-63: a cold start shows the saved song straight away.** Given a saved queue, when S2 starts, then the player
+shows the saved song, and where it was left, before the queue has been read back; pressing play on it plays once the
+queue is restored. Once restored, the restored queue's own song takes over, even if it isn't the one shown; a restore
+that brings nothing back (every saved song gone from the library) leaves nothing showing. The song saved is the one
+the saved position names: while an opened file plays (RS-58), the library song after it, from the start. A request
+that plays something before the restore finishes keeps its queue, and the restored song never replaces it. — JVM (`PlayerViewModelTest` in
+`:android:app`, the song saved with the queue in `PlaybackInitializerTest`); on the emulator, the first frame after a
+cold start shows the player.
+
+**RS-64: the resumption controls get the saved song straight away.** Given S2 not running, or its saved queue still
+being restored, when the system asks what S2 would resume (its resumption controls, after a reboot), then it gets the
+saved song and its position without waiting for the restore. Asked to resume playback, S2 waits for the restore as
+RS-44 does; once restored, the player's own queue answers either way. — JVM (`spec/MediaSessionSpecTest`);
+resumption after a reboot is device-only: *Media session through Media3*.
+
 ## Commits with no rule
 
 Mechanism only, with no behaviour of their own to hold (the design doc's section 4 list, plus thread-safety and

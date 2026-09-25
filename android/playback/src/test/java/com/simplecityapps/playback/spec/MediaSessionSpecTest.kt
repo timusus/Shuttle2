@@ -12,6 +12,7 @@ import androidx.media3.session.SessionResult
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.mediasession.SessionCallback
+import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.shuttle.model.Album
@@ -136,6 +137,34 @@ class MediaSessionSpecTest {
         harness.playback.runUntil { harness.playback.playbackOperations.playbackStateFlow.value == PlaybackState.Playing }
         queue.queueStateFlow.value.currentItem?.song shouldBe saved[1]
         queue.getQueue().map { it.song } shouldBe saved
+    }
+
+    @Test
+    fun `RS-64 the resumption controls get the saved song straight away, and the restored queue once it's there`() {
+        // As when the system builds its resumption controls, after a reboot or with S2 not running.
+        val harness = sessionHarness(restored = false)
+        val queue = harness.playback.queueOperations
+        val saved = listOf(song(1), song(2))
+        harness.playback.playbackPreferenceManager.nowPlaying = NowPlayingSnapshot.of(saved[1])
+        harness.playback.playbackPreferenceManager.playbackPosition = 30_000
+        harness.connect()
+        val controller = harness.session.connectedControllers.first()
+
+        val offered = harness.await(harness.callback.onPlaybackResumption(harness.session, controller, false))
+        offered.mediaItems.map { it.mediaId } shouldBe listOf(saved[1].id.toString())
+        offered.mediaItems.single().mediaMetadata.title shouldBe saved[1].name
+        offered.startPositionMs shouldBe 30_000
+
+        // To play, it waits for the restored queue.
+        val resumed = harness.callback.onPlaybackResumption(harness.session, controller, true)
+        harness.playback.idle()
+        resumed.isDone shouldBe false
+        harness.playback.run { queue.setQueue(saved, position = 1) }
+        queue.hasRestoredQueue = true
+        harness.await(resumed).mediaItems.size shouldBe 2
+
+        // Once restored, the player's own items answer either way.
+        harness.await(harness.callback.onPlaybackResumption(harness.session, controller, false)).mediaItems.size shouldBe 2
     }
 
     @Test

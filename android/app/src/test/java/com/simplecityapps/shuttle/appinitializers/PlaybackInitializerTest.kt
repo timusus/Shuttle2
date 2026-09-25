@@ -13,6 +13,7 @@ import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PositionAnchor
 import com.simplecityapps.playback.SongPosition
+import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueState
@@ -312,6 +313,56 @@ class PlaybackInitializerTest {
         publishQueue(listOf(createSong(id = -5)), currentPosition = 0, contentVersion = 3)
         preferences.queueIds shouldBe null
         preferences.queuePosition shouldBe null
+    }
+
+    @Test
+    fun `the saved song is saved with the position, and read back with where it resumes from`() {
+        initializer.init(application)
+
+        publishQueue(currentPosition = 1, contentVersion = 1)
+        preferences.playbackPosition = 30_000
+
+        preferences.nowPlaying?.songId shouldBe 2L
+        preferences.nowPlaying?.title shouldBe songs[1].name
+        preferences.nowPlaying?.positionMs shouldBe 30_000
+
+        publishQueue(currentPosition = 2, contentVersion = 1)
+        preferences.nowPlaying?.songId shouldBe 3L
+    }
+
+    @Test
+    fun `while an opened file plays, the saved song is the library song after it, from the start`() {
+        initializer.init(application)
+        preferences.playbackPosition = 30_000
+
+        publishQueue(listOf(createSong(id = 1), createSong(id = -5), createSong(id = 2)), currentPosition = 1, contentVersion = 1)
+
+        preferences.nowPlaying?.songId shouldBe 2L
+        preferences.nowPlaying?.positionMs shouldBe 0
+    }
+
+    @Test
+    fun `an emptied queue clears the saved song`() {
+        initializer.init(application)
+        publishQueue(currentPosition = 0, contentVersion = 1)
+
+        publishQueue(listOf(createSong(id = -5)), currentPosition = 0, contentVersion = 2)
+
+        preferences.nowPlaying shouldBe null
+    }
+
+    @Test
+    fun `a restore that brings nothing back clears the saved song`() {
+        songRepository.applyQueryPredicates = true
+        songRepository.setSongs(emptyList())
+        preferences.queueIds = "1,2,3"
+        preferences.queuePosition = 1
+        preferences.nowPlaying = NowPlayingSnapshot.of(songs[1])
+
+        initializer.init(application)
+
+        awaitUntil { queueManager.hasRestoredQueue }
+        awaitUntil { preferences.nowPlaying == null }
     }
 
     @Test

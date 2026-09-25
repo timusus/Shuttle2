@@ -24,6 +24,7 @@ import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.playback.mediasession.SessionCallback
 import com.simplecityapps.playback.mediasession.SessionPlayer
 import com.simplecityapps.playback.mediasession.awaitRestored
+import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
@@ -66,6 +67,9 @@ class PlaybackService : MediaLibraryService() {
     lateinit var mediaIdHelper: MediaIdHelper
 
     @Inject
+    lateinit var playbackPreferenceManager: PlaybackPreferenceManager
+
+    @Inject
     lateinit var artworkImageLoader: ArtworkImageLoader
 
     @Inject
@@ -104,7 +108,7 @@ class PlaybackService : MediaLibraryService() {
         )
         setShowNotificationForIdlePlayer(SHOW_NOTIFICATION_FOR_IDLE_PLAYER_AFTER_STOP_OR_ERROR)
 
-        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, coroutineScope) { controller ->
+        callback = SessionCallback(this, playRequests, mediaIdHelper, queueOperations, playbackPreferenceManager::nowPlaying, coroutineScope) { controller ->
             controller.isTrusted || runCatching { packageValidator.isKnownCaller(controller.packageName, controller.uid) }.getOrDefault(false)
         }
         val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope)

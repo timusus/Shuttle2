@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import com.bumptech.glide.Glide
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
+import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.designsystem.theme.SeedColorCache
@@ -57,6 +58,9 @@ object PlayerModule {
 
     @Provides
     fun provideCastAvailability(castSessionManager: CastSessionManager): CastAvailability = CastAvailability { castSessionManager.isAvailable }
+
+    @Provides
+    fun provideSavedNowPlaying(playbackPreferenceManager: PlaybackPreferenceManager): SavedNowPlaying = SavedNowPlaying { playbackPreferenceManager.nowPlaying }
 
     @Provides
     fun provideSleepTimerPreference(preferenceManager: GeneralPreferenceManager): SleepTimerPreference = object : SleepTimerPreference {

@@ -12,6 +12,7 @@ import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
+import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueState
@@ -49,6 +50,7 @@ class PlayerViewModelTest {
 
     private val playbackManager = FakePlaybackManager()
     private val queueManager = FakeQueueManager()
+    private var savedNowPlaying: NowPlayingSnapshot? = null
     private val playlistRepository = FakePlaylistRepository()
     private val sleepTimerPreference = object : SleepTimerPreference {
         override var playToEnd: Boolean = false
@@ -88,6 +90,7 @@ class PlayerViewModelTest {
             replayGainPreference = replayGainPreference,
             seedSource = seedSource,
             castAvailability = { false },
+            savedNowPlaying = { savedNowPlaying },
             clearQueue = ClearQueue(queueManager, playbackManager),
             restoreQueue = RestoreQueue(queueManager, playbackManager),
             availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, FakeSongDownloadRepository()),
@@ -107,6 +110,48 @@ class PlayerViewModelTest {
     ): QueueState {
         val items = songs.mapIndexed { index, song -> QueueItem(uid = 100L + index, song = song, isCurrent = index == current) }
         return QueueState.Empty.copy(items = items, currentItem = items.getOrNull(current), currentPosition = current, isRestored = true)
+    }
+
+    @Test
+    fun `RS-63 a cold start shows the saved song, where it was left, until the queue is restored`() = runTest {
+        savedNowPlaying = NowPlayingSnapshot.of(createSong(id = 7, name = "Saved", album = "Album", duration = 180_000)).copy(positionMs = 42_000)
+        val viewModel = viewModel()
+
+        viewModel.uiState.value.hasQueue shouldBe true
+        viewModel.uiState.value.current?.title shouldBe "Saved"
+        viewModel.uiState.value.current?.album shouldBe "Album"
+        viewModel.uiState.value.current?.durationMs shouldBe 180_000
+        viewModel.progress.value shouldBe PlayerProgress(42_000, 180_000)
+
+        // The restored queue takes over, even when its song isn't the saved one.
+        queueManager.queueStateFlow.value = queueOf(songs("Restored"))
+
+        viewModel.uiState.value.current?.title shouldBe "Restored"
+        viewModel.uiState.value.items.map { it.title } shouldBe listOf("Restored")
+    }
+
+    @Test
+    fun `a restore that brings nothing back takes the saved song away`() = runTest {
+        savedNowPlaying = NowPlayingSnapshot.of(createSong(id = 7, name = "Saved"))
+        val viewModel = viewModel()
+
+        queueManager.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
+
+        viewModel.uiState.value.hasQueue shouldBe false
+        viewModel.uiState.value.current shouldBe null
+    }
+
+    @Test
+    fun `play on the saved song plays once the queue is restored`() = runTest {
+        savedNowPlaying = NowPlayingSnapshot.of(createSong(id = 7, name = "Saved"))
+        val viewModel = viewModel()
+
+        viewModel.togglePlayback()
+        playbackManager.calls shouldBe emptyList()
+
+        queueManager.queueStateFlow.value = queueOf(songs("Saved"))
+
+        playbackManager.calls shouldBe listOf("play()")
     }
 
     @Test
