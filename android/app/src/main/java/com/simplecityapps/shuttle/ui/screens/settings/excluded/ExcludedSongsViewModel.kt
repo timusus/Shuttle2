@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.ui.actions.MediaAction
+import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,7 +24,8 @@ data class ExcludedSongsUiState(
 /** The songs hidden from the library, and the way back in for each. */
 @HiltViewModel
 class ExcludedSongsViewModel @Inject constructor(
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val mediaActionHandler: MediaActionHandler
 ) : ViewModel() {
     val uiState: StateFlow<ExcludedSongsUiState> = songRepository.getSongs(SongQuery.All(includeExcluded = true))
         .map { songs ->
@@ -32,12 +36,12 @@ class ExcludedSongsViewModel @Inject constructor(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExcludedSongsUiState())
 
-    // TODO(#389): switch to the ExcludeSongs use case (MediaAction.Include) once it lands on main
     fun onInclude(song: Song) {
-        viewModelScope.launch { songRepository.setExcluded(listOf(song), false) }
+        viewModelScope.launch { mediaActionHandler.handle(MediaAction.Include(MediaSelection.Songs(song))) }
     }
 
     fun onIncludeAll() {
-        viewModelScope.launch { songRepository.clearExcludeList() }
+        val songs = uiState.value.songs
+        viewModelScope.launch { mediaActionHandler.handle(MediaAction.Include(MediaSelection.Songs(songs))) }
     }
 }

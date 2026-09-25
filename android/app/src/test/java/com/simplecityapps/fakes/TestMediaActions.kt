@@ -38,14 +38,11 @@ class TestMediaActions(
     /** Whether a song's file deletes; every delete succeeds by default. */
     var fileDeleter: SongFileDeleter = SongFileDeleter { true }
 
-    /** The legacy `playlist_ignore_duplicates` setting. */
-    var ignorePlaylistDuplicates: Boolean = false
-
     val resolveSongs = ResolveSongs(songRepository, genreRepository, playlistRepository, queueManager, ResolveFolderSongs(songRepository))
     val playSongs = PlaySongs(queueManager, playbackManager)
     val shuffleSongs = ShuffleSongs(playbackManager)
     val enqueueSongs = EnqueueSongs(playbackManager, resolveSongs)
-    val addToPlaylist = AddToPlaylist(playlistRepository, resolveSongs) { ignorePlaylistDuplicates }
+    val addToPlaylist = AddToPlaylist(playlistRepository, resolveSongs)
     val createPlaylist = CreatePlaylist(playlistRepository, resolveSongs)
     val excludeSongs = ExcludeSongs(songRepository, queueManager, resolveSongs)
     val deleteSongs = DeleteSongs(songRepository, queueManager, resolveSongs, { fileDeleter.delete(it) }, Dispatchers.Unconfined)

@@ -57,17 +57,6 @@ class AddToPlaylistTest {
     }
 
     @Test
-    fun `the legacy ignore-duplicates setting skips the check`() = runTest {
-        actions.ignorePlaylistDuplicates = true
-        val song = createSong(id = 1, name = "Dupe")
-        fakePlaylistRepository.setSongsForPlaylist(playlist, listOf(song))
-
-        val result = addToPlaylist(playlist, MediaSelection.Songs(song))
-
-        result shouldBe AddToPlaylist.Result.Success(playlist, listOf(song))
-    }
-
-    @Test
     fun `a repository error fails with its message`() = runTest {
         fakePlaylistRepository.failure = IllegalStateException("disk full")
 

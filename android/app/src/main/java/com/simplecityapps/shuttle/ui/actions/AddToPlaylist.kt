@@ -7,13 +7,11 @@ import kotlinx.coroutines.flow.firstOrNull
 
 /**
  * Adds a selection's songs to [Playlist]. Songs already in the playlist stop the add with [Result.DuplicatesFound],
- * unless the caller passes `ignoreDuplicates` ("Add anyway") or the legacy `playlist_ignore_duplicates` setting is on.
+ * unless the caller passes `ignoreDuplicates` ("Add anyway").
  */
 class AddToPlaylist(
     private val playlistRepository: PlaylistRepository,
     private val resolveSongs: ResolveSongs,
-    // TODO: drop with the legacy Playlists settings screen (redesign owner decision 8); the "Add anyway" snackbar replaces it.
-    private val ignorePlaylistDuplicates: () -> Boolean,
 ) {
     sealed interface Result {
         data class Success(val playlist: Playlist, val songs: List<Song>) : Result
@@ -37,7 +35,7 @@ class AddToPlaylist(
         val songs = resolveSongs(selection)
         if (songs.isEmpty()) return Result.Failure(null)
 
-        if (!ignoreDuplicates && !ignorePlaylistDuplicates()) {
+        if (!ignoreDuplicates) {
             val existingIds = playlistRepository.getSongsForPlaylist(playlist)
                 .firstOrNull().orEmpty()
                 .mapTo(mutableSetOf()) { it.song.id }

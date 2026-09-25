@@ -48,10 +48,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
             findNavController().navigate(R.id.widgetPreferenceManager)
             true
         }
-        preferenceScreen.findPreference<Preference>("pref_screen_playlist")?.setOnPreferenceClickListener {
-            findNavController().navigate(R.id.playlistPreferenceFragment)
-            true
-        }
         preferenceScreen.findPreference<Preference>("pref_screen_app_info")?.setOnPreferenceClickListener {
             findNavController().navigate(R.id.appInfoPreferenceFragment)
             true

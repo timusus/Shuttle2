@@ -80,10 +80,5 @@ class AppModule {
     fun provideAddToPlaylist(
         playlistRepository: PlaylistRepository,
         resolveSongs: ResolveSongs,
-        preferenceManager: GeneralPreferenceManager,
-    ): AddToPlaylist = AddToPlaylist(
-        playlistRepository,
-        resolveSongs,
-        ignorePlaylistDuplicates = { preferenceManager.ignorePlaylistDuplicates },
-    )
+    ): AddToPlaylist = AddToPlaylist(playlistRepository, resolveSongs)
 }
