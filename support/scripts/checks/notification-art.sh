@@ -61,7 +61,7 @@ ffmpeg -loglevel error -y -f lavfi -i "sine=frequency=440:duration=30" -i "${loc
     "${local_dir}/song.mp3" || fail "ffmpeg could not make the song"
 
 adb_retry shell mkdir -p "$remote_dir" >/dev/null
-adb_retry push "${local_dir}/song.mp3" "${remote_dir}/" >/dev/null
+ADB_CALL_TIMEOUT=90 adb_retry push "${local_dir}/song.mp3" "${remote_dir}/" >/dev/null
 adb_retry shell content call --uri content://media/ --method scan_file --arg "${remote_dir}/song.mp3" >/dev/null
 launch_app
 s2 IMPORT >/dev/null

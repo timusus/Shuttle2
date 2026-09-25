@@ -34,7 +34,7 @@ ffmpeg -loglevel error -y -f lavfi -i "color=c=0xFF00FF:size=600x600" -frames:v 
     fail "ffmpeg could not make the cover"
 
 adb_retry shell mkdir -p "$remote_dir" >/dev/null
-adb_retry push "${local_dir}/song.mp3" "${local_dir}/cover.jpg" "${remote_dir}/" >/dev/null
+ADB_CALL_TIMEOUT=90 adb_retry push "${local_dir}/song.mp3" "${local_dir}/cover.jpg" "${remote_dir}/" >/dev/null
 for f in song.mp3 cover.jpg; do
     adb_retry shell content call --uri content://media/ --method scan_file --arg "${remote_dir}/${f}" >/dev/null
 done

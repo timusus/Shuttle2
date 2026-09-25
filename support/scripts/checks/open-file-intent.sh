@@ -49,7 +49,7 @@ adb logcat -c -b crash
 # --- content:// (mp3) and file:// (FLAC) variants: each just has to play ---
 REMOTE_CONTENT_MP3="/sdcard/Download/opened-content.mp3"
 start_playback
-adb_retry push "$LOCAL_MP3" "$REMOTE_CONTENT_MP3" >/dev/null
+ADB_CALL_TIMEOUT=90 adb_retry push "$LOCAL_MP3" "$REMOTE_CONTENT_MP3" >/dev/null
 content_uri="$(content_uri_for "$REMOTE_CONTENT_MP3")"
 open_uri "$content_uri" audio/mpeg
 wait_for 10 "s['state'] == 'Playing' and s['title'] == '${TITLE_MP3}' and s['queueSize'] == 1"
@@ -57,7 +57,7 @@ echo "  content:// mp3 (${content_uri}) plays"
 
 REMOTE_FLAC="/sdcard/Download/opened.flac"
 start_playback
-adb_retry push "$LOCAL_FLAC" "$REMOTE_FLAC" >/dev/null
+ADB_CALL_TIMEOUT=90 adb_retry push "$LOCAL_FLAC" "$REMOTE_FLAC" >/dev/null
 open_uri "file://${REMOTE_FLAC}" audio/flac
 wait_for 10 "s['state'] == 'Playing' and s['title'] == '${TITLE_FLAC}' and s['queueSize'] == 1"
 echo "  file:// flac plays"
@@ -73,7 +73,7 @@ open_file() {
 }
 
 start_playback
-adb_retry push "$LOCAL_MP3" "$REMOTE_FILE" >/dev/null
+ADB_CALL_TIMEOUT=90 adb_retry push "$LOCAL_MP3" "$REMOTE_FILE" >/dev/null
 open_file
 wait_for 10 "s['state'] == 'Playing' and s['title'] == '${TITLE}' and s['queueSize'] == 1"
 

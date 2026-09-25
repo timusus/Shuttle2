@@ -33,7 +33,7 @@ wait_for_focus() {
 video="$(mktemp -d)/focus.mp4"
 ffmpeg -loglevel error -f lavfi -i "color=c=black:s=320x240:d=30" -f lavfi -i "sine=frequency=440:duration=30" \
     -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$video"
-adb_retry push "$video" "$VIDEO" >/dev/null
+ADB_CALL_TIMEOUT=90 adb_retry push "$video" "$VIDEO" >/dev/null
 rm -rf "$(dirname "$video")"
 trap 'adb shell am force-stop "$PHOTOS" >/dev/null 2>&1; adb shell rm -f "$VIDEO" >/dev/null 2>&1 || true' EXIT
 
