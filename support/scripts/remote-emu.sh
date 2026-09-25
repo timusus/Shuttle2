@@ -623,7 +623,20 @@ cmd_ui_prep() {
 
 xml_unescape() {
     local s="$1"
-    s="${s//&lt;/<}"; s="${s//&gt;/>}"; s="${s//&quot;/\"}"; s="${s//&apos;/\'}"; s="${s//&amp;/&}"
+    s="${s//&lt;/<}"; s="${s//&gt;/>}"; s="${s//&quot;/\"}"; s="${s//&apos;/\'}"
+    # uiautomator's XmlSerializer writes BMP characters (accents, CJK, ...) as raw UTF-8 but numeric-
+    # escapes anything outside the BMP -- emoji, some musical symbols -- as `&#NNNN;`/`&#xHHHH;`
+    # decimal/hex character references (#416: a title with such a character never matched raw text).
+    # Only worth a python3 call when one is actually present.
+    if [[ "$s" == *'&#'* ]]; then
+        s="$(python3 -c '
+import re, sys
+def repl(m):
+    return chr(int(m.group(1), 16) if m.group(1) else int(m.group(2)))
+sys.stdout.write(re.sub(r"&#x([0-9A-Fa-f]+);|&#([0-9]+);", repl, sys.stdin.read()))
+' <<<"$s")"
+    fi
+    s="${s//&amp;/&}"
     echo "$s"
 }
 

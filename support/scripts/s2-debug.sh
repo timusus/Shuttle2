@@ -51,7 +51,8 @@ adb_retry shell am broadcast -f 32 -a "${PREFIX}${action}" -p "$APP_ID" "$@" >/d
 deadline=$(($(date +%s) + TIMEOUT))
 while :; do
     # The first reply line after the marker: the JSON line, "<ACTION> ok[: detail]" or "<ACTION> error: ...".
-    line="$(adb logcat -d -v raw -s S2DebugMark:I S2Debug:I \
+    # adb_retry (#416): a dropped tunnel must fail this poll within ADB_CALL_TIMEOUT, not hang.
+    line="$(adb_retry logcat -d -v raw -s S2DebugMark:I S2Debug:I \
         | awk -v m="$marker" -v a="$action" 'f && ($0 ~ "^\\{" || index($0, a " ") == 1) { print; exit } $0 == m { f = 1 }')"
     if [ -n "$line" ]; then
         echo "$line"
