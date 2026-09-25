@@ -44,6 +44,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
@@ -64,15 +65,22 @@ val QueuePeekHeight = 56.dp
 /** Height of the seek bar and transport controls, which stay visible above the queue at the Queue level. */
 val TransportHeight = 176.dp
 
+/** Height of the song row the player pane keeps above the transport at the Queue level. */
+val QueueHeadSongHeight = 72.dp
+
+/** The head that stays above the queue at the Queue level: the transport, under the song row where there is one. */
+internal fun queueHeadHeight(withSong: Boolean): Dp = if (withSong) TransportHeight + QueueHeadSongHeight else TransportHeight
+
 /**
  * How far the Queue level pushes a stacked player up: from the peek at the bottom to just below
- * the transport row, which stays as the compact head under the status bar. In px.
+ * the head, which stays under the status bar. In px.
  */
 internal fun Density.stackedQueueTravel(
     height: Float,
     statusBarTop: Int,
     navigationBarBottom: Int,
-): Float = (height - statusBarTop - TransportHeight.toPx() - QueuePeekHeight.toPx() - navigationBarBottom).coerceAtLeast(0f)
+    headHeight: Dp = TransportHeight,
+): Float = (height - statusBarTop - headHeight.toPx() - QueuePeekHeight.toPx() - navigationBarBottom).coerceAtLeast(0f)
 
 internal object PlayerTestTags {
     const val Sheet = "player_sheet"
@@ -82,11 +90,14 @@ internal object PlayerTestTags {
     const val QueueList = "player_queue_list"
     const val Scrim = "player_scrim"
     const val Pane = "player_pane"
+    const val QueueHeadSong = "player_queue_head_song"
 }
 
 /**
  * The compact sheet's Now Playing and queue: a rigid column that the Queue level pushes up by the
- * queue travel, leaving the transport row as the compact head above the queue list.
+ * queue travel, leaving the transport row as the compact head above the queue list. With
+ * [songInQueueHead] (the pane, which has the height) a song row fades in above the transport there,
+ * so the head still says what is playing; the travel must leave room for it ([queueHeadHeight]).
  */
 @Composable
 internal fun StackedPlayer(
@@ -99,6 +110,7 @@ internal fun StackedPlayer(
     onCollapse: () -> Unit,
     onShowQueue: () -> Unit,
     modifier: Modifier = Modifier,
+    songInQueueHead: Boolean = false,
 ) {
     // Faded-out layers leave the semantics tree, so TalkBack (and UI drivers) reach only what shows.
     val nowPlayingShown by remember(geometry, offset) { derivedStateOf { geometry().nowPlayingAlpha(offset()) > 0f } }
@@ -132,11 +144,22 @@ internal fun StackedPlayer(
             }
             Spacer(Modifier.windowInsetsPadding(WindowInsets.navigationBars).height(QueuePeekHeight))
         }
+        // Composed only while the queue shows, so at Now Playing it can't take the header's taps.
+        if (songInQueueHead && queueShown) {
+            QueueHeadSong(
+                player = player,
+                onClick = onShowQueue,
+                modifier = Modifier
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .height(QueueHeadSongHeight)
+                    .graphicsLayer { alpha = geometry().queue(offset()) },
+            )
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(top = TransportHeight)
+                .padding(top = queueHeadHeight(songInQueueHead))
                 .hiddenFromSemantics(!nowPlayingShown)
                 .graphicsLayer {
                     alpha = geometry().nowPlayingAlpha(offset())

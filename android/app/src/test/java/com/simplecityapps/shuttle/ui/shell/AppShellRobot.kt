@@ -328,6 +328,21 @@ class AppShellRobot(
         rule.onNodeWithTag(PlayerTestTags.Sheet).assertExists()
     }
 
+    /** The pane's song row over the queue: in the semantics tree, holding the playing song, only at the Queue level. */
+    fun assertQueueHeadSong(shown: Boolean) {
+        val node = rule.onNodeWithTag(PlayerTestTags.QueueHeadSong)
+        if (shown) {
+            node.assertIsDisplayed().assert(hasText("First song"))
+        } else {
+            node.assertDoesNotExist()
+        }
+    }
+
+    fun tapQueueHeadSong() {
+        rule.onNodeWithTag(PlayerTestTags.QueueHeadSong).performClick()
+        rule.waitForIdle()
+    }
+
     fun assertPaneShown() {
         rule.onNodeWithTag(PlayerTestTags.Pane).assertIsDisplayed()
     }

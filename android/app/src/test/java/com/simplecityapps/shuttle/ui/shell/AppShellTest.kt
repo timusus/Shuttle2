@@ -170,6 +170,21 @@ class AppShellTest {
     }
 
     @Test
+    @Config(qualifiers = "w1280dp-h900dp")
+    fun `the pane's queue keeps the playing song above the transport, and tapping it goes back to Now Playing`() {
+        robot.setContent(window = PaneWindow)
+        robot.tapMiniPlayer()
+        robot.assertQueueHeadSong(shown = false)
+
+        robot.tapQueuePeek()
+        robot.assertQueueHeadSong(shown = true)
+
+        robot.tapQueueHeadSong()
+        robot.assertQueueHeadSong(shown = false)
+        robot.assertTextDisplayed("Now playing")
+    }
+
+    @Test
     fun `now playing plays and pauses, skips and seeks`() {
         robot.setContent()
         robot.tapMiniPlayer()

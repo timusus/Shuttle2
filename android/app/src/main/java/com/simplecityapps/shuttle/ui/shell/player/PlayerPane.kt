@@ -64,7 +64,7 @@ internal fun PlayerPane(
                             height = height,
                             navBarHeight = 0f,
                             miniHeight = MiniPlayerHeight.toPx(),
-                            queueTravel = stackedQueueTravel(height, statusBarTop, navigationBarBottom),
+                            queueTravel = stackedQueueTravel(height, statusBarTop, navigationBarBottom, queueHeadHeight(withSong = true)),
                         )
                     }
                 }
@@ -79,6 +79,7 @@ internal fun PlayerPane(
                     onShowQueue = {
                         scope.launch { state.moveTo(if (state.level == PlayerLevel.Queue) PlayerLevel.NowPlaying else PlayerLevel.Queue) }
                     },
+                    songInQueueHead = true,
                 )
             }
         }
