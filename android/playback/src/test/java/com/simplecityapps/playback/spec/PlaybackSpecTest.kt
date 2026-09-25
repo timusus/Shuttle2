@@ -262,7 +262,7 @@ class PlaybackSpecTest {
     }
 
     @Test
-    fun `RS-50 a restored song that can't be loaded stays current, paused, until it's played`() {
+    fun `RS-56 a restored song that can't be loaded stays current, paused, until it's played`() {
         val unreadable = unreadableSong(1)
         val playable = song(2)
         val failures = harness.record(playback.playbackFailureFlow)
