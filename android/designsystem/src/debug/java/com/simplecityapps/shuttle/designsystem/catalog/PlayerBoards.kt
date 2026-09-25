@@ -16,18 +16,22 @@ import com.simplecityapps.shuttle.designsystem.component.S2PlaybackProgress
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControls
 import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.designsystem.component.S2SeekBar
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
+import com.simplecityapps.shuttle.fixtures.SampleSong
+
+private val nowPlaying = SampleLibrary.album("undertow").songs[1]
 
 @Composable
 private fun MiniPlayer(playing: Boolean, buffering: Boolean = false, progress: Float = 0.35f) {
     S2MiniPlayer(
-        title = "Paranoid Android",
-        subtitle = "Radiohead · OK Computer",
+        title = nowPlaying.title,
+        subtitle = "${nowPlaying.artist} · ${nowPlaying.album}",
         playing = playing,
         progress = { progress },
         onPlayPause = {},
         onNext = {},
         onClick = {},
-        artwork = { Artwork(ArtworkPlaceholder.Album, size = ArtworkSize.Small, image = { SampleArt() }) },
+        artwork = { Artwork(ArtworkPlaceholder.Album, size = ArtworkSize.Small, image = { SampleArt(nowPlaying.albumId) }) },
         buffering = buffering,
     )
 }
@@ -114,31 +118,33 @@ fun ProgressBoard(width: BoardWidth) {
 }
 
 @Composable
-private fun Queue(title: String, subtitle: String, variant: Int, position: QueuePosition, duration: String, dragging: Boolean = false) {
+private fun Queue(song: SampleSong, position: QueuePosition, dragging: Boolean = false) {
     QueueRow(
-        title = title,
-        subtitle = subtitle,
+        title = song.title,
+        subtitle = song.artist,
         onClick = {},
         position = position,
-        artwork = { Artwork(ArtworkPlaceholder.Song, size = ArtworkSize.Small, image = { SampleArt(variant) }) },
-        duration = duration,
+        artwork = { Artwork(ArtworkPlaceholder.Song, size = ArtworkSize.Small, image = { SampleArt(song.albumId) }) },
+        duration = song.duration,
         dragging = dragging,
     )
 }
+
+private val queue = SampleLibrary.queue(6)
 
 @Composable
 fun QueueRowBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("Played") { Queue("Airbag", "Radiohead", 0, QueuePosition.Played, "4:44") },
-            BoardSection("Current") { Queue("Paranoid Android", "Radiohead", 1, QueuePosition.Current, "6:23") },
-            BoardSection("Upcoming") { Queue("Subterranean Homesick Alien", "Radiohead", 2, QueuePosition.Upcoming, "4:27") },
+            BoardSection("Played") { Queue(queue[0], QueuePosition.Played) },
+            BoardSection("Current") { Queue(queue[1], QueuePosition.Current) },
+            BoardSection("Upcoming") { Queue(queue[2], QueuePosition.Upcoming) },
             BoardSection("Dragging, between rows") {
                 Column {
-                    Queue("Exit Music (For a Film)", "Radiohead", 0, QueuePosition.Upcoming, "4:24")
-                    Queue("Let Down", "Radiohead", 1, QueuePosition.Upcoming, "4:59", dragging = true)
-                    Queue("Karma Police", "Radiohead", 2, QueuePosition.Upcoming, "4:21")
+                    Queue(queue[3], QueuePosition.Upcoming)
+                    Queue(queue[4], QueuePosition.Upcoming, dragging = true)
+                    Queue(queue[5], QueuePosition.Upcoming)
                 }
             },
         ),

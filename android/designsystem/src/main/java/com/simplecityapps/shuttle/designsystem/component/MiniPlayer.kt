@@ -80,8 +80,8 @@ fun S2MiniPlayer(
 private fun S2MiniPlayerPreview() {
     S2Theme {
         S2MiniPlayer(
-            title = "Airbag",
-            subtitle = "Radiohead • OK Computer",
+            title = "Route 29, Outbound",
+            subtitle = "Juniper Static • Night Bus Frequencies",
             playing = true,
             progress = { 0.35f },
             onPlayPause = {},

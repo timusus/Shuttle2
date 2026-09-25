@@ -25,6 +25,10 @@ import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongOfflineState
 import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.fixtures.SampleAlbum
+import com.simplecityapps.shuttle.fixtures.SampleArtist
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
+import com.simplecityapps.shuttle.fixtures.SampleSong
 
 @Composable
 private fun ArtworkRow(sizes: List<ArtworkSize>, shape: ArtworkShape = ArtworkShape.Rounded, loading: Boolean = false, loaded: Boolean = true) {
@@ -82,8 +86,14 @@ fun ArtworkBoard(width: BoardWidth) {
     )
 }
 
+private val nightBus = SampleLibrary.album("night-bus-frequencies")
+
+private val SampleSong.subtitle: String get() = "$artist · $album"
+
+private val SampleArtist.summary: String get() = "${albumCount(albums.size)} · ${songCount(songCount)}"
+
 @Composable
-private fun SongArt() = Artwork(ArtworkPlaceholder.Song, size = ArtworkSize.Medium, image = { SampleArt() })
+private fun SongArt(albumId: String = nightBus.id) = Artwork(ArtworkPlaceholder.Song, size = ArtworkSize.Medium, image = { SampleArt(albumId) })
 
 @Composable
 fun SongRowBoard(width: BoardWidth) {
@@ -91,74 +101,79 @@ fun SongRowBoard(width: BoardWidth) {
         width,
         listOf(
             BoardSection("Default") {
-                SongRow("Paranoid Android", "Radiohead · OK Computer", {}, artwork = { SongArt() }, duration = "6:27", onMore = {})
+                val song = nightBus.songs[0]
+                SongRow(song.title, song.subtitle, {}, artwork = { SongArt() }, duration = song.duration, onMore = {})
             },
             BoardSection("Track number (album)") {
-                SongRow("Karma Police", "Radiohead", {}, trackNumber = 6, duration = "4:24", onMore = {})
+                val song = nightBus.songs[5]
+                SongRow(song.title, song.artist, {}, trackNumber = song.track, duration = song.duration, onMore = {})
             },
             BoardSection("Playing") {
-                SongRow("Paranoid Android", "Radiohead · OK Computer", {}, artwork = { SongArt() }, duration = "6:27", playing = true, onMore = {})
+                val song = nightBus.songs[0]
+                SongRow(song.title, song.subtitle, {}, artwork = { SongArt() }, duration = song.duration, playing = true, onMore = {})
             },
             BoardSection("Selected") {
-                SongRow("Let Down", "Radiohead · OK Computer", {}, artwork = { SongArt() }, duration = "4:59", selected = true, onMore = {})
+                val song = nightBus.songs[1]
+                SongRow(song.title, song.subtitle, {}, artwork = { SongArt() }, duration = song.duration, selected = true, onMore = {})
             },
             BoardSection("Missing file (disabled)") {
-                SongRow("Lucky", "Radiohead · OK Computer", {}, artwork = { SongArt() }, duration = "4:19", enabled = false, onMore = {})
+                val song = nightBus.songs[2]
+                SongRow(song.title, song.subtitle, {}, artwork = { SongArt() }, duration = song.duration, enabled = false, onMore = {})
             },
             BoardSection("Downloading") {
-                SongRow("No Surprises", "Radiohead · OK Computer", {}, artwork = { SongArt() }, duration = "3:48", offlineState = SongOfflineState.Downloading, onMore = {})
+                val song = nightBus.songs[3]
+                SongRow(song.title, song.subtitle, {}, artwork = { SongArt() }, duration = song.duration, offlineState = SongOfflineState.Downloading, onMore = {})
             },
             BoardSection("Offline") {
-                SongRow("The Tourist", "Radiohead · OK Computer", {}, artwork = { SongArt() }, duration = "5:24", offlineState = SongOfflineState.Offline, onMore = {})
+                val song = nightBus.songs[4]
+                SongRow(song.title, song.subtitle, {}, artwork = { SongArt() }, duration = song.duration, offlineState = SongOfflineState.Offline, onMore = {})
             },
             BoardSection("Long text") {
-                SongRow(
-                    "A song title long enough to run out of room in a compact row",
-                    "An artist with a long name · An album with an even longer name",
-                    {},
-                    artwork = { SongArt() },
-                    duration = "12:07",
-                    onMore = {},
-                )
+                val song = SampleLibrary.longTitleAlbum.songs.maxBy { it.title.length }
+                SongRow(song.title, song.subtitle, {}, artwork = { SongArt(song.albumId) }, duration = song.duration, onMore = {})
             },
         ),
     )
 }
 
 @Composable
-private fun AlbumArt() = Artwork(ArtworkPlaceholder.Album, image = { SampleArt(1) })
+private fun AlbumRow(album: SampleAlbum, artwork: Boolean = true, selected: Boolean = false) = AlbumRow(
+    album.title,
+    album.artist,
+    {},
+    artwork = { Artwork(ArtworkPlaceholder.Album, image = if (artwork) ({ SampleArt(album.id) }) else null) },
+    meta = album.year.toString(),
+    selected = selected,
+    onMore = {},
+)
 
 @Composable
 fun AlbumRowBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("Default") { AlbumRow("OK Computer", "Radiohead", {}, artwork = { AlbumArt() }, meta = "1997", onMore = {}) },
-            BoardSection("Selected") { AlbumRow("Kid A", "Radiohead", {}, artwork = { AlbumArt() }, meta = "2000", selected = true, onMore = {}) },
-            BoardSection("No artwork") { AlbumRow("Amnesiac", "Radiohead", {}, artwork = { Artwork(ArtworkPlaceholder.Album) }, meta = "2001", onMore = {}) },
-            BoardSection("Long text") {
-                AlbumRow(
-                    "An album title long enough to run out of room in a compact row",
-                    "An artist with a long name",
-                    {},
-                    artwork = { AlbumArt() },
-                    meta = "2016",
-                    onMore = {},
-                )
-            },
+            BoardSection("Default") { AlbumRow(nightBus) },
+            BoardSection("Selected") { AlbumRow(SampleLibrary.album("phase-garden"), selected = true) },
+            BoardSection("No artwork") { AlbumRow(SampleLibrary.album("signal-room"), artwork = false) },
+            BoardSection("Long text") { AlbumRow(SampleLibrary.longTitleAlbum) },
         ),
     )
 }
 
 @Composable
-private fun ArtistArt(loaded: Boolean = true) = Artwork(
-    ArtworkPlaceholder.Artist,
-    shape = ArtworkShape.Circle,
-    image = if (loaded) {
-        { SampleArt(2) }
-    } else {
-        null
+private fun ArtistRow(artist: SampleArtist, loaded: Boolean = true, selected: Boolean = false, summary: String = artist.summary) = ArtistRow(
+    artist.name,
+    {},
+    summary = summary,
+    artwork = {
+        Artwork(
+            ArtworkPlaceholder.Artist,
+            shape = ArtworkShape.Circle,
+            image = if (loaded) ({ SampleArt(artist.coverAlbumId) }) else null,
+        )
     },
+    selected = selected,
+    onMore = {},
 )
 
 @Composable
@@ -166,9 +181,9 @@ fun ArtistRowBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("Default") { ArtistRow("Radiohead", {}, summary = "9 albums · 102 songs", artwork = { ArtistArt() }, onMore = {}) },
-            BoardSection("Selected") { ArtistRow("Portishead", {}, summary = "3 albums · 33 songs", artwork = { ArtistArt() }, selected = true, onMore = {}) },
-            BoardSection("No image") { ArtistRow("Massive Attack", {}, summary = "5 albums · 51 songs", artwork = { ArtistArt(loaded = false) }, onMore = {}) },
+            BoardSection("Default") { ArtistRow(SampleLibrary.artist("Juniper Static")) },
+            BoardSection("Selected") { ArtistRow(SampleLibrary.artist("Marlow Vane"), selected = true) },
+            BoardSection("No image") { ArtistRow(SampleLibrary.artist("The Tin Orchards"), loaded = false) },
         ),
     )
 }
@@ -178,12 +193,12 @@ fun PlaylistRowBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("User playlist") { PlaylistRow("Road trip", {}, summary = "48 songs", artwork = { Artwork(ArtworkPlaceholder.Playlist) }, onMore = {}) },
+            BoardSection("User playlist") { PlaylistRow("Road Trip", {}, summary = songCount(SampleLibrary.playlist("Road Trip").songs.size), artwork = { Artwork(ArtworkPlaceholder.Playlist) }, onMore = {}) },
             BoardSection("Smart playlist") { PlaylistRow("Recently added", {}, summary = "120 songs", artwork = { Artwork(ArtworkPlaceholder.SmartPlaylist) }, onMore = {}) },
             BoardSection("Empty") { PlaylistRow("New playlist", {}, summary = "No songs", artwork = { Artwork(ArtworkPlaceholder.Playlist) }, onMore = {}) },
-            BoardSection("Selected") { PlaylistRow("Focus", {}, summary = "22 songs", artwork = { Artwork(ArtworkPlaceholder.Playlist) }, selected = true, onMore = {}) },
+            BoardSection("Selected") { PlaylistRow("Focus", {}, summary = songCount(SampleLibrary.playlist("Focus").songs.size), artwork = { Artwork(ArtworkPlaceholder.Playlist) }, selected = true, onMore = {}) },
             BoardSection("Scalloped artwork (mask option)") {
-                PlaylistRow("Late night", {}, summary = "31 songs", artwork = { Artwork(ArtworkPlaceholder.Playlist, shape = ArtworkShape.Scalloped, image = { SampleArt(2) }) }, onMore = {})
+                PlaylistRow("Late Night", {}, summary = songCount(SampleLibrary.playlist("Late Night").songs.size), artwork = { Artwork(ArtworkPlaceholder.Playlist, shape = ArtworkShape.Scalloped, image = { SampleArt(2) }) }, onMore = {})
             },
         ),
     )
@@ -198,9 +213,9 @@ fun SectionHeaderBoard(width: BoardWidth) {
             BoardSection("Plain") { SectionHeader("Albums") },
             BoardSection("Sticky letter header") {
                 Column {
-                    SectionHeader("A")
-                    ArtistRow("Air", {}, summary = "6 albums", artwork = { ArtistArt() })
-                    ArtistRow("Aphex Twin", {}, summary = "11 albums", artwork = { ArtistArt(loaded = false) })
+                    val artist = SampleLibrary.artist("Oda Kestrel Quartet")
+                    SectionHeader(artist.name.take(1))
+                    ArtistRow(artist, summary = albumCount(artist.albums.size))
                 }
             },
         ),
@@ -212,8 +227,8 @@ fun GenreRowBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("Default") { GenreRow("Trip hop", {}, songCount = "86 songs", artwork = { Artwork(ArtworkPlaceholder.Genre) }, onMore = {}) },
-            BoardSection("Selected") { GenreRow("Shoegaze", {}, songCount = "41 songs", artwork = { Artwork(ArtworkPlaceholder.Genre) }, selected = true, onMore = {}) },
+            BoardSection("Default") { GenreRow("Electronic", {}, songCount = songCount(SampleLibrary.genres.first { it.name == "Electronic" }.songs.size), artwork = { Artwork(ArtworkPlaceholder.Genre) }, onMore = {}) },
+            BoardSection("Selected") { GenreRow("Shoegaze", {}, songCount = songCount(SampleLibrary.genres.first { it.name == "Shoegaze" }.songs.size), artwork = { Artwork(ArtworkPlaceholder.Genre) }, selected = true, onMore = {}) },
             BoardSection("One song") { GenreRow("Field recordings", {}, songCount = "1 song", artwork = { Artwork(ArtworkPlaceholder.Genre) }, onMore = {}) },
         ),
     )
@@ -224,12 +239,13 @@ fun FolderRowBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("Folder") { FolderRow("Radiohead", FolderEntryKind.Folder, {}, summary = "9 folders", onMore = {}) },
+            BoardSection("Folder") { FolderRow("Juniper Static", FolderEntryKind.Folder, {}, summary = "2 folders", onMore = {}) },
             BoardSection("File") {
-                FolderRow("01 Airbag.flac", FolderEntryKind.File, {}, summary = "Radiohead · OK Computer", meta = "4:44", artwork = { SongArt() }, onMore = {})
+                val song = nightBus.songs[0]
+                FolderRow("0${song.track} ${song.title}.flac", FolderEntryKind.File, {}, summary = song.subtitle, meta = song.duration, artwork = { SongArt() }, onMore = {})
             },
             BoardSection("File, no artwork") { FolderRow("demo take 3.mp3", FolderEntryKind.File, {}, meta = "2:10", onMore = {}) },
-            BoardSection("Selected") { FolderRow("Portishead", FolderEntryKind.Folder, {}, summary = "3 folders", selected = true, onMore = {}) },
+            BoardSection("Selected") { FolderRow("Marlow Vane", FolderEntryKind.Folder, {}, summary = "2 folders", selected = true, onMore = {}) },
         ),
     )
 }
@@ -241,7 +257,7 @@ private fun SampleTile(
     subtitle: String,
     placeholder: ArtworkPlaceholder = ArtworkPlaceholder.Album,
     shape: ArtworkShape = ArtworkShape.Rounded,
-    art: Int? = 1,
+    art: String? = null,
     selected: Boolean = false,
     playing: Boolean = false,
 ) {
@@ -255,7 +271,7 @@ private fun SampleTile(
                 Modifier.fillMaxSize(),
                 size = ArtworkSize.Grid,
                 shape = shape,
-                image = art?.let { variant -> { SampleArt(variant) } },
+                image = art?.let { albumId -> { SampleArt(albumId) } },
             )
         },
         modifier = Modifier.width(172.dp),
@@ -263,6 +279,16 @@ private fun SampleTile(
         playing = playing,
     )
 }
+
+@Composable
+private fun AlbumTile(album: SampleAlbum, art: Boolean = true, selected: Boolean = false, playing: Boolean = false) = SampleTile(album.title, album.artist, art = album.id.takeIf { art }, selected = selected, playing = playing)
+
+@Composable
+private fun ArtistTile(artist: SampleArtist, art: Boolean = true) = SampleTile(artist.name, albumCount(artist.albums.size), ArtworkPlaceholder.Artist, ArtworkShape.Circle, art = artist.coverAlbumId.takeIf { art })
+
+private fun songCount(count: Int) = if (count == 1) "1 song" else "$count songs"
+
+private fun albumCount(count: Int) = if (count == 1) "1 album" else "$count albums"
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -277,26 +303,27 @@ fun GridTileBoard(width: BoardWidth) {
         listOf(
             BoardSection("Album and artist") {
                 Tiles {
-                    SampleTile("OK Computer", "Radiohead")
-                    SampleTile("Radiohead", "9 albums", ArtworkPlaceholder.Artist, ArtworkShape.Circle, art = 2)
+                    AlbumTile(nightBus)
+                    ArtistTile(SampleLibrary.artist("Saltmarsh Choir"))
                 }
             },
             BoardSection("Playlist (scalloped mask), playing") {
                 Tiles {
-                    SampleTile("Late night", "31 songs", ArtworkPlaceholder.Playlist, ArtworkShape.Scalloped, art = 0)
-                    SampleTile("Mezzanine", "Massive Attack", playing = true)
+                    val playlist = SampleLibrary.playlist("Late Night")
+                    SampleTile(playlist.name, songCount(playlist.songs.size), ArtworkPlaceholder.Playlist, ArtworkShape.Scalloped, art = "lantern-hours")
+                    AlbumTile(SampleLibrary.album("smoke-rings"), playing = true)
                 }
             },
             BoardSection("Selected, long text") {
                 Tiles {
-                    SampleTile("Dummy", "Portishead", selected = true)
-                    SampleTile("An album title long enough to run out of room", "An artist with a long name")
+                    AlbumTile(SampleLibrary.album("soft-focus"), selected = true)
+                    AlbumTile(SampleLibrary.longTitleAlbum)
                 }
             },
             BoardSection("Placeholder") {
                 Tiles {
-                    SampleTile("Amnesiac", "Radiohead", art = null)
-                    SampleTile("Massive Attack", "5 albums", ArtworkPlaceholder.Artist, ArtworkShape.Circle, art = null)
+                    AlbumTile(SampleLibrary.album("undertow"), art = false)
+                    ArtistTile(SampleLibrary.artist("Pale Meridian"), art = false)
                 }
             },
         ),

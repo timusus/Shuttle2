@@ -1,33 +1,27 @@
 package com.simplecityapps.shuttle.designsystem.catalog
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.simplecityapps.shuttle.designsystem.theme.S2Accent
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** The two widths every board records at; a board is as tall as its content. */
 enum class BoardWidth(val widthDp: Int) {
@@ -90,22 +84,23 @@ fun rememberPressed(): MutableInteractionSource = rememberHeldInteraction { Pres
 @Composable
 fun rememberFocused(): MutableInteractionSource = rememberHeldInteraction { FocusInteraction.Focus() }
 
-/** Stand-in album art: a gradient from the scheme column's seed (or the brand accent) with a disc. */
+/** Three sample covers per scheme column, picked so their colours sit with the column's seed. */
+private fun CatalogScheme.sampleCovers(): List<String> = when (this) {
+    CatalogScheme.Brand -> listOf("night-bus-frequencies", "phase-garden", "signal-room")
+    CatalogScheme.Warm -> listOf("cassette-summer", "undertow", "lighthouse-ferry")
+    CatalogScheme.Cool -> listOf("blue-hours", "loose-change", "lantern-hours")
+    CatalogScheme.LowChroma, CatalogScheme.Dynamic -> listOf("estuary", "smoke-rings", "weather-systems")
+}
+
+/** Sample album art for a board with no particular album in mind: one of the scheme column's covers. */
 @Composable
 fun SampleArt(variant: Int = 0) {
-    val seed = LocalCatalogScheme.current.seed ?: S2Accent.Default.seed
-    val shift = listOf(Color.Black, Color.White, Color(0xFF3A1C71))[variant % 3]
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Brush.linearGradient(listOf(seed, lerp(seed, shift, 0.55f)))),
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            Modifier
-                .fillMaxSize(0.45f)
-                .clip(CircleShape)
-                .background(lerp(seed, Color.White, 0.35f)),
-        )
-    }
+    val covers = LocalCatalogScheme.current.sampleCovers()
+    SampleArt(covers[variant % covers.size])
+}
+
+/** The generated cover of sample album [albumId] (see `SampleLibrary`), for a row that names that album. */
+@Composable
+fun SampleArt(albumId: String) {
+    Image(SampleLibrary.cover(albumId), contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
 }

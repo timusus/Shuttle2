@@ -56,6 +56,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.activity.compose)
+    // The catalogue boards (src/debug) show the sample library's invented names and covers.
+    debugImplementation(project(":android:fixtures"))
 
     testImplementation(composeBom)
     testImplementation(libs.junit)

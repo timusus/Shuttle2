@@ -76,6 +76,6 @@ fun QueueRow(
 @Composable
 private fun QueueRowPreview() {
     S2Theme {
-        QueueRow("Airbag", "Radiohead", onClick = {}, position = QueuePosition.Current, duration = "4:44", artwork = { Artwork(ArtworkPlaceholder.Song) })
+        QueueRow("Route 29, Outbound", "Juniper Static", onClick = {}, position = QueuePosition.Current, duration = "4:44", artwork = { Artwork(ArtworkPlaceholder.Song) })
     }
 }

@@ -103,8 +103,8 @@ internal fun SupportingIcon(icon: ImageVector, contentDescription: String, tint:
 private fun SongRowPreview() {
     S2Theme {
         SongRow(
-            title = "Paranoid Android",
-            subtitle = "Radiohead · OK Computer",
+            title = "Route 29, Outbound",
+            subtitle = "Juniper Static · Night Bus Frequencies",
             onClick = {},
             artwork = { Artwork(ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
             duration = "6:27",

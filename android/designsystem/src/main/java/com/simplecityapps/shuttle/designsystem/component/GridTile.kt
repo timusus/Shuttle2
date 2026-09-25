@@ -143,8 +143,8 @@ private fun SelectedBadge(modifier: Modifier = Modifier) {
 private fun GridTilePreview() {
     S2Theme {
         GridTile(
-            title = "OK Computer",
-            subtitle = "Radiohead",
+            title = "Night Bus Frequencies",
+            subtitle = "Juniper Static",
             onClick = {},
             artwork = { Artwork(ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
             modifier = Modifier.width(176.dp),

@@ -49,6 +49,9 @@ import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
 import com.simplecityapps.shuttle.designsystem.component.S2Snackbar
 import com.simplecityapps.shuttle.designsystem.component.S2SortChip
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
+
+private val sheetSong = SampleLibrary.album("harbour-weather").songs[1]
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -161,9 +164,9 @@ fun ActionsSheetBoard(width: BoardWidth) {
             BoardSection("Song: header with artwork, destructive item") {
                 SheetFrame {
                     ActionsSheetContent(
-                        title = "Paranoid Android",
-                        subtitle = "Radiohead · OK Computer",
-                        artwork = { Artwork(ArtworkPlaceholder.Song, image = { SampleArt() }) },
+                        title = sheetSong.title,
+                        subtitle = "${sheetSong.artist} · ${sheetSong.album}",
+                        artwork = { Artwork(ArtworkPlaceholder.Song, image = { SampleArt(sheetSong.albumId) }) },
                         actions = songActions,
                         onDismissRequest = {},
                     )
@@ -251,7 +254,7 @@ fun SnackbarBoard(width: BoardWidth) {
             },
             BoardSection("Above the nav bar") {
                 Column {
-                    S2Snackbar("Excluded Radiohead", actionLabel = "Undo", modifier = Modifier.padding(12.dp))
+                    S2Snackbar("Excluded ${SampleLibrary.artists[1].name}", actionLabel = "Undo", modifier = Modifier.padding(12.dp))
                     S2NavigationBar(navItems(), 1, {})
                 }
             },

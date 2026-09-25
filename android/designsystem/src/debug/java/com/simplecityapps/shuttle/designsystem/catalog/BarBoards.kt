@@ -51,6 +51,7 @@ import com.simplecityapps.shuttle.designsystem.component.SearchNoResults
 import com.simplecityapps.shuttle.designsystem.component.SearchRecentRow
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 @Composable
 private fun LibraryActions() {
@@ -87,7 +88,7 @@ fun TopBarBoard(width: BoardWidth) {
             BoardSection("Large flexible, title only, back") { S2LargeTopBar(title = "Settings", onBack = {}) },
             BoardSection("Detail (pinned), back and actions") {
                 S2TopBar(
-                    title = "OK Computer",
+                    title = SampleLibrary.album("harbour-weather").title,
                     onBack = {},
                     actions = {
                         S2IconButton(Icons.Rounded.Shuffle, "Shuffle", {})
@@ -141,16 +142,18 @@ fun SearchBoard(width: BoardWidth) {
             },
             BoardSection("Focused, empty: recent searches") {
                 SearchViewFrame("") {
-                    SearchRecentRow("radiohead", {}, {})
-                    SearchRecentRow("massive attack", {}, {})
+                    SearchRecentRow("juniper static", {}, {})
+                    SearchRecentRow("blue hours", {}, {})
                 }
             },
             BoardSection("Typing: results") {
-                SearchViewFrame("radio") {
+                SearchViewFrame("salt") {
                     SectionHeader("Artists", containerColor = SearchBarDefaults.colors().containerColor)
-                    ArtistRow("Radiohead", {}, summary = "9 albums", artwork = { Artwork(ArtworkPlaceholder.Artist, shape = ArtworkShape.Circle, image = { SampleArt(2) }) })
+                    val artist = SampleLibrary.artist("Saltmarsh Choir")
+                    ArtistRow(artist.name, {}, summary = "${artist.albums.size} albums", artwork = { Artwork(ArtworkPlaceholder.Artist, shape = ArtworkShape.Circle, image = { SampleArt(artist.coverAlbumId) }) })
                     SectionHeader("Songs", containerColor = SearchBarDefaults.colors().containerColor)
-                    SongRow("Radio Friendly Unit Shifter", "Nirvana · In Utero", {}, artwork = { Artwork(ArtworkPlaceholder.Song, image = { SampleArt() }) }, duration = "4:51")
+                    val song = SampleLibrary.songs.first { it.title == "Wall of Salt" }
+                    SongRow(song.title, "${song.artist} · ${song.album}", {}, artwork = { Artwork(ArtworkPlaceholder.Song, image = { SampleArt(song.albumId) }) }, duration = song.duration)
                 }
             },
             BoardSection("No results") { SearchViewFrame("zzxq") { SearchNoResults("zzxq") } },

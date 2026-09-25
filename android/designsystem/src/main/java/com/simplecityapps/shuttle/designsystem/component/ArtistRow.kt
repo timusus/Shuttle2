@@ -34,7 +34,7 @@ fun ArtistRow(
 private fun ArtistRowPreview() {
     S2Theme {
         ArtistRow(
-            name = "Radiohead",
+            name = "Juniper Static",
             onClick = {},
             summary = "9 albums · 102 songs",
             artwork = { Artwork(ArtworkPlaceholder.Artist, shape = ArtworkShape.Circle) },

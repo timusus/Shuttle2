@@ -36,8 +36,8 @@ fun AlbumRow(
 private fun AlbumRowPreview() {
     S2Theme {
         AlbumRow(
-            title = "OK Computer",
-            artist = "Radiohead",
+            title = "Night Bus Frequencies",
+            artist = "Juniper Static",
             onClick = {},
             artwork = { Artwork(ArtworkPlaceholder.Album) },
             meta = "1997",

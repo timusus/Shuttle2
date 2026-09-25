@@ -115,8 +115,8 @@ private fun ActionsSheetContentPreview() {
     S2Theme {
         Surface {
             ActionsSheetContent(
-                title = "Paranoid Android",
-                subtitle = "Radiohead · OK Computer",
+                title = "Route 29, Outbound",
+                subtitle = "Juniper Static · Night Bus Frequencies",
                 artwork = { Artwork(ArtworkPlaceholder.Song) },
                 actions = listOf(
                     S2Action("Play next", {}, Icons.Rounded.PlayArrow),
