@@ -160,12 +160,20 @@ class LegacySafSongsImportTest {
     }
 
     @Test
-    fun `a remap onto a path another song already has is skipped`() = runBlocking<Unit> {
-        val remaps = listOf(SongPathRemap(songId = 2, path = "/storage/emulated/0/Music/Other.mp3"), SongPathRemap(songId = 3, path = "/gone/3.mp3"))
+    fun `a remap onto a path another provider's song already has succeeds, but onto the same provider's is skipped`() = runBlocking<Unit> {
+        val remaps =
+            listOf(
+                // Song 6 holds this path as a MediaStore song, so it's no longer a conflict for a Shuttle remap (#420)
+                SongPathRemap(songId = 2, path = "/storage/emulated/0/Music/Other.mp3"),
+                SongPathRemap(songId = 3, path = "/gone/3.mp3"),
+                // Song 1 already holds this path as a Shuttle song
+                SongPathRemap(songId = 4, path = "$MUSIC_TREE/document/primary%3AMusic%2FAlbum%2FPrimary.mp3")
+            )
 
-        LocalSongRepository(scope, database.songDataDao()).remapPaths(remaps) shouldBe listOf(remaps[1])
+        LocalSongRepository(scope, database.songDataDao()).remapPaths(remaps, MediaProviderType.Shuttle) shouldBe listOf(remaps[0], remaps[1])
 
-        database.songDataDao().get().single { song -> song.id == 2L }.path shouldBe "$SD_CARD_TREE/document/04B9-1208%3AMusic%2FSD%20Card.flac"
+        database.songDataDao().get().single { song -> song.id == 2L }.path shouldBe "/storage/emulated/0/Music/Other.mp3"
+        database.songDataDao().get().single { song -> song.id == 4L }.path shouldBe "$MUSIC_TREE/document/primary%3AMusic%2FDeleted.mp3"
     }
 
     private suspend fun import(provider: FakeTaglibMediaProvider = FakeTaglibMediaProvider(mediaStore)): FakeTaglibMediaProvider {

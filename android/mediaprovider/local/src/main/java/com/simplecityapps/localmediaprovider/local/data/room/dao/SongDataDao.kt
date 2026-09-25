@@ -62,8 +62,11 @@ abstract class SongDataDao {
         return Triple(insertCount.size, updateCount, deleteCount)
     }
 
-    @Query("SELECT id FROM songs WHERE path = :path")
-    abstract suspend fun idForPath(path: String): Long?
+    @Query("SELECT id FROM songs WHERE path = :path AND mediaProvider = :mediaProvider")
+    abstract suspend fun idForPath(
+        path: String,
+        mediaProvider: MediaProviderType
+    ): Long?
 
     @Query("UPDATE songs SET path = :path WHERE id = :id")
     abstract suspend fun updatePath(
@@ -79,13 +82,16 @@ abstract class SongDataDao {
 
     /**
      * Moves each song to its remapped path, keeping its row id and so everything keyed by it. A remap whose path is
-     * already another song's, or whose song is gone, is skipped: paths are unique.
+     * already another song's for the same provider, or whose song is gone, is skipped: paths are unique per provider.
      *
      * @return the remaps applied
      */
     @Transaction
-    open suspend fun remapPaths(remaps: List<SongPathRemap>): List<SongPathRemap> = remaps.filter { remap ->
-        val pathOwner = idForPath(remap.path)
+    open suspend fun remapPaths(
+        remaps: List<SongPathRemap>,
+        mediaProviderType: MediaProviderType
+    ): List<SongPathRemap> = remaps.filter { remap ->
+        val pathOwner = idForPath(remap.path, mediaProviderType)
         when {
             pathOwner != null && pathOwner != remap.songId -> {
                 Timber.w("Not remapping song ${remap.songId}: song $pathOwner already has its path")

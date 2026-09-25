@@ -11,7 +11,7 @@ import java.util.Date
 @Entity(
     tableName = "songs",
     indices = [
-        Index("path", unique = true)
+        Index(value = ["path", "mediaProvider"], unique = true)
     ]
 )
 data class SongData(

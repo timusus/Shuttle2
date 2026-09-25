@@ -76,7 +76,10 @@ class LocalSongRepository(
         mediaProviderType: MediaProviderType
     ): Triple<Int, Int, Int> = songDataDao.insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongDataUpdate(), deletes.toSongData(mediaProviderType))
 
-    override suspend fun remapPaths(remaps: List<SongPathRemap>): List<SongPathRemap> = songDataDao.remapPaths(remaps)
+    override suspend fun remapPaths(
+        remaps: List<SongPathRemap>,
+        mediaProviderType: MediaProviderType
+    ): List<SongPathRemap> = songDataDao.remapPaths(remaps, mediaProviderType)
 
     override suspend fun incrementPlayCount(song: Song) {
         Timber.v("Incrementing play count for song: ${song.name}")

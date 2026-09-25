@@ -276,7 +276,7 @@ class MediaImporter(
     ): List<Song> {
         val remaps = mediaProvider.remapLegacySongs(songs)
         if (remaps.isEmpty()) return songs
-        val paths = songRepository.remapPaths(remaps).associate { remap -> remap.songId to remap.path }
+        val paths = songRepository.remapPaths(remaps, mediaProvider.type).associate { remap -> remap.songId to remap.path }
         Timber.i("Moved ${paths.size} of ${remaps.size} matched ${mediaProvider.type} songs to their new paths")
         return songs.map { song -> paths[song.id]?.let { path -> song.copy(path = path) } ?: song }
     }

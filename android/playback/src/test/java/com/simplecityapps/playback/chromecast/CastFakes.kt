@@ -42,7 +42,10 @@ class FakeSongRepository(private val songs: List<Song>) : SongRepository {
         mediaProviderType: MediaProviderType
     ): Triple<Int, Int, Int> = error("not called")
 
-    override suspend fun remapPaths(remaps: List<SongPathRemap>): List<SongPathRemap> = error("not called")
+    override suspend fun remapPaths(
+        remaps: List<SongPathRemap>,
+        mediaProviderType: MediaProviderType
+    ): List<SongPathRemap> = error("not called")
 
     override suspend fun incrementPlayCount(song: Song) = error("not called")
 

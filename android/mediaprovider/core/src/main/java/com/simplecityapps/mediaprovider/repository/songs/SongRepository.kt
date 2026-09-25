@@ -30,11 +30,15 @@ interface SongRepository {
     ): Triple<Int, Int, Int>
 
     /**
-     * Applies each remap that doesn't clash with a song already stored under its path, in one transaction.
+     * Applies each remap that doesn't clash with a [mediaProviderType] song already stored under its path, in one
+     * transaction.
      *
      * @return the remaps applied
      */
-    suspend fun remapPaths(remaps: List<SongPathRemap>): List<SongPathRemap>
+    suspend fun remapPaths(
+        remaps: List<SongPathRemap>,
+        mediaProviderType: MediaProviderType
+    ): List<SongPathRemap>
 
     suspend fun incrementPlayCount(song: Song)
 

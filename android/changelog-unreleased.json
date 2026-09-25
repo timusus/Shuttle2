@@ -200,6 +200,10 @@
       "commits": []
     },
     {
+      "text": "Fixed songs disappearing, or losing their play count, playlists and excluded status, when both the S2 and Android media scanners were turned on and found the same file",
+      "commits": []
+    },
+    {
       "text": "Fixed accented and non-Latin characters being corrupted when editing tags",
       "commits": []
     },

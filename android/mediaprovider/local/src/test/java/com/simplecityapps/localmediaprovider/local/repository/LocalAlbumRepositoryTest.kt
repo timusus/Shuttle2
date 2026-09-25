@@ -77,7 +77,10 @@ class LocalAlbumRepositoryTest {
 
         override suspend fun delete(songData: List<SongData>): Int = throw NotImplementedError()
 
-        override suspend fun idForPath(path: String): Long? = throw NotImplementedError()
+        override suspend fun idForPath(
+            path: String,
+            mediaProvider: MediaProviderType
+        ): Long? = throw NotImplementedError()
 
         override suspend fun updatePath(
             id: Long,
