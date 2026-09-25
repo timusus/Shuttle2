@@ -19,10 +19,10 @@ import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 import com.simplecityapps.shuttle.ui.screens.library.AlbumArtistRoute
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.library.route
-import com.simplecityapps.toAlbum
-import com.simplecityapps.toAlbumArtist
 import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
+import com.simplecityapps.toAlbum
+import com.simplecityapps.toAlbumArtist
 
 /**
  * Stand-in screens for the shell's own tests: the real destinations need the Hilt graph, and these tests exercise
