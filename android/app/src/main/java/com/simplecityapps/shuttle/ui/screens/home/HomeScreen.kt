@@ -90,6 +90,8 @@ fun HomeScreen(
     uiState: HomeUiState,
     callbacks: HomeCallbacks,
     modifier: Modifier = Modifier,
+    /** Shown in place of the generic empty state while the library has no songs (#422), so it can offer access. */
+    emptyContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
@@ -108,11 +110,15 @@ fun HomeScreen(
         when (uiState) {
             HomeUiState.Loading -> LoadingState(contentModifier)
 
-            HomeUiState.Empty -> EmptyState(
-                title = stringResource(R.string.home_empty_title),
-                message = stringResource(R.string.home_empty_message),
-                modifier = contentModifier,
-            )
+            HomeUiState.Empty -> if (emptyContent != null) {
+                emptyContent(contentModifier)
+            } else {
+                EmptyState(
+                    title = stringResource(R.string.home_empty_title),
+                    message = stringResource(R.string.home_empty_message),
+                    modifier = contentModifier,
+                )
+            }
 
             is HomeUiState.Content -> HomeContent(uiState, callbacks, contentModifier)
         }

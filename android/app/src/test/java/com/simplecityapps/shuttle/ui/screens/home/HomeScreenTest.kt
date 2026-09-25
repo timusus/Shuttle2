@@ -3,6 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.home
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
+import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
+import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -25,6 +28,32 @@ class HomeScreenTest {
 
         robot.assertTextDisplayed("No music yet")
         robot.assertTextNotShown("Shuffle all")
+    }
+
+    @Test
+    fun `an empty library offers the library's own empty-state actions, when given the slot`() {
+        var allowAccessRequested = 0
+        var serverConnectRequested = 0
+        robot.setContent(
+            HomeScenarios.empty,
+            emptyContent = { modifier ->
+                LibraryEmptyScreen(
+                    state = LibraryAvailability.Empty(MusicAccess.NotRequested),
+                    onAllowAccess = { allowAccessRequested++ },
+                    onOpenAppSettings = {},
+                    onScan = {},
+                    onConnectServer = { serverConnectRequested++ },
+                    modifier = modifier,
+                )
+            },
+        )
+
+        robot.assertTextDisplayed("Allow access to music")
+        robot.tapVisibleText("Allow access to music")
+        robot.tapVisibleText("Connect a server")
+
+        allowAccessRequested shouldBe 1
+        serverConnectRequested shouldBe 1
     }
 
     @Test

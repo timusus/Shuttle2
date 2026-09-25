@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
@@ -33,10 +35,14 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     val openedArtists = mutableListOf<AlbumArtist>()
     val shownActions = mutableListOf<MediaActionsTarget>()
 
-    fun setContent(uiState: HomeUiState, theme: ThemeMode = ThemeMode.Light) {
+    fun setContent(
+        uiState: HomeUiState,
+        theme: ThemeMode = ThemeMode.Light,
+        emptyContent: (@Composable (Modifier) -> Unit)? = null,
+    ) {
         rule.setContent {
             S2AppTheme(AppThemeState(theme = theme)) {
-                HomeScreen(uiState = uiState, callbacks = callbacks())
+                HomeScreen(uiState = uiState, callbacks = callbacks(), emptyContent = emptyContent)
             }
         }
         rule.waitForIdle()
@@ -59,6 +65,11 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
 
     fun tapText(text: String) {
         scrollTo(text)
+        rule.onAllNodesWithText(text)[0].performClick()
+    }
+
+    /** Taps text outside Home's own scrolling list, such as content in the empty-state slot (#422). */
+    fun tapVisibleText(text: String) {
         rule.onAllNodesWithText(text)[0].performClick()
     }
 

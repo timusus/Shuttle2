@@ -64,12 +64,17 @@ class LibraryEmptyViewModel @Inject constructor(
 
     /**
      * The permission as it stands on resume. One granted in the system settings meanwhile starts the scan the prompt
-     * would have; one already held at startup scans from [MediaSources.scanIfNeverScanned].
+     * would have. The very first check of a fresh instance defers to [MediaSources.scanIfNeverScanned], which covers
+     * permission already held (granted in system settings while backgrounded, before this screen ever opened) without
+     * rescanning a library that already has one.
      */
     fun onAccessChecked(granted: Boolean, showRationale: Boolean) {
         val previous = access.value
         update(granted, showRationale)
-        if (granted && previous != null && previous != MusicAccess.Granted) scan()
+        when {
+            previous == null -> mediaSources.scanIfNeverScanned(granted)
+            granted && previous != MusicAccess.Granted -> scan()
+        }
     }
 
     /** The system prompt's answer. */
