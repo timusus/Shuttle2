@@ -20,7 +20,6 @@ import com.simplecityapps.playback.CallMonitor
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.chromecast.CastQueue
-import com.simplecityapps.playback.chromecast.isRemote
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.engine.SongUriResolver
@@ -209,7 +208,7 @@ class PlaybackHarness(
         val active = activePlayer(player)
         appPlayer = active
         audioEffectSessionManager.attach(active, player)
-        audioFocus = AudioFocusCounts(Shadow.extract(audioManager), active)
+        audioFocus = AudioFocusCounts(Shadow.extract(audioManager))
         val queueManager = QueueManager(player, PlaybackSettings(SettingsStore(FakeSharedPreferences())), songUriResolver, buildContext, active)
         queueOperations = queueManager
         playbackOperations =
@@ -395,17 +394,11 @@ class PlaybackHarness(
     }
 }
 
-/** The audio focus requests and abandons [shadow] has seen, as the player plays through [appPlayer]. */
-class AudioFocusCounts(
-    private val shadow: CountingShadowAudioManager,
-    private val appPlayer: Player
-) {
+/** The audio focus requests and abandons [shadow] has seen. */
+class AudioFocusCounts(private val shadow: CountingShadowAudioManager) {
     val requests: Int get() = shadow.requests.get()
 
     val abandons: Int get() = shadow.abandons.get()
-
-    /** Whether playing would take focus: it's the local player's, and while the app plays on a Cast receiver, it's stopped. */
-    val enabled: Boolean get() = !appPlayer.isRemote
 }
 
 /** Robolectric's audio manager, counting focus requests and abandons (made on the player's playback thread). */

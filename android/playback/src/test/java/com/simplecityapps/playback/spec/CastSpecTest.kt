@@ -116,13 +116,22 @@ class CastSpecTest {
         connect()
 
         harness.audioFocus.abandons shouldBe abandons + 1
-        harness.audioFocus.enabled shouldBe false
         harness.audioEffectSessionManager.sessionId.shouldBeNull()
+
+        // Playing on the receiver takes no focus on this device.
+        val requestsWhileCasting = harness.audioFocus.requests
+        playback.pause()
+        settle()
+        playback.play()
+        settle()
+
+        receiver.playWhenReady shouldBe true
+        harness.audioFocus.requests shouldBe requestsWhileCasting
+        harness.audioFocus.abandons shouldBe abandons + 1
 
         castPlayer.disconnect()
         harness.idle()
 
-        harness.audioFocus.enabled shouldBe true
         harness.audioEffectSessionManager.sessionId shouldBe sessionId
 
         val requests = harness.audioFocus.requests
