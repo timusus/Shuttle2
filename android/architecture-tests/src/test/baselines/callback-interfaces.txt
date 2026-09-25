@@ -2,4 +2,3 @@
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
 com.simplecityapps.mediaprovider.MediaImporter.Listener
 com.simplecityapps.shuttle.debug.DebugLoggingTree.Callback
-com.simplecityapps.shuttle.ui.common.view.CircularLoadingView.Listener

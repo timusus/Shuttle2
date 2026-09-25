@@ -1,4 +1,3 @@
 # No new View subclasses, RecyclerView adapters/view holders or ViewBinders; write a composable
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
-com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 com.simplecityapps.shuttle.ui.common.view.SnowfallView
