@@ -142,6 +142,31 @@ class GeneralPreferenceManager(
             return sharedPreferences.getBoolean("search_filter_songs", true)
         }
 
+    var searchFilterGenres: Boolean
+        set(value) {
+            sharedPreferences.put("search_filter_genres", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("search_filter_genres", true)
+        }
+
+    var searchFilterPlaylists: Boolean
+        set(value) {
+            sharedPreferences.put("search_filter_playlists", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("search_filter_playlists", true)
+        }
+
+    /** Recent search queries, newest first. */
+    var recentSearches: List<String>
+        set(value) {
+            sharedPreferences.put("search_recent", value.joinToString("\n"))
+        }
+        get() {
+            return sharedPreferences.getString("search_recent", null)?.split("\n")?.filter { it.isNotBlank() }.orEmpty()
+        }
+
     // Playlists
 
     var ignorePlaylistDuplicates: Boolean

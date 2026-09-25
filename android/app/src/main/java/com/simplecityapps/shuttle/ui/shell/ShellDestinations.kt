@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -24,10 +23,10 @@ import androidx.navigation3.runtime.entryProvider
 import com.simplecityapps.shuttle.designsystem.component.AlbumRow
 import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
-import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.ui.screens.library.libraryEntries
+import com.simplecityapps.shuttle.ui.screens.search.searchEntries
 import com.simplecityapps.shuttle.ui.screens.settings.settingsEntries
 
 // Placeholder destinations for the shell spike (#375): enough to exercise tabs, list-detail and
@@ -46,7 +45,7 @@ fun shellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey> = 
     val openAlbum = { album: PlaceholderAlbum -> navigator.open(AlbumRoute(albumKey = album.key, albumArtistKey = album.artist)) }
     entry<HomeRoute> { HomeScreen(onOpenAlbum = openAlbum) }
     libraryEntries(navigator)
-    entry<SearchRoute> { SearchScreen() }
+    searchEntries(navigator)
     settingsEntries(navigator)
 }
 
@@ -100,12 +99,5 @@ private fun LazyListScope.albumItems(
             onClick = { onOpenAlbum(album) },
             artwork = { Artwork(ArtworkPlaceholder.Album) },
         )
-    }
-}
-
-@Composable
-private fun SearchScreen() {
-    ShellListScreen(title = "Search", subtitle = null) {
-        item { EmptyState(title = "Search", message = "Placeholder destination", icon = Icons.Rounded.Search) }
     }
 }

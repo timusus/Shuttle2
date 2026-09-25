@@ -29,8 +29,11 @@ fun EntryProviderScope<NavKey>.libraryEntries(navigator: AppNavigator) {
     entry<SmartPlaylistRoute>(metadata = detail) { route -> SmartPlaylistDetailDestination(route, onNavigateUp = onNavigateUp, onNavigate = onNavigate) }
 }
 
-/** Opens a detail screen a media action asked for. The tag editor and song info have no shell screens yet. */
-private fun AppNavigator.openTarget(target: NavigationTarget) {
+/**
+ * Opens a detail screen a media action asked for, from the library or any screen that links into it (Home,
+ * Search). The tag editor and song info have no shell screens yet.
+ */
+fun AppNavigator.openTarget(target: NavigationTarget) {
     when (target) {
         is NavigationTarget.Album -> open(target.album.route)
         is NavigationTarget.AlbumArtist -> open(target.albumArtist.route)

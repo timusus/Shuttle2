@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Placeholder in the search field -->
+    <string name="search_placeholder">Search your library</string>
+    <!-- Header above the list of recent search queries -->
+    <string name="search_recent">Recent searches</string>
+    <!-- Shown under the search field before anything has been searched for -->
+    <string name="search_start_title">Search your library</string>
+    <!-- Shown under the search field before anything has been searched for -->
+    <string name="search_start_message">Find artists, albums, songs, genres and playlists</string>
+    <!-- Filter chip and results header: artists -->
+    <string name="search_category_artists">Artists</string>
+    <!-- Filter chip and results header: albums -->
+    <string name="search_category_albums">Albums</string>
+    <!-- Filter chip and results header: songs -->
+    <string name="search_category_songs">Songs</string>
+    <!-- Filter chip and results header: genres -->
+    <string name="search_category_genres">Genres</string>
+    <!-- Filter chip and results header: playlists -->
+    <string name="search_category_playlists">Playlists</string>
+</resources>
