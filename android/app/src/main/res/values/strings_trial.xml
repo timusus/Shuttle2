@@ -1,26 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <!-- The title of the menu button. When clicked, will show the 'free trial' dialog, with an option for the user to upgrade-->
-    <string name="menu_trial">Trial</string>
-    <!-- The heading of the 'free trial' dialog -->
-    <string name="trial_heading_trial">Free Trial</string>
-    <!-- Shows how many days are left in the free trial-->
-    <plurals name="trial_days_remaining">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> day remaining</item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> days remaining</item>
-    </plurals>
-    <!-- Explains what S2 Pro unlocks, in the 'free trial' dialog -->
-    <string name="trial_description_pro">Streaming and downloading from Jellyfin, Emby and Plex is part of S2 Pro. Local playback, Chromecast, EQ and Android Auto stay free.</string>
-    <!-- Heading of the 'free trial' dialog when the user has no trial and hasn't upgraded -->
-    <string name="trial_heading_pro">S2 Pro</string>
     <!-- Price of an annual subscription, e.g. '$5.99 / year' -->
     <string name="purchase_price_annual"><xliff:g example="$5.99" id="price">{price}</xliff:g> / year</string>
-    <!-- Shown when the user's trial has expired -->
-    <string name="trial_heading_expired">Trial Expired</string>
-    <!-- Button to upgrade from the trial version to a paid version -->
-    <string name="trial_button_upgrade">Upgrade</string>
-    <!-- Title of dialog shown after user has completed a purchase-->
-    <string name="dialog_title_purchase_complete">Thank You</string>
-    <!-- Message shown in dialog after user has completed a purchase. Note: This is informal, but should reflect sincere appreciation (not just a generic 'thank you')-->
-    <string name="dialog_message_purchase_complete">You have successfully upgraded to the full version of S2. Thank you so much for supporting the app.</string>
 </resources>

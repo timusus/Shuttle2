@@ -7,19 +7,15 @@
 
     <color name="history_green_primary">#05000000</color>
     <color name="history_green_primary_dark">#1F74BDB0</color>
-    <color name="history_green_tint">#74bdb0</color>
 
     <color name="recently_added_yellow_primary">#05000000</color>
     <color name="recently_added_yellow_primary_dark">#1FFBBC05</color>
-    <color name="recently_added_yellow_tint">#fbbc05</color>
 
     <color name="favorite_red_primary">#05000000</color>
     <color name="favorite_red_primary_dark">#1FEA4335</color>
-    <color name="favorite_red_tint">#ea4335</color>
 
     <color name="shuffle_blue_primary">#05000000</color>
     <color name="shuffle_blue_primary_dark">#1F0492EA</color>
-    <color name="shuffle_blue_tint">#0492ea</color>
 
     <color name="bg_window_light">#FFFFFF</color>
     <color name="bg_window_dark">#111111</color>
@@ -36,26 +32,16 @@
     <color name="ripple_dark">#12FFFFFF</color>
     <color name="ripple_light">#1A000000</color>
 
-
     <!-- Vertical Seekbar-->
-    <color name="vertical_seekbar_progress_disabled">#A8272727</color>
-    <color name="vertical_seekbar_track_disabled">#30b2b2b2</color>
-    <color name="vertical_seekbar_thumb">#ececec</color>
     <color name="vertical_seekbar_guideline_light">#10000000</color>
     <color name="vertical_seekbar_guideline_dark">#20FFFFFF</color>
 
-
     <!-- TextInputLayout -->
-    <color name="helperTextColorDark">#E65100</color>
     <color name="helperTextColor">#E65100</color>
-
 
     <!-- Theme Buttons -->
     <color name="outline_light">#30000000</color>
     <color name="outline_dark">#50FFFFFF</color>
-
-
-    <!-- Theme specific -->
 
     <!-- Shuttle -->
     <color name="colorPrimary">#FF0492ea</color>
@@ -92,5 +78,4 @@
     <color name="colorPrimaryAmberDark">#BA6F00</color>
     <color name="colorPrimaryAmberSemiTransparent">#30FF9800</color>
     <color name="colorPrimaryAmberTransparent">#20FF9800</color>
-
 </resources>

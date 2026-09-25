@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- The option to view lyrics for a song-->
-    <string name="lyrics_title">Lyrics</string>
-    <!-- Button to hide the lyrics -->
-    <string name="lyrics_close_button_title">Close</string>
-</resources>

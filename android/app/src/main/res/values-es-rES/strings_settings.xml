@@ -1,21 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The title of the sleep timer in the bottom settings menu -->
-    <string name="settings_menu_sleep_timer">Temporizador</string>
-    <!-- The title of 'shuffle all' in the bottom settings menu -->
-    <string name="settings_menu_shuffle_all">Todo aleatorio</string>
-    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar. Also shown as the title of the DSP screen. -->
-    <string name="settings_menu_dsp">DSP</string>
     <!-- The title of 'settings' in the bottom settings menu -->
     <string name="settings_menu_settings">Configuración</string>
-    <!-- Title of the dialog shown when the user changes a setting which requires the app to be restarted.-->
-    <string name="settings_crash_reporting_dialog_requires_restart">Requiere reiniciar</string>
-    <!-- Description of dialog shown when user changes the crash reporting opt-in setting. Explaining that the user needs to restart the app. -->
-    <string name="settings_crash_reporting_dialog_message">Para excluirte completamente de los informes de fallos, por favor reinicia Shuttle. Asegúrate de pausar, deslizar la notificación y borrar la aplicación de los recientes.</string>
-    <!-- Settings option to view the list of excluded (blacklisted) songs -->
-    <string name="settings_dialog_title_excluded">Excluidas</string>
-    <!-- Option to clear the list of excluded (blacklisted) songs -->
-    <string name="settings_dialog_button_clear_excludes">Borrar</string>
     <!-- Settings option to clear (delete) all existing artwork -->
     <string name="settings_dialog_title_clear_artwork">Borrar portadas</string>
     <!-- Button shown to confirm clearing (deleting) of existing artwork -->
@@ -28,8 +14,6 @@
     <string name="settings_dialog_message_download_artwork">Esto descargará todas las portadas, independientemente de tu conexión de red (WiFi/datos/otra)</string>
     <!-- Option to confirm downloading of artwork (album/artist images) -->
     <string name="settings_dialog_button_download_artwork">Descargar</string>
-    <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
-    <string name="settings_dialog_title_amoled_required_restart">Requiere reiniciar</string>
     <!-- Settings option to copy debug logs to clipboard -->
     <string name="settings_logging_clipboard_name">Registros de depuración</string>
     <!-- Shown when the debug logs have been copied to the clipboard -->
@@ -40,46 +24,16 @@
     <string name="settings_logging_clipboard_logs_empty">Archivo de registro vacío</string>
     <!-- Settings: Title for 'appearance' settings (settings related to themes, etc.) -->
     <string name="pref_category_title_display">Apariencia</string>
-    <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
-    <string name="pref_category_title_media">Multimedia</string>
-    <!-- Settings: Title for 'playback' settings -->
-    <string name="pref_category_title_playback">Reproducción</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Portada</string>
     <!-- Settings: Title for widget related settings  -->
     <string name="pref_category_title_widgets">Widgets</string>
-    <!-- Settings: Title for playlist related settings  -->
-    <string name="pref_category_title_playlists">Listas de reproducción</string>
-    <!-- Settings: Title for shangelog related settings -->
-    <string name="pref_category_title_changelog">Registro de cambios</string>
-    <!-- Settings: Title for app info related settings -->
-    <string name="pref_category_title_app_info">Acerca de</string>
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">Privacidad</string>
-    <!-- Settings: Title for open source related settings -->
-    <string name="pref_category_title_open_source">Código abierto</string>
-    <!-- Settings: Title for debug related settings -->
-    <string name="pref_category_title_debug">Depurar</string>
-    <!-- Settings: Title for settings which otherwise don't have a group -->
-    <string name="pref_category_title_other">Otro</string>
     <!-- Settings: Title for changing the theme -->
     <string name="pref_theme_title">Tema</string>
-    <!-- Settings: Title for 'follow system' theme mode -->
-    <string name="pref_theme_title_follow_system">Predeterminado</string>
-    <!-- Settings: Title for 'light theme' theme mode -->
-    <string name="pref_theme_title_light">Claro</string>
-    <!-- Settings: Title for 'dark theme' theme mode-->
-    <string name="pref_theme_title_dark">Oscuro</string>
-    <!-- Settings: Description for changing the theme -->
-    <string name="pref_theme_summary">Elige entre día/noche (predeterminado), claro y oscuro</string>
     <!-- Settings: Title for changing the accent colour -->
     <string name="pref_theme_accent_title">Acento</string>
-    <!-- Settings: Description for changing the accent colour -->
-    <string name="pref_theme_accent_summary">Color de acento del tema</string>
-    <!-- Settings: Title for the option to use the 'extra dark' theme -->
-    <string name="pref_theme_extra_dark_title">Extra oscuro</string>
-    <!-- Settings: Description for the option to use the 'extra dark' theme -->
-    <string name="pref_theme_extra_dark_summary">Utiliza colores más oscuros para ahorrar un poco de batería en las pantallas AMOLED</string>
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">Volver a buscar</string>
     <!-- Settings: Description for the option to rescan the media library -->
@@ -104,14 +58,8 @@
     <string name="pref_download_artwork_title">Descargar todas las portadas</string>
     <!-- Settings: Title for the option to change opacity of the widget background -->
     <string name="pref_widget_opacity_title">Opacidad de fondo</string>
-    <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
-    <string name="pref_ignore_duplicates_title">Ignorar duplicadas</string>
-    <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->
-    <string name="pref_ignore_duplicates_subtitle">No avisar al intentar agregar canciones duplicadas a una lista de reproducción</string>
     <!-- Settings: Title for the option to view the changelog -->
     <string name="pref_view_changelog_title">Ver registro de cambios</string>
-    <!-- Settings: Title for the option to toggle whether the changelog is shown when the app is launched -->
-    <string name="pref_show_changelog_launch_title">Mostrar registro de cambios al iniciar</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">Informe de fallos</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
@@ -148,14 +96,10 @@
     <string name="theme_accent_entry_green">Verde</string>
     <!-- Settings title for the orange theme option -->
     <string name="theme_accent_entry_orange">Naranja</string>
-    <!-- Settings title for the red theme option -->
-    <string name="theme_accent_entry_red">Rojo</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_title">Análisis de Firebase</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_subtitle">Permite realizar pruebas A/B de funciones y realiza un seguimiento de cómo interactúan los usuarios con la aplicación</string>
-    <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
-    <string name="pref_library_tabs_title">Pestañas de la biblioteca</string>
     <!-- Settings: Title for the automatic rescan frequency (never rescan)-->
     <string name="pref_rescan_frequency_never">Nunca</string>
     <!-- Settings: Title for the automatic rescan frequency (daily rescan)-->

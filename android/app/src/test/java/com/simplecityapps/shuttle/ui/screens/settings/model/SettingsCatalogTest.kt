@@ -6,8 +6,6 @@ import com.simplecityapps.shuttle.settings.ThemeMode
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
-import java.io.File
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 class SettingsCatalogTest {
@@ -20,19 +18,6 @@ class SettingsCatalogTest {
         val unaccounted = legacyXmlKeys - mappedKeys - SettingsCatalog.droppedKeys.keys
 
         unaccounted.shouldBeEmpty()
-    }
-
-    @Test
-    fun `the legacy key snapshot matches the XMLs`() {
-        val xmlDir = File("src/main/res/xml")
-        // The XMLs go when the legacy screens do; the snapshot above keeps the mapping check honest after that
-        assumeTrue("Legacy preference XMLs are gone", xmlDir.isDirectory)
-
-        val keyAttribute = Regex("""(?:android|app):key="([^"]+)"""")
-        val keys = xmlDir.listFiles { file -> file.name.startsWith("preferences") && file.extension == "xml" }.orEmpty()
-            .flatMap { file -> keyAttribute.findAll(file.readText()).map { it.groupValues[1] }.toList() }
-
-        keys shouldContainExactlyInAnyOrder legacyXmlKeys
     }
 
     @Test

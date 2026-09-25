@@ -300,8 +300,7 @@ object SettingsCatalog {
     val items: List<SettingItem> get() = screens.flatMap { it.items }
 
     /**
-     * Keys the redesign leaves out, with why. Their stored values stay put, and the legacy screens keep reading
-     * them until those screens are deleted.
+     * Keys the redesign leaves out, with why. Their stored values stay put.
      */
     val droppedKeys: Map<String, String> = mapOf(
         "changelog_show_on_launch" to "Dropped by decision 12",

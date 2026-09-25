@@ -6,29 +6,12 @@
     <string name="error_unexpected">एक अप्रत्याशित त्रुटि हुई</string>
     <!-- Shown when an unknown error occurs -->
     <string name="error_unknown">एक अज्ञात ग़लती हुई</string>
-    <!-- Shown when items (an album, artist or song) are added to the queue -->
-    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
-     कतार में जोड़ा गया</string>
     <!-- Shown when songs are added to the queue -->
     <plurals name="queue_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        गीत कतार में जोड़ा गया</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
        गाने कतार में जोड़े गए</item>
-    </plurals>
-    <!-- Shown when albums are added to the queue -->
-    <plurals name="queue_albums_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       एल्बम कतार में जोड़ा गया</item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       एल्बम कतार में जोड़े गए</item>
-    </plurals>
-    <!-- Shown when artists are added to the queue -->
-    <plurals name="queue_artists_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       कलाकार कतार में जोड़ा गया</item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       कलाकारों ने कतार में जोड़ा</item>
     </plurals>
     <!-- Shown when current playback queue is added to a playlist -->
     <string name="playlist_queue_added">कतार में जोड़ा गया 
@@ -76,8 +59,6 @@
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
        में जोड़ी गई</item>
     </plurals>
-    <!-- Shown when a song fails to be deleted -->
-    <string name="delete_song_failed">गीत हटाया नहीं जा सका</string>
     <!-- The disc number for this album-->
     <string name="disc_number">डिस्क 
     <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
@@ -91,24 +72,12 @@
     <string name="genre_list_empty">कोई विधा नहीं</string>
     <!-- Shown when the playlists list finishes loading, and there are no songs-->
     <string name="playlist_list_empty">कोई प्लेलिस्ट नहीं</string>
-    <!-- Shown when a playlist is empty -->
-    <string name="playlist_empty">प्लेलिस्ट खाली</string>
-    <!-- Button to toggle the 'repeat' mode-->
-    <string name="button_repeat">दोहराना</string>
-    <!-- Button to indicate 'seek forward' (skipping forward by, say, 10 seconds)-->
-    <string name="button_seek_forward">आगे की तलाश करें</string>
     <!-- Button to skip to the next track -->
     <string name="button_skip_next">अगला छोड़ें</string>
     <!-- Button to play/pause the current song-->
     <string name="button_toggle_playback">प्लेबैक को टॉगल करें</string>
-    <!-- Button to indicate 'seek backward' (skipping backwards by, say, 10 seconds)-->
-    <string name="button_seek_backward">पिछड़ों की तलाश करो</string>
     <!-- Button to skip to the previous track-->
     <string name="button_skip_previous">पिछला छोड़ें</string>
-    <!-- Button to shuffle songs-->
-    <string name="button_content_description_shuffle">शफ़ल</string>
-    <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
-    <string name="button_album_shuffle">एल्बम शफ़ल</string>
     <!-- 'Loading' text. Shown on various screens as their content is loading-->
     <string name="loading">लोड हो रहा है…</string>
     <!-- Shown when the playback queue is empty -->

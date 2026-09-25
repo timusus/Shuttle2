@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <!-- Shown when the media scanner is scanning -->
-    <string name="onboarding_media_scanner_scanning">A verificar...</string>
-    <!-- Button to initiate a media scanner scan-->
-    <string name="onboarding_media_scan">Verificar</string>
-    <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
-    <string name="onboarding_scanner_reading_song_tags">A ler etiquetas de música...</string>
-</resources>

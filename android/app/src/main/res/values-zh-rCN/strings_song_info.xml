@@ -32,8 +32,6 @@
     <string name="song_info_lyrics">歌词</string>
     <!-- The song info dialog heading -->
     <string name="song_info_dialog_title">歌曲信息</string>
-    <!-- Button to close the song info dialog -->
-    <string name="song_info_dialog_close_button_title">关闭</string>
     <!-- Shown in the song infor dialog. The song bit rate. -->
     <string name="song_info_bit_rate">比特率</string>
     <!-- Shown in the song infor dialog. The song bit depth. -->

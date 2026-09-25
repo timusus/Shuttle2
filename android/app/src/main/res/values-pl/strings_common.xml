@@ -6,9 +6,6 @@
     <string name="error_unexpected">Wystąpił nieoczekiwany błąd</string>
     <!-- Shown when an unknown error occurs -->
     <string name="error_unknown">Wystąpił nieznany błąd</string>
-    <!-- Shown when items (an album, artist or song) are added to the queue -->
-    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
-     dodano do kolejki</string>
     <!-- Shown when songs are added to the queue -->
     <plurals name="queue_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
@@ -19,32 +16,6 @@
        utwory dodane do kolejki</item>
         <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
        utwory dodane do kolejki</item>
-    </plurals>
-    <!-- Shown when albums are added to the queue -->
-    <plurals name="queue_albums_added">
-        <item quantity="one">Album 
-      <xliff:g example="1" id="count">{count}</xliff:g>
-       został dodany do kolejki</item>
-        <item quantity="other">Albumy dodane do kolejki: 
-      <xliff:g example="30" id="count">{count}</xliff:g></item>
-        <item quantity="few">Albumy dodane do kolejki: 
-      <xliff:g example="30" id="count">{count}</xliff:g></item>
-        <item quantity="many">Albumy dodane do kolejki: 
-      <xliff:g example="30" id="count">{count}</xliff:g></item>
-    </plurals>
-    <!-- Shown when artists are added to the queue -->
-    <plurals name="queue_artists_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       wykonawca został dodany do kolejki</item>
-        <item quantity="other">Do kolejki dodano 
-      <xliff:g example="30" id="count">{count}</xliff:g>
-       wykonawców</item>
-        <item quantity="few">Do kolejki dodano 
-      <xliff:g example="30" id="count">{count}</xliff:g>
-       wykonawców</item>
-        <item quantity="many">Do kolejki dodano 
-      <xliff:g example="30" id="count">{count}</xliff:g>
-       wykonawców</item>
     </plurals>
     <!-- Shown when current playback queue is added to a playlist -->
     <string name="playlist_queue_added">Dodano kolejkę do: 
@@ -120,8 +91,6 @@
        został dodany do 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
-    <!-- Shown when a song fails to be deleted -->
-    <string name="delete_song_failed">Nie udało się usunąć utworu</string>
     <!-- The disc number for this album-->
     <string name="disc_number">Dysk 
     <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
@@ -135,24 +104,12 @@
     <string name="genre_list_empty">Brak gatunków</string>
     <!-- Shown when the playlists list finishes loading, and there are no songs-->
     <string name="playlist_list_empty">Brak list odtwarzania</string>
-    <!-- Shown when a playlist is empty -->
-    <string name="playlist_empty">Lista odtwarzania jest pusta</string>
-    <!-- Button to toggle the 'repeat' mode-->
-    <string name="button_repeat">Powtarzać</string>
-    <!-- Button to indicate 'seek forward' (skipping forward by, say, 10 seconds)-->
-    <string name="button_seek_forward">Szukaj do przodu</string>
     <!-- Button to skip to the next track -->
     <string name="button_skip_next">Pomiń następne</string>
     <!-- Button to play/pause the current song-->
     <string name="button_toggle_playback">Przełącz odtwarzanie</string>
-    <!-- Button to indicate 'seek backward' (skipping backwards by, say, 10 seconds)-->
-    <string name="button_seek_backward">Szukaj wstecz</string>
     <!-- Button to skip to the previous track-->
     <string name="button_skip_previous">Pomiń poprzedni</string>
-    <!-- Button to shuffle songs-->
-    <string name="button_content_description_shuffle">Tasować</string>
-    <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
-    <string name="button_album_shuffle">Tasować Album</string>
     <!-- 'Loading' text. Shown on various screens as their content is loading-->
     <string name="loading">Ładowanie…</string>
     <!-- Shown when the playback queue is empty -->

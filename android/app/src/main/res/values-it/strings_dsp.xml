@@ -8,16 +8,10 @@
     <string name="dsp_replay_gain_album">Guadagno album</string>
     <!-- An option to disable the 'Replay Gain' feature -->
     <string name="dsp_replay_gain_off">Spento</string>
-    <!-- Frequency Response - a graph showing volume vs frequency-->
-    <string name="dsp_dialog_frequency_response_title">Risposta frequenze</string>
-    <!-- The Replay Gain 'mode' (Album Gain or Track Gain)-->
-    <string name="dsp_replay_gain_hint_mode">Modalità</string>
     <!-- Pre-amp, or preamplification - the 'gain' in volume, applied to the sound output, before the Equalizer is used-->
     <string name="dsp_preamp">Guadagno</string>
     <!-- Title of the 'Equalizer'-->
     <string name="dsp_equalizer_title">Equalizzatore</string>
     <!-- Title of the Equalizer Preset selector-->
     <string name="dsp_equalizer_hint_preset">Preset</string>
-    <!-- Frequency Response Curve - a graph showing volume vs frequency-->
-    <string name="dsp_frequency_response_curve_title">Curva risposta frequenze</string>
 </resources>

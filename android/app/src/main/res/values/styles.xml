@@ -10,7 +10,6 @@
         <item name="colorPrimaryTransparent">@color/colorPrimaryTransparent</item>
         <item name="colorPrimarySemiTransparent">@color/colorPrimarySemiTransparent</item>
         <item name="colorControlHighlight">@color/ripple_light</item>
-        <item name="tabLayoutStyle">@style/TabLayout.AppTheme.Dark</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar" tools:targetApi="23">true</item>
         <item name="android:textViewStyle">@style/Widget.Shuttle.TextView</item>
@@ -25,8 +24,6 @@
         <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Shuttle.SmallComponent</item>
         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Shuttle.MediumComponent</item>
         <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Shuttle.LargeComponent</item>
-
-        <item name="preferenceTheme">@style/Shuttle.PreferenceThemeOverlay</item>
 
         <item name="toolbarNavigationButtonStyle">@style/Toolbar.Button.Navigation.Tinted</item>
 
@@ -63,7 +60,6 @@
         <item name="android:windowBackground">@color/bg_window_dark</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="tabLayoutStyle">@style/TabLayout.AppTheme.Dark</item>
         <item name="colorAccent">@color/colorPrimary</item>
         <item name="colorPrimaryTransparent">@color/colorPrimaryTransparent</item>
         <item name="colorPrimarySemiTransparent">@color/colorPrimarySemiTransparent</item>
@@ -81,10 +77,6 @@
         <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Shuttle.SmallComponent</item>
         <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Shuttle.MediumComponent</item>
         <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Shuttle.LargeComponent</item>
-
-        <item name="preferenceTheme">@style/Shuttle.PreferenceThemeOverlay</item>
-
-        <item name="bottomSheetDialogTheme">@style/Shuttle.BottomSheetDialog.Dark</item>
 
         <item name="toolbarNavigationButtonStyle">@style/Toolbar.Button.Navigation.Tinted</item>
 
@@ -125,7 +117,6 @@
         <item name="android:navigationBarColor">@color/bg_window_black</item>
     </style>
 
-
     <!-- Semi transparent primary color -->
 
     <attr name="colorPrimaryTransparent" format="reference|color" />
@@ -134,30 +125,11 @@
     <!-- Play/Pause Button-->
     <attr name="colorPlayPauseTint" format="reference|color" />
 
-
     <!-- Image Buttons-->
 
     <style name="Widget.Shuttle.ImageButton" parent="Widget.AppCompat.ImageButton">
         <item name="android:tint">?android:textColorPrimary</item>
     </style>
-
-
-    <!-- Text Items-->
-
-    <style name="TextTitle">
-        <item name="android:textSize">16sp</item>
-        <item name="android:ellipsize">end</item>
-        <item name="android:maxLines">1</item>
-        <item name="android:fontFamily">@font/opensans_semibold</item>
-    </style>
-
-    <style name="TextSubtitle">
-        <item name="android:textSize">13sp</item>
-        <item name="android:ellipsize">end</item>
-        <item name="android:maxLines">1</item>
-        <item name="android:fontFamily">@font/opensans_regular</item>
-    </style>
-
 
     <!-- Toolbar -->
 
@@ -171,50 +143,11 @@
         <item name="backgroundColor">?cardBackgroundColor</item>
     </style>
 
-
     <!-- TextView -->
 
     <style name="Widget.Shuttle.TextView" parent="@android:style/Widget.Material.TextView">
         <item name="android:textAppearance">@style/TextAppearance.AppCompat.Body1</item>
         <item name="android:fontFamily">@font/opensans_regular</item>
-    </style>
-
-
-    <!-- FastScroll -->
-
-    <style name="FastScrollRecyclerView">
-        <item name="fastScrollPopupBgColor">?colorAccent</item>
-        <item name="fastScrollPopupTextColor">@android:color/primary_text_dark</item>
-        <item name="fastScrollThumbColor">?colorAccent</item>
-        <item name="fastScrollThumbInactiveColor">?colorAccent</item>
-    </style>
-
-
-    <!-- TabLayout -->
-
-    <style name="TextAppearance.Shuttle.TabItem" parent="@android:style/TextAppearance">
-        <item name="android:textSize">16sp</item>
-        <item name="android:fontFamily">@font/opensans_semibold</item>
-    </style>
-
-    <style name="TabLayout.AppTheme.Dark" parent="Widget.MaterialComponents.TabLayout">
-        <item name="android:background">@android:color/transparent</item>
-        <item name="tabTextColor">?android:textColorPrimary</item>
-        <item name="tabSelectedTextColor">?colorPrimary</item>
-        <item name="tabTextAppearance">@style/TextAppearance.Shuttle.TabItem</item>
-    </style>
-
-
-    <!-- Overflow Image Button -->
-
-    <style name="Widget.Shuttle.OverflowButton" parent="Widget.AppCompat.ImageButton">
-        <item name="android:layout_width">48dp</item>
-        <item name="android:layout_height">48dp</item>
-        <item name="android:background">?actionBarItemBackground</item>
-        <item name="android:paddingStart">20dp</item>
-        <item name="android:paddingEnd">12dp</item>
-        <item name="android:scaleType">centerInside</item>
-        <item name="srcCompat">@drawable/ic_more_vert_black_24dp</item>
     </style>
 
     <!-- Home Buttons -->
@@ -223,7 +156,6 @@
     <attr name="recentlyAddedButtonBackgroundColor" format="reference|color" />
     <attr name="favoritesButtonBackgroundColor" format="reference|color" />
     <attr name="shuffleButtonBackgroundColor" format="reference|color" />
-
 
     <!-- Material Shapes-->
 
@@ -242,52 +174,19 @@
         <item name="cornerSize">16dp</item>
     </style>
 
-
-    <!-- Settings Fragment-->
-
-    <style name="Shuttle.PreferenceThemeOverlay" parent="@style/PreferenceThemeOverlay">
-        <item name="android:layout">@layout/fragment_settings</item>
-    </style>
-
-    <style name="Shuttle.BottomSheetDialog.Dark" parent="Theme.Design.BottomSheetDialog">
-        <item name="colorBackgroundFloating">@color/bg_window_dark</item>
-    </style>
-
-
     <!-- Toolbar -->
 
     <style name="Toolbar.Button.Navigation.Tinted" parent="Widget.AppCompat.Toolbar.Button.Navigation">
         <item name="tint">?android:textColorPrimary</item>
     </style>
 
-
     <!-- Equalizer-->
 
     <attr name="guidelineColor" format="reference|color" />
 
-
     <!-- Placeholder-->
 
     <attr name="placeholderBackgroundColor" format="reference|color" />
-
-
-    <!-- Chips -->
-
-    <style name="ThinnerChip" parent="Widget.MaterialComponents.Chip.Action">
-        <item name="chipMinHeight">24dp</item>
-        <item name="chipMinTouchTargetSize">24dp</item>
-        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.MaterialComponents.Chip_Thin</item>
-        <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Body2_Thin</item>
-    </style>
-
-    <style name="ShapeAppearanceOverlay.MaterialComponents.Chip_Thin" parent="">
-        <item name="cornerSize">50%</item>
-    </style>
-
-    <style name="TextAppearance.MaterialComponents.Body2_Thin" parent="TextAppearance.MaterialComponents.Body2">
-        <item name="android:textSize">12sp</item>
-    </style>
-
 
     <!-- Material Alert Dialogs -->
 
@@ -300,19 +199,9 @@
         <item name="android:background">@color/bg_window_dark</item>
     </style>
 
-
-    <!-- Shapeable Image View-->
-
-    <style name="ShapeAppearanceOverlay.App.CornerSize10Percent" parent="">
-        <item name="cornerSize">8dp</item>
-        <item name="cornerFamily">rounded</item>
-    </style>
-
-
     <!-- Theme Buttons-->
 
     <attr name="outlineColor" format="reference|color" />
-
 
     <!-- Theme accents-->
 
@@ -322,7 +211,6 @@
     <attr name="accentPurple" format="reference|color" />
     <attr name="accentGreen" format="reference|color" />
     <attr name="accentAmber" format="reference|color" />
-
 
     <!-- Orange theme-->
 
@@ -370,7 +258,6 @@
         <item name="colorPrimarySemiTransparent">@color/colorPrimaryOrangeSemiTransparent</item>
         <item name="colorPlayPauseTint">#FFFFFFFF</item>
     </style>
-
 
     <!-- Cyan theme-->
 
@@ -513,7 +400,6 @@
         <item name="colorPlayPauseTint">#FFFFFFFF</item>
     </style>
 
-
     <!-- Amber theme-->
 
     <style name="AppTheme.Light.Amber">
@@ -570,5 +456,4 @@
         <item name="android:windowIsFloating">true</item>
         <item name="android:backgroundDimEnabled">false</item>
     </style>
-
 </resources>

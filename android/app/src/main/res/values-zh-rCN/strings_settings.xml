@@ -1,21 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The title of the sleep timer in the bottom settings menu -->
-    <string name="settings_menu_sleep_timer">睡眠计时器</string>
-    <!-- The title of 'shuffle all' in the bottom settings menu -->
-    <string name="settings_menu_shuffle_all">全部随机</string>
-    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar. Also shown as the title of the DSP screen. -->
-    <string name="settings_menu_dsp">数字信号处理</string>
     <!-- The title of 'settings' in the bottom settings menu -->
     <string name="settings_menu_settings">设置</string>
-    <!-- Title of the dialog shown when the user changes a setting which requires the app to be restarted.-->
-    <string name="settings_crash_reporting_dialog_requires_restart">需要重新启动</string>
-    <!-- Description of dialog shown when user changes the crash reporting opt-in setting. Explaining that the user needs to restart the app. -->
-    <string name="settings_crash_reporting_dialog_message">请重启 Shuttle 来完全退出崩溃报告，确保先暂停播放、划走通知并将应用从最近任务中清除。</string>
-    <!-- Settings option to view the list of excluded (blacklisted) songs -->
-    <string name="settings_dialog_title_excluded">已排除项目</string>
-    <!-- Option to clear the list of excluded (blacklisted) songs -->
-    <string name="settings_dialog_button_clear_excludes">清除</string>
     <!-- Settings option to clear (delete) all existing artwork -->
     <string name="settings_dialog_title_clear_artwork">清除封面</string>
     <!-- Button shown to confirm clearing (deleting) of existing artwork -->
@@ -28,8 +14,6 @@
     <string name="settings_dialog_message_download_artwork">将下载所有专辑封面，无论您当前正使用何种网络连接（Wi-Fi/数据/其他）</string>
     <!-- Option to confirm downloading of artwork (album/artist images) -->
     <string name="settings_dialog_button_download_artwork">下载</string>
-    <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
-    <string name="settings_dialog_title_amoled_required_restart">需要重新启动</string>
     <!-- Settings option to copy debug logs to clipboard -->
     <string name="settings_logging_clipboard_name">调试日志</string>
     <!-- Shown when the debug logs have been copied to the clipboard -->
@@ -40,46 +24,16 @@
     <string name="settings_logging_clipboard_logs_empty">日志文件为空</string>
     <!-- Settings: Title for 'appearance' settings (settings related to themes, etc.) -->
     <string name="pref_category_title_display">外观</string>
-    <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
-    <string name="pref_category_title_media">媒体播放</string>
-    <!-- Settings: Title for 'playback' settings -->
-    <string name="pref_category_title_playback">播放</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">专辑封面</string>
     <!-- Settings: Title for widget related settings  -->
     <string name="pref_category_title_widgets">小组件</string>
-    <!-- Settings: Title for playlist related settings  -->
-    <string name="pref_category_title_playlists">播放列表</string>
-    <!-- Settings: Title for shangelog related settings -->
-    <string name="pref_category_title_changelog">更新日志</string>
-    <!-- Settings: Title for app info related settings -->
-    <string name="pref_category_title_app_info">应用信息</string>
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">隐私</string>
-    <!-- Settings: Title for open source related settings -->
-    <string name="pref_category_title_open_source">开源信息</string>
-    <!-- Settings: Title for debug related settings -->
-    <string name="pref_category_title_debug">调试</string>
-    <!-- Settings: Title for settings which otherwise don't have a group -->
-    <string name="pref_category_title_other">其他</string>
     <!-- Settings: Title for changing the theme -->
     <string name="pref_theme_title">主题</string>
-    <!-- Settings: Title for 'follow system' theme mode -->
-    <string name="pref_theme_title_follow_system">跟随系统</string>
-    <!-- Settings: Title for 'light theme' theme mode -->
-    <string name="pref_theme_title_light">浅色主题</string>
-    <!-- Settings: Title for 'dark theme' theme mode-->
-    <string name="pref_theme_title_dark">深色主题</string>
-    <!-- Settings: Description for changing the theme -->
-    <string name="pref_theme_summary">在日/夜、明暗主题间切换</string>
     <!-- Settings: Title for changing the accent colour -->
     <string name="pref_theme_accent_title">强调色</string>
-    <!-- Settings: Description for changing the accent colour -->
-    <string name="pref_theme_accent_summary">主题强调色</string>
-    <!-- Settings: Title for the option to use the 'extra dark' theme -->
-    <string name="pref_theme_extra_dark_title">纯黑</string>
-    <!-- Settings: Description for the option to use the 'extra dark' theme -->
-    <string name="pref_theme_extra_dark_summary">在 AMOLED 设备上使用更深的配色来延长续航</string>
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">重新扫描</string>
     <!-- Settings: Description for the option to rescan the media library -->
@@ -104,14 +58,8 @@
     <string name="pref_download_artwork_title">下载所有专辑封面</string>
     <!-- Settings: Title for the option to change opacity of the widget background -->
     <string name="pref_widget_opacity_title">背景不透明度</string>
-    <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
-    <string name="pref_ignore_duplicates_title">忽略重复</string>
-    <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->
-    <string name="pref_ignore_duplicates_subtitle">试图向播放列表添加重复歌曲时不要弹出提醒</string>
     <!-- Settings: Title for the option to view the changelog -->
     <string name="pref_view_changelog_title">查看更新日志</string>
-    <!-- Settings: Title for the option to toggle whether the changelog is shown when the app is launched -->
-    <string name="pref_show_changelog_launch_title">启动时显示</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">崩溃报告</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
@@ -148,12 +96,8 @@
     <string name="theme_accent_entry_green">绿色</string>
     <!-- Settings title for the orange theme option -->
     <string name="theme_accent_entry_orange">橙色</string>
-    <!-- Settings title for the red theme option -->
-    <string name="theme_accent_entry_red">红色</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_title">Firebase 分析服务</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_subtitle">启用应用功能的 A/B 测试，用以追踪用户与应用间的交互行为</string>
-    <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
-    <string name="pref_library_tabs_title">曲库选项卡</string>
 </resources>

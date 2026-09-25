@@ -25,12 +25,4 @@
     <string name="library_playlists">प्लेलिस्ट</string>
     <!-- Shown when the app is scanning for songs in the library -->
     <string name="library_scan_in_progress">अपनी लाइब्रेरी को स्कैन करना</string>
-    <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
-    <plurals name="multi_select_items_selected">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       चयनित</item>
-        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g>
-       चयनित</item>
-    </plurals>
-    <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
 </resources>

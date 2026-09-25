@@ -6,22 +6,10 @@
     <string name="error_unexpected">Si è verificato un errore imprevisto</string>
     <!-- Shown when an unknown error occurs -->
     <string name="error_unknown">Si è verificato un errore sconosciuto</string>
-    <!-- Shown when items (an album, artist or song) are added to the queue -->
-    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g> aggiunto alla coda</string>
     <!-- Shown when songs are added to the queue -->
     <plurals name="queue_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> brano aggiunto alla coda</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> brani aggiunti alla coda</item>
-    </plurals>
-    <!-- Shown when albums are added to the queue -->
-    <plurals name="queue_albums_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> album aggiunto alla coda</item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> album aggiunti alla coda</item>
-    </plurals>
-    <!-- Shown when artists are added to the queue -->
-    <plurals name="queue_artists_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> artista aggiunto alla coda</item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> artisti aggiunti alla coda</item>
     </plurals>
     <!-- Shown when current playback queue is added to a playlist -->
     <string name="playlist_queue_added">Coda aggiunta a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
@@ -45,8 +33,6 @@
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> genere aggiunto a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> generi aggiunti a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
-    <!-- Shown when a song fails to be deleted -->
-    <string name="delete_song_failed">Impossibile eliminare il brano</string>
     <!-- The disc number for this album-->
     <string name="disc_number">Disco 
     <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
@@ -60,24 +46,12 @@
     <string name="genre_list_empty">Nessun genere disponibile</string>
     <!-- Shown when the playlists list finishes loading, and there are no songs-->
     <string name="playlist_list_empty">Nessuna playlist disponibile</string>
-    <!-- Shown when a playlist is empty -->
-    <string name="playlist_empty">Playlist vuota</string>
-    <!-- Button to toggle the 'repeat' mode-->
-    <string name="button_repeat">Ripetizione</string>
-    <!-- Button to indicate 'seek forward' (skipping forward by, say, 10 seconds)-->
-    <string name="button_seek_forward">Salta avanti</string>
     <!-- Button to skip to the next track -->
     <string name="button_skip_next">Successivo</string>
     <!-- Button to play/pause the current song-->
     <string name="button_toggle_playback">Attiva o disattiva la riproduzione</string>
-    <!-- Button to indicate 'seek backward' (skipping backwards by, say, 10 seconds)-->
-    <string name="button_seek_backward">Salta indietro</string>
     <!-- Button to skip to the previous track-->
     <string name="button_skip_previous">Precedente</string>
-    <!-- Button to shuffle songs-->
-    <string name="button_content_description_shuffle">Riproduzione casuale</string>
-    <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
-    <string name="button_album_shuffle">Album casuali</string>
     <!-- 'Loading' text. Shown on various screens as their content is loading-->
     <string name="loading">Caricamento...</string>
     <!-- Shown when the playback queue is empty -->

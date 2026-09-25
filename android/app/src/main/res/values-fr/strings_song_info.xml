@@ -32,8 +32,6 @@
     <string name="song_info_lyrics">Paroles de chanson</string>
     <!-- The song info dialog heading -->
     <string name="song_info_dialog_title">Informations sur la chanson</string>
-    <!-- Button to close the song info dialog -->
-    <string name="song_info_dialog_close_button_title">Fermer</string>
     <!-- Shown in the song infor dialog. The song bit rate. -->
     <string name="song_info_bit_rate">Bit rate</string>
     <!-- Shown in the song infor dialog. The song bit depth. -->

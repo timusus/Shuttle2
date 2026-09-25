@@ -8,14 +8,6 @@
     <string name="dialog_button_save">Сохранить</string>
     <!-- Dialog button 'cancel'-->
     <string name="dialog_button_cancel">Отмена</string>
-    <!-- Shown in the 'exclude' dialog (move the selected songs to the list of 'excluded' songs) (another word for 'blacklist') -->
-    <string name="dialog_exclude_title">Исключить</string>
-    <!-- Shown when songs are about to be added to the list of songs to be excluded (blacklisted) -->
-    <string name="dialog_exclude_message">Элемент \'
-    <xliff:g example="Lateralus" id="item">{item}</xliff:g>
-    \' будет скрыт из вашей библиотеки.\n\nВы можете просмотреть исключенные песни в настройках.</string>
-    <!-- Button to add the selected songs to the list of 'excluded' (blacklisted) songs  -->
-    <string name="dialog_exclude_button">Исключить</string>
     <!-- Shown when viewing the list of 'excluded' (blacklisted) songs, and it's empty-->
     <string name="dialog_exclude_list_empty">Список исключений пуст</string>
     <!-- Dialog title shown when attempting to delete a song -->

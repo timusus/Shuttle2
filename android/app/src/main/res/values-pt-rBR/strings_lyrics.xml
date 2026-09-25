@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- The option to view lyrics for a song-->
-    <string name="lyrics_title">Letra da Música</string>
-</resources>

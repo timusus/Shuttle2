@@ -32,9 +32,6 @@
     <string name="sources_no_folder_picker">No app on this device can pick folders</string>
     <string name="sources_scan_now">Scan now</string>
     <string name="sources_scan_summary">Look for new and changed music</string>
-    <string name="sources_scan_started">Scanning for music</string>
-    <string name="sources_settings_title">Sources</string>
-    <string name="sources_settings_summary">Folders on this device, and Jellyfin, Emby &amp; Plex servers</string>
     <string name="sources_servers_title">Servers</string>
     <string name="sources_server_connected">Connected</string>
     <string name="sources_server_not_connected">Not connected</string>

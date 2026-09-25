@@ -1,29 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="media_provider_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
-    メディアプロバイダー</string>
-    <string name="media_provider_scan_progress">曲のスキャン状況:
-<xliff:g example="5" id="progress">{progress}</xliff:g>
-    /
-    <xliff:g example="25" id="total">{total}</xliff:g></string>
-    <string name="media_provider_scan_success_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
-    のスキャンが完了しました</string>
-    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g>
-    曲挿入、
-    <xliff:g example="15" id="updates">{updates}</xliff:g>
-    曲更新、
-    <xliff:g example="25" id="deletes">{deletes}</xliff:g>
-    曲削除</string>
-    <string name="media_provider_scan_failure_title">スキャンに失敗しました</string>
-    <string name="media_provider_scan_failure_subtitle">曲はインポートされませんでした</string>
     <string name="media_provider_button_authenticate">認証する</string>
     <string name="media_provider_authenticating">認証中…</string>
     <string name="media_provider_authentication_success">認証に成功しました</string>
     <string name="media_provider_title_plex">Plexメディアサーバー</string>
     <string name="media_provider_title_jellyfin">Jellyfinメディアサーバー</string>
     <string name="media_provider_title_emby">Embyメディアサーバー</string>
-    <string name="media_providers_add_onboarding">メディアプロバイダーを追加します。これは後でも変更できます</string>
-    <string name="media_providers_add">メディアプロバイダーを追加</string>
     <string name="media_provider_config_hint_address">アドレス</string>
     <string name="media_provider_config_hint_username">ユーザー名</string>
     <string name="media_provider_config_hint_password">パスワード</string>

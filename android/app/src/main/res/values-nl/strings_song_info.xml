@@ -32,8 +32,6 @@
     <string name="song_info_lyrics">Songtekst</string>
     <!-- The song info dialog heading -->
     <string name="song_info_dialog_title">Nummerinformatie</string>
-    <!-- Button to close the song info dialog -->
-    <string name="song_info_dialog_close_button_title">Sluiten</string>
     <!-- Shown in the song infor dialog. The song bit rate. -->
     <string name="song_info_bit_rate">Bitsnelheid</string>
     <!-- Shown in the song infor dialog. The song bit depth. -->
