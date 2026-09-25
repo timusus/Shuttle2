@@ -9,15 +9,23 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
+import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
+import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.DeleteSongs
 import com.simplecityapps.shuttle.ui.actions.DownloadSongs
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
 import com.simplecityapps.shuttle.ui.actions.FindGoToTarget
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
+import com.simplecityapps.shuttle.ui.actions.ObserveAlbumArtists
+import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
+import com.simplecityapps.shuttle.ui.actions.ObserveGenres
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.RemoveFromPlaylist
+import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.actions.ShareSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
@@ -29,7 +37,7 @@ import com.simplecityapps.trial.ServerAccessGate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** The shared media action use cases, wired to a test's fakes. */
+/** The shared media action and library use cases, wired to a test's fakes. */
 class TestMediaActions(
     songRepository: SongRepository = FakeSongRepository(),
     genreRepository: GenreRepository = FakeGenreRepository(),
@@ -60,6 +68,14 @@ class TestMediaActions(
     val findGoToTarget = FindGoToTarget(albumRepository, albumArtistRepository)
     val shareSongs = ShareSongs(resolveSongs)
     val removeFromPlaylist = RemoveFromPlaylist(playlistRepository)
+    val renamePlaylist = RenamePlaylist(playlistRepository)
+    val clearPlaylist = ClearPlaylist(playlistRepository)
+    val deletePlaylist = DeletePlaylist(playlistRepository)
+    val observeSongs = ObserveSongs(songRepository)
+    val observeAlbums = ObserveAlbums(albumRepository)
+    val observeAlbumArtists = ObserveAlbumArtists(albumArtistRepository)
+    val observeGenres = ObserveGenres(genreRepository)
+    val observePlaylists = ObservePlaylists(playlistRepository)
     val handler = MediaActionHandler(
         resolveSongs = resolveSongs,
         playSongs = playSongs,

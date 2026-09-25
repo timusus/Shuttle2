@@ -76,13 +76,20 @@ class FakePlaylistRepository : PlaylistRepository {
         }
     }
 
-    override suspend fun deletePlaylist(playlist: Playlist) {}
+    override suspend fun deletePlaylist(playlist: Playlist) {
+        playlists.value = playlists.value.filterNot { it.id == playlist.id }
+        playlistSongs.value -= playlist.id
+    }
 
     override suspend fun deleteAll(mediaProviderType: MediaProviderType) {}
 
-    override suspend fun clearPlaylist(playlist: Playlist) {}
+    override suspend fun clearPlaylist(playlist: Playlist) {
+        playlistSongs.value -= playlist.id
+    }
 
-    override suspend fun renamePlaylist(playlist: Playlist, name: String) {}
+    override suspend fun renamePlaylist(playlist: Playlist, name: String) {
+        playlists.value = playlists.value.map { existing -> if (existing.id == playlist.id) existing.copy(name = name) else existing }
+    }
 
     override suspend fun updatePlaylistSortOder(playlist: Playlist, sortOrder: PlaylistSongSortOrder, sortDescending: Boolean) {
         playlists.value = playlists.value.map { existing ->
