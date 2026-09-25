@@ -37,8 +37,11 @@ appId: com.simplecityapps.shuttle.dev
 - back
 - back
 # At Mini, back belongs to the destinations: open an album, back returns Home with the mini player kept
-- tapOn: "Album 1"
-- assertVisible: "Track 1"
+- tapOn: "Playback Album"
+- extendedWaitUntil:
+    visible: "Navigate up"
+    timeout: 5000
+- assertVisible: "Playback Two"
 - back
-- assertVisible: "Recently played"
+- assertVisible: "Recently added"
 - assertVisible: "Playback One"
