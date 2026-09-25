@@ -187,9 +187,6 @@ android {
         // Material
         implementation(libs.google.material)
 
-        // Constraint Layout
-        implementation(libs.androidx.constraintlayout)
-
         // Hilt
         implementation(libs.hilt)
         ksp(libs.hilt.compiler)
@@ -205,9 +202,6 @@ android {
 
         // ChromeCast
         implementation(libs.google.play.services.cast.framework)
-
-        // NanoHttp
-        implementation(libs.nanohttpd.webserver)
 
         // Moshi
         ksp(libs.moshi.kotlinCodegen)
@@ -239,9 +233,6 @@ android {
 
         // About Libraries
         implementation(libs.mikepenz.aboutlibrariesCore)
-
-        // Billing
-        implementation(libs.billingclient.billingKtx)
 
         // Play Core (review api)
         implementation(libs.google.review)
