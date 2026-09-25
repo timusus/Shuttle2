@@ -5,9 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Playlist
@@ -20,6 +17,8 @@ import com.simplecityapps.shuttle.ui.actions.DeleteSongs
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.common.SelectionState
@@ -36,7 +35,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -71,7 +69,7 @@ sealed interface SongListUiEvent {
 
 @HiltViewModel
 class SongListViewModel @Inject constructor(
-    private val songRepository: SongRepository,
+    observeSongs: ObserveSongs,
     private val playSongs: PlaySongs,
     private val shuffleSongs: ShuffleSongs,
     private val addToPlaylistUseCase: AddToPlaylist,
@@ -79,7 +77,7 @@ class SongListViewModel @Inject constructor(
     private val enqueueSongs: EnqueueSongs,
     private val excludeSongs: ExcludeSongs,
     private val deleteSongs: DeleteSongs,
-    private val playlistRepository: PlaylistRepository,
+    observePlaylists: ObservePlaylists,
     private val sortPreferenceManager: SortPreferences,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     mediaImportObserver: SongImportStateProvider,
@@ -93,13 +91,11 @@ class SongListViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(sortPreferenceManager.sortOrderSongList)
 
     val uiState: StateFlow<SongListUiState> = combine(
-        songRepository
-            .getSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList))
-            .filterNotNull(),
+        observeSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList)),
         mediaImportObserver.songImportState,
         selectionState.selectedItems,
         _sortOrder,
-        playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
+        observePlaylists(),
     ) { songs, songImportState, selectedSongIds, sortOrder, playlists ->
         val selectedSongs = songs.filter { it.id in selectedSongIds }.toSet()
 

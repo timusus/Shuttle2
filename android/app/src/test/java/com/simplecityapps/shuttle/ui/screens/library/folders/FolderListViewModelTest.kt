@@ -224,7 +224,7 @@ class FolderListViewModelTest {
     private fun createViewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()): FolderListViewModel {
         val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, fakeQueueManager, playbackManager = fakePlaybackManager)
         return FolderListViewModel(
-            songRepository = fakeSongRepository,
+            observeSongs = testMediaActions.observeSongs,
             playSongs = PlaySongs(fakeQueueManager, fakePlaybackManager),
             shuffleSongs = ShuffleSongs(fakePlaybackManager),
             resolveFolderSongs = ResolveFolderSongs(fakeSongRepository),
@@ -233,7 +233,7 @@ class FolderListViewModelTest {
             enqueueSongs = testMediaActions.enqueueSongs,
             excludeSongs = testMediaActions.excludeSongs,
             deleteSongs = testMediaActions.deleteSongs,
-            playlistRepository = fakePlaylistRepository,
+            observePlaylists = testMediaActions.observePlaylists,
             savedStateHandle = savedStateHandle,
             ioDispatcher = testDispatcher,
             mediaImportObserver = fakeImportState,

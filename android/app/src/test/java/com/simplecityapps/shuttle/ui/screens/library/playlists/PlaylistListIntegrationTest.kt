@@ -134,7 +134,11 @@ class PlaylistListIntegrationTest {
     private fun createViewModel(): PlaylistListViewModel {
         val actions = TestMediaActions(playlistRepository = fakePlaylistRepository)
         return PlaylistListViewModel(
-            playlistRepository = fakePlaylistRepository,
+            observePlaylists = actions.observePlaylists,
+            createPlaylist = actions.createPlaylist,
+            renamePlaylist = actions.renamePlaylist,
+            clearPlaylist = actions.clearPlaylist,
+            deletePlaylist = actions.deletePlaylist,
             playSongs = actions.playSongs,
             resolveSongs = actions.resolveSongs,
             enqueueSongs = actions.enqueueSongs,

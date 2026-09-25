@@ -6,21 +6,19 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.FolderNode
 import com.simplecityapps.shuttle.model.FolderTree
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
 import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
 import com.simplecityapps.shuttle.ui.actions.DeleteSongs
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -34,7 +32,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -82,7 +79,7 @@ sealed interface FolderListUiEvent {
 
 @HiltViewModel
 class FolderListViewModel @Inject constructor(
-    private val songRepository: SongRepository,
+    observeSongs: ObserveSongs,
     private val playSongs: PlaySongs,
     private val shuffleSongs: ShuffleSongs,
     private val resolveFolderSongs: ResolveFolderSongs,
@@ -91,16 +88,14 @@ class FolderListViewModel @Inject constructor(
     private val enqueueSongs: EnqueueSongs,
     private val excludeSongs: ExcludeSongs,
     private val deleteSongs: DeleteSongs,
-    private val playlistRepository: PlaylistRepository,
+    observePlaylists: ObservePlaylists,
     private val savedStateHandle: SavedStateHandle,
     @IoDispatcher ioDispatcher: CoroutineDispatcher,
     mediaImportObserver: SongImportStateProvider,
 ) : ViewModel() {
 
     /** Derived once per library change, so navigating between folders doesn't rebuild it. */
-    private val folderTree: StateFlow<FolderTree?> = songRepository
-        .getSongs(SongQuery.All())
-        .filterNotNull()
+    private val folderTree: StateFlow<FolderTree?> = observeSongs()
         .map { songs -> FolderTree.build(songs) }
         .flowOn(ioDispatcher)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -112,7 +107,7 @@ class FolderListViewModel @Inject constructor(
         folderTree,
         currentPath,
         mediaImportObserver.songImportState,
-        playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
+        observePlaylists(),
     ) { tree, path, songImportState, playlists ->
         when {
             songImportState is SongImportState.ImportProgress -> FolderListUiState(

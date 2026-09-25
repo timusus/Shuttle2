@@ -5,11 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
-import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
-import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.genres.comparator
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
@@ -19,6 +15,8 @@ import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObserveGenres
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
@@ -62,14 +60,14 @@ sealed interface GenreListUiEvent {
 
 @HiltViewModel
 class GenreListViewModel @Inject constructor(
-    private val genreRepository: GenreRepository,
+    observeGenres: ObserveGenres,
     private val playSongs: PlaySongs,
     private val addToPlaylistUseCase: AddToPlaylist,
     private val createPlaylistUseCase: CreatePlaylist,
     private val resolveSongs: ResolveSongs,
     private val enqueueSongs: EnqueueSongs,
     private val excludeSongs: ExcludeSongs,
-    private val playlistRepository: PlaylistRepository,
+    observePlaylists: ObservePlaylists,
     private val sortPreferenceManager: SortPreferences,
     mediaImportObserver: SongImportStateProvider
 ) : ViewModel() {
@@ -77,9 +75,9 @@ class GenreListViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(sortPreferenceManager.sortOrderGenreList)
 
     val uiState: StateFlow<GenreListUiState> = combine(
-        genreRepository.getGenres(GenreQuery.All()),
+        observeGenres(),
         mediaImportObserver.songImportState,
-        playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
+        observePlaylists(),
         _sortOrder,
     ) { genres, songImportState, playlists, sortOrder ->
         if (songImportState is SongImportState.ImportProgress) {

@@ -4,21 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
-import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
-import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.albums.comparator
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Playlist
-import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
 import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
@@ -43,8 +40,8 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class AlbumListViewModel @Inject constructor(
-    private val albumRepository: AlbumRepository,
-    private val songRepository: SongRepository,
+    observeAlbums: ObserveAlbums,
+    private val observeSongs: ObserveSongs,
     private val playSongs: PlaySongs,
     private val shuffleSongs: ShuffleSongs,
     private val addToPlaylistUseCase: AddToPlaylist,
@@ -52,7 +49,7 @@ class AlbumListViewModel @Inject constructor(
     private val resolveSongs: ResolveSongs,
     private val enqueueSongs: EnqueueSongs,
     private val excludeSongs: ExcludeSongs,
-    private val playlistRepository: PlaylistRepository,
+    observePlaylists: ObservePlaylists,
     private val sortPreferenceManager: SortPreferences,
     private val viewModePreferenceManager: AlbumListPreferences,
     mediaImportObserver: SongImportStateProvider,
@@ -70,13 +67,13 @@ class AlbumListViewModel @Inject constructor(
     private val _randomSeed = MutableStateFlow(random.nextLong())
 
     val uiState: StateFlow<AlbumListUiState> = combine(
-        albumRepository.getAlbums(AlbumQuery.All()),
+        observeAlbums(),
         mediaImportObserver.songImportState,
         selectionState.selectedItems,
         _sortOrder,
         combine(
             _viewMode,
-            playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
+            observePlaylists(),
             _randomSeed,
         ) { viewMode, playlists, randomSeed -> Triple(viewMode, playlists, randomSeed) },
     ) { albums, songImportState, selectedAlbums, sortOrder, (viewMode, playlists, randomSeed) ->
@@ -178,7 +175,7 @@ class AlbumListViewModel @Inject constructor(
 
     fun onShuffle() {
         viewModelScope.launch {
-            val allSongs = songRepository.getSongs(SongQuery.All()).firstOrNull().orEmpty()
+            val allSongs = observeSongs().firstOrNull().orEmpty()
             val shuffledByAlbum = allSongs
                 .groupBy { it.album }
                 .keys.shuffled()

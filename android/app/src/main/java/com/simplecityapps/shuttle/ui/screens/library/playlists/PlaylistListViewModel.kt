@@ -4,14 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
-import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
+import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
+import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistId
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
@@ -29,7 +31,11 @@ import kotlinx.coroutines.launch
 
 @HiltViewModel
 class PlaylistListViewModel @Inject constructor(
-    private val playlistRepository: PlaylistRepository,
+    observePlaylists: ObservePlaylists,
+    private val createPlaylist: CreatePlaylist,
+    private val renamePlaylist: RenamePlaylist,
+    private val clearPlaylist: ClearPlaylist,
+    private val deletePlaylist: DeletePlaylist,
     private val playSongs: PlaySongs,
     private val resolveSongs: ResolveSongs,
     private val enqueueSongs: EnqueueSongs,
@@ -40,7 +46,7 @@ class PlaylistListViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(sortPreferenceManager.sortOrderPlaylistList)
 
     val uiState: StateFlow<PlaylistListUiState> = combine(
-        playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
+        observePlaylists(),
         mediaImportObserver.songImportState,
         _sortOrder,
     ) { playlists, songImportState, sortOrder ->
@@ -98,26 +104,26 @@ class PlaylistListViewModel @Inject constructor(
 
     fun onDelete(playlist: Playlist) {
         viewModelScope.launch {
-            playlistRepository.deletePlaylist(playlist)
+            deletePlaylist(playlist)
         }
     }
 
     fun onClear(playlist: Playlist) {
         viewModelScope.launch {
-            playlistRepository.clearPlaylist(playlist)
+            clearPlaylist(playlist)
         }
     }
 
     fun onRename(playlist: Playlist, name: String) {
         viewModelScope.launch {
-            playlistRepository.renamePlaylist(playlist, name)
+            renamePlaylist(playlist, name)
         }
     }
 
     /** Creates an empty local playlist (the Playlists tab's "New playlist"). */
     fun onCreatePlaylist(name: String) {
         viewModelScope.launch {
-            playlistRepository.createPlaylist(name, MediaProviderType.Shuttle, songs = null, externalId = null)
+            createPlaylist(name, selection = null)
         }
     }
 }

@@ -5,10 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
-import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
-import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
@@ -17,6 +13,8 @@ import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObserveAlbumArtists
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.common.SelectionState
@@ -64,14 +62,14 @@ sealed interface AlbumArtistListUiEvent {
 
 @HiltViewModel
 class AlbumArtistListViewModel @Inject constructor(
-    private val albumArtistRepository: AlbumArtistRepository,
+    observeAlbumArtists: ObserveAlbumArtists,
     private val playSongs: PlaySongs,
     private val addToPlaylistUseCase: AddToPlaylist,
     private val createPlaylistUseCase: CreatePlaylist,
     private val resolveSongs: ResolveSongs,
     private val enqueueSongs: EnqueueSongs,
     private val excludeSongs: ExcludeSongs,
-    private val playlistRepository: PlaylistRepository,
+    observePlaylists: ObservePlaylists,
     private val preferenceManager: ArtistListPreferences,
     mediaImportObserver: SongImportStateProvider,
 ) : ViewModel() {
@@ -81,10 +79,10 @@ class AlbumArtistListViewModel @Inject constructor(
     private val _viewMode = MutableStateFlow(preferenceManager.artistListViewMode)
 
     val uiState: StateFlow<AlbumArtistListUiState> = combine(
-        albumArtistRepository.getAlbumArtists(AlbumArtistQuery.All()),
+        observeAlbumArtists(),
         mediaImportObserver.songImportState,
         selectionState.selectedItems,
-        combine(_viewMode, playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null))) { a, b -> a to b },
+        combine(_viewMode, observePlaylists()) { a, b -> a to b },
     ) { albumArtists, songImportState, selectedArtists, (viewMode, playlists) ->
         if (songImportState is SongImportState.ImportProgress) {
             AlbumArtistListUiState(

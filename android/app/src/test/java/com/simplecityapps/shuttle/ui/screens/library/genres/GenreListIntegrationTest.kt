@@ -125,14 +125,14 @@ class GenreListIntegrationTest {
     private fun createViewModel(): GenreListViewModel {
         val testMediaActions = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
         return GenreListViewModel(
-            genreRepository = fakeGenreRepository,
+            observeGenres = testMediaActions.observeGenres,
             playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
             addToPlaylistUseCase = testMediaActions.addToPlaylist,
             createPlaylistUseCase = testMediaActions.createPlaylist,
             resolveSongs = testMediaActions.resolveSongs,
             enqueueSongs = testMediaActions.enqueueSongs,
             excludeSongs = testMediaActions.excludeSongs,
-            playlistRepository = fakePlaylistRepository,
+            observePlaylists = testMediaActions.observePlaylists,
             sortPreferenceManager = fakeSortPreferences,
             mediaImportObserver = fakeImportState,
         )

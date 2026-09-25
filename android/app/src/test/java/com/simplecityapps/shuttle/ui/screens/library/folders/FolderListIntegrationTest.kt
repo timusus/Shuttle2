@@ -81,7 +81,7 @@ class FolderListIntegrationTest {
         val playbackManager = FakePlaybackManager()
         val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager)
         return FolderListViewModel(
-            songRepository = fakeSongRepository,
+            observeSongs = testMediaActions.observeSongs,
             playSongs = PlaySongs(queueManager, playbackManager),
             shuffleSongs = ShuffleSongs(playbackManager),
             resolveFolderSongs = ResolveFolderSongs(fakeSongRepository),
@@ -90,7 +90,7 @@ class FolderListIntegrationTest {
             enqueueSongs = testMediaActions.enqueueSongs,
             excludeSongs = testMediaActions.excludeSongs,
             deleteSongs = testMediaActions.deleteSongs,
-            playlistRepository = fakePlaylistRepository,
+            observePlaylists = testMediaActions.observePlaylists,
             savedStateHandle = SavedStateHandle(),
             ioDispatcher = mainDispatcherRule.testDispatcher,
             mediaImportObserver = fakeImportState,

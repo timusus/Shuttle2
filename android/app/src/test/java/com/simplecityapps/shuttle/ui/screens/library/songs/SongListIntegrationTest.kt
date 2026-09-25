@@ -179,7 +179,7 @@ class SongListIntegrationTest {
     ): SongListViewModel {
         val testMediaActions = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
         return SongListViewModel(
-            songRepository = songRepository,
+            observeSongs = testMediaActions.observeSongs,
             playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
             shuffleSongs = ShuffleSongs(FakePlaybackManager()),
             addToPlaylistUseCase = testMediaActions.addToPlaylist,
@@ -187,7 +187,7 @@ class SongListIntegrationTest {
             enqueueSongs = testMediaActions.enqueueSongs,
             excludeSongs = testMediaActions.excludeSongs,
             deleteSongs = testMediaActions.deleteSongs,
-            playlistRepository = fakePlaylistRepository,
+            observePlaylists = testMediaActions.observePlaylists,
             sortPreferenceManager = fakeSortPreferences,
             ioDispatcher = mainDispatcherRule.testDispatcher,
             mediaImportObserver = fakeImportState,

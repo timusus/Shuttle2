@@ -91,7 +91,7 @@ class SongListViewModelTest {
     private fun createViewModel(queueManager: FakeQueueManager = FakeQueueManager()): SongListViewModel {
         val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
         return SongListViewModel(
-            songRepository = fakeSongRepository,
+            observeSongs = testMediaActions.observeSongs,
             playSongs = PlaySongs(queueManager, FakePlaybackManager()),
             shuffleSongs = ShuffleSongs(FakePlaybackManager()),
             addToPlaylistUseCase = testMediaActions.addToPlaylist,
@@ -99,7 +99,7 @@ class SongListViewModelTest {
             enqueueSongs = testMediaActions.enqueueSongs,
             excludeSongs = testMediaActions.excludeSongs,
             deleteSongs = testMediaActions.deleteSongs,
-            playlistRepository = fakePlaylistRepository,
+            observePlaylists = testMediaActions.observePlaylists,
             sortPreferenceManager = fakeSortPreferences,
             ioDispatcher = testDispatcher,
             mediaImportObserver = fakeImportState,

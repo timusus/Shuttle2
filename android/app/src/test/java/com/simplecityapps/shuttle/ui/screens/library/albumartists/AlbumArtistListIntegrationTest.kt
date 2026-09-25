@@ -152,16 +152,16 @@ class AlbumArtistListIntegrationTest {
     // endregion
 
     private fun createViewModel(): AlbumArtistListViewModel {
-        val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
+        val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager(), albumArtistRepository = fakeAlbumArtistRepository)
         return AlbumArtistListViewModel(
-            albumArtistRepository = fakeAlbumArtistRepository,
+            observeAlbumArtists = testMediaActions.observeAlbumArtists,
             playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
             addToPlaylistUseCase = testMediaActions.addToPlaylist,
             createPlaylistUseCase = testMediaActions.createPlaylist,
             resolveSongs = testMediaActions.resolveSongs,
             enqueueSongs = testMediaActions.enqueueSongs,
             excludeSongs = testMediaActions.excludeSongs,
-            playlistRepository = fakePlaylistRepository,
+            observePlaylists = testMediaActions.observePlaylists,
             preferenceManager = fakePreferences,
             mediaImportObserver = fakeImportState,
         )
