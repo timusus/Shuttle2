@@ -280,6 +280,7 @@ class PlaybackSpecTest {
 
         playback.getPlaybackSpeed() shouldBe 1.5f
         playback.positionAnchorFlow.value.speed shouldBe 1.5f
+        harness.appPlayer.playbackParameters.pitch shouldBe 1f
     }
 
     @Test

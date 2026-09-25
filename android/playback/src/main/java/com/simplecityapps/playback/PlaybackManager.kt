@@ -630,8 +630,9 @@ class PlaybackManager(
 
     override fun getPlaybackSpeed(): Float = if (playerThread.isCurrent) player.playbackParameters.speed else _positionAnchorFlow.value.speed
 
+    // Pitch stays put: a faster song should sound like the same voice, just quicker.
     override fun setPlaybackSpeed(multiplier: Float) = playerThread.run {
-        player.playbackParameters = PlaybackParameters(multiplier, multiplier)
+        player.playbackParameters = PlaybackParameters(multiplier)
     }
 
     override fun moveQueueItem(
