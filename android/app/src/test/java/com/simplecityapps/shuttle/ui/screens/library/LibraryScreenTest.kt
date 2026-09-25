@@ -140,6 +140,8 @@ class LibraryScreenTest {
         robot.clickText("Airbag")
         robot.lastSongClicked shouldBe song
 
+        // The fast scroller's thumb covers the header's end until it hides.
+        robot.waitForFastScrollerToHide()
         robot.clickText("Shuffle")
         robot.shuffleClicked shouldBe true
     }
@@ -159,6 +161,20 @@ class LibraryScreenTest {
         robot.clickText("OK Computer")
 
         robot.lastAlbumClicked shouldBe album
+    }
+
+    @Test
+    fun `the fast scroller sits at the page's end edge`() {
+        val albums = listOf(createAlbum(name = "OK Computer", albumArtist = "Radiohead"))
+        robot.setContent(libraryState(currentTab = LibraryTab.Albums), pages = LibraryPageStates(albums = readyAlbumList(albums)))
+        robot.assertFastScrollerAtEndEdge()
+    }
+
+    @Test
+    fun `the fast scroller sits at the end edge of a grid page too`() {
+        val albums = listOf(createAlbum(name = "OK Computer", albumArtist = "Radiohead"))
+        robot.setContent(libraryState(currentTab = LibraryTab.Albums), pages = LibraryPageStates(albums = readyAlbumList(albums, viewMode = ViewMode.Grid)))
+        robot.assertFastScrollerAtEndEdge()
     }
 
     @Test

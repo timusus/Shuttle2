@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -52,6 +53,9 @@ import com.simplecityapps.shuttle.ui.screens.library.songs.getFastscrollPopupTex
 // The library tabs' pages: state in, events out, restyled with catalogue rows. The ViewModels are the existing
 // tab ViewModels; LibraryScreen wires them.
 
+/** Fills the page so the scroller's track sits at its end edge, as the legacy lists have it. */
+private val FastScrollerModifier = Modifier.fillMaxSize().padding(vertical = 8.dp).testTag("library-fast-scroller")
+
 /** Songs: a count header with Shuffle, then every song. Tap plays from that row; long-press selects. */
 @Composable
 fun SongsPage(
@@ -90,6 +94,7 @@ fun SongsPage(
                 }
             }
             FastScroller(
+                modifier = FastScrollerModifier,
                 getPopupText = { index -> state.songs.getOrNull(index - 1)?.let { getFastscrollPopupText(it, state.sortOrder) } },
                 state = listState,
                 popup = getFastscrollPopup(state.sortOrder),
@@ -169,7 +174,7 @@ fun AlbumsPage(
                         )
                     }
                 }
-                FastScroller(getPopupText = popupText, scrollableState = rememberFastScrollableState(gridState), popup = getAlbumFastscrollPopup(state.sortOrder))
+                FastScroller(modifier = FastScrollerModifier, getPopupText = popupText, scrollableState = rememberFastScrollableState(gridState), popup = getAlbumFastscrollPopup(state.sortOrder))
             } else {
                 val listState = rememberLazyListState()
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-albums")) {
@@ -187,7 +192,7 @@ fun AlbumsPage(
                         )
                     }
                 }
-                FastScroller(getPopupText = popupText, state = listState, popup = getAlbumFastscrollPopup(state.sortOrder))
+                FastScroller(modifier = FastScrollerModifier, getPopupText = popupText, state = listState, popup = getAlbumFastscrollPopup(state.sortOrder))
             }
         }
     }
@@ -231,7 +236,7 @@ fun ArtistsPage(
                         )
                     }
                 }
-                FastScroller(getPopupText = popupText, scrollableState = rememberFastScrollableState(gridState))
+                FastScroller(modifier = FastScrollerModifier, getPopupText = popupText, scrollableState = rememberFastScrollableState(gridState))
             } else {
                 val listState = rememberLazyListState()
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-artists")) {
@@ -247,7 +252,7 @@ fun ArtistsPage(
                         )
                     }
                 }
-                FastScroller(getPopupText = popupText, state = listState)
+                FastScroller(modifier = FastScrollerModifier, getPopupText = popupText, state = listState)
             }
         }
     }
@@ -281,7 +286,7 @@ fun GenresPage(
                     )
                 }
             }
-            FastScroller(getPopupText = { index -> state.genres.getOrNull(index)?.name?.firstOrNull()?.uppercase() }, state = listState)
+            FastScroller(modifier = FastScrollerModifier, getPopupText = { index -> state.genres.getOrNull(index)?.name?.firstOrNull()?.uppercase() }, state = listState)
         }
     }
 }
@@ -334,7 +339,7 @@ fun PlaylistsPage(
                     )
                 }
             }
-            FastScroller(getPopupText = { index -> state.playlists.getOrNull(index - headerCount)?.name?.firstOrNull()?.uppercase() }, state = listState)
+            FastScroller(modifier = FastScrollerModifier, getPopupText = { index -> state.playlists.getOrNull(index - headerCount)?.name?.firstOrNull()?.uppercase() }, state = listState)
         }
     }
 }

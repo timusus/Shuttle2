@@ -15,6 +15,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
@@ -159,6 +160,13 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         rule.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() || error("\"$text\" is shown")
     }
 
+    /** The page's fast scroller spans the page, so its track sits at the end edge rather than over the rows' start. */
+    fun assertFastScrollerAtEndEdge() {
+        val scroller = rule.onNodeWithTag("library-fast-scroller").fetchSemanticsNode().boundsInRoot
+        val root = rule.onRoot().fetchSemanticsNode().boundsInRoot
+        check(scroller.left == root.left && scroller.right == root.right) { "fast scroller spans $scroller, page spans $root" }
+    }
+
     fun assertTabSelected(label: String) {
         tab(label).assertIsSelected()
     }
@@ -182,6 +190,12 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
 
     fun scrollToText(listTag: String, text: String) {
         rule.onNodeWithTag(listTag).performScrollToNode(hasText(text))
+    }
+
+    /** The fast scroller hides 1.5 s after the list stops scrolling. */
+    fun waitForFastScrollerToHide() {
+        rule.mainClock.advanceTimeBy(2_000)
+        rule.waitForIdle()
     }
 
     fun openOverflow() {
