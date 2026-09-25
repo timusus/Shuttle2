@@ -86,6 +86,10 @@
       "commits": []
     },
     {
+      "text": "A folder or server connected while your library was already scanning is no longer skipped until the next scan",
+      "commits": []
+    },
+    {
       "text": "A purchase that is still waiting for payment no longer unlocks the full version early",
       "commits": ["d0d4a614"]
     },

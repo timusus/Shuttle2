@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import java.util.Date
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -67,6 +68,9 @@ class MediaImporter(
     /** Held for the length of an import, so a second [import] finds it taken and returns rather than scanning again. */
     private val importLock = Mutex()
 
+    /** Set by an [import] that finds one already running, so the running import runs one more pass once it's done. */
+    private val rescanRequested = AtomicBoolean(false)
+
     val isImporting: Boolean get() = importLock.isLocked
 
     var listeners = mutableSetOf<Listener>()
@@ -82,12 +86,16 @@ class MediaImporter(
         }
 
         if (!importLock.tryLock()) {
-            Timber.v("Import already in progress")
+            Timber.v("Import already in progress, requesting a follow-up pass")
+            rescanRequested.set(true)
             return
         }
 
         try {
-            importAll()
+            do {
+                rescanRequested.set(false)
+                importAll()
+            } while (rescanRequested.get())
         } finally {
             importLock.unlock()
         }

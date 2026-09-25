@@ -9,7 +9,6 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.shouldBe
 import java.lang.reflect.Proxy
 import java.util.concurrent.atomic.AtomicInteger
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -56,19 +55,25 @@ class MediaImporterTest {
         val returned = Channel<Unit>(Channel.UNLIMITED)
         repeat(IMPORTS) { launch(Dispatchers.Default) { importer.import().also { returned.send(Unit) } } }
 
-        // Every import but the one holding the scan returns without waiting for it
+        // Every import but the one holding the scan returns without waiting for it, requesting a follow-up pass
+        provider.started.receive()
         repeat(IMPORTS - 1) { returned.receive() }
         importer.isImporting shouldBe true
-        provider.release.complete(Unit)
+
+        // The requests made while the first pass was running coalesce into exactly one follow-up pass
+        provider.gate.trySend(Unit)
+        provider.started.receive()
+        provider.gate.trySend(Unit)
         returned.receive()
 
-        provider.scans.get() shouldBe 1
+        provider.scans.get() shouldBe 2
         importer.isImporting shouldBe false
     }
 
     @Test
     fun `an import after one has finished scans again`() = runBlocking<Unit> {
-        provider.release.complete(Unit)
+        provider.gate.trySend(Unit)
+        provider.gate.trySend(Unit)
 
         importer.import()
         importer.import()
@@ -76,16 +81,53 @@ class MediaImporterTest {
         provider.scans.get() shouldBe 2
     }
 
-    /** Counts its scans, and holds each one open until [release] completes. */
+    @Test
+    fun `an import requested while one is running triggers exactly one follow-up pass`() = runBlocking<Unit> {
+        val returned = Channel<Unit>(Channel.UNLIMITED)
+        launch(Dispatchers.Default) { importer.import().also { returned.send(Unit) } }
+        provider.started.receive()
+
+        importer.import() // requested while the first pass is running; returns immediately rather than scanning
+
+        importer.isImporting shouldBe true
+        provider.gate.trySend(Unit) // let the first pass finish
+        provider.started.receive() // the follow-up pass starts
+        provider.gate.trySend(Unit) // let it finish
+        returned.receive()
+
+        provider.scans.get() shouldBe 2
+        importer.isImporting shouldBe false
+    }
+
+    @Test
+    fun `repeated imports requested while one is running still trigger only one follow-up pass`() = runBlocking<Unit> {
+        val returned = Channel<Unit>(Channel.UNLIMITED)
+        launch(Dispatchers.Default) { importer.import().also { returned.send(Unit) } }
+        provider.started.receive()
+
+        repeat(3) { importer.import() } // three requests while the first pass is running
+
+        provider.gate.trySend(Unit) // let the first pass finish
+        provider.started.receive() // the single follow-up pass starts
+        provider.gate.trySend(Unit) // let it finish
+        returned.receive()
+
+        provider.scans.get() shouldBe 2 // not 4 -- the three requests coalesced into one follow-up pass
+        importer.isImporting shouldBe false
+    }
+
+    /** Counts its scans, signals [started] as each one begins, and holds it open until a [gate] send. */
     private class GatedProvider : MediaProvider {
         override val type = MediaProviderType.Shuttle
 
         val scans = AtomicInteger()
-        val release = CompletableDeferred<Unit>()
+        val started = Channel<Unit>(Channel.UNLIMITED)
+        val gate = Channel<Unit>(Channel.UNLIMITED)
 
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
             scans.incrementAndGet()
-            release.await()
+            started.send(Unit)
+            gate.receive()
         }
 
         override fun findPlaylists(
