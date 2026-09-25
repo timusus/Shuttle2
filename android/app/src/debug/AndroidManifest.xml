@@ -65,7 +65,9 @@
         </receiver>
 
         <!-- The design system catalogue (#374): boards for review on device, with motion, touch
-             and dynamic colour. Its own launcher entry, debug builds only. -->
+             and dynamic colour. Debug builds only. No LAUNCHER category: a second launcher activity
+             takes over the package's default launch intent, which Maestro's launchApp uses (#392).
+             Open it with `adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.designsystem.catalog.DesignCatalogActivity`. -->
         <activity
             android:name="com.simplecityapps.shuttle.designsystem.catalog.DesignCatalogActivity"
             android:exported="true"
@@ -74,12 +76,11 @@
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <!-- The Compose app shell spike (#375, docs/architecture/app-shell.md): Navigation 3,
-             adaptive layouts and the player sheet over placeholder screens. Debug builds only. -->
+             adaptive layouts and the player sheet over placeholder screens. Debug builds only; no LAUNCHER category, as above (#392). -->
         <activity
             android:name="com.simplecityapps.shuttle.ui.shell.ShellActivity"
             android:exported="true"
@@ -88,7 +89,6 @@
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
