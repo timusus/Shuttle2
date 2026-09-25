@@ -40,7 +40,7 @@ class AlbumArtistDetailIntegrationTest {
     private val robot = AlbumArtistDetailRobot(composeTestRule)
 
     private val testArtist = createAlbumArtist(
-        name = "The Beatles",
+        name = "The Tin Orchards",
         albumCount = 2,
         songCount = 30,
     )
@@ -68,32 +68,32 @@ class AlbumArtistDetailIntegrationTest {
         fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
         fakeAlbumRepository.setAlbums(
             listOf(
-                createAlbum(name = "Abbey Road", year = 1969),
-                createAlbum(name = "Let It Be", year = 1970),
+                createAlbum(name = "Cassette Summer", year = 1969),
+                createAlbum(name = "Loose Change", year = 1970),
             )
         )
-        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Come Together")))
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Rewind Button")))
 
         robot.setContentWithViewModel(createViewModel())
 
-        robot.assertTextDisplayed("Abbey Road")
-        robot.assertTextDisplayed("Let It Be")
+        robot.assertTextDisplayed("Cassette Summer")
+        robot.assertTextDisplayed("Loose Change")
     }
 
     @Test
     fun `shows songs from repository`() {
         fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
-        fakeAlbumRepository.setAlbums(listOf(createAlbum(name = "Abbey Road")))
+        fakeAlbumRepository.setAlbums(listOf(createAlbum(name = "Cassette Summer")))
         fakeSongRepository.setSongs(
             listOf(
-                createSong(id = 1, name = "Come Together"),
+                createSong(id = 1, name = "Rewind Button"),
                 createSong(id = 2, name = "Something"),
             )
         )
 
         robot.setContentWithViewModel(createViewModel())
 
-        robot.assertTextDisplayed("Come Together")
+        robot.assertTextDisplayed("Rewind Button")
         robot.assertTextDisplayed("Something")
     }
 
@@ -102,9 +102,9 @@ class AlbumArtistDetailIntegrationTest {
         fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
         fakeAlbumRepository.setAlbums(
             listOf(
-                createAlbum(name = "Please Please Me", year = 1963),
-                createAlbum(name = "Let It Be", year = 1970),
-                createAlbum(name = "Abbey Road", year = 1969),
+                createAlbum(name = "Lantern Hours", year = 1963),
+                createAlbum(name = "Loose Change", year = 1970),
+                createAlbum(name = "Cassette Summer", year = 1969),
             )
         )
         fakeSongRepository.setSongs(listOf(createSong()))
@@ -112,9 +112,9 @@ class AlbumArtistDetailIntegrationTest {
         robot.setContentWithViewModel(createViewModel())
 
         // All three should be displayed (order verified visually; asserting presence)
-        robot.assertTextDisplayed("Let It Be")
-        robot.assertTextDisplayed("Abbey Road")
-        robot.assertTextDisplayed("Please Please Me")
+        robot.assertTextDisplayed("Loose Change")
+        robot.assertTextDisplayed("Cassette Summer")
+        robot.assertTextDisplayed("Lantern Hours")
     }
 
     // endregion

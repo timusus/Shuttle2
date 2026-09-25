@@ -79,12 +79,12 @@ class FolderListTest {
         robot.setContent(
             readyFolderList(
                 currentFolder = createFolder("primary", "Music"),
-                folders = listOf(createFolder("primary", "Music", "Radiohead")),
+                folders = listOf(createFolder("primary", "Music", "Juniper Static")),
                 songs = listOf(createSong(name = "Loose Track")),
             )
         )
 
-        robot.assertTextDisplayed("Radiohead")
+        robot.assertTextDisplayed("Juniper Static")
         robot.assertTextDisplayed("Loose Track")
     }
 
@@ -96,10 +96,10 @@ class FolderListTest {
 
     @Test
     fun `subfolder shows its path relative to the storage volume`() {
-        robot.setContent(readyFolderList(currentFolder = createFolder("primary", "Music", "Radiohead"), folders = emptyList()))
+        robot.setContent(readyFolderList(currentFolder = createFolder("primary", "Music", "Juniper Static"), folders = emptyList()))
 
         robot.assertCanNavigateUp()
-        robot.assertTextDisplayed("Music/Radiohead")
+        robot.assertTextDisplayed("Music/Juniper Static")
     }
 
     // endregion
@@ -127,10 +127,10 @@ class FolderListTest {
 
     @Test
     fun `clicking a song plays it`() {
-        val song = createSong(name = "Airbag")
+        val song = createSong(name = "Chlorophyll Loop")
         robot.setContent(readyFolderList(currentFolder = createFolder("primary", "Music"), folders = emptyList(), songs = listOf(song)))
 
-        robot.clickText("Airbag")
+        robot.clickText("Chlorophyll Loop")
 
         robot.lastClickedSong shouldBe song
     }

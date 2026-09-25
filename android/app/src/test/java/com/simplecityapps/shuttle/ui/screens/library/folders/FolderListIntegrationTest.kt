@@ -52,7 +52,7 @@ class FolderListIntegrationTest {
     fun `browses into a folder and back up`() {
         fakeSongRepository.setSongs(
             listOf(
-                createSong(id = 1, name = "Airbag", path = "/storage/emulated/0/Music/Radiohead/01 Airbag.mp3"),
+                createSong(id = 1, name = "Chlorophyll Loop", path = "/storage/emulated/0/Music/Juniper Static/01 Chlorophyll Loop.mp3"),
                 createSong(id = 2, name = "Loose Track", path = "/storage/emulated/0/Music/loose.mp3"),
                 createSong(id = 3, name = "Episode", path = "/storage/emulated/0/Podcasts/episode.mp3"),
             )
@@ -66,7 +66,7 @@ class FolderListIntegrationTest {
 
         robot.clickText("Music")
 
-        robot.assertTextDisplayed("Radiohead")
+        robot.assertTextDisplayed("Juniper Static")
         robot.assertTextDisplayed("Loose Track")
         robot.assertTextNotDisplayed("Podcasts")
 

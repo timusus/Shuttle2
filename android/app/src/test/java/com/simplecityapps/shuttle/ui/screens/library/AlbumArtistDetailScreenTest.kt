@@ -20,10 +20,10 @@ class AlbumArtistDetailScreenTest {
     fun `shows the artist's album and song counts, then Albums and Songs sections`() {
         robot.setAlbumArtist(readyAlbumArtistDetail())
 
-        robot.assertTextDisplayed("Radiohead")
+        robot.assertTextDisplayed("Juniper Static")
         robot.assertTextDisplayed("1 album · 3 songs")
         robot.assertTextDisplayed("Albums")
-        robot.assertTextDisplayed("OK Computer")
+        robot.assertTextDisplayed("Phase Garden")
         robot.scrollTo("Songs")
         robot.assertTextDisplayed("Songs")
     }
@@ -33,7 +33,7 @@ class AlbumArtistDetailScreenTest {
         val state = readyAlbumArtistDetail()
         robot.setAlbumArtist(state)
 
-        robot.clickText("OK Computer")
+        robot.clickText("Phase Garden")
 
         robot.lastAlbumClicked shouldBe state.albums[0]
     }
@@ -42,18 +42,18 @@ class AlbumArtistDetailScreenTest {
     fun `a folded album shows its songs only in the Songs section`() {
         robot.setAlbumArtist(readyAlbumArtistDetail())
 
-        robot.assertTextShownTimes("Paranoid Android", 1)
+        robot.assertTextShownTimes("Soft Machines at Dawn", 1)
     }
 
     @Test
     @Config(qualifiers = "w411dp-h2000dp") // tall enough that the Songs section below the unfolded album is composed
     fun `an unfolded album lists its songs, which play within the album`() {
-        val songs = okComputerSongs()
+        val songs = phaseGardenSongs()
         val album = albumOf(songs)
         robot.setAlbumArtist(readyAlbumArtistDetail(songs = songs, albums = listOf(album), expandedAlbums = setOfNotNull(album.groupKey)))
 
-        robot.assertTextShownTimes("Paranoid Android", 2)
-        robot.clickText("Paranoid Android")
+        robot.assertTextShownTimes("Soft Machines at Dawn", 2)
+        robot.clickText("Soft Machines at Dawn")
 
         robot.lastPlayed shouldBe (songs to 1)
     }

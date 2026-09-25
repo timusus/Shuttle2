@@ -89,16 +89,16 @@ class AlbumArtistListIntegrationTest {
     fun `shows artists from repository`() {
         fakeAlbumArtistRepository.setAlbumArtists(
             listOf(
-                createAlbumArtist(name = "Pink Floyd"),
-                createAlbumArtist(name = "Led Zeppelin"),
+                createAlbumArtist(name = "Velvet Cartography"),
+                createAlbumArtist(name = "Pale Meridian"),
             )
         )
         fakeImportState.setState(importComplete())
 
         robot.setContentWithViewModel(createViewModel())
 
-        robot.assertTextDisplayed("Pink Floyd")
-        robot.assertTextDisplayed("Led Zeppelin")
+        robot.assertTextDisplayed("Velvet Cartography")
+        robot.assertTextDisplayed("Pale Meridian")
     }
 
     // endregion

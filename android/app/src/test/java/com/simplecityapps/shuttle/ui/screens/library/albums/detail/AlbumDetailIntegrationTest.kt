@@ -39,8 +39,8 @@ class AlbumDetailIntegrationTest {
     private val robot = AlbumDetailRobot(composeTestRule)
 
     private val testAlbum = createAlbum(
-        name = "Abbey Road",
-        albumArtist = "The Beatles",
+        name = "Cassette Summer",
+        albumArtist = "The Tin Orchards",
         year = 1969,
         songCount = 17,
         duration = 2820000,
@@ -67,7 +67,7 @@ class AlbumDetailIntegrationTest {
     fun `shows songs from repository`() {
         fakeSongRepository.setSongs(
             listOf(
-                createSong(id = 1, name = "Come Together"),
+                createSong(id = 1, name = "Rewind Button"),
                 createSong(id = 2, name = "Something"),
             )
         )
@@ -75,7 +75,7 @@ class AlbumDetailIntegrationTest {
 
         robot.setContentWithViewModel(createViewModel())
 
-        robot.assertTextDisplayed("Come Together")
+        robot.assertTextDisplayed("Rewind Button")
         robot.assertTextDisplayed("Something")
     }
 
@@ -85,7 +85,7 @@ class AlbumDetailIntegrationTest {
 
     @Test
     fun `current song follows the queue's current item`() {
-        val song = createSong(id = 1, name = "Come Together")
+        val song = createSong(id = 1, name = "Rewind Button")
         fakeSongRepository.setSongs(listOf(song, createSong(id = 2, name = "Something")))
         fakeAlbumRepository.setAlbums(listOf(testAlbum))
         val viewModel = createViewModel()

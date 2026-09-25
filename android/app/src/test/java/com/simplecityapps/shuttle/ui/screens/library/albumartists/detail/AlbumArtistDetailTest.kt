@@ -38,17 +38,17 @@ class AlbumArtistDetailTest {
     fun `ready state shows album name`() {
         robot.setContent(
             readyAlbumArtistDetail(
-                albums = listOf(createAlbum(name = "Abbey Road")),
+                albums = listOf(createAlbum(name = "Cassette Summer")),
             )
         )
-        robot.assertTextDisplayed("Abbey Road")
+        robot.assertTextDisplayed("Cassette Summer")
     }
 
     @Test
     fun `ready state shows album year and song count`() {
         robot.setContent(
             readyAlbumArtistDetail(
-                albums = listOf(createAlbum(name = "Abbey Road", year = 1969, songCount = 17)),
+                albums = listOf(createAlbum(name = "Cassette Summer", year = 1969, songCount = 17)),
             )
         )
         robot.assertSubtextDisplayed("1969")
@@ -60,21 +60,21 @@ class AlbumArtistDetailTest {
         robot.setContent(
             readyAlbumArtistDetail(
                 albums = listOf(
-                    createAlbum(name = "Abbey Road"),
-                    createAlbum(name = "Let It Be"),
+                    createAlbum(name = "Cassette Summer"),
+                    createAlbum(name = "Loose Change"),
                 ),
             )
         )
-        robot.assertTextDisplayed("Abbey Road")
-        robot.assertTextDisplayed("Let It Be")
+        robot.assertTextDisplayed("Cassette Summer")
+        robot.assertTextDisplayed("Loose Change")
     }
 
     @Test
     fun `ready state shows section headers`() {
         robot.setContent(
             readyAlbumArtistDetail(
-                albums = listOf(createAlbum(name = "Abbey Road")),
-                songs = listOf(createSong(name = "Come Together")),
+                albums = listOf(createAlbum(name = "Cassette Summer")),
+                songs = listOf(createSong(name = "Rewind Button")),
             )
         )
         robot.assertTextDisplayed("Albums")
@@ -85,10 +85,10 @@ class AlbumArtistDetailTest {
     fun `ready state shows song name`() {
         robot.setContent(
             readyAlbumArtistDetail(
-                songs = listOf(createSong(name = "Come Together")),
+                songs = listOf(createSong(name = "Rewind Button")),
             )
         )
-        robot.assertTextDisplayed("Come Together")
+        robot.assertTextDisplayed("Rewind Button")
     }
 
     @Test
@@ -96,15 +96,15 @@ class AlbumArtistDetailTest {
         robot.setContent(
             readyAlbumArtistDetail(
                 songs = listOf(
-                    createSong(id = 1, name = "Come Together"),
+                    createSong(id = 1, name = "Rewind Button"),
                     createSong(id = 2, name = "Something"),
-                    createSong(id = 3, name = "Here Comes the Sun"),
+                    createSong(id = 3, name = "Heatwave Radio"),
                 ),
             )
         )
-        robot.assertTextDisplayed("Come Together")
+        robot.assertTextDisplayed("Rewind Button")
         robot.assertTextDisplayed("Something")
-        robot.assertTextDisplayed("Here Comes the Sun")
+        robot.assertTextDisplayed("Heatwave Radio")
     }
 
     @Test
@@ -180,18 +180,18 @@ class AlbumArtistDetailTest {
 
     @Test
     fun `collapsed album does not show its tracks`() {
-        val songs = listOf(createSong(id = 1, name = "Come Together", album = "Abbey Road"))
+        val songs = listOf(createSong(id = 1, name = "Rewind Button", album = "Cassette Summer"))
         robot.setContent(
             readyAlbumArtistDetail(albums = listOf(albumFor(songs)), songs = songs)
         )
-        robot.assertAlbumTrackNotDisplayed("Come Together")
+        robot.assertAlbumTrackNotDisplayed("Rewind Button")
     }
 
     @Test
     fun `expanded album shows its tracks`() {
         val songs = listOf(
-            createSong(id = 1, name = "Come Together", album = "Abbey Road"),
-            createSong(id = 2, name = "Something", album = "Abbey Road"),
+            createSong(id = 1, name = "Rewind Button", album = "Cassette Summer"),
+            createSong(id = 2, name = "Something", album = "Cassette Summer"),
         )
         val album = albumFor(songs)
         robot.setContent(
@@ -201,14 +201,14 @@ class AlbumArtistDetailTest {
                 expandedAlbums = setOfNotNull(album.groupKey),
             )
         )
-        robot.assertAlbumTrackDisplayed("Come Together")
+        robot.assertAlbumTrackDisplayed("Rewind Button")
         robot.assertAlbumTrackDisplayed("Something")
     }
 
     @Test
     fun `expanded album only shows its own tracks`() {
-        val abbeyRoadSongs = listOf(createSong(id = 1, name = "Come Together", album = "Abbey Road"))
-        val letItBeSongs = listOf(createSong(id = 2, name = "Get Back", album = "Let It Be"))
+        val abbeyRoadSongs = listOf(createSong(id = 1, name = "Rewind Button", album = "Cassette Summer"))
+        val letItBeSongs = listOf(createSong(id = 2, name = "Borrowed Bicycle", album = "Loose Change"))
         val abbeyRoad = albumFor(abbeyRoadSongs)
         robot.setContent(
             readyAlbumArtistDetail(
@@ -217,26 +217,26 @@ class AlbumArtistDetailTest {
                 expandedAlbums = setOfNotNull(abbeyRoad.groupKey),
             )
         )
-        robot.assertAlbumTrackDisplayed("Come Together")
-        robot.assertAlbumTrackNotDisplayed("Get Back")
+        robot.assertAlbumTrackDisplayed("Rewind Button")
+        robot.assertAlbumTrackNotDisplayed("Borrowed Bicycle")
     }
 
     @Test
     fun `album row click invokes onAlbumClick to toggle expansion`() {
-        val songs = listOf(createSong(id = 1, name = "Come Together", album = "Abbey Road"))
+        val songs = listOf(createSong(id = 1, name = "Rewind Button", album = "Cassette Summer"))
         val album = albumFor(songs)
         robot.setContent(readyAlbumArtistDetail(albums = listOf(album), songs = songs))
-        robot.clickText("Abbey Road")
+        robot.clickText("Cassette Summer")
         robot.lastAlbumClicked shouldBe album
     }
 
     @Test
     fun `track inside an expanded album plays that album's songs`() {
         val abbeyRoadSongs = listOf(
-            createSong(id = 1, name = "Come Together", album = "Abbey Road"),
-            createSong(id = 2, name = "Something", album = "Abbey Road"),
+            createSong(id = 1, name = "Rewind Button", album = "Cassette Summer"),
+            createSong(id = 2, name = "Something", album = "Cassette Summer"),
         )
-        val letItBeSongs = listOf(createSong(id = 3, name = "Get Back", album = "Let It Be"))
+        val letItBeSongs = listOf(createSong(id = 3, name = "Borrowed Bicycle", album = "Loose Change"))
         val abbeyRoad = albumFor(abbeyRoadSongs)
         robot.setContent(
             readyAlbumArtistDetail(
@@ -251,7 +251,7 @@ class AlbumArtistDetailTest {
 
     @Test
     fun `expanded album stays expanded when songs and albums are re-emitted with new instances`() {
-        val songs = listOf(createSong(id = 1, name = "Come Together", album = "Abbey Road"))
+        val songs = listOf(createSong(id = 1, name = "Rewind Button", album = "Cassette Summer"))
         val album = albumFor(songs)
         robot.setContent(
             readyAlbumArtistDetail(
@@ -260,10 +260,10 @@ class AlbumArtistDetailTest {
                 expandedAlbums = setOfNotNull(album.groupKey),
             )
         )
-        robot.assertAlbumTrackDisplayed("Come Together")
+        robot.assertAlbumTrackDisplayed("Rewind Button")
 
         // Simulate a rescan: the repository re-emits new list/model instances with the same data.
-        val rescannedSongs = listOf(createSong(id = 1, name = "Come Together", album = "Abbey Road"))
+        val rescannedSongs = listOf(createSong(id = 1, name = "Rewind Button", album = "Cassette Summer"))
         val rescannedAlbum = albumFor(rescannedSongs)
         robot.updateContent(
             readyAlbumArtistDetail(
@@ -273,7 +273,7 @@ class AlbumArtistDetailTest {
             )
         )
 
-        robot.assertAlbumTrackDisplayed("Come Together")
+        robot.assertAlbumTrackDisplayed("Rewind Button")
     }
 
     // endregion
@@ -468,20 +468,20 @@ class AlbumArtistDetailTest {
 
     @Test
     fun `top bar does not show artist name while the header is visible`() {
-        robot.setContent(readyAlbumArtistDetail(albumArtist = createAlbumArtist(name = "The Beatles"), songs = manySongs()))
-        robot.assertTopBarTitleNotDisplayed("The Beatles")
+        robot.setContent(readyAlbumArtistDetail(albumArtist = createAlbumArtist(name = "The Tin Orchards"), songs = manySongs()))
+        robot.assertTopBarTitleNotDisplayed("The Tin Orchards")
     }
 
     @Test
     fun `top bar shows artist name and subtitle once the header scrolls away`() {
         robot.setContent(
             readyAlbumArtistDetail(
-                albumArtist = createAlbumArtist(name = "The Beatles", albumCount = 2, songCount = 30),
+                albumArtist = createAlbumArtist(name = "The Tin Orchards", albumCount = 2, songCount = 30),
                 songs = manySongs(),
             )
         )
         robot.scrollPastHeader()
-        robot.assertTopBarTitleDisplayed("The Beatles")
+        robot.assertTopBarTitleDisplayed("The Tin Orchards")
         robot.assertTopBarTitleDisplayed("2 albums · 30 songs")
     }
 

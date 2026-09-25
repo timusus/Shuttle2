@@ -42,18 +42,18 @@ class FolderListViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private val airbag = createSong(id = 1, name = "Airbag", path = "/storage/emulated/0/Music/Radiohead/01 Airbag.mp3")
-    private val paranoid = createSong(id = 2, name = "Paranoid Android", path = "/storage/emulated/0/Music/Radiohead/02 Paranoid Android.mp3")
+    private val chlorophyllLoop = createSong(id = 1, name = "Chlorophyll Loop", path = "/storage/emulated/0/Music/Juniper Static/01 Chlorophyll Loop.mp3")
+    private val paranoid = createSong(id = 2, name = "Soft Machines at Dawn", path = "/storage/emulated/0/Music/Juniper Static/02 Soft Machines at Dawn.mp3")
     private val loose = createSong(id = 3, name = "Loose", path = "/storage/emulated/0/Music/loose.mp3")
     private val podcast = createSong(id = 4, name = "Episode", path = "/storage/emulated/0/Podcasts/episode.mp3")
 
     private val music = Folder(listOf("primary", "Music"), songCount = 3)
-    private val radiohead = Folder(listOf("primary", "Music", "Radiohead"), songCount = 2)
+    private val juniperStatic = Folder(listOf("primary", "Music", "Juniper Static"), songCount = 2)
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        fakeSongRepository.setSongs(listOf(podcast, loose, paranoid, airbag))
+        fakeSongRepository.setSongs(listOf(podcast, loose, paranoid, chlorophyllLoop))
         fakeImportState.setState(importComplete())
     }
 
@@ -85,14 +85,14 @@ class FolderListViewModelTest {
         val state = viewModel.uiState.value
         state.currentFolder shouldBe music
         state.canNavigateUp shouldBe true
-        state.folders shouldBe listOf(radiohead)
+        state.folders shouldBe listOf(juniperStatic)
         state.songs shouldBe listOf(loose)
     }
 
     @Test
     fun `navigating up returns to the parent and then the top level`() = runTest(testDispatcher) {
         val viewModel = subscribe(createViewModel())
-        viewModel.onFolderClick(radiohead)
+        viewModel.onFolderClick(juniperStatic)
         advanceUntilIdle()
 
         viewModel.onNavigateUp()
@@ -107,19 +107,19 @@ class FolderListViewModelTest {
     @Test
     fun `browsed folder survives process death`() = runTest(testDispatcher) {
         val savedStateHandle = SavedStateHandle()
-        subscribe(createViewModel(savedStateHandle)).onFolderClick(radiohead)
+        subscribe(createViewModel(savedStateHandle)).onFolderClick(juniperStatic)
         advanceUntilIdle()
 
         val restoredHandle = SavedStateHandle(savedStateHandle.keys().associateWith { savedStateHandle.get<Any>(it) })
         val restored = subscribe(createViewModel(restoredHandle))
 
-        restored.uiState.value.currentFolder shouldBe radiohead
+        restored.uiState.value.currentFolder shouldBe juniperStatic
     }
 
     @Test
     fun `a folder that disappears falls back to its nearest ancestor`() = runTest(testDispatcher) {
         val viewModel = subscribe(createViewModel())
-        viewModel.onFolderClick(radiohead)
+        viewModel.onFolderClick(juniperStatic)
         advanceUntilIdle()
 
         fakeSongRepository.setSongs(listOf(podcast, loose))
@@ -158,7 +158,7 @@ class FolderListViewModelTest {
         viewModel.onPlay(music)
         advanceUntilIdle()
 
-        fakeQueueManager.lastSetQueue shouldBe listOf(airbag, paranoid, loose)
+        fakeQueueManager.lastSetQueue shouldBe listOf(chlorophyllLoop, paranoid, loose)
         fakeQueueManager.lastSetQueuePosition shouldBe 0
     }
 
@@ -169,7 +169,7 @@ class FolderListViewModelTest {
         viewModel.onShuffle(music)
         advanceUntilIdle()
 
-        fakePlaybackManager.shuffled.toSet() shouldBe setOf(airbag, paranoid, loose)
+        fakePlaybackManager.shuffled.toSet() shouldBe setOf(chlorophyllLoop, paranoid, loose)
     }
 
     @Test
@@ -179,11 +179,11 @@ class FolderListViewModelTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.toList(events) }
         advanceUntilIdle()
 
-        viewModel.onAddToQueue(radiohead)
+        viewModel.onAddToQueue(juniperStatic)
         advanceUntilIdle()
 
-        fakePlaybackManager.addedToQueue shouldBe listOf(airbag, paranoid)
-        events shouldBe listOf(FolderListUiEvent.FolderAddedToQueue(radiohead))
+        fakePlaybackManager.addedToQueue shouldBe listOf(chlorophyllLoop, paranoid)
+        events shouldBe listOf(FolderListUiEvent.FolderAddedToQueue(juniperStatic))
     }
 
     @Test
@@ -193,7 +193,7 @@ class FolderListViewModelTest {
         viewModel.onPlayNext(music)
         advanceUntilIdle()
 
-        fakePlaybackManager.playedNext shouldBe listOf(airbag, paranoid, loose)
+        fakePlaybackManager.playedNext shouldBe listOf(chlorophyllLoop, paranoid, loose)
     }
 
     // endregion
@@ -203,13 +203,13 @@ class FolderListViewModelTest {
     @Test
     fun `clicking a song plays the folder's songs from it`() = runTest(testDispatcher) {
         val viewModel = subscribe(createViewModel())
-        viewModel.onFolderClick(radiohead)
+        viewModel.onFolderClick(juniperStatic)
         advanceUntilIdle()
 
         viewModel.onSongClick(paranoid)
         advanceUntilIdle()
 
-        fakeQueueManager.lastSetQueue shouldBe listOf(airbag, paranoid)
+        fakeQueueManager.lastSetQueue shouldBe listOf(chlorophyllLoop, paranoid)
         fakeQueueManager.lastSetQueuePosition shouldBe 1
     }
 

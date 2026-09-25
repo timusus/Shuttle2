@@ -24,7 +24,7 @@ class PlaylistDetailScreenTest {
 
         robot.assertTextDisplayed("Road trip")
         robot.assertTextDisplayed("3 songs", substring = true)
-        robot.assertTextDisplayed("Airbag")
+        robot.assertTextDisplayed("Chlorophyll Loop")
     }
 
     @Test
@@ -48,7 +48,7 @@ class PlaylistDetailScreenTest {
         val state = readyPlaylistDetail()
         robot.setPlaylist(state)
 
-        robot.clickText("Paranoid Android")
+        robot.clickText("Soft Machines at Dawn")
 
         robot.lastPlayed shouldBe (state.songs.map { it.song } to 1)
     }
@@ -58,7 +58,7 @@ class PlaylistDetailScreenTest {
         val state = readyPlaylistDetail()
         robot.setPlaylist(state)
 
-        robot.longClickText("Airbag")
+        robot.longClickText("Chlorophyll Loop")
 
         robot.lastToggled shouldBe state.songs[0]
     }
@@ -81,7 +81,7 @@ class PlaylistDetailScreenTest {
         val state = readyPlaylistDetail(playlist = createPlaylist(id = 7, name = "Road trip", sortOrder = PlaylistSongSortOrder.SongName), selectedIds = setOf(10L))
         robot.setPlaylist(state)
 
-        robot.clickText("Paranoid Android")
+        robot.clickText("Soft Machines at Dawn")
 
         robot.lastToggled shouldBe state.songs[1]
         robot.lastPlayed shouldBe null

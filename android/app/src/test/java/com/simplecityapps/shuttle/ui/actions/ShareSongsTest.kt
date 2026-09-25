@@ -23,8 +23,8 @@ class ShareSongsTest {
 
     @Test
     fun `local files are attached, remote songs are text only`() = runTest {
-        val local = createSong(id = 1, name = "Airbag", path = "content://media/1")
-        val remote = createSong(id = 2, name = "Karma Police", mediaProvider = MediaProviderType.Jellyfin, path = "content://remote/2")
+        val local = createSong(id = 1, name = "Chlorophyll Loop", path = "content://media/1")
+        val remote = createSong(id = 2, name = "Sodium Light", mediaProvider = MediaProviderType.Jellyfin, path = "content://remote/2")
 
         val request = shareSongs(MediaSelection.Songs(listOf(local, remote)))!!
 

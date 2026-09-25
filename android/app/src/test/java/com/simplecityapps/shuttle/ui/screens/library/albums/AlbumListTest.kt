@@ -47,15 +47,15 @@ class AlbumListTest {
 
     @Test
     fun `ready state shows album name and artist`() {
-        robot.setContent(readyAlbumList(albums = listOf(createAlbum(name = "Dark Side of the Moon", albumArtist = "Pink Floyd"))))
-        robot.assertTextDisplayed("Dark Side of the Moon")
-        robot.assertSubtextDisplayed("Pink Floyd")
+        robot.setContent(readyAlbumList(albums = listOf(createAlbum(name = "Soft Focus", albumArtist = "Velvet Cartography"))))
+        robot.assertTextDisplayed("Soft Focus")
+        robot.assertSubtextDisplayed("Velvet Cartography")
     }
 
     @Test
     fun `ready state shows song count`() {
         robot.setContent(
-            readyAlbumList(albums = listOf(createAlbum(name = "Abbey Road", songCount = 17)))
+            readyAlbumList(albums = listOf(createAlbum(name = "Cassette Summer", songCount = 17)))
         )
         robot.assertSubtextDisplayed("17 songs")
     }

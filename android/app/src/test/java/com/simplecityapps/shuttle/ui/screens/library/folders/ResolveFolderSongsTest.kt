@@ -11,29 +11,29 @@ class ResolveFolderSongsTest {
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
     private val resolveFolderSongs = ResolveFolderSongs(songRepository)
 
-    private val airbag = createSong(id = 1, path = "/storage/emulated/0/Music/Radiohead/01 Airbag.mp3")
-    private val paranoid = createSong(id = 2, path = "/storage/emulated/0/Music/Radiohead/02 Paranoid Android.mp3")
+    private val chlorophyllLoop = createSong(id = 1, path = "/storage/emulated/0/Music/Juniper Static/01 Chlorophyll Loop.mp3")
+    private val paranoid = createSong(id = 2, path = "/storage/emulated/0/Music/Juniper Static/02 Soft Machines at Dawn.mp3")
     private val loose = createSong(id = 3, path = "/storage/emulated/0/Music/loose.mp3")
     private val podcast = createSong(id = 4, path = "/storage/emulated/0/Podcasts/episode.mp3")
 
     @Test
     fun `resolves songs in the folder and its subfolders, in browsing order`() = runTest {
-        songRepository.setSongs(listOf(loose, podcast, paranoid, airbag))
+        songRepository.setSongs(listOf(loose, podcast, paranoid, chlorophyllLoop))
 
-        resolveFolderSongs(listOf(listOf("primary", "Music"))) shouldBe listOf(airbag, paranoid, loose)
+        resolveFolderSongs(listOf(listOf("primary", "Music"))) shouldBe listOf(chlorophyllLoop, paranoid, loose)
     }
 
     @Test
     fun `resolves several folders in order without duplicates`() = runTest {
-        songRepository.setSongs(listOf(loose, podcast, paranoid, airbag))
+        songRepository.setSongs(listOf(loose, podcast, paranoid, chlorophyllLoop))
 
         resolveFolderSongs(
             listOf(
                 listOf("primary", "Podcasts"),
-                listOf("primary", "Music", "Radiohead"),
+                listOf("primary", "Music", "Juniper Static"),
                 listOf("primary", "Music"),
             )
-        ) shouldBe listOf(podcast, airbag, paranoid, loose)
+        ) shouldBe listOf(podcast, chlorophyllLoop, paranoid, loose)
     }
 
     @Test

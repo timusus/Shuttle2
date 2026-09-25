@@ -11,8 +11,8 @@ class SongFolderTest {
 
     @Test
     fun `internal storage path resolves relative to the primary volume`() {
-        SongFolder.locate("/storage/emulated/0/Music/Radiohead/OK Computer/01 Airbag.mp3") shouldBe
-            SongFolder.Location(listOf("primary", "Music", "Radiohead", "OK Computer"), "01 Airbag.mp3")
+        SongFolder.locate("/storage/emulated/0/Music/Juniper Static/Phase Garden/01 Chlorophyll Loop.mp3") shouldBe
+            SongFolder.Location(listOf("primary", "Music", "Juniper Static", "Phase Garden"), "01 Chlorophyll Loop.mp3")
     }
 
     @Test
@@ -51,10 +51,10 @@ class SongFolderTest {
 
     @Test
     fun `saf tree document uri on primary storage resolves to the same folder as its MediaStore path`() {
-        val uri = "content://com.android.externalstorage.documents/tree/primary%3AMusic/document/primary%3AMusic%2FRadiohead%2F01%20Airbag.mp3"
+        val uri = "content://com.android.externalstorage.documents/tree/primary%3AMusic/document/primary%3AMusic%2FJuniper%20Static%2F01%20Chlorophyll%20Loop.mp3"
 
-        SongFolder.locate(uri) shouldBe SongFolder.Location(listOf("primary", "Music", "Radiohead"), "01 Airbag.mp3")
-        SongFolder.locate(uri).folder shouldBe SongFolder.locate("/storage/emulated/0/Music/Radiohead/01 Airbag.mp3").folder
+        SongFolder.locate(uri) shouldBe SongFolder.Location(listOf("primary", "Music", "Juniper Static"), "01 Chlorophyll Loop.mp3")
+        SongFolder.locate(uri).folder shouldBe SongFolder.locate("/storage/emulated/0/Music/Juniper Static/01 Chlorophyll Loop.mp3").folder
     }
 
     @Test
@@ -66,9 +66,9 @@ class SongFolderTest {
 
     @Test
     fun `saf uri decodes multi byte characters and keeps plus signs`() {
-        val uri = "content://com.android.externalstorage.documents/document/primary%3AMusic%2FBj%C3%B6rk%2FA+B.mp3"
+        val uri = "content://com.android.externalstorage.documents/document/primary%3AMusic%2FIn%C3%A8s%20Quarrow%2FA+B.mp3"
 
-        SongFolder.locate(uri) shouldBe SongFolder.Location(listOf("primary", "Music", "Björk"), "A+B.mp3")
+        SongFolder.locate(uri) shouldBe SongFolder.Location(listOf("primary", "Music", "Inès Quarrow"), "A+B.mp3")
     }
 
     @Test
@@ -106,12 +106,12 @@ class SongFolderTest {
 
     @Test
     fun `isUnder matches the folder and its subfolders only`() {
-        val path = "/storage/emulated/0/Music/Radiohead/a.mp3"
+        val path = "/storage/emulated/0/Music/Juniper Static/a.mp3"
 
         SongFolder.isUnder(path, listOf("primary", "Music")) shouldBe true
-        SongFolder.isUnder(path, listOf("primary", "Music", "Radiohead")) shouldBe true
+        SongFolder.isUnder(path, listOf("primary", "Music", "Juniper Static")) shouldBe true
         SongFolder.isUnder(path, listOf("primary", "Music", "Radio")) shouldBe false
-        SongFolder.isUnder(path, listOf("primary", "Music", "Radiohead", "Live")) shouldBe false
+        SongFolder.isUnder(path, listOf("primary", "Music", "Juniper Static", "Live")) shouldBe false
     }
 
     @Test

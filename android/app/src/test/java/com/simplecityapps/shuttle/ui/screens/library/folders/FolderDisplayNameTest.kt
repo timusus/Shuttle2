@@ -34,8 +34,8 @@ class FolderDisplayNameTest {
 
     @Test
     fun `subfolder shows its own name`() {
-        val folder = Folder(path = listOf(SongFolder.PRIMARY_VOLUME, "Music", "Radiohead"), songCount = 2)
+        val folder = Folder(path = listOf(SongFolder.PRIMARY_VOLUME, "Music", "Juniper Static"), songCount = 2)
 
-        folder.displayName(resources) shouldBe "Radiohead"
+        folder.displayName(resources) shouldBe "Juniper Static"
     }
 }

@@ -18,7 +18,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumAr
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
 
 /** The album [songs] belong to, keyed the way the songs group, so it unfolds to them. */
-fun albumOf(songs: List<Song>, year: Int = 1997) = createAlbum(
+fun albumOf(songs: List<Song>, year: Int = 2021) = createAlbum(
     name = songs.first().album.orEmpty(),
     albumArtist = songs.first().albumArtist,
     songCount = songs.size,
@@ -26,14 +26,14 @@ fun albumOf(songs: List<Song>, year: Int = 1997) = createAlbum(
     groupKey = songs.first().albumGroupKey,
 )
 
-/** Three songs on "OK Computer" by Radiohead, tracks 1 to 3. */
-fun okComputerSongs(disc: Int = 1) = listOf("Airbag", "Paranoid Android", "Subterranean Homesick Alien").mapIndexed { index, name ->
-    createSong(id = index + 1L + (disc - 1) * 100, name = name, albumArtist = "Radiohead", album = "OK Computer", track = index + 1, disc = disc, duration = 240_000)
+/** Three songs on "Phase Garden" by Juniper Static, tracks 1 to 3. */
+fun phaseGardenSongs(disc: Int = 1) = listOf("Chlorophyll Loop", "Soft Machines at Dawn", "Petal Arithmetic").mapIndexed { index, name ->
+    createSong(id = index + 1L + (disc - 1) * 100, name = name, albumArtist = "Juniper Static", album = "Phase Garden", track = index + 1, disc = disc, duration = 240_000)
 }
 
 fun readyAlbumDetail(
-    album: Album = createAlbum(name = "OK Computer", albumArtist = "Radiohead", songCount = 3, year = 1997),
-    songs: List<Song> = okComputerSongs(),
+    album: Album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 3, year = 2021),
+    songs: List<Song> = phaseGardenSongs(),
     currentSong: Song? = null,
 ) = AlbumDetailUiState(album = album, songs = songs, currentSong = currentSong, loadingState = AlbumDetailUiState.LoadingState.Ready)
 
@@ -42,8 +42,8 @@ val loadingAlbumDetail = AlbumDetailUiState(loadingState = AlbumDetailUiState.Lo
 val missingAlbumDetail = AlbumDetailUiState(album = null, loadingState = AlbumDetailUiState.LoadingState.Empty)
 
 fun readyAlbumArtistDetail(
-    artist: AlbumArtist = createAlbumArtist(name = "Radiohead"),
-    songs: List<Song> = okComputerSongs(),
+    artist: AlbumArtist = createAlbumArtist(name = "Juniper Static"),
+    songs: List<Song> = phaseGardenSongs(),
     albums: List<Album> = listOf(albumOf(songs)),
     expandedAlbums: Set<AlbumGroupKey> = emptySet(),
     currentSong: Song? = null,
@@ -59,16 +59,16 @@ fun readyAlbumArtistDetail(
 val loadingAlbumArtistDetail = AlbumArtistDetailUiState(loadingState = AlbumArtistDetailUiState.LoadingState.Loading)
 
 fun readyGenreDetail(
-    genre: Genre = createGenre(name = "Alternative"),
-    albums: List<Album> = listOf(createAlbum(name = "OK Computer", albumArtist = "Radiohead")),
-    songs: List<Song> = okComputerSongs(),
+    genre: Genre = createGenre(name = "Electronic"),
+    albums: List<Album> = listOf(createAlbum(name = "Phase Garden", albumArtist = "Juniper Static")),
+    songs: List<Song> = phaseGardenSongs(),
     currentSong: Song? = null,
 ) = GenreDetailUiState(genre = genre, albums = albums, songs = songs, currentSong = currentSong, loading = false)
 
 val missingGenreDetail = GenreDetailUiState(genre = null, loading = false)
 
 /** [songs] as playlist entries whose ids are 10, 11, 12… in order. */
-fun playlistEntries(songs: List<Song> = okComputerSongs()) = songs.mapIndexed { index, song -> PlaylistSong(id = 10L + index, sortOrder = index.toLong(), song = song) }
+fun playlistEntries(songs: List<Song> = phaseGardenSongs()) = songs.mapIndexed { index, song -> PlaylistSong(id = 10L + index, sortOrder = index.toLong(), song = song) }
 
 fun readyPlaylistDetail(
     playlist: Playlist = createPlaylist(id = 7, name = "Road trip", songCount = 3),
@@ -81,7 +81,7 @@ val loadingPlaylistDetail = PlaylistDetailUiState(loading = true)
 
 fun readySmartPlaylistDetail(
     smartPlaylist: SmartPlaylist = createSmartPlaylist(),
-    songs: List<Song> = okComputerSongs(),
+    songs: List<Song> = phaseGardenSongs(),
     currentSong: Song? = null,
 ) = SmartPlaylistDetailUiState(smartPlaylist = smartPlaylist, songs = songs, currentSong = currentSong, loading = false)
 

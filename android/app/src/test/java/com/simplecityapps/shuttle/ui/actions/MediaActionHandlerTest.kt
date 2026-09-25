@@ -36,8 +36,8 @@ class MediaActionHandlerTest {
     )
     private val handler = actions.handler
 
-    private val song = createSong(id = 1, name = "Airbag")
-    private val other = createSong(id = 2, name = "Paranoid Android")
+    private val song = createSong(id = 1, name = "Chlorophyll Loop")
+    private val other = createSong(id = 2, name = "Soft Machines at Dawn")
     private val songs = MediaSelection.Songs(listOf(song, other))
 
     @Test
@@ -133,7 +133,7 @@ class MediaActionHandlerTest {
         val result = handler.handle(MediaAction.Delete(MediaSelection.Songs(song)))
 
         result shouldBe MediaActionResult.ConfirmationRequired(
-            MediaActionMessage.ConfirmDelete("Airbag", 1),
+            MediaActionMessage.ConfirmDelete("Chlorophyll Loop", 1),
             MediaAction.Delete(MediaSelection.Songs(song), confirmed = true),
         )
         songRepository.removed shouldBe emptyList()

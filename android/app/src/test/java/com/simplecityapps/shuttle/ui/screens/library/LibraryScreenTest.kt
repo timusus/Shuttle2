@@ -134,10 +134,10 @@ class LibraryScreenTest {
 
     @Test
     fun `songs page plays a tapped song, selects on long press and shuffles`() {
-        val song = createSong(id = 1, name = "Airbag")
+        val song = createSong(id = 1, name = "Chlorophyll Loop")
         robot.setContent(libraryState(currentTab = LibraryTab.Songs), pages = LibraryPageStates(songs = readySongList(listOf(song, createSong(id = 2, name = "Lucky")))))
 
-        robot.clickText("Airbag")
+        robot.clickText("Chlorophyll Loop")
         robot.lastSongClicked shouldBe song
 
         // The fast scroller's thumb covers the header's end until it hides.
@@ -155,34 +155,34 @@ class LibraryScreenTest {
 
     @Test
     fun `albums page opens a tapped album`() {
-        val album = createAlbum(name = "OK Computer", albumArtist = "Radiohead")
+        val album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static")
         robot.setContent(libraryState(currentTab = LibraryTab.Albums), pages = LibraryPageStates(albums = readyAlbumList(listOf(album))))
 
-        robot.clickText("OK Computer")
+        robot.clickText("Phase Garden")
 
         robot.lastAlbumClicked shouldBe album
     }
 
     @Test
     fun `the fast scroller sits at the page's end edge`() {
-        val albums = listOf(createAlbum(name = "OK Computer", albumArtist = "Radiohead"))
+        val albums = listOf(createAlbum(name = "Phase Garden", albumArtist = "Juniper Static"))
         robot.setContent(libraryState(currentTab = LibraryTab.Albums), pages = LibraryPageStates(albums = readyAlbumList(albums)))
         robot.assertFastScrollerAtEndEdge()
     }
 
     @Test
     fun `the fast scroller sits at the end edge of a grid page too`() {
-        val albums = listOf(createAlbum(name = "OK Computer", albumArtist = "Radiohead"))
+        val albums = listOf(createAlbum(name = "Phase Garden", albumArtist = "Juniper Static"))
         robot.setContent(libraryState(currentTab = LibraryTab.Albums), pages = LibraryPageStates(albums = readyAlbumList(albums, viewMode = ViewMode.Grid)))
         robot.assertFastScrollerAtEndEdge()
     }
 
     @Test
     fun `artists page opens a tapped artist`() {
-        val artist = createAlbumArtist(name = "Radiohead")
+        val artist = createAlbumArtist(name = "Juniper Static")
         robot.setContent(libraryState(currentTab = LibraryTab.Artists), pages = LibraryPageStates(artists = readyAlbumArtistList(listOf(artist))))
 
-        robot.clickText("Radiohead")
+        robot.clickText("Juniper Static")
 
         robot.lastArtistClicked shouldBe artist
     }

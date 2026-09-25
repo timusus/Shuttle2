@@ -3,15 +3,23 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.test.core.app.ApplicationProvider
+import com.bumptech.glide.SampleArtworkGlide
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.simplecityapps.createAlbum
-import com.simplecityapps.createAlbumArtist
-import com.simplecityapps.createSong
+import com.simplecityapps.sampleSongs
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.ui.screens.library.albums.readyAlbumList
 import com.simplecityapps.shuttle.ui.screens.library.songs.readySongList
+import com.simplecityapps.toAlbum
+import com.simplecityapps.toAlbumArtist
+import com.simplecityapps.toGenre
+import com.simplecityapps.toPlaylist
+import com.simplecityapps.toSong
 import java.io.File
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,7 +28,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Records the Compose library container and its detail screens into `docs/design/library/` for review (#377).
+ * Records the Compose library container and its detail screens into `docs/design/library/` for review (#377),
+ * showing the sample library with its generated covers ([SampleArtworkGlide]).
  * A no-op under plain `testDebugUnitTest`; record with
  * `./gradlew :android:app:recordRoborazziDebug --tests '*LibraryScreenshotTest*'`.
  */
@@ -34,14 +43,15 @@ class LibraryScreenshotTest {
     private val library = LibraryScreenRobot(composeTestRule)
     private val detail = LibraryDetailRobot(composeTestRule)
 
-    private val artists = listOf("Radiohead", "Portishead", "Massive Attack", "Björk")
+    private val albums = SampleLibrary.albums.map { it.toAlbum() }
 
-    private val albums = listOf("OK Computer", "Dummy", "Mezzanine", "Homogenic", "Kid A", "Third", "Protection", "Post")
-        .mapIndexed { index, name -> createAlbum(name = name, albumArtist = artists[index % artists.size], songCount = 10 + index, year = 1994 + index) }
+    private val songs = SampleLibrary.songs.map { it.toSong() }
 
-    private val songs = albums.flatMapIndexed { albumIndex, album ->
-        (1..3).map { track -> createSong(id = albumIndex * 10L + track, name = "${album.name} $track", albumArtist = album.albumArtist.orEmpty(), album = album.name.orEmpty(), track = track, duration = 200_000 + track * 17_000) }
-    }
+    @Before
+    fun installSampleArtwork() = SampleArtworkGlide.install(ApplicationProvider.getApplicationContext())
+
+    @After
+    fun uninstallSampleArtwork() = SampleArtworkGlide.uninstall()
 
     private fun shot(name: String) {
         composeTestRule.waitForIdle()
@@ -90,19 +100,22 @@ class LibraryScreenshotTest {
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneAlbumDetail() {
-        val albumSongs = okComputerSongs(disc = 1) + okComputerSongs(disc = 2)
-        detail.setAlbum(readyAlbumDetail(songs = albumSongs, currentSong = albumSongs[1]))
+        val album = SampleLibrary.album("phase-garden")
+        val tracks = album.songs.map { it.toSong() }
+        val albumSongs = tracks.take(3) + tracks.drop(3).map { it.copy(disc = 2) }
+        detail.setAlbum(readyAlbumDetail(album = album.toAlbum(), songs = albumSongs, currentSong = albumSongs[1]))
         shot("phone-album-detail")
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneArtistDetail() {
-        val artistSongs = songs.filter { it.albumArtist == "Radiohead" }
-        val artistAlbums = artistSongs.groupBy { it.album }.values.map { albumOf(it) }
+        val artist = SampleLibrary.artist("Juniper Static")
+        val artistSongs = artist.albums.flatMap { album -> album.songs.map { it.toSong() } }
+        val artistAlbums = artist.albums.map { album -> albumOf(album.songs.map { it.toSong() }, year = album.year) }
         detail.setAlbumArtist(
             readyAlbumArtistDetail(
-                artist = createAlbumArtist(name = "Radiohead"),
+                artist = artist.toAlbumArtist(),
                 songs = artistSongs,
                 albums = artistAlbums,
                 expandedAlbums = setOfNotNull(artistAlbums.first().groupKey),
@@ -114,29 +127,45 @@ class LibraryScreenshotTest {
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneGenreDetail() {
-        detail.setGenre(readyGenreDetail(albums = albums.take(4), songs = songs.take(6)))
+        val genre = SampleLibrary.genres.first { it.name == "Electronic" }
+        detail.setGenre(
+            readyGenreDetail(
+                genre = genre.toGenre(),
+                albums = SampleLibrary.albums.filter { it.genre == genre.name }.map { it.toAlbum() },
+                songs = genre.songs.take(6).map { it.toSong() },
+            ),
+        )
         shot("phone-genre-detail")
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phonePlaylistDetail() {
-        detail.setPlaylist(readyPlaylistDetail(songs = playlistEntries(songs.take(8))))
+        detail.setPlaylist(roadTrip())
         shot("phone-playlist-detail")
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phonePlaylistSelection() {
-        detail.setPlaylist(readyPlaylistDetail(songs = playlistEntries(songs.take(8)), selectedIds = setOf(10L, 12L)))
+        detail.setPlaylist(roadTrip(selectedIds = setOf(10L, 12L)))
         shot("phone-playlist-selection")
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneSmartPlaylistDetail() {
-        detail.setSmartPlaylist(readySmartPlaylistDetail(songs = songs.take(8)))
+        detail.setSmartPlaylist(readySmartPlaylistDetail(songs = sampleSongs(8)))
         shot("phone-smart-playlist-detail")
+    }
+
+    private fun roadTrip(selectedIds: Set<Long> = emptySet()): PlaylistDetailUiState {
+        val playlist = SampleLibrary.playlist("Road Trip")
+        return readyPlaylistDetail(
+            playlist = playlist.toPlaylist(id = 7),
+            songs = playlistEntries(playlist.songs.map { it.toSong() }),
+            selectedIds = selectedIds,
+        )
     }
 
     private companion object {

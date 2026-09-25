@@ -10,8 +10,8 @@ class FolderTreeTest {
     fun `builds folders with recursive song counts`() {
         val tree = FolderTree.build(
             listOf(
-                createSong(id = 1, path = "/storage/emulated/0/Music/Radiohead/a.mp3"),
-                createSong(id = 2, path = "/storage/emulated/0/Music/Radiohead/b.mp3"),
+                createSong(id = 1, path = "/storage/emulated/0/Music/Juniper Static/a.mp3"),
+                createSong(id = 2, path = "/storage/emulated/0/Music/Juniper Static/b.mp3"),
                 createSong(id = 3, path = "/storage/emulated/0/Music/c.mp3"),
                 createSong(id = 4, path = "/storage/emulated/0/Podcasts/d.mp3"),
             )
@@ -97,9 +97,9 @@ class FolderTreeTest {
 
     @Test
     fun `nearest falls back to the deepest existing ancestor`() {
-        val tree = FolderTree.build(listOf(createSong(path = "/storage/emulated/0/Music/Radiohead/a.mp3")))
+        val tree = FolderTree.build(listOf(createSong(path = "/storage/emulated/0/Music/Juniper Static/a.mp3")))
 
-        tree.root.nearest(listOf("primary", "Music", "Radiohead")).name shouldBe "Radiohead"
+        tree.root.nearest(listOf("primary", "Music", "Juniper Static")).name shouldBe "Juniper Static"
         tree.root.nearest(listOf("primary", "Music", "Gone", "Deeper")).path shouldBe listOf("primary", "Music")
         tree.root.nearest(listOf("missing")) shouldBe tree.root
     }

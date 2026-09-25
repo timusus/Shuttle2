@@ -19,21 +19,21 @@ class AlbumDetailScreenTest {
     fun `shows the album, its artist, year and songs`() {
         robot.setAlbum(readyAlbumDetail())
 
-        robot.assertTextDisplayed("OK Computer")
-        robot.assertTextDisplayed("Radiohead · 1997 · 3 songs", substring = true)
-        robot.assertTextDisplayed("Airbag")
-        robot.assertTextDisplayed("Paranoid Android")
+        robot.assertTextDisplayed("Phase Garden")
+        robot.assertTextDisplayed("Juniper Static · 2021 · 3 songs", substring = true)
+        robot.assertTextDisplayed("Chlorophyll Loop")
+        robot.assertTextDisplayed("Soft Machines at Dawn")
     }
 
     @Test
     fun `Play starts the album from the top and a song plays from its position`() {
-        val songs = okComputerSongs()
+        val songs = phaseGardenSongs()
         robot.setAlbum(readyAlbumDetail(songs = songs))
 
         robot.clickPlay()
         robot.lastPlayed shouldBe (songs to 0)
 
-        robot.clickText("Paranoid Android")
+        robot.clickText("Soft Machines at Dawn")
         robot.lastPlayed shouldBe (songs to 1)
     }
 
@@ -60,7 +60,7 @@ class AlbumDetailScreenTest {
 
     @Test
     fun `a two-disc album groups its songs under disc headers`() {
-        robot.setAlbum(readyAlbumDetail(songs = okComputerSongs(disc = 1) + okComputerSongs(disc = 2)))
+        robot.setAlbum(readyAlbumDetail(songs = phaseGardenSongs(disc = 1) + phaseGardenSongs(disc = 2)))
 
         robot.assertTextDisplayed("Disc 1")
         robot.scrollTo("Disc 2")
@@ -76,7 +76,7 @@ class AlbumDetailScreenTest {
 
     @Test
     fun `the playing song is marked`() {
-        val songs = okComputerSongs()
+        val songs = phaseGardenSongs()
         robot.setAlbum(readyAlbumDetail(songs = songs, currentSong = songs[0]))
 
         robot.assertNowPlayingShown()

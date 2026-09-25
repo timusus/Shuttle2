@@ -47,15 +47,15 @@ class AlbumArtistListTest {
 
     @Test
     fun `ready state shows artist name`() {
-        robot.setContent(readyAlbumArtistList(albumArtists = listOf(createAlbumArtist(name = "Pink Floyd"))))
-        robot.assertTextDisplayed("Pink Floyd")
+        robot.setContent(readyAlbumArtistList(albumArtists = listOf(createAlbumArtist(name = "Velvet Cartography"))))
+        robot.assertTextDisplayed("Velvet Cartography")
     }
 
     @Test
     fun `ready state shows album and song counts`() {
         robot.setContent(
             readyAlbumArtistList(
-                albumArtists = listOf(createAlbumArtist(name = "Tool", albumCount = 3, songCount = 42))
+                albumArtists = listOf(createAlbumArtist(name = "Glasshouse Relay", albumCount = 3, songCount = 42))
             )
         )
         robot.assertSubtextDisplayed("3 albums")
@@ -67,39 +67,39 @@ class AlbumArtistListTest {
         robot.setContent(
             readyAlbumArtistList(
                 albumArtists = listOf(
-                    createAlbumArtist(name = "Pink Floyd"),
-                    createAlbumArtist(name = "Led Zeppelin"),
-                    createAlbumArtist(name = "The Beatles"),
+                    createAlbumArtist(name = "Velvet Cartography"),
+                    createAlbumArtist(name = "Pale Meridian"),
+                    createAlbumArtist(name = "The Tin Orchards"),
                 )
             )
         )
-        robot.assertTextDisplayed("Pink Floyd")
-        robot.assertTextDisplayed("Led Zeppelin")
-        robot.assertTextDisplayed("The Beatles")
+        robot.assertTextDisplayed("Velvet Cartography")
+        robot.assertTextDisplayed("Pale Meridian")
+        robot.assertTextDisplayed("The Tin Orchards")
     }
 
     @Test
     fun `grid mode renders grid layout`() {
         robot.setContent(
             readyAlbumArtistList(
-                albumArtists = listOf(createAlbumArtist(name = "Pink Floyd")),
+                albumArtists = listOf(createAlbumArtist(name = "Velvet Cartography")),
                 viewMode = ViewMode.Grid,
             )
         )
         robot.assertGridLayout()
-        robot.assertTextDisplayed("Pink Floyd")
+        robot.assertTextDisplayed("Velvet Cartography")
     }
 
     @Test
     fun `list mode renders list layout`() {
         robot.setContent(
             readyAlbumArtistList(
-                albumArtists = listOf(createAlbumArtist(name = "Pink Floyd")),
+                albumArtists = listOf(createAlbumArtist(name = "Velvet Cartography")),
                 viewMode = ViewMode.List,
             )
         )
         robot.assertListLayout()
-        robot.assertTextDisplayed("Pink Floyd")
+        robot.assertTextDisplayed("Velvet Cartography")
     }
 
     @Test

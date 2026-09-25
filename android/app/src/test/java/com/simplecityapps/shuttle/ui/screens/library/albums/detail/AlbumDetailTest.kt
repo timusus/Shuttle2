@@ -36,10 +36,10 @@ class AlbumDetailTest {
     fun `ready state shows song name`() {
         robot.setContent(
             readyAlbumDetail(
-                songs = listOf(createSong(name = "Come Together")),
+                songs = listOf(createSong(name = "Rewind Button")),
             )
         )
-        robot.assertTextDisplayed("Come Together")
+        robot.assertTextDisplayed("Rewind Button")
     }
 
     @Test
@@ -47,15 +47,15 @@ class AlbumDetailTest {
         robot.setContent(
             readyAlbumDetail(
                 songs = listOf(
-                    createSong(id = 1, name = "Come Together", track = 1),
+                    createSong(id = 1, name = "Rewind Button", track = 1),
                     createSong(id = 2, name = "Something", track = 2),
-                    createSong(id = 3, name = "Here Comes the Sun", track = 3),
+                    createSong(id = 3, name = "Heatwave Radio", track = 3),
                 ),
             )
         )
-        robot.assertTextDisplayed("Come Together")
+        robot.assertTextDisplayed("Rewind Button")
         robot.assertTextDisplayed("Something")
-        robot.assertTextDisplayed("Here Comes the Sun")
+        robot.assertTextDisplayed("Heatwave Radio")
     }
 
     @Test
@@ -135,11 +135,11 @@ class AlbumDetailTest {
     fun `ready state shows hero artwork and album title`() {
         robot.setContent(
             readyAlbumDetail(
-                album = createAlbum(name = "Abbey Road"),
-                songs = listOf(createSong(name = "Come Together")),
+                album = createAlbum(name = "Cassette Summer"),
+                songs = listOf(createSong(name = "Rewind Button")),
             )
         )
-        robot.assertTextDisplayed("Abbey Road")
+        robot.assertTextDisplayed("Cassette Summer")
         robot.assertArtworkDisplayed()
     }
 
@@ -148,9 +148,9 @@ class AlbumDetailTest {
         robot.setContent(
             readyAlbumDetail(
                 songs = listOf(
-                    createSong(id = 1, name = "Come Together", track = 1),
+                    createSong(id = 1, name = "Rewind Button", track = 1),
                     createSong(id = 2, name = "Something", track = 2),
-                    createSong(id = 3, name = "Here Comes the Sun", track = 3),
+                    createSong(id = 3, name = "Heatwave Radio", track = 3),
                 ),
             )
         )
@@ -271,20 +271,20 @@ class AlbumDetailTest {
 
     @Test
     fun `top bar does not show album title while the header is visible`() {
-        robot.setContent(readyAlbumDetail(album = createAlbum(name = "Abbey Road"), songs = manySongs()))
-        robot.assertTopBarTitleNotDisplayed("Abbey Road")
+        robot.setContent(readyAlbumDetail(album = createAlbum(name = "Cassette Summer"), songs = manySongs()))
+        robot.assertTopBarTitleNotDisplayed("Cassette Summer")
     }
 
     @Test
     fun `top bar shows album title and subtitle once the header scrolls away`() {
         robot.setContent(
             readyAlbumDetail(
-                album = createAlbum(name = "Abbey Road", year = 1969, songCount = 30),
+                album = createAlbum(name = "Cassette Summer", year = 1969, songCount = 30),
                 songs = manySongs(),
             )
         )
         robot.scrollPastHeader()
-        robot.assertTopBarTitleDisplayed("Abbey Road")
+        robot.assertTopBarTitleDisplayed("Cassette Summer")
         robot.assertTopBarTitleDisplayed("1969 · 30 songs", substring = true)
     }
 

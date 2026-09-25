@@ -41,18 +41,18 @@ class AlbumArtistDetailViewModelTest {
     private val fakePlaylistRepository = FakePlaylistRepository()
     private val fakeQueueManager = FakeQueueManager()
 
-    private val testArtist = createAlbumArtist(name = "The Beatles", albumCount = 2, songCount = 2)
+    private val testArtist = createAlbumArtist(name = "The Tin Orchards", albumCount = 2, songCount = 2)
 
     @Test
     fun `expanded album survives a re-emission of new instances with the same groupKey`() = runTest {
-        val albumA = createAlbum(name = "Abbey Road", albumArtist = "The Beatles", year = 1969)
-        val albumB = createAlbum(name = "Let It Be", albumArtist = "The Beatles", year = 1970)
+        val albumA = createAlbum(name = "Cassette Summer", albumArtist = "The Tin Orchards", year = 1969)
+        val albumB = createAlbum(name = "Loose Change", albumArtist = "The Tin Orchards", year = 1970)
         fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
         fakeAlbumRepository.setAlbums(listOf(albumA, albumB))
         fakeSongRepository.setSongs(
             listOf(
-                createSong(id = 1, name = "Come Together", album = "Abbey Road"),
-                createSong(id = 2, name = "Let It Be", album = "Let It Be"),
+                createSong(id = 1, name = "Rewind Button", album = "Cassette Summer"),
+                createSong(id = 2, name = "Loose Change", album = "Loose Change"),
             )
         )
 
@@ -65,13 +65,13 @@ class AlbumArtistDetailViewModelTest {
         viewModel.uiState.value.expandedAlbums shouldBe setOf(albumA.groupKey)
 
         // Repository re-emits new instances with matching name/artist (same groupKey), e.g. after a rescan.
-        val albumARescanned = createAlbum(name = "Abbey Road", albumArtist = "The Beatles", year = 1969)
-        val albumBRescanned = createAlbum(name = "Let It Be", albumArtist = "The Beatles", year = 1970)
+        val albumARescanned = createAlbum(name = "Cassette Summer", albumArtist = "The Tin Orchards", year = 1969)
+        val albumBRescanned = createAlbum(name = "Loose Change", albumArtist = "The Tin Orchards", year = 1970)
         fakeAlbumRepository.setAlbums(listOf(albumARescanned, albumBRescanned))
         fakeSongRepository.setSongs(
             listOf(
-                createSong(id = 1, name = "Come Together", album = "Abbey Road"),
-                createSong(id = 2, name = "Let It Be", album = "Let It Be"),
+                createSong(id = 1, name = "Rewind Button", album = "Cassette Summer"),
+                createSong(id = 2, name = "Loose Change", album = "Loose Change"),
             )
         )
         advanceUntilIdle()

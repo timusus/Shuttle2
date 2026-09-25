@@ -19,11 +19,11 @@ class GenreDetailScreenTest {
     fun `shows the genre, its song count, its albums and its songs`() {
         robot.setGenre(readyGenreDetail())
 
-        robot.assertTextDisplayed("Alternative")
+        robot.assertTextDisplayed("Electronic")
         robot.assertTextDisplayed("3 songs", substring = true)
-        robot.assertTextDisplayed("OK Computer")
-        robot.scrollTo("Airbag")
-        robot.assertTextDisplayed("Airbag")
+        robot.assertTextDisplayed("Phase Garden")
+        robot.scrollTo("Chlorophyll Loop")
+        robot.assertTextDisplayed("Chlorophyll Loop")
     }
 
     @Test
@@ -31,10 +31,10 @@ class GenreDetailScreenTest {
         val state = readyGenreDetail()
         robot.setGenre(state)
 
-        robot.clickText("OK Computer")
+        robot.clickText("Phase Garden")
         robot.lastAlbumClicked shouldBe state.albums[0]
 
-        robot.clickText("Subterranean Homesick Alien")
+        robot.clickText("Petal Arithmetic")
         robot.lastPlayed shouldBe (state.songs to 2)
     }
 

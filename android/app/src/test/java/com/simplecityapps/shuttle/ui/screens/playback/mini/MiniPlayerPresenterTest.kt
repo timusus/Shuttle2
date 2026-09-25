@@ -27,7 +27,7 @@ class MiniPlayerPresenterTest {
     private val presenter = MiniPlayerPresenter(playbackManager, queueManager)
     private val view = RecordingView()
 
-    private val song = createSong(id = 1, name = "Come Together", duration = 200_000)
+    private val song = createSong(id = 1, name = "Rewind Button", duration = 200_000)
 
     @Test
     fun `binding renders the current state once`() {
@@ -35,7 +35,7 @@ class MiniPlayerPresenterTest {
 
         presenter.bindView(view)
 
-        view.events shouldBe listOf("progress 0/200000", "song Come Together", "state Paused")
+        view.events shouldBe listOf("progress 0/200000", "song Rewind Button", "state Paused")
     }
 
     @Test
@@ -67,7 +67,7 @@ class MiniPlayerPresenterTest {
         val state = queueManager.queueStateFlow.value
         queueManager.queueStateFlow.value = state.copy(items = state.items + createSong(id = 2).toQueueItem(false), contentVersion = 1)
 
-        view.events shouldBe listOf("song Come Together")
+        view.events shouldBe listOf("song Rewind Button")
     }
 
     @Test

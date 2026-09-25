@@ -21,7 +21,7 @@ class SmartPlaylistDetailScreenTest {
 
         robot.assertTextDisplayed("Recently Added")
         robot.assertTextDisplayed("3 songs", substring = true)
-        robot.assertTextDisplayed("Airbag")
+        robot.assertTextDisplayed("Chlorophyll Loop")
     }
 
     @Test
@@ -29,7 +29,7 @@ class SmartPlaylistDetailScreenTest {
         val state = readySmartPlaylistDetail()
         robot.setSmartPlaylist(state)
 
-        robot.clickText("Paranoid Android")
+        robot.clickText("Soft Machines at Dawn")
         robot.lastPlayed shouldBe (state.songs to 1)
 
         robot.clickPlay()

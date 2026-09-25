@@ -89,16 +89,16 @@ class AlbumListIntegrationTest {
     fun `shows albums from repository`() {
         fakeAlbumRepository.setAlbums(
             listOf(
-                createAlbum(name = "Dark Side of the Moon"),
-                createAlbum(name = "Abbey Road"),
+                createAlbum(name = "Soft Focus"),
+                createAlbum(name = "Cassette Summer"),
             )
         )
         fakeImportState.setState(importComplete())
 
         robot.setContentWithViewModel(createViewModel())
 
-        robot.assertTextDisplayed("Dark Side of the Moon")
-        robot.assertTextDisplayed("Abbey Road")
+        robot.assertTextDisplayed("Soft Focus")
+        robot.assertTextDisplayed("Cassette Summer")
     }
 
     // endregion
