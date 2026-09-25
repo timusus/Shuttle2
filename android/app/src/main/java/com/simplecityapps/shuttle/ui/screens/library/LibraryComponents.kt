@@ -38,6 +38,7 @@ fun LibraryArtwork(
         modifier = modifier,
         size = size,
         shape = shape,
+        model = model,
         image = model?.let { { GlideImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize()) } },
     )
 }

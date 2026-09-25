@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
 import android.content.Context
 import android.graphics.drawable.Drawable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -56,6 +57,7 @@ import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.designsystem.component.previewArtwork
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
@@ -261,6 +263,11 @@ internal fun DetailArtwork(
     requestBuilderTransform: RequestBuilderTransform<Drawable> = { it },
 ) {
     val artworkDescription = stringResource(R.string.artwork)
+    val preview = previewArtwork(model)
+    if (preview != null) {
+        Image(preview, artworkDescription, modifier.clip(shape), contentScale = ContentScale.Crop)
+        return
+    }
     if (LocalInspectionMode.current) {
         Box(
             modifier = modifier

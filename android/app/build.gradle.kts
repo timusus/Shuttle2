@@ -290,8 +290,13 @@ android {
         testImplementation(libs.mockk)
         testImplementation(libs.kotlinx.coroutinesTest)
         testImplementation(libs.robolectric)
-        // The sample library: invented names and generated covers for screenshot tests.
+        // The sample library: invented names and generated covers for screenshot tests and @Previews
+        // (ui/preview). Release compiles against it, for the previews in main source, but never
+        // packages it, and R8 does not catch live code that reaches it: keep fixture use inside
+        // @Preview functions.
         testImplementation(project(":android:fixtures"))
+        debugImplementation(project(":android:fixtures"))
+        releaseCompileOnly(project(":android:fixtures"))
         testImplementation(libs.androidx.glance.appwidget.testing)
         testImplementation("androidx.compose.ui:ui-test-junit4")
         debugImplementation("androidx.compose.ui:ui-test-manifest")
