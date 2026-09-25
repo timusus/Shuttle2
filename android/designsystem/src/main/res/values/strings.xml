@@ -13,4 +13,7 @@
     <string name="ds_search_no_results_message">Check the spelling, or search for an artist, album, song or playlist.</string>
     <string name="ds_expand_navigation">Expand navigation</string>
     <string name="ds_collapse_navigation">Collapse navigation</string>
+    <string name="ds_sort_ascending">Ascending</string>
+    <string name="ds_sort_descending">Descending</string>
+    <string name="ds_remove_filter">Remove filter</string>
 </resources>
