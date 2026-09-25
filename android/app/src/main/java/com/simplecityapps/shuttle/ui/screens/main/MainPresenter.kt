@@ -1,11 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.main
 
-import com.google.firebase.Firebase
-import com.google.firebase.crashlytics.crashlytics
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.trial.Entitlement
 import com.simplecityapps.trial.EntitlementRepository
@@ -24,13 +21,9 @@ interface MainContract {
         fun showThankYouDialog()
 
         fun launchReviewFlow()
-
-        fun showCrashReportingDialog()
     }
 
-    interface Presenter {
-        fun onCrashReportingToggled(enabled: Boolean)
-    }
+    interface Presenter
 }
 
 class MainPresenter
@@ -38,7 +31,6 @@ class MainPresenter
 constructor(
     private val queueManager: QueueOperations,
     private val preferenceManager: GeneralPreferenceManager,
-    private val privacySettings: PrivacySettings,
     private val entitlementRepository: EntitlementRepository
 ) : BasePresenter<MainContract.View>(),
     MainContract.Presenter {
@@ -55,13 +47,6 @@ constructor(
 
         if (preferenceManager.lastViewedChangelogVersion != BuildConfig.VERSION_NAME && preferenceManager.showChangelogOnLaunch) {
             view.showChangelog()
-        }
-
-        if (!privacySettings.crashReporting.value && !preferenceManager.hasSeenCrashReportingDialog) {
-            if (BuildConfig.VERSION_NAME.contains("alpha") || BuildConfig.VERSION_NAME.contains("beta")) {
-                this.view?.showCrashReportingDialog()
-                preferenceManager.hasSeenCrashReportingDialog = true
-            }
         }
 
         entitlementRepository.entitlement.onEach { entitlement ->
@@ -83,10 +68,5 @@ constructor(
                 this.view?.launchReviewFlow()
             }
         }
-    }
-
-    override fun onCrashReportingToggled(enabled: Boolean) {
-        privacySettings.crashReporting.value = enabled
-        Firebase.crashlytics.setCrashlyticsCollectionEnabled(enabled)
     }
 }

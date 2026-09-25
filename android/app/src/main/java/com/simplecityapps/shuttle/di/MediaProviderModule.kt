@@ -8,6 +8,7 @@ import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStor
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.ui.screens.sources.SafScannerFolderStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,8 +31,10 @@ class MediaProviderModule {
     @Singleton
     fun provideTagLibSongProvider(
         @ApplicationContext context: Context,
-        kTagLib: KTagLib
-    ): TaglibMediaProvider = TaglibMediaProvider(context, kTagLib)
+        kTagLib: KTagLib,
+        fileScanner: FileScanner,
+        folderStore: SafScannerFolderStore
+    ): TaglibMediaProvider = TaglibMediaProvider(context, kTagLib, fileScanner, folderStore::scannerFolders)
 
     @Provides
     @Singleton

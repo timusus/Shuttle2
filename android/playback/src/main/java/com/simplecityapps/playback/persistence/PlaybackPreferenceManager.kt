@@ -92,7 +92,8 @@ class PlaybackPreferenceManager(
             sharedPreferences.put("media_providers", value.map { it.ordinal }.joinToString(","))
         }
         get() {
-            return sharedPreferences.get("media_providers", "")
+            // A fresh install scans this device with the S2 scanner; an empty saved value means every source was turned off.
+            return sharedPreferences.get("media_providers", MediaProviderType.Shuttle.ordinal.toString())
                 .split(",")
                 .filter { it.isNotEmpty() }
                 .map {

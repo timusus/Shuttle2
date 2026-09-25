@@ -139,9 +139,9 @@ private val SettingsDestination.icon: ImageVector
     }
 
 /**
- * One settings destination, rendered from its catalog [screen]. Rows below [sdkInt]'s level and links in
- * [hiddenLinks] are left out; a row whose `dependsOn` switch is off is disabled. About gets a version row
- * when [versionName] is set.
+ * One settings destination, rendered from its catalog [screen] after any [leadingContent]. Rows below [sdkInt]'s
+ * level are left out; a row whose `dependsOn` switch is off is disabled. About gets a version row when
+ * [versionName] is set.
  */
 @Composable
 fun SettingsDestinationScreen(
@@ -156,14 +156,15 @@ fun SettingsDestinationScreen(
     modifier: Modifier = Modifier,
     sdkInt: Int = Build.VERSION.SDK_INT,
     versionName: String? = null,
-    hiddenLinks: Set<SettingsLink> = HiddenLinks,
+    /** Rows a destination adds ahead of its catalog groups, such as Sources' folders and servers. */
+    leadingContent: LazyListScope.() -> Unit = {},
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     var openChoiceKey by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingAction by rememberSaveable { mutableStateOf<SettingsAction?>(null) }
 
     val groups = screen.groups
-        .map { group -> group to group.items.filter { it.minSdk <= sdkInt && (it !is SettingItem.Navigate || it.target !in hiddenLinks) } }
+        .map { group -> group to group.items.filter { it.minSdk <= sdkInt } }
         .filter { (_, items) -> items.isNotEmpty() }
 
     SettingsScaffold(
@@ -172,6 +173,7 @@ fun SettingsDestinationScreen(
         modifier = modifier,
         snackbarHostState = snackbarHostState
     ) {
+        leadingContent()
         groups.forEach { (group, items) ->
             item(key = group.title ?: items.first().title) {
                 SettingsGroup(
@@ -236,9 +238,6 @@ fun SettingsDestinationScreen(
         }
     }
 }
-
-/** Links with no redesigned screen yet: Sources' media provider list arrives with the Sources redesign. */
-val HiddenLinks: Set<SettingsLink> = setOf(SettingsLink.MediaProviders)
 
 @Composable
 private fun SettingRow(

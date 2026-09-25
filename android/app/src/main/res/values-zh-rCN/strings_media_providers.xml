@@ -12,16 +12,8 @@
     <string name="media_provider_title_plex">Plex</string>
     <string name="media_provider_title_jellyfin">Jellyfin</string>
     <string name="media_provider_title_emby">Emby</string>
-    <string name="media_provider_type_local">本地</string>
-    <string name="media_provider_type_remote">远程</string>
-    <string name="media_provider_add">添加媒体提供服务</string>
     <string name="media_providers_add_onboarding">添加媒体提供服务。您稍后也可进行更改</string>
     <string name="media_providers_add">添加媒体提供服务</string>
-    <string name="media_provider_toolbar_title_onboarding">发现您的音乐</string>
-    <string name="media_provider_toolbar_title">媒体提供服务</string>
-    <string name="media_provider_dialog_remove_title">移除 <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
-    <string name="media_provider_dialog_remove_subtitle">将删除 <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> 中的所有的歌曲、播放列表和播放记录</string>
-    <string name="media_provider_dialog_button_remove">移除</string>
     <string name="media_provider_config_hint_address">地址</string>
     <string name="media_provider_config_hint_username">用户名</string>
     <string name="media_provider_config_hint_password">密码</string>

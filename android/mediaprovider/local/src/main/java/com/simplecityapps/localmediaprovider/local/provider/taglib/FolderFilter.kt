@@ -18,12 +18,13 @@ private const val EXTERNAL_STORAGE_AUTHORITY = "com.android.externalstorage.docu
 
 /**
  * The absolute folder path of a tree picked from the external storage document provider, or null for a tree from any
- * other provider (Downloads, cloud storage), which has no path to filter MediaStore's rows by.
+ * other provider (Downloads, cloud storage), which has no path to filter MediaStore's rows by. A document id has the
+ * same form, so this also gives a document's file path.
  *
  * A tree document id is `<root>:<path>`: `primary` is [primaryStoragePath], `home` is its Documents folder, and any
  * other root is a secondary volume's id, mounted at `/storage/<id>`.
  */
-internal fun externalStorageTreeFolder(
+fun externalStorageTreeFolder(
     authority: String?,
     treeDocumentId: String,
     primaryStoragePath: String

@@ -23,18 +23,8 @@
     <string name="media_provider_title_plex">Plex</string>
     <string name="media_provider_title_jellyfin">Jellyfin</string>
     <string name="media_provider_title_emby">Emby</string>
-    <string name="media_provider_type_local">Local</string>
-    <string name="media_provider_type_remote">Remoto</string>
-    <string name="media_provider_add">Adicionar provedor de mídia</string>
     <string name="media_providers_add_onboarding">Adicionar provedor(es) de mídia. Você pode mudar isso mais tarde</string>
     <string name="media_providers_add">Adicionar provedor(es) de mídia</string>
-    <string name="media_provider_toolbar_title_onboarding">Descubra sua música</string>
-    <string name="media_provider_toolbar_title">Provedores de mídia</string>
-    <string name="media_provider_dialog_remove_title">Remover 
-    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
-    <string name="media_provider_dialog_remove_subtitle">Isso removerá todas as músicas, playlists e contagens de reprodução associadas ao provedor de mídia 
-    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
-    <string name="media_provider_dialog_button_remove">Remover</string>
     <string name="media_provider_config_hint_address">Local</string>
     <string name="media_provider_config_hint_username">Nome do usuário</string>
     <string name="media_provider_config_hint_password">Senha</string>

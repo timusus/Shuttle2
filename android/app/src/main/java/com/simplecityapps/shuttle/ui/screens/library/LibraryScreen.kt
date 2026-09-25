@@ -81,6 +81,8 @@ import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import kotlinx.coroutines.launch
 
 /** What the container's chrome shows for the current tab: its count, selection and overflow options. */
@@ -106,6 +108,8 @@ fun LibraryScreen(
     onTabsChanged: (order: List<LibraryTab>, enabled: Set<LibraryTab>) -> Unit,
     onSelectionAction: (MediaActionType) -> Unit,
     modifier: Modifier = Modifier,
+    /** Shown in place of the tabs while the library has no songs (#379). */
+    emptyLibrary: (@Composable (Modifier) -> Unit)? = null,
     page: @Composable (LibraryTab) -> Unit,
 ) {
     val tabs = uiState.tabs
@@ -167,7 +171,9 @@ fun LibraryScreen(
             }
         },
     ) { padding ->
-        if (tabs.isEmpty()) {
+        if (emptyLibrary != null) {
+            emptyLibrary(Modifier.padding(padding).fillMaxSize())
+        } else if (tabs.isEmpty()) {
             EmptyState(
                 title = stringResource(R.string.library_all_tabs_hidden),
                 message = stringResource(R.string.library_tabs_empty),
@@ -286,6 +292,9 @@ fun LibraryDestination(
 ) {
     val viewModel: LibraryViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val emptyViewModel: LibraryEmptyViewModel = hiltViewModel()
+    val content by emptyViewModel.uiState.collectAsStateWithLifecycle()
+    val accessRequests = rememberMusicAccessRequests(emptyViewModel)
     MediaActionsHost(onNavigate = onNavigate) { actions ->
         val chrome = tabChrome(uiState.currentTab)
         LibraryScreen(
@@ -296,6 +305,18 @@ fun LibraryDestination(
             onSelectionAction = { type ->
                 chrome.selection?.let { actions.perform(type, it) }
                 chrome.onClearSelection()
+            },
+            emptyLibrary = (content as? LibraryAvailability.Empty)?.let { empty ->
+                @Composable { modifier: Modifier ->
+                    LibraryEmptyScreen(
+                        state = empty,
+                        onAllowAccess = accessRequests.request,
+                        onOpenAppSettings = accessRequests.openAppSettings,
+                        onScan = emptyViewModel::onScan,
+                        onConnectServer = { onOpen(SettingsDestinationRoute(SettingsDestination.Sources)) },
+                        modifier = modifier,
+                    )
+                }
             },
         ) { tab -> LibraryPage(tab, actions, onOpen) }
     }

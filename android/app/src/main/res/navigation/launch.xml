@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph_launch"
-    app:startDestination="@id/onboardingFragment">
+    app:startDestination="@id/mainFragment">
 
     <fragment
         android:id="@+id/mainFragment"
@@ -15,20 +15,9 @@
             app:destination="@id/bottomSheetFragment" />
     </fragment>
     <fragment
-        android:id="@+id/onboardingFragment"
-        android:name="com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragment"
-        android:label="OnboardingFragment"
-        tools:layout="@layout/fragment_onboarding">
-        <action
-            android:id="@+id/action_onboardingFragment_to_mainFragment"
-            app:destination="@id/mainFragment"
-            app:popUpTo="@+id/onboardingFragment"
-            app:popUpToInclusive="true" />
-        <argument
-            android:name="isOnboarding"
-            android:defaultValue="true"
-            app:argType="boolean" />
-    </fragment>
+        android:id="@+id/sourcesFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.sources.SourcesFragment"
+        android:label="SourcesFragment" />
 
     <fragment
         android:id="@+id/equalizerFragment"
@@ -52,11 +41,7 @@
         android:id="@+id/settingsFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.SettingsFragment"
         android:label="SettingsFragment"
-        tools:layout="@layout/fragment_settings">
-        <action
-            android:id="@+id/action_settingsFragment_to_onboardingFragment"
-            app:destination="@id/onboardingFragment" />
-    </fragment>
+        tools:layout="@layout/fragment_settings" />
 
     <fragment
         android:id="@+id/displayPreferenceFragment"

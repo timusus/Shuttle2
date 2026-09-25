@@ -32,7 +32,6 @@ data class SettingsGroup(
 
 /** Where a [SettingItem.Navigate] row goes. The UI step maps each to a route. */
 enum class SettingsLink {
-    MediaProviders,
     Equalizer,
     ExcludedSongs,
     WhatsNew,

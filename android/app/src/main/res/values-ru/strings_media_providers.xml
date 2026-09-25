@@ -24,19 +24,8 @@
     <string name="media_provider_title_plex">Plex</string>
     <string name="media_provider_title_jellyfin">Jellyfin</string>
     <string name="media_provider_title_emby">Emby</string>
-    <string name="media_provider_type_local">Локальный</string>
-    <string name="media_provider_type_remote">Удаленный</string>
-    <string name="media_provider_add">Добавить медиа-провайдера</string>
     <string name="media_providers_add_onboarding">Добавьте медиа-провайдера(ов). Вы можете изменить это позже</string>
     <string name="media_providers_add">Добавить медиа-провайдера(ов)</string>
-    <string name="media_provider_toolbar_title_onboarding">Откройте для себя свою музыку</string>
-    <string name="media_provider_toolbar_title">Медиа-провайдеры</string>
-    <string name="media_provider_dialog_remove_title">Удалить 
-    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
-    <string name="media_provider_dialog_remove_subtitle">Это приведет к удалению всех песен, плейлистов и счетчиков воспроизведения, связанных с медиа-провайдером 
-    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
-    .</string>
-    <string name="media_provider_dialog_button_remove">Удалить</string>
     <string name="media_provider_config_hint_address">Адрес</string>
     <string name="media_provider_config_hint_username">Имя пользователя</string>
     <string name="media_provider_config_hint_password">Пароль</string>

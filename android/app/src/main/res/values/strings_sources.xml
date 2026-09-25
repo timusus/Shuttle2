@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Library empty state, before the app may read the device's music -->
+    <string name="sources_access_title">Find the music on this device</string>
+    <string name="sources_access_message">S2 needs access to your music to build your library. You can also stream from your own server.</string>
+    <string name="sources_access_denied_message">Without access to your music, S2 can only play from a server.</string>
+    <string name="sources_access_permanently_denied_message">Access to music is turned off for S2. Turn on Music and audio in S2\'s app settings.</string>
+    <string name="sources_allow_access">Allow access to music</string>
+    <string name="sources_open_app_settings">Open app settings</string>
+    <string name="sources_connect_server">Connect a server</string>
+    <string name="sources_scanning_title">Scanning your music</string>
+    <string name="sources_no_music_title">No music found</string>
+    <string name="sources_no_music_message">S2 didn\'t find any music on this device. Add a folder in Sources, or connect a server.</string>
+    <string name="sources_scan_again">Scan again</string>
+
+    <!-- Settings > Sources -->
+    <string name="sources_this_device">This device</string>
+    <string name="sources_this_device_summary">Music stored on this phone</string>
+    <string name="sources_android_provider_summary">Found by Android\'s media library. Folder choices below don\'t apply to it.</string>
+    <string name="sources_this_device_off_title">Stop using this device\'s music?</string>
+    <string name="sources_this_device_off_message">Songs and playlists from this device leave your library. Turning it back on scans them again.</string>
+    <string name="sources_turn_off">Turn off</string>
+    <string name="sources_includes_title">Only scan these folders</string>
+    <string name="sources_includes_empty">Every folder is scanned</string>
+    <string name="sources_excludes_title">Skip these folders</string>
+    <string name="sources_extras_title">Read these folders directly</string>
+    <string name="sources_extras_summary">For folders Android hides from music apps, or file types it doesn\'t recognise</string>
+    <string name="sources_add_folder">Add folder</string>
+    <string name="sources_remove_folder_title">Remove this folder?</string>
+    <string name="sources_remove">Remove</string>
+    <string name="sources_folder_not_on_device">Pick a folder on this device\'s storage</string>
+    <string name="sources_no_folder_picker">No app on this device can pick folders</string>
+    <string name="sources_scan_now">Scan now</string>
+    <string name="sources_scan_summary">Look for new and changed music</string>
+    <string name="sources_scan_started">Scanning for music</string>
+    <string name="sources_settings_title">Sources</string>
+    <string name="sources_settings_summary">Folders on this device, and Jellyfin, Emby &amp; Plex servers</string>
+    <string name="sources_servers_title">Servers</string>
+    <string name="sources_server_connected">Connected</string>
+    <string name="sources_server_not_connected">Not connected</string>
+    <string name="sources_server_sign_in">Sign in again</string>
+    <string name="sources_remove_server_title">Remove %1$s?</string>
+    <string name="sources_remove_server_message">Its songs and playlists leave your library. You can connect it again later.</string>
+</resources>

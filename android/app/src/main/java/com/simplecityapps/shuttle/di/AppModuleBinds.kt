@@ -15,6 +15,10 @@ import com.simplecityapps.shuttle.appinitializers.ShortcutInitializer
 import com.simplecityapps.shuttle.appinitializers.TimberInitializer
 import com.simplecityapps.shuttle.appinitializers.WidgetInitializer
 import com.simplecityapps.shuttle.entitlement.EntitledServerStreamPolicy
+import com.simplecityapps.shuttle.ui.screens.sources.DefaultMediaSources
+import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
+import com.simplecityapps.shuttle.ui.screens.sources.SafScannerFolderStore
+import com.simplecityapps.shuttle.ui.screens.sources.ScannerFolderStore
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -29,6 +33,12 @@ abstract class AppModuleBinds {
 
     @Binds
     abstract fun bindServerStreamPolicy(impl: EntitledServerStreamPolicy): ServerStreamPolicy
+
+    @Binds
+    abstract fun bindMediaSources(impl: DefaultMediaSources): MediaSources
+
+    @Binds
+    abstract fun bindScannerFolderStore(impl: SafScannerFolderStore): ScannerFolderStore
 
     @Binds
     @IntoSet

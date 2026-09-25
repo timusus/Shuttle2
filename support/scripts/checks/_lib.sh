@@ -95,16 +95,16 @@ restore_playback_fixture() {
     "${CHECKS_ROOT}/support/scripts/seed-test-media.sh" playback --skip-onboarding >/dev/null
 }
 
-# Resets the lane, seeds the `taglib` fixture (support/scripts/seed-test-media.sh) and adds it as
-# the Shuttle (TagLib) local provider through the real system SAF folder picker
-# (support/maestro/nav/setup-taglib-provider.yaml), so a check can exercise m3u sync or tag edits
-# against a real SAF-backed provider instead of MediaStore. Leaves the library holding only the
-# taglib fixture's 5 songs (MediaStore stays selected but empty, since `seed-test-media.sh taglib`
-# never scans its files into MediaStore). Call `trap restore_playback_fixture EXIT` right after, so
+# Resets the lane, seeds the `taglib` fixture (support/scripts/seed-test-media.sh) with the S2
+# scanner (Shuttle) selected, and adds its folder under Settings > Sources' "Read these folders
+# directly" through the real system SAF folder picker (support/maestro/nav/setup-taglib-provider.yaml),
+# so a check can exercise m3u sync or tag edits against real SAF-backed songs. The library holds
+# the taglib fixture's 5 songs (`seed-test-media.sh taglib` never scans its files into MediaStore,
+# so the scanner reads them through the folder grant). Call `trap restore_playback_fixture EXIT` right after, so
 # a later check's start_playback (queueSize == 5 on the `playback` fixture) still holds.
 setup_taglib_provider() {
     "${CHECKS_ROOT}/support/scripts/remote-emu.sh" reset >/dev/null
-    "${CHECKS_ROOT}/support/scripts/seed-test-media.sh" taglib --skip-onboarding >/dev/null
+    "${CHECKS_ROOT}/support/scripts/seed-test-media.sh" taglib --skip-onboarding --s2-scanner >/dev/null
     local device out
     device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
     out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"

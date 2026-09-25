@@ -44,7 +44,7 @@ PREFS_FILE="${DEBUG_APP_ID}_preferences.xml"
 
 usage() {
     cat <<'EOF'
-Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding]
+Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding [--s2-scanner]]
 
   two-disc        one album, 2 discs x 3 tracks (one track is FLAC), disc/track/ReplayGain tags set
   many-tracks     3 artists x 2 albums x 8 tracks
@@ -60,6 +60,8 @@ Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding]
 
   --skip-onboarding   write debug-app prefs so it opens straight to the library with the local
                       provider selected (needs the debug APK already installed)
+  --s2-scanner        with --skip-onboarding, select the S2 scanner (Shuttle) instead of the
+                      Android (MediaStore) provider, so Settings > Sources' folders apply
 
 Requires ffmpeg + adb locally, and ANDROID_SERIAL set -- run
 `eval "$(support/scripts/remote-emu.sh env)"` first (or export it yourself for a local emulator).
@@ -77,9 +79,11 @@ esac
 shift
 
 SKIP_ONBOARDING=0
+PROVIDER_TYPES=1 # MediaProviderType.MediaStore; 0 is Shuttle
 for arg in "$@"; do
     case "$arg" in
         --skip-onboarding) SKIP_ONBOARDING=1 ;;
+        --s2-scanner) PROVIDER_TYPES=0 ;;
         *) echo "seed-test-media: unknown argument '$arg'" >&2; usage >&2; exit 2 ;;
     esac
 done
@@ -272,27 +276,24 @@ case "$FIXTURE" in
     taglib) build_taglib "$FIXTURE_DIR" ;;
 esac
 
-# The app only imports MediaStore tracks into its own library on: walking through onboarding's
-# Scanner page, or a periodic WorkManager job (off by default; even enabled it only runs once a
-# day and requires the device idle). With onboarding skipped there's no Scanner page, so
-# --skip-onboarding uses a debug-only broadcast receiver (android/app/src/debug) that calls
-# MediaImporter.import() directly.
+# The app imports into its own library when the music permission is granted in the app, on a
+# rescan, or from a periodic WorkManager job (off by default). Granting the permission over adb
+# starts none of those, so --skip-onboarding selects the Android (MediaStore) provider and uses a
+# debug-only broadcast receiver (android/app/src/debug) that calls MediaImporter.import() directly.
 if [ "$SKIP_ONBOARDING" = "1" ]; then
     echo "seed-test-media: writing debug-app prefs to skip onboarding (local provider) ..."
-    # MainActivity also gates onboarding on the storage-read runtime permission (READ_MEDIA_AUDIO
-    # on API 33+), which onboarding itself would otherwise prompt for.
+    # Granted up front, so MainActivity doesn't ask for it on first launch.
     radb shell pm grant "$DEBUG_APP_ID" android.permission.READ_MEDIA_AUDIO >/dev/null 2>&1 || true
     radb shell "run-as ${DEBUG_APP_ID} mkdir -p shared_prefs" \
         || { echo "seed-test-media: run-as failed -- is the debug APK installed?" >&2; exit 1; }
     radb shell "run-as ${DEBUG_APP_ID} sh -c 'cat > shared_prefs/${PREFS_FILE}'" <<EOF
 <?xml version='1.0' encoding='utf-8' standalone='yes' ?>
 <map>
-    <boolean name="has_onboarded" value="true" />
-    <string name="media_providers">1</string>
+    <string name="media_providers">${PROVIDER_TYPES}</string>
     <boolean name="changelog_show_on_launch" value="false" />
 </map>
 EOF
-    echo "seed-test-media: launching the app past onboarding ..."
+    echo "seed-test-media: launching the app ..."
     radb shell am start -n "${DEBUG_APP_ID}/com.simplecityapps.shuttle.ui.MainActivity" >/dev/null
     sleep 3
 fi

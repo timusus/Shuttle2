@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.jellyfin
+package com.simplecityapps.shuttle.ui.screens.sources.servers.emby
 
 import android.app.Dialog
 import android.os.Bundle
@@ -9,16 +9,19 @@ import androidx.core.view.isVisible
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import androidx.fragment.app.setFragmentResult
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import com.simplecityapps.networking.userDescription
-import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
-import com.simplecityapps.provider.jellyfin.http.LoginCredentials
+import com.simplecityapps.provider.emby.EmbyAuthenticationManager
+import com.simplecityapps.provider.emby.http.LoginCredentials
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import com.simplecityapps.shuttle.ui.screens.sources.servers.SERVER_CONNECTED_REQUEST
+import com.simplecityapps.shuttle.ui.screens.sources.servers.serverConnectedResult
 import com.simplecityapps.trial.EntitlementRepository
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -27,9 +30,9 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
-class JellyfinConfigurationFragment : DialogFragment() {
+class EmbyConfigurationFragment : DialogFragment() {
     @Inject
-    lateinit var jellyfinAuthenticationManager: JellyfinAuthenticationManager
+    lateinit var embyAuthenticationManager: EmbyAuthenticationManager
 
     @Inject
     lateinit var entitlementRepository: EntitlementRepository
@@ -53,13 +56,13 @@ class JellyfinConfigurationFragment : DialogFragment() {
         loadingView = view.findViewById(R.id.loadingView)
         inputGroup = view.findViewById(R.id.inputGroup)
 
-        jellyfinAuthenticationManager.getAddress()?.let { address ->
+        embyAuthenticationManager.getAddress()?.let { address ->
             addressInputLayout.editText?.setText(address)
         }
-        jellyfinAuthenticationManager.getLoginCredentials()?.username?.let { username ->
+        embyAuthenticationManager.getLoginCredentials()?.username?.let { username ->
             loginInputLayout.editText?.setText(username)
         }
-        jellyfinAuthenticationManager.getLoginCredentials()?.password?.let { password ->
+        embyAuthenticationManager.getLoginCredentials()?.password?.let { password ->
             passwordInputLayout.editText?.setText(password)
             passwordInputLayout.endIconMode = TextInputLayout.END_ICON_NONE
         }
@@ -87,13 +90,13 @@ class JellyfinConfigurationFragment : DialogFragment() {
 
         rememberPasswordSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
             if (!isChecked) {
-                jellyfinAuthenticationManager.setLoginCredentials(null)
+                embyAuthenticationManager.setLoginCredentials(null)
             }
         }
 
         val dialog =
             MaterialAlertDialogBuilder(requireContext())
-                .setTitle(requireContext().getString(com.simplecityapps.mediaprovider.R.string.media_provider_title_long_jellyfin))
+                .setTitle(requireContext().getString(com.simplecityapps.mediaprovider.R.string.media_provider_title_long_emby))
                 .setView(view)
                 .setPositiveButton(requireContext().getString(R.string.media_provider_button_authenticate), null)
                 .setNegativeButton(requireContext().getString(R.string.dialog_button_close), null)
@@ -109,27 +112,28 @@ class JellyfinConfigurationFragment : DialogFragment() {
                 loadingView.setState(CircularLoadingView.State.Loading(requireContext().getString(R.string.media_provider_authenticating)))
                 loadingView.isVisible = true
 
-                jellyfinAuthenticationManager.setAddress(addressInputLayout.editText!!.text.toString())
+                embyAuthenticationManager.setAddress(addressInputLayout.editText!!.text.toString())
 
                 val loginCredentials = LoginCredentials(loginInputLayout.editText!!.text.toString(), passwordInputLayout.editText!!.text.toString())
 
                 lifecycleScope.launch {
                     val result =
-                        jellyfinAuthenticationManager.authenticate(
-                            address = jellyfinAuthenticationManager.getAddress()!!,
+                        embyAuthenticationManager.authenticate(
+                            address = embyAuthenticationManager.getAddress()!!,
                             loginCredentials = loginCredentials
                         )
                     result.onSuccess {
-                        entitlementRepository.onServerConnected(MediaProviderType.Jellyfin)
+                        entitlementRepository.onServerConnected(MediaProviderType.Emby)
+                        setFragmentResult(SERVER_CONNECTED_REQUEST, serverConnectedResult(MediaProviderType.Emby))
                         if (rememberPasswordSwitch.isChecked) {
-                            jellyfinAuthenticationManager.setLoginCredentials(loginCredentials)
+                            embyAuthenticationManager.setLoginCredentials(loginCredentials)
                         }
                         loadingView.setState(CircularLoadingView.State.Empty(requireContext().getString(R.string.media_provider_authentication_success)))
                         delay(1000)
                         dialog.dismiss()
                     }
                     result.onFailure { error ->
-                        Timber.e("Jellyfin authentication failed. Error ${error.localizedMessage}")
+                        Timber.e("Emby authentication failed. Error ${error.localizedMessage}")
                         loadingView.setState(CircularLoadingView.State.Retry(error.userDescription()))
                     }
                 }
@@ -142,7 +146,7 @@ class JellyfinConfigurationFragment : DialogFragment() {
     // Public
 
     fun show(manager: FragmentManager) {
-        super.show(manager, "JellyfinConfigurationFragment")
+        super.show(manager, "EmbyConfigurationFragment")
     }
 
     // Private
@@ -150,7 +154,7 @@ class JellyfinConfigurationFragment : DialogFragment() {
     private fun validate(): Boolean {
         var hasError = false
 
-        // address
+        // Host
         if (addressInputLayout.editText!!.text.isEmpty()) {
             addressInputLayout.error = requireContext().getString(R.string.validation_field_required)
             hasError = true
@@ -168,6 +172,6 @@ class JellyfinConfigurationFragment : DialogFragment() {
     // Static
 
     companion object {
-        fun newInstance() = JellyfinConfigurationFragment()
+        fun newInstance() = EmbyConfigurationFragment()
     }
 }

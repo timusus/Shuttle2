@@ -2,8 +2,6 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Dialog button 'close' -->
     <string name="dialog_button_close">Kapat</string>
-    <!-- Dialog button 'done' -->
-    <string name="dialog_button_done">Bitti</string>
     <!-- Dialog button 'retry' -->
     <string name="dialog_button_retry">Yeniden dene</string>
     <!-- Dialog button 'save' (save whatever changes were made in the dialog) -->

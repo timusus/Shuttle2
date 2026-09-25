@@ -31,7 +31,7 @@ import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 /** A button a state message offers, such as "Add a music folder" or "Retry". */
 class StateAction(val label: String, val onClick: () -> Unit)
 
-/** Why a screen has nothing to show, with an optional [action] that fixes it. */
+/** Why a screen has nothing to show, with an optional [action] that fixes it and a [secondaryAction] beside it. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun EmptyState(
@@ -40,6 +40,7 @@ fun EmptyState(
     message: String? = null,
     icon: ImageVector = Icons.Rounded.LibraryMusic,
     action: StateAction? = null,
+    secondaryAction: StateAction? = null,
 ) {
     StateMessage(
         title = title,
@@ -49,11 +50,12 @@ fun EmptyState(
         iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
         iconColor = MaterialTheme.colorScheme.onSecondaryContainer,
         action = action,
+        secondaryAction = secondaryAction,
         modifier = modifier,
     )
 }
 
-/** The layout empty and error states share: a `MaterialShapes` icon container, text, one action. */
+/** The layout empty and error states share: a `MaterialShapes` icon container, text, up to two actions. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun StateMessage(
@@ -65,6 +67,7 @@ internal fun StateMessage(
     iconColor: Color,
     action: StateAction?,
     modifier: Modifier = Modifier,
+    secondaryAction: StateAction? = null,
 ) {
     Column(
         modifier = modifier
@@ -104,6 +107,9 @@ internal fun StateMessage(
         }
         if (action != null) {
             S2Button(text = action.label, onClick = action.onClick)
+        }
+        if (secondaryAction != null) {
+            S2Button(text = secondaryAction.label, onClick = secondaryAction.onClick, style = S2ButtonStyle.Text)
         }
     }
 }

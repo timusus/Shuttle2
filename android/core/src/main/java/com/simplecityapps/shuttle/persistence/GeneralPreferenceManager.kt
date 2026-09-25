@@ -84,30 +84,6 @@ class GeneralPreferenceManager(
             return sharedPreferences.getString("pref_album_view_mode", null)
         }
 
-    var hasSeenOnboardingAnalyticsDialog: Boolean
-        set(value) {
-            sharedPreferences.put("onboarding_analytics_dialog_viewed", value)
-        }
-        get() {
-            return sharedPreferences.get("onboarding_analytics_dialog_viewed", false)
-        }
-
-    var hasSeenCrashReportingDialog: Boolean
-        set(value) {
-            sharedPreferences.put("crash_reporting_dialog_viewed", value)
-        }
-        get() {
-            return sharedPreferences.get("crash_reporting_dialog_viewed", false)
-        }
-
-    var hasOnboarded: Boolean
-        set(value) {
-            sharedPreferences.put("has_onboarded", value)
-        }
-        get() {
-            return sharedPreferences.getBoolean("has_onboarded", false)
-        }
-
     var currentLibraryTab: LibraryTab?
         set(value) {
             sharedPreferences.put("library_tab_current", value?.name)

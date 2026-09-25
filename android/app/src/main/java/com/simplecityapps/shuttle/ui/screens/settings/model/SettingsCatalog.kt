@@ -146,12 +146,6 @@ object SettingsCatalog {
             SettingsGroup(
                 title = null,
                 items = listOf(
-                    SettingItem.Navigate(
-                        target = SettingsLink.MediaProviders,
-                        title = R.string.pref_media_provider_title,
-                        summary = R.string.pref_media_provider_summary,
-                        key = "pref_media_provider"
-                    ),
                     SettingItem.Switch(
                         setting = LibrarySettings.ReportPlaybackToServer,
                         title = R.string.pref_report_playback_title,
@@ -311,6 +305,7 @@ object SettingsCatalog {
      */
     val droppedKeys: Map<String, String> = mapOf(
         "changelog_show_on_launch" to "Dropped by decision 12",
+        "pref_media_provider" to "Settings > Sources replaces the provider picker, above the catalog's own rows (#379)",
         "pref_library_tabs_all" to "Tab order moves to the Library screen's Edit tabs sheet",
         "pref_library_tabs_enabled" to "Tab visibility moves to the Library screen's Edit tabs sheet"
     )

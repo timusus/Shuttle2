@@ -1,22 +1,21 @@
 package com.simplecityapps.shuttle.ui
 
-import android.Manifest
 import android.app.SearchManager
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.NavHostFragment
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.di.AppCoroutineScope
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.view.SnowfallView
 import com.simplecityapps.shuttle.ui.screens.paywall.showPaywallOnRequest
+import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
+import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
+import com.simplecityapps.shuttle.ui.screens.sources.SourcesSettings
 import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.ServerAccessGate
 import dagger.hilt.android.AndroidEntryPoint
@@ -28,9 +27,6 @@ import kotlinx.coroutines.withTimeout
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-    @Inject
-    lateinit var preferenceManager: GeneralPreferenceManager
-
     @Inject
     lateinit var themeManager: ThemeManager
 
@@ -50,7 +46,19 @@ class MainActivity : AppCompatActivity() {
     @AppCoroutineScope
     lateinit var scope: CoroutineScope
 
+    @Inject
+    lateinit var mediaSources: MediaSources
+
+    @Inject
+    lateinit var sourcesSettings: SourcesSettings
+
     var snowfallView: SnowfallView? = null
+
+    private val musicPermissionRequest =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            sourcesSettings.musicPermissionRequested.value = true
+            if (granted) mediaSources.scanThisDevice()
+        }
 
     // Lifecycle
 
@@ -64,16 +72,13 @@ class MainActivity : AppCompatActivity() {
         val navHost = supportFragmentManager.findFragmentById(R.id.onboardingNavHostFragment) as NavHostFragment
         val navController = navHost.navController
 
-        val navInflater = navController.navInflater
-        val graph = navInflater.inflate(R.navigation.launch)
+        navController.setGraph(R.navigation.launch)
 
-        if (!preferenceManager.hasOnboarded || !hasStoragePermission()) {
-            graph.setStartDestination(R.id.onboardingFragment)
-        } else {
-            graph.setStartDestination(R.id.mainFragment)
+        // No onboarding (#379): ask for the music permission once, on first launch, and scan when it's granted.
+        // A later grant goes through Settings > Media > Sources, or the system settings.
+        if (savedInstanceState == null && !sourcesSettings.musicPermissionRequested.value && !MusicPermission.isGranted(this)) {
+            musicPermissionRequest.launch(MusicPermission.name)
         }
-
-        navController.graph = graph
 
         handleSearchQuery(intent)
         // Not on recreation, or on a relaunch from recents, which redeliver the intent that opened the file
@@ -108,14 +113,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Private
-
-    private fun hasStoragePermission(): Boolean = (ContextCompat.checkSelfPermission(this, getStoragePermission()) == PackageManager.PERMISSION_GRANTED)
-
-    private fun getStoragePermission(): String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        Manifest.permission.READ_MEDIA_AUDIO
-    } else {
-        Manifest.permission.READ_EXTERNAL_STORAGE
-    }
 
     /** Plays what a voice search (e.g. Assistant's "play X on S2") asks for. */
     private fun handleSearchQuery(intent: Intent?) {

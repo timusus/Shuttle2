@@ -2,8 +2,6 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Dialog button 'close' -->
     <string name="dialog_button_close">关闭</string>
-    <!-- Dialog button 'done' -->
-    <string name="dialog_button_done">完成</string>
     <!-- Dialog button 'retry' -->
     <string name="dialog_button_retry">重试</string>
     <!-- Dialog button 'save' (save whatever changes were made in the dialog) -->

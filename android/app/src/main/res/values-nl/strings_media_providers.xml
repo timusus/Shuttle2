@@ -22,19 +22,8 @@
     <string name="media_provider_title_plex">Plex</string>
     <string name="media_provider_title_jellyfin">Jellyfin</string>
     <string name="media_provider_title_emby">Emby</string>
-    <string name="media_provider_type_local">Lokaal</string>
-    <string name="media_provider_type_remote">Op afstand</string>
-    <string name="media_provider_add">Mediaprovider toevoegen</string>
     <string name="media_providers_add_onboarding">Mediaprovider(s) toevoegen. U kunt dit later wijzigen</string>
     <string name="media_providers_add">Mediaprovider(s) toevoegen</string>
-    <string name="media_provider_toolbar_title_onboarding">Ontdek je muziek</string>
-    <string name="media_provider_toolbar_title">Mediaproviders</string>
-    <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
-     verwijderen</string>
-    <string name="media_provider_dialog_remove_subtitle">Hiermee worden afspeelgeschiedenis, alle nummers &amp; afspeellijsten die zijn gekoppeld aan de mediaprovider 
-    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
-     verwijderd</string>
-    <string name="media_provider_dialog_button_remove">Verwijderen</string>
     <string name="media_provider_config_hint_address">Adres</string>
     <string name="media_provider_config_hint_username">Gebruikersnaam</string>
     <string name="media_provider_config_hint_password">Wachtwoord</string>

@@ -63,7 +63,7 @@ else
         { echo "seed-remote-provider: could not find user '$TEST_USER' (server unreachable or key rejected?)" >&2; exit 1; }
 fi
 
-# MainActivity gates the library on the storage-read permission even with onboarding marked done.
+# Granted up front, so MainActivity doesn't ask for the music permission on first launch.
 radb shell pm grant "$DEBUG_APP_ID" android.permission.READ_MEDIA_AUDIO >/dev/null 2>&1 || true
 
 echo "seed-remote-provider: signing the debug app in to $server ..."

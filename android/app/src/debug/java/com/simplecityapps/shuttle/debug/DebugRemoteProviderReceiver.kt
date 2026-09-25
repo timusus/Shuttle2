@@ -15,7 +15,6 @@ import com.simplecityapps.provider.plex.CredentialStore as PlexCredentialStore
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.provider.plex.http.AuthenticatedCredentials as PlexAuthenticatedCredentials
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import timber.log.Timber
@@ -24,7 +23,7 @@ import timber.log.Timber
  * Debug-build-only: lets `support/scripts/seed-remote-provider.sh` sign the app in to a Jellyfin,
  * Emby or Plex server with an existing access token (or API key) via `adb shell am broadcast`, so
  * an emulator run never needs a password typed into the UI. Stores the address and credentials,
- * enables the provider, and marks onboarding done; the script then triggers an import through
+ * and enables the provider; the script then triggers an import through
  * [DebugMediaImportReceiver].
  *
  * Extras: `provider` (`jellyfin`, `emby` or `plex`), `address`, `user_id`, `access_token`. `user_id`
@@ -58,9 +57,6 @@ class DebugRemoteProviderReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var playbackPreferenceManager: PlaybackPreferenceManager
-
-    @Inject
-    lateinit var generalPreferenceManager: GeneralPreferenceManager
 
     override fun onReceive(
         context: Context,
@@ -105,7 +101,6 @@ class DebugRemoteProviderReceiver : BroadcastReceiver() {
         if (type !in playbackPreferenceManager.mediaProviderTypes) {
             playbackPreferenceManager.mediaProviderTypes += type
         }
-        generalPreferenceManager.hasOnboarded = true
         Timber.i("DebugRemoteProviderReceiver: signed in to $type at $address")
     }
 

@@ -1,9 +1,9 @@
 package com.simplecityapps.localmediaprovider.local.provider.taglib
 
 import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.Environment
-import android.provider.DocumentsContract
 import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.FolderImage
@@ -19,6 +19,7 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.model.AudioFile
+import com.simplecityapps.saf.DocumentNode
 import com.simplecityapps.saf.DocumentNodeTree
 import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.shuttle.coroutines.concurrentMap
@@ -40,26 +41,41 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+/**
+ * The folders the S2 scanner covers, read at the start of each import: [filter] limits MediaStore's audio rows, and
+ * [extraTrees] are SAF trees walked directly, for folders MediaStore skips (`.nomedia`) or formats it doesn't index.
+ */
+data class ScannerFolders(
+    val filter: FolderFilter = FolderFilter(),
+    val extraTrees: List<Uri> = emptyList()
+)
+
 class TaglibMediaProvider(
     private val context: Context,
-    private val kTagLib: KTagLib
+    private val kTagLib: KTagLib,
+    private val fileScanner: FileScanner,
+    private val folders: () -> ScannerFolders
 ) : MediaProvider {
     override val type = MediaProviderType.Shuttle
 
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
         val startTime = System.currentTimeMillis()
-        val files = findAudioFiles()
-        if (files == null) {
+        val folders = folders()
+        val mediaStoreFiles = findAudioFiles(folders.filter)
+        val extraDocuments = findExtraDocuments(folders, knownPaths = mediaStoreFiles.orEmpty().map { it.path.lowercase() }.toSet())
+        if (mediaStoreFiles == null && extraDocuments.isEmpty()) {
             emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_directories_empty)))
             return@flow
         }
+        val files = mediaStoreFiles.orEmpty()
+        val total = files.size + extraDocuments.size
         val filesWithImages =
             withContext(Dispatchers.IO) {
                 val folderImageReader = FolderImageReader(sharedStorageListsImages = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
                 files.map { file -> file to folderImageReader.imagesNear(file.path) }
             }
         val songs = mutableListOf<Song>()
-        getSongs(filesWithImages)
+        merge(getSongs(filesWithImages), getExtraSongs(extraDocuments))
             .collectIndexed { index, song ->
                 emit(
                     FlowEvent.Progress(
@@ -69,13 +85,13 @@ class TaglibMediaProvider(
                                     song.friendlyArtistName ?: song.albumArtist,
                                     song.name
                                 ).joinToString(" • "),
-                            progress = Progress(index, files.size)
+                            progress = Progress(index, total)
                         )
                     )
                 )
                 songs.add(song)
             }
-        Timber.i("Read ${songs.size} of ${files.size} MediaStore audio files in ${System.currentTimeMillis() - startTime}ms")
+        Timber.i("Read ${songs.size} of ${files.size} MediaStore audio files and ${extraDocuments.size} extra folder files in ${System.currentTimeMillis() - startTime}ms")
         emit(FlowEvent.Success(songs))
     }
 
@@ -87,17 +103,16 @@ class TaglibMediaProvider(
         val legacySongs = existingSongs.filter { song -> legacyLocation(song.path) != null }
         if (legacySongs.isEmpty()) return emptyList()
         // Without MediaStore, findSongs fails too, so nothing is diffed and the songs keep their history until next time
-        val files = findAudioFiles() ?: return emptyList()
+        val files = findAudioFiles(folders().filter) ?: return emptyList()
         return LegacySafSongs(primaryStoragePath()).remaps(legacySongs, files)
             .also { remaps -> Timber.i("Matched ${remaps.size} of ${legacySongs.size} songs stored under SAF document URIs to MediaStore files") }
     }
 
     /**
-     * The audio files MediaStore has indexed, on every volume, limited to the folders picked for the scanner if there are any.
+     * The audio files MediaStore has indexed, on every volume, limited by [folderFilter].
      * Null if MediaStore can't be queried, for example without the audio permission.
      */
-    private suspend fun findAudioFiles(): List<MediaStoreAudioFile>? = withContext(Dispatchers.IO) {
-        val folderFilter = FolderFilter(includes = pickedFolders())
+    private suspend fun findAudioFiles(folderFilter: FolderFilter): List<MediaStoreAudioFile>? = withContext(Dispatchers.IO) {
         try {
             context.contentResolver.query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -113,21 +128,42 @@ class TaglibMediaProvider(
     }
 
     /**
-     * The paths of the folders picked with the SAF folder picker. Folders from a provider other than external storage
-     * have no path, so they don't limit the import.
+     * The audio documents in the extra folders that MediaStore didn't already list (by [knownPaths], lowercased), and
+     * that no excluded folder covers.
      */
-    private fun pickedFolders(): List<String> {
+    private suspend fun findExtraDocuments(
+        folders: ScannerFolders,
+        knownPaths: Set<String>
+    ): List<DocumentNode> = withContext(Dispatchers.IO) {
+        if (folders.extraTrees.isEmpty()) return@withContext emptyList()
         val primaryStoragePath = primaryStoragePath()
-        return context.contentResolver.persistedUriPermissions
-            .filter { uriPermission -> uriPermission.isReadPermission || uriPermission.isWritePermission }
-            .mapNotNull { uriPermission ->
-                val treeDocumentId = runCatching { DocumentsContract.getTreeDocumentId(uriPermission.uri) }.getOrNull() ?: return@mapNotNull null
-                externalStorageTreeFolder(uriPermission.uri.authority, treeDocumentId, primaryStoragePath)
+        val excludes = FolderFilter(excludes = folders.filter.excludes)
+        folders.extraTrees
+            .map { treeUri ->
+                SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, treeUri)
+                    .filterIsInstance<SafDirectoryHelper.TreeStatus.Complete>()
+                    .map { it.tree }
             }
+            .merge()
+            .toList()
+            .flatMap { tree -> tree.getLeaves() }
+            .filter { node -> node.ext != "m3u" && node.ext != "m3u8" && node.ext != "pls" }
+            .filter { node ->
+                val path = externalStorageTreeFolder(node.uri.authority, node.documentId, primaryStoragePath) ?: return@filter true
+                path.lowercase() !in knownPaths && excludes.accepts(path)
+            }
+            .distinctBy { node -> node.uri }
     }
 
     @Suppress("DEPRECATION")
     private fun primaryStoragePath(): String = Environment.getExternalStorageDirectory().path
+
+    /** Songs read from SAF documents keep their document URI as their path, which the tag editor writes through. */
+    private fun getExtraSongs(documents: List<DocumentNode>): Flow<Song> = documents
+        .asFlow()
+        .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { node ->
+            fileScanner.getAudioFile(context, kTagLib, node.uri)?.toSong(type, emptyList())
+        }.mapNotNull { it }
 
     private fun getSongs(files: List<Pair<MediaStoreAudioFile, List<FolderImage>>>): Flow<Song> = files
         .asFlow()

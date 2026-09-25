@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -24,8 +25,6 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
-import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragmentArgs
-import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.scanner.MediaScannerDialogFragment
 import com.simplecityapps.shuttle.ui.screens.settings.ExcludeBinder
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
@@ -69,12 +68,13 @@ class MediaPreferenceFragment : PreferenceFragmentCompat() {
         toolbar.setTitle(R.string.pref_category_title_media)
 
         preferenceScreen.findPreference<Preference>("pref_media_provider")?.setOnPreferenceClickListener {
-            findNavController().navigate(R.id.onboardingFragment, OnboardingParentFragmentArgs(false).toBundle())
+            findNavController().navigate(R.id.sourcesFragment)
             true
         }
 
         preferenceScreen.findPreference<Preference>("pref_media_rescan")?.setOnPreferenceClickListener {
-            MediaScannerDialogFragment.newInstance().show(childFragmentManager)
+            viewLifecycleOwner.lifecycleScope.launch { mediaImporter.import() }
+            Toast.makeText(requireContext(), R.string.sources_scan_started, Toast.LENGTH_SHORT).show()
             true
         }
 

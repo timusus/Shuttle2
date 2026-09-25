@@ -1,24 +1,24 @@
-# Adds the Shuttle (TagLib) local provider pointed at the folder named ${FOLDER_NAME} under Music
-# (support/scripts/seed-test-media.sh taglib pushes it there first) and waits for the import to
-# finish, observed via the UI's own "Song import complete" screen -- not a fixed sleep.
-# support/scripts/checks/_lib.sh's setup_taglib_provider wraps this: it also seeds the fixture and
-# cross-checks completion against DUMP_STATE's librarySongCount before returning. Starts from a
-# fresh launch so it runs standalone; navigation matches nav/open-settings.yaml plus
-# DirectorySelectionFragment/MediaProviderSelectionFragment's screens (Settings -> Media -> Media
-# providers -> Add Media Provider -> S2 Media Provider -> Add Directory -> [system picker] -> Done
-# -> Next).
+# Adds the folder named ${FOLDER_NAME} under Music (support/scripts/seed-test-media.sh taglib pushes
+# it there first) to Settings > Sources' "Read these folders directly", which reads it through the
+# SAF grant rather than MediaStore. Picking the folder starts a scan; the caller waits for it, and
+# the flow ends on Settings > Media.
+# support/scripts/checks/_lib.sh's setup_taglib_provider wraps this: it seeds the fixture with the
+# S2 scanner selected and waits on DUMP_STATE's librarySongCount. Starts from a fresh launch so it
+# runs standalone; navigation matches nav/open-settings.yaml, then Media -> Sources.
 appId: com.simplecityapps.shuttle.dev
 ---
 - runFlow: open-settings.yaml
 - tapOn: "Media"
-- tapOn: "Media providers"
-- tapOn: "ADD MEDIA PROVIDER"
-- tapOn: "S2 Media Provider"
-- tapOn: "ADD DIRECTORY"
+- tapOn: "Sources"
+- scrollUntilVisible:
+    element: "Read these folders directly"
+    direction: DOWN
+- tapOn:
+    text: "Add folder"
+    below: "Read these folders directly"
 - runFlow: pick-saf-folder.yaml
-- tapOn: "DONE"
-- tapOn: "NEXT"
 - extendedWaitUntil:
-    visible: "Song import complete"
-    timeout: 30000
-- tapOn: "CLOSE"
+    visible: "${FOLDER_NAME}"
+    timeout: 10000
+# Back to Settings > Media, where the old onboarding-based flow left off, so callers navigate the same.
+- back

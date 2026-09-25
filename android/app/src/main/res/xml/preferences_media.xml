@@ -4,8 +4,8 @@
 
     <Preference
         android:key="pref_media_provider"
-        android:summary="@string/pref_media_provider_summary"
-        android:title="@string/pref_media_provider_title"
+        android:summary="@string/sources_settings_summary"
+        android:title="@string/sources_settings_title"
         app:iconSpaceReserved="false" />
     <SwitchPreference
         android:defaultValue="true"

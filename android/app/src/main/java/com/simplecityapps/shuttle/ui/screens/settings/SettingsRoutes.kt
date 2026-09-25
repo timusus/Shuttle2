@@ -27,6 +27,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsView
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
+import com.simplecityapps.shuttle.ui.screens.sources.sourcesRows
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import com.simplecityapps.trial.PaywallSource
@@ -58,15 +59,9 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     val openLink = { link: SettingsLink ->
         when (link) {
             SettingsLink.Equalizer -> navigator.open(EqualizerRoute)
-
             SettingsLink.ExcludedSongs -> navigator.open(ExcludedSongsRoute)
-
             SettingsLink.WhatsNew -> navigator.open(WhatsNewRoute)
-
             SettingsLink.Licences -> navigator.open(LicencesRoute)
-
-            // Hidden until the Sources redesign brings the media provider screen to the shell
-            SettingsLink.MediaProviders -> Unit
         }
     }
     entry<SettingsRoute> {
@@ -96,6 +91,12 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     }
 }
 
+/** Settings > Sources on its own, for the legacy settings screens until the shell replaces them (#381). */
+@Composable
+fun SourcesSettingsRoute(onNavigateUp: () -> Unit) {
+    SettingsDestinationEntry(SettingsDestination.Sources, onNavigateUp, onOpenLink = {})
+}
+
 @Composable
 private fun SettingsDestinationEntry(
     destination: SettingsDestination,
@@ -123,7 +124,8 @@ private fun SettingsDestinationEntry(
         onAction = viewModel::onAction,
         onOpenLink = onOpenLink,
         versionName = BuildConfig.VERSION_NAME,
-        snackbarHostState = snackbarHostState
+        snackbarHostState = snackbarHostState,
+        leadingContent = if (destination == SettingsDestination.Sources) sourcesRows(snackbarHostState) else ({})
     )
 }
 
