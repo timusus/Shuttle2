@@ -10,6 +10,7 @@ plugins {
     id("com.google.devtools.ksp")
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.roborazzi)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -138,6 +139,16 @@ android {
         debugImplementation(libs.androidx.ui.tooling)
 
         implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+        // Navigation 3 and adaptive layouts for the Compose shell (docs/architecture/app-shell.md)
+        implementation(libs.androidx.navigation3.runtime)
+        implementation(libs.androidx.navigation3.ui)
+        implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+        implementation(libs.androidx.material3.adaptive)
+        implementation(libs.androidx.material3.adaptive.layout)
+        implementation(libs.androidx.material3.adaptive.navigation3)
+        implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+        implementation(libs.kotlinx.serialization.core)
 
         // Shuttle Core
         implementation(project(":android:core"))
