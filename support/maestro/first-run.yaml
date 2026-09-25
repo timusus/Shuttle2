@@ -1,0 +1,21 @@
+# #379: first run from a clean install, with no onboarding. The app opens to the Library and asks
+# for the music permission; granting it starts the S2 scanner, the Library fills with the seeded
+# `playback` fixture, and Settings > Media > Sources shows this device on. Run it through
+# support/scripts/checks/first-run.sh, which clears the app and seeds the files first.
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    stopApp: true
+- tapOn:
+    id: "com.android.permissioncontroller:id/permission_allow_button"
+- extendedWaitUntil:
+    visible: "Playback One"
+    timeout: 60000
+- runFlow: nav/open-settings.yaml
+- tapOn: "Media"
+- tapOn: "Sources"
+- assertVisible: "This device"
+- assertVisible: "Music stored on this phone"
+- scrollUntilVisible:
+    element: "Servers"
+- assertVisible: "Scan now"
