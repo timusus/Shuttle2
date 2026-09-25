@@ -1,9 +1,11 @@
 package com.simplecityapps.shuttle.di
 
 import android.content.Context
+import androidx.core.content.getSystemService
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
+import com.simplecityapps.playback.CallMonitor
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.di.PlaybackEngineModule
@@ -69,6 +71,7 @@ class TestPlaybackEngineModule {
     @Singleton
     @Provides
     fun providePlaybackManager(
+        @ApplicationContext context: Context,
         queueManager: QueueManager,
         player: Player,
         localPlayer: ExoPlayer,
@@ -79,6 +82,7 @@ class TestPlaybackEngineModule {
         player,
         localPlayer,
         playbackPreferenceManager,
+        CallMonitor(context.getSystemService()),
         coroutineScope,
         castQueue = null
     )

@@ -1,12 +1,14 @@
 package com.simplecityapps.playback.spec
 
 import android.media.AudioManager
+import android.os.Build
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_3S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unreadableSong
 import com.simplecityapps.shuttle.model.Song
+import io.kotest.assertions.withClue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
@@ -14,6 +16,7 @@ import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 /**
  * The audio focus and headphone rules of the behaviour spec (docs/testing/playback-behaviour-spec.md): other apps
@@ -123,6 +126,102 @@ class AudioFocusSpecTest {
 
         playback.playbackStateFlow.value shouldBe PlaybackState.Paused
         harness.audioFocus.abandons shouldBe abandons
+    }
+
+    @Test
+    fun `RS-54 a play during a call waits, paused, and playback starts when the call ends`() {
+        startPlaying(listOf(song(1, file = TONE_3S)))
+        harness.run { playback.pause() }
+        val requests = harness.audioFocus.requests
+        harness.setAudioMode(AudioManager.MODE_IN_CALL)
+
+        harness.run { playback.play() }
+
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        harness.appPlayer.playWhenReady shouldBe false
+        harness.audioFocus.requests shouldBe requests
+
+        harness.setAudioMode(AudioManager.MODE_NORMAL)
+
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
+        val position = playback.getProgress() ?: 0
+        harness.runUntil { (playback.getProgress() ?: 0) > position }
+    }
+
+    @Test
+    fun `RS-54 a play while a call rings, is screened or redirected, or a VoIP call is on, waits too`() {
+        startPlaying(listOf(song(1, file = TONE_3S)))
+        harness.run { playback.pause() }
+        val modes =
+            listOf(
+                AudioManager.MODE_RINGTONE,
+                AudioManager.MODE_IN_CALL,
+                AudioManager.MODE_IN_COMMUNICATION,
+                AudioManager.MODE_CALL_SCREENING,
+                AudioManager.MODE_CALL_REDIRECT,
+                AudioManager.MODE_COMMUNICATION_REDIRECT
+            )
+
+        modes.forEach { mode ->
+            harness.setAudioMode(mode)
+            harness.run { playback.play() }
+
+            withClue("mode $mode") { harness.appPlayer.playWhenReady shouldBe false }
+        }
+    }
+
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.M])
+    fun `RS-54 below API 31, where the end of a call can't be seen, a play during a call is dropped`() {
+        startPlaying(listOf(song(1, file = TONE_3S)))
+        harness.run { playback.pause() }
+        harness.setAudioMode(AudioManager.MODE_IN_CALL)
+
+        harness.run { playback.play() }
+        harness.setAudioMode(AudioManager.MODE_NORMAL)
+
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        harness.appPlayer.playWhenReady shouldBe false
+    }
+
+    @Test
+    fun `RS-54 pausing during the call drops the waiting play`() {
+        startPlaying(listOf(song(1, file = TONE_3S)))
+        harness.run { playback.pause() }
+        harness.setAudioMode(AudioManager.MODE_IN_CALL)
+        harness.run { playback.play() }
+
+        harness.run { playback.pause() }
+        harness.setAudioMode(AudioManager.MODE_NORMAL)
+
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        harness.appPlayer.playWhenReady shouldBe false
+    }
+
+    @Test
+    fun `RS-54 a queue change during the call drops the waiting play`() {
+        startPlaying(listOf(song(1, file = TONE_3S)))
+        harness.run { playback.pause() }
+        harness.setAudioMode(AudioManager.MODE_IN_CALL)
+        harness.run { playback.play() }
+
+        harness.run { playback.addToQueue(listOf(song(2))) }
+        harness.setAudioMode(AudioManager.MODE_NORMAL)
+
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        harness.appPlayer.playWhenReady shouldBe false
+    }
+
+    @Test
+    fun `RS-54 toggling playback during a call, as a widget or headset button does, waits too`() {
+        startPlaying(listOf(song(1, file = TONE_3S)))
+        harness.run { playback.pause() }
+        harness.setAudioMode(AudioManager.MODE_IN_CALL)
+
+        harness.run { playback.togglePlayback() }
+
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        harness.appPlayer.playWhenReady shouldBe false
     }
 
     private fun startPlaying(songs: List<Song>) {

@@ -16,6 +16,7 @@ import androidx.media3.test.utils.TestExoPlayerBuilder
 import androidx.media3.test.utils.robolectric.RobolectricUtil
 import androidx.media3.test.utils.robolectric.TestPlayerRunHelper
 import com.simplecityapps.playback.AudioEffectSessionManager
+import com.simplecityapps.playback.CallMonitor
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.chromecast.CastQueue
@@ -217,6 +218,7 @@ class PlaybackHarness(
                 player = active,
                 localPlayer = player,
                 playbackPreferenceManager = playbackPreferenceManager,
+                callMonitor = CallMonitor(audioManager),
                 appCoroutineScope = scope,
                 castQueue = cast
             )
@@ -268,6 +270,15 @@ class PlaybackHarness(
         focusMayChange = true
         awaitFocusChange()
         shadowOf(Looper.getMainLooper()).idle()
+    }
+
+    /**
+     * A call ringing, starting or ending, as the platform sets the audio mode ([mode] is one of AudioManager's `MODE_`
+     * values). Robolectric tells the app's mode listeners on API 31+.
+     */
+    fun setAudioMode(mode: Int) {
+        audioManager.mode = mode
+        idle()
     }
 
     /** Headphones unplugged: the platform's becoming-noisy broadcast. */

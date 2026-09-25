@@ -184,10 +184,15 @@ JVM. New in step 3: S2 now gives focus up at this point, where it used to hold o
 headset disconnects), then playback pauses, keeping audio focus as any pause does (RS-04). (#345) — JVM for the broadcast; a real unplug and
 a Bluetooth disconnect are device-only: *Service and notification*.
 
-**RS-54: pressing play during a phone call.** Given a phone call in progress, when the user presses play, then S2
-starts playing straight away, alongside the call as the system allows. (#345) — device-only: *Audio focus (#345 step
-3)*. Changed on purpose in step 3: S2 used to wait for the call to end and start then. Media3 takes a delayed focus
-grant as focus, and doesn't let an app wait for one.
+**RS-54: pressing play during a phone call waits for it to end.** Given a call ringing or in progress (a phone call,
+a VoIP call, or one being screened or redirected: any audio mode but normal), when the user presses play, from the app,
+the media session, a widget or a headset button, then playback doesn't start over the call: it shows paused and takes
+no audio focus. On API 31+ it starts when the call ends (the audio mode returns to normal), unless the user pauses, a
+new queue is loaded or the queue changes first, which drops it. Below API 31, which can't say when a call ends, the
+play is dropped, and the user presses play again after the call. A play on a Cast receiver goes ahead. (#345) — JVM
+(`AudioFocusSpecTest`, the audio mode set through Robolectric's `AudioManager`); how it sounds on a real call is
+device-only: *Audio focus (#345 step 3)*. The same as before step 3 in effect: S2 used to wait for the delayed focus
+grant a call gives; Media3 takes that grant as focus, so `PlaybackManager` checks the audio mode itself.
 
 ## Cast
 

@@ -21,6 +21,7 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.model.Song
+import java.util.concurrent.Executor
 import kotlin.math.max
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,6 +58,8 @@ class PlaybackManager(
     /** The local player: [player] itself, or the one a Cast player plays through when not casting. */
     private val localPlayer: ExoPlayer,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
+    /** Says when a call is on, and when it ends, so a play during one waits for it (see [holdForCall]). */
+    private val callMonitor: CallMonitor,
     private val appCoroutineScope: CoroutineScope,
     /** Keeps a Cast receiver's queue in line, and says when it has played the queue out; null when there's no Cast. */
     castQueue: CastQueue?,
@@ -64,6 +67,8 @@ class PlaybackManager(
     private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime
 ) : PlaybackOperations {
     private val playerThread = PlayerThread(player)
+
+    private val playerExecutor = Executor { command -> playerThread.run(command::run) }
 
     /**
      * The uid of the entry that last became ready to play, or that playback moved on to by playing out the one
@@ -148,6 +153,8 @@ class PlaybackManager(
                     checkDevice()
                     if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) {
                         playlistChanged = true
+                        // A play waiting for a call to end was for the queue as it was.
+                        callMonitor.cancel()
                         if (timeline.isEmpty) onQueueEmptied()
                     }
                 }
@@ -454,6 +461,7 @@ class PlaybackManager(
         } else {
             Timber.v("load(seekPosition: $seekPosition) ${entry.song.name}")
             pendingLoad = PendingLoad(completion)
+            callMonitor.cancel()
             player.playWhenReady = false
             loadCurrent(seekPosition ?: entry.song.getStartPosition() ?: 0, completion)
         }
@@ -486,6 +494,7 @@ class PlaybackManager(
             Timber.w("Failed to play: Queue empty.")
             return
         }
+        if (holdForCall()) return
         when {
             player.playbackState == Player.STATE_IDLE -> {
                 var startPosition = playbackPreferenceManager.playbackPosition ?: currentEntry?.song?.getStartPosition() ?: 0
@@ -501,6 +510,22 @@ class PlaybackManager(
         player.playWhenReady = true
     }
 
+    /**
+     * A play during a call (ringing or in progress, phone or VoIP) doesn't start playback over it, which the player
+     * would: Media3 takes the delayed audio focus a call gives as focus. It waits, paused, and plays when the call ends;
+     * a pause, a load or a queue change first drops it. Below API 31, where the end of a call can't be seen, it's
+     * dropped. A play on a Cast receiver, or while already set to play (held off by a short focus loss), goes ahead.
+     */
+    private fun holdForCall(): Boolean {
+        if (isRemote || player.playWhenReady || !callMonitor.isInCall) return false
+        if (callMonitor.awaitCallEnd(playerExecutor) { playNow() }) {
+            Timber.w("play() held until the call ends")
+        } else {
+            Timber.w("play() dropped: in a call")
+        }
+        return true
+    }
+
     private fun isNearEndOfCurrentSong(positionMs: Int): Boolean {
         val duration = getDuration() ?: currentEntry?.song?.duration ?: return false
         return positionMs > duration - NEAR_END_MS
@@ -509,6 +534,7 @@ class PlaybackManager(
     /** A user- or system-driven pause. The player keeps audio focus while paused (see [com.simplecityapps.playback.exoplayer.ExoPlayerFactory]). */
     override fun pause() = playerThread.run {
         Timber.v("pause()")
+        callMonitor.cancel()
         player.playWhenReady = false
     }
 

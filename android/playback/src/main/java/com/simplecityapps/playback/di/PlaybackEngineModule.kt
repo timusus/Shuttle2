@@ -1,12 +1,14 @@
 package com.simplecityapps.playback.di
 
 import android.content.Context
+import androidx.core.content.getSystemService
 import androidx.media3.cast.CastPlayer
 import androidx.media3.cast.RemoteCastPlayer
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.playback.AudioEffectSessionManager
+import com.simplecityapps.playback.CallMonitor
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.chromecast.CastMediaItemConverter
@@ -131,13 +133,22 @@ class PlaybackEngineModule {
     @Singleton
     @Provides
     fun providePlaybackManager(
+        @ApplicationContext context: Context,
         queueManager: QueueManager,
         player: Player,
         localPlayer: ExoPlayer,
         playbackPreferenceManager: PlaybackPreferenceManager,
         @AppCoroutineScope coroutineScope: CoroutineScope,
         castQueue: CastQueue
-    ): PlaybackManager = PlaybackManager(queueManager, player, localPlayer, playbackPreferenceManager, coroutineScope, castQueue)
+    ): PlaybackManager = PlaybackManager(
+        queueManager,
+        player,
+        localPlayer,
+        playbackPreferenceManager,
+        CallMonitor(context.getSystemService()),
+        coroutineScope,
+        castQueue
+    )
 
     @Provides
     fun providePlaybackOperations(playbackManager: PlaybackManager): PlaybackOperations = playbackManager
