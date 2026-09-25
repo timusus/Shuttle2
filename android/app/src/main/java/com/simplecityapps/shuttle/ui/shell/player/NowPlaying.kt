@@ -119,40 +119,64 @@ private fun CastButton(modifier: Modifier = Modifier) {
     )
 }
 
-/** The artwork, as large as fits, over the title, artist and favourite toggle. */
+/** The artwork, square and as large as its slot allows, up to [MaxArtworkSize]. */
 @Composable
 internal fun NowPlayingArtwork(
+    player: PlayerUiState,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
+        player.current?.let { current ->
+            SongArtwork(current.song, Modifier.widthIn(max = MaxArtworkSize).aspectRatio(1f, matchHeightConstraintsFirst = true), size = ArtworkSize.Hero)
+        }
+    }
+}
+
+/** The title and artist beside the favourite toggle, sitting directly on the seek bar. */
+@Composable
+internal fun NowPlayingTitle(
     player: PlayerUiState,
     actions: PlayerActions,
     modifier: Modifier = Modifier,
 ) {
     val current = player.current
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Box(Modifier.weight(1f, fill = false).fillMaxWidth().padding(horizontal = 32.dp, vertical = 16.dp), contentAlignment = Alignment.Center) {
-            if (current != null) {
-                SongArtwork(current.song, Modifier.widthIn(max = 480.dp).aspectRatio(1f, matchHeightConstraintsFirst = true), size = ArtworkSize.Hero)
-            }
-        }
-        Row(Modifier.fillMaxWidth().padding(start = 24.dp, end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(text = current?.title.orEmpty(), style = MaterialTheme.typography.headlineSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    text = listOfNotNull(current?.artist, current?.album).joinToString(" • "),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            S2IconToggleButton(
-                icon = Icons.Rounded.FavoriteBorder,
-                checkedIcon = Icons.Rounded.Favorite,
-                contentDescription = stringResource(R.string.menu_title_favorite),
-                checked = player.favourite,
-                onCheckedChange = { actions.toggleFavourite() },
-                enabled = current != null,
+    Row(modifier.fillMaxWidth().padding(start = 24.dp, end = 16.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(text = current?.title.orEmpty(), style = MaterialTheme.typography.headlineSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                text = listOfNotNull(current?.artist, current?.album).joinToString(" • "),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
+        S2IconToggleButton(
+            icon = Icons.Rounded.FavoriteBorder,
+            checkedIcon = Icons.Rounded.Favorite,
+            contentDescription = stringResource(R.string.menu_title_favorite),
+            checked = player.favourite,
+            onCheckedChange = { actions.toggleFavourite() },
+            enabled = current != null,
+        )
+    }
+}
+
+/**
+ * The artwork over the title. With [fillHeight] the artwork's slot takes all the height the title
+ * leaves, centring the artwork in it, so the title stays on whatever sits below; without it the two
+ * wrap and centre together as a group.
+ */
+@Composable
+internal fun NowPlayingSong(
+    player: PlayerUiState,
+    actions: PlayerActions,
+    fillHeight: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
+        NowPlayingArtwork(player, Modifier.weight(1f, fill = fillHeight))
+        NowPlayingTitle(player, actions)
     }
 }
 
@@ -206,6 +230,9 @@ private fun SeekBar(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
     )
 }
+
+/** The largest the Now Playing artwork grows, however much room there is. */
+private val MaxArtworkSize = 480.dp
 
 private val SleepTimerDurations = listOf(
     R.string.sleep_timer_5_minutes to 5 * DateUtils.MINUTE_IN_MILLIS,

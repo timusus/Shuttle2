@@ -81,6 +81,14 @@ class ShellScreenshotTest {
     }
 
     @Test
+    @Config(qualifiers = "w360dp-h640dp-xhdpi")
+    fun phoneShort() {
+        robot.setContent(window = windowInfo(360, 640))
+        robot.tapMiniPlayer()
+        shot("phone-short-now-playing")
+    }
+
+    @Test
     @Config(qualifiers = "w411dp-h826dp-xhdpi")
     fun foldableFolded() {
         robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 826))

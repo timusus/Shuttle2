@@ -115,13 +115,21 @@ internal fun StackedPlayer(
                 },
         ) {
             NowPlayingHeader(player, actions, onCollapse = onCollapse, modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars))
-            FoldSplit(
-                fold = tabletopFold,
-                orientation = Orientation.Vertical,
-                modifier = Modifier.weight(1f),
-                first = { NowPlayingArtwork(player, actions, Modifier.fillMaxSize()) },
-                second = { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) { Transport(player, progress, actions) } },
-            )
+            // The song fades as the queue pushes it up, so it never shows under the status bar behind the head.
+            val song = Modifier.graphicsLayer { alpha = 1f - geometry().queue(offset()) }
+            if (tabletopFold != null) {
+                FoldSplit(
+                    fold = tabletopFold,
+                    orientation = Orientation.Vertical,
+                    modifier = Modifier.weight(1f),
+                    first = { NowPlayingSong(player, actions, fillHeight = false, modifier = song.fillMaxSize()) },
+                    second = { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) { Transport(player, progress, actions) } },
+                )
+            } else {
+                // The transport sits on the peek, where the queue push expects it; the song fills the room above.
+                NowPlayingSong(player, actions, fillHeight = true, modifier = song.weight(1f).fillMaxWidth())
+                Transport(player, progress, actions)
+            }
             Spacer(Modifier.windowInsetsPadding(WindowInsets.navigationBars).height(QueuePeekHeight))
         }
         Column(
@@ -166,8 +174,11 @@ internal fun SideBySidePlayer(
         first = {
             Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars)) {
                 NowPlayingHeader(player, actions, onCollapse = onCollapse, modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars))
-                NowPlayingArtwork(player, actions, Modifier.weight(1f).fillMaxWidth())
-                Transport(player, progress, actions)
+                // Nothing pushes this player, so the song and transport centre together in the room below the header.
+                Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
+                    NowPlayingSong(player, actions, fillHeight = false, modifier = Modifier.weight(1f, fill = false).fillMaxWidth())
+                    Transport(player, progress, actions)
+                }
             }
         },
         second = {
