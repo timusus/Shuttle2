@@ -48,7 +48,7 @@ import timber.log.Timber
  * position to resume from on both itself, since it must be saved before the call reporting them returns.
  *
  * Also starts the playback components that run for the life of the app: Cast session handling, the media
- * session, the noisy-audio receiver and bit-perfect USB output.
+ * session and bit-perfect USB output.
  */
 class PlaybackInitializer
 @Inject
