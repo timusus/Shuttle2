@@ -1,5 +1,3 @@
 # No new Fragments: destinations are composables in the app shell (docs/architecture/app-shell.md)
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallDialogFragment
-com.simplecityapps.shuttle.ui.screens.sources.servers.emby.EmbyConfigurationFragment
-com.simplecityapps.shuttle.ui.screens.sources.servers.jellyfin.JellyfinConfigurationFragment
