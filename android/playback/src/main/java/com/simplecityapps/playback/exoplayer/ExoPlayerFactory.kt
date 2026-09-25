@@ -27,8 +27,9 @@ import com.simplecityapps.playback.engine.SongUriResolver
  * player reports the AudioTracks it opens to [audioTrackMonitor].
  *
  * The player handles audio focus and headphones being unplugged itself: it pauses when unplugged and on a permanent
- * focus loss, holds off on a transient loss until focus comes back, and ducks while another app may play over it. A
- * pause gives focus up (see [giveUpFocusOnPause]).
+ * focus loss (giving focus up), holds off on a transient loss until focus comes back, and ducks while another app may
+ * play over it. It keeps focus through a pause, as Android asks of media apps, and gives it up when it stops; another
+ * app asking for focus while it's paused gets it, and the player doesn't resume when that app is done.
  */
 class ExoPlayerFactory(
     private val context: Context,
@@ -68,7 +69,7 @@ class ExoPlayerFactory(
             .setLoadErrorHandlingPolicy(S2LoadErrorHandlingPolicy())
         val player = buildPlayer(renderersFactory, mediaSourceFactory)
         player.setHandleAudioBecomingNoisy(true)
-        player.giveUpFocusOnPause()
+        player.setAudioAttributes(MUSIC, true)
         val owner = AudioTrackReopener(player)
         player.addAnalyticsListener(
             object : AnalyticsListener {
@@ -116,27 +117,3 @@ private val MUSIC: AudioAttributes = AudioAttributes.Builder()
     .setUsage(C.USAGE_MEDIA)
     .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
     .build()
-
-/**
- * Gives audio focus up when the player stops being set to play. The player keeps focus through a pause of its own, but
- * a pause (by the user, by headphones being unplugged, or by playback ending or failing) should let another app play.
- * Turning focus handling off gives focus up; turning it straight back on doesn't take it again until the player is next
- * set to play, and then before playback starts. A transient focus loss doesn't change whether the player is set to
- * play, so playback still resumes when focus comes back.
- */
-private fun ExoPlayer.giveUpFocusOnPause() {
-    setAudioAttributes(MUSIC, true)
-    addListener(
-        object : Player.Listener {
-            override fun onPlayWhenReadyChanged(
-                playWhenReady: Boolean,
-                reason: Int
-            ) {
-                if (!playWhenReady) {
-                    setAudioAttributes(MUSIC, false)
-                    setAudioAttributes(MUSIC, true)
-                }
-            }
-        }
-    )
-}

@@ -2,9 +2,12 @@ package com.simplecityapps.playback.spec
 
 import android.media.AudioManager
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_3S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
+import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unreadableSong
 import com.simplecityapps.shuttle.model.Song
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import org.junit.After
@@ -27,6 +30,41 @@ class AudioFocusSpecTest {
     }
 
     @Test
+    fun `RS-04 playing out the queue pauses at its end, keeping audio focus as a pause does`() {
+        val ended = harness.record(playback.trackEndedFlow)
+        startPlaying(listOf(song(1, file = TONE_1S)))
+
+        harness.runUntil { ended.isNotEmpty() }
+        harness.idle()
+
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        harness.audioFocus.abandons shouldBe 0
+    }
+
+    @Test
+    fun `RS-04 a song failing while playing stops playback and gives up audio focus`() {
+        val failures = harness.record(playback.playbackFailureFlow)
+        startPlaying(listOf(song(1, file = TONE_1S), unreadableSong(2)))
+
+        harness.runUntil { failures.isNotEmpty() }
+        harness.idle()
+
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        harness.audioFocus.abandons shouldBe 1
+    }
+
+    @Test
+    fun `RS-04 clearing the queue while paused gives up audio focus`() {
+        startPlaying(listOf(song(1), song(2)))
+        harness.run { playback.pause() }
+
+        harness.run { playback.clearQueue() }
+
+        harness.queueOperations.queueStateFlow.value.items.shouldBeEmpty()
+        harness.audioFocus.abandons shouldBe 1
+    }
+
+    @Test
     fun `RS-50 a short interruption holds playback paused, and it plays on when the interruption ends`() {
         startPlaying(listOf(song(1, file = TONE_3S)))
 
@@ -45,14 +83,13 @@ class AudioFocusSpecTest {
     fun `RS-50 pausing during a short interruption keeps playback paused after it ends`() {
         startPlaying(listOf(song(1, file = TONE_3S)))
         harness.changeAudioFocus(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
-        val abandons = harness.audioFocus.abandons
 
         harness.run { playback.pause() }
+        harness.changeAudioFocus(AudioManager.AUDIOFOCUS_GAIN)
 
-        // Pausing gives focus up, so the end of the interruption can't reach the player to start it again.
-        harness.audioFocus.abandons shouldBeGreaterThan abandons
         playback.playbackStateFlow.value shouldBe PlaybackState.Paused
         harness.appPlayer.playWhenReady shouldBe false
+        harness.appPlayer.isPlaying shouldBe false
     }
 
     @Test
@@ -78,14 +115,14 @@ class AudioFocusSpecTest {
     }
 
     @Test
-    fun `RS-53 unplugging headphones pauses playback and gives up audio focus`() {
+    fun `RS-53 unplugging headphones pauses playback, keeping audio focus`() {
         startPlaying(listOf(song(1, file = TONE_3S)))
         val abandons = harness.audioFocus.abandons
 
         harness.unplugHeadphones()
 
         playback.playbackStateFlow.value shouldBe PlaybackState.Paused
-        harness.audioFocus.abandons shouldBeGreaterThan abandons
+        harness.audioFocus.abandons shouldBe abandons
     }
 
     private fun startPlaying(songs: List<Song>) {

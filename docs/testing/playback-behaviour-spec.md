@@ -30,8 +30,13 @@ straight away, before the new song has loaded. (70581fbe) — JVM.
 **RS-03: seek while paused.** Given a paused song, when the user seeks, then the published progress and the anchor
 move to the new position while still paused, and pressing play resumes from there. (77ac6765) — JVM.
 
-**RS-04: pause releases audio focus.** Given a song playing with audio focus, when the user pauses, then focus is
-abandoned so other apps can play. (ea250913) — JVM.
+**RS-04: pausing keeps audio focus, and another app can still take it.** Given a song playing with audio focus, when
+the user pauses, then S2 keeps focus, as Android asks of media apps. When another app asks for focus while S2 is paused,
+it gets it: S2 is told it lost focus and gives it up, and doesn't resume on its own afterwards, nor when a short
+interruption that began while paused ends. Playing out the queue pauses at its end and keeps focus the same way; a
+failure that stops playback, or emptying the queue (RS-05), stops the player, which gives focus up. (ea250913; changed
+in #345 step 3, which follows Media3: S2 used to give focus up on every pause, a refactor-era fix rather than a user
+report) — JVM (`PlaybackSpecTest`, `AudioFocusSpecTest`).
 
 **RS-05: removing the last song stops cleanly.** Given one song playing, when the user removes it from the queue,
 then the queue is empty, playback stops (paused) and audio focus is abandoned. (d77f516d) — JVM.
@@ -161,8 +166,9 @@ harness plays the platform's part: `changeAudioFocus` hands the player the focus
 
 **RS-50: a short interruption pauses, and playback resumes when it ends.** Given a song playing, when another app
 takes focus for a moment (a phone call, a voice assistant), then playback shows paused; when the app gives focus
-back, it plays on from where it was. If the user pauses during the interruption, it stays paused after it ends:
-pausing gives focus up, so the end of the interruption can't reach the player. (#345) — JVM. The same as before
+back, it plays on from where it was. If the user pauses during the interruption, it stays paused after it ends. While
+held off, pressing play does nothing audible until focus comes back (the player is already set to play), unchanged from
+before step 3. (#345) — JVM. The same as before
 step 3, now Media3's behaviour.
 
 **RS-51: a navigation prompt ducks playback, without pausing it.** Given a song playing, when another app takes focus
@@ -175,7 +181,7 @@ permanently (another music app starts), then playback pauses, gives focus up and
 JVM. New in step 3: S2 now gives focus up at this point, where it used to hold on to it while paused.
 
 **RS-53: unplugging headphones pauses playback.** Given a song playing, when headphones are unplugged (or a Bluetooth
-headset disconnects), then playback pauses and gives up audio focus. (#345) — JVM for the broadcast; a real unplug and
+headset disconnects), then playback pauses, keeping audio focus as any pause does (RS-04). (#345) — JVM for the broadcast; a real unplug and
 a Bluetooth disconnect are device-only: *Service and notification*.
 
 **RS-54: pressing play during a phone call.** Given a phone call in progress, when the user presses play, then S2

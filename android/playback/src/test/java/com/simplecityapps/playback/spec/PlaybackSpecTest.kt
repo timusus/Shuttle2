@@ -1,5 +1,6 @@
 package com.simplecityapps.playback.spec
 
+import android.media.AudioManager
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueManager
@@ -97,19 +98,39 @@ class PlaybackSpecTest {
     }
 
     @Test
-    fun `RS-04 pausing gives up audio focus`() {
+    fun `RS-04 pausing keeps audio focus, and another app asking for it while paused gets it`() {
         val audioManager = shadowOf(harness.audioManager)
         harness.run { playback.addToQueue(listOf(song(1), song(2))) }
         harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
         audioManager.lastAudioFocusRequest.shouldNotBeNull()
-        audioManager.lastAbandonedAudioFocusRequest.shouldBeNull()
 
         playback.pause()
         harness.idle()
 
+        harness.audioFocus.abandons shouldBe 0
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+
+        harness.changeAudioFocus(AudioManager.AUDIOFOCUS_LOSS)
+
         audioManager.lastAbandonedAudioFocusRequest.shouldNotBeNull()
         harness.audioFocus.abandons shouldBe 1
         playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        harness.appPlayer.playWhenReady shouldBe false
+    }
+
+    @Test
+    fun `RS-04 an interruption while paused doesn't start playback when it ends`() {
+        harness.run { playback.addToQueue(listOf(song(1), song(2))) }
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
+        playback.pause()
+        harness.idle()
+
+        harness.changeAudioFocus(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+        harness.changeAudioFocus(AudioManager.AUDIOFOCUS_GAIN)
+
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        harness.appPlayer.playWhenReady shouldBe false
+        harness.appPlayer.isPlaying shouldBe false
     }
 
     @Test

@@ -148,6 +148,7 @@ class PlaybackManager(
                     checkDevice()
                     if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) {
                         playlistChanged = true
+                        if (timeline.isEmpty) onQueueEmptied()
                     }
                 }
 
@@ -282,6 +283,16 @@ class PlaybackManager(
             if (player.playWhenReady) {
                 pause()
             }
+        }
+    }
+
+    /**
+     * The queue was emptied, so there's nothing left to play: the local player stops, giving up audio focus, which it
+     * otherwise keeps while paused. A Cast receiver is left to its Cast session.
+     */
+    private fun onQueueEmptied() {
+        if (!isRemote && !switching && player.playbackState != Player.STATE_IDLE) {
+            player.stop()
         }
     }
 
@@ -495,7 +506,7 @@ class PlaybackManager(
         return positionMs > duration - NEAR_END_MS
     }
 
-    /** A user- or system-driven pause. It gives up audio focus (see [com.simplecityapps.playback.exoplayer.ExoPlayerFactory]). */
+    /** A user- or system-driven pause. The player keeps audio focus while paused (see [com.simplecityapps.playback.exoplayer.ExoPlayerFactory]). */
     override fun pause() = playerThread.run {
         Timber.v("pause()")
         player.playWhenReady = false
