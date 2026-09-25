@@ -6,6 +6,27 @@ paths:
 
 # Android tests
 
+## `unit-test --changed`
+
+`support/scripts/unit-test --changed [--base <ref>]` maps a diff (committed since `<ref>`, default
+`origin/main`, plus uncommitted/untracked changes) to Gradle modules and runs only what's affected —
+use this instead of hand-writing a `--tests` filter or running the whole suite. `--dry-run` prints the
+Gradle commands without running them.
+
+Rules, in order:
+- Each changed file resolves to a module by its `android/**` directory (via `settings.gradle`).
+- A changed `src/test|androidTest` file filters to its own test class. A changed `src/main` file
+  filters to its matching `*Test` class only if exactly one exists; otherwise (or for any non-`.kt`
+  change, e.g. `build.gradle.kts`) the module runs whole.
+- Unit-test sources for every affected module compile first (`compileDebugUnitTestKotlin`); a compile
+  error stops the run before any test executes.
+- A `src/main` change in any module other than `:android:app` also runs `:android:app` whole — it
+  depends on nearly every other module, so this catches API breaks. It does not chase the full
+  dependency graph (e.g. a `mediaprovider:core` change doesn't add `mediaprovider:local`); rerun
+  manually for a sibling you know is affected.
+- `docs/design/**` or any changed file containing `@Composable` also runs
+  `:android:app:verifyRoborazziDebug`.
+
 ### Compose UI Characterisation Tests
 
 Robolectric-based Compose tests that verify observable UI behaviour. These allow safe rearchitecting of Compose screens and ViewModels — if the UI still looks right, the tests pass.

@@ -15,6 +15,9 @@ RESULT_PATH=${RESULT_PATH:-${BUILD_PATH}/Artifacts}
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
+# Set by run_changed_mode; cleaned up by finish() on exit.
+WORK_DIR=""
+
 # build-brief condenses Gradle's console output (a 400+ line log becomes a
 # handful of lines) while keeping the exit code and, for compile failures,
 # the file:line and message; fall back to plain ./gradlew when it's not on
@@ -81,6 +84,7 @@ run_and_report() {
 
 function finish() {
   # Do any work necessary even if script this fails
+  [ -n "${WORK_DIR}" ] && rm -rf "${WORK_DIR}"
   echo "Finished"
 }
 
@@ -89,6 +93,7 @@ trap finish EXIT
 usage() {
   cat <<'EOF'
 Usage: support/scripts/unit-test [module ...] [--tests <filter>]
+       support/scripts/unit-test --changed [--base <ref>] [--dry-run]
 
   (no args)              Run testDebugUnitTest across the whole project.
   <module> [module ...]  Run testDebugUnitTest for one or more modules only.
@@ -99,10 +104,20 @@ Usage: support/scripts/unit-test [module ...] [--tests <filter>]
                           segment.
   --tests <filter>        Passed through to Gradle's --tests filter.
 
+  --changed               Map changed files (committed since <ref>, plus
+                           uncommitted/untracked) to Gradle modules, compile
+                           their unit-test sources first, then run only the
+                           affected modules' tests. See "unit-test --changed"
+                           in .claude/rules/testing.md for the mapping rules.
+    --base <ref>           Diff base. Defaults to origin/main.
+    --dry-run               Print the Gradle commands without running them.
+
 Examples:
   support/scripts/unit-test
   support/scripts/unit-test playback
   support/scripts/unit-test playback app --tests '*QueueManager*'
+  support/scripts/unit-test --changed
+  support/scripts/unit-test --changed --base main --dry-run
 
 Set VERBOSE=1 to print each command as it runs.
 EOF
@@ -175,6 +190,282 @@ resolve_module() {
     return 1
   fi
 }
+
+##############################################################################
+# --changed mode
+##############################################################################
+
+# Prints "<module-dir>\t<gradle-path>" for every declared module, e.g.
+# "android/mediaprovider/core\t:android:mediaprovider:core".
+module_dir_path_pairs() {
+  local p dir
+  while IFS= read -r p; do
+    dir="android$(printf '%s' "${p#:android}" | tr ':' '/')"
+    printf '%s\t%s\n' "${dir}" "${p}"
+  done < <(all_module_paths)
+}
+
+# Resolves a repo-relative file path to the Gradle path of the module whose
+# directory it falls under (longest-prefix match), printing
+# "<module-dir>\t<gradle-path>", or nothing if it isn't inside any module.
+module_dir_and_path_for_file() {
+  local file="$1"
+  local dir path best_dir="" best_path=""
+  while IFS=$'\t' read -r dir path; do
+    case "${file}" in
+      "${dir}"/*)
+        if [ "${#dir}" -gt "${#best_dir}" ]; then
+          best_dir="${dir}"
+          best_path="${path}"
+        fi
+        ;;
+    esac
+  done < <(module_dir_path_pairs)
+  [ -n "${best_path}" ] && printf '%s\t%s\n' "${best_dir}" "${best_path}"
+}
+
+# A filesystem-safe id for a Gradle path, used as a filename stem under
+# WORK_DIR to track per-module state without bash 4 associative arrays.
+module_id() {
+  printf '%s' "${1#:}" | tr ':' '_'
+}
+
+# Echoes the changed files: committed since the merge-base with ${base},
+# plus uncommitted (staged/unstaged) and untracked changes. One path per
+# line, deduplicated.
+changed_files_since() {
+  local base="$1" merge_base
+  merge_base="$(git -C "${REPO_ROOT}" merge-base "${base}" HEAD 2>/dev/null)" || return 1
+  {
+    git -C "${REPO_ROOT}" diff --name-only "${merge_base}" HEAD
+    git -C "${REPO_ROOT}" diff --name-only HEAD
+    git -C "${REPO_ROOT}" ls-files --others --exclude-standard
+  } | sort -u
+}
+
+print_and_run() {
+  echo "+ ${GRADLE_RUNNER[*]} $*"
+  if [ "${DRY_RUN}" -eq 1 ]; then
+    return 0
+  fi
+  run_and_report "$@"
+}
+
+run_changed_mode() {
+  local base="$1"
+  local changed_files
+  if ! changed_files="$(changed_files_since "${base}")"; then
+    echo "error: cannot find a merge base with '${base}' (fetch it first?)" >&2
+    exit 2
+  fi
+
+  if [ -z "${changed_files}" ]; then
+    echo "No changes against ${base}; nothing to run."
+    return 0
+  fi
+
+  WORK_DIR="$(mktemp -d -t unit-test-changed)"
+
+  # Roborazzi trigger: docs/design/** changed, or any changed file that
+  # currently contains a @Composable function.
+  local roborazzi=0 f
+  while IFS= read -r f; do
+    [ -z "${f}" ] && continue
+    case "${f}" in
+      docs/design/*) roborazzi=1 ;;
+    esac
+    if [ "${roborazzi}" -eq 0 ] && [ "${f%.kt}" != "${f}" ] && [ -f "${REPO_ROOT}/${f}" ]; then
+      grep -q '@Composable' "${REPO_ROOT}/${f}" 2>/dev/null && roborazzi=1
+    fi
+  done <<< "${changed_files}"
+
+  # Classify each changed android/** file against its module: a test file
+  # contributes its own class name as a filter candidate; a main file
+  # contributes its corresponding *Test class only if exactly one exists,
+  # otherwise (and for any non-.kt change) the module falls back to a whole
+  # run. Any main-source change outside :android:app marks :android:app as
+  # downstream-affected, since it depends on nearly every other module.
+  local mdir mpath id rel cls matches match_count
+  while IFS= read -r f; do
+    [ -z "${f}" ] && continue
+    case "${f}" in
+      android/*) ;;
+      *) continue ;;
+    esac
+
+    IFS=$'\t' read -r mdir mpath <<< "$(module_dir_and_path_for_file "${f}")"
+    [ -z "${mpath}" ] && continue
+    id="$(module_id "${mpath}")"
+    echo "${mpath}" >> "${WORK_DIR}/modules_seen"
+    rel="${f#"${mdir}"/}"
+
+    case "${rel}" in
+      src/test/*.kt|src/androidTest/*.kt)
+        cls="$(basename "${rel}" .kt)"
+        echo "${cls}" >> "${WORK_DIR}/${id}.classes"
+        ;;
+      src/main/*.kt)
+        cls="$(basename "${rel}" .kt)"
+        matches="$(find "${REPO_ROOT}/${mdir}/src/test" "${REPO_ROOT}/${mdir}/src/androidTest" \
+          -type f -name "${cls}Test.kt" 2>/dev/null || true)"
+        match_count="$(printf '%s\n' "${matches}" | grep -c . || true)"
+        if [ "${match_count}" -eq 1 ]; then
+          echo "${cls}Test" >> "${WORK_DIR}/${id}.classes"
+        else
+          touch "${WORK_DIR}/${id}.unmappable"
+        fi
+        touch "${WORK_DIR}/${id}.main"
+        [ "${mpath}" != ":android:app" ] && touch "${WORK_DIR}/app_downstream_triggered"
+        ;;
+      src/test/*|src/androidTest/*)
+        # Non-.kt test-source change (e.g. resources): run the module whole.
+        touch "${WORK_DIR}/${id}.unmappable"
+        ;;
+      *)
+        # Non-.kt, non-test change (build.gradle.kts, manifest, resources):
+        # run the module whole, and treat it like a main-source change.
+        touch "${WORK_DIR}/${id}.unmappable"
+        touch "${WORK_DIR}/${id}.main"
+        [ "${mpath}" != ":android:app" ] && touch "${WORK_DIR}/app_downstream_triggered"
+        ;;
+    esac
+  done <<< "${changed_files}"
+
+  if [ ! -f "${WORK_DIR}/modules_seen" ] && [ "${roborazzi}" -eq 0 ]; then
+    echo "No modules affected; nothing to run."
+    return 0
+  fi
+
+  local app_path=":android:app"
+  local app_downstream=0
+  [ -f "${WORK_DIR}/app_downstream_triggered" ] && app_downstream=1
+
+  local modules=()
+  if [ -f "${WORK_DIR}/modules_seen" ]; then
+    while IFS= read -r mpath; do
+      modules+=("${mpath}")
+    done < <(sort -u "${WORK_DIR}/modules_seen")
+  fi
+
+  local app_in_modules=0 m
+  for m in "${modules[@]:-}"; do
+    [ "${m}" = "${app_path}" ] && app_in_modules=1
+  done
+
+  # :android:app runs a normal (filtered-or-whole) invocation if it changed
+  # directly or was pulled in downstream; roborazzi alone only adds the
+  # verifyRoborazziDebug task, not the whole app suite.
+  local app_test_needed=0
+  [ "${app_in_modules}" -eq 1 ] || [ "${app_downstream}" -eq 1 ] && app_test_needed=1
+  if [ "${app_test_needed}" -eq 1 ] && [ "${app_in_modules}" -eq 0 ]; then
+    modules+=("${app_path}")
+  fi
+
+  local compile_modules=("${modules[@]:-}")
+  if [ "${roborazzi}" -eq 1 ] && [ "${app_test_needed}" -eq 0 ]; then
+    compile_modules+=("${app_path}")
+  fi
+
+  echo "Base: ${base}"
+  echo "Changed files: $(printf '%s\n' "${changed_files}" | grep -c .)"
+  echo "Affected modules: ${modules[*]:-(none)}"
+  [ "${roborazzi}" -eq 1 ] && echo "Roborazzi: verifyRoborazziDebug will run (docs/design or @Composable change)"
+  echo
+
+  # 1. Compile unit-test sources for every affected module first; stop here
+  #    on a compile error so it doesn't surface mid test-run.
+  if [ "${#compile_modules[@]}" -gt 0 ]; then
+    local compile_tasks=() cm
+    for cm in "${compile_modules[@]}"; do
+      compile_tasks+=("${cm}:compileDebugUnitTestKotlin")
+    done
+    if ! print_and_run "${compile_tasks[@]}"; then
+      echo "Compile failed; stopping before running tests." >&2
+      return 1
+    fi
+  fi
+
+  # 2. Run tests: batch every whole-module run into one invocation (safe,
+  #    since none of them pass --tests), and run each filtered module in
+  #    its own invocation so its --tests filter can't shadow another
+  #    module's tests in the same build.
+  local overall_rc=0 whole_batch=() mid unmappable_file classes_file
+  for m in "${modules[@]:-}"; do
+    [ -z "${m}" ] && continue
+    mid="$(module_id "${m}")"
+    unmappable_file="${WORK_DIR}/${mid}.unmappable"
+    classes_file="${WORK_DIR}/${mid}.classes"
+
+    local whole=0
+    if [ "${m}" = "${app_path}" ] && [ "${app_downstream}" -eq 1 ]; then
+      whole=1
+    elif [ -f "${unmappable_file}" ] || [ ! -s "${classes_file}" ]; then
+      whole=1
+    fi
+
+    if [ "${whole}" -eq 1 ]; then
+      whole_batch+=("${m}:testDebugUnitTest")
+      if [ "${m}" = "${app_path}" ] && [ "${roborazzi}" -eq 1 ]; then
+        whole_batch+=("${app_path}:verifyRoborazziDebug")
+        roborazzi=2 # placed; 2 means "handled" so the solo run below is skipped
+      fi
+    else
+      local filter_args=() cls_line
+      while IFS= read -r cls_line; do
+        [ -z "${cls_line}" ] && continue
+        filter_args+=(--tests "${cls_line}")
+      done < <(sort -u "${classes_file}")
+      local run_tasks=("${m}:testDebugUnitTest")
+      if [ "${m}" = "${app_path}" ] && [ "${roborazzi}" -eq 1 ]; then
+        run_tasks+=("${app_path}:verifyRoborazziDebug")
+        roborazzi=2
+      fi
+      print_and_run "${run_tasks[@]}" "${filter_args[@]}" || overall_rc=$?
+    fi
+  done
+
+  if [ "${#whole_batch[@]}" -gt 0 ]; then
+    print_and_run "${whole_batch[@]}" || overall_rc=$?
+  fi
+
+  # roborazzi still 1 here means :android:app wasn't otherwise scheduled
+  # (e.g. a docs/design-only change): run just the verify task.
+  if [ "${roborazzi}" -eq 1 ]; then
+    print_and_run "${app_path}:verifyRoborazziDebug" || overall_rc=$?
+  fi
+
+  return "${overall_rc}"
+}
+
+if [ "$#" -gt 0 ] && [ "$1" = "--changed" ]; then
+  shift
+  DRY_RUN=0
+  BASE_REF="origin/main"
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --base)
+        shift
+        [ "$#" -gt 0 ] || { echo "error: --base requires an argument" >&2; exit 2; }
+        BASE_REF="$1"
+        shift
+        ;;
+      --dry-run)
+        DRY_RUN=1
+        shift
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        echo "error: unexpected argument '$1' after --changed" >&2
+        exit 2
+        ;;
+    esac
+  done
+  run_changed_mode "${BASE_REF}"
+  exit $?
+fi
 
 if [ "$#" -eq 0 ]; then
   run_and_report testDebugUnitTest
