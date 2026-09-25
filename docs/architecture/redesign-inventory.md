@@ -411,20 +411,20 @@ All 12 taken as written on 2026-09-25 (epic #382); each can still be revisited.
 
 ## Parity checklist (tick before the first post-freeze release)
 
-- [ ] Library tabs: Songs, Albums, Artists, Genres, Playlists, Folders (opt-in); reorder and hide tabs; last tab restored
-- [ ] Songs sort ×6, Albums sort ×4 incl. Random, Genres sort ×2, Playlists sort ×2
-- [ ] Album and artist list/grid toggle, persisted
-- [ ] Fast scroller with section popup on every long list
-- [ ] Multi-select on Songs, Albums, Artists, Playlist detail; back clears selection first
+- [x] Library tabs: Songs, Albums, Artists, Genres, Playlists, Folders (opt-in); reorder and hide tabs; last tab restored
+- [x] Songs sort ×6, Albums sort ×4 incl. Random, Genres sort ×2, Playlists sort ×2
+- [x] Album and artist list/grid toggle, persisted
+- [x] Fast scroller with section popup on every long list
+- [x] Multi-select on Songs, Albums, Artists, Playlist detail; back clears selection first
 - [ ] Batch Add to queue, Add to playlist, Edit tags
 - [ ] Album detail: disc groups, Shuffle, Queue, Play next, Add to playlist, Edit tags
 - [ ] Artist detail: inline album expand, Play/Shuffle all, Shuffle albums, Play next, Edit all tags
-- [ ] Genre detail actions at genre, album and song level
-- [ ] Playlist detail: 7 sorts + descending, drag reorder (custom), Remove, Rename, Clear, Delete, Export m3u
+- [x] Genre detail actions at genre, album and song level
+- [x] Playlist detail: 7 sorts + descending, drag reorder (custom), Remove, Rename, Clear, Delete, Export m3u
 - [ ] Auto playlists: Recently added, Most played, History, Favorites (heart in Now Playing)
-- [ ] Folders: drill down, back one level, recursive Play/Shuffle/Queue/Playlist
+- [x] Folders: drill down, back one level, recursive Play/Shuffle/Queue/Playlist
 - [ ] Song actions: Play next, Add to queue, Add to playlist, Song info, Exclude, Edit tags, Delete, Remove
-- [ ] Create, rename, clear, delete playlists; duplicate-song handling
+- [x] Create, rename, clear, delete playlists; duplicate-song handling
 - [ ] Tag editor: all 11 fields, batch mode, provider gating
 - [ ] Song info: all 17 fields
 - [ ] Search: artists/albums/songs, fuzzy ranking, filter chips persisted, shared-element open
