@@ -1,9 +1,7 @@
 package com.simplecityapps.shuttle.ui
 
-import android.app.SearchManager
 import android.content.Intent
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.ViewGroup
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -103,7 +101,6 @@ class MainActivity : AppCompatActivity() {
             musicPermissionRequest.launch(MusicPermission.name)
         }
 
-        handleSearchQuery(intent)
         // Not on recreation, or on a relaunch from recents, which redeliver the intent that opened the file
         if (savedInstanceState == null && intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == 0) {
             handleViewIntent(intent)
@@ -133,7 +130,6 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
-        handleSearchQuery(intent)
         handleViewIntent(intent)
     }
 
@@ -156,13 +152,6 @@ class MainActivity : AppCompatActivity() {
             } else {
                 Timber.e(task.exception ?: Exception("Unknown"), "Failed to launch review flow")
             }
-        }
-    }
-
-    /** Plays what a voice search (e.g. Assistant's "play X on S2") asks for. */
-    private fun handleSearchQuery(intent: Intent?) {
-        if (intent?.action == MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
-            playRequests.playFromSearch(intent.getStringExtra(SearchManager.QUERY), intent.extras)
         }
     }
 

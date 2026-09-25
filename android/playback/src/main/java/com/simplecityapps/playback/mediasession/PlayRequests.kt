@@ -114,9 +114,6 @@ constructor(
         }
     }
 
-    /** Plays what a voice search asks for (see [playSearch]), for as long as the app runs. */
-    fun playFromSearch(query: String?, extras: Bundle?): Job = appCoroutineScope.launch { playSearch(query, extras) }
-
     /** Plays the file at [uri] on its own, replacing the queue, or says it can't be opened. */
     fun playFromUri(uri: Uri, mimeType: String?): Job = appCoroutineScope.launch {
         val song = songForUri(uri, mimeType)
