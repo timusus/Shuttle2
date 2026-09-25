@@ -12,10 +12,11 @@ class PrivacySettings @Inject constructor(
 
     companion object {
         /**
-         * Read once at startup, so a change applies after a restart. On by default (owner decision 3, #379), with the
-         * opt-out in Settings > Privacy; a user who turned it off keeps their stored choice.
+         * Read once at startup, so a change applies after a restart, with the opt-out in Settings > Privacy. A new
+         * install stores it on (owner decision 3, #379; see InstallDefaults); this default, off, is what existing users
+         * who never chose have always had.
          */
-        val CrashReporting = Setting.boolean("pref_crash_reporting", true)
+        val CrashReporting = Setting.boolean("pref_crash_reporting", false)
 
         /**
          * Firebase Analytics. Off until the user turns it on; when, if ever, to ask is an open legal question. Remote Config (trial length, pricing tier, snowfall) is only fetched while this is on,

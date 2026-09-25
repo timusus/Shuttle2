@@ -54,7 +54,7 @@ class SettingsRepositoriesTest {
             "artwork_wifi_only" to true,
             "artwork_local_only" to false,
             "media_session_artwork" to true,
-            "pref_crash_reporting" to true,
+            "pref_crash_reporting" to false,
             "pref_firebase_analytics" to false,
             "pref_file_logging" to false,
             "pref_retain_shuffle_on_new_queue" to false,

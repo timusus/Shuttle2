@@ -7,7 +7,6 @@ import androidx.work.Configuration
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.di.AppCoroutineScope
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.MainActivity
 import com.simplecityapps.shuttle.ui.ThemeManager
 import dagger.hilt.android.HiltAndroidApp
@@ -29,7 +28,7 @@ class ShuttleApplication :
     lateinit var initializers: AppInitializers
 
     @Inject
-    lateinit var preferenceManager: GeneralPreferenceManager
+    lateinit var installDefaults: InstallDefaults
 
     @Inject
     lateinit var themeManager: ThemeManager
@@ -43,9 +42,7 @@ class ShuttleApplication :
 
         themeManager.setDayNightMode()
 
-        if (preferenceManager.previousVersionCode != BuildConfig.VERSION_CODE) {
-            preferenceManager.previousVersionCode = BuildConfig.VERSION_CODE
-        }
+        installDefaults.onLaunch()
 
         initializers.init(this)
 
