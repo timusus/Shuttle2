@@ -2,7 +2,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
-    id("androidx.navigation.safeargs.kotlin")
     id("com.mikepenz.aboutlibraries.plugin.android")
     id("kotlin-parcelize")
     id("dagger.hilt.android.plugin")
@@ -122,7 +121,6 @@ android {
         androidTestImplementation(composeBom)
         implementation(libs.androidx.activity.ktx)
         implementation(libs.androidx.activity.compose)
-        implementation(libs.androidx.hilt.navigation.compose)
         testImplementation(libs.roborazzi)
         testImplementation(libs.roborazzi.compose)
         testImplementation(libs.roborazzi.composePreviewScannerSupport)
@@ -177,17 +175,11 @@ android {
         // Shuttle Playback
         implementation(project(":android:playback"))
 
-        // RecylerView Adapter
-        implementation(project(":android:recyclerview-adapter"))
-
         // Storage Access Framework Helper
         implementation(project(":android:saf"))
 
         // Trial
         implementation(project(":android:trial"))
-
-        // RecyclerView FastScroll
-        implementation(libs.timusus.recyclerViewFastScroll)
 
         // AppCompat
         implementation(libs.androidx.appcompat)
@@ -197,10 +189,6 @@ android {
 
         // Constraint Layout
         implementation(libs.androidx.constraintlayout)
-
-        // AndroidX Navigation
-        implementation(libs.androidx.navigation.fragment.ktx)
-        implementation(libs.androidx.navigation.ui.ktx)
 
         // Hilt
         implementation(libs.hilt)
@@ -212,14 +200,8 @@ android {
         // Leak Canary
         debugImplementation(libs.leakcanary.android)
 
-        // ViewPager 2
-        implementation(libs.androidx.viewpager2)
-
-        // ViewPager Circle Indicator
-        implementation(libs.relex.circleindicator)
-
-        // AndroidX Preference
-        implementation(libs.androidx.preference.ktx)
+        // AndroidX Preference: SettingsRepositoriesTest checks the settings still open its file
+        testImplementation(libs.androidx.preference.ktx)
 
         // ChromeCast
         implementation(libs.google.play.services.cast.framework)
@@ -244,18 +226,12 @@ android {
         implementation(files("libs/media3-decoder-flac-1.11.1.aar"))
         implementation(files("libs/media3-decoder-opus-1.11.1.aar"))
 
-        implementation(libs.androidx.drawerlayout)
-
         // New fragment manager
         implementation(libs.androidx.fragment.ktx)
 
         // Glide
         implementation(libs.glide)
         implementation(libs.glide.okhttp3Integration)
-        implementation("com.github.bumptech.glide:recyclerview-integration:4.14.2") {
-            // Excludes the support library because it's already included by Glide.
-            isTransitive = false
-        }
         implementation(libs.glide.compose)
 
         // Drag to reorder in lazy lists (playlist detail)
@@ -273,8 +249,6 @@ android {
 
         // Semantic versioning
         implementation(libs.vdurmont.semver4j)
-
-        implementation(libs.design.fluentSystemIcons)
 
         // KotlinX DateTime
         implementation(libs.kotlinx.datetime)
@@ -304,9 +278,9 @@ android {
         androidTestImplementation(libs.androidx.runner)
         androidTestImplementation(libs.androidx.rules)
         androidTestImplementation(libs.androidx.core.ktx)
-        androidTestImplementation(libs.hamcrest.library)
+        // Declared directly, not just through ui-test-junit4, or its error_prone_annotations 2.30.0 clashes with the
+        // app runtime classpath's strict 2.28.0 and the androidTest classpath fails to resolve
         androidTestImplementation(libs.androidx.espresso.core)
-        androidTestImplementation(libs.androidx.espresso.contrib)
         androidTestImplementation(libs.androidx.junit)
         androidTestImplementation(libs.androidx.ui.test.junit4)
         debugImplementation(libs.androidx.ui.test.manifest)

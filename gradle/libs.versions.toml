@@ -6,7 +6,6 @@ annotation = "1.10.0"
 appcompat = "1.8.0"
 agp = "9.4.1"
 billing-ktx = "8.0.0"
-circleindicator = "2.1.6"
 compose = "2026.09.00"
 compose-lint-checks = "1.6.0"
 kotlinx-collections-immutable = "0.5.2"
@@ -16,11 +15,9 @@ converter-moshi = "3.0.0"
 core-ktx-version = "1.7.0"
 desugar-jdk-libs = "2.1.5"
 documentfile = "1.1.0"
-drawerlayout = "1.2.0"
 espresso-core = "3.7.0"
 firebase-bom = "34.19.0"
 firebase-crashlytics = "3.0.8"
-fluent-system-icons = "1.1.311"
 fragment-ktx = "1.9.0"
 glance = "1.2.0"
 glide = "5.0.9"
@@ -61,8 +58,6 @@ moshi-adapters = "1.15.2"
 moshi-kotlin = "1.15.2"
 moshi-kotlin-codegen = "1.15.2"
 nanohttpd-webserver = "2.3.1"
-navigation-safe-args-gradle-plugin = "2.9.8"
-navigation-ui-ktx = "2.9.8"
 navigation3 = "1.2.0"
 okhttp = "5.5.0"
 okhttp3-integration = "5.0.9"
@@ -70,9 +65,7 @@ palette-ktx = "1.0.0"
 phrase = "1.2.0"
 play-services-cast-framework = "22.3.1"
 preference-ktx = "1.2.1"
-recyclerview = "1.4.0"
 reorderable = "3.1.0"
-recyclerview-fastscroll = "2.0.1"
 review = "2.0.2"
 room-compiler = "2.8.3"
 robolectric = "4.17"
@@ -81,7 +74,6 @@ runner = "1.7.0"
 security-crypto = "1.1.0"
 semver4j = "3.1.0"
 timber = "5.0.1"
-viewpager2 = "1.1.0"
 work-runtime-ktx = "2.11.2"
 
 [libraries]
@@ -93,8 +85,6 @@ androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = 
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 androidx-core-ktx = { module = "androidx.test:core-ktx", version.ref = "core-ktx-version" }
 androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
-androidx-drawerlayout = { module = "androidx.drawerlayout:drawerlayout", version.ref = "drawerlayout" }
-androidx-espresso-contrib = { module = "androidx.test.espresso:espresso-contrib", version.ref = "espresso-core" }
 androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso-core" }
 androidx-foundation = { module = "androidx.compose.foundation:foundation" }
 androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragment-ktx" }
@@ -102,7 +92,6 @@ androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", versi
 androidx-glance-appwidget-testing = { module = "androidx.glance:glance-appwidget-testing", version.ref = "glance" }
 androidx-glance-material3 = { module = "androidx.glance:glance-material3", version.ref = "glance" }
 androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hilt-compiler" }
-androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hilt-compiler" }
 androidx-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hilt-work" }
 androidx-hilt-lifecycle-viewmodel-compose = { module = "androidx.hilt:hilt-lifecycle-viewmodel-compose", version.ref = "hilt-compiler" }
 androidx-lifecycle-viewmodel-navigation3 = { module = "androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "lifecycle-viewmodel-navigation3" }
@@ -117,12 +106,8 @@ androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtim
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle-viewmodel-compose" }
 androidx-material = { module = "androidx.compose.material:material" }
 androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
-androidx-navigation-fragment-ktx = { module = "androidx.navigation:navigation-fragment-ktx", version.ref = "navigation-ui-ktx" }
-androidx-navigation-safe-args-gradle-plugin = { module = "androidx.navigation:navigation-safe-args-gradle-plugin", version.ref = "navigation-safe-args-gradle-plugin" }
-androidx-navigation-ui-ktx = { module = "androidx.navigation:navigation-ui-ktx", version.ref = "navigation-ui-ktx" }
 androidx-palette-ktx = { module = "androidx.palette:palette-ktx", version.ref = "palette-ktx" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preference-ktx" }
-androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room-compiler" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room-compiler" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room-compiler" }
@@ -135,12 +120,10 @@ androidx-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 androidx-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
-androidx-viewpager2 = { module = "androidx.viewpager2:viewpager2", version.ref = "viewpager2" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work-runtime-ktx" }
 billingclient-billingKtx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing-ktx" }
 compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "compose-lint-checks" }
 compose-preview-scanner = { module = "io.github.sergio-sastre.ComposablePreviewScanner:android", version.ref = "composable-preview-scanner" }
-design-fluentSystemIcons = { module = "com.microsoft.design:fluent-system-icons", version.ref = "fluent-system-icons" }
 firebase-analytics-ktx = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-config-ktx = { module = "com.google.firebase:firebase-config" }
@@ -187,7 +170,6 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 nanohttpd-webserver = { module = "org.nanohttpd:nanohttpd-webserver", version.ref = "nanohttpd-webserver" }
 okhttp3-loggingInterceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "logging-interceptor" }
 okhttp3-okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
-relex-circleindicator = { module = "me.relex:circleindicator", version.ref = "circleindicator" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
@@ -198,7 +180,6 @@ retrofit2-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref =
 square-phrase = { module = "com.squareup.phrase:phrase", version.ref = "phrase" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 timusus-ktaglib = { module = "com.simplecityapps:ktaglib", version.ref = "ktaglib" }
-timusus-recyclerViewFastScroll = { module = "com.simplecityapps:recyclerview-fastscroll", version.ref = "recyclerview-fastscroll" }
 tools-desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
 vdurmont-semver4j = { module = "com.vdurmont:semver4j", version.ref = "semver4j" }
 

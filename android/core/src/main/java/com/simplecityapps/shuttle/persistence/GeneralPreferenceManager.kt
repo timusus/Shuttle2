@@ -56,14 +56,6 @@ class GeneralPreferenceManager(
             return null
         }
 
-    var hasSeenThankYouDialog: Boolean
-        set(value) {
-            sharedPreferences.put("thank_you_dialog_viewed", value)
-        }
-        get() {
-            return sharedPreferences.get("thank_you_dialog_viewed", false)
-        }
-
     // Kept for the trial module; the setting itself is [PrivacySettings.analytics].
     val firebaseAnalyticsEnabled: Boolean
         get() = sharedPreferences.preference(PrivacySettings.Analytics).value
@@ -141,16 +133,6 @@ class GeneralPreferenceManager(
         }
         get() {
             return sharedPreferences.getString("search_recent", null)?.split("\n")?.filter { it.isNotBlank() }.orEmpty()
-        }
-
-    // Playlists
-
-    var ignorePlaylistDuplicates: Boolean
-        set(value) {
-            sharedPreferences.put("playlist_ignore_duplicates", value)
-        }
-        get() {
-            return sharedPreferences.getBoolean("playlist_ignore_duplicates", false)
         }
 
     // Sleep Timer
