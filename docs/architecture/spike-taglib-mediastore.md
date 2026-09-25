@@ -246,3 +246,14 @@ their history when the import removes them, as any missing file does.
 **Tests:** `LegacySafSongsTest` (primary, SD card, `home:`, ambiguous, unmatched, already-migrated,
 duplicates, Downloads ids) and `LegacySafSongsImportTest`, which builds a schema-40 database,
 migrates it and runs `MediaImporter` over a fake MediaStore listing.
+
+**On the emulator (2026-09-25):** the 1.0.10 debug build (a3a79c54) added the `taglib` fixture
+through the S2 provider's SAF picker (`nav/setup-taglib-provider.yaml`), which stored the 5 songs
+under `content://com.android.externalstorage.documents/tree/primary%3AMusic%2Ftaglib-seed/...`.
+Play counts, last completed dates, an excluded song, a Favorites entry and a "Road trip" playlist
+were written into its schema-40 database with `sqlite3`, the fixture's `.nomedia` was removed and
+its files scanned into MediaStore, and the providers pref was set to S2 only. After `install -r` of
+this branch and one import, the database was at version 43 with all 5 rows on their original ids,
+now at `/storage/emulated/0/Music/taglib-seed/...`, and every play count, date, the exclusion, the
+Favorites entry and both playlists (plus the imported `taglib.m3u`) unchanged. With the MediaStore
+provider also enabled, the two providers race for the same paths: #420.
