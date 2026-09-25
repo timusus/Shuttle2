@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
@@ -26,10 +27,10 @@ fun FolderRow(
     onMore: (() -> Unit)? = null,
 ) {
     MediaRow(
-        title = name,
+        title = AnnotatedString(name),
         onClick = onClick,
         modifier = modifier,
-        supporting = summary,
+        supporting = summary?.let(::AnnotatedString),
         meta = meta,
         leading = artwork ?: {
             Artwork(if (kind == FolderEntryKind.Folder) ArtworkPlaceholder.Folder else ArtworkPlaceholder.Song)

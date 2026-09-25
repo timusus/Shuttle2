@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
@@ -51,10 +52,10 @@ fun QueueRow(
         shape = if (dragging) MaterialTheme.shapes.medium else RectangleShape,
     ) {
         MediaRow(
-            title = title,
+            title = AnnotatedString(title),
             onClick = onClick,
             modifier = if (position == QueuePosition.Played && !dragging) Modifier.alpha(0.6f) else Modifier,
-            supporting = subtitle,
+            supporting = AnnotatedString(subtitle),
             meta = duration,
             leading = artwork,
             supportingLeading = if (current) {

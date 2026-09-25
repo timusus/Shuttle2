@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
@@ -11,6 +12,20 @@ import com.simplecityapps.shuttle.fixtures.SampleLibrary
 fun AlbumRow(
     title: String,
     artist: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    artwork: (@Composable () -> Unit)? = null,
+    meta: String? = null,
+    selected: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
+    onMore: (() -> Unit)? = null,
+) = AlbumRow(AnnotatedString(title), AnnotatedString(artist), onClick, modifier, artwork, meta, selected, onLongClick, onMore)
+
+/** An [AlbumRow] with styled [title] and [artist], such as a search query's matches in bold. */
+@Composable
+fun AlbumRow(
+    title: AnnotatedString,
+    artist: AnnotatedString,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     artwork: (@Composable () -> Unit)? = null,

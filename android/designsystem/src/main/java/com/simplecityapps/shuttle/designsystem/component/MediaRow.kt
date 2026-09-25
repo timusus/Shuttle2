@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import com.simplecityapps.shuttle.designsystem.R
 
@@ -22,14 +23,15 @@ import com.simplecityapps.shuttle.designsystem.R
  * `bodyMedium` on `onSurfaceVariant` (both from the M3 defaults), meta `labelMedium`, selection
  * on `secondaryContainer`, and an optional overflow button. The unselected container is
  * transparent, so a row takes the colour of what it sits on: a screen, a sheet or the search view.
+ * The text is styled so a row can show spans, such as a search query's matches in bold.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun MediaRow(
-    title: String,
+    title: AnnotatedString,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    supporting: String? = null,
+    supporting: AnnotatedString? = null,
     meta: String? = null,
     leading: (@Composable () -> Unit)? = null,
     supportingLeading: (@Composable RowScope.() -> Unit)? = null,

@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
@@ -17,12 +18,25 @@ fun GenreRow(
     selected: Boolean = false,
     onLongClick: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
+) = GenreRow(AnnotatedString(name), onClick, modifier, songCount, artwork, selected, onLongClick, onMore)
+
+/** A [GenreRow] with a styled [name], such as a search query's matches in bold. */
+@Composable
+fun GenreRow(
+    name: AnnotatedString,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    songCount: String? = null,
+    artwork: (@Composable () -> Unit)? = null,
+    selected: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
+    onMore: (() -> Unit)? = null,
 ) {
     MediaRow(
         title = name,
         onClick = onClick,
         modifier = modifier,
-        supporting = songCount,
+        supporting = songCount?.let(::AnnotatedString),
         leading = artwork,
         selected = selected,
         onLongClick = onLongClick,

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
@@ -35,6 +36,38 @@ enum class SongOfflineState { None, Downloading, Offline }
 fun SongRow(
     title: String,
     subtitle: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    artwork: (@Composable () -> Unit)? = null,
+    trackNumber: Int? = null,
+    duration: String? = null,
+    playing: Boolean = false,
+    selected: Boolean = false,
+    enabled: Boolean = true,
+    offlineState: SongOfflineState = SongOfflineState.None,
+    onLongClick: (() -> Unit)? = null,
+    onMore: (() -> Unit)? = null,
+) = SongRow(
+    AnnotatedString(title),
+    AnnotatedString(subtitle),
+    onClick,
+    modifier,
+    artwork,
+    trackNumber,
+    duration,
+    playing,
+    selected,
+    enabled,
+    offlineState,
+    onLongClick,
+    onMore,
+)
+
+/** A [SongRow] with styled [title] and [subtitle], such as a search query's matches in bold. */
+@Composable
+fun SongRow(
+    title: AnnotatedString,
+    subtitle: AnnotatedString,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     artwork: (@Composable () -> Unit)? = null,

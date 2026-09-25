@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
@@ -20,12 +21,25 @@ fun PlaylistRow(
     selected: Boolean = false,
     onLongClick: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
+) = PlaylistRow(AnnotatedString(name), onClick, modifier, summary, artwork, selected, onLongClick, onMore)
+
+/** A [PlaylistRow] with a styled [name], such as a search query's matches in bold. */
+@Composable
+fun PlaylistRow(
+    name: AnnotatedString,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    summary: String? = null,
+    artwork: (@Composable () -> Unit)? = null,
+    selected: Boolean = false,
+    onLongClick: (() -> Unit)? = null,
+    onMore: (() -> Unit)? = null,
 ) {
     MediaRow(
         title = name,
         onClick = onClick,
         modifier = modifier,
-        supporting = summary,
+        supporting = summary?.let(::AnnotatedString),
         leading = artwork,
         selected = selected,
         onLongClick = onLongClick,

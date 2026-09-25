@@ -59,6 +59,14 @@ class SearchViewModelTest {
         }
     }
 
+    /** Every content the screen is shown from now on, starting with the current one. */
+    private fun TestScope.recordContent(viewModel: SearchViewModel): List<SearchContent> {
+        val shown = mutableListOf<SearchContent>()
+        backgroundScope.launch { viewModel.uiState.collect { shown += it.content } }
+        runCurrent()
+        return shown
+    }
+
     private fun TestScope.type(viewModel: SearchViewModel, query: String) {
         viewModel.onQueryChange(query)
         advanceTimeBy(SearchViewModel.SearchDebounce.inWholeMilliseconds + 1)
@@ -86,6 +94,32 @@ class SearchViewModelTest {
         val content = viewModel.uiState.value.content.shouldBeInstanceOf<SearchContent.Results>()
         content.query shouldBe "chlorophyll"
         content.results.songs.first().item shouldBe chlorophyllLoop
+    }
+
+    @Test
+    fun `the first query shows the searching state until its results arrive`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        val shown = recordContent(viewModel)
+
+        type(viewModel, "chlorophyll")
+
+        shown.drop(1).first() shouldBe SearchContent.Searching
+        shown.last().shouldBeInstanceOf<SearchContent.Results>().query shouldBe "chlorophyll"
+    }
+
+    @Test
+    fun `the previous results stay up while the next query runs`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        type(viewModel, "chlorophyll")
+        val shown = recordContent(viewModel)
+
+        type(viewModel, "petal")
+
+        shown.first().shouldBeInstanceOf<SearchContent.Results>().query shouldBe "chlorophyll"
+        shown.none { it == SearchContent.Searching } shouldBe true
+        val content = shown.last().shouldBeInstanceOf<SearchContent.Results>()
+        content.query shouldBe "petal"
+        content.results.songs.first().item shouldBe petalArithmetic
     }
 
     @Test
