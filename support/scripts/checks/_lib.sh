@@ -17,13 +17,18 @@ s2() { "${CHECKS_ROOT}/support/scripts/s2-debug.sh" "$@"; }
 # Every adb call below runs under this deadline (#416: a dropped tunnel left a bare `adb` call
 # hanging on a dead TCP read for ~22 minutes instead of failing, since only adb_retry's *detected*
 # errors -- not a hang -- triggered its reconnect). Prefers GNU coreutils `timeout`; macOS has none
-# built in, but the box and any devbox with `brew install coreutils` provide `gtimeout`.
+# built in, but the box and any devbox with `brew install coreutils` provide `gtimeout`. Without
+# either (a bare Mac -- exactly where #416 bites), _run_adb falls back to a bash watchdog below
+# instead of running adb with no deadline at all.
 ADB_CALL_TIMEOUT="${ADB_CALL_TIMEOUT:-20}"
 _ADB_TIMEOUT_BIN=""
 for _t in timeout gtimeout; do
     command -v "$_t" >/dev/null 2>&1 && { _ADB_TIMEOUT_BIN="$_t"; break; }
 done
 unset _t
+if [ -z "$_ADB_TIMEOUT_BIN" ]; then
+    echo "checks/_lib.sh: no 'timeout'/'gtimeout' on PATH -- using a bash watchdog fallback for adb_retry's ${ADB_CALL_TIMEOUT}s deadline" >&2
+fi
 
 # adb_retry <adb args...>: runs `adb "$@"` under ADB_CALL_TIMEOUT; on a timeout or a dropped-tunnel
 # failure (device offline/not found), it reconnects the lane once via `remote-emu.sh reconnect` and
@@ -35,9 +40,26 @@ unset _t
 _run_adb() {
     if [ -n "$_ADB_TIMEOUT_BIN" ]; then
         "$_ADB_TIMEOUT_BIN" "$ADB_CALL_TIMEOUT" adb "$@"
-    else
-        adb "$@"
+        return $?
     fi
+    # No `timeout`/`gtimeout` on PATH: watch the adb call ourselves and kill it (TERM, then KILL
+    # if it ignores that) after ADB_CALL_TIMEOUT, so a dead TCP read still fails instead of hanging
+    # forever (#416). Mirrors `timeout`'s exit-124-on-timeout convention so adb_retry's check below
+    # (and any ADB_CALL_TIMEOUT=<n> override from a caller) works the same either way.
+    adb "$@" &
+    local adb_pid=$!
+    ( sleep "$ADB_CALL_TIMEOUT"
+      kill -0 "$adb_pid" 2>/dev/null || exit 0
+      kill -TERM "$adb_pid" 2>/dev/null
+      sleep 2
+      kill -KILL "$adb_pid" 2>/dev/null ) &
+    local watchdog_pid=$!
+    local status=0
+    wait "$adb_pid" || status=$?
+    kill "$watchdog_pid" 2>/dev/null || true
+    wait "$watchdog_pid" 2>/dev/null || true
+    [ "$status" -ge 128 ] && status=124
+    return "$status"
 }
 
 adb_retry() {
