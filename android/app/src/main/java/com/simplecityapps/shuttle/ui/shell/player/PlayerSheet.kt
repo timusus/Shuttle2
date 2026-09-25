@@ -28,11 +28,10 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
-import com.simplecityapps.shuttle.ui.shell.ShellQueueUiState
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
@@ -48,10 +47,12 @@ import kotlinx.coroutines.withContext
 @Composable
 internal fun PlayerSheet(
     state: PlayerSheetState,
-    queue: ShellQueueUiState,
+    player: PlayerUiState,
+    progress: () -> PlayerProgress,
+    actions: PlayerActions,
     layout: ShellLayout,
     modifier: Modifier = Modifier,
-    collapsedInset: Dp = 0.dp,
+    collapsedInset: () -> Int = { 0 },
 ) {
     val scope = rememberCoroutineScope()
     val flingBehavior = AnchoredDraggableDefaults.flingBehavior(state.draggable, animationSpec = state.animationSpec)
@@ -60,45 +61,53 @@ internal fun PlayerSheet(
     val levelDescription = state.settledLevel.description
     val nowPlayingShown by remember(state) { derivedStateOf { state.geometry.nowPlayingAlpha(state.offset) > 0f } }
 
-    Surface(
-        modifier = modifier
-            .fillMaxSize()
-            .testTag(PlayerTestTags.Sheet)
-            .semantics { stateDescription = levelDescription }
-            .nestedScroll(nestedScroll)
-            .anchoredDraggable(state.draggable, orientation = Orientation.Vertical, flingBehavior = flingBehavior),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        Box(Modifier.fillMaxSize()) {
-            val geometry = { state.geometry }
-            val offset = { state.offset }
-            if (state.mode == PlayerMode.CompactSheet) {
-                StackedPlayer(
-                    queue = queue,
-                    geometry = geometry,
-                    offset = offset,
-                    tabletopFold = layout.horizontalFold,
-                    onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
-                    onShowQueue = { scope.launch { state.moveTo(PlayerLevel.Queue) } },
-                )
-            } else {
-                SideBySidePlayer(
-                    queue = queue,
-                    verticalFold = layout.verticalFold,
-                    onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
+    ArtworkTheme(player.seed, ArtworkSchemeStyle.Player) {
+        Surface(
+            modifier = modifier
+                .fillMaxSize()
+                .testTag(PlayerTestTags.Sheet)
+                .semantics { stateDescription = levelDescription }
+                .nestedScroll(nestedScroll)
+                .anchoredDraggable(state.draggable, orientation = Orientation.Vertical, flingBehavior = flingBehavior),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+        ) {
+            Box(Modifier.fillMaxSize()) {
+                val geometry = { state.geometry }
+                val offset = { state.offset }
+                if (state.mode == PlayerMode.CompactSheet) {
+                    StackedPlayer(
+                        player = player,
+                        progress = progress,
+                        actions = actions,
+                        geometry = geometry,
+                        offset = offset,
+                        tabletopFold = layout.horizontalFold,
+                        onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
+                        onShowQueue = { scope.launch { state.moveTo(PlayerLevel.Queue) } },
+                    )
+                } else {
+                    SideBySidePlayer(
+                        player = player,
+                        progress = progress,
+                        actions = actions,
+                        verticalFold = layout.verticalFold,
+                        onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
+                        modifier = Modifier
+                            .hiddenFromSemantics(!nowPlayingShown)
+                            .graphicsLayer { alpha = state.geometry.nowPlayingAlpha(state.offset) },
+                    )
+                }
+                MiniPlayer(
+                    player = player,
+                    progress = progress,
+                    actions = actions,
+                    interactive = miniInteractive,
+                    onClick = { scope.launch { state.moveTo(PlayerLevel.NowPlaying) } },
                     modifier = Modifier
-                        .hiddenFromSemantics(!nowPlayingShown)
-                        .graphicsLayer { alpha = state.geometry.nowPlayingAlpha(state.offset) },
+                        .collapsedInset(collapsedInset) { state.geometry.expand(state.offset) }
+                        .graphicsLayer { alpha = state.geometry.miniAlpha(state.offset) },
                 )
             }
-            MiniPlayer(
-                current = queue.current,
-                interactive = miniInteractive,
-                onClick = { scope.launch { state.moveTo(PlayerLevel.NowPlaying) } },
-                modifier = Modifier
-                    .collapsedInset(collapsedInset) { state.geometry.expand(state.offset) }
-                    .graphicsLayer { alpha = state.geometry.miniAlpha(state.offset) },
-            )
         }
     }
 
@@ -106,21 +115,17 @@ internal fun PlayerSheet(
 }
 
 /**
- * Narrows the mini player by [inset] and slides it back to the leading edge as the sheet expands,
- * for a sheet that grows over the rail. [expand] is read in placement only.
+ * Narrows the mini player by [inset] px and slides it back to the leading edge as the sheet
+ * expands, for a sheet that grows over the rail. [expand] is read in placement only.
  */
 private fun Modifier.collapsedInset(
-    inset: Dp,
+    inset: () -> Int,
     expand: () -> Float,
-): Modifier = if (inset == 0.dp) {
-    this
-} else {
-    layout { measurable, constraints ->
-        val insetPx = inset.roundToPx()
-        val placeable = measurable.measure(constraints.copy(minWidth = 0, maxWidth = (constraints.maxWidth - insetPx).coerceAtLeast(0)))
-        layout(constraints.maxWidth, placeable.height) {
-            placeable.placeRelative((insetPx * (1f - expand())).roundToInt(), 0)
-        }
+): Modifier = layout { measurable, constraints ->
+    val insetPx = inset()
+    val placeable = measurable.measure(constraints.copy(minWidth = 0, maxWidth = (constraints.maxWidth - insetPx).coerceAtLeast(0)))
+    layout(constraints.maxWidth, placeable.height) {
+        placeable.placeRelative((insetPx * (1f - expand())).roundToInt(), 0)
     }
 }
 

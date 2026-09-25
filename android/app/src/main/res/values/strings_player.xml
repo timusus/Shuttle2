@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Content description: collapses the full-screen player back to the mini player -->
+    <string name="player_collapse">Collapse player</string>
+    <!-- Heading at the top of the full-screen player -->
+    <string name="player_now_playing">Now playing</string>
+    <!-- Accessibility action on the queue peek: shows the queue -->
+    <string name="player_show_queue">Show queue</string>
+    <!-- Snackbar shown after the queue is cleared -->
+    <string name="player_queue_cleared">Queue cleared</string>
+    <!-- Snackbar action that puts a cleared queue back -->
+    <string name="player_undo">Undo</string>
+    <!-- Content description of the button that casts to another device -->
+    <string name="player_cast">Cast</string>
+    <!-- Content description of the sleep timer button while a timer runs -->
+    <string name="player_sleep_timer_on">Sleep timer on</string>
+</resources>

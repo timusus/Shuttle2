@@ -25,6 +25,11 @@ class FakePlaybackManager : PlaybackOperations {
     var loadResult: Result<Boolean> = Result.success(true)
     var shuffleResult: Result<Any?> = Result.success(null)
 
+    /** Each transport and queue call, in order, as "name(args)". */
+    val calls = mutableListOf<String>()
+
+    var savedProgress: Int? = null
+
     /** The seek position of each [load] call, in order. */
     val loadedPositions = mutableListOf<Int?>()
 
@@ -34,11 +39,21 @@ class FakePlaybackManager : PlaybackOperations {
     }
 
     override fun pause() {}
-    override fun play() {}
-    override fun togglePlayback() {}
-    override fun skipToNext(ignoreRepeat: Boolean, completion: ((Result<Any?>) -> Unit)?) {}
-    override fun skipToPrev(force: Boolean, completion: ((Result<Any?>) -> Unit)?) {}
-    override fun skipTo(position: Int) {}
+    override fun play() {
+        calls += "play()"
+    }
+    override fun togglePlayback() {
+        calls += "togglePlayback()"
+    }
+    override fun skipToNext(ignoreRepeat: Boolean, completion: ((Result<Any?>) -> Unit)?) {
+        calls += "skipToNext($ignoreRepeat)"
+    }
+    override fun skipToPrev(force: Boolean, completion: ((Result<Any?>) -> Unit)?) {
+        calls += "skipToPrev()"
+    }
+    override fun skipTo(position: Int) {
+        calls += "skipTo($position)"
+    }
 
     override suspend fun addToQueue(songs: List<Song>) {
         addedToQueue.addAll(songs)
@@ -53,14 +68,22 @@ class FakePlaybackManager : PlaybackOperations {
         completion(shuffleResult)
     }
 
-    override fun seekTo(position: Int) {}
+    override fun seekTo(position: Int) {
+        calls += "seekTo($position)"
+    }
     override fun playbackState(): PlaybackState = playbackStateFlow.value
-    override fun getProgress(): Int? = null
+    override fun getProgress(): Int? = savedProgress
     override fun getDuration(): Int? = null
     override fun getPlaybackSpeed(): Float = 1.0f
     override fun setPlaybackSpeed(multiplier: Float) {}
-    override fun moveQueueItem(from: Int, to: Int) {}
-    override fun removeQueueItem(queueItem: QueueItem) {}
-    override fun clearQueue() {}
+    override fun moveQueueItem(from: Int, to: Int) {
+        calls += "moveQueueItem($from, $to)"
+    }
+    override fun removeQueueItem(queueItem: QueueItem) {
+        calls += "removeQueueItem(${queueItem.uid})"
+    }
+    override fun clearQueue() {
+        calls += "clearQueue()"
+    }
     override fun updateQueueSongs(songs: List<Song>) {}
 }

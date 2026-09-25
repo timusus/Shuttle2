@@ -19,7 +19,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.simplecityapps.shuttle.ui.shell.ShellQueueUiState
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import kotlinx.coroutines.launch
 
 /** The persistent player pane's width: 360 dp, 412 dp at Extra-large (app-shell.md, section 2). */
@@ -33,7 +34,9 @@ fun playerPaneWidth(extraLarge: Boolean): Dp = if (extraLarge) 412.dp else 360.d
 @Composable
 internal fun PlayerPane(
     state: PlayerSheetState,
-    queue: ShellQueueUiState,
+    player: PlayerUiState,
+    progress: () -> PlayerProgress,
+    actions: PlayerActions,
     width: Dp,
     tabletopFold: Rect?,
     modifier: Modifier = Modifier,
@@ -44,36 +47,40 @@ internal fun PlayerPane(
         animationSpec = MaterialTheme.motionScheme.slowSpatialSpec(),
         label = "paneQueue",
     )
-    Surface(
-        modifier = modifier.width(width).fillMaxHeight().testTag(PlayerTestTags.Pane),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        BoxWithConstraints {
-            val density = LocalDensity.current
-            val height = with(density) { maxHeight.toPx() }
-            val statusBarTop = WindowInsets.statusBars.getTop(density)
-            val navigationBarBottom = WindowInsets.navigationBars.getBottom(density)
-            // The pane's own stacked geometry: always fully expanded, pushed up by the queue as a compact sheet is.
-            val geometry = remember(height, density, statusBarTop, navigationBarBottom) {
-                with(density) {
-                    PlayerSheetGeometry(
-                        height = height,
-                        navBarHeight = 0f,
-                        miniHeight = MiniPlayerHeight.toPx(),
-                        queueTravel = stackedQueueTravel(height, statusBarTop, navigationBarBottom),
-                    )
+    ArtworkTheme(player.seed, ArtworkSchemeStyle.Player) {
+        Surface(
+            modifier = modifier.width(width).fillMaxHeight().testTag(PlayerTestTags.Pane),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+        ) {
+            BoxWithConstraints {
+                val density = LocalDensity.current
+                val height = with(density) { maxHeight.toPx() }
+                val statusBarTop = WindowInsets.statusBars.getTop(density)
+                val navigationBarBottom = WindowInsets.navigationBars.getBottom(density)
+                // The pane's own stacked geometry: always fully expanded, pushed up by the queue as a compact sheet is.
+                val geometry = remember(height, density, statusBarTop, navigationBarBottom) {
+                    with(density) {
+                        PlayerSheetGeometry(
+                            height = height,
+                            navBarHeight = 0f,
+                            miniHeight = MiniPlayerHeight.toPx(),
+                            queueTravel = stackedQueueTravel(height, statusBarTop, navigationBarBottom),
+                        )
+                    }
                 }
+                StackedPlayer(
+                    player = player,
+                    progress = progress,
+                    actions = actions,
+                    geometry = { geometry },
+                    offset = { -geometry.queueTravel * queueFraction },
+                    tabletopFold = tabletopFold,
+                    onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
+                    onShowQueue = {
+                        scope.launch { state.moveTo(if (state.level == PlayerLevel.Queue) PlayerLevel.NowPlaying else PlayerLevel.Queue) }
+                    },
+                )
             }
-            StackedPlayer(
-                queue = queue,
-                geometry = { geometry },
-                offset = { -geometry.queueTravel * queueFraction },
-                tabletopFold = tabletopFold,
-                onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
-                onShowQueue = {
-                    scope.launch { state.moveTo(if (state.level == PlayerLevel.Queue) PlayerLevel.NowPlaying else PlayerLevel.Queue) }
-                },
-            )
         }
     }
 }

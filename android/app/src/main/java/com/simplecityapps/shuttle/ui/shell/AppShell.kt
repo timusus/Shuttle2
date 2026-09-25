@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -17,6 +18,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.LibraryMusic
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.MoreHoriz
@@ -27,12 +32,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.ShortNavigationBar
-import androidx.compose.material3.ShortNavigationBarItem
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.WideNavigationRail
-import androidx.compose.material3.WideNavigationRailItem
 import androidx.compose.material3.WideNavigationRailValue
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
@@ -44,22 +46,24 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -70,18 +74,27 @@ import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.NavDisplay
+import com.simplecityapps.shuttle.designsystem.component.S2NavItem
+import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
+import com.simplecityapps.shuttle.designsystem.component.S2NavigationRail
+import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellWidth
 import com.simplecityapps.shuttle.ui.shell.adaptive.listDetailDirective
 import com.simplecityapps.shuttle.ui.shell.player.MiniPlayer
 import com.simplecityapps.shuttle.ui.shell.player.MiniPlayerHeight
+import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerMode
 import com.simplecityapps.shuttle.ui.shell.player.PlayerPane
+import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
 import com.simplecityapps.shuttle.ui.shell.player.PlayerScrim
 import com.simplecityapps.shuttle.ui.shell.player.PlayerSheet
 import com.simplecityapps.shuttle.ui.shell.player.PlayerSheetGeometry
 import com.simplecityapps.shuttle.ui.shell.player.PlayerSheetState
+import com.simplecityapps.shuttle.ui.shell.player.PlayerUiState
 import com.simplecityapps.shuttle.ui.shell.player.playerPaneWidth
 import com.simplecityapps.shuttle.ui.shell.player.rememberPlayerSheetState
 import com.simplecityapps.shuttle.ui.shell.player.stackedQueueTravel
@@ -96,15 +109,18 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun AppShell(
-    queue: ShellQueueUiState,
+    playerUi: PlayerUiState,
+    progress: () -> PlayerProgress,
+    actions: PlayerActions,
     modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     startTab: ShellTab = ShellTab.Home,
     windowAdaptiveInfo: WindowAdaptiveInfo = currentWindowAdaptiveInfoV2(),
 ) {
     val layout = remember(windowAdaptiveInfo) { ShellLayout.from(windowAdaptiveInfo) }
     val navigator = rememberAppNavigator(startTab)
     val player = rememberPlayerSheetState(layout.playerMode)
-    SideEffect { player.configure(layout.playerMode, queue.hasQueue) }
+    SideEffect { player.configure(layout.playerMode, playerUi.hasQueue) }
     LaunchedEffect(player, player.revealPending) { if (player.revealPending) player.reveal() }
     LaunchedEffect(player, player.collapsePending) { if (player.collapsePending) player.collapse() }
     LaunchedEffect(player, player.requestedLevel) { player.applyRequestedLevel() }
@@ -122,13 +138,38 @@ fun AppShell(
     val onOpenSettings: () -> Unit = { navigate { navigator.open(SettingsRoute) } }
     val destinations: @Composable () -> Unit = { ShellNavDisplay(navigator, layout, windowAdaptiveInfo) }
 
+    val playerContent = PlayerContent(playerUi, progress, actions)
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-        when (layout.playerMode) {
-            PlayerMode.CompactSheet -> CompactShell(player, queue, layout, navigator.selectedTab, onSelectTab, onOpenSettings, destinations)
-            PlayerMode.Sheet -> RailSheetShell(player, queue, layout, navigator.selectedTab, onSelectTab, onOpenSettings, destinations)
-            PlayerMode.Pane -> PaneShell(player, queue, layout, navigator.selectedTab, onSelectTab, onOpenSettings, destinations)
+        Box(Modifier.fillMaxSize()) {
+            when (layout.playerMode) {
+                PlayerMode.CompactSheet -> CompactShell(player, playerContent, layout, navigator.selectedTab, onSelectTab, onOpenSettings, destinations)
+                PlayerMode.Sheet -> RailSheetShell(player, playerContent, layout, navigator.selectedTab, onSelectTab, onOpenSettings, destinations)
+                PlayerMode.Pane -> PaneShell(player, playerContent, layout, navigator.selectedTab, onSelectTab, onOpenSettings, destinations)
+            }
+            S2SnackbarHost(
+                snackbarHostState,
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = rememberSnackbarBottomPadding(player)),
+            )
         }
     }
+}
+
+/** What every player surface shows and does, handed down the shell as one value. */
+private class PlayerContent(
+    val state: PlayerUiState,
+    val progress: () -> PlayerProgress,
+    val actions: PlayerActions,
+)
+
+/** Snackbars sit above whatever is docked at the bottom: the nav bar and mini player, or the pane shell's docked mini player. */
+@Composable
+private fun rememberSnackbarBottomPadding(player: PlayerSheetState): Dp = if (player.mode == PlayerMode.Pane) {
+    val navigationBars = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    if (player.level == PlayerLevel.Mini) navigationBars + MiniPlayerHeight else navigationBars
+} else {
+    rememberContentBottomPadding(player)
 }
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -171,7 +212,7 @@ private fun rememberContentBottomPadding(player: PlayerSheetState) = with(LocalD
 @Composable
 private fun CompactShell(
     player: PlayerSheetState,
-    queue: ShellQueueUiState,
+    content: PlayerContent,
     layout: ShellLayout,
     selectedTab: ShellTab,
     onSelectTab: (ShellTab) -> Unit,
@@ -190,7 +231,7 @@ private fun CompactShell(
         contents = listOf(
             { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding)) { destinations() } },
             { PlayerScrim(player) },
-            { if (sheetVisible) PlayerSheet(player, queue, layout) },
+            { if (sheetVisible) PlayerSheet(player, content.state, content.progress, content.actions, layout) },
             {
                 ShellNavigationBar(
                     selectedTab = selectedTab,
@@ -242,7 +283,7 @@ private fun CompactShell(
 @Composable
 private fun RailSheetShell(
     player: PlayerSheetState,
-    queue: ShellQueueUiState,
+    content: PlayerContent,
     layout: ShellLayout,
     selectedTab: ShellTab,
     onSelectTab: (ShellTab) -> Unit,
@@ -255,19 +296,33 @@ private fun RailSheetShell(
     val sheetVisible = rememberSheetVisible(player)
     val bottomPadding = rememberContentBottomPadding(player)
     val coversRail = layout.width == ShellWidth.Expanded
-    val railWidth = with(density) { CollapsedRailWidth.roundToPx() }
+    // The rail's width as last laid out, for the mini player's inset: the rail's own toggle can widen it.
+    var measuredRailWidth by remember { mutableIntStateOf(0) }
 
     Layout(
         contents = listOf(
             { ShellRail(selectedTab, expanded = false, onSelectTab = onSelectTab, onOpenSettings = onOpenSettings) },
             { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding)) { destinations() } },
             { PlayerScrim(player) },
-            { if (sheetVisible) PlayerSheet(player, queue, layout, collapsedInset = if (coversRail) CollapsedRailWidth else 0.dp) },
+            {
+                if (sheetVisible) {
+                    PlayerSheet(
+                        player,
+                        content.state,
+                        content.progress,
+                        content.actions,
+                        layout,
+                        collapsedInset = if (coversRail) ({ measuredRailWidth }) else ({ 0 }),
+                    )
+                }
+            },
         ),
     ) { (rail, destination, scrim, sheet), constraints ->
         val width = constraints.maxWidth
         val height = constraints.maxHeight
-        val railPlaceables = rail.map { it.measure(Constraints.fixed(railWidth, height)) }
+        val railPlaceables = rail.map { it.measure(Constraints(maxWidth = width, minHeight = height, maxHeight = height)) }
+        val railWidth = railPlaceables.maxOfOrNull { it.width } ?: 0
+        measuredRailWidth = railWidth
         val contentWidth = width - railWidth
         player.onMeasured(
             PlayerSheetGeometry(height = height.toFloat(), navBarHeight = navigationBarBottom.toFloat(), miniHeight = miniHeight, queueTravel = 0f),
@@ -298,9 +353,6 @@ private fun RailSheetShell(
     }
 }
 
-/** The collapsed rail's width (M3's wide navigation rail), which the collapsed sheet leaves uncovered. */
-private val CollapsedRailWidth = 96.dp
-
 /** Clips away the leading [inset] px, so the sheet grows over the rail without being remeasured. */
 private class LeadingInsetShape(
     private val inset: Float,
@@ -320,7 +372,7 @@ private class LeadingInsetShape(
 @Composable
 private fun PaneShell(
     player: PlayerSheetState,
-    queue: ShellQueueUiState,
+    content: PlayerContent,
     layout: ShellLayout,
     selectedTab: ShellTab,
     onSelectTab: (ShellTab) -> Unit,
@@ -342,18 +394,22 @@ private fun PaneShell(
                 destinations()
             }
             if (docked) {
-                Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-                    MiniPlayer(
-                        current = queue.current,
-                        interactive = true,
-                        onClick = { scope.launch { player.moveTo(PlayerLevel.NowPlaying) } },
-                        modifier = Modifier.navigationBarsPadding(),
-                    )
+                ArtworkTheme(content.state.seed, ArtworkSchemeStyle.Player) {
+                    Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+                        MiniPlayer(
+                            player = content.state,
+                            progress = content.progress,
+                            actions = content.actions,
+                            interactive = true,
+                            onClick = { scope.launch { player.moveTo(PlayerLevel.NowPlaying) } },
+                            modifier = Modifier.navigationBarsPadding(),
+                        )
+                    }
                 }
             }
         }
         AnimatedVisibility(visible = paneOpen, enter = expandHorizontally(spec), exit = shrinkHorizontally(spec)) {
-            PlayerPane(player, queue, width = playerPaneWidth(layout.width == ShellWidth.ExtraLarge), tabletopFold = layout.horizontalFold)
+            PlayerPane(player, content.state, content.progress, content.actions, width = playerPaneWidth(layout.width == ShellWidth.ExtraLarge), tabletopFold = layout.horizontalFold)
         }
     }
 }
@@ -365,12 +421,20 @@ private val ShellTab.label: String
         ShellTab.Search -> "Search"
     }
 
-private val ShellTab.icon: ImageVector
+private val ShellTab.navItem: S2NavItem
     get() = when (this) {
-        ShellTab.Home -> Icons.Rounded.Home
-        ShellTab.Library -> Icons.Rounded.LibraryMusic
-        ShellTab.Search -> Icons.Rounded.Search
+        ShellTab.Home -> S2NavItem(label, Icons.Outlined.Home, Icons.Rounded.Home)
+        ShellTab.Library -> S2NavItem(label, Icons.Outlined.LibraryMusic, Icons.Rounded.LibraryMusic)
+        ShellTab.Search -> S2NavItem(label, Icons.Outlined.Search, Icons.Rounded.Search)
     }
+
+private val TabItems = ShellTab.entries.map { it.navItem }
+
+/** The tabs, then More, which opens the settings drawer. */
+private val NavigationBarItems = TabItems + S2NavItem("More", Icons.Rounded.MoreHoriz)
+
+/** The settings drawer's entries are the rail's secondary items (app-shell.md, section 4). */
+private val RailSecondaryItems = listOf(S2NavItem("Settings", Icons.Outlined.Settings, Icons.Rounded.Settings))
 
 @Composable
 private fun ShellNavigationBar(
@@ -379,22 +443,12 @@ private fun ShellNavigationBar(
     onMore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ShortNavigationBar(modifier = modifier) {
-        ShellTab.entries.forEach { tab ->
-            ShortNavigationBarItem(
-                selected = tab == selectedTab,
-                onClick = { onSelectTab(tab) },
-                icon = { Icon(tab.icon, contentDescription = null) },
-                label = { Text(tab.label) },
-            )
-        }
-        ShortNavigationBarItem(
-            selected = false,
-            onClick = onMore,
-            icon = { Icon(Icons.Rounded.MoreHoriz, contentDescription = null) },
-            label = { Text("More") },
-        )
-    }
+    S2NavigationBar(
+        items = NavigationBarItems,
+        selectedIndex = selectedTab.ordinal,
+        onSelect = { index -> ShellTab.entries.getOrNull(index)?.let(onSelectTab) ?: onMore() },
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -406,25 +460,13 @@ private fun ShellRail(
 ) {
     val state = rememberWideNavigationRailState(if (expanded) WideNavigationRailValue.Expanded else WideNavigationRailValue.Collapsed)
     LaunchedEffect(state, expanded) { if (expanded) state.expand() else state.collapse() }
-    WideNavigationRail(state = state) {
-        ShellTab.entries.forEach { tab ->
-            WideNavigationRailItem(
-                selected = tab == selectedTab,
-                onClick = { onSelectTab(tab) },
-                icon = { Icon(tab.icon, contentDescription = null) },
-                label = { Text(tab.label) },
-                railExpanded = expanded,
-            )
-        }
-        // The settings drawer's entries are the rail's secondary items (app-shell.md, section 4).
-        WideNavigationRailItem(
-            selected = false,
-            onClick = onOpenSettings,
-            icon = { Icon(Icons.Rounded.Settings, contentDescription = null) },
-            label = { Text("Settings") },
-            railExpanded = expanded,
-        )
-    }
+    S2NavigationRail(
+        items = TabItems,
+        selectedIndex = selectedTab.ordinal,
+        onSelect = { index -> ShellTab.entries.getOrNull(index)?.let(onSelectTab) ?: onOpenSettings() },
+        secondaryItems = RailSecondaryItems,
+        state = state,
+    )
 }
 
 /** The compact settings drawer: a shell-owned bottom sheet. Only Settings is wired in the spike. */

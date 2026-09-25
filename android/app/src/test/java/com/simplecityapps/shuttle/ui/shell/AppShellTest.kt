@@ -4,6 +4,8 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
+import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -165,5 +167,92 @@ class AppShellTest {
 
         robot.setWindow(PaneWindow)
         robot.assertPaneShown()
+    }
+
+    @Test
+    fun `now playing plays and pauses, skips and seeks`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.tapPlayerControl("Play")
+        robot.tapPlayerControl("Pause")
+        robot.tapPlayerControl("Next")
+        robot.tapPlayerControl("Previous")
+        robot.seekTo(0.5f)
+
+        robot.calls shouldBe listOf("togglePlayback", "togglePlayback", "skipToNext", "skipToPrevious", "seekTo(90000)")
+    }
+
+    @Test
+    fun `now playing shows the song and its position`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.assertTextDisplayed("Artist • Album")
+        robot.assertTextDisplayed("1:00")
+        robot.assertTextDisplayed("3:00")
+    }
+
+    @Test
+    fun `the mini player plays in place, and swipes sideways to skip`() {
+        robot.setContent()
+        robot.tapDescription("Play")
+        robot.swipeMiniPlayer(towardsStart = true)
+        robot.swipeMiniPlayer(towardsStart = false)
+
+        robot.calls shouldBe listOf("togglePlayback", "skipToNext", "skipToPrevious")
+        robot.assertLevel(PlayerLevel.Mini)
+    }
+
+    @Test
+    fun `tapping a queue row skips to it`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapQueuePeek()
+
+        robot.tapText("Third song")
+        robot.calls shouldBe listOf("skipToQueueItem(2)")
+    }
+
+    @Test
+    fun `swiping a queue row away removes it`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapQueuePeek()
+
+        robot.swipeAwayQueueRow("Second song")
+        robot.calls shouldBe listOf("removeQueueItem(1)")
+    }
+
+    @Test
+    fun `dragging a row's handle moves it down the queue`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapQueuePeek()
+
+        robot.dragQueueRow("First song", rows = 2)
+        robot.calls shouldBe listOf("moveQueueItem(0, 2)")
+    }
+
+    @Test
+    fun `long-pressing a queue row offers Play Next and Remove`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapQueuePeek()
+
+        robot.longPressQueueRow("Third song")
+        robot.tapText("Play Next")
+        robot.calls shouldBe listOf("playNext(2)")
+    }
+
+    @Test
+    fun `clearing the queue offers Undo`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapQueuePeek()
+
+        robot.tapDescription("Clear Queue")
+        robot.tapText("Undo")
+        robot.calls shouldContain "clearQueue"
+        robot.calls.last() shouldBe "undoClearQueue"
     }
 }

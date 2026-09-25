@@ -20,11 +20,14 @@ class FakeQueueManager : QueueOperations {
         private set
     var lastSetQueuePosition: Int? = null
         private set
+    var lastSetShuffleQueue: List<Song>? = null
+        private set
 
     var nextItem: QueueItem? = null
 
     override suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Boolean {
         lastSetQueue = songs
+        lastSetShuffleQueue = shuffleSongs
         lastSetQueuePosition = position
         return setQueueResult
     }
@@ -55,8 +58,16 @@ class FakeQueueManager : QueueOperations {
     override fun clear() {}
     override fun getShuffleMode(): QueueManager.ShuffleMode = shuffleModeFlow.value
     override suspend fun setShuffleMode(shuffleMode: QueueManager.ShuffleMode, reshuffle: Boolean) {}
-    override suspend fun toggleShuffleMode() {}
+    override suspend fun toggleShuffleMode() {
+        shuffleModeFlow.value = if (shuffleModeFlow.value == QueueManager.ShuffleMode.On) QueueManager.ShuffleMode.Off else QueueManager.ShuffleMode.On
+    }
     override fun getRepeatMode(): QueueManager.RepeatMode = repeatModeFlow.value
     override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {}
-    override fun toggleRepeatMode() {}
+    override fun toggleRepeatMode() {
+        repeatModeFlow.value = when (repeatModeFlow.value) {
+            QueueManager.RepeatMode.Off -> QueueManager.RepeatMode.All
+            QueueManager.RepeatMode.All -> QueueManager.RepeatMode.One
+            QueueManager.RepeatMode.One -> QueueManager.RepeatMode.Off
+        }
+    }
 }
