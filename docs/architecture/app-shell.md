@@ -424,7 +424,8 @@ layouts, menus) in the same change and moves its Maestro flows to test tags (`te
    left outside an agreed keep list; APK size against the last release.
    **Done (#381).** Kept, because still reachable with no Compose replacement: the Jellyfin, Emby and
    Plex sign-in `DialogFragment`s and the paywall `DialogFragment`, with the AppCompat/Material View
-   themes, `CircularLoadingView` and the helpers they use.
+   themes, `CircularLoadingView` and the helpers they use. The paywall has since moved to a Compose
+   `PaywallHost` in `MainActivity` (#443).
 8. **Parity gate, then tag.** Every Maestro flow green on phone, foldable and tablet profiles; the
    `redesign-inventory.md` checklist ticked; the `docs/testing/device-checks.md` batch done on the
    owner's device (predictive back, 3-button and gesture nav, light and dark, Cast, Android Auto).

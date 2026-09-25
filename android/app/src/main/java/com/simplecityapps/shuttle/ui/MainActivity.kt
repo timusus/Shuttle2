@@ -18,7 +18,7 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.common.components.Snowfall
-import com.simplecityapps.shuttle.ui.screens.paywall.showPaywallOnRequest
+import com.simplecityapps.shuttle.ui.screens.paywall.PaywallHost
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesSettings
@@ -37,7 +37,7 @@ import timber.log.Timber
 
 /**
  * The app's only screen: the Compose shell (docs/architecture/app-shell.md). An AppCompatActivity, because the
- * server sign-in dialogs, the Cast route chooser and the paywall show as dialog fragments over it.
+ * server sign-in dialogs and the Cast route chooser show as dialog fragments over it.
  */
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -96,6 +96,7 @@ class MainActivity : AppCompatActivity() {
                     // Over the shell, and blind to touches, so they reach it
                     Snowfall(forecast = snowForecast)
                 }
+                PaywallHost(serverAccessGate)
             }
         }
 
@@ -112,7 +113,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         billing.queryPurchases()
-        showPaywallOnRequest(serverAccessGate)
         recordPurchase()
         if (savedInstanceState == null && reviewPrompt.takeIfDue()) {
             launchReviewFlow()

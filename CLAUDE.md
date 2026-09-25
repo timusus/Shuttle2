@@ -87,7 +87,7 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 
 ### UI Patterns
 
-Screens use **Compose + ViewModel** with unidirectional data flow — see [`docs/architecture/compose-viewmodel-udf.md`](docs/architecture/compose-viewmodel-udf.md) for the canonical patterns and principles. Non-trivial ViewModel action logic is extracted into **use cases** — classes with a single `operator fun invoke`, injected via Hilt (see principle #8a in the UDF doc). `MainActivity` hosts the Compose shell (`ui/shell`: Navigation 3 back stack, Home/Library/Search tabs, the player sheet or pane); see [`docs/architecture/app-shell.md`](docs/architecture/app-shell.md). The only View-based UI left is the Jellyfin/Emby/Plex server sign-in dialogs and the paywall `DialogFragment`.
+Screens use **Compose + ViewModel** with unidirectional data flow — see [`docs/architecture/compose-viewmodel-udf.md`](docs/architecture/compose-viewmodel-udf.md) for the canonical patterns and principles. Non-trivial ViewModel action logic is extracted into **use cases** — classes with a single `operator fun invoke`, injected via Hilt (see principle #8a in the UDF doc). `MainActivity` hosts the Compose shell (`ui/shell`: Navigation 3 back stack, Home/Library/Search tabs, the player sheet or pane); see [`docs/architecture/app-shell.md`](docs/architecture/app-shell.md). The only View-based UI left is the Jellyfin/Emby/Plex server sign-in dialogs.
 
 ### Playback Flow
 

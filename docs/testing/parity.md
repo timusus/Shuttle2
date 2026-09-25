@@ -77,10 +77,10 @@ The rows are the parity checklist in
 
 | 1.0.10 feature | Compose replacement | Coverage | Gap |
 |---|---|---|---|
-| Purchase: Lifetime, Annual, Monthly plan cards; thank-you; promo code; review prompt | `screens/paywall/PaywallScreen` (hosted by `PaywallDialogFragment`), `ReviewPrompt` | `PaywallScreenTest`, `PaywallViewModelTest`, `PaywallScreenshotTest`, `ReviewPromptTest` | Thank-you, promo code: #418 |
+| Purchase: Lifetime, Annual, Monthly plan cards; thank-you; promo code; review prompt | `screens/paywall/PaywallScreen` (hosted by `PaywallHost`), `ReviewPrompt` | `PaywallScreenTest`, `PaywallViewModelTest`, `PaywallScreenshotTest`, `ReviewPromptTest` | Thank-you, promo code: #418 |
 | Grandfathering: 5 legacy product IDs grant Pro | `android/trial` `EntitlementResolver` | `EntitlementResolverTest` | |
 | Server trial: 14 days on first server connection; trial chip in the Library top bar | `android/trial` `EntitlementRepository`, `ServerAccessGate` | `EntitledServerStreamPolicyTest`, `EntitlementResolverTest` | Trial chip: #418 |
-| Paywall entry points: add server, trial end, Settings > S2 Pro | `showPaywallOnRequest` in `MainActivity`, `ServerAccessGate` | `PaywallViewModelTest`, `SourcesViewModelTest`, `SettingsScreenTest` | |
+| Paywall entry points: add server, trial end, Settings > S2 Pro | `PaywallHost` in `MainActivity`, `ServerAccessGate` | `PaywallViewModelTest`, `SourcesViewModelTest`, `SettingsScreenTest` | |
 | Intents: play-from-search, VIEW audio file, default music app; Toggle playback shortcut | `MainActivity`, `ShortcutManager` | `ShortcutManagerTest`; `open-file-intent.sh`, `media-buttons.sh` | |
 | Android Auto browse and playback; Cast from Now Playing | `android/playback` `PlaybackService`; Cast button in `NowPlaying` | Device checks only | |
 
