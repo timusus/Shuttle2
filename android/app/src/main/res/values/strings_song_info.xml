@@ -42,4 +42,14 @@
     <string name="song_info_sample_rate">Sample rate</string>
     <!-- Shown in the song infor dialog. The song channel count. -->
     <string name="song_info_channel_count">Channel count</string>
+    <!-- Shown in song info. The song's ReplayGain track gain, in dB. -->
+    <string name="song_info_replay_gain_track">Track gain</string>
+    <!-- Shown in song info. The song's ReplayGain album gain, in dB. -->
+    <string name="song_info_replay_gain_album">Album gain</string>
+    <!-- Button in song info that copies the song's file path to the clipboard -->
+    <string name="song_info_copy_path">Copy path</string>
+    <!-- Shown after the song's file path is copied to the clipboard from song info -->
+    <string name="song_info_path_copied">Path copied</string>
+    <!-- Shown in song info when the song can't be found in the library (it was removed) -->
+    <string name="song_info_not_found">This song is no longer in your library</string>
 </resources>

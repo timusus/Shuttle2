@@ -15,7 +15,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.fragment.app.FragmentActivity
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -25,8 +24,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.actions.format
-import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
-import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel
@@ -119,14 +116,7 @@ private fun CoroutineScope.onMediaActionResult(
             if (shown == SnackbarResult.ActionPerformed && action != null) actions.onMediaAction(action.action)
         }
 
-        is MediaActionResult.Navigate -> when (val target = result.target) {
-            is NavigationTarget.Album, is NavigationTarget.AlbumArtist -> onNavigate(target)
-
-            // The tag editor and song info are still fragments; they open over the shell until they move to Compose.
-            is NavigationTarget.TagEditor -> (activity as? FragmentActivity)?.let { TagEditorAlertDialog.newInstance(target.songs).show(it.supportFragmentManager) }
-
-            is NavigationTarget.SongInfo -> (activity as? FragmentActivity)?.let { SongInfoDialogFragment.newInstance(target.song).show(it.supportFragmentManager) }
-        }
+        is MediaActionResult.Navigate -> onNavigate(result.target)
 
         is MediaActionResult.Share -> activity?.startActivity(Intent.createChooser(result.request.toIntent(), null))
 

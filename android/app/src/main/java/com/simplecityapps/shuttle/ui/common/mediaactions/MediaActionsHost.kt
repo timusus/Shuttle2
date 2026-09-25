@@ -97,12 +97,6 @@ class MediaActionsState internal constructor(
 }
 
 /**
- * Media actions whose screens don't exist in the shell yet: the tag editor and song info are legacy dialogs that
- * need MainActivity's fragment host.
- */
-val UnavailableInShell = setOf(MediaActionType.EditTags, MediaActionType.SongInfo)
-
-/**
  * Hosts one destination's media actions: collects [MediaActionsViewModel.results] into the shell snackbar (with
  * Undo / Add anyway), confirmation dialogs, shares and [onNavigate]; renders the actions sheet and the
  * add-to-playlist picker.
@@ -112,7 +106,6 @@ val UnavailableInShell = setOf(MediaActionType.EditTags, MediaActionType.SongInf
 fun MediaActionsHost(
     onNavigate: (NavigationTarget) -> Unit,
     viewModel: MediaActionsViewModel = hiltViewModel(),
-    hidden: Set<MediaActionType> = UnavailableInShell,
     content: @Composable (MediaActionsState) -> Unit,
 ) {
     val state = remember(viewModel) { MediaActionsState(viewModel::dispatch) }
@@ -153,7 +146,7 @@ fun MediaActionsHost(
             title = target.title,
             subtitle = target.subtitle,
             artwork = { Artwork(target.placeholder, size = ArtworkSize.Small) },
-            actions = types.filterNot { it in hidden }.map { type ->
+            actions = types.map { type ->
                 S2Action(
                     label = type.label(),
                     icon = type.icon,

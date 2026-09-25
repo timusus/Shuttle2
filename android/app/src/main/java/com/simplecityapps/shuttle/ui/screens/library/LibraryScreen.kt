@@ -18,6 +18,7 @@ import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
@@ -133,7 +134,12 @@ fun LibraryScreen(
                                     selectionAction(MediaActionType.PlayNext, Icons.Rounded.SkipNext, onSelectionAction),
                                     selectionAction(MediaActionType.Shuffle, Icons.Rounded.Shuffle, onSelectionAction),
                                 ),
-                                listOf(selectionAction(MediaActionType.Exclude, Icons.Rounded.Block, onSelectionAction)),
+                                listOfNotNull(
+                                    // Batch tag editing, when every selected item's provider can write tags.
+                                    selectionAction(MediaActionType.EditTags, Icons.Rounded.Edit, onSelectionAction)
+                                        .takeIf { chrome.selection?.mediaProviders?.let { providers -> providers.isNotEmpty() && providers.all { it.supportsTagEditing } } == true },
+                                    selectionAction(MediaActionType.Exclude, Icons.Rounded.Block, onSelectionAction),
+                                ),
                             ),
                         )
                     }

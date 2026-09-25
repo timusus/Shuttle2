@@ -13,7 +13,7 @@
     <!-- Shown when the tag editor is in progress, reading tags (metadata) from the selected songs -->
     <string name="edit_tags_reading_tags">Reading tags <xliff:g example="1" id="progress">{progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
     <!-- Shown when the tag editor is in progress, writing tags (metadata) to the selected songs -->
-    <string name="edit_tags_writing_tags">Reading tags <xliff:g example="1" id="progress">{progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_writing_tags">Writing tags <xliff:g example="1" id="progress">{progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
     <!-- Shown when the tag editor fails to read the tags (metadata) of a song -->
     <string name="edit_tags_read_failed">The selected song tags could not be read</string>
     <!-- Shown when the tag editor successfully writes the tags (metadata) of the songs -->
@@ -48,4 +48,17 @@
     <string name="edit_tags_hint_genres">Genres</string>
     <!-- The hint (placeholder) text shown in the 'lyrics' text field, when editing the tags (metadata) -->
     <string name="edit_tags_hint_lyrics">Lyrics</string>
+    <!-- Shown above the tag editor's fields when some of the chosen songs can't be edited (their files can't be read, or aren't on a storage the app can write to). Those songs are listed below it. -->
+    <plurals name="edit_tags_skipped">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song can\'t be edited and will be left as it is</item>
+        <item quantity="other"><xliff:g example="2" id="count">{count}</xliff:g> songs can\'t be edited and will be left as they are</item>
+    </plurals>
+    <!-- Content description of the button beside a tag editor field that puts back the field's original value. -->
+    <string name="edit_tags_reset_field">Reset <xliff:g example="Album" id="field">{field}</xliff:g></string>
+    <!-- Title of the dialog shown when leaving the tag editor with unsaved changes -->
+    <string name="edit_tags_discard_title">Discard your changes?</string>
+    <!-- Button in the unsaved-changes dialog that leaves the tag editor without saving -->
+    <string name="edit_tags_discard">Discard</string>
+    <!-- Button in the unsaved-changes dialog that goes back to editing -->
+    <string name="edit_tags_keep_editing">Keep editing</string>
 </resources>

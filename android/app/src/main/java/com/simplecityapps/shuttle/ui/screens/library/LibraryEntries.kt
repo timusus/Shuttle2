@@ -9,6 +9,8 @@ import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoRoute
+import com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorRoute
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.LibraryRoute
@@ -31,13 +33,14 @@ fun EntryProviderScope<NavKey>.libraryEntries(navigator: AppNavigator) {
 
 /**
  * Opens a detail screen a media action asked for, from the library or any screen that links into it (Home,
- * Search). The tag editor and song info have no shell screens yet.
+ * Search, the player).
  */
 fun AppNavigator.openTarget(target: NavigationTarget) {
     when (target) {
         is NavigationTarget.Album -> open(target.album.route)
         is NavigationTarget.AlbumArtist -> open(target.albumArtist.route)
-        is NavigationTarget.TagEditor, is NavigationTarget.SongInfo -> Unit
+        is NavigationTarget.TagEditor -> open(TagEditorRoute(target.songs.map { it.id }))
+        is NavigationTarget.SongInfo -> open(SongInfoRoute(target.song.id))
     }
 }
 
