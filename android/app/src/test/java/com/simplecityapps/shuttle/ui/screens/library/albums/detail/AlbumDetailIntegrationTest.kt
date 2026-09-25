@@ -105,17 +105,20 @@ class AlbumDetailIntegrationTest {
     private fun createViewModel(
         album: Album = testAlbum,
         songRepository: FakeSongRepository = fakeSongRepository,
-    ): AlbumDetailViewModel = AlbumDetailViewModel(
-        groupKey = album.groupKey,
-        songRepository = songRepository,
-        albumRepository = fakeAlbumRepository,
-        queueManager = fakeQueueManager,
-        playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-        shuffleSongs = ShuffleSongs(FakePlaybackManager()),
-        addToPlaylistUseCase = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).addToPlaylist,
-        enqueueSongs = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).enqueueSongs,
-        excludeSongs = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).excludeSongs,
-        deleteSongs = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).deleteSongs,
-        playlistRepository = fakePlaylistRepository,
-    )
+    ): AlbumDetailViewModel {
+        val testMediaActions = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
+        return AlbumDetailViewModel(
+            groupKey = album.groupKey,
+            songRepository = songRepository,
+            albumRepository = fakeAlbumRepository,
+            queueManager = fakeQueueManager,
+            playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
+            shuffleSongs = ShuffleSongs(FakePlaybackManager()),
+            addToPlaylistUseCase = testMediaActions.addToPlaylist,
+            enqueueSongs = testMediaActions.enqueueSongs,
+            excludeSongs = testMediaActions.excludeSongs,
+            deleteSongs = testMediaActions.deleteSongs,
+            playlistRepository = fakePlaylistRepository,
+        )
+    }
 }

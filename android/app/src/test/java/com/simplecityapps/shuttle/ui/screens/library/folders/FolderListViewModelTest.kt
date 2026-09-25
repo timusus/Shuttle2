@@ -221,19 +221,22 @@ class FolderListViewModelTest {
         return viewModel
     }
 
-    private fun createViewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()): FolderListViewModel = FolderListViewModel(
-        songRepository = fakeSongRepository,
-        playSongs = PlaySongs(fakeQueueManager, fakePlaybackManager),
-        shuffleSongs = ShuffleSongs(fakePlaybackManager),
-        resolveFolderSongs = ResolveFolderSongs(fakeSongRepository),
-        addToPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, fakeQueueManager, playbackManager = fakePlaybackManager).addToPlaylist,
-        createPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, fakeQueueManager, playbackManager = fakePlaybackManager).createPlaylist,
-        enqueueSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, fakeQueueManager, playbackManager = fakePlaybackManager).enqueueSongs,
-        excludeSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, fakeQueueManager, playbackManager = fakePlaybackManager).excludeSongs,
-        deleteSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, fakeQueueManager, playbackManager = fakePlaybackManager).deleteSongs,
-        playlistRepository = fakePlaylistRepository,
-        savedStateHandle = savedStateHandle,
-        ioDispatcher = testDispatcher,
-        mediaImportObserver = fakeImportState,
-    )
+    private fun createViewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()): FolderListViewModel {
+        val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, fakeQueueManager, playbackManager = fakePlaybackManager)
+        return FolderListViewModel(
+            songRepository = fakeSongRepository,
+            playSongs = PlaySongs(fakeQueueManager, fakePlaybackManager),
+            shuffleSongs = ShuffleSongs(fakePlaybackManager),
+            resolveFolderSongs = ResolveFolderSongs(fakeSongRepository),
+            addToPlaylistUseCase = testMediaActions.addToPlaylist,
+            createPlaylistUseCase = testMediaActions.createPlaylist,
+            enqueueSongs = testMediaActions.enqueueSongs,
+            excludeSongs = testMediaActions.excludeSongs,
+            deleteSongs = testMediaActions.deleteSongs,
+            playlistRepository = fakePlaylistRepository,
+            savedStateHandle = savedStateHandle,
+            ioDispatcher = testDispatcher,
+            mediaImportObserver = fakeImportState,
+        )
+    }
 }

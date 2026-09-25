@@ -201,20 +201,23 @@ class AlbumListIntegrationTest {
 
     // endregion
 
-    private fun createViewModel(random: Random = Random.Default): AlbumListViewModel = AlbumListViewModel(
-        albumRepository = fakeAlbumRepository,
-        songRepository = fakeSongRepository,
-        playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-        shuffleSongs = ShuffleSongs(FakePlaybackManager()),
-        addToPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).addToPlaylist,
-        createPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).createPlaylist,
-        resolveSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).resolveSongs,
-        enqueueSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).enqueueSongs,
-        excludeSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).excludeSongs,
-        playlistRepository = fakePlaylistRepository,
-        sortPreferenceManager = fakeSortPreferences,
-        viewModePreferenceManager = fakeViewModePreferences,
-        mediaImportObserver = fakeImportState,
-        random = random,
-    )
+    private fun createViewModel(random: Random = Random.Default): AlbumListViewModel {
+        val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
+        return AlbumListViewModel(
+            albumRepository = fakeAlbumRepository,
+            songRepository = fakeSongRepository,
+            playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
+            shuffleSongs = ShuffleSongs(FakePlaybackManager()),
+            addToPlaylistUseCase = testMediaActions.addToPlaylist,
+            createPlaylistUseCase = testMediaActions.createPlaylist,
+            resolveSongs = testMediaActions.resolveSongs,
+            enqueueSongs = testMediaActions.enqueueSongs,
+            excludeSongs = testMediaActions.excludeSongs,
+            playlistRepository = fakePlaylistRepository,
+            sortPreferenceManager = fakeSortPreferences,
+            viewModePreferenceManager = fakeViewModePreferences,
+            mediaImportObserver = fakeImportState,
+            random = random,
+        )
+    }
 }

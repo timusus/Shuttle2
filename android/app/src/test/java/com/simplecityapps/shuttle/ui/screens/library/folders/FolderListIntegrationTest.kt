@@ -79,16 +79,17 @@ class FolderListIntegrationTest {
     private fun createViewModel(): FolderListViewModel {
         val queueManager = FakeQueueManager()
         val playbackManager = FakePlaybackManager()
+        val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager)
         return FolderListViewModel(
             songRepository = fakeSongRepository,
             playSongs = PlaySongs(queueManager, playbackManager),
             shuffleSongs = ShuffleSongs(playbackManager),
             resolveFolderSongs = ResolveFolderSongs(fakeSongRepository),
-            addToPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager).addToPlaylist,
-            createPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager).createPlaylist,
-            enqueueSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager).enqueueSongs,
-            excludeSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager).excludeSongs,
-            deleteSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager).deleteSongs,
+            addToPlaylistUseCase = testMediaActions.addToPlaylist,
+            createPlaylistUseCase = testMediaActions.createPlaylist,
+            enqueueSongs = testMediaActions.enqueueSongs,
+            excludeSongs = testMediaActions.excludeSongs,
+            deleteSongs = testMediaActions.deleteSongs,
             playlistRepository = fakePlaylistRepository,
             savedStateHandle = SavedStateHandle(),
             ioDispatcher = mainDispatcherRule.testDispatcher,

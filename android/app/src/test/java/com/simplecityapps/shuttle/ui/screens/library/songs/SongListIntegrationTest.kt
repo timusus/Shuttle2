@@ -176,18 +176,21 @@ class SongListIntegrationTest {
 
     private fun createViewModel(
         songRepository: FakeSongRepository = fakeSongRepository,
-    ): SongListViewModel = SongListViewModel(
-        songRepository = songRepository,
-        playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-        shuffleSongs = ShuffleSongs(FakePlaybackManager()),
-        addToPlaylistUseCase = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).addToPlaylist,
-        createPlaylistUseCase = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).createPlaylist,
-        enqueueSongs = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).enqueueSongs,
-        excludeSongs = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).excludeSongs,
-        deleteSongs = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).deleteSongs,
-        playlistRepository = fakePlaylistRepository,
-        sortPreferenceManager = fakeSortPreferences,
-        ioDispatcher = mainDispatcherRule.testDispatcher,
-        mediaImportObserver = fakeImportState,
-    )
+    ): SongListViewModel {
+        val testMediaActions = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
+        return SongListViewModel(
+            songRepository = songRepository,
+            playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
+            shuffleSongs = ShuffleSongs(FakePlaybackManager()),
+            addToPlaylistUseCase = testMediaActions.addToPlaylist,
+            createPlaylistUseCase = testMediaActions.createPlaylist,
+            enqueueSongs = testMediaActions.enqueueSongs,
+            excludeSongs = testMediaActions.excludeSongs,
+            deleteSongs = testMediaActions.deleteSongs,
+            playlistRepository = fakePlaylistRepository,
+            sortPreferenceManager = fakeSortPreferences,
+            ioDispatcher = mainDispatcherRule.testDispatcher,
+            mediaImportObserver = fakeImportState,
+        )
+    }
 }

@@ -79,20 +79,23 @@ class AlbumArtistDetailViewModelTest {
         viewModel.uiState.value.expandedAlbums shouldBe setOf(albumARescanned.groupKey)
     }
 
-    private fun createViewModel() = AlbumArtistDetailViewModel(
-        groupKey = testArtist.groupKey,
-        albumArtistRepository = fakeAlbumArtistRepository,
-        albumRepository = fakeAlbumRepository,
-        songRepository = fakeSongRepository,
-        queueManager = fakeQueueManager,
-        playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-        shuffleSongs = ShuffleSongs(FakePlaybackManager()),
-        shuffleAlbums = ShuffleAlbums(FakeQueueManager(), FakePlaybackManager()),
-        addToPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).addToPlaylist,
-        resolveSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).resolveSongs,
-        enqueueSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).enqueueSongs,
-        excludeSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).excludeSongs,
-        deleteSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).deleteSongs,
-        playlistRepository = fakePlaylistRepository,
-    )
+    private fun createViewModel(): AlbumArtistDetailViewModel {
+        val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
+        return AlbumArtistDetailViewModel(
+            groupKey = testArtist.groupKey,
+            albumArtistRepository = fakeAlbumArtistRepository,
+            albumRepository = fakeAlbumRepository,
+            songRepository = fakeSongRepository,
+            queueManager = fakeQueueManager,
+            playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
+            shuffleSongs = ShuffleSongs(FakePlaybackManager()),
+            shuffleAlbums = ShuffleAlbums(FakeQueueManager(), FakePlaybackManager()),
+            addToPlaylistUseCase = testMediaActions.addToPlaylist,
+            resolveSongs = testMediaActions.resolveSongs,
+            enqueueSongs = testMediaActions.enqueueSongs,
+            excludeSongs = testMediaActions.excludeSongs,
+            deleteSongs = testMediaActions.deleteSongs,
+            playlistRepository = fakePlaylistRepository,
+        )
+    }
 }

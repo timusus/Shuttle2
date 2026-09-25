@@ -122,16 +122,19 @@ class GenreListIntegrationTest {
 
     // endregion
 
-    private fun createViewModel(): GenreListViewModel = GenreListViewModel(
-        genreRepository = fakeGenreRepository,
-        playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-        addToPlaylistUseCase = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).addToPlaylist,
-        createPlaylistUseCase = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).createPlaylist,
-        resolveSongs = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).resolveSongs,
-        enqueueSongs = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).enqueueSongs,
-        excludeSongs = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).excludeSongs,
-        playlistRepository = fakePlaylistRepository,
-        sortPreferenceManager = fakeSortPreferences,
-        mediaImportObserver = fakeImportState,
-    )
+    private fun createViewModel(): GenreListViewModel {
+        val testMediaActions = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
+        return GenreListViewModel(
+            genreRepository = fakeGenreRepository,
+            playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
+            addToPlaylistUseCase = testMediaActions.addToPlaylist,
+            createPlaylistUseCase = testMediaActions.createPlaylist,
+            resolveSongs = testMediaActions.resolveSongs,
+            enqueueSongs = testMediaActions.enqueueSongs,
+            excludeSongs = testMediaActions.excludeSongs,
+            playlistRepository = fakePlaylistRepository,
+            sortPreferenceManager = fakeSortPreferences,
+            mediaImportObserver = fakeImportState,
+        )
+    }
 }
