@@ -16,6 +16,7 @@ class PlaybackSettings @Inject constructor(
     val equalizerEnabled = store.preference(EqualizerEnabled)
     val replayGainMode = store.preference(ReplayGain)
     val preAmpGain = store.preference(PreAmpGain)
+    val playbackSpeed = store.preference(PlaybackSpeed)
 
     companion object {
         /** Starting a new queue keeps shuffle on instead of turning it off. */
@@ -30,5 +31,8 @@ class PlaybackSettings @Inject constructor(
 
         /** In dB, within ±[com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor.maxPreAmpGain]. */
         val PreAmpGain = Setting.float("preamp_gain", 0f)
+
+        /** The speed chosen in Now Playing, a multiplier; the player owns it, this keeps it across restarts. */
+        val PlaybackSpeed = Setting.float("playback_speed", 1f)
     }
 }

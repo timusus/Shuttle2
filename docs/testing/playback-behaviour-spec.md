@@ -68,7 +68,8 @@ playback resumes, then the song plays from the start; a saved position mid-song 
 created), when the song ends, then it plays again rather than advancing. (9b1c45bd) — JVM.
 
 **RS-13: speed and volume survive a new player.** Given a playback speed set before anything has loaded, then that
-speed is reported (and shown) straight away. (e11a74e2) — JVM. The volume half (a rebuilt player starts at full
+speed is reported (and shown) straight away. (e11a74e2) — JVM. Given a speed set, when the app starts again, then
+the new player plays at that speed (#408) — JVM. The volume half (a rebuilt player starts at full
 volume, not stuck ducked) is device-only: *Cast* — duck, switch to Cast and back.
 
 **RS-14: every queue change is published.** Given a queue, when a song is moved, removed, added or played next, then

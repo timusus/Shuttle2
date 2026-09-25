@@ -141,6 +141,7 @@ class PlaybackEngineModule {
         player: Player,
         localPlayer: ExoPlayer,
         playbackPreferenceManager: PlaybackPreferenceManager,
+        playbackSettings: PlaybackSettings,
         @AppCoroutineScope coroutineScope: CoroutineScope,
         castQueue: CastQueue
     ): PlaybackManager = PlaybackManager(
@@ -148,6 +149,7 @@ class PlaybackEngineModule {
         player,
         localPlayer,
         playbackPreferenceManager,
+        playbackSettings.playbackSpeed,
         CallMonitor(context.getSystemService()),
         coroutineScope,
         castQueue

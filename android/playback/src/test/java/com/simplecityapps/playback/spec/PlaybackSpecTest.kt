@@ -284,6 +284,20 @@ class PlaybackSpecTest {
     }
 
     @Test
+    fun `RS-13 a speed set is restored when the app starts again`() {
+        playback.setPlaybackSpeed(1.25f)
+        harness.release()
+
+        val restarted = PlaybackHarness(sharedPreferences = harness.sharedPreferences)
+        try {
+            restarted.playbackOperations.getPlaybackSpeed() shouldBe 1.25f
+            restarted.playbackOperations.positionAnchorFlow.value.speed shouldBe 1.25f
+        } finally {
+            restarted.release()
+        }
+    }
+
+    @Test
     fun `RS-14 every change to the queue publishes a new queue state`() {
         val songs = (1L..5L).map { song(it) }
         loadPaused(songs)

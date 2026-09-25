@@ -2,6 +2,7 @@ package com.simplecityapps.playback.spec
 
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
@@ -87,7 +88,9 @@ class PlaybackHarness(
     /** The player the app plays through, around the local player: the local player itself, as when not casting. */
     activePlayer: (ExoPlayer) -> Player = { it },
     /** What keeps a Cast receiver in line, around the local player: none, as when there's no Cast. Built before [activePlayer]. */
-    castQueue: (ExoPlayer) -> CastQueue? = { null }
+    castQueue: (ExoPlayer) -> CastQueue? = { null },
+    /** Where settings are kept. Pass one harness's to the next to model the app starting again. */
+    val sharedPreferences: SharedPreferences = FakeSharedPreferences()
 ) {
     val context: Context = RuntimeEnvironment.getApplication()
 
@@ -209,7 +212,8 @@ class PlaybackHarness(
         appPlayer = active
         audioEffectSessionManager.attach(active, player)
         audioFocus = AudioFocusCounts(Shadow.extract(audioManager))
-        val queueManager = QueueManager(player, PlaybackSettings(SettingsStore(FakeSharedPreferences())), songUriResolver, buildContext, active)
+        val playbackSettings = PlaybackSettings(SettingsStore(sharedPreferences))
+        val queueManager = QueueManager(player, playbackSettings, songUriResolver, buildContext, active)
         queueOperations = queueManager
         playbackOperations =
             PlaybackManager(
@@ -217,6 +221,7 @@ class PlaybackHarness(
                 player = active,
                 localPlayer = player,
                 playbackPreferenceManager = playbackPreferenceManager,
+                playbackSpeed = playbackSettings.playbackSpeed,
                 callMonitor = CallMonitor(audioManager),
                 appCoroutineScope = scope,
                 castQueue = cast

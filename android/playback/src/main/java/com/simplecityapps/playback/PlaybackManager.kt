@@ -21,6 +21,7 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.settings.Preference
 import java.util.concurrent.Executor
 import kotlin.math.max
 import kotlinx.coroutines.CoroutineScope
@@ -58,6 +59,8 @@ class PlaybackManager(
     /** The local player: [player] itself, or the one a Cast player plays through when not casting. */
     private val localPlayer: ExoPlayer,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
+    /** Where the player's speed is kept across restarts: restored onto the player at start, saved whenever it changes. */
+    private val playbackSpeed: Preference<Float>,
     /** Says when a call is on, and when it ends, so a play during one waits for it (see [holdForCall]). */
     private val callMonitor: CallMonitor,
     private val appCoroutineScope: CoroutineScope,
@@ -215,6 +218,8 @@ class PlaybackManager(
 
                 override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
                     checkDevice()
+                    // A Cast receiver's speed is its own; the one to keep is the local player's.
+                    if (!isRemote) playbackSpeed.value = playbackParameters.speed
                     reanchor()
                 }
 
@@ -229,6 +234,9 @@ class PlaybackManager(
                 }
             }
         )
+
+        // The saved speed, onto a player that starts at normal speed.
+        playbackSpeed.value.takeIf { it > 0f && it != PlaybackParameters.DEFAULT.speed }?.let(::setPlaybackSpeed)
     }
 
     /**

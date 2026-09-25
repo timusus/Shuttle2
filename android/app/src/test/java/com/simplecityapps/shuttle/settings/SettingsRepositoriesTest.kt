@@ -82,6 +82,7 @@ class SettingsRepositoriesTest {
         val playback = PlaybackSettings(store)
         playback.replayGainMode.value = ReplayGainMode.Album
         playback.preAmpGain.value = -3.5f
+        playback.playbackSpeed.value = 1.25f
         val library = LibrarySettings(store)
         library.rescanFrequency.value = ImportFrequency.Weekly
         library.reportPlaybackToServer.value = false
@@ -93,6 +94,7 @@ class SettingsRepositoriesTest {
         AppearanceSettings(reread).widgetBackgroundOpacity.value shouldBe 40
         PlaybackSettings(reread).replayGainMode.value shouldBe ReplayGainMode.Album
         PlaybackSettings(reread).preAmpGain.value shouldBe -3.5f
+        PlaybackSettings(reread).playbackSpeed.value shouldBe 1.25f
         LibrarySettings(reread).rescanFrequency.value shouldBe ImportFrequency.Weekly
         LibrarySettings(reread).reportPlaybackToServer.value shouldBe false
     }
