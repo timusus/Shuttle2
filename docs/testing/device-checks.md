@@ -132,14 +132,21 @@ notification is Media3's own, with shuffle and repeat as its extra buttons.
 
 ## Audio focus (#345 step 3)
 
-ExoPlayer handles audio focus now, in place of S2's own helper. Rules in `docs/testing/playback-behaviour-spec.md`.
+ExoPlayer handles audio focus now, in place of S2's own helper, and keeps focus while paused; `PlaybackManager` holds
+a play during a call. Rules in `docs/testing/playback-behaviour-spec.md`.
 
 - [ ] RS-50: while playing, take a phone call. Playback pauses; end the call and it resumes by itself.
 - [ ] RS-50: while playing, take a phone call and pause S2 from its notification during the call. End the call: S2 stays paused.
-- [ ] RS-50: while S2 is held paused by a call, check the notification and lock screen show a play button, and pressing play during the call does no harm.
+- [ ] RS-55: while S2 is held paused by a call, check the notification and lock screen, and press play during the call. Nothing plays over the call; S2 resumes when the call ends.
+- [ ] RS-55: while playing, hold the home button for the voice assistant, and press play in S2's notification while it listens. S2 takes focus back and plays at once.
 - [ ] RS-51: with navigation (Google Maps) giving spoken directions, S2's volume drops during each prompt and comes back after it, without pausing.
 - [ ] RS-52: while playing, start another music app (e.g. YouTube Music). S2 pauses and stays paused after the other app stops.
-- [ ] RS-54: during a phone call, press play in S2. It starts playing straight away (it used to wait until the call ended). Check how that sounds on the call and whether that's acceptable.
+- [ ] RS-04: pause S2, then start another music app. It plays normally; stop it, and S2 stays paused.
+- [ ] RS-04: pause S2, then let a navigation prompt or a notification sound play. S2 stays paused afterwards.
+- [ ] RS-54 (Android 12+): with S2 paused, take a phone call and press play in S2 (app, notification, and a headset button). Nothing plays over the call, and S2 shows paused; end the call and S2 starts playing.
+- [ ] RS-54 (Android 12+): as above, but pause S2 again before ending the call. S2 stays paused after the call.
+- [ ] RS-54 (Android 11 or lower): with S2 paused, take a phone call and press play in S2. Nothing plays over the call, and S2 stays paused after it; press play again to start.
+- [ ] RS-54: with S2 paused, start a WhatsApp or Meet call and press play in S2. Same as a phone call.
 - [ ] Cast: duck while casting (a navigation prompt), then switch back to the phone. Local playback is at full volume.
 
 ## Behaviour spec, device-only rules
