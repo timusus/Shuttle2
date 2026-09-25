@@ -16,7 +16,11 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
@@ -31,39 +35,36 @@ class MediaImporter(
     private val playlistRepository: PlaylistRepository,
     private val preferenceManager: GeneralPreferenceManager
 ) {
-    interface Listener {
-        fun onStart(providerType: MediaProviderType) {}
+    sealed class ImportEvent {
+        data class Started(val providerType: MediaProviderType) : ImportEvent()
 
-        fun onSongImportProgress(
-            providerType: MediaProviderType,
-            message: String,
-            progress: Progress?
-        )
+        data class SongImportProgress(
+            val providerType: MediaProviderType,
+            val message: String,
+            val progress: Progress?
+        ) : ImportEvent()
 
-        fun onSongImportComplete(providerType: MediaProviderType) {}
+        data class SongImportComplete(val providerType: MediaProviderType) : ImportEvent()
 
-        fun onSongImportFailed(
-            providerType: MediaProviderType,
-            message: String?
-        ) {
-        }
+        data class SongImportFailed(
+            val providerType: MediaProviderType,
+            val message: String?
+        ) : ImportEvent()
 
-        fun onPlaylistImportProgress(
-            providerType: MediaProviderType,
-            message: String,
-            progress: Progress?
-        ) {
-        }
+        data class PlaylistImportProgress(
+            val providerType: MediaProviderType,
+            val message: String,
+            val progress: Progress?
+        ) : ImportEvent()
 
-        fun onPlaylistImportComplete(providerType: MediaProviderType) {}
+        data class PlaylistImportComplete(val providerType: MediaProviderType) : ImportEvent()
 
-        fun onPlaylistImportFailed(
-            providerType: MediaProviderType,
-            message: String?
-        ) {
-        }
+        data class PlaylistImportFailed(
+            val providerType: MediaProviderType,
+            val message: String?
+        ) : ImportEvent()
 
-        fun onAllComplete() {}
+        data object AllComplete : ImportEvent()
     }
 
     /** Held for the length of an import, so a second [import] finds it taken and returns rather than scanning again. */
@@ -78,7 +79,8 @@ class MediaImporter(
 
     val isImporting: Boolean get() = importLock.isLocked
 
-    var listeners = mutableSetOf<Listener>()
+    private val _importEvents = MutableSharedFlow<ImportEvent>(extraBufferCapacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val importEvents: SharedFlow<ImportEvent> = _importEvents.asSharedFlow()
 
     val mediaProviders: MutableSet<MediaProvider> = mutableSetOf()
 
@@ -127,41 +129,30 @@ class MediaImporter(
         val time = System.currentTimeMillis()
 
         mediaProviders.forEach { mediaProvider ->
-            listeners.forEach { it.onStart(mediaProvider.type) }
+            _importEvents.tryEmit(ImportEvent.Started(mediaProvider.type))
         }
 
         withContext(Dispatchers.IO) {
             mediaProviders.map { mediaProvider ->
                 async {
                     importSongs(mediaProvider).collect { event ->
-                        withContext(Dispatchers.Main) {
-                            when (event) {
-                                is FlowEvent.Progress -> {
-                                    listeners.forEach { listener ->
-                                        listener.onSongImportProgress(
-                                            providerType = mediaProvider.type,
-                                            message = event.data.message,
-                                            progress = event.data.progress
-                                        )
-                                    }
-                                }
+                        when (event) {
+                            is FlowEvent.Progress -> {
+                                _importEvents.tryEmit(
+                                    ImportEvent.SongImportProgress(
+                                        providerType = mediaProvider.type,
+                                        message = event.data.message,
+                                        progress = event.data.progress
+                                    )
+                                )
+                            }
 
-                                is FlowEvent.Success -> {
-                                    listeners.forEach { listener ->
-                                        listener.onSongImportComplete(
-                                            providerType = mediaProvider.type
-                                        )
-                                    }
-                                }
+                            is FlowEvent.Success -> {
+                                _importEvents.tryEmit(ImportEvent.SongImportComplete(providerType = mediaProvider.type))
+                            }
 
-                                is FlowEvent.Failure -> {
-                                    listeners.forEach { listener ->
-                                        listener.onSongImportFailed(
-                                            mediaProvider.type,
-                                            event.message
-                                        )
-                                    }
-                                }
+                            is FlowEvent.Failure -> {
+                                _importEvents.tryEmit(ImportEvent.SongImportFailed(mediaProvider.type, event.message))
                             }
                         }
                     }
@@ -171,34 +162,23 @@ class MediaImporter(
             mediaProviders.map { mediaProvider ->
                 async {
                     importPlaylists(mediaProvider).collect { event ->
-                        withContext(Dispatchers.Main) {
-                            when (event) {
-                                is FlowEvent.Progress -> {
-                                    listeners.forEach { listener ->
-                                        listener.onPlaylistImportProgress(
-                                            providerType = mediaProvider.type,
-                                            message = event.data.message,
-                                            progress = event.data.progress
-                                        )
-                                    }
-                                }
+                        when (event) {
+                            is FlowEvent.Progress -> {
+                                _importEvents.tryEmit(
+                                    ImportEvent.PlaylistImportProgress(
+                                        providerType = mediaProvider.type,
+                                        message = event.data.message,
+                                        progress = event.data.progress
+                                    )
+                                )
+                            }
 
-                                is FlowEvent.Success -> {
-                                    listeners.forEach { listener ->
-                                        listener.onPlaylistImportComplete(
-                                            providerType = mediaProvider.type
-                                        )
-                                    }
-                                }
+                            is FlowEvent.Success -> {
+                                _importEvents.tryEmit(ImportEvent.PlaylistImportComplete(providerType = mediaProvider.type))
+                            }
 
-                                is FlowEvent.Failure -> {
-                                    listeners.forEach { listener ->
-                                        listener.onPlaylistImportFailed(
-                                            mediaProvider.type,
-                                            event.message
-                                        )
-                                    }
-                                }
+                            is FlowEvent.Failure -> {
+                                _importEvents.tryEmit(ImportEvent.PlaylistImportFailed(mediaProvider.type, event.message))
                             }
                         }
                     }
@@ -208,7 +188,7 @@ class MediaImporter(
 
         preferenceManager.lastMediaImportDate = Date()
 
-        listeners.forEach { listener -> listener.onAllComplete() }
+        _importEvents.tryEmit(ImportEvent.AllComplete)
 
         importCount++
 

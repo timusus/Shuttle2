@@ -1,3 +1,2 @@
 # Don't declare *Listener/*Callback(s) interfaces; expose a Flow or a suspend function
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
-com.simplecityapps.mediaprovider.MediaImporter.Listener

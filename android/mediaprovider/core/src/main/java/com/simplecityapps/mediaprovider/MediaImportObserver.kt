@@ -1,70 +1,68 @@
 package com.simplecityapps.mediaprovider
 
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.MediaProviderType
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 @Singleton
 class MediaImportObserver @Inject constructor(
-    mediaImporter: MediaImporter
-) : MediaImporter.Listener,
-    SongImportStateProvider {
-
-    init {
-        mediaImporter.listeners.add(this)
-    }
-
+    mediaImporter: MediaImporter,
+    @AppCoroutineScope scope: CoroutineScope
+) : SongImportStateProvider {
     private val _songImportState = MutableStateFlow<SongImportState>(SongImportState.Idle)
     override val songImportState: StateFlow<SongImportState> = _songImportState.asStateFlow()
 
     private val _playlistImportState = MutableStateFlow<PlaylistImportState>(PlaylistImportState.Idle)
     val playlistImportState: StateFlow<PlaylistImportState> = _playlistImportState.asStateFlow()
 
-    override fun onStart(providerType: MediaProviderType) {
-        _songImportState.value = SongImportState.ImportProgress(
-            providerType = providerType,
-            message = null,
-            progress = null
-        )
-    }
+    init {
+        scope.launch {
+            mediaImporter.importEvents.collect { event ->
+                when (event) {
+                    is MediaImporter.ImportEvent.Started -> {
+                        _songImportState.value = SongImportState.ImportProgress(
+                            providerType = event.providerType,
+                            message = null,
+                            progress = null
+                        )
+                    }
 
-    override fun onSongImportProgress(
-        providerType: MediaProviderType,
-        message: String,
-        progress: Progress?
-    ) {
-        _songImportState.value = SongImportState.ImportProgress(providerType, message, progress)
-    }
+                    is MediaImporter.ImportEvent.SongImportProgress -> {
+                        _songImportState.value = SongImportState.ImportProgress(event.providerType, event.message, event.progress)
+                    }
 
-    override fun onSongImportComplete(providerType: MediaProviderType) {
-        _songImportState.value = SongImportState.ImportComplete(providerType, null)
-    }
+                    is MediaImporter.ImportEvent.SongImportComplete -> {
+                        _songImportState.value = SongImportState.ImportComplete(event.providerType, null)
+                    }
 
-    override fun onSongImportFailed(providerType: MediaProviderType, message: String?) {
-        _songImportState.value = SongImportState.ImportComplete(providerType, message)
-    }
+                    is MediaImporter.ImportEvent.SongImportFailed -> {
+                        _songImportState.value = SongImportState.ImportComplete(event.providerType, event.message)
+                    }
 
-    override fun onPlaylistImportProgress(
-        providerType: MediaProviderType,
-        message: String,
-        progress: Progress?
-    ) {
-        _playlistImportState.value = PlaylistImportState.ImportProgress(providerType, message, progress)
-    }
+                    is MediaImporter.ImportEvent.PlaylistImportProgress -> {
+                        _playlistImportState.value = PlaylistImportState.ImportProgress(event.providerType, event.message, event.progress)
+                    }
 
-    override fun onPlaylistImportComplete(providerType: MediaProviderType) {
-        _playlistImportState.value = PlaylistImportState.ImportComplete(providerType, null)
-    }
+                    is MediaImporter.ImportEvent.PlaylistImportComplete -> {
+                        _playlistImportState.value = PlaylistImportState.ImportComplete(event.providerType, null)
+                    }
 
-    override fun onPlaylistImportFailed(providerType: MediaProviderType, message: String?) {
-        _playlistImportState.value = PlaylistImportState.ImportComplete(providerType, message)
-    }
+                    is MediaImporter.ImportEvent.PlaylistImportFailed -> {
+                        _playlistImportState.value = PlaylistImportState.ImportComplete(event.providerType, event.message)
+                    }
 
-    override fun onAllComplete() {
-        // Anyone interested in this event could derive it by observing both state flows
+                    MediaImporter.ImportEvent.AllComplete -> {
+                        // Anyone interested in this event could derive it by observing both state flows
+                    }
+                }
+            }
+        }
     }
 }
 

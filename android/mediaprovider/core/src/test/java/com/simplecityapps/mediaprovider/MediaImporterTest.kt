@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -163,6 +164,32 @@ class MediaImporterTest {
 
         provider.scans.get() shouldBe 1
         importer.isImporting shouldBe false
+    }
+
+    @Test
+    fun `an import emits importEvents starting with Started and ending with AllComplete`() = runBlocking<Unit> {
+        provider.gate.trySend(Unit)
+
+        val events = mutableListOf<MediaImporter.ImportEvent>()
+        val subscribed = CompletableDeferred<Unit>()
+        val allComplete = CompletableDeferred<Unit>()
+        val collector =
+            launch(Dispatchers.Default) {
+                importer.importEvents
+                    .onSubscription { subscribed.complete(Unit) }
+                    .collect { event ->
+                        events.add(event)
+                        if (event == MediaImporter.ImportEvent.AllComplete) allComplete.complete(Unit)
+                    }
+            }
+        subscribed.await()
+
+        importer.import()
+        allComplete.await()
+
+        collector.cancel()
+        events.first() shouldBe MediaImporter.ImportEvent.Started(MediaProviderType.Shuttle)
+        events.last() shouldBe MediaImporter.ImportEvent.AllComplete
     }
 
     /** Counts its scans, signals [started] as each one begins, holds it open until a [gate] send, then throws [failure] if [failNext] is set. */
