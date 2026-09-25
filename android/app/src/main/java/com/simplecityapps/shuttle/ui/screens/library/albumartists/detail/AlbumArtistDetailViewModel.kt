@@ -10,7 +10,6 @@ import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -18,11 +17,17 @@ import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
-import com.simplecityapps.shuttle.ui.common.playback.ShuffleAlbums
-import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
+import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
+import com.simplecityapps.shuttle.ui.actions.DeleteSongs
+import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
+import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.ResolveSongs
+import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
+import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.toMediaSelection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -47,9 +52,12 @@ class AlbumArtistDetailViewModel @Inject constructor(
     private val albumArtistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackOperations,
     private val queueManager: QueueOperations,
     private val playSongs: PlaySongs,
+    private val resolveSongs: ResolveSongs,
+    private val enqueueSongs: EnqueueSongs,
+    private val excludeSongs: ExcludeSongs,
+    private val deleteSongs: DeleteSongs,
     private val shuffleSongs: ShuffleSongs,
     private val shuffleAlbums: ShuffleAlbums,
     private val addToPlaylistUseCase: AddToPlaylist,
@@ -114,22 +122,21 @@ class AlbumArtistDetailViewModel @Inject constructor(
 
     fun onAddToQueue(song: Song) {
         viewModelScope.launch {
-            playbackManager.addToQueue(listOf(song))
+            enqueueSongs(MediaSelection.Songs(song), EnqueueSongs.Position.End)
             _events.emit(AlbumArtistDetailUiEvent.AddedToQueue(1))
         }
     }
 
     fun onPlayNext(song: Song) {
         viewModelScope.launch {
-            playbackManager.playNext(listOf(song))
+            enqueueSongs(MediaSelection.Songs(song), EnqueueSongs.Position.Next)
             _events.emit(AlbumArtistDetailUiEvent.AddedToQueue(1))
         }
     }
 
     fun onExcludeSong(song: Song) {
         viewModelScope.launch {
-            songRepository.setExcluded(listOf(song), true)
-            queueManager.remove(song)
+            excludeSongs(MediaSelection.Songs(song))
         }
     }
 
@@ -139,10 +146,9 @@ class AlbumArtistDetailViewModel @Inject constructor(
         }
     }
 
-    fun onSongDeleted(song: Song) {
+    fun onDelete(song: Song) {
         viewModelScope.launch {
-            songRepository.remove(song)
-            queueManager.remove(song)
+            if (deleteSongs(MediaSelection.Songs(song)).failed.isNotEmpty()) _events.emit(AlbumArtistDetailUiEvent.DeleteFailed)
         }
     }
 
@@ -168,7 +174,7 @@ class AlbumArtistDetailViewModel @Inject constructor(
 
     fun onPlayAlbum(album: Album) {
         viewModelScope.launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumGroupKey(key = album.groupKey)).filterNotNull().firstOrNull().orEmpty()
+            val songs = resolveSongs(MediaSelection.Albums(album))
             val result = playSongs(songs)
             if (result is PlaySongs.Result.Failure) {
                 _events.emit(AlbumArtistDetailUiEvent.PlaybackFailed(result.message))
@@ -178,30 +184,29 @@ class AlbumArtistDetailViewModel @Inject constructor(
 
     fun onAddAlbumToQueue(album: Album) {
         viewModelScope.launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumGroupKey(key = album.groupKey)).filterNotNull().firstOrNull().orEmpty()
-            playbackManager.addToQueue(songs)
+            val songs = resolveSongs(MediaSelection.Albums(album))
+            enqueueSongs(MediaSelection.Songs(songs), EnqueueSongs.Position.End)
             _events.emit(AlbumArtistDetailUiEvent.AddedToQueue(songs.size))
         }
     }
 
     fun onPlayAlbumNext(album: Album) {
         viewModelScope.launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumGroupKey(key = album.groupKey)).filterNotNull().firstOrNull().orEmpty()
-            playbackManager.playNext(songs)
+            val songs = resolveSongs(MediaSelection.Albums(album))
+            enqueueSongs(MediaSelection.Songs(songs), EnqueueSongs.Position.Next)
             _events.emit(AlbumArtistDetailUiEvent.AddedToQueue(songs.size))
         }
     }
 
     fun onExcludeAlbum(album: Album) {
         viewModelScope.launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumGroupKey(key = album.groupKey)).filterNotNull().firstOrNull().orEmpty()
-            songRepository.setExcluded(songs, true)
+            excludeSongs(MediaSelection.Albums(album))
         }
     }
 
     fun onEditAlbumTags(album: Album) {
         viewModelScope.launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumGroupKey(key = album.groupKey)).filterNotNull().firstOrNull().orEmpty()
+            val songs = resolveSongs(MediaSelection.Albums(album))
             _events.emit(AlbumArtistDetailUiEvent.EditTags(songs))
         }
     }
@@ -244,7 +249,7 @@ class AlbumArtistDetailViewModel @Inject constructor(
     fun onAddAllToQueue() {
         viewModelScope.launch {
             val songs = uiState.value.songs
-            playbackManager.addToQueue(songs)
+            enqueueSongs(MediaSelection.Songs(songs), EnqueueSongs.Position.End)
             _events.emit(AlbumArtistDetailUiEvent.AddedToQueue(songs.size))
         }
     }
@@ -252,7 +257,7 @@ class AlbumArtistDetailViewModel @Inject constructor(
     fun onPlayAllNext() {
         viewModelScope.launch {
             val songs = uiState.value.songs
-            playbackManager.playNext(songs)
+            enqueueSongs(MediaSelection.Songs(songs), EnqueueSongs.Position.Next)
             _events.emit(AlbumArtistDetailUiEvent.AddedToQueue(songs.size))
         }
     }
@@ -267,16 +272,16 @@ class AlbumArtistDetailViewModel @Inject constructor(
 
     fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData, ignoreDuplicates: Boolean = false) {
         viewModelScope.launch {
-            when (val result = addToPlaylistUseCase(playlist, playlistData, ignoreDuplicates)) {
+            when (val result = addToPlaylistUseCase(playlist, playlistData.toMediaSelection(), ignoreDuplicates)) {
                 is AddToPlaylist.Result.Success ->
-                    _events.emit(AlbumArtistDetailUiEvent.AddedToPlaylist(result.playlist, result.playlistData))
+                    _events.emit(AlbumArtistDetailUiEvent.AddedToPlaylist(result.playlist, playlistData))
 
                 is AddToPlaylist.Result.DuplicatesFound ->
                     _events.emit(
                         AlbumArtistDetailUiEvent.PlaylistDuplicatesFound(
                             result.playlist,
-                            result.playlistData,
-                            result.deduplicatedSongs,
+                            playlistData,
+                            PlaylistData.Songs(result.nonDuplicates),
                             result.duplicates,
                         )
                     )

@@ -37,4 +37,5 @@ sealed interface AlbumArtistDetailUiEvent {
         val duplicates: List<Song>,
     ) : AlbumArtistDetailUiEvent
     data class PlaylistAddFailed(val message: String?) : AlbumArtistDetailUiEvent
+    data object DeleteFailed : AlbumArtistDetailUiEvent
 }

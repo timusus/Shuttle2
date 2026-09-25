@@ -7,9 +7,11 @@ import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
-import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.shuttle.model.Playlist
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -20,15 +22,15 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @HiltViewModel
 class PlaylistListViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
-    private val playbackManager: PlaybackOperations,
     private val playSongs: PlaySongs,
+    private val resolveSongs: ResolveSongs,
+    private val enqueueSongs: EnqueueSongs,
     private val sortPreferenceManager: SortPreferences,
     mediaImportObserver: SongImportStateProvider,
 ) : ViewModel() {
@@ -75,7 +77,7 @@ class PlaylistListViewModel @Inject constructor(
 
     fun onPlay(playlist: Playlist) {
         viewModelScope.launch {
-            val songs = playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song }
+            val songs = resolveSongs(MediaSelection.Playlists(playlist))
             val result = playSongs(songs)
             if (result is PlaySongs.Result.Failure) {
                 _events.emit(PlaylistListUiEvent.PlaybackFailed(result.message))
@@ -85,16 +87,14 @@ class PlaylistListViewModel @Inject constructor(
 
     fun onAddToQueue(playlist: Playlist) {
         viewModelScope.launch {
-            val songs = playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song }
-            playbackManager.addToQueue(songs)
+            enqueueSongs(MediaSelection.Playlists(playlist), EnqueueSongs.Position.End)
             _events.emit(PlaylistListUiEvent.AddedToQueue(playlist.name))
         }
     }
 
     fun onPlayNext(playlist: Playlist) {
         viewModelScope.launch {
-            val songs = playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song }
-            playbackManager.playNext(songs)
+            enqueueSongs(MediaSelection.Playlists(playlist), EnqueueSongs.Position.Next)
             _events.emit(PlaylistListUiEvent.AddedToQueue(playlist.name))
         }
     }

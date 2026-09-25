@@ -4,13 +4,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.downloads.DownloadSettings
-import com.simplecityapps.shuttle.downloads.SongDownloadManager
 import com.simplecityapps.shuttle.downloads.SongDownloadRepository
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.ui.actions.DownloadSongs
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 import javax.inject.Inject
@@ -28,7 +28,7 @@ import org.json.JSONObject
  * lands. Replies on logcat tag `S2Debug` like [DebugPlaybackReceiver], so `support/scripts/s2-debug.sh`
  * drives it too; the debug-receivers skill documents the actions.
  *
- * A download uses the song's current stream URI, which is what playback would fetch.
+ * Downloads go through [DownloadSongs], the same path as the actions sheet's Download.
  */
 @AndroidEntryPoint
 class DebugDownloadReceiver : BroadcastReceiver() {
@@ -36,10 +36,7 @@ class DebugDownloadReceiver : BroadcastReceiver() {
     lateinit var songRepository: SongRepository
 
     @Inject
-    lateinit var mediaInfoProvider: AggregateMediaInfoProvider
-
-    @Inject
-    lateinit var songDownloadManager: SongDownloadManager
+    lateinit var downloadSongs: DownloadSongs
 
     @Inject
     lateinit var songDownloadRepository: SongDownloadRepository
@@ -72,14 +69,13 @@ class DebugDownloadReceiver : BroadcastReceiver() {
     ): String? = when (action) {
         "DOWNLOAD_SONG" -> {
             val song = song(intent)
-            val uri = mediaInfoProvider.getMediaInfo(song).path
-            songDownloadManager.download(song, uri)
+            check(downloadSongs(MediaSelection.Songs(song)).changed.isNotEmpty()) { "no download URL for ${song.id} ${song.name}" }
             "${song.id} ${song.name} (${song.path})"
         }
 
         "REMOVE_DOWNLOAD" -> {
             val song = song(intent)
-            songDownloadManager.remove(song)
+            downloadSongs(MediaSelection.Songs(song), download = false)
             "${song.id} ${song.name}"
         }
 

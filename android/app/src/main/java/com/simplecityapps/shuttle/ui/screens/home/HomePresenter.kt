@@ -5,12 +5,16 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
+import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
+import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.ResolveSongs
+import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import java.util.*
@@ -77,8 +81,11 @@ constructor(
     private val songRepository: SongRepository,
     private val albumRepository: AlbumRepository,
     private val albumArtistRepository: AlbumArtistRepository,
-    private val playbackManager: PlaybackOperations,
-    private val queueManager: QueueOperations,
+    private val resolveSongs: ResolveSongs,
+    private val playSongs: PlaySongs,
+    private val shuffleSongs: ShuffleSongs,
+    private val enqueueSongs: EnqueueSongs,
+    private val excludeSongs: ExcludeSongs,
     @Named("randomSeed") private val seed: Long
 ) : BasePresenter<HomeContract.View>(),
     HomeContract.Presenter {
@@ -88,12 +95,8 @@ constructor(
             if (songs.isEmpty()) {
                 view?.showLoadError(UserFriendlyError("Your library is empty"))
             } else {
-                playbackManager.shuffle(songs) { result ->
-                    result.onSuccess {
-                        playbackManager.play()
-                    }
-                    result.onFailure { error -> view?.showLoadError(Error(error)) }
-                }
+                val result = shuffleSongs(songs)
+                if (result is ShuffleSongs.Result.Failure) view?.showLoadError(Error(result.message))
             }
         }
     }
@@ -141,85 +144,62 @@ constructor(
 
     override fun addToQueue(albumArtist: AlbumArtist) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
-            playbackManager.addToQueue(songs)
+            enqueueSongs(MediaSelection.AlbumArtists(albumArtist), EnqueueSongs.Position.End)
             view?.onAddedToQueue(albumArtist)
         }
     }
 
     override fun playNext(albumArtist: AlbumArtist) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
-            playbackManager.playNext(songs)
+            enqueueSongs(MediaSelection.AlbumArtists(albumArtist), EnqueueSongs.Position.Next)
             view?.onAddedToQueue(albumArtist)
         }
     }
 
     override fun addToQueue(album: Album) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey)))).firstOrNull().orEmpty()
-            playbackManager.addToQueue(songs)
+            enqueueSongs(MediaSelection.Albums(album), EnqueueSongs.Position.End)
             view?.onAddedToQueue(album)
         }
     }
 
     override fun playNext(album: Album) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey)))).firstOrNull().orEmpty()
-            playbackManager.playNext(songs)
+            enqueueSongs(MediaSelection.Albums(album), EnqueueSongs.Position.Next)
             view?.onAddedToQueue(album)
         }
     }
 
     override fun exclude(albumArtist: AlbumArtist) {
-        launch {
-            val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
-            songRepository.setExcluded(songs, true)
-        }
+        launch { excludeSongs(MediaSelection.AlbumArtists(albumArtist)) }
     }
 
     override fun editTags(albumArtist: AlbumArtist) {
-        launch {
-            val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
-            view?.showTagEditor(songs)
-        }
+        launch { view?.showTagEditor(resolveSongs(MediaSelection.AlbumArtists(albumArtist))) }
     }
 
     override fun exclude(album: Album) {
-        launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey)))).firstOrNull().orEmpty()
-            songRepository.setExcluded(songs, true)
-        }
+        launch { excludeSongs(MediaSelection.Albums(album)) }
     }
 
     override fun editTags(album: Album) {
-        launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey)))).firstOrNull().orEmpty()
-            view?.showTagEditor(songs)
-        }
+        launch { view?.showTagEditor(resolveSongs(MediaSelection.Albums(album))) }
     }
 
     override fun play(albumArtist: AlbumArtist) {
-        launch {
-            val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
-            if (queueManager.setQueue(songs)) {
-                playbackManager.load { result ->
-                    result.onSuccess { playbackManager.play() }
-                    result.onFailure { error -> view?.showLoadError(error as Error) }
-                }
-            }
-        }
+        play(MediaSelection.AlbumArtists(albumArtist))
     }
 
     override fun play(album: Album) {
+        play(MediaSelection.Albums(album))
+    }
+
+    private fun play(selection: MediaSelection) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey)))).firstOrNull().orEmpty()
-            if (queueManager.setQueue(songs)) {
-                playbackManager.load { result ->
-                    result.onSuccess { playbackManager.play() }
-                    result.onFailure { error -> view?.showLoadError(error as Error) }
-                }
-            }
+            val songs = resolveSongs(selection)
+            if (songs.isEmpty()) return@launch
+            val result = playSongs(songs)
+            if (result is PlaySongs.Result.Failure && result.message != null) view?.showLoadError(Error(result.message))
         }
     }
 }

@@ -7,12 +7,11 @@ import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
+import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.shuttle.sorting.SongSortOrder
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
-import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
-import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -67,18 +66,13 @@ class SongListViewModelTest {
 
     private fun createViewModel(): SongListViewModel = SongListViewModel(
         songRepository = fakeSongRepository,
-        playbackManager = FakePlaybackManager(),
-        queueManager = FakeQueueManager(),
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
         shuffleSongs = ShuffleSongs(FakePlaybackManager()),
-        addToPlaylistUseCase = AddToPlaylist(
-            fakePlaylistRepository,
-            fakeSongRepository,
-            FakeGenreRepository(),
-            FakeQueueManager(),
-            ResolveFolderSongs(fakeSongRepository),
-            ignorePlaylistDuplicates = { false },
-        ),
+        addToPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).addToPlaylist,
+        createPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).createPlaylist,
+        enqueueSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).enqueueSongs,
+        excludeSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).excludeSongs,
+        deleteSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).deleteSongs,
         playlistRepository = fakePlaylistRepository,
         sortPreferenceManager = fakeSortPreferences,
         ioDispatcher = testDispatcher,

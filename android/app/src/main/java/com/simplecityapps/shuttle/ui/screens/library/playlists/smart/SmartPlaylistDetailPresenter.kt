@@ -1,14 +1,16 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists.smart
 
 import android.content.Context
-import androidx.core.net.toUri
-import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
-import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.DeleteSongs
+import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
+import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -59,8 +61,11 @@ class SmartPlaylistDetailPresenter
 constructor(
     @ApplicationContext private val context: Context,
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackOperations,
-    private val queueManager: QueueOperations,
+    private val playSongs: PlaySongs,
+    private val shuffleSongs: ShuffleSongs,
+    private val enqueueSongs: EnqueueSongs,
+    private val excludeSongs: ExcludeSongs,
+    private val deleteSongs: DeleteSongs,
     @Assisted private val playlist: com.simplecityapps.shuttle.model.SmartPlaylist
 ) : BasePresenter<SmartPlaylistDetailContract.View>(),
     SmartPlaylistDetailContract.Presenter {
@@ -85,22 +90,16 @@ constructor(
 
     override fun onSongClicked(song: Song) {
         launch {
-            if (queueManager.setQueue(songs = songs, position = songs.indexOf(song))) {
-                playbackManager.load { result ->
-                    result.onSuccess { playbackManager.play() }
-                    result.onFailure { error -> view?.showLoadError(error as Error) }
-                }
-            }
+            val result = playSongs(songs, songs.indexOf(song).coerceAtLeast(0))
+            if (result is PlaySongs.Result.Failure && result.message != null) view?.showLoadError(Error(result.message))
         }
     }
 
     override fun shuffle() {
         if (songs.isNotEmpty()) {
             launch {
-                playbackManager.shuffle(songs) { result ->
-                    result.onSuccess { playbackManager.play() }
-                    result.onFailure { error -> view?.showLoadError(error as Error) }
-                }
+                val result = shuffleSongs(songs)
+                if (result is ShuffleSongs.Result.Failure) view?.showLoadError(Error(result.message))
             }
         } else {
             Timber.i("Shuffle failed: Songs list empty")
@@ -109,42 +108,34 @@ constructor(
 
     override fun addToQueue(song: Song) {
         launch {
-            playbackManager.addToQueue(listOf(song))
+            enqueueSongs(MediaSelection.Songs(song), EnqueueSongs.Position.End)
             view?.onAddedToQueue(song)
         }
     }
 
     override fun addToQueue(playlist: com.simplecityapps.shuttle.model.SmartPlaylist) {
         launch {
-            playbackManager.addToQueue(songs)
+            enqueueSongs(MediaSelection.Songs(songs), EnqueueSongs.Position.End)
             view?.onAddedToQueue(playlist)
         }
     }
 
     override fun playNext(song: Song) {
         launch {
-            playbackManager.playNext(listOf(song))
+            enqueueSongs(MediaSelection.Songs(song), EnqueueSongs.Position.Next)
             view?.onAddedToQueue(song)
         }
     }
 
     override fun exclude(song: Song) {
-        launch {
-            songRepository.setExcluded(listOf(song), true)
-            queueManager.remove(queueManager.getQueue().filter { it.song.id == song.id })
-        }
+        launch { excludeSongs(MediaSelection.Songs(song)) }
     }
 
     override fun delete(song: Song) {
-        val uri = song.path.toUri()
-        val documentFile = DocumentFile.fromSingleUri(context, uri)
-        if (documentFile?.delete() == true) {
-            launch {
-                songRepository.remove(song)
-                queueManager.remove(queueManager.getQueue().filter { it.song.id == song.id })
+        launch {
+            if (deleteSongs(MediaSelection.Songs(song)).failed.isNotEmpty()) {
+                view?.showDeleteError(UserFriendlyError(context.getString(R.string.delete_song_failed)))
             }
-        } else {
-            view?.showDeleteError(UserFriendlyError(context.getString(R.string.delete_song_failed)))
         }
     }
 }

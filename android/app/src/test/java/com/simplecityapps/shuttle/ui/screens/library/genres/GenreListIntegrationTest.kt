@@ -9,14 +9,13 @@ import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
+import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
-import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -125,18 +124,12 @@ class GenreListIntegrationTest {
 
     private fun createViewModel(): GenreListViewModel = GenreListViewModel(
         genreRepository = fakeGenreRepository,
-        songRepository = fakeSongRepository,
-        playbackManager = FakePlaybackManager(),
-        queueManager = FakeQueueManager(),
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-        addToPlaylistUseCase = AddToPlaylist(
-            fakePlaylistRepository,
-            fakeSongRepository,
-            fakeGenreRepository,
-            FakeQueueManager(),
-            ResolveFolderSongs(fakeSongRepository),
-            ignorePlaylistDuplicates = { false },
-        ),
+        addToPlaylistUseCase = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).addToPlaylist,
+        createPlaylistUseCase = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).createPlaylist,
+        resolveSongs = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).resolveSongs,
+        enqueueSongs = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).enqueueSongs,
+        excludeSongs = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).excludeSongs,
         playlistRepository = fakePlaylistRepository,
         sortPreferenceManager = fakeSortPreferences,
         mediaImportObserver = fakeImportState,

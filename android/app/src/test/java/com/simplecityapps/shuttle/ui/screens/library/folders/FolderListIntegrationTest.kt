@@ -9,10 +9,10 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.fakes.importComplete
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
-import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import org.junit.Rule
@@ -81,19 +81,14 @@ class FolderListIntegrationTest {
         val playbackManager = FakePlaybackManager()
         return FolderListViewModel(
             songRepository = fakeSongRepository,
-            playbackManager = playbackManager,
-            queueManager = queueManager,
             playSongs = PlaySongs(queueManager, playbackManager),
             shuffleSongs = ShuffleSongs(playbackManager),
             resolveFolderSongs = ResolveFolderSongs(fakeSongRepository),
-            addToPlaylistUseCase = AddToPlaylist(
-                fakePlaylistRepository,
-                fakeSongRepository,
-                FakeGenreRepository(),
-                queueManager,
-                ResolveFolderSongs(fakeSongRepository),
-                ignorePlaylistDuplicates = { false },
-            ),
+            addToPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager).addToPlaylist,
+            createPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager).createPlaylist,
+            enqueueSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager).enqueueSongs,
+            excludeSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager).excludeSongs,
+            deleteSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager).deleteSongs,
             playlistRepository = fakePlaylistRepository,
             savedStateHandle = SavedStateHandle(),
             ioDispatcher = mainDispatcherRule.testDispatcher,

@@ -9,8 +9,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.net.toUri
-import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -126,6 +124,10 @@ class AlbumArtistDetailFragment :
                             )
                         }
 
+                        is AlbumArtistDetailUiEvent.DeleteFailed -> {
+                            Toast.makeText(context, R.string.delete_song_failed, Toast.LENGTH_LONG).show()
+                        }
+
                         is AlbumArtistDetailUiEvent.PlaylistAddFailed -> {
                             Toast.makeText(context, event.message ?: getString(R.string.error_unknown), Toast.LENGTH_LONG).show()
                         }
@@ -221,12 +223,7 @@ class AlbumArtistDetailFragment :
     // Private
 
     private fun deleteSong(song: Song) {
-        val documentFile = DocumentFile.fromSingleUri(requireContext(), song.path.toUri())
-        if (documentFile?.delete() == false) {
-            Toast.makeText(context, R.string.delete_song_failed, Toast.LENGTH_LONG).show()
-            return
-        }
-        viewModel.onSongDeleted(song)
+        viewModel.onDelete(song)
     }
 
     @SuppressLint("InflateParams")

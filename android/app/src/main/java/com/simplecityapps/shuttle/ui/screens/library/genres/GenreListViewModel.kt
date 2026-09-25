@@ -10,19 +10,20 @@ import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.genres.comparator
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Genre
-import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
+import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
+import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
+import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
+import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.toMediaSelection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -32,7 +33,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -63,11 +63,12 @@ sealed interface GenreListUiEvent {
 @HiltViewModel
 class GenreListViewModel @Inject constructor(
     private val genreRepository: GenreRepository,
-    private val songRepository: SongRepository,
-    private val playbackManager: PlaybackOperations,
-    private val queueManager: QueueOperations,
     private val playSongs: PlaySongs,
     private val addToPlaylistUseCase: AddToPlaylist,
+    private val createPlaylistUseCase: CreatePlaylist,
+    private val resolveSongs: ResolveSongs,
+    private val enqueueSongs: EnqueueSongs,
+    private val excludeSongs: ExcludeSongs,
     private val playlistRepository: PlaylistRepository,
     private val sortPreferenceManager: SortPreferences,
     mediaImportObserver: SongImportStateProvider
@@ -112,7 +113,7 @@ class GenreListViewModel @Inject constructor(
 
     fun onPlay(genre: Genre) {
         viewModelScope.launch {
-            val songs = getSongsForGenreOrEmpty(genre)
+            val songs = resolveSongs(MediaSelection.Genres(genre))
             val result = playSongs(songs)
             if (result is PlaySongs.Result.Failure) {
                 _events.emit(GenreListUiEvent.PlaybackFailed(result.message))
@@ -122,51 +123,43 @@ class GenreListViewModel @Inject constructor(
 
     fun onAddToQueue(genre: Genre) {
         viewModelScope.launch {
-            val songs = getSongsForGenreOrEmpty(genre)
-            playbackManager.addToQueue(songs)
+            enqueueSongs(MediaSelection.Genres(genre), EnqueueSongs.Position.End)
             _events.emit(GenreListUiEvent.AddedToQueue(genre.name))
         }
     }
 
     fun onPlayNext(genre: Genre) {
         viewModelScope.launch {
-            val songs = getSongsForGenreOrEmpty(genre)
-            playbackManager.playNext(songs)
+            enqueueSongs(MediaSelection.Genres(genre), EnqueueSongs.Position.Next)
             _events.emit(GenreListUiEvent.AddedToQueue(genre.name))
         }
     }
 
     fun onExclude(genre: Genre) {
         viewModelScope.launch {
-            val songs = getSongsForGenreOrEmpty(genre)
-            songRepository.setExcluded(songs, true)
-            queueManager.remove(
-                queueManager
-                    .getQueue()
-                    .filter { queueItem -> songs.contains(queueItem.song) }
-            )
+            excludeSongs(MediaSelection.Genres(genre))
         }
     }
 
     fun onEditTags(genre: Genre) {
         viewModelScope.launch {
-            val songs = getSongsForGenreOrEmpty(genre)
+            val songs = resolveSongs(MediaSelection.Genres(genre))
             _events.emit(GenreListUiEvent.EditTags(songs))
         }
     }
 
     fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData, ignoreDuplicates: Boolean = false) {
         viewModelScope.launch {
-            when (val result = addToPlaylistUseCase(playlist, playlistData, ignoreDuplicates)) {
+            when (val result = addToPlaylistUseCase(playlist, playlistData.toMediaSelection(), ignoreDuplicates)) {
                 is AddToPlaylist.Result.Success ->
-                    _events.emit(GenreListUiEvent.AddedToPlaylist(result.playlist, result.playlistData))
+                    _events.emit(GenreListUiEvent.AddedToPlaylist(result.playlist, playlistData))
 
                 is AddToPlaylist.Result.DuplicatesFound ->
                     _events.emit(
                         GenreListUiEvent.PlaylistDuplicatesFound(
                             result.playlist,
-                            result.playlistData,
-                            result.deduplicatedSongs,
+                            playlistData,
+                            PlaylistData.Songs(result.nonDuplicates),
                             result.duplicates
                         )
                     )
@@ -179,8 +172,7 @@ class GenreListViewModel @Inject constructor(
 
     fun createPlaylist(name: String, playlistData: PlaylistData) {
         viewModelScope.launch {
-            val songs = addToPlaylistUseCase.resolveSongs(playlistData)
-            playlistRepository.createPlaylist(name, MediaProviderType.Shuttle, songs, null)
+            createPlaylistUseCase(name, playlistData.toMediaSelection())
         }
     }
 
@@ -188,8 +180,4 @@ class GenreListViewModel @Inject constructor(
         sortPreferenceManager.sortOrderGenreList = sortOrder
         _sortOrder.value = sortOrder
     }
-
-    private suspend fun getSongsForGenreOrEmpty(genre: Genre) = genreRepository.getSongsForGenre(genre.name, SongQuery.All())
-        .firstOrNull()
-        .orEmpty()
 }

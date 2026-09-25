@@ -1,29 +1,21 @@
 package com.simplecityapps.shuttle.ui.screens.playlistmenu
 
 import android.content.Context
-import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.mediaprovider.repository.songs.comparator
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.simplecityapps.shuttle.query.SongQuery
-import com.simplecityapps.shuttle.sorting.SongSortOrder
+import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
+import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 interface PlaylistMenuContract {
     interface View : CreatePlaylistDialogFragment.Listener {
@@ -71,11 +63,9 @@ class PlaylistMenuPresenter
 constructor(
     @ApplicationContext private val context: Context,
     private val playlistRepository: PlaylistRepository,
-    private val songRepository: SongRepository,
-    private val genreRepository: GenreRepository,
-    private val queueManager: QueueOperations,
     private val preferenceManager: GeneralPreferenceManager,
-    private val resolveFolderSongs: ResolveFolderSongs
+    private val addToPlaylistUseCase: AddToPlaylist,
+    private val createPlaylistUseCase: CreatePlaylist,
 ) : BasePresenter<PlaylistMenuContract.View>(),
     PlaylistMenuContract.Presenter {
     override var playlists: List<Playlist> = emptyList()
@@ -103,15 +93,7 @@ constructor(
         playlistData: PlaylistData?
     ) {
         launch {
-            val songs = playlistData?.getSongs()
-            val playlist =
-                playlistRepository.createPlaylist(
-                    name = name,
-                    mediaProviderType = MediaProviderType.Shuttle,
-                    songs = songs,
-                    externalId = null
-                )
-
+            val playlist = createPlaylistUseCase(name, playlistData?.toMediaSelection())
             if (playlistData != null) {
                 view?.onAddedToPlaylist(playlist, playlistData)
             } else {
@@ -126,77 +108,25 @@ constructor(
         ignoreDuplicates: Boolean
     ) {
         launch {
-            if (ignoreDuplicates || preferenceManager.ignorePlaylistDuplicates) {
-                addToPlaylist(playlist, playlistData)
-                return@launch
-            } else {
-                val existingSongs = playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty()
-                val songsToAdd = playlistData.getSongs()
-                val duplicates = songsToAdd.filter { song -> existingSongs.any { it.song.id == song.id } }
-                if (duplicates.isNotEmpty()) {
-                    val deduplicatedPlaylistData = PlaylistData.Songs(songsToAdd - duplicates)
-                    view?.onAddToPlaylistWithDuplicates(playlist, playlistData, deduplicatedPlaylistData, duplicates)
-                } else {
-                    addToPlaylist(playlist, playlistData)
-                }
-            }
-        }
-    }
+            when (val result = addToPlaylistUseCase(playlist, playlistData.toMediaSelection(), ignoreDuplicates)) {
+                is AddToPlaylist.Result.Success -> view?.onAddedToPlaylist(playlist, playlistData)
 
-    private fun addToPlaylist(
-        playlist: Playlist,
-        playlistData: PlaylistData
-    ) {
-        launch {
-            val songs = playlistData.getSongs()
-            if (songs.isNotEmpty()) {
-                try {
-                    playlistRepository.addToPlaylist(playlist, songs)
-                    view?.onAddedToPlaylist(playlist, playlistData)
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to add to playlist")
-                    view?.onPlaylistAddFailed(Error(e))
-                }
-            } else {
-                view?.onPlaylistAddFailed(UserFriendlyError(context.getString(R.string.playlist_menu_empty_data_message)))
+                is AddToPlaylist.Result.DuplicatesFound -> view?.onAddToPlaylistWithDuplicates(
+                    playlist,
+                    playlistData,
+                    PlaylistData.Songs(result.nonDuplicates),
+                    result.duplicates,
+                )
+
+                is AddToPlaylist.Result.Failure -> view?.onPlaylistAddFailed(
+                    result.message?.let { Error(it) }
+                        ?: UserFriendlyError(context.getString(R.string.playlist_menu_empty_data_message)),
+                )
             }
         }
     }
 
     override fun setIgnorePlaylistDuplicates(ignorePlaylistDuplicates: Boolean) {
         preferenceManager.ignorePlaylistDuplicates = ignorePlaylistDuplicates
-    }
-
-    private suspend fun PlaylistData.getSongs(): List<com.simplecityapps.shuttle.model.Song> {
-        return when (this) {
-            is PlaylistData.Songs -> return data
-
-            is PlaylistData.Albums -> {
-                songRepository.getSongs(SongQuery.AlbumGroupKeys(data.map { album -> SongQuery.AlbumGroupKey(key = album.groupKey) }))
-                    .firstOrNull()
-                    .orEmpty()
-                    .sortedWith(SongSortOrder.Default.comparator)
-            }
-
-            is PlaylistData.AlbumArtists -> {
-                songRepository.getSongs(SongQuery.ArtistGroupKeys(data.map { albumArtist -> SongQuery.ArtistGroupKey(key = albumArtist.groupKey) }))
-                    .firstOrNull()
-                    .orEmpty()
-                    .sortedWith(SongSortOrder.Default.comparator)
-            }
-
-            is PlaylistData.Genres -> {
-                genreRepository.getSongsForGenres(
-                    genres = data.map { it.name },
-                    songQuery = SongQuery.All()
-                ).firstOrNull()
-                    .orEmpty()
-                    .sortedWith(SongSortOrder.Default.comparator)
-            }
-
-            is PlaylistData.Folders -> resolveFolderSongs(data)
-
-            is PlaylistData.Queue -> queueManager.getQueue().map { queueItem -> queueItem.song }
-        }
     }
 }

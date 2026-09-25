@@ -4,23 +4,20 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.util.LruCache
-import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.ui.ThemeManager
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
+import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
+import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferences
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferences
-import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -76,17 +73,11 @@ class AppModule {
     @Provides
     fun provideAddToPlaylist(
         playlistRepository: PlaylistRepository,
-        songRepository: SongRepository,
-        genreRepository: GenreRepository,
-        queueManager: QueueOperations,
-        resolveFolderSongs: ResolveFolderSongs,
+        resolveSongs: ResolveSongs,
         preferenceManager: GeneralPreferenceManager,
     ): AddToPlaylist = AddToPlaylist(
         playlistRepository,
-        songRepository,
-        genreRepository,
-        queueManager,
-        resolveFolderSongs,
+        resolveSongs,
         ignorePlaylistDuplicates = { preferenceManager.ignorePlaylistDuplicates },
     )
 }

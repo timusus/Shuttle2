@@ -15,8 +15,6 @@ import androidx.activity.addCallback
 import androidx.appcompat.widget.SwitchCompat
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.net.toUri
-import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -158,6 +156,10 @@ class SongListFragment :
 
                         is SongListUiEvent.PlaylistDuplicatesFound -> {
                             showPlaylistDuplicatesDialog(event.playlist, event.playlistData, event.deduplicatedSongs, event.duplicates)
+                        }
+
+                        is SongListUiEvent.DeleteFailed -> {
+                            Toast.makeText(context, R.string.delete_song_failed, Toast.LENGTH_LONG).show()
                         }
 
                         is SongListUiEvent.PlaylistAddFailed -> {
@@ -350,12 +352,7 @@ class SongListFragment :
     }
 
     private fun deleteSong(song: Song) {
-        val documentFile = DocumentFile.fromSingleUri(requireContext(), song.path.toUri())
-        if (documentFile?.delete() == false) {
-            Toast.makeText(context, R.string.delete_song_failed, Toast.LENGTH_LONG).show()
-            return
-        }
-        viewModel.onSongDeleted(song)
+        viewModel.onDelete(song)
     }
 
     fun showTagEditor(song: Song) {

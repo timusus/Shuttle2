@@ -3,17 +3,15 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSmartPlaylist
-import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSortPreferences
+import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -146,11 +144,15 @@ class PlaylistListIntegrationTest {
 
     // endregion
 
-    private fun createViewModel(): PlaylistListViewModel = PlaylistListViewModel(
-        playlistRepository = fakePlaylistRepository,
-        playbackManager = FakePlaybackManager(),
-        playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-        sortPreferenceManager = fakeSortPreferences,
-        mediaImportObserver = fakeImportState,
-    )
+    private fun createViewModel(): PlaylistListViewModel {
+        val actions = TestMediaActions(playlistRepository = fakePlaylistRepository)
+        return PlaylistListViewModel(
+            playlistRepository = fakePlaylistRepository,
+            playSongs = actions.playSongs,
+            resolveSongs = actions.resolveSongs,
+            enqueueSongs = actions.enqueueSongs,
+            sortPreferenceManager = fakeSortPreferences,
+            mediaImportObserver = fakeImportState,
+        )
+    }
 }

@@ -2,18 +2,19 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists.detail
 
 import android.content.Context
 import android.net.Uri
-import androidx.core.net.toUri
-import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.PlaylistExporter
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
+import com.simplecityapps.shuttle.ui.actions.DeleteSongs
+import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
+import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -124,9 +125,11 @@ class PlaylistDetailPresenter
 constructor(
     @ApplicationContext private val context: Context,
     private val playlistRepository: PlaylistRepository,
-    private val songRepository: SongRepository,
-    private val playbackManager: PlaybackOperations,
-    private val queueManager: QueueOperations,
+    private val playSongs: PlaySongs,
+    private val shuffleSongs: ShuffleSongs,
+    private val enqueueSongs: EnqueueSongs,
+    private val excludeSongs: ExcludeSongs,
+    private val deleteSongs: DeleteSongs,
     @Assisted playlist: Playlist
 ) : BasePresenter<PlaylistDetailContract.View>(),
     PlaylistDetailContract.Presenter {
@@ -183,22 +186,18 @@ constructor(
         index: Int
     ) {
         launch {
-            if (queueManager.setQueue(songs = playlistSongs.value.orEmpty().map { it.song }, position = index)) {
-                playbackManager.load { result ->
-                    result.onSuccess { playbackManager.play() }
-                    result.onFailure { error -> view?.showLoadError(error as Error) }
-                }
-            }
+            val songs = playlistSongs.value.orEmpty().map { it.song }
+            if (songs.isEmpty()) return@launch
+            val result = playSongs(songs, index.coerceIn(0, songs.lastIndex))
+            if (result is PlaySongs.Result.Failure && result.message != null) view?.showLoadError(Error(result.message))
         }
     }
 
     override fun shuffle() {
         if (playlistSongs.value.orEmpty().isNotEmpty()) {
             launch {
-                playbackManager.shuffle(playlistSongs.value.orEmpty().map { it.song }) { result ->
-                    result.onSuccess { playbackManager.play() }
-                    result.onFailure { error -> view?.showLoadError(error as Error) }
-                }
+                val result = shuffleSongs(playlistSongs.value.orEmpty().map { it.song })
+                if (result is ShuffleSongs.Result.Failure) view?.showLoadError(Error(result.message))
             }
         } else {
             Timber.i("Shuffle failed: Songs list empty")
@@ -207,36 +206,33 @@ constructor(
 
     override fun addToQueue(playlistSong: PlaylistSong) {
         launch {
-            playbackManager.addToQueue(listOf(playlistSong.song))
+            enqueueSongs(MediaSelection.Songs(playlistSong.song), EnqueueSongs.Position.End)
             view?.onAddedToQueue(playlistSong)
         }
     }
 
     override fun addToQueue(playlistSongs: List<PlaylistSong>) {
         launch {
-            playbackManager.addToQueue(playlistSongs.map { it.song })
+            enqueueSongs(MediaSelection.Songs(playlistSongs.map { it.song }), EnqueueSongs.Position.End)
         }
     }
 
     override fun addToQueue(playlist: Playlist) {
         launch {
-            playbackManager.addToQueue(playlistSongs.value.orEmpty().map { it.song })
+            enqueueSongs(MediaSelection.Songs(playlistSongs.value.orEmpty().map { it.song }), EnqueueSongs.Position.End)
             view?.onAddedToQueue(playlist)
         }
     }
 
     override fun playNext(playlistSong: PlaylistSong) {
         launch {
-            playbackManager.playNext(listOf(playlistSong.song))
+            enqueueSongs(MediaSelection.Songs(playlistSong.song), EnqueueSongs.Position.Next)
             view?.onAddedToQueue(playlistSong)
         }
     }
 
     override fun exclude(playlistSong: PlaylistSong) {
-        launch {
-            songRepository.setExcluded(listOf(playlistSong.song), true)
-            queueManager.remove(queueManager.getQueue().filter { it.song.id == playlistSong.song.id })
-        }
+        launch { excludeSongs(MediaSelection.Songs(playlistSong.song)) }
     }
 
     override fun editTags(playlistSong: PlaylistSong) {
@@ -254,16 +250,11 @@ constructor(
     }
 
     override fun delete(playlistSong: PlaylistSong) {
-        val uri = playlistSong.song.path.toUri()
-        val documentFile = DocumentFile.fromSingleUri(context, uri)
-        if (documentFile?.delete() == true) {
-            launch {
-                songRepository.remove(playlistSong.song)
+        launch {
+            if (deleteSongs(MediaSelection.Songs(playlistSong.song)).failed.isNotEmpty()) {
+                view?.showDeleteError(UserFriendlyError(context.getString(R.string.delete_song_failed)))
             }
-        } else {
-            view?.showDeleteError(UserFriendlyError(context.getString(R.string.delete_song_failed)))
         }
-        queueManager.remove(queueManager.getQueue().filter { it.song.id == playlistSong.song.id })
     }
 
     override fun delete(playlist: Playlist) {

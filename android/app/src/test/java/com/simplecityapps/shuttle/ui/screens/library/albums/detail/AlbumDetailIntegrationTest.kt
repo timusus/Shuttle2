@@ -10,13 +10,12 @@ import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.model.Album
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
-import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
-import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -111,18 +110,13 @@ class AlbumDetailIntegrationTest {
         savedStateHandle = SavedStateHandle(mapOf("album" to album)),
         songRepository = songRepository,
         albumRepository = fakeAlbumRepository,
-        playbackManager = FakePlaybackManager(),
         queueManager = fakeQueueManager,
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
         shuffleSongs = ShuffleSongs(FakePlaybackManager()),
-        addToPlaylistUseCase = AddToPlaylist(
-            fakePlaylistRepository,
-            songRepository,
-            FakeGenreRepository(),
-            FakeQueueManager(),
-            ResolveFolderSongs(songRepository),
-            ignorePlaylistDuplicates = { false },
-        ),
+        addToPlaylistUseCase = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).addToPlaylist,
+        enqueueSongs = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).enqueueSongs,
+        excludeSongs = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).excludeSongs,
+        deleteSongs = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).deleteSongs,
         playlistRepository = fakePlaylistRepository,
     )
 }

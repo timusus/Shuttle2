@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Snackbar shown when an action (play, add to queue, etc.) found no songs to act on -->
+    <string name="media_action_no_songs">No songs</string>
+    <!-- Snackbar shown when playback fails to start -->
+    <string name="media_action_playback_failed">Couldn\'t play: <xliff:g example="File not found" id="reason">{reason}</xliff:g></string>
+    <!-- Snackbar shown when songs couldn't be added to a playlist because some are already in it. Offered with 'Add anyway' -->
+    <plurals name="media_action_already_in_playlist">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> already in <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="2" id="count">{count}</xliff:g> already in <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <!-- Snackbar button: add songs to a playlist even though some are already in it -->
+    <string name="media_action_add_anyway">Add anyway</string>
+    <!-- Snackbar button: reverse the action just taken -->
+    <string name="media_action_undo">Undo</string>
+    <!-- Snackbar shown when songs are excluded (hidden) from the library -->
+    <plurals name="media_action_excluded">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song excluded</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> songs excluded</item>
+    </plurals>
+    <!-- Delete confirmation for several songs -->
+    <plurals name="media_action_confirm_delete">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song will be permanently deleted</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> songs will be permanently deleted</item>
+    </plurals>
+    <!-- Snackbar shown when songs are deleted -->
+    <plurals name="media_action_deleted">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song deleted</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> songs deleted</item>
+    </plurals>
+    <!-- Snackbar shown when some songs couldn't be deleted -->
+    <plurals name="media_action_delete_failed">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song couldn\'t be deleted</item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> songs couldn\'t be deleted</item>
+    </plurals>
+    <!-- Snackbar shown when songs are queued for offline download -->
+    <plurals name="media_action_download_queued">
+        <item quantity="one">Downloading <xliff:g example="1" id="count">{count}</xliff:g> song</item>
+        <item quantity="other">Downloading <xliff:g example="30" id="count">{count}</xliff:g> songs</item>
+    </plurals>
+    <!-- Snackbar shown when some songs couldn't be downloaded, e.g. because the server rejected the request -->
+    <plurals name="media_action_download_failed">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song couldn\'t be downloaded</item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> songs couldn\'t be downloaded</item>
+    </plurals>
+    <!-- Snackbar shown when songs' offline downloads are removed -->
+    <plurals name="media_action_download_removed">
+        <item quantity="one">Download removed</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> downloads removed</item>
+    </plurals>
+    <!-- Snackbar shown when 'Go to album' or 'Go to artist' can't find it in the library -->
+    <string name="media_action_not_found">Not in your library</string>
+</resources>

@@ -53,7 +53,13 @@ class FakeQueueManager : QueueOperations {
     override suspend fun addToNext(songs: List<Song>): Boolean = false
     override fun updateSongs(songs: List<Song>) {}
     override fun move(from: Int, to: Int) {}
-    override fun remove(items: List<QueueItem>) {}
+
+    /** Every item passed to [remove], in order. */
+    val removedItems = mutableListOf<QueueItem>()
+
+    override fun remove(items: List<QueueItem>) {
+        removedItems += items
+    }
     override fun remove(song: Song) {}
     override fun clear() {}
     override fun getShuffleMode(): QueueManager.ShuffleMode = shuffleModeFlow.value

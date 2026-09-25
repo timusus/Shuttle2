@@ -21,6 +21,15 @@ class FakePlaylistRepository : PlaylistRepository {
     /** What [getFavoritesPlaylist] returns; unset, it throws as the real one can. */
     var favorites: Playlist? = null
 
+    /** Every [addToPlaylist] call, in order. */
+    val addedToPlaylist = mutableListOf<Pair<Playlist, List<Song>>>()
+
+    /** Every [createPlaylist] call's name and songs, in order. */
+    val created = mutableListOf<Pair<String, List<Song>?>>()
+
+    /** Thrown by [addToPlaylist] and [createPlaylist] when set. */
+    var failure: Exception? = null
+
     fun setSongsForPlaylist(playlist: Playlist, songs: List<Song>) {
         playlistSongs.value += playlist.id to songs
     }
@@ -39,9 +48,15 @@ class FakePlaylistRepository : PlaylistRepository {
 
     override suspend fun getFavoritesPlaylist(): Playlist = favorites ?: error("No favorites playlist")
 
-    override suspend fun createPlaylist(name: String, mediaProviderType: MediaProviderType, songs: List<Song>?, externalId: String?): Playlist = error("Not implemented")
+    override suspend fun createPlaylist(name: String, mediaProviderType: MediaProviderType, songs: List<Song>?, externalId: String?): Playlist {
+        failure?.let { throw it }
+        created += name to songs
+        return com.simplecityapps.createPlaylist(id = 1000L + created.size, name = name)
+    }
 
     override suspend fun addToPlaylist(playlist: Playlist, songs: List<Song>) {
+        failure?.let { throw it }
+        addedToPlaylist += playlist to songs
         playlistSongs.value += playlist.id to playlistSongs.value[playlist.id].orEmpty() + songs
     }
 

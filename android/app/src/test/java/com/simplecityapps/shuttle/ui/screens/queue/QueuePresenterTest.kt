@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.queue
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakeQueueManager
-import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
@@ -21,7 +21,7 @@ class QueuePresenterTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val queueManager = FakeQueueManager()
-    private val presenter = QueuePresenter(queueManager, FakePlaybackManager(), FakeSongRepository())
+    private val presenter = QueuePresenter(queueManager, FakePlaybackManager(), TestMediaActions(queueManager = queueManager).excludeSongs)
     private val view = RecordingView()
 
     private val items = (1L..3L).map { id -> createSong(id = id).toQueueItem(isCurrent = id == 1L) }

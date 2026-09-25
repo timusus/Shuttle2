@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.common.playback
+package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations

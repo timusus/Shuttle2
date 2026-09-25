@@ -10,14 +10,13 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
-import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -154,17 +153,12 @@ class AlbumArtistListIntegrationTest {
 
     private fun createViewModel(): AlbumArtistListViewModel = AlbumArtistListViewModel(
         albumArtistRepository = fakeAlbumArtistRepository,
-        songRepository = fakeSongRepository,
-        playbackManager = FakePlaybackManager(),
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-        addToPlaylistUseCase = AddToPlaylist(
-            fakePlaylistRepository,
-            fakeSongRepository,
-            FakeGenreRepository(),
-            FakeQueueManager(),
-            ResolveFolderSongs(fakeSongRepository),
-            ignorePlaylistDuplicates = { false },
-        ),
+        addToPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).addToPlaylist,
+        createPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).createPlaylist,
+        resolveSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).resolveSongs,
+        enqueueSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).enqueueSongs,
+        excludeSongs = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).excludeSongs,
         playlistRepository = fakePlaylistRepository,
         preferenceManager = fakePreferences,
         mediaImportObserver = fakeImportState,

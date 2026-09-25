@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.squareup.phrase.Phrase
 import kotlinx.parcelize.Parcelize
 
@@ -95,4 +96,14 @@ sealed class PlaylistData : Parcelable {
             .format()
             .toString()
     }
+}
+
+/** The legacy screens' selection as a [MediaSelection], so they share the [com.simplecityapps.shuttle.ui.actions] use cases. */
+fun PlaylistData.toMediaSelection(): MediaSelection = when (this) {
+    is PlaylistData.Songs -> MediaSelection.Songs(data)
+    is PlaylistData.Albums -> MediaSelection.Albums(data)
+    is PlaylistData.AlbumArtists -> MediaSelection.AlbumArtists(data)
+    is PlaylistData.Genres -> MediaSelection.Genres(data)
+    is PlaylistData.Folders -> MediaSelection.Folders(data)
+    is PlaylistData.Queue -> MediaSelection.Queue
 }

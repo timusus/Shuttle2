@@ -1,11 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.queue
 
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import javax.inject.Inject
@@ -65,7 +66,7 @@ class QueuePresenter
 constructor(
     private val queueManager: QueueOperations,
     private val playbackManager: PlaybackOperations,
-    private val songRepository: SongRepository
+    private val excludeSongs: ExcludeSongs
 ) : BasePresenter<QueueContract.View>(),
     QueueContract.Presenter {
     override fun bindView(view: QueueContract.View) {
@@ -128,9 +129,10 @@ constructor(
     }
 
     override fun exclude(queueItem: QueueItem) {
+        // Playback-aware removal first, so excluding the current item skips to the next one
         removeFromQueue(queueItem)
         launch {
-            songRepository.setExcluded(listOf(queueItem.song), true)
+            excludeSongs(MediaSelection.Songs(queueItem.song))
         }
     }
 

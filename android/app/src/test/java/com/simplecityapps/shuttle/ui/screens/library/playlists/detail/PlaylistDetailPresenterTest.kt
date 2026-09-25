@@ -7,6 +7,7 @@ import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
@@ -71,14 +72,24 @@ class PlaylistDetailPresenterTest {
             }
         }
 
-    private fun createPresenter(playlist: com.simplecityapps.shuttle.model.Playlist) = PlaylistDetailPresenter(
-        context = ApplicationProvider.getApplicationContext(),
-        playlistRepository = fakePlaylistRepository,
-        songRepository = fakeSongRepository,
-        playbackManager = fakePlaybackManager,
-        queueManager = fakeQueueManager,
-        playlist = playlist
-    )
+    private fun createPresenter(playlist: com.simplecityapps.shuttle.model.Playlist): PlaylistDetailPresenter {
+        val actions = TestMediaActions(
+            songRepository = fakeSongRepository,
+            playlistRepository = fakePlaylistRepository,
+            queueManager = fakeQueueManager,
+            playbackManager = fakePlaybackManager,
+        )
+        return PlaylistDetailPresenter(
+            context = ApplicationProvider.getApplicationContext(),
+            playlistRepository = fakePlaylistRepository,
+            playSongs = actions.playSongs,
+            shuffleSongs = actions.shuffleSongs,
+            enqueueSongs = actions.enqueueSongs,
+            excludeSongs = actions.excludeSongs,
+            deleteSongs = actions.deleteSongs,
+            playlist = playlist
+        )
+    }
 
     @Test
     fun `toggling sortDescending persists the direction and re-sorts the displayed songs`() = runTest {

@@ -9,18 +9,20 @@ import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.shuttle.model.AlbumArtist
-import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
+import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
+import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
+import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.common.SelectionState
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.toMediaSelection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,7 +32,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -64,10 +65,12 @@ sealed interface AlbumArtistListUiEvent {
 @HiltViewModel
 class AlbumArtistListViewModel @Inject constructor(
     private val albumArtistRepository: AlbumArtistRepository,
-    private val songRepository: SongRepository,
-    private val playbackManager: PlaybackOperations,
     private val playSongs: PlaySongs,
     private val addToPlaylistUseCase: AddToPlaylist,
+    private val createPlaylistUseCase: CreatePlaylist,
+    private val resolveSongs: ResolveSongs,
+    private val enqueueSongs: EnqueueSongs,
+    private val excludeSongs: ExcludeSongs,
     private val playlistRepository: PlaylistRepository,
     private val preferenceManager: ArtistListPreferences,
     mediaImportObserver: SongImportStateProvider,
@@ -123,7 +126,7 @@ class AlbumArtistListViewModel @Inject constructor(
 
     fun onPlay(albumArtist: AlbumArtist) {
         viewModelScope.launch {
-            val songs = getSongsForArtist(albumArtist)
+            val songs = resolveSongs(MediaSelection.AlbumArtists(albumArtist))
             val result = playSongs(songs)
             if (result is PlaySongs.Result.Failure) {
                 _events.emit(AlbumArtistListUiEvent.PlaybackFailed(result.message))
@@ -133,8 +136,7 @@ class AlbumArtistListViewModel @Inject constructor(
 
     fun onAddToQueue(albumArtist: AlbumArtist) {
         viewModelScope.launch {
-            val songs = getSongsForArtist(albumArtist)
-            playbackManager.addToQueue(songs)
+            enqueueSongs(MediaSelection.AlbumArtists(albumArtist), EnqueueSongs.Position.End)
             _events.emit(AlbumArtistListUiEvent.AddedToQueue(1))
         }
     }
@@ -142,8 +144,7 @@ class AlbumArtistListViewModel @Inject constructor(
     fun onAddSelectedToQueue() {
         viewModelScope.launch {
             val selected = selectionState.selectedItems.value.toList()
-            val songs = getSongsForArtists(selected)
-            playbackManager.addToQueue(songs)
+            enqueueSongs(MediaSelection.AlbumArtists(selected), EnqueueSongs.Position.End)
             _events.emit(AlbumArtistListUiEvent.AddedToQueue(selected.size))
             selectionState.clear()
         }
@@ -151,22 +152,20 @@ class AlbumArtistListViewModel @Inject constructor(
 
     fun onPlayNext(albumArtist: AlbumArtist) {
         viewModelScope.launch {
-            val songs = getSongsForArtist(albumArtist)
-            playbackManager.playNext(songs)
+            enqueueSongs(MediaSelection.AlbumArtists(albumArtist), EnqueueSongs.Position.Next)
             _events.emit(AlbumArtistListUiEvent.AddedToQueue(1))
         }
     }
 
     fun onExclude(albumArtist: AlbumArtist) {
         viewModelScope.launch {
-            val songs = getSongsForArtist(albumArtist)
-            songRepository.setExcluded(songs, true)
+            excludeSongs(MediaSelection.AlbumArtists(albumArtist))
         }
     }
 
     fun onEditTags(albumArtist: AlbumArtist) {
         viewModelScope.launch {
-            val songs = getSongsForArtist(albumArtist)
+            val songs = resolveSongs(MediaSelection.AlbumArtists(albumArtist))
             _events.emit(AlbumArtistListUiEvent.EditTags(songs))
         }
     }
@@ -174,7 +173,7 @@ class AlbumArtistListViewModel @Inject constructor(
     fun onEditTagsSelected() {
         viewModelScope.launch {
             val selected = selectionState.selectedItems.value.toList()
-            val songs = getSongsForArtists(selected)
+            val songs = resolveSongs(MediaSelection.AlbumArtists(selected))
             _events.emit(AlbumArtistListUiEvent.EditTags(songs))
             selectionState.clear()
         }
@@ -193,16 +192,16 @@ class AlbumArtistListViewModel @Inject constructor(
 
     fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData, ignoreDuplicates: Boolean = false) {
         viewModelScope.launch {
-            when (val result = addToPlaylistUseCase(playlist, playlistData, ignoreDuplicates)) {
+            when (val result = addToPlaylistUseCase(playlist, playlistData.toMediaSelection(), ignoreDuplicates)) {
                 is AddToPlaylist.Result.Success ->
-                    _events.emit(AlbumArtistListUiEvent.AddedToPlaylist(result.playlist, result.playlistData))
+                    _events.emit(AlbumArtistListUiEvent.AddedToPlaylist(result.playlist, playlistData))
 
                 is AddToPlaylist.Result.DuplicatesFound ->
                     _events.emit(
                         AlbumArtistListUiEvent.PlaylistDuplicatesFound(
                             result.playlist,
-                            result.playlistData,
-                            result.deduplicatedSongs,
+                            playlistData,
+                            PlaylistData.Songs(result.nonDuplicates),
                             result.duplicates
                         )
                     )
@@ -215,18 +214,7 @@ class AlbumArtistListViewModel @Inject constructor(
 
     fun createPlaylist(name: String, playlistData: PlaylistData) {
         viewModelScope.launch {
-            val songs = addToPlaylistUseCase.resolveSongs(playlistData)
-            playlistRepository.createPlaylist(name, MediaProviderType.Shuttle, songs, null)
+            createPlaylistUseCase(name, playlistData.toMediaSelection())
         }
     }
-
-    private suspend fun getSongsForArtist(albumArtist: AlbumArtist): List<Song> = songRepository
-        .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
-        .firstOrNull()
-        .orEmpty()
-
-    private suspend fun getSongsForArtists(albumArtists: List<AlbumArtist>): List<Song> = songRepository
-        .getSongs(SongQuery.ArtistGroupKeys(albumArtists.map { SongQuery.ArtistGroupKey(key = it.groupKey) }))
-        .firstOrNull()
-        .orEmpty()
 }
