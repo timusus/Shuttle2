@@ -35,11 +35,12 @@ fun shellQueue(vararg titles: String): ShellQueueUiState {
 
 val EmptyShellQueue = ShellQueueUiState(hasQueue = false, current = null, items = emptyList())
 
-/** A window of the given size in dp with no fold. */
+/** A window of the given size in dp, with no fold unless [posture] has one. */
 fun windowInfo(
     widthDp: Int,
     heightDp: Int,
-): WindowAdaptiveInfo = WindowAdaptiveInfo(WindowSizeClass.BREAKPOINTS_V2.computeWindowSizeClass(widthDp.toFloat(), heightDp.toFloat()), Posture())
+    posture: Posture = Posture(),
+): WindowAdaptiveInfo = WindowAdaptiveInfo(WindowSizeClass.BREAKPOINTS_V2.computeWindowSizeClass(widthDp.toFloat(), heightDp.toFloat()), posture)
 
 val CompactWindow = windowInfo(411, 891)
 val MediumWindow = windowInfo(700, 900)
