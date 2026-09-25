@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.simplecityapps.createAlbum
+import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
@@ -304,7 +305,7 @@ class AppShellTest {
 
     @Test
     fun `Go to album in the Now Playing menu opens the album and settles the sheet to Mini`() {
-        val album = createAlbum(name = "Album", albumArtist = "Artist")
+        val album = createAlbum(name = "Blue Train", albumArtist = "John Coltrane")
         robot.actions.mediaActionResult = { MediaActionResult.Navigate(NavigationTarget.Album(album)) }
         robot.setContent()
         robot.tapMiniPlayer()
@@ -312,8 +313,22 @@ class AppShellTest {
         robot.tapDescription("More options")
         robot.tapText("Go to album")
         robot.actions.mediaActions.single().shouldBeSongAction<MediaAction.GoToAlbum>("First song")
-        robot.navigated shouldBe listOf(AlbumRoute(albumKey = "Album", albumArtistKey = "Artist"))
         robot.assertLevel(PlayerLevel.Mini)
+        robot.assertTextDisplayed("Track 1")
+    }
+
+    @Test
+    fun `Go to artist in the Now Playing menu opens the artist and settles the sheet to Mini`() {
+        val artist = createAlbumArtist(name = "John Coltrane")
+        robot.actions.mediaActionResult = { MediaActionResult.Navigate(NavigationTarget.AlbumArtist(artist)) }
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.tapDescription("More options")
+        robot.tapText("Go to artist")
+        robot.actions.mediaActions.single().shouldBeSongAction<MediaAction.GoToArtist>("First song")
+        robot.assertLevel(PlayerLevel.Mini)
+        robot.assertTextDisplayed("John Coltrane")
     }
 
     @Test

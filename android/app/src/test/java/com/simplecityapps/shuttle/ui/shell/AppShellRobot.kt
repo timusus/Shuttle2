@@ -32,7 +32,6 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
-import androidx.navigation3.runtime.NavKey
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.computeWindowSizeClass
@@ -45,6 +44,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
+import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
@@ -220,9 +220,6 @@ class AppShellRobot(
 
     val calls: List<String> get() = actions.calls
 
-    /** The routes the player's events asked the shell to open. */
-    val navigated = mutableListOf<NavKey>()
-
     fun setContent(
         queue: PlayerUiState = queueState.value,
         window: WindowAdaptiveInfo = CompactWindow,
@@ -237,16 +234,13 @@ class AppShellRobot(
             val currentWindow by windowState
             val currentProgress by progressState
             val snackbarHostState = remember { SnackbarHostState() }
-            val routes = remember { Channel<NavKey>(Channel.UNLIMITED) }
+            val targets = remember { Channel<NavigationTarget>(Channel.UNLIMITED) }
             S2Theme {
                 PlayerEventsEffect(
                     actions.events,
                     snackbarHostState,
                     actions = actions,
-                    onNavigate = { route ->
-                        navigated += route
-                        routes.trySend(route)
-                    },
+                    onNavigate = { targets.trySend(it) },
                 )
                 AppShell(
                     playerUi = currentQueue,
@@ -255,7 +249,7 @@ class AppShellRobot(
                     snackbarHostState = snackbarHostState,
                     windowAdaptiveInfo = currentWindow,
                     entryProvider = ::fakeShellEntryProvider,
-                    navigationRequests = remember(routes) { routes.receiveAsFlow() },
+                    navigationRequests = remember(targets) { targets.receiveAsFlow() },
                 )
             }
         }

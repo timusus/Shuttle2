@@ -21,13 +21,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.actions.format
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
-import com.simplecityapps.shuttle.ui.screens.library.AlbumArtistRoute
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiEvent
@@ -47,29 +45,29 @@ fun ShellRoute(
     val playerUi by viewModel.uiState.collectAsStateWithLifecycle()
     val progress = viewModel.progress.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    val routes = remember { Channel<NavKey>(Channel.UNLIMITED) }
-    PlayerEventsEffect(viewModel.events, snackbarHostState, actions = viewModel, onNavigate = { routes.trySend(it) })
+    val targets = remember { Channel<NavigationTarget>(Channel.UNLIMITED) }
+    PlayerEventsEffect(viewModel.events, snackbarHostState, actions = viewModel, onNavigate = { targets.trySend(it) })
     AppShell(
         playerUi = playerUi,
         progress = { progress.value },
         actions = viewModel,
         modifier = modifier,
         snackbarHostState = snackbarHostState,
-        navigationRequests = remember(routes) { routes.receiveAsFlow() },
+        navigationRequests = remember(targets) { targets.receiveAsFlow() },
     )
 }
 
 /**
  * Carries out the player's events while the screen is started: a cleared queue or removed row offers
- * Undo, and a song action's result shows its message, opens its screen through [onNavigate] or opens
- * the legacy tag editor and song info dialogs.
+ * Undo, and a song action's result shows its message, opens its album or artist screen through
+ * [onNavigate] or opens the legacy tag editor and song info dialogs.
  */
 @Composable
 internal fun PlayerEventsEffect(
     events: Flow<PlayerUiEvent>,
     snackbarHostState: SnackbarHostState,
     actions: PlayerActions,
-    onNavigate: (NavKey) -> Unit,
+    onNavigate: (NavigationTarget) -> Unit,
 ) {
     val queueCleared = stringResource(R.string.player_queue_cleared)
     val removedFromQueue = stringResource(R.string.player_removed_from_queue)
@@ -106,7 +104,7 @@ private fun CoroutineScope.onMediaActionResult(
     resources: Resources,
     activity: Activity?,
     actions: PlayerActions,
-    onNavigate: (NavKey) -> Unit,
+    onNavigate: (NavigationTarget) -> Unit,
 ) {
     when (result) {
         is MediaActionResult.None -> Unit
@@ -122,9 +120,7 @@ private fun CoroutineScope.onMediaActionResult(
         }
 
         is MediaActionResult.Navigate -> when (val target = result.target) {
-            is NavigationTarget.Album -> onNavigate(AlbumRoute(albumKey = target.album.groupKey?.key, albumArtistKey = target.album.groupKey?.albumArtistGroupKey?.key))
-
-            is NavigationTarget.AlbumArtist -> onNavigate(AlbumArtistRoute(albumArtistKey = target.albumArtist.groupKey.key))
+            is NavigationTarget.Album, is NavigationTarget.AlbumArtist -> onNavigate(target)
 
             // The tag editor and song info are still fragments; they open over the shell until they move to Compose.
             is NavigationTarget.TagEditor -> (activity as? FragmentActivity)?.let { TagEditorAlertDialog.newInstance(target.songs).show(it.supportFragmentManager) }

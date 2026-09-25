@@ -82,6 +82,8 @@ import com.simplecityapps.shuttle.designsystem.component.S2NavigationRail
 import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
+import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.screens.library.openTarget
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellWidth
 import com.simplecityapps.shuttle.ui.shell.adaptive.listDetailDirective
@@ -122,7 +124,7 @@ fun AppShell(
     startTab: ShellTab = ShellTab.Home,
     windowAdaptiveInfo: WindowAdaptiveInfo = currentWindowAdaptiveInfoV2(),
     entryProvider: (AppNavigator) -> (NavKey) -> NavEntry<NavKey> = ::shellEntryProvider,
-    navigationRequests: Flow<NavKey> = emptyFlow(),
+    navigationRequests: Flow<NavigationTarget> = emptyFlow(),
 ) {
     val layout = remember(windowAdaptiveInfo) { ShellLayout.from(windowAdaptiveInfo) }
     val navigator = rememberAppNavigator(startTab)
@@ -144,7 +146,7 @@ fun AppShell(
     val onSelectTab: (ShellTab) -> Unit = { tab -> navigate { navigator.selectTab(tab) } }
     val onOpenSettings: () -> Unit = { navigate { navigator.open(SettingsRoute) } }
     // Screens the player's song actions open, such as Go to album.
-    LaunchedEffect(navigationRequests) { navigationRequests.collect { route -> navigate { navigator.open(route) } } }
+    LaunchedEffect(navigationRequests) { navigationRequests.collect { target -> navigate { navigator.openTarget(target) } } }
     // Screens post to the shell's one snackbar host, which sits above the nav bar and mini player.
     val destinations: @Composable () -> Unit = {
         CompositionLocalProvider(LocalShellSnackbarHostState provides snackbarHostState) {

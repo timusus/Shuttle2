@@ -15,11 +15,12 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
+import com.simplecityapps.shuttle.ui.screens.library.AlbumArtistRoute
 
 /**
  * Stand-in screens for the shell's own tests: the real destinations need the Hilt graph, and these tests exercise
  * tabs, list-detail and back stacks rather than any one screen. Home and Library list "Album N"; an album lists
- * "Track N".
+ * "Track N"; an artist lists its key over "Album N".
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 fun fakeShellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey> = entryProvider {
@@ -37,6 +38,7 @@ fun fakeShellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey
             items((1..10).toList(), key = { it }) { track -> SongRow(title = "Track $track", subtitle = "Artist", onClick = {}, trackNumber = track) }
         }
     }
+    entry<AlbumArtistRoute>(metadata = ListDetailSceneStrategy.detailPane()) { route -> FakeList(route.albumArtistKey.orEmpty(), (1..3).toList(), openAlbum) }
     entry<SettingsRoute> { FakeList("Settings", emptyList(), openAlbum) }
 }
 
