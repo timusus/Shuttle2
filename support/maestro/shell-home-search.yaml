@@ -1,0 +1,52 @@
+# #377: the Compose shell's Home and Search (debug ShellActivity). Setup
+# (support/scripts/checks/shell-home-search.sh): the `playback` fixture (One..Five) imported, nothing
+# playing, the shell launched on Home. Checks Home shows the library and a Home album opens the
+# library's album screen, opens Search from its top bar, opens an artist result, then searches for a
+# song and taps the result to play it. The wrapper checks what's playing.
+appId: com.simplecityapps.shuttle.dev
+---
+- extendedWaitUntil:
+    visible: "Shuffle all"
+    timeout: 15000
+- assertVisible: "Recently added"
+- takeScreenshot: shell-home
+# A Home album opens the library's album screen; the mini player shows Playback One, so check for Two
+- tapOn: "Playback Album"
+- extendedWaitUntil:
+    visible: "Navigate up"
+    timeout: 5000
+- assertVisible: "Playback Two"
+- takeScreenshot: shell-home-album
+- back
+# The top bar's search action (the nav bar's Search tab lands on the same screen)
+- tapOn: "Search"
+- extendedWaitUntil:
+    visible: "Search your library"
+    timeout: 5000
+- tapOn: "Search your library"
+- inputText: "Playback Artist"
+# The artist row, by its album count: the query field, the album row and the mini player also show the name
+- extendedWaitUntil:
+    visible: ".*1 album.*"
+    timeout: 5000
+- tapOn: ".*1 album.*"
+# The library's artist screen, with its album
+- extendedWaitUntil:
+    visible: "Navigate up"
+    timeout: 5000
+- assertVisible: "Playback Album"
+- takeScreenshot: shell-search-artist
+- back
+- tapOn: "Clear search"
+- tapOn: "Search your library"
+- inputText: "Playback Three"
+# The first match is the query field itself; the second is the song row
+- extendedWaitUntil:
+    visible:
+      text: "Playback Three"
+      index: 1
+    timeout: 5000
+- takeScreenshot: shell-search-results
+- tapOn:
+    text: "Playback Three"
+    index: 1
