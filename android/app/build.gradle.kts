@@ -258,6 +258,9 @@ android {
         }
         implementation(libs.glide.compose)
 
+        // Drag to reorder in lazy lists (playlist detail)
+        implementation(libs.reorderable)
+
         // About Libraries
         implementation(libs.mikepenz.aboutlibrariesCore)
 

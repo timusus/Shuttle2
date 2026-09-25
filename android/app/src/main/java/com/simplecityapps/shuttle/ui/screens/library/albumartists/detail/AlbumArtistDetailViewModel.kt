@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
@@ -12,7 +11,7 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Album
-import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
@@ -28,8 +27,10 @@ import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.toMediaSelection
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,9 +47,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@HiltViewModel
-class AlbumArtistDetailViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+/** One album artist's albums and songs, loaded by [groupKey]: the legacy fragment passes its argument's key, the shell its route's. */
+@HiltViewModel(assistedFactory = AlbumArtistDetailViewModel.Factory::class)
+class AlbumArtistDetailViewModel @AssistedInject constructor(
+    @Assisted private val groupKey: AlbumArtistGroupKey,
     private val albumArtistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
@@ -64,7 +66,10 @@ class AlbumArtistDetailViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
 ) : ViewModel() {
 
-    val albumArtist: AlbumArtist = AlbumArtistDetailFragmentArgs.fromSavedStateHandle(savedStateHandle).albumArtist
+    @AssistedFactory
+    interface Factory {
+        fun create(groupKey: AlbumArtistGroupKey): AlbumArtistDetailViewModel
+    }
 
     private val currentSong: Flow<Song?> = queueManager.queueStateFlow
         .map { queueState -> queueState.currentItem?.song }
@@ -73,20 +78,19 @@ class AlbumArtistDetailViewModel @Inject constructor(
     private val expandedAlbums = MutableStateFlow<Set<AlbumGroupKey>>(emptySet())
 
     val uiState: StateFlow<AlbumArtistDetailUiState> = combine(
-        albumArtistRepository.getAlbumArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = albumArtist.groupKey)),
-        albumRepository.getAlbums(AlbumQuery.ArtistGroupKey(albumArtist.groupKey)),
+        albumArtistRepository.getAlbumArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = groupKey)),
+        albumRepository.getAlbums(AlbumQuery.ArtistGroupKey(groupKey)),
         songRepository
-            .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
+            .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = groupKey))))
             .filterNotNull(),
         playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
         currentSong,
     ) { artists, albums, songs, playlists, currentSong ->
-        val latestArtist = artists.firstOrNull() ?: albumArtist
         val sortedAlbums = albums.sortedByDescending { it.year ?: 0 }
         val albumOrder = sortedAlbums.withIndex().associate { (index, album) -> album.groupKey to index }
         val sortedSongs = songs.sortedWith(compareBy({ albumOrder[it.albumGroupKey] ?: Int.MAX_VALUE }, { it.disc }, { it.track }))
         AlbumArtistDetailUiState(
-            albumArtist = latestArtist,
+            albumArtist = artists.firstOrNull(),
             albums = sortedAlbums,
             songs = sortedSongs,
             playlists = playlists,
@@ -102,7 +106,7 @@ class AlbumArtistDetailViewModel @Inject constructor(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = AlbumArtistDetailUiState(albumArtist = albumArtist),
+        initialValue = AlbumArtistDetailUiState(),
     )
 
     private val _events = MutableSharedFlow<AlbumArtistDetailUiEvent>()

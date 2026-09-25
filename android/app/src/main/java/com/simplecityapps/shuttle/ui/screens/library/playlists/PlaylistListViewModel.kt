@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
@@ -114,6 +115,13 @@ class PlaylistListViewModel @Inject constructor(
     fun onRename(playlist: Playlist, name: String) {
         viewModelScope.launch {
             playlistRepository.renamePlaylist(playlist, name)
+        }
+    }
+
+    /** Creates an empty local playlist (the Playlists tab's "New playlist"). */
+    fun onCreatePlaylist(name: String) {
+        viewModelScope.launch {
+            playlistRepository.createPlaylist(name, MediaProviderType.Shuttle, songs = null, externalId = null)
         }
     }
 }

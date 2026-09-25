@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.util.LruCache
+import com.simplecityapps.mediaprovider.PlaylistExporter
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -47,6 +48,11 @@ class AppModule {
     }
 
     @Singleton
+    @Provides
+    fun providePlaylistExporter(
+        @ApplicationContext context: Context,
+    ): PlaylistExporter = PlaylistExporter(context)
+
     @Provides
     fun provideSortPreferences(preference: SharedPreferences): SortPreferences = SortPreferenceManager(preference)
 

@@ -33,6 +33,7 @@ import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.lifecycle.withCreationCallback
 import javax.inject.Inject
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
@@ -50,7 +51,13 @@ class AlbumDetailFragment :
 
     private lateinit var album: com.simplecityapps.shuttle.model.Album
 
-    private val viewModel: AlbumDetailViewModel by viewModels()
+    private val viewModel: AlbumDetailViewModel by viewModels(
+        extrasProducer = {
+            defaultViewModelCreationExtras.withCreationCallback<AlbumDetailViewModel.Factory> { factory ->
+                factory.create(AlbumDetailFragmentArgs.fromBundle(requireArguments()).album.groupKey)
+            }
+        },
+    )
 
     private var composeView: ComposeView by autoCleared()
     private lateinit var playlistMenuView: PlaylistMenuView

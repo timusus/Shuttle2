@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
@@ -10,6 +9,7 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Album
+import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
@@ -22,8 +22,10 @@ import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.toMediaSelection
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -62,9 +64,10 @@ sealed interface AlbumDetailUiEvent {
     data object DeleteFailed : AlbumDetailUiEvent
 }
 
-@HiltViewModel
-class AlbumDetailViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
+/** One album's songs and header, loaded by [groupKey]: the legacy fragment passes its argument's key, the shell its route's. */
+@HiltViewModel(assistedFactory = AlbumDetailViewModel.Factory::class)
+class AlbumDetailViewModel @AssistedInject constructor(
+    @Assisted private val groupKey: AlbumGroupKey?,
     private val songRepository: SongRepository,
     private val albumRepository: AlbumRepository,
     private val queueManager: QueueOperations,
@@ -77,7 +80,10 @@ class AlbumDetailViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
 ) : ViewModel() {
 
-    val album: Album = AlbumDetailFragmentArgs.fromSavedStateHandle(savedStateHandle).album
+    @AssistedFactory
+    interface Factory {
+        fun create(groupKey: AlbumGroupKey?): AlbumDetailViewModel
+    }
 
     private val currentSong: Flow<Song?> = queueManager.queueStateFlow
         .map { queueState -> queueState.currentItem?.song }
@@ -85,15 +91,14 @@ class AlbumDetailViewModel @Inject constructor(
 
     val uiState: StateFlow<AlbumDetailUiState> = combine(
         songRepository
-            .getSongs(SongQuery.AlbumGroupKey(key = album.groupKey))
+            .getSongs(SongQuery.AlbumGroupKey(key = groupKey))
             .filterNotNull(),
-        albumRepository.getAlbums(AlbumQuery.AlbumGroupKey(album.groupKey)),
+        albumRepository.getAlbums(AlbumQuery.AlbumGroupKey(groupKey)),
         currentSong,
         playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
     ) { songs, albums, currentSong, playlists ->
-        val latestAlbum = albums.firstOrNull() ?: album
         AlbumDetailUiState(
-            album = latestAlbum,
+            album = albums.firstOrNull(),
             songs = songs,
             playlists = playlists,
             currentSong = currentSong,
@@ -106,7 +111,7 @@ class AlbumDetailViewModel @Inject constructor(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = AlbumDetailUiState(album = album),
+        initialValue = AlbumDetailUiState(),
     )
 
     private val _events = MutableSharedFlow<AlbumDetailUiEvent>()

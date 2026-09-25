@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
-import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createSong
@@ -81,7 +80,7 @@ class AlbumArtistDetailViewModelTest {
     }
 
     private fun createViewModel() = AlbumArtistDetailViewModel(
-        savedStateHandle = SavedStateHandle(mapOf("albumArtist" to testArtist)),
+        groupKey = testArtist.groupKey,
         albumArtistRepository = fakeAlbumArtistRepository,
         albumRepository = fakeAlbumRepository,
         songRepository = fakeSongRepository,

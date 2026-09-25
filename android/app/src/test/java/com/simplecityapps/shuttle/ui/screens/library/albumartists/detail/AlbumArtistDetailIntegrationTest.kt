@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createSong
@@ -124,7 +123,7 @@ class AlbumArtistDetailIntegrationTest {
         albumArtist: AlbumArtist = testArtist,
         songRepository: FakeSongRepository = fakeSongRepository,
     ): AlbumArtistDetailViewModel = AlbumArtistDetailViewModel(
-        savedStateHandle = SavedStateHandle(mapOf("albumArtist" to albumArtist)),
+        groupKey = albumArtist.groupKey,
         albumArtistRepository = fakeAlbumArtistRepository,
         albumRepository = fakeAlbumRepository,
         songRepository = songRepository,
