@@ -75,9 +75,14 @@ class MainActivity : AppCompatActivity() {
         navController.setGraph(R.navigation.launch)
 
         // No onboarding (#379): ask for the music permission once, on first launch, and scan when it's granted.
-        // A later grant goes through Settings > Media > Sources, or the system settings.
-        if (savedInstanceState == null && !sourcesSettings.musicPermissionRequested.value && !MusicPermission.isGranted(this)) {
-            musicPermissionRequest.launch(MusicPermission.name)
+        // A later grant goes through Settings > Media > Sources, or the system settings. One already held before any
+        // scan (granted over adb, or restored with a backup) starts the scan the prompt would have.
+        if (savedInstanceState == null) {
+            if (MusicPermission.isGranted(this)) {
+                if (!mediaSources.hasScanned) mediaSources.scanThisDevice()
+            } else if (!sourcesSettings.musicPermissionRequested.value) {
+                musicPermissionRequest.launch(MusicPermission.name)
+            }
         }
 
         handleSearchQuery(intent)

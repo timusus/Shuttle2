@@ -14,6 +14,7 @@ import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -34,6 +35,9 @@ interface MediaSources {
     /** Stops importing from [type] and removes its songs and playlists from the library and the queue. */
     fun disable(type: MediaProviderType)
 
+    /** Whether an import has ever finished on this install. */
+    val hasScanned: Boolean
+
     /** Imports from every enabled provider, outliving the screen that asked; a no-op while an import runs. */
     fun scan()
 
@@ -50,6 +54,7 @@ val MediaProviderType.isLocal: Boolean get() = this == MediaProviderType.Shuttle
 @Singleton
 class DefaultMediaSources @Inject constructor(
     private val preferences: PlaybackPreferenceManager,
+    private val generalPreferences: GeneralPreferenceManager,
     private val mediaImporter: MediaImporter,
     private val taglibMediaProvider: TaglibMediaProvider,
     private val mediaStoreMediaProvider: MediaStoreMediaProvider,
@@ -86,6 +91,8 @@ class DefaultMediaSources @Inject constructor(
             playlistRepository.deleteAll(type)
         }
     }
+
+    override val hasScanned: Boolean get() = generalPreferences.lastMediaImportDate != null
 
     override fun scan() {
         appCoroutineScope.launch { mediaImporter.import() }

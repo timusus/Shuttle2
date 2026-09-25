@@ -16,6 +16,8 @@ class FakeMediaSources(vararg enabled: MediaProviderType) : MediaSources {
     var scans = 0
         private set
 
+    override var hasScanned = false
+
     override fun enable(type: MediaProviderType) {
         if (type !in _enabledTypes.value) _enabledTypes.value += type
     }
@@ -26,6 +28,7 @@ class FakeMediaSources(vararg enabled: MediaProviderType) : MediaSources {
 
     override fun scan() {
         scans++
+        hasScanned = true
     }
 }
 

@@ -95,12 +95,36 @@ class LibraryEmptyViewModelTest {
     }
 
     @Test
-    fun `an existing grant on launch doesn't scan again`() = runTest {
+    fun `a grant held at launch before any scan enables the S2 scanner and scans`() = runTest {
         songRepository.setSongs(emptyList())
 
         viewModel().onAccessChecked(granted = true, showRationale = false)
 
-        mediaSources.scans shouldBe 0
+        mediaSources.enabledTypes.value shouldBe listOf(MediaProviderType.Shuttle)
+        mediaSources.scans shouldBe 1
+    }
+
+    @Test
+    fun `a grant held at launch after a scan doesn't scan again`() = runTest {
+        songRepository.setSongs(emptyList())
+        mediaSources.scan()
+        val viewModel = viewModel()
+
+        viewModel.onAccessChecked(granted = true, showRationale = false)
+        viewModel.onAccessChecked(granted = true, showRationale = false)
+
+        mediaSources.scans shouldBe 1
+    }
+
+    @Test
+    fun `resuming with the grant it already had doesn't scan again`() = runTest {
+        songRepository.setSongs(emptyList())
+        val viewModel = viewModel()
+        viewModel.onAccessResult(granted = true, showRationale = false)
+
+        viewModel.onAccessChecked(granted = true, showRationale = false)
+
+        mediaSources.scans shouldBe 1
     }
 
     @Test
