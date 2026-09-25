@@ -143,7 +143,12 @@ fun LibraryScreen(
                         subtitle = chrome.subtitle?.let { { Text(it) } },
                         actions = {
                             var menuOpen by remember { mutableStateOf(false) }
-                            S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = stringResource(R.string.library_more_options), onClick = { menuOpen = true })
+                            S2IconButton(
+                                icon = Icons.Rounded.MoreVert,
+                                contentDescription = stringResource(R.string.library_more_options),
+                                onClick = { menuOpen = true },
+                                modifier = Modifier.testTag("library-more"),
+                            )
                             S2Menu(
                                 expanded = menuOpen,
                                 onDismissRequest = { menuOpen = false },
