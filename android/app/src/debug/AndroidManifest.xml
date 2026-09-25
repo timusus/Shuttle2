@@ -65,6 +65,20 @@
             </intent-filter>
         </receiver>
 
+        <!-- The design system catalogue (#374): boards for review on device, with motion, touch
+             and dynamic colour. Its own launcher entry, debug builds only. -->
+        <activity
+            android:name="com.simplecityapps.shuttle.designsystem.catalog.DesignCatalogActivity"
+            android:exported="true"
+            android:label="S2 Catalog"
+            android:taskAffinity="com.simplecityapps.shuttle.catalog"
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
     </application>
 
 </manifest>
