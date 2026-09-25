@@ -46,6 +46,14 @@ interface MediaSources {
         if (enabledTypes.value.none { it.isLocal }) enable(MediaProviderType.Shuttle)
         scan()
     }
+
+    /**
+     * Scans this device if the music permission is held but nothing has been scanned yet: granted over adb, or
+     * restored with a backup. Asked once, at startup; the prompts that grant the permission scan for themselves.
+     */
+    fun scanIfNeverScanned(musicPermissionGranted: Boolean) {
+        if (musicPermissionGranted && !hasScanned) scanThisDevice()
+    }
 }
 
 /** Songs on this device come from the S2 scanner, or the Android (MediaStore) provider for users who chose it before. */

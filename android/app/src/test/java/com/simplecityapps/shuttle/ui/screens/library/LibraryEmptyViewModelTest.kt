@@ -95,25 +95,15 @@ class LibraryEmptyViewModelTest {
     }
 
     @Test
-    fun `a grant held at launch before any scan enables the S2 scanner and scans`() = runTest {
+    fun `a grant held when the Library opens leaves the scan to startup`() = runTest {
         songRepository.setSongs(emptyList())
-
-        viewModel().onAccessChecked(granted = true, showRationale = false)
-
-        mediaSources.enabledTypes.value shouldBe listOf(MediaProviderType.Shuttle)
-        mediaSources.scans shouldBe 1
-    }
-
-    @Test
-    fun `a grant held at launch after a scan doesn't scan again`() = runTest {
-        songRepository.setSongs(emptyList())
-        mediaSources.scan()
         val viewModel = viewModel()
 
         viewModel.onAccessChecked(granted = true, showRationale = false)
         viewModel.onAccessChecked(granted = true, showRationale = false)
 
-        mediaSources.scans shouldBe 1
+        viewModel.uiState.value shouldBe LibraryAvailability.Empty(MusicAccess.Granted)
+        mediaSources.scans shouldBe 0
     }
 
     @Test

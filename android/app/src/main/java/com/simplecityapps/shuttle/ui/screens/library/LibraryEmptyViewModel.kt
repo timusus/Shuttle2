@@ -63,16 +63,13 @@ class LibraryEmptyViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), LibraryAvailability.Loading)
 
     /**
-     * The permission as it stands on resume. A grant from outside the app starts the scan the prompt would have: one
-     * made in the system settings meanwhile, or one already held at launch (granted over adb, or restored with a
-     * backup) before any scan has run.
+     * The permission as it stands on resume. One granted in the system settings meanwhile starts the scan the prompt
+     * would have; one already held at startup scans from [MediaSources.scanIfNeverScanned].
      */
     fun onAccessChecked(granted: Boolean, showRationale: Boolean) {
         val previous = access.value
         update(granted, showRationale)
-        val grantedMeanwhile = previous != null && previous != MusicAccess.Granted
-        val grantedBeforeFirstScan = previous == null && !mediaSources.hasScanned
-        if (granted && (grantedMeanwhile || grantedBeforeFirstScan)) scan()
+        if (granted && previous != null && previous != MusicAccess.Granted) scan()
     }
 
     /** The system prompt's answer. */
