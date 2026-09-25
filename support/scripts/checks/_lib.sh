@@ -48,10 +48,19 @@ _run_adb() {
     # (and any ADB_CALL_TIMEOUT=<n> override from a caller) works the same either way.
     adb "$@" &
     local adb_pid=$!
-    ( sleep "$ADB_CALL_TIMEOUT"
+    # Each sleep below runs backgrounded with its pid tracked in watchdog_sleep_pid, and the TERM
+    # trap kills it before exiting -- so when the caller kills this subshell after adb finishes
+    # early (the common case), the sleep dies with it instead of running to completion as an
+    # orphan (a plain foreground `sleep` in a killed subshell isn't signalled itself and keeps
+    # running for up to ADB_CALL_TIMEOUT seconds).
+    ( local watchdog_sleep_pid
+      trap 'kill "$watchdog_sleep_pid" 2>/dev/null; exit 0' TERM
+      sleep "$ADB_CALL_TIMEOUT" & watchdog_sleep_pid=$!
+      wait "$watchdog_sleep_pid" 2>/dev/null
       kill -0 "$adb_pid" 2>/dev/null || exit 0
       kill -TERM "$adb_pid" 2>/dev/null
-      sleep 2
+      sleep 2 & watchdog_sleep_pid=$!
+      wait "$watchdog_sleep_pid" 2>/dev/null
       kill -KILL "$adb_pid" 2>/dev/null ) &
     local watchdog_pid=$!
     local status=0
