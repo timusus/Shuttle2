@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -63,7 +64,10 @@ class MediaImporter(
         fun onAllComplete() {}
     }
 
-    var isImporting = false
+    /** Held for the length of an import, so a second [import] finds it taken and returns rather than scanning again. */
+    private val importLock = Mutex()
+
+    val isImporting: Boolean get() = importLock.isLocked
 
     var listeners = mutableSetOf<Listener>()
 
@@ -77,15 +81,21 @@ class MediaImporter(
             return
         }
 
-        if (isImporting) {
+        if (!importLock.tryLock()) {
             Timber.v("Import already in progress")
             return
         }
 
+        try {
+            importAll()
+        } finally {
+            importLock.unlock()
+        }
+    }
+
+    private suspend fun importAll() {
         Timber.v("Starting import..")
         val time = System.currentTimeMillis()
-
-        isImporting = true
 
         mediaProviders.forEach { mediaProvider ->
             listeners.forEach { it.onStart(mediaProvider.type) }
@@ -172,7 +182,6 @@ class MediaImporter(
         listeners.forEach { listener -> listener.onAllComplete() }
 
         importCount++
-        isImporting = false
 
         Timber.v("Import complete in ${System.currentTimeMillis() - time}ms)")
     }
