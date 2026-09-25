@@ -22,7 +22,7 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records Now Playing's extras on a phone into `docs/design/player-extras/` for review (#377, #400):
- * the artwork scheme under three contrasting covers, the sleep timer and Playback & sound. A no-op
+ * the artwork scheme under three contrasting covers and a dark one, the sleep timer and Playback & sound. A no-op
  * under plain `testDebugUnitTest`; record with
  * `./gradlew :android:app:recordRoborazziDebug --tests '*PlayerExtrasScreenshotTest*'`.
  */
@@ -67,6 +67,12 @@ class PlayerExtrasScreenshotTest {
     }
 
     @Test
+    fun darkArtworkScheme() {
+        nowPlaying(DarkCover)
+        shot("now-playing-artwork-dark")
+    }
+
+    @Test
     fun sleepTimer() {
         nowPlaying(ArtworkCovers[0])
         robot.tapDescription("Sleep timer")
@@ -90,6 +96,9 @@ class PlayerExtrasScreenshotTest {
     private companion object {
         /** Queue positions whose covers seed clearly different schemes: Blue Hours, Cassette Summer and Undertow. */
         val ArtworkCovers = listOf(6, 4, 14)
+
+        /** Night Bus Frequencies: a near-black cover, whose seed the player lifts to a usable tone (#409). */
+        const val DarkCover = 1
 
         val shotsDir: File by lazy {
             generateSequence(File(System.getProperty("user.dir")).absoluteFile) { it.parentFile }

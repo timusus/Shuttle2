@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.designsystem.theme
 
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.materialkolor.ktx.toHct
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
@@ -10,8 +11,10 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class SeedColorCacheTest {
     private val red = Color(0xFFD9542B)
 
@@ -23,6 +26,27 @@ class SeedColorCacheTest {
     fun `extracts the dominant hue from a large bitmap`() {
         val seed = extractSeedColor(solidBitmap(red, size = 500))
         seed!!.toHct().hue shouldBe (red.toHct().hue plusOrMinus 5.0)
+    }
+
+    @Test
+    fun `a dark cover's seed is its colour, not its near-black background`() {
+        // Pink dots over a near-black navy that covers most of it, each shaded like a real cover's
+        val cover = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888).apply {
+            for (x in 0 until 100) {
+                for (y in 0 until 100) {
+                    val shade = (x + y) % 24
+                    setPixel(x, y, if (x % 10 < 3 && y % 10 < 3) android.graphics.Color.rgb(200 + shade, 50 + shade, 140) else android.graphics.Color.rgb(12, 10, 28 + shade))
+                }
+            }
+        }
+        val seed = extractSeedColor(cover)!!.toHct()
+        seed.hue shouldBe (Color(0xFFD74A9A).toHct().hue plusOrMinus 10.0)
+    }
+
+    @Test
+    fun `an all-dark cover still has a seed`() {
+        val navy = Color(0xFF1A1740)
+        extractSeedColor(solidBitmap(navy))!!.toHct().hue shouldBe (navy.toHct().hue plusOrMinus 5.0)
     }
 
     @Test

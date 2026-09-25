@@ -69,6 +69,19 @@ class ColorSchemesTest {
     }
 
     @Test
+    fun `a dark seed gives the player tinted containers, not near-black ones`() {
+        // Phase Garden's cover: a dark violet
+        val dark = Color(0xFF1F1530)
+        for (isDark in listOf(true, false)) {
+            val player = artworkColorScheme(dark, isDark, style = ArtworkSchemeStyle.Player)!!
+            player.primaryContainer.toHct().tone shouldBe (30.0 plusOrMinus 1.0)
+            player.primaryContainer.toHct().hue shouldBe (dark.toHct().hue plusOrMinus 10.0)
+            player.primary.toHct().tone shouldBeGreaterThan 15.0
+            player.onPrimaryContainer.contrastRatio(player.primaryContainer) shouldBeGreaterThan 4.5
+        }
+    }
+
+    @Test
     fun `system contrast maps onto levels`() {
         S2Contrast.fromSystemContrast(-1f) shouldBe S2Contrast.Default
         S2Contrast.fromSystemContrast(0f) shouldBe S2Contrast.Default

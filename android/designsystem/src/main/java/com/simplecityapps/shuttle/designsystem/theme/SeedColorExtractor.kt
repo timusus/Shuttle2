@@ -2,17 +2,29 @@ package com.simplecityapps.shuttle.designsystem.theme
 
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import com.materialkolor.ktx.themeColorOrNull
+import com.materialkolor.ktx.toHct
+import com.materialkolor.quantize.QuantizerCelebi
+import com.materialkolor.score.Score
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /** Side of the square the artwork is scaled to before quantising: plenty for one seed, cheap to scan. */
 private const val SAMPLE_SIZE = 112
 
+/** Colours the artwork is quantised to before they're ranked. */
+private const val MAX_SWATCHES = 128
+
 /**
- * The seed colour of [bitmap], or null when it has no colour worth theming with. Quantises a
- * downscaled copy, so call it off the main thread (see [SeedColorCache.getOrExtract]).
+ * Swatches darker than this HCT tone read as near-black: a dark cover's background rather than its
+ * colour, so a lighter swatch is preferred as the seed.
+ */
+const val MIN_PREFERRED_SEED_TONE = 20.0
+
+/**
+ * The seed colour of [bitmap], or null when it has no colour worth theming with. Of the swatches
+ * ranked by chroma and population, the first that isn't near-black (see [MIN_PREFERRED_SEED_TONE]),
+ * else the first. Quantises a downscaled copy, so call it off the main thread (see
+ * [SeedColorCache.getOrExtract]).
  */
 fun extractSeedColor(bitmap: Bitmap): Color? {
     val sample = if (bitmap.width > SAMPLE_SIZE || bitmap.height > SAMPLE_SIZE) {
@@ -20,7 +32,12 @@ fun extractSeedColor(bitmap: Bitmap): Color? {
     } else {
         bitmap
     }
-    return sample.asImageBitmap().themeColorOrNull()?.takeIf(::isUsableSeed)
+    val pixels = IntArray(sample.width * sample.height)
+    sample.getPixels(pixels, 0, sample.width, 0, 0, sample.width, sample.height)
+    val swatches = Score.score(QuantizerCelebi.quantize(pixels, MAX_SWATCHES), fallbackColorArgb = null)
+        .map(::Color)
+        .filter(::isUsableSeed)
+    return swatches.firstOrNull { it.toHct().tone >= MIN_PREFERRED_SEED_TONE } ?: swatches.firstOrNull()
 }
 
 /**

@@ -5,15 +5,22 @@ import androidx.compose.ui.graphics.Color
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.dynamiccolor.ColorSpec
+import com.materialkolor.ktx.toColor
 import com.materialkolor.ktx.toHct
 
 /**
  * How an artwork seed is turned into a scheme. Detail screens keep the seed to the accent roles;
  * the player lets the seed hue carry into the containers.
+ *
+ * [minSeedTone] lifts a darker seed to that tone first. The player's Content palette builds its
+ * containers at the seed's own tone, so an all-dark cover's seed (tone 5 to 15) would give
+ * near-black containers, and a black primary on a light scheme; lifted, it keeps its hue and chroma.
  */
-enum class ArtworkSchemeStyle(internal val paletteStyle: PaletteStyle) {
-    Detail(PaletteStyle.TonalSpot),
-    Player(PaletteStyle.Content),
+enum class ArtworkSchemeStyle(internal val paletteStyle: PaletteStyle, internal val minSeedTone: Double) {
+    Detail(PaletteStyle.TonalSpot, minSeedTone = 0.0),
+
+    /** Lifted to 30, M3's dark-scheme container tone. */
+    Player(PaletteStyle.Content, minSeedTone = 30.0),
 }
 
 /**
@@ -60,4 +67,6 @@ fun artworkColorScheme(
     isDark: Boolean,
     style: ArtworkSchemeStyle = ArtworkSchemeStyle.Detail,
     contrast: S2Contrast = S2Contrast.Default,
-): ColorScheme? = if (isUsableSeed(seed)) seedColorScheme(seed, isDark, style.paletteStyle, contrast) else null
+): ColorScheme? = if (isUsableSeed(seed)) seedColorScheme(seed.withMinTone(style.minSeedTone), isDark, style.paletteStyle, contrast) else null
+
+private fun Color.withMinTone(minTone: Double): Color = toHct().let { hct -> if (hct.tone < minTone) hct.withTone(minTone).toColor() else this }

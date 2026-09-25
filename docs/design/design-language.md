@@ -55,9 +55,12 @@ screens never see it.
   role structure. A hand-tuned override is allowed per accent where generation distorts the brand
   hue (Podcasts found the coral pushed to brick red at tone 40); the catalogue shows both.
 - **Artwork-seeded schemes are nested, not global** (app-shell §5): the player surface and artwork
-  detail screens only. Seed = MaterialKolor `themeColorOrNull()` on a small bitmap, off the main
-  thread, cached by artwork key. Style `TonalSpot` for detail screens, `Content` style for the
-  player so the seed hue carries into the containers; the catalogue compares both before approval.
+  detail screens only. Seed = the MaterialKolor-scored swatches of a small bitmap (quantise, then
+  rank by chroma and population), off the main thread, cached by artwork key: the first swatch at
+  tone 20 or above, so a dark cover seeds from its colour rather than its near-black background,
+  else the first. Style `TonalSpot` for detail screens, `Content` style for the player so the seed
+  hue carries into the containers; `Content` builds containers at the seed's own tone, so the
+  player lifts a darker seed to tone 30 (#409). The catalogue compares both before approval.
 - **Brand fallback.** No artwork, extraction failure, or a seed too grey to carry a hue (chroma
   below a threshold picked on the catalogue's low-chroma seed) → the root accent scheme. Never a
   grey scheme and never the stock M3 purple.
