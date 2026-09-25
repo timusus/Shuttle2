@@ -31,9 +31,6 @@ class BillingManager(
 ) {
     private var retryDelay = INITIAL_RETRY_DELAY
 
-    /** Completed purchases per product type (INAPP, SUBS), from the last query of each. */
-    private val purchasedByType = mutableMapOf<String, Set<String>>()
-
     private val _ownedProductIds = MutableStateFlow<Set<String>?>(null)
 
     /** Product IDs with a completed (PURCHASED) purchase, or null until Play has answered for both product types. */
@@ -49,7 +46,7 @@ class BillingManager(
             override fun onBillingServiceDisconnected() {
                 coroutineScope.launch {
                     delay(retryDelay)
-                    retryDelay *= 2
+                    retryDelay = (retryDelay * 2).coerceAtMost(MAX_RETRY_DELAY)
                     start()
                 }
             }
@@ -160,30 +157,32 @@ class BillingManager(
             // Setup calls this again once it's ready.
             return
         }
-        listOf(BillingClient.ProductType.INAPP, BillingClient.ProductType.SUBS).forEach { productType ->
+        val productTypes = listOf(BillingClient.ProductType.INAPP, BillingClient.ProductType.SUBS)
+        val pass = OwnedProductsQuery(productTypes.toSet())
+        productTypes.forEach { productType ->
             val params = QueryPurchasesParams.newBuilder()
                 .setProductType(productType)
                 .build()
             billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    onPurchasesQueried(productType, purchases)
+                val purchased = if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    acknowledge(purchases)
+                    purchases.purchasedProductIds()
                 } else {
                     Timber.e("queryPurchasesAsync($productType): ${billingResult.responseCode} ${billingResult.debugMessage}")
+                    null
                 }
+                onQueryResult(pass.onResult(productType, purchased))
             }
         }
     }
 
     @Synchronized
-    private fun onPurchasesQueried(
-        productType: String,
-        purchases: List<Purchase>
-    ) {
-        purchasedByType[productType] = purchases.purchasedProductIds()
-        if (purchasedByType.size == 2) {
-            _ownedProductIds.value = purchasedByType.values.flatten().toSet()
+    private fun onQueryResult(outcome: OwnedProductsQuery.Outcome) {
+        when (outcome) {
+            is OwnedProductsQuery.Outcome.Complete -> _ownedProductIds.value = outcome.owned
+            is OwnedProductsQuery.Outcome.Failed -> Timber.e("queryPurchases: ${outcome.failedTypes} failed; keeping the last owned products (${_ownedProductIds.value})")
+            OwnedProductsQuery.Outcome.Pending -> Unit
         }
-        acknowledge(purchases)
     }
 
     @Synchronized
@@ -210,6 +209,35 @@ class BillingManager(
 
     companion object {
         private const val INITIAL_RETRY_DELAY = 1000L
+        private const val MAX_RETRY_DELAY = 60_000L
+    }
+}
+
+/**
+ * One pass of owned-product queries, one query per product type. Once every type has answered it yields the owned
+ * products, or, if any query failed, a failure: a partial set could drop a product the user owns and revoke Pro.
+ */
+internal class OwnedProductsQuery(private val productTypes: Set<String>) {
+    sealed interface Outcome {
+        data object Pending : Outcome
+
+        data class Complete(val owned: Set<String>) : Outcome
+
+        data class Failed(val failedTypes: Set<String>) : Outcome
+    }
+
+    private val results = mutableMapOf<String, Set<String>?>()
+
+    /** Records [productType]'s purchased products, or null if its query failed. */
+    @Synchronized
+    fun onResult(
+        productType: String,
+        purchased: Set<String>?
+    ): Outcome {
+        results[productType] = purchased
+        if (!results.keys.containsAll(productTypes)) return Outcome.Pending
+        val failed = results.filterValues { it == null }.keys
+        return if (failed.isEmpty()) Outcome.Complete(results.values.flatMap { it.orEmpty() }.toSet()) else Outcome.Failed(failed)
     }
 }
 
