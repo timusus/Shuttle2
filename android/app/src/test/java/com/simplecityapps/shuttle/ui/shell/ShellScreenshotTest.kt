@@ -11,6 +11,8 @@ import com.bumptech.glide.SampleArtworkGlide
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureScreenRoboImage
+import com.simplecityapps.shuttle.ui.shell.player.NowPlayingItems
+import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
 import java.io.File
 import org.junit.After
@@ -53,20 +55,35 @@ class ShellScreenshotTest {
         )
     }
 
-    private fun levels(
-        prefix: String,
-        withQueue: Boolean,
-    ) {
+    private fun levels(prefix: String) {
         shot("$prefix-mini")
         robot.tapMiniPlayer()
         shot("$prefix-now-playing")
-        if (withQueue) {
-            robot.tapQueuePeek()
-            shot("$prefix-queue")
-            robot.pressBack()
-        }
         robot.pressBack()
     }
+
+    /** A compact sheet: Mini, the rest, each panel open, and the list scrolled past the artwork. */
+    private fun sheetLevels(prefix: String) {
+        shot("$prefix-mini")
+        robot.tapMiniPlayer()
+        shot("$prefix-now-playing")
+        NowPlayingPanel.entries.forEach { panel ->
+            robot.tapPanelButton(panel)
+            shot("$prefix-${panel.shotName}")
+            robot.tapPanelButton(panel)
+        }
+        robot.swipeUpNowPlaying()
+        robot.scrollNowPlayingTo(NowPlayingItems.Title)
+        shot("$prefix-artwork-scrolled")
+        robot.backToMini()
+    }
+
+    private val NowPlayingPanel.shotName: String
+        get() = when (this) {
+            NowPlayingPanel.Queue -> "queue"
+            NowPlayingPanel.SleepTimer -> "sleep-timer"
+            NowPlayingPanel.PlaybackSound -> "playback-sound"
+        }
 
     private fun libraryDetail(prefix: String) {
         robot.tapText("Library")
@@ -78,30 +95,47 @@ class ShellScreenshotTest {
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phone() {
         robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 891), systemBars = PhoneSystemBars)
-        levels("phone", withQueue = true)
+        sheetLevels("phone")
         libraryDetail("phone")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night-xhdpi")
+    fun phoneDark() {
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 891), systemBars = PhoneSystemBars)
+        robot.tapMiniPlayer()
+        shot("phone-dark-now-playing")
     }
 
     @Test
     @Config(qualifiers = "w360dp-h640dp-xhdpi")
     fun phoneShort() {
         robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(360, 640), systemBars = PhoneSystemBars)
-        robot.tapMiniPlayer()
-        shot("phone-short-now-playing")
+        sheetLevels("phone-short")
     }
 
     @Test
     @Config(qualifiers = "w411dp-h826dp-xhdpi")
     fun foldableFolded() {
         robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 826), systemBars = PhoneSystemBars)
-        levels("foldable-folded", withQueue = true)
+        sheetLevels("foldable-folded")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun flipTabletop() {
+        // Half-opened flat on a table: a separating horizontal hinge across the middle, in window pixels.
+        val hinge = HingeInfo(bounds = Rect(0f, 889f, 822f, 893f), isFlat = false, isVertical = false, isSeparating = true, isOccluding = false)
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 891, Posture(isTabletop = true, hingeList = listOf(hinge))), systemBars = PhoneSystemBars)
+        robot.tapMiniPlayer()
+        shot("flip-tabletop-now-playing")
     }
 
     @Test
     @Config(qualifiers = "w700dp-h840dp-xhdpi")
     fun foldableUnfoldedMedium() {
         robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(700, 840))
-        levels("foldable-unfolded-medium", withQueue = false)
+        levels("foldable-unfolded-medium")
         libraryDetail("foldable-unfolded-medium")
     }
 
@@ -109,7 +143,7 @@ class ShellScreenshotTest {
     @Config(qualifiers = "w841dp-h701dp-xhdpi")
     fun foldableUnfoldedExpanded() {
         robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(841, 701))
-        levels("foldable-unfolded-expanded", withQueue = false)
+        levels("foldable-unfolded-expanded")
         libraryDetail("foldable-unfolded-expanded")
     }
 
@@ -119,7 +153,7 @@ class ShellScreenshotTest {
         // Half-opened like a book: a separating vertical hinge down the middle, in window pixels.
         val hinge = HingeInfo(bounds = Rect(1680f, 0f, 1684f, 1402f), isFlat = false, isVertical = true, isSeparating = true, isOccluding = false)
         robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(841, 701, Posture(isTabletop = false, hingeList = listOf(hinge))))
-        levels("foldable-book", withQueue = false)
+        levels("foldable-book")
         libraryDetail("foldable-book")
     }
 
@@ -127,7 +161,7 @@ class ShellScreenshotTest {
     @Config(qualifiers = "w1280dp-h800dp-xhdpi")
     fun tablet() {
         robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(1280, 800))
-        levels("tablet", withQueue = true)
+        levels("tablet")
         libraryDetail("tablet")
     }
 

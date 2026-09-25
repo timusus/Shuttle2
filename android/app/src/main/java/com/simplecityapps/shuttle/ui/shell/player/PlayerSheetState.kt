@@ -23,8 +23,8 @@ import androidx.compose.runtime.setValue
  *
  * It is created above the width-class branch, so one instance, and its level, survives rotation,
  * resizing and folding; the level and the last [PlayerMode] are saved, so it also survives process
- * death. The pane (from 1200 dp) uses the same state over nominal anchors and snaps between them;
- * it animates its own queue push.
+ * death. The pane (from 1200 dp) uses the same state over nominal anchors and snaps between them.
+ * The open panel is the view model's ([PlayerUiState.panel]), beside the level.
  */
 @Stable
 class PlayerSheetState internal constructor(
@@ -42,6 +42,9 @@ class PlayerSheetState internal constructor(
     /** Anchors and fractions, in px. Nominal until the sheet is measured, and always in pane mode. */
     var geometry: PlayerSheetGeometry by mutableStateOf(NominalGeometry)
         private set
+
+    /** Whether the sheet has been measured, so [geometry] is its own rather than the stand-in. */
+    internal val measured: Boolean get() = geometry != NominalGeometry
 
     /** The spec for level changes; the shell sets it from the motion scheme. */
     internal var animationSpec: AnimationSpec<Float> = animationSpec
@@ -65,7 +68,7 @@ class PlayerSheetState internal constructor(
     val settledLevel: PlayerLevel get() = draggable.settledValue
 
     val allowedLevels: Set<PlayerLevel>
-        get() = playerLevels(mode, hasQueue ?: (draggable.currentValue != PlayerLevel.Hidden))
+        get() = playerLevels(mode, hasQueue ?: (draggable.currentValue != PlayerLevel.Hidden), geometry.partialRest)
 
     /** The sheet's current offset, or its settled level's anchor before the first layout. */
     val offset: Float
@@ -98,7 +101,7 @@ class PlayerSheetState internal constructor(
         // A revealing sheet keeps Hidden as an anchor until it has animated up to Mini, and a collapsing one keeps
         // its levels until it has animated down to Hidden.
         val anchorLevels = when {
-            collapse || collapsePending -> playerLevels(mode, hasQueue = true) + PlayerLevel.Hidden
+            collapse || collapsePending -> playerLevels(mode, hasQueue = true, geometry.partialRest) + PlayerLevel.Hidden
             reveal || revealPending -> allowed + PlayerLevel.Hidden
             else -> allowed
         }
@@ -184,8 +187,11 @@ class PlayerSheetState internal constructor(
     }
 
     companion object {
-        /** Stand-in anchors before the first layout and in the pane, where no gesture drives the offset. */
-        internal val NominalGeometry = PlayerSheetGeometry(height = 3f, navBarHeight = 0f, miniHeight = 1f, queueTravel = 1f)
+        /**
+         * Stand-in anchors before the first layout and in the pane, where no gesture drives the offset.
+         * It rests partway, so a restored Expanded level stands until the sheet is measured.
+         */
+        internal val NominalGeometry = PlayerSheetGeometry(height = 4f, navBarHeight = 0f, miniHeight = 1f, restOffset = 1f)
     }
 }
 

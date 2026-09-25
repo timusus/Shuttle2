@@ -52,57 +52,9 @@ import com.simplecityapps.shuttle.designsystem.component.S2PlayerControls
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControlsSize
 import com.simplecityapps.shuttle.designsystem.component.S2SeekBar
 
-/**
- * The collapse button, title and the player's tools: Cast, a speed other than normal, the sleep timer
- * (its countdown while one runs) and the overflow, which also opens Playback & sound.
- */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-internal fun NowPlayingHeader(
-    player: PlayerUiState,
-    actions: PlayerActions,
-    onCollapse: () -> Unit,
-    onOpenRoute: (NavKey) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var showSleepTimer by rememberSaveable { mutableStateOf(false) }
-    var showPlaybackSound by rememberSaveable { mutableStateOf(false) }
-    val songActions = rememberSongActionsState()
-    Row(modifier = modifier.fillMaxWidth().height(NowPlayingHeaderHeight).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        S2IconButton(icon = Icons.Rounded.KeyboardArrowDown, contentDescription = stringResource(R.string.player_collapse), onClick = onCollapse)
-        Text(text = stringResource(R.string.player_now_playing), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-        if (player.castAvailable) CastButton()
-        if (player.playbackSpeed != 1f) {
-            PlaybackSpeedChip(player.playbackSpeed, onClick = { showPlaybackSound = true }, modifier = Modifier.padding(horizontal = 4.dp))
-        }
-        if (player.sleepTimerActive) {
-            SleepTimerChip(actions, onClick = { showSleepTimer = true }, modifier = Modifier.padding(horizontal = 4.dp))
-        } else {
-            S2IconButton(icon = Icons.Rounded.Bedtime, contentDescription = stringResource(R.string.player_sleep_timer), onClick = { showSleepTimer = true })
-        }
-        S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = stringResource(DesignR.string.ds_more_options), onClick = { songActions.menuFor = player.current })
-    }
-    if (showSleepTimer) {
-        SleepTimerSheet(player = player, actions = actions, onDismiss = { showSleepTimer = false })
-    }
-    if (showPlaybackSound) {
-        PlaybackSoundSheet(player = player, actions = actions, onOpenRoute = onOpenRoute, onDismiss = { showPlaybackSound = false })
-    }
-    val playbackSound = stringResource(R.string.settings_destination_playback_and_sound)
-    val clearQueue = stringResource(R.string.menu_title_sort_clear_queue)
-    SongActionsHost(
-        songActions,
-        actions,
-        trailing = listOf(
-            S2Action(label = playbackSound, onClick = { showPlaybackSound = true }, icon = Icons.Rounded.GraphicEq),
-            S2Action(label = clearQueue, onClick = actions::clearQueue, icon = Icons.Rounded.ClearAll, destructive = true),
-        ),
-    )
-}
-
 /** The Cast framework's route button, themed to the player's scheme. Only shown where Cast can start. */
 @Composable
-private fun CastButton(modifier: Modifier = Modifier) {
+internal fun CastButton(modifier: Modifier = Modifier) {
     val description = stringResource(R.string.player_cast)
     val tint = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
     AndroidView(
@@ -168,33 +120,6 @@ internal fun NowPlayingTitle(
     }
 }
 
-/** The playing song's artwork, title and artist as one row: the pane's head over the queue. Tapping it goes back to Now Playing. */
-@Composable
-internal fun QueueHeadSong(
-    player: PlayerUiState,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val current = player.current ?: return
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .testTag(PlayerTestTags.QueueHeadSong)
-            .clickable(onClickLabel = stringResource(R.string.player_now_playing), onClick = onClick)
-            .padding(horizontal = 24.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        SongArtwork(current.song, Modifier.size(48.dp))
-        Column(Modifier.weight(1f)) {
-            Text(text = current.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            current.artist?.let { artist ->
-                Text(text = artist, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        }
-    }
-}
-
 /**
  * The artwork over the title, [gap] apart. With [fillHeight] the artwork's slot takes all the height
  * the title leaves, centring the artwork in it, so the title stays on whatever sits below; without it
@@ -215,8 +140,8 @@ internal fun NowPlayingSong(
 }
 
 /**
- * The seek bar over the transport controls, [gap] between and below them: the head that stays above
- * the queue at the Queue level ([transportHeight]). The Large controls sit closer to the edges than
+ * The seek bar over the transport controls, [gap] between and below them: which heads the open
+ * panel once the artwork has scrolled away ([transportHeight]). The Large controls sit closer to the edges than
  * the seek bar, and scale down where even that doesn't fit.
  */
 @Composable

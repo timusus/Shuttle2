@@ -26,6 +26,13 @@ data class PlayerSong(
 )
 
 /**
+ * What Now Playing's bar opens below the transport (app-shell.md, section 1): the queue, the sleep
+ * timer, or Playback & sound. With none open the queue still follows the transport, so a drag up
+ * reveals it.
+ */
+enum class NowPlayingPanel { Queue, SleepTimer, PlaybackSound }
+
+/**
  * Everything the player surfaces show except the playback position, which ticks too often to live
  * here (see [PlayerProgress]).
  *
@@ -49,6 +56,8 @@ data class PlayerUiState(
     /** The playback speed, 1 being normal; the pitch stays the same at any speed. */
     val playbackSpeed: Float = 1f,
     val replayGainMode: ReplayGainMode = ReplayGainMode.Off,
+    /** The panel the bar has open, or null at rest. */
+    val panel: NowPlayingPanel? = null,
 ) {
     companion object {
         val Unknown = PlayerUiState(hasQueue = null, current = null, items = emptyList())
@@ -112,6 +121,12 @@ interface PlayerActions {
     fun setPlaybackSpeed(speed: Float)
 
     fun setReplayGainMode(mode: ReplayGainMode)
+
+    /** Opens [panel], or closes it if it is already open. */
+    fun togglePanel(panel: NowPlayingPanel)
+
+    /** Opens [panel], or closes whichever is open when null. */
+    fun showPanel(panel: NowPlayingPanel?)
 
     fun skipToQueueItem(uid: Long)
 

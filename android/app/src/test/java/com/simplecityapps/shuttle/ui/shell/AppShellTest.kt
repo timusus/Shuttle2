@@ -13,6 +13,8 @@ import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.actions.SnackbarAction
 import com.simplecityapps.shuttle.ui.preview.toAlbum
 import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
+import com.simplecityapps.shuttle.ui.shell.player.NowPlayingItems
+import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
@@ -73,23 +75,68 @@ class AppShellTest {
     }
 
     @Test
-    fun `tapping the mini player expands, and the queue peek opens the queue`() {
+    fun `tapping the mini player opens Now Playing at rest, and the queue button raises the sheet on the queue`() {
         robot.setContent()
         robot.tapMiniPlayer()
         robot.assertLevel(PlayerLevel.NowPlaying)
+        robot.assertPinnedSong(shown = false)
 
-        robot.tapQueuePeek()
-        robot.assertLevel(PlayerLevel.Queue)
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+        robot.assertLevel(PlayerLevel.Expanded)
+        robot.panel shouldBe NowPlayingPanel.Queue
+        robot.assertPanel(NowPlayingPanel.Queue)
+        robot.assertPinnedSong(shown = true)
     }
 
     @Test
-    fun `back steps the sheet down one level at a time, then leaves it at Mini`() {
+    fun `each bar button opens its panel in the list, and tapping it again closes it`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapQueuePeek()
+        listOf(NowPlayingPanel.SleepTimer, NowPlayingPanel.PlaybackSound, NowPlayingPanel.Queue).forEach { panel ->
+            robot.tapPanelButton(panel)
+            robot.assertLevel(PlayerLevel.Expanded)
+            robot.panel shouldBe panel
+            robot.assertPanel(panel)
+
+            robot.tapPanelButton(panel)
+            robot.assertLevel(PlayerLevel.NowPlaying)
+            robot.panel shouldBe null
+        }
+    }
+
+    @Test
+    fun `dragging Now Playing up raises the sheet on the queue`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.swipeUpNowPlaying()
+        robot.assertLevel(PlayerLevel.Expanded)
+        robot.panel shouldBe NowPlayingPanel.Queue
+    }
+
+    @Test
+    fun `the pinned song stands in once the transport scrolls away, and tapping it scrolls back to the title`() {
+        robot.setContent(queue = shellQueue(*Array(30) { "Song ${it + 1}" }))
+        robot.tapMiniPlayer()
+        robot.assertPinnedSong(shown = false)
+
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+        robot.scrollNowPlayingTo(12)
+        robot.assertPinnedSong(shown = true)
+        robot.tapPinnedSong()
+        robot.assertPinnedSong(shown = false)
+        robot.assertTextDisplayed("Juniper Static • Phase Garden")
+    }
+
+    @Test
+    fun `back closes the open panel with the sheet's full height, then steps down to Mini`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.SleepTimer)
 
         robot.pressBack()
         robot.assertLevel(PlayerLevel.NowPlaying)
+        robot.panel shouldBe null
         robot.pressBack()
         robot.assertLevel(PlayerLevel.Mini)
     }
@@ -102,9 +149,8 @@ class AppShellTest {
 
         robot.tapMiniPlayer()
         robot.assertReachable("Collapse player", reachable = true)
-        robot.assertReachable("Second song", reachable = false)
 
-        robot.tapQueuePeek()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
         robot.assertReachable("Second song", reachable = true)
     }
 
@@ -121,7 +167,7 @@ class AppShellTest {
 
     @Test
     @Config(qualifiers = "w840dp-h900dp")
-    fun `at Medium width the sheet has no Queue level, so back goes straight to Mini`() {
+    fun `at Medium width the sheet has no Expanded level, so back goes straight to Mini`() {
         robot.setContent(window = MediumWindow)
         robot.tapMiniPlayer()
         robot.assertLevel(PlayerLevel.NowPlaying)
@@ -132,13 +178,30 @@ class AppShellTest {
 
     @Test
     @Config(qualifiers = "w840dp-h900dp")
-    fun `compact Queue becomes Now Playing at Medium width`() {
+    fun `at Medium width a panel opens beside the player, and back closes it before the sheet`() {
+        robot.setContent(window = MediumWindow)
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
+        robot.assertLevel(PlayerLevel.NowPlaying)
+        robot.assertPanel(NowPlayingPanel.PlaybackSound)
+
+        robot.pressBack()
+        robot.assertLevel(PlayerLevel.NowPlaying)
+        robot.panel shouldBe null
+        robot.pressBack()
+        robot.assertLevel(PlayerLevel.Mini)
+    }
+
+    @Test
+    @Config(qualifiers = "w840dp-h900dp")
+    fun `compact Expanded becomes Now Playing at Medium width, keeping the open panel`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapQueuePeek()
+        robot.tapPanelButton(NowPlayingPanel.SleepTimer)
 
         robot.setWindow(MediumWindow)
         robot.assertLevel(PlayerLevel.NowPlaying)
+        robot.assertPanel(NowPlayingPanel.SleepTimer)
     }
 
     @Test
@@ -146,11 +209,12 @@ class AppShellTest {
         val restoration = StateRestorationTester(composeTestRule)
         robot.setContent(restoration = restoration)
         robot.tapMiniPlayer()
-        robot.tapQueuePeek()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
 
         restoration.emulateSavedInstanceStateRestore()
         composeTestRule.waitForIdle()
-        robot.assertLevel(PlayerLevel.Queue)
+        robot.assertLevel(PlayerLevel.Expanded)
+        robot.assertPanel(NowPlayingPanel.Queue)
     }
 
     @Test
@@ -170,28 +234,28 @@ class AppShellTest {
 
     @Test
     @Config(qualifiers = "w1280dp-h900dp")
-    fun `compact Queue maps to the pane's Queue`() {
+    fun `compact Expanded opens the pane on the open panel`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapQueuePeek()
+        robot.tapPanelButton(NowPlayingPanel.SleepTimer)
 
         robot.setWindow(PaneWindow)
         robot.assertPaneShown()
+        robot.assertPanel(NowPlayingPanel.SleepTimer)
     }
 
     @Test
     @Config(qualifiers = "w1280dp-h900dp")
-    fun `the pane's queue keeps the playing song above the transport, and tapping it goes back to Now Playing`() {
+    fun `the pane's bar opens and closes each panel in its list`() {
         robot.setContent(window = PaneWindow)
         robot.tapMiniPlayer()
-        robot.assertQueueHeadSong(shown = false)
+        robot.assertPanel(NowPlayingPanel.Queue)
 
-        robot.tapQueuePeek()
-        robot.assertQueueHeadSong(shown = true)
-
-        robot.tapQueueHeadSong()
-        robot.assertQueueHeadSong(shown = false)
-        robot.assertTextDisplayed("Now playing")
+        robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
+        robot.assertPanel(NowPlayingPanel.PlaybackSound)
+        robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
+        robot.panel shouldBe null
+        robot.assertPanel(NowPlayingPanel.Queue)
     }
 
     @Test
@@ -214,7 +278,7 @@ class AppShellTest {
         robot.tapMiniPlayer()
         robot.assertTextDisplayed("Juniper Static • Phase Garden")
         robot.assertTextDisplayed("1:00")
-        robot.assertTextDisplayed("3:00")
+        robot.assertTextDisplayed("3:00", outsideQueue = true)
     }
 
     @Test
@@ -232,7 +296,7 @@ class AppShellTest {
     fun `tapping a queue row skips to it`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapQueuePeek()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
 
         robot.tapText("Third song")
         robot.calls shouldBe listOf("skipToQueueItem(2)")
@@ -242,7 +306,7 @@ class AppShellTest {
     fun `swiping a queue row away removes it`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapQueuePeek()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
 
         robot.swipeAwayQueueRow("Second song")
         robot.calls shouldBe listOf("removeQueueItem(1)")
@@ -252,7 +316,8 @@ class AppShellTest {
     fun `dragging a row's handle moves it down the queue`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapQueuePeek()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+        robot.scrollNowPlayingTo(NowPlayingItems.Panel)
 
         robot.dragQueueRow("First song", rows = 2)
         robot.calls shouldBe listOf("moveQueueItem(0, after 2)")
@@ -262,7 +327,8 @@ class AppShellTest {
     fun `holding a dragged row at the bottom of the queue scrolls it to the end`() {
         robot.setContent(queue = shellQueue(*Array(30) { "Song ${it + 1}" }))
         robot.tapMiniPlayer()
-        robot.tapQueuePeek()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+        robot.scrollNowPlayingTo(NowPlayingItems.Panel)
 
         robot.holdFirstQueueRowAtBottom(holdMs = 10_000)
         robot.calls shouldBe listOf("moveQueueItem(0, after 29)")
@@ -272,7 +338,7 @@ class AppShellTest {
     fun `long-pressing a queue row offers Play Next`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapQueuePeek()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
 
         robot.longPressQueueRow("Third song")
         robot.tapText("Play Next")
@@ -283,9 +349,10 @@ class AppShellTest {
     fun `clearing the queue offers Undo`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapQueuePeek()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
 
-        robot.tapDescription("Clear Queue")
+        robot.tapDescription("More options")
+        robot.tapText("Clear Queue")
         robot.tapText("Undo")
         robot.calls shouldContain "clearQueue"
         robot.calls.last() shouldBe "undoClearQueue"
@@ -295,7 +362,7 @@ class AppShellTest {
     fun `removing a queue row from its menu offers Undo`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapQueuePeek()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
 
         robot.longPressQueueRow("Second song")
         robot.tapText("Remove from Queue")
@@ -307,7 +374,7 @@ class AppShellTest {
     fun `a queue row's song actions act on that row's song`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapQueuePeek()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
 
         robot.longPressQueueRow("Third song")
         robot.tapText("Song Info")
@@ -387,20 +454,31 @@ class AppShellTest {
     }
 
     @Test
-    fun `the sleep timer sheet starts a preset or a slid length, playing the last song to the end if asked`() {
+    fun `the sleep timer panel starts a slid length, playing the last song to the end if asked`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapDescription("Sleep timer")
-        robot.tapText("15 min")
+        robot.tapPanelButton(NowPlayingPanel.SleepTimer)
+        robot.setRuler("Length", 2)
         robot.tapText("Play last song to end")
         robot.tapText("Start timer")
 
         robot.calls shouldContain "startSleepTimer(900000, true)"
-        robot.assertTextDisplayed("15:00")
+        robot.assertReachable("15:00", reachable = true)
+        robot.assertTextDisplayed("Stop Timer")
     }
 
     @Test
-    fun `a running sleep timer counts down in the header until it stops`() {
+    fun `End of song starts a timer that stops after the playing song`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.SleepTimer)
+        robot.tapText("End of song")
+
+        robot.calls shouldContain "startSleepTimer(0, true)"
+    }
+
+    @Test
+    fun `a running sleep timer counts down in the bar until it stops`() {
         robot.actions.sleepTimerRemaining.value = 754_000
         robot.setContent(queue = shellQueue("First song").copy(sleepTimerActive = true))
         robot.tapMiniPlayer()
@@ -417,11 +495,11 @@ class AppShellTest {
     }
 
     @Test
-    fun `the running sleep timer's sheet adds five minutes or stops it`() {
+    fun `the running sleep timer's panel adds five minutes or stops it`() {
         robot.actions.sleepTimerRemaining.value = 90_000
         robot.setContent(queue = shellQueue("First song").copy(sleepTimerActive = true))
         robot.tapMiniPlayer()
-        robot.tapSleepTimerChip()
+        robot.tapPanelButton(NowPlayingPanel.SleepTimer)
         robot.tapText("Add 5 min")
         robot.calls shouldContain "startSleepTimer(390000, false)"
 
@@ -431,36 +509,33 @@ class AppShellTest {
     }
 
     @Test
-    fun `playback and sound sets the speed and ReplayGain, and a speed other than normal shows in the header`() {
+    fun `playback and sound sets the speed and ReplayGain, and a speed other than normal shows in the bar`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapDescription("More options")
-        robot.tapText("Playback & sound")
+        robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
         robot.tapText("1.5×")
         robot.tapText("Album Gain")
 
         robot.calls shouldContain "setPlaybackSpeed(1.5)"
         robot.calls shouldContain "setReplayGainMode(Album)"
-        robot.assertReachable("Playback speed 1.5×", reachable = true)
+        robot.assertReachable("Playback & sound, Playback speed 1.5×", reachable = true)
 
         robot.actions.setPlaybackSpeed(1f)
-        robot.assertReachable("Playback speed 1×", reachable = false)
+        robot.assertReachable("Playback & sound, Playback speed 1×", reachable = false)
     }
 
     @Test
     fun `playback and sound links to the equalizer and the rest of its settings, settling the player first`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapDescription("More options")
-        robot.tapText("Playback & sound")
+        robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
         robot.tapText("Equalizer")
 
         robot.assertLevel(PlayerLevel.Mini)
         robot.assertTextDisplayed("Equalizer screen")
 
         robot.tapMiniPlayer()
-        robot.tapDescription("More options")
-        robot.tapText("Playback & sound")
+        robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
         robot.tapText("More sound settings")
         robot.assertLevel(PlayerLevel.Mini)
         robot.assertTextDisplayed("Settings: PlaybackAndSound")

@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
@@ -69,8 +70,8 @@ interface ReplayGainPreference {
 
 /**
  * The player surfaces' state and actions (docs/architecture/app-shell.md, sections 1 and 5): the
- * queue, playback state and modes, favourite, sleep timer, speed and ReplayGain, and the now-playing
- * artwork seed.
+ * queue, playback state and modes, favourite, sleep timer, speed and ReplayGain, the now-playing
+ * artwork seed, and the panel Now Playing's bar has open, which survives process death.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -87,6 +88,7 @@ class PlayerViewModel @Inject constructor(
     private val restoreQueue: RestoreQueue,
     private val availableMediaActions: AvailableMediaActions,
     private val mediaActionHandler: MediaActionHandler,
+    private val savedStateHandle: SavedStateHandle,
 ) : ViewModel(),
     PlayerActions {
     private val castAvailable = castAvailability.isAvailable()
@@ -99,6 +101,8 @@ class PlayerViewModel @Inject constructor(
     val events: SharedFlow<PlayerUiEvent> = _events.asSharedFlow()
 
     private var clearedQueue: QueueSnapshot? = null
+
+    private val panel: StateFlow<NowPlayingPanel?> = savedStateHandle.getStateFlow(PANEL_KEY, null)
 
     private var removedItem: RemovedQueueItem? = null
 
@@ -163,6 +167,9 @@ class PlayerViewModel @Inject constructor(
                 playbackSpeed = extras.sound.speed,
                 replayGainMode = extras.sound.replayGainMode,
             )
+        }.combine(panel) { state, panel ->
+            // An emptied queue takes the player, and its panel, away.
+            state.copy(panel = panel.takeIf { state.hasQueue == true })
         }.distinctUntilChanged()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), queueOperations.queueStateFlow.value.toPlayerUiState())
 
@@ -230,6 +237,12 @@ class PlayerViewModel @Inject constructor(
     override fun setPlaybackSpeed(speed: Float) = playbackOperations.setPlaybackSpeed(speed)
 
     override fun setReplayGainMode(mode: ReplayGainMode) = replayGainPreference.set(mode)
+
+    override fun togglePanel(panel: NowPlayingPanel) = showPanel(panel.takeUnless { it == this.panel.value })
+
+    override fun showPanel(panel: NowPlayingPanel?) {
+        savedStateHandle[PANEL_KEY] = panel
+    }
 
     override fun skipToQueueItem(uid: Long) {
         val index = queueOperations.getQueue().indexOfFirst { it.uid == uid }
@@ -319,14 +332,16 @@ class PlayerViewModel @Inject constructor(
         override fun hashCode() = key.hashCode()
     }
 
-    private companion object {
-        const val SLEEP_TIMER_TICK_MS = 1_000L
+    internal companion object {
+        private const val SLEEP_TIMER_TICK_MS = 1_000L
+
+        const val PANEL_KEY = "now_playing_panel"
 
         /**
          * The shared actions that make sense on the playing song or a queue row: not Play, Shuffle or the queue verbs,
          * which would rebuild or duplicate the queue it is already in (redesign inventory, section 4).
          */
-        val PlayerSongActions = setOf(
+        private val PlayerSongActions = setOf(
             MediaActionType.AddToPlaylist,
             MediaActionType.GoToAlbum,
             MediaActionType.GoToArtist,

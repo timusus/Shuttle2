@@ -1,9 +1,9 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
+import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel.Expanded
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel.Hidden
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel.Mini
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel.NowPlaying
-import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel.Queue
 import com.simplecityapps.shuttle.ui.shell.player.PlayerMode.CompactSheet
 import com.simplecityapps.shuttle.ui.shell.player.PlayerMode.Pane
 import com.simplecityapps.shuttle.ui.shell.player.PlayerMode.Sheet
@@ -18,38 +18,39 @@ class PlayerLevelTest {
     }
 
     @Test
-    fun `a queue allows Mini to Queue on compact and in the pane, and no Queue level on Medium and Expanded`() {
-        playerLevels(CompactSheet, hasQueue = true) shouldBe setOf(Mini, NowPlaying, Queue)
-        playerLevels(Pane, hasQueue = true) shouldBe setOf(Mini, NowPlaying, Queue)
+    fun `only a compact sheet resting below full height has an Expanded level`() {
+        playerLevels(CompactSheet, hasQueue = true) shouldBe setOf(Mini, NowPlaying, Expanded)
+        playerLevels(CompactSheet, hasQueue = true, partialRest = false) shouldBe setOf(Mini, NowPlaying)
+        playerLevels(Pane, hasQueue = true) shouldBe setOf(Mini, NowPlaying)
         playerLevels(Sheet, hasQueue = true) shouldBe setOf(Mini, NowPlaying)
     }
 
     @Test
     fun `back steps down one level at a time and never reaches Hidden`() {
-        Queue.stepDown() shouldBe NowPlaying
+        Expanded.stepDown() shouldBe NowPlaying
         NowPlaying.stepDown() shouldBe Mini
         Mini.stepDown() shouldBe null
         Hidden.stepDown() shouldBe null
     }
 
     @Test
-    fun `sheet to pane opens the pane, keeping Queue`() {
+    fun `sheet to pane opens the pane`() {
         mapPlayerLevel(Mini, CompactSheet, Pane) shouldBe NowPlaying
         mapPlayerLevel(NowPlaying, Sheet, Pane) shouldBe NowPlaying
-        mapPlayerLevel(Queue, CompactSheet, Pane) shouldBe Queue
+        mapPlayerLevel(Expanded, CompactSheet, Pane) shouldBe NowPlaying
     }
 
     @Test
     fun `pane to sheet always drops to Mini`() {
-        listOf(Mini, NowPlaying, Queue).forEach { level ->
+        listOf(Mini, NowPlaying).forEach { level ->
             mapPlayerLevel(level, Pane, CompactSheet) shouldBe Mini
             mapPlayerLevel(level, Pane, Sheet) shouldBe Mini
         }
     }
 
     @Test
-    fun `compact to Medium folds Queue into Now Playing and leaves other levels`() {
-        mapPlayerLevel(Queue, CompactSheet, Sheet) shouldBe NowPlaying
+    fun `compact to Medium folds Expanded into Now Playing and leaves other levels`() {
+        mapPlayerLevel(Expanded, CompactSheet, Sheet) shouldBe NowPlaying
         mapPlayerLevel(NowPlaying, CompactSheet, Sheet) shouldBe NowPlaying
         mapPlayerLevel(Mini, CompactSheet, Sheet) shouldBe Mini
         mapPlayerLevel(NowPlaying, Sheet, CompactSheet) shouldBe NowPlaying
@@ -66,8 +67,8 @@ class PlayerLevelTest {
     @Test
     fun `resolving against the allowed levels hides an emptied sheet and reveals Mini for a new queue`() {
         resolvePlayerLevel(NowPlaying, setOf(Hidden)) shouldBe Hidden
-        resolvePlayerLevel(Hidden, setOf(Mini, NowPlaying, Queue)) shouldBe Mini
-        resolvePlayerLevel(Queue, setOf(Mini, NowPlaying)) shouldBe NowPlaying
-        resolvePlayerLevel(Queue, setOf(Mini, NowPlaying, Queue)) shouldBe Queue
+        resolvePlayerLevel(Hidden, setOf(Mini, NowPlaying, Expanded)) shouldBe Mini
+        resolvePlayerLevel(Expanded, setOf(Mini, NowPlaying)) shouldBe NowPlaying
+        resolvePlayerLevel(Expanded, setOf(Mini, NowPlaying, Expanded)) shouldBe Expanded
     }
 }

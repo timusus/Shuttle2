@@ -7,20 +7,23 @@ package com.simplecityapps.shuttle.ui.shell.player
  *
  * - Hidden = [height], the sheet fully below the shell
  * - Mini = [height] - [navBarHeight] - [miniHeight], the mini player sitting on the nav bar
- * - NowPlaying = 0, the sheet filling the shell
- * - Queue = -[queueTravel], now playing pushed up and the queue panel fully in
+ * - NowPlaying = [restOffset], the sheet at rest: as tall as its content, or the full height (0)
+ * - Expanded = 0, the sheet filling the shell
  */
 data class PlayerSheetGeometry(
     val height: Float,
     val navBarHeight: Float,
     val miniHeight: Float,
-    val queueTravel: Float,
+    val restOffset: Float,
 ) {
+    /** Whether the sheet rests below full height, so it has an Expanded level above rest. */
+    val partialRest: Boolean get() = restOffset > 0f
+
     fun offsetOf(level: PlayerLevel): Float = when (level) {
         PlayerLevel.Hidden -> height
         PlayerLevel.Mini -> height - navBarHeight - miniHeight
-        PlayerLevel.NowPlaying -> 0f
-        PlayerLevel.Queue -> -queueTravel
+        PlayerLevel.NowPlaying -> restOffset
+        PlayerLevel.Expanded -> 0f
     }
 
     /** 0 hidden → 1 mini. */
@@ -28,9 +31,6 @@ data class PlayerSheetGeometry(
 
     /** 0 mini → 1 now playing. */
     fun expand(offset: Float): Float = fraction(offsetOf(PlayerLevel.Mini), offsetOf(PlayerLevel.NowPlaying), offset)
-
-    /** 0 now playing → 1 queue. */
-    fun queue(offset: Float): Float = fraction(offsetOf(PlayerLevel.NowPlaying), offsetOf(PlayerLevel.Queue), offset)
 
     /** Where the sheet itself sits: it never rises above the shell's top edge. */
     fun sheetTop(offset: Float): Float = offset.coerceAtLeast(0f)
@@ -45,12 +45,30 @@ data class PlayerSheetGeometry(
 
     fun nowPlayingAlpha(offset: Float): Float = ((expand(offset) - 0.2f) / 0.8f).coerceIn(0f, 1f)
 
-    fun nowPlayingTranslation(offset: Float): Float = -queueTravel * queue(offset)
-
-    /** The queue panel rises from its peek at Now Playing to fully in at Queue. */
-    fun queuePanelTranslation(offset: Float): Float = queueTravel * (1f - queue(offset))
-
     fun scrimAlpha(offset: Float): Float = MaxScrimAlpha * expand(offset)
+
+    /**
+     * How far down the sheet its content starts: none while the sheet's edge is below the status bar
+     * ([statusBar] px), then as much as keeps the content under it as the edge rises into it.
+     */
+    fun contentTop(
+        offset: Float,
+        statusBar: Float,
+    ): Float = (statusBar - sheetTop(offset)).coerceAtLeast(0f)
+
+    /**
+     * The radius of the sheet's top corners: none at Mini, [corner] px at rest, flattening over the
+     * last [corner] px before the edge meets the status bar, so an expanded sheet fills it square.
+     */
+    fun cornerRadius(
+        offset: Float,
+        statusBar: Float,
+        corner: Float,
+    ): Float {
+        if (!partialRest || corner <= 0f) return 0f
+        val toStatusBar = ((sheetTop(offset) - statusBar) / corner).coerceIn(0f, 1f)
+        return corner * expand(offset) * toStatusBar
+    }
 
     /** Follows reveal only, never expand, so destinations never reflow per frame. */
     fun contentBottomPadding(reveal: Float): Float = navBarHeight + miniHeight * reveal

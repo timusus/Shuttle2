@@ -76,11 +76,9 @@ class PlayerExtrasScreenshotTest {
     @Test
     fun sleepTimer() {
         nowPlaying(ArtworkCovers[0])
-        robot.tapDescription("Sleep timer")
+        robot.tapPanelButton(NowPlayingPanel.SleepTimer)
         shot("sleep-timer-new")
         robot.tapText("Start timer")
-        shot("sleep-timer-running-header")
-        robot.tapSleepTimerChip()
         shot("sleep-timer-running")
     }
 
@@ -88,9 +86,8 @@ class PlayerExtrasScreenshotTest {
     fun playbackAndSound() {
         nowPlaying(ArtworkCovers[1])
         robot.setQueue(sampleShellQueue(size = 16, playing = ArtworkCovers[1]).copy(playbackSpeed = 1.25f))
-        shot("playback-speed-header")
-        robot.tapDescription("More options")
-        robot.tapText("Playback & sound")
+        shot("playback-speed-bar")
+        robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
         shot("playback-sound")
     }
 

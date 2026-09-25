@@ -2,6 +2,10 @@
   "since": "v26092301",
   "features": [
     {
+      "text": "A new Now Playing: scroll past the artwork to your queue, and open the sleep timer and playback speed and sound settings from the bar along the bottom",
+      "commits": []
+    },
+    {
       "text": "Select multiple songs in a playlist at once, to add them to the queue, a playlist or edit their tags together",
       "commits": ["2eaa82f5"]
     },

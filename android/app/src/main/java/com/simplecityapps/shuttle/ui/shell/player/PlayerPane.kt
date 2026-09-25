@@ -1,20 +1,22 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
@@ -28,9 +30,9 @@ import kotlinx.coroutines.launch
 fun playerPaneWidth(extraLarge: Boolean): Dp = if (extraLarge) 412.dp else 360.dp
 
 /**
- * The trailing player pane from 1200 dp, shown at NowPlaying and Queue; Mini collapses it to the
- * docked mini player. No gesture drives it: the level snaps and the queue push animates on the
- * level with the slow spatial spec.
+ * The trailing player pane from 1200 dp, shown at NowPlaying; Mini collapses it to the docked mini
+ * player. It holds the compact sheet's list and bar without the sheet: no gesture drives it, and a
+ * panel opens by scrolling the list alone.
  */
 @Composable
 internal fun PlayerPane(
@@ -39,51 +41,42 @@ internal fun PlayerPane(
     progress: () -> PlayerProgress,
     actions: PlayerActions,
     width: Dp,
-    tabletopFold: Rect?,
     onOpenRoute: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
-    val queueFraction by animateFloatAsState(
-        targetValue = if (state.level == PlayerLevel.Queue) 1f else 0f,
-        animationSpec = MaterialTheme.motionScheme.slowSpatialSpec(),
-        label = "paneQueue",
-    )
+    val listState = rememberLazyListState()
+    val panels = rememberNowPlayingPanels(listState, state, player, actions)
+    val transportScrolledAway by rememberTransportScrolledAway(listState)
     ArtworkTheme(player.seed, ArtworkSchemeStyle.Player) {
         Surface(
             modifier = modifier.width(width).fillMaxHeight().testTag(PlayerTestTags.Pane),
-            color = MaterialTheme.colorScheme.surfaceContainer,
+            color = PlayerSheetColor,
         ) {
-            BoxWithConstraints {
-                val density = LocalDensity.current
-                val width = with(density) { maxWidth.toPx() }
-                val height = with(density) { maxHeight.toPx() }
-                val statusBarTop = WindowInsets.statusBars.getTop(density)
-                val navigationBarBottom = WindowInsets.navigationBars.getBottom(density)
-                // The pane's own stacked geometry: always fully expanded, pushed up by the queue as a compact sheet is.
-                val geometry = remember(width, height, density, statusBarTop, navigationBarBottom) {
-                    with(density) {
-                        PlayerSheetGeometry(
-                            height = height,
-                            navBarHeight = 0f,
-                            miniHeight = MiniPlayerHeight.toPx(),
-                            queueTravel = stackedQueueTravel(width, height, statusBarTop, navigationBarBottom, withSong = true),
-                        )
-                    }
+            Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars)) {
+                BoxWithConstraints(Modifier.weight(1f)) {
+                    val fixed = HandleHeight + with(LocalDensity.current) { titleHeight().toDp() } + transportHeight(NowPlayingGap) + NowPlayingGap * 2
+                    val artwork = minOf(maxWidth - NowPlayingMargin * 2, MaxArtworkSize, maxHeight - fixed).coerceAtLeast(0.dp)
+                    NowPlayingList(
+                        player = player,
+                        progress = progress,
+                        actions = actions,
+                        listState = listState,
+                        artworkSize = artwork,
+                        artworkSlotHeight = artwork + NowPlayingGap * 2,
+                        viewportHeight = maxHeight,
+                        onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
+                        onOpenRoute = onOpenRoute,
+                        modifier = Modifier.testTag(PlayerTestTags.NowPlaying),
+                    )
+                    PinnedSong(player, actions, visible = transportScrolledAway, onClick = panels::scrollToTitle)
                 }
-                StackedPlayer(
+                NowPlayingBar(
                     player = player,
-                    progress = progress,
                     actions = actions,
-                    geometry = { geometry },
-                    offset = { -geometry.queueTravel * queueFraction },
-                    tabletopFold = tabletopFold,
-                    onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
-                    onShowQueue = {
-                        scope.launch { state.moveTo(if (state.level == PlayerLevel.Queue) PlayerLevel.NowPlaying else PlayerLevel.Queue) }
-                    },
-                    onOpenRoute = onOpenRoute,
-                    songInQueueHead = true,
+                    selected = player.panel,
+                    onPanel = panels::toggle,
+                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
                 )
             }
         }

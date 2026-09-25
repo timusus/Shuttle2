@@ -14,6 +14,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.DeviceConfigurationOverride
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
@@ -28,15 +29,18 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
@@ -57,6 +61,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.preview.sampleSongs
+import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
@@ -235,6 +240,13 @@ class RecordingPlayerActions(
         calls += "undoClearQueue"
     }
 
+    override fun togglePanel(panel: NowPlayingPanel) = showPanel(panel.takeUnless { it == state.value.panel })
+
+    /** Not recorded in [calls]: the open panel is the player's own state, asserted on [state]. */
+    override fun showPanel(panel: NowPlayingPanel?) {
+        state.value = state.value.copy(panel = panel)
+    }
+
     override fun songActions(song: Song): Flow<List<MediaActionType>> = flowOf(songActions)
 
     override fun playlists(): Flow<List<Playlist>> = flowOf(playlists)
@@ -277,6 +289,9 @@ class AppShellRobot(
     val actions = RecordingPlayerActions(queueState)
 
     val calls: List<String> get() = actions.calls
+
+    /** The panel the player's state has open. */
+    val panel: NowPlayingPanel? get() = queueState.value.panel
 
     fun setContent(
         queue: PlayerUiState = queueState.value,
@@ -349,13 +364,35 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
-    fun tapSleepTimerChip() {
-        rule.onNodeWithTag(PlayerTestTags.SleepTimerChip).performClick()
+    /** Taps the Now Playing bar's button for [panel], which opens it or, if it is open, closes it. */
+    fun tapPanelButton(panel: NowPlayingPanel) {
+        val description = when (panel) {
+            NowPlayingPanel.Queue -> "Show queue"
+            NowPlayingPanel.SleepTimer -> "Sleep timer"
+            NowPlayingPanel.PlaybackSound -> "Playback & sound"
+        }
+        rule.onNode(hasContentDescription(description, substring = true) and hasAnyAncestor(hasTestTag(PlayerTestTags.Bar))).performClick()
         rule.waitForIdle()
     }
 
-    fun tapQueuePeek() {
-        rule.onNodeWithTag(PlayerTestTags.QueuePeek).performClick()
+    /** Sets the ruler labelled [description] to its tick at [index], as accessibility would. */
+    fun setRuler(
+        description: String,
+        index: Int,
+    ) {
+        rule.onNodeWithContentDescription(description).performSemanticsAction(SemanticsActions.SetProgress) { it(index.toFloat()) }
+        rule.waitForIdle()
+    }
+
+    /** Scrolls the Now Playing list to its item at [index] (see NowPlayingItems). */
+    fun scrollNowPlayingTo(index: Int) {
+        rule.onNodeWithTag(PlayerTestTags.NowPlayingList).performScrollToIndex(index)
+        rule.waitForIdle()
+    }
+
+    /** Swipes up on the Now Playing list, which raises a resting sheet before it scrolls. */
+    fun swipeUpNowPlaying() {
+        rule.onNodeWithTag(PlayerTestTags.NowPlayingList).performTouchInput { swipeUp(startY = centerY, endY = top) }
         rule.waitForIdle()
     }
 
@@ -413,7 +450,7 @@ class AppShellRobot(
         rows: Int,
     ) {
         val rowHeight = queueRow("Second song").fetchSemanticsNode().boundsInRoot.top - queueRow("First song").fetchSemanticsNode().boundsInRoot.top
-        val handle = rule.onAllNodes(hasContentDescription("Reorder") and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueList)), useUnmergedTree = true)[
+        val handle = rule.onAllNodes(hasContentDescription("Reorder") and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueRow)), useUnmergedTree = true)[
             listOf("First song", "Second song", "Third song").indexOf(title)
         ]
         handle.performTouchInput {
@@ -426,8 +463,8 @@ class AppShellRobot(
 
     /** Drags the first visible row's handle to the bottom of the queue list and holds it there for [holdMs]. */
     fun holdFirstQueueRowAtBottom(holdMs: Long) {
-        val list = rule.onNodeWithTag(PlayerTestTags.QueueList).fetchSemanticsNode().boundsInRoot
-        val handle = rule.onAllNodes(hasContentDescription("Reorder") and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueList)), useUnmergedTree = true)[0]
+        val list = rule.onNode(hasTestTag(PlayerTestTags.QueueList) or hasTestTag(PlayerTestTags.NowPlayingList)).fetchSemanticsNode().boundsInRoot
+        val handle = rule.onAllNodes(hasContentDescription("Reorder") and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueRow)), useUnmergedTree = true)[0]
         val start = handle.fetchSemanticsNode().boundsInRoot.center.y
         handle.performTouchInput {
             down(center)
@@ -439,7 +476,13 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
-    private fun queueRow(title: String) = rule.onNode(hasText(title) and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueList)))
+    private fun queueRow(title: String) = rule.onNode(hasText(title) and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueRow)))
+
+    /** Presses back until the sheet rests at Mini, one level at a time. */
+    fun backToMini() {
+        val mini = PlayerLevel.Mini.description
+        while (rule.onNodeWithTag(PlayerTestTags.Sheet).fetchSemanticsNode().config.getOrNull(SemanticsProperties.StateDescription) != mini) pressBack()
+    }
 
     fun assertLevel(level: PlayerLevel) {
         rule.onNodeWithTag(PlayerTestTags.Sheet).assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, level.description))
@@ -453,18 +496,27 @@ class AppShellRobot(
         rule.onNodeWithTag(PlayerTestTags.Sheet).assertExists()
     }
 
-    /** The pane's song row over the queue: in the semantics tree, holding the playing song, only at the Queue level. */
-    fun assertQueueHeadSong(shown: Boolean) {
-        val node = rule.onNodeWithTag(PlayerTestTags.QueueHeadSong)
-        if (shown) {
-            node.assertIsDisplayed().assert(hasText("First song"))
-        } else {
-            node.assertDoesNotExist()
+    /** Which panel shows in the Now Playing list: [panel]'s content is there, and the other panels' are not. */
+    fun assertPanel(panel: NowPlayingPanel) {
+        val tags = mapOf(
+            NowPlayingPanel.Queue to PlayerTestTags.QueueRow,
+            NowPlayingPanel.SleepTimer to PlayerTestTags.SleepTimerPanel,
+            NowPlayingPanel.PlaybackSound to PlayerTestTags.PlaybackSoundPanel,
+        )
+        tags.forEach { (each, tag) ->
+            val nodes = rule.onAllNodesWithTag(tag, useUnmergedTree = true)
+            if (each == panel) nodes.onFirst().assertExists() else nodes.assertCountEquals(0)
         }
     }
 
-    fun tapQueueHeadSong() {
-        rule.onNodeWithTag(PlayerTestTags.QueueHeadSong).performClick()
+    /** The pinned song stands in for the title and transport once they scroll away. */
+    fun assertPinnedSong(shown: Boolean) {
+        val node = rule.onNodeWithTag(PlayerTestTags.PinnedSong)
+        if (shown) node.assertIsDisplayed() else node.assertDoesNotExist()
+    }
+
+    fun tapPinnedSong() {
+        rule.onNodeWithTag(PlayerTestTags.PinnedSong).performClick()
         rule.waitForIdle()
     }
 
@@ -484,8 +536,13 @@ class AppShellRobot(
         if (reachable) nodes.onFirst().assertExists() else nodes.assertCountEquals(0)
     }
 
-    fun assertTextDisplayed(text: String) {
-        rule.onNodeWithText(text).assertIsDisplayed()
+    /** [outsideQueue] skips the queue's rows, which show their songs' lengths too. */
+    fun assertTextDisplayed(
+        text: String,
+        outsideQueue: Boolean = false,
+    ) {
+        val node = if (outsideQueue) rule.onNode(hasText(text) and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueRow)).not()) else rule.onNodeWithText(text)
+        node.assertIsDisplayed()
     }
 }
 

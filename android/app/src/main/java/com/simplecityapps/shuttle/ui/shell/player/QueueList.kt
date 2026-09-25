@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.compose.animation.core.animate
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -31,6 +31,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -59,37 +60,152 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.formatDuration
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-/** "Up Next" over the queue, with Clear Queue; at the Now Playing level it is the queue's peek, and [onClick] shows the queue. */
+/** Height of the "Up Next" header over the queue's rows. */
+internal val QueueHeaderHeight = 56.dp
+
+/** "Up Next" over the queue, with Clear Queue. */
 @Composable
 internal fun QueueHeader(
-    onClick: (() -> Unit)?,
     onClear: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val showQueue = stringResource(R.string.player_show_queue)
+    val color = PlayerSheetColor
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(QueuePeekHeight)
-            .testTag(PlayerTestTags.QueuePeek)
-            .then(if (onClick != null) Modifier.clickable(onClickLabel = showQueue, onClick = onClick) else Modifier)
+            .height(QueueHeaderHeight)
+            .background(color)
+            .testTag(PlayerTestTags.QueueHeader)
             .padding(end = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SectionHeader(title = stringResource(R.string.playback_up_next), modifier = Modifier.weight(1f), containerColor = MaterialTheme.colorScheme.surfaceContainer)
+        SectionHeader(title = stringResource(R.string.playback_up_next), modifier = Modifier.weight(1f), containerColor = color)
         S2IconButton(icon = Icons.Rounded.ClearAll, contentDescription = stringResource(R.string.menu_title_sort_clear_queue), onClick = onClear)
     }
 }
 
 /**
- * The queue: tap a row to play it, drag its handle to reorder, swipe it away to remove it, or
- * long-press it for its song actions. The list scrolls inside the sheet's nested scroll, so an
- * upward drag raises the sheet to Queue before the list moves.
+ * What the queue's rows share across the list that holds them: the reorder in progress, the
+ * long-press menu and the latest items, which a drag that began on older ones reads.
+ */
+@Stable
+internal class QueueListState(
+    val reorder: QueueReorderState,
+    val songActions: SongActionsState,
+    items: State<List<PlayerSong>>,
+) {
+    val items: List<PlayerSong> by items
+}
+
+/** [firstRowIndex] is the list index of the queue's first row, after whatever the list shows above it. */
+@Composable
+internal fun rememberQueueListState(
+    listState: LazyListState,
+    items: List<PlayerSong>,
+    firstRowIndex: Int = 0,
+): QueueListState {
+    val reorder = remember(listState, firstRowIndex) { QueueReorderState(listState, firstRowIndex) }
+    val songActions = rememberSongActionsState()
+    val currentItems = rememberUpdatedState(items)
+    val density = LocalDensity.current
+
+    // While a row is held, scroll the list when it's dragged near either edge.
+    LaunchedEffect(reorder.held) {
+        if (reorder.held) with(density) { reorder.autoScroll(edge = AutoScrollEdge.toPx(), maxSpeed = AutoScrollMaxSpeed.toPx()) }
+    }
+    return remember(reorder, songActions, currentItems) { QueueListState(reorder, songActions, currentItems) }
+}
+
+/**
+ * The queue's rows: tap a row to play it, drag its handle to reorder, swipe it away to remove it, or
+ * long-press it for its song actions ([QueueSongActions] shows the menu). Rows are keyed by their
+ * queue uid, so a list may hold them after items of its own.
  */
 @OptIn(ExperimentalMaterial3Api::class)
+internal fun LazyListScope.queueItems(
+    items: List<PlayerSong>,
+    queue: QueueListState,
+    actions: PlayerActions,
+    scope: CoroutineScope,
+) {
+    val reorder = queue.reorder
+    if (items.isEmpty()) {
+        item(key = "queue_empty") {
+            Box(Modifier.fillMaxWidth().padding(vertical = 32.dp), contentAlignment = Alignment.Center) {
+                Text(stringResource(R.string.queue_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        return
+    }
+    items(reorder.rows(items), key = { it.uid }) { row ->
+        val playNext = stringResource(R.string.menu_title_play_next)
+        val remove = stringResource(R.string.menu_title_remove_from_queue)
+        val dragging = reorder.draggingUid == row.uid
+        QueueItem(
+            row = row,
+            dragging = dragging,
+            swipeEnabled = reorder.draggingUid == null,
+            onClick = { actions.skipToQueueItem(row.uid) },
+            onLongClick = { queue.songActions.menuFor = row },
+            onRemove = { actions.removeQueueItem(row.uid) },
+            dragHandleModifier = Modifier.pointerInput(row.uid) {
+                detectDragGestures(
+                    onDragStart = { reorder.start(queue.items, row.uid) },
+                    onDrag = { change, amount ->
+                        change.consume()
+                        reorder.drag(amount.y)
+                    },
+                    onDragEnd = {
+                        reorder.end()?.let { (uid, afterUid) -> actions.moveQueueItem(uid, afterUid) }
+                        scope.launch { reorder.settle() }
+                    },
+                    onDragCancel = { scope.launch { reorder.settle() } },
+                )
+            },
+            modifier = Modifier
+                .semantics {
+                    customActions = listOf(
+                        CustomAccessibilityAction(playNext) {
+                            actions.playNext(row.uid)
+                            true
+                        },
+                        CustomAccessibilityAction(remove) {
+                            actions.removeQueueItem(row.uid)
+                            true
+                        },
+                    )
+                }.then(
+                    if (dragging) {
+                        Modifier.zIndex(1f).graphicsLayer { translationY = reorder.offsetOf(row.uid) }
+                    } else {
+                        Modifier.animateItem()
+                    },
+                ),
+        )
+    }
+}
+
+/** The long-press menu of a queue row: Play next and Remove, then the song's actions. */
+@Composable
+internal fun QueueSongActions(
+    queue: QueueListState,
+    actions: PlayerActions,
+) {
+    val playNext = stringResource(R.string.menu_title_play_next)
+    val remove = stringResource(R.string.menu_title_remove_from_queue)
+    SongActionsHost(queue.songActions, actions, leading = { row ->
+        listOf(
+            S2Action(label = playNext, onClick = { actions.playNext(row.uid) }, icon = Icons.Rounded.QueuePlayNext),
+            S2Action(label = remove, onClick = { actions.removeQueueItem(row.uid) }, icon = Icons.Rounded.RemoveCircleOutline),
+        )
+    })
+}
+
+/** The queue on its own, beside the player on wider windows. It opens on the current song, with the played ones above it. */
 @Composable
 internal fun QueueList(
     items: List<PlayerSong>,
@@ -98,85 +214,18 @@ internal fun QueueList(
     contentPadding: PaddingValues = PaddingValues(),
 ) {
     val listState = rememberLazyListState()
-    val reorder = remember(listState) { QueueReorderState(listState) }
+    val queue = rememberQueueListState(listState, items)
     val scope = rememberCoroutineScope()
-    val songActions = rememberSongActionsState()
-    val currentItems by rememberUpdatedState(items)
-    val density = LocalDensity.current
 
-    // While a row is held, scroll the list when it's dragged near either edge.
-    LaunchedEffect(reorder.held) {
-        if (reorder.held) with(density) { reorder.autoScroll(edge = AutoScrollEdge.toPx(), maxSpeed = AutoScrollMaxSpeed.toPx()) }
-    }
-
-    // Open on the current song, with the played ones above it.
     LaunchedEffect(listState) {
         val current = items.indexOfFirst { it.position == QueuePosition.Current }
         if (current > 0) listState.scrollToItem(current)
     }
 
-    if (items.isEmpty()) {
-        Box(modifier.fillMaxSize().testTag(PlayerTestTags.QueueList), contentAlignment = Alignment.Center) {
-            Text(stringResource(R.string.queue_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        return
-    }
-
-    val playNext = stringResource(R.string.menu_title_play_next)
-    val remove = stringResource(R.string.menu_title_remove_from_queue)
     LazyColumn(state = listState, modifier = modifier.testTag(PlayerTestTags.QueueList), contentPadding = contentPadding) {
-        items(reorder.rows(items), key = { it.uid }) { row ->
-            val dragging = reorder.draggingUid == row.uid
-            QueueItem(
-                row = row,
-                dragging = dragging,
-                swipeEnabled = reorder.draggingUid == null,
-                onClick = { actions.skipToQueueItem(row.uid) },
-                onLongClick = { songActions.menuFor = row },
-                onRemove = { actions.removeQueueItem(row.uid) },
-                dragHandleModifier = Modifier.pointerInput(row.uid) {
-                    detectDragGestures(
-                        onDragStart = { reorder.start(currentItems, row.uid) },
-                        onDrag = { change, amount ->
-                            change.consume()
-                            reorder.drag(amount.y)
-                        },
-                        onDragEnd = {
-                            reorder.end()?.let { (uid, afterUid) -> actions.moveQueueItem(uid, afterUid) }
-                            scope.launch { reorder.settle() }
-                        },
-                        onDragCancel = { scope.launch { reorder.settle() } },
-                    )
-                },
-                modifier = Modifier
-                    .semantics {
-                        customActions = listOf(
-                            CustomAccessibilityAction(playNext) {
-                                actions.playNext(row.uid)
-                                true
-                            },
-                            CustomAccessibilityAction(remove) {
-                                actions.removeQueueItem(row.uid)
-                                true
-                            },
-                        )
-                    }.then(
-                        if (dragging) {
-                            Modifier.zIndex(1f).graphicsLayer { translationY = reorder.offsetOf(row.uid) }
-                        } else {
-                            Modifier.animateItem()
-                        },
-                    ),
-            )
-        }
+        queueItems(items, queue, actions, scope)
     }
-
-    SongActionsHost(songActions, actions, leading = { row ->
-        listOf(
-            S2Action(label = playNext, onClick = { actions.playNext(row.uid) }, icon = Icons.Rounded.QueuePlayNext),
-            S2Action(label = remove, onClick = { actions.removeQueueItem(row.uid) }, icon = Icons.Rounded.RemoveCircleOutline),
-        )
-    })
+    QueueSongActions(queue, actions)
 }
 
 @Composable
@@ -193,7 +242,7 @@ private fun QueueItem(
     val swipeState = rememberSwipeToDismissBoxState()
     SwipeToDismissBox(
         state = swipeState,
-        modifier = modifier,
+        modifier = modifier.testTag(PlayerTestTags.QueueRow),
         gesturesEnabled = swipeEnabled,
         onDismiss = { onRemove() },
         backgroundContent = {
@@ -210,7 +259,7 @@ private fun QueueItem(
             title = row.title,
             subtitle = row.artist.orEmpty(),
             onClick = onClick,
-            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer),
+            modifier = Modifier.background(PlayerSheetColor),
             position = row.position,
             artwork = { SongArtwork(row.song) },
             duration = formatDuration(row.durationMs.toLong()),
@@ -235,6 +284,8 @@ private val AutoScrollMaxSpeed = 1200.dp
 @Stable
 internal class QueueReorderState(
     private val listState: LazyListState,
+    /** The list index of the queue's first row. */
+    private val firstRowIndex: Int = 0,
 ) {
     var draggingUid by mutableStateOf<Long?>(null)
         private set
@@ -302,7 +353,7 @@ internal class QueueReorderState(
         // The list keeps its first visible row in place across a reorder; when the dragged row is, or
         // passes, that row, keep the scroll position instead, so the list doesn't follow the drag.
         val first = listState.firstVisibleItemIndex
-        if (first in minOf(start, index)..maxOf(start, index)) {
+        if (first - firstRowIndex in minOf(start, index)..maxOf(start, index)) {
             listState.requestScrollToItem(first, listState.firstVisibleItemScrollOffset)
         }
         order = rows

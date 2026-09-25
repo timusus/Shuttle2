@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.compose.ui.graphics.Color
+import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackManager
@@ -75,7 +76,7 @@ class PlayerViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun TestScope.viewModel(): PlayerViewModel {
+    private fun TestScope.viewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()): PlayerViewModel {
         val sleepTimer = SleepTimer(playbackManager, backgroundScope, UnconfinedTestDispatcher(testScheduler)) { testScheduler.currentTime }
         val mediaActions = TestMediaActions(playlistRepository = playlistRepository, queueManager = queueManager, playbackManager = playbackManager)
         return PlayerViewModel(
@@ -91,6 +92,7 @@ class PlayerViewModelTest {
             restoreQueue = RestoreQueue(queueManager, playbackManager),
             availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, FakeSongDownloadRepository()),
             mediaActionHandler = mediaActions.handler,
+            savedStateHandle = savedStateHandle,
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.progress.collect {} }
@@ -436,5 +438,43 @@ class PlayerViewModelTest {
         viewModel.startSleepTimer(durationMs = 3_000, playToEnd = false)
         advanceTimeBy(4_500)
         viewModel.uiState.value.sleepTimerActive shouldBe false
+    }
+
+    @Test
+    fun `a panel toggles open and shut, and showing another replaces it`() = runTest {
+        val viewModel = viewModel()
+        queueManager.queueStateFlow.value = queueOf(songs("One"))
+        viewModel.uiState.value.panel shouldBe null
+
+        viewModel.togglePanel(NowPlayingPanel.SleepTimer)
+        viewModel.uiState.value.panel shouldBe NowPlayingPanel.SleepTimer
+        viewModel.togglePanel(NowPlayingPanel.PlaybackSound)
+        viewModel.uiState.value.panel shouldBe NowPlayingPanel.PlaybackSound
+        viewModel.togglePanel(NowPlayingPanel.PlaybackSound)
+        viewModel.uiState.value.panel shouldBe null
+        viewModel.showPanel(NowPlayingPanel.Queue)
+        viewModel.uiState.value.panel shouldBe NowPlayingPanel.Queue
+        viewModel.showPanel(null)
+        viewModel.uiState.value.panel shouldBe null
+    }
+
+    @Test
+    fun `the open panel is saved, so it survives process death`() = runTest {
+        val handle = SavedStateHandle()
+        viewModel(handle).showPanel(NowPlayingPanel.Queue)
+
+        val restored = viewModel(SavedStateHandle(mapOf(PlayerViewModel.PANEL_KEY to handle.get<NowPlayingPanel>(PlayerViewModel.PANEL_KEY))))
+        queueManager.queueStateFlow.value = queueOf(songs("One"))
+        restored.uiState.value.panel shouldBe NowPlayingPanel.Queue
+    }
+
+    @Test
+    fun `an emptied queue shows no panel`() = runTest {
+        val viewModel = viewModel()
+        queueManager.queueStateFlow.value = queueOf(songs("One"))
+        viewModel.showPanel(NowPlayingPanel.SleepTimer)
+
+        queueManager.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
+        viewModel.uiState.value.panel shouldBe null
     }
 }

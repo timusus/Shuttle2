@@ -99,9 +99,9 @@ import com.simplecityapps.shuttle.ui.shell.player.PlayerSheet
 import com.simplecityapps.shuttle.ui.shell.player.PlayerSheetGeometry
 import com.simplecityapps.shuttle.ui.shell.player.PlayerSheetState
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiState
+import com.simplecityapps.shuttle.ui.shell.player.nowPlayingRest
 import com.simplecityapps.shuttle.ui.shell.player.playerPaneWidth
 import com.simplecityapps.shuttle.ui.shell.player.rememberPlayerSheetState
-import com.simplecityapps.shuttle.ui.shell.player.stackedQueueTravel
 import kotlin.math.roundToInt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -227,7 +227,7 @@ private fun rememberContentBottomPadding(player: PlayerSheetState) = with(LocalD
     padding.toDp()
 }
 
-/** Below 600 dp: bottom bar, one pane, the sheet with a Queue level. The bar draws over the sheet's foot. */
+/** Below 600 dp: bottom bar, one pane, the sheet with a partial rest below full height. The bar draws over the sheet's foot. */
 @Composable
 private fun CompactShell(
     player: PlayerSheetState,
@@ -270,7 +270,7 @@ private fun CompactShell(
                 height = height.toFloat(),
                 navBarHeight = navBarHeight.toFloat(),
                 miniHeight = miniHeight,
-                queueTravel = stackedQueueTravel(width.toFloat(), height.toFloat(), statusBarTop, navigationBarBottom),
+                restOffset = with(density) { nowPlayingRest(width.toFloat(), height.toFloat(), statusBarTop, navigationBarBottom, layout.horizontalFold).offset },
             ),
         )
         val fill = Constraints.fixed(width, height)
@@ -295,7 +295,7 @@ private fun CompactShell(
 }
 
 /**
- * 600 to 1199 dp: collapsed rail, the sheet without a Queue level. On Medium the sheet covers the
+ * 600 to 1199 dp: collapsed rail, the sheet at full height with the panel beside the player. On Medium the sheet covers the
  * content pane and the rail stays live; on Expanded the mini player docks across the content area
  * and the expanded player grows over the rail to fill the window.
  */
@@ -345,7 +345,7 @@ private fun RailSheetShell(
         measuredRailWidth = railWidth
         val contentWidth = width - railWidth
         player.onMeasured(
-            PlayerSheetGeometry(height = height.toFloat(), navBarHeight = navigationBarBottom.toFloat(), miniHeight = miniHeight, queueTravel = 0f),
+            PlayerSheetGeometry(height = height.toFloat(), navBarHeight = navigationBarBottom.toFloat(), miniHeight = miniHeight, restOffset = 0f),
         )
         val destinationPlaceables = destination.map { it.measure(Constraints.fixed(contentWidth, height)) }
         val scrimX = if (coversRail) 0 else railWidth
@@ -400,7 +400,7 @@ private fun PaneShell(
     destinations: @Composable () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val paneOpen = player.level == PlayerLevel.NowPlaying || player.level == PlayerLevel.Queue
+    val paneOpen = player.level == PlayerLevel.NowPlaying
     val docked = player.level == PlayerLevel.Mini
     val spec = MaterialTheme.motionScheme.slowSpatialSpec<IntSize>()
     Row(Modifier.fillMaxSize()) {
@@ -429,7 +429,7 @@ private fun PaneShell(
             }
         }
         AnimatedVisibility(visible = paneOpen, enter = expandHorizontally(spec), exit = shrinkHorizontally(spec)) {
-            PlayerPane(player, content.state, content.progress, content.actions, width = playerPaneWidth(layout.width == ShellWidth.ExtraLarge), tabletopFold = layout.horizontalFold, onOpenRoute = content.openRoute)
+            PlayerPane(player, content.state, content.progress, content.actions, width = playerPaneWidth(layout.width == ShellWidth.ExtraLarge), onOpenRoute = content.openRoute)
         }
     }
 }
