@@ -21,6 +21,8 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.toAlbum
 import com.simplecityapps.toAlbumArtist
+import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 
 /**
  * Stand-in screens for the shell's own tests: the real destinations need the Hilt graph, and these tests exercise
@@ -49,6 +51,8 @@ fun fakeShellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey
         FakeList(artist?.name ?: route.albumArtistKey.orEmpty(), artist?.albums.orEmpty(), openAlbum)
     }
     entry<SettingsRoute> { FakeList("Settings", emptyList(), openAlbum) }
+    entry<EqualizerRoute> { FakeList("Equalizer screen", emptyList(), openAlbum) }
+    entry<SettingsDestinationRoute> { route -> FakeList("Settings: ${route.destination.name}", emptyList(), openAlbum) }
 }
 
 @Composable

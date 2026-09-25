@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import kotlinx.coroutines.launch
@@ -39,6 +40,7 @@ internal fun PlayerPane(
     actions: PlayerActions,
     width: Dp,
     tabletopFold: Rect?,
+    onOpenRoute: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
@@ -80,6 +82,7 @@ internal fun PlayerPane(
                     onShowQueue = {
                         scope.launch { state.moveTo(if (state.level == PlayerLevel.Queue) PlayerLevel.NowPlaying else PlayerLevel.Queue) }
                     },
+                    onOpenRoute = onOpenRoute,
                     songInQueueHead = true,
                 )
             }

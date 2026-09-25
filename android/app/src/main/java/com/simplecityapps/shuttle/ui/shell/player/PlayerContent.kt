@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
@@ -145,6 +146,8 @@ internal object PlayerTestTags {
     const val QueueHeadSong = "player_queue_head_song"
     const val SleepTimerSheet = "player_sleep_timer_sheet"
     const val SleepTimerChip = "player_sleep_timer_chip"
+    const val PlaybackSoundSheet = "player_playback_sound_sheet"
+    const val PlaybackSpeedChip = "player_playback_speed_chip"
 }
 
 /**
@@ -163,6 +166,7 @@ internal fun StackedPlayer(
     tabletopFold: Rect?,
     onCollapse: () -> Unit,
     onShowQueue: () -> Unit,
+    onOpenRoute: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
     songInQueueHead: Boolean = false,
 ) {
@@ -185,7 +189,7 @@ internal fun StackedPlayer(
                     translationY = geometry().nowPlayingTranslation(offset())
                 },
         ) {
-            NowPlayingHeader(player, actions, onCollapse = onCollapse, modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars))
+            NowPlayingHeader(player, actions, onCollapse = onCollapse, onOpenRoute = onOpenRoute, modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars))
             // The song fades as the queue pushes it up, so it never shows under the status bar behind the head.
             val song = Modifier.graphicsLayer { alpha = 1f - geometry().queue(offset()) }
             if (tabletopFold != null) {
@@ -247,6 +251,7 @@ internal fun SideBySidePlayer(
     actions: PlayerActions,
     verticalFold: Rect?,
     onCollapse: () -> Unit,
+    onOpenRoute: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     FoldSplit(
@@ -255,7 +260,7 @@ internal fun SideBySidePlayer(
         modifier = modifier.fillMaxSize().testTag(PlayerTestTags.NowPlaying),
         first = {
             Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.navigationBars)) {
-                NowPlayingHeader(player, actions, onCollapse = onCollapse, modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars))
+                NowPlayingHeader(player, actions, onCollapse = onCollapse, onOpenRoute = onOpenRoute, modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars))
                 // Nothing pushes this player, so the song and transport centre together in the room below the header.
                 Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
                     NowPlayingSong(player, actions, gap = SideBySideGap, fillHeight = false, modifier = Modifier.weight(1f, fill = false).fillMaxWidth())

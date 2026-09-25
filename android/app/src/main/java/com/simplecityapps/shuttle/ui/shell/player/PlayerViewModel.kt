@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
@@ -58,9 +59,18 @@ interface SleepTimerPreference {
     var playToEnd: Boolean
 }
 
+/** The stored ReplayGain mode, which the player's Playback & sound sheet shows and changes. */
+interface ReplayGainPreference {
+    val mode: Flow<ReplayGainMode>
+
+    /** Stores [mode] and applies it to the live audio processor. */
+    fun set(mode: ReplayGainMode)
+}
+
 /**
  * The player surfaces' state and actions (docs/architecture/app-shell.md, sections 1 and 5): the
- * queue, playback state and modes, favourite, sleep timer and the now-playing artwork seed.
+ * queue, playback state and modes, favourite, sleep timer, speed and ReplayGain, and the now-playing
+ * artwork seed.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -70,6 +80,7 @@ class PlayerViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val sleepTimer: SleepTimer,
     private val sleepTimerPreference: SleepTimerPreference,
+    private val replayGainPreference: ReplayGainPreference,
     private val seedSource: ArtworkSeedSource,
     castAvailability: CastAvailability,
     private val clearQueue: ClearQueue,
@@ -123,9 +134,12 @@ class PlayerViewModel @Inject constructor(
                 }
             }.distinctUntilChanged()
 
+    private val sound: Flow<Sound> =
+        combine(playbackOperations.positionAnchorFlow.map { it.speed }.distinctUntilChanged(), replayGainPreference.mode, ::Sound)
+
     private val extras: Flow<Extras> =
-        combine(favouriteIds, seed.onStart { emit(ArtworkSeed.Loading) }, sleepTimerActive, sleepTimerPlayToEnd) { favourites, seed, sleeping, playToEnd ->
-            Extras(favourites, seed, sleeping, playToEnd)
+        combine(favouriteIds, seed.onStart { emit(ArtworkSeed.Loading) }, sleepTimerActive, sleepTimerPlayToEnd, sound) { favourites, seed, sleeping, playToEnd, sound ->
+            Extras(favourites, seed, sleeping, playToEnd, sound)
         }
 
     val uiState: StateFlow<PlayerUiState> =
@@ -146,6 +160,8 @@ class PlayerViewModel @Inject constructor(
                 sleepTimerPlayToEnd = extras.sleepTimerPlayToEnd,
                 castAvailable = castAvailable,
                 seed = extras.seed,
+                playbackSpeed = extras.sound.speed,
+                replayGainMode = extras.sound.replayGainMode,
             )
         }.distinctUntilChanged()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), queueOperations.queueStateFlow.value.toPlayerUiState())
@@ -210,6 +226,10 @@ class PlayerViewModel @Inject constructor(
             delay(SLEEP_TIMER_TICK_MS)
         }
     }.distinctUntilChanged()
+
+    override fun setPlaybackSpeed(speed: Float) = playbackOperations.setPlaybackSpeed(speed)
+
+    override fun setReplayGainMode(mode: ReplayGainMode) = replayGainPreference.set(mode)
 
     override fun skipToQueueItem(uid: Long) {
         val index = queueOperations.getQueue().indexOfFirst { it.uid == uid }
@@ -280,6 +300,12 @@ class PlayerViewModel @Inject constructor(
         val seed: ArtworkSeed,
         val sleepTimerActive: Boolean,
         val sleepTimerPlayToEnd: Boolean,
+        val sound: Sound,
+    )
+
+    private data class Sound(
+        val speed: Float,
+        val replayGainMode: ReplayGainMode,
     )
 
     /** Songs on one album share artwork, so they share a seed. */

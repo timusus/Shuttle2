@@ -10,6 +10,7 @@ import com.simplecityapps.fakes.FakeSongDownloadRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueState
@@ -28,6 +29,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -49,6 +51,13 @@ class PlayerViewModelTest {
     private val playlistRepository = FakePlaylistRepository()
     private val sleepTimerPreference = object : SleepTimerPreference {
         override var playToEnd: Boolean = false
+    }
+    private val replayGainPreference = object : ReplayGainPreference {
+        override val mode = MutableStateFlow(ReplayGainMode.Off)
+
+        override fun set(mode: ReplayGainMode) {
+            this.mode.value = mode
+        }
     }
     private val seededSongs = mutableListOf<Song>()
     private val seedSource = ArtworkSeedSource { song ->
@@ -75,6 +84,7 @@ class PlayerViewModelTest {
             playlistRepository = playlistRepository,
             sleepTimer = sleepTimer,
             sleepTimerPreference = sleepTimerPreference,
+            replayGainPreference = replayGainPreference,
             seedSource = seedSource,
             castAvailability = { false },
             clearQueue = ClearQueue(queueManager, playbackManager),
@@ -386,6 +396,20 @@ class PlayerViewModelTest {
         viewModel.clearQueue()
         viewModel.undoClearQueue()
         playbackManager.calls shouldBe listOf("clearQueue()")
+    }
+
+    @Test
+    fun `the speed follows the player and the ReplayGain mode follows its setting`() = runTest {
+        val viewModel = viewModel()
+        viewModel.uiState.value.playbackSpeed shouldBe 1f
+
+        viewModel.setPlaybackSpeed(1.5f)
+        viewModel.uiState.value.playbackSpeed shouldBe 1.5f
+        playbackManager.getPlaybackSpeed() shouldBe 1.5f
+
+        viewModel.setReplayGainMode(ReplayGainMode.Album)
+        viewModel.uiState.value.replayGainMode shouldBe ReplayGainMode.Album
+        replayGainPreference.mode.value shouldBe ReplayGainMode.Album
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.compose.runtime.Immutable
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
@@ -45,6 +46,9 @@ data class PlayerUiState(
     val sleepTimerPlayToEnd: Boolean = false,
     val castAvailable: Boolean = false,
     val seed: ArtworkSeed = ArtworkSeed.None,
+    /** The playback speed, 1 being normal; the pitch stays the same at any speed. */
+    val playbackSpeed: Float = 1f,
+    val replayGainMode: ReplayGainMode = ReplayGainMode.Off,
 ) {
     companion object {
         val Unknown = PlayerUiState(hasQueue = null, current = null, items = emptyList())
@@ -104,6 +108,10 @@ interface PlayerActions {
 
     /** The sleep timer's time left in milliseconds, ticking while collected: null when off, 0 while it waits for the track to end. */
     fun sleepTimerRemaining(): Flow<Long?>
+
+    fun setPlaybackSpeed(speed: Float)
+
+    fun setReplayGainMode(mode: ReplayGainMode)
 
     fun skipToQueueItem(uid: Long)
 

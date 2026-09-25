@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.util.lerp
+import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
@@ -51,6 +52,7 @@ internal fun PlayerSheet(
     progress: () -> PlayerProgress,
     actions: PlayerActions,
     layout: ShellLayout,
+    onOpenRoute: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
     collapsedInset: () -> Int = { 0 },
 ) {
@@ -84,6 +86,7 @@ internal fun PlayerSheet(
                         tabletopFold = layout.horizontalFold,
                         onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
                         onShowQueue = { scope.launch { state.moveTo(PlayerLevel.Queue) } },
+                        onOpenRoute = onOpenRoute,
                     )
                 } else {
                     SideBySidePlayer(
@@ -92,6 +95,7 @@ internal fun PlayerSheet(
                         actions = actions,
                         verticalFold = layout.verticalFold,
                         onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
+                        onOpenRoute = onOpenRoute,
                         modifier = Modifier
                             .hiddenFromSemantics(!nowPlayingShown)
                             .graphicsLayer { alpha = state.geometry.nowPlayingAlpha(state.offset) },

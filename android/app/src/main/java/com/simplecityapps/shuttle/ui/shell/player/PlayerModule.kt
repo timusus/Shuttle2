@@ -4,10 +4,13 @@ import android.content.Context
 import android.graphics.Bitmap
 import com.bumptech.glide.Glide
 import com.simplecityapps.playback.chromecast.CastSessionManager
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.designsystem.theme.SeedColorCache
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsEffects
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,6 +18,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -61,5 +65,19 @@ object PlayerModule {
             set(value) {
                 preferenceManager.sleepTimerPlayToEnd = value
             }
+    }
+
+    // The same write and live-processor effect as the Settings screen's ReplayGain choice.
+    @Provides
+    fun provideReplayGainPreference(
+        playbackSettings: PlaybackSettings,
+        settingsEffects: SettingsEffects,
+    ): ReplayGainPreference = object : ReplayGainPreference {
+        override val mode: Flow<ReplayGainMode> = playbackSettings.replayGainMode.flow
+
+        override fun set(mode: ReplayGainMode) {
+            playbackSettings.replayGainMode.value = mode
+            settingsEffects.onSettingChanged(PlaybackSettings.ReplayGain, mode)
+        }
     }
 }

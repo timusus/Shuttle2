@@ -154,7 +154,8 @@ fun AppShell(
         }
     }
 
-    val playerContent = PlayerContent(playerUi, progress, actions)
+    // The player's links into Settings (Equalizer, Playback & sound) settle it to Mini like any other navigation.
+    val playerContent = PlayerContent(playerUi, progress, actions, openRoute = { route -> navigate { navigator.open(route) } })
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Box(Modifier.fillMaxSize()) {
             when (layout.playerMode) {
@@ -177,6 +178,7 @@ private class PlayerContent(
     val state: PlayerUiState,
     val progress: () -> PlayerProgress,
     val actions: PlayerActions,
+    val openRoute: (NavKey) -> Unit,
 )
 
 /** Snackbars sit above whatever is docked at the bottom: the nav bar and mini player, or the pane shell's docked mini player. */
@@ -248,7 +250,7 @@ private fun CompactShell(
         contents = listOf(
             { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding)) { destinations() } },
             { PlayerScrim(player) },
-            { if (sheetVisible) PlayerSheet(player, content.state, content.progress, content.actions, layout) },
+            { if (sheetVisible) PlayerSheet(player, content.state, content.progress, content.actions, layout, onOpenRoute = content.openRoute) },
             {
                 ShellNavigationBar(
                     selectedTab = selectedTab,
@@ -329,6 +331,7 @@ private fun RailSheetShell(
                         content.progress,
                         content.actions,
                         layout,
+                        onOpenRoute = content.openRoute,
                         collapsedInset = if (coversRail) ({ measuredRailWidth }) else ({ 0 }),
                     )
                 }
@@ -426,7 +429,7 @@ private fun PaneShell(
             }
         }
         AnimatedVisibility(visible = paneOpen, enter = expandHorizontally(spec), exit = shrinkHorizontally(spec)) {
-            PlayerPane(player, content.state, content.progress, content.actions, width = playerPaneWidth(layout.width == ShellWidth.ExtraLarge), tabletopFold = layout.horizontalFold)
+            PlayerPane(player, content.state, content.progress, content.actions, width = playerPaneWidth(layout.width == ShellWidth.ExtraLarge), tabletopFold = layout.horizontalFold, onOpenRoute = content.openRoute)
         }
     }
 }

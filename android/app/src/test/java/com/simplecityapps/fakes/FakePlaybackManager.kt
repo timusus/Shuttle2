@@ -78,8 +78,10 @@ class FakePlaybackManager : PlaybackOperations {
     override fun playbackState(): PlaybackState = playbackStateFlow.value
     override fun getProgress(): Int? = savedProgress
     override fun getDuration(): Int? = null
-    override fun getPlaybackSpeed(): Float = 1.0f
-    override fun setPlaybackSpeed(multiplier: Float) {}
+    override fun getPlaybackSpeed(): Float = positionAnchorFlow.value.speed
+    override fun setPlaybackSpeed(multiplier: Float) {
+        positionAnchorFlow.value = positionAnchorFlow.value.copy(speed = multiplier)
+    }
     override fun moveQueueItem(from: Int, to: Int) {
         calls += "moveQueueItem($from, $to)"
     }

@@ -418,6 +418,42 @@ class AppShellTest {
         robot.calls shouldContain "stopSleepTimer"
         robot.assertReachable("Stop Timer", reachable = false)
     }
+
+    @Test
+    fun `playback and sound sets the speed and ReplayGain, and a speed other than normal shows in the header`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapDescription("More options")
+        robot.tapText("Playback & sound")
+        robot.tapText("1.5×")
+        robot.tapText("Album Gain")
+
+        robot.calls shouldContain "setPlaybackSpeed(1.5)"
+        robot.calls shouldContain "setReplayGainMode(Album)"
+        robot.assertReachable("Playback speed 1.5×", reachable = true)
+
+        robot.actions.setPlaybackSpeed(1f)
+        robot.assertReachable("Playback speed 1×", reachable = false)
+    }
+
+    @Test
+    fun `playback and sound links to the equalizer and the rest of its settings, settling the player first`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapDescription("More options")
+        robot.tapText("Playback & sound")
+        robot.tapText("Equalizer")
+
+        robot.assertLevel(PlayerLevel.Mini)
+        robot.assertTextDisplayed("Equalizer screen")
+
+        robot.tapMiniPlayer()
+        robot.tapDescription("More options")
+        robot.tapText("Playback & sound")
+        robot.tapText("More sound settings")
+        robot.assertLevel(PlayerLevel.Mini)
+        robot.assertTextDisplayed("Settings: PlaybackAndSound")
+    }
 }
 
 private inline fun <reified T : MediaAction> MediaAction.shouldBeSongAction(title: String) {

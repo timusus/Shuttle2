@@ -24,6 +24,16 @@
     <string name="player_sleep_timer_extend">Add %1$s</string>
     <!-- The running sleep timer's countdown once its time is up and it waits for the song to finish -->
     <string name="player_sleep_timer_track_end">End of song</string>
+    <!-- Title of the playback speed slider in Playback & sound -->
+    <string name="player_speed">Speed</string>
+    <!-- A playback speed; %1$s is a number such as "1.25" -->
+    <string name="player_speed_value">%1$s×</string>
+    <!-- Content description of the Now Playing chip showing a non-normal speed; %1$s is a speed such as "1.25×" -->
+    <string name="player_speed_description">Playback speed %1$s</string>
+    <!-- Link from Now Playing's Playback & sound to the rest of those settings -->
+    <string name="player_more_sound_settings">More sound settings</string>
+    <!-- Summary of the link to the rest of the Playback & sound settings -->
+    <string name="player_more_sound_settings_summary">Pre-amp, USB audio output and shuffle</string>
     <!-- Snackbar shown after a song is removed from the queue -->
     <string name="player_removed_from_queue">Removed from queue</string>
     <!-- Song menu option: opens the song's album -->

@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.ClearAll
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.mediarouter.app.MediaRouteButton
+import androidx.navigation3.runtime.NavKey
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.R as DesignR
@@ -50,21 +52,29 @@ import com.simplecityapps.shuttle.designsystem.component.S2PlayerControls
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControlsSize
 import com.simplecityapps.shuttle.designsystem.component.S2SeekBar
 
-/** The collapse button, title and the player's tools: Cast, the sleep timer (its countdown while one runs) and the overflow. */
+/**
+ * The collapse button, title and the player's tools: Cast, a speed other than normal, the sleep timer
+ * (its countdown while one runs) and the overflow, which also opens Playback & sound.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun NowPlayingHeader(
     player: PlayerUiState,
     actions: PlayerActions,
     onCollapse: () -> Unit,
+    onOpenRoute: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var showSleepTimer by rememberSaveable { mutableStateOf(false) }
+    var showPlaybackSound by rememberSaveable { mutableStateOf(false) }
     val songActions = rememberSongActionsState()
     Row(modifier = modifier.fillMaxWidth().height(NowPlayingHeaderHeight).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         S2IconButton(icon = Icons.Rounded.KeyboardArrowDown, contentDescription = stringResource(R.string.player_collapse), onClick = onCollapse)
         Text(text = stringResource(R.string.player_now_playing), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         if (player.castAvailable) CastButton()
+        if (player.playbackSpeed != 1f) {
+            PlaybackSpeedChip(player.playbackSpeed, onClick = { showPlaybackSound = true }, modifier = Modifier.padding(horizontal = 4.dp))
+        }
         if (player.sleepTimerActive) {
             SleepTimerChip(actions, onClick = { showSleepTimer = true }, modifier = Modifier.padding(horizontal = 4.dp))
         } else {
@@ -75,8 +85,19 @@ internal fun NowPlayingHeader(
     if (showSleepTimer) {
         SleepTimerSheet(player = player, actions = actions, onDismiss = { showSleepTimer = false })
     }
+    if (showPlaybackSound) {
+        PlaybackSoundSheet(player = player, actions = actions, onOpenRoute = onOpenRoute, onDismiss = { showPlaybackSound = false })
+    }
+    val playbackSound = stringResource(R.string.settings_destination_playback_and_sound)
     val clearQueue = stringResource(R.string.menu_title_sort_clear_queue)
-    SongActionsHost(songActions, actions, trailing = listOf(S2Action(label = clearQueue, onClick = actions::clearQueue, icon = Icons.Rounded.ClearAll, destructive = true)))
+    SongActionsHost(
+        songActions,
+        actions,
+        trailing = listOf(
+            S2Action(label = playbackSound, onClick = { showPlaybackSound = true }, icon = Icons.Rounded.GraphicEq),
+            S2Action(label = clearQueue, onClick = actions::clearQueue, icon = Icons.Rounded.ClearAll, destructive = true),
+        ),
+    )
 }
 
 /** The Cast framework's route button, themed to the player's scheme. Only shown where Cast can start. */

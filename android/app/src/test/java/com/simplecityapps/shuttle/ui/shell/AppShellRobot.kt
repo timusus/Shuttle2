@@ -36,6 +36,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.computeWindowSizeClass
 import com.simplecityapps.createSong
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.sampleSongs
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
@@ -162,6 +163,16 @@ class RecordingPlayerActions(
     val sleepTimerRemaining = MutableStateFlow<Long?>(null)
 
     override fun sleepTimerRemaining(): Flow<Long?> = sleepTimerRemaining
+
+    override fun setPlaybackSpeed(speed: Float) {
+        calls += "setPlaybackSpeed($speed)"
+        state.value = state.value.copy(playbackSpeed = speed)
+    }
+
+    override fun setReplayGainMode(mode: ReplayGainMode) {
+        calls += "setReplayGainMode($mode)"
+        state.value = state.value.copy(replayGainMode = mode)
+    }
 
     override fun skipToQueueItem(uid: Long) {
         calls += "skipToQueueItem($uid)"
