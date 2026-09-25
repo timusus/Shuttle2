@@ -7,11 +7,13 @@
 #
 #   support/scripts/emu-verify.sh [--check <name>]... [--flow <path.yaml>]... [--apk <path>]
 #                                  [--no-seed] [--no-reset] [--remote <jellyfin|emby|plex>] [--keep]
+#                                  [--remote-build]
 #                                  [--suite [--flows <name,name,...>] [--flow-timeout <secs>]]
 #
 #     --check <name>   run support/scripts/checks/<name>.sh (repeatable)
 #     --flow <path>    run a Maestro flow directly via `maestro test` (repeatable)
 #     --apk <path>     install this APK instead of building/reusing the cached one
+#     --remote-build   build the APK on the WSL box via remote-build.sh (or S2_REMOTE_BUILD=1)
 #     --no-seed        skip seed-test-media.sh (media/app state already set up)
 #     --no-reset       skip `remote-emu.sh reset` (#412: iterate against a lane that's already
 #                       seeded from a previous run -- install + seed-test-media.sh --if-needed
@@ -68,6 +70,7 @@ KEEP=0
 SUITE=0
 FLOWS_ARG=""
 FLOW_TIMEOUT=180
+REMOTE_BUILD="${S2_REMOTE_BUILD:-0}"
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -78,6 +81,7 @@ while [ $# -gt 0 ]; do
         --no-reset) NO_RESET=1; shift ;;
         --remote) REMOTE="${2:?emu-verify: --remote needs jellyfin, emby or plex}"; shift 2 ;;
         --keep) KEEP=1; shift ;;
+--remote-build) REMOTE_BUILD=1; shift ;;
         --suite) SUITE=1; shift ;;
         --flows) FLOWS_ARG="${2:?emu-verify: --flows needs a comma-separated list of check names}"; shift 2 ;;
         --flow-timeout) FLOW_TIMEOUT="${2:?emu-verify: --flow-timeout needs a number of seconds}"; shift 2 ;;
@@ -150,7 +154,8 @@ else
         APK="$CACHE_APK"
         echo "emu-verify: reusing cached APK for HEAD (${HEAD_SHA:0:12}) at $APK"
     else
-        step "building assembleDebug" ./gradlew :android:app:assembleDebug -q || exit 1
+        GRADLE=(./gradlew); [ "$REMOTE_BUILD" = 1 ] && GRADLE=(support/scripts/remote-build.sh)
+        step "building assembleDebug" "${GRADLE[@]}" :android:app:assembleDebug -q || exit 1
         APK=android/app/build/outputs/apk/debug/app-debug.apk
         if [ -z "$(git status --porcelain)" ]; then
             # Only a clean tree may populate the cache: a dirty build is not what HEAD contains.

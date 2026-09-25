@@ -26,6 +26,12 @@ GRADLE_RUNNER=(./gradlew)
 if command -v build-brief >/dev/null 2>&1; then
   GRADLE_RUNNER=(build-brief ./gradlew)
 fi
+# A leading --remote-build (or S2_REMOTE_BUILD=1) runs Gradle on the WSL box
+# through remote-build.sh, which syncs the test results back here (#451).
+if [ "${1:-}" = "--remote-build" ]; then S2_REMOTE_BUILD=1; shift; fi
+if [ "${S2_REMOTE_BUILD:-0}" = "1" ]; then
+  GRADLE_RUNNER=("${SCRIPT_DIR}/remote-build.sh")
+fi
 
 # Parse the TEST-*.xml files written since ${marker} and print each failed/
 # errored testcase's class.method, assertion message and first project
@@ -119,7 +125,8 @@ Examples:
   support/scripts/unit-test --changed
   support/scripts/unit-test --changed --base main --dry-run
 
-Set VERBOSE=1 to print each command as it runs.
+Set VERBOSE=1 to print each command as it runs. A leading --remote-build (or
+S2_REMOTE_BUILD=1) runs Gradle on the WSL box via remote-build.sh.
 EOF
 }
 
