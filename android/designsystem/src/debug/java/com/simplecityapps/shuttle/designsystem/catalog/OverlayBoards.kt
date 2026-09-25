@@ -5,7 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
@@ -21,8 +24,14 @@ import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -31,9 +40,13 @@ import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
 import com.simplecityapps.shuttle.designsystem.component.S2Action
+import com.simplecityapps.shuttle.designsystem.component.S2ChoiceList
+import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
 import com.simplecityapps.shuttle.designsystem.component.S2FilterChip
 import com.simplecityapps.shuttle.designsystem.component.S2InputChip
 import com.simplecityapps.shuttle.designsystem.component.S2MenuContent
+import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
+import com.simplecityapps.shuttle.designsystem.component.S2Snackbar
 import com.simplecityapps.shuttle.designsystem.component.S2SortChip
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -169,6 +182,76 @@ fun ActionsSheetBoard(width: BoardWidth) {
                         ),
                         onDismissRequest = {},
                     )
+                }
+            },
+        ),
+    )
+}
+
+@Composable
+private fun NameField(name: String) {
+    OutlinedTextField(
+        state = rememberTextFieldState(name),
+        label = { Text("Name") },
+        lineLimits = TextFieldLineLimits.SingleLine,
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+fun DialogBoard(width: BoardWidth) {
+    Board(
+        width,
+        listOf(
+            BoardSection("Confirm") {
+                S2DialogContent(title = "Clear the queue?", onDismiss = {}, confirmLabel = "Clear", dismissLabel = "Cancel") {
+                    Text("The 42 songs in the queue are removed. Your library isn't changed.")
+                }
+            },
+            BoardSection("Destructive, with icon") {
+                S2DialogContent(
+                    title = "Delete 3 songs?",
+                    onDismiss = {},
+                    confirmLabel = "Delete",
+                    dismissLabel = "Cancel",
+                    destructive = true,
+                    icon = Icons.Rounded.Delete,
+                ) { Text("The files are removed from this device. This can't be undone.") }
+            },
+            BoardSection("Choice list (applies on tap)") {
+                var selected by remember { mutableIntStateOf(0) }
+                S2DialogContent(title = "Theme", onDismiss = {}, dismissLabel = "Cancel") {
+                    S2ChoiceList(listOf("System default", "Light", "Dark"), selected, { selected = it })
+                }
+            },
+            BoardSection("Text input: empty, confirm disabled") {
+                S2DialogContent(title = "New playlist", onDismiss = {}, confirmLabel = "Create", dismissLabel = "Cancel", confirmEnabled = false) {
+                    NameField("")
+                }
+            },
+            BoardSection("Text input: filled") {
+                S2DialogContent(title = "New playlist", onDismiss = {}, confirmLabel = "Create", dismissLabel = "Cancel") {
+                    NameField("Road trip")
+                }
+            },
+        ),
+    )
+}
+
+@Composable
+fun SnackbarBoard(width: BoardWidth) {
+    Board(
+        width,
+        listOf(
+            BoardSection("Message") { S2Snackbar("Added 12 songs to Road trip") },
+            BoardSection("With action") { S2Snackbar("Removed from queue", actionLabel = "Undo") },
+            BoardSection("Long message, action and dismiss") {
+                S2Snackbar("2 songs are already in Road trip. They weren't added again.", actionLabel = "Add anyway", onDismiss = {})
+            },
+            BoardSection("Above the nav bar") {
+                Column {
+                    S2Snackbar("Excluded Radiohead", actionLabel = "Undo", modifier = Modifier.padding(12.dp))
+                    S2NavigationBar(navItems(), 1, {})
                 }
             },
         ),

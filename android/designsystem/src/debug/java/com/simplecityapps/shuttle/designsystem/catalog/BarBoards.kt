@@ -158,7 +158,7 @@ fun SearchBoard(width: BoardWidth) {
     )
 }
 
-private fun navItems(playlistBadge: String? = null, searchBadge: String? = null) = listOf(
+internal fun navItems(playlistBadge: String? = null, searchBadge: String? = null) = listOf(
     S2NavItem("Home", Icons.Outlined.Home, Icons.Rounded.Home),
     S2NavItem("Library", Icons.Outlined.LibraryMusic, Icons.Rounded.LibraryMusic),
     S2NavItem("Playlists", Icons.AutoMirrored.Outlined.QueueMusic, Icons.Rounded.QueueMusic, badge = playlistBadge),

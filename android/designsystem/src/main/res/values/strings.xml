@@ -16,4 +16,5 @@
     <string name="ds_sort_ascending">Ascending</string>
     <string name="ds_sort_descending">Descending</string>
     <string name="ds_remove_filter">Remove filter</string>
+    <string name="ds_dismiss">Dismiss</string>
 </resources>
