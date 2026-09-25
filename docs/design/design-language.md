@@ -170,7 +170,7 @@ Every component lives in `:android:designsystem` and gets a board (§4). IDs are
 | `button-group` | `ButtonGroup` | standard, connected | each button pressed (the morph), checked (connected) |
 | `icon-button` | `IconButton`, `FilledIconButton`, `FilledTonalIconButton`, `IconToggleButton` | sizes S2 uses | enabled, pressed, checked, disabled |
 | `fab` | `FloatingActionButton`, `ExtendedFloatingActionButton` | Shuffle all on Library and Home only | collapsed, extended, pressed |
-| `toolbar-selection` | `HorizontalFloatingToolbar` (compact), docked `FlexibleBottomAppBar` alternative | selection actions, overflow | 1 and many selected, overflow open; floating vs docked shown side by side for the owner to choose |
+| `toolbar-selection` | `HorizontalFloatingToolbar` (compact), docked `FlexibleBottomAppBar` alternative | selection actions, overflow | 1 and many selected, overflow open; floating vs docked side by side; decided: floating (2026-09-25, #382) |
 
 ### Navigation and app bars
 

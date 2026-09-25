@@ -2,7 +2,8 @@
 
 The approval record for the design system (`docs/design/design-language.md` §5). Each line opens
 a component's boards. Approve one by ticking it; the commit records the date, the commit hash and
-a hash of the component's PNGs. Only approved components go into screens.
+a hash of the component's PNGs. Approval is asynchronous: screens may use a component before it is
+ticked, and a change to a component flows to every screen that uses it.
 
 Boards are recorded by `support/scripts/catalog`, which also rewrites this file and keeps
 existing lines as they are.

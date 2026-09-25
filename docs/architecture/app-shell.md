@@ -418,9 +418,8 @@ layouts, menus) in the same change and moves its Maestro flows to test tags (`te
 5. **List-detail beside the player pane.** Resolved by the section 2 rule: at 840–1199 dp there is
    no persistent pane, so list-detail has two panes; from 1200 dp list, detail and player fit.
 6. **Design system choices** (material3 alpha pin, Roborazzi): decided, see `design-language.md`
-   §1 and §4. **Still open:** the selection toolbar (floating vs docked, `design-language.md` §3)
-   — that table gives no recommendation, so it isn't resolved here; the owner picks from the
-   catalogue boards when they land.
+   (the Sources preamble) and §4. The selection toolbar (`design-language.md` §3) is **decided:
+   floating** (`HorizontalFloatingToolbar`); the docked board stays in the catalogue for comparison.
 
 ## 8. Changes to the UDF principles
 
