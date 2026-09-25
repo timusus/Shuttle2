@@ -30,22 +30,24 @@ class LocalSongRepository(
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 
-    override fun getSongs(query: SongQuery): Flow<List<Song>?> = songsRelay
-        .map { songs ->
-            var result = songs
-
-            if (!query.includeExcluded) {
-                result = songs?.filterNot { it.blacklisted }
+    /**
+     * Songs by id (a restored queue, a song a controller names) are read by id, so the cost is bounded by how many are
+     * asked for rather than by the library; every other query filters the whole library.
+     */
+    override fun getSongs(query: SongQuery): Flow<List<Song>?> {
+        val songs: Flow<List<Song>?> =
+            if (query is SongQuery.SongIds) {
+                songDataDao.getByIds(query.songIds).flowOn(Dispatchers.IO)
+            } else {
+                songsRelay.map { songs -> songs?.filter(query.predicate) }
             }
-
-            query.providerType?.let { providerType ->
-                result = songs?.filter { song -> song.mediaProvider == providerType }
-            }
-
+        return songs.map { result ->
             result
-                ?.filter(query.predicate)
+                ?.filter { song -> query.includeExcluded || !song.blacklisted }
+                ?.filter { song -> query.providerType == null || song.mediaProvider == query.providerType }
                 ?.sortedWith(query.sortOrder.comparator)
         }
+    }
 
     override suspend fun insert(
         songs: List<Song>,

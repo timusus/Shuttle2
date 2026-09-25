@@ -74,6 +74,10 @@
     {
       "text": "The playback notification now uses Android's standard media controls, with shuffle and repeat buttons, and Android Auto, headsets and the lock screen follow what's playing more closely",
       "commits": []
+    },
+    {
+      "text": "S2 opens to your last queue faster on large libraries",
+      "commits": []
     }
   ],
   "fixes": [

@@ -15,6 +15,8 @@ import com.simplecityapps.shuttle.model.Song
 import java.util.*
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import timber.log.Timber
@@ -33,6 +35,20 @@ abstract class SongDataDao {
         list.map { songData ->
             songData.toSong()
         }
+    }
+
+    @Transaction
+    @Query("SELECT * FROM songs WHERE id IN (:ids) ORDER BY albumArtist, album, track")
+    abstract fun getSongDataByIds(ids: List<Long>): Flow<List<SongData>>
+
+    /**
+     * The songs with [ids] (each once, however often it's listed), read by id rather than from the whole library.
+     * Queried in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a statement.
+     */
+    fun getByIds(ids: List<Long>): Flow<List<Song>> {
+        val chunks = ids.distinct().chunked(MAX_BOUND_VARIABLES)
+        if (chunks.isEmpty()) return flowOf(emptyList())
+        return combine(chunks.map(::getSongDataByIds)) { lists -> lists.flatMap { list -> list.map { songData -> songData.toSong() } } }
     }
 
     @Insert(onConflict = IGNORE)
@@ -140,6 +156,8 @@ abstract class SongDataDao {
     @Query("DELETE FROM songs WHERE id = :id")
     abstract suspend fun delete(id: Long)
 }
+
+private const val MAX_BOUND_VARIABLES = 999
 
 fun SongData.toSong(): Song = Song(
     id = id,

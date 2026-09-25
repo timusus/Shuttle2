@@ -67,6 +67,8 @@ class LocalAlbumRepositoryTest {
     private class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDataDao() {
         override fun getAllSongData(): Flow<List<SongData>> = songs
 
+        override fun getSongDataByIds(ids: List<Long>): Flow<List<SongData>> = throw NotImplementedError()
+
         override suspend fun get(): List<SongData> = throw NotImplementedError()
 
         override suspend fun insert(songData: List<SongData>): List<Long> = throw NotImplementedError()
