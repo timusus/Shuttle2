@@ -1,11 +1,12 @@
-# #376: the Compose shell's player (debug ShellActivity). Setup (support/scripts/checks/shell-player.sh):
+# #376, #410: the Compose shell's player (debug ShellActivity). Setup (support/scripts/checks/shell-player.sh):
 # the `playback` fixture (One..Five, 60 s each) queued with PLAY_ALL and paused, then the shell
 # launched at Mini showing "Playback One". Expands the player, plays and pauses, seeks by tapping
-# the middle of the seek bar, skips, then at the Queue level removes Five by swiping it away, drags
-# Four by its handle to the top and taps Three to play it. Back at Now Playing, it starts a 5 min sleep
-# timer from its sheet, sees the header's countdown chip and stops it again, then sets 1.5x in Playback
-# & sound and sees the speed chip. Go to artist in the menu then settles the sheet to Mini over the
-# Library's artist screen. The wrapper checks the resulting queue and speed.
+# the middle of the seek bar, skips, then opens the queue from the bar, removes Five by swiping it
+# away, scrolls back to the transport, drags Four by its handle to the top and taps Three to play it.
+# It starts a 30 min sleep timer from the Sleep timer panel, sees the bar's countdown and stops it
+# again, then sets 1.5x in the Playback & sound panel and sees it on the bar. Go to artist in the
+# menu then settles the sheet to Mini over the Library's artist screen. The wrapper checks the
+# resulting queue and speed.
 appId: com.simplecityapps.shuttle.dev
 ---
 - extendedWaitUntil:
@@ -25,15 +26,26 @@ appId: com.simplecityapps.shuttle.dev
 - assertVisible: "0:[23]\\d"
 - tapOn: "Next"
 - assertVisible: "Playback Two"
-# Now Playing -> Queue
-- tapOn: "Up Next"
+# The queue opens at the song after the playing one
+- tapOn: "Show queue"
 - assertVisible: "Playback Five"
+# A touch while the queue is still scrolling into view only stops the scroll
+- waitForAnimationToEnd:
+    timeout: 3000
 # Swipe to remove
 - swipe:
     from:
       text: "Playback Five"
     direction: LEFT
 - assertNotVisible: "Playback Five"
+# A slow drag down scrolls the list back until the transport shows over the whole queue
+- swipe:
+    start: 50%, 35%
+    end: 50%, 70%
+    duration: 1500
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible: "Repeat off"
 # Drag Playback Four (the fourth handle) up to the top
 - swipe:
     from:
@@ -44,26 +56,20 @@ appId: com.simplecityapps.shuttle.dev
 # Tap a row to skip to it
 - tapOn: "Playback Three"
 - takeScreenshot: shell-player-queue
-# Queue -> Now Playing, then Go to artist opens the Library's artist screen with the sheet at Mini
-- back
-- assertVisible: "Collapse player"
-# Sleep timer: start one from the sheet, see the countdown chip, then stop it from the chip's sheet
+# Sleep timer: start one from its panel, see the countdown on the bar, then stop it
 - tapOn: "Sleep timer"
-- tapOn: "5 min"
 - tapOn: "Start timer"
 - assertVisible: "Sleep timer on"
 - takeScreenshot: shell-player-sleep-timer
-- tapOn: "Sleep timer on"
 - tapOn: "Stop Timer"
 - assertNotVisible: "Sleep timer on"
-- assertVisible: "Sleep timer"
-# Speed: 1.5x from Playback & sound in the menu, shown as a chip once the sheet closes
-- tapOn: "More options"
+# Speed: 1.5x from the Playback & sound panel, shown on the bar's button
 - tapOn: "Playback & sound"
 - tapOn: "1.5×"
 - takeScreenshot: shell-player-playback-sound
+- assertVisible: ".*Playback speed 1.5×"
 - back
-- assertVisible: "Playback speed 1.5×"
+- assertVisible: ".*Playback speed 1.5×"
 - tapOn: "More options"
 - tapOn: "Go to artist"
 - extendedWaitUntil:

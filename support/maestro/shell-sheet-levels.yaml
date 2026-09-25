@@ -1,8 +1,10 @@
-# #375: the Compose shell's player sheet (debug ShellActivity). Setup
+# #375, #410: the Compose shell's player sheet (debug ShellActivity). Setup
 # (support/scripts/checks/shell-sheet-levels.sh): the `playback` fixture queued with PLAY_ALL and
 # paused, then the shell launched, so the sheet reveals at Mini showing "Playback One". Faded-out
 # layers leave the accessibility tree, so each level is told apart by what is reachable: Mini has
-# no "Collapse player", Now Playing hides the queue rows, Queue shows them.
+# no "Collapse player", Now Playing at rest keeps the queue below the bar, and an open panel shows
+# its content. A drag up expands the sheet onto the queue and then scrolls the artwork away; back
+# closes the open panel, then steps down to Mini.
 appId: com.simplecityapps.shuttle.dev
 ---
 - extendedWaitUntil:
@@ -15,10 +17,9 @@ appId: com.simplecityapps.shuttle.dev
 - assertVisible:
     text: "Collapse player"
 - assertNotVisible: "Playback Three"
-# Now Playing -> Queue by tapping the queue peek
-- tapOn: "Up next"
+# The bar's queue button opens the queue; back closes it, then steps down to Mini
+- tapOn: "Show queue"
 - assertVisible: "Playback Three"
-# Back steps down one level at a time
 - back
 - assertNotVisible: "Playback Three"
 - assertVisible:
@@ -27,15 +28,38 @@ appId: com.simplecityapps.shuttle.dev
 - assertNotVisible:
     text: "Collapse player"
 - assertVisible: "Playback One"
-# Dragging Now Playing up past half way settles at Queue (mid-screen swipe, clear of the gesture area)
+# Dragging Now Playing up expands the sheet onto the queue (mid-screen swipes, clear of the gesture area)
 - tapOn: "Playback One"
 - swipe:
     start: 50%, 60%
     end: 50%, 15%
-    duration: 400
+    duration: 800
 - assertVisible: "Playback Three"
+# A second drag up scrolls the artwork away; the pinned row keeps the song and play in view
+- swipe:
+    start: 50%, 60%
+    end: 50%, 25%
+    duration: 800
+- assertNotVisible:
+    text: "Collapse player"
+- assertVisible: "Play"
+- takeScreenshot: shell-sheet-artwork-scrolled
+# Each panel opens from the bar
+- tapOn: "Sleep timer"
+- assertVisible: "Start timer"
+- takeScreenshot: shell-sheet-sleep-timer
+- tapOn: "Playback & sound"
+- assertNotVisible: "Start timer"
+- assertVisible: "1.5×"
+- takeScreenshot: shell-sheet-playback-sound
+# Back closes the panel back to the rest, then steps down to Mini
 - back
+- assertNotVisible: "1.5×"
+- assertVisible:
+    text: "Collapse player"
 - back
+- assertNotVisible:
+    text: "Collapse player"
 # At Mini, back belongs to the destinations: open an album, back returns Home with the mini player kept
 - tapOn: "Playback Album"
 - extendedWaitUntil:
