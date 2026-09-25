@@ -18,6 +18,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -89,8 +90,9 @@ private fun FolderListItemPreview() {
     AppTheme(
         accent = Accent.Default
     ) {
+        val artist = SampleLibrary.artists.first()
         FolderListItem(
-            folder = Folder(path = listOf("primary", "Music", "Radiohead"), songCount = 42),
+            folder = Folder(path = listOf("primary", "Music", artist.name), songCount = artist.songCount),
             playlists = persistentListOf()
         )
     }

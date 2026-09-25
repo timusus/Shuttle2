@@ -39,6 +39,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
@@ -280,12 +281,8 @@ private fun FolderListPreview() {
         ) {
             FolderList(
                 uiState = FolderListUiState(
-                    currentFolder = Folder(path = listOf("primary", "Music"), songCount = 160),
-                    folders = listOf(
-                        Folder(path = listOf("primary", "Music", "Aphex Twin"), songCount = 48),
-                        Folder(path = listOf("primary", "Music", "Boards of Canada"), songCount = 67),
-                        Folder(path = listOf("primary", "Music", "Radiohead"), songCount = 45)
-                    ),
+                    currentFolder = Folder(path = listOf("primary", "Music"), songCount = SampleLibrary.songs.size),
+                    folders = SampleLibrary.artists.map { Folder(path = listOf("primary", "Music", it.name), songCount = it.songCount) },
                     loadingState = FolderListUiState.LoadingState.Ready
                 ),
                 playlists = persistentListOf()

@@ -20,14 +20,15 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.model.Genre
-import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
-import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.FastScroller
 import com.simplecityapps.shuttle.ui.common.components.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
+import com.simplecityapps.shuttle.ui.preview.samplePlaylists
+import com.simplecityapps.shuttle.ui.preview.toGenre
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.theme.AppTheme
 import kotlinx.collections.immutable.ImmutableList
@@ -159,7 +160,7 @@ private fun GenreListLoadingPreview() {
         ) {
             GenreList(
                 uiState = GenreListUiState(loadingState = GenreListUiState.LoadingState.Loading),
-                playlists = samplePlaylists
+                playlists = previewPlaylists
             )
         }
     }
@@ -179,7 +180,7 @@ private fun GenreListScanningPreview() {
                     loadingState = GenreListUiState.LoadingState.Scanning,
                     scanProgress = Progress(20, 205)
                 ),
-                playlists = samplePlaylists
+                playlists = previewPlaylists
             )
         }
     }
@@ -196,7 +197,7 @@ private fun GenreListEmptyPreview() {
         ) {
             GenreList(
                 uiState = GenreListUiState(loadingState = GenreListUiState.LoadingState.Empty),
-                playlists = samplePlaylists
+                playlists = previewPlaylists
             )
         }
     }
@@ -213,116 +214,16 @@ private fun GenreListPreview() {
         ) {
             GenreList(
                 uiState = GenreListUiState(
-                    genres = sampleGenres,
+                    genres = previewGenres,
                     loadingState = GenreListUiState.LoadingState.Ready
                 ),
-                playlists = samplePlaylists
+                playlists = previewPlaylists
             )
         }
     }
 }
 
-private val sampleGenres = listOf(
-    Genre(
-        name = "Rock",
-        songCount = 245,
-        duration = 14730,
-        mediaProviders = listOf(MediaProviderType.Shuttle, MediaProviderType.Jellyfin)
-    ),
-    Genre(
-        name = "Electronic",
-        songCount = 156,
-        duration = 9480,
-        mediaProviders = listOf(MediaProviderType.Shuttle)
-    ),
-    Genre(
-        name = "Jazz",
-        songCount = 89,
-        duration = 5340,
-        mediaProviders = listOf(MediaProviderType.Jellyfin)
-    ),
-    Genre(
-        name = "Hip-Hop",
-        songCount = 198,
-        duration = 11880,
-        mediaProviders = listOf(MediaProviderType.Shuttle, MediaProviderType.Plex)
-    ),
-    Genre(
-        name = "Classical",
-        songCount = 67,
-        duration = 8020,
-        mediaProviders = listOf(MediaProviderType.Shuttle)
-    ),
-    Genre(
-        name = "Pop",
-        songCount = 312,
-        duration = 18720,
-        mediaProviders = listOf(MediaProviderType.Shuttle, MediaProviderType.Jellyfin, MediaProviderType.Plex)
-    ),
-    Genre(
-        name = "Alternative",
-        songCount = 134,
-        duration = 8040,
-        mediaProviders = listOf(MediaProviderType.Shuttle)
-    ),
-    Genre(
-        name = "Blues",
-        songCount = 45,
-        duration = 2700,
-        mediaProviders = listOf(MediaProviderType.Jellyfin)
-    ),
-    Genre(
-        name = "Country",
-        songCount = 78,
-        duration = 4680,
-        mediaProviders = listOf(MediaProviderType.Shuttle, MediaProviderType.Plex)
-    ),
-    Genre(
-        name = "Reggae",
-        songCount = 32,
-        duration = 1920,
-        mediaProviders = listOf(MediaProviderType.Shuttle)
-    ),
-    Genre(
-        name = "Progressive Rock",
-        songCount = 56,
-        duration = 4480,
-        mediaProviders = listOf(MediaProviderType.Shuttle, MediaProviderType.Jellyfin)
-    ),
-    Genre(
-        name = "Ambient",
-        songCount = 23,
-        duration = 2760,
-        mediaProviders = listOf(MediaProviderType.Shuttle)
-    )
-)
+// Getters, not fields: a field would initialise with this file's production code, and release builds have no fixtures.
+private val previewGenres get() = SampleLibrary.genres.map { it.toGenre() }
 
-private val samplePlaylists = listOf(
-    Playlist(
-        id = 1L,
-        name = "My Favorites",
-        songCount = 25,
-        duration = 1500,
-        sortOrder = PlaylistSongSortOrder.Duration,
-        mediaProvider = MediaProviderType.Shuttle,
-        externalId = null
-    ),
-    Playlist(
-        id = 2L,
-        name = "Workout Mix",
-        songCount = 32,
-        duration = 1920,
-        sortOrder = PlaylistSongSortOrder.Duration,
-        mediaProvider = MediaProviderType.Shuttle,
-        externalId = null
-    ),
-    Playlist(
-        id = 3L,
-        name = "Chill Vibes",
-        songCount = 18,
-        duration = 1080,
-        sortOrder = PlaylistSongSortOrder.Duration,
-        mediaProvider = MediaProviderType.Jellyfin,
-        externalId = "playlist_123"
-    )
-).toImmutableList()
+private val previewPlaylists get() = samplePlaylists().toImmutableList()

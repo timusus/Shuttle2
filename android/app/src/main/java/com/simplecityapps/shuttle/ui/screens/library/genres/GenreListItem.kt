@@ -14,15 +14,16 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.model.Genre
-import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.settings.Accent
-import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
+import com.simplecityapps.shuttle.ui.preview.samplePlaylists
+import com.simplecityapps.shuttle.ui.preview.toGenre
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.theme.AppTheme
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 
 @Composable
 fun GenreListItem(
@@ -85,23 +86,8 @@ private fun GenreListItemPreview() {
         accent = Accent.Default
     ) {
         GenreListItem(
-            genre = Genre(
-                name = "Genre",
-                songCount = 1,
-                duration = 10,
-                mediaProviders = listOf(MediaProviderType.MediaStore)
-            ),
-            playlists = persistentListOf(
-                Playlist(
-                    id = 1,
-                    name = "Playlist",
-                    songCount = 1,
-                    duration = 10,
-                    sortOrder = PlaylistSongSortOrder.SongName,
-                    mediaProvider = MediaProviderType.MediaStore,
-                    externalId = null
-                )
-            )
+            genre = SampleLibrary.genres.first().toGenre(),
+            playlists = samplePlaylists().toImmutableList(),
         )
     }
 }
