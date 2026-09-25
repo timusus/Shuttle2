@@ -34,11 +34,13 @@ private fun HomeDestination(
     onNavigate: (NavigationTarget) -> Unit,
     onSearch: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
+    consentViewModel: AnalyticsConsentViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val emptyViewModel: LibraryEmptyViewModel = hiltViewModel()
     val emptyState by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
+    val showConsentCard by consentViewModel.showCard.collectAsStateWithLifecycle()
     MediaActionsHost(onNavigate = onNavigate) { actions ->
         HomeScreen(
             uiState = uiState,
@@ -65,6 +67,17 @@ private fun HomeDestination(
                         modifier = modifier,
                     )
                 }
+            },
+            consentCard = if (showConsentCard) {
+                @Composable {
+                    AnalyticsConsentCard(
+                        onShare = consentViewModel::onShare,
+                        onNoThanks = consentViewModel::onNoThanks,
+                        onOpenPrivacySettings = { onOpen(SettingsDestinationRoute(SettingsDestination.Privacy)) },
+                    )
+                }
+            } else {
+                null
             },
         )
     }

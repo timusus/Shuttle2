@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Shuffle
@@ -92,6 +93,8 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     /** Shown in place of the generic empty state while the library has no songs (#422), so it can offer access. */
     emptyContent: (@Composable (Modifier) -> Unit)? = null,
+    /** The analytics consent card (#421), shown above the shelves when its own ViewModel decides to ask. */
+    consentCard: (@Composable () -> Unit)? = null,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
@@ -120,7 +123,7 @@ fun HomeScreen(
                 )
             }
 
-            is HomeUiState.Content -> HomeContent(uiState, callbacks, contentModifier)
+            is HomeUiState.Content -> HomeContent(uiState, callbacks, contentModifier, consentCard)
         }
     }
 }
@@ -130,6 +133,7 @@ private fun HomeContent(
     content: HomeUiState.Content,
     callbacks: HomeCallbacks,
     modifier: Modifier,
+    consentCard: (@Composable () -> Unit)?,
 ) {
     LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = 16.dp)) {
         item(key = "shuffle") {
@@ -140,6 +144,9 @@ private fun HomeContent(
                 style = S2ButtonStyle.Tonal,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
+        }
+        if (consentCard != null) {
+            item(key = "consent") { consentCard() }
         }
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks) }
@@ -172,6 +179,52 @@ private fun WhatsNewCard(callbacks: HomeCallbacks) {
         S2Button(
             text = stringResource(R.string.home_whats_new_open),
             onClick = callbacks.onOpenWhatsNew,
+            style = S2ButtonStyle.Text,
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+        )
+    }
+}
+
+/** The Home analytics consent card (#421): equal-weight Share/No thanks buttons, so neither is a dark pattern. */
+@Composable
+fun AnalyticsConsentCard(
+    onShare: () -> Unit,
+    onNoThanks: () -> Unit,
+    onOpenPrivacySettings: () -> Unit,
+) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Row(modifier = Modifier.padding(start = 16.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Rounded.Insights, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Text(
+                text = stringResource(R.string.home_consent_title),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+            )
+            S2IconButton(icon = Icons.Rounded.Close, contentDescription = stringResource(R.string.home_consent_dismiss), onClick = onNoThanks)
+        }
+        Text(
+            text = stringResource(R.string.home_consent_message),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            S2Button(
+                text = stringResource(R.string.home_consent_no_thanks),
+                onClick = onNoThanks,
+                style = S2ButtonStyle.Outlined,
+                modifier = Modifier.weight(1f),
+            )
+            S2Button(
+                text = stringResource(R.string.home_consent_share),
+                onClick = onShare,
+                style = S2ButtonStyle.Outlined,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        S2Button(
+            text = stringResource(R.string.home_consent_privacy_settings),
+            onClick = onOpenPrivacySettings,
             style = S2ButtonStyle.Text,
             modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
         )

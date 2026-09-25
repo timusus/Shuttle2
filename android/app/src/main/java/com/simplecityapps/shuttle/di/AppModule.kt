@@ -24,6 +24,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.time.Clock
 import java.util.*
 import javax.inject.Named
 import javax.inject.Singleton
@@ -75,6 +76,9 @@ class AppModule {
 
     @Provides
     fun provideRandom(): kotlin.random.Random = kotlin.random.Random.Default
+
+    @Provides
+    fun provideClock(): Clock = Clock.systemDefaultZone()
 
     @Provides
     fun provideAddToPlaylist(

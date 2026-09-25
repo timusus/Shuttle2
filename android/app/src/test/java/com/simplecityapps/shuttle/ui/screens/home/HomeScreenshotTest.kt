@@ -43,8 +43,8 @@ class HomeScreenshotTest {
     @After
     fun uninstallSampleArtwork() = SampleArtworkGlide.uninstall()
 
-    private fun shot(name: String, uiState: HomeUiState, theme: ThemeMode = ThemeMode.Light) {
-        robot.setContent(uiState, theme)
+    private fun shot(name: String, uiState: HomeUiState, theme: ThemeMode = ThemeMode.Light, showConsentCard: Boolean = false) {
+        robot.setContent(uiState, theme, showConsentCard = showConsentCard)
         composeTestRule.onRoot().captureRoboImage(
             filePath = File(shotsDir, "$name.png").path,
             roborazziOptions = RoborazziOptions(captureType = RoborazziOptions.CaptureType.Screenshot()),
@@ -53,6 +53,9 @@ class HomeScreenshotTest {
 
     @Test
     fun content() = shot("content", HomeScenarios.content)
+
+    @Test
+    fun consent() = shot("consent", HomeScenarios.content, showConsentCard = true)
 
     @Test
     fun contentDark() = shot("content-dark", HomeScenarios.content, ThemeMode.Dark)

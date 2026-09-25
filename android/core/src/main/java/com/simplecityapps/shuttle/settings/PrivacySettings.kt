@@ -19,8 +19,9 @@ class PrivacySettings @Inject constructor(
         val CrashReporting = Setting.boolean("pref_crash_reporting", false)
 
         /**
-         * Firebase Analytics. Off until the user turns it on; when, if ever, to ask is an open legal question. Remote Config (trial length, pricing tier, snowfall) is only fetched while this is on,
-         * so it changes trial and pricing behaviour too.
+         * Firebase Analytics. Off until the user turns it on, via the Home consent card (#421) or here. Remote Config
+         * (trial length, pricing tier, snowfall) is only fetched while this is on, so it changes trial and pricing
+         * behaviour too.
          */
         val Analytics = Setting.boolean("pref_firebase_analytics", false)
     }

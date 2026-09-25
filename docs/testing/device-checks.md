@@ -170,3 +170,7 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 - [ ] On an API 23–28 device, the same check as on API 29.
 - [ ] On a real 10k-track library, time a full import with the S2 provider (`Import complete in` in logcat) and compare it with the last Play build, which walks SAF folders.
 - [ ] Put music in a folder containing `.nomedia` and grant that folder under Media > Directories. Those songs don't import (expected until the optional SAF "Add folder" lands); nothing else breaks.
+
+## Home analytics consent card (#421)
+
+- [ ] With a library loaded, force-stop and reopen the app on 3 separate calendar days (change the device date between opens). The card appears on Home on the 3rd day, not before, and Analytics in Settings > Privacy stays off the whole time.
