@@ -79,9 +79,10 @@ albums or songs, and never hand-typed "Artist"/"Album" stand-ins where content i
 - **Data and covers:** `:android:fixtures` (`SampleLibrary`: albums, songs, artists, genres,
   playlists, `queue()`, `cover(albumId)`), read from
   `android/fixtures/src/main/resources/sample-library/library.json`. Add it as
-  `testImplementation(project(":android:fixtures"))` (designsystem uses `debugImplementation`
-  for its `src/debug` boards). To change names or covers, edit the manifest and rerun
-  `support/scripts/generate-fake-artwork.py`; the contact sheet is
+  `testImplementation(project(":android:fixtures"))` (designsystem and app also use
+  `debugImplementation` plus `releaseCompileOnly`, for the boards and `@Preview`s). To change
+  names or covers, edit the manifest and rerun `support/scripts/generate-fake-artwork.py`; the
+  contact sheet is
   `docs/design/fake-artwork/contact-sheet.png`.
 - **App models:** `SampleSong.toSong()`, `toAlbum()`, `toAlbumArtist()`, `toGenre()`,
   `toPlaylist()` and `sampleSongs(n)` in `app/src/test/.../SampleLibraryFactories.kt`.
@@ -89,6 +90,11 @@ albums or songs, and never hand-typed "Artist"/"Album" stand-ins where content i
   `uninstall()` in `@After`. Songs, albums and album artists named after sample ones then
   load their covers synchronously. Nothing else loads, so other content keeps its placeholder.
   Production image loading is untouched. See `ShellScreenshotTest`.
+- **Previews:** wrap a `@Preview` in `S2Preview { }` (designsystem) and pass the sample model as
+  `Artwork(model = ...)`; app previews use `S2Preview(artwork = SampleAppCovers)` or
+  `SampleArtwork { }` inside their own theme, with models from `ui/preview/SamplePreviews.kt`.
+  Covers draw synchronously through `LocalPreviewArtwork`, no Glide; keep fixture data in
+  previews out of top-level fields (release has no fixtures). See `PreviewArtworkTest`.
 - **Boards:** `SampleArt(albumId)` for a row naming a sample album, `SampleArt(variant)` for
   generic art matched to the scheme column.
 
