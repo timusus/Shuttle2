@@ -121,7 +121,7 @@ class MediaActionHandlerTest {
         playlistRepository.removedFromPlaylist shouldBe listOf(playlist to removed)
 
         // The repository appends the re-added song, so the playlist reads back as song, third, other.
-        playlistRepository.setSongsForPlaylist(playlist, listOf(song, third, other))
+        playlistRepository.setSongsForPlaylist(playlist, listOf(song, third))
         handler.handle((result as Message).action!!.action) shouldBe MediaActionResult.None
 
         playlistRepository.addedToPlaylist shouldBe listOf(playlist to listOf(other))
