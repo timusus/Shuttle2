@@ -8,8 +8,9 @@ source "$(dirname "$0")/_lib.sh"
 
 # cold_start <keycode> <screenshot name>
 cold_start() {
-    s2 SEEK --el ms 10000 >/dev/null
+    # Paused first: seeking while playing, a slow lane plays on past 11 s before the pause lands.
     s2 PAUSE >/dev/null
+    s2 SEEK --el ms 10000 >/dev/null
     wait_for 5 "s['state'] == 'Paused' and s['title'] == 'Playback One' and 9000 <= s['positionMs'] <= 11000"
     adb_retry shell am force-stop "$APP_ID"
     adb_retry shell pidof "$APP_ID" >/dev/null 2>&1 && fail "the app is still running after force-stop"
