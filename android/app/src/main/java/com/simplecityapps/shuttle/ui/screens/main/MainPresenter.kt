@@ -6,8 +6,8 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import com.simplecityapps.trial.TrialManager
-import com.simplecityapps.trial.TrialState
+import com.simplecityapps.trial.Entitlement
+import com.simplecityapps.trial.EntitlementRepository
 import java.util.Date
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -19,8 +19,6 @@ interface MainContract {
         fun toggleSheet(visible: Boolean)
 
         fun showChangelog()
-
-        fun showTrialDialog()
 
         fun showThankYouDialog()
 
@@ -39,7 +37,7 @@ class MainPresenter
 constructor(
     private val queueManager: QueueOperations,
     private val preferenceManager: GeneralPreferenceManager,
-    private val trialManager: TrialManager
+    private val entitlementRepository: EntitlementRepository
 ) : BasePresenter<MainContract.View>(),
     MainContract.Presenter {
     override fun bindView(view: MainContract.View) {
@@ -64,30 +62,13 @@ constructor(
             }
         }
 
-        trialManager.trialState.onEach { trialState ->
-            when (trialState) {
-                is TrialState.Pretrial, is TrialState.Unknown -> {
-                    // Nothing to do
+        entitlementRepository.entitlement.onEach { entitlement ->
+            if (entitlement is Entitlement.Pro) {
+                if (preferenceManager.appPurchasedDate == null) {
+                    preferenceManager.appPurchasedDate = Date()
                 }
-
-                is TrialState.Trial -> {
-                    // Show the trial dialog once every 3 days
-                    if (preferenceManager.lastViewedTrialDialogDate == null || preferenceManager.lastViewedTrialDialogDate?.before(Date(Date().time - 4 * 24 * 60 * 60 * 1000)) == true) {
-                        this.view?.showTrialDialog()
-                    }
-                }
-
-                is TrialState.Expired -> {
-                    // Show the trial dialog once a day
-                    if (preferenceManager.lastViewedTrialDialogDate == null || preferenceManager.lastViewedTrialDialogDate?.before(Date(Date().time - 1 * 24 * 60 * 60 * 1000)) == true) {
-                        this.view?.showTrialDialog()
-                    }
-                }
-
-                is TrialState.Paid -> {
-                    if (!preferenceManager.hasSeenThankYouDialog) {
-                        this.view?.showThankYouDialog()
-                    }
+                if (!preferenceManager.hasSeenThankYouDialog) {
+                    this.view?.showThankYouDialog()
                 }
             }
         }.launchIn(this)

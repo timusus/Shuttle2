@@ -25,9 +25,6 @@ class RemoteConfigModule {
 
         remoteConfig.setDefaultsAsync(
             mapOf(
-                "pricing_tier" to "high",
-                "pre_trial_length" to 0,
-                "trial_length" to 14L,
                 "snow_forecast" to 0.0
             )
         )

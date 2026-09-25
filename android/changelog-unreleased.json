@@ -52,6 +52,10 @@
   ],
   "improvements": [
     {
+      "text": "Playback no longer speeds up after the trial ends, and the trial reminder no longer pops up. Streaming from Jellyfin, Emby and Plex now comes with a 14-day free trial that starts when you connect your first server, and everyone who has already bought S2 keeps full access",
+      "commits": []
+    },
+    {
       "text": "More local album art filenames are now recognised, including albumart.jpg, front.jpg and artwork.jpg",
       "commits": []
     },
@@ -65,6 +69,10 @@
     }
   ],
   "fixes": [
+    {
+      "text": "A purchase that is still waiting for payment no longer unlocks the full version early",
+      "commits": ["d0d4a614"]
+    },
     {
       "text": "The home screen's \"Albums released this year\" now shows up to 100 albums instead of stopping at 20",
       "commits": []

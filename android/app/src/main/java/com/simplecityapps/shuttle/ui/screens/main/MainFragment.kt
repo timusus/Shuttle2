@@ -29,7 +29,6 @@ import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
 import com.simplecityapps.shuttle.ui.screens.trial.ThankYouDialogFragment
-import com.simplecityapps.shuttle.ui.screens.trial.TrialDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -149,10 +148,6 @@ class MainFragment :
 
     override fun showChangelog() {
         ChangelogDialogFragment.newInstance().show(childFragmentManager)
-    }
-
-    override fun showTrialDialog() {
-        TrialDialogFragment.newInstance().show(childFragmentManager)
     }
 
     override fun showThankYouDialog() {

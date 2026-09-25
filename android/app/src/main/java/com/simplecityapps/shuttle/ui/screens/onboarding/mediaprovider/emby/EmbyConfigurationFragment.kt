@@ -16,8 +16,10 @@ import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.emby.http.LoginCredentials
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import com.simplecityapps.trial.EntitlementRepository
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.delay
@@ -28,6 +30,9 @@ import timber.log.Timber
 class EmbyConfigurationFragment : DialogFragment() {
     @Inject
     lateinit var embyAuthenticationManager: EmbyAuthenticationManager
+
+    @Inject
+    lateinit var entitlementRepository: EntitlementRepository
 
     var addressInputLayout: TextInputLayout by autoCleared()
     var loginInputLayout: TextInputLayout by autoCleared()
@@ -115,6 +120,7 @@ class EmbyConfigurationFragment : DialogFragment() {
                             loginCredentials = loginCredentials
                         )
                     result.onSuccess {
+                        entitlementRepository.onServerConnected(MediaProviderType.Emby)
                         if (rememberPasswordSwitch.isChecked) {
                             embyAuthenticationManager.setLoginCredentials(loginCredentials)
                         }

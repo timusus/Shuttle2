@@ -7,7 +7,6 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -27,15 +26,14 @@ import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.recyclerview.enforceSingleScrollDirection
 import com.simplecityapps.shuttle.ui.common.recyclerview.recyclerView
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
-import com.simplecityapps.shuttle.ui.common.view.CircularProgressView
 import com.simplecityapps.shuttle.ui.common.view.ToolbarHost
 import com.simplecityapps.shuttle.ui.screens.trial.PromoCodeDialogFragment
 import com.simplecityapps.shuttle.ui.screens.trial.TrialDialogFragment
+import com.simplecityapps.shuttle.ui.screens.trial.bindTrialChip
+import com.simplecityapps.trial.EntitlementRepository
+import com.simplecityapps.trial.PaywallSource
 import com.simplecityapps.trial.PromoCodeService
-import com.simplecityapps.trial.TrialManager
-import com.simplecityapps.trial.TrialState
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 
@@ -63,7 +61,7 @@ class LibraryFragment :
     lateinit var preferenceManager: GeneralPreferenceManager
 
     @Inject
-    lateinit var trialManager: TrialManager
+    lateinit var entitlementRepository: EntitlementRepository
 
     @Inject
     lateinit var promoCodeService: PromoCodeService
@@ -132,7 +130,7 @@ class LibraryFragment :
         tabLayoutMediator?.attach()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            trialManager.trialState.collect {
+            entitlementRepository.entitlement.collect {
                 this@LibraryFragment.requireActivity().invalidateOptionsMenu()
             }
         }
@@ -148,39 +146,14 @@ class LibraryFragment :
 
         val trialMenuItem = menu.findItem(R.id.trial)
         trialMenuItem.actionView!!.setOnClickListener {
-            TrialDialogFragment.newInstance().show(childFragmentManager)
+            TrialDialogFragment.newInstance(PaywallSource.LibraryTrialChip).show(childFragmentManager)
         }
     }
 
     override fun onPrepareOptionsMenu(menu: Menu) {
         super.onPrepareOptionsMenu(menu)
 
-        val trialMenuItem = menu.findItem(R.id.trial)
-        when (val trialState = trialManager.trialState.value) {
-            is TrialState.Unknown, is TrialState.Paid -> {
-                trialMenuItem.isVisible = false
-            }
-
-            is TrialState.Trial -> {
-                trialMenuItem.isVisible = true
-                val daysRemainingText: TextView = trialMenuItem.actionView!!.findViewById(R.id.daysRemaining)
-                daysRemainingText.text = TimeUnit.MILLISECONDS.toDays(trialState.timeRemaining).toString()
-                val progress: CircularProgressView = trialMenuItem.actionView!!.findViewById(R.id.progress)
-                progress.setProgress((trialState.timeRemaining / trialManager.trialLength.toDouble()).toFloat())
-            }
-
-            is TrialState.Expired -> {
-                trialMenuItem.isVisible = true
-                val daysRemainingText: TextView = trialMenuItem.actionView!!.findViewById(R.id.daysRemaining)
-                daysRemainingText.text = String.format("%.1fx", trialState.multiplier())
-                val progress: CircularProgressView = trialMenuItem.actionView!!.findViewById(R.id.progress)
-                progress.setProgress(0f)
-            }
-
-            is TrialState.Pretrial -> {
-                // Nothing to do
-            }
-        }
+        menu.findItem(R.id.trial).bindTrialChip(entitlementRepository.entitlement.value)
     }
 
     override fun onDestroyView() {

@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.remote_config
 
 import android.content.Context
+import androidx.core.os.bundleOf
 import com.google.firebase.analytics.FirebaseAnalytics
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -12,5 +13,13 @@ constructor(
 ) {
     fun enableAnalytics(enabled: Boolean) {
         FirebaseAnalytics.getInstance(context).setAnalyticsCollectionEnabled(enabled)
+    }
+
+    /** Logs [name] with [params]. Firebase drops it unless the user has opted in to analytics. */
+    fun logEvent(
+        name: String,
+        params: Map<String, String> = emptyMap()
+    ) {
+        FirebaseAnalytics.getInstance(context).logEvent(name, bundleOf(*params.toList().toTypedArray()))
     }
 }

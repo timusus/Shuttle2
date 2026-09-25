@@ -16,8 +16,10 @@ import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.http.LoginCredentials
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import com.simplecityapps.trial.EntitlementRepository
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.delay
@@ -28,6 +30,9 @@ import timber.log.Timber
 class JellyfinConfigurationFragment : DialogFragment() {
     @Inject
     lateinit var jellyfinAuthenticationManager: JellyfinAuthenticationManager
+
+    @Inject
+    lateinit var entitlementRepository: EntitlementRepository
 
     var addressInputLayout: TextInputLayout by autoCleared()
     var loginInputLayout: TextInputLayout by autoCleared()
@@ -115,6 +120,7 @@ class JellyfinConfigurationFragment : DialogFragment() {
                             loginCredentials = loginCredentials
                         )
                     result.onSuccess {
+                        entitlementRepository.onServerConnected(MediaProviderType.Jellyfin)
                         if (rememberPasswordSwitch.isChecked) {
                             jellyfinAuthenticationManager.setLoginCredentials(loginCredentials)
                         }

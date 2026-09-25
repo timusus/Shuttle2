@@ -15,8 +15,10 @@ import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.http.LoginCredentials
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import com.simplecityapps.trial.EntitlementRepository
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.delay
@@ -27,6 +29,9 @@ import timber.log.Timber
 class PlexConfigurationFragment : DialogFragment() {
     @Inject
     lateinit var plexAuthenticationManager: PlexAuthenticationManager
+
+    @Inject
+    lateinit var entitlementRepository: EntitlementRepository
 
     var addressInputLayout: TextInputLayout by autoCleared()
     var loginInputLayout: TextInputLayout by autoCleared()
@@ -123,6 +128,7 @@ class PlexConfigurationFragment : DialogFragment() {
                             loginCredentials = loginCredentials
                         )
                     result.onSuccess {
+                        entitlementRepository.onServerConnected(MediaProviderType.Plex)
                         if (rememberPasswordSwitch.isChecked) {
                             plexAuthenticationManager.setLoginCredentials(loginCredentials)
                         }

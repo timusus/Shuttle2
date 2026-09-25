@@ -68,7 +68,9 @@ dependencies {
 
     implementation project(':android:networking')
     implementation project(':android:core')
+    implementation project(':android:data')
 
     testImplementation libs.junit
     testImplementation libs.mockk
+    testImplementation(libs.kotlinx.coroutinesTest)
 }

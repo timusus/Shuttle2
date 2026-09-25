@@ -34,18 +34,6 @@ class GeneralPreferenceManager(
             return sharedPreferences.getString("last_viewed_changelog_version", null)
         }
 
-    var lastViewedTrialDialogDate: Date?
-        set(value) {
-            sharedPreferences.put("last_viewed_trial_dialog", value?.time)
-        }
-        get() {
-            val time = sharedPreferences.getLong("last_viewed_trial_dialog", -1)
-            if (time != -1L) {
-                return Date(time)
-            }
-            return null
-        }
-
     var appPurchasedDate: Date?
         set(value) {
             sharedPreferences.put("app_purchased_date", value?.time)

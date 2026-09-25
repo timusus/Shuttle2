@@ -30,7 +30,6 @@ import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.ItemTouchHelperCallback
-import com.simplecityapps.shuttle.ui.common.view.CircularProgressView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -39,12 +38,13 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.trial.PromoCodeDialogFragment
 import com.simplecityapps.shuttle.ui.screens.trial.TrialDialogFragment
+import com.simplecityapps.shuttle.ui.screens.trial.bindTrialChip
+import com.simplecityapps.shuttle.ui.screens.trial.showsTrialChip
+import com.simplecityapps.trial.EntitlementRepository
+import com.simplecityapps.trial.PaywallSource
 import com.simplecityapps.trial.PromoCodeService
-import com.simplecityapps.trial.TrialManager
-import com.simplecityapps.trial.TrialState
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -77,7 +77,7 @@ class QueueFragment :
     lateinit var playbackManager: PlaybackOperations
 
     @Inject
-    lateinit var trialManager: TrialManager
+    lateinit var entitlementRepository: EntitlementRepository
 
     @Inject
     lateinit var promoCodeService: PromoCodeService
@@ -160,32 +160,10 @@ class QueueFragment :
 
         val trialMenuItem = toolbar!!.menu.findItem(R.id.trial)
         trialMenuItem.actionView!!.setOnClickListener {
-            TrialDialogFragment.newInstance().show(childFragmentManager)
+            TrialDialogFragment.newInstance(PaywallSource.QueueTrialChip).show(childFragmentManager)
         }
         viewLifecycleOwner.lifecycleScope.launch {
-            trialManager.trialState.collect { trialState ->
-                when (trialState) {
-                    is TrialState.Pretrial, is TrialState.Paid, is TrialState.Unknown -> {
-                        trialMenuItem.isVisible = false
-                    }
-
-                    is TrialState.Trial -> {
-                        trialMenuItem.isVisible = true
-                        val daysRemainingText: TextView = trialMenuItem.actionView!!.findViewById(R.id.daysRemaining)
-                        daysRemainingText.text = TimeUnit.MILLISECONDS.toDays(trialState.timeRemaining).toString()
-                        val progress: CircularProgressView = trialMenuItem.actionView!!.findViewById(R.id.progress)
-                        progress.setProgress((trialState.timeRemaining / trialManager.trialLength.toDouble()).toFloat())
-                    }
-
-                    is TrialState.Expired -> {
-                        trialMenuItem.isVisible = true
-                        val daysRemainingText: TextView = trialMenuItem.actionView!!.findViewById(R.id.daysRemaining)
-                        daysRemainingText.text = String.format("%.1fx", trialState.multiplier())
-                        val progress: CircularProgressView = trialMenuItem.actionView!!.findViewById(R.id.progress)
-                        progress.setProgress(0f)
-                    }
-                }
-            }
+            entitlementRepository.entitlement.collect { entitlement -> trialMenuItem.bindTrialChip(entitlement) }
         }
     }
 
@@ -372,7 +350,7 @@ class QueueFragment :
                         toolbar.menu.findItem(R.id.trial).isVisible = false
                     }
                     if (sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_COLLAPSED) {
-                        if (trialManager.trialState.value is TrialState.Trial || trialManager.trialState.value is TrialState.Expired) {
+                        if (entitlementRepository.entitlement.value.showsTrialChip) {
                             toolbar.menu.findItem(R.id.trial).isVisible = true
                         }
                     }

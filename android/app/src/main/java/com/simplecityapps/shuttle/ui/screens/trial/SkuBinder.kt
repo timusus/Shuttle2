@@ -6,15 +6,15 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.core.view.isInvisible
-import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.ProductDetails
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.simplecityapps.trial.PaywallOffer
+import com.squareup.phrase.Phrase
 
-class SkuBinder(val productDetails: ProductDetails, val litener: Listener) : ViewBinder {
+class SkuBinder(val offer: PaywallOffer, val listener: Listener) : ViewBinder {
     interface Listener {
-        fun onClick(productDetails: ProductDetails)
+        fun onClick(offer: PaywallOffer)
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_sku, parent, false))
@@ -29,7 +29,7 @@ class SkuBinder(val productDetails: ProductDetails, val litener: Listener) : Vie
 
         init {
             itemView.setOnClickListener {
-                viewBinder?.litener?.onClick(viewBinder!!.productDetails)
+                viewBinder?.listener?.onClick(viewBinder!!.offer)
             }
         }
 
@@ -39,15 +39,19 @@ class SkuBinder(val productDetails: ProductDetails, val litener: Listener) : Vie
         ) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.productDetails.name.substringBefore('(')
-            subtitle.text = viewBinder.productDetails.description
-            val formattedPrice = viewBinder.productDetails.oneTimePurchaseOfferDetails?.formattedPrice
-                ?: viewBinder.productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
-                ?: ""
+            val offer = viewBinder.offer
+            title.text = offer.productDetails.name.substringBefore('(')
+            subtitle.text = offer.productDetails.description
+            val periodPrice = when (offer.billingPeriod) {
+                "P1M" -> R.string.purchase_price_monthly
+                "P1Y" -> R.string.purchase_price_annual
+                else -> null
+            }
+            val formattedPrice = periodPrice?.let { Phrase.from(itemView.context, it).put("price", offer.formattedPrice).format() } ?: offer.formattedPrice
             price.text = formattedPrice
             priceOutlined.text = formattedPrice
-            price.isInvisible = viewBinder.productDetails.productType == BillingClient.ProductType.SUBS
-            priceOutlined.isInvisible = viewBinder.productDetails.productType == BillingClient.ProductType.INAPP
+            price.isInvisible = offer.isSubscription
+            priceOutlined.isInvisible = !offer.isSubscription
         }
     }
 }

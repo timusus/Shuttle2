@@ -2,14 +2,15 @@ package com.simplecityapps.trial.di
 
 import android.content.Context
 import androidx.core.content.getSystemService
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.shuttle.di.AppCoroutineScope
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.trial.BillingManager
-import com.simplecityapps.trial.DeviceService
+import com.simplecityapps.trial.BuildConfig
+import com.simplecityapps.trial.EntitlementRepository
+import com.simplecityapps.trial.EntitlementStore
+import com.simplecityapps.trial.MonetisationAnalytics
 import com.simplecityapps.trial.PromoCodeService
-import com.simplecityapps.trial.TrialManager
+import com.simplecityapps.trial.SharedPreferencesEntitlementStore
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
@@ -18,6 +19,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Named
 import javax.inject.Singleton
+import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
@@ -54,12 +56,6 @@ class TrialModule {
 
     @Provides
     @Singleton
-    fun provideDeviceService(
-        @Named("S2ApiRetrofit") retrofit: Retrofit
-    ): DeviceService = retrofit.create(DeviceService::class.java)
-
-    @Provides
-    @Singleton
     fun providePromoCodeService(
         @Named("S2ApiRetrofit") retrofit: Retrofit
     ): PromoCodeService = retrofit.create(PromoCodeService::class.java)
@@ -68,18 +64,31 @@ class TrialModule {
     @Singleton
     fun provideBillingManager(
         @ApplicationContext context: Context,
-        @AppCoroutineScope coroutineScope: CoroutineScope
-    ): BillingManager = BillingManager(context, coroutineScope)
+        @AppCoroutineScope coroutineScope: CoroutineScope,
+        analytics: MonetisationAnalytics
+    ): BillingManager = BillingManager(context, coroutineScope, analytics)
 
     @Provides
     @Singleton
-    fun provideTrialManager(
-        @ApplicationContext context: Context,
-        moshi: Moshi,
-        deviceService: DeviceService,
-        preferenceManager: GeneralPreferenceManager,
-        remoteConfig: FirebaseRemoteConfig,
+    fun provideEntitlementStore(
+        @ApplicationContext context: Context
+    ): EntitlementStore = SharedPreferencesEntitlementStore(
+        context.getSharedPreferences(SharedPreferencesEntitlementStore.PREFERENCES_NAME, Context.MODE_PRIVATE)
+    )
+
+    @Provides
+    @Singleton
+    fun provideEntitlementRepository(
         billingManager: BillingManager,
+        store: EntitlementStore,
+        analytics: MonetisationAnalytics,
         @AppCoroutineScope coroutineScope: CoroutineScope
-    ): TrialManager = TrialManager(context, moshi, deviceService, preferenceManager, remoteConfig, billingManager, coroutineScope)
+    ): EntitlementRepository = EntitlementRepository(
+        owned = billingManager.ownedProductIds,
+        store = store,
+        analytics = analytics,
+        clock = Clock.System,
+        coroutineScope = coroutineScope,
+        isDebug = BuildConfig.DEBUG
+    )
 }
