@@ -24,4 +24,35 @@
     <string name="btn_favorite">Favorites</string>
     <!-- Button to shuffle all songs -->
     <string name="btn_shuffle">Shuffle</string>
+    <!-- Home screen title -->
+    <string name="home_title">Home</string>
+    <!-- Home: button that shuffles every song in the library -->
+    <string name="home_shuffle_all">Shuffle all</string>
+    <!-- Home: shelf of albums the user played most recently -->
+    <string name="home_recently_played">Recently played</string>
+    <!-- Home: shelf of albums most recently added to the library -->
+    <string name="home_recently_added">Recently added</string>
+    <!-- Home: shelf of the user's most played albums -->
+    <string name="home_most_played">Most played</string>
+    <!-- Home: shelf of artists the user has never played -->
+    <string name="home_something_different">Something different</string>
+    <!-- Home: badge on a most played album, read out by screen readers -->
+    <plurals name="home_play_count">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> play</item>
+        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> plays</item>
+    </plurals>
+    <!-- Home: card title telling the user this version has release notes they haven't seen -->
+    <string name="home_whats_new_title">What\'s new in S2</string>
+    <!-- Home: card message under the What's new title; {version} is the app version -->
+    <string name="home_whats_new_message">See what changed in version <xliff:g example="2026.09.25" id="version">{version}</xliff:g></string>
+    <!-- Home: button on the What's new card that opens the release notes -->
+    <string name="home_whats_new_open">See what\'s new</string>
+    <!-- Home: content description for the button that dismisses the What's new card -->
+    <string name="home_whats_new_dismiss">Dismiss</string>
+    <!-- Home: title of the empty state when the library has no songs -->
+    <string name="home_empty_title">No music yet</string>
+    <!-- Home: message of the empty state when the library has no songs -->
+    <string name="home_empty_message">Music on this device and on servers you connect shows up here</string>
+    <!-- Home: content description for the top bar button that opens Search -->
+    <string name="home_search">Search</string>
 </resources>
