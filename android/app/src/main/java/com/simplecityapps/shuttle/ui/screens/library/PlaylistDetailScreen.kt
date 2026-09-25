@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.automirrored.rounded.Sort
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FileDownload
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.PlaylistRemove
@@ -190,7 +191,12 @@ fun PlaylistDetailScreen(
                         selectionAction(MediaActionType.Shuffle, Icons.Rounded.Shuffle, onSelectionAction),
                         selectionAction(MediaActionType.AddToPlaylist, Icons.AutoMirrored.Rounded.PlaylistAdd, onSelectionAction),
                     ),
-                ),
+                    // Batch tag editing, when every selected song's provider can write tags.
+                    listOfNotNull(
+                        selectionAction(MediaActionType.EditTags, Icons.Rounded.Edit, onSelectionAction)
+                            .takeIf { uiState.selectedEntries.let { entries -> entries.isNotEmpty() && entries.all { it.song.mediaProvider.supportsTagEditing } } },
+                    ),
+                ).filter { it.isNotEmpty() },
                 modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = 16.dp),
             )
         }

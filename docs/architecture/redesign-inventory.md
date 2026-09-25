@@ -206,12 +206,15 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   skipped but still counted in the "N of M updated" toast. Writes only SAF `content://` files;
   always updates Room and the live queue.
 - Redesign: full-screen Compose editor, "mixed" placeholders; list uneditable songs before saving.
-- Maestro: none.
+  Done (#377): `ui/screens/tageditor`, a detail-pane screen with write progress and a discard prompt;
+  the toast now counts only songs it tried to write.
+- Maestro: `shell-tag-editor` (on the `taglib` provider).
 
 ### Song info — Keep
 - Title, track, duration, album artist, artists, album, year, disc, play count, genres, path
   (decoded), MIME, size, bit rate, sample rate, channels, lyrics.
-- Redesign: modal bottom sheet, copy-path action. Maestro: none.
+- Redesign: modal bottom sheet, copy-path action. Done (#377) as a detail-pane screen rather than a
+  sheet, adding bit depth and ReplayGain; `ui/screens/songinfo`. Maestro: `shell-tag-editor`.
 
 ### Sleep timer — Keep
 - 5/15/30/60 min, "Play to end of track" switch (`sleepTimerPlayToEnd`); while active: live
@@ -416,17 +419,17 @@ All 12 taken as written on 2026-09-25 (epic #382); each can still be revisited.
 - [x] Album and artist list/grid toggle, persisted
 - [x] Fast scroller with section popup on every long list
 - [x] Multi-select on Songs, Albums, Artists, Playlist detail; back clears selection first
-- [ ] Batch Add to queue, Add to playlist, Edit tags
+- [x] Batch Add to queue, Add to playlist, Edit tags
 - [ ] Album detail: disc groups, Shuffle, Queue, Play next, Add to playlist, Edit tags
 - [ ] Artist detail: inline album expand, Play/Shuffle all, Shuffle albums, Play next, Edit all tags
 - [x] Genre detail actions at genre, album and song level
 - [x] Playlist detail: 7 sorts + descending, drag reorder (custom), Remove, Rename, Clear, Delete, Export m3u
 - [ ] Auto playlists: Recently added, Most played, History, Favorites (heart in Now Playing)
 - [x] Folders: drill down, back one level, recursive Play/Shuffle/Queue/Playlist
-- [ ] Song actions: Play next, Add to queue, Add to playlist, Song info, Exclude, Edit tags, Delete, Remove
+- [x] Song actions: Play next, Add to queue, Add to playlist, Song info, Exclude, Edit tags, Delete, Remove
 - [x] Create, rename, clear, delete playlists; duplicate-song handling
-- [ ] Tag editor: all 11 fields, batch mode, provider gating
-- [ ] Song info: all 17 fields
+- [x] Tag editor: all 11 fields, batch mode, provider gating
+- [x] Song info: all 17 fields
 - [ ] Search: artists/albums/songs, fuzzy ranking, filter chips persisted, shared-element open
 - [ ] Home sections and Shuffle all
 - [ ] Mini player: progress, play/pause, skip, long-press seek
@@ -481,4 +484,4 @@ All 12 taken as written on 2026-09-25 (epic #382); each can still be revisited.
 - `DebugPreferenceFragment` wires a "requires restart" dialog to `pref_crash_reporting`, which is
   not in `preferences_debug.xml`: dead code.
 - `AnalyticsPermissionViewModel` starts both switches at `false` instead of reading preferences.
-- Tag editor counts silently skipped songs in its "N of M updated" toast.
+- ~~Tag editor counts silently skipped songs in its "N of M updated" toast.~~ Fixed in #377.
