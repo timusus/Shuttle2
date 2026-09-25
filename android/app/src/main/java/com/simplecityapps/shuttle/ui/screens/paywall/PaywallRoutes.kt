@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -53,7 +54,7 @@ fun EntryProviderScope<NavKey>.paywallEntries(navigator: AppNavigator) {
  */
 @Composable
 fun PaywallHost(serverAccessGate: ServerAccessGate) {
-    var activeSource by remember { mutableStateOf<PaywallSource?>(null) }
+    var activeSource by rememberSaveable { mutableStateOf<PaywallSource?>(null) }
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(serverAccessGate, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
