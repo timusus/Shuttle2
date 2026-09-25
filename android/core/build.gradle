@@ -61,6 +61,9 @@ dependencies {
     // Timber
     api libs.timber
 
+    // Tracing: trace() sections for startup and queue restore
+    api libs.androidx.tracing
+
     // Coroutines
     api(libs.kotlinx.coroutinesCore)
     api(libs.kotlinx.coroutinesAndroid)

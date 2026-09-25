@@ -74,6 +74,7 @@ runner = "1.7.0"
 security-crypto = "1.1.0"
 semver4j = "3.1.0"
 timber = "5.0.1"
+tracing = "1.2.0"
 work-runtime-ktx = "2.11.2"
 
 [libraries]
@@ -179,6 +180,7 @@ retrofit2-converterMoshi = { module = "com.squareup.retrofit2:converter-moshi", 
 retrofit2-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "converter-moshi" }
 square-phrase = { module = "com.squareup.phrase:phrase", version.ref = "phrase" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
+androidx-tracing = { module = "androidx.tracing:tracing-ktx", version.ref = "tracing" }
 timusus-ktaglib = { module = "com.simplecityapps:ktaglib", version.ref = "ktaglib" }
 tools-desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
 vdurmont-semver4j = { module = "com.vdurmont:semver4j", version.ref = "semver4j" }

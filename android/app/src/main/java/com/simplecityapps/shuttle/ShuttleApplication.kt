@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle
 import android.app.Application
 import android.content.Intent
 import androidx.hilt.work.HiltWorkerFactory
+import androidx.tracing.trace
 import androidx.work.Configuration
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
@@ -37,7 +38,7 @@ class ShuttleApplication :
     @Inject
     lateinit var appCoroutineScope: CoroutineScope
 
-    override fun onCreate() {
+    override fun onCreate() = trace("S2 Application.onCreate") {
         super.onCreate()
 
         themeManager.setDayNightMode()

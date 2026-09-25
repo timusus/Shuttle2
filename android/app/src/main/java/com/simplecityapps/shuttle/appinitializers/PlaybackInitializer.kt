@@ -7,6 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.content.ContextCompat
+import androidx.tracing.trace
+import androidx.tracing.traceAsync
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.BitPerfectOutput
 import com.simplecityapps.playback.PlaybackOperations
@@ -27,6 +29,7 @@ import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlin.math.abs
+import kotlin.time.TimeSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
@@ -120,20 +123,21 @@ constructor(
     ) {
         var restoredContentVersion = initialContentVersion
 
-        val queueRestoreStartTime = System.currentTimeMillis()
+        val timings = RestoreTimings()
         var restoredSeekPosition = seekPosition
         queuePosition?.let {
-            val songIds = playbackPreferenceManager.queueIds.toSongIds().orEmpty()
+            val songIds = timings.measure("prefs") { playbackPreferenceManager.queueIds.toSongIds().orEmpty() }
             if (songIds.isNotEmpty()) {
                 withContext(Dispatchers.IO) {
-                    val shuffleSongIds = playbackPreferenceManager.shuffleQueueIds.toSongIds()
+                    val shuffleSongIds = timings.measure("prefs") { playbackPreferenceManager.shuffleQueueIds.toSongIds() }
 
-                    val songsById =
+                    val songsById = timings.measureSuspending("DB") {
                         songRepository.getSongs(SongQuery.SongIds((songIds + shuffleSongIds.orEmpty()).distinct()))
                             .filterNotNull()
                             .firstOrNull()
                             .orEmpty()
                             .associateBy { song -> song.id }
+                    }
 
                     // A song gone from the library since the queue was saved is dropped, so the position is
                     // found again among the songs that are left, in the list the shuffle mode presents.
@@ -149,12 +153,14 @@ constructor(
                         withContext(Dispatchers.Main) {
                             // A request's setQueue can't come between the check and the set, and one that follows
                             // it leaves the queue at another version.
-                            queueManager.setQueueIfContentVersion(
-                                contentVersion = initialContentVersion,
-                                songs = songs,
-                                shuffleSongs = shuffleSongs,
-                                position = restoredPosition.position
-                            )?.let { contentVersion -> restoredContentVersion = contentVersion }
+                            timings.measureSuspending("setQueue") {
+                                queueManager.setQueueIfContentVersion(
+                                    contentVersion = initialContentVersion,
+                                    songs = songs,
+                                    shuffleSongs = shuffleSongs,
+                                    position = restoredPosition.position
+                                )
+                            }?.let { contentVersion -> restoredContentVersion = contentVersion }
                         }
                     } else {
                         Timber.w("Queue restoration failed: none of the saved songs are in the library")
@@ -164,8 +170,6 @@ constructor(
         } ?: run {
             Timber.w("Queue restoration failed: queue position null")
         }
-
-        Timber.v("Queue restored in ${System.currentTimeMillis() - queueRestoreStartTime}ms (Time since app init: ${System.currentTimeMillis() - initTime}ms)")
 
         // On the main thread, where the check and the load can't have anything that sets the queue between them.
         withContext(Dispatchers.Main) {
@@ -179,8 +183,10 @@ constructor(
                 playbackPreferenceManager.playbackPosition = restoredSeekPosition
             }
             // A saved song that can't load (a server out of reach, a file not there yet) stays where it was left.
-            playbackManager.load(restoredSeekPosition, skipUnloadable = false) {}
+            timings.measure("load") { playbackManager.load(restoredSeekPosition, skipUnloadable = false) {} }
         }
+
+        Timber.v("Queue restored in ${timings.total}ms (${timings.stages}) (Time since app init: ${System.currentTimeMillis() - initTime}ms)")
     }
 
     /**
@@ -351,3 +357,36 @@ private fun remainingQueuePosition(
 }
 
 private fun String?.toSongIds(): List<Long>? = this?.split(',')?.map { id -> id.toLong() }
+
+/** How long each stage of a restore took, traced as `S2 restore <stage>` and summed into the restore's log line. */
+private class RestoreTimings {
+    private val start = TimeSource.Monotonic.markNow()
+    private val stageMs = linkedMapOf<String, Long>()
+
+    val total: Long get() = start.elapsedNow().inWholeMilliseconds
+
+    val stages: String get() = stageMs.entries.joinToString { (stage, ms) -> "$stage ${ms}ms" }
+
+    inline fun <T> measure(
+        stage: String,
+        crossinline block: () -> T
+    ): T {
+        val mark = TimeSource.Monotonic.markNow()
+        return trace("S2 restore $stage", block).also { add(stage, mark) }
+    }
+
+    suspend inline fun <T> measureSuspending(
+        stage: String,
+        crossinline block: suspend () -> T
+    ): T {
+        val mark = TimeSource.Monotonic.markNow()
+        return traceAsync("S2 restore $stage", stage.hashCode(), block).also { add(stage, mark) }
+    }
+
+    fun add(
+        stage: String,
+        mark: TimeSource.Monotonic.ValueTimeMark
+    ) {
+        stageMs[stage] = (stageMs[stage] ?: 0) + mark.elapsedNow().inWholeMilliseconds
+    }
+}

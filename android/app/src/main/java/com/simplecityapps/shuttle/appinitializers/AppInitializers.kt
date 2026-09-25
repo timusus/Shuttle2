@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
 import android.util.Log
+import androidx.tracing.trace
 import javax.inject.Inject
 
 class AppInitializers
@@ -13,8 +14,9 @@ constructor(
         initializers
             .sortedByDescending { it.priority() }
             .forEach {
-                Log.i("AppInit", "Initialising ${it::class.java.simpleName}")
-                it.init(application)
+                val name = it::class.java.simpleName
+                Log.i("AppInit", "Initialising $name")
+                trace("S2 init $name") { it.init(application) }
             }
     }
 }

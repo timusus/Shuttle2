@@ -6,6 +6,7 @@ import androidx.media3.cast.CastPlayer
 import androidx.media3.cast.RemoteCastPlayer
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.tracing.trace
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.mediaprovider.ServerStreamPolicy
 import com.simplecityapps.playback.AudioEffectSessionManager
@@ -97,7 +98,9 @@ class PlaybackEngineModule {
         replayGainAudioProcessor: ReplayGainAudioProcessor,
         audioTrackMonitor: AudioTrackMonitor,
         songUriResolver: SongUriResolver
-    ): ExoPlayer = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver).create()
+    ): ExoPlayer = trace("S2 build ExoPlayer") {
+        ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver).create()
+    }
 
     @Singleton
     @Provides
@@ -125,13 +128,15 @@ class PlaybackEngineModule {
         converter: CastMediaItemConverter,
         castQueue: CastQueue,
         audioEffectSessionManager: AudioEffectSessionManager
-    ): Player = CastPlayer.Builder(context)
-        .setLocalPlayer(exoPlayer)
-        .setRemotePlayer(RemoteCastPlayer.Builder(context).setMediaItemConverter(converter).build())
-        .setTransferCallback(castQueue)
-        .build()
-        .also(castQueue::attach)
-        .also { player -> audioEffectSessionManager.attach(player, exoPlayer) }
+    ): Player = trace("S2 build CastPlayer") {
+        CastPlayer.Builder(context)
+            .setLocalPlayer(exoPlayer)
+            .setRemotePlayer(RemoteCastPlayer.Builder(context).setMediaItemConverter(converter).build())
+            .setTransferCallback(castQueue)
+            .build()
+            .also(castQueue::attach)
+            .also { player -> audioEffectSessionManager.attach(player, exoPlayer) }
+    }
 
     @Singleton
     @Provides

@@ -1,6 +1,7 @@
 package com.simplecityapps.playback.chromecast
 
 import android.content.Context
+import androidx.tracing.trace
 import com.google.android.gms.cast.MediaStatus
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
@@ -23,13 +24,15 @@ constructor(
         private set
 
     init {
-        try {
-            val sessionManager = CastContext.getSharedInstance(applicationContext).sessionManager
-            sessionManager.addSessionManagerListener(this, CastSession::class.java)
-            isAvailable = true
-        } catch (e: Exception) {
-            // Cast framework unavailable on this device (e.g., no Google Play Services)
-            Timber.w(e, "Failed to initialize Cast framework - Chromecast will be unavailable")
+        trace("S2 Cast init") {
+            try {
+                val sessionManager = CastContext.getSharedInstance(applicationContext).sessionManager
+                sessionManager.addSessionManagerListener(this, CastSession::class.java)
+                isAvailable = true
+            } catch (e: Exception) {
+                // Cast framework unavailable on this device (e.g., no Google Play Services)
+                Timber.w(e, "Failed to initialize Cast framework - Chromecast will be unavailable")
+            }
         }
     }
 
