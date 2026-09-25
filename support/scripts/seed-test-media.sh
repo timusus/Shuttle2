@@ -13,6 +13,8 @@
 #     gapless         one album of 5 x 12 s sine tones played back to back: an MP3, two
 #                     FLAC-in-Matroska (.mka) tracks and two native FLACs, so gapless transitions
 #                     cross MP3 -> FLAC, Matroska -> Matroska and Matroska -> FLAC
+#     library         the sample library the screenshot tests use: 16 invented albums (97 x 10 s
+#                     tracks) with their generated covers embedded, plus its 4 playlists as .m3u
 #     podcast         one 60 s track pushed under a path containing "podcast", so Song.type
 #                     resolves to Type.Podcast (Song.kt matches on path, not a MediaStore flag)
 #     taglib          5 x 180 s tracks plus an .m3u listing the first 3 plus one line that can't
@@ -50,6 +52,8 @@ Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding]
   playback        one album of 5 x 60 s tracks, long enough for playback checks (seek, skip,
                   remove the current item) to finish before a track ends on its own
   gapless         one album of 5 x 12 s tones: MP3, two FLAC-in-Matroska, two native FLAC
+  library         the screenshot tests' sample library: 16 invented albums with embedded covers
+                  (97 x 10 s tracks) plus 4 .m3u playlists
   podcast         one 60 s track under a "podcast" path, so it resolves to Song.Type.Podcast
   taglib          5 x 180 s tracks + an .m3u (3 of them plus one unresolvable line), for the
                   Shuttle (TagLib) provider's SAF picker -- not scanned into MediaStore
@@ -67,7 +71,7 @@ FIXTURE="${1:-}"
 case "$FIXTURE" in
     -h|--help) usage; exit 0 ;;
     "") usage >&2; exit 2 ;;
-    two-disc|many-tracks|playlist-basic|playback|gapless|podcast|taglib) ;;
+    two-disc|many-tracks|playlist-basic|playback|gapless|library|podcast|taglib) ;;
     *) echo "seed-test-media: unknown fixture '$FIXTURE'" >&2; usage >&2; exit 2 ;;
 esac
 shift
@@ -179,6 +183,47 @@ build_playback() {
     done
 }
 
+# The sample library (android/fixtures/src/main/resources/sample-library/library.json, the same
+# data the screenshot tests use): 16 invented albums by 10 artists plus a compilation, each track a
+# 10 s silent mp3 tagged from the manifest with its album's generated cover embedded as ID3 front
+# art, plus one .m3u per sample playlist (the local MediaStore provider didn't import them on an
+# API 37 lane; the library itself did). Files are flat (<album-id>-<track>.mp3), so each carries
+# its own art rather than sharing a folder.jpg.
+build_library() {
+    local dir="$1" library="${REPO_ROOT}/android/fixtures/src/main/resources/sample-library"
+    command -v python3 >/dev/null 2>&1 || { echo "seed-test-media: python3 not found on PATH" >&2; exit 1; }
+    mkdir -p "$dir"
+    local file title artist album_artist album track tracktotal year genre cover
+    while IFS=$'\t' read -r file title artist album_artist album track tracktotal year genre cover; do
+        [ -f "${dir}/${file}" ] && continue
+        ffmpeg -nostdin -loglevel error -f lavfi -i "anullsrc=r=44100:cl=mono" -i "${library}/covers/${cover}.jpg" \
+            -t 10 -map 0:a -map 1:v -c:a libmp3lame -b:a 32k -c:v copy -id3v2_version 3 \
+            -disposition:v attached_pic -metadata:s:v title="Album cover" -metadata:s:v comment="Cover (front)" \
+            -metadata title="$title" -metadata artist="$artist" -metadata album_artist="$album_artist" \
+            -metadata album="$album" -metadata track="${track}/${tracktotal}" -metadata disc="1/1" \
+            -metadata date="$year" -metadata genre="$genre" \
+            -y "${dir}/${file}" >/dev/null
+    done < <(python3 - "${library}/library.json" "$dir" <<'EOF'
+import json, sys
+library = json.load(open(sys.argv[1]))
+files = {}
+for album in library["albums"]:
+    tracks = album["tracks"]
+    for number, track in enumerate(tracks, 1):
+        name = "%s-%02d.mp3" % (album["id"], number)
+        files["%s/%d" % (album["id"], number)] = (name, track["title"], track.get("artist", album["artist"]))
+        print("\t".join(str(v) for v in (name, track["title"], track.get("artist", album["artist"]), album["artist"],
+                                         album["title"], number, len(tracks), album["year"], album["genre"], album["id"])))
+for playlist in library["playlists"]:
+    with open("%s/%s.m3u" % (sys.argv[2], playlist["name"]), "w") as m3u:
+        m3u.write("#EXTM3U\n")
+        for ref in playlist["tracks"]:
+            name, title, artist = files[ref]
+            m3u.write("#EXTINF:10, %s - %s\n%s\n" % (artist, title, name))
+EOF
+    )
+}
+
 # Pushed to .../s2-seed/podcast/..., so its MediaStore path contains "podcast" and Song.type
 # resolves to Type.Podcast (Song.kt matches on path, not a genre tag or MediaStore flag).
 build_podcast() {
@@ -223,6 +268,7 @@ case "$FIXTURE" in
     playlist-basic) build_playlist_basic "$FIXTURE_DIR" ;;
     playback) build_playback "$FIXTURE_DIR" ;;
     gapless) build_gapless "$FIXTURE_DIR" ;;
+    library) build_library "$FIXTURE_DIR" ;;
     podcast) build_podcast "$FIXTURE_DIR" ;;
     taglib) build_taglib "$FIXTURE_DIR" ;;
 esac
@@ -279,8 +325,9 @@ if [ "$FIXTURE" != "taglib" ]; then
     # underlying call), so each pushed file needs its own scan to be indexed with real tags.
     echo "seed-test-media: scanning each pushed file so MediaStore extracts its tags ..."
     for f in "$FIXTURE_DIR"/*; do
+        # Quoted for the device shell: the library fixture's playlist files have spaces in their names.
         radb shell content call --uri content://media/ --method scan_file \
-            --arg "${REMOTE_DIR}/$(basename "$f")" >/dev/null 2>&1 || true
+            --arg "'${REMOTE_DIR}/$(basename "$f")'" >/dev/null 2>&1 || true
     done
 fi
 
