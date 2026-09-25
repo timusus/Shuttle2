@@ -13,6 +13,10 @@ import kotlinx.coroutines.launch
 /**
  * Debug-build-only: lets `support/scripts/seed-test-media.sh` trigger a library import via
  * `adb shell am broadcast` instead of waiting on a real onboarding pass or a scheduled import.
+ *
+ * Launched on Main, like the onboarding scan's `appCoroutineScope` call: [MediaImporter.import]
+ * moves its own work to IO but notifies its listeners on the caller's thread, and an IO caller
+ * crashes Settings > Media's listener if the import finishes while that screen is open (#386).
  */
 @AndroidEntryPoint
 class DebugMediaImportReceiver : BroadcastReceiver() {
@@ -24,7 +28,7 @@ class DebugMediaImportReceiver : BroadcastReceiver() {
         intent: Intent
     ) {
         val pendingResult = goAsync()
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.Main).launch {
             try {
                 mediaImporter.import()
             } finally {
