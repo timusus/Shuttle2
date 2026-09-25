@@ -5,5 +5,5 @@ appId: com.simplecityapps.shuttle.dev
 ---
 - runFlow: launch-fresh.yaml
 - tapOn: "Search"
-- tapOn: "Search Music"
+- tapOn: "Search your library"
 - inputText: "${QUERY}"
