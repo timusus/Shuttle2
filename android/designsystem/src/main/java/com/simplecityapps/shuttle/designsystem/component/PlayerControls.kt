@@ -34,13 +34,16 @@ import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Matrix
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -48,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.Morph
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import kotlin.math.roundToInt
 
 enum class S2RepeatMode { Off, All, One }
 
@@ -129,7 +133,7 @@ fun S2PlayerControls(
     buffering: Boolean = false,
 ) {
     val sources = remember { List(5) { MutableInteractionSource() } }
-    ButtonGroup(overflowIndicator = {}, modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+    ButtonGroup(overflowIndicator = {}, modifier = modifier.scaleDownToFit(PlayerControlsWidth), verticalAlignment = Alignment.CenterVertically) {
         customItem(
             buttonGroupContent = {
                 ToggleIcon(Icons.Rounded.Shuffle, stringResource(R.string.ds_shuffle), shuffle, onShuffleChange, Modifier.animateWidth(sources[0]), sources[0])
@@ -212,6 +216,33 @@ private fun ToggleIcon(
         interactionSource = interactionSource,
     ) {
         Icon(icon, contentDescription)
+    }
+}
+
+/** The transport's natural width: two 48 dp toggles, two medium skip buttons, the 80 dp play button and the group's gaps. */
+private val PlayerControlsWidth = 336.dp
+
+/**
+ * Below [natural] width, lays the content out at [natural] and scales it down to fit. `ButtonGroup`
+ * otherwise drops the buttons that don't fit (clipping Repeat), and throws once it can't fit its
+ * first three; a narrow pane or split screen can get there.
+ */
+private fun Modifier.scaleDownToFit(natural: Dp): Modifier = layout { measurable, constraints ->
+    val naturalPx = natural.roundToPx()
+    if (constraints.maxWidth >= naturalPx) {
+        val placeable = measurable.measure(constraints)
+        layout(placeable.width, placeable.height) { placeable.place(0, 0) }
+    } else {
+        val scale = constraints.maxWidth.toFloat() / naturalPx
+        val placeable = measurable.measure(Constraints.fixedWidth(naturalPx))
+        val height = (placeable.height * scale).roundToInt().coerceIn(constraints.minHeight, constraints.maxHeight)
+        layout(constraints.maxWidth, height) {
+            placeable.placeWithLayer(0, 0) {
+                scaleX = scale
+                scaleY = scale
+                transformOrigin = TransformOrigin(0f, 0f)
+            }
+        }
     }
 }
 
