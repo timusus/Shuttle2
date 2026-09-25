@@ -147,6 +147,12 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         check(rule.onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isEmpty()) { "\"$text\" is shown" }
     }
 
+    /** [text] appears [times] times in the composed tree, e.g. a song listed under its album and in Songs. */
+    fun assertTextShownTimes(text: String, times: Int) {
+        val shown = rule.onAllNodesWithText(text).fetchSemanticsNodes().size
+        check(shown == times) { "\"$text\" shown $shown times, expected $times" }
+    }
+
     /** Whether a row shows the now-playing indicator. */
     fun assertNowPlayingShown() {
         rule.onAllNodesWithContentDescription("Now playing")[0].assertIsDisplayed()

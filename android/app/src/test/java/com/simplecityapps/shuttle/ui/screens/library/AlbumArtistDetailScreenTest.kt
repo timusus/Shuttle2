@@ -1,12 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.simplecityapps.createAlbum
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 class AlbumArtistDetailScreenTest {
@@ -39,11 +39,20 @@ class AlbumArtistDetailScreenTest {
     }
 
     @Test
-    fun `an unfolded album lists its songs, which play within the album`() {
-        val album = createAlbum(name = "OK Computer", albumArtist = "Radiohead", songCount = 3)
-        val songs = okComputerSongs()
-        robot.setAlbumArtist(readyAlbumArtistDetail(albums = listOf(album), songs = songs, expandedAlbums = setOfNotNull(album.groupKey)))
+    fun `a folded album shows its songs only in the Songs section`() {
+        robot.setAlbumArtist(readyAlbumArtistDetail())
 
+        robot.assertTextShownTimes("Paranoid Android", 1)
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h2000dp") // tall enough that the Songs section below the unfolded album is composed
+    fun `an unfolded album lists its songs, which play within the album`() {
+        val songs = okComputerSongs()
+        val album = albumOf(songs)
+        robot.setAlbumArtist(readyAlbumArtistDetail(songs = songs, albums = listOf(album), expandedAlbums = setOfNotNull(album.groupKey)))
+
+        robot.assertTextShownTimes("Paranoid Android", 2)
         robot.clickText("Paranoid Android")
 
         robot.lastPlayed shouldBe (songs to 1)

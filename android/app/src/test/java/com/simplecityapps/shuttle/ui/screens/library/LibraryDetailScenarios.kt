@@ -17,6 +17,15 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
 
+/** The album [songs] belong to, keyed the way the songs group, so it unfolds to them. */
+fun albumOf(songs: List<Song>, year: Int = 1997) = createAlbum(
+    name = songs.first().album.orEmpty(),
+    albumArtist = songs.first().albumArtist,
+    songCount = songs.size,
+    year = year,
+    groupKey = songs.first().albumGroupKey,
+)
+
 /** Three songs on "OK Computer" by Radiohead, tracks 1 to 3. */
 fun okComputerSongs(disc: Int = 1) = listOf("Airbag", "Paranoid Android", "Subterranean Homesick Alien").mapIndexed { index, name ->
     createSong(id = index + 1L + (disc - 1) * 100, name = name, albumArtist = "Radiohead", album = "OK Computer", track = index + 1, disc = disc, duration = 240_000)
@@ -34,8 +43,8 @@ val missingAlbumDetail = AlbumDetailUiState(album = null, loadingState = AlbumDe
 
 fun readyAlbumArtistDetail(
     artist: AlbumArtist = createAlbumArtist(name = "Radiohead"),
-    albums: List<Album> = listOf(createAlbum(name = "OK Computer", albumArtist = "Radiohead", songCount = 3, year = 1997)),
     songs: List<Song> = okComputerSongs(),
+    albums: List<Album> = listOf(albumOf(songs)),
     expandedAlbums: Set<AlbumGroupKey> = emptySet(),
     currentSong: Song? = null,
 ) = AlbumArtistDetailUiState(
