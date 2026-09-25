@@ -186,8 +186,7 @@ build_playback() {
 # The sample library (android/fixtures/src/main/resources/sample-library/library.json, the same
 # data the screenshot tests use): 16 invented albums by 10 artists plus a compilation, each track a
 # 10 s silent mp3 tagged from the manifest with its album's generated cover embedded as ID3 front
-# art, plus one .m3u per sample playlist (the local MediaStore provider didn't import them on an
-# API 37 lane; the library itself did). Files are flat (<album-id>-<track>.mp3), so each carries
+# art, plus one .m3u per sample playlist. Files are flat (<album-id>-<track>.mp3), so each carries
 # its own art rather than sharing a folder.jpg.
 build_library() {
     local dir="$1" library="${REPO_ROOT}/android/fixtures/src/main/resources/sample-library"
@@ -323,9 +322,21 @@ if [ "$FIXTURE" != "taglib" ]; then
     # scan_volume only registers pending placeholder rows for new files (title/duration/is_music
     # stay NULL) -- the metadata extractor only runs per-file via scan_file (MediaStore.scanFile()'s
     # underlying call), so each pushed file needs its own scan to be indexed with real tags.
+    #
+    # .m3u files must be scanned last: MediaStore's ModernMediaScanner resolves each playlist entry
+    # against files already indexed at scan time and silently drops any entry whose target hasn't
+    # been scanned yet (#399) -- scanning in plain filesystem order interleaves playlists with the
+    # tracks they reference (e.g. "Focus.m3u" sorts before "lantern-hours-03.mp3"), so some entries
+    # would lose their track before the playlist is ever resolved.
     echo "seed-test-media: scanning each pushed file so MediaStore extracts its tags ..."
     for f in "$FIXTURE_DIR"/*; do
+        case "$f" in *.m3u) continue ;; esac
         # Quoted for the device shell: the library fixture's playlist files have spaces in their names.
+        radb shell content call --uri content://media/ --method scan_file \
+            --arg "'${REMOTE_DIR}/$(basename "$f")'" >/dev/null 2>&1 || true
+    done
+    for f in "$FIXTURE_DIR"/*.m3u; do
+        [ -e "$f" ] || continue
         radb shell content call --uri content://media/ --method scan_file \
             --arg "'${REMOTE_DIR}/$(basename "$f")'" >/dev/null 2>&1 || true
     done
