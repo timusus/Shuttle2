@@ -14,8 +14,3 @@ data class PlaylistListUiState(
 ) {
     enum class LoadingState { Loading, Scanning, Ready }
 }
-
-sealed interface PlaylistListUiEvent {
-    data class AddedToQueue(val playlistName: String) : PlaylistListUiEvent
-    data class PlaybackFailed(val errorMessage: String?) : PlaylistListUiEvent
-}

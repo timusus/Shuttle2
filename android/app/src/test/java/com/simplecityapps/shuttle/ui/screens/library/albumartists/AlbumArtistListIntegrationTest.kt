@@ -15,7 +15,6 @@ import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
@@ -155,13 +154,6 @@ class AlbumArtistListIntegrationTest {
         val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager(), albumArtistRepository = fakeAlbumArtistRepository)
         return AlbumArtistListViewModel(
             observeAlbumArtists = testMediaActions.observeAlbumArtists,
-            playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-            addToPlaylistUseCase = testMediaActions.addToPlaylist,
-            createPlaylistUseCase = testMediaActions.createPlaylist,
-            resolveSongs = testMediaActions.resolveSongs,
-            enqueueSongs = testMediaActions.enqueueSongs,
-            excludeSongs = testMediaActions.excludeSongs,
-            observePlaylists = testMediaActions.observePlaylists,
             preferenceManager = fakePreferences,
             mediaImportObserver = fakeImportState,
         )

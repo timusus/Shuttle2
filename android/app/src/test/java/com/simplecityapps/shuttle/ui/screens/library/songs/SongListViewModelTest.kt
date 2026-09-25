@@ -12,7 +12,6 @@ import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
-import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -93,13 +92,6 @@ class SongListViewModelTest {
         return SongListViewModel(
             observeSongs = testMediaActions.observeSongs,
             playSongs = PlaySongs(queueManager, FakePlaybackManager()),
-            shuffleSongs = ShuffleSongs(FakePlaybackManager()),
-            addToPlaylistUseCase = testMediaActions.addToPlaylist,
-            createPlaylistUseCase = testMediaActions.createPlaylist,
-            enqueueSongs = testMediaActions.enqueueSongs,
-            excludeSongs = testMediaActions.excludeSongs,
-            deleteSongs = testMediaActions.deleteSongs,
-            observePlaylists = testMediaActions.observePlaylists,
             sortPreferenceManager = fakeSortPreferences,
             ioDispatcher = testDispatcher,
             mediaImportObserver = fakeImportState,

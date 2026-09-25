@@ -15,7 +15,6 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
-import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -126,13 +125,6 @@ class GenreListIntegrationTest {
         val testMediaActions = TestMediaActions(fakeSongRepository, fakeGenreRepository, fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
         return GenreListViewModel(
             observeGenres = testMediaActions.observeGenres,
-            playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-            addToPlaylistUseCase = testMediaActions.addToPlaylist,
-            createPlaylistUseCase = testMediaActions.createPlaylist,
-            resolveSongs = testMediaActions.resolveSongs,
-            enqueueSongs = testMediaActions.enqueueSongs,
-            excludeSongs = testMediaActions.excludeSongs,
-            observePlaylists = testMediaActions.observePlaylists,
             sortPreferenceManager = fakeSortPreferences,
             mediaImportObserver = fakeImportState,
         )

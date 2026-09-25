@@ -16,7 +16,6 @@ import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
-import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import org.junit.Rule
 import org.junit.Test
@@ -181,13 +180,6 @@ class SongListIntegrationTest {
         return SongListViewModel(
             observeSongs = testMediaActions.observeSongs,
             playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-            shuffleSongs = ShuffleSongs(FakePlaybackManager()),
-            addToPlaylistUseCase = testMediaActions.addToPlaylist,
-            createPlaylistUseCase = testMediaActions.createPlaylist,
-            enqueueSongs = testMediaActions.enqueueSongs,
-            excludeSongs = testMediaActions.excludeSongs,
-            deleteSongs = testMediaActions.deleteSongs,
-            observePlaylists = testMediaActions.observePlaylists,
             sortPreferenceManager = fakeSortPreferences,
             ioDispatcher = mainDispatcherRule.testDispatcher,
             mediaImportObserver = fakeImportState,

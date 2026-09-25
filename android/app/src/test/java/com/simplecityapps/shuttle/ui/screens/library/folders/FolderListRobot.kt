@@ -76,7 +76,7 @@ class FolderListRobot(private val rule: ComposeContentTestRule) {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             RenderFolderList(
                 uiState = uiState,
-                playlists = uiState.playlists,
+                playlists = emptyList(),
                 onFolderClick = viewModel::onFolderClick,
                 onNavigateUp = viewModel::onNavigateUp,
             )

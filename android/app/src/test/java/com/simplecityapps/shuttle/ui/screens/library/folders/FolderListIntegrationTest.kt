@@ -11,9 +11,6 @@ import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.fakes.importComplete
-import com.simplecityapps.shuttle.ui.actions.PlaySongs
-import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
-import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import org.junit.Rule
 import org.junit.Test
@@ -82,15 +79,6 @@ class FolderListIntegrationTest {
         val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, queueManager, playbackManager = playbackManager)
         return FolderListViewModel(
             observeSongs = testMediaActions.observeSongs,
-            playSongs = PlaySongs(queueManager, playbackManager),
-            shuffleSongs = ShuffleSongs(playbackManager),
-            resolveFolderSongs = ResolveFolderSongs(fakeSongRepository),
-            addToPlaylistUseCase = testMediaActions.addToPlaylist,
-            createPlaylistUseCase = testMediaActions.createPlaylist,
-            enqueueSongs = testMediaActions.enqueueSongs,
-            excludeSongs = testMediaActions.excludeSongs,
-            deleteSongs = testMediaActions.deleteSongs,
-            observePlaylists = testMediaActions.observePlaylists,
             savedStateHandle = SavedStateHandle(),
             ioDispatcher = mainDispatcherRule.testDispatcher,
             mediaImportObserver = fakeImportState,

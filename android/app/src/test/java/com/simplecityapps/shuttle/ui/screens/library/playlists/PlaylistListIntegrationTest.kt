@@ -139,9 +139,6 @@ class PlaylistListIntegrationTest {
             renamePlaylist = actions.renamePlaylist,
             clearPlaylist = actions.clearPlaylist,
             deletePlaylist = actions.deletePlaylist,
-            playSongs = actions.playSongs,
-            resolveSongs = actions.resolveSongs,
-            enqueueSongs = actions.enqueueSongs,
             sortPreferenceManager = fakeSortPreferences,
             mediaImportObserver = fakeImportState,
         )

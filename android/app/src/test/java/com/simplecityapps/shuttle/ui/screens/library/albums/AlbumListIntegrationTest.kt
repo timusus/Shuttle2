@@ -17,7 +17,6 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
-import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.testing.MainDispatcherRule
@@ -206,14 +205,7 @@ class AlbumListIntegrationTest {
         return AlbumListViewModel(
             observeAlbums = testMediaActions.observeAlbums,
             observeSongs = testMediaActions.observeSongs,
-            playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
             shuffleSongs = ShuffleSongs(FakePlaybackManager()),
-            addToPlaylistUseCase = testMediaActions.addToPlaylist,
-            createPlaylistUseCase = testMediaActions.createPlaylist,
-            resolveSongs = testMediaActions.resolveSongs,
-            enqueueSongs = testMediaActions.enqueueSongs,
-            excludeSongs = testMediaActions.excludeSongs,
-            observePlaylists = testMediaActions.observePlaylists,
             sortPreferenceManager = fakeSortPreferences,
             viewModePreferenceManager = fakeViewModePreferences,
             mediaImportObserver = fakeImportState,

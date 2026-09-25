@@ -13,17 +13,12 @@ import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.ui.actions.PlaySongs
-import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
-import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -149,72 +144,6 @@ class FolderListViewModelTest {
 
     // endregion
 
-    // region Folder actions
-
-    @Test
-    fun `play folder queues its songs recursively in browsing order`() = runTest(testDispatcher) {
-        val viewModel = subscribe(createViewModel())
-
-        viewModel.onPlay(music)
-        advanceUntilIdle()
-
-        fakeQueueManager.lastSetQueue shouldBe listOf(chlorophyllLoop, paranoid, loose)
-        fakeQueueManager.lastSetQueuePosition shouldBe 0
-    }
-
-    @Test
-    fun `shuffle folder shuffles its songs recursively`() = runTest(testDispatcher) {
-        val viewModel = subscribe(createViewModel())
-
-        viewModel.onShuffle(music)
-        advanceUntilIdle()
-
-        fakePlaybackManager.shuffled.toSet() shouldBe setOf(chlorophyllLoop, paranoid, loose)
-    }
-
-    @Test
-    fun `add folder to queue adds its songs and reports it`() = runTest(testDispatcher) {
-        val viewModel = subscribe(createViewModel())
-        val events = mutableListOf<FolderListUiEvent>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.toList(events) }
-        advanceUntilIdle()
-
-        viewModel.onAddToQueue(juniperStatic)
-        advanceUntilIdle()
-
-        fakePlaybackManager.addedToQueue shouldBe listOf(chlorophyllLoop, paranoid)
-        events shouldBe listOf(FolderListUiEvent.FolderAddedToQueue(juniperStatic))
-    }
-
-    @Test
-    fun `play folder next inserts its songs next`() = runTest(testDispatcher) {
-        val viewModel = subscribe(createViewModel())
-
-        viewModel.onPlayNext(music)
-        advanceUntilIdle()
-
-        fakePlaybackManager.playedNext shouldBe listOf(chlorophyllLoop, paranoid, loose)
-    }
-
-    // endregion
-
-    // region Song actions
-
-    @Test
-    fun `clicking a song plays the folder's songs from it`() = runTest(testDispatcher) {
-        val viewModel = subscribe(createViewModel())
-        viewModel.onFolderClick(juniperStatic)
-        advanceUntilIdle()
-
-        viewModel.onSongClick(paranoid)
-        advanceUntilIdle()
-
-        fakeQueueManager.lastSetQueue shouldBe listOf(chlorophyllLoop, paranoid)
-        fakeQueueManager.lastSetQueuePosition shouldBe 1
-    }
-
-    // endregion
-
     private fun TestScope.subscribe(viewModel: FolderListViewModel): FolderListViewModel {
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
@@ -225,15 +154,6 @@ class FolderListViewModelTest {
         val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, fakeQueueManager, playbackManager = fakePlaybackManager)
         return FolderListViewModel(
             observeSongs = testMediaActions.observeSongs,
-            playSongs = PlaySongs(fakeQueueManager, fakePlaybackManager),
-            shuffleSongs = ShuffleSongs(fakePlaybackManager),
-            resolveFolderSongs = ResolveFolderSongs(fakeSongRepository),
-            addToPlaylistUseCase = testMediaActions.addToPlaylist,
-            createPlaylistUseCase = testMediaActions.createPlaylist,
-            enqueueSongs = testMediaActions.enqueueSongs,
-            excludeSongs = testMediaActions.excludeSongs,
-            deleteSongs = testMediaActions.deleteSongs,
-            observePlaylists = testMediaActions.observePlaylists,
             savedStateHandle = savedStateHandle,
             ioDispatcher = testDispatcher,
             mediaImportObserver = fakeImportState,
