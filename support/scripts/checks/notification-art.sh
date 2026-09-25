@@ -4,7 +4,26 @@
 # is the loaded artwork (the placeholder is a 72x72 music note) and that the shade's media player
 # shows it (its background, drawn from the artwork, is magenta-tinted). Removes the album and
 # reimports on exit, so the other checks keep their fixture-only library.
+#
+# Also: with the "Media session artwork" setting off, ArtworkBitmapLoader.mediaSessionArtwork short-
+# circuits to no bitmap at all (android/playback/.../mediasession/ArtworkBitmapLoader.kt), so the
+# same large-icon-size check that proves artwork loaded when the setting's on proves it's back to
+# the placeholder when it's off -- the lock screen reads the identical session metadata.
 source "$(dirname "$0")/_lib.sh"
+
+PREFS_FILE="${APP_ID}_preferences.xml"
+PREFS_TMP="$(mktemp)"
+
+set_artwork_pref() { # true | false
+    adb_retry shell "run-as ${APP_ID} cat shared_prefs/${PREFS_FILE}" 2>/dev/null > "$PREFS_TMP"
+    if grep -q 'name="media_session_artwork"' "$PREFS_TMP"; then
+        sed -i.bak "s#<boolean name=\"media_session_artwork\" value=\"[a-z]*\" />#<boolean name=\"media_session_artwork\" value=\"$1\" />#" "$PREFS_TMP"
+    else
+        sed -i.bak "s#</map>#    <boolean name=\"media_session_artwork\" value=\"$1\" />\n</map>#" "$PREFS_TMP"
+    fi
+    adb_retry shell "run-as ${APP_ID} sh -c 'cat > shared_prefs/${PREFS_FILE}'" < "$PREFS_TMP"
+    rm -f "$PREFS_TMP" "${PREFS_TMP}.bak"
+}
 
 remote_dir="/sdcard/Music/s2-seed/notification-art"
 album="Notification Art Check"
@@ -13,6 +32,10 @@ local_dir="$(mktemp -d)"
 cleanup() {
     adb_retry shell cmd statusbar collapse >/dev/null 2>&1 || true
     s2 PAUSE >/dev/null 2>&1 || true
+    set_artwork_pref true >/dev/null 2>&1 || true
+    # The live process cached the setting in memory when it toggled off; a file write alone won't
+    # reach it, so the next check to launch the (still-running) app would inherit the stale value.
+    adb_retry shell am force-stop "$APP_ID" >/dev/null 2>&1 || true
     adb_retry shell rm -f "${remote_dir}/song.mp3" >/dev/null 2>&1 || true
     adb_retry shell rmdir "$remote_dir" >/dev/null 2>&1 || true
     adb_retry shell content call --uri content://media/ --method scan_file --arg "${remote_dir}/song.mp3" >/dev/null 2>&1 || true
@@ -88,4 +111,36 @@ print(*(t // n for t in tot))
 read -r r g b <<<"$rgb"
 echo "  media player average colour: ${rgb}"
 [ "$r" -gt $((g + 40)) ] && [ "$b" -gt $((g + 40)) ] || fail "the shade's media player isn't tinted by the artwork (average ${rgb})"
+
+# "Media session artwork" off: ArtworkBitmapLoader short-circuits to no bitmap, so the notification
+# (and the identical lock-screen metadata) carries no large icon at all -- not necessarily the same
+# 72x72 BITMAP placeholder the "on" case's icon-less default is, just not the loaded artwork's size.
+# SharedPreferences caches its values in memory on first read, so a file write alone doesn't reach a
+# live process -- force-stop and relaunch, same as seed-test-media.sh's --skip-onboarding prefs
+# write, then resume the album.
+s2 PAUSE >/dev/null
+before_position="$(state positionMs)"
+set_artwork_pref false
+adb_retry shell am force-stop "$APP_ID" >/dev/null
+launch_app
+deadline=$(($(date +%s) + 30))
+until s2 PLAY_ALL --es album "'${album}'" >/dev/null 2>&1 && [ "$(state title)" = "Notification Art Song" ]; do
+    [ "$(date +%s)" -lt "$deadline" ] || fail "'${album}' isn't playable within 30s after relaunching with artwork off"
+    sleep 1
+done
+s2 SEEK --el ms "$before_position" >/dev/null
+wait_for 10 "s['state'] == 'Playing' and s['title'] == 'Notification Art Song'"
+# BSD sed (this runs on the Mac host, not the device) has no `\|` alternation in a BRE, so match the
+# null and BITMAP-placeholder cases with two separate patterns rather than one combined regex.
+deadline=$(($(date +%s) + 15))
+until raw_icon="$(adb_retry shell dumpsys notification --noredact | grep -A60 "pkg=${APP_ID} " \
+    | sed -n 's/.*\(android.largeIcon=.*\)$/\1/p' | head -1)" \
+    && { [ "$raw_icon" = "android.largeIcon=null" ] \
+        || [[ "$raw_icon" == "android.largeIcon=Icon (Icon(typ=BITMAP size=72x72))" ]]; }; do
+    [ "$(date +%s)" -lt "$deadline" ] || fail "the notification's large icon is '${raw_icon:-none}', expected null or the 72x72 placeholder with artwork off"
+    sleep 1
+done
+icon_off="${raw_icon#android.largeIcon=}"
+echo "  media session artwork off: large icon is '${icon_off}', not the loaded artwork"
+s2 PAUSE >/dev/null
 pass
