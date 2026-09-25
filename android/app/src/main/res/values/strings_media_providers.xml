@@ -12,4 +12,8 @@
     <string name="media_provider_config_hint_code">2FA Code</string>
     <string name="media_provider_config_helper_code">Optional</string>
     <string name="media_provider_config_switch_remember_password">Remember password</string>
+    <string name="media_provider_config_helper_address">e.g. http://my.server.com:8080</string>
+    <string name="media_provider_config_helper_address_plex">e.g. http://my.plex.server.com:32400</string>
+    <string name="media_provider_config_show_password">Show password</string>
+    <string name="media_provider_config_hide_password">Hide password</string>
 </resources>

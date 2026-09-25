@@ -22,7 +22,9 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.screens.sources.servers.SERVER_CONNECTED_REQUEST
+import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInRoute
 import com.simplecityapps.shuttle.ui.screens.sources.servers.connectedServerType
 import com.simplecityapps.shuttle.ui.screens.sources.servers.showServerSignIn
 import kotlinx.coroutines.launch
@@ -42,6 +44,10 @@ fun sourcesRows(snackbarHostState: SnackbarHostState): LazyListScope.() -> Unit 
     val lifecycleOwner = LocalLifecycleOwner.current
     var dialog by remember { mutableStateOf<SourcesDialog?>(null) }
     var pickingFolder by rememberSaveable { mutableStateOf<FolderKind?>(null) }
+    var signingIn by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
+    val signIn: (MediaProviderType) -> Unit = { type ->
+        if (type == MediaProviderType.Plex) signingIn = type else fragmentManager?.showServerSignIn(type)
+    }
 
     val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         pickingFolder?.let { kind -> viewModel.onFolderPicked(kind, uri?.toString()) }
@@ -69,10 +75,13 @@ fun sourcesRows(snackbarHostState: SnackbarHostState): LazyListScope.() -> Unit 
         dialog = dialog,
         onTurnOffThisDevice = { viewModel.onThisDeviceChange(false) },
         onRemoveFolder = viewModel::onRemoveFolder,
-        onSignIn = { type -> fragmentManager?.showServerSignIn(type) },
+        onSignIn = signIn,
         onRemoveServer = viewModel::onRemoveServer,
         onDismiss = { dialog = null },
     )
+    signingIn?.let { type ->
+        ServerSignInRoute(type, onConnected = viewModel::onServerConnected, onDismiss = { signingIn = null })
+    }
 
     val actions = remember(viewModel, fragmentManager, folderPicker) {
         SourcesActions(
@@ -92,7 +101,7 @@ fun sourcesRows(snackbarHostState: SnackbarHostState): LazyListScope.() -> Unit 
                 if (server.connected) {
                     dialog = SourcesDialog.Server(server.type)
                 } else if (viewModel.onAddServer()) {
-                    fragmentManager?.showServerSignIn(server.type)
+                    signIn(server.type)
                 }
             },
             onShowDialog = { dialog = it },

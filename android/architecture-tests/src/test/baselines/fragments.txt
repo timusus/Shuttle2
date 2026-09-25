@@ -3,4 +3,3 @@
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallDialogFragment
 com.simplecityapps.shuttle.ui.screens.sources.servers.emby.EmbyConfigurationFragment
 com.simplecityapps.shuttle.ui.screens.sources.servers.jellyfin.JellyfinConfigurationFragment
-com.simplecityapps.shuttle.ui.screens.sources.servers.plex.PlexConfigurationFragment
