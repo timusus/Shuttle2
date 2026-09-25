@@ -71,6 +71,27 @@ loadingSongList  // val, not a function — Loading has no parameters
 
 `createSong()`, `createGenre()`, `createPlaylist()` in `app/src/test/.../creationFunctions.kt`. All parameters have defaults — override only what matters for the test.
 
+## Sample Library (screenshots)
+
+Recordings (Roborazzi, catalogue boards) show the invented sample library, never real artists,
+albums or songs, and never hand-typed "Artist"/"Album" stand-ins where content is visible.
+
+- **Data and covers:** `:android:fixtures` (`SampleLibrary`: albums, songs, artists, genres,
+  playlists, `queue()`, `cover(albumId)`), read from
+  `android/fixtures/src/main/resources/sample-library/library.json`. Add it as
+  `testImplementation(project(":android:fixtures"))` (designsystem uses `debugImplementation`
+  for its `src/debug` boards). To change names or covers, edit the manifest and rerun
+  `support/scripts/generate-fake-artwork.py`; the contact sheet is
+  `docs/design/fake-artwork/contact-sheet.png`.
+- **App models:** `SampleSong.toSong()`, `toAlbum()`, `toAlbumArtist()`, `toGenre()`,
+  `toPlaylist()` and `sampleSongs(n)` in `app/src/test/.../SampleLibraryFactories.kt`.
+- **Artwork through Glide:** call `SampleArtworkGlide.install(context)` in `@Before` and
+  `uninstall()` in `@After`. Songs, albums and album artists named after sample ones then
+  load their covers synchronously. Nothing else loads, so other content keeps its placeholder.
+  Production image loading is untouched. See `ShellScreenshotTest`.
+- **Boards:** `SampleArt(albumId)` for a row naming a sample album, `SampleArt(variant)` for
+  generic art matched to the scheme column.
+
 ## Adding a New Screen's Tests
 
 1. Create `*Robot.kt` — constructor takes `ComposeContentTestRule`, provides `setContent()`, selectors, callback captures
