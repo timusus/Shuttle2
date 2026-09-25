@@ -3,7 +3,6 @@ package com.simplecityapps.mediaprovider.repository.playlists
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
-import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import java.io.Serializable
@@ -49,8 +48,6 @@ interface PlaylistRepository {
         playlist: Playlist,
         name: String
     )
-
-    fun getSmartPlaylists(): Flow<List<SmartPlaylist>>
 
     suspend fun updatePlaylistSortOder(
         playlist: Playlist,

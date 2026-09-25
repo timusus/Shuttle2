@@ -14,7 +14,6 @@ import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
-import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
@@ -48,8 +47,6 @@ class FakePlaylistRepository(private val playlists: Map<Playlist, List<Song>> = 
     override fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>> = flowOf(
         playlists[playlist].orEmpty().mapIndexed { index, song -> PlaylistSong(id = index.toLong(), sortOrder = index.toLong(), song = song) }
     )
-
-    override fun getSmartPlaylists(): Flow<List<SmartPlaylist>> = error("not called")
 
     override suspend fun getFavoritesPlaylist(): Playlist = error("not called")
 

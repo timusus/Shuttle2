@@ -18,11 +18,8 @@ import com.simplecityapps.shuttle.model.Entry
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
-import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
-import com.simplecityapps.shuttle.sorting.SongSortOrder
 import java.io.IOException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,7 +28,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -70,15 +66,6 @@ class LocalPlaylistRepository(
                 .toMutableList()
                 .sortedWith(query.sortOrder.comparator)
         }
-
-    override fun getSmartPlaylists(): Flow<List<SmartPlaylist>> = flow {
-        emit(
-            listOf(
-                SmartPlaylist(com.simplecityapps.mediaprovider.R.string.playlist_title_recently_added, SongQuery.RecentlyAdded()),
-                SmartPlaylist(com.simplecityapps.mediaprovider.R.string.playlist_title_most_played, SongQuery.PlayCount(2, SongSortOrder.PlayCount))
-            )
-        )
-    }
 
     override suspend fun getFavoritesPlaylist(): Playlist {
         val favoritesName = context.getString(com.simplecityapps.mediaprovider.R.string.playlist_title_favorites)

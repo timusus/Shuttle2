@@ -6,7 +6,6 @@ import com.simplecityapps.mediaprovider.repository.playlists.comparator
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
-import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import kotlinx.coroutines.flow.Flow
@@ -38,8 +37,6 @@ class FakePlaylistRepository : PlaylistRepository {
     }
 
     override fun getPlaylists(query: PlaylistQuery): Flow<List<Playlist>> = playlists
-
-    override fun getSmartPlaylists(): Flow<List<SmartPlaylist>> = error("The app builds its smart playlists from SmartPlaylistId")
 
     override suspend fun getFavoritesPlaylist(): Playlist = favorites ?: error("No favorites playlist")
 
