@@ -33,8 +33,12 @@ class FakePlaybackManager : PlaybackOperations {
     /** The seek position of each [load] call, in order. */
     val loadedPositions = mutableListOf<Int?>()
 
+    /** The [skipUnloadable] argument of each [load] call, in order. */
+    val loadedSkipUnloadable = mutableListOf<Boolean>()
+
     override fun load(seekPosition: Int?, skipUnloadable: Boolean, completion: (Result<Boolean>) -> Unit) {
         loadedPositions += seekPosition
+        loadedSkipUnloadable += skipUnloadable
         completion(loadResult)
     }
 

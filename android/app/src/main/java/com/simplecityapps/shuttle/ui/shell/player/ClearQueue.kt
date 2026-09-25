@@ -45,7 +45,8 @@ class RestoreQueue @Inject constructor(
 ) {
     suspend operator fun invoke(snapshot: QueueSnapshot) {
         if (!queueOperations.setQueue(snapshot.songs, snapshot.shuffleSongs, snapshot.position)) return
-        playbackOperations.load(snapshot.seekPositionMs) { result ->
+        // A restored song that can't load stays where it was left, rather than the queue moving on (RS-56).
+        playbackOperations.load(snapshot.seekPositionMs, skipUnloadable = false) { result ->
             if (snapshot.playing && result.isSuccess) playbackOperations.play()
         }
     }

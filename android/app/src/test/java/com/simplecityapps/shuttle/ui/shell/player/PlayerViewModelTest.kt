@@ -398,6 +398,8 @@ class PlayerViewModelTest {
         viewModel.clearQueue()
         viewModel.undoClearQueue()
         playbackManager.calls shouldBe listOf("clearQueue()")
+        // A restored song that can't load stays where it was left, rather than the queue moving on (RS-56).
+        playbackManager.loadedSkipUnloadable shouldBe listOf(false)
     }
 
     @Test

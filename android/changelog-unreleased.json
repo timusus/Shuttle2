@@ -90,6 +90,10 @@
       "commits": []
     },
     {
+      "text": "Undoing a cleared queue that was paused on a song that can't be played now stays on that song too, instead of skipping ahead",
+      "commits": []
+    },
+    {
       "text": "A purchase that is still waiting for payment no longer unlocks the full version early",
       "commits": ["d0d4a614"]
     },
