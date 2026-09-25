@@ -23,7 +23,11 @@ import com.simplecityapps.shuttle.ui.actions.ShareSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
+import com.simplecityapps.trial.Entitlement
+import com.simplecityapps.trial.ProSource
+import com.simplecityapps.trial.ServerAccessGate
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /** The shared media action use cases, wired to a test's fakes. */
 class TestMediaActions(
@@ -48,7 +52,11 @@ class TestMediaActions(
     val deleteSongs = DeleteSongs(songRepository, queueManager, resolveSongs, { fileDeleter.delete(it) }, Dispatchers.Unconfined)
     val songDownloadManager = FakeSongDownloadManager()
     val mediaInfoProvider = FakeMediaInfoProvider()
-    val downloadSongs = DownloadSongs(songDownloadManager, AggregateMediaInfoProvider(mutableSetOf(mediaInfoProvider)), resolveSongs)
+
+    /** The user's entitlement, which gates server downloads; Pro by default. */
+    val entitlement = MutableStateFlow<Entitlement>(Entitlement.Pro(ProSource.Lifetime))
+    val serverAccessGate = ServerAccessGate(entitlement)
+    val downloadSongs = DownloadSongs(songDownloadManager, AggregateMediaInfoProvider(mutableSetOf(mediaInfoProvider)), resolveSongs, serverAccessGate)
     val findGoToTarget = FindGoToTarget(albumRepository, albumArtistRepository)
     val shareSongs = ShareSongs(resolveSongs)
     val removeFromPlaylist = RemoveFromPlaylist(playlistRepository)

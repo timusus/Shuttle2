@@ -34,7 +34,28 @@ interface MediaInfoProvider {
     ): Uri?
 }
 
-class AggregateMediaInfoProvider(val providers: MutableSet<MediaInfoProvider> = mutableSetOf()) : MediaInfoProvider {
+/** Whether a song from a remote server may be streamed. Asked once per song, when its stream is resolved. */
+fun interface ServerStreamPolicy {
+    suspend fun allows(song: Song): Boolean
+
+    companion object {
+        val AllowAll = ServerStreamPolicy { true }
+    }
+}
+
+/** [ServerStreamPolicy] refused a song's stream. */
+class ServerStreamDeniedException(song: Song) : IllegalStateException("Streaming ${song.name} from its server isn't allowed")
+
+/**
+ * Resolves a song through the provider that handles it, or as a local file if none does.
+ *
+ * @param streamPolicy asked before a remote song's stream is resolved, so every player (local, Cast, Android Auto)
+ * goes through the same check. A refusal throws [ServerStreamDeniedException].
+ */
+class AggregateMediaInfoProvider(
+    val providers: MutableSet<MediaInfoProvider> = mutableSetOf(),
+    private val streamPolicy: ServerStreamPolicy = ServerStreamPolicy.AllowAll
+) : MediaInfoProvider {
     fun addProvider(provider: MediaInfoProvider) {
         providers.add(provider)
     }
@@ -50,8 +71,9 @@ class AggregateMediaInfoProvider(val providers: MutableSet<MediaInfoProvider> = 
         castCompatibilityMode: Boolean
     ): MediaInfo {
         val uri = uriFor(song)
-        return providers.firstOrNull { it.handles(uri) }?.getMediaInfo(song, castCompatibilityMode)
-            ?: MediaInfo(path = uri, mimeType = song.mimeType, isRemote = false)
+        val provider = providers.firstOrNull { it.handles(uri) } ?: return MediaInfo(path = uri, mimeType = song.mimeType, isRemote = false)
+        if (!streamPolicy.allows(song)) throw ServerStreamDeniedException(song)
+        return provider.getMediaInfo(song, castCompatibilityMode)
     }
 
     // Local songs are already on disk, so there's nothing to download; only a remote provider

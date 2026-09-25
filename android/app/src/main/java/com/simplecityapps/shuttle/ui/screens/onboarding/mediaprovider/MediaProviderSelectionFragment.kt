@@ -35,6 +35,7 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.emby.EmbyC
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.jellyfin.JellyfinConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.plex.PlexConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.taglib.DirectorySelectionFragment
+import com.simplecityapps.trial.ServerAccessGate
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -58,6 +59,9 @@ class MediaProviderSelectionFragment :
 
     @Inject
     lateinit var presenterFactory: MediaProviderSelectionPresenter.Factory
+
+    @Inject
+    lateinit var serverAccessGate: ServerAccessGate
     lateinit var presenter: MediaProviderSelectionPresenter
 
     private val preAnimationConstraints = ConstraintSet()
@@ -180,6 +184,8 @@ class MediaProviderSelectionFragment :
     // MediaProviderSelectionFragment.Listener Implementation
 
     override fun onMediaProviderSelected(providerType: MediaProviderType) {
+        // Once the trial is over, adding a server opens the paywall instead
+        if (providerType.remote && !serverAccessGate.tryAddServer()) return
         when (providerType) {
             MediaProviderType.MediaStore -> {
                 presenter.addMediaProviderType(providerType)

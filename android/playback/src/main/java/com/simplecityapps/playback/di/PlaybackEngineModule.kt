@@ -7,6 +7,7 @@ import androidx.media3.cast.RemoteCastPlayer
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
+import com.simplecityapps.mediaprovider.ServerStreamPolicy
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.CallMonitor
 import com.simplecityapps.playback.PlaybackManager
@@ -68,13 +69,15 @@ class PlaybackEngineModule {
     fun provideAggregateMediaPathProvider(
         embyMediaPathProvider: EmbyMediaInfoProvider,
         jellyfinMediaPathProvider: JellyfinMediaInfoProvider,
-        plexMediaPathProvider: PlexMediaInfoProvider
+        plexMediaPathProvider: PlexMediaInfoProvider,
+        serverStreamPolicy: ServerStreamPolicy
     ): AggregateMediaInfoProvider = AggregateMediaInfoProvider(
         mutableSetOf(
             embyMediaPathProvider,
             jellyfinMediaPathProvider,
             plexMediaPathProvider
-        )
+        ),
+        serverStreamPolicy
     )
 
     @Singleton

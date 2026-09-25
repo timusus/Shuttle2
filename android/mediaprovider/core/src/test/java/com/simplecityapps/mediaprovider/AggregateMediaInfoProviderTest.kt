@@ -3,6 +3,7 @@ package com.simplecityapps.mediaprovider
 import android.net.Uri
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -71,6 +72,35 @@ class AggregateMediaInfoProviderTest {
     @Test
     fun `fallback uri reaches the provider for its scheme`() = runTest {
         provider.downloadFallbackUri("jellyfin://item/107898", 403).toString() shouldBe "https://jellyfin.example/fallback"
+    }
+
+    @Test
+    fun `a remote song the stream policy refuses fails to resolve`() = runTest {
+        val asked = mutableListOf<String>()
+        val refusing = AggregateMediaInfoProvider(
+            mutableSetOf(SchemeProvider("jellyfin")),
+            ServerStreamPolicy { song ->
+                asked += song.path
+                false
+            }
+        )
+
+        shouldThrow<ServerStreamDeniedException> { refusing.getMediaInfo(createSong("jellyfin://item/107898")) }
+        asked shouldBe listOf("jellyfin://item/107898")
+    }
+
+    @Test
+    fun `local songs never ask the stream policy`() = runTest {
+        val refusing = AggregateMediaInfoProvider(mutableSetOf(SchemeProvider("jellyfin")), ServerStreamPolicy { error("asked") })
+
+        refusing.getMediaInfo(createSong("/storage/emulated/0/Music/a.mp3")).isRemote shouldBe false
+    }
+
+    @Test
+    fun `downloads don't ask the stream policy`() = runTest {
+        val refusing = AggregateMediaInfoProvider(mutableSetOf(SchemeProvider("jellyfin")), ServerStreamPolicy { error("asked") })
+
+        refusing.downloadUri(createSong("jellyfin://item/107898")).toString() shouldBe "https://jellyfin.example/download"
     }
 
     private fun createSong(path: String) = Song(

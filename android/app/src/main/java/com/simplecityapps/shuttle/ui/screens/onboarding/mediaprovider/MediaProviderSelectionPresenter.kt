@@ -15,6 +15,7 @@ import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import com.simplecityapps.trial.EntitlementRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -51,6 +52,7 @@ constructor(
     private val playlistRepository: PlaylistRepository,
     private val queueManager: QueueOperations,
     private val playbackManager: PlaybackOperations,
+    private val entitlementRepository: EntitlementRepository,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
     @Assisted private val isOnboarding: Boolean
 ) : BasePresenter<MediaProviderSelectionContract.View>(),
@@ -80,6 +82,8 @@ constructor(
     override fun addMediaProviderType(mediaProviderType: MediaProviderType) {
         if (!playbackPreferenceManager.mediaProviderTypes.contains(mediaProviderType)) {
             playbackPreferenceManager.mediaProviderTypes = playbackPreferenceManager.mediaProviderTypes + mediaProviderType
+            // The first server added starts the server trial
+            if (mediaProviderType.remote) entitlementRepository.onServerConnected(mediaProviderType)
         }
 
         mediaImporter.mediaProviders += mediaProviderType.toMediaProvider()

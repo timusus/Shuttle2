@@ -166,8 +166,13 @@ class MediaActionHandler @Inject constructor(
     private suspend fun download(selection: MediaSelection): MediaActionResult {
         val result = downloadSongs(selection, download = true)
         return when {
+            // The gate has already asked for the paywall
+            result.needsPro -> MediaActionResult.None
+
             result.failed.isNotEmpty() -> Message(MediaActionMessage.DownloadFailed(result.failed.size))
+
             result.changed.isEmpty() -> Message(MediaActionMessage.NoSongs)
+
             else -> Message(MediaActionMessage.DownloadQueued(result.changed.size))
         }
     }

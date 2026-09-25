@@ -3,8 +3,12 @@ package com.simplecityapps.shuttle.ui.actions
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.trial.Entitlement
+import com.simplecityapps.trial.PaywallSource
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,5 +46,26 @@ class DownloadSongsTest {
 
         result shouldBe DownloadSongs.Result(changed = listOf(remote), failed = emptyList())
         actions.songDownloadManager.removed shouldBe listOf(remote)
+    }
+
+    @Test
+    fun `a free user downloads nothing and is sent to the paywall`() = runTest(UnconfinedTestDispatcher()) {
+        actions.entitlement.value = Entitlement.Free(trialUsed = true)
+        val requests = mutableListOf<PaywallSource>()
+        backgroundScope.launch { actions.serverAccessGate.paywallRequests.collect { requests += it } }
+
+        val result = actions.downloadSongs(MediaSelection.Songs(listOf(remote, local)))
+
+        result shouldBe DownloadSongs.Result(changed = emptyList(), failed = emptyList(), needsPro = true)
+        actions.songDownloadManager.downloaded.shouldBeEmpty()
+        requests shouldBe listOf(PaywallSource.ServerDownload)
+    }
+
+    @Test
+    fun `a free user can still remove downloads, and local-only selections never ask`() = runTest {
+        actions.entitlement.value = Entitlement.Free(trialUsed = true)
+
+        actions.downloadSongs(MediaSelection.Songs(remote), download = false).changed shouldBe listOf(remote)
+        actions.downloadSongs(MediaSelection.Songs(local)).needsPro shouldBe false
     }
 }
