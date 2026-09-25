@@ -632,7 +632,13 @@ xml_unescape() {
         s="$(python3 -c '
 import re, sys
 def repl(m):
-    return chr(int(m.group(1), 16) if m.group(1) else int(m.group(2)))
+    cp = int(m.group(1), 16) if m.group(1) else int(m.group(2))
+    # A lone surrogate (D800-DFFF, from a lossy source) or an out-of-range code point cannot be
+    # a real character -- chr() itself is fine with a surrogate, but encoding it back out for
+    # stdout is not, so swap it for U+FFFD instead of raising and aborting the decode (#416).
+    if cp > 0x10FFFF or 0xD800 <= cp <= 0xDFFF:
+        return "�"
+    return chr(cp)
 sys.stdout.write(re.sub(r"&#x([0-9A-Fa-f]+);|&#([0-9]+);", repl, sys.stdin.read()))
 ' <<<"$s")"
     fi
