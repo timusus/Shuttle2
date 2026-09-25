@@ -22,6 +22,7 @@ dependencyResolutionManagement {
 rootProject.name = "shuttle"
 
 include ':android:app'
+include ':android:architecture-tests'
 include ':android:core'
 include ':android:data'
 include ':android:designsystem'
