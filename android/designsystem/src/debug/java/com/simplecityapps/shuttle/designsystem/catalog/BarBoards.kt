@@ -1,12 +1,24 @@
 package com.simplecityapps.shuttle.designsystem.catalog
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.QueueMusic
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.LibraryMusic
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.rounded.Equalizer
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -14,18 +26,24 @@ import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SearchBarValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.WideNavigationRailValue
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.material3.rememberWideNavigationRailState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.component.ArtistRow
 import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
+import com.simplecityapps.shuttle.designsystem.component.S2NavItem
+import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
+import com.simplecityapps.shuttle.designsystem.component.S2NavigationRail
 import com.simplecityapps.shuttle.designsystem.component.S2SearchBar
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SearchInputField
@@ -136,6 +154,62 @@ fun SearchBoard(width: BoardWidth) {
                 }
             },
             BoardSection("No results") { SearchViewFrame("zzxq") { SearchNoResults("zzxq") } },
+        ),
+    )
+}
+
+private fun navItems(playlistBadge: String? = null, searchBadge: String? = null) = listOf(
+    S2NavItem("Home", Icons.Outlined.Home, Icons.Rounded.Home),
+    S2NavItem("Library", Icons.Outlined.LibraryMusic, Icons.Rounded.LibraryMusic),
+    S2NavItem("Playlists", Icons.AutoMirrored.Outlined.QueueMusic, Icons.Rounded.QueueMusic, badge = playlistBadge),
+    S2NavItem("Search", Icons.Rounded.Search, badge = searchBadge),
+)
+
+private val secondaryNavItems = listOf(
+    S2NavItem("Equalizer", Icons.Rounded.Equalizer),
+    S2NavItem("Settings", Icons.Outlined.Settings, Icons.Rounded.Settings),
+)
+
+@Composable
+fun NavBarBoard(width: BoardWidth) {
+    Board(
+        width,
+        listOf(
+            BoardSection("4 items, Home selected") { S2NavigationBar(navItems(), 0, {}) },
+            BoardSection("4 items, Library selected") { S2NavigationBar(navItems(), 1, {}) },
+            BoardSection("Badges: dot on Playlists, count on Search") { S2NavigationBar(navItems(playlistBadge = "", searchBadge = "3"), 2, {}) },
+            BoardSection("3 items (Search in the top bar)") { S2NavigationBar(navItems().take(3), 0, {}) },
+            BoardSection("3 items, long count badge") { S2NavigationBar(navItems(playlistBadge = "999+").take(3), 2, {}) },
+        ),
+    )
+}
+
+@Composable
+private fun Rail(expanded: Boolean, selectedIndex: Int, playlistBadge: String? = null) {
+    S2NavigationRail(
+        items = navItems(playlistBadge = playlistBadge),
+        secondaryItems = secondaryNavItems,
+        selectedIndex = selectedIndex,
+        onSelect = {},
+        state = rememberWideNavigationRailState(if (expanded) WideNavigationRailValue.Expanded else WideNavigationRailValue.Collapsed),
+        modifier = Modifier.height(620.dp),
+    )
+}
+
+/** Each rail at a fixed height beside its sibling, as the shell lays it against the content pane. */
+@Composable
+fun NavRailBoard(width: BoardWidth) {
+    Board(
+        width,
+        listOf(
+            BoardSection("Collapsed: Library selected; badged; Settings selected") {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Rail(expanded = false, selectedIndex = 1)
+                    Rail(expanded = false, selectedIndex = 2, playlistBadge = "3")
+                    Rail(expanded = false, selectedIndex = 5)
+                }
+            },
+            BoardSection("Expanded: Home selected, badged") { Rail(expanded = true, selectedIndex = 0, playlistBadge = "") },
         ),
     )
 }

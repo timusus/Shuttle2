@@ -11,4 +11,6 @@
     <string name="ds_remove_recent_search">Remove from recent searches</string>
     <string name="ds_search_no_results">No results for “%1$s”</string>
     <string name="ds_search_no_results_message">Check the spelling, or search for an artist, album, song or playlist.</string>
+    <string name="ds_expand_navigation">Expand navigation</string>
+    <string name="ds_collapse_navigation">Collapse navigation</string>
 </resources>

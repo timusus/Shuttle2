@@ -21,6 +21,8 @@ existing lines as they are.
 - [ ] `row-playlist`: [boards](row-playlist.md) · approved: — · boards hash: —
 - [ ] `top-bar`: [boards](top-bar.md) · approved: — · boards hash: —
 - [ ] `search`: [boards](search.md) · approved: — · boards hash: —
+- [ ] `nav-bar`: [boards](nav-bar.md) · approved: — · boards hash: —
+- [ ] `nav-rail`: [boards](nav-rail.md) · approved: — · boards hash: —
 - [ ] `row-genre`: [boards](row-genre.md) · approved: — · boards hash: —
 - [ ] `row-folder`: [boards](row-folder.md) · approved: — · boards hash: —
 - [ ] `grid-tile`: [boards](grid-tile.md) · approved: — · boards hash: —

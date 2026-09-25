@@ -69,6 +69,8 @@ val CatalogEntries = listOf(
         listOf("large flexible expanded with subtitle and actions", "collapsed", "title only with back", "detail bar", "long title"),
     ) { TopBarBoard(it) },
     CatalogEntry("search", "Search", listOf("collapsed", "focused empty with recent searches", "typing with results", "no results")) { SearchBoard(it) },
+    CatalogEntry("nav-bar", "Navigation bar", listOf("4 items, each selection", "dot and count badges", "3 items", "long count")) { NavBarBoard(it) },
+    CatalogEntry("nav-rail", "Navigation rail", listOf("collapsed: selected, badged, secondary selected", "expanded with secondary items")) { NavRailBoard(it) },
     CatalogEntry("row-genre", "Genre row", listOf("default", "selected", "one song")) { GenreRowBoard(it) },
     CatalogEntry("row-folder", "Folder row", listOf("folder", "file", "file without artwork", "selected")) { FolderRowBoard(it) },
     CatalogEntry(
