@@ -143,6 +143,8 @@ internal object PlayerTestTags {
     const val Scrim = "player_scrim"
     const val Pane = "player_pane"
     const val QueueHeadSong = "player_queue_head_song"
+    const val SleepTimerSheet = "player_sleep_timer_sheet"
+    const val SleepTimerChip = "player_sleep_timer_chip"
 }
 
 /**

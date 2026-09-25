@@ -374,6 +374,50 @@ class AppShellTest {
         robot.tapText("Undo")
         robot.actions.mediaActions.last() shouldBe include
     }
+
+    @Test
+    fun `the sleep timer sheet starts a preset or a slid length, playing the last song to the end if asked`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapDescription("Sleep timer")
+        robot.tapText("15 min")
+        robot.tapText("Play last song to end")
+        robot.tapText("Start timer")
+
+        robot.calls shouldContain "startSleepTimer(900000, true)"
+        robot.assertTextDisplayed("15:00")
+    }
+
+    @Test
+    fun `a running sleep timer counts down in the header until it stops`() {
+        robot.actions.sleepTimerRemaining.value = 754_000
+        robot.setContent(queue = shellQueue("First song").copy(sleepTimerActive = true))
+        robot.tapMiniPlayer()
+        robot.assertTextDisplayed("12:34")
+
+        robot.actions.sleepTimerRemaining.value = 0
+        robot.setQueue(shellQueue("First song").copy(sleepTimerActive = true))
+        robot.assertTextDisplayed("End of song")
+
+        robot.actions.stopSleepTimer()
+        robot.setQueue(shellQueue("First song"))
+        robot.assertReachable("End of song", reachable = false)
+        robot.assertReachable("Sleep timer", reachable = true)
+    }
+
+    @Test
+    fun `the running sleep timer's sheet adds five minutes or stops it`() {
+        robot.actions.sleepTimerRemaining.value = 90_000
+        robot.setContent(queue = shellQueue("First song").copy(sleepTimerActive = true))
+        robot.tapMiniPlayer()
+        robot.tapSleepTimerChip()
+        robot.tapText("Add 5 min")
+        robot.calls shouldContain "startSleepTimer(390000, false)"
+
+        robot.tapText("Stop Timer")
+        robot.calls shouldContain "stopSleepTimer"
+        robot.assertReachable("Stop Timer", reachable = false)
+    }
 }
 
 private inline fun <reified T : MediaAction> MediaAction.shouldBeSongAction(title: String) {

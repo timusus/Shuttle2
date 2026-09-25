@@ -56,6 +56,7 @@ import com.simplecityapps.shuttle.ui.shell.player.description
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 
@@ -147,13 +148,20 @@ class RecordingPlayerActions(
         playToEnd: Boolean,
     ) {
         calls += "startSleepTimer($durationMs, $playToEnd)"
+        sleepTimerRemaining.value = durationMs
+        state.value = state.value.copy(sleepTimerActive = true, sleepTimerPlayToEnd = playToEnd)
     }
 
     override fun stopSleepTimer() {
         calls += "stopSleepTimer"
+        sleepTimerRemaining.value = null
+        state.value = state.value.copy(sleepTimerActive = false)
     }
 
-    override fun sleepTimerRemaining(): Flow<Long?> = flowOf(null)
+    /** The running timer's time left; set it with the state's `sleepTimerActive` to show a timer already running. */
+    val sleepTimerRemaining = MutableStateFlow<Long?>(null)
+
+    override fun sleepTimerRemaining(): Flow<Long?> = sleepTimerRemaining
 
     override fun skipToQueueItem(uid: Long) {
         calls += "skipToQueueItem($uid)"
@@ -285,6 +293,11 @@ class AppShellRobot(
 
     fun tapMiniPlayer() {
         rule.onNodeWithTag(PlayerTestTags.MiniPlayer).performClick()
+        rule.waitForIdle()
+    }
+
+    fun tapSleepTimerChip() {
+        rule.onNodeWithTag(PlayerTestTags.SleepTimerChip).performClick()
         rule.waitForIdle()
     }
 

@@ -14,6 +14,16 @@
     <string name="player_cast">Cast</string>
     <!-- Content description of the sleep timer button while a timer runs -->
     <string name="player_sleep_timer_on">Sleep timer on</string>
+    <!-- Content description of the button that opens the sleep timer -->
+    <string name="player_sleep_timer">Sleep timer</string>
+    <!-- Title of the sleep timer's length slider -->
+    <string name="player_sleep_timer_length">Length</string>
+    <!-- Button that starts the sleep timer -->
+    <string name="player_sleep_timer_start">Start timer</string>
+    <!-- Button that adds time to a running sleep timer; %1$s is a length such as "5 min" -->
+    <string name="player_sleep_timer_extend">Add %1$s</string>
+    <!-- The running sleep timer's countdown once its time is up and it waits for the song to finish -->
+    <string name="player_sleep_timer_track_end">End of song</string>
     <!-- Snackbar shown after a song is removed from the queue -->
     <string name="player_removed_from_queue">Removed from queue</string>
     <!-- Song menu option: opens the song's album -->

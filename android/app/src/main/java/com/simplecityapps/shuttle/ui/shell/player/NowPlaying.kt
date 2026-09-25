@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
-import android.text.format.DateUtils
 import android.view.ContextThemeWrapper
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Bedtime
-import androidx.compose.material.icons.rounded.BedtimeOff
 import androidx.compose.material.icons.rounded.ClearAll
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
@@ -26,11 +24,8 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,17 +44,13 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.R as DesignR
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2Action
-import com.simplecityapps.shuttle.designsystem.component.S2ChoiceList
-import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2IconToggleButton
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControls
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControlsSize
 import com.simplecityapps.shuttle.designsystem.component.S2SeekBar
-import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
-import com.squareup.phrase.Phrase
 
-/** The collapse button, title and the player's tools: Cast, the sleep timer and the overflow. */
+/** The collapse button, title and the player's tools: Cast, the sleep timer (its countdown while one runs) and the overflow. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun NowPlayingHeader(
@@ -74,17 +65,15 @@ internal fun NowPlayingHeader(
         S2IconButton(icon = Icons.Rounded.KeyboardArrowDown, contentDescription = stringResource(R.string.player_collapse), onClick = onCollapse)
         Text(text = stringResource(R.string.player_now_playing), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         if (player.castAvailable) CastButton()
-        S2IconToggleButton(
-            icon = Icons.Rounded.BedtimeOff,
-            checkedIcon = Icons.Rounded.Bedtime,
-            contentDescription = stringResource(if (player.sleepTimerActive) R.string.player_sleep_timer_on else R.string.sleep_timer_dialog_title),
-            checked = player.sleepTimerActive,
-            onCheckedChange = { showSleepTimer = true },
-        )
+        if (player.sleepTimerActive) {
+            SleepTimerChip(actions, onClick = { showSleepTimer = true }, modifier = Modifier.padding(horizontal = 4.dp))
+        } else {
+            S2IconButton(icon = Icons.Rounded.Bedtime, contentDescription = stringResource(R.string.player_sleep_timer), onClick = { showSleepTimer = true })
+        }
         S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = stringResource(DesignR.string.ds_more_options), onClick = { songActions.menuFor = player.current })
     }
     if (showSleepTimer) {
-        SleepTimerDialog(player = player, actions = actions, onDismiss = { showSleepTimer = false })
+        SleepTimerSheet(player = player, actions = actions, onDismiss = { showSleepTimer = false })
     }
     val clearQueue = stringResource(R.string.menu_title_sort_clear_queue)
     SongActionsHost(songActions, actions, trailing = listOf(S2Action(label = clearQueue, onClick = actions::clearQueue, icon = Icons.Rounded.ClearAll, destructive = true)))
@@ -259,65 +248,3 @@ private fun SeekBar(
 
 /** The largest the Now Playing artwork grows, however much room there is. */
 internal val MaxArtworkSize = 480.dp
-
-private val SleepTimerDurations = listOf(
-    R.string.sleep_timer_5_minutes to 5 * DateUtils.MINUTE_IN_MILLIS,
-    R.string.sleep_timer_15_minutes to 15 * DateUtils.MINUTE_IN_MILLIS,
-    R.string.sleep_timer_30_minutes to 30 * DateUtils.MINUTE_IN_MILLIS,
-    R.string.sleep_timer_1_hour to DateUtils.HOUR_IN_MILLIS,
-)
-
-/** Sets the sleep timer, or shows the time left on a running one and stops it. */
-@Composable
-internal fun SleepTimerDialog(
-    player: PlayerUiState,
-    actions: PlayerActions,
-    onDismiss: () -> Unit,
-) {
-    val remaining by remember(actions) { actions.sleepTimerRemaining() }.collectAsState(initial = null)
-    val running = remaining != null || player.sleepTimerActive
-    val title = stringResource(R.string.sleep_timer_dialog_title)
-    val close = stringResource(R.string.sleep_timer_dialog_button_close)
-    if (running) {
-        S2Dialog(
-            title = title,
-            onDismissRequest = onDismiss,
-            confirmLabel = stringResource(R.string.sleep_timer_dialog_button_stop_timer),
-            onConfirm = {
-                actions.stopSleepTimer()
-                onDismiss()
-            },
-            dismissLabel = close,
-            destructive = true,
-            icon = Icons.Rounded.Bedtime,
-        ) {
-            Text(remaining.remainingText(), style = MaterialTheme.typography.bodyLarge)
-        }
-    } else {
-        var selected by rememberSaveable { mutableIntStateOf(0) }
-        var playToEnd by rememberSaveable { mutableStateOf(player.sleepTimerPlayToEnd) }
-        S2Dialog(
-            title = title,
-            onDismissRequest = onDismiss,
-            confirmLabel = stringResource(R.string.sleep_timer_dialog_button_set_time),
-            onConfirm = {
-                actions.startSleepTimer(SleepTimerDurations[selected].second, playToEnd)
-                onDismiss()
-            },
-            dismissLabel = close,
-            icon = Icons.Rounded.Bedtime,
-        ) {
-            Column {
-                S2ChoiceList(options = SleepTimerDurations.map { stringResource(it.first) }, selectedIndex = selected, onSelect = { selected = it })
-                SwitchSetting(title = stringResource(R.string.sleep_timer_play_to_track_end), checked = playToEnd, onCheckedChange = { playToEnd = it })
-            }
-        }
-    }
-}
-
-@Composable
-private fun Long?.remainingText(): String = when {
-    this == null -> ""
-    this <= 0L -> stringResource(R.string.sleep_timer_waiting_track_end)
-    else -> Phrase.from(stringResource(R.string.sleep_timer_time_remaining)).put("time", DateUtils.formatElapsedTime(this / 1000)).format().toString()
-}
