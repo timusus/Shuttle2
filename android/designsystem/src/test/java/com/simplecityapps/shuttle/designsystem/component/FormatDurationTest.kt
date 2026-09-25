@@ -23,4 +23,13 @@ class FormatDurationTest {
         assertEquals("--:--", formatDuration(0, zeroValue = "--:--"))
         assertEquals("0:00", formatDuration(0))
     }
+
+    @Test
+    fun `padded space-pads the leading hour or minute to two digits`() {
+        assertEquals(" 0:00", formatDuration(0, padded = true))
+        assertEquals(" 3:00", formatDuration(180_000, padded = true))
+        assertEquals("59:59", formatDuration(3_599_000, padded = true))
+        assertEquals(" 1:00:00", formatDuration(3_600_000, padded = true))
+        assertEquals("--:--", formatDuration(0, zeroValue = "--:--", padded = true))
+    }
 }

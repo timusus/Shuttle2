@@ -596,7 +596,7 @@ private fun AlbumArtistDetailSongItem(
         }
 
         Text(
-            text = formatDuration(song.duration.toLong(), zeroValue = "--:--"),
+            text = formatDuration(song.duration.toLong(), zeroValue = "--:--", padded = true),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

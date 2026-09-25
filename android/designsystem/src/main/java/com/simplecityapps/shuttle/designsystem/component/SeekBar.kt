@@ -83,8 +83,13 @@ fun S2SeekBar(
 /**
  * "m:ss", or "h:mm:ss" from an hour: how the seek bar and queue rows show a time.
  * @param zeroValue returned instead, if given, when [ms] is 0.
+ * @param padded space-pads the leading hour/minute to two digits, matching the legacy `toHms` callers this absorbed.
  */
-fun formatDuration(ms: Long, zeroValue: String? = null): String {
+fun formatDuration(
+    ms: Long,
+    zeroValue: String? = null,
+    padded: Boolean = false,
+): String {
     if (ms == 0L && zeroValue != null) {
         return zeroValue
     }
@@ -92,7 +97,8 @@ fun formatDuration(ms: Long, zeroValue: String? = null): String {
     val hours = totalSeconds / 3600
     val minutes = totalSeconds % 3600 / 60
     val seconds = totalSeconds % 60
-    return if (hours > 0) "%d:%02d:%02d".format(hours, minutes, seconds) else "%d:%02d".format(minutes, seconds)
+    val leading = if (padded) "%2d" else "%d"
+    return if (hours > 0) "$leading:%02d:%02d".format(hours, minutes, seconds) else "$leading:%02d".format(minutes, seconds)
 }
 
 @Preview

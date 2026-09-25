@@ -328,7 +328,7 @@ private fun albumSubtitle(
             listOf(
                 album.year?.toString(),
                 songsQuantity,
-                formatDuration(album.duration.toLong()),
+                formatDuration(album.duration.toLong(), padded = true),
             )
         )
         ?.toString()
@@ -491,7 +491,7 @@ internal fun DetailSongRow(
         )
 
         Text(
-            text = formatDuration(song.duration.toLong(), zeroValue = "--:--"),
+            text = formatDuration(song.duration.toLong(), zeroValue = "--:--", padded = true),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
