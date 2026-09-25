@@ -160,3 +160,13 @@ The rules in `docs/testing/playback-behaviour-spec.md` the JVM can't run.
 - [ ] RS-21: while paused on Cast, seek from another sender (e.g. the Google Home app). S2's seekbar moves to the new position.
 - [ ] RS-21: on Cast, press Previous before the receiver has reported a position (straight after a skip). The song restarts rather than jumping two songs back.
 - [ ] RS-21: with a system EQ app attached, switch to Cast. The EQ app detaches; switch back and it reattaches.
+
+## Local scanner through MediaStore (#370)
+
+The S2 (TagLib) provider now finds files with a MediaStore query and reads them through content URIs. The emulators cover only API 36 and 37.
+
+- [ ] With an SD card holding music, select only the S2 provider and import. Songs from the card show up with full tags and artwork, and they play.
+- [ ] On an API 29 device, import with only the S2 provider. Every song imports with the same tags as the MediaStore provider shows, and they play.
+- [ ] On an API 23–28 device, the same check as on API 29.
+- [ ] On a real 10k-track library, time a full import with the S2 provider (`Import complete in` in logcat) and compare it with the last Play build, which walks SAF folders.
+- [ ] Put music in a folder containing `.nomedia` and grant that folder under Media > Directories. Those songs don't import (expected until the optional SAF "Add folder" lands); nothing else breaks.

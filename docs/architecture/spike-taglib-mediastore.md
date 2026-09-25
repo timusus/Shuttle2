@@ -2,9 +2,10 @@
 
 Question: can the local provider discover audio with MediaStore (`READ_MEDIA_AUDIO` on API 33+,
 `READ_EXTERNAL_STORAGE` below) and read every tag with KTagLib from a file descriptor on each
-`content://media/...` URI, so users no longer pick SAF folders? The spike code (a debug-only
-broadcast receiver plus a debug activity for the write consent) was deleted after the run. This
-doc records what it found.
+`content://media/...` URI, so users no longer pick SAF folders? The first run's code (a debug-only
+broadcast receiver plus a debug activity for the write consent) was deleted after the run. A
+second run (b, below) changed `TaglibMediaProvider` itself to discover through MediaStore and
+measured it against the SAF walk it replaces. This doc records what both runs found.
 
 ## Verdict
 
@@ -128,3 +129,75 @@ telling them apart. Files on the SD card read the same way.
 - Benchmark against today's SAF walk on the same 10k library, on a phone.
 - Tag parity with the existing TagLib provider on multi-value artists and genres wasn't covered
   (the fixtures carried single values).
+
+## Run b: the provider change
+
+**Go, for API 30+.** `TaglibMediaProvider` no longer walks SAF trees to find songs. It queries
+`Audio.Media.EXTERNAL_CONTENT_URI` (`IS_MUSIC=1 OR IS_PODCAST=1`, as the MediaStore provider
+does), filters rows by folder, opens each row's content URI with `openFileDescriptor(uri, "r")`
+and hands the detached fd to `KTagLib.getAudioFile` on the same `concurrentMap` as before. Folder
+art near each file comes from `FolderImageReader`, as in the MediaStore provider. The SAF walk's
+image collection (`DocumentNodeTree.imageNodes`) and `leavesWithFolderImages` were deleted. m3u
+import still walks the SAF trees.
+
+### What changed for stored songs
+
+- `Song.path` is now the MediaStore `DATA` file path (the MediaStore provider already stores
+  that), not a SAF document URI. Playback, artwork and m3u matching already handle file paths.
+- Users who had the MediaStore provider keep their song identities. Users who had the S2 provider
+  get new paths, so the import replaces their songs and their play counts and per-song excludes
+  reset. Spike 3 (migration) must map old SAF URIs to file paths before this ships to them.
+
+### Folder filters (#207 and the exclude list)
+
+- `FolderFilter(includes, excludes)`: no includes means every folder; an exclude beats an include;
+  prefix match on whole folder names, case-insensitive.
+- Includes: the #207 persisted SAF tree grants, mapped to paths (`primary:Music` →
+  `/storage/emulated/0/Music`, `home:` → `…/Documents`, `<UUID>:x` → `/storage/<UUID>/x`). Trees
+  from other document providers have no path and are ignored. So an existing user's folder choice
+  keeps working, and a user with no grants gets the whole device.
+- Excludes: nothing feeds them yet. Settings > Sources (#379) will. The per-song exclude list
+  (`blacklisted`, keyed by path) stays per song.
+
+### Emulator results
+
+The fixture was the seeded `library` (97 files) plus 5 hand-made files (mp3, FLAC, m4a, Ogg,
+Opus with Latin-1, CJK, Greek and Cyrillic tags, embedded covers and ReplayGain), a `.wv` file
+and a `.nomedia` folder, all under `/sdcard/Music/s2-seed`.
+
+| Check | API 36 ATD | API 37 google_apis |
+|---|---|---|
+| Files read, failures | 102 of 102, 0 | 102 of 102, 0 |
+| Tags vs the SAF build (every stored column) | identical except m4a MIME | same as API 36 |
+| Non-ASCII, ReplayGain, track/disc, year | identical | identical |
+| Embedded artwork | not checked in run b | shows in the Albums tab |
+| Playback of an imported album | not run | plays |
+| `.nomedia` folder | skipped | skipped |
+| `.wv` (MediaStore type 0) | skipped | skipped |
+| Include filter from a SAF grant | `Download` file excluded | same |
+| Import, SAF walk (old build, same grant) | 915–1,217 ms | 2,138–2,424 ms |
+| Import, MediaStore path | 232–274 ms | 267–309 ms |
+
+- The only tag difference: m4a's MIME type is `audio/mp4` from MediaStore; SAF reported
+  `audio/mpeg`. The new value is the right one.
+- `.nomedia` songs were in the old SAF import and aren't in the new one. `.wv` was skipped by
+  both (the SAF walk filters by extension and MIME too).
+- The first API 37 run, with no grant and a cold start, took 1.3–1.6 s. With a warm cache and the
+  same grant as the SAF runs, it took 0.27–0.31 s, which suggests host load on the shared box.
+  Either way it beat the SAF walk.
+- A fresh install with no SAF grant imports every audio file on the device, with no folder
+  picker, and no m3u playlists (m3u import still needs a grant).
+- Not run: secondary volume (the first run read a virtual SD card on API 36), anything below
+  API 30, a 10k-track library, a real phone. These are in `docs/testing/device-checks.md`.
+
+### Still open after run b
+
+- Migration of S2-provider users' paths (spike 3), before release.
+- m3u import without a SAF grant: read playlists from MediaStore `Files` rows or scan the
+  included folders by path.
+- An optional SAF "Add folder" for `.nomedia` and unrecognised formats.
+- Tag editing and Delete for file-path songs need `createWriteRequest` (spike 2); today's editor
+  expects SAF document URIs.
+- Folder art on API 33+ for S2 songs: `FolderImageReader` can't list shared images there, and the
+  MediaStore thumbnail fallback in the image loader only covers the MediaStore provider.
+- `IS_MUSIC` leaves out audiobooks and recordings, and rows MediaStore hasn't scanned fully.

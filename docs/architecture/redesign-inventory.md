@@ -273,6 +273,11 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
 - Redesign: MediaStore discovery + KTagLib via content URIs for everything; SAF trees become an
   optional "Add folder" for files MediaStore misses. Open: tag writing and Delete need a write path
   (`MediaStore.createWriteRequest` on 30+, SAF below) — spike 2.
+- Spike 1 (#370): **go for API 30+**, and the discovery half has landed. `TaglibMediaProvider`
+  queries `Audio.Media`, filters by folder (`FolderFilter`) and reads each content URI with
+  KTagLib. Tags match the SAF build on every stored column; imports ran 4–8x faster than the SAF
+  walk on API 36/37. Songs are keyed by file path now, so S2-provider users need spike 3 before
+  release. Evidence in [`spike-taglib-mediastore.md`](spike-taglib-mediastore.md).
 - Maestro: none (emulator fixtures seed files, not provider choice).
 
 ### Directory selection (SAF) — Change
@@ -471,6 +476,22 @@ All 12 taken as written on 2026-09-25 (epic #382); each can still be revisited.
    nudge or an optional SAF include covers them; scoped storage on 29 (`requestLegacyExternalStorage`)
    vs 30+; OEM MediaStore quirks (missing `DISC_NUMBER`, stale rows). Pass: tag parity with today's
    TagLib provider on the emulator fixtures plus one real SD-card device.
+   **Result: go for API 30+** ([`spike-taglib-mediastore.md`](spike-taglib-mediastore.md)).
+
+   | | API 36 ATD | API 37 google_apis |
+   |---|---|---|
+   | Read via content URI | 102/102, 0 failures | 102/102, 0 failures |
+   | Tags, non-ASCII, ReplayGain | same as the SAF build | same as the SAF build |
+   | Artwork | read (run a) | shown in Albums |
+   | Import time, SAF walk → MediaStore | ~1.0 s → ~0.25 s | ~2.3 s → ~0.3 s |
+   | `.nomedia`, unrecognised `.wv` | skipped | skipped |
+   | Secondary volume | virtual SD read (run a) | not run |
+
+   Folder mapping: the #207 SAF tree grants become include folders (`primary:Music` →
+   `/storage/emulated/0/Music`; no grants means the whole device); folder excludes come from
+   Settings > Sources (#379); the per-song exclude list stays per song, keyed by path. Still open:
+   API 23–29 and a real SD card (in `docs/testing/device-checks.md`), m3u import without a grant,
+   an optional SAF "Add folder" for `.nomedia` and unrecognised files, path migration (spike 3).
 2. **Writes without SAF.** Tag editing and Delete for MediaStore-discovered files:
    `MediaStore.createWriteRequest` / `createDeleteRequest` on 30+, `RecoverableSecurityException`
    on 29, plain file access on 23–28. Decide whether tag editing requires a folder grant below 30.
