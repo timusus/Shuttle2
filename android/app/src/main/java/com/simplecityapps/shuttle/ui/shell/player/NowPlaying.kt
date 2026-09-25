@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import android.text.format.DateUtils
+import android.view.ContextThemeWrapper
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -102,7 +103,8 @@ private fun CastButton(modifier: Modifier = Modifier) {
     val tint = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
     AndroidView(
         factory = { context ->
-            MediaRouteButton(context).also { button ->
+            // The route button reads AppCompat colours from its context; don't depend on the host activity's theme for them.
+            MediaRouteButton(ContextThemeWrapper(context, androidx.appcompat.R.style.Theme_AppCompat_DayNight_NoActionBar)).also { button ->
                 CastButtonFactory.setUpMediaRouteButton(context.applicationContext, button)
                 button.contentDescription = description
             }
