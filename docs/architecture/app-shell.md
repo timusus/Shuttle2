@@ -157,13 +157,18 @@ Renders in `docs/design/np-sheet-410/`, recorded by `NowPlayingSheetVariantsScre
 the preview-only `NowPlayingSheetVariants.kt` (test sources, real player composables, sample
 library, 24 dp status and gesture bars). Each variant `{a-full-level,b-content-height,c-artwork-fill}`
 is shot at `-rest` and `-dragging` (Up Next pulled 64 dp) on `phone` (411×891) and `phone-short`
-(360×640), and at rest on `foldable-folded` (411×826).
+(360×640), at rest on `foldable-folded` (411×826), and at `-queue` on the phone. (D), from
+`NowPlayingPodcastsVariant.kt`, is shot as `d-podcasts-{rest,queue,sleep-timer,playback-sound,dragging}`
+on all three windows; `phone-dark-{c-artwork-fill,d-podcasts}-rest` check the dark scheme.
+`compare-rest.png` and `compare-expanded.png` put the four phone renders side by side at rest and at
+the queue; `support/scripts/np410-compare.py` rebuilds them after a re-record.
 
 | Variant | Now Playing anchor | Phone 411×891 | Short 360×640 | Folded 411×826 |
 |---|---|---|---|---|
 | (A) Full level (today) | 0; spare height spreads into the gaps (#403) | full, 379 dp art | full | full |
 | (B) Content height | window − measured content; full height if under 48 dp of library shows | 52 dp of library under the status bar, a row cut in half; 379 dp art | falls back to (A) | falls back to (A) |
 | (C) Artwork fills | fixed: status bar + 96 dp of library; artwork takes the rest up to full width; full height if the artwork would drop under 240 dp | one library row; 335 dp art | falls back to (A) | 270 dp art |
+| (D) Podcasts panels | (C)'s rule over a smaller chrome (handle 24 + bottom bar 64, no header or Up Next peek); an open panel pushes it up | one library row; 367 dp art | full height, 212 dp art | 302 dp art |
 
 With today's chrome (header 64, title 72, transport 188 at a 16 dp gap, peek 56, gesture bar 24:
 436 dp), (B) only goes partial on a window at least 887 dp tall at 411 wide, and then shows a strip
@@ -201,7 +206,8 @@ library or move the sheet. The nav bar still slides off by N·e and is under the
 
 **Artwork colour.** The sheet is `ArtworkTheme(Player)` `surfaceContainer`. A partial sheet gets
 28 dp top corners, which flatten over the last 28 dp as its edge meets the status bar; above it,
-the dimmed user-scheme library makes the edge read as a card in the (light) renders; dark is unchecked. Once
+the dimmed user-scheme library makes the edge read as a card; in dark (`phone-dark-*-rest`) the
+edge is visible but low-contrast, dark surface on a near-black library. Once
 the sheet passes under the status bar the artwork surface fills it, as in (A).
 
 **Short phones and folded.** Both (B) and (C) fall back to (A) below their thresholds, so short
@@ -224,11 +230,79 @@ three variants are the same full-height column. At NowPlaying the first queue ro
 the Up Next header into the gesture bar (in (A) too, at realistic insets); its handle should not
 start a reorder there.
 
-**Recommendation: build (C).** It gives the #410 look (a sheet over one readable library row) on
-the phones most people hold, with anchors that stay pure window arithmetic, so restoration, back
-and rotation keep working as they do. (B) barely differs from (A) on real phones, shows a clipped
-strip where it does differ, and needs measured anchors. Keep (A) on short phones through (C)'s
-fallback.
+#### (D) Podcasts panels
+
+The owner's sketch: "You just see artwork and transport. Queue could be a button down the bottom
+which then pushes the sheet up. Sleep timer pushes sheet up, etc." At rest the sheet is a drag
+handle, square artwork, title, seek bar and transport, then a bottom bar pinned above the gesture
+bar: Playback & sound, Sleep timer, Cast, Queue, overflow (Podcasts' order, with our sound panel in
+its speed slot; favourite stays by the title). A bar button opens its panel between the transport
+and the bar, inside the same sheet: queue, the sleep timer (`SleepTimerSheetContent`, no longer a
+`ModalBottomSheet`) or Playback & sound (`PlaybackSoundSheetContent`). The open button turns tonal.
+
+**Push.** The panel's height h is taken first from the gap above the sheet: the edge rises by h
+until it meets the status bar (corners flatten over the last 28 dp, as in (C)). Past that the
+artwork slot gives up the rest, and the artwork fades out between 120 dp and 48 dp so it never
+survives as a clipped strip. The largest panel is (P − status bar) + the artwork slot, so the title
+and transport always stay on screen as the panel's head. The queue always takes the largest; the
+sleep timer and Playback & sound take their measured height, capped there. On the phone the sleep
+timer leaves 117 dp of art and Playback & sound none; on the short phone the sleep timer is capped
+at 244 dp and its Start button needs a scroll inside the panel.
+
+**Anchors.** P is (C)'s arithmetic with D's chrome: no measurement at rest. The open panel's anchor
+is P − h, and h is measured: the sleep timer's content differs between a running timer and a new
+one, and every panel changes with font scale. A build sets these anchors inside measure, as M3's
+`draggableAnchors` does (the preview's `Layout` computes P, h and the artwork slot in one measure
+pass); a song change moves nothing, because the artwork is square and the title ellipsised. The
+queue's anchor is the full height, so it needs no measurement either.
+
+**Gestures.** Two state values replace today's single level: the sheet (Hidden/Mini/NowPlaying) and
+the open panel (none/Queue/Sleep timer/Playback & sound). Dragging the sheet's head up from rest
+opens the queue, which is the Up Next pull of (A)–(C) without a peek; the `-dragging` renders are
+40% of the way. Dragging the head down closes an open panel, then collapses to Mini. The other
+panels open only from their buttons. Tapping the open button closes its panel; tapping another
+swaps them without a trip through rest. So mini → Now Playing → queue keeps its three levels, but
+Queue becomes the panel reached by drag, and the sleep timer and sound become levels too.
+
+**Back.** Panel open → closed (rest), rest → Mini, as `PlayerSheetBackHandler` does in Podcasts.
+Predictive back lerps h to 0 for the first step and P to the mini anchor for the second.
+
+**Restoration.** Save the sheet level and the open panel (a `rememberSaveable` enum, not a view model
+value: Podcasts dismisses its panel when the player leaves, and we should too). P comes back from
+window arithmetic; h comes back in the first measure pass, so there is no flash if the anchors live
+in measure.
+
+**TalkBack.** Order: handle (with expand/collapse custom actions), song, transport, panel, bar. The
+bar buttons are toggles with a selected state ("Queue, selected"), and opening one moves focus to
+the panel's heading. The destinations are hidden from semantics while the sheet covers them, as in
+(B) and (C).
+
+**Reorder vs sheet drag.** The queue list scrolls and reorders by row handles inside the panel;
+only the head (handle, title, transport) drags the sheet, so a list fling at the top does not close
+the panel unless it is overscroll handed to the sheet by the same nested-scroll connection as today.
+The pinned bar keeps the last row off the gesture bar, which fixes the peek-row conflict of (A)–(C).
+
+**What it removes.** `NowPlayingHeader` (collapse chevron, sleep-timer icon, overflow with Playback
+& sound), the Up Next peek (`QueuePeek`, the peek `QueueHeader` click), the three-level queue travel
+(`stackedQueueTravel`, `stackedGroupGap`'s spread), and the `SleepTimerSheet` and
+`PlaybackSoundSheet` `ModalBottomSheet` wrappers. It changes `PlayerSheetState` (a panel value
+beside the level, anchors from P and h), `PlayerContent`'s `StackedPlayer` (the push `Layout`, the
+bar), `PlayerSheet` (shape, corner flattening, scrim above a partial sheet), `NowPlaying.kt` (the
+overflow moves to the bar's More, song actions and Clear queue with it) and `AppShell` (semantics of
+the destinations, the back handler order).
+
+**Costs.** The queue gets less room: the handle, title and bar (160 dp) stay on screen above and
+below it, so the short phone shows two and a half rows (`phone-short-d-podcasts-queue.png`).
+Folded and tall phones are fine. Every panel height is a measured anchor, which (C) avoided. Playback
+& sound on the phone uses its full cap and loses the artwork entirely.
+
+**Recommendation.** (C) is still the safe build: it keeps today's gestures and levels and changes
+only one anchor. (D) is the better player if its gesture model holds up (the owner's sketch, the
+larger artwork, no modal sheets over a sheet, and a queue that no longer peeks into the gesture
+bar), but it is a redesign of `ui/shell/player/**`, not an anchor change. Build (D) only after a
+throwaway prototype on a device confirms three things: drag-up-to-queue is discoverable without a
+peek, drag-down on the head closes a panel without fighting the list, and the short-phone queue is
+tall enough. If any of those fails, build (C). (B) is out either way.
 
 A build of (C) would touch:
 - `ui/shell/player/PlayerSheetGeometry.kt`: the NowPlaying anchor P and the fractions measured from it.
@@ -239,9 +313,9 @@ A build of (C) would touch:
 - Tests: `PlayerSheetGeometryTest`, `AppShellTest`/`AppShellRobot` (strip, scrim tap, back), and a
   re-record of `ShellScreenshotTest`.
 
-The np410 test files become characterisation tests if (C) is built: the variant switch goes, the
-test renders the real shell at rest and mid-drag on the three windows, and records into the shell
-screenshots. If #410 is closed without a build, `ui/shell/player/np410/` and
+The np410 test files become characterisation tests if (C) or (D) is built: the variant switch goes,
+the test renders the real shell at rest, mid-drag and (for (D)) with each panel open on the three
+windows, and records into the shell screenshots; `support/scripts/np410-compare.py` goes with them. If #410 is closed without a build, `ui/shell/player/np410/` and
 `docs/design/np-sheet-410/` are deleted in the change that closes it.
 
 ## 2. Adaptive layout
