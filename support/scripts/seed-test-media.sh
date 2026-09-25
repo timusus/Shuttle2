@@ -26,10 +26,14 @@
 #                         with the local (MediaStore) provider selected, skipping onboarding
 #                         and the launch changelog sheet (which would cover the UI under test).
 #                         Requires the debug APK already installed (run-as needs it resolvable).
-#     --if-needed         skip pushing/scanning/onboarding-prefs entirely when this fixture (and
-#                         the --skip-onboarding state) was already the last thing seeded on this
-#                         device -- tracked by a manifest file written to the fixture's own remote
-#                         dir, so a `reset` (which deletes it) always forces a real reseed (#412).
+#     --if-needed         skip pushing/scanning media when this fixture's content hash (and the
+#                         --skip-onboarding state) was already the last thing seeded on this device
+#                         -- tracked by a manifest file written to the fixture's own remote dir, so a
+#                         `reset` (which deletes it) always forces a real reseed (#412). With
+#                         --skip-onboarding, the prefs+import-broadcast steps are separately tracked
+#                         by a manifest written into the app's own data (via run-as), so a `pm clear`
+#                         or reinstall -- which leaves /sdcard untouched but wipes app data -- still
+#                         reruns them even when the media manifest still matches.
 #
 # Respects ANDROID_SERIAL / ANDROID_ADB_SERVER_PORT the way `remote-emu.sh env` sets them --
 # run `eval "$(support/scripts/remote-emu.sh env)"` first. Generated files are cached under
@@ -292,21 +296,37 @@ else
     REMOTE_DIR="${REMOTE_ROOT}/${FIXTURE}"
 fi
 
-# --if-needed (#412): a cheap fingerprint (file count + total bytes) of the cached local fixture,
-# paired with the --skip-onboarding and provider state, written as a manifest file in the fixture's
-# own remote dir once seeding finishes below. `remote-emu.sh reset` wipes that dir, so a mismatch or
-# missing manifest always falls through to a real reseed -- this never trusts state it didn't write
-# itself.
+# --if-needed (#412, #416 round 2): a content hash of the cached local fixture -- sha256 over
+# sorted relative paths plus each file's sha256 -- so an edit that keeps the same size (e.g.
+# re-tagging) still changes the fingerprint. Paired with the --skip-onboarding and provider state
+# and written as a manifest file in the fixture's own remote dir once the push/scan below finishes.
+# `remote-emu.sh reset` wipes that dir, so a mismatch or missing manifest always falls through to a
+# real reseed -- this never trusts state it didn't write itself.
 fixture_fingerprint() {
-    find "$1" -type f | sort | xargs -I{} wc -c {} 2>/dev/null \
-        | awk '{n++; sum+=$1} END{printf "%d:%d", n, sum}' || true
+    ( cd "$1" && find . -type f | LC_ALL=C sort | while IFS= read -r f; do
+        shasum -a 256 "$f"
+    done ) | shasum -a 256 | awk '{print $1}'
 }
 MANIFEST_VALUE="${FIXTURE}:$(fixture_fingerprint "$FIXTURE_DIR"):onboard=${SKIP_ONBOARDING}:provider=${PROVIDER_TYPES}"
 MANIFEST_PATH="${REMOTE_DIR}/.manifest"
+# The app-side manifest lives in the debug app's own data dir (via run-as), not on /sdcard --
+# a `pm clear`/reinstall wipes app data but leaves /sdcard/Music/s2-seed in place, so relying on
+# MANIFEST_PATH alone would skip the prefs+import-broadcast steps after a clear even though the
+# app has actually lost its imported library. Only meaningful when --skip-onboarding runs those
+# steps at all.
+APP_MANIFEST_REL="files/.s2-seed-manifest-${FIXTURE}"
+
+MEDIA_MATCHES=0
+APP_STATE_MATCHES=0
 if [ "$IF_NEEDED" = "1" ]; then
     remote_value="$(radb shell cat "$MANIFEST_PATH" 2>/dev/null | tr -d '\r' || true)"
-    if [ "$remote_value" = "$MANIFEST_VALUE" ]; then
-        echo "seed-test-media: '${FIXTURE}' already seeded on this device (manifest matches), skipping"
+    [ "$remote_value" = "$MANIFEST_VALUE" ] && MEDIA_MATCHES=1
+    if [ "$SKIP_ONBOARDING" = "1" ]; then
+        app_value="$(radb shell "run-as ${DEBUG_APP_ID} cat ${APP_MANIFEST_REL}" 2>/dev/null | tr -d '\r' || true)"
+        [ "$app_value" = "$MANIFEST_VALUE" ] && APP_STATE_MATCHES=1
+    fi
+    if [ "$MEDIA_MATCHES" = "1" ] && { [ "$SKIP_ONBOARDING" != "1" ] || [ "$APP_STATE_MATCHES" = "1" ]; }; then
+        echo "seed-test-media: '${FIXTURE}' already seeded on this device (manifests match), skipping"
         exit 0
     fi
 fi
@@ -316,7 +336,7 @@ fi
 # starts none of those, so --skip-onboarding selects the Android (MediaStore) provider (unless
 # --s2-scanner) and uses a debug-only broadcast receiver (android/app/src/debug) that calls
 # MediaImporter.import() directly.
-if [ "$SKIP_ONBOARDING" = "1" ]; then
+if [ "$SKIP_ONBOARDING" = "1" ] && [ "$APP_STATE_MATCHES" != "1" ]; then
     echo "seed-test-media: writing debug-app prefs to skip onboarding (local provider) ..."
     # Granted up front, so MainActivity doesn't ask for it on first launch.
     radb shell pm grant "$DEBUG_APP_ID" android.permission.READ_MEDIA_AUDIO >/dev/null 2>&1 || true
@@ -332,45 +352,51 @@ EOF
     echo "seed-test-media: launching the app ..."
     radb shell am start -n "${DEBUG_APP_ID}/com.simplecityapps.shuttle.ui.MainActivity" >/dev/null
     sleep 3
+elif [ "$SKIP_ONBOARDING" = "1" ]; then
+    echo "seed-test-media: app-side manifest matches (prefs already set), skipping onboarding prefs"
 fi
 
 # taglib is never MediaStore-scanned: it's meant to be read by the TagLib provider only, so
 # scanning it into MediaStore too would double-import each file as two different Songs. A
 # .nomedia marker keeps Android's own background media scanner (which walks standard media
 # directories like Music/ independently of our explicit scan_file calls) from indexing it anyway.
-radb shell mkdir -p "$REMOTE_DIR"
-if [ "$FIXTURE" = "taglib" ]; then
-    radb shell "touch ${REMOTE_DIR}/.nomedia"
-fi
-file_count=0
-for f in "$FIXTURE_DIR"/*; do
-    radb push "$f" "${REMOTE_DIR}/$(basename "$f")" >/dev/null
-    file_count=$((file_count + 1))
-done
-echo "seed-test-media: pushed ${file_count} file(s) to ${REMOTE_DIR}"
-
-if [ "$FIXTURE" != "taglib" ]; then
-    # scan_volume only registers pending placeholder rows for new files (title/duration/is_music
-    # stay NULL) -- the metadata extractor only runs per-file via scan_file (MediaStore.scanFile()'s
-    # underlying call), so each pushed file needs its own scan to be indexed with real tags.
-    #
-    # .m3u files must be scanned last: MediaStore's ModernMediaScanner resolves each playlist entry
-    # against files already indexed at scan time and silently drops any entry whose target hasn't
-    # been scanned yet (#399) -- scanning in plain filesystem order interleaves playlists with the
-    # tracks they reference (e.g. "Focus.m3u" sorts before "lantern-hours-03.mp3"), so some entries
-    # would lose their track before the playlist is ever resolved.
-    echo "seed-test-media: scanning each pushed file so MediaStore extracts its tags ..."
+if [ "$MEDIA_MATCHES" != "1" ]; then
+    radb shell mkdir -p "$REMOTE_DIR"
+    if [ "$FIXTURE" = "taglib" ]; then
+        radb shell "touch ${REMOTE_DIR}/.nomedia"
+    fi
+    file_count=0
     for f in "$FIXTURE_DIR"/*; do
-        case "$f" in *.m3u) continue ;; esac
-        # Quoted for the device shell: the library fixture's playlist files have spaces in their names.
-        radb shell content call --uri content://media/ --method scan_file \
-            --arg "'${REMOTE_DIR}/$(basename "$f")'" >/dev/null 2>&1 || true
+        radb push "$f" "${REMOTE_DIR}/$(basename "$f")" >/dev/null
+        file_count=$((file_count + 1))
     done
-    for f in "$FIXTURE_DIR"/*.m3u; do
-        [ -e "$f" ] || continue
-        radb shell content call --uri content://media/ --method scan_file \
-            --arg "'${REMOTE_DIR}/$(basename "$f")'" >/dev/null 2>&1 || true
-    done
+    echo "seed-test-media: pushed ${file_count} file(s) to ${REMOTE_DIR}"
+
+    if [ "$FIXTURE" != "taglib" ]; then
+        # scan_volume only registers pending placeholder rows for new files (title/duration/is_music
+        # stay NULL) -- the metadata extractor only runs per-file via scan_file (MediaStore.scanFile()'s
+        # underlying call), so each pushed file needs its own scan to be indexed with real tags.
+        #
+        # .m3u files must be scanned last: MediaStore's ModernMediaScanner resolves each playlist entry
+        # against files already indexed at scan time and silently drops any entry whose target hasn't
+        # been scanned yet (#399) -- scanning in plain filesystem order interleaves playlists with the
+        # tracks they reference (e.g. "Focus.m3u" sorts before "lantern-hours-03.mp3"), so some entries
+        # would lose their track before the playlist is ever resolved.
+        echo "seed-test-media: scanning each pushed file so MediaStore extracts its tags ..."
+        for f in "$FIXTURE_DIR"/*; do
+            case "$f" in *.m3u) continue ;; esac
+            # Quoted for the device shell: the library fixture's playlist files have spaces in their names.
+            radb shell content call --uri content://media/ --method scan_file \
+                --arg "'${REMOTE_DIR}/$(basename "$f")'" >/dev/null 2>&1 || true
+        done
+        for f in "$FIXTURE_DIR"/*.m3u; do
+            [ -e "$f" ] || continue
+            radb shell content call --uri content://media/ --method scan_file \
+                --arg "'${REMOTE_DIR}/$(basename "$f")'" >/dev/null 2>&1 || true
+        done
+    fi
+else
+    echo "seed-test-media: media manifest matches, skipping push/scan"
 fi
 
 # _data holds the MediaStore-resolved path (e.g. /storage/emulated/0/...), which does not share
@@ -379,11 +405,16 @@ track_count="$(radb shell content query --uri content://media/external/audio/med
     --projection _id --where "\"_data LIKE '%s2-seed/${FIXTURE}/%'\"" 2>/dev/null | grep -c '^Row' || true)"
 echo "seed-test-media: MediaStore reports ${track_count} track(s) under ${REMOTE_DIR}"
 
-if [ "$SKIP_ONBOARDING" = "1" ]; then
+if [ "$SKIP_ONBOARDING" = "1" ] && [ "$APP_STATE_MATCHES" != "1" ]; then
     echo "seed-test-media: triggering a library import via the debug broadcast receiver ..."
     radb shell am broadcast -a com.simplecityapps.shuttle.debug.ACTION_IMPORT_MEDIA -p "$DEBUG_APP_ID" >/dev/null
     sleep 3
     echo "seed-test-media: onboarding skipped, local provider selected, library import should now be complete"
+    # Recorded in the app's own data (not /sdcard) so a `pm clear`/reinstall -- which wipes this but
+    # not /sdcard/Music/s2-seed -- always forces the prefs+import steps to rerun on the next
+    # --if-needed call, even though the media manifest below would still match.
+    radb shell "run-as ${DEBUG_APP_ID} mkdir -p files" >/dev/null 2>&1 || true
+    radb shell "run-as ${DEBUG_APP_ID} sh -c 'cat > ${APP_MANIFEST_REL}'" <<<"$MANIFEST_VALUE" >/dev/null 2>&1 || true
 fi
 
 radb shell "echo '${MANIFEST_VALUE}' > '${MANIFEST_PATH}'" >/dev/null 2>&1 || true
