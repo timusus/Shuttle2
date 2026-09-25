@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,7 +20,8 @@ import com.simplecityapps.shuttle.designsystem.R
 /**
  * The `ListItem` every library row shares: title `bodyLarge` on `onSurface`, secondary
  * `bodyMedium` on `onSurfaceVariant` (both from the M3 defaults), meta `labelMedium`, selection
- * on `secondaryContainer`, and an optional overflow button.
+ * on `secondaryContainer`, and an optional overflow button. The unselected container is
+ * transparent, so a row takes the colour of what it sits on: a screen, a sheet or the search view.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -43,6 +45,7 @@ internal fun MediaRow(
         modifier = modifier,
         enabled = enabled,
         onLongClick = onLongClick,
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         leadingContent = leading,
         supportingContent = supporting?.let {
             {

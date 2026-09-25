@@ -5,4 +5,10 @@
     <string name="ds_downloading">Downloading</string>
     <string name="ds_available_offline">Available offline</string>
     <string name="ds_loading">Loading</string>
+    <string name="ds_back">Back</string>
+    <string name="ds_search">Search</string>
+    <string name="ds_clear_search">Clear search</string>
+    <string name="ds_remove_recent_search">Remove from recent searches</string>
+    <string name="ds_search_no_results">No results for “%1$s”</string>
+    <string name="ds_search_no_results_message">Check the spelling, or search for an artist, album, song or playlist.</string>
 </resources>

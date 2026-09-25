@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
@@ -18,7 +19,8 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 
 /**
  * A section heading in `titleSmall` on `primary`, with an optional trailing [action] ("See all").
- * It sits on an opaque `surface`, so it also works as a sticky letter header.
+ * It sits on an opaque [containerColor] (`surface`), so it also works as a sticky letter header;
+ * pass the container's colour when it heads a list on another surface, such as the search view.
  */
 @Composable
 fun SectionHeader(
@@ -26,11 +28,12 @@ fun SectionHeader(
     modifier: Modifier = Modifier,
     action: String? = null,
     onAction: () -> Unit = {},
+    containerColor: Color = MaterialTheme.colorScheme.surface,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(containerColor)
             .heightIn(min = 48.dp)
             .padding(start = 16.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,

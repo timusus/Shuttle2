@@ -19,6 +19,8 @@ existing lines as they are.
 - [ ] `row-album`: [boards](row-album.md) · approved: — · boards hash: —
 - [ ] `row-artist`: [boards](row-artist.md) · approved: — · boards hash: —
 - [ ] `row-playlist`: [boards](row-playlist.md) · approved: — · boards hash: —
+- [ ] `top-bar`: [boards](top-bar.md) · approved: — · boards hash: —
+- [ ] `search`: [boards](search.md) · approved: — · boards hash: —
 - [ ] `row-genre`: [boards](row-genre.md) · approved: — · boards hash: —
 - [ ] `row-folder`: [boards](row-folder.md) · approved: — · boards hash: —
 - [ ] `grid-tile`: [boards](grid-tile.md) · approved: — · boards hash: —
