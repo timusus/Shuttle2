@@ -27,7 +27,7 @@ import dagger.multibindings.IntoSet
 
 @InstallIn(SingletonComponent::class)
 @Module
-abstract class AppModuleBinds {
+abstract class AppBindsModule {
     @Binds
     abstract fun bindSongImportStateProvider(impl: MediaImportObserver): SongImportStateProvider
 

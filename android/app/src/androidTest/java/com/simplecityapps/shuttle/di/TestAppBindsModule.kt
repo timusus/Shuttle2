@@ -10,9 +10,9 @@ import dagger.multibindings.ElementsIntoSet
 @Module
 @TestInstallIn(
     components = [SingletonComponent::class],
-    replaces = [AppModuleBinds::class]
+    replaces = [AppBindsModule::class]
 )
-class TestAppModuleBinds {
+class TestAppBindsModule {
     @Provides
     @ElementsIntoSet
     fun provideEmptyInitializers(): Set<AppInitializer> = emptySet()

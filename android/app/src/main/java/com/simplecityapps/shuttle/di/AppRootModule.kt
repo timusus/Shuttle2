@@ -28,4 +28,4 @@ import dagger.hilt.components.SingletonComponent
         RemoteConfigModule::class
     ]
 )
-interface AppComponent
+interface AppRootModule

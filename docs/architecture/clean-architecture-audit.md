@@ -87,6 +87,7 @@ submenu. One shared `ObservePlaylists` use case removes most of those entries.
 and 34 files reference that package.
 
 **Naming.** `di/AppComponent` and `di/AppModuleBinds` are `@Module`s without the `Module` suffix.
+Batch F renamed them to `di/AppRootModule` and `di/AppBindsModule`.
 
 ## Poor-code hotspots
 
@@ -151,19 +152,27 @@ Found by a static pass: each symbol is declared in production code, and a text s
 excluded. **Every item is unverified.** Confirm each with a compile and a search for reflection
 or manifest use before deleting it.
 
-| Candidate | File |
-|---|---|
-| `AppScope` qualifier | `core/.../di/AppScope.kt` |
-| `ShellRoute` (function) | `app/.../ui/shell/ShellRoute.kt` |
-| `SourcesSettingsRoute` (only user, `SourcesFragment`, is deleted by #381) | `app/.../ui/screens/settings/SettingsRoutes.kt` |
-| `increaseTouchableArea` (only user, `QueueBinder`, is deleted by #381) | `app/.../ui/common/view/ViewExt.kt` |
-| `spannable` builder | `app/.../ui/common/utils/SpannableExt.kt` |
-| `MaterialGridOverlay` | `app/.../ui/common/components/MaterialGridOverlay.kt` |
-| `ColorFamily` | `app/.../ui/theme/Theme.kt` |
-| `ReadyWithExpandedAlbum` (may be a preview state; check before deleting) | `app/.../library/albumartists/detail/AlbumArtistDetail.kt` |
-| `isHttpError`, `isHttpServerError`, `isHttpClientError`, `isNetworkError` | `networking/.../ErrorHelper.kt` |
-| `HighPassFilter`, `LowPassFilter` | `playback/.../dsp/equalizer/` |
-| `ColorSetEvaluator` | `imageloader/.../palette/ColorSet.kt` |
+Batch F (#443) resolved this list:
+
+| Candidate | File | Outcome |
+|---|---|---|
+| `AppScope` qualifier | `core/.../di/AppScope.kt` | Deleted (whole file) |
+| `ShellRoute` (function) | `app/.../ui/shell/ShellRoute.kt` | **Live** — called from `MainActivity`; audit was stale |
+| `SourcesSettingsRoute` (only user, `SourcesFragment`, is deleted by #381) | `app/.../ui/screens/settings/SettingsRoutes.kt` | Already gone by the time batch F ran |
+| `increaseTouchableArea` (only user, `QueueBinder`, is deleted by #381) | `app/.../ui/common/view/ViewExt.kt` | Deleted, along with the also-dead `setMargins`; `fadeIn`/`fadeOut` stay (used by `CircularLoadingView`, #445) |
+| `spannable` builder | `app/.../ui/common/utils/SpannableExt.kt` | Deleted (whole file — every other builder in it was dead too) |
+| `MaterialGridOverlay` | `app/.../ui/common/components/MaterialGridOverlay.kt` | Deleted (whole file) |
+| `ColorFamily` | `app/.../ui/theme/Theme.kt` | Deleted |
+| `ReadyWithExpandedAlbum` (may be a preview state; check before deleting) | `app/.../library/albumartists/detail/AlbumArtistDetail.kt` | **Live** — a `@Snapshot @Preview` Roborazzi golden |
+| `isHttpError`, `isHttpServerError`, `isHttpClientError`, `isNetworkError` | `networking/.../ErrorHelper.kt` | Deleted |
+| `HighPassFilter`, `LowPassFilter` | `playback/.../dsp/equalizer/` | Deleted (whole files) |
+| `ColorSetEvaluator` | `imageloader/.../palette/ColorSet.kt` | Owned by batch G, untouched |
+
+Batch F also swept `:android:app`'s Gradle dependencies for #381 leftovers and dropped three with
+no remaining callers in the module: `androidx.constraintlayout` (no layout XML uses it anymore),
+`billingclient.billingKtx` and `nanohttpd.webserver` (both already declared, and actually used, by
+`:android:trial` and `:android:playback` respectively). `lintDebug`'s `UnusedResources` check found
+no orphaned resources.
 
 Some production code is referenced only from tests, and needs a decision rather than a deletion:
 
@@ -242,7 +251,7 @@ should be removals only.
     `debug/DebugLoggingTree.kt`.
   - Also `mediaprovider/core/.../MediaImporter.kt` and `MediaImportObserver.kt`, moving
     `Listener` to a `Flow`.
-- **F. Dead code and naming.**
+- **F. Dead code and naming (done).**
   - Files: the candidates above, except `ColorSet.kt`, which belongs to G.
   - Also `di/AppComponent.kt` and `di/AppModuleBinds.kt`: rename them to `*Module`.
 - **G. Imageloader.**

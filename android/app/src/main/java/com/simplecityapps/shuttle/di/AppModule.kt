@@ -30,7 +30,7 @@ import javax.inject.Named
 import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)
-@Module(includes = [AppModuleBinds::class])
+@Module(includes = [AppBindsModule::class])
 class AppModule {
     @Singleton
     @Provides
