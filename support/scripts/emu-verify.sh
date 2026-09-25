@@ -6,12 +6,20 @@
 # chance to skip a step or forget `stop`.
 #
 #   support/scripts/emu-verify.sh [--check <name>]... [--flow <path.yaml>]... [--apk <path>]
-#                                  [--no-seed] [--remote <jellyfin|emby|plex>] [--keep]
+#                                  [--no-seed] [--no-reset] [--remote <jellyfin|emby|plex>] [--keep]
 #
 #     --check <name>   run support/scripts/checks/<name>.sh (repeatable)
 #     --flow <path>    run a Maestro flow directly via `maestro test` (repeatable)
 #     --apk <path>     install this APK instead of building/reusing the cached one
 #     --no-seed        skip seed-test-media.sh (media/app state already set up)
+#     --no-reset       skip `remote-emu.sh reset` (#412: iterate against a lane that's already
+#                       seeded from a previous run -- install + seed-test-media.sh --if-needed
+#                       become near no-ops when nothing changed, instead of paying the ~2-3 min
+#                       reset+reseed every call). The seed step always passes --if-needed, so
+#                       this is safe with or without --no-reset: after a real reset the fixture
+#                       manifest is gone and it reseeds for real either way. Never use --no-reset
+#                       for the landing gate -- only emu-verify's default (reset every time)
+#                       catches state a previous run's checks left behind.
 #     --remote <server>  sign in and import from a seeded jellyfin/emby/plex server
 #                         (support/scripts/seed-remote-provider.sh) instead of seeding local
 #                         media, and export S2_REMOTE=<server> so remote checks run instead of
@@ -40,6 +48,7 @@ CHECKS=()
 FLOWS=()
 APK=""
 NO_SEED=0
+NO_RESET=0
 REMOTE=""
 KEEP=0
 
@@ -49,6 +58,7 @@ while [ $# -gt 0 ]; do
         --flow) FLOWS+=("${2:?emu-verify: --flow needs a path}"); shift 2 ;;
         --apk) APK="${2:?emu-verify: --apk needs a path}"; shift 2 ;;
         --no-seed) NO_SEED=1; shift ;;
+        --no-reset) NO_RESET=1; shift ;;
         --remote) REMOTE="${2:?emu-verify: --remote needs jellyfin, emby or plex}"; shift 2 ;;
         --keep) KEEP=1; shift ;;
         -h|--help) usage; exit 0 ;;
@@ -134,7 +144,11 @@ echo "$ENV_OUT" >>"$LOG"
 eval "$ENV_OUT"
 echo "emu-verify: lane env exported"
 
-step "remote-emu: reset" support/scripts/remote-emu.sh reset || exit 1
+if [ "$NO_RESET" = "1" ]; then
+    echo "emu-verify: --no-reset set, skipping remote-emu.sh reset"
+else
+    step "remote-emu: reset" support/scripts/remote-emu.sh reset || exit 1
+fi
 step "remote-emu: install" support/scripts/remote-emu.sh install "$APK" || exit 1
 
 if [ -n "$REMOTE" ]; then
@@ -143,7 +157,7 @@ if [ -n "$REMOTE" ]; then
 elif [ "$NO_SEED" = "1" ]; then
     echo "emu-verify: --no-seed set, skipping seed-test-media.sh"
 else
-    step "seed-test-media: playback fixture" support/scripts/seed-test-media.sh playback --skip-onboarding || exit 1
+    step "seed-test-media: playback fixture" support/scripts/seed-test-media.sh playback --skip-onboarding --if-needed || exit 1
 fi
 
 # ---- Checks / flows ----

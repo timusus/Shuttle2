@@ -37,6 +37,10 @@ support/scripts/emu-verify.sh --remote jellyfin
 support/scripts/emu-verify.sh --remote plex --check remote-playback
 ```
 
+- Re-running the same flow/check after a small code change, on the lane you already leased and
+  seeded this session? Add `--no-reset`: skips the ~2-3 min reset+reseed, since `seed-test-media.sh
+  --if-needed` (always on) is a no-op when the fixture's already there (#412). Never use it for the
+  landing verification -- only the default (reset every time) catches state a prior run left behind.
 - Run the whole script in the foreground. A headless worker that backgrounds it ends its run (#303).
 - Never start a local `emulator` or hand-roll `sleep`/`getprop sys.boot_completed` loops: `start`
   (which `emu-verify.sh` calls) already waits for boot (up to 300 s) and fails loudly. Those loops

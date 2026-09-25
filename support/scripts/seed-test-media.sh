@@ -3,7 +3,7 @@
 # under /sdcard/Music/s2-seed/<fixture>, and triggers a MediaStore scan -- so a validation run
 # starts from known media instead of hand-rolled ffmpeg + adb push + broadcast each time.
 #
-#   support/scripts/seed-test-media.sh <fixture> [--skip-onboarding]
+#   support/scripts/seed-test-media.sh <fixture> [--skip-onboarding] [--if-needed]
 #
 #     two-disc        one album, 2 discs x 3 tracks (one track is FLAC), disc/track/ReplayGain tags set
 #     many-tracks     3 artists x 2 albums x 8 tracks
@@ -26,6 +26,10 @@
 #                         with the local (MediaStore) provider selected, skipping onboarding
 #                         and the launch changelog sheet (which would cover the UI under test).
 #                         Requires the debug APK already installed (run-as needs it resolvable).
+#     --if-needed         skip pushing/scanning/onboarding-prefs entirely when this fixture (and
+#                         the --skip-onboarding state) was already the last thing seeded on this
+#                         device -- tracked by a manifest file written to the fixture's own remote
+#                         dir, so a `reset` (which deletes it) always forces a real reseed (#412).
 #
 # Respects ANDROID_SERIAL / ANDROID_ADB_SERVER_PORT the way `remote-emu.sh env` sets them --
 # run `eval "$(support/scripts/remote-emu.sh env)"` first. Generated files are cached under
@@ -44,7 +48,7 @@ PREFS_FILE="${DEBUG_APP_ID}_preferences.xml"
 
 usage() {
     cat <<'EOF'
-Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding [--s2-scanner]]
+Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding [--s2-scanner]] [--if-needed]
 
   two-disc        one album, 2 discs x 3 tracks (one track is FLAC), disc/track/ReplayGain tags set
   many-tracks     3 artists x 2 albums x 8 tracks
@@ -62,6 +66,8 @@ Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding [--s2-sca
                       provider selected (needs the debug APK already installed)
   --s2-scanner        with --skip-onboarding, select the S2 scanner (Shuttle) instead of the
                       Android (MediaStore) provider, so Settings > Sources' folders apply
+  --if-needed         skip the push/scan/onboarding-prefs work when this fixture (and provider/
+                      onboarding state) is already seeded on the device (cleared by `remote-emu.sh reset`)
 
 Requires ffmpeg + adb locally, and ANDROID_SERIAL set -- run
 `eval "$(support/scripts/remote-emu.sh env)"` first (or export it yourself for a local emulator).
@@ -80,10 +86,12 @@ shift
 
 SKIP_ONBOARDING=0
 PROVIDER_TYPES=1 # MediaProviderType.MediaStore; 0 is Shuttle
+IF_NEEDED=0
 for arg in "$@"; do
     case "$arg" in
         --skip-onboarding) SKIP_ONBOARDING=1 ;;
         --s2-scanner) PROVIDER_TYPES=0 ;;
+        --if-needed) IF_NEEDED=1 ;;
         *) echo "seed-test-media: unknown argument '$arg'" >&2; usage >&2; exit 2 ;;
     esac
 done
@@ -276,10 +284,38 @@ case "$FIXTURE" in
     taglib) build_taglib "$FIXTURE_DIR" ;;
 esac
 
+# The taglib fixture lives outside REMOTE_ROOT (a folder the Shuttle/TagLib provider's SAF picker
+# selects directly) and is never MediaStore-scanned -- see the comment further down.
+if [ "$FIXTURE" = "taglib" ]; then
+    REMOTE_DIR="/sdcard/Music/taglib-seed"
+else
+    REMOTE_DIR="${REMOTE_ROOT}/${FIXTURE}"
+fi
+
+# --if-needed (#412): a cheap fingerprint (file count + total bytes) of the cached local fixture,
+# paired with the --skip-onboarding and provider state, written as a manifest file in the fixture's
+# own remote dir once seeding finishes below. `remote-emu.sh reset` wipes that dir, so a mismatch or
+# missing manifest always falls through to a real reseed -- this never trusts state it didn't write
+# itself.
+fixture_fingerprint() {
+    find "$1" -type f | sort | xargs -I{} wc -c {} 2>/dev/null \
+        | awk '{n++; sum+=$1} END{printf "%d:%d", n, sum}' || true
+}
+MANIFEST_VALUE="${FIXTURE}:$(fixture_fingerprint "$FIXTURE_DIR"):onboard=${SKIP_ONBOARDING}:provider=${PROVIDER_TYPES}"
+MANIFEST_PATH="${REMOTE_DIR}/.manifest"
+if [ "$IF_NEEDED" = "1" ]; then
+    remote_value="$(radb shell cat "$MANIFEST_PATH" 2>/dev/null | tr -d '\r' || true)"
+    if [ "$remote_value" = "$MANIFEST_VALUE" ]; then
+        echo "seed-test-media: '${FIXTURE}' already seeded on this device (manifest matches), skipping"
+        exit 0
+    fi
+fi
+
 # The app imports into its own library when the music permission is granted in the app, on a
 # rescan, or from a periodic WorkManager job (off by default). Granting the permission over adb
-# starts none of those, so --skip-onboarding selects the Android (MediaStore) provider and uses a
-# debug-only broadcast receiver (android/app/src/debug) that calls MediaImporter.import() directly.
+# starts none of those, so --skip-onboarding selects the Android (MediaStore) provider (unless
+# --s2-scanner) and uses a debug-only broadcast receiver (android/app/src/debug) that calls
+# MediaImporter.import() directly.
 if [ "$SKIP_ONBOARDING" = "1" ]; then
     echo "seed-test-media: writing debug-app prefs to skip onboarding (local provider) ..."
     # Granted up front, so MainActivity doesn't ask for it on first launch.
@@ -298,16 +334,10 @@ EOF
     sleep 3
 fi
 
-# The taglib fixture lives outside REMOTE_ROOT (a folder the Shuttle/TagLib provider's SAF picker
-# selects directly) and is never MediaStore-scanned: it's meant to be read by the TagLib provider
-# only, so scanning it into MediaStore too would double-import each file as two different Songs.
-# A .nomedia marker keeps Android's own background media scanner (which walks standard media
+# taglib is never MediaStore-scanned: it's meant to be read by the TagLib provider only, so
+# scanning it into MediaStore too would double-import each file as two different Songs. A
+# .nomedia marker keeps Android's own background media scanner (which walks standard media
 # directories like Music/ independently of our explicit scan_file calls) from indexing it anyway.
-if [ "$FIXTURE" = "taglib" ]; then
-    REMOTE_DIR="/sdcard/Music/taglib-seed"
-else
-    REMOTE_DIR="${REMOTE_ROOT}/${FIXTURE}"
-fi
 radb shell mkdir -p "$REMOTE_DIR"
 if [ "$FIXTURE" = "taglib" ]; then
     radb shell "touch ${REMOTE_DIR}/.nomedia"
@@ -355,3 +385,5 @@ if [ "$SKIP_ONBOARDING" = "1" ]; then
     sleep 3
     echo "seed-test-media: onboarding skipped, local provider selected, library import should now be complete"
 fi
+
+radb shell "echo '${MANIFEST_VALUE}' > '${MANIFEST_PATH}'" >/dev/null 2>&1 || true

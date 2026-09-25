@@ -85,6 +85,8 @@ the ssh command, each failed connect, every close and how ssh exited (#342).
 checks or Maestro flows (or the full suite), and stop as a single foreground call -- see the
 `emulator-check` skill. The steps below are what it automates; use them directly only for a
 one-off command it doesn't cover (a different fixture, a raw `adb` call, leaving the lane up).
+`--no-reset` skips the reset step for a fast re-run of the same flow/check on a lane you already
+seeded this session (#412) -- keep the default (reset every time) for the landing verification.
 
 **Standard start state for validation:** a lane that's been reused inherits stale app data and
 media from a previous run. Before validating a UI or playback change, reset the lane and reseed
@@ -100,7 +102,7 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
 - `remote-emu.sh reset [N]` clears the debug app's data (`pm clear`) and removes
   `/sdcard/Music/s2-seed` on the lane's serial. Run it before reseeding to avoid mixing fixtures
   from a previous validation run into the new one.
-- `seed-test-media.sh <fixture> [--skip-onboarding]` generates short, tagged mp3/FLAC files with
+- `seed-test-media.sh <fixture> [--skip-onboarding] [--if-needed]` generates short, tagged mp3/FLAC files with
   ffmpeg (cached under `build/test-media/<fixture>`), pushes them to
   `/sdcard/Music/s2-seed/<fixture>` on the current lane, and triggers a MediaStore scan. Fixtures:
   `two-disc` (one album, 2 discs x 3 tracks, one FLAC), `many-tracks` (3 artists x 2 albums x 8
@@ -112,6 +114,9 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
   `MediaImporter.import()` directly — the app's real `MediaStore` `ContentObserver` import path is
   dead code (never wired into the `AppInitializer` set), so nothing else triggers a library import
   once onboarding's Scanner page is skipped. Run it only after `install`, before the first launch.
+  `--if-needed` skips the push/scan/prefs work entirely when this fixture (and `--skip-onboarding`
+  state) is already what a manifest file on the lane records as last seeded -- `reset` removes that
+  manifest with the rest of `/sdcard/Music/s2-seed`, so it always forces a real reseed (#412).
 - Respects `ANDROID_SERIAL` / `ANDROID_ADB_SERVER_PORT` the same way `remote-emu.sh env` sets
   them — `eval` that first in any shell that calls either script.
 - **Remote providers (Jellyfin/Emby/Plex):** `support/scripts/seed-remote-provider.sh
