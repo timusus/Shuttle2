@@ -22,6 +22,7 @@ import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +39,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -52,6 +54,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2IconToggleButton
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControls
+import com.simplecityapps.shuttle.designsystem.component.S2PlayerControlsSize
 import com.simplecityapps.shuttle.designsystem.component.S2SeekBar
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.squareup.phrase.Phrase
@@ -67,7 +70,7 @@ internal fun NowPlayingHeader(
 ) {
     var showSleepTimer by rememberSaveable { mutableStateOf(false) }
     val songActions = rememberSongActionsState()
-    Row(modifier = modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = modifier.fillMaxWidth().height(NowPlayingHeaderHeight).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         S2IconButton(icon = Icons.Rounded.KeyboardArrowDown, contentDescription = stringResource(R.string.player_collapse), onClick = onCollapse)
         Text(text = stringResource(R.string.player_now_playing), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         if (player.castAvailable) CastButton()
@@ -110,20 +113,22 @@ private fun CastButton(modifier: Modifier = Modifier) {
     )
 }
 
-/** The artwork, square and as large as its slot allows, up to [MaxArtworkSize]. */
+/** The artwork, square and as large as its slot allows, up to [MaxArtworkSize], with [gap] above and below it. */
 @Composable
 internal fun NowPlayingArtwork(
     player: PlayerUiState,
+    gap: Dp,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
+    Box(modifier.fillMaxWidth().padding(horizontal = NowPlayingMargin, vertical = gap), contentAlignment = Alignment.Center) {
         player.current?.let { current ->
             SongArtwork(current.song, Modifier.widthIn(max = MaxArtworkSize).aspectRatio(1f, matchHeightConstraintsFirst = true), size = ArtworkSize.Hero)
         }
     }
 }
 
-/** The title and artist beside the favourite toggle, sitting directly on the seek bar. */
+/** The title and artist beside the favourite toggle, sitting a small step above the seek bar. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun NowPlayingTitle(
     player: PlayerUiState,
@@ -131,12 +136,12 @@ internal fun NowPlayingTitle(
     modifier: Modifier = Modifier,
 ) {
     val current = player.current
-    Row(modifier.fillMaxWidth().padding(start = 24.dp, end = 16.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.fillMaxWidth().padding(start = NowPlayingMargin + 4.dp, end = 8.dp, bottom = TitleSeekGap), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
-            Text(text = current?.title.orEmpty(), style = MaterialTheme.typography.headlineSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(text = current?.title.orEmpty(), style = MaterialTheme.typography.headlineMediumEmphasized, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
                 text = listOfNotNull(current?.artist, current?.album).joinToString(" • "),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -181,41 +186,43 @@ internal fun QueueHeadSong(
 }
 
 /**
- * The artwork over the title. With [fillHeight] the artwork's slot takes all the height the title
- * leaves, centring the artwork in it, so the title stays on whatever sits below; without it the two
- * wrap and centre together as a group.
+ * The artwork over the title, [gap] apart. With [fillHeight] the artwork's slot takes all the height
+ * the title leaves, centring the artwork in it, so the title stays on whatever sits below; without it
+ * the two wrap and centre together as a group.
  */
 @Composable
 internal fun NowPlayingSong(
     player: PlayerUiState,
     actions: PlayerActions,
+    gap: Dp,
     fillHeight: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
-        NowPlayingArtwork(player, Modifier.weight(1f, fill = fillHeight))
+        NowPlayingArtwork(player, gap, Modifier.weight(1f, fill = fillHeight))
         NowPlayingTitle(player, actions)
     }
 }
 
 /**
- * The seek bar over the transport controls: the head that stays above the queue at the Queue level.
- * The controls take a fixed 336 dp, so they sit closer to the edges than the seek bar to fit the 360 dp pane.
+ * The seek bar over the transport controls, [gap] between and below them: the head that stays above
+ * the queue at the Queue level ([transportHeight]). The Large controls sit closer to the edges than
+ * the seek bar, and scale down where even that doesn't fit.
  */
 @Composable
 internal fun Transport(
     player: PlayerUiState,
     progress: () -> PlayerProgress,
     actions: PlayerActions,
+    gap: Dp,
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().height(TransportHeight),
-        verticalArrangement = Arrangement.Center,
+        modifier = modifier.fillMaxWidth().height(transportHeight(gap)),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         SeekBar(player, progress, actions)
-        Box(Modifier.padding(horizontal = 12.dp)) {
+        Box(Modifier.weight(1f).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
             S2PlayerControls(
                 playing = player.playing,
                 onPlayPause = actions::togglePlayback,
@@ -226,6 +233,7 @@ internal fun Transport(
                 repeatMode = player.repeatMode,
                 onRepeatClick = actions::cycleRepeatMode,
                 buffering = player.buffering,
+                size = S2PlayerControlsSize.Large,
             )
         }
     }
@@ -245,12 +253,12 @@ private fun SeekBar(
         onSeek = actions::seekTo,
         playing = player.playing,
         enabled = player.current != null,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+        modifier = Modifier.fillMaxWidth().height(SeekBarHeight).padding(horizontal = NowPlayingMargin),
     )
 }
 
 /** The largest the Now Playing artwork grows, however much room there is. */
-private val MaxArtworkSize = 480.dp
+internal val MaxArtworkSize = 480.dp
 
 private val SleepTimerDurations = listOf(
     R.string.sleep_timer_5_minutes to 5 * DateUtils.MINUTE_IN_MILLIS,

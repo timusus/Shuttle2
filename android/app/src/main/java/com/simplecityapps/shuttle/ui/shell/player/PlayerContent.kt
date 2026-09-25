@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -40,6 +41,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Constraints
@@ -62,25 +64,75 @@ val MiniPlayerHeight = 72.dp
 /** Height of the "Up next" peek at the bottom of Now Playing on a compact sheet. */
 val QueuePeekHeight = 56.dp
 
-/** Height of the seek bar and transport controls, which stay visible above the queue at the Queue level. */
-val TransportHeight = 176.dp
+/** Height of the Now Playing header row: collapse, title and the player's tools. */
+val NowPlayingHeaderHeight = 64.dp
+
+/** Height of the seek bar: the slider over its times. */
+internal val SeekBarHeight = 60.dp
+
+/** Height of the Large transport controls, whose play morph is the tallest button. */
+internal val ControlsHeight = 96.dp
+
+/** The title and artist lines with the small step down to the seek bar, at font scale 1; larger text takes it from the artwork. */
+private val NominalTitleHeight = 72.dp
+
+/** The step from the title block down to the seek bar, which belongs with it. */
+internal val TitleSeekGap = 8.dp
+
+/** The side margin of the artwork, title and seek bar. */
+internal val NowPlayingMargin = 16.dp
+
+/** The even gaps between the stacked Now Playing's groups never shrink below this or grow past that. */
+private val MinGroupGap = 8.dp
+private val MaxGroupGap = 40.dp
+
+/** The gaps: header to artwork, artwork to title, seek bar to controls, and controls to Up Next. */
+private const val GroupGapCount = 4
 
 /** Height of the song row the player pane keeps above the transport at the Queue level. */
 val QueueHeadSongHeight = 72.dp
 
+/**
+ * The even gap between the stacked Now Playing's groups in a [width] × [height] px player: what is
+ * left once the full-width artwork, the title block, the seek bar and the controls have their room,
+ * shared by the [GroupGapCount] gaps and capped, so a tall phone reads as composed rather than holed.
+ * On a short phone it bottoms out and the artwork gives up the height instead. In dp.
+ */
+internal fun Density.stackedGroupGap(
+    width: Float,
+    height: Float,
+    statusBarTop: Int,
+    navigationBarBottom: Int,
+): Dp {
+    val room = height - statusBarTop - navigationBarBottom - (NowPlayingHeaderHeight + QueuePeekHeight).toPx()
+    val artwork = minOf(width - (NowPlayingMargin * 2).toPx(), MaxArtworkSize.toPx())
+    val left = room - artwork - (NominalTitleHeight + SeekBarHeight + ControlsHeight).toPx()
+    return (left / GroupGapCount).toDp().coerceIn(MinGroupGap, MaxGroupGap)
+}
+
+/** Height of the seek bar and controls with [gap] between and below them: the head that stays above the queue at the Queue level. */
+internal fun transportHeight(gap: Dp): Dp = SeekBarHeight + ControlsHeight + gap * 2
+
 /** The head that stays above the queue at the Queue level: the transport, under the song row where there is one. */
-internal fun queueHeadHeight(withSong: Boolean): Dp = if (withSong) TransportHeight + QueueHeadSongHeight else TransportHeight
+internal fun queueHeadHeight(
+    gap: Dp,
+    withSong: Boolean,
+): Dp = if (withSong) transportHeight(gap) + QueueHeadSongHeight else transportHeight(gap)
 
 /**
  * How far the Queue level pushes a stacked player up: from the peek at the bottom to just below
  * the head, which stays under the status bar. In px.
  */
 internal fun Density.stackedQueueTravel(
+    width: Float,
     height: Float,
     statusBarTop: Int,
     navigationBarBottom: Int,
-    headHeight: Dp = TransportHeight,
-): Float = (height - statusBarTop - headHeight.toPx() - QueuePeekHeight.toPx() - navigationBarBottom).coerceAtLeast(0f)
+    withSong: Boolean = false,
+): Float {
+    val head = queueHeadHeight(stackedGroupGap(width, height, statusBarTop, navigationBarBottom), withSong)
+    return (height - statusBarTop - head.toPx() - QueuePeekHeight.toPx() - navigationBarBottom).coerceAtLeast(0f)
+}
 
 internal object PlayerTestTags {
     const val Sheet = "player_sheet"
@@ -115,7 +167,12 @@ internal fun StackedPlayer(
     // Faded-out layers leave the semantics tree, so TalkBack (and UI drivers) reach only what shows.
     val nowPlayingShown by remember(geometry, offset) { derivedStateOf { geometry().nowPlayingAlpha(offset()) > 0f } }
     val queueShown by remember(geometry, offset) { derivedStateOf { geometry().queue(offset()) > 0f } }
-    Box(modifier = modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        // The same gap the queue travel was measured with (stackedQueueTravel), so the transport lands under the status bar.
+        val density = LocalDensity.current
+        val statusBarTop = WindowInsets.statusBars.getTop(density)
+        val navigationBarBottom = WindowInsets.navigationBars.getBottom(density)
+        val gap = with(density) { stackedGroupGap(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat(), statusBarTop, navigationBarBottom) }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -134,13 +191,13 @@ internal fun StackedPlayer(
                     fold = tabletopFold,
                     orientation = Orientation.Vertical,
                     modifier = Modifier.weight(1f),
-                    first = { NowPlayingSong(player, actions, fillHeight = false, modifier = song.fillMaxSize()) },
-                    second = { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) { Transport(player, progress, actions) } },
+                    first = { NowPlayingSong(player, actions, gap = gap, fillHeight = false, modifier = song.fillMaxSize()) },
+                    second = { Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) { Transport(player, progress, actions, gap = gap) } },
                 )
             } else {
                 // The transport sits on the peek, where the queue push expects it; the song fills the room above.
-                NowPlayingSong(player, actions, fillHeight = true, modifier = song.weight(1f).fillMaxWidth())
-                Transport(player, progress, actions)
+                NowPlayingSong(player, actions, gap = gap, fillHeight = true, modifier = song.weight(1f).fillMaxWidth())
+                Transport(player, progress, actions, gap = gap)
             }
             Spacer(Modifier.windowInsetsPadding(WindowInsets.navigationBars).height(QueuePeekHeight))
         }
@@ -159,7 +216,7 @@ internal fun StackedPlayer(
             modifier = Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(top = queueHeadHeight(songInQueueHead))
+                .padding(top = queueHeadHeight(gap, songInQueueHead))
                 .hiddenFromSemantics(!nowPlayingShown)
                 .graphicsLayer {
                     alpha = geometry().nowPlayingAlpha(offset())
@@ -199,8 +256,8 @@ internal fun SideBySidePlayer(
                 NowPlayingHeader(player, actions, onCollapse = onCollapse, modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars))
                 // Nothing pushes this player, so the song and transport centre together in the room below the header.
                 Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
-                    NowPlayingSong(player, actions, fillHeight = false, modifier = Modifier.weight(1f, fill = false).fillMaxWidth())
-                    Transport(player, progress, actions)
+                    NowPlayingSong(player, actions, gap = SideBySideGap, fillHeight = false, modifier = Modifier.weight(1f, fill = false).fillMaxWidth())
+                    Transport(player, progress, actions, gap = SideBySideGap)
                 }
             }
         },
@@ -212,6 +269,9 @@ internal fun SideBySidePlayer(
         },
     )
 }
+
+/** The gap between the side-by-side player's groups, which centre together rather than share the height. */
+private val SideBySideGap = 24.dp
 
 /**
  * Two slots split along [orientation] (Horizontal: side by side). A separating [fold], in window

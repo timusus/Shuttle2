@@ -54,17 +54,18 @@ internal fun PlayerPane(
         ) {
             BoxWithConstraints {
                 val density = LocalDensity.current
+                val width = with(density) { maxWidth.toPx() }
                 val height = with(density) { maxHeight.toPx() }
                 val statusBarTop = WindowInsets.statusBars.getTop(density)
                 val navigationBarBottom = WindowInsets.navigationBars.getBottom(density)
                 // The pane's own stacked geometry: always fully expanded, pushed up by the queue as a compact sheet is.
-                val geometry = remember(height, density, statusBarTop, navigationBarBottom) {
+                val geometry = remember(width, height, density, statusBarTop, navigationBarBottom) {
                     with(density) {
                         PlayerSheetGeometry(
                             height = height,
                             navBarHeight = 0f,
                             miniHeight = MiniPlayerHeight.toPx(),
-                            queueTravel = stackedQueueTravel(height, statusBarTop, navigationBarBottom, queueHeadHeight(withSong = true)),
+                            queueTravel = stackedQueueTravel(width, height, statusBarTop, navigationBarBottom, withSong = true),
                         )
                     }
                 }

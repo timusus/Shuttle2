@@ -101,8 +101,8 @@ screens never see it.
 
 - The M3 type scale plus its 15 **emphasized** styles, from `Typography` in 1.4.0. The default
   typeface stays until the type board is approved; a brand face is a separate decision.
-- **One emphasized element per region**: the now-playing title (`headlineSmallEmphasized` compact,
-  `headlineMediumEmphasized` expanded+), detail screen titles, the flexible top bar title. Body
+- **One emphasized element per region**: the now-playing title (`headlineMediumEmphasized` at every size, over a `titleLarge` artist line,
+  so a tall phone fills with type rather than gaps), detail screen titles, the flexible top bar title. Body
   text, rows and metadata are never emphasized.
 - **Row hierarchy**: title `bodyLarge` on `onSurface`; secondary line `bodyMedium` on
   `onSurfaceVariant`; trailing meta (duration, count) `labelMedium` on `onSurfaceVariant`. Section

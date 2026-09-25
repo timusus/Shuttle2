@@ -268,7 +268,7 @@ private fun CompactShell(
                 height = height.toFloat(),
                 navBarHeight = navBarHeight.toFloat(),
                 miniHeight = miniHeight,
-                queueTravel = stackedQueueTravel(height.toFloat(), statusBarTop, navigationBarBottom),
+                queueTravel = stackedQueueTravel(width.toFloat(), height.toFloat(), statusBarTop, navigationBarBottom),
             ),
         )
         val fill = Constraints.fixed(width, height)

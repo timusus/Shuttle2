@@ -55,6 +55,24 @@ import kotlin.math.roundToInt
 
 enum class S2RepeatMode { Off, All, One }
 
+/**
+ * The transport's scale. [Regular] fits the 360 dp pane; [Large] is the phone's Now Playing, with a
+ * bigger play morph and hit targets. [width] is the natural width: the buttons plus the group's gaps.
+ */
+enum class S2PlayerControlsSize(
+    internal val toggle: Dp,
+    internal val toggleIcon: Dp,
+    internal val skip: S2IconButtonSize,
+    internal val skipContainer: Dp?,
+    internal val playPause: Dp,
+    internal val width: Dp,
+) {
+    Regular(toggle = 48.dp, toggleIcon = 24.dp, skip = S2IconButtonSize.Medium, skipContainer = null, playPause = 80.dp, width = 336.dp),
+
+    // The Large icon button's 32 dp icon in a 64 dp container, rather than its 96 dp one, so the row fits a 411 dp phone.
+    Large(toggle = 56.dp, toggleIcon = 28.dp, skip = S2IconButtonSize.Large, skipContainer = 64.dp, playPause = 96.dp, width = 384.dp),
+}
+
 /** A [Morph] between two `MaterialShapes` at [progress], scaled to fill the bounds. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 internal class MorphShape(private val morph: Morph, private val progress: Float) : Shape {
@@ -131,12 +149,14 @@ fun S2PlayerControls(
     onRepeatClick: () -> Unit,
     modifier: Modifier = Modifier,
     buffering: Boolean = false,
+    size: S2PlayerControlsSize = S2PlayerControlsSize.Regular,
 ) {
     val sources = remember { List(5) { MutableInteractionSource() } }
-    ButtonGroup(overflowIndicator = {}, modifier = modifier.scaleDownToFit(PlayerControlsWidth), verticalAlignment = Alignment.CenterVertically) {
+    val skipModifier = size.skipContainer?.let { Modifier.size(it) } ?: Modifier
+    ButtonGroup(overflowIndicator = {}, modifier = modifier.scaleDownToFit(size.width), verticalAlignment = Alignment.CenterVertically) {
         customItem(
             buttonGroupContent = {
-                ToggleIcon(Icons.Rounded.Shuffle, stringResource(R.string.ds_shuffle), shuffle, onShuffleChange, Modifier.animateWidth(sources[0]), sources[0])
+                ToggleIcon(Icons.Rounded.Shuffle, stringResource(R.string.ds_shuffle), shuffle, onShuffleChange, Modifier.animateWidth(sources[0]), sources[0], size)
             },
             menuContent = {},
         )
@@ -146,8 +166,8 @@ fun S2PlayerControls(
                     Icons.Rounded.SkipPrevious,
                     stringResource(R.string.ds_previous),
                     onPrevious,
-                    Modifier.animateWidth(sources[1]),
-                    size = S2IconButtonSize.Medium,
+                    Modifier.animateWidth(sources[1]).then(skipModifier),
+                    size = size.skip,
                     interactionSource = sources[1],
                 )
             },
@@ -155,7 +175,7 @@ fun S2PlayerControls(
         )
         customItem(
             buttonGroupContent = {
-                S2PlayPauseButton(playing, onPlayPause, Modifier.animateWidth(sources[2]), buffering = buffering, interactionSource = sources[2])
+                S2PlayPauseButton(playing, onPlayPause, Modifier.animateWidth(sources[2]), buffering = buffering, size = size.playPause, interactionSource = sources[2])
             },
             menuContent = {},
         )
@@ -165,8 +185,8 @@ fun S2PlayerControls(
                     Icons.Rounded.SkipNext,
                     stringResource(R.string.ds_next),
                     onNext,
-                    Modifier.animateWidth(sources[3]),
-                    size = S2IconButtonSize.Medium,
+                    Modifier.animateWidth(sources[3]).then(skipModifier),
+                    size = size.skip,
                     interactionSource = sources[3],
                 )
             },
@@ -187,6 +207,7 @@ fun S2PlayerControls(
                     onCheckedChange = { onRepeatClick() },
                     modifier = Modifier.animateWidth(sources[4]),
                     interactionSource = sources[4],
+                    size = size,
                 )
             },
             menuContent = {},
@@ -203,24 +224,22 @@ private fun ToggleIcon(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier,
     interactionSource: MutableInteractionSource,
+    size: S2PlayerControlsSize,
 ) {
     IconToggleButton(
         checked = checked,
         onCheckedChange = onCheckedChange,
         shapes = IconButtonDefaults.toggleableShapes(),
-        modifier = modifier.size(48.dp),
+        modifier = modifier.size(size.toggle),
         colors = IconButtonDefaults.iconToggleButtonColors(
             checkedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
             checkedContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
         ),
         interactionSource = interactionSource,
     ) {
-        Icon(icon, contentDescription)
+        Icon(icon, contentDescription, Modifier.size(size.toggleIcon))
     }
 }
-
-/** The transport's natural width: two 48 dp toggles, two medium skip buttons, the 80 dp play button and the group's gaps. */
-private val PlayerControlsWidth = 336.dp
 
 /**
  * Below [natural] width, lays the content out at [natural] and scales it down to fit. `ButtonGroup`
