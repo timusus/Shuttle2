@@ -61,7 +61,7 @@ class SearchIndex<T> private constructor(
     /**
      * The documents that [accept] lets through and that match every token of [query], best first. When none match
      * every token, tokens are dropped from the end, then from the start, until something does. A leading "the" is
-     * optional, so "the beatles" still finds "Beatles".
+     * optional, so "the tin orchards" still finds "Tin Orchards".
      *
      * Ranking is bucketed: tokens matched, then fewer typos, then whole-token over prefix matches, then field weight,
      * then tokens found next to each other in order, then popularity, then alphabetical.
