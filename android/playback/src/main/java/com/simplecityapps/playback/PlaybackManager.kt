@@ -337,7 +337,9 @@ class PlaybackManager(
     /**
      * An item that fails to load (its file can't be read, its stream can't be resolved or fetched, its format isn't
      * supported) is skipped for the next one, up to [MAX_ATTEMPTS] in a row and never past the end of the queue,
-     * whether it was loaded directly or reached by playing on. An item that fails once it's playing stops playback.
+     * whether it was loaded directly or reached by playing on. A load that doesn't skip (a restore) leaves it current,
+     * paused, unless it's played meanwhile: playing it tries it again, and skips it then. An item that fails once it's
+     * playing stops playback.
      * Every failure but an unresolvable stream (a server that can't be reached) is reported for its song.
      */
     private fun onError(error: PlaybackException) {
@@ -348,7 +350,8 @@ class PlaybackManager(
         if (!error.isResolutionFailure()) {
             failedEntry?.song?.let(_playbackFailureFlow::tryEmit)
         }
-        if (failedEntry != null && failedEntry.uid != readyUid) {
+        val skips = player.playWhenReady || pendingLoad?.skipUnloadable != false
+        if (failedEntry != null && failedEntry.uid != readyUid && skips) {
             loadFailures++
             val next = player.currentTimeline.getNextWindowIndex(failedIndex, Player.REPEAT_MODE_OFF, player.shuffleModeEnabled)
             if (next != C.INDEX_UNSET && loadFailures < MAX_ATTEMPTS) {
@@ -455,11 +458,13 @@ class PlaybackManager(
 
     /**
      * Loads the current item, paused, at [seekPosition] (or the song's own start position). [completion] gets
-     * whether it loaded at the first attempt once it's ready to play, or the failure if nothing could load. A
-     * later load or skip supersedes it, and it's never called.
+     * whether it loaded at the first attempt once it's ready to play, or the failure if nothing could load (the
+     * current item alone, unless [skipUnloadable]: see [onError]). A later load or skip supersedes it, and it's never
+     * called.
      */
     override fun load(
         seekPosition: Int?,
+        skipUnloadable: Boolean,
         completion: (Result<Boolean>) -> Unit
     ) = playerThread.run {
         val entry = currentEntry
@@ -468,19 +473,19 @@ class PlaybackManager(
             completion(Result.failure(IllegalStateException("Queue empty")))
         } else {
             Timber.v("load(seekPosition: $seekPosition) ${entry.song.name}")
-            pendingLoad = PendingLoad(completion)
             callMonitor.cancel()
             player.playWhenReady = false
-            loadCurrent(seekPosition ?: entry.song.getStartPosition() ?: 0, completion)
+            loadCurrent(seekPosition ?: entry.song.getStartPosition() ?: 0, skipUnloadable, completion)
         }
     }
 
     /** Moves to the current item at [positionMs] and prepares it, calling [completion] once it's ready. */
     private fun loadCurrent(
         positionMs: Int,
+        skipUnloadable: Boolean = true,
         completion: (Result<Boolean>) -> Unit
     ) {
-        pendingLoad = PendingLoad(completion)
+        pendingLoad = PendingLoad(completion, skipUnloadable)
         readyUid = null
         loadFailures = 0
         player.seekTo(player.currentMediaItemIndex, positionMs.toLong())
@@ -614,7 +619,7 @@ class PlaybackManager(
     ) = withContext(Dispatchers.Main.immediate) {
         queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
         queueManager.setQueue(songs, songs.shuffled(), 0)
-        load(0, completion)
+        load(0, completion = completion)
     }
 
     override fun seekTo(position: Int) = playerThread.run {
@@ -682,6 +687,7 @@ class PlaybackManager(
 
     private data class PendingLoad(
         val completion: (Result<Boolean>) -> Unit,
+        val skipUnloadable: Boolean,
         val attempt: Int = 1
     )
 

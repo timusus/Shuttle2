@@ -287,6 +287,11 @@ saved queue's restore, as the widget's play-pause cold-starts the app), when pla
 given a song loading to play (a skip), then it pauses. (#345) — JVM (`spec/PlaybackSpecTest`); the widget's cold start
 is on the emulator (`checks/cold-start-widget.sh`).
 
+**RS-50: a restored song that can't load stays where it was left.** Given a saved queue whose current song can't be
+loaded when the app starts (a server out of reach, a file that can't be read), when the queue is restored, then that
+song stays current, paused, and a failure is reported for it, rather than the queue moving on; when it's then
+played, it's skipped for the next song that can load (RS-23). (#394) — JVM.
+
 ## Commits with no rule
 
 Mechanism only, with no behaviour of their own to hold (the design doc's section 4 list, plus thread-safety and

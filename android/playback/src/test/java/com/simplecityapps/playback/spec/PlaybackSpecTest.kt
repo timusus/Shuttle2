@@ -262,6 +262,29 @@ class PlaybackSpecTest {
     }
 
     @Test
+    fun `RS-50 a restored song that can't be loaded stays current, paused, until it's played`() {
+        val unreadable = unreadableSong(1)
+        val playable = song(2)
+        val failures = harness.record(playback.playbackFailureFlow)
+        var result: Result<Boolean>? = null
+        harness.run { queue.setQueue(listOf(unreadable, playable)) }
+
+        playback.load(skipUnloadable = false) { result = it }
+        harness.runUntil { result != null }
+        harness.idle()
+
+        result!!.isFailure shouldBe true
+        queue.queueStateFlow.value.currentItem?.song shouldBe unreadable
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        failures shouldBe listOf(unreadable)
+
+        playback.play()
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
+
+        queue.queueStateFlow.value.currentItem?.song shouldBe playable
+    }
+
+    @Test
     fun `RS-12 repeat one set before anything plays repeats the song`() {
         val first = song(1)
         val ended = harness.record(playback.trackEndedFlow)

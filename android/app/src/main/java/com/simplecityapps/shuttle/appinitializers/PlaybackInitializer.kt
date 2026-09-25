@@ -178,7 +178,8 @@ constructor(
                 // It's what a reload reads back as the position to resume from.
                 playbackPreferenceManager.playbackPosition = restoredSeekPosition
             }
-            playbackManager.load(restoredSeekPosition) {}
+            // A saved song that can't load (a server out of reach, a file not there yet) stays where it was left.
+            playbackManager.load(restoredSeekPosition, skipUnloadable = false) {}
         }
     }
 

@@ -29,7 +29,7 @@ class FakePlaybackOperations : PlaybackOperations {
     /** The seek position of each [load] call, in order. */
     val loadedPositions = mutableListOf<Int?>()
 
-    override fun load(seekPosition: Int?, completion: (Result<Boolean>) -> Unit) {
+    override fun load(seekPosition: Int?, skipUnloadable: Boolean, completion: (Result<Boolean>) -> Unit) {
         loadedPositions += seekPosition
         completion(loadResult)
     }
