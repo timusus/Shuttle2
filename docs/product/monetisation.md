@@ -2,6 +2,27 @@
 
 Status: recommendation, 2026-09-25. Nothing here is implemented yet.
 
+## Decisions (2026-09-25)
+
+Decided by the owner on epic #382; each can still be revisited:
+
+- **Pro** = streaming from Jellyfin/Emby/Plex, plus new downloads from a server. Songs already
+  downloaded never disappear.
+- **Free** = local playback, Chromecast, EQ, Android Auto and downloaded songs.
+- **One subscription** (monthly $1.49, annual $5.99) plus a **lifetime purchase** ($14.99).
+- **A 14-day trial, no card**, starting when the first server is connected. Current non-payers get
+  one fresh trial at cutover.
+- **All five legacy products are grandfathered to Pro**, indefinitely.
+- **No nag dialogs.** The paywall appears at add-server, at trial end, and in Settings.
+- **Pro for local-only users** takes nothing away; Pro adds optional supporter extras only
+  (alternate app icons, extra theme options beyond artwork theming). Details land with #380.
+- **No analytics-only release before the freeze.** Paywall and server-use analytics events ship
+  with the redesign; prices are tuned afterwards with Play price experiments.
+- **Still needs the owner:** Play listing wording, new prices before launch, and the payments
+  account notice (#372).
+- **Non-blocking catalogue approval** (design-language.md §5, app-shell.md §6) was decided in the
+  same round but belongs to those docs, not this one.
+
 ## 1. Owner decisions this builds on
 
 - The trial-expiry playback-speed penalty goes.
@@ -146,7 +167,7 @@ Also expect the "Shuttle+ was abandoned" crowd to reappear in reviews. Draft rep
 2. **Which variant won "S2 Pricing" isn't confirmed.** Check the A/B test's detail page.
 3. **Zero orders since about 13 Sep 2026.** Verify billing on a release build before attributing any drop to the new model.
 4. **Revenue scale.** At about 500 orders a year, price matters less than volume. The larger lever is a better rating and a free local tier that brings users in.
-5. **Downloads.** How "downloads stay free" applies to servers that need Pro needs the owner's confirmation (section 5).
+5. **Downloads — resolved.** Downloading from a server needs Pro; a song already downloaded is never taken away. See the Decisions section above.
 
 ## Sources
 

@@ -161,7 +161,8 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
 - Tap artist or album name opens that detail and collapses the sheet.
 - Menu: Cast route button (when Cast available), Sleep timer, Favorite (heart), Lyrics overlay
   (only if lyrics exist), Song info, Edit tags, Clear queue.
-- No rating, no playback-speed control (speed is only changed by the trial penalty, §8).
+- No rating, no playback-speed control. The trial-expiry speed penalty that used to change playback
+  speed here is removed (§8, decision 6 superseded).
 - Redesign: artwork-themed surface (app-shell §5); Expressive `FilledIconButton` shapes that morph
   on press for play/pause; `Slider` with wavy active track; lyrics as a full panel; an Equalizer
   entry in the overflow (owner decision 2); tabletop split (app-shell §2).
@@ -331,15 +332,24 @@ Expressive grouped sections and search, five destinations instead of nine.
 
 ## 8. Changelog, trial and purchase
 
+Decided model (owner, 2026-09-25; detail in [`monetisation.md`](../product/monetisation.md)): **no
+playback penalty, no nag dialogs.** A 14-day, no-card trial starts at the first server connection;
+the paywall appears only at add-server, trial end and Settings > S2 Pro. All five legacy product
+IDs are grandfathered to Pro forever; new server downloads need Pro, existing downloads keep
+playing. `:android:trial` (#380) has landed with the penalty code deleted; `ServerAccessGate`
+itself is wired in with the paywall UI, not before.
+
 | Flow | Today | Verdict | Redesign |
 |---|---|---|---|
 | Changelog | Bottom sheet on launch when the version changed and `changelog_show_on_launch`; newest entries expanded; its own "show on launch" switch; also from App info | Change | No launch popup: a dismissible "What's new in 2026.10" card at the top of Home, full list under About |
-| Trial dialog | Every 3 days in Trial, daily when Expired (`last_viewed_trial_dialog`); countdown or speed multiplier; Upgrade opens purchase | Change | One non-blocking card on Home / Library during Trial; a sheet on Expired, at most weekly |
-| Trial ring | Days-left ring in the Library toolbar and collapsed Queue header | Change | Single chip in the Library top bar |
-| Expiry penalty | `TrialInitializer` raises playback speed by 2 %/day after expiry, capped at 1.5× | Keep (contested) | Owner decision 6 |
-| Purchase | Lists Play Billing products from a hardcoded SKU list (monthly, yearly, lifetime; `_low` variants by Remote Config `pricing_tier`) | Keep | Modal sheet with Expressive plan cards |
-| Thank you | Once after purchase (`thank_you_dialog_viewed`), auto-closes after 8 s | Change | Snackbar or a one-off card; no dialog |
-| Promo code | Hidden: five taps on the trial dialog icon in 2 s → email prompt → `PromoCodeService` → `PromoCodeDialogFragment` (shown by `LibraryFragment`, which owns the listener) | Change | Keep the hidden path but own it in the trial sheet; `LibraryFragment` loses it |
+| Server trial | No server-scoped trial exists; the whole app degraded instead, via the penalty removed below | Decided: new | A 14-day, no-card trial starts at the first server connection, recorded server-side on the existing device backend so reinstalling doesn't reset it. Every current non-payer gets one fresh trial at cutover |
+| Trial nag dialog / ring | Dialog every 3 days in Trial, daily when Expired (`last_viewed_trial_dialog`); days-left ring in the Library toolbar and collapsed Queue header | Drop | No nag dialogs. A trial chip in the Library top bar for the last 3 days of the trial only; the paywall itself surfaces only at add-server, trial end and Settings > S2 Pro |
+| Expiry penalty | `TrialInitializer` raised playback speed by 2 %/day after expiry, capped at 1.5× | **Dropped** (owner decision 6, superseded) | No penalty, no reduced quality. At trial end, remote libraries stay visible and browsable with a small lock; tapping play on a remote song opens the paywall and remote queue items are skipped with a snackbar. Local playback, settings and downloaded songs are untouched |
+| Grandfathering | Five products (`s2_subscription_full_version_monthly/_yearly/_yearly_low`, `s2_iap_full_version`, `_low`) each independently unlock everything | Decided | Any of the five legacy SKUs grants Pro forever, whichever the user holds; legacy subscribers keep their existing renewal price. The products stop being sold but stay in the entitlement set indefinitely |
+| Downloads | `:android:downloads` has no UI; nothing is gated | Change | New downloads from a connected server require Pro; songs already downloaded before or during Pro keep playing after a trial or subscription ends |
+| Purchase | Lists Play Billing products from a hardcoded SKU list (monthly, yearly, lifetime; `_low` variants by Remote Config `pricing_tier`) | Change | One modal sheet, three Expressive plan cards: Lifetime ($14.99, preselected, "Best value"), Annual ($5.99/yr), Monthly ($1.49/mo) |
+| Thank you | Once after purchase (`thank_you_dialog_viewed`), auto-closes after 8 s | Change | Snackbar or a one-off card; no dialog. Existing legacy-SKU holders get a one-off "You already own S2 Pro" message instead |
+| Promo code | Hidden: five taps on the trial dialog icon in 2 s → email prompt → `PromoCodeService` → `PromoCodeDialogFragment` (shown by `LibraryFragment`, which owns the listener) | Change | Made visible in Settings > S2 Pro (the five-tap easter egg is dropped); owned by the paywall sheet, not `LibraryFragment` |
 | Review prompt | Play in-app review ≥7 days after purchase, at most every 30 days | Keep | Unchanged, from `ShellViewModel` |
 | Crash nag | Alpha/beta only, once, if crash reporting is off | Drop | Crash reporting defaults on |
 
@@ -365,37 +375,39 @@ Maestro: none for any of these (trial state depends on billing; fixtures run as 
 
 ## Owner decisions
 
-1. **Settings bottom sheet.** Recommend dropping it (each entry has a better home, §7); this
-   supersedes app-shell decision 5. Settings then sits as a top-bar action, not a nav item.
-2. **Where the equalizer lives.** Recommend a "Playback & sound" screen reachable from Now Playing
+All 12 taken as written on 2026-09-25 (epic #382); each can still be revisited.
+
+1. **Settings bottom sheet. Decided: drop it** (each entry has a better home, §7); this
+   supersedes app-shell decision 4 ("Fourth nav item" — this doc previously mis-cited it as
+   decision 5). Settings then sits as a top-bar action, not a nav item.
+2. **Where the equalizer lives. Decided: a "Playback & sound" screen** reachable from Now Playing
    overflow and Settings, merging EQ, ReplayGain, pre-amp and USB DAC output.
-3. **Usage analytics.** Options: (a) on by default everywhere; (b) on by default outside the EEA
-   and UK; (c) ask once, later, in a small non-blocking prompt (e.g. after the tenth play).
-   Recommend (c). This is a legal question (GDPR/ePrivacy consent for non-essential analytics, UK
-   PECR); get advice before shipping (a) or (b). Crash reporting on by default is also worth a
-   one-line check under the same advice.
-4. **Home's content.** Recommend Home = empty state + "What's new"/trial cards + carousels (recent,
+3. **Usage analytics. Decided: (c) ask once, later, in a small non-blocking prompt** (e.g. after
+   the tenth play). This is a legal question (GDPR/ePrivacy consent for non-essential analytics,
+   UK PECR); get advice before shipping. Crash reporting on by default is also worth a one-line
+   check under the same advice.
+4. **Home's content. Decided: Home = empty state + "What's new"/trial cards + carousels** (recent,
    added, most played, something different); move History/Latest/Favorites buttons to Playlists'
-   auto-playlist row. Alternative: drop Home and start on Library (the "Show Home on launch" switch
-   already hints many users do).
-5. **Nav bar items.** With the drawer and onboarding gone: Home, Library, Search today. Recommend
-   Home and Library as tabs and Search as a top-bar `SearchBar` on both, leaving a two-item bar
-   (or three with Playlists promoted from a Library tab). Needs a call with app-shell §2.
-6. **Trial expiry speed penalty.** Keep as is, or replace with a gentler restriction (e.g. the
-   EQ or remote sources locked)? It is the only enforcement and is invisible except as a badge.
-   Recommend keeping the mechanism but showing it honestly ("Playing at 1.2× until you upgrade")
-   on the Now Playing surface.
-7. **Smart playlists.** Recommend keeping the built-ins (Recently added, Most played, plus History
-   and Favorites merged in as "auto playlists") and not building user-defined rules now.
-8. **Duplicate-song handling.** Recommend an "Add anyway" snackbar and dropping the
+   auto-playlist row.
+5. **Nav bar items. Decided: Home and Library as tabs, Search as a top-bar `SearchBar`** on both,
+   leaving a two-item bar (or three with Playlists promoted from a Library tab). Needs a call with
+   app-shell §2.
+6. **Trial expiry speed penalty. Superseded: no penalty.** The mechanism is dropped entirely, not
+   softened or shown honestly — see the decided monetisation model in §8 and
+   [`monetisation.md`](../product/monetisation.md). Enforcement moves from a whole-app playback
+   penalty to server access itself (locked remote items, paywall on tap).
+7. **Smart playlists. Decided: keep the built-ins** (Recently added, Most played, plus History
+   and Favorites merged in as "auto playlists") and don't build user-defined rules now.
+8. **Duplicate-song handling. Decided: an "Add anyway" snackbar**, dropping the
    `playlist_ignore_duplicates` setting and the Playlists settings screen.
-9. **Mini player swipe.** Recommend horizontal swipe to skip (matches Now Playing's artwork swipe);
-   vertical swipe down stays "no hide" per app-shell decision 4.
-10. **Offline downloads UI.** The engine ships with no UI. Recommend in scope for the redesign as
-    a per-server toggle and a "Download" action in the shared actions sheet, but not a parity blocker.
-11. **Exclude confirm.** Recommend immediate exclude with Undo everywhere (today it is confirm in
+9. **Mini player swipe. Decided: horizontal swipe to skip** (matches Now Playing's artwork swipe);
+   vertical swipe down stays "no hide" per app-shell decision 3.
+10. **Offline downloads UI. Decided: in scope for the redesign**, as a per-server toggle and a
+    "Download" action in the shared actions sheet; not a parity blocker. Downloading from a server
+    needs Pro, but a song already downloaded is never taken away (§8).
+11. **Exclude confirm. Decided: immediate exclude with Undo everywhere** (today it is confirm in
     half the screens and silent in the other half).
-12. **Changelog on launch.** Recommend dropping the auto-popup and its switch in favour of a Home card.
+12. **Changelog on launch. Decided: drop the auto-popup and its switch** in favour of a Home card.
 
 ## Parity checklist (tick before the first post-freeze release)
 
@@ -434,7 +446,10 @@ Maestro: none for any of these (trial state depends on billing; fixtures run as 
 - [ ] Crash reporting and analytics toggles; Remote Config still refreshes as decided
 - [ ] File logging, copy logs; debug live log reachable in debug builds
 - [ ] Changelog reachable; licences
-- [ ] Trial countdown, expiry handling, purchase (all SKUs, low tier), thank-you, promo code path, review prompt
+- [ ] Purchase (Lifetime, Annual, Monthly plan cards), thank-you, promo code path (visible in Settings > S2 Pro), review prompt
+- [ ] Grandfathering: all 5 legacy product IDs (monthly, yearly, yearly_low, iap_full_version, iap_full_version_low) still grant Pro
+- [ ] Server trial: starts on first server connection, 14 days no card, trial chip in Library top bar for the last 3 days
+- [ ] Paywall entry points: add-server (before connecting), trial end (on tapping play on a remote song), Settings > S2 Pro
 - [ ] Intents: play-from-search, VIEW audio file, default music app; Toggle playback shortcut
 - [ ] Android Auto browse and playback; Cast connect from Now Playing
 - [ ] Every `support/maestro` flow ported to Compose test tags and green

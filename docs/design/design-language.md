@@ -36,7 +36,7 @@ guidance from these pages:
 | `MaterialShapes`, `toShape`/`toPath`, `LoadingIndicator`, `ContainedLoadingIndicator`, parts of `MenuKt` and `SliderDefaults` | 1.5.0-alpha29 | `@ExperimentalMaterial3ExpressiveApi` |
 | Seeded schemes: `rememberDynamicColorScheme(seed, isDark, style, contrastLevel, specVersion)`, `Contrast.Default/Medium/High`, `SpecVersion.SPEC_2025` | MaterialKolor 5.0.1 | stable, not a dependency |
 
-**Decision for the owner: pin material3 1.5.0-alpha29** over the BOM in `:android:designsystem`
+**Decided (2026-09-25): pin material3 1.5.0-alpha29** over the BOM in `:android:designsystem`
 (and the app). The BOM's 1.4.0 lacks most Expressive components. The release freeze means nothing
 ships on the alpha until the parity gate, and the pin moves to the first 1.5.0 beta/RC when it
 appears. The opt-in for `MaterialShapes` and `LoadingIndicator` stays inside `:android:designsystem`;
@@ -255,7 +255,7 @@ Every component lives in `:android:designsystem` and gets a board (§4). IDs are
   layoutlib, a second rendering stack beside the Robolectric one the characterisation tests use,
   and is an alpha. Roborazzi runs on that same Robolectric stack, can drive interactions (press,
   focus, drag frames) through the Compose test rule, and records GIF/APNG (`recordRoboVideo`)
-  for motion evidence. **Decision for the owner:** when the catalogue lands, move the app's preview
+  for motion evidence. **Decided (2026-09-25):** when the catalogue lands, move the app's preview
   snapshot test to Roborazzi's Compose Preview Scanner support and delete Paparazzi, so the repo has
   one snapshot tool.
 - **Matrix per component**: one PNG per {light, dark} × {compact, expanded}. Inside each PNG,
@@ -284,7 +284,7 @@ Screenshots cannot show springs, morphs or drags. A **debug-only** `DesignCatalo
 It opens from the debug settings screen and by `adb shell am start` with an extra, so a Maestro flow
 can open a board for a recording.
 
-## 5. The approval gate
+## 5. The approval gate (asynchronous, decided 2026-09-25)
 
 `docs/design/catalog/index.md` is the record. One task-list line per component (GitHub renders
 task lists as checkboxes; tables do not):
@@ -294,16 +294,23 @@ task lists as checkboxes; tables do not):
 - [x] `button`: [boards](button.md) · approved: 2026-10-02 @ a1b2c3d · boards hash: 9f3e…
 ```
 
-- **Approve**: the owner ticks the box (on GitHub or by telling a session), and the commit records
-  the date, the commit hash and a hash of that component's PNGs.
-- **Only approved components in screens.** No build-order step from the shell onwards
-  (app-shell §6) uses a component whose box is unticked. Screens build their UI from
+- **Approval is non-blocking.** Screens may use a catalogue component before its box is ticked;
+  building the screen and approving the component are independent. The owner reviews
+  `docs/design/catalog/index.md` on their own time, not as a gate any build-order step waits on
+  (app-shell §6 build order updated to match). Screens still build their UI only from
   `:android:designsystem` components; a check in `support/scripts/lint` flags
   `androidx.compose.material3` component imports in `ui/screens/**` (theme and token access
-  allowed), so a screen cannot slip in an uncatalogued control.
+  allowed), so a screen cannot slip in an uncatalogued control — catalogued but not yet approved
+  is fine, raw Material3 is not.
+- **Approve**: the owner ticks the box (on GitHub or by telling a session), and the commit records
+  the date, the commit hash and a hash of that component's PNGs.
+- **A change to a component flows to every screen that uses it.** Because screens only ever import
+  the catalogued component (never a copy), editing `component/<id>.kt` updates every screen using
+  it in the same commit; there is nothing to propagate by hand.
 - **Changing an approved component re-opens it.** A unit test in `:android:designsystem` compares
   each ticked component's current PNG hash with the recorded one; any mismatch fails the build until
   the box is unticked (hash cleared) in the same commit that re-records the images. The owner then
-  reviews the new boards and re-approves.
+  reviews the new boards and re-approves — screens already using the component are unaffected while
+  its box is unticked; only the recorded-approval date lapses.
 - **New components** go through the same line, starting unticked; a custom one also needs its row
   in §2 first.

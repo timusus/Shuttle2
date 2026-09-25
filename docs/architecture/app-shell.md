@@ -353,14 +353,16 @@ From step 2, `main` runs the new shell and an unbuilt destination is a `NotBuilt
 placeholder entry. Each step deletes the legacy code it replaces (Fragments, presenters, contracts,
 layouts, menus) in the same change and moves its Maestro flows to test tags (`testTagsAsResourceId`).
 
-1. **Build deps, design system and component catalogue, approved by the owner: a gate.** Catalog:
-   navigation3 runtime and ui, lifecycle-viewmodel-navigation3, material3-adaptive (adaptive,
-   layout, navigation3), hilt-lifecycle-viewmodel-compose, the serialization plugin and core,
-   MaterialKolor, material3 1.5.0-alpha29, Roborazzi. The `:android:designsystem` module with
-   `S2Theme`, `ArtworkTheme` and every component, board and catalogue page in
-   [`design-language.md`](../design/design-language.md). Verify: lint, colour-extraction unit tests,
-   `verifyRoborazziDebug`, the approval-hash test. **Gate:** no later step starts until the owner
-   has ticked every component it uses in `docs/design/catalog/index.md`.
+1. **Build deps, design system and component catalogue.** Catalog: navigation3 runtime and ui,
+   lifecycle-viewmodel-navigation3, material3-adaptive (adaptive, layout, navigation3),
+   hilt-lifecycle-viewmodel-compose, the serialization plugin and core, MaterialKolor, material3
+   1.5.0-alpha29, Roborazzi. The `:android:designsystem` module with `S2Theme`, `ArtworkTheme` and
+   every component, board and catalogue page in [`design-language.md`](../design/design-language.md).
+   Verify: lint, colour-extraction unit tests, `verifyRoborazziDebug`, the approval-hash test.
+   **Not a gate (decided 2026-09-25):** later steps start using a component as soon as it is
+   catalogued, whether or not its box in `docs/design/catalog/index.md` is ticked yet — the owner
+   reviews and ticks it in their own time (design-language.md §5), and a later change to a ticked
+   component flows to every screen already using it.
 2. **Shell and player sheet.** First a branch-only spike covering just the sheet drag, the scroll
    handoff from a stub `LazyColumn` queue, and predictive back (with section 1's ordering case);
    findings amend this doc. Then `setContent { AppTheme { AppShell(start) } }`: `NavDisplay` with
@@ -402,19 +404,23 @@ layouts, menus) in the same change and moves its Maestro flows to test tags (`te
    owner's device (predictive back, 3-button and gesture nav, light and dark, Cast, Android Auto).
    Only then is a release tagged.
 
-## 7. Open decisions for the owner
+## 7. Decisions for the owner (decided 2026-09-25, epic #382; each can still be revisited)
 
-1. **Artwork theming scope.** Recommend player surface + artwork detail screens, behind a
+1. **Artwork theming scope. Decided: player surface + artwork detail screens**, behind a
    default-on setting; not the whole app (section 5).
 2. **Player on wide windows.** Resolved by the section 2 rule: the sheet below 1200 dp, a
    persistent trailing pane from Large up.
-3. **Swipe the mini player away** (to Hidden, clearing or stopping the queue). Recommend no; keep
-   Hidden programmatic, as today.
-4. **Fourth nav item.** Recommend keeping the settings bottom sheet on compact for parity, with the
-   entries as rail secondary items on wider classes. Alternative: Settings as a top-level tab.
+3. **Swipe the mini player away** (to Hidden, clearing or stopping the queue). **Decided: no**;
+   keep Hidden programmatic, as today.
+4. **Fourth nav item. Superseded.** The settings bottom sheet is dropped, not kept — see
+   redesign-inventory.md owner decision 1, which supersedes the "keep it for parity" recommendation
+   here. Settings becomes a top-bar action, not a nav item or rail entry.
 5. **List-detail beside the player pane.** Resolved by the section 2 rule: at 840–1199 dp there is
    no persistent pane, so list-detail has two panes; from 1200 dp list, detail and player fit.
-6. **Design system choices** (material3 alpha pin, Roborazzi, selection toolbar): `design-language.md`.
+6. **Design system choices** (material3 alpha pin, Roborazzi): decided, see `design-language.md`
+   §1 and §4. **Still open:** the selection toolbar (floating vs docked, `design-language.md` §3)
+   — that table gives no recommendation, so it isn't resolved here; the owner picks from the
+   catalogue boards when they land.
 
 ## 8. Changes to the UDF principles
 
