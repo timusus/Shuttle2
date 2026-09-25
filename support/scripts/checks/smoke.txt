@@ -1,0 +1,14 @@
+# The device smoke set: the checks `run-all.sh --smoke` runs, one name per line (no `.sh`), in order,
+# then no-crashes. Each covers a different device surface on the `playback` fixture; UI-only
+# behaviour lives in Robolectric tests instead (support/maestro/CLASSIFICATION.md). `run-all.sh`
+# with no flag still runs every check.
+playback-controls
+notification-controls
+media-session-controller
+media-buttons
+cold-start-widget
+queue-remove-current
+rapid-skip
+restore-queue
+open-file-intent
+voice-search

@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 # Run every check in this directory, in order, and summarise. Exits non-zero if any failed.
+# --smoke runs only the checks named in smoke.txt (one per line, # comments), the device smoke set.
 # Clears the crash/main/system log buffers first so no-crashes.sh, run last, only sees this run.
 set -uo pipefail
 dir="$(dirname "$0")"
+smoke=0
+case "${1:-}" in
+    "") ;;
+    --smoke) smoke=1 ;;
+    *) echo "usage: $0 [--smoke]" >&2; exit 2 ;;
+esac
 adb logcat -c -b crash -b main -b system 2>/dev/null
 
 # fail() (checks/_lib.sh) drops a marker here when it runs, so a check that instead dies under
@@ -26,12 +33,27 @@ run_check() {
     fi
 }
 
-for check in "$dir"/[a-z]*.sh; do
-    name="$(basename "$check")"
-    [ "$name" = "run-all.sh" ] && continue
-    [ "$name" = "no-crashes.sh" ] && continue
-    run_check "$check"
-done
+if [ "$smoke" -eq 1 ]; then
+    while read -r name _; do
+        case "$name" in "" | "#"*) continue ;; esac
+        [ "$name" = "no-crashes" ] && continue
+        if [ -f "$dir/${name}.sh" ]; then
+            run_check "$dir/${name}.sh"
+        else
+            failed=$((failed + 1))
+            failed_names="${failed_names:+$failed_names }${name}"
+            echo "FAIL ${name} (listed in smoke.txt, but there is no ${name}.sh)" >&2
+        fi
+    done <"$dir/smoke.txt"
+else
+    for check in "$dir"/[a-z]*.sh; do
+        name="$(basename "$check")"
+        [ "$name" = "run-all.sh" ] && continue
+        [ "$name" = "no-crashes.sh" ] && continue
+        case "$name" in *_test.sh) continue ;; esac
+        run_check "$check"
+    done
+fi
 run_check "$dir/no-crashes.sh"
 
 if [ "$failed" -eq 0 ]; then

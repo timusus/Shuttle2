@@ -58,3 +58,11 @@ Subflows run by other flows or wrappers, not checks of their own: `create-testli
 None. No UI-only flow hit a Robolectric limit. Two limits shaped the tests instead: the fast scroller swallows
 `DropdownMenu` popups and a focused `TextField` in a `Dialog` never idles. The tests assert overflow items and the
 new-playlist form outside those hosts.
+
+## Device smoke set
+
+`support/scripts/checks/smoke.txt` names ten device-only checks, each on a different surface:
+`playback-controls`, `notification-controls`, `media-session-controller`, `media-buttons`, `cold-start-widget`,
+`queue-remove-current`, `rapid-skip`, `restore-queue`, `open-file-intent` and `voice-search`. `checks/run-all.sh --smoke`
+runs them, then `no-crashes`. `run-all.sh` with no flag still runs every check. The set leaves out checks that need
+something besides the `playback` fixture: remote servers, another app, a phone call or a fresh install.

@@ -66,6 +66,14 @@ check() {
     fi
 }
 
+# A stub test living beside the checks, which run-all must not run as a check.
+cat >"$CHECKS/zz-stub_test.sh" <<'EOF'
+#!/usr/bin/env bash
+echo "zz-stub_test ran"
+exit 1
+EOF
+chmod +x "$CHECKS/zz-stub_test.sh"
+
 status=0
 out="$("$CHECKS/run-all.sh" 2>&1)" || status=$?
 
@@ -80,6 +88,40 @@ check "summary lists both failing check names" \
     "$(echo "$out" | grep -qE 'check\(s\) failed: .*ab-silent-death.*ac-calls-fail' && echo 1 || echo 0)"
 check "the passing check is not named as failed" \
     "$([ "$(echo "$out" | grep -c 'aa-passing')" -eq 0 ] && echo 1 || echo 0)"
+
+check "the full run skips the *_test.sh stub tests" \
+    "$(echo "$out" | grep -q 'zz-stub_test' && echo 0 || echo 1)"
+
+# --smoke runs only what smoke.txt names, then no-crashes; a listed name with no script is a
+# named failure rather than a silent skip.
+cat >"$CHECKS/smoke.txt" <<'EOF'
+# a comment, then a blank line
+
+aa-passing
+ad-gone
+EOF
+cat >"$CHECKS/no-crashes.sh" <<'EOF'
+#!/usr/bin/env bash
+echo "ran no-crashes"
+EOF
+smoke_status=0
+smoke_out="$("$CHECKS/run-all.sh" --smoke 2>&1)" || smoke_status=$?
+
+check "--smoke skips checks smoke.txt doesn't list" \
+    "$(echo "$smoke_out" | grep -qE 'ab-silent-death|ac-calls-fail' && echo 0 || echo 1)"
+check "--smoke names a listed check with no script" \
+    "$(echo "$smoke_out" | grep -qE '^FAIL ad-gone \(listed in smoke.txt' && [ "$smoke_status" -ne 0 ] && echo 1 || echo 0)"
+check "--smoke still runs no-crashes" \
+    "$(echo "$smoke_out" | grep -q '^ran no-crashes$' && echo 1 || echo 0)"
+usage_status=0
+"$CHECKS/run-all.sh" --bogus >/dev/null 2>&1 || usage_status=$?
+check "an unknown flag is a usage error" "$([ "$usage_status" -eq 2 ] && echo 1 || echo 0)"
+smoke_listed_exist=1
+while read -r name _; do
+    case "$name" in "" | "#"*) continue ;; esac
+    [ -f "$REAL_ROOT/support/scripts/checks/${name}.sh" ] || smoke_listed_exist=0
+done <"$REAL_ROOT/support/scripts/checks/smoke.txt"
+check "every check the real smoke.txt names exists" "$smoke_listed_exist"
 
 echo "-- ${pass_count} passed, ${fail_count} failed --"
 [ "$fail_count" -eq 0 ]
