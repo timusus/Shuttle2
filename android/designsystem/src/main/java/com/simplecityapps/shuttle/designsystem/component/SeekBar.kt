@@ -83,7 +83,7 @@ fun S2SeekBar(
 /**
  * "m:ss", or "h:mm:ss" from an hour: how the seek bar and queue rows show a time.
  * @param zeroValue returned instead, if given, when [ms] is 0.
- * @param padded space-pads the leading hour/minute to two digits, matching the legacy `toHms` callers this absorbed.
+ * @param padded space-pads the leading hour/minute to two digits (the detail-screen song rows rely on it).
  */
 fun formatDuration(
     ms: Long,
