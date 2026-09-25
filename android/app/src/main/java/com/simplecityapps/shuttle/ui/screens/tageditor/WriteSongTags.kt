@@ -47,22 +47,25 @@ class WriteSongTags @Inject constructor(
 
 /**
  * The TagLib properties to write to [file] for [edits]. Track and disc numbers are written with their totals as
- * "03/12"; when only a total changes, each file keeps its own number.
+ * "03/12"; when only a total changes, each file keeps its own number. A field emptied by the user maps to an empty
+ * list, which KTagLib removes from the tag.
  */
 internal fun metadata(
     file: AudioFile,
     edits: Map<TagField, String>,
-): Map<String, List<String?>> = buildMap {
-    edits[TagField.Title]?.let { put(TagLibProperty.Title.key, listOf(it)) }
-    edits[TagField.Artists]?.let { put(TagLibProperty.Artist.key, listOf(it)) }
-    edits[TagField.Album]?.let { put(TagLibProperty.Album.key, listOf(it)) }
-    edits[TagField.AlbumArtist]?.let { put(TagLibProperty.AlbumArtist.key, listOf(it)) }
-    edits[TagField.Year]?.let { put(TagLibProperty.Date.key, listOf(it)) }
-    numberWithTotal(edits, TagField.Track, TagField.TrackTotal, file.track, file.trackTotal)?.let { put(TagLibProperty.Track.key, listOf(it)) }
-    numberWithTotal(edits, TagField.Disc, TagField.DiscTotal, file.disc, file.discTotal)?.let { put(TagLibProperty.Disc.key, listOf(it)) }
-    edits[TagField.Genres]?.let { put(TagLibProperty.Genre.key, listOf(it)) }
-    edits[TagField.Lyrics]?.let { put(TagLibProperty.Lyrics.key, listOf(it)) }
+): Map<String, List<String>> = buildMap {
+    edits[TagField.Title]?.let { put(TagLibProperty.Title.key, tagValues(it)) }
+    edits[TagField.Artists]?.let { put(TagLibProperty.Artist.key, tagValues(it)) }
+    edits[TagField.Album]?.let { put(TagLibProperty.Album.key, tagValues(it)) }
+    edits[TagField.AlbumArtist]?.let { put(TagLibProperty.AlbumArtist.key, tagValues(it)) }
+    edits[TagField.Year]?.let { put(TagLibProperty.Date.key, tagValues(it)) }
+    numberWithTotal(edits, TagField.Track, TagField.TrackTotal, file.track, file.trackTotal)?.let { put(TagLibProperty.Track.key, tagValues(it)) }
+    numberWithTotal(edits, TagField.Disc, TagField.DiscTotal, file.disc, file.discTotal)?.let { put(TagLibProperty.Disc.key, tagValues(it)) }
+    edits[TagField.Genres]?.let { put(TagLibProperty.Genre.key, tagValues(it)) }
+    edits[TagField.Lyrics]?.let { put(TagLibProperty.Lyrics.key, tagValues(it)) }
 }
+
+private fun tagValues(value: String): List<String> = if (value.isBlank()) emptyList() else listOf(value)
 
 private fun numberWithTotal(
     edits: Map<TagField, String>,

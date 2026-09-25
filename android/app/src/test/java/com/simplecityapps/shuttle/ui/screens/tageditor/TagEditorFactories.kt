@@ -49,13 +49,13 @@ class FakeTagFileAccess(
     var failingSongIds: Set<Long> = emptySet()
 
     /** Every write as (song id, metadata), in order. */
-    val writes = mutableListOf<Pair<Long, Map<String, List<String?>>>>()
+    val writes = mutableListOf<Pair<Long, Map<String, List<String>>>>()
 
     override suspend fun read(song: Song): AudioFile? = files[song.id]
 
     override suspend fun write(
         song: Song,
-        metadata: Map<String, List<String?>>,
+        metadata: Map<String, List<String>>,
     ): Boolean {
         writes += song.id to metadata
         return song.id !in failingSongIds

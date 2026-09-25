@@ -190,6 +190,10 @@
     {
       "text": "The back button now exits multi-select mode on the Songs, Albums and Artists tabs instead of leaving the library",
       "commits": []
+    },
+    {
+      "text": "Fixed accented and non-Latin characters being corrupted when editing tags",
+      "commits": []
     }
   ]
 }

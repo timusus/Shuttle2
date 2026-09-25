@@ -71,7 +71,21 @@ class WriteSongTagsTest {
     fun `an emptied track number clears the tag`() = runTest {
         writeSongTags(listOf(EditableSong(createSong(id = 1), createAudioFile(track = 3))), mapOf(TagField.Track to ""))
 
-        tagFileAccess.writes.single().second shouldBe mapOf("TRACKNUMBER" to listOf(""))
+        tagFileAccess.writes.single().second shouldBe mapOf("TRACKNUMBER" to emptyList())
+    }
+
+    @Test
+    fun `an emptied field is written as an empty list, which removes it from the tag`() {
+        metadata(createAudioFile(), mapOf(TagField.Title to "", TagField.Album to "  ", TagField.Genres to "Rock")) shouldBe
+            mapOf("TITLE" to emptyList(), "ALBUM" to emptyList(), "GENRE" to listOf("Rock"))
+    }
+
+    @Test
+    fun `non-ASCII values are passed through unchanged`() {
+        val title = "Café — Ünïcødé 日本語 🎵"
+
+        metadata(createAudioFile(), mapOf(TagField.Title to title, TagField.Artists to "Björk")) shouldBe
+            mapOf("TITLE" to listOf(title), "ARTIST" to listOf("Björk"))
     }
 
     @Test

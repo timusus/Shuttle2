@@ -30,7 +30,7 @@ interface TagFileAccess {
      */
     suspend fun write(
         song: Song,
-        metadata: Map<String, List<String?>>,
+        metadata: Map<String, List<String>>,
     ): Boolean
 }
 
@@ -47,13 +47,13 @@ class SafTagFileAccess @Inject constructor(
 
     override suspend fun write(
         song: Song,
-        metadata: Map<String, List<String?>>,
+        metadata: Map<String, List<String>>,
     ): Boolean {
         val uri = song.documentUri() ?: return false
         return withContext(Dispatchers.IO) {
             try {
                 context.contentResolver.openFileDescriptor(uri, "rw")?.use { pfd ->
-                    kTagLib.writeMetadata(pfd.detachFd(), HashMap(metadata.mapValues { ArrayList(it.value) }), uri.lastPathSegment)
+                    kTagLib.writeMetadata(pfd.detachFd(), metadata, uri.lastPathSegment)
                 } ?: false
             } catch (e: IllegalStateException) {
                 Timber.e(e, "Failed to update tags")
