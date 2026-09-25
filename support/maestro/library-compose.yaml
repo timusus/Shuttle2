@@ -1,0 +1,51 @@
+# #377: the Compose library in the debug ShellActivity. Setup (support/scripts/checks/library-compose.sh):
+# the `playback` fixture imported (Playback One..Five by Playback Artist on Playback Album, genre
+# Ambient), no playlists, the shell launched. Visits every default tab, opens an album, the artist and
+# the genre, adds a song to a new playlist from the Songs tab, opens the playlist and plays the song.
+appId: com.simplecityapps.shuttle.dev
+---
+- extendedWaitUntil:
+    visible: "Library"
+    timeout: 10000
+- tapOn: "Library"
+# Every default tab shows its page
+- tapOn: "Songs"
+- assertVisible: "Playback Three"
+- tapOn: "Albums"
+- assertVisible: "Playback Album"
+- tapOn: "Artists"
+- assertVisible: "Playback Artist"
+- tapOn: "Playlists"
+- assertVisible: "Recently Added"
+- tapOn: "Genres"
+- assertVisible: "Ambient"
+# Genre detail: its album and songs
+- tapOn: "Ambient"
+- assertVisible: "Playback Album"
+- back
+# Artist detail: Albums then Songs
+- tapOn: "Artists"
+- tapOn: "Playback Artist"
+- assertVisible: "Albums"
+- assertVisible: "Playback Album"
+- back
+# Album detail: its tracks
+- tapOn: "Albums"
+- tapOn: "Playback Album"
+- assertVisible: "Playback One"
+- assertVisible: "Play"
+- back
+# A new playlist holding one song, from a selection on the Songs tab
+- tapOn: "Songs"
+- longPressOn: "Playback Two"
+- assertVisible: "1 selected"
+- tapOn: "Add to Playlist"
+- tapOn: "New Playlist"
+- tapOn: "Playlist Name"
+- inputText: "Road trip"
+- tapOn: "Save"
+# Playlist detail: play the song
+- tapOn: "Playlists"
+- tapOn: "Road trip"
+- assertVisible: "Playback Two"
+- tapOn: "Playback Two"
