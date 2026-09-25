@@ -111,9 +111,12 @@ class AlbumArtistDetailViewModel @Inject constructor(
     // Song actions
 
     fun onSongClick(song: Song) {
+        // Snapshot synchronously, at click time -- see SongListViewModel.play()'s comment for why
+        // reading uiState.value inside the launched coroutine can race a still-settling uiState.
+        val songs = uiState.value.songs
+        val position = songs.indexOf(song)
         viewModelScope.launch {
-            val songs = uiState.value.songs
-            val result = playSongs(songs, position = songs.indexOf(song))
+            val result = playSongs(songs, position = position)
             if (result is PlaySongs.Result.Failure) {
                 _events.emit(AlbumArtistDetailUiEvent.PlaybackFailed(result.message))
             }

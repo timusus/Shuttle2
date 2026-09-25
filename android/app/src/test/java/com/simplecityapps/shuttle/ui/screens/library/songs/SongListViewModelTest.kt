@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
+import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakePlaylistRepository
@@ -64,9 +65,32 @@ class SongListViewModelTest {
         fakeSortPreferences.sortOrderSongList shouldBe SongSortOrder.ArtistGroupKey
     }
 
-    private fun createViewModel(): SongListViewModel = SongListViewModel(
+    @Test
+    fun `onSongClick plays the song against the list shown when it was tapped, not a later re-sort`() = runTest {
+        val songA = createSong(id = 1, name = "Song A")
+        val songB = createSong(id = 2, name = "Song B")
+        fakeSongRepository.setSongs(listOf(songA, songB))
+        fakeImportState.setState(importComplete())
+        val fakeQueueManager = FakeQueueManager()
+        val viewModel = createViewModel(fakeQueueManager)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+        viewModel.uiState.value.songs shouldBe listOf(songA, songB)
+
+        // A re-sort/re-import emission lands (enqueuing the uiState collector's re-emission)
+        // before onSongClick runs its own coroutine -- play() must have already captured songA's
+        // position against the list the tap actually happened against, not this later one.
+        fakeSongRepository.setSongs(listOf(songB, songA))
+        viewModel.onSongClick(songA)
+        advanceUntilIdle()
+
+        fakeQueueManager.lastSetQueue shouldBe listOf(songA, songB)
+        fakeQueueManager.lastSetQueuePosition shouldBe 0
+    }
+
+    private fun createViewModel(queueManager: FakeQueueManager = FakeQueueManager()): SongListViewModel = SongListViewModel(
         songRepository = fakeSongRepository,
-        playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
+        playSongs = PlaySongs(queueManager, FakePlaybackManager()),
         shuffleSongs = ShuffleSongs(FakePlaybackManager()),
         addToPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).addToPlaylist,
         createPlaylistUseCase = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager()).createPlaylist,

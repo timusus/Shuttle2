@@ -147,9 +147,14 @@ class SongListViewModel @Inject constructor(
     }
 
     private fun play(song: Song) {
+        // Snapshot the list synchronously, at click time: uiState's combine() can still be
+        // settling (import in progress, a sort re-emission), and viewModelScope.launch defers
+        // this coroutine's body to a later dispatch, so reading uiState.value.songs inside the
+        // launch block can race a newer emission and land indexOf(song) on the wrong position.
+        val songs = uiState.value.songs.ifEmpty { listOf(song) }
+        val position = songs.indexOf(song)
         viewModelScope.launch {
-            val songs = uiState.value.songs.ifEmpty { listOf(song) }
-            val result = playSongs(songs, position = songs.indexOf(song))
+            val result = playSongs(songs, position = position)
             if (result is PlaySongs.Result.Failure) {
                 _events.emit(SongListUiEvent.PlaybackFailed(result.message))
             }
