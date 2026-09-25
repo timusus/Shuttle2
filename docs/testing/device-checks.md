@@ -23,7 +23,7 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 
 ### Service and notification
 - [x] Pause, then swipe S2 away in Recents. The service stops and the notification goes, with no crash. — automated: `emu-verify.sh --check service-stop`
-- [ ] The notification can be dismissed while paused, with no crash.
+- [x] The notification can be dismissed while paused, with no crash. — automated: `emu-verify.sh --check dismiss-paused-notification`
 - [x] Resume playback from a headset/Bluetooth media button after the service has stopped. — automated: `emu-verify.sh --check media-buttons`
 - [ ] Resume playback from the notification after the service has stopped.
 - [ ] RS-53: unplug wired headphones while playing. Playback pauses. (The emulator check went with S2's own noisy receiver in #345 step 3; ExoPlayer handles it now.)
