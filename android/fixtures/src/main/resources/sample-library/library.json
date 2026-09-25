@@ -1,0 +1,280 @@
+{
+  "comment": "Invented sample library for screenshots, tests and emulator fixtures. Every name is made up. Covers are generated from the 'cover' block by support/scripts/generate-fake-artwork.py into covers/<id>.jpg. Durations are in seconds.",
+  "albums": [
+    {
+      "id": "phase-garden",
+      "title": "Phase Garden",
+      "artist": "Juniper Static",
+      "year": 2021,
+      "genre": "Electronic",
+      "cover": { "style": "halftone", "seed": 101, "palette": ["#141833", "#E0368F", "#FF9ACB", "#4B2A7A"] },
+      "tracks": [
+        { "title": "Chlorophyll Loop", "duration": 262 },
+        { "title": "Soft Machines at Dawn", "duration": 318 },
+        { "title": "Petal Arithmetic", "duration": 241 },
+        { "title": "Greenhouse Effect", "duration": 356 },
+        { "title": "Photoperiod", "duration": 289 },
+        { "title": "The Gardener Sleeps", "duration": 402 }
+      ]
+    },
+    {
+      "id": "night-bus-frequencies",
+      "title": "Night Bus Frequencies",
+      "artist": "Juniper Static",
+      "year": 2018,
+      "genre": "Electronic",
+      "cover": { "style": "contour", "seed": 102, "palette": ["#070B10", "#36E0E8", "#1B7C8C", "#E8FBFF"] },
+      "tracks": [
+        { "title": "Route 29, Outbound", "duration": 274 },
+        { "title": "Sodium Light", "duration": 331 },
+        { "title": "Upper Deck", "duration": 227 },
+        { "title": "Request Stop", "duration": 296 },
+        { "title": "Last Orders, First Frost", "duration": 363 },
+        { "title": "Depot", "duration": 418 },
+        { "title": "Terminus Hum", "duration": 245 }
+      ]
+    },
+    {
+      "id": "harbour-weather",
+      "title": "Harbour Weather",
+      "artist": "Marlow Vane",
+      "year": 2016,
+      "genre": "Folk",
+      "cover": { "style": "riso-landscape", "seed": 103, "palette": ["#EFE6D2", "#C9A15B", "#4E8A86", "#6B5B45"] },
+      "tracks": [
+        { "title": "Slipway", "duration": 198 },
+        { "title": "Gulls Over the Co-op", "duration": 223 },
+        { "title": "Tidewater Letter", "duration": 251 },
+        { "title": "Rope and Tar", "duration": 187 },
+        { "title": "The Pilot's Daughter", "duration": 276 },
+        { "title": "Low Water Mark", "duration": 239 },
+        { "title": "Harbour Weather", "duration": 305 }
+      ]
+    },
+    {
+      "id": "lighthouse-ferry",
+      "title": "Everything We Said at the Lighthouse Before the Last Ferry Left for the Mainland",
+      "artist": "Marlow Vane",
+      "year": 2020,
+      "genre": "Folk",
+      "cover": { "style": "typographic-serif", "seed": 104, "palette": ["#F4ECDF", "#D2452B", "#2B2622", "#E8B7A5"] },
+      "tracks": [
+        { "title": "Keeper", "duration": 212 },
+        { "title": "What the Fog Took", "duration": 264 },
+        { "title": "A Long Conversation About Nothing in Particular on the Harbour Wall", "duration": 347 },
+        { "title": "Fresnel", "duration": 201 },
+        { "title": "Crossing", "duration": 288 },
+        { "title": "Mainland", "duration": 256 }
+      ]
+    },
+    {
+      "id": "cassette-summer",
+      "title": "Cassette Summer",
+      "artist": "The Tin Orchards",
+      "year": 2014,
+      "genre": "Indie Rock",
+      "cover": { "style": "stripes", "seed": 105, "palette": ["#F3E3C3", "#E07B2A", "#B8431F", "#6A3A1E", "#E9B23A"] },
+      "tracks": [
+        { "title": "Rewind Button", "duration": 184 },
+        { "title": "Heatwave Radio", "duration": 203 },
+        { "title": "Borrowed Bicycle", "duration": 176 },
+        { "title": "Chalk Outline Summer", "duration": 229 },
+        { "title": "Side B", "duration": 195 },
+        { "title": "Garage Door Anthem", "duration": 241 },
+        { "title": "Tape Hiss", "duration": 167 },
+        { "title": "Sunburnt Postcards", "duration": 258 }
+      ]
+    },
+    {
+      "id": "loose-change",
+      "title": "Loose Change",
+      "artist": "The Tin Orchards",
+      "year": 2017,
+      "genre": "Indie Rock",
+      "cover": { "style": "riso", "seed": 106, "palette": ["#F2EEE4", "#2F5FD0", "#FF4F8B", "#1F2A44"] },
+      "tracks": [
+        { "title": "Coin Operated", "duration": 192 },
+        { "title": "Pockets", "duration": 214 },
+        { "title": "The Arcade Closed Down", "duration": 237 },
+        { "title": "Exact Fare", "duration": 171 },
+        { "title": "Small Denominations", "duration": 226 },
+        { "title": "Spent", "duration": 283 }
+      ]
+    },
+    {
+      "id": "blue-hours",
+      "title": "Blue Hours",
+      "artist": "Oda Kestrel Quartet",
+      "year": 2012,
+      "genre": "Jazz",
+      "cover": { "style": "bauhaus", "seed": 107, "palette": ["#1F3E8C", "#F2EAD8", "#E3A72F", "#101218", "#C8452E"] },
+      "tracks": [
+        { "title": "Cobalt Walk", "duration": 412 },
+        { "title": "Ultramarine Ballad", "duration": 486 },
+        { "title": "Kestrel's Theme", "duration": 367 },
+        { "title": "Indigo Standard", "duration": 529 },
+        { "title": "After the Rain on Mercer Street", "duration": 451 }
+      ]
+    },
+    {
+      "id": "smoke-rings",
+      "title": "Smoke Rings",
+      "artist": "Oda Kestrel Quartet",
+      "year": 2015,
+      "genre": "Jazz",
+      "cover": { "style": "flowfield", "seed": 108, "palette": ["#2A2523", "#B98A6A", "#E3CBB4", "#7A5A48"] },
+      "tracks": [
+        { "title": "Ember Waltz", "duration": 398 },
+        { "title": "Second Set", "duration": 544 },
+        { "title": "Brushes", "duration": 322 },
+        { "title": "Late Licence", "duration": 471 },
+        { "title": "Smoke Rings", "duration": 603 }
+      ]
+    },
+    {
+      "id": "soft-focus",
+      "title": "Soft Focus",
+      "artist": "Velvet Cartography",
+      "year": 2022,
+      "genre": "Dream Pop",
+      "cover": { "style": "gradient-mesh", "seed": 109, "palette": ["#E9DDF7", "#B79CF0", "#FFC3A6", "#F7E8C9", "#8E7BE0"] },
+      "tracks": [
+        { "title": "Aperture", "duration": 244 },
+        { "title": "Bokeh", "duration": 271 },
+        { "title": "Long Exposure", "duration": 318 },
+        { "title": "Vaseline on the Lens", "duration": 233 },
+        { "title": "Golden Hour Again", "duration": 286 },
+        { "title": "Out of Focus, Into You", "duration": 302 },
+        { "title": "Negative Space", "duration": 259 }
+      ]
+    },
+    {
+      "id": "estuary",
+      "title": "Estuary",
+      "artist": "Saltmarsh Choir",
+      "year": 2019,
+      "genre": "Ambient",
+      "cover": { "style": "fog", "seed": 110, "palette": ["#9FB3A8", "#6E8479", "#C9D2C6", "#4F5F58"] },
+      "tracks": [
+        { "title": "Mudflat I", "duration": 522 },
+        { "title": "Reed Bed", "duration": 437 },
+        { "title": "Brackish", "duration": 611 },
+        { "title": "Mudflat II", "duration": 489 }
+      ]
+    },
+    {
+      "id": "lantern-hours",
+      "title": "Lantern Hours",
+      "artist": "Saltmarsh Choir",
+      "year": 2023,
+      "genre": "Ambient",
+      "cover": { "style": "horizon-moon", "seed": 111, "palette": ["#0E1030", "#2C2F7A", "#F4D58D", "#5A4FB0"] },
+      "tracks": [
+        { "title": "Dusk Chorus", "duration": 468 },
+        { "title": "Wick", "duration": 392 },
+        { "title": "The Long Blue", "duration": 575 },
+        { "title": "Night Ferry Lights", "duration": 441 },
+        { "title": "Before Morning", "duration": 503 }
+      ]
+    },
+    {
+      "id": "weather-systems",
+      "title": "Weather Systems",
+      "artist": "Nightjar & the Loom",
+      "year": 2016,
+      "genre": "Post-Rock",
+      "cover": { "style": "op-art", "seed": 112, "palette": ["#EDEAE3", "#1A1A1A", "#D23A2A"] },
+      "tracks": [
+        { "title": "Isobar", "duration": 512 },
+        { "title": "Occluded Front", "duration": 634 },
+        { "title": "Pressure Drop Over Rockall", "duration": 587 },
+        { "title": "The Eye", "duration": 719 },
+        { "title": "Anticyclone", "duration": 463 }
+      ]
+    },
+    {
+      "id": "slow-bloom",
+      "title": "Slow Bloom",
+      "artist": "Ines Quarrow",
+      "year": 2020,
+      "genre": "Soul",
+      "cover": { "style": "halftone-sun", "seed": 113, "palette": ["#F1EAD6", "#2E6B45", "#8CC084", "#173A27"] },
+      "tracks": [
+        { "title": "Morning Glory", "duration": 223 },
+        { "title": "Hold the Water", "duration": 248 },
+        { "title": "Perennial", "duration": 201 },
+        { "title": "Sunday Tenderness", "duration": 267 },
+        { "title": "Roots and All", "duration": 235 },
+        { "title": "Slow Bloom", "duration": 294 }
+      ]
+    },
+    {
+      "id": "signal-room",
+      "title": "Signal Room",
+      "artist": "Glasshouse Relay",
+      "year": 2021,
+      "genre": "Techno",
+      "cover": { "style": "swiss-grid", "seed": 114, "palette": ["#0B0C0A", "#C6F23A", "#F2F2EA", "#3C4A12"] },
+      "tracks": [
+        { "title": "Carrier Wave", "duration": 391 },
+        { "title": "Handshake Protocol", "duration": 423 },
+        { "title": "Relay 7", "duration": 377 },
+        { "title": "Packet Loss", "duration": 446 },
+        { "title": "Dead Air", "duration": 358 },
+        { "title": "Uplink", "duration": 481 }
+      ]
+    },
+    {
+      "id": "undertow",
+      "title": "Undertow",
+      "artist": "Pale Meridian",
+      "year": 2018,
+      "genre": "Shoegaze",
+      "cover": { "style": "horizon-sun", "seed": 115, "palette": ["#3A1024", "#E04A6A", "#FFB1B8", "#8A1F43"] },
+      "tracks": [
+        { "title": "Riptide Hymn", "duration": 287 },
+        { "title": "Wall of Salt", "duration": 334 },
+        { "title": "Drowned Chapel", "duration": 311 },
+        { "title": "Feedback Tide", "duration": 365 },
+        { "title": "Pulled Under", "duration": 298 },
+        { "title": "Surface Again", "duration": 412 }
+      ]
+    },
+    {
+      "id": "low-tide-sessions",
+      "title": "Low Tide Sessions, Vol. 2",
+      "artist": "Various Artists",
+      "year": 2022,
+      "genre": "Compilation",
+      "cover": { "style": "typographic-swiss", "seed": 116, "palette": ["#F2C230", "#141414", "#F7F1DE", "#D9532B"] },
+      "tracks": [
+        { "title": "Tidewater Letter (Session)", "artist": "Marlow Vane", "duration": 244 },
+        { "title": "Upper Deck (Live Edit)", "artist": "Juniper Static", "duration": 301 },
+        { "title": "Brushes (Sound Check)", "artist": "Oda Kestrel Quartet", "duration": 356 },
+        { "title": "Coin Operated (Acoustic)", "artist": "The Tin Orchards", "duration": 188 },
+        { "title": "Hold the Water (Demo)", "artist": "Ines Quarrow", "duration": 232 },
+        { "title": "Reed Bed (Excerpt)", "artist": "Saltmarsh Choir", "duration": 274 },
+        { "title": "Bokeh (Rehearsal)", "artist": "Velvet Cartography", "duration": 263 },
+        { "title": "Isobar (Radio Edit)", "artist": "Nightjar & the Loom", "duration": 297 }
+      ]
+    }
+  ],
+  "playlists": [
+    {
+      "name": "Road Trip",
+      "tracks": ["cassette-summer/2", "night-bus-frequencies/1", "loose-change/1", "undertow/1", "slow-bloom/2", "phase-garden/1", "harbour-weather/2", "signal-room/3"]
+    },
+    {
+      "name": "Late Night",
+      "tracks": ["smoke-rings/4", "lantern-hours/4", "night-bus-frequencies/5", "blue-hours/2", "soft-focus/3", "estuary/2"]
+    },
+    {
+      "name": "Focus",
+      "tracks": ["estuary/1", "estuary/3", "lantern-hours/3", "weather-systems/1", "signal-room/1"]
+    },
+    {
+      "name": "Sunday Morning",
+      "tracks": ["slow-bloom/4", "harbour-weather/1", "lighthouse-ferry/4", "blue-hours/5", "soft-focus/1", "low-tide-sessions/5", "cassette-summer/3"]
+    }
+  ]
+}
