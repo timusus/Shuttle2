@@ -23,7 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /**
  * The sort control above a list: an `AssistChip` naming the sort [field], with an arrow for the
@@ -99,7 +99,7 @@ fun S2InputChip(
 @Preview
 @Composable
 private fun ChipsPreview() {
-    S2Theme {
+    S2Preview {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             S2SortChip("Title", ascending = true, onClick = {})
             S2FilterChip("Downloaded", selected = true, onClick = {})

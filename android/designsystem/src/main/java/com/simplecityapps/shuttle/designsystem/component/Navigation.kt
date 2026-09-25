@@ -29,7 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import kotlinx.coroutines.launch
 
 /**
@@ -124,7 +124,7 @@ private fun NavIcon(item: S2NavItem, selected: Boolean) {
 @Preview
 @Composable
 private fun S2NavigationBarPreview() {
-    S2Theme {
+    S2Preview {
         S2NavigationBar(
             items = listOf(
                 S2NavItem("Home", Icons.Outlined.Home, Icons.Rounded.Home),

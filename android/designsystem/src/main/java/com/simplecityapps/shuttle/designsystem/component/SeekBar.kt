@@ -24,7 +24,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /**
  * The now-playing seek bar: an M3 `Slider` (thumb, drag, semantics) whose track is the
@@ -92,7 +92,7 @@ fun formatDuration(ms: Long): String {
 @Preview
 @Composable
 private fun S2SeekBarPreview() {
-    S2Theme {
+    S2Preview {
         S2SeekBar(positionMs = 83_000, durationMs = 245_000, onSeek = {}, playing = true)
     }
 }

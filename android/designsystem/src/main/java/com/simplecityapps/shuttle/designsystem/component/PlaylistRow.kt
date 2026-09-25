@@ -3,7 +3,8 @@ package com.simplecityapps.shuttle.designsystem.component
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /**
  * A playlist in a list, user or smart: the caller picks the [artwork] (a smart playlist uses the
@@ -35,11 +36,12 @@ fun PlaylistRow(
 @Preview
 @Composable
 private fun PlaylistRowPreview() {
-    S2Theme {
+    val playlist = SampleLibrary.playlists.first()
+    S2Preview {
         PlaylistRow(
-            name = "Road trip",
+            name = playlist.name,
             onClick = {},
-            summary = "48 songs",
+            summary = "${playlist.songs.size} songs",
             artwork = { Artwork(ArtworkPlaceholder.Playlist) },
             onMore = {},
         )

@@ -18,7 +18,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** Where a song sits in the queue relative to the current one. */
 enum class QueuePosition { Played, Current, Upcoming }
@@ -75,7 +76,8 @@ fun QueueRow(
 @Preview
 @Composable
 private fun QueueRowPreview() {
-    S2Theme {
-        QueueRow("Route 29, Outbound", "Juniper Static", onClick = {}, position = QueuePosition.Current, duration = "4:44", artwork = { Artwork(ArtworkPlaceholder.Song) })
+    val song = SampleLibrary.queue(1).single()
+    S2Preview {
+        QueueRow(song.title, song.artist, onClick = {}, position = QueuePosition.Current, duration = song.duration, artwork = { Artwork(ArtworkPlaceholder.Song, model = song) })
     }
 }

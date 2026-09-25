@@ -30,7 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /**
  * The one actions sheet for a song, album, artist or playlist: a `ModalBottomSheet` headed by the
@@ -112,12 +113,13 @@ fun ActionsSheetContent(
 @Preview
 @Composable
 private fun ActionsSheetContentPreview() {
-    S2Theme {
+    val song = SampleLibrary.queue(1).single()
+    S2Preview {
         Surface {
             ActionsSheetContent(
-                title = "Route 29, Outbound",
-                subtitle = "Juniper Static · Night Bus Frequencies",
-                artwork = { Artwork(ArtworkPlaceholder.Song) },
+                title = song.title,
+                subtitle = "${song.artist} · ${song.album}",
+                artwork = { Artwork(ArtworkPlaceholder.Song, model = song) },
                 actions = listOf(
                     S2Action("Play next", {}, Icons.Rounded.PlayArrow),
                     S2Action("Add to playlist", {}, Icons.AutoMirrored.Rounded.PlaylistAdd),

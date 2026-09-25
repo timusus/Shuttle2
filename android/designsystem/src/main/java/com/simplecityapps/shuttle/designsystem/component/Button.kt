@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /** Emphasis, highest first: one [Filled] action per screen, everything else below it. */
 enum class S2ButtonStyle { Filled, Tonal, Outlined, Text }
@@ -107,7 +107,7 @@ fun S2Button(
 @Preview
 @Composable
 private fun S2ButtonPreview() {
-    S2Theme {
+    S2Preview {
         S2Button(text = "Play", onClick = {}, icon = Icons.Rounded.PlayArrow, size = S2ButtonSize.Medium)
     }
 }

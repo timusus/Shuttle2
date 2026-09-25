@@ -31,7 +31,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /**
  * A dialog: [title], an optional hero [icon], the [content] (a message, a [S2ChoiceList], a text
@@ -162,7 +162,7 @@ fun S2ChoiceList(
 @Preview
 @Composable
 private fun S2DialogContentPreview() {
-    S2Theme {
+    S2Preview {
         S2DialogContent(
             title = "Delete 3 songs?",
             onDismiss = {},

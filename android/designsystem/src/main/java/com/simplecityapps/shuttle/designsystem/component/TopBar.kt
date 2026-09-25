@@ -16,7 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.R
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /**
  * The bar on top-level and list screens (Home, Library, Playlists, Settings): the Expressive
@@ -71,7 +71,7 @@ internal fun BackButton(onClick: () -> Unit) {
 @Preview
 @Composable
 private fun S2LargeTopBarPreview() {
-    S2Theme {
+    S2Preview {
         S2LargeTopBar(
             title = "Library",
             subtitle = "3,310 songs",

@@ -15,7 +15,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /**
  * A section heading in `titleSmall` on `primary`, with an optional trailing [action] ("See all").
@@ -55,7 +55,7 @@ fun SectionHeader(
 @Preview
 @Composable
 private fun SectionHeaderPreview() {
-    S2Theme {
+    S2Preview {
         SectionHeader(title = "Recently added", action = "See all")
     }
 }

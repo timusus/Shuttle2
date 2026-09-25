@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.Morph
 import com.simplecityapps.shuttle.designsystem.R
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import kotlin.math.roundToInt
 
 enum class S2RepeatMode { Off, All, One }
@@ -249,7 +249,7 @@ private fun Modifier.scaleDownToFit(natural: Dp): Modifier = layout { measurable
 @Preview
 @Composable
 private fun S2PlayerControlsPreview() {
-    S2Theme {
+    S2Preview {
         S2PlayerControls(
             playing = true,
             onPlayPause = {},

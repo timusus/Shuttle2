@@ -24,7 +24,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /** One action in an [S2ButtonGroup]. */
 class S2GroupAction(
@@ -127,7 +127,7 @@ fun <T> S2ConnectedButtonGroup(
 @Preview
 @Composable
 private fun S2ButtonGroupPreview() {
-    S2Theme {
+    S2Preview {
         S2ButtonGroup(
             primary = S2GroupAction("Play", {}, Icons.Rounded.PlayArrow),
             secondary = listOf(S2GroupAction("Shuffle", {}, Icons.Rounded.Shuffle)),

@@ -21,7 +21,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** Offline state of a remote song, shown ahead of the secondary line. */
 enum class SongOfflineState { None, Downloading, Offline }
@@ -101,13 +102,14 @@ internal fun SupportingIcon(icon: ImageVector, contentDescription: String, tint:
 @Preview
 @Composable
 private fun SongRowPreview() {
-    S2Theme {
+    val song = SampleLibrary.queue(1).single()
+    S2Preview {
         SongRow(
-            title = "Route 29, Outbound",
-            subtitle = "Juniper Static · Night Bus Frequencies",
+            title = song.title,
+            subtitle = "${song.artist} · ${song.album}",
             onClick = {},
-            artwork = { Artwork(ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
-            duration = "6:27",
+            artwork = { Artwork(ArtworkPlaceholder.Song, size = ArtworkSize.Small, model = song) },
+            duration = song.duration,
             playing = true,
             onMore = {},
         )

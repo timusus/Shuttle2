@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 enum class S2IconButtonStyle { Standard, Filled, Tonal, Outlined }
 
@@ -113,7 +113,7 @@ fun S2IconToggleButton(
 @Preview
 @Composable
 private fun S2IconToggleButtonPreview() {
-    S2Theme {
+    S2Preview {
         S2IconToggleButton(
             icon = Icons.Rounded.FavoriteBorder,
             checkedIcon = Icons.Rounded.Favorite,

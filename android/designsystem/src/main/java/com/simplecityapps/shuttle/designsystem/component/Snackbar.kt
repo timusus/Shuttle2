@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.R
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /**
  * A snackbar: the [message], an optional action ("Undo") and, with [onDismiss], a close button.
@@ -64,7 +64,7 @@ fun S2SnackbarHost(hostState: SnackbarHostState, modifier: Modifier = Modifier) 
 @Preview
 @Composable
 private fun S2SnackbarPreview() {
-    S2Theme {
+    S2Preview {
         S2Snackbar("Removed from queue", actionLabel = "Undo")
     }
 }

@@ -28,7 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.R
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import kotlinx.coroutines.launch
 
 /**
@@ -119,7 +119,7 @@ fun SearchNoResults(query: String, modifier: Modifier = Modifier) {
 @Preview
 @Composable
 private fun S2SearchBarPreview() {
-    S2Theme {
+    S2Preview {
         S2SearchBar(
             state = rememberSearchBarState(),
             textFieldState = rememberTextFieldState(),

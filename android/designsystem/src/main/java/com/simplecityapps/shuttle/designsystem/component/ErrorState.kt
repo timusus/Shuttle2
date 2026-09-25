@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /** Something failed: what happened, and the [action] that recovers (Retry, Sign in). */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -36,7 +36,7 @@ fun ErrorState(
 @Preview
 @Composable
 private fun ErrorStatePreview() {
-    S2Theme {
+    S2Preview {
         ErrorState(
             title = "Couldn't reach Jellyfin",
             message = "Check the server address and your connection.",

@@ -26,7 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.RoundedPolygon
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /** A button a state message offers, such as "Add a music folder" or "Retry". */
 class StateAction(val label: String, val onClick: () -> Unit)
@@ -111,7 +111,7 @@ internal fun StateMessage(
 @Preview
 @Composable
 private fun EmptyStatePreview() {
-    S2Theme {
+    S2Preview {
         EmptyState(
             title = "No songs yet",
             message = "Add a music folder to start building your library.",

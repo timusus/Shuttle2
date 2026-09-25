@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.designsystem.component
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /** What a [FolderRow] stands for: a folder to open, or a song file to play. */
 enum class FolderEntryKind { Folder, File }
@@ -43,7 +43,7 @@ fun FolderRow(
 @Preview
 @Composable
 private fun FolderRowPreview() {
-    S2Theme {
+    S2Preview {
         FolderRow(name = "Music", kind = FolderEntryKind.Folder, onClick = {}, summary = "12 folders · 3 songs", onMore = {})
     }
 }

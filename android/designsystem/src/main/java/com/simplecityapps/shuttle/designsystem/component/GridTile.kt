@@ -36,7 +36,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /**
  * An album, artist or playlist in a grid or a Home shelf: a filled `Card` with the [artwork] inset
@@ -141,12 +142,13 @@ private fun SelectedBadge(modifier: Modifier = Modifier) {
 @Preview
 @Composable
 private fun GridTilePreview() {
-    S2Theme {
+    val album = SampleLibrary.albums.first()
+    S2Preview {
         GridTile(
-            title = "Night Bus Frequencies",
-            subtitle = "Juniper Static",
+            title = album.title,
+            subtitle = album.artist,
             onClick = {},
-            artwork = { Artwork(ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
+            artwork = { Artwork(ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid, model = album) },
             modifier = Modifier.width(176.dp),
         )
     }

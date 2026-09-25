@@ -29,7 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /*
  * Settings rows are `SegmentedListItem`s. A [SettingsGroup] stacks them with the segmented gap and
@@ -229,7 +229,7 @@ private fun SettingIcon(icon: ImageVector, enabled: Boolean) {
 @Preview
 @Composable
 private fun SettingsGroupPreview() {
-    S2Theme {
+    S2Preview {
         SettingsGroup(
             title = "Appearance",
             rows = listOf(

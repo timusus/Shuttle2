@@ -3,7 +3,8 @@ package com.simplecityapps.shuttle.designsystem.component
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** A genre in a list: the genre placeholder (or artwork) and the [songCount] ("24 songs") as the secondary line. */
 @Composable
@@ -32,11 +33,12 @@ fun GenreRow(
 @Preview
 @Composable
 private fun GenreRowPreview() {
-    S2Theme {
+    val genre = SampleLibrary.genres.first()
+    S2Preview {
         GenreRow(
-            name = "Trip hop",
+            name = genre.name,
             onClick = {},
-            songCount = "86 songs",
+            songCount = "${genre.songs.size} songs",
             artwork = { Artwork(ArtworkPlaceholder.Genre) },
             onMore = {},
         )

@@ -19,7 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /**
  * A screen or section waiting on content: the M3 loading indicator with an optional [message].
@@ -75,7 +75,7 @@ fun InlineLoadingIndicator(
 @Preview
 @Composable
 private fun LoadingStatePreview() {
-    S2Theme {
+    S2Preview {
         LoadingState(message = "Importing 1,204 of 3,310 songs", progress = { 0.36f })
     }
 }

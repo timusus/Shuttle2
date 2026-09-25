@@ -18,7 +18,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /**
  * The collapsed player above the nav bar (compact) or docked under the content (expanded): the
@@ -78,16 +79,17 @@ fun S2MiniPlayer(
 @Preview
 @Composable
 private fun S2MiniPlayerPreview() {
-    S2Theme {
+    val song = SampleLibrary.queue(1).single()
+    S2Preview {
         S2MiniPlayer(
-            title = "Route 29, Outbound",
-            subtitle = "Juniper Static • Night Bus Frequencies",
+            title = song.title,
+            subtitle = "${song.artist} • ${song.album}",
             playing = true,
             progress = { 0.35f },
             onPlayPause = {},
             onNext = {},
             onClick = {},
-            artwork = { Artwork(ArtworkPlaceholder.Song) },
+            artwork = { Artwork(ArtworkPlaceholder.Song, model = song) },
         )
     }
 }

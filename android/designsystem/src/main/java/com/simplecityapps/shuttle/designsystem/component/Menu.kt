@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /**
  * One verb in a menu or an actions sheet. [destructive] draws it in `error` (Delete, Remove);
@@ -116,7 +116,7 @@ private fun MenuItem(
 @Preview
 @Composable
 private fun S2MenuContentPreview() {
-    S2Theme {
+    S2Preview {
         S2MenuContent(
             groups = listOf(
                 listOf(S2Action("Play", {}, Icons.Rounded.PlayArrow), S2Action("Add to playlist", {}, Icons.AutoMirrored.Rounded.PlaylistAdd)),

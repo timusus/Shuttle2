@@ -3,7 +3,8 @@ package com.simplecityapps.shuttle.designsystem.component
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** An artist in a list: circular [artwork] and a [summary] (album and song counts) as the secondary line. */
 @Composable
@@ -32,12 +33,13 @@ fun ArtistRow(
 @Preview
 @Composable
 private fun ArtistRowPreview() {
-    S2Theme {
+    val artist = SampleLibrary.artists.first()
+    S2Preview {
         ArtistRow(
-            name = "Juniper Static",
+            name = artist.name,
             onClick = {},
-            summary = "9 albums · 102 songs",
-            artwork = { Artwork(ArtworkPlaceholder.Artist, shape = ArtworkShape.Circle) },
+            summary = "${artist.albums.size} albums · ${artist.songCount} songs",
+            artwork = { Artwork(ArtworkPlaceholder.Artist, shape = ArtworkShape.Circle, model = artist) },
             onMore = {},
         )
     }

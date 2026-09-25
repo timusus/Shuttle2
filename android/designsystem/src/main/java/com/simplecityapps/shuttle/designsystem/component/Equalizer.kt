@@ -26,7 +26,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -124,7 +124,7 @@ fun EqualizerCurve(
 @Preview
 @Composable
 private fun EqualizerPreview() {
-    S2Theme {
+    S2Preview {
         val gains = listOf(4f, 2f, 0f, -2f, 3f)
         Column(Modifier.fillMaxWidth()) {
             EqualizerCurve(gains, Modifier.fillMaxWidth())

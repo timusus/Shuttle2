@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /**
  * Playback or download progress as a `LinearWavyProgressIndicator`: wavy while [playing], flattening
@@ -34,7 +34,7 @@ fun S2PlaybackProgress(
 @Preview
 @Composable
 private fun S2PlaybackProgressPreview() {
-    S2Theme {
+    S2Preview {
         S2PlaybackProgress(progress = { 0.4f }, playing = true, modifier = Modifier.fillMaxWidth())
     }
 }
