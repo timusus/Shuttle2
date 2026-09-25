@@ -395,7 +395,8 @@ run_changed_mode() {
     modules+=("${app_path}")
   fi
 
-  local compile_modules=("${modules[@]:-}")
+  local compile_modules=()
+  if [ "${#modules[@]}" -gt 0 ]; then compile_modules=("${modules[@]}"); fi
   if [ "${roborazzi}" -eq 1 ] && [ "${app_test_needed}" -eq 0 ]; then
     compile_modules+=("${app_path}")
   fi
