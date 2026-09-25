@@ -106,7 +106,7 @@ class SmokeTestSuite {
 
         // Songs tab is Compose — use compose rule to find text
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Highway to Hell").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(SmokeTestData.FIRST_SONG).fetchSemanticsNodes().isNotEmpty()
         }
     }
 
@@ -122,9 +122,9 @@ class SmokeTestSuite {
 
         // Songs tab is Compose — wait then tap
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Highway to Hell").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(SmokeTestData.FIRST_SONG).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Highway to Hell").performClick()
+        composeRule.onNodeWithText(SmokeTestData.FIRST_SONG).performClick()
 
         // Mini player should show a song title
         waitForView(allOf(withId(R.id.titleTextView), isDescendantOfA(withId(R.id.sheet1PeekView))))
@@ -174,9 +174,9 @@ class SmokeTestSuite {
 
         // Songs tab is Compose — wait then tap
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Highway to Hell").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(SmokeTestData.FIRST_SONG).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Highway to Hell").performClick()
+        composeRule.onNodeWithText(SmokeTestData.FIRST_SONG).performClick()
 
         // Wait for mini player, then expand to full playback
         waitForView(allOf(withId(R.id.sheet1PeekView), isDisplayed()))
@@ -203,9 +203,9 @@ class SmokeTestSuite {
 
         // Songs tab is Compose — wait then tap
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Highway to Hell").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(SmokeTestData.FIRST_SONG).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Highway to Hell").performClick()
+        composeRule.onNodeWithText(SmokeTestData.FIRST_SONG).performClick()
 
         // Wait for mini player to appear before expanding to queue
         waitForView(allOf(withId(R.id.titleTextView), isDescendantOfA(withId(R.id.sheet1PeekView))))
@@ -267,10 +267,10 @@ class SmokeTestSuite {
         onView(withId(R.id.searchView))
             .perform(click())
         onView(isAssignableFrom(android.widget.EditText::class.java))
-            .perform(typeText("Queen"), closeSoftKeyboard())
+            .perform(typeText(SmokeTestData.ARTIST), closeSoftKeyboard())
 
         // Wait for debounce + query results
-        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(withText("Queen"))))
+        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(withText(SmokeTestData.ARTIST))))
     }
 
     @Test

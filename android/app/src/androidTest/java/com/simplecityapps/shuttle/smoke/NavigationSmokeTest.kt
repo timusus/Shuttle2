@@ -101,7 +101,7 @@ class NavigationSmokeTest {
 
         onView(withText("Songs")).perform(click())
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Highway to Hell").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(SmokeTestData.FIRST_SONG).fetchSemanticsNodes().isNotEmpty()
         }
 
         onView(withText("Albums")).perform(click())
@@ -156,9 +156,9 @@ class NavigationSmokeTest {
         onView(withId(R.id.libraryFragment)).perform(click())
         onView(withText("Songs")).perform(click())
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Highway to Hell").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(SmokeTestData.FIRST_SONG).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Highway to Hell").performClick()
+        composeRule.onNodeWithText(SmokeTestData.FIRST_SONG).performClick()
 
         // Mini player
         waitForView(allOf(withId(R.id.titleTextView), isDescendantOfA(withId(R.id.sheet1PeekView))))

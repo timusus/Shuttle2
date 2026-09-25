@@ -7,7 +7,17 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import java.util.Date
 import kotlinx.coroutines.runBlocking
 
+/**
+ * Seeds the smoke tests' library with songs from the invented sample library (android/fixtures' library.json), never
+ * real artists. The names are copied here rather than read from the fixtures module, which the test APK doesn't ship.
+ */
 object SmokeTestData {
+
+    /** A song the tests tap: the first in the Songs tab's default order (by album). */
+    const val FIRST_SONG = "Rewind Button"
+
+    /** An artist the tests search for. */
+    const val ARTIST = "Marlow Vane"
 
     fun seedDatabase(database: MediaDatabase) {
         val dao = database.songDataDao()
@@ -29,16 +39,16 @@ object SmokeTestData {
     private fun buildSongList(): List<SongData> {
         val now = Date()
         return listOf(
-            songData("Highway to Hell", "AC/DC", "Back in Black", 1, 210000, "/music/01.mp3", now),
-            songData("Thunderstruck", "AC/DC", "The Razors Edge", 1, 292000, "/music/02.mp3", now),
-            songData("Back in Black", "AC/DC", "Back in Black", 2, 255000, "/music/03.mp3", now),
-            songData("Bohemian Rhapsody", "Queen", "A Night at the Opera", 1, 354000, "/music/04.mp3", now),
-            songData("Don't Stop Me Now", "Queen", "Jazz", 1, 209000, "/music/05.mp3", now),
-            songData("Somebody to Love", "Queen", "A Day at the Races", 1, 297000, "/music/06.mp3", now),
-            songData("Stairway to Heaven", "Led Zeppelin", "Led Zeppelin IV", 4, 482000, "/music/07.mp3", now),
-            songData("Whole Lotta Love", "Led Zeppelin", "Led Zeppelin II", 1, 333000, "/music/08.mp3", now),
-            songData("Black Dog", "Led Zeppelin", "Led Zeppelin IV", 1, 296000, "/music/09.mp3", now),
-            songData("Immigrant Song", "Led Zeppelin", "Led Zeppelin III", 1, 146000, "/music/10.mp3", now),
+            songData(FIRST_SONG, "The Tin Orchards", "Cassette Summer", 1, 184_000, 2014, "Indie Rock", "/music/01.mp3", now),
+            songData("Heatwave Radio", "The Tin Orchards", "Cassette Summer", 2, 203_000, 2014, "Indie Rock", "/music/02.mp3", now),
+            songData("Borrowed Bicycle", "The Tin Orchards", "Cassette Summer", 3, 176_000, 2014, "Indie Rock", "/music/03.mp3", now),
+            songData("Slipway", ARTIST, "Harbour Weather", 1, 198_000, 2016, "Folk", "/music/04.mp3", now),
+            songData("Gulls Over the Co-op", ARTIST, "Harbour Weather", 2, 223_000, 2016, "Folk", "/music/05.mp3", now),
+            songData("Tidewater Letter", ARTIST, "Harbour Weather", 3, 251_000, 2016, "Folk", "/music/06.mp3", now),
+            songData("Chlorophyll Loop", "Juniper Static", "Phase Garden", 1, 262_000, 2021, "Electronic", "/music/07.mp3", now),
+            songData("Soft Machines at Dawn", "Juniper Static", "Phase Garden", 2, 318_000, 2021, "Electronic", "/music/08.mp3", now),
+            songData("Petal Arithmetic", "Juniper Static", "Phase Garden", 3, 241_000, 2021, "Electronic", "/music/09.mp3", now),
+            songData("Greenhouse Effect", "Juniper Static", "Phase Garden", 4, 356_000, 2021, "Electronic", "/music/10.mp3", now),
         )
     }
 
@@ -48,6 +58,8 @@ object SmokeTestData {
         album: String,
         track: Int,
         duration: Int,
+        year: Int,
+        genre: String,
         path: String,
         lastModified: Date
     ): SongData = SongData(
@@ -55,8 +67,8 @@ object SmokeTestData {
         track = track,
         disc = 1,
         duration = duration,
-        year = 1975,
-        genres = listOf("Rock"),
+        year = year,
+        genres = listOf(genre),
         path = path,
         albumArtist = albumArtist,
         artists = listOf(albumArtist),
