@@ -140,8 +140,6 @@ class LibraryScreenTest {
         robot.clickText("Chlorophyll Loop")
         robot.lastSongClicked shouldBe song
 
-        // The fast scroller's thumb covers the header's end until it hides.
-        robot.waitForFastScrollerToHide()
         robot.clickText("Shuffle")
         robot.shuffleClicked shouldBe true
     }

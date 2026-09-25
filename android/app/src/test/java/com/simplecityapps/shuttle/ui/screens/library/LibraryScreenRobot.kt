@@ -192,12 +192,6 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         rule.onNodeWithTag(listTag).performScrollToNode(hasText(text))
     }
 
-    /** The fast scroller hides 1.5 s after the list stops scrolling. */
-    fun waitForFastScrollerToHide() {
-        rule.mainClock.advanceTimeBy(2_000)
-        rule.waitForIdle()
-    }
-
     fun openOverflow() {
         rule.onNodeWithTag("library-more").performClick()
         rule.waitForIdle()

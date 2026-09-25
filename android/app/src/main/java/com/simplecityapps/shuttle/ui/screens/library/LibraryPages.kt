@@ -53,8 +53,11 @@ import com.simplecityapps.shuttle.ui.screens.library.songs.getFastscrollPopupTex
 // The library tabs' pages: state in, events out, restyled with catalogue rows. The ViewModels are the existing
 // tab ViewModels; LibraryScreen wires them.
 
-/** Fills the page so the scroller's track sits at its end edge, as the legacy lists have it. */
-private val FastScrollerModifier = Modifier.fillMaxSize().padding(vertical = 8.dp).testTag("library-fast-scroller")
+/**
+ * Fills the page so the scroller's track sits at its end edge, as the legacy lists have it. The track starts below the
+ * pages' leading section header (48dp at least), so the thumb never covers the header's action, such as Shuffle (#396).
+ */
+private val FastScrollerModifier = Modifier.fillMaxSize().padding(top = 48.dp + 8.dp, bottom = 8.dp).testTag("library-fast-scroller")
 
 /** Songs: a count header with Shuffle, then every song. Tap plays from that row; long-press selects. */
 @Composable
