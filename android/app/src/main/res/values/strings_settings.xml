@@ -174,4 +174,33 @@
     <string name="pref_rescan_frequency_daily">Daily</string>
     <!-- Settings: Title for the automatic rescan frequency (weekly rescan)-->
     <string name="pref_rescan_frequency_weekly">Weekly</string>
+
+    <!-- Settings: Title of the Playback and sound settings screen -->
+    <string name="settings_destination_playback_and_sound">Playback &amp; sound</string>
+    <!-- Settings: Title of the Sources settings screen (media providers such as Jellyfin, Emby and Plex) -->
+    <string name="settings_destination_sources">Sources</string>
+    <!-- Settings: Title of the Library settings screen -->
+    <string name="settings_destination_library">Library</string>
+    <!-- Settings: Title of the About settings screen -->
+    <string name="settings_destination_about">About</string>
+    <!-- Settings: Title of the Advanced group (debug logging) on the About screen -->
+    <string name="settings_group_advanced">Advanced</string>
+    <!-- Settings: Title of the switch that makes dark theme backgrounds pure black -->
+    <string name="pref_pure_black_title">Pure black</string>
+    <!-- Settings: Summary of the pure black switch -->
+    <string name="pref_pure_black_summary">Black backgrounds in dark theme, for AMOLED screens</string>
+    <!-- Settings: Title of the switch that takes the app colours from the wallpaper (Android 12+) -->
+    <string name="pref_dynamic_colour_title">Dynamic colour</string>
+    <!-- Settings: Summary of the dynamic colour switch -->
+    <string name="pref_dynamic_colour_summary">Use colours from your wallpaper</string>
+    <!-- Settings: Title of the switch that tints the player with colours from the album artwork -->
+    <string name="pref_colour_from_artwork_title">Colour from artwork</string>
+    <!-- Settings: Summary of the colour from artwork switch -->
+    <string name="pref_colour_from_artwork_summary">Tint the player with colours from the album art</string>
+    <!-- Settings: Title of the switch that limits offline downloads to Wi-Fi -->
+    <string name="pref_download_wifi_only_title">Download on Wi-Fi only</string>
+    <!-- Settings: Summary of the download on Wi-Fi only switch -->
+    <string name="pref_download_wifi_only_summary">Offline downloads wait for Wi-Fi</string>
+    <!-- Settings: Name of the amber accent colour -->
+    <string name="theme_accent_entry_amber">Amber</string>
 </resources>
