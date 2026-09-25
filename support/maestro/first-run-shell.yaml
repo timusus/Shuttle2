@@ -1,0 +1,17 @@
+# #379: first run from a clean install in the Compose shell (the debug ShellActivity, which the
+# caller launches), which opens on Home. The Library tab shows its empty state; "Allow access to music" shows the system
+# prompt, and granting it starts the S2 scanner and fills the Library with the seeded `playback`
+# fixture. Run it through support/scripts/checks/first-run.sh.
+appId: com.simplecityapps.shuttle.dev
+---
+- tapOn: "Library"
+- extendedWaitUntil:
+    visible: "Allow access to music"
+    timeout: 15000
+- assertNotVisible: "Changelog"
+- tapOn: "Allow access to music"
+- tapOn:
+    id: "com.android.permissioncontroller:id/permission_allow_button"
+- extendedWaitUntil:
+    notVisible: "Allow access to music"
+    timeout: 10000
