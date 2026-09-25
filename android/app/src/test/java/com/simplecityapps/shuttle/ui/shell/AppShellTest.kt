@@ -3,15 +3,16 @@ package com.simplecityapps.shuttle.ui.shell
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import com.simplecityapps.createAlbum
-import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createPlaylist
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.actions.SnackbarAction
+import com.simplecityapps.shuttle.ui.preview.toAlbum
+import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
@@ -315,7 +316,7 @@ class AppShellTest {
 
     @Test
     fun `Go to album in the Now Playing menu opens the album and settles the sheet to Mini`() {
-        val album = createAlbum(name = "Slow Bloom", albumArtist = "Ines Quarrow")
+        val album = SampleLibrary.albums.first { it.title == "Slow Bloom" }.toAlbum()
         robot.actions.mediaActionResult = { MediaActionResult.Navigate(NavigationTarget.Album(album)) }
         robot.setContent()
         robot.tapMiniPlayer()
@@ -329,7 +330,7 @@ class AppShellTest {
 
     @Test
     fun `Go to artist in the Now Playing menu opens the artist and settles the sheet to Mini`() {
-        val artist = createAlbumArtist(name = "Ines Quarrow")
+        val artist = SampleLibrary.artists.first { it.name == "Ines Quarrow" }.toAlbumArtist()
         robot.actions.mediaActionResult = { MediaActionResult.Navigate(NavigationTarget.AlbumArtist(artist)) }
         robot.setContent()
         robot.tapMiniPlayer()
