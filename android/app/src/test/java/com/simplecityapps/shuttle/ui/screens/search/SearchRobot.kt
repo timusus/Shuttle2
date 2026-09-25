@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.search
 
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.text.font.FontWeight
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
@@ -76,6 +78,13 @@ class SearchRobot(private val rule: ComposeContentTestRule) {
 
     fun assertTextDisplayed(text: String) {
         rule.onNodeWithText(text).assertIsDisplayed()
+    }
+
+    /** The node showing [text] has [part] of it, and only that, in bold. */
+    fun assertBold(text: String, part: String) {
+        val shown = rule.onAllNodesWithText(text)[0].fetchSemanticsNode().config[SemanticsProperties.Text].first()
+        val bold = shown.spanStyles.filter { it.item.fontWeight == FontWeight.Bold }.map { shown.text.substring(it.start, it.end) }
+        bold shouldBe listOf(part)
     }
 
     fun assertTextNotShown(text: String) {

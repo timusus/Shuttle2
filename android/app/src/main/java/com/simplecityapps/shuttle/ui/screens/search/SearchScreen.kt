@@ -1,7 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.search
 
-import androidx.annotation.PluralsRes
-import androidx.annotation.StringRes
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
@@ -28,38 +26,32 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.simplecityapps.mediaprovider.search.SearchHit
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.designsystem.component.AlbumRow
-import com.simplecityapps.shuttle.designsystem.component.ArtistRow
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
-import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
-import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
-import com.simplecityapps.shuttle.designsystem.component.GenreRow
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
-import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
 import com.simplecityapps.shuttle.designsystem.component.S2FilterChip
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SearchNoResults
 import com.simplecityapps.shuttle.designsystem.component.SearchRecentRow
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
-import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
-import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
-import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 
 /** What the user can do on the Search screen; the destination wires each to the ViewModel, navigator or actions host. */
 class SearchCallbacks(
@@ -138,7 +130,7 @@ fun SearchScreen(
             is SearchContent.Recent -> RecentSearches(content.searches, onSelect = { queryState.edit { replace(0, length, it) } }, onRemove = callbacks.onRemoveRecentSearch)
             SearchContent.Searching -> LoadingState(Modifier.fillMaxSize())
             is SearchContent.NoResults -> SearchNoResults(content.query, Modifier.fillMaxSize())
-            is SearchContent.Results -> SearchResultList(content.results, callbacks)
+            is SearchContent.Results -> SearchResultList(content.query, content.results, callbacks)
         }
     }
 }
@@ -166,95 +158,73 @@ private fun RecentSearches(
     }
 }
 
+/** How many hits each section shows before "See all", unless it's the only section with results. */
+private val SectionLimits = mapOf(
+    SearchCategory.Artists to 3,
+    SearchCategory.Albums to 3,
+    SearchCategory.Songs to 5,
+    SearchCategory.Genres to 3,
+    SearchCategory.Playlists to 3,
+)
+
 @Composable
 private fun SearchResultList(
+    query: String,
     results: SearchResults,
     callbacks: SearchCallbacks,
 ) {
-    val unknown = stringResource(com.simplecityapps.core.R.string.unknown)
-    // Precomputed here because LazyListScope isn't composable.
-    val artistSummaries = results.artists.map { countString(R.plurals.albumsPlural, it.albumCount) }
-    val genreSummaries = results.genres.map { countString(R.plurals.songsPlural, it.songCount) }
-    val playlistSummaries = results.playlists.map { countString(R.plurals.songsPlural, it.songCount) }
+    var expanded by rememberSaveable(query) { mutableStateOf<SearchCategory?>(null) }
+    val onlySection = listOf(results.artists, results.albums, results.songs, results.genres, results.playlists).count { it.isNotEmpty() } == 1
+    val limit = { category: SearchCategory -> if (onlySection || category == expanded) Int.MAX_VALUE else SectionLimits.getValue(category) }
+    val showAll = { category: SearchCategory -> expanded = category }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
-        section(R.string.search_category_artists, "artist", results.artists, { it.groupKey }) { index, artist ->
-            val name = artist.name ?: artist.friendlyArtistName ?: unknown
-            ArtistRow(
-                name = name,
-                summary = artistSummaries[index],
-                onClick = { callbacks.onArtistClick(artist) },
-                artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, size = ArtworkSize.Small, shape = ArtworkShape.Circle) },
-                onLongClick = { callbacks.onShowActions(MediaActionsTarget(name, null, MediaSelection.AlbumArtists(artist), ArtworkPlaceholder.Artist)) },
-                onMore = { callbacks.onShowActions(MediaActionsTarget(name, null, MediaSelection.AlbumArtists(artist), ArtworkPlaceholder.Artist)) },
-            )
+        // The best match of all leads, lifted out of its own section.
+        results.top?.let { top ->
+            item(key = "header:top", contentType = "header") { SectionHeader(stringResource(R.string.search_top_result)) }
+            item(key = "top", contentType = top) {
+                when (top) {
+                    SearchCategory.Artists -> ArtistResult(results.artists.first(), callbacks)
+                    SearchCategory.Albums -> AlbumResult(results.albums.first(), callbacks)
+                    SearchCategory.Songs -> SongResult(results.songs.first(), 0, callbacks)
+                    SearchCategory.Genres -> GenreResult(results.genres.first(), callbacks)
+                    SearchCategory.Playlists -> PlaylistResult(results.playlists.first(), callbacks)
+                }
+            }
         }
-        section(R.string.search_category_albums, "album", results.albums, { it.groupKey ?: it.name }) { _, album ->
-            val title = album.name ?: unknown
-            val artist = album.albumArtist ?: album.friendlyArtistName ?: unknown
-            val target = MediaActionsTarget(title, artist, MediaSelection.Albums(album), ArtworkPlaceholder.Album)
-            AlbumRow(
-                title = title,
-                artist = artist,
-                meta = album.year?.toString(),
-                onClick = { callbacks.onAlbumClick(album) },
-                artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, size = ArtworkSize.Small) },
-                onLongClick = { callbacks.onShowActions(target) },
-                onMore = { callbacks.onShowActions(target) },
-            )
-        }
-        section(R.string.search_category_songs, "song", results.songs, { it.id }) { index, song ->
-            val title = song.name ?: unknown
-            val subtitle = song.subtitle(unknown)
-            val target = MediaActionsTarget(title, subtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)
-            SongRow(
-                title = title,
-                subtitle = subtitle,
-                onClick = { callbacks.onSongClick(index) },
-                artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
-                onLongClick = { callbacks.onShowActions(target) },
-                onMore = { callbacks.onShowActions(target) },
-            )
-        }
-        section(R.string.search_category_genres, "genre", results.genres, { it.name }) { index, genre ->
-            val target = MediaActionsTarget(genre.name, genreSummaries[index], MediaSelection.Genres(genre), ArtworkPlaceholder.Genre)
-            GenreRow(
-                name = genre.name,
-                songCount = genreSummaries[index],
-                onClick = { callbacks.onGenreClick(genre) },
-                onLongClick = { callbacks.onShowActions(target) },
-                onMore = { callbacks.onShowActions(target) },
-            )
-        }
-        section(R.string.search_category_playlists, "playlist", results.playlists, { it.id }) { index, playlist ->
-            val target = MediaActionsTarget(playlist.name, playlistSummaries[index], MediaSelection.Playlists(playlist), ArtworkPlaceholder.Playlist)
-            PlaylistRow(
-                name = playlist.name,
-                summary = playlistSummaries[index],
-                onClick = { callbacks.onPlaylistClick(playlist) },
-                onLongClick = { callbacks.onShowActions(target) },
-                onMore = { callbacks.onShowActions(target) },
-            )
-        }
+        section(SearchCategory.Artists, results.artists, results.top, limit, showAll, { it.groupKey }) { _, hit -> ArtistResult(hit, callbacks) }
+        section(SearchCategory.Albums, results.albums, results.top, limit, showAll, { it.groupKey ?: it.name }) { _, hit -> AlbumResult(hit, callbacks) }
+        section(SearchCategory.Songs, results.songs, results.top, limit, showAll, { it.id }) { index, hit -> SongResult(hit, index, callbacks) }
+        section(SearchCategory.Genres, results.genres, results.top, limit, showAll, { it.name }) { _, hit -> GenreResult(hit, callbacks) }
+        section(SearchCategory.Playlists, results.playlists, results.top, limit, showAll, { it.id }) { _, hit -> PlaylistResult(hit, callbacks) }
     }
 }
 
-/** One result group: a header, then a row per item. Keys are prefixed with [type] so groups can't collide. */
+/**
+ * One result group: a header, then a row per hit, up to its [limit] with "See all" in the header past it. The group's
+ * first hit is left out when it's the [top] result. Rows get the hit's index in the whole group.
+ */
 private fun <T> LazyListScope.section(
-    @StringRes title: Int,
-    type: String,
-    items: List<T>,
+    category: SearchCategory,
+    hits: List<SearchHit<T>>,
+    top: SearchCategory?,
+    limit: (SearchCategory) -> Int,
+    onShowAll: (SearchCategory) -> Unit,
     key: (T) -> Any?,
-    row: @Composable (index: Int, item: T) -> Unit,
+    row: @Composable (index: Int, hit: SearchHit<T>) -> Unit,
 ) {
-    if (items.isEmpty()) return
-    item(key = "header:$type", contentType = "header") { SectionHeader(stringResource(title)) }
-    itemsIndexed(items, key = { _, item -> "$type:${key(item)}" }, contentType = { _, _ -> type }) { index, item -> row(index, item) }
+    val from = if (top == category) 1 else 0
+    if (hits.size <= from) return
+    val until = (from + limit(category).toLong()).coerceAtMost(hits.size.toLong()).toInt()
+    val type = category.name
+    item(key = "header:$type", contentType = "header") {
+        SectionHeader(
+            title = category.label(),
+            action = if (until < hits.size) stringResource(R.string.search_see_all) else null,
+            onAction = { onShowAll(category) },
+        )
+    }
+    items(count = until - from, key = { "$type:${key(hits[from + it].item)}" }, contentType = { type }) { i -> row(from + i, hits[from + i]) }
 }
-
-private fun Song.subtitle(unknown: String): String = listOfNotNull(friendlyArtistName ?: albumArtist, album).joinToString(" · ").ifEmpty { unknown }
-
-@Composable
-private fun countString(@PluralsRes plural: Int, count: Int): String = pluralStringResource(plural, count, count).replace("{count}", count.toString())
 
 @Composable
 internal fun SearchCategory.label(): String = stringResource(

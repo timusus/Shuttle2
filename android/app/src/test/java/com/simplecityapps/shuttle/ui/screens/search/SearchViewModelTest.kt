@@ -50,7 +50,9 @@ class SearchViewModelTest {
     }
 
     private fun TestScope.viewModel(): SearchViewModel {
-        val searchLibrary = SearchLibrary(FakeAlbumArtistRepository(), albums, songs, FakeGenreRepository(), FakePlaylistRepository(), mainDispatcherRule.testDispatcher)
+        val dispatcher = mainDispatcherRule.testDispatcher
+        val index = LibrarySearchIndex(FakeAlbumArtistRepository(), albums, songs, FakeGenreRepository(), FakePlaylistRepository(), backgroundScope, dispatcher)
+        val searchLibrary = SearchLibrary(index, dispatcher)
         return SearchViewModel(searchLibrary, RecentSearches(preferenceManager), preferenceManager).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
             runCurrent()
@@ -75,7 +77,7 @@ class SearchViewModelTest {
         val viewModel = viewModel()
 
         viewModel.onQueryChange("airbag")
-        advanceTimeBy(SearchViewModel.SearchDebounce.inWholeMilliseconds - 100)
+        advanceTimeBy(SearchViewModel.SearchDebounce.inWholeMilliseconds - 1)
         runCurrent()
         viewModel.uiState.value.content.shouldBeInstanceOf<SearchContent.Recent>()
 
@@ -83,7 +85,7 @@ class SearchViewModelTest {
         runCurrent()
         val content = viewModel.uiState.value.content.shouldBeInstanceOf<SearchContent.Results>()
         content.query shouldBe "airbag"
-        content.results.songs.first() shouldBe airbag
+        content.results.songs.first().item shouldBe airbag
     }
 
     @Test
@@ -117,7 +119,7 @@ class SearchViewModelTest {
 
         val content = viewModel.uiState.value.content.shouldBeInstanceOf<SearchContent.Results>()
         content.results.songs shouldBe emptyList()
-        content.results.albums.map { it.name } shouldBe listOf("OK Computer")
+        content.results.albums.map { it.item.name } shouldBe listOf("OK Computer")
         (SearchCategory.Songs in viewModel.uiState.value.categories) shouldBe false
         preferenceManager.searchFilterSongs shouldBe false
     }
@@ -151,7 +153,7 @@ class SearchViewModelTest {
     fun `tapping a song plays every song result from that one`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
         type(viewModel, "radiohead")
-        val results = (viewModel.uiState.value.content as SearchContent.Results).results.songs
+        val results = (viewModel.uiState.value.content as SearchContent.Results).results.songs.map { it.item }
 
         viewModel.playSong(1) shouldBe MediaAction.Play(MediaSelection.Songs(results), position = 1)
         preferenceManager.recentSearches shouldBe listOf("radiohead")

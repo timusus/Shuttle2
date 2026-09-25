@@ -18,6 +18,7 @@ import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -28,7 +29,12 @@ class SearchLibraryTest {
     private val songs = FakeSongRepository()
     private val genres = FakeGenreRepository()
     private val playlists = FakePlaylistRepository()
-    private val searchLibrary = SearchLibrary(artists, albums, songs, genres, playlists, Dispatchers.Unconfined)
+
+    /** A [SearchLibrary] over the fakes, its index shared in the test's background scope. */
+    private fun TestScope.searchLibrary(query: String, categories: Set<SearchCategory>) = SearchLibrary(
+        LibrarySearchIndex(artists, albums, songs, genres, playlists, backgroundScope, Dispatchers.Unconfined),
+        Dispatchers.Unconfined,
+    )(query, categories)
 
     @Before
     fun setUp() {
@@ -55,23 +61,23 @@ class SearchLibraryTest {
     fun `finds artists, albums and songs by fuzzy name`() = runTest {
         val results = searchLibrary("radiohead", SearchCategory.entries.toSet()).first()
 
-        results.artists.map { it.name } shouldContainExactly listOf("Radiohead")
-        results.albums.map { it.name } shouldContainExactly listOf("OK Computer")
-        results.songs.map { it.name } shouldContainAll listOf("Airbag", "Paranoid Android")
-        results.songs.map { it.name } shouldNotContain "Teardrop"
+        results.artists.map { it.item.name } shouldContainExactly listOf("Radiohead")
+        results.albums.map { it.item.name } shouldContainExactly listOf("OK Computer")
+        results.songs.map { it.item.name } shouldContainAll listOf("Airbag", "Paranoid Android")
+        results.songs.map { it.item.name } shouldNotContain "Teardrop"
     }
 
     @Test
     fun `ranks a song whose own name matches above songs matched by artist`() = runTest {
         val results = searchLibrary("radio", setOf(SearchCategory.Songs)).first()
 
-        results.songs.first().name shouldBe "Radio"
+        results.songs.first().item.name shouldBe "Radio"
     }
 
     @Test
     fun `finds genres and playlists by name`() = runTest {
-        searchLibrary("trip hop", SearchCategory.entries.toSet()).first().genres.map { it.name } shouldContainExactly listOf("Trip Hop")
-        searchLibrary("focus", SearchCategory.entries.toSet()).first().playlists.map { it.name } shouldContainExactly listOf("Focus")
+        searchLibrary("trip hop", SearchCategory.entries.toSet()).first().genres.map { it.item.name } shouldContainExactly listOf("Trip Hop")
+        searchLibrary("focus", SearchCategory.entries.toSet()).first().playlists.map { it.item.name } shouldContainExactly listOf("Focus")
     }
 
     @Test
@@ -87,6 +93,26 @@ class SearchLibraryTest {
     fun `re-emits when the library changes`() = runTest {
         songs.setSongs(listOf(createSong(id = 9, name = "Glory Box", albumArtist = "Portishead", album = "Dummy")))
 
-        searchLibrary("glory box", setOf(SearchCategory.Songs)).first().songs.map { it.id } shouldContainExactly listOf(9L)
+        searchLibrary("glory box", setOf(SearchCategory.Songs)).first().songs.map { it.item.id } shouldContainExactly listOf(9L)
+    }
+
+    @Test
+    fun `tolerates typos and missing accents`() = runTest {
+        searchLibrary("radohead", setOf(SearchCategory.Artists)).first().artists.map { it.item.name } shouldContainExactly listOf("Radiohead")
+        searchLibrary("masive atack", setOf(SearchCategory.Artists)).first().artists.map { it.item.name } shouldContainExactly listOf("Massive Attack")
+    }
+
+    @Test
+    fun `names the group of the best match as the top result`() = runTest {
+        searchLibrary("radiohead", SearchCategory.entries.toSet()).first().top shouldBe SearchCategory.Artists
+        searchLibrary("airbag", SearchCategory.entries.toSet()).first().top shouldBe SearchCategory.Songs
+        searchLibrary("zzzzzz", SearchCategory.entries.toSet()).first().top shouldBe null
+    }
+
+    @Test
+    fun `hits highlight what the query matched`() = runTest {
+        val artist = searchLibrary("radioh", setOf(SearchCategory.Artists)).first().artists.single()
+
+        artist.highlights("Radiohead") shouldContainExactly listOf(0..5)
     }
 }

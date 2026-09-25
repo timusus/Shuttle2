@@ -46,6 +46,25 @@ class SearchScreenTest {
     }
 
     @Test
+    fun `the best match leads as the top result, bold where it matched`() {
+        robot.setContent(SearchScenarios.results)
+
+        robot.assertTextDisplayed("Top result")
+        robot.assertBold("Radiohead", "Radiohead")
+    }
+
+    @Test
+    fun `a long section shows the first few until see all`() {
+        robot.setContent(SearchScenarios.manySongs)
+
+        robot.scrollTo("Track 5")
+        robot.assertTextNotShown("Track 6")
+        robot.tapText("See all")
+
+        robot.scrollTo("Track 8")
+    }
+
+    @Test
     fun `tapping a song plays from it`() {
         robot.setContent(SearchScenarios.results)
 

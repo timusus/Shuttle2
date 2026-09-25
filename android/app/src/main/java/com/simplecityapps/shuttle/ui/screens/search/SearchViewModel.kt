@@ -15,10 +15,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
@@ -27,7 +29,7 @@ sealed interface SearchContent {
     /** No query yet: the recent searches, newest first. */
     data class Recent(val searches: List<String>) : SearchContent
 
-    /** The query changed and its results aren't in yet. */
+    /** The first query's results aren't in yet; later queries keep the last results up until theirs arrive. */
     data object Searching : SearchContent
 
     data class Results(val query: String, val results: SearchResults) : SearchContent
@@ -62,6 +64,11 @@ class SearchViewModel @Inject constructor(
                     .onStart<SearchContent> { emit(SearchContent.Searching) }
             }
         }
+        // Results stay up while the next keystroke's arrive, so typing never flashes the loading state.
+        .scan<SearchContent, SearchContent?>(null) { shown, next ->
+            if (next == SearchContent.Searching && (shown is SearchContent.Results || shown is SearchContent.NoResults)) shown else next
+        }
+        .filterNotNull()
 
     val uiState: StateFlow<SearchUiState> = combine(categories, content) { categories, content -> SearchUiState(categories, content) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SearchUiState(categories.value, SearchContent.Recent(recentSearches.searches.value)))
@@ -93,11 +100,11 @@ class SearchViewModel @Inject constructor(
     fun playSong(index: Int): MediaAction? {
         val results = (uiState.value.content as? SearchContent.Results)?.results ?: return null
         onResultChosen()
-        return MediaAction.Play(MediaSelection.Songs(results.songs), position = index)
+        return MediaAction.Play(MediaSelection.Songs(results.songs.map { it.item }), position = index)
     }
 
     companion object {
-        val SearchDebounce = 500.milliseconds
+        val SearchDebounce = 100.milliseconds
     }
 }
 
