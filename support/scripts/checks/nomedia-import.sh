@@ -28,8 +28,14 @@ adb_retry shell touch "${REMOTE_DIR}/.nomedia" >/dev/null
 adb_retry push "${LOCAL_DIR}/song.mp3" "${REMOTE_DIR}/song.mp3" >/dev/null
 adb_retry shell content call --uri content://media/ --method scan_file --arg "${REMOTE_DIR}/song.mp3" >/dev/null
 
-rows="$(adb_retry shell content query --uri content://media/external/audio/media --projection _id \
-    --where "\"_data LIKE '%nomedia-check/song.mp3'\"" 2>/dev/null | grep -c '_id=' || true)"
+# Capture the query first so a failed query can't pass as "no rows".
+query="$(adb_retry shell content query --uri content://media/external/audio/media --projection _id \
+    --where "\"_data LIKE '%nomedia-check/song.mp3'\"")" || fail "MediaStore query failed"
+case "$query" in
+*_id=* | "No result found."*) ;;
+*) fail "unexpected MediaStore query output: ${query}" ;;
+esac
+rows="$(printf '%s\n' "$query" | grep -c '_id=' || true)"
 [ "$rows" -eq 0 ] || fail "MediaStore indexed ${rows} row(s) for a song under a .nomedia folder"
 echo "  MediaStore excludes the .nomedia folder's song"
 

@@ -14,7 +14,7 @@ echo "  auto-advanced to Playback Two"
 # A beat of real playback on the new track, so the pre-stop position is unmistakably non-zero.
 sleep 1
 before="$(state positionMs)"
-adb shell am force-stop "$APP_ID"
+adb_retry shell am force-stop "$APP_ID"
 launch_app
 # PlaybackInitializer restores the queue asynchronously after the process starts.
 wait_for 20 "s['queueSize'] == 5 and s['queuePosition'] == 1 and not s['pendingLoad']"

@@ -119,7 +119,7 @@ notification is Media3's own, with shuffle and repeat as its extra buttons.
 - [ ] Android Auto (DHU): Shuffle All plays, and search ("play <song>") finds and plays the song.
 - [ ] Lock screen: title, artist and artwork show; play, pause, skip and seek work; the shuffle and repeat buttons change the modes and their icons follow (RS-45).
 - [ ] Notification: the same controls work, the artwork shows, and there's only one S2 media notification. Paused, it can be swiped away.
-- [x] With Settings, "Media session artwork" turned off, the lock screen shows no artwork. — automated: `emu-verify.sh --check notification-art`
+- [x] With Settings, "Media session artwork" turned off, the lock screen shows no artwork. — automated: `emu-verify.sh --check notification-art` (asserts the media notification has no large icon; the lock screen reads the same session metadata, so eyeball it once on a device)
 - [ ] Bluetooth headset: play/pause, next and previous (single, double and triple press) act on S2.
 - [x] Widget: play/pause, next and previous work with the app open, and with the app force-stopped (the service starts in the foreground without a crash). — automated: `emu-verify.sh --check widget-controls`
 - [ ] Resumption after reboot: after a reboot, the system's media resumption controls (quick settings) show the last song; play resumes the saved queue at that song (RS-44). The same with a headset's play button.
