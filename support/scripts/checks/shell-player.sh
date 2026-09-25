@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # #376: the Compose shell's player, driven by taps with Maestro on the debug ShellActivity
 # (support/maestro/shell-player.yaml): expand, play/pause, seek, skip, then swipe Five out of the
-# queue, drag Four to the top and tap Three. Playback then follows the reordered queue.
+# queue, drag Four to the top and tap Three, then Go to artist from Now Playing. Playback follows the
+# reordered queue.
 source "$(dirname "$0")/_lib.sh"
 
 device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"

@@ -2,7 +2,8 @@
 # the `playback` fixture (One..Five, 60 s each) queued with PLAY_ALL and paused, then the shell
 # launched at Mini showing "Playback One". Expands the player, plays and pauses, seeks by tapping
 # the middle of the seek bar, skips, then at the Queue level removes Five by swiping it away, drags
-# Four by its handle to the top and taps Three to play it. The wrapper checks the resulting queue.
+# Four by its handle to the top and taps Three to play it. Back at Now Playing, Go to artist in the
+# menu settles the sheet to Mini over the Library's artist screen. The wrapper checks the resulting queue.
 appId: com.simplecityapps.shuttle.dev
 ---
 - extendedWaitUntil:
@@ -41,3 +42,14 @@ appId: com.simplecityapps.shuttle.dev
 # Tap a row to skip to it
 - tapOn: "Playback Three"
 - takeScreenshot: shell-player-queue
+# Queue -> Now Playing, then Go to artist opens the Library's artist screen with the sheet at Mini
+- back
+- assertVisible: "Collapse player"
+- tapOn: "More options"
+- tapOn: "Go to artist"
+- extendedWaitUntil:
+    visible: "Albums"
+    timeout: 5000
+- assertVisible: "Playback Album"
+- assertNotVisible: "Collapse player"
+- takeScreenshot: shell-player-artist
