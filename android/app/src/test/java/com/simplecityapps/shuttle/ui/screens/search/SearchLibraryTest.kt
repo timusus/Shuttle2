@@ -1,15 +1,17 @@
 package com.simplecityapps.shuttle.ui.screens.search
 
-import com.simplecityapps.createAlbum
-import com.simplecityapps.createAlbumArtist
-import com.simplecityapps.createGenre
-import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
+import com.simplecityapps.toAlbum
+import com.simplecityapps.toAlbumArtist
+import com.simplecityapps.toGenre
+import com.simplecityapps.toPlaylist
+import com.simplecityapps.toSong
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldContainExactly
@@ -38,18 +40,11 @@ class SearchLibraryTest {
 
     @Before
     fun setUp() {
-        artists.setAlbumArtists(listOf(createAlbumArtist("Radiohead"), createAlbumArtist("Portishead"), createAlbumArtist("Massive Attack")))
-        albums.setAlbums(listOf(createAlbum("OK Computer", "Radiohead"), createAlbum("Dummy", "Portishead"), createAlbum("Mezzanine", "Massive Attack")))
-        songs.setSongs(
-            listOf(
-                createSong(id = 1, name = "Airbag", albumArtist = "Radiohead", album = "OK Computer"),
-                createSong(id = 2, name = "Paranoid Android", albumArtist = "Radiohead", album = "OK Computer"),
-                createSong(id = 3, name = "Teardrop", albumArtist = "Massive Attack", album = "Mezzanine"),
-                createSong(id = 4, name = "Radio", albumArtist = "Someone", album = "Elsewhere"),
-            ),
-        )
-        genres.setGenres(listOf(createGenre("Trip Hop"), createGenre("Rock")))
-        playlists.setPlaylists(listOf(createPlaylist(id = 1, name = "Road trip"), createPlaylist(id = 2, name = "Focus")))
+        artists.setAlbumArtists(SampleLibrary.artists.map { it.toAlbumArtist() })
+        albums.setAlbums(SampleLibrary.albums.map { it.toAlbum() })
+        songs.setSongs(SampleLibrary.songs.map { it.toSong() })
+        genres.setGenres(SampleLibrary.genres.map { it.toGenre() })
+        playlists.setPlaylists(SampleLibrary.playlists.mapIndexed { index, playlist -> playlist.toPlaylist(id = index + 1L) })
     }
 
     @Test
@@ -59,30 +54,30 @@ class SearchLibraryTest {
 
     @Test
     fun `finds artists, albums and songs by fuzzy name`() = runTest {
-        val results = searchLibrary("radiohead", SearchCategory.entries.toSet()).first()
+        val results = searchLibrary("juniper", SearchCategory.entries.toSet()).first()
 
-        results.artists.map { it.item.name } shouldContainExactly listOf("Radiohead")
-        results.albums.map { it.item.name } shouldContainExactly listOf("OK Computer")
-        results.songs.map { it.item.name } shouldContainAll listOf("Airbag", "Paranoid Android")
-        results.songs.map { it.item.name } shouldNotContain "Teardrop"
+        results.artists.map { it.item.name } shouldContainExactly listOf("Juniper Static")
+        results.albums.map { it.item.name } shouldContainAll listOf("Phase Garden", "Night Bus Frequencies")
+        results.songs.map { it.item.name } shouldContainAll listOf("Chlorophyll Loop", "Sodium Light")
+        results.songs.map { it.item.name } shouldNotContain "Slipway"
     }
 
     @Test
     fun `ranks a song whose own name matches above songs matched by artist`() = runTest {
-        val results = searchLibrary("radio", setOf(SearchCategory.Songs)).first()
+        val results = searchLibrary("relay", setOf(SearchCategory.Songs)).first()
 
-        results.songs.first().item.name shouldBe "Radio"
+        results.songs.first().item.name shouldBe "Relay 7"
     }
 
     @Test
     fun `finds genres and playlists by name`() = runTest {
-        searchLibrary("trip hop", SearchCategory.entries.toSet()).first().genres.map { it.item.name } shouldContainExactly listOf("Trip Hop")
+        searchLibrary("dream pop", SearchCategory.entries.toSet()).first().genres.map { it.item.name } shouldContainExactly listOf("Dream Pop")
         searchLibrary("focus", SearchCategory.entries.toSet()).first().playlists.map { it.item.name } shouldContainExactly listOf("Focus")
     }
 
     @Test
     fun `leaves out categories that are filtered off`() = runTest {
-        val results = searchLibrary("radiohead", setOf(SearchCategory.Albums)).first()
+        val results = searchLibrary("juniper", setOf(SearchCategory.Albums)).first()
 
         results.artists.shouldBeEmpty()
         results.songs.shouldBeEmpty()
@@ -91,28 +86,28 @@ class SearchLibraryTest {
 
     @Test
     fun `re-emits when the library changes`() = runTest {
-        songs.setSongs(listOf(createSong(id = 9, name = "Glory Box", albumArtist = "Portishead", album = "Dummy")))
+        songs.setSongs(listOf(createSong(id = 9, name = "Brand New Song", albumArtist = "Juniper Static", album = "Phase Garden")))
 
-        searchLibrary("glory box", setOf(SearchCategory.Songs)).first().songs.map { it.item.id } shouldContainExactly listOf(9L)
+        searchLibrary("brand new song", setOf(SearchCategory.Songs)).first().songs.map { it.item.id } shouldContainExactly listOf(9L)
     }
 
     @Test
-    fun `tolerates typos and missing accents`() = runTest {
-        searchLibrary("radohead", setOf(SearchCategory.Artists)).first().artists.map { it.item.name } shouldContainExactly listOf("Radiohead")
-        searchLibrary("masive atack", setOf(SearchCategory.Artists)).first().artists.map { it.item.name } shouldContainExactly listOf("Massive Attack")
+    fun `tolerates typos`() = runTest {
+        searchLibrary("junpier", setOf(SearchCategory.Artists)).first().artists.map { it.item.name } shouldContainExactly listOf("Juniper Static")
+        searchLibrary("oda kestral", setOf(SearchCategory.Artists)).first().artists.map { it.item.name } shouldContainExactly listOf("Oda Kestrel Quartet")
     }
 
     @Test
     fun `names the group of the best match as the top result`() = runTest {
-        searchLibrary("radiohead", SearchCategory.entries.toSet()).first().top shouldBe SearchCategory.Artists
-        searchLibrary("airbag", SearchCategory.entries.toSet()).first().top shouldBe SearchCategory.Songs
+        searchLibrary("juniper", SearchCategory.entries.toSet()).first().top shouldBe SearchCategory.Artists
+        searchLibrary("chlorophyll", SearchCategory.entries.toSet()).first().top shouldBe SearchCategory.Songs
         searchLibrary("zzzzzz", SearchCategory.entries.toSet()).first().top shouldBe null
     }
 
     @Test
     fun `hits highlight what the query matched`() = runTest {
-        val artist = searchLibrary("radioh", setOf(SearchCategory.Artists)).first().artists.single()
+        val artist = searchLibrary("junip", setOf(SearchCategory.Artists)).first().artists.single()
 
-        artist.highlights("Radiohead") shouldContainExactly listOf(0..5)
+        artist.highlights("Juniper Static") shouldContainExactly listOf(0..4)
     }
 }

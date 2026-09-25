@@ -3,10 +3,14 @@ package com.simplecityapps.shuttle.ui.screens.home
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.test.core.app.ApplicationProvider
+import com.bumptech.glide.SampleArtworkGlide
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.simplecityapps.shuttle.settings.ThemeMode
 import java.io.File
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,7 +20,8 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records the Home screen at phone size into `docs/design/home/` for review (#377). A no-op under plain
- * `testDebugUnitTest`; record with `./gradlew :android:app:recordRoborazziDebug --tests '*HomeScreenshotTest*'`.
+ * `testDebugUnitTest`; record with `./gradlew :android:app:recordRoborazziDebug --tests '*HomeScreenshotTest*'`. The
+ * shelves show the sample library with its generated covers ([SampleArtworkGlide]).
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -26,6 +31,12 @@ class HomeScreenshotTest {
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     private val robot = HomeRobot(composeTestRule)
+
+    @Before
+    fun installSampleArtwork() = SampleArtworkGlide.install(ApplicationProvider.getApplicationContext())
+
+    @After
+    fun uninstallSampleArtwork() = SampleArtworkGlide.uninstall()
 
     private fun shot(name: String, uiState: HomeUiState, theme: ThemeMode = ThemeMode.Light) {
         robot.setContent(uiState, theme)

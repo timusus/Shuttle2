@@ -3,10 +3,14 @@ package com.simplecityapps.shuttle.ui.screens.search
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.test.core.app.ApplicationProvider
+import com.bumptech.glide.SampleArtworkGlide
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.simplecityapps.shuttle.settings.ThemeMode
 import java.io.File
+import org.junit.After
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,7 +20,8 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records the Search screen at phone size into `docs/design/search/` for review (#377). A no-op under plain
- * `testDebugUnitTest`; record with `./gradlew :android:app:recordRoborazziDebug --tests '*SearchScreenshotTest*'`.
+ * `testDebugUnitTest`; record with `./gradlew :android:app:recordRoborazziDebug --tests '*SearchScreenshotTest*'`. Results
+ * show the sample library with its generated covers ([SampleArtworkGlide]).
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -26,6 +31,12 @@ class SearchScreenshotTest {
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     private val robot = SearchRobot(composeTestRule)
+
+    @Before
+    fun installSampleArtwork() = SampleArtworkGlide.install(ApplicationProvider.getApplicationContext())
+
+    @After
+    fun uninstallSampleArtwork() = SampleArtworkGlide.uninstall()
 
     private fun shot(name: String, uiState: SearchUiState, theme: ThemeMode = ThemeMode.Light, query: String = "") {
         robot.queryState.edit { replace(0, length, query) }
@@ -43,13 +54,13 @@ class SearchScreenshotTest {
     fun recent() = shot("recent", SearchScenarios.recent)
 
     @Test
-    fun results() = shot("results", SearchScenarios.results, query = "radiohead")
+    fun results() = shot("results", SearchScenarios.results, query = "night")
 
     @Test
-    fun resultsDark() = shot("results-dark", SearchScenarios.results, ThemeMode.Dark, query = "radiohead")
+    fun resultsDark() = shot("results-dark", SearchScenarios.results, ThemeMode.Dark, query = "night")
 
     @Test
-    fun songsOnly() = shot("songs-only", SearchScenarios.songsOnly, query = "radiohead")
+    fun songsOnly() = shot("songs-only", SearchScenarios.songsOnly, query = "night")
 
     @Test
     fun noResults() = shot("no-results", SearchScenarios.noResults, query = "zzzz")

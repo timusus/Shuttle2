@@ -37,15 +37,15 @@ class HomeSectionsTest {
 
     @Test
     fun `recently added orders albums by their newest song`() = runTest {
-        val okComputerSong = createSong(id = 1, album = "OK Computer", albumArtist = "Radiohead").copy(lastModified = now - 3.days)
-        val kidASong = createSong(id = 2, album = "Kid A", albumArtist = "Radiohead").copy(lastModified = now - 5.days)
-        val kidANewSong = createSong(id = 3, album = "Kid A", albumArtist = "Radiohead").copy(lastModified = now - 1.days)
-        val okComputer = createAlbum("OK Computer", "Radiohead", groupKey = okComputerSong.albumGroupKey)
-        val kidA = createAlbum("Kid A", "Radiohead", groupKey = kidASong.albumGroupKey)
-        songs.setSongs(listOf(okComputerSong, kidASong, kidANewSong))
-        albums.setAlbums(listOf(okComputer, kidA))
+        val phaseGardenSong = createSong(id = 1, album = "Phase Garden", albumArtist = "Juniper Static").copy(lastModified = now - 3.days)
+        val nightBusSong = createSong(id = 2, album = "Night Bus Frequencies", albumArtist = "Juniper Static").copy(lastModified = now - 5.days)
+        val nightBusNewSong = createSong(id = 3, album = "Night Bus Frequencies", albumArtist = "Juniper Static").copy(lastModified = now - 1.days)
+        val phaseGarden = createAlbum("Phase Garden", "Juniper Static", groupKey = phaseGardenSong.albumGroupKey)
+        val nightBus = createAlbum("Night Bus Frequencies", "Juniper Static", groupKey = nightBusSong.albumGroupKey)
+        songs.setSongs(listOf(phaseGardenSong, nightBusSong, nightBusNewSong))
+        albums.setAlbums(listOf(phaseGarden, nightBus))
 
-        homeSections()().first().recentlyAdded shouldContainExactly listOf(kidA, okComputer)
+        homeSections()().first().recentlyAdded shouldContainExactly listOf(nightBus, phaseGarden)
     }
 
     @Test

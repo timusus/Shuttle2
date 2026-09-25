@@ -21,13 +21,13 @@ class RecentSearchesTest {
 
     @Test
     fun `adding puts the query first and drops an earlier copy of it`() {
-        preferenceManager.recentSearches = listOf("air", "bjork")
+        preferenceManager.recentSearches = listOf("salt", "kestrel")
         val recent = RecentSearches(preferenceManager)
 
-        recent.add("  Bjork ")
+        recent.add("  Kestrel ")
 
-        recent.searches.value shouldBe listOf("Bjork", "air")
-        preferenceManager.recentSearches shouldBe listOf("Bjork", "air")
+        recent.searches.value shouldBe listOf("Kestrel", "salt")
+        preferenceManager.recentSearches shouldBe listOf("Kestrel", "salt")
     }
 
     @Test

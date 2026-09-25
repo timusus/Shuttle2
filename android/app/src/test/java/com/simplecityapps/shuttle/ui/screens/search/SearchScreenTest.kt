@@ -27,22 +27,21 @@ class SearchScreenTest {
         robot.setContent(SearchScenarios.recent)
         robot.assertTextDisplayed("Recent searches")
 
-        robot.tapText("massive attack")
-        robot.assertQuery("massive attack")
+        robot.tapText("harbour weather")
+        robot.assertQuery("harbour weather")
 
         robot.tapRemoveRecentSearch(0)
-        robot.removedRecentSearches shouldBe listOf("radiohead")
+        robot.removedRecentSearches shouldBe listOf("nightjar")
     }
 
     @Test
     fun `results are grouped by type`() {
         robot.setContent(SearchScenarios.results)
 
-        robot.scrollTo("Radiohead")
-        robot.scrollTo("OK Computer")
-        robot.scrollTo("Paranoid Android")
-        robot.scrollTo("Alternative")
-        robot.scrollTo("Radio favourites")
+        robot.scrollTo("Nightjar & the Loom")
+        robot.scrollTo("Night Bus Frequencies")
+        robot.scrollTo("Night Ferry Lights")
+        robot.scrollTo("Late Night")
     }
 
     @Test
@@ -50,25 +49,26 @@ class SearchScreenTest {
         robot.setContent(SearchScenarios.results)
 
         robot.assertTextDisplayed("Top result")
-        robot.assertBold("Radiohead", "Radiohead")
+        robot.assertBold("Nightjar & the Loom", "Night")
     }
 
     @Test
     fun `a long section shows the first few until see all`() {
         robot.setContent(SearchScenarios.manySongs)
 
-        robot.scrollTo("Track 5")
-        robot.assertTextNotShown("Track 6")
+        val songs = SearchScenarios.juniperSongs.map { it.name.orEmpty() }
+        robot.scrollTo(songs[4])
+        robot.assertTextNotShown(songs[5])
         robot.tapText("See all")
 
-        robot.scrollTo("Track 8")
+        robot.scrollTo(songs[7])
     }
 
     @Test
     fun `tapping a song plays from it`() {
         robot.setContent(SearchScenarios.results)
 
-        robot.tapText("Paranoid Android")
+        robot.tapText("Route 29, Outbound")
 
         robot.playedSongs shouldBe listOf(1)
     }
@@ -77,13 +77,20 @@ class SearchScreenTest {
     fun `tapping an album, artist, genre or playlist opens it`() {
         robot.setContent(SearchScenarios.results)
 
-        robot.tapText("Kid A")
-        robot.tapText("Alternative")
-        robot.tapText("Radio favourites")
+        robot.tapText("Weather Systems")
+        robot.tapText("Late Night")
 
-        robot.openedAlbums shouldBe listOf(SearchScenarios.kidA)
-        robot.openedGenres shouldBe listOf(SearchScenarios.genre)
+        robot.openedAlbums shouldBe listOf(SearchScenarios.weatherSystems)
         robot.openedPlaylists shouldBe listOf(SearchScenarios.playlist)
+    }
+
+    @Test
+    fun `tapping a genre opens it`() {
+        robot.setContent(SearchScenarios.genreResults)
+
+        robot.tapText("Jazz")
+
+        robot.openedGenres shouldBe listOf(SearchScenarios.genre)
     }
 
     @Test
@@ -92,7 +99,7 @@ class SearchScreenTest {
 
         robot.tapMoreOn(0)
 
-        robot.shownActions.single().selection shouldBe MediaSelection.AlbumArtists(SearchScenarios.radiohead)
+        robot.shownActions.single().selection shouldBe MediaSelection.AlbumArtists(SearchScenarios.nightjar)
     }
 
     @Test

@@ -38,7 +38,7 @@ class HomeViewModelTest {
     private val songs = FakeSongRepository()
     private val albums = FakeAlbumRepository()
 
-    private val airbag = createSong(id = 1, name = "Airbag", albumArtist = "Radiohead", album = "OK Computer")
+    private val chlorophyllLoop = createSong(id = 1, name = "Chlorophyll Loop", albumArtist = "Juniper Static", album = "Phase Garden")
 
     @Before
     fun setUp() {
@@ -61,8 +61,8 @@ class HomeViewModelTest {
 
     @Test
     fun `a library shows its shelves`() = runTest(mainDispatcherRule.testDispatcher) {
-        val often = createAlbum("OK Computer", "Radiohead", playCount = 5)
-        songs.setSongs(listOf(airbag))
+        val often = createAlbum("Phase Garden", "Juniper Static", playCount = 5)
+        songs.setSongs(listOf(chlorophyllLoop))
         albums.setAlbums(listOf(often))
 
         val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
@@ -72,9 +72,9 @@ class HomeViewModelTest {
 
     @Test
     fun `shuffle all shuffles every song`() = runTest(mainDispatcherRule.testDispatcher) {
-        songs.setSongs(listOf(airbag))
+        songs.setSongs(listOf(chlorophyllLoop))
 
-        viewModel().shuffleAll() shouldBe MediaAction.Shuffle(MediaSelection.Songs(listOf(airbag)))
+        viewModel().shuffleAll() shouldBe MediaAction.Shuffle(MediaSelection.Songs(listOf(chlorophyllLoop)))
     }
 
     @Test
@@ -85,7 +85,7 @@ class HomeViewModelTest {
     @Test
     fun `unseen release notes show the whats new card until handled`() = runTest(mainDispatcherRule.testDispatcher) {
         preferenceManager.lastViewedChangelogVersion = "2020.01.01"
-        songs.setSongs(listOf(airbag))
+        songs.setSongs(listOf(chlorophyllLoop))
         val viewModel = viewModel()
         (viewModel.uiState.value as HomeUiState.Content).showWhatsNew shouldBe true
 
@@ -100,7 +100,7 @@ class HomeViewModelTest {
     fun `the whats new card stays hidden when changelogs are turned off`() = runTest(mainDispatcherRule.testDispatcher) {
         preferenceManager.lastViewedChangelogVersion = "2020.01.01"
         preferenceManager.showChangelogOnLaunch = false
-        songs.setSongs(listOf(airbag))
+        songs.setSongs(listOf(chlorophyllLoop))
 
         (viewModel().uiState.value as HomeUiState.Content).showWhatsNew shouldBe false
     }

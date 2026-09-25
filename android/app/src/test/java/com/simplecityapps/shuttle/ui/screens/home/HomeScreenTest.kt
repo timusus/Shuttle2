@@ -35,7 +35,7 @@ class HomeScreenTest {
         robot.scrollTo("Recently added")
         robot.scrollTo("Most played")
         robot.scrollTo("Something different")
-        robot.scrollTo("Boards of Canada")
+        robot.scrollTo("Saltmarsh Choir")
     }
 
     @Test
@@ -51,7 +51,7 @@ class HomeScreenTest {
     fun `most played albums carry their play count`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.scrollTo("Dummy")
+        robot.scrollTo("Soft Focus")
         robot.assertDescriptionDisplayed("14 plays")
     }
 
@@ -59,20 +59,20 @@ class HomeScreenTest {
     fun `tapping an album or artist opens it`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.tapText("OK Computer")
-        robot.tapText("Boards of Canada")
+        robot.tapText("Phase Garden")
+        robot.tapText("Saltmarsh Choir")
 
-        robot.openedAlbums shouldContainExactly listOf(HomeScenarios.okComputer)
-        robot.openedArtists shouldContainExactly listOf(HomeScenarios.boardsOfCanada)
+        robot.openedAlbums shouldContainExactly listOf(HomeScenarios.phaseGarden)
+        robot.openedArtists shouldContainExactly listOf(HomeScenarios.saltmarshChoir)
     }
 
     @Test
     fun `long-pressing a tile opens its actions`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.longPressText("Dummy")
+        robot.longPressText("Soft Focus")
 
-        robot.shownActions.single().selection shouldBe MediaSelection.Albums(HomeScenarios.dummy)
+        robot.shownActions.single().selection shouldBe MediaSelection.Albums(HomeScenarios.softFocus)
     }
 
     @Test

@@ -1,58 +1,69 @@
 package com.simplecityapps.shuttle.ui.screens.search
 
-import com.simplecityapps.createAlbum
-import com.simplecityapps.createAlbumArtist
-import com.simplecityapps.createGenre
-import com.simplecityapps.createPlaylist
-import com.simplecityapps.createSong
 import com.simplecityapps.mediaprovider.search.SearchHit
 import com.simplecityapps.mediaprovider.search.SearchQuery
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
+import com.simplecityapps.toAlbum
+import com.simplecityapps.toAlbumArtist
+import com.simplecityapps.toGenre
+import com.simplecityapps.toPlaylist
+import com.simplecityapps.toSong
 
+/** Search over the sample library, so rows load the generated covers under `SampleArtworkGlide`. */
 object SearchScenarios {
-    val radiohead = createAlbumArtist("Radiohead", albumCount = 9)
-    val okComputer = createAlbum("OK Computer", "Radiohead", year = 1997)
-    val kidA = createAlbum("Kid A", "Radiohead", year = 2000)
+    /** What the sample library holds for "night": an artist, two albums, songs by name and by artist, and a playlist. */
+    val nightjar = SampleLibrary.artist("Nightjar & the Loom").toAlbumArtist()
+    val nightBus = SampleLibrary.album("night-bus-frequencies").toAlbum()
+    val weatherSystems = SampleLibrary.album("weather-systems").toAlbum()
     val songs = listOf(
-        createSong(id = 1, name = "Airbag", albumArtist = "Radiohead", album = "OK Computer"),
-        createSong(id = 2, name = "Paranoid Android", albumArtist = "Radiohead", album = "OK Computer"),
-        createSong(id = 3, name = "Everything In Its Right Place", albumArtist = "Radiohead", album = "Kid A"),
-    )
-    val genre = createGenre("Alternative", songCount = 42)
-    val playlist = createPlaylist(id = 7, name = "Radio favourites", songCount = 12)
+        SampleLibrary.album("lantern-hours").songs.first { it.title == "Night Ferry Lights" },
+        SampleLibrary.album("night-bus-frequencies").songs[0],
+        SampleLibrary.album("weather-systems").songs[0],
+    ).map { it.toSong() }
+    val playlist = SampleLibrary.playlist("Late Night").toPlaylist(id = 7)
 
-    /** Hits for "radiohead", so rows bold what it matched. */
-    private fun <T> hits(vararg items: T, query: String = "radiohead") = items.map { SearchHit(it, SearchQuery.parse(query)) }
+    /** No sample genre is named for "night", so genres get their own query. */
+    val genre = SampleLibrary.genres.first { it.name == "Jazz" }.toGenre()
+
+    /** Hits for [query], so rows bold what it matched. */
+    private fun <T> hits(vararg items: T, query: String = "night") = items.map { SearchHit(it, SearchQuery.parse(query)) }
 
     val start = SearchUiState(content = SearchContent.Recent(emptyList()))
 
-    val recent = SearchUiState(content = SearchContent.Recent(listOf("radiohead", "massive attack", "bjork")))
+    val recent = SearchUiState(content = SearchContent.Recent(listOf("nightjar", "harbour weather", "kestrel")))
 
     val results = SearchUiState(
         content = SearchContent.Results(
-            query = "radiohead",
+            query = "night",
             results = SearchResults(
-                artists = hits(radiohead),
-                albums = hits(okComputer, kidA),
+                artists = hits(nightjar),
+                albums = hits(nightBus, weatherSystems),
                 songs = hits(*songs.toTypedArray()),
-                genres = hits(genre),
                 playlists = hits(playlist),
                 top = SearchCategory.Artists,
             ),
         ),
     )
 
+    val genreResults = SearchUiState(
+        content = SearchContent.Results("jazz", SearchResults(genres = hits(genre, query = "jazz"), top = SearchCategory.Genres)),
+    )
+
     val songsOnly = SearchUiState(
         categories = setOf(SearchCategory.Songs),
-        content = SearchContent.Results("radiohead", SearchResults(songs = hits(*songs.toTypedArray()), top = SearchCategory.Songs)),
+        content = SearchContent.Results("night", SearchResults(songs = hits(*songs.toTypedArray()), top = SearchCategory.Songs)),
     )
+
+    /** Juniper Static's first eight songs: more than the section shows before "See all". */
+    val juniperSongs = SampleLibrary.artist("Juniper Static").albums.flatMap { it.songs }.take(8).map { it.toSong() }
 
     /** More songs than the section shows before "See all", beside an artist so it isn't the only section. */
     val manySongs = SearchUiState(
         content = SearchContent.Results(
-            query = "radiohead",
+            query = "juniper",
             results = SearchResults(
-                artists = hits(radiohead),
-                songs = hits(*(1..8).map { createSong(id = it.toLong(), name = "Track $it", albumArtist = "Radiohead", album = "Demos") }.toTypedArray()),
+                artists = hits(SampleLibrary.artist("Juniper Static").toAlbumArtist(), query = "juniper"),
+                songs = hits(*juniperSongs.toTypedArray(), query = "juniper"),
                 top = SearchCategory.Artists,
             ),
         ),

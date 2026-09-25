@@ -39,14 +39,14 @@ class SearchViewModelTest {
     private val songs = FakeSongRepository()
     private val albums = FakeAlbumRepository()
 
-    private val airbag = createSong(id = 1, name = "Airbag", albumArtist = "Radiohead", album = "OK Computer")
-    private val paranoid = createSong(id = 2, name = "Paranoid Android", albumArtist = "Radiohead", album = "OK Computer")
+    private val chlorophyllLoop = createSong(id = 1, name = "Chlorophyll Loop", albumArtist = "Juniper Static", album = "Phase Garden")
+    private val petalArithmetic = createSong(id = 2, name = "Petal Arithmetic", albumArtist = "Juniper Static", album = "Phase Garden")
 
     @Before
     fun setUp() {
         preferenceManager = GeneralPreferenceManager(context.getSharedPreferences("search-test", Context.MODE_PRIVATE).apply { edit().clear().commit() })
-        songs.setSongs(listOf(airbag, paranoid))
-        albums.setAlbums(listOf(createAlbum("OK Computer", "Radiohead")))
+        songs.setSongs(listOf(chlorophyllLoop, petalArithmetic))
+        albums.setAlbums(listOf(createAlbum("Phase Garden", "Juniper Static")))
     }
 
     private fun TestScope.viewModel(): SearchViewModel {
@@ -67,16 +67,16 @@ class SearchViewModelTest {
 
     @Test
     fun `an empty query shows the stored recent searches`() = runTest(mainDispatcherRule.testDispatcher) {
-        preferenceManager.recentSearches = listOf("bjork", "air")
+        preferenceManager.recentSearches = listOf("kestrel", "salt")
 
-        viewModel().uiState.value.content shouldBe SearchContent.Recent(listOf("bjork", "air"))
+        viewModel().uiState.value.content shouldBe SearchContent.Recent(listOf("kestrel", "salt"))
     }
 
     @Test
     fun `typing searches once the debounce has passed`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
 
-        viewModel.onQueryChange("airbag")
+        viewModel.onQueryChange("chlorophyll")
         advanceTimeBy(SearchViewModel.SearchDebounce.inWholeMilliseconds - 1)
         runCurrent()
         viewModel.uiState.value.content.shouldBeInstanceOf<SearchContent.Recent>()
@@ -84,8 +84,8 @@ class SearchViewModelTest {
         advanceTimeBy(101)
         runCurrent()
         val content = viewModel.uiState.value.content.shouldBeInstanceOf<SearchContent.Results>()
-        content.query shouldBe "airbag"
-        content.results.songs.first().item shouldBe airbag
+        content.query shouldBe "chlorophyll"
+        content.results.songs.first().item shouldBe chlorophyllLoop
     }
 
     @Test
@@ -100,7 +100,7 @@ class SearchViewModelTest {
     @Test
     fun `clearing the query goes back to the recent searches`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
-        type(viewModel, "airbag")
+        type(viewModel, "chlorophyll")
 
         viewModel.onQueryChange("")
         runCurrent()
@@ -111,7 +111,7 @@ class SearchViewModelTest {
     @Test
     fun `toggling a category filters the results and is remembered`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
-        type(viewModel, "radiohead")
+        type(viewModel, "juniper")
 
         viewModel.onToggleCategory(SearchCategory.Songs)
         advanceTimeBy(SearchViewModel.SearchDebounce.inWholeMilliseconds + 1)
@@ -119,43 +119,43 @@ class SearchViewModelTest {
 
         val content = viewModel.uiState.value.content.shouldBeInstanceOf<SearchContent.Results>()
         content.results.songs shouldBe emptyList()
-        content.results.albums.map { it.item.name } shouldBe listOf("OK Computer")
+        content.results.albums.map { it.item.name } shouldBe listOf("Phase Garden")
         (SearchCategory.Songs in viewModel.uiState.value.categories) shouldBe false
         preferenceManager.searchFilterSongs shouldBe false
     }
 
     @Test
     fun `submitting a query records it as a recent search`() = runTest(mainDispatcherRule.testDispatcher) {
-        preferenceManager.recentSearches = listOf("air")
+        preferenceManager.recentSearches = listOf("salt")
         val viewModel = viewModel()
-        type(viewModel, "Radiohead")
+        type(viewModel, "Juniper")
 
         viewModel.onSearch()
         viewModel.onQueryChange("")
         runCurrent()
 
-        viewModel.uiState.value.content shouldBe SearchContent.Recent(listOf("Radiohead", "air"))
-        preferenceManager.recentSearches shouldBe listOf("Radiohead", "air")
+        viewModel.uiState.value.content shouldBe SearchContent.Recent(listOf("Juniper", "salt"))
+        preferenceManager.recentSearches shouldBe listOf("Juniper", "salt")
     }
 
     @Test
     fun `removing a recent search forgets it`() = runTest(mainDispatcherRule.testDispatcher) {
-        preferenceManager.recentSearches = listOf("bjork", "air")
+        preferenceManager.recentSearches = listOf("kestrel", "salt")
         val viewModel = viewModel()
 
-        viewModel.onRemoveRecentSearch("bjork")
+        viewModel.onRemoveRecentSearch("kestrel")
         runCurrent()
 
-        viewModel.uiState.value.content shouldBe SearchContent.Recent(listOf("air"))
+        viewModel.uiState.value.content shouldBe SearchContent.Recent(listOf("salt"))
     }
 
     @Test
     fun `tapping a song plays every song result from that one`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
-        type(viewModel, "radiohead")
+        type(viewModel, "juniper")
         val results = (viewModel.uiState.value.content as SearchContent.Results).results.songs.map { it.item }
 
         viewModel.playSong(1) shouldBe MediaAction.Play(MediaSelection.Songs(results), position = 1)
-        preferenceManager.recentSearches shouldBe listOf("radiohead")
+        preferenceManager.recentSearches shouldBe listOf("juniper")
     }
 }
