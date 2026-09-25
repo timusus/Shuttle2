@@ -74,18 +74,20 @@ fun S2AppTheme(
         ThemeMode.Dark -> true
     }
     S2Theme(darkTheme = darkTheme, accent = state.accent.toS2Accent(), dynamicColor = state.dynamicColour) {
-        if (darkTheme && state.pureBlack) {
-            val colorScheme = MaterialTheme.colorScheme
-            MaterialTheme(
-                colorScheme = colorScheme.copy(background = Color.Black, surface = Color.Black, surfaceContainerLowest = Color.Black),
-                motionScheme = MaterialTheme.motionScheme,
-                shapes = MaterialTheme.shapes,
-                typography = MaterialTheme.typography,
-                content = content
-            )
-        } else {
-            content()
-        }
+        // Always the same call, so toggling pure black recolours the content instead of moving it to a new
+        // composition branch, which would drop its saved state (the shell's back stacks among it).
+        val colorScheme = MaterialTheme.colorScheme
+        MaterialTheme(
+            colorScheme = if (darkTheme && state.pureBlack) {
+                colorScheme.copy(background = Color.Black, surface = Color.Black, surfaceContainerLowest = Color.Black)
+            } else {
+                colorScheme
+            },
+            motionScheme = MaterialTheme.motionScheme,
+            shapes = MaterialTheme.shapes,
+            typography = MaterialTheme.typography,
+            content = content
+        )
     }
 }
 
