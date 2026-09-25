@@ -1,8 +1,10 @@
 package com.simplecityapps.playback
 
 import android.app.PendingIntent
+import android.app.SearchManager
 import android.content.Intent
 import android.graphics.Bitmap
+import android.os.Bundle
 import android.util.LruCache
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
@@ -41,7 +43,8 @@ import timber.log.Timber
  * notification and the foreground state; commands from controllers reach the queue and playback through
  * [SessionPlayer] and [SessionCallback].
  *
- * The app's widget and shortcuts start the service with one of the actions below, which it handles itself.
+ * The app's widget and shortcuts, and voice searches ([VoiceSearchActivity]), start the service with one of the actions
+ * below, which it handles itself.
  * [ForegroundStarts] keeps a start in the foreground until its command has run, as the app starts too.
  */
 @UnstableApi
@@ -131,7 +134,7 @@ class PlaybackService : MediaLibraryService() {
         startId: Int
     ): Int {
         val result = super.onStartCommand(intent, flags, startId)
-        if (intent != null) handleStart(intent, foregroundStarts, playbackOperations, queueOperations)
+        if (intent != null) handleStart(intent, foregroundStarts, playbackOperations, queueOperations, playRequests::playSearch)
         return result
     }
 
@@ -162,7 +165,10 @@ class PlaybackService : MediaLibraryService() {
         const val ACTION_TOGGLE_SHUFFLE: String = "com.simplecityapps.playback.shuffle"
         const val ACTION_TOGGLE_REPEAT: String = "com.simplecityapps.playback.repeat"
 
-        private val actions = setOf(ACTION_START, ACTION_TOGGLE_PLAYBACK, ACTION_SKIP_PREV, ACTION_SKIP_NEXT, ACTION_TOGGLE_SHUFFLE, ACTION_TOGGLE_REPEAT)
+        /** Plays a voice search: the intent's [SearchManager.QUERY] and its extras, as `VoiceSearch.from` reads them. */
+        const val ACTION_PLAY_FROM_SEARCH: String = "com.simplecityapps.playback.search"
+
+        private val actions = setOf(ACTION_START, ACTION_TOGGLE_PLAYBACK, ACTION_SKIP_PREV, ACTION_SKIP_NEXT, ACTION_TOGGLE_SHUFFLE, ACTION_TOGGLE_REPEAT, ACTION_PLAY_FROM_SEARCH)
 
         /**
          * Runs one of the actions above, or keeps the service in the foreground for a play button's start, whose play
@@ -173,7 +179,8 @@ class PlaybackService : MediaLibraryService() {
             intent: Intent,
             foregroundStarts: ForegroundStarts,
             playbackOperations: PlaybackOperations,
-            queueOperations: QueueOperations
+            queueOperations: QueueOperations,
+            playSearch: suspend (query: String?, extras: Bundle?) -> Unit
         ) {
             val action = intent.action
             when {
@@ -193,6 +200,7 @@ class PlaybackService : MediaLibraryService() {
                             ACTION_SKIP_NEXT -> playbackOperations.skipToNext(ignoreRepeat = true)
                             ACTION_TOGGLE_SHUFFLE -> queueOperations.toggleShuffleMode()
                             ACTION_TOGGLE_REPEAT -> queueOperations.toggleRepeatMode()
+                            ACTION_PLAY_FROM_SEARCH -> playSearch(intent.getStringExtra(SearchManager.QUERY), intent.extras)
                         }
                     }
                 }

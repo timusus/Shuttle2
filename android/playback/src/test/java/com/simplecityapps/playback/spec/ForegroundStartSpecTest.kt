@@ -1,6 +1,7 @@
 package com.simplecityapps.playback.spec
 
 import android.app.Notification
+import android.app.SearchManager
 import android.content.ComponentName
 import android.content.Intent
 import android.view.KeyEvent
@@ -32,7 +33,7 @@ import org.robolectric.shadows.ShadowService
 
 /**
  * The foreground rules in docs/testing/playback-behaviour-spec.md: a start of the playback service in the foreground (the
- * widget, a shortcut, a headset's play button) as the app starts, with the saved queue still being restored. The service
+ * widget, a shortcut, a headset's play button, a voice search) as the app starts, with the saved queue still being restored. The service
  * under test is [PlaybackService]'s start handling and foreground hold over a [SessionHarness]'s session, as
  * PlaybackService itself needs Hilt.
  */
@@ -41,7 +42,9 @@ import org.robolectric.shadows.ShadowService
 class ForegroundStartSpecTest {
     private val saved = listOf(song(1), song(2))
 
-    private val harness = SessionHarness(restored = false)
+    private val library = listOf(song(3).copy(name = "Clair de Lune", albumArtist = "Debussy"), song(4).copy(name = "Gymnopédie No. 1", albumArtist = "Satie"))
+
+    private val harness = SessionHarness(songs = library, restored = false)
 
     private val queue = harness.playback.queueOperations
 
@@ -92,6 +95,19 @@ class ForegroundStartSpecTest {
 
         restore(foreground)
         harness.playback.runUntil { foreground.isForegroundStopped }
+    }
+
+    @Test
+    fun `RS-62 a voice search that cold-starts the app plays what it asks for once the saved queue is restored`() {
+        val foreground = start(Intent(PlaybackService.ACTION_PLAY_FROM_SEARCH).putExtra(SearchManager.QUERY, "satie"))
+
+        foreground.lastForegroundNotificationId shouldBe PlaybackService.NOTIFICATION_ID
+        stayForegroundUntil(foreground) { true }
+
+        // The restore doesn't overwrite the search: the search waits for it, then replaces it.
+        restore(foreground)
+        stayForegroundUntil(foreground) { isPlaying() && foreground.isMedia3Notification() }
+        queue.getQueue().map { it.song } shouldBe listOf(library[1])
     }
 
     private fun start(intent: Intent): ShadowService {
@@ -150,7 +166,7 @@ class ForegroundStartSpecTest {
             startId: Int
         ): Int {
             val result = super.onStartCommand(intent, flags, startId)
-            if (intent != null) PlaybackService.handleStart(intent, foregroundStarts, harness.playback.playbackOperations, harness.playback.queueOperations)
+            if (intent != null) PlaybackService.handleStart(intent, foregroundStarts, harness.playback.playbackOperations, harness.playback.queueOperations, harness.playRequests::playSearch)
             return result
         }
 

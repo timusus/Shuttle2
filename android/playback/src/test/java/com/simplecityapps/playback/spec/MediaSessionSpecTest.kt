@@ -2,6 +2,8 @@ package com.simplecityapps.playback.spec
 
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
+import androidx.core.os.bundleOf
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.CommandButton
@@ -16,7 +18,9 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
@@ -154,7 +158,7 @@ class MediaSessionSpecTest {
     }
 
     @Test
-    fun `RS-46 a voice search plays what it finds, and a search for nothing plays every song`() {
+    fun `RS-46 a voice search plays what it finds, and adding one adds the songs it names`() {
         val songs = listOf(song(1), song(2), song(3))
         val harness = sessionHarness(songs = songs)
         val queue = harness.playback.queueOperations
@@ -163,19 +167,64 @@ class MediaSessionSpecTest {
         playRequest(harness, browser, searchItem("Song2"))
         queue.getQueue().map { it.song } shouldBe listOf(songs[1])
 
-        // "Play music": a blank query, or an item that names nothing at all.
-        playRequest(harness, browser, searchItem("  "))
-        queue.getQueue().map { it.song } shouldBe songs
-        harness.playback.run { queue.setQueue(listOf(songs[0])) }
-        playRequest(harness, browser, MediaItem.Builder().build())
-        queue.getQueue().map { it.song } shouldBe songs
-
         // Adding a search or a file to the queue adds the songs they name, as playing them would.
         browser.addMediaItem(searchItem("Song3"))
-        harness.playback.runUntil { queue.getQueue().size == 4 }
+        harness.playback.runUntil { queue.getQueue().size == 2 }
         browser.addMediaItem(MediaItem.Builder().setRequestMetadata(MediaItem.RequestMetadata.Builder().setMediaUri(Uri.parse(songs[0].path)).build()).build())
-        harness.playback.runUntil { queue.getQueue().size == 5 }
-        queue.getQueue().map { it.song } shouldBe songs + songs[2] + songs[0]
+        harness.playback.runUntil { queue.getQueue().size == 3 }
+        queue.getQueue().map { it.song } shouldBe listOf(songs[1], songs[2], songs[0])
+    }
+
+    @Test
+    fun `RS-60 a voice search focused on an artist, album, song, genre or playlist plays the closest match`() {
+        val blue = listOf(albumSong(1, track = 1), albumSong(2, track = 2), albumSong(3, track = 3)).map { it.copy(genres = listOf("Folk")) }
+        val other = song(4).copy(name = "Harvest Moon", albumArtist = "Neil Young", album = "Harvest Moon", genres = listOf("Rock"))
+        val playlist = Playlist(id = 1, name = "Sunday Morning", songCount = 2, duration = 0, sortOrder = PlaylistSongSortOrder.Position, mediaProvider = MediaProviderType.Shuttle, externalId = null)
+        val harness = SessionHarness(songs = blue + other, playlists = mapOf(playlist to listOf(other, blue[0]))).also { harnesses += it }
+        val queue = harness.playback.queueOperations
+        val browser = harness.connect()
+
+        playRequest(harness, browser, searchItem("joni", MediaStore.Audio.Artists.ENTRY_CONTENT_TYPE, MediaStore.EXTRA_MEDIA_ARTIST to "Joni"))
+        queue.getQueue().map { it.song } shouldBe blue
+
+        playRequest(harness, browser, searchItem("harvest moon", MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE, MediaStore.EXTRA_MEDIA_ALBUM to "Harvest Moon"))
+        queue.getQueue().map { it.song } shouldBe listOf(other)
+
+        // A song plays with the rest of its album after it; a title heard differently finds the closest.
+        playRequest(harness, browser, searchItem("song 2", MediaStore.Audio.Media.ENTRY_CONTENT_TYPE, MediaStore.EXTRA_MEDIA_TITLE to "Song 2"))
+        queue.getQueue().map { it.song } shouldBe blue
+        queue.queueStateFlow.value.currentItem?.song shouldBe blue[1]
+
+        playRequest(harness, browser, searchItem("folk", MediaStore.Audio.Genres.ENTRY_CONTENT_TYPE, MediaStore.EXTRA_MEDIA_GENRE to "Folk"))
+        queue.getQueue().map { it.song } shouldBe blue
+
+        playRequest(harness, browser, searchItem("sunday morning", MediaStore.Audio.Playlists.ENTRY_CONTENT_TYPE, MediaStore.EXTRA_MEDIA_PLAYLIST to "Sunday Morning"))
+        queue.getQueue().map { it.song } shouldBe listOf(other, blue[0])
+
+        // Unstructured: the words alone.
+        playRequest(harness, browser, searchItem("Neil Young"))
+        queue.getQueue().map { it.song } shouldBe listOf(other)
+    }
+
+    @Test
+    fun `RS-61 a voice search for nothing in particular resumes the queue, or shuffles the library when there's none`() {
+        val songs = (1L..8L).map { song(it) }
+        val harness = sessionHarness(songs = songs)
+        val queue = harness.playback.queueOperations
+        val browser = harness.connect()
+
+        // "Play music" with no queue: every song, shuffled.
+        playRequest(harness, browser, searchItem("  "))
+        queue.getQueue().map { it.song }.toSet() shouldBe songs.toSet()
+
+        // With a queue: it plays as it is, from where it was, whether the search is blank or names nothing at all.
+        harness.playback.run { queue.setQueue(songs.take(3), position = 1) }
+        playRequest(harness, browser, searchItem(""))
+        queue.getQueue().map { it.song } shouldBe songs.take(3)
+        queue.queueStateFlow.value.currentItem?.song shouldBe songs[1]
+        playRequest(harness, browser, MediaItem.Builder().build())
+        queue.getQueue().map { it.song } shouldBe songs.take(3)
+        queue.queueStateFlow.value.currentItem?.song shouldBe songs[1]
     }
 
     @Test
@@ -278,6 +327,20 @@ class MediaSessionSpecTest {
 
     private companion object {
         fun searchItem(query: String): MediaItem = MediaItem.Builder().setRequestMetadata(MediaItem.RequestMetadata.Builder().setSearchQuery(query).build()).build()
+
+        /** A voice search as Assistant parses one: the words, the kind of thing they name ([focus]), and its [parts]. */
+        fun searchItem(
+            query: String,
+            focus: String,
+            vararg parts: Pair<String, String>
+        ): MediaItem = MediaItem.Builder()
+            .setRequestMetadata(
+                MediaItem.RequestMetadata.Builder()
+                    .setSearchQuery(query)
+                    .setExtras(bundleOf(MediaStore.EXTRA_MEDIA_FOCUS to focus, *parts))
+                    .build()
+            )
+            .build()
 
         fun albumSong(
             id: Long,

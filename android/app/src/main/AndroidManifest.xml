@@ -38,11 +38,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <intent-filter>
-                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-
             <!-- Lists S2 as a music app, e.g. for the system's default music player setting -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

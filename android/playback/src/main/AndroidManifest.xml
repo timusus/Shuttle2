@@ -22,6 +22,23 @@
             </intent-filter>
         </service>
 
+        <!--
+            Voice searches ("play <artist> on S2" from Assistant) arrive here with the app running or not. It has no UI:
+            it hands the search to the playback service in the foreground and finishes. Its label is the app's.
+        -->
+        <activity
+            android:name=".VoiceSearchActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <!-- Media buttons with no session active (a headset's play after a reboot) start the service to resume playback -->
         <receiver
             android:name="androidx.media3.session.MediaButtonReceiver"

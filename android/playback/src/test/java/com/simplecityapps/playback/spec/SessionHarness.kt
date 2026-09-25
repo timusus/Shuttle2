@@ -7,12 +7,12 @@ import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.chromecast.FakeSongRepository
 import com.simplecityapps.playback.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.playback.fakes.FakeAlbumRepository
-import com.simplecityapps.playback.fakes.FakeGenreRepository
 import com.simplecityapps.playback.fakes.FakePlaylistRepository
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.playback.mediasession.SessionCallback
 import com.simplecityapps.playback.mediasession.SessionPlayer
 import com.simplecityapps.playback.mediasession.UriSongResolver
+import com.simplecityapps.playback.mediasession.VoiceSearchResolver
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
@@ -43,7 +43,7 @@ class SessionHarness(
 
     val session: MediaLibrarySession
 
-    /** The requests the session and the app's own entry points (a file opened with the app, a search intent) share. */
+    /** The requests the session and the app's own entry points (a file opened with the app, a voice search) share. */
     val playRequests: PlayRequests
 
     init {
@@ -52,7 +52,8 @@ class SessionHarness(
         val songRepository = FakeSongRepository(songs)
         val albumRepository = FakeAlbumRepository(albums)
         val artistRepository = FakeAlbumArtistRepository()
-        val mediaIdHelper = MediaIdHelper(FakePlaylistRepository(playlists), artistRepository, albumRepository, songRepository)
+        val playlistRepository = FakePlaylistRepository(playlists)
+        val mediaIdHelper = MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository)
         playRequests =
             PlayRequests(
                 context = context,
@@ -61,10 +62,8 @@ class SessionHarness(
                 queueOperations = playback.queueOperations,
                 mediaIdHelper = mediaIdHelper,
                 uriSongResolver = UriSongResolver(context, songRepository),
-                artistRepository = artistRepository,
-                albumRepository = albumRepository,
-                songRepository = songRepository,
-                genreRepository = FakeGenreRepository()
+                voiceSearchResolver = VoiceSearchResolver(songRepository, playlistRepository),
+                songRepository = songRepository
             )
         val callback = SessionCallback(context, playRequests, mediaIdHelper, playback.queueOperations, scope) { trusted }
         val player = SessionPlayer(playback.appPlayer, playback.playbackOperations, playback.queueOperations, scope)

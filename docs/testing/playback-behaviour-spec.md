@@ -261,12 +261,11 @@ device-only: *Media session through Media3*.
 and repeat buttons, when one is pressed, then shuffle toggles and repeat goes off, all, one, and each button's icon
 follows the mode, whichever way it changed. (#345) — JVM (`spec/MediaSessionSpecTest`).
 
-**RS-46: a voice search plays what it finds, and a search for nothing plays every song.** Given a library, when a
-controller asks to play a search, then the songs it finds play; a blank search, or a request that names nothing, plays
-every song; and adding a search or a file to the queue adds the songs it names. (#345) — JVM
-(`spec/MediaSessionSpecTest`); an app on the old session library (`MediaControllerCompat` play-from-id and
-play-from-search) is device-only, as Robolectric's platform `MediaController` never reaches the session: *Media session
-through Media3*.
+**RS-46: a voice search plays what it finds, and adding one adds the songs it names.** Given a library, when a
+controller asks to play a search, then what it finds plays (RS-60; a search for nothing in particular is RS-61); and
+adding a search or a file to the queue adds the songs it names. (#345, #424) — JVM (`spec/MediaSessionSpecTest`); an
+app on the old session library (`MediaControllerCompat` play-from-id and play-from-search) is device-only, as
+Robolectric's platform `MediaController` never reaches the session: *Media session through Media3*.
 
 **RS-47: an app that isn't trusted can play but can't browse or change the queue.** Given a controller that isn't the
 system, S2 or a caller the app knows (Android Auto), when it connects, then its browse root is empty and it can't add,
@@ -318,6 +317,30 @@ the restore is on the emulator (`checks/open-file-intent.sh`).
 **RS-59: leaving S2 after opening a file keeps it playing.** Given a file opened from another app, when the user
 presses back, then S2 goes to the background and the file keeps playing, with its notification. Relaunching S2 from
 recents doesn't open the file again. (#425) — device-only (`checks/open-file-intent.sh`).
+
+## Voice search
+
+**RS-60: a voice search plays the closest match for what it names.** Given a library, when a voice search
+("play Radiohead on S2") focuses on an artist, album, song, genre or playlist, by the parts Assistant parses out or
+by its words, then that plays: an artist's or a genre's songs, an album or a playlist in order, or a song followed by
+the rest of its album. A search with no focus matches every kind and plays the best match, an artist over an album,
+a playlist, a song and a genre where they match as well; a song can be named with its artist ("Creep by
+Radiohead"). Case, accents, punctuation and a leading "the" don't count, and a name misheard, misspelt or with words
+around it plays the closest match rather than nothing; a focus with nothing of its kind (no playlists) is searched
+with no focus. (#424) — JVM (`mediasession/VoiceSearchResolverTest` per focus, `spec/MediaSessionSpecTest` through
+the session); on the emulator (`checks/voice-search.sh`); Assistant itself is device-only: *Media session through
+Media3*.
+
+**RS-61: a voice search for nothing in particular resumes the queue, or shuffles the library.** Given a queue, when
+a voice search with no words and no parts arrives ("play music on S2", or a request that names nothing), then the
+queue plays from where it was, unchanged; given no queue, every song plays, shuffled. (#424) — JVM
+(`spec/MediaSessionSpecTest`); on the emulator (`checks/voice-search.sh`).
+
+**RS-62: a voice search with the app not running plays once the saved queue is restored.** Given S2 not running,
+when a voice search arrives (`MEDIA_PLAY_FROM_SEARCH`), then the playback service starts in the foreground and stays
+there (RS-48), waits for the saved queue's restore, and plays the search's songs in its place; the search runs once,
+and isn't run again when S2 is reopened from recents. (#424) — JVM (`spec/ForegroundStartSpecTest`); the cold start
+on the emulator (`checks/voice-search.sh`).
 
 ## Commits with no rule
 

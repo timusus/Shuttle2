@@ -188,7 +188,8 @@ class SessionCallback(
     /**
      * Resolves a request to play [mediaItems] (a browsed media id, a URI or a voice search, as the requests from
      * older controllers arrive) to songs, and sets them as the queue through [PlayRequests]. The session then sets
-     * the player's own items, which [SessionPlayer] leaves alone, and plays them if that's what was asked.
+     * the player's own items, which [SessionPlayer] leaves alone, and plays them if that's what was asked. A voice
+     * search for nothing in particular leaves a queue there is to resume as it is.
      */
     override fun onSetMediaItems(
         mediaSession: MediaSession,
@@ -197,7 +198,12 @@ class SessionCallback(
         startIndex: Int,
         startPositionMs: Long
     ): ListenableFuture<MediaItemsWithStartPosition> = scope.listenableFuture {
-        val playQueue = resolve(mediaItems, startIndex)
+        val search = mediaItems.singleOrNull()?.takeIf { item -> item.isSearch }?.requestMetadata
+        val playQueue = if (search != null) {
+            playRequests.queueForSearch(search.searchQuery, search.extras) ?: return@listenableFuture currentItems(mediaSession.player)
+        } else {
+            resolve(mediaItems, startIndex)
+        }
         if (playQueue == null || playQueue.songs.isEmpty()) {
             throw UnsupportedOperationException("Nothing to play for ${mediaItems.map { it.mediaId }}")
         }
@@ -230,7 +236,7 @@ class SessionCallback(
 
     private suspend fun resolve(mediaItems: List<MediaItem>, startIndex: Int): PlayQueue? {
         val item = mediaItems.singleOrNull()
-        if (item != null && item.mediaId != MediaItem.DEFAULT_MEDIA_ID && item.requestMetadata.searchQuery == null && item.requestMetadata.mediaUri == null) {
+        if (item != null && item.mediaId != MediaItem.DEFAULT_MEDIA_ID && item.requestMetadata.mediaUri == null) {
             return playRequests.songsForMediaId(item.mediaId)
         }
         if (item != null) return PlayQueue(songsFor(item), 0)
@@ -239,18 +245,20 @@ class SessionCallback(
         return PlayQueue(songs.flatten(), songs.take(start).sumOf { it.size })
     }
 
+    /** A voice search: an item with a search query, or one that names nothing at all, as a search for "music" arrives. */
+    private val MediaItem.isSearch: Boolean
+        get() = requestMetadata.searchQuery != null || (mediaId == MediaItem.DEFAULT_MEDIA_ID && requestMetadata.mediaUri == null)
+
     /**
      * The songs [item] asks for on its own: those a search finds, the file at a URI, or the song a media id names (not
-     * the album or playlist it's in). An item that names nothing is a search with no query, as a voice search for
-     * "music" arrives, which finds every song.
+     * the album or playlist it's in). An item that names nothing is a search with no query, which names every song.
      */
     private suspend fun songsFor(item: MediaItem): List<Song> {
         val request = item.requestMetadata
         return when {
-            request.searchQuery != null -> playRequests.songsForSearch(request.searchQuery, request.extras)
+            item.isSearch -> playRequests.songsForSearch(request.searchQuery, request.extras)
             request.mediaUri != null -> listOfNotNull(playRequests.songForUri(request.mediaUri!!, mimeType = null))
-            item.mediaId != MediaItem.DEFAULT_MEDIA_ID -> listOfNotNull(songFor(item))
-            else -> playRequests.songsForSearch(null, request.extras)
+            else -> listOfNotNull(songFor(item))
         }
     }
 

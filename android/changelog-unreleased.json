@@ -82,6 +82,10 @@
   ],
   "fixes": [
     {
+      "text": "Asking Google Assistant to play an artist, album, song, genre or playlist in S2 now plays the closest match, even when S2 isn't running, and asking it just to play music resumes where you left off",
+      "commits": []
+    },
+    {
       "text": "When the song you left off on can't be played as S2 starts, for example because your server is out of reach, S2 now stays on it instead of moving on through your queue",
       "commits": []
     },

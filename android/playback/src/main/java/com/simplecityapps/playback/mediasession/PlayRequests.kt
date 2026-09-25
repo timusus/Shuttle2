@@ -3,14 +3,7 @@ package com.simplecityapps.playback.mediasession
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
-import android.provider.MediaStore
 import android.widget.Toast
-import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
-import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
-import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
-import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
-import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
-import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.androidauto.MediaIdHelper
@@ -26,16 +19,13 @@ import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
@@ -54,10 +44,8 @@ constructor(
     private val queueOperations: QueueOperations,
     private val mediaIdHelper: MediaIdHelper,
     private val uriSongResolver: UriSongResolver,
-    private val artistRepository: AlbumArtistRepository,
-    private val albumRepository: AlbumRepository,
-    private val songRepository: SongRepository,
-    private val genreRepository: GenreRepository
+    private val voiceSearchResolver: VoiceSearchResolver,
+    private val songRepository: SongRepository
 ) {
     /** The songs for the playable item [mediaId], or null for an id that isn't one. */
     suspend fun songsForMediaId(mediaId: String): PlayQueue? = mediaIdHelper.getPlayQueue(mediaId)
@@ -66,56 +54,34 @@ constructor(
     suspend fun songForUri(uri: Uri, mimeType: String?): Song? = uriSongResolver.resolve(uri, mimeType)
 
     /**
-     * The songs a voice search asks for. [extras] may focus it ([MediaStore.EXTRA_MEDIA_FOCUS]) on an artist, album
-     * or genre; otherwise [query] is matched against songs, and no query at all means every song.
+     * The queue a voice search asks for (see [VoiceSearchResolver]), or null to play the queue as it is: a search for
+     * nothing in particular resumes the queue, or shuffles the whole library when there's no queue to resume. A search
+     * that finds nothing (an empty library) is an empty queue.
      */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    suspend fun songsForSearch(query: String?, extras: Bundle?): List<Song> {
-        val artist = extras?.getString(MediaStore.EXTRA_MEDIA_ARTIST)
-        val album = extras?.getString(MediaStore.EXTRA_MEDIA_ALBUM)
-        val genre = extras?.getString(MediaStore.EXTRA_MEDIA_GENRE)
+    suspend fun queueForSearch(query: String?, extras: Bundle?): PlayQueue? = when (val result = voiceSearchResolver.resolve(VoiceSearch.from(query, extras))) {
+        is VoiceSearchResult.Songs -> PlayQueue(result.songs, result.position)
 
-        val flow =
-            when (extras?.getString(MediaStore.EXTRA_MEDIA_FOCUS)) {
-                MediaStore.Audio.Artists.ENTRY_CONTENT_TYPE, MediaStore.Audio.Artists.CONTENT_TYPE -> {
-                    artist?.let {
-                        artistRepository
-                            .getAlbumArtists(AlbumArtistQuery.Search(query = artist))
-                            .flatMapConcat { albumArtists ->
-                                songRepository.getSongs(SongQuery.ArtistGroupKeys(albumArtists.map { albumArtist -> SongQuery.ArtistGroupKey(albumArtist.groupKey) }))
-                            }
-                    } ?: emptyFlow()
-                }
+        VoiceSearchResult.Empty -> PlayQueue(emptyList(), 0)
 
-                MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE -> {
-                    album?.let {
-                        albumRepository
-                            .getAlbums(AlbumQuery.Search(query = album))
-                            .flatMapConcat { albums ->
-                                songRepository.getSongs(SongQuery.AlbumGroupKeys(albums.map { album -> SongQuery.AlbumGroupKey(album.groupKey) }))
-                            }
-                    } ?: emptyFlow()
-                }
-
-                MediaStore.Audio.Genres.ENTRY_CONTENT_TYPE -> {
-                    genre?.let {
-                        genreRepository
-                            .getGenres(GenreQuery.Search(genre))
-                            .flatMapConcat { genres ->
-                                genres.firstOrNull()?.let { genre ->
-                                    genreRepository.getSongsForGenre(genre.name, SongQuery.All())
-                                } ?: emptyFlow()
-                            }
-                    } ?: emptyFlow()
-                }
-
-                else -> songRepository.getSongs(query?.takeIf { it.isNotBlank() }?.let { SongQuery.Search(query = query) } ?: SongQuery.All())
-            }.flowOn(Dispatchers.IO)
-
-        return flow.firstOrNull().orEmpty().also { songs ->
-            if (songs.isEmpty()) Timber.v("Search query $query with extras $extras yielded no results")
+        VoiceSearchResult.Anything -> {
+            queueOperations.queueStateFlow.awaitRestored()
+            if (queueOperations.getQueue().isNotEmpty()) null else PlayQueue(librarySongs().shuffled(), 0)
         }
+    }.also { playQueue ->
+        if (playQueue?.songs?.isEmpty() == true) Timber.v("Search query $query with extras $extras yielded no results")
     }
+
+    /**
+     * The songs a voice search names, to add to the queue: those it would play, from the one it would start at, and
+     * every song for a search for nothing in particular.
+     */
+    suspend fun songsForSearch(query: String?, extras: Bundle?): List<Song> = when (val result = voiceSearchResolver.resolve(VoiceSearch.from(query, extras))) {
+        is VoiceSearchResult.Songs -> result.songs.drop(result.position)
+        VoiceSearchResult.Empty -> emptyList()
+        VoiceSearchResult.Anything -> librarySongs()
+    }
+
+    private suspend fun librarySongs(): List<Song> = withContext(Dispatchers.IO) { songRepository.getSongs(SongQuery.All()).firstOrNull().orEmpty() }
 
     /**
      * Replaces the queue with [songs], starting at [position], and loads it, returning once it has loaded (or failed
@@ -135,12 +101,21 @@ constructor(
         }
     }
 
-    /** Plays the songs a voice search asks for (see [songsForSearch]). */
-    fun playFromSearch(query: String?, extras: Bundle?): Job = appCoroutineScope.launch {
-        songsForSearch(query, extras).takeIf { it.isNotEmpty() }?.let { songs ->
-            if (setQueue(songs, position = 0, source = "playFromSearch")) playbackOperations.play()
+    /**
+     * Plays what a voice search asks for (see [queueForSearch]), returning once it's playing, or once it's clear
+     * nothing will: as the app starts, that waits for the saved queue to be restored.
+     */
+    suspend fun playSearch(query: String?, extras: Bundle?) {
+        val playQueue = queueForSearch(query, extras)
+        when {
+            playQueue == null -> playbackOperations.play()
+            playQueue.songs.isEmpty() -> Unit
+            setQueue(playQueue.songs, playQueue.position, source = "playFromSearch") -> playbackOperations.play()
         }
     }
+
+    /** Plays what a voice search asks for (see [playSearch]), for as long as the app runs. */
+    fun playFromSearch(query: String?, extras: Bundle?): Job = appCoroutineScope.launch { playSearch(query, extras) }
 
     /** Plays the file at [uri] on its own, replacing the queue, or says it can't be opened. */
     fun playFromUri(uri: Uri, mimeType: String?): Job = appCoroutineScope.launch {

@@ -4,18 +4,14 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
-import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
-import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
-import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -28,16 +24,6 @@ class FakeAlbumArtistRepository(private val artists: List<AlbumArtist> = emptyLi
 /** The albums [albums], read only. */
 class FakeAlbumRepository(private val albums: List<Album> = emptyList()) : AlbumRepository {
     override fun getAlbums(query: AlbumQuery): Flow<List<Album>> = flowOf(albums.filter(query.predicate))
-}
-
-/** No genres. */
-class FakeGenreRepository : GenreRepository {
-    override fun getGenres(query: GenreQuery): Flow<List<Genre>> = flowOf(emptyList())
-
-    override fun getSongsForGenres(
-        genres: List<String>,
-        songQuery: SongQuery
-    ): Flow<List<Song>> = flowOf(emptyList())
 }
 
 /** The playlists [playlists] and their songs, in order, read only. */
