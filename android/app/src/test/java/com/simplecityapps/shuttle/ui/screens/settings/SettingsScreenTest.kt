@@ -31,6 +31,15 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun `the root opens S2 Pro`() {
+        robot.setRootContent()
+
+        robot.tapText("S2 Pro")
+
+        robot.openedPro shouldBe true
+    }
+
+    @Test
     fun `back leaves settings`() {
         robot.setRootContent()
 

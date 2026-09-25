@@ -69,7 +69,7 @@ class SettingsScreenshotTest {
     }
 
     @Test
-    fun root() = shot("root") { SettingsRootScreen(onNavigateUp = {}, onOpenDestination = {}) }
+    fun root() = shot("root") { SettingsRootScreen(onNavigateUp = {}, onOpenDestination = {}, onOpenPro = {}) }
 
     @Test
     fun appearance() = shot("appearance", content = destination(SettingsDestination.Appearance, SettingsScenarios.darkPureBlack))

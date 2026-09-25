@@ -29,13 +29,15 @@ class SettingsRobot(private val rule: ComposeContentTestRule) {
     val choiceSelections = mutableListOf<Pair<String, Int>>()
     val actions = mutableListOf<SettingsAction>()
     val openedLinks = mutableListOf<SettingsLink>()
+    var openedPro = false
+        private set
     var navigatedUp = false
         private set
 
     fun setRootContent() {
         rule.setContent {
             S2AppTheme(AppThemeState()) {
-                SettingsRootScreen(onNavigateUp = { navigatedUp = true }, onOpenDestination = { openedDestinations += it })
+                SettingsRootScreen(onNavigateUp = { navigatedUp = true }, onOpenDestination = { openedDestinations += it }, onOpenPro = { openedPro = true })
             }
         }
     }
