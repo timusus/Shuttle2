@@ -177,6 +177,21 @@ class SearchIndexTest {
     }
 
     @Test
+    fun `highlights a query token only where it matches with the fewest typos`() {
+        SearchQuery.parse("night").highlights("Night Ferry Lights") shouldContainExactly listOf(0..4)
+        SearchQuery.parse("lights").highlights("Night Ferry Lights") shouldContainExactly listOf(12..17)
+        // Ties are all highlighted
+        SearchQuery.parse("salt").highlights("Salt of the Salt Flats") shouldContainExactly listOf(0..3, 12..15)
+    }
+
+    @Test
+    fun `highlights a query token's best match across a row's texts`() {
+        SearchQuery.parse("night").highlights(listOf("Lights Out", "Night Bus Frequencies")) shouldContainExactly listOf(emptyList(), listOf(0..4))
+        SearchQuery.parse("night lights").highlights(listOf("Lights Out", "Night Bus Frequencies")) shouldContainExactly listOf(listOf(0..5), listOf(0..4))
+        SearchQuery.parse("night").highlights(listOf("Night Ferry", null, "Late Night")) shouldContainExactly listOf(listOf(0..4), emptyList(), listOf(5..9))
+    }
+
+    @Test
     fun `highlights nothing of a term a longer query token can't match`() {
         SearchQuery.parse("nightjar").highlights("Late Night").shouldBeEmpty()
         SearchQuery.parse("saltmarsh").highlights("Wall of Salt").shouldBeEmpty()

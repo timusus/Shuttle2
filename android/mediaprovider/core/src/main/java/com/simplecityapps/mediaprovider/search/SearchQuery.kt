@@ -17,19 +17,33 @@ class SearchQuery private constructor(internal val tokens: List<String>) {
      * The ranges of [text] this query matches, merged and in order, so a row can bold them. A field token is
      * highlighted up to the length of the query token's best match, or whole if the query token covers it.
      */
-    fun highlights(text: String?): List<IntRange> {
-        if (text.isNullOrEmpty() || tokens.isEmpty()) return emptyList()
-        val ranges = mutableListOf<IntRange>()
-        SearchText.tokens(text, withSources = true) { token, sources, _, _ ->
-            val length = tokens.maxOf { query -> PrefixDistance.matchedLength(query, token, typoBudget(query.length)) }
-            if (length > 0) {
-                var end = sources!![length - 1] + 1
-                // Take in the combining marks that trail the last matched char, so an accent isn't left unbolded.
-                while (end < text.length && text[end].isMark()) end++
-                ranges += sources[0] until end
+    fun highlights(text: String?): List<IntRange> = highlights(listOf(text)).single()
+
+    /**
+     * The ranges of each of [texts] (a row's title and secondary line, say) this query matches, as [highlights] for one
+     * text, except that each query token is highlighted only where it matches best across all of them: with the fewest
+     * typos, and wherever it ties. So "night" bolds "Night" in "Night Ferry Lights" but not "Lights", which it matches
+     * only with a typo.
+     */
+    fun highlights(texts: List<String?>): List<List<IntRange>> {
+        if (tokens.isEmpty()) return texts.map { emptyList() }
+        class Match(val text: Int, val start: Int, val end: Int, val queryToken: Int, val typos: Int)
+        val matches = mutableListOf<Match>()
+        texts.forEachIndexed { t, text ->
+            if (text.isNullOrEmpty()) return@forEachIndexed
+            SearchText.tokens(text, withSources = true) { token, sources, _, _ ->
+                tokens.forEachIndexed { q, query ->
+                    val match = PrefixDistance.match(query, token, typoBudget(query.length)) ?: return@forEachIndexed
+                    var end = sources!![match.length - 1] + 1
+                    // Take in the combining marks that trail the last matched char, so an accent isn't left unbolded.
+                    while (end < text.length && text[end].isMark()) end++
+                    matches += Match(t, sources[0], end, q, match.typos)
+                }
             }
         }
-        return ranges.merged()
+        val fewestTypos = matches.groupBy { it.queryToken }.mapValues { (_, byToken) -> byToken.minOf { it.typos } }
+        val best = matches.filter { it.typos == fewestTypos.getValue(it.queryToken) }
+        return texts.indices.map { t -> best.filter { it.text == t }.map { it.start until it.end }.merged() }
     }
 
     override fun equals(other: Any?): Boolean = other is SearchQuery && other.tokens == tokens
@@ -66,11 +80,14 @@ private fun List<IntRange>.merged(): List<IntRange> {
 
 /** Bounded Damerau-Levenshtein (optimal string alignment) between a query token and the prefixes of a term. */
 internal object PrefixDistance {
+    /** How [query] matches a prefix of a term: the prefix's [length] and the [typos] it takes. */
+    class Match(val length: Int, val typos: Int)
+
     /**
-     * The length of the longest prefix of [term] that [query] matches with the fewest typos, if that's within
-     * [maxTypos]; 0 when [query] doesn't match any prefix of [term].
+     * The longest prefix of [term] that [query] matches with the fewest typos, if that's within [maxTypos]; null when
+     * [query] doesn't match any prefix of [term].
      */
-    fun matchedLength(query: String, term: String, maxTypos: Int): Int {
+    fun match(query: String, term: String, maxTypos: Int): Match? {
         val q = query.length
         var prev2 = IntArray(q + 1)
         var prev = IntArray(q + 1) { it }
@@ -96,6 +113,6 @@ internal object PrefixDistance {
             prev = row
             row = recycled
         }
-        return if (best <= maxTypos && bestLength > 0) bestLength else 0
+        return if (best <= maxTypos && bestLength > 0) Match(bestLength, best) else null
     }
 }

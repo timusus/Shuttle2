@@ -24,6 +24,9 @@ class SearchDocument<T>(
 data class SearchHit<out T>(val item: T, val query: SearchQuery) {
     fun highlights(text: String?): List<IntRange> = query.highlights(text)
 
+    /** [SearchQuery.highlights] across a row's [texts], so each query token is highlighted only where it matches best. */
+    fun highlights(texts: List<String?>): List<List<IntRange>> = query.highlights(texts)
+
     fun <R> map(transform: (T) -> R): SearchHit<R> = SearchHit(transform(item), query)
 }
 

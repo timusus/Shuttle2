@@ -34,7 +34,7 @@ internal fun ArtistResult(hit: SearchHit<AlbumArtist>, callbacks: SearchCallback
     val name = artist.name ?: artist.friendlyArtistName ?: stringResource(com.simplecityapps.core.R.string.unknown)
     val showActions = { callbacks.onShowActions(MediaActionsTarget(name, null, MediaSelection.AlbumArtists(artist), ArtworkPlaceholder.Artist)) }
     ArtistRow(
-        name = highlighted(name, hit),
+        name = highlighted(hit, listOf(name)).single(),
         summary = countString(R.plurals.albumsPlural, artist.albumCount),
         onClick = { callbacks.onArtistClick(artist) },
         artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, size = ArtworkSize.Small, shape = ArtworkShape.Circle) },
@@ -50,9 +50,10 @@ internal fun AlbumResult(hit: SearchHit<Album>, callbacks: SearchCallbacks) {
     val title = album.name ?: unknown
     val artist = album.albumArtist ?: album.friendlyArtistName ?: unknown
     val showActions = { callbacks.onShowActions(MediaActionsTarget(title, artist, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) }
+    val (titleText, artistText) = highlighted(hit, listOf(title), listOf(artist))
     AlbumRow(
-        title = highlighted(title, hit),
-        artist = highlighted(artist, hit),
+        title = titleText,
+        artist = artistText,
         meta = album.year?.toString(),
         onClick = { callbacks.onAlbumClick(album) },
         artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, size = ArtworkSize.Small) },
@@ -69,9 +70,10 @@ internal fun SongResult(hit: SearchHit<Song>, index: Int, callbacks: SearchCallb
     val title = song.name ?: unknown
     val subtitleParts = listOfNotNull(song.friendlyArtistName ?: song.albumArtist, song.album).ifEmpty { listOf(unknown) }
     val showActions = { callbacks.onShowActions(MediaActionsTarget(title, subtitleParts.joinToString(" · "), MediaSelection.Songs(song), ArtworkPlaceholder.Song)) }
+    val (titleText, subtitleText) = highlighted(hit, listOf(title), subtitleParts)
     SongRow(
-        title = highlighted(title, hit),
-        subtitle = highlighted(subtitleParts, hit),
+        title = titleText,
+        subtitle = subtitleText,
         onClick = { callbacks.onSongClick(index) },
         artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
         onLongClick = showActions,
@@ -85,7 +87,7 @@ internal fun GenreResult(hit: SearchHit<Genre>, callbacks: SearchCallbacks) {
     val songCount = countString(R.plurals.songsPlural, genre.songCount)
     val showActions = { callbacks.onShowActions(MediaActionsTarget(genre.name, songCount, MediaSelection.Genres(genre), ArtworkPlaceholder.Genre)) }
     GenreRow(
-        name = highlighted(genre.name, hit),
+        name = highlighted(hit, listOf(genre.name)).single(),
         songCount = songCount,
         onClick = { callbacks.onGenreClick(genre) },
         artwork = { LibraryArtwork(null, ArtworkPlaceholder.Genre, size = ArtworkSize.Small) },
@@ -100,7 +102,7 @@ internal fun PlaylistResult(hit: SearchHit<Playlist>, callbacks: SearchCallbacks
     val summary = countString(R.plurals.songsPlural, playlist.songCount)
     val showActions = { callbacks.onShowActions(MediaActionsTarget(playlist.name, summary, MediaSelection.Playlists(playlist), ArtworkPlaceholder.Playlist)) }
     PlaylistRow(
-        name = highlighted(playlist.name, hit),
+        name = highlighted(hit, listOf(playlist.name)).single(),
         summary = summary,
         onClick = { callbacks.onPlaylistClick(playlist) },
         artwork = { LibraryArtwork(null, ArtworkPlaceholder.Playlist, size = ArtworkSize.Small) },
@@ -111,21 +113,27 @@ internal fun PlaylistResult(hit: SearchHit<Playlist>, callbacks: SearchCallbacks
 
 private val MatchStyle = SpanStyle(fontWeight = FontWeight.Bold)
 
-/** [parts] joined with " · ", each part's matches in bold. */
+/**
+ * Each of a row's [lines] with the query's matches in bold, a line's parts joined with " · ". The lines are highlighted
+ * together, so a query token is bolded only where it matches best in the row.
+ */
 @Composable
-private fun highlighted(parts: List<String>, hit: SearchHit<*>): AnnotatedString = remember(parts, hit) {
-    buildAnnotatedString {
-        parts.forEachIndexed { i, part ->
-            if (i > 0) append(" · ")
-            val start = length
-            append(part)
-            hit.highlights(part).forEach { addStyle(MatchStyle, start + it.first, start + it.last + 1) }
+private fun highlighted(hit: SearchHit<*>, vararg lines: List<String>): List<AnnotatedString> {
+    val key = lines.toList()
+    return remember(hit, key) {
+        val ranges = hit.highlights(key.flatten()).iterator()
+        key.map { parts ->
+            buildAnnotatedString {
+                parts.forEachIndexed { i, part ->
+                    if (i > 0) append(" · ")
+                    val start = length
+                    append(part)
+                    ranges.next().forEach { addStyle(MatchStyle, start + it.first, start + it.last + 1) }
+                }
+            }
         }
     }
 }
-
-@Composable
-private fun highlighted(text: String, hit: SearchHit<*>): AnnotatedString = highlighted(listOf(text), hit)
 
 @Composable
 private fun countString(@PluralsRes plural: Int, count: Int): String = pluralStringResource(plural, count, count).replace("{count}", count.toString())
