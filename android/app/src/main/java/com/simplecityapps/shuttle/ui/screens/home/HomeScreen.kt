@@ -37,8 +37,13 @@ import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.translate
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.pluralStringResource
@@ -46,6 +51,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
@@ -165,7 +172,10 @@ private fun WhatsNewCard(callbacks: HomeCallbacks) {
     }
 }
 
-/** A multi-browse carousel of albums (inventory §3), hidden when there are none. */
+/**
+ * A multi-browse carousel of albums (inventory §3), hidden when there are none. Each album's title and artist sit below
+ * its cover rather than over it, where they'd clash with text printed on the art (#404).
+ */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 private fun LazyListScope.albumCarousel(
     @StringRes title: Int,
@@ -178,41 +188,71 @@ private fun LazyListScope.albumCarousel(
     item(key = key) {
         HorizontalMultiBrowseCarousel(
             state = rememberCarouselState { albums.size },
-            preferredItemWidth = 200.dp,
+            preferredItemWidth = CarouselCoverSize,
             itemSpacing = 8.dp,
             contentPadding = PaddingValues(horizontal = 16.dp),
-            modifier = Modifier.fillMaxWidth().height(200.dp),
+            modifier = Modifier.fillMaxWidth().height(CarouselCoverSize + CarouselLabelHeight),
         ) { index ->
             val album = albums[index]
             val title = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown)
             val artist = album.albumArtist ?: album.friendlyArtistName ?: stringResource(com.simplecityapps.core.R.string.unknown)
-            Box(
+            val coverShape = MaterialTheme.shapes.extraLarge
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .maskClip(MaterialTheme.shapes.extraLarge)
+                    // The mask spans the cover and its label; the cover rounds its own visible part below.
+                    .maskClip(RectangleShape)
                     .combinedClickable(
                         onClick = { callbacks.onAlbumClick(album) },
                         onLongClick = { callbacks.onShowActions(MediaActionsTarget(title, artist, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
                     ),
             ) {
-                LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Hero)
+                LibraryArtwork(
+                    album,
+                    ArtworkPlaceholder.Album,
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .graphicsLayer {
+                            val mask = carouselItemDrawInfo.maskRect
+                            shape = HorizontalSliceShape(coverShape, mask.left, mask.right)
+                            clip = true
+                        },
+                    size = ArtworkSize.Hero,
+                )
                 Column(
                     modifier = Modifier
-                        .align(Alignment.BottomStart)
                         .fillMaxWidth()
+                        .height(CarouselLabelHeight)
                         // Keep the label at the visible edge and fade it out as the item shrinks toward small.
                         .graphicsLayer {
                             val info = carouselItemDrawInfo
                             translationX = info.maskRect.left
                             alpha = if (info.maxSize > info.minSize) ((info.size - info.minSize) / (info.maxSize - info.minSize)).coerceIn(0f, 1f).let { it * it } else 1f
                         }
-                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f))))
-                        .padding(start = 12.dp, end = 12.dp, top = 24.dp, bottom = 12.dp),
+                        .padding(start = 4.dp, end = 4.dp, top = 8.dp),
                 ) {
-                    Text(title, style = MaterialTheme.typography.titleSmall, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(artist, style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.8f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(artist, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
+        }
+    }
+}
+
+private val CarouselCoverSize = 200.dp
+
+/** Room below a carousel cover for its title and artist, one line each. */
+private val CarouselLabelHeight = 48.dp
+
+/** [shape] fitted to the horizontal slice [left]..[right] of the bounds, their full height: a carousel item's visible part. */
+private class HorizontalSliceShape(private val shape: Shape, private val left: Float, private val right: Float) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val offset = Offset(left, 0f)
+        return when (val outline = shape.createOutline(Size(right - left, size.height), layoutDirection, density)) {
+            is Outline.Rectangle -> Outline.Rectangle(outline.rect.translate(offset))
+            is Outline.Rounded -> Outline.Rounded(outline.roundRect.translate(offset))
+            is Outline.Generic -> Outline.Generic(Path().apply { addPath(outline.path, offset) })
         }
     }
 }
