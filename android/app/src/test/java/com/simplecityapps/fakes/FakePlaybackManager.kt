@@ -55,8 +55,12 @@ class FakePlaybackManager : PlaybackOperations {
         calls += "skipTo($position)"
     }
 
+    /** Runs after each [addToQueue], for a test that keeps a fake queue in step. */
+    var onAddToQueue: (List<Song>) -> Unit = {}
+
     override suspend fun addToQueue(songs: List<Song>) {
         addedToQueue.addAll(songs)
+        onAddToQueue(songs)
     }
 
     override suspend fun playNext(songs: List<Song>) {

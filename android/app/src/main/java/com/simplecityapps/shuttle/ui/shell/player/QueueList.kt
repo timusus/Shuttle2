@@ -52,7 +52,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.QueueRow
 import com.simplecityapps.shuttle.designsystem.component.S2Action
-import com.simplecityapps.shuttle.designsystem.component.S2ActionsSheet
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.formatDuration
@@ -82,7 +81,7 @@ internal fun QueueHeader(
 
 /**
  * The queue: tap a row to play it, drag its handle to reorder, swipe it away to remove it, or
- * long-press it for Play Next and Remove. The list scrolls inside the sheet's nested scroll, so an
+ * long-press it for its song actions. The list scrolls inside the sheet's nested scroll, so an
  * upward drag raises the sheet to Queue before the list moves.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -96,7 +95,7 @@ internal fun QueueList(
     val listState = rememberLazyListState()
     val reorder = remember(listState) { QueueReorderState(listState) }
     val scope = rememberCoroutineScope()
-    var menuFor by remember { mutableStateOf<PlayerSong?>(null) }
+    val songActions = rememberSongActionsState()
     val currentItems by rememberUpdatedState(items)
 
     // Open on the current song, with the played ones above it.
@@ -122,7 +121,7 @@ internal fun QueueList(
                 dragging = dragging,
                 swipeEnabled = reorder.draggingUid == null,
                 onClick = { actions.skipToQueueItem(row.uid) },
-                onLongClick = { menuFor = row },
+                onLongClick = { songActions.menuFor = row },
                 onRemove = { actions.removeQueueItem(row.uid) },
                 dragHandleModifier = Modifier.pointerInput(row.uid) {
                     detectDragGestures(
@@ -161,18 +160,12 @@ internal fun QueueList(
         }
     }
 
-    menuFor?.let { row ->
-        S2ActionsSheet(
-            title = row.title,
-            subtitle = row.artist,
-            artwork = { SongArtwork(row.song) },
-            actions = listOf(
-                S2Action(label = playNext, onClick = { actions.playNext(row.uid) }, icon = Icons.Rounded.QueuePlayNext),
-                S2Action(label = remove, onClick = { actions.removeQueueItem(row.uid) }, icon = Icons.Rounded.RemoveCircleOutline),
-            ),
-            onDismissRequest = { menuFor = null },
+    SongActionsHost(songActions, actions, leading = { row ->
+        listOf(
+            S2Action(label = playNext, onClick = { actions.playNext(row.uid) }, icon = Icons.Rounded.QueuePlayNext),
+            S2Action(label = remove, onClick = { actions.removeQueueItem(row.uid) }, icon = Icons.Rounded.RemoveCircleOutline),
         )
-    }
+    })
 }
 
 @Composable

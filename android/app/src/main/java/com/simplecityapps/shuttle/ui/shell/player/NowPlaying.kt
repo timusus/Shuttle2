@@ -47,7 +47,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.R as DesignR
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2Action
-import com.simplecityapps.shuttle.designsystem.component.S2ActionsSheet
 import com.simplecityapps.shuttle.designsystem.component.S2ChoiceList
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
@@ -67,7 +66,7 @@ internal fun NowPlayingHeader(
     modifier: Modifier = Modifier,
 ) {
     var showSleepTimer by rememberSaveable { mutableStateOf(false) }
-    var showOverflow by rememberSaveable { mutableStateOf(false) }
+    val songActions = rememberSongActionsState()
     Row(modifier = modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         S2IconButton(icon = Icons.Rounded.KeyboardArrowDown, contentDescription = stringResource(R.string.player_collapse), onClick = onCollapse)
         Text(text = stringResource(R.string.player_now_playing), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
@@ -79,23 +78,13 @@ internal fun NowPlayingHeader(
             checked = player.sleepTimerActive,
             onCheckedChange = { showSleepTimer = true },
         )
-        S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = stringResource(DesignR.string.ds_more_options), onClick = { showOverflow = true })
+        S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = stringResource(DesignR.string.ds_more_options), onClick = { songActions.menuFor = player.current })
     }
     if (showSleepTimer) {
         SleepTimerDialog(player = player, actions = actions, onDismiss = { showSleepTimer = false })
     }
-    val current = player.current
-    if (showOverflow && current != null) {
-        S2ActionsSheet(
-            title = current.title,
-            subtitle = current.artist,
-            artwork = { SongArtwork(current.song) },
-            actions = listOf(
-                S2Action(label = stringResource(R.string.menu_title_sort_clear_queue), onClick = actions::clearQueue, icon = Icons.Rounded.ClearAll, destructive = true),
-            ),
-            onDismissRequest = { showOverflow = false },
-        )
-    }
+    val clearQueue = stringResource(R.string.menu_title_sort_clear_queue)
+    SongActionsHost(songActions, actions, trailing = listOf(S2Action(label = clearQueue, onClick = actions::clearQueue, icon = Icons.Rounded.ClearAll, destructive = true)))
 }
 
 /** The Cast framework's route button, themed to the player's scheme. Only shown where Cast can start. */

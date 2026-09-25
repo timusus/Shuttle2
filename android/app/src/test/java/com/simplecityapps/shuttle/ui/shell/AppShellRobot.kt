@@ -32,6 +32,7 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.navigation3.runtime.NavKey
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.computeWindowSizeClass
@@ -39,6 +40,11 @@ import com.simplecityapps.createSong
 import com.simplecityapps.sampleSongs
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.MediaAction
+import com.simplecityapps.shuttle.ui.actions.MediaActionResult
+import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
@@ -47,9 +53,11 @@ import com.simplecityapps.shuttle.ui.shell.player.PlayerTestTags
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiState
 import com.simplecityapps.shuttle.ui.shell.player.description
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.receiveAsFlow
 
 /** A queue of [titles], each by "Artist", three minutes long, playing the first. */
 fun shellQueue(vararg titles: String): PlayerUiState {
@@ -85,12 +93,25 @@ fun sampleShellQueue(size: Int = 8): PlayerUiState {
 
 val EmptyShellQueue = PlayerUiState(hasQueue = false, current = null, items = emptyList())
 
-/** Records each action by name, plays and pauses [state] in place, and reports a cleared queue on [events]. */
+/**
+ * Records each action by name, plays and pauses [state] in place, reports a cleared queue or removed
+ * row on [events], and answers each song action with [mediaActionResult].
+ */
 class RecordingPlayerActions(
     private val state: MutableState<PlayerUiState>,
 ) : PlayerActions {
     val calls = mutableListOf<String>()
+    val mediaActions = mutableListOf<MediaAction>()
     val events = MutableSharedFlow<PlayerUiEvent>(extraBufferCapacity = 8)
+    var songActions: List<MediaActionType> = listOf(
+        MediaActionType.AddToPlaylist,
+        MediaActionType.GoToAlbum,
+        MediaActionType.GoToArtist,
+        MediaActionType.SongInfo,
+        MediaActionType.Exclude,
+    )
+    var playlists: List<Playlist> = emptyList()
+    var mediaActionResult: (MediaAction) -> MediaActionResult = { MediaActionResult.None }
 
     override fun togglePlayback() {
         calls += "togglePlayback"
@@ -147,6 +168,11 @@ class RecordingPlayerActions(
 
     override fun removeQueueItem(uid: Long) {
         calls += "removeQueueItem($uid)"
+        events.tryEmit(PlayerUiEvent.QueueItemRemoved)
+    }
+
+    override fun undoRemoveQueueItem() {
+        calls += "undoRemoveQueueItem"
     }
 
     override fun playNext(uid: Long) {
@@ -160,6 +186,15 @@ class RecordingPlayerActions(
 
     override fun undoClearQueue() {
         calls += "undoClearQueue"
+    }
+
+    override fun songActions(song: Song): Flow<List<MediaActionType>> = flowOf(songActions)
+
+    override fun playlists(): Flow<List<Playlist>> = flowOf(playlists)
+
+    override fun onMediaAction(action: MediaAction) {
+        mediaActions += action
+        events.tryEmit(PlayerUiEvent.MediaActionDone(mediaActionResult(action)))
     }
 }
 
@@ -185,6 +220,9 @@ class AppShellRobot(
 
     val calls: List<String> get() = actions.calls
 
+    /** The routes the player's events asked the shell to open. */
+    val navigated = mutableListOf<NavKey>()
+
     fun setContent(
         queue: PlayerUiState = queueState.value,
         window: WindowAdaptiveInfo = CompactWindow,
@@ -199,8 +237,17 @@ class AppShellRobot(
             val currentWindow by windowState
             val currentProgress by progressState
             val snackbarHostState = remember { SnackbarHostState() }
+            val routes = remember { Channel<NavKey>(Channel.UNLIMITED) }
             S2Theme {
-                PlayerEventsEffect(actions.events, snackbarHostState, onUndoClearQueue = actions::undoClearQueue)
+                PlayerEventsEffect(
+                    actions.events,
+                    snackbarHostState,
+                    actions = actions,
+                    onNavigate = { route ->
+                        navigated += route
+                        routes.trySend(route)
+                    },
+                )
                 AppShell(
                     playerUi = currentQueue,
                     progress = { currentProgress },
@@ -208,6 +255,7 @@ class AppShellRobot(
                     snackbarHostState = snackbarHostState,
                     windowAdaptiveInfo = currentWindow,
                     entryProvider = ::fakeShellEntryProvider,
+                    navigationRequests = remember(routes) { routes.receiveAsFlow() },
                 )
             }
         }
@@ -255,6 +303,8 @@ class AppShellRobot(
         rule.onNodeWithText(text).performClick()
         rule.waitForIdle()
     }
+
+    /** Types into the one text field on screen. */
 
     fun pressBack() {
         rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }

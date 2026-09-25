@@ -3,6 +3,14 @@ package com.simplecityapps.shuttle.ui.shell
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import com.simplecityapps.createAlbum
+import com.simplecityapps.createPlaylist
+import com.simplecityapps.shuttle.ui.actions.MediaAction
+import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
+import com.simplecityapps.shuttle.ui.actions.MediaActionResult
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.actions.SnackbarAction
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
@@ -249,7 +257,7 @@ class AppShellTest {
     }
 
     @Test
-    fun `long-pressing a queue row offers Play Next and Remove`() {
+    fun `long-pressing a queue row offers Play Next`() {
         robot.setContent()
         robot.tapMiniPlayer()
         robot.tapQueuePeek()
@@ -270,4 +278,90 @@ class AppShellTest {
         robot.calls shouldContain "clearQueue"
         robot.calls.last() shouldBe "undoClearQueue"
     }
+
+    @Test
+    fun `removing a queue row from its menu offers Undo`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapQueuePeek()
+
+        robot.longPressQueueRow("Second song")
+        robot.tapText("Remove from Queue")
+        robot.tapText("Undo")
+        robot.calls shouldBe listOf("removeQueueItem(1)", "undoRemoveQueueItem")
+    }
+
+    @Test
+    fun `a queue row's song actions act on that row's song`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapQueuePeek()
+
+        robot.longPressQueueRow("Third song")
+        robot.tapText("Song Info")
+        robot.actions.mediaActions.single().shouldBeSongAction<MediaAction.SongInfo>("Third song")
+    }
+
+    @Test
+    fun `Go to album in the Now Playing menu opens the album and settles the sheet to Mini`() {
+        val album = createAlbum(name = "Album", albumArtist = "Artist")
+        robot.actions.mediaActionResult = { MediaActionResult.Navigate(NavigationTarget.Album(album)) }
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.tapDescription("More options")
+        robot.tapText("Go to album")
+        robot.actions.mediaActions.single().shouldBeSongAction<MediaAction.GoToAlbum>("First song")
+        robot.navigated shouldBe listOf(AlbumRoute(albumKey = "Album", albumArtistKey = "Artist"))
+        robot.assertLevel(PlayerLevel.Mini)
+    }
+
+    @Test
+    fun `the Now Playing menu keeps Clear Queue after the song actions`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.tapDescription("More options")
+        robot.tapText("Clear Queue")
+        robot.calls shouldBe listOf("clearQueue")
+        robot.actions.mediaActions shouldBe emptyList()
+    }
+
+    @Test
+    fun `Add to playlist adds the song to the playlist picked`() {
+        val roadTrip = createPlaylist(name = "Road trip")
+        robot.actions.playlists = listOf(roadTrip)
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.tapDescription("More options")
+        robot.tapText("Add to Playlist")
+        robot.assertTextDisplayed("New Playlist")
+        robot.tapText("Road trip")
+
+        val added = robot.actions.mediaActions.single()
+        added.shouldBeSongAction<MediaAction.AddToPlaylist>("First song")
+        (added as MediaAction.AddToPlaylist).playlist shouldBe roadTrip
+    }
+
+    @Test
+    fun `a song action's snackbar button sends its action back`() {
+        val include = MediaAction.Include(MediaSelection.Songs(emptyList()))
+        robot.actions.mediaActionResult = { action ->
+            if (action is MediaAction.Exclude) MediaActionResult.Message(MediaActionMessage.Excluded(1), SnackbarAction(SnackbarAction.Label.Undo, include)) else MediaActionResult.None
+        }
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.tapDescription("More options")
+        robot.tapText("Exclude")
+        robot.assertTextDisplayed("1 song excluded")
+        robot.tapText("Undo")
+        robot.actions.mediaActions.last() shouldBe include
+    }
+}
+
+private inline fun <reified T : MediaAction> MediaAction.shouldBeSongAction(title: String) {
+    (this is T) shouldBe true
+    (selection as MediaSelection.Songs).songs.single().name shouldBe title
 }

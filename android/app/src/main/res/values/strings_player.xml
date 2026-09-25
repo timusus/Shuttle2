@@ -14,4 +14,12 @@
     <string name="player_cast">Cast</string>
     <!-- Content description of the sleep timer button while a timer runs -->
     <string name="player_sleep_timer_on">Sleep timer on</string>
+    <!-- Snackbar shown after a song is removed from the queue -->
+    <string name="player_removed_from_queue">Removed from queue</string>
+    <!-- Song menu option: opens the song's album -->
+    <string name="player_go_to_album">Go to album</string>
+    <!-- Song menu option: opens the song's album artist -->
+    <string name="player_go_to_artist">Go to artist</string>
+    <!-- Button that creates the playlist named in the New Playlist dialog -->
+    <string name="player_create_playlist">Create</string>
 </resources>

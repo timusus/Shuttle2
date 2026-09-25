@@ -6,17 +6,25 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeSongDownloadRepository
+import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueItem
-import com.simplecityapps.playback.queue.clone
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.clone
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
+import com.simplecityapps.shuttle.ui.actions.MediaAction
+import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
+import com.simplecityapps.shuttle.ui.actions.MediaActionResult
+import com.simplecityapps.shuttle.ui.actions.MediaActionType
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -60,6 +68,7 @@ class PlayerViewModelTest {
 
     private fun TestScope.viewModel(): PlayerViewModel {
         val sleepTimer = SleepTimer(playbackManager, backgroundScope, UnconfinedTestDispatcher(testScheduler)) { testScheduler.currentTime }
+        val mediaActions = TestMediaActions(playlistRepository = playlistRepository, queueManager = queueManager, playbackManager = playbackManager)
         return PlayerViewModel(
             playbackOperations = playbackManager,
             queueOperations = queueManager,
@@ -70,6 +79,8 @@ class PlayerViewModelTest {
             castAvailability = { false },
             clearQueue = ClearQueue(queueManager, playbackManager),
             restoreQueue = RestoreQueue(queueManager, playbackManager),
+            availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, FakeSongDownloadRepository()),
+            mediaActionHandler = mediaActions.handler,
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.progress.collect {} }
@@ -271,6 +282,67 @@ class PlayerViewModelTest {
         queueMove(uids, 3, afterUid = null) shouldBe (2 to 0)
         queueMove(uids, 2, afterUid = 1) shouldBe null
         queueMove(uids, 1, afterUid = null) shouldBe null
+    }
+
+    @Test
+    fun `removing a row reports it, and undo puts its song back where it was`() = runTest {
+        val viewModel = viewModel()
+        val (one, two, three, four) = songs("One", "Two", "Three", "Four")
+        queueManager.queueStateFlow.value = queueOf(listOf(one, two, three, four))
+        val events = mutableListOf<PlayerUiEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.toList(events) }
+
+        viewModel.removeQueueItem(101)
+        events shouldBe listOf(PlayerUiEvent.QueueItemRemoved)
+        queueManager.queueStateFlow.value = queueOf(listOf(one, three, four))
+        playbackManager.onAddToQueue = { songs -> queueManager.queueStateFlow.value = queueOf(listOf(one, three, four) + songs) }
+
+        viewModel.undoRemoveQueueItem()
+        playbackManager.addedToQueue shouldBe listOf(two)
+        // Re-added at the end (3), then back to where it was (1).
+        playbackManager.calls shouldBe listOf("removeQueueItem(101)", "moveQueueItem(3, 1)")
+
+        // Undo is spent once used.
+        viewModel.undoRemoveQueueItem()
+        playbackManager.addedToQueue shouldBe listOf(two)
+    }
+
+    @Test
+    fun `undoing the removal of the last row leaves it at the end`() = runTest {
+        val viewModel = viewModel()
+        val (one, two) = songs("One", "Two")
+        queueManager.queueStateFlow.value = queueOf(listOf(one, two))
+
+        viewModel.removeQueueItem(101)
+        queueManager.queueStateFlow.value = queueOf(listOf(one))
+        playbackManager.onAddToQueue = { songs -> queueManager.queueStateFlow.value = queueOf(listOf(one) + songs) }
+        viewModel.undoRemoveQueueItem()
+
+        playbackManager.addedToQueue shouldBe listOf(two)
+        playbackManager.calls shouldBe listOf("removeQueueItem(101)")
+    }
+
+    @Test
+    fun `the song menus offer the shared actions that suit a song already in the queue`() = runTest {
+        val viewModel = viewModel()
+
+        val offered = viewModel.songActions(createSong(id = 1)).first()
+
+        offered.none { it in setOf(MediaActionType.Play, MediaActionType.Shuffle, MediaActionType.PlayNext, MediaActionType.AddToQueue, MediaActionType.Delete) } shouldBe true
+        offered.take(3) shouldBe listOf(MediaActionType.AddToPlaylist, MediaActionType.GoToAlbum, MediaActionType.GoToArtist)
+        offered.last() shouldBe MediaActionType.Exclude
+    }
+
+    @Test
+    fun `a song action reports the handler's result`() = runTest {
+        val viewModel = viewModel()
+        val events = mutableListOf<PlayerUiEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.toList(events) }
+
+        // The fake library has no albums, so Go to album finds nothing.
+        viewModel.onMediaAction(MediaAction.GoToAlbum(MediaSelection.Songs(createSong(id = 1))))
+
+        events shouldBe listOf(PlayerUiEvent.MediaActionDone(MediaActionResult.Message(MediaActionMessage.NotFound)))
     }
 
     @Test

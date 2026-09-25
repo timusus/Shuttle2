@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
@@ -12,7 +13,13 @@ import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
+import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
+import com.simplecityapps.shuttle.ui.actions.MediaAction
+import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
+import com.simplecityapps.shuttle.ui.actions.MediaActionType
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -67,6 +74,8 @@ class PlayerViewModel @Inject constructor(
     castAvailability: CastAvailability,
     private val clearQueue: ClearQueue,
     private val restoreQueue: RestoreQueue,
+    private val availableMediaActions: AvailableMediaActions,
+    private val mediaActionHandler: MediaActionHandler,
 ) : ViewModel(),
     PlayerActions {
     private val castAvailable = castAvailability.isAvailable()
@@ -79,6 +88,8 @@ class PlayerViewModel @Inject constructor(
     val events: SharedFlow<PlayerUiEvent> = _events.asSharedFlow()
 
     private var clearedQueue: QueueSnapshot? = null
+
+    private var removedItem: RemovedQueueItem? = null
 
     private val currentSong: Flow<Song?> = queueOperations.queueStateFlow.map { it.currentItem?.song }.distinctUntilChanged()
 
@@ -213,7 +224,23 @@ class PlayerViewModel @Inject constructor(
     }
 
     override fun removeQueueItem(uid: Long) {
-        queueOperations.getQueue().firstOrNull { it.uid == uid }?.let(playbackOperations::removeQueueItem)
+        val queue = queueOperations.getQueue()
+        val index = queue.indexOfFirst { it.uid == uid }
+        if (index < 0) return
+        playbackOperations.removeQueueItem(queue[index])
+        removedItem = RemovedQueueItem(queue[index].song, index)
+        viewModelScope.launch { _events.emit(PlayerUiEvent.QueueItemRemoved) }
+    }
+
+    // Back in as a new row at the end, then moved to where the old row was.
+    override fun undoRemoveQueueItem() {
+        val removed = removedItem ?: return
+        removedItem = null
+        viewModelScope.launch {
+            playbackOperations.addToQueue(listOf(removed.song))
+            val last = queueOperations.getSize() - 1
+            if (removed.index < last) playbackOperations.moveQueueItem(last, removed.index)
+        }
     }
 
     override fun playNext(uid: Long) {
@@ -235,6 +262,19 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch { restoreQueue(snapshot) }
     }
 
+    override fun songActions(song: Song): Flow<List<MediaActionType>> = availableMediaActions(MediaSelection.Songs(song)).map { types -> types.filter { it in PlayerSongActions } }
+
+    override fun playlists(): Flow<List<Playlist>> = playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null))
+
+    override fun onMediaAction(action: MediaAction) {
+        viewModelScope.launch { _events.emit(PlayerUiEvent.MediaActionDone(mediaActionHandler.handle(action))) }
+    }
+
+    private class RemovedQueueItem(
+        val song: Song,
+        val index: Int,
+    )
+
     private data class Extras(
         val favouriteIds: Set<Long>,
         val seed: ArtworkSeed,
@@ -255,6 +295,19 @@ class PlayerViewModel @Inject constructor(
 
     private companion object {
         const val SLEEP_TIMER_TICK_MS = 1_000L
+
+        /**
+         * The shared actions that make sense on the playing song or a queue row: not Play, Shuffle or the queue verbs,
+         * which would rebuild or duplicate the queue it is already in (redesign inventory, section 4).
+         */
+        val PlayerSongActions = setOf(
+            MediaActionType.AddToPlaylist,
+            MediaActionType.GoToAlbum,
+            MediaActionType.GoToArtist,
+            MediaActionType.EditTags,
+            MediaActionType.SongInfo,
+            MediaActionType.Exclude,
+        )
     }
 }
 

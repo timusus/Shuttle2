@@ -4,7 +4,11 @@ import androidx.compose.runtime.Immutable
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
+import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.MediaAction
+import com.simplecityapps.shuttle.ui.actions.MediaActionResult
+import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import kotlinx.coroutines.flow.Flow
 
 /** A song in the queue, and the one Now Playing shows when it is the current item. */
@@ -64,6 +68,12 @@ data class PlayerProgress(
 sealed interface PlayerUiEvent {
     /** The queue was cleared; [PlayerActions.undoClearQueue] puts it back. */
     data class QueueCleared(val songCount: Int) : PlayerUiEvent
+
+    /** A row left the queue; [PlayerActions.undoRemoveQueueItem] puts it back. */
+    data object QueueItemRemoved : PlayerUiEvent
+
+    /** A song action ran; the shell shows its message, opens its screen or runs its snackbar's action. */
+    data class MediaActionDone(val result: MediaActionResult) : PlayerUiEvent
 }
 
 /**
@@ -108,9 +118,20 @@ interface PlayerActions {
 
     fun removeQueueItem(uid: Long)
 
+    fun undoRemoveQueueItem()
+
     fun playNext(uid: Long)
 
     fun clearQueue()
 
     fun undoClearQueue()
+
+    /** The shared song actions the player's menus offer for [song], in display order. */
+    fun songActions(song: Song): Flow<List<MediaActionType>>
+
+    /** The playlists Add to playlist can add to. */
+    fun playlists(): Flow<List<Playlist>>
+
+    /** Runs a song action, or a snackbar's action sent back; the outcome arrives as [PlayerUiEvent.MediaActionDone]. */
+    fun onMediaAction(action: MediaAction)
 }
