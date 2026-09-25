@@ -139,10 +139,12 @@ class PlayerViewModel @Inject constructor(
         }.distinctUntilChanged()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), queueOperations.queueStateFlow.value.toPlayerUiState())
 
+    // The total is the song's own duration, as the queue rows show it; the player's reported duration can differ by a rounding second.
     val progress: StateFlow<PlayerProgress> =
         combine(playbackOperations.progressFlow, currentSong) { progress, song ->
+            val songDuration = song?.duration?.toLong()?.takeIf { it > 0 }
             when {
-                progress != null -> PlayerProgress(progress.position.toLong(), progress.duration.toLong())
+                progress != null -> PlayerProgress(progress.position.toLong(), songDuration ?: progress.duration.toLong())
                 song != null -> PlayerProgress(song.playbackPosition.toLong(), song.duration.toLong())
                 else -> PlayerProgress.Zero
             }

@@ -158,6 +158,22 @@ class PlayerViewModelTest {
     }
 
     @Test
+    fun `the total is the song's duration, as the queue rows show it, not the player's`() = runTest {
+        val viewModel = viewModel()
+        queueManager.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 60_000)))
+        playbackManager.progressFlow.value = PlaybackProgress(position = 10_000, duration = 59_950)
+        viewModel.progress.value shouldBe PlayerProgress(10_000, 60_000)
+    }
+
+    @Test
+    fun `without a song duration the total is the player's`() = runTest {
+        val viewModel = viewModel()
+        queueManager.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 0)))
+        playbackManager.progressFlow.value = PlaybackProgress(position = 10_000, duration = 59_950)
+        viewModel.progress.value shouldBe PlayerProgress(10_000, 59_950)
+    }
+
+    @Test
     fun `the favourite follows the favourites playlist, and toggling adds then removes the song`() = runTest {
         val favourites = createPlaylist(id = 9, name = "Favorites")
         playlistRepository.favorites = favourites
