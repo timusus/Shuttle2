@@ -83,7 +83,7 @@ class ShellScreenshotTest {
     @Test
     @Config(qualifiers = "w360dp-h640dp-xhdpi")
     fun phoneShort() {
-        robot.setContent(window = windowInfo(360, 640))
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(360, 640))
         robot.tapMiniPlayer()
         shot("phone-short-now-playing")
     }
