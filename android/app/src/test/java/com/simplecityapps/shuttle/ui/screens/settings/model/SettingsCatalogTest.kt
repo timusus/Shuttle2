@@ -92,7 +92,6 @@ class SettingsCatalogTest {
             "pref_screen_media",
             "pref_screen_artwork",
             "pref_screen_widget",
-            "pref_screen_playlist",
             "pref_screen_app_info",
             "pref_screen_privacy",
             "pref_screen_debug",
@@ -113,7 +112,6 @@ class SettingsCatalogTest {
             "pref_excluded",
             "pref_retain_shuffle_on_new_queue",
             "pref_bit_perfect_usb",
-            "playlist_ignore_duplicates",
             "pref_crash_reporting",
             "pref_firebase_analytics",
             "widget_background_opacity"

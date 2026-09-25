@@ -310,8 +310,6 @@ object SettingsCatalog {
      * them until those screens are deleted.
      */
     val droppedKeys: Map<String, String> = mapOf(
-        "pref_screen_playlist" to "The Playlists screen held only playlist_ignore_duplicates",
-        "playlist_ignore_duplicates" to "Dropped in the settings redesign inventory",
         "changelog_show_on_launch" to "Dropped by decision 12",
         "pref_library_tabs_all" to "Tab order moves to the Library screen's Edit tabs sheet",
         "pref_library_tabs_enabled" to "Tab visibility moves to the Library screen's Edit tabs sheet"
