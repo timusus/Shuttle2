@@ -81,3 +81,4 @@ loadingSongList  // val, not a function — Loading has no parameters
 ## Known Robolectric Limitations
 
 - **FastScroller + DropdownMenu:** The `FastScroller` overlay causes `DropdownMenu` popups to be immediately dismissed under Robolectric. Context menu tests that need dropdowns should render the list *item* composable directly (e.g. `GenreListItem`) rather than the full list. The robots encapsulate this — see `setItemContent()` in `GenreListRobot`, `PlaylistListRobot`, `AlbumListRobot`, `AlbumArtistListRobot` and `FolderListRobot`.
+- **Text field inside a Dialog window:** Compose never goes idle under Robolectric when a `TextField` is focused in a `Dialog`, so the test hangs. Test the dialog's form composable on its own, outside the dialog (see `NewPlaylistFormTest`), and stop screen-level tests at the step that opens the dialog.
