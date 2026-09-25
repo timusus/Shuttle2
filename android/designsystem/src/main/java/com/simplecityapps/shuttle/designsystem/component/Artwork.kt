@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.designsystem.component
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,16 +20,21 @@ import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ProvidableCompositionLocal
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.RoundedPolygon
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** The artwork sizes S2 lays out: list rows, the grid tile, and the detail/player hero. */
 enum class ArtworkSize(val dp: Dp) {
@@ -58,9 +64,28 @@ enum class ArtworkPlaceholder(internal val icon: ImageVector, internal val polyg
 }
 
 /**
+ * Artwork for `@Preview`s and screenshot tests, where no image loader runs: the image for a model
+ * (a sample album id, or an app model named after a sample album), drawn synchronously, or null to
+ * keep the placeholder. The app never provides one; `S2Preview` provides the sample library's covers.
+ */
+fun interface PreviewArtwork {
+    fun image(model: Any): ImageBitmap?
+}
+
+/** The [PreviewArtwork] in scope: null outside previews and screenshot tests. */
+val LocalPreviewArtwork: ProvidableCompositionLocal<PreviewArtwork?> = staticCompositionLocalOf { null }
+
+/** [model]'s image from [LocalPreviewArtwork], for callers that load their own image: null outside previews. */
+@Composable
+fun previewArtwork(model: Any?): ImageBitmap? = model?.let { LocalPreviewArtwork.current?.image(it) }
+
+/**
  * A piece of artwork: [image] clipped to the artwork shape once it has loaded, an empty container
  * while [loading], otherwise the [placeholder] for the media type in a `MaterialShapes` container.
  * The image loader stays with the caller, which passes it through the [image] slot.
+ *
+ * [model] is what [image] loads. Only previews read it: when [LocalPreviewArtwork] has an image for
+ * it, that image is drawn in place of [image].
  */
 @Composable
 fun Artwork(
@@ -69,9 +94,11 @@ fun Artwork(
     size: ArtworkSize = ArtworkSize.Medium,
     shape: ArtworkShape = ArtworkShape.Rounded,
     loading: Boolean = false,
+    model: Any? = null,
     image: (@Composable () -> Unit)? = null,
 ) {
     val clip = artworkShape(shape, size)
+    val preview = previewArtwork(model)
     Box(
         modifier = modifier
             .size(size.dp)
@@ -80,6 +107,7 @@ fun Artwork(
         contentAlignment = Alignment.Center,
     ) {
         when {
+            preview != null -> Image(preview, contentDescription = null, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
             image != null -> Box(Modifier.fillMaxSize()) { image() }
             loading -> Unit
             else -> ArtworkPlaceholderContent(placeholder, size)
@@ -124,7 +152,7 @@ private fun artworkShape(shape: ArtworkShape, size: ArtworkSize): Shape = when (
 @Preview
 @Composable
 private fun ArtworkPreview() {
-    S2Theme {
-        Artwork(ArtworkPlaceholder.Album, size = ArtworkSize.Grid)
+    S2Preview {
+        Artwork(ArtworkPlaceholder.Album, size = ArtworkSize.Grid, model = SampleLibrary.albums.first())
     }
 }

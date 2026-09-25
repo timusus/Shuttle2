@@ -56,8 +56,12 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.activity.compose)
-    // The catalogue boards (src/debug) show the sample library's invented names and covers.
+    // The catalogue boards (src/debug) and the component @Previews (S2Preview) show the sample
+    // library's invented names and covers. Release compiles against it, for the previews in main
+    // source, but never packages it,
+    // and R8 does not catch live code that reaches it: keep fixture use inside @Preview functions.
     debugImplementation(project(":android:fixtures"))
+    releaseCompileOnly(project(":android:fixtures"))
 
     testImplementation(composeBom)
     testImplementation(libs.junit)
