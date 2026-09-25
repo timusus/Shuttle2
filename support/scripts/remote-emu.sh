@@ -15,8 +15,10 @@
 #   remote-emu.sh status           all lanes: owner, age, qemu alive; box load and free memory
 #   remote-emu.sh start [N] [--api 36|37]
 #                                  lease the lowest free lane (or lane N), boot it, open its tunnel,
-#                                  and run ui-prep once booted. Default is the API 36 ATD image;
-#                                  --api 37 opts into the full google_apis API 37 image instead.
+#                                  and run ui-prep once booted. Default is the full google_apis API 37
+#                                  image (screencap works); --api 36 opts into the lighter ATD image
+#                                  instead, for lanes that never take a screenshot (#390: the ATD
+#                                  image's screencap comes back solid black under Maestro and adb).
 #                                  If this session's lane is already up on another image, an explicit
 #                                  --api fails with instructions (stop, then start) instead of rebooting.
 #   remote-emu.sh env [N]          print the two exports for this session's lane (eval it)
@@ -69,10 +71,12 @@
 #
 # Every lane boots the same AVD with -read-only (emulator 30+: concurrent boots of one AVD, no
 # snapshot, disk writes discarded at exit) so the app must be `install`ed on each lane, each time.
-# Default AVD is the API 36 ATD image (android-36 google_atd x86_64; no ATD image exists for API
-# 37), right-sized to 2560 MB / 3 cores -- an idle ATD lane costs noticeably less CPU than the old
-# full google_apis image at 4096 MB / 4 cores. `start --api 37` boots the full google_apis API 37
-# image instead, for anything that needs Play services or system apps ATD strips out.
+# Default AVD is the full google_apis API 37 image (pixel_9_pro_api37), right-sized to 2560 MB / 3
+# cores same as the lighter image below -- `screencap`/Maestro screenshots need it (#390: the API 36
+# ATD image renders black frames for both, likely because its stripped-down system image lacks the
+# hardware composer path `screencap` reads from under swiftshader). `start --api 36` opts into the
+# android-36 google_atd x86_64 image instead: no Play services or ATD-stripped system apps, and a
+# noticeably lighter idle CPU cost, for lanes that never take a screenshot.
 #
 # ALWAYS `stop` when finished. The box also hosts the CI runner containers, and a stray emulator
 # there can be picked up by an instrumentation job instead of its managed device
@@ -84,8 +88,8 @@
 set -euo pipefail
 
 BOX="tim@192.168.50.131"
-AVD_ATD="pixel_9_pro_atd_api36"  # default lane image: android-36 google_atd x86_64, no Play services
-AVD_API37="pixel_9_pro_api37"    # opt-in full google_apis image: `start --api 37`
+AVD_ATD="pixel_9_pro_atd_api36"  # opt-in lightweight image: android-36 google_atd x86_64, no Play services, `start --api 36`
+AVD_API37="pixel_9_pro_api37"    # default lane image: full google_apis API 37 (screencap works, #390)
 LANE_MEMORY=2560                 # MB; lowest of 2048/2560/3072 that booted reliably and ran emu-verify
 LANE_CORES=3
 LANES=3
@@ -449,7 +453,7 @@ cmd_start() {
     done
     [ -z "$want" ] || valid_lane "$want" || { echo "remote-emu: lane must be 1..$LANES" >&2; exit 2; }
     local avd
-    case "${api:-36}" in
+    case "${api:-37}" in
         36) avd="$AVD_ATD" ;;
         37) avd="$AVD_API37" ;;
         *) echo "remote-emu: --api must be 36 or 37" >&2; exit 2 ;;

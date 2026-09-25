@@ -55,10 +55,12 @@ Mac starves a local emulator whenever it's loaded (Xcode, other sessions). Launc
 `serial [N]` / `reconnect [N]` / `reset [N]` / `ui-prep [N]` / `tap-text` / `dump-texts` /
 `seed-music [dir]` / `lockscreen on|off` / `stop [N|--all]`).
 
-Default lane image is `android-36 google_atd x86_64` (no Play services, fewer system apps),
-right-sized to 2560 MB / 3 cores -- an idle lane costs noticeably less CPU than the old full
-`google_apis` API 37 image at 4096 MB / 4 cores. `start --api 37` boots that full image instead,
-for anything that needs Play services or a system app ATD strips out. `start` in a session that
+Default lane image is the full `google_apis` API 37 image, right-sized to 2560 MB / 3 cores --
+`screencap`/Maestro screenshots need it (#390: the lighter `android-36 google_atd x86_64` ATD image
+renders solid black frames for both, likely because its stripped-down system image lacks the
+hardware composer path `screencap` reads from under swiftshader). `start --api 36` opts into that
+ATD image instead (no Play services, fewer system apps, noticeably less idle CPU) for lanes that
+never take a screenshot. `start` in a session that
 already holds a live lane reuses it; an explicit `--api` naming a different image than the one
 running fails with instructions instead of rebooting it -- `stop`, then `start --api N`. `start`
 runs `ui-prep` itself once the device has booted, so a raw `start` gets animations disabled
