@@ -1,11 +1,13 @@
 package com.simplecityapps.shuttle.ui.screens.tageditor
 
+import android.content.IntentSender
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -27,6 +29,7 @@ class TagEditorViewModelTest {
         songRepository,
         ReadSongTags(tagFileAccess),
         WriteSongTags(tagFileAccess, songRepository, playbackManager),
+        tagFileAccess,
     )
 
     private val TagEditorViewModel.editing get() = uiState.value.shouldBeInstanceOf<TagEditorUiState.Editing>()
@@ -129,6 +132,50 @@ class TagEditorViewModelTest {
         advanceUntilIdle()
 
         viewModel.editing.writing shouldBe null
+        tagFileAccess.writes shouldBe emptyList()
+    }
+
+    @Test
+    fun `save asks for consent first and writes once it's given`() = runTest {
+        songRepository.setSongs(listOf(createSong(id = 1)))
+        tagFileAccess.files = mapOf(1L to createAudioFile())
+        val consent = mockk<IntentSender>()
+        tagFileAccess.consent = consent
+        val viewModel = viewModel(1)
+        advanceUntilIdle()
+
+        viewModel.onFieldChange(TagField.Album, "New")
+        viewModel.onSave()
+        advanceUntilIdle()
+
+        viewModel.events.first() shouldBe TagEditorEvent.RequestWriteConsent(consent)
+        tagFileAccess.writes shouldBe emptyList()
+
+        viewModel.onWriteConsent(granted = true)
+        advanceUntilIdle()
+
+        viewModel.events.first().shouldBeInstanceOf<TagEditorEvent.Saved>().result.updated.map { it.id } shouldBe listOf(1L)
+        tagFileAccess.writes.map { it.second } shouldBe listOf(mapOf("ALBUM" to listOf("New")))
+    }
+
+    @Test
+    fun `declined consent goes back to editing without writing`() = runTest {
+        songRepository.setSongs(listOf(createSong(id = 1)))
+        tagFileAccess.files = mapOf(1L to createAudioFile())
+        tagFileAccess.consent = mockk<IntentSender>()
+        val viewModel = viewModel(1)
+        advanceUntilIdle()
+
+        viewModel.onFieldChange(TagField.Album, "New")
+        viewModel.onSave()
+        advanceUntilIdle()
+        viewModel.events.first().shouldBeInstanceOf<TagEditorEvent.RequestWriteConsent>()
+
+        viewModel.onWriteConsent(granted = false)
+        advanceUntilIdle()
+
+        viewModel.editing.writing shouldBe null
+        viewModel.editing.hasChanges shouldBe true
         tagFileAccess.writes shouldBe emptyList()
     }
 }

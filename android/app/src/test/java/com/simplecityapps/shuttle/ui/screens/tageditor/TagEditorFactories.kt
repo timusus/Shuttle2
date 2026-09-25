@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.tageditor
 
+import android.content.IntentSender
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.model.Song
 
@@ -51,7 +52,12 @@ class FakeTagFileAccess(
     /** Every write as (song id, metadata), in order. */
     val writes = mutableListOf<Pair<Long, Map<String, List<String>>>>()
 
+    /** The consent request a save must launch first, if any. */
+    var consent: IntentSender? = null
+
     override suspend fun read(song: Song): AudioFile? = files[song.id]
+
+    override suspend fun writeConsent(songs: List<Song>): IntentSender? = consent
 
     override suspend fun write(
         song: Song,

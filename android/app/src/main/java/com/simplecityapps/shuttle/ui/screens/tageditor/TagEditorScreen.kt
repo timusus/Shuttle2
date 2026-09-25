@@ -1,9 +1,13 @@
 package com.simplecityapps.shuttle.ui.screens.tageditor
 
+import android.app.Activity
 import android.content.res.Resources
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,10 +72,15 @@ fun TagEditorDestination(
     // The snackbar outlives this screen, so it runs in the activity's scope rather than the entry's.
     val activityScope = (LocalActivity.current as? ComponentActivity)?.lifecycleScope
     val currentOnNavigateUp by rememberUpdatedState(onNavigateUp)
+    val writeConsent = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+        viewModel.onWriteConsent(granted = result.resultCode == Activity.RESULT_OK)
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
+                is TagEditorEvent.RequestWriteConsent -> writeConsent.launch(IntentSenderRequest.Builder(event.intentSender).build())
+
                 is TagEditorEvent.Saved -> {
                     val message = event.result.message(resources)
                     activityScope?.launch { snackbarHostState.showSnackbar(message) }

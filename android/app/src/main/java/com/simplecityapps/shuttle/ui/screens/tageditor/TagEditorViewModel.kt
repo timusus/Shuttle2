@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.tageditor
 
+import android.content.IntentSender
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
@@ -48,6 +49,9 @@ sealed interface TagEditorUiState {
 
 sealed interface TagEditorEvent {
     data class Saved(val result: TagWriteResult) : TagEditorEvent
+
+    /** The system has to ask the user before the save can change some of the files; answer with [TagEditorViewModel.onWriteConsent]. */
+    data class RequestWriteConsent(val intentSender: IntentSender) : TagEditorEvent
 }
 
 /**
@@ -60,6 +64,7 @@ class TagEditorViewModel @AssistedInject constructor(
     songRepository: SongRepository,
     private val readSongTags: ReadSongTags,
     private val writeSongTags: WriteSongTags,
+    private val tagFileAccess: TagFileAccess,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
@@ -73,6 +78,9 @@ class TagEditorViewModel @AssistedInject constructor(
     val events: Flow<TagEditorEvent> = _events.receiveAsFlow()
 
     private var editable: List<EditableSong> = emptyList()
+
+    /** The edits a save holds back while the user is asked for consent to write the files. */
+    private var pendingEdits: Map<TagField, String>? = null
 
     init {
         viewModelScope.launch {
@@ -101,11 +109,32 @@ class TagEditorViewModel @AssistedInject constructor(
         val edits = editing.fields.edits()
         _uiState.value = editing.copy(writing = TagProgress(0, editable.size))
         viewModelScope.launch {
-            val result = writeSongTags(editable, edits) { written, total ->
-                _uiState.update { state -> (state as? TagEditorUiState.Editing)?.copy(writing = TagProgress(written, total)) ?: state }
+            val consent = tagFileAccess.writeConsent(editable.map { it.song })
+            if (consent == null) {
+                write(edits)
+            } else {
+                pendingEdits = edits
+                _events.send(TagEditorEvent.RequestWriteConsent(consent))
             }
-            _events.send(TagEditorEvent.Saved(result))
         }
+    }
+
+    /** The user's answer to [TagEditorEvent.RequestWriteConsent]: the save goes ahead, or goes back to editing. */
+    fun onWriteConsent(granted: Boolean) {
+        val edits = pendingEdits ?: return
+        pendingEdits = null
+        if (granted) {
+            viewModelScope.launch { write(edits) }
+        } else {
+            _uiState.update { state -> (state as? TagEditorUiState.Editing)?.copy(writing = null) ?: state }
+        }
+    }
+
+    private suspend fun write(edits: Map<TagField, String>) {
+        val result = writeSongTags(editable, edits) { written, total ->
+            _uiState.update { state -> (state as? TagEditorUiState.Editing)?.copy(writing = TagProgress(written, total)) ?: state }
+        }
+        _events.send(TagEditorEvent.Saved(result))
     }
 
     private fun updateField(
