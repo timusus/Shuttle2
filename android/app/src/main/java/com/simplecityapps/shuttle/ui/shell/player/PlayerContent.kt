@@ -67,7 +67,7 @@ val MiniPlayerHeight = 72.dp
 val QueuePeekHeight = 56.dp
 
 /** Height of the transport row, which stays visible above the queue at the Queue level. */
-val TransportHeight = 72.dp
+val TransportHeight = 112.dp
 
 /**
  * How far the Queue level pushes a stacked player up: from the peek at the bottom to just below

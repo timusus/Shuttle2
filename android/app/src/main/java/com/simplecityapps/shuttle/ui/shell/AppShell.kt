@@ -195,7 +195,7 @@ private fun CompactShell(
     ) { (destination, scrim, sheet, navBar), constraints ->
         val width = constraints.maxWidth
         val height = constraints.maxHeight
-        val navBarPlaceables = navBar.map { it.measure(constraints.copy(minWidth = width, minHeight = 0)) }
+        val navBarPlaceables = navBar.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }
         val navBarHeight = navBarPlaceables.maxOfOrNull { it.height } ?: 0
         player.onMeasured(
             PlayerSheetGeometry(
@@ -258,7 +258,7 @@ private fun RailSheetShell(
     ) { (rail, destination, scrim, sheet), constraints ->
         val width = constraints.maxWidth
         val height = constraints.maxHeight
-        val railPlaceables = rail.map { it.measure(constraints.copy(minWidth = 0, minHeight = height)) }
+        val railPlaceables = rail.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }
         val railWidth = railPlaceables.maxOfOrNull { it.width } ?: 0
         val contentWidth = width - railWidth
         player.onMeasured(

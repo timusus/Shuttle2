@@ -25,6 +25,12 @@ class AppShellTest {
     }
 
     @Test
+    fun `the compact nav bar shows every tab on screen`() {
+        robot.setContent()
+        listOf("Library", "Search", "More").forEach(robot::assertTextDisplayed)
+    }
+
+    @Test
     fun `an empty queue composes no sheet`() {
         robot.setContent(queue = EmptyShellQueue)
         robot.assertSheetAbsent()
