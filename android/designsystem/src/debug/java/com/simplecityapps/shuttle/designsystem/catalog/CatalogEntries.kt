@@ -78,6 +78,9 @@ val CatalogEntries = listOf(
     CatalogEntry("song-actions-sheet", "Actions sheet", listOf("song target with destructive item", "playlist target with long title")) { ActionsSheetBoard(it) },
     CatalogEntry("dialog", "Dialog", listOf("confirm", "destructive with icon", "choice list", "text input with confirm disabled", "text input filled")) { DialogBoard(it) },
     CatalogEntry("snackbar", "Snackbar", listOf("message", "with action", "long with action and dismiss", "above the nav bar")) { SnackbarBoard(it) },
+    CatalogEntry("toolbar-selection", "Selection toolbar", listOf("floating, 1 selected", "floating, many with overflow", "overflow open", "docked alternative")) {
+        SelectionToolbarBoard(it)
+    },
     CatalogEntry("row-genre", "Genre row", listOf("default", "selected", "one song")) { GenreRowBoard(it) },
     CatalogEntry("row-folder", "Folder row", listOf("folder", "file", "file without artwork", "selected")) { FolderRowBoard(it) },
     CatalogEntry(

@@ -28,6 +28,7 @@ existing lines as they are.
 - [ ] `song-actions-sheet`: [boards](song-actions-sheet.md) · approved: — · boards hash: —
 - [ ] `dialog`: [boards](dialog.md) · approved: — · boards hash: —
 - [ ] `snackbar`: [boards](snackbar.md) · approved: — · boards hash: —
+- [ ] `toolbar-selection`: [boards](toolbar-selection.md) · approved: — · boards hash: —
 - [ ] `row-genre`: [boards](row-genre.md) · approved: — · boards hash: —
 - [ ] `row-folder`: [boards](row-folder.md) · approved: — · boards hash: —
 - [ ] `grid-tile`: [boards](grid-tile.md) · approved: — · boards hash: —

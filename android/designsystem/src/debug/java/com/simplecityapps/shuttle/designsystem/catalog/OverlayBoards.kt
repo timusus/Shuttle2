@@ -46,6 +46,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2FilterChip
 import com.simplecityapps.shuttle.designsystem.component.S2InputChip
 import com.simplecityapps.shuttle.designsystem.component.S2MenuContent
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
+import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
 import com.simplecityapps.shuttle.designsystem.component.S2Snackbar
 import com.simplecityapps.shuttle.designsystem.component.S2SortChip
 
@@ -253,6 +254,41 @@ fun SnackbarBoard(width: BoardWidth) {
                     S2Snackbar("Excluded Radiohead", actionLabel = "Undo", modifier = Modifier.padding(12.dp))
                     S2NavigationBar(navItems(), 1, {})
                 }
+            },
+        ),
+    )
+}
+
+private val selectionActions = listOf(
+    S2Action("Play", {}, Icons.Rounded.PlayArrow),
+    S2Action("Add to queue", {}, Icons.AutoMirrored.Rounded.QueueMusic),
+    S2Action("Add to playlist", {}, Icons.AutoMirrored.Rounded.PlaylistAdd),
+)
+
+private val selectionOverflow = listOf(
+    listOf(S2Action("Play next", {}, Icons.AutoMirrored.Rounded.PlaylistPlay), S2Action("Edit tags", {}, Icons.Rounded.Edit)),
+    listOf(S2Action("Exclude", {}, Icons.Rounded.Block), S2Action("Delete", {}, Icons.Rounded.Delete, destructive = true)),
+)
+
+@Composable
+fun SelectionToolbarBoard(width: BoardWidth) {
+    Board(
+        width,
+        listOf(
+            BoardSection("Floating, 1 selected") {
+                S2SelectionToolbar(1, {}, selectionActions.take(2))
+            },
+            BoardSection("Floating, many selected, overflow") {
+                S2SelectionToolbar(24, {}, selectionActions, overflowActions = selectionOverflow)
+            },
+            BoardSection("Floating, overflow open") {
+                Column(horizontalAlignment = Alignment.End, modifier = Modifier.width(360.dp)) {
+                    S2MenuContent(selectionOverflow, {}, Modifier.width(200.dp).padding(bottom = 8.dp))
+                    S2SelectionToolbar(24, {}, selectionActions, overflowActions = selectionOverflow)
+                }
+            },
+            BoardSection("Docked (the alternative), many selected") {
+                S2SelectionToolbar(24, {}, selectionActions, overflowActions = selectionOverflow, docked = true)
             },
         ),
     )

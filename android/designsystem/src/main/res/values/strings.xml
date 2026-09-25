@@ -17,4 +17,9 @@
     <string name="ds_sort_descending">Descending</string>
     <string name="ds_remove_filter">Remove filter</string>
     <string name="ds_dismiss">Dismiss</string>
+    <string name="ds_clear_selection">Clear selection</string>
+    <plurals name="ds_selected_count">
+        <item quantity="one">%d selected</item>
+        <item quantity="other">%d selected</item>
+    </plurals>
 </resources>
