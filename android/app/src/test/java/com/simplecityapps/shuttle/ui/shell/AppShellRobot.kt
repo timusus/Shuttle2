@@ -36,6 +36,7 @@ import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.computeWindowSizeClass
 import com.simplecityapps.createSong
+import com.simplecityapps.sampleSongs
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
@@ -64,6 +65,22 @@ fun shellQueue(vararg titles: String): PlayerUiState {
         )
     }
     return PlayerUiState(hasQueue = rows.isNotEmpty(), current = rows.firstOrNull(), items = rows)
+}
+
+/** A queue of [size] sample-library songs (one from each album in turn), playing the first. */
+fun sampleShellQueue(size: Int = 8): PlayerUiState {
+    val rows = sampleSongs(size).mapIndexed { index, song ->
+        PlayerSong(
+            uid = index.toLong(),
+            title = song.name.orEmpty(),
+            artist = song.artists.first(),
+            album = song.album.orEmpty(),
+            durationMs = song.duration,
+            position = if (index == 0) QueuePosition.Current else QueuePosition.Upcoming,
+            song = song,
+        )
+    }
+    return PlayerUiState(hasQueue = true, current = rows.first(), items = rows)
 }
 
 val EmptyShellQueue = PlayerUiState(hasQueue = false, current = null, items = emptyList())
@@ -172,8 +189,10 @@ class AppShellRobot(
         queue: PlayerUiState = queueState.value,
         window: WindowAdaptiveInfo = CompactWindow,
         restoration: StateRestorationTester? = null,
+        progress: PlayerProgress = progressState.value,
     ) {
         queueState.value = queue
+        progressState.value = progress
         windowState.value = window
         val content: @Composable () -> Unit = {
             val currentQueue by queueState

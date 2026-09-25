@@ -290,6 +290,8 @@ android {
         testImplementation(libs.mockk)
         testImplementation(libs.kotlinx.coroutinesTest)
         testImplementation(libs.robolectric)
+        // The sample library: invented names and generated covers for screenshot tests.
+        testImplementation(project(":android:fixtures"))
         testImplementation(libs.androidx.glance.appwidget.testing)
         testImplementation("androidx.compose.ui:ui-test-junit4")
         debugImplementation("androidx.compose.ui:ui-test-manifest")

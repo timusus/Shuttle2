@@ -6,8 +6,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.simplecityapps.createSong
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.sampleSongs
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerBandState
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerScreen
@@ -109,10 +109,7 @@ class SettingsScreenshotTest {
     fun excludedSongs() = shot("excluded-songs") {
         ExcludedSongsScreen(
             uiState = ExcludedSongsUiState(
-                songs = listOf(
-                    createSong(id = 1, name = "Airbag", albumArtist = "Radiohead", album = "OK Computer").copy(blacklisted = true),
-                    createSong(id = 2, name = "Intro", albumArtist = "The xx", album = "xx").copy(blacklisted = true)
-                ),
+                songs = sampleSongs(2).map { it.copy(blacklisted = true) },
                 loading = false
             ),
             onNavigateUp = {},
