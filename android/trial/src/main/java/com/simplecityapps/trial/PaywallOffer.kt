@@ -1,7 +1,13 @@
 package com.simplecityapps.trial
 
-import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.ProductDetails
+
+/** How a [PaywallOffer] is paid for. */
+enum class PaywallPlan {
+    Lifetime,
+    Annual,
+    Monthly
+}
 
 /**
  * One thing the paywall can sell: a one-time product, or one base plan of a subscription.
@@ -9,35 +15,36 @@ import com.android.billingclient.api.ProductDetails
  * @param offerToken the base plan's offer token, which Play requires to buy a subscription; null for a one-time product.
  */
 data class PaywallOffer(
-    val productDetails: ProductDetails,
-    val offerToken: String?,
+    val productId: String,
+    val plan: PaywallPlan,
     val formattedPrice: String,
-    /** ISO 8601 billing period of a subscription base plan (e.g. `P1M`, `P1Y`); null for a one-time product. */
-    val billingPeriod: String?
+    val offerToken: String?
 ) {
-    val productId: String get() = productDetails.productId
-
-    val isSubscription: Boolean get() = productDetails.productType == BillingClient.ProductType.SUBS
+    val isSubscription: Boolean get() = plan != PaywallPlan.Lifetime
 }
 
 /**
- * The offers for [this] product details: the S2 Pro products if Play returned any, otherwise the legacy ones.
- * Subscriptions come first, one offer per base plan, annual before monthly.
+ * The offers for [this] product details: the S2 Pro products if Play returned any, otherwise the legacy ones still
+ * on sale. One offer per one-time product and per yearly or monthly subscription base plan, lifetime first.
  */
 internal fun List<ProductDetails>.toPaywallOffers(): List<PaywallOffer> {
     val pro = filter { it.productId == ProductIds.PRO_SUBSCRIPTION || it.productId == ProductIds.PRO_LIFETIME }
     return pro.ifEmpty { filter { it.productId in ProductIds.legacyOffered } }
-        .sortedByDescending { it.productType } // "subs" before "inapp"
         .flatMap { details ->
             details.oneTimePurchaseOfferDetails?.let { oneTime ->
-                listOf(PaywallOffer(details, offerToken = null, formattedPrice = oneTime.formattedPrice, billingPeriod = null))
+                listOf(PaywallOffer(details.productId, PaywallPlan.Lifetime, oneTime.formattedPrice, offerToken = null))
             } ?: details.subscriptionOfferDetails.orEmpty()
                 // Base plans only; developer-defined offers (offerId != null) aren't sold here.
                 .filter { it.offerId == null }
-                .sortedByDescending { it.basePlanId == ProductIds.PRO_BASE_PLAN_ANNUAL }
                 .mapNotNull { offer ->
                     val phase = offer.pricingPhases.pricingPhaseList.lastOrNull() ?: return@mapNotNull null
-                    PaywallOffer(details, offer.offerToken, phase.formattedPrice, phase.billingPeriod)
+                    val plan = when (phase.billingPeriod) {
+                        "P1Y" -> PaywallPlan.Annual
+                        "P1M" -> PaywallPlan.Monthly
+                        else -> return@mapNotNull null
+                    }
+                    PaywallOffer(details.productId, plan, phase.formattedPrice, offer.offerToken)
                 }
         }
+        .sortedBy { it.plan }
 }

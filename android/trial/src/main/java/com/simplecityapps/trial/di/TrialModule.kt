@@ -4,12 +4,15 @@ import android.content.Context
 import androidx.core.content.getSystemService
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.shuttle.di.AppCoroutineScope
-import com.simplecityapps.trial.BillingManager
+import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.BuildConfig
+import com.simplecityapps.trial.Entitlement
 import com.simplecityapps.trial.EntitlementRepository
 import com.simplecityapps.trial.EntitlementStore
 import com.simplecityapps.trial.MonetisationAnalytics
+import com.simplecityapps.trial.PlayBilling
 import com.simplecityapps.trial.PromoCodeService
+import com.simplecityapps.trial.ServerAccessGate
 import com.simplecityapps.trial.SharedPreferencesEntitlementStore
 import com.squareup.moshi.Moshi
 import dagger.Module
@@ -21,6 +24,7 @@ import javax.inject.Named
 import javax.inject.Singleton
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -62,11 +66,11 @@ class TrialModule {
 
     @Provides
     @Singleton
-    fun provideBillingManager(
+    fun provideBilling(
         @ApplicationContext context: Context,
         @AppCoroutineScope coroutineScope: CoroutineScope,
         analytics: MonetisationAnalytics
-    ): BillingManager = BillingManager(context, coroutineScope, analytics)
+    ): Billing = PlayBilling(context, coroutineScope, analytics)
 
     @Provides
     @Singleton
@@ -79,16 +83,24 @@ class TrialModule {
     @Provides
     @Singleton
     fun provideEntitlementRepository(
-        billingManager: BillingManager,
+        billing: Billing,
         store: EntitlementStore,
         analytics: MonetisationAnalytics,
         @AppCoroutineScope coroutineScope: CoroutineScope
     ): EntitlementRepository = EntitlementRepository(
-        owned = billingManager.ownedProductIds,
+        owned = billing.ownedProductIds,
         store = store,
         analytics = analytics,
         clock = Clock.System,
         coroutineScope = coroutineScope,
         isDebug = BuildConfig.DEBUG
     )
+
+    /** The user's entitlement. Inject it as `@JvmSuppressWildcards StateFlow<Entitlement>`. */
+    @Provides
+    fun provideEntitlement(entitlementRepository: EntitlementRepository): StateFlow<Entitlement> = entitlementRepository.entitlement
+
+    @Provides
+    @Singleton
+    fun provideServerAccessGate(entitlementRepository: EntitlementRepository): ServerAccessGate = ServerAccessGate(entitlementRepository.entitlement)
 }

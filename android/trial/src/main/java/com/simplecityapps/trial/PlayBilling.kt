@@ -14,6 +14,7 @@ import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.queryProductDetails
+import com.android.billingclient.api.queryPurchasesAsync
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -23,23 +24,25 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-/** Talks to Play Billing: owned products, the products on sale, and the purchase flow. */
-class BillingManager(
+/** [Billing] backed by the Play Billing library. */
+class PlayBilling(
     context: Context,
     @AppCoroutineScope private val coroutineScope: CoroutineScope,
     private val analytics: MonetisationAnalytics
-) {
+) : Billing {
     private var retryDelay = INITIAL_RETRY_DELAY
 
     private val _ownedProductIds = MutableStateFlow<Set<String>?>(null)
 
-    /** Product IDs with a completed (PURCHASED) purchase, or null until Play has answered for both product types. */
-    val ownedProductIds: StateFlow<Set<String>?> = _ownedProductIds.asStateFlow()
+    override val ownedProductIds: StateFlow<Set<String>?> = _ownedProductIds.asStateFlow()
 
-    private val _offers = MutableStateFlow<List<PaywallOffer>>(emptyList())
+    private val _offers = MutableStateFlow<PaywallOffers>(PaywallOffers.Loading)
 
-    /** What the paywall offers: the S2 Pro products once they exist in Play, otherwise the legacy ones still on sale. */
-    val offers: StateFlow<List<PaywallOffer>> = _offers.asStateFlow()
+    /** The S2 Pro products once they exist in Play, otherwise the legacy ones still on sale. */
+    override val offers: StateFlow<PaywallOffers> = _offers.asStateFlow()
+
+    /** The details Play returned for each product on sale, which the purchase flow needs. */
+    private var productDetails: Map<String, ProductDetails> = emptyMap()
 
     private val billingClientStateListener =
         object : BillingClientStateListener {
@@ -58,6 +61,7 @@ class BillingManager(
                     coroutineScope.launch { queryProductDetails() }
                 } else {
                     Timber.e("onBillingSetupFinished (code: ${billingResult.responseCode}, message: ${billingResult.debugMessage})")
+                    _offers.value = PaywallOffers.Unavailable
                 }
             }
         }
@@ -95,22 +99,32 @@ class BillingManager(
             )
             .build()
 
-    /** Connects to Play, then loads owned products and the products on sale. */
-    fun start() {
+    override fun start() {
         billingClient.startConnection(billingClientStateListener)
     }
 
-    fun launchPurchaseFlow(
+    override fun refreshOffers() {
+        _offers.value = PaywallOffers.Loading
+        if (billingClient.isReady) {
+            coroutineScope.launch { queryProductDetails() }
+        } else {
+            // Setup loads the offers once it connects, or reports them unavailable.
+            start()
+        }
+    }
+
+    override fun launchPurchaseFlow(
         activity: Activity,
         offer: PaywallOffer
     ): Boolean {
-        if (!billingClient.isReady) {
-            Timber.e("Failed to launch purchase flow: BillingClient not ready")
+        val details = productDetails[offer.productId]
+        if (!billingClient.isReady || details == null) {
+            Timber.e("Failed to launch purchase flow: BillingClient not ready, or no details for ${offer.productId}")
             return false
         }
 
         val productDetailsParams = BillingFlowParams.ProductDetailsParams.newBuilder()
-            .setProductDetails(offer.productDetails)
+            .setProductDetails(details)
             .apply { offer.offerToken?.let { setOfferToken(it) } }
             .build()
 
@@ -147,42 +161,57 @@ class BillingManager(
                 emptyList()
             }
         }
-        _offers.value = details.toPaywallOffers()
+        productDetails = details.associateBy { it.productId }
+        val offers = details.toPaywallOffers()
+        _offers.value = if (offers.isEmpty()) PaywallOffers.Unavailable else PaywallOffers.Available(offers)
     }
 
-    /** Refreshes owned products. Call on start and whenever the app comes to the foreground. */
-    fun queryPurchases() {
+    override fun queryPurchases() {
+        coroutineScope.launch { queryOwnedProducts() }
+    }
+
+    override suspend fun restorePurchases(): RestoreResult {
+        val owned = queryOwnedProducts() ?: return RestoreResult.Failed
+        return if (owned.proSource() != null) RestoreResult.Restored else RestoreResult.NothingToRestore
+    }
+
+    /** Asks Play for every owned product and publishes them. Returns null if Play couldn't answer for every product type. */
+    private suspend fun queryOwnedProducts(): Set<String>? {
         if (!billingClient.isReady) {
             // If the billing client isn't ready, querying it potentially crashes the billing service.
             // Setup calls this again once it's ready.
-            return
+            return null
         }
         val productTypes = listOf(BillingClient.ProductType.INAPP, BillingClient.ProductType.SUBS)
         val pass = OwnedProductsQuery(productTypes.toSet())
+        var outcome: OwnedProductsQuery.Outcome = OwnedProductsQuery.Outcome.Pending
         productTypes.forEach { productType ->
             val params = QueryPurchasesParams.newBuilder()
                 .setProductType(productType)
                 .build()
-            billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
-                val purchased = if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    acknowledge(purchases)
-                    purchases.purchasedProductIds()
-                } else {
-                    Timber.e("queryPurchasesAsync($productType): ${billingResult.responseCode} ${billingResult.debugMessage}")
-                    null
-                }
-                onQueryResult(pass.onResult(productType, purchased))
+            val result = billingClient.queryPurchasesAsync(params)
+            val purchased = if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                acknowledge(result.purchasesList)
+                result.purchasesList.purchasedProductIds()
+            } else {
+                Timber.e("queryPurchasesAsync($productType): ${result.billingResult.responseCode} ${result.billingResult.debugMessage}")
+                null
             }
+            outcome = pass.onResult(productType, purchased)
         }
+        return onQueryResult(outcome)
     }
 
     @Synchronized
-    private fun onQueryResult(outcome: OwnedProductsQuery.Outcome) {
-        when (outcome) {
-            is OwnedProductsQuery.Outcome.Complete -> _ownedProductIds.value = outcome.owned
-            is OwnedProductsQuery.Outcome.Failed -> Timber.e("queryPurchases: ${outcome.failedTypes} failed; keeping the last owned products (${_ownedProductIds.value})")
-            OwnedProductsQuery.Outcome.Pending -> Unit
+    private fun onQueryResult(outcome: OwnedProductsQuery.Outcome): Set<String>? = when (outcome) {
+        is OwnedProductsQuery.Outcome.Complete -> outcome.owned.also { _ownedProductIds.value = it }
+
+        is OwnedProductsQuery.Outcome.Failed -> {
+            Timber.e("queryPurchases: ${outcome.failedTypes} failed; keeping the last owned products (${_ownedProductIds.value})")
+            null
         }
+
+        OwnedProductsQuery.Outcome.Pending -> null
     }
 
     @Synchronized
