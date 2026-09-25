@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.shell
 
+import android.graphics.BitmapFactory
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.adaptive.Posture
@@ -39,7 +40,10 @@ import com.simplecityapps.createSong
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.sampleSongs
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.designsystem.theme.extractSeedColor
+import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -77,8 +81,14 @@ fun shellQueue(vararg titles: String): PlayerUiState {
     return PlayerUiState(hasQueue = rows.isNotEmpty(), current = rows.firstOrNull(), items = rows)
 }
 
-/** A queue of [size] sample-library songs (one from each album in turn), playing the first. */
-fun sampleShellQueue(size: Int = 8): PlayerUiState {
+/**
+ * A queue of [size] sample-library songs (one from each album in turn), playing the one at [playing],
+ * with the seed its cover gives the player's artwork scheme.
+ */
+fun sampleShellQueue(
+    size: Int = 8,
+    playing: Int = 0,
+): PlayerUiState {
     val rows = sampleSongs(size).mapIndexed { index, song ->
         PlayerSong(
             uid = index.toLong(),
@@ -86,11 +96,22 @@ fun sampleShellQueue(size: Int = 8): PlayerUiState {
             artist = song.artists.first(),
             album = song.album.orEmpty(),
             durationMs = song.duration,
-            position = if (index == 0) QueuePosition.Current else QueuePosition.Upcoming,
+            position = when {
+                index < playing -> QueuePosition.Played
+                index == playing -> QueuePosition.Current
+                else -> QueuePosition.Upcoming
+            },
             song = song,
         )
     }
-    return PlayerUiState(hasQueue = true, current = rows.first(), items = rows)
+    val current = rows[playing]
+    return PlayerUiState(hasQueue = true, current = current, items = rows, seed = sampleSeed(current.album.orEmpty()))
+}
+
+/** The seed the player would extract from the sample album [title]'s cover. */
+private fun sampleSeed(title: String): ArtworkSeed {
+    val bytes = SampleLibrary.albumNamed(title)?.let { SampleLibrary.coverBytes(it.id) } ?: return ArtworkSeed.None
+    return extractSeedColor(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))?.let(ArtworkSeed::Available) ?: ArtworkSeed.None
 }
 
 val EmptyShellQueue = PlayerUiState(hasQueue = false, current = null, items = emptyList())
