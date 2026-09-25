@@ -244,6 +244,9 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   music on this device" (runtime permission in context; rationale on second ask; "Open settings"
   after permanent denial) and "Connect Jellyfin / Plex / Emby". Scan starts on grant and shows
   progress in place (§6 scanner). `has_onboarded` and the launch nav graph go.
+- Done (#379): the wizard, its layouts and strings and `has_onboarded` are deleted. The legacy
+  `MainActivity` opens to `mainFragment` and asks for the audio permission once on first launch;
+  Settings > Media > Sources hosts the Compose Sources screen (`SourcesFragment`) until #381.
 - Maestro: `nav/launch-fresh` assumes onboarding is already done; none covers it.
 
 ### Analytics / privacy step — Drop
@@ -278,6 +281,14 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   KTagLib. Tags match the SAF build on every stored column; imports ran 4–8x faster than the SAF
   walk on API 36/37. Songs are keyed by file path now; spike 3 (#414) moves S2-provider users' songs
   to their paths on the first import after the upgrade, keeping their history. Evidence in [`spike-taglib-mediastore.md`](spike-taglib-mediastore.md).
+- Decision (#379): **the MediaStore ("Basic") provider is closed to new users.** First run enables
+  the S2 scanner (`MediaSources.scanThisDevice`) and Settings > Sources offers no Basic option.
+  Existing Basic users keep it as "This device", with a note that folder choices don't apply,
+  until a migration moves them to the S2 scanner and the provider is deleted.
+- Tag writing (#406): `DeviceTagFileAccess` writes through a folder grant covering the file (SAF),
+  else on 30+ through `MediaStore.createWriteRequest` after user consent. Below 30, files outside a
+  granted folder are listed as skipped. `MediaProviderType.MediaStore.supportsTagEditing` is still
+  false, so Basic songs stay read-only until that migration.
 - Maestro: none (emulator fixtures seed files, not provider choice).
 
 ### Directory selection (SAF) — Change
