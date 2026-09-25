@@ -1,0 +1,2 @@
+# Files declaring @Composable functions or ViewModels must not import Room, Retrofit/OkHttp, DAOs, entities or network DTOs
+# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.

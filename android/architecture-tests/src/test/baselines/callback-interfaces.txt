@@ -1,0 +1,29 @@
+# Don't declare *Listener/*Callback(s) interfaces; expose a Flow or a suspend function
+# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
+com.simplecityapps.mediaprovider.MediaImporter.Listener
+com.simplecityapps.shuttle.debug.DebugLoggingTree.Callback
+com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper.Callback
+com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog.Listener
+com.simplecityapps.shuttle.ui.common.recyclerview.ItemTouchHelperCallback.OnItemMoveListener
+com.simplecityapps.shuttle.ui.common.view.CircularLoadingView.Listener
+com.simplecityapps.shuttle.ui.common.view.HorizontalSeekbar.Listener
+com.simplecityapps.shuttle.ui.common.view.SeekButton.OnSeekListener
+com.simplecityapps.shuttle.ui.common.view.SkipButton.OnSeekListener
+com.simplecityapps.shuttle.ui.common.view.VerticalSeekbar.Listener
+com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView.SheetStateChangeListener
+com.simplecityapps.shuttle.ui.common.viewbinders.DetailSongBinder.Listener
+com.simplecityapps.shuttle.ui.screens.changelog.ChangesetBinder.Listener
+com.simplecityapps.shuttle.ui.screens.equalizer.EqualizerView.Listener
+com.simplecityapps.shuttle.ui.screens.home.search.SearchSongBinder.Listener
+com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder.Listener
+com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder.Listener
+com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistSongBinder.Listener
+com.simplecityapps.shuttle.ui.screens.library.songs.GridSongBinder.Listener
+com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder.Listener
+com.simplecityapps.shuttle.ui.screens.opensource.LibraryBinder.Listener
+com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment.Listener
+com.simplecityapps.shuttle.ui.screens.queue.QueueBinder.Listener
+com.simplecityapps.shuttle.ui.screens.settings.ExcludeBinder.Listener
+com.simplecityapps.shuttle.ui.screens.settings.SettingsViewBinder.Listener
+com.simplecityapps.shuttle.ui.screens.settings.screens.appearance.LibraryTabBinder.Listener
+com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerBinder.Listener

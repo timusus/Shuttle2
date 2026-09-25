@@ -1,0 +1,2 @@
+# Use coroutines, not AsyncTask
+# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.

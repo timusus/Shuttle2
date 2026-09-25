@@ -1,0 +1,6 @@
+# ViewModels are named *ViewModel, are @HiltViewModel, and have no Android framework dependencies (UDF 8b)
+# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
+com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailViewModel: imports android.net.Uri (8b)
+com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel: imports android.content.Context (8b)
+com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewViewModel: imports android.content.Context (8b)
+com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorViewModel: imports android.content.IntentSender (8b)

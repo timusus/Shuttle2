@@ -1,0 +1,4 @@
+# Subclasses and annotated declarations carry their conventional suffix (*ViewModel, *Worker, *Service, *Module, *Dao, ...)
+# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
+com.simplecityapps.shuttle.di.AppComponent: @Module not named *Module
+com.simplecityapps.shuttle.di.AppModuleBinds: @Module not named *Module
