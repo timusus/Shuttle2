@@ -9,7 +9,9 @@ Decided by the owner on epic #382; each can still be revisited:
 - **Pro** = streaming from Jellyfin/Emby/Plex, plus new downloads from a server. Songs already
   downloaded never disappear.
 - **Free** = local playback, Chromecast, EQ, Android Auto and downloaded songs.
-- **One subscription** (monthly $1.49, annual $5.99) plus a **lifetime purchase** ($14.99).
+- **Pricing decided on #380:** lifetime $9.99, annual $3.99, **no monthly plan** (the 14-day trial
+  covers trying it, and twelve monthly payments would cost more than lifetime). A 30-day launch
+  sale keeps lifetime at today's $7.99. See §5 for the full breakdown.
 - **A 14-day trial, no card**, starting when the first server is connected. Current non-payers get
   one fresh trial at cutover.
 - **All five legacy products are grandfathered to Pro**, indefinitely.
@@ -18,8 +20,8 @@ Decided by the owner on epic #382; each can still be revisited:
   (alternate app icons, extra theme options beyond artwork theming). Details land with #380.
 - **No analytics-only release before the freeze.** Paywall and server-use analytics events ship
   with the redesign; prices are tuned afterwards with Play price experiments.
-- **Still needs the owner:** Play listing wording, new prices before launch, and the payments
-  account notice (#372).
+- **Still needs the owner:** Play listing wording, the Play Console setup checklist in §5, and the
+  payments account notice (#372).
 - **Non-blocking catalogue approval** (design-language.md §5, app-shell.md §6) was decided in the
   same round but belongs to those docs, not this one.
 
@@ -63,19 +65,20 @@ Decided by the owner on epic #382; each can still be revisited:
 
 | App | Model | Price (USD) |
 |---|---|---|
-| Symfonium (the direct Jellyfin/Emby/Plex/Subsonic rival) | Trial, then a one-time unlock of everything | ~$5.99 |
-| Plexamp / Plex Pass | Streaming is free; the Pass adds downloads, EQ and lyrics | $6.99/mo, $69.99/yr, lifetime $749.99 (was $119.99) |
+| Symfonium (the direct Jellyfin/Emby/Plex/Subsonic rival) | Trial, then a one-time unlock of everything | ~$5.99 (unverified — couldn't confirm against a current listing) |
+| Plexamp / Plex Pass | Streaming is free; the Pass adds downloads, EQ and lyrics | $6.99/mo, $69.99/yr, lifetime $749.99 (was $249.99 before July 2026) |
 | Poweramp | 15-day trial, then a one-time unlocker | $19.99 (often on sale for $2–7) |
-| Neutron / BlackPlayer EX / GoneMAD / Musicolet | Paid up front, or a one-time unlock | $12.99 / $3.49 / ~$7.99 / ~$4–6 |
+| Neutron / BlackPlayer EX / GoneMAD | Paid up front, or a one-time unlock | $12.99 / $3.49 / ~$7.99 |
+| Musicolet | Free | $0 |
 | Finamp, Jellify, Substreamer, Tempus | Free, mostly open source | $0 |
 
 - No dedicated Android player I checked sells a subscription. Plex charges for a server ecosystem, and Plexamp's music streaming stays free.
-- Self-hosters are allergic to subscriptions. Plex's lifetime price went from $119.99 to $749.99 and drew a revolt, and Jellyfin replied with a "$0 price increase" post. Symfonium's reviews praise its one-time fee.
+- Self-hosters are allergic to subscriptions. Plex's lifetime pass went from $249.99 to $749.99 in July 2026 and drew a revolt, and Jellyfin replied with a "$0 price increase" post. Symfonium's reviews praise its one-time fee.
 - RevenueCat 2026: hard paywalls convert 10.7% of downloads by day 35, against 2.1% for freemium. Trials of 17–32 days convert 42.5%, against 25.5% for trials under 4 days. 35% of subscription apps also sell a lifetime or consumable. Google Play earns less per install than iOS, and billing failures cause 31% of its churn.
 
 ## 5. Recommendation
 
-**Model: local playback is free for good; "S2 Pro" unlocks remote servers. Pro is sold as an annual subscription, a monthly subscription, or a lifetime purchase.** The lifetime option leads, because S2's own buyers pick it 4:1 and the market expects it. The subscription is there for people who would rather pay less up front.
+**Model: local playback is free for good; "S2 Pro" unlocks remote servers. Pro is sold as an annual subscription or a lifetime purchase — no monthly plan.** The lifetime option leads, because S2's own buyers pick it 4:1 and the market expects it. The annual subscription is there for people who would rather pay less up front; a monthly option was dropped because the 14-day trial already covers "let me try it first", and twelve months of a monthly price would cost more than lifetime.
 
 ### Free vs Pro
 
@@ -88,15 +91,40 @@ Decided by the owner on epic #382; each can still be revisited:
 
 The owner kept downloads free, but downloading from a server needs server access. My reading is that downloads are never a separate upsell and never disappear, rather than that free users can download from a server. Confirm this.
 
-### Prices (US anchor; use Play's local-currency pricing templates)
+### Prices (decided 2026-09-25, issue #380)
 
-| Product | Price | Why |
+| Product | US price | Why |
 |---|---|---|
-| Lifetime | **$14.99** | $7.99 sells with almost no price resistance (the A/B test above), and Poweramp charges $19.99. Symfonium's ~$6 caps what streaming-only users will accept, so don't go above $19.99. |
-| Annual | **$5.99/yr** | Cheap enough not to feel like "a subscription tax". Lifetime is 2.5× the annual price, the usual ratio. |
-| Monthly | **$1.49/mo** | For people who want to try it for a month. Twelve months cost $17.88, so annual looks like the better deal. |
+| Lifetime (`s2_pro_lifetime`) | **$9.99** | $7.99 sold with almost no price resistance (the A/B test in §3), and Poweramp charges $19.99. Run a Play price experiment at $9.99 / $12.99 / $14.99 after launch. |
+| Annual (`s2_pro`, base plan `annual`) | **$3.99/yr** | Cheap enough not to feel like "a subscription tax". No monthly base plan: the 14-day trial covers trying it, and 12 × $0.99 would exceed the lifetime price. |
 
-Run Play Console price experiments on lifetime ($9.99 / $14.99 / $19.99) for the first 8–12 weeks. At about 500 orders a year that is statistically thin, so judge on revenue per paywall view, not on conversion.
+- **Regional prices** (not Play's auto-conversion, set manually): lifetime A$14.99 / £8.99 / €9.99;
+  annual A$5.99 / £3.49 / €3.99. Everywhere else, use Play's auto-conversion templates. Keep the
+  existing manual emerging-market prices, e.g. ₹260 lifetime — don't let auto-conversion overwrite
+  them.
+- **Launch sale.** Lifetime stays at today's $7.99 for 30 days after launch, as a Play one-time-product
+  discount on `s2_pro_lifetime` (not a lower base price). No intro offer on the subscription.
+- **No existing-user discount.** Every legacy SKU (`s2_iap_full_version`, `s2_iap_full_version_low`,
+  `s2_subscription_full_version_monthly`, `_yearly`, `_yearly_low`) already grants Pro for as long as
+  it's owned — see Grandfathering below — so there's nothing further to discount.
+- **Trial.** Stays 14 days, app-side, no card (see Trial mechanics below). Test a 30-day trial if
+  trial-to-paid comes in under 8%.
+- **Price experiment.** Once the 30-day launch sale ends, run a Play Console price experiment on
+  lifetime at $9.99 / $12.99 / $14.99. At about 500 orders a year that's statistically thin, so judge
+  it on revenue per paywall view, not on conversion.
+
+#### Play Console setup checklist (owner)
+
+1. Create the `s2_pro` subscription product with a single auto-renewing base plan, `annual` (P1Y), at
+   $3.99 (regional overrides above). No monthly base plan, no Play free-trial offer — the trial is
+   app-side.
+2. Create the `s2_pro_lifetime` one-time product at $9.99 (regional overrides above), via the new
+   one-time-products API. Keep the existing manual emerging-market prices (e.g. ₹260) rather than
+   letting auto-conversion set them.
+3. Add a one-time-product discount on `s2_pro_lifetime`: $7.99, running for 30 days from launch.
+4. Once the launch sale ends, start the lifetime price experiment: $9.99 / $12.99 / $14.99.
+5. Leave the five legacy products' base plans and prices untouched — they stay in the entitlement set
+   indefinitely and are never offered to new buyers again (see Grandfathering).
 
 ### Trial mechanics
 
@@ -107,8 +135,8 @@ Run Play Console price experiments on lifetime ($9.99 / $14.99 / $19.99) for the
 
 ### Grandfathering
 
-- Any of the five legacy SKUs grants Pro, whichever one the user has. Lifetime owners (about 400 in the last year) have Pro forever. Legacy annual subscribers ($1.99/yr) have Pro for as long as they keep renewing; leave their base plans active and never migrate their price.
-- Stop offering the legacy products, but keep them in the entitlement set indefinitely.
+- Any of the five legacy SKUs grants Pro, whichever one the user has. Lifetime owners (about 400 in the last year) have Pro forever. Legacy monthly and annual subscribers (`s2_subscription_full_version_monthly` at $0.99/mo, `_yearly`/`_yearly_low`) have Pro for as long as they keep renewing; leave their base plans active and never migrate their price.
+- Stop offering the legacy products, but keep them in the entitlement set indefinitely. This is also why there's no separate existing-user discount: every legacy SKU already grants Pro at no extra cost.
 - Thank existing buyers once, with a message along the lines of "You already own S2 Pro". Many of them are local-only users who paid to avoid the speed penalty; they lose nothing.
 
 ### Paywall placement
@@ -118,7 +146,7 @@ Run Play Console price experiments on lifetime ($9.99 / $14.99 / $19.99) for the
 3. **Settings → S2 Pro**: status, restore purchases, promo code (make it visible and drop the five-tap easter egg), and manage subscription (a deep link to Play).
 4. **A trial chip** in the Library top bar for the last 3 days only. Replaces today's always-visible ring and daily dialog.
 
-Show one sheet with three plan cards: Lifetime (preselected, marked "Best value"), Annual, Monthly. Put the price plus a one-line summary of Pro on each card.
+Show one sheet with two plan cards: Lifetime (preselected, marked "Best value") and Annual. Put the price plus a one-line summary of Pro on each card.
 
 ### Play listing wording risk
 
@@ -132,7 +160,7 @@ Also expect the "Shuttle+ was abandoned" crowd to reappear in reviews. Draft rep
 
 ### Play Billing implementation notes
 
-- **Subscription.** One new subscription product, `s2_pro`, with two auto-renewing base plans: `annual` (P1Y) and `monthly` (P1M). Add no Play free-trial offer at launch, because the trial is app-side. Offers can come later, for example a win-back for lapsed subscribers or a first-year intro price, both targeted with offer tags.
+- **Subscription.** One new subscription product, `s2_pro`, with a single auto-renewing base plan: `annual` (P1Y). No monthly base plan — the 14-day trial covers trying it. Add no Play free-trial offer at launch either, because the trial is app-side. Offers can come later, for example a win-back for lapsed subscribers or a first-year intro price, both targeted with offer tags.
 - **Lifetime.** A new one-time product, `s2_pro_lifetime`, with a single "buy" purchase option. Build it with the new one-time-products API; the old `inappproducts` API now returns "migrate to the new publishing API".
 - **Entitlement.** Pro means any PURCHASED (not PENDING) purchase among `s2_pro`, `s2_pro_lifetime` and the five legacy SKUs.
   - Query INAPP and SUBS on start and on every foreground, and handle `onPurchasesUpdated`.
