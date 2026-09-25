@@ -7,7 +7,7 @@
 # flow leaves the app on Settings > Media (two screens deep), so two `back`s reach the Library tab
 # and its mini player. The wrapper (support/scripts/checks/tag-edit-queued.sh) checks this alone,
 # before support/maestro/tag-edit-not-playing.yaml runs the second edit -- a real SAF tag write is
-# slow enough that both edits together can outlast this 60 s fixture track's remaining runtime.
+# slow enough that both edits together can outlast this 180 s fixture track's remaining runtime.
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp:

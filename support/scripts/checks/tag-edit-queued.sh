@@ -6,7 +6,7 @@
 # setup_taglib_provider; restored back to the `playback` fixture on exit like m3u-sync.sh.
 #
 # Two Maestro flows, not one: a real SAF tag write is slow enough that doing both edits back to
-# back can outlast the 60 s fixture track's remaining runtime, so the currently-playing song's
+# back can outlast the 180 s fixture track's remaining runtime, so the currently-playing song's
 # assertions (title updated, position past its pre-edit value, notification) run right after
 # tag-edit-playing.yaml alone, before tag-edit-not-playing.yaml's edit risks the track finishing
 # and the queue auto-advancing on its own (which is fine -- undisturbed playback, not a bug).

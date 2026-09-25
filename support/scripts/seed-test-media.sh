@@ -15,7 +15,7 @@
 #                     cross MP3 -> FLAC, Matroska -> Matroska and Matroska -> FLAC
 #     podcast         one 60 s track pushed under a path containing "podcast", so Song.type
 #                     resolves to Type.Podcast (Song.kt matches on path, not a MediaStore flag)
-#     taglib          5 x 60 s tracks plus an .m3u listing the first 3 plus one line that can't
+#     taglib          5 x 180 s tracks plus an .m3u listing the first 3 plus one line that can't
 #                     resolve to any of them, pushed to a folder meant for the Shuttle (TagLib)
 #                     provider's SAF picker (support/maestro/nav/pick-saf-folder.yaml), not scanned
 #                     into MediaStore -- see setup_taglib_provider in support/scripts/checks/_lib.sh
@@ -51,7 +51,7 @@ Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding]
                   remove the current item) to finish before a track ends on its own
   gapless         one album of 5 x 12 s tones: MP3, two FLAC-in-Matroska, two native FLAC
   podcast         one 60 s track under a "podcast" path, so it resolves to Song.Type.Podcast
-  taglib          5 x 60 s tracks + an .m3u (3 of them plus one unresolvable line), for the
+  taglib          5 x 180 s tracks + an .m3u (3 of them plus one unresolvable line), for the
                   Shuttle (TagLib) provider's SAF picker -- not scanned into MediaStore
 
   --skip-onboarding   write debug-app prefs so it opens straight to the library with the local
@@ -188,24 +188,26 @@ build_podcast() {
         "Podcast Artist" "Podcast Album" 1 1 1 1 "2022" "Spoken Word" 60
 }
 
-# 5 x 60 s tracks (long enough for playback checks, like build_playback) plus an .m3u that lists
-# the first 3 by filename and one line ("missing-track.mp3") that doesn't match any file, so the
-# TagLib provider's playlist import keeps it as an unresolved entry (LocalPlaylistRepository).
+# 5 x 180 s tracks plus an .m3u that lists the first 3 by filename and one line
+# ("missing-track.mp3") that doesn't match any file, so the TagLib provider's playlist import keeps
+# it as an unresolved entry (LocalPlaylistRepository). Longer than build_playback's 60 s because
+# tag-edit-queued.sh edits the playing song through a dozen Maestro taps while it plays; on a
+# loaded lane PLAY_ALL to Save took over 60 s, so a 60 s track ended and advanced mid-edit.
 build_taglib() {
     local dir="$1" i
     mkdir -p "$dir"
     local songs=("One" "Two" "Three" "Four" "Five")
     for i in 1 2 3 4 5; do
         generate_track "${dir}/taglib${i}.mp3" mp3 "Taglib ${songs[$((i - 1))]}" "Taglib Artist" \
-            "Taglib Artist" "Taglib Album" "$i" 5 1 1 "2024" "Ambient" 60
+            "Taglib Artist" "Taglib Album" "$i" 5 1 1 "2024" "Ambient" 180
     done
     cat > "${dir}/taglib.m3u" <<'EOF'
 #EXTM3U
-#EXTINF:60, Taglib Artist - Taglib One
+#EXTINF:180, Taglib Artist - Taglib One
 taglib1.mp3
-#EXTINF:60, Taglib Artist - Taglib Two
+#EXTINF:180, Taglib Artist - Taglib Two
 taglib2.mp3
-#EXTINF:60, Taglib Artist - Taglib Three
+#EXTINF:180, Taglib Artist - Taglib Three
 taglib3.mp3
 #EXTINF:180, Unknown Artist - Missing Track
 missing-track.mp3
