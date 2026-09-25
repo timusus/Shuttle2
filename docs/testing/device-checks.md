@@ -8,7 +8,7 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 
 ### Position and restore
 - [x] Pause mid-track, force-stop the app, reopen it. It resumes at the paused position. — automated: `emu-verify.sh --check restore-position`
-- [ ] Let a track finish into the next one, force-stop, reopen. It resumes on the new track near 0:00.
+- [x] Let a track finish into the next one, force-stop, reopen. It resumes on the new track near 0:00. — automated: `emu-verify.sh --check restore-track-finish`
 - [x] Skip and pause right away, before the new track is audible, then force-stop and reopen. It resumes on the new track at 0:00. — automated: `emu-verify.sh --check restore-skip-pause`
 - [x] Podcasts and audiobooks resume about 5 s before where they stopped. — automated: `emu-verify.sh --check spoken-word-rewind`
 
@@ -121,7 +121,7 @@ notification is Media3's own, with shuffle and repeat as its extra buttons.
 - [ ] Notification: the same controls work, the artwork shows, and there's only one S2 media notification. Paused, it can be swiped away.
 - [ ] With Settings, "Media session artwork" turned off, the lock screen shows no artwork.
 - [ ] Bluetooth headset: play/pause, next and previous (single, double and triple press) act on S2.
-- [ ] Widget: play/pause, next and previous work with the app open, and with the app force-stopped (the service starts in the foreground without a crash).
+- [x] Widget: play/pause, next and previous work with the app open, and with the app force-stopped (the service starts in the foreground without a crash). — automated: `emu-verify.sh --check widget-controls`
 - [ ] Resumption after reboot: after a reboot, the system's media resumption controls (quick settings) show the last song; play resumes the saved queue at that song (RS-44). The same with a headset's play button.
 - [ ] Assistant: "play <artist> on S2" and "play <song> on S2" play the right songs, with S2 closed and open.
 - [ ] Cold start from the widget, API 31+: play something, then force-stop S2 (Settings, Apps, S2, Force stop) so the app is dead. Press the widget's play button. A notification appears (a "Loading" one first on a large library, then the playing song's), the saved queue plays, and nothing crashes, even if the queue takes several seconds to restore (RS-48).
@@ -169,7 +169,7 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 - [ ] On an API 29 device, import with only the S2 provider. Every song imports with the same tags as the MediaStore provider shows, and they play.
 - [ ] On an API 23–28 device, the same check as on API 29.
 - [ ] On a real 10k-track library, time a full import with the S2 provider (`Import complete in` in logcat) and compare it with the last Play build, which walks SAF folders.
-- [ ] Put music in a folder containing `.nomedia` and grant that folder under Media > Directories. Those songs don't import (expected until the optional SAF "Add folder" lands); nothing else breaks.
+- [x] Put music in a folder containing `.nomedia` and grant that folder under Media > Directories. Those songs don't import (expected until the optional SAF "Add folder" lands); nothing else breaks. — automated: `emu-verify.sh --check nomedia-import`
 
 ## Home analytics consent card (#421)
 
