@@ -386,7 +386,10 @@ shows the Pro status); the other states are covered by the Roborazzi recordings 
 ## 9. System surfaces (unaffected)
 
 - **Activity intents — Keep.** `MEDIA_PLAY_FROM_SEARCH`, `VIEW` of `audio/*` (plays via the media
-  session), `MUSIC_PLAYER`, `APP_MUSIC` category. Unchanged by the shell.
+  session), `MUSIC_PLAYER`, `APP_MUSIC` category. Unchanged by the shell. Opening a file (#425):
+  it replaces the queue and plays on its own, as its library song when the library holds it, else
+  as a transient song that isn't added or restored; no "add to library" prompt; back leaves it
+  playing (playback spec RS-57 to RS-59).
 - **Shortcut — Keep.** One dynamic "Toggle playback" shortcut via `ShortcutHandlerActivity`, which
   only starts the service. Opportunity: add "Shuffle all" and "Search" static shortcuts.
 - **Widgets — Keep, unaffected.** Glance `WidgetProvider41`/`42` with Row/Card/Split/Hero layouts,

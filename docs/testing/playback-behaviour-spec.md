@@ -292,6 +292,33 @@ loaded when the app starts (a server out of reach, a file that can't be read), w
 song stays current, paused, and a failure is reported for it, rather than the queue moving on; when it's then
 played, it's skipped for the next song that can load (RS-23). (#394) — JVM.
 
+## Opening files from other apps
+
+A file manager, a download or a messaging attachment can open an audio file with S2 (`ACTION_VIEW` of `audio/*`,
+by a file:// or content:// URI). Decided in #425: S2 plays it straight away, on its own, as other players do; what
+changes is only whether it's the library's song or a transient one. Neither case adds anything to the library or
+asks to (a file in a folder the library reads is imported by the next scan anyway). RS-09 covers an opened file that
+can no longer be read.
+
+**RS-57: an opened file that's in the library plays as its library song, on its own.** Given a file the library holds
+(matched by the URI itself, the file path behind a file:// or MediaStore URI, or a SAF document id), when another app
+opens it, then the queue it replaces becomes that one library song, which plays, counts its plays and restores after
+a restart like any library song. When several rows hold the file (one per local provider, #420), the choice doesn't
+depend on the library's order: a row that isn't excluded, then S2's own scan over MediaStore's, then the lowest id.
+(#425, #426) — JVM (`spec/MediaSessionSpecTest`, and `OpenedAudioTest` for each tie-break); on the emulator
+(`checks/open-file-intent.sh`).
+
+**RS-58: an opened file that isn't in the library plays on its own, outside the library.** Given a file the library
+doesn't hold (a download, an attachment, or a content:// URI with no file path behind it), when another app opens it,
+then the queue it replaces becomes that one transient song, named from its tags (or its file name), which plays under
+the opening app's URI grant. It isn't added to the library and its plays aren't counted; once the app is killed the
+grant has lapsed, so it isn't restored and the queue comes back empty. (#425) — JVM (`spec/MediaSessionSpecTest`);
+the restore is on the emulator (`checks/open-file-intent.sh`).
+
+**RS-59: leaving S2 after opening a file keeps it playing.** Given a file opened from another app, when the user
+presses back, then S2 goes to the background and the file keeps playing, with its notification. Relaunching S2 from
+recents doesn't open the file again. (#425) — device-only (`checks/open-file-intent.sh`).
+
 ## Commits with no rule
 
 Mechanism only, with no behaviour of their own to hold (the design doc's section 4 list, plus thread-safety and
