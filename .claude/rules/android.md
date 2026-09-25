@@ -208,3 +208,36 @@ by tap.
   can hijack a CI instrumentation job.
 - Setup, lanes, gotchas and reversal: on the box at `/home/tim/gh-runner-image/EMULATOR-SETUP.md`
   (box setup is shared infra written up from the podcasts repo, not duplicated here).
+
+## Remote Gradle Builds (WSL Box, opt-in)
+
+`support/scripts/remote-build.sh <gradle args...>` runs a Gradle build on the same box (#451): it
+rsyncs the worktree to `~/s2-builds/<worktree name>`, runs `./gradlew` there with a box-side JDK
+(Temurin 21 in `~/opt/jdk-21`) and Gradle user home (`~/s2-builds/.gradle-home`) at
+`--max-workers=8` unless the args say otherwise (`REMOTE_BUILD_MAX_WORKERS` changes the default),
+streams a condensed log (full log: `build/remote-build/gradle.log`), and syncs back APKs, test
+results, test reports and Roborazzi outputs with Gradle's exit code. The version tag is read on the
+Mac and passed as `-PversionCode`/`-PversionName`. Different worktrees build side by side; two calls
+from one worktree queue. One-time box setup: `support/scripts/remote-build-setup.sh` (idempotent;
+it only checks the CI-shared SDK at `/opt/android-sdk` and never installs into it).
+
+Opt in with `S2_REMOTE_BUILD=1`, or `--remote-build` as the first argument to
+`support/scripts/unit-test` / an argument to `emu-verify.sh` (which builds the APK remotely and
+installs the synced-back copy over the lane's tunnel). Not the default yet. Line for briefs:
+
+> Run Gradle on the WSL box to spare the Mac: `support/scripts/unit-test --remote-build [module]`,
+> `support/scripts/emu-verify.sh --remote-build ...`, or `support/scripts/remote-build.sh <tasks>`
+> for anything else (foreground, generous timeout). Keep `verifyRoborazziDebug` on the Mac.
+
+**Keep `verifyRoborazziDebug`/`recordRoborazziDebug` on the Mac.** The `docs/design/**` screenshot
+goldens are recorded on macOS, and on Linux 25 of them differ by anti-aliasing at text and rounded
+corner edges, so a Linux verify fails where the Mac passes (the LFS preview goldens under
+`android/app/src/test/snapshots` verify identically). Plain `testDebugUnitTest` is unaffected: the
+`docs/design` shots are a no-op outside `verify`/`record`.
+
+Measured 2026-09-26, the full verify (`testDebugUnitTest :android:architecture-tests:test
+:android:app:verifyRoborazziDebug :android:app:assembleDebug --continue`): cold (no build outputs,
+`--no-build-cache`) 3m29s on the box (5m40s with a fresh daemon) vs 4m21s on the Mac at `--max-workers=2` (Mac load average
+10 → 41 during the run); warm after a one-line app change, 2m04s vs 2m16s (Mac load 44 → 125).
+The first build into an empty box-side Gradle home (downloads) took 10m48s for `assembleDebug`.
+The sync costs 1-5 s each way.
