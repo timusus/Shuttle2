@@ -9,6 +9,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.tracing.trace
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.mediaprovider.ServerStreamPolicy
+import com.simplecityapps.playback.AppPlayer
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.CallMonitor
 import com.simplecityapps.playback.PlaybackManager
@@ -31,6 +32,7 @@ import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -118,25 +120,33 @@ class PlaybackEngineModule {
         streams: CastStreams
     ): CastQueue = CastQueue(exoPlayer, converter, streams) { CastSessionManager.receiverPlayedOut(context) }
 
-    // The player the app plays through: the ExoPlayer, or a Cast receiver while a Cast session is up. Built on the main
-    // thread, as Cast requires.
+    // The player the app plays through: the ExoPlayer, then, once Cast is attached (see CastStarter), a Cast player
+    // around it that plays on a Cast receiver while a Cast session is up. The Cast player is built on the main thread,
+    // as Cast requires.
     @Singleton
     @Provides
-    fun providePlayer(
+    fun provideAppPlayer(
         @ApplicationContext context: Context,
         exoPlayer: ExoPlayer,
-        converter: CastMediaItemConverter,
+        converter: Lazy<CastMediaItemConverter>,
         castQueue: CastQueue,
+        castSessionManager: Lazy<CastSessionManager>,
         audioEffectSessionManager: AudioEffectSessionManager
-    ): Player = trace("S2 build CastPlayer") {
-        CastPlayer.Builder(context)
-            .setLocalPlayer(exoPlayer)
-            .setRemotePlayer(RemoteCastPlayer.Builder(context).setMediaItemConverter(converter).build())
-            .setTransferCallback(castQueue)
-            .build()
-            .also(castQueue::attach)
-            .also { player -> audioEffectSessionManager.attach(player, exoPlayer) }
-    }
+    ): AppPlayer = AppPlayer(exoPlayer) {
+        if (castSessionManager.get().start()) {
+            CastPlayer.Builder(context)
+                .setLocalPlayer(exoPlayer)
+                .setRemotePlayer(RemoteCastPlayer.Builder(context).setMediaItemConverter(converter.get()).build())
+                .setTransferCallback(castQueue)
+                .build()
+                .also(castQueue::attach)
+        } else {
+            null
+        }
+    }.also { player -> audioEffectSessionManager.attach(player, exoPlayer) }
+
+    @Provides
+    fun providePlayer(appPlayer: AppPlayer): Player = appPlayer
 
     @Singleton
     @Provides

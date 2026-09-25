@@ -1,5 +1,6 @@
 package com.simplecityapps.playback.spec
 
+import com.simplecityapps.playback.AppPlayer
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.chromecast.CastMediaItemConverter
 import com.simplecityapps.playback.chromecast.CastQueue
@@ -37,10 +38,19 @@ class CastSpecTest {
 
     private lateinit var castPlayer: FakeCastPlayer
 
+    private lateinit var appPlayer: AppPlayer
+
+    private var castPlayersBuilt = 0
+
     private val harness =
         PlaybackHarness(
             castQueue = { local -> CastQueue(local, converter, streams) { receiver.finished }.also { castQueue = it } },
-            activePlayer = { local -> FakeCastPlayer(local, receiver, castQueue).also { castPlayer = it }.also(castQueue::attach) }
+            activePlayer = { local ->
+                AppPlayer(local) {
+                    castPlayersBuilt++
+                    FakeCastPlayer(local, receiver, castQueue).also { castPlayer = it }.also(castQueue::attach)
+                }.also { appPlayer = it }
+            }
         )
 
     private val playback = harness.playbackOperations
@@ -54,13 +64,15 @@ class CastSpecTest {
 
     private fun songs(count: Int) = (1L..count).map { song(it) }
 
-    /** Loads [count] songs at the one at [index], at [positionMs], playing if [play]. */
+    /** Loads [count] songs at the one at [index], at [positionMs], playing if [play], with Cast attached first if [attachCast]. */
     private fun start(
         count: Int,
         index: Int = 0,
         positionMs: Int = 0,
-        play: Boolean = true
+        play: Boolean = true,
+        attachCast: Boolean = true
     ) {
+        if (attachCast) appPlayer.attachCast()
         harness.run { queue.setQueue(songs(count), position = index) }
         var loaded = false
         playback.load(positionMs) { loaded = true }
@@ -73,6 +85,7 @@ class CastSpecTest {
 
     /** Starts casting, and lets the receiver report what it was sent. */
     private fun connect() {
+        appPlayer.attachCast()
         castPlayer.connect()
         settle()
     }
@@ -87,6 +100,33 @@ class CastSpecTest {
     }
 
     private val currentSongId get() = queue.getCurrentItem()?.song?.id
+
+    @Test
+    fun `attaching Cast while playing leaves playback as it was, and casting works after`() {
+        start(count = 3, index = 1, positionMs = 1_000, attachCast = false)
+        val sessionId = harness.audioEffectSessionManager.sessionId
+        val abandons = harness.audioFocus.abandons
+
+        appPlayer.attachCast()
+        appPlayer.attachCast()
+        harness.idle()
+
+        castPlayersBuilt shouldBe 1
+        playback.playbackStateFlow.value shouldBe PlaybackState.Playing
+        currentSongId shouldBe 2L
+        harness.audioFocus.abandons shouldBe abandons
+        harness.audioEffectSessionManager.sessionId shouldBe sessionId
+        playback.pause()
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Paused }
+        playback.play()
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
+
+        connect()
+
+        receiver.songIds shouldBe listOf(1L, 2L, 3L)
+        receiver.currentMediaItemIndex shouldBe 1
+        receiver.playWhenReady shouldBe true
+    }
 
     @Test
     fun `casting sends the queue around the current song, at its position, playing, and stops the local player`() {

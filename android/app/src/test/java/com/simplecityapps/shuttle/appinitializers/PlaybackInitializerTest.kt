@@ -66,7 +66,7 @@ class PlaybackInitializerTest {
         playbackManager = playbackManager,
         queueManager = queueManager,
         playbackPreferenceManager = preferences,
-        castSessionManager = Lazy {
+        castStarter = Lazy {
             startedComponents += "cast"
             mockk(relaxed = true)
         },

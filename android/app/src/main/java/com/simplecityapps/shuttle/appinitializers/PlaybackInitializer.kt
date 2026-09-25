@@ -11,11 +11,11 @@ import androidx.tracing.trace
 import androidx.tracing.traceAsync
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.BitPerfectOutput
+import com.simplecityapps.playback.CastStarter
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
-import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
@@ -50,8 +50,8 @@ import timber.log.Timber
  * [PlaybackOperations.pausePositionFlow] to record each song's own position. [PlaybackOperations] saves the
  * position to resume from on both itself, since it must be saved before the call reporting them returns.
  *
- * Also starts the playback components that run for the life of the app: Cast session handling, the media
- * session and bit-perfect USB output.
+ * Also starts the playback components that run for the life of the app: Cast (once the app first comes to the
+ * foreground), the media session and bit-perfect USB output.
  */
 class PlaybackInitializer
 @Inject
@@ -61,7 +61,7 @@ constructor(
     private val playbackManager: PlaybackOperations,
     private val queueManager: QueueOperations,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
-    private val castSessionManager: Lazy<CastSessionManager>,
+    private val castStarter: Lazy<CastStarter>,
     private val playRequests: Lazy<PlayRequests>,
     private val bitPerfectOutput: Lazy<BitPerfectOutput>,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
@@ -73,7 +73,7 @@ constructor(
         initTime = System.currentTimeMillis()
         Timber.v("PlaybackInitializer.init()")
 
-        startPlaybackComponents()
+        startPlaybackComponents(application)
         collectPlaybackState()
         collectSongPositions()
 
@@ -104,9 +104,9 @@ constructor(
         }
     }
 
-    /** Each starts itself when it's created, so creating it here is what starts it. */
-    private fun startPlaybackComponents() {
-        castSessionManager.get()
+    /** Each starts itself when it's created, so creating it here is what starts it; Cast waits for the foreground. */
+    private fun startPlaybackComponents(application: Application) {
+        castStarter.get().startInForeground(application)
         playRequests.get().launchPlaybackFailureMessages()
         bitPerfectOutput.get()
     }

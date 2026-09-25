@@ -1,39 +1,53 @@
 package com.simplecityapps.playback.chromecast
 
 import android.content.Context
-import androidx.tracing.trace
+import androidx.media3.cast.Cast
 import com.google.android.gms.cast.MediaStatus
-import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import javax.inject.Inject
 import timber.log.Timber
 
 /**
  * Whether Cast is available, and keeps the local [HttpServer] a Cast receiver streams from running while a Cast
  * session is up, with a new key for its URLs each session (a resumed one keeps its key). Moving playback to and from the receiver is the Cast player's (see [CastQueue]).
+ *
+ * Follows sessions once [start]ed, which the Cast player's setup does (see [com.simplecityapps.playback.AppPlayer]).
+ * Media3's [Cast] loads Cast's context off the main thread, and holds the listener until it's loaded.
  */
 class CastSessionManager
 @Inject
 constructor(
-    applicationContext: Context,
+    private val applicationContext: Context,
     private val httpServer: HttpServer,
     private val streams: CastStreams
 ) : SessionManagerListener<CastSession> {
-    var isAvailable: Boolean = false
-        private set
+    /**
+     * Whether Cast can run here: it needs Google Play services, and Cast's context mustn't have failed to load. Read
+     * before Cast is set up, so it asks Play services only whether it's there.
+     */
+    val isAvailable: Boolean
+        get() = hasPlayServices && Cast.getSingletonInstance(applicationContext).castContextLoadFailure == null
 
-    init {
-        trace("S2 Cast init") {
-            try {
-                val sessionManager = CastContext.getSharedInstance(applicationContext).sessionManager
-                sessionManager.addSessionManagerListener(this, CastSession::class.java)
-                isAvailable = true
-            } catch (e: Exception) {
-                // Cast framework unavailable on this device (e.g., no Google Play Services)
-                Timber.w(e, "Failed to initialize Cast framework - Chromecast will be unavailable")
-            }
+    private val hasPlayServices: Boolean by lazy {
+        GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(applicationContext) == ConnectionResult.SUCCESS
+    }
+
+    private var started = false
+
+    /** Follows Cast sessions from now on; false, doing nothing, when Cast isn't available. */
+    fun start(): Boolean {
+        if (!isAvailable) {
+            Timber.w("Cast is unavailable on this device")
+            return false
         }
+        if (!started) {
+            started = true
+            Cast.getSingletonInstance(applicationContext).addSessionManagerListener(this)
+        }
+        return true
     }
 
     override fun onSessionStarting(castSession: CastSession) {
@@ -112,7 +126,7 @@ constructor(
          * interrupted or failing: Media3's Cast player reports all of those as idle.
          */
         fun receiverPlayedOut(context: Context): Boolean = try {
-            CastContext.getSharedInstance(context).sessionManager.currentCastSession?.remoteMediaClient?.mediaStatus?.idleReason ==
+            Cast.getSingletonInstance(context).currentCastSession?.remoteMediaClient?.mediaStatus?.idleReason ==
                 MediaStatus.IDLE_REASON_FINISHED
         } catch (e: Exception) {
             false

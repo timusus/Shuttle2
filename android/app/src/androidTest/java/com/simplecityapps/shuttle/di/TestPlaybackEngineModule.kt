@@ -5,6 +5,7 @@ import androidx.core.content.getSystemService
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
+import com.simplecityapps.playback.AppPlayer
 import com.simplecityapps.playback.CallMonitor
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
@@ -64,10 +65,13 @@ class TestPlaybackEngineModule {
         songUriResolver: SongUriResolver
     ): ExoPlayer = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver).create()
 
-    // No Cast player in tests: the app plays through the ExoPlayer itself.
+    // No Cast player in tests: the app plays through the ExoPlayer, and attaching Cast does nothing.
     @Singleton
     @Provides
-    fun providePlayer(exoPlayer: ExoPlayer): Player = exoPlayer
+    fun provideAppPlayer(exoPlayer: ExoPlayer): AppPlayer = AppPlayer(exoPlayer, castPlayer = null)
+
+    @Provides
+    fun providePlayer(appPlayer: AppPlayer): Player = appPlayer
 
     @Singleton
     @Provides
