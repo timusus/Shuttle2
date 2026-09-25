@@ -38,8 +38,9 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Records the #410 Now Playing variants into `docs/design/np-sheet-410/`: each at rest and with Up
- * Next dragged up by 64 dp, over the shell's Home with a 24 dp status bar and a 24 dp
+ * Records the #410 Now Playing variants into `docs/design/np-sheet-410/`: (A) to (C) at rest and with
+ * Up Next dragged up by 64 dp (and at the queue on the phone), (D) at rest, with each panel open and
+ * part-way to the queue, over the shell's Home with a 24 dp status bar and a 24 dp
  * gesture bar. A no-op under plain `testDebugUnitTest`; record with
  * `./gradlew :android:app:recordRoborazziDebug --tests '*NowPlayingSheetVariantsScreenshotTest*'`.
  */
@@ -52,6 +53,9 @@ class NowPlayingSheetVariantsScreenshotTest {
 
     private val variant = mutableStateOf(NowPlayingVariant.FullLevel)
     private val drag = mutableStateOf(0.dp)
+
+    /** (D)'s open panel and how far it is open; null renders [variant] instead. */
+    private val podcasts = mutableStateOf<Pair<PodcastsPanel?, Float>?>(null)
     private val playerState = mutableStateOf(sampleQueue)
     private val actions = RecordingPlayerActions(playerState)
 
@@ -68,6 +72,7 @@ class NowPlayingSheetVariantsScreenshotTest {
         composeTestRule.setContent {
             val currentVariant by variant
             val currentDrag by drag
+            val currentPodcasts by podcasts
             S2Theme {
                 Box {
                     // An empty queue: the destinations and nav bar with no mini player, as the sheet covers it.
@@ -79,7 +84,12 @@ class NowPlayingSheetVariantsScreenshotTest {
                         windowAdaptiveInfo = windowInfo(widthDp, heightDp),
                         entryProvider = ::fakeShellEntryProvider,
                     )
-                    NowPlayingVariantPreview(currentVariant, playerState.value, { sampleProgress }, actions, currentDrag)
+                    val (panel, open) = currentPodcasts ?: (null to 0f)
+                    if (currentPodcasts != null) {
+                        PodcastsVariantPreview(playerState.value, { sampleProgress }, actions, panel, open)
+                    } else {
+                        NowPlayingVariantPreview(currentVariant, playerState.value, { sampleProgress }, actions, currentDrag)
+                    }
                 }
             }
         }
@@ -119,6 +129,7 @@ class NowPlayingSheetVariantsScreenshotTest {
         widthDp: Int,
         heightDp: Int,
         dragged: Boolean = true,
+        queue: Boolean = false,
     ) {
         setContent(widthDp, heightDp)
         NowPlayingVariant.entries.forEach {
@@ -129,12 +140,42 @@ class NowPlayingSheetVariantsScreenshotTest {
                 drag.value = DragDistance
                 shot("$device-${it.slug}-dragging")
             }
+            if (queue) {
+                drag.value = QueueDrag
+                shot("$device-${it.slug}-queue")
+            }
         }
+        recordPodcasts(device)
+    }
+
+    /** (D) at rest, with each panel open, and part-way through the drag up to the queue. */
+    private fun recordPodcasts(device: String) {
+        val slug = "$device-$PodcastsSlug"
+        podcasts.value = null to 0f
+        shot("$slug-rest")
+        PodcastsPanel.entries.forEach {
+            podcasts.value = it to 1f
+            shot("$slug-${it.slug}")
+        }
+        podcasts.value = PodcastsPanel.Queue to PodcastsDragOpen
+        shot("$slug-dragging")
+        podcasts.value = null
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
-    fun phone() = record("phone", 411, 891)
+    fun phone() = record("phone", 411, 891, queue = true)
+
+    /** The dark scheme at rest, for (C) and (D), whose sheet edges read against the dimmed library. */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night-xhdpi")
+    fun phoneDark() {
+        setContent(411, 891)
+        variant.value = NowPlayingVariant.ArtworkFill
+        shot("phone-dark-${NowPlayingVariant.ArtworkFill.slug}-rest")
+        podcasts.value = null to 0f
+        shot("phone-dark-$PodcastsSlug-rest")
+    }
 
     @Test
     @Config(qualifiers = "w360dp-h640dp-xhdpi")
@@ -149,6 +190,14 @@ class NowPlayingSheetVariantsScreenshotTest {
 
         /** Early in the drag, while a content-height sheet's top edge is still rising towards the status bar. */
         val DragDistance = 64.dp
+
+        /** Far enough to settle every variant at its Queue level. */
+        val QueueDrag = 2000.dp
+
+        const val PodcastsSlug = "d-podcasts"
+
+        /** (D) part-way from rest to the queue: the sheet's edge at the status bar and the artwork shrinking. */
+        const val PodcastsDragOpen = 0.4f
 
         val sampleQueue = sampleShellQueue(size = 16)
         val sampleProgress = PlayerProgress(positionMs = 60_000, durationMs = sampleQueue.current!!.durationMs.toLong())
