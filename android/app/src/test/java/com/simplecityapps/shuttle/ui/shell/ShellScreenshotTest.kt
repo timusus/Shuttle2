@@ -6,11 +6,11 @@ import androidx.compose.material3.adaptive.Posture
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
-import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
 import com.bumptech.glide.SampleArtworkGlide
+import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.RoborazziOptions
-import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
 import java.io.File
 import org.junit.After
@@ -43,9 +43,11 @@ class ShellScreenshotTest {
     @After
     fun uninstallSampleArtwork() = SampleArtworkGlide.uninstall()
 
+    // The whole screen: with system bars the shell sits in a second compose root (the insets override).
+    @OptIn(ExperimentalRoborazziApi::class)
     private fun shot(name: String) {
         composeTestRule.waitForIdle()
-        composeTestRule.onRoot().captureRoboImage(
+        captureScreenRoboImage(
             filePath = File(shotsDir, "$name.png").path,
             roborazziOptions = RoborazziOptions(captureType = RoborazziOptions.CaptureType.Screenshot()),
         )
@@ -75,7 +77,7 @@ class ShellScreenshotTest {
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phone() {
-        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 891))
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 891), systemBars = PhoneSystemBars)
         levels("phone", withQueue = true)
         libraryDetail("phone")
     }
@@ -83,7 +85,7 @@ class ShellScreenshotTest {
     @Test
     @Config(qualifiers = "w360dp-h640dp-xhdpi")
     fun phoneShort() {
-        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(360, 640))
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(360, 640), systemBars = PhoneSystemBars)
         robot.tapMiniPlayer()
         shot("phone-short-now-playing")
     }
@@ -91,7 +93,7 @@ class ShellScreenshotTest {
     @Test
     @Config(qualifiers = "w411dp-h826dp-xhdpi")
     fun foldableFolded() {
-        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 826))
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 826), systemBars = PhoneSystemBars)
         levels("foldable-folded", withQueue = true)
     }
 

@@ -35,8 +35,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onPlaced
@@ -227,6 +229,14 @@ internal fun StackedPlayer(
                 .graphicsLayer {
                     alpha = geometry().nowPlayingAlpha(offset())
                     translationY = geometry().queuePanelTranslation(offset())
+                }
+                // At rest Up Next ends on the gesture bar, so nothing of the list may draw below it; the rows reveal into
+                // that strip only as the queue rises (#417).
+                .drawWithContent {
+                    val uncovered = navigationBarBottom * (1f - geometry().queue(offset()))
+                    clipRect(bottom = size.height - geometry().queuePanelTranslation(offset()) - uncovered) {
+                        this@drawWithContent.drawContent()
+                    }
                 },
         ) {
             QueueHeader(onClick = onShowQueue, onClear = actions::clearQueue)

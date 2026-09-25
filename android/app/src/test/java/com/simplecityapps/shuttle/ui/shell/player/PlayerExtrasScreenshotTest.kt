@@ -8,6 +8,7 @@ import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.simplecityapps.shuttle.ui.shell.AppShellRobot
+import com.simplecityapps.shuttle.ui.shell.PhoneSystemBars
 import com.simplecityapps.shuttle.ui.shell.sampleShellQueue
 import com.simplecityapps.shuttle.ui.shell.windowInfo
 import java.io.File
@@ -53,7 +54,7 @@ class PlayerExtrasScreenshotTest {
     }
 
     private fun nowPlaying(playing: Int) {
-        robot.setContent(queue = sampleShellQueue(size = 16, playing = playing), window = windowInfo(411, 891))
+        robot.setContent(queue = sampleShellQueue(size = 16, playing = playing), window = windowInfo(411, 891), systemBars = PhoneSystemBars)
         robot.tapMiniPlayer()
     }
 

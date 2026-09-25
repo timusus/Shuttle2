@@ -11,9 +11,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.DeviceConfigurationOverride
+import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.WindowInsets
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -33,6 +37,9 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.unit.dp
+import androidx.core.graphics.Insets
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.computeWindowSizeClass
@@ -245,6 +252,17 @@ fun windowInfo(
     posture: Posture = Posture(),
 ): WindowAdaptiveInfo = WindowAdaptiveInfo(WindowSizeClass.BREAKPOINTS_V2.computeWindowSizeClass(widthDp.toFloat(), heightDp.toFloat()), posture)
 
+/**
+ * A phone's system bars in dp: a status bar and a gesture bar, for recordings that must show what sits under them.
+ * Robolectric gives the window no insets otherwise.
+ */
+data class SystemBars(
+    val statusBarDp: Int = 24,
+    val navigationBarDp: Int = 24,
+)
+
+val PhoneSystemBars = SystemBars()
+
 val CompactWindow = windowInfo(411, 891)
 val MediumWindow = windowInfo(700, 900)
 val PaneWindow = windowInfo(1280, 900)
@@ -265,6 +283,7 @@ class AppShellRobot(
         window: WindowAdaptiveInfo = CompactWindow,
         restoration: StateRestorationTester? = null,
         progress: PlayerProgress = progressState.value,
+        systemBars: SystemBars? = null,
     ) {
         queueState.value = queue
         progressState.value = progress
@@ -275,22 +294,24 @@ class AppShellRobot(
             val currentProgress by progressState
             val snackbarHostState = remember { SnackbarHostState() }
             val targets = remember { Channel<NavigationTarget>(Channel.UNLIMITED) }
-            S2Theme {
-                PlayerEventsEffect(
-                    actions.events,
-                    snackbarHostState,
-                    actions = actions,
-                    onNavigate = { targets.trySend(it) },
-                )
-                AppShell(
-                    playerUi = currentQueue,
-                    progress = { currentProgress },
-                    actions = actions,
-                    snackbarHostState = snackbarHostState,
-                    windowAdaptiveInfo = currentWindow,
-                    entryProvider = ::fakeShellEntryProvider,
-                    navigationRequests = remember(targets) { targets.receiveAsFlow() },
-                )
+            WithSystemBars(systemBars) {
+                S2Theme {
+                    PlayerEventsEffect(
+                        actions.events,
+                        snackbarHostState,
+                        actions = actions,
+                        onNavigate = { targets.trySend(it) },
+                    )
+                    AppShell(
+                        playerUi = currentQueue,
+                        progress = { currentProgress },
+                        actions = actions,
+                        snackbarHostState = snackbarHostState,
+                        windowAdaptiveInfo = currentWindow,
+                        entryProvider = ::fakeShellEntryProvider,
+                        navigationRequests = remember(targets) { targets.receiveAsFlow() },
+                    )
+                }
             }
         }
         if (restoration != null) restoration.setContent(content) else rule.setContent(content)
@@ -466,4 +487,21 @@ class AppShellRobot(
     fun assertTextDisplayed(text: String) {
         rule.onNodeWithText(text).assertIsDisplayed()
     }
+}
+
+@OptIn(ExperimentalTestApi::class)
+@Composable
+private fun WithSystemBars(
+    systemBars: SystemBars?,
+    content: @Composable () -> Unit,
+) {
+    if (systemBars == null) return content()
+    val density = LocalDensity.current
+    val insets = with(density) {
+        WindowInsetsCompat.Builder()
+            .setInsets(WindowInsetsCompat.Type.statusBars(), Insets.of(0, systemBars.statusBarDp.dp.roundToPx(), 0, 0))
+            .setInsets(WindowInsetsCompat.Type.navigationBars(), Insets.of(0, 0, 0, systemBars.navigationBarDp.dp.roundToPx()))
+            .build()
+    }
+    DeviceConfigurationOverride(DeviceConfigurationOverride.WindowInsets(insets), content)
 }
