@@ -1,11 +1,9 @@
 package com.simplecityapps.shuttle.persistence
 
 import android.content.SharedPreferences
+import com.simplecityapps.shuttle.settings.PrivacySettings
+import com.simplecityapps.shuttle.settings.preference
 import java.util.Date
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
-import stateFlowForBoolean
-import stateFlowForMappedValue
 
 class GeneralPreferenceManager(
     private val sharedPreferences: SharedPreferences
@@ -66,92 +64,9 @@ class GeneralPreferenceManager(
             return sharedPreferences.get("thank_you_dialog_viewed", false)
         }
 
-    enum class Theme {
-        DayNight,
-        Light,
-        Dark
-    }
-
-    var themeBase: Theme
-        set(value) {
-            sharedPreferences.put("pref_theme", value.ordinal.toString())
-        }
-        get() {
-            return Theme.entries[sharedPreferences.get("pref_theme", "0").toInt()]
-        }
-
-    fun theme(scope: CoroutineScope): StateFlow<Theme> = sharedPreferences.stateFlowForMappedValue(
-        key = "pref_theme",
-        default = "0",
-        getter = { key, default -> getString(key, default) },
-        mapper = { value -> Theme.entries[value.toInt()] },
-        scope = scope
-    )
-
-    enum class Accent {
-        Default,
-        Orange,
-        Cyan,
-        Purple,
-        Green,
-        Amber
-    }
-
-    var themeAccent: Accent
-        set(value) {
-            sharedPreferences.put("pref_theme_accent", value.ordinal.toString())
-        }
-        get() {
-            return Accent.entries[sharedPreferences.get("pref_theme_accent", "0").toInt()]
-        }
-
-    fun accent(scope: CoroutineScope): StateFlow<Accent> = sharedPreferences.stateFlowForMappedValue(
-        key = "pref_theme_accent",
-        default = "0",
-        getter = { key, default -> getString(key, default) },
-        mapper = { value -> Accent.entries[value.toInt()] },
-        scope = scope
-    )
-
-    var themeExtraDark: Boolean
-        set(value) {
-            sharedPreferences.put("pref_theme_extra_dark", value)
-        }
-        get() {
-            return sharedPreferences.get("pref_theme_extra_dark", false)
-        }
-
-    var artworkWifiOnly: Boolean
-        set(value) {
-            sharedPreferences.put("artwork_wifi_only", value)
-        }
-        get() {
-            return sharedPreferences.get("artwork_wifi_only", true)
-        }
-
-    var artworkLocalOnly: Boolean
-        set(value) {
-            sharedPreferences.put("artwork_local_only", value)
-        }
-        get() {
-            return sharedPreferences.get("artwork_local_only", false)
-        }
-
-    var crashReportingEnabled: Boolean
-        set(value) {
-            sharedPreferences.put("pref_crash_reporting", value)
-        }
-        get() {
-            return sharedPreferences.get("pref_crash_reporting", false)
-        }
-
-    var firebaseAnalyticsEnabled: Boolean
-        set(value) {
-            sharedPreferences.put("pref_firebase_analytics", value)
-        }
-        get() {
-            return sharedPreferences.get("pref_firebase_analytics", false)
-        }
+    // Kept for the trial module; the setting itself is [PrivacySettings.analytics].
+    val firebaseAnalyticsEnabled: Boolean
+        get() = sharedPreferences.preference(PrivacySettings.Analytics).value
 
     var artistListViewMode: String?
         set(value) {
@@ -201,32 +116,6 @@ class GeneralPreferenceManager(
             return sharedPreferences.getString("library_tab_current", null)?.let { LibraryTab.valueOf(it) }
         }
 
-    var mediaSessionArtwork: Boolean
-        set(value) {
-            sharedPreferences.put("media_session_artwork", value)
-        }
-        get() {
-            return sharedPreferences.getBoolean("media_session_artwork", true)
-        }
-
-    // Widgets
-
-    /** The widget background opacity, a percentage. The key predates the Glance widgets, so old values carry over. */
-    val widgetBackgroundOpacity: Int
-        get() {
-            return sharedPreferences.getInt("widget_background_opacity", 100)
-        }
-
-    // Debugging
-
-    var debugFileLogging: Boolean
-        set(value) {
-            sharedPreferences.put("pref_file_logging", value)
-        }
-        get() {
-            return sharedPreferences.getBoolean("pref_file_logging", false)
-        }
-
     // Search
 
     var searchFilterArtists: Boolean
@@ -273,32 +162,6 @@ class GeneralPreferenceManager(
             return sharedPreferences.getBoolean("sleep_timer_play_to_end", false)
         }
 
-    // Playback
-
-    var retainShuffleOnNewQueue: Boolean
-        set(value) {
-            sharedPreferences.put("pref_retain_shuffle_on_new_queue", value)
-        }
-        get() {
-            return sharedPreferences.get("pref_retain_shuffle_on_new_queue", false)
-        }
-
-    // Media provider
-
-    var reportPlaybackToServer: Boolean
-        set(value) {
-            sharedPreferences.put("pref_report_playback", value)
-        }
-        get() {
-            return sharedPreferences.get("pref_report_playback", true)
-        }
-
-    fun reportPlaybackToServer(scope: CoroutineScope): StateFlow<Boolean> = sharedPreferences.stateFlowForBoolean(
-        key = "pref_report_playback",
-        default = true,
-        scope = scope
-    )
-
     var allLibraryTabs: List<LibraryTab>
         set(value) {
             sharedPreferences.put("pref_library_tabs_all", value.joinToString(","))
@@ -328,16 +191,6 @@ class GeneralPreferenceManager(
                 }
                 .orEmpty()
         }
-
-    var showHomeOnLaunch: Boolean
-        set(value) {
-            sharedPreferences.put("pref_show_home_on_launch", value)
-        }
-        get() {
-            return sharedPreferences.get("pref_show_home_on_launch", false)
-        }
-
-    var mediaImportFrequency: Int = sharedPreferences.getString("pref_media_rescan_frequency", "0")?.toInt() ?: 0
 
     // Songs imported via MediaStore before ReplayGain tags were read for them have null ReplayGain values that look
     // just like untagged files, so the first MediaStore import after the upgrade reads every file once and then sets this

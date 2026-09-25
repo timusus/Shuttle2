@@ -18,11 +18,11 @@ import kotlinx.coroutines.flow.onEach
 @Singleton
 class DownloadRequirementsManager @Inject constructor(
     private val songDownloadManager: SongDownloadManager,
-    private val downloadPreferences: DownloadPreferences
+    private val downloadSettings: DownloadSettings
 ) {
     fun observe(scope: CoroutineScope) {
-        var appliedWifiOnly = downloadPreferences.wifiOnly
-        downloadPreferences.wifiOnlyFlow
+        var appliedWifiOnly = downloadSettings.wifiOnly.value
+        downloadSettings.wifiOnly.flow
             .onEach { wifiOnly ->
                 if (wifiOnly != appliedWifiOnly) {
                     songDownloadManager.setRequirements(wifiOnly)

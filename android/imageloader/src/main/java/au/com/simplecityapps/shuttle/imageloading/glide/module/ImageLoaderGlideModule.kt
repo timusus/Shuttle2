@@ -39,7 +39,7 @@ import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.squareup.phrase.BuildConfig
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -62,7 +62,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
     internal interface ImageLoaderGlideModuleEntryPoint {
         fun provideHttpClient(): OkHttpClient
 
-        fun providePreferenceManager(): GeneralPreferenceManager
+        fun provideArtworkSettings(): ArtworkSettings
 
         fun provideSongRepository(): SongRepository
 
@@ -97,7 +97,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
                     }
                 }
                 .addNetworkInterceptor { chain ->
-                    if (entryPoint.providePreferenceManager().artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {
+                    if (entryPoint.provideArtworkSettings().wifiOnly.value && connectivityManager?.isActiveNetworkMetered == true) {
                         throw NoConnectivityException
                     }
                     chain.proceed(chain.request())
@@ -195,7 +195,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
             Song::class.java,
             InputStream::class.java,
             RemoteArtworkSongModelLoader.Factory(
-                preferenceManager = entryPoint.providePreferenceManager(),
+                artworkSettings = entryPoint.provideArtworkSettings(),
                 remoteArtworkProvider = entryPoint.provideAggregateRemoteArtworkProvider(),
                 coroutineScope = entryPoint.provideCoroutineScope()
             )
@@ -204,7 +204,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
             Album::class.java,
             InputStream::class.java,
             RemoteArtworkAlbumModelLoader.Factory(
-                preferenceManager = entryPoint.providePreferenceManager(),
+                artworkSettings = entryPoint.provideArtworkSettings(),
                 songRepository = entryPoint.provideSongRepository(),
                 remoteArtworkProvider = entryPoint.provideAggregateRemoteArtworkProvider(),
                 coroutineScope = entryPoint.provideCoroutineScope()
@@ -214,7 +214,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
             AlbumArtist::class.java,
             InputStream::class.java,
             RemoteArtworkAlbumArtistModelLoader.Factory(
-                preferenceManager = entryPoint.providePreferenceManager(),
+                artworkSettings = entryPoint.provideArtworkSettings(),
                 songRepository = entryPoint.provideSongRepository(),
                 remoteArtworkProvider = entryPoint.provideAggregateRemoteArtworkProvider(),
                 coroutineScope = entryPoint.provideCoroutineScope()
@@ -226,21 +226,21 @@ class ImageLoaderGlideModule : AppGlideModule() {
             Song::class.java,
             InputStream::class.java,
             S2SongArtworkModelLoader.Factory(
-                preferenceManager = entryPoint.providePreferenceManager()
+                artworkSettings = entryPoint.provideArtworkSettings()
             )
         )
         registry.append(
             Album::class.java,
             InputStream::class.java,
             S2AlbumArtworkModelLoader.Factory(
-                preferenceManager = entryPoint.providePreferenceManager()
+                artworkSettings = entryPoint.provideArtworkSettings()
             )
         )
         registry.append(
             AlbumArtist::class.java,
             InputStream::class.java,
             S2AlbumArtistArtworkModelLoader.Factory(
-                preferenceManager = entryPoint.providePreferenceManager()
+                artworkSettings = entryPoint.provideArtworkSettings()
             )
         )
     }

@@ -20,7 +20,7 @@ import com.google.common.util.concurrent.SettableFuture
 import com.simplecityapps.playback.R
 import com.simplecityapps.playback.getArtworkCacheKey
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.ArtworkSettings
 
 /**
  * Loads the current song's artwork, through the app's image loader, for the notification and the session's metadata
@@ -34,7 +34,7 @@ class ArtworkBitmapLoader(
     private val context: Context,
     private val artworkImageLoader: ArtworkImageLoader,
     private val artworkCache: LruCache<String, Bitmap?>,
-    private val preferenceManager: GeneralPreferenceManager,
+    private val artworkSettings: ArtworkSettings,
     private val currentSong: () -> Song?
 ) : BitmapLoader {
     private val placeholder: Bitmap by lazy {
@@ -42,7 +42,7 @@ class ArtworkBitmapLoader(
     }
 
     override fun loadBitmapFromMetadata(metadata: MediaMetadata): ListenableFuture<Bitmap>? {
-        if (!preferenceManager.mediaSessionArtwork) return null
+        if (!artworkSettings.mediaSessionArtwork.value) return null
         val song = currentSong() ?: return null
         val key = song.getArtworkCacheKey(ARTWORK_SIZE, ARTWORK_SIZE)
         synchronized(artworkCache) { artworkCache[key] }?.let { cached -> return Futures.immediateFuture(cached) }

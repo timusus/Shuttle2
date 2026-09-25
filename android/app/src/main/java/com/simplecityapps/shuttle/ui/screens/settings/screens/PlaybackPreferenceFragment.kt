@@ -7,7 +7,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.R
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -20,7 +20,7 @@ class PlaybackPreferenceFragment : PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.preferences_playback, rootKey)
 
         // Bit-perfect output needs AudioMixerAttributes, added in Android 14
-        findPreference<Preference>(PlaybackPreferenceManager.KEY_BIT_PERFECT_ENABLED)?.isVisible = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+        findPreference<Preference>(PlaybackSettings.UsbDacDirectOutput.key)?.isVisible = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
     }
 
     override fun onViewCreated(

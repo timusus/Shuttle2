@@ -19,7 +19,7 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.theme.AppTheme
 import kotlinx.collections.immutable.ImmutableList
@@ -87,7 +87,7 @@ fun FolderListItem(
 @Composable
 private fun FolderListItemPreview() {
     AppTheme(
-        accent = GeneralPreferenceManager.Accent.Default
+        accent = Accent.Default
     ) {
         FolderListItem(
             folder = Folder(path = listOf("primary", "Music", "Radiohead"), songCount = 42),

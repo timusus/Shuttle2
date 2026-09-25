@@ -32,7 +32,7 @@ import com.simplecityapps.core.R
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.ui.common.components.SelectionMark
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
@@ -143,7 +143,7 @@ fun SongListItem(
 @Composable
 private fun SongListItemPreview() {
     AppTheme(
-        accent = GeneralPreferenceManager.Accent.Default
+        accent = Accent.Default
     ) {
         SongListItem(
             song = Song(

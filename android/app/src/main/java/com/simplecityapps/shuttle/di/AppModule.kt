@@ -10,6 +10,8 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
@@ -35,8 +37,8 @@ class AppModule {
     @Provides
     fun provideDebugLoggingTree(
         @ApplicationContext context: Context,
-        generalPreferenceManager: GeneralPreferenceManager
-    ): DebugLoggingTree = DebugLoggingTree(context, generalPreferenceManager)
+        debugSettings: DebugSettings
+    ): DebugLoggingTree = DebugLoggingTree(context, debugSettings)
 
     @Singleton
     @Provides
@@ -61,7 +63,7 @@ class AppModule {
 
     @Singleton
     @Provides
-    fun provideThemeManager(preferenceManager: GeneralPreferenceManager): ThemeManager = ThemeManager(preferenceManager)
+    fun provideThemeManager(appearanceSettings: AppearanceSettings): ThemeManager = ThemeManager(appearanceSettings)
 
     @Singleton
     @Provides

@@ -21,8 +21,9 @@ import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.equalizer.frequencyResponseDb
 import com.simplecityapps.playback.dsp.equalizer.toNyquistBand
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.theme.AppTheme
@@ -51,7 +52,10 @@ class FrequencyResponseDialogFragment : DialogFragment() {
     lateinit var playbackPreferenceManager: PlaybackPreferenceManager
 
     @Inject
-    lateinit var generalPreferenceManager: GeneralPreferenceManager
+    lateinit var playbackSettings: PlaybackSettings
+
+    @Inject
+    lateinit var appearanceSettings: AppearanceSettings
 
     private lateinit var preset: Equalizer.Presets.Preset
 
@@ -74,8 +78,8 @@ class FrequencyResponseDialogFragment : DialogFragment() {
             val points = withContext(Dispatchers.Default) { calculateFrequencyResponse() }
 
             composeView.setContent {
-                val theme by generalPreferenceManager.theme(lifecycleScope).collectAsStateWithLifecycle()
-                val accent by generalPreferenceManager.accent(lifecycleScope).collectAsStateWithLifecycle()
+                val theme by appearanceSettings.theme.flow.collectAsStateWithLifecycle(appearanceSettings.theme.value)
+                val accent by appearanceSettings.accent.flow.collectAsStateWithLifecycle(appearanceSettings.accent.value)
 
                 AppTheme(theme = theme, accent = accent) {
                     FrequencyResponseChart(
@@ -105,7 +109,7 @@ class FrequencyResponseDialogFragment : DialogFragment() {
         val bandProcessors = preset.bands.map { band ->
             BandProcessor(band.toNyquistBand(), sampleRate = ANALYSIS_SAMPLE_RATE, channelCount = 1, referenceGain = 0.0)
         }
-        val preAmpGainDb = playbackPreferenceManager.preAmpGain
+        val preAmpGainDb = playbackSettings.preAmpGain.value.toDouble()
 
         val logSpan = ANALYSIS_MAX_FREQUENCY / ANALYSIS_MIN_FREQUENCY
         return (0 until ANALYSIS_POINT_COUNT).map { index ->

@@ -17,7 +17,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.theme.AppTheme
@@ -82,7 +82,7 @@ fun GenreListItem(
 @Composable
 private fun GenreListItemPreview() {
     AppTheme(
-        accent = GeneralPreferenceManager.Accent.Default
+        accent = Accent.Default
     ) {
         GenreListItem(
             genre = Genre(

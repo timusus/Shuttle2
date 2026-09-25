@@ -13,7 +13,7 @@ import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -47,7 +47,7 @@ constructor(
     private val playbackManager: PlaybackOperations,
     private val queueManager: QueueOperations,
     private val artworkStore: WidgetArtworkStore,
-    private val preferenceManager: GeneralPreferenceManager,
+    private val appearanceSettings: AppearanceSettings,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) {
     private val updateRequests = Channel<Unit>(Channel.CONFLATED)
@@ -140,7 +140,7 @@ constructor(
 
         val song = queueManager.getCurrentItem()?.song
         if (song == null) {
-            publish(NowPlayingWidgetState.Idle.copy(backgroundOpacity = preferenceManager.widgetBackgroundOpacity))
+            publish(NowPlayingWidgetState.Idle.copy(backgroundOpacity = appearanceSettings.widgetBackgroundOpacity.value))
             artworkStore.prune(emptyList())
             return
         }
@@ -173,7 +173,7 @@ constructor(
         shuffleMode = queueManager.getShuffleMode(),
         repeatMode = queueManager.getRepeatMode(),
         artworkPath = artworkPath,
-        backgroundOpacity = preferenceManager.widgetBackgroundOpacity
+        backgroundOpacity = appearanceSettings.widgetBackgroundOpacity.value
     )
 
     private suspend fun publish(state: NowPlayingWidgetState) {

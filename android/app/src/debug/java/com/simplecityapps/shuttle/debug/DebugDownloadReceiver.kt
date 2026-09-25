@@ -6,7 +6,7 @@ import android.content.Intent
 import android.util.Log
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.shuttle.downloads.DownloadPreferences
+import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.downloads.SongDownloadManager
 import com.simplecityapps.shuttle.downloads.SongDownloadRepository
 import com.simplecityapps.shuttle.model.Song
@@ -45,7 +45,7 @@ class DebugDownloadReceiver : BroadcastReceiver() {
     lateinit var songDownloadRepository: SongDownloadRepository
 
     @Inject
-    lateinit var downloadPreferences: DownloadPreferences
+    lateinit var downloadSettings: DownloadSettings
 
     override fun onReceive(
         context: Context,
@@ -85,15 +85,15 @@ class DebugDownloadReceiver : BroadcastReceiver() {
 
         "DOWNLOAD_WIFI_ONLY" -> {
             check(intent.hasExtra("enabled")) { "--ez enabled true|false is required" }
-            downloadPreferences.wifiOnly = intent.getBooleanExtra("enabled", true)
-            "wifiOnly=${downloadPreferences.wifiOnly}"
+            downloadSettings.wifiOnly.value = intent.getBooleanExtra("enabled", true)
+            "wifiOnly=${downloadSettings.wifiOnly.value}"
         }
 
         "DUMP_DOWNLOADS" -> {
             val downloads = songDownloadRepository.observeDownloads().first()
             val files = File(context.filesDir, "downloads").walk().filter { it.isFile }.toList()
             JSONObject()
-                .put("wifiOnly", downloadPreferences.wifiOnly)
+                .put("wifiOnly", downloadSettings.wifiOnly.value)
                 .put("cacheFiles", files.size)
                 .put("cacheBytes", files.sumOf { it.length() })
                 .put(

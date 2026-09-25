@@ -28,6 +28,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.ComposeContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
@@ -57,6 +58,9 @@ class SongListFragment :
 
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
+
+    @Inject
+    lateinit var appearanceSettings: AppearanceSettings
 
     private var composeView: ComposeView by autoCleared()
 
@@ -167,8 +171,8 @@ class SongListFragment :
         composeView.setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-            val theme by preferenceManager.theme(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
-            val accent by preferenceManager.accent(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
+            val theme by appearanceSettings.theme.flow.collectAsStateWithLifecycle(appearanceSettings.theme.value)
+            val accent by appearanceSettings.accent.flow.collectAsStateWithLifecycle(appearanceSettings.accent.value)
 
             AppTheme(
                 theme = theme,

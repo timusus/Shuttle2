@@ -4,7 +4,7 @@ import android.content.SharedPreferences
 import com.simplecityapps.mediaprovider.AggregatePlaybackReporter
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.playbackreporting.PendingPlays
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportSender
 import com.simplecityapps.shuttle.query.SongQuery
@@ -34,13 +34,13 @@ class PlaybackReportingModule {
         playbackReporter: AggregatePlaybackReporter,
         sharedPreferences: SharedPreferences,
         songRepository: SongRepository,
-        generalPreferenceManager: GeneralPreferenceManager,
+        librarySettings: LibrarySettings,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
     ): PlaybackReportSender = PlaybackReportSender(
         reporter = playbackReporter,
         pendingPlays = PendingPlays(sharedPreferences),
         findSongs = { songIds -> songRepository.getSongs(SongQuery.SongIds(songIds)).filterNotNull().firstOrNull().orEmpty() },
-        isEnabled = { generalPreferenceManager.reportPlaybackToServer },
+        isEnabled = { librarySettings.reportPlaybackToServer.value },
         now = { Clock.System.now() },
         scope = appCoroutineScope + Dispatchers.IO
     )

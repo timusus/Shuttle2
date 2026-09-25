@@ -5,6 +5,7 @@ import com.google.firebase.crashlytics.crashlytics
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.trial.Entitlement
 import com.simplecityapps.trial.EntitlementRepository
@@ -37,6 +38,7 @@ class MainPresenter
 constructor(
     private val queueManager: QueueOperations,
     private val preferenceManager: GeneralPreferenceManager,
+    private val privacySettings: PrivacySettings,
     private val entitlementRepository: EntitlementRepository
 ) : BasePresenter<MainContract.View>(),
     MainContract.Presenter {
@@ -55,7 +57,7 @@ constructor(
             view.showChangelog()
         }
 
-        if (!preferenceManager.crashReportingEnabled && !preferenceManager.hasSeenCrashReportingDialog) {
+        if (!privacySettings.crashReporting.value && !preferenceManager.hasSeenCrashReportingDialog) {
             if (BuildConfig.VERSION_NAME.contains("alpha") || BuildConfig.VERSION_NAME.contains("beta")) {
                 this.view?.showCrashReportingDialog()
                 preferenceManager.hasSeenCrashReportingDialog = true
@@ -84,7 +86,7 @@ constructor(
     }
 
     override fun onCrashReportingToggled(enabled: Boolean) {
-        preferenceManager.crashReportingEnabled = enabled
+        privacySettings.crashReporting.value = enabled
         Firebase.crashlytics.setCrashlyticsCollectionEnabled(enabled)
     }
 }

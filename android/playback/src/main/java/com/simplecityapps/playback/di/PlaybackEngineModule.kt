@@ -27,6 +27,7 @@ import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
@@ -44,7 +45,10 @@ import kotlinx.coroutines.CoroutineScope
 class PlaybackEngineModule {
     @Singleton
     @Provides
-    fun provideEqualizer(playbackPreferenceManager: PlaybackPreferenceManager): EqualizerAudioProcessor = EqualizerAudioProcessor(playbackPreferenceManager.equalizerEnabled).apply {
+    fun provideEqualizer(
+        playbackPreferenceManager: PlaybackPreferenceManager,
+        playbackSettings: PlaybackSettings
+    ): EqualizerAudioProcessor = EqualizerAudioProcessor(playbackSettings.equalizerEnabled.value).apply {
         // Restore custom eq bands first: setting the preset captures its band gains
         playbackPreferenceManager.customPresetBands?.forEach { restoredBand ->
             Equalizer.Presets.custom.bands.forEach { customBand ->
@@ -60,7 +64,7 @@ class PlaybackEngineModule {
 
     @Singleton
     @Provides
-    fun provideReplayGainAudioProcessor(playbackPreferenceManager: PlaybackPreferenceManager): ReplayGainAudioProcessor = ReplayGainAudioProcessor(playbackPreferenceManager.replayGainMode, playbackPreferenceManager.preAmpGain)
+    fun provideReplayGainAudioProcessor(playbackSettings: PlaybackSettings): ReplayGainAudioProcessor = ReplayGainAudioProcessor(playbackSettings.replayGainMode.value, playbackSettings.preAmpGain.value.toDouble())
 
     @Singleton
     @Provides

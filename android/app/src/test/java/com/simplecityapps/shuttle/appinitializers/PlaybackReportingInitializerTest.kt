@@ -8,15 +8,16 @@ import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.mediaprovider.AggregatePlaybackReporter
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.PlaybackSession
+import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.playbackreporting.PendingPlays
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportSender
+import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
@@ -43,8 +44,10 @@ class PlaybackReportingInitializerTest {
     private val queueManager = FakeQueueManager()
     private val reporter = FakeReporter()
     private val playbackReporter = AggregatePlaybackReporter(setOf(reporter))
-    private val preferences = GeneralPreferenceManager(
-        application.getSharedPreferences("playback_reporting_initializer_test", Context.MODE_PRIVATE).apply { edit().clear().commit() }
+    private val librarySettings = LibrarySettings(
+        SettingsStore(
+            application.getSharedPreferences("playback_reporting_initializer_test", Context.MODE_PRIVATE).apply { edit().clear().commit() }
+        )
     )
     private val appCoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -58,11 +61,11 @@ class PlaybackReportingInitializerTest {
                 reporter = playbackReporter,
                 pendingPlays = PendingPlays(application.getSharedPreferences("playback_reporting_initializer_test_plays", Context.MODE_PRIVATE)),
                 findSongs = { emptyList() },
-                isEnabled = { preferences.reportPlaybackToServer },
+                isEnabled = { librarySettings.reportPlaybackToServer.value },
                 now = { Instant.fromEpochMilliseconds(0) },
                 scope = appCoroutineScope
             ),
-            generalPreferenceManager = preferences,
+            librarySettings = librarySettings,
             appCoroutineScope = appCoroutineScope
         )
     }
@@ -89,12 +92,12 @@ class PlaybackReportingInitializerTest {
 
     @Test
     fun `turning reporting on mid-song starts a play at the current position`() {
-        preferences.reportPlaybackToServer = false
+        librarySettings.reportPlaybackToServer.value = false
         playSongAt(30_000)
         initializer.init(application)
         reporter.calls.shouldBeEmpty()
 
-        preferences.reportPlaybackToServer = true
+        librarySettings.reportPlaybackToServer.value = true
 
         reporter.calls shouldBe listOf("start 30000")
     }
@@ -104,7 +107,7 @@ class PlaybackReportingInitializerTest {
         playSongAt(30_000)
         initializer.init(application)
 
-        preferences.reportPlaybackToServer = false
+        librarySettings.reportPlaybackToServer.value = false
 
         reporter.calls shouldBe listOf("start 30000", "stop 30000")
     }

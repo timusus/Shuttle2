@@ -21,7 +21,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
@@ -46,7 +46,7 @@ class MainFragment :
     lateinit var presenter: MainPresenter
 
     @Inject
-    lateinit var generalPreferenceManager: GeneralPreferenceManager
+    lateinit var appearanceSettings: AppearanceSettings
 
     private lateinit var reviewManager: ReviewManager
 
@@ -201,7 +201,7 @@ class MainFragment :
     private fun initializeNavGraph(navController: NavController) {
         val navGraph = navController.navInflater.inflate(R.navigation.main)
 
-        if (generalPreferenceManager.showHomeOnLaunch) {
+        if (appearanceSettings.showHomeOnLaunch.value) {
             navGraph.setStartDestination(R.id.homeFragment)
         } else {
             navGraph.setStartDestination(R.id.libraryFragment)

@@ -3,13 +3,13 @@ package com.simplecityapps.shuttle.appinitializers
 import android.app.Application
 import android.os.SystemClock
 import com.simplecityapps.mediaprovider.AggregatePlaybackReporter
+import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportPlanner
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportSender
 import java.util.UUID
@@ -31,7 +31,7 @@ constructor(
     private val queueManager: QueueOperations,
     private val playbackReporter: AggregatePlaybackReporter,
     private val sender: PlaybackReportSender,
-    private val generalPreferenceManager: GeneralPreferenceManager,
+    private val librarySettings: LibrarySettings,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : AppInitializer {
     override fun init(application: Application) {
@@ -40,7 +40,7 @@ constructor(
             newSessionId = { UUID.randomUUID().toString() }
         )
 
-        val enabledFlow = generalPreferenceManager.reportPlaybackToServer(appCoroutineScope)
+        val enabledFlow = librarySettings.reportPlaybackToServer.stateIn(appCoroutineScope)
         val enabled = enabledFlow.value
         val queueState = queueManager.queueStateFlow.value
         val playbackState = playbackManager.playbackStateFlow.value

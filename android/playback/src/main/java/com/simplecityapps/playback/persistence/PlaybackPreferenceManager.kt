@@ -3,7 +3,6 @@ package com.simplecityapps.playback.persistence
 import android.content.SharedPreferences
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
-import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.get
@@ -12,8 +11,6 @@ import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import java.lang.reflect.Type
-import kotlinx.coroutines.flow.Flow
-import observeBoolean
 
 class PlaybackPreferenceManager(
     private val sharedPreferences: SharedPreferences,
@@ -103,41 +100,6 @@ class PlaybackPreferenceManager(
                 }
         }
 
-    var equalizerEnabled: Boolean
-        set(value) {
-            sharedPreferences.put("equalizer_enabled", value)
-        }
-        get() {
-            return sharedPreferences.get("equalizer_enabled", false)
-        }
-
-    /** Direct output to USB DACs through a bit-perfect mixer (Android 14+), set from the playback settings screen. */
-    var bitPerfectEnabled: Boolean
-        set(value) {
-            sharedPreferences.put(KEY_BIT_PERFECT_ENABLED, value)
-        }
-        get() {
-            return sharedPreferences.get(KEY_BIT_PERFECT_ENABLED, false)
-        }
-
-    fun bitPerfectEnabledFlow(): Flow<Boolean> = sharedPreferences.observeBoolean(KEY_BIT_PERFECT_ENABLED, false)
-
-    var replayGainMode: ReplayGainMode
-        set(value) {
-            sharedPreferences.put("replaygain_mode", value.ordinal)
-        }
-        get() {
-            return ReplayGainMode.init(sharedPreferences.get("replaygain_mode", ReplayGainMode.Off.ordinal))
-        }
-
-    var preAmpGain: Double
-        set(value) {
-            sharedPreferences.put("preamp_gain", value.toFloat())
-        }
-        get() {
-            return sharedPreferences.getFloat("preamp_gain", 0f).toDouble()
-        }
-
     var preset: Equalizer.Presets.Preset
         set(value) {
             sharedPreferences.put("preset_name", value.name)
@@ -158,9 +120,4 @@ class PlaybackPreferenceManager(
                 adapter.fromJson(json)
             }
         }
-
-    companion object {
-        /** Also the key of the switch in preferences_playback.xml. */
-        const val KEY_BIT_PERFECT_ENABLED = "pref_bit_perfect_usb"
-    }
 }

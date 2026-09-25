@@ -7,12 +7,12 @@ import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.simplecityapps.shuttle.model.AlbumArtist
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.ArtworkSettings
 import java.io.InputStream
 
 class S2AlbumArtistArtworkModelLoader(
     private val urlLoader: ModelLoader<GlideUrl, InputStream>,
-    private val preferenceManager: GeneralPreferenceManager
+    private val artworkSettings: ArtworkSettings
 ) : ModelLoader<AlbumArtist, InputStream> {
     private fun getUrl(model: AlbumArtist): String = "https://api.shuttlemusicplayer.app/v1/artwork?artist=${(model.name ?: model.friendlyArtistName)!!.urlEncode()}"
 
@@ -24,16 +24,16 @@ class S2AlbumArtistArtworkModelLoader(
         height: Int,
         options: Options
     ): ModelLoader.LoadData<InputStream>? {
-        if (preferenceManager.artworkLocalOnly) {
+        if (artworkSettings.localOnly.value) {
             return null
         }
         return urlLoader.buildLoadData(VersionedGlideUrl(getUrl(model), model.artworkVersion), width, height, options)
     }
 
     class Factory(
-        private val preferenceManager: GeneralPreferenceManager
+        private val artworkSettings: ArtworkSettings
     ) : ModelLoaderFactory<AlbumArtist, InputStream> {
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<AlbumArtist, InputStream> = S2AlbumArtistArtworkModelLoader(multiFactory.build(GlideUrl::class.java, InputStream::class.java), preferenceManager)
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<AlbumArtist, InputStream> = S2AlbumArtistArtworkModelLoader(multiFactory.build(GlideUrl::class.java, InputStream::class.java), artworkSettings)
 
         override fun teardown() {}
     }

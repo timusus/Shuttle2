@@ -6,6 +6,7 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import javax.inject.Inject
@@ -46,6 +47,7 @@ class DspPresenter
 @Inject
 constructor(
     private val playbackPreferenceManager: PlaybackPreferenceManager,
+    private val playbackSettings: PlaybackSettings,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor
 ) : BasePresenter<EqualizerContract.View>(),
@@ -54,12 +56,12 @@ constructor(
         super.bindView(view)
 
         view.initializeEqualizerView(equalizerAudioProcessor.enabled, equalizerAudioProcessor.preset, equalizerAudioProcessor.maxBandGain)
-        view.updateSelectedReplayGainMode(playbackPreferenceManager.replayGainMode)
-        view.updatePreAmpGain(playbackPreferenceManager.preAmpGain)
+        view.updateSelectedReplayGainMode(playbackSettings.replayGainMode.value)
+        view.updatePreAmpGain(playbackSettings.preAmpGain.value.toDouble())
     }
 
     override fun toggleEqualizer(activated: Boolean) {
-        playbackPreferenceManager.equalizerEnabled = activated
+        playbackSettings.equalizerEnabled.value = activated
         equalizerAudioProcessor.enabled = activated
         view?.showEqEnabled(activated)
     }
@@ -91,11 +93,11 @@ constructor(
 
     override fun setReplayGainMode(mode: ReplayGainMode) {
         replayGainAudioProcessor.mode = mode
-        playbackPreferenceManager.replayGainMode = mode
+        playbackSettings.replayGainMode.value = mode
     }
 
     override fun setPreAmpGain(gain: Double) {
         replayGainAudioProcessor.preAmpGain = gain
-        playbackPreferenceManager.preAmpGain = gain
+        playbackSettings.preAmpGain.value = gain.toFloat()
     }
 }

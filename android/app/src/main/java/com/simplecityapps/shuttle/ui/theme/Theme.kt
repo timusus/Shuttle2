@@ -9,7 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.Accent
+import com.simplecityapps.shuttle.settings.ThemeMode
 
 @Immutable
 data class ColorFamily(
@@ -22,14 +23,14 @@ data class ColorFamily(
 @Composable
 fun AppTheme(
     dynamicColor: Boolean = false,
-    theme: GeneralPreferenceManager.Theme = GeneralPreferenceManager.Theme.DayNight,
-    accent: GeneralPreferenceManager.Accent = GeneralPreferenceManager.Accent.Default,
+    theme: ThemeMode = ThemeMode.DayNight,
+    accent: Accent = Accent.Default,
     content: @Composable () -> Unit
 ) {
     val isDark = when (theme) {
-        GeneralPreferenceManager.Theme.DayNight -> isSystemInDarkTheme()
-        GeneralPreferenceManager.Theme.Light -> false
-        GeneralPreferenceManager.Theme.Dark -> true
+        ThemeMode.DayNight -> isSystemInDarkTheme()
+        ThemeMode.Light -> false
+        ThemeMode.Dark -> true
     }
 
     val colorScheme = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -37,12 +38,12 @@ fun AppTheme(
         if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     } else {
         when (accent) {
-            GeneralPreferenceManager.Accent.Default -> ShuttleTheme.getColorScheme(isDark)
-            GeneralPreferenceManager.Accent.Orange -> OrangeTheme.getColorScheme(isDark)
-            GeneralPreferenceManager.Accent.Cyan -> CyanTheme.getColorScheme(isDark)
-            GeneralPreferenceManager.Accent.Purple -> PurpleTheme.getColorScheme(isDark)
-            GeneralPreferenceManager.Accent.Green -> GreenTheme.getColorScheme(isDark)
-            GeneralPreferenceManager.Accent.Amber -> AmberTheme.getColorScheme(isDark)
+            Accent.Default -> ShuttleTheme.getColorScheme(isDark)
+            Accent.Orange -> OrangeTheme.getColorScheme(isDark)
+            Accent.Cyan -> CyanTheme.getColorScheme(isDark)
+            Accent.Purple -> PurpleTheme.getColorScheme(isDark)
+            Accent.Green -> GreenTheme.getColorScheme(isDark)
+            Accent.Amber -> AmberTheme.getColorScheme(isDark)
         }
     }
     MaterialTheme(

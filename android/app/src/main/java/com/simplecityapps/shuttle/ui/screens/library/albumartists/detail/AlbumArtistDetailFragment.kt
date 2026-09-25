@@ -23,7 +23,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showDeleteDialog
@@ -50,7 +50,7 @@ class AlbumArtistDetailFragment :
     lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
     @Inject
-    lateinit var preferenceManager: GeneralPreferenceManager
+    lateinit var appearanceSettings: AppearanceSettings
 
     private lateinit var albumArtist: com.simplecityapps.shuttle.model.AlbumArtist
 
@@ -137,8 +137,8 @@ class AlbumArtistDetailFragment :
         composeView = view.findViewById(R.id.composeView)
         composeView.setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-            val theme by preferenceManager.theme(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
-            val accent by preferenceManager.accent(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
+            val theme by appearanceSettings.theme.flow.collectAsStateWithLifecycle(appearanceSettings.theme.value)
+            val accent by appearanceSettings.accent.flow.collectAsStateWithLifecycle(appearanceSettings.accent.value)
 
             AppTheme(
                 theme = theme,

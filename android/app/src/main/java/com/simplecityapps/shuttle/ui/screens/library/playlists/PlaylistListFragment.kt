@@ -22,7 +22,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
@@ -44,7 +44,7 @@ class PlaylistListFragment :
     private val viewModel: PlaylistListViewModel by viewModels()
 
     @Inject
-    lateinit var preferenceManager: GeneralPreferenceManager
+    lateinit var appearanceSettings: AppearanceSettings
 
     // Lifecycle
 
@@ -104,8 +104,8 @@ class PlaylistListFragment :
 
         composeView.setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-            val theme by preferenceManager.theme(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
-            val accent by preferenceManager.accent(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
+            val theme by appearanceSettings.theme.flow.collectAsStateWithLifecycle(appearanceSettings.theme.value)
+            val accent by appearanceSettings.accent.flow.collectAsStateWithLifecycle(appearanceSettings.accent.value)
 
             AppTheme(
                 theme = theme,

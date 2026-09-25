@@ -5,7 +5,8 @@ import com.simplecityapps.playback.engine.SongUriResolver
 import com.simplecityapps.playback.exoplayer.MediaResolver
 import com.simplecityapps.playback.exoplayer.ResolvedMedia
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.settings.SettingsStore
 import kotlin.coroutines.EmptyCoroutineContext
 import org.robolectric.RuntimeEnvironment
 
@@ -16,5 +17,5 @@ import org.robolectric.RuntimeEnvironment
 fun testQueueManager(): QueueManager {
     val resolver = SongUriResolver(MediaResolver { song -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false) })
     val player = TestExoPlayerBuilder(RuntimeEnvironment.getApplication()).build()
-    return QueueManager(player, GeneralPreferenceManager(FakeSharedPreferences()), resolver, buildContext = EmptyCoroutineContext)
+    return QueueManager(player, PlaybackSettings(SettingsStore(FakeSharedPreferences())), resolver, buildContext = EmptyCoroutineContext)
 }

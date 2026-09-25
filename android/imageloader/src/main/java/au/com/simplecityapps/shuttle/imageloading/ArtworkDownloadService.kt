@@ -21,7 +21,7 @@ import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.ArtworkSettings
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -57,7 +57,7 @@ class ArtworkDownloadService :
     lateinit var albumArtistRepository: AlbumArtistRepository
 
     @Inject
-    lateinit var preferenceManager: GeneralPreferenceManager
+    lateinit var artworkSettings: ArtworkSettings
 
     private var job = SupervisorJob()
 
@@ -75,7 +75,7 @@ class ArtworkDownloadService :
     override fun onCreate() {
         super.onCreate()
 
-        if (preferenceManager.artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {
+        if (artworkSettings.wifiOnly.value && connectivityManager?.isActiveNetworkMetered == true) {
             Toast.makeText(this, "Failed to download artwork - WiFi only", Toast.LENGTH_LONG).show()
             stopSelf()
         }

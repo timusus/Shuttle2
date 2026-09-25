@@ -25,7 +25,7 @@ import com.simplecityapps.playback.mediasession.awaitRestored
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.ArtworkSettings
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -69,7 +69,7 @@ class PlaybackService : MediaLibraryService() {
     lateinit var artworkCache: LruCache<String, Bitmap?>
 
     @Inject
-    lateinit var preferenceManager: GeneralPreferenceManager
+    lateinit var artworkSettings: ArtworkSettings
 
     private val packageValidator: PackageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
 
@@ -106,7 +106,7 @@ class PlaybackService : MediaLibraryService() {
         }
         val sessionPlayer = SessionPlayer(player, playbackOperations, queueOperations, coroutineScope)
         session = MediaLibrarySession.Builder(this, sessionPlayer, callback)
-            .setBitmapLoader(ArtworkBitmapLoader(this, artworkImageLoader, artworkCache, preferenceManager) { player.currentMediaItem?.queueEntryOrNull?.song })
+            .setBitmapLoader(ArtworkBitmapLoader(this, artworkImageLoader, artworkCache, artworkSettings) { player.currentMediaItem?.queueEntryOrNull?.song })
             .setMediaButtonPreferences(callback.mediaButtonPreferences(queueOperations.getShuffleMode(), queueOperations.getRepeatMode()))
             .setSessionActivity(PendingIntent.getActivity(this, 1, (applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
             .build()

@@ -2,13 +2,13 @@ package com.simplecityapps.shuttle.debug
 
 import android.content.Context
 import com.simplecityapps.shuttle.BuildConfig
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.DebugSettings
 import java.util.*
 import timber.log.Timber
 
 class DebugLoggingTree(
     private val context: Context,
-    private val generalPreferenceManager: GeneralPreferenceManager
+    private val debugSettings: DebugSettings
 ) : Timber.DebugTree() {
     interface Callback {
         fun onLog(logMessage: LogMessage)
@@ -37,7 +37,7 @@ class DebugLoggingTree(
         if (BuildConfig.DEBUG) {
             super.log(priority, tag, message, t)
         }
-        if (generalPreferenceManager.debugFileLogging) {
+        if (debugSettings.fileLogging.value) {
             synchronized(this) {
                 val logMessage = LogMessage(priority, tag, message, t)
 
@@ -45,7 +45,7 @@ class DebugLoggingTree(
 
                 callbacks.forEach { callback -> callback.onLog(logMessage) }
 
-                if (generalPreferenceManager.debugFileLogging) {
+                if (debugSettings.fileLogging.value) {
                     writeToFile(context, logMessage)
                 }
             }

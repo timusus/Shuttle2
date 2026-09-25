@@ -17,7 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.ui.theme.AppTheme
 
 @Composable
@@ -52,7 +52,7 @@ fun ShuffleListItem(
 @Composable
 private fun ShuffleListItemPreview() {
     AppTheme(
-        accent = GeneralPreferenceManager.Accent.Default
+        accent = Accent.Default
     ) {
         ShuffleListItem()
     }

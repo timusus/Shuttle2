@@ -12,7 +12,7 @@ import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadNotificationHelper
 import com.simplecityapps.shuttle.downloads.DefaultSongDownloadManager
 import com.simplecityapps.shuttle.downloads.DefaultSongDownloadRepository
-import com.simplecityapps.shuttle.downloads.DownloadPreferences
+import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.downloads.SongDownloadManager
 import com.simplecityapps.shuttle.downloads.SongDownloadRepository
 import com.simplecityapps.shuttle.downloads.downloadRequirements
@@ -84,7 +84,7 @@ abstract class DownloadsModule {
             @ApplicationContext context: Context,
             databaseProvider: DatabaseProvider,
             @DownloadCache cache: Cache,
-            downloadPreferences: DownloadPreferences
+            downloadSettings: DownloadSettings
         ): DownloadManager {
             val dataSourceFactory =
                 DefaultHttpDataSource.Factory()
@@ -101,7 +101,7 @@ abstract class DownloadsModule {
                     maxParallelDownloads = MAX_PARALLEL_DOWNLOADS
                     // Built with the preference as it stands, so DownloadRequirementsManager only
                     // has to push a change (each push starts the foreground service).
-                    requirements = downloadRequirements(downloadPreferences.wifiOnly)
+                    requirements = downloadRequirements(downloadSettings.wifiOnly.value)
                 }
             }
         }

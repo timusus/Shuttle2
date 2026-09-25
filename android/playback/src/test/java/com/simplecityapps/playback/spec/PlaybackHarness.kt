@@ -30,8 +30,9 @@ import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.SettingsStore
 import com.squareup.moshi.Moshi
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -182,7 +183,7 @@ class PlaybackHarness(
         val cast = castQueue(player)
         val active = activePlayer(player)
         appPlayer = active
-        val queueManager = QueueManager(player, GeneralPreferenceManager(FakeSharedPreferences()), songUriResolver, buildContext, active)
+        val queueManager = QueueManager(player, PlaybackSettings(SettingsStore(FakeSharedPreferences())), songUriResolver, buildContext, active)
         queueOperations = queueManager
         playbackOperations =
             PlaybackManager(

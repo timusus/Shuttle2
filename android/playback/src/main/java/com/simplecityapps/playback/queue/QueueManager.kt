@@ -9,8 +9,8 @@ import com.simplecityapps.playback.chromecast.isRemote
 import com.simplecityapps.playback.engine.PlayerThread
 import com.simplecityapps.playback.engine.S2ShuffleOrder
 import com.simplecityapps.playback.engine.SongUriResolver
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +36,7 @@ import timber.log.Timber
  */
 class QueueManager(
     private val player: ExoPlayer,
-    private val preferenceManager: GeneralPreferenceManager,
+    private val playbackSettings: PlaybackSettings,
     private val songUriResolver: SongUriResolver,
     /** Where new queue entries are built: off the main thread, as a long queue takes a while. */
     private val buildContext: CoroutineContext = Dispatchers.Default,
@@ -201,7 +201,7 @@ class QueueManager(
         }
 
         batch {
-            if (shuffleSongs == null && !preferenceManager.retainShuffleOnNewQueue) {
+            if (shuffleSongs == null && !playbackSettings.retainShuffleOnNewQueue.value) {
                 writer.shuffleModeEnabled = false
             }
 

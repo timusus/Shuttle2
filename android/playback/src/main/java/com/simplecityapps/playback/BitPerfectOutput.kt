@@ -12,7 +12,7 @@ import androidx.annotation.RequiresApi
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
-import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.settings.PlaybackSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -44,7 +44,7 @@ import timber.log.Timber
  */
 class BitPerfectOutput(
     private val audioManager: AudioManager?,
-    private val playbackPreferenceManager: PlaybackPreferenceManager,
+    private val playbackSettings: PlaybackSettings,
     private val audioTrackMonitor: AudioTrackMonitor,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor,
@@ -64,7 +64,7 @@ class BitPerfectOutput(
     /** The device and mixer attributes that should be preferred, or null for none. */
     @OptIn(ExperimentalCoroutinesApi::class)
     @RequiresApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    private fun targets(audioManager: AudioManager): Flow<Pair<AudioDeviceInfo, AudioMixerAttributes>?> = playbackPreferenceManager.bitPerfectEnabledFlow()
+    private fun targets(audioManager: AudioManager): Flow<Pair<AudioDeviceInfo, AudioMixerAttributes>?> = playbackSettings.usbDacDirectOutput.flow
         .distinctUntilChanged()
         .flatMapLatest { enabled ->
             if (!enabled) {

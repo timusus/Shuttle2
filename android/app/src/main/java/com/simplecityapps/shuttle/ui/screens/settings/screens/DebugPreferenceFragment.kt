@@ -11,18 +11,12 @@ import androidx.appcompat.widget.Toolbar
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class DebugPreferenceFragment : PreferenceFragmentCompat() {
-    @Inject
-    lateinit var preferenceManager: GeneralPreferenceManager
-
     override fun onCreatePreferences(
         savedInstanceState: Bundle?,
         rootKey: String?
@@ -40,16 +34,6 @@ class DebugPreferenceFragment : PreferenceFragmentCompat() {
         toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
         toolbar.setTitle(R.string.pref_category_title_debug)
 
-        preferenceScreen.findPreference<Preference>("pref_crash_reporting")?.setOnPreferenceClickListener {
-            if (!preferenceManager.crashReportingEnabled) {
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle(getString(R.string.settings_crash_reporting_dialog_requires_restart))
-                    .setMessage(getString(R.string.settings_crash_reporting_dialog_message))
-                    .setNegativeButton(getString(R.string.dialog_button_close), null)
-                    .show()
-            }
-            true
-        }
         preferenceScreen.findPreference<Preference>("pref_copy_debug_logs")?.setOnPreferenceClickListener {
             val clipboardManager: ClipboardManager = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val file = requireContext().getFileStreamPath(DebugLoggingTree.FILE_NAME)

@@ -11,7 +11,7 @@ import androidx.fragment.app.FragmentManager
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
 import com.simplecityapps.shuttle.BuildConfig
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.ui.common.ActivityLifecycleCallbacksAdapter
 import javax.inject.Inject
 import timber.log.Timber
@@ -19,10 +19,10 @@ import timber.log.Timber
 class CrashReportingInitializer
 @Inject
 constructor(
-    private val preferenceManager: GeneralPreferenceManager
+    private val privacySettings: PrivacySettings
 ) : AppInitializer {
     override fun init(application: Application) {
-        if (preferenceManager.crashReportingEnabled) {
+        if (privacySettings.crashReporting.value) {
             Firebase.crashlytics.setCrashlyticsCollectionEnabled(true)
 
             if (!BuildConfig.DEBUG) {

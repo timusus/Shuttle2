@@ -23,9 +23,9 @@ import com.simplecityapps.playback.mediasession.UriSongResolver
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.di.AppCoroutineScope
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
@@ -43,9 +43,9 @@ class PlaybackModule {
     fun provideQueueManager(
         player: ExoPlayer,
         activePlayer: Player,
-        preferenceManager: GeneralPreferenceManager,
+        playbackSettings: PlaybackSettings,
         songUriResolver: SongUriResolver
-    ): QueueManager = QueueManager(player, preferenceManager, songUriResolver, activePlayer = activePlayer)
+    ): QueueManager = QueueManager(player, playbackSettings, songUriResolver, activePlayer = activePlayer)
 
     @Provides
     fun provideQueueOperations(queueManager: QueueManager): QueueOperations = queueManager
@@ -93,12 +93,12 @@ class PlaybackModule {
     @Provides
     fun provideBitPerfectOutput(
         audioManager: AudioManager?,
-        playbackPreferenceManager: PlaybackPreferenceManager,
+        playbackSettings: PlaybackSettings,
         audioTrackMonitor: AudioTrackMonitor,
         equalizerAudioProcessor: EqualizerAudioProcessor,
         replayGainAudioProcessor: ReplayGainAudioProcessor,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): BitPerfectOutput = BitPerfectOutput(audioManager, playbackPreferenceManager, audioTrackMonitor, equalizerAudioProcessor, replayGainAudioProcessor, appCoroutineScope)
+    ): BitPerfectOutput = BitPerfectOutput(audioManager, playbackSettings, audioTrackMonitor, equalizerAudioProcessor, replayGainAudioProcessor, appCoroutineScope)
 
     @Singleton
     @Provides

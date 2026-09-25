@@ -24,6 +24,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showDeleteDialog
@@ -47,6 +48,9 @@ class FolderListFragment :
 
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
+
+    @Inject
+    lateinit var appearanceSettings: AppearanceSettings
 
     /**
      * Back goes up a folder. Only while this tab is the visible page: off-screen library pages are still STARTED,
@@ -130,8 +134,8 @@ class FolderListFragment :
 
         composeView.setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-            val theme by preferenceManager.theme(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
-            val accent by preferenceManager.accent(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
+            val theme by appearanceSettings.theme.flow.collectAsStateWithLifecycle(appearanceSettings.theme.value)
+            val accent by appearanceSettings.accent.flow.collectAsStateWithLifecycle(appearanceSettings.accent.value)
 
             AppTheme(
                 theme = theme,
