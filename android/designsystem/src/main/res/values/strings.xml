@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ds_more_options">More options</string>
+    <string name="ds_now_playing">Now playing</string>
+    <string name="ds_downloading">Downloading</string>
+    <string name="ds_available_offline">Available offline</string>
+    <string name="ds_loading">Loading</string>
+</resources>
