@@ -8,7 +8,10 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.SmartPlaylist
+import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
+import kotlin.time.Instant
 import kotlinx.serialization.Serializable
 
 // Route keys for the library detail screens, shared by every screen that links to them (library,
@@ -41,14 +44,23 @@ data class SmartPlaylistRoute(
     val smartPlaylistId: String,
 ) : NavKey
 
-/** The built-in smart playlists' stable ids, matched to the repository's [SmartPlaylist]s by their name. */
+/**
+ * The built-in smart playlists: each one's stable id, name and [SongQuery]. The app's source of truth for which
+ * smart playlists exist; [of] matches a [SmartPlaylist] back to its entry by name.
+ */
 enum class SmartPlaylistId(
     val id: String,
     @StringRes val nameResId: Int,
+    songQuery: SongQuery,
 ) {
-    RecentlyAdded("recently-added", MediaProviderR.string.playlist_title_recently_added),
-    MostPlayed("most-played", MediaProviderR.string.playlist_title_most_played),
+    RecentlyAdded("recently-added", MediaProviderR.string.playlist_title_recently_added, SongQuery.RecentlyAdded()),
+    MostPlayed("most-played", MediaProviderR.string.playlist_title_most_played, SongQuery.PlayCount(2, SongSortOrder.PlayCount)),
+
+    /** Every song that has played to the end, most recent first. */
+    History("history", MediaProviderR.string.playlist_title_history, SongQuery.LastCompleted(Instant.fromEpochMilliseconds(0))),
     ;
+
+    val smartPlaylist = SmartPlaylist(nameResId, songQuery)
 
     companion object {
         fun of(smartPlaylist: SmartPlaylist): SmartPlaylistId? = entries.firstOrNull { it.nameResId == smartPlaylist.nameResId }

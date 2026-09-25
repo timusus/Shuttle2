@@ -39,12 +39,6 @@ class PlaylistListTest {
     }
 
     @Test
-    fun `empty state shows empty message`() {
-        robot.setContent(emptyPlaylistList())
-        robot.assertTextDisplayed("No playlists")
-    }
-
-    @Test
     fun `ready state shows playlist name`() {
         robot.setContent(readyPlaylistList(playlists = listOf(createPlaylist(name = "Favorites"))))
         robot.assertTextDisplayed("Favorites")

@@ -1,15 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
-import com.simplecityapps.createSmartPlaylist
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.mediaprovider.R as MediaProviderR
-import com.simplecityapps.shuttle.query.SongQuery
-import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -24,15 +21,10 @@ class SmartPlaylistDetailViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val playlistRepository = FakePlaylistRepository()
-    private val songRepository = FakeSongRepository()
-
-    private val recentlyAdded = createSmartPlaylist()
-    private val mostPlayed = createSmartPlaylist(MediaProviderR.string.playlist_title_most_played, SongQuery.PlayCount(2, SongSortOrder.PlayCount))
+    private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
 
     private fun TestScope.viewModel(id: String): SmartPlaylistDetailViewModel {
-        playlistRepository.setSmartPlaylists(listOf(recentlyAdded, mostPlayed))
-        val viewModel = SmartPlaylistDetailViewModel(id, playlistRepository, songRepository, FakeQueueManager())
+        val viewModel = SmartPlaylistDetailViewModel(id, songRepository, FakeQueueManager())
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
         return viewModel
@@ -46,8 +38,26 @@ class SmartPlaylistDetailViewModelTest {
 
         val state = viewModel.uiState.value
         state.loading shouldBe false
-        state.smartPlaylist shouldBe mostPlayed
+        state.smartPlaylist shouldBe SmartPlaylistId.MostPlayed.smartPlaylist
         state.songs.map { it.name } shouldBe listOf("Loved", "Rare")
+    }
+
+    @Test
+    fun `history lists the songs played to the end, most recent first`() = runTest {
+        songRepository.setSongs(
+            listOf(
+                createSong(id = 1, name = "Last week", lastCompleted = Instant.fromEpochSeconds(1_000)),
+                createSong(id = 2, name = "Never finished", lastCompleted = null),
+                createSong(id = 3, name = "Just now", lastCompleted = Instant.fromEpochSeconds(9_000)),
+                createSong(id = 4, name = "Yesterday", lastCompleted = Instant.fromEpochSeconds(5_000)),
+            )
+        )
+
+        val viewModel = viewModel(SmartPlaylistId.History.id)
+
+        val state = viewModel.uiState.value
+        state.smartPlaylist?.nameResId shouldBe MediaProviderR.string.playlist_title_history
+        state.songs.map { it.name } shouldBe listOf("Just now", "Yesterday", "Last week")
     }
 
     @Test
@@ -60,8 +70,7 @@ class SmartPlaylistDetailViewModelTest {
     }
 
     @Test
-    fun `every smart playlist the repository offers has a route that resolves back to it`() {
-        listOf(recentlyAdded, mostPlayed).map { it.route()?.smartPlaylistId?.let(SmartPlaylistId::fromId) } shouldBe
-            listOf(SmartPlaylistId.RecentlyAdded, SmartPlaylistId.MostPlayed)
+    fun `every smart playlist has a route that resolves back to it`() {
+        SmartPlaylistId.entries.map { it.smartPlaylist.route()?.smartPlaylistId?.let(SmartPlaylistId::fromId) } shouldBe SmartPlaylistId.entries
     }
 }

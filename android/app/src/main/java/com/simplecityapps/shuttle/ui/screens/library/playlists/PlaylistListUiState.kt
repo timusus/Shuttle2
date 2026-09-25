@@ -12,7 +12,7 @@ data class PlaylistListUiState(
     val loadingState: LoadingState = LoadingState.Loading,
     val scanProgress: Progress? = null,
 ) {
-    enum class LoadingState { Loading, Scanning, Ready, Empty }
+    enum class LoadingState { Loading, Scanning, Ready }
 }
 
 sealed interface PlaylistListUiEvent {

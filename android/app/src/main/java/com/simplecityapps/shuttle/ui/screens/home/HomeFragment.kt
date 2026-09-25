@@ -23,7 +23,6 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
@@ -31,6 +30,7 @@ import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.HomeButton
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
+import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistId
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder
@@ -45,7 +45,6 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Calendar
 import javax.inject.Inject
-import kotlin.time.Instant.Companion.fromEpochMilliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
@@ -105,12 +104,7 @@ class HomeFragment :
             if (navController.currentDestination?.id != R.id.smartPlaylistDetailFragment) {
                 navController.navigate(
                     R.id.action_homeFragment_to_smartPlaylistDetailFragment,
-                    SmartPlaylistDetailFragmentArgs(
-                        com.simplecityapps.shuttle.model.SmartPlaylist(
-                            com.simplecityapps.mediaprovider.R.string.playlist_title_history,
-                            SongQuery.LastCompleted(fromEpochMilliseconds(0))
-                        )
-                    ).toBundle()
+                    SmartPlaylistDetailFragmentArgs(SmartPlaylistId.History.smartPlaylist).toBundle()
                 )
             }
         }
@@ -119,12 +113,7 @@ class HomeFragment :
             if (navController.currentDestination?.id != R.id.smartPlaylistDetailFragment) {
                 navController.navigate(
                     R.id.action_homeFragment_to_smartPlaylistDetailFragment,
-                    SmartPlaylistDetailFragmentArgs(
-                        com.simplecityapps.shuttle.model.SmartPlaylist(
-                            com.simplecityapps.mediaprovider.R.string.playlist_title_recently_added,
-                            SongQuery.RecentlyAdded()
-                        )
-                    ).toBundle()
+                    SmartPlaylistDetailFragmentArgs(SmartPlaylistId.RecentlyAdded.smartPlaylist).toBundle()
                 )
             }
         }

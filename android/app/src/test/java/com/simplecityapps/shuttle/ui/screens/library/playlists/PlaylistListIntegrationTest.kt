@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.createPlaylist
-import com.simplecityapps.createSmartPlaylist
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSortPreferences
@@ -58,14 +57,15 @@ class PlaylistListIntegrationTest {
     }
 
     @Test
-    fun `shows empty message when repository has no playlists`() {
+    fun `shows the built-in smart playlists when there are no playlists`() {
         fakePlaylistRepository.setPlaylists(emptyList())
-        fakePlaylistRepository.setSmartPlaylists(emptyList())
         fakeImportState.setState(importComplete())
 
         robot.setContentWithViewModel(createViewModel())
 
-        robot.assertTextDisplayed("No playlists")
+        robot.assertTextDisplayed("Recently Added")
+        robot.assertTextDisplayed("Most Played")
+        robot.assertTextDisplayed("History")
     }
 
     @Test
@@ -85,21 +85,8 @@ class PlaylistListIntegrationTest {
     }
 
     @Test
-    fun `shows smart playlists from repository`() {
-        fakePlaylistRepository.setSmartPlaylists(
-            listOf(createSmartPlaylist())
-        )
-        fakeImportState.setState(importComplete())
-
-        robot.setContentWithViewModel(createViewModel())
-
-        robot.assertTextDisplayed("Recently Added")
-    }
-
-    @Test
     fun `shows both playlists and smart playlists with section headers`() {
         fakePlaylistRepository.setPlaylists(listOf(createPlaylist(name = "My Mix")))
-        fakePlaylistRepository.setSmartPlaylists(listOf(createSmartPlaylist()))
         fakeImportState.setState(importComplete())
 
         robot.setContentWithViewModel(createViewModel())

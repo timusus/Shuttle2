@@ -11,6 +11,7 @@ import com.simplecityapps.sampleSongs
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.ui.screens.library.albums.readyAlbumList
+import com.simplecityapps.shuttle.ui.screens.library.playlists.readyPlaylistList
 import com.simplecityapps.shuttle.ui.screens.library.songs.readySongList
 import com.simplecityapps.toAlbum
 import com.simplecityapps.toAlbumArtist
@@ -99,6 +100,18 @@ class LibraryScreenshotTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phonePlaylists() {
+        val playlists = SampleLibrary.playlists.mapIndexed { index, playlist -> playlist.toPlaylist(id = index + 1L) }
+        library.setContent(
+            libraryState(currentTab = LibraryTab.Playlists),
+            chromeWithMenu(subtitle = "${playlists.size} playlists"),
+            LibraryPageStates(playlists = readyPlaylistList(playlists, smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist })),
+        )
+        shot("phone-playlists")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneAlbumDetail() {
         val album = SampleLibrary.album("phase-garden")
         val tracks = album.songs.map { it.toSong() }
@@ -155,7 +168,7 @@ class LibraryScreenshotTest {
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneSmartPlaylistDetail() {
-        detail.setSmartPlaylist(readySmartPlaylistDetail(songs = sampleSongs(8)))
+        detail.setSmartPlaylist(readySmartPlaylistDetail(smartPlaylist = SmartPlaylistId.History.smartPlaylist, songs = sampleSongs(8)))
         shot("phone-smart-playlist-detail")
     }
 

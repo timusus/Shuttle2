@@ -5,7 +5,6 @@ import com.simplecityapps.createAlbum
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createGenre
 import com.simplecityapps.createPlaylist
-import com.simplecityapps.createSmartPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.persistence.LibraryTab
@@ -198,14 +197,16 @@ class LibraryScreenTest {
     @Test
     fun `playlists page lists smart playlists, opens a playlist and starts a new one`() {
         val playlist = createPlaylist(name = "Road trip")
-        val smart = createSmartPlaylist()
+        val smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist }
         robot.setContent(
             libraryState(currentTab = LibraryTab.Playlists),
-            pages = LibraryPageStates(playlists = readyPlaylistList(listOf(playlist), smartPlaylists = listOf(smart))),
+            pages = LibraryPageStates(playlists = readyPlaylistList(listOf(playlist), smartPlaylists = smartPlaylists)),
         )
 
-        robot.clickText("Recently Added")
-        robot.lastSmartPlaylistClicked shouldBe smart
+        robot.assertTextDisplayed("Recently Added")
+        robot.assertTextDisplayed("Most Played")
+        robot.clickText("History")
+        robot.lastSmartPlaylistClicked shouldBe SmartPlaylistId.History.smartPlaylist
 
         robot.clickText("Road trip")
         robot.lastPlaylistClicked shouldBe playlist

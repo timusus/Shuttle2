@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.map
 
 class FakePlaylistRepository : PlaylistRepository {
     private val playlists = MutableStateFlow<List<Playlist>>(emptyList())
-    private val smartPlaylists = MutableStateFlow<List<SmartPlaylist>>(emptyList())
     private val playlistSongs = MutableStateFlow<Map<Long, List<Song>>>(emptyMap())
 
     /** What [getFavoritesPlaylist] returns; unset, it throws as the real one can. */
@@ -38,13 +37,9 @@ class FakePlaylistRepository : PlaylistRepository {
         playlists.value = value
     }
 
-    fun setSmartPlaylists(value: List<SmartPlaylist>) {
-        smartPlaylists.value = value
-    }
-
     override fun getPlaylists(query: PlaylistQuery): Flow<List<Playlist>> = playlists
 
-    override fun getSmartPlaylists(): Flow<List<SmartPlaylist>> = smartPlaylists
+    override fun getSmartPlaylists(): Flow<List<SmartPlaylist>> = error("The app builds its smart playlists from SmartPlaylistId")
 
     override suspend fun getFavoritesPlaylist(): Playlist = favorites ?: error("No favorites playlist")
 

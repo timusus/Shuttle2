@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
+import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistId
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -40,10 +41,9 @@ class PlaylistListViewModel @Inject constructor(
 
     val uiState: StateFlow<PlaylistListUiState> = combine(
         playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
-        playlistRepository.getSmartPlaylists(),
         mediaImportObserver.songImportState,
         _sortOrder,
-    ) { playlists, smartPlaylists, songImportState, sortOrder ->
+    ) { playlists, songImportState, sortOrder ->
         if (songImportState is SongImportState.ImportProgress) {
             PlaylistListUiState(
                 loadingState = PlaylistListUiState.LoadingState.Scanning,
@@ -53,13 +53,9 @@ class PlaylistListViewModel @Inject constructor(
         } else {
             PlaylistListUiState(
                 playlists = playlists.sortedWith(sortOrder.comparator),
-                smartPlaylists = smartPlaylists,
+                smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist },
                 sortOrder = sortOrder,
-                loadingState = if (playlists.isEmpty() && smartPlaylists.isEmpty()) {
-                    PlaylistListUiState.LoadingState.Empty
-                } else {
-                    PlaylistListUiState.LoadingState.Ready
-                },
+                loadingState = PlaylistListUiState.LoadingState.Ready,
             )
         }
     }.stateIn(

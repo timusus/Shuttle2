@@ -19,10 +19,6 @@ fun scanningPlaylistList(progress: Progress? = null) = PlaylistListUiState(
     scanProgress = progress,
 )
 
-fun emptyPlaylistList() = PlaylistListUiState(
-    loadingState = PlaylistListUiState.LoadingState.Empty,
-)
-
 val loadingPlaylistList = PlaylistListUiState(
     loadingState = PlaylistListUiState.LoadingState.Loading,
 )

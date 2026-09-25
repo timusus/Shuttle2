@@ -61,16 +61,6 @@ fun PlaylistList(
             )
         }
 
-        PlaylistListUiState.LoadingState.Empty -> {
-            LoadingStatusIndicator(
-                modifier = modifier
-                    .fillMaxSize()
-                    .wrapContentSize()
-                    .padding(16.dp),
-                state = CircularLoadingState.Empty(stringResource(R.string.playlist_list_empty))
-            )
-        }
-
         PlaylistListUiState.LoadingState.Ready -> {
             PlaylistList(
                 smartPlaylists = uiState.smartPlaylists.toImmutableList(),
