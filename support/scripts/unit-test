@@ -279,12 +279,15 @@ run_changed_mode() {
     fi
   done <<< "${changed_files}"
 
-  # Classify each changed android/** file against its module: a test file
-  # contributes its own class name as a filter candidate; a main file
-  # contributes its corresponding *Test class only if exactly one exists,
-  # otherwise (and for any non-.kt change) the module falls back to a whole
-  # run. Any main-source change outside :android:app marks :android:app as
-  # downstream-affected, since it depends on nearly every other module.
+  # Classify each changed android/** file against its module: a src/test
+  # file contributes its own class name as a filter candidate (only if it
+  # still exists — a deletion contributes nothing); a main file contributes
+  # its corresponding *Test class only if exactly one exists, otherwise (and
+  # for any non-.kt change, or an androidTest change) the module falls back
+  # to a whole run. Any main-source change outside :android:app marks
+  # :android:app as downstream-affected, since it depends on nearly every
+  # other module. A file under android/** that isn't part of any registered
+  # module is skipped with a printed note.
   local mdir mpath id rel cls matches match_count
   while IFS= read -r f; do
     [ -z "${f}" ] && continue
@@ -294,15 +297,28 @@ run_changed_mode() {
     esac
 
     IFS=$'\t' read -r mdir mpath <<< "$(module_dir_and_path_for_file "${f}")"
-    [ -z "${mpath}" ] && continue
+    if [ -z "${mpath}" ]; then
+      echo "note: '${f}' is under android/ but isn't part of a registered module; skipping"
+      continue
+    fi
     id="$(module_id "${mpath}")"
     echo "${mpath}" >> "${WORK_DIR}/modules_seen"
     rel="${f#"${mdir}"/}"
 
     case "${rel}" in
-      src/test/*.kt|src/androidTest/*.kt)
-        cls="$(basename "${rel}" .kt)"
-        echo "${cls}" >> "${WORK_DIR}/${id}.classes"
+      src/test/*.kt)
+        # Only filter on classes that still exist; a deleted test file must
+        # not add a --tests filter for a class Gradle can no longer find.
+        if [ -f "${REPO_ROOT}/${f}" ]; then
+          cls="$(basename "${rel}" .kt)"
+          echo "${cls}" >> "${WORK_DIR}/${id}.classes"
+        fi
+        ;;
+      src/androidTest/*.kt)
+        # androidTest classes aren't part of testDebugUnitTest; filtering on
+        # one fails with "No tests found", so fall back to a whole run.
+        echo "note: '${f}' is an androidTest source; running ${mpath} whole"
+        touch "${WORK_DIR}/${id}.unmappable"
         ;;
       src/main/*.kt)
         cls="$(basename "${rel}" .kt)"
@@ -330,6 +346,24 @@ run_changed_mode() {
         ;;
     esac
   done <<< "${changed_files}"
+
+  # Build-system-wide changes (buildSrc, the Gradle wrapper/version catalog,
+  # root build/settings files) can affect any module's classpath or task
+  # graph; per-module mapping doesn't apply, so fall back to the full suite.
+  local full_suite_trigger
+  full_suite_trigger="$(printf '%s\n' "${changed_files}" | grep -E \
+    '^buildSrc/|^gradle/|^build\.gradle(\.kts)?$|^settings\.gradle(\.kts)?$|^gradle\.properties$' \
+    | head -1 || true)"
+
+  if [ -n "${full_suite_trigger}" ]; then
+    echo "Build-system file changed ('${full_suite_trigger}'); running the full test suite."
+    local full_rc=0
+    print_and_run testDebugUnitTest || full_rc=$?
+    if [ "${roborazzi}" -eq 1 ]; then
+      print_and_run ":android:app:verifyRoborazziDebug" || full_rc=$?
+    fi
+    return "${full_rc}"
+  fi
 
   if [ ! -f "${WORK_DIR}/modules_seen" ] && [ "${roborazzi}" -eq 0 ]; then
     echo "No modules affected; nothing to run."

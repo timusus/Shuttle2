@@ -14,18 +14,26 @@ use this instead of hand-writing a `--tests` filter or running the whole suite. 
 Gradle commands without running them.
 
 Rules, in order:
-- Each changed file resolves to a module by its `android/**` directory (via `settings.gradle`).
-- A changed `src/test|androidTest` file filters to its own test class. A changed `src/main` file
-  filters to its matching `*Test` class only if exactly one exists; otherwise (or for any non-`.kt`
-  change, e.g. `build.gradle.kts`) the module runs whole.
+- Each changed file resolves to a module by its `android/**` directory (via `settings.gradle`). A file
+  under `android/**` that isn't part of any registered module (e.g. a loose changelog fragment) is
+  skipped with a printed note, not silently dropped.
+- A changed `src/test` file filters to its own test class, but only if the file still exists — a
+  deleted test file contributes no filter, so the module falls back to a whole run if that leaves it
+  with no filters. A changed `src/androidTest` file always runs its module whole: androidTest classes
+  aren't part of `testDebugUnitTest`, so filtering on one fails with "No tests found". A changed
+  `src/main` file filters to its matching `*Test` class only if exactly one exists on disk; otherwise
+  (or for any non-`.kt` change, e.g. `build.gradle.kts`) the module runs whole.
 - Unit-test sources for every affected module compile first (`compileDebugUnitTestKotlin`); a compile
   error stops the run before any test executes.
 - A `src/main` change in any module other than `:android:app` also runs `:android:app` whole — it
   depends on nearly every other module, so this catches API breaks. It does not chase the full
   dependency graph (e.g. a `mediaprovider:core` change doesn't add `mediaprovider:local`); rerun
   manually for a sibling you know is affected.
+- A change under `buildSrc/`, `gradle/` (including `gradle/libs.versions.toml`), or the root
+  `build.gradle*`, `settings.gradle*` or `gradle.properties` runs the full suite instead of mapping by
+  module, since it can affect any module's classpath or task graph.
 - `docs/design/**` or any changed file containing `@Composable` also runs
-  `:android:app:verifyRoborazziDebug`.
+  `:android:app:verifyRoborazziDebug`. Other paths outside `android/` (docs, scripts) run nothing.
 
 ### Compose UI Characterisation Tests
 
