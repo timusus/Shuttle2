@@ -53,6 +53,7 @@ internal fun PlayerSheet(
     val nestedScroll = remember(state, flingBehavior) { PlayerSheetNestedScrollConnection(state, flingBehavior) }
     val miniInteractive by remember(state) { derivedStateOf { state.geometry.miniInteractive(state.geometry.expand(state.offset)) } }
     val levelDescription = state.settledLevel.description
+    val nowPlayingShown by remember(state) { derivedStateOf { state.geometry.nowPlayingAlpha(state.offset) > 0f } }
 
     Surface(
         modifier = modifier
@@ -80,7 +81,9 @@ internal fun PlayerSheet(
                     queue = queue,
                     verticalFold = layout.verticalFold,
                     onCollapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } },
-                    modifier = Modifier.graphicsLayer { alpha = state.geometry.nowPlayingAlpha(state.offset) },
+                    modifier = Modifier
+                        .hiddenFromSemantics(!nowPlayingShown)
+                        .graphicsLayer { alpha = state.geometry.nowPlayingAlpha(state.offset) },
                 )
             }
             MiniPlayer(

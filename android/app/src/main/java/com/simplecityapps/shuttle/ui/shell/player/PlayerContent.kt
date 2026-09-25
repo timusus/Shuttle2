@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -100,7 +101,7 @@ internal fun MiniPlayer(
             .fillMaxWidth()
             .height(MiniPlayerHeight)
             .testTag(PlayerTestTags.MiniPlayer)
-            .then(if (interactive) Modifier else Modifier.clearAndSetSemantics { }),
+            .hiddenFromSemantics(!interactive),
         contentAlignment = Alignment.Center,
     ) {
         SongRow(
@@ -196,11 +197,15 @@ internal fun StackedPlayer(
     onShowQueue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Faded-out layers leave the semantics tree, so TalkBack (and UI drivers) reach only what shows.
+    val nowPlayingShown by remember(geometry, offset) { derivedStateOf { geometry().nowPlayingAlpha(offset()) > 0f } }
+    val queueShown by remember(geometry, offset) { derivedStateOf { geometry().queue(offset()) > 0f } }
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .testTag(PlayerTestTags.NowPlaying)
+                .hiddenFromSemantics(!nowPlayingShown)
                 .graphicsLayer {
                     alpha = geometry().nowPlayingAlpha(offset())
                     translationY = geometry().nowPlayingTranslation(offset())
@@ -221,16 +226,24 @@ internal fun StackedPlayer(
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(top = TransportHeight)
+                .hiddenFromSemantics(!nowPlayingShown)
                 .graphicsLayer {
                     alpha = geometry().nowPlayingAlpha(offset())
                     translationY = geometry().queuePanelTranslation(offset())
                 },
         ) {
             QueueHeader(onClick = onShowQueue)
-            QueueList(queue.items, Modifier.weight(1f), contentPadding = WindowInsets.navigationBars.asPaddingValues())
+            QueueList(
+                queue.items,
+                Modifier.weight(1f).hiddenFromSemantics(!queueShown),
+                contentPadding = WindowInsets.navigationBars.asPaddingValues(),
+            )
         }
     }
 }
+
+/** Drops this node and its children from the semantics tree while [hidden]. */
+internal fun Modifier.hiddenFromSemantics(hidden: Boolean): Modifier = if (hidden) clearAndSetSemantics { } else this
 
 /** Medium and Expanded Now Playing: the player beside the queue, split at a vertical fold if there is one. */
 @Composable

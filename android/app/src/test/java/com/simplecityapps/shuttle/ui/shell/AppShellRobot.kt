@@ -10,9 +10,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.StateRestorationTester
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -107,6 +111,14 @@ class AppShellRobot(
 
     fun assertPaneAbsent() {
         rule.onNodeWithTag(PlayerTestTags.Pane).assertDoesNotExist()
+    }
+
+    fun assertReachable(
+        text: String,
+        reachable: Boolean,
+    ) {
+        val nodes = rule.onAllNodes(hasText(text) or hasContentDescription(text))
+        if (reachable) nodes.onFirst().assertExists() else nodes.assertCountEquals(0)
     }
 
     fun assertTextDisplayed(text: String) {

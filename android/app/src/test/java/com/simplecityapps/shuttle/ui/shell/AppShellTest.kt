@@ -64,6 +64,20 @@ class AppShellTest {
     }
 
     @Test
+    fun `only the layers a level shows are reachable by accessibility`() {
+        robot.setContent()
+        robot.assertReachable("Collapse player", reachable = false)
+        robot.assertReachable("Second song", reachable = false)
+
+        robot.tapMiniPlayer()
+        robot.assertReachable("Collapse player", reachable = true)
+        robot.assertReachable("Second song", reachable = false)
+
+        robot.tapQueuePeek()
+        robot.assertReachable("Second song", reachable = true)
+    }
+
+    @Test
     fun `back at Mini pops the destination instead`() {
         robot.setContent()
         robot.tapText("Album 1")
