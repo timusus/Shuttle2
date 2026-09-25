@@ -40,11 +40,3 @@ fun Error.userDescription(): String = when (this) {
         "An unknown error occurred."
     }
 }
-
-fun Error.isHttpError(): Boolean = this is RemoteServiceHttpError
-
-fun Error.isHttpServerError(): Boolean = (this as? RemoteServiceHttpError)?.isServerError ?: false
-
-fun Error.isHttpClientError(): Boolean = (this as? RemoteServiceHttpError)?.isClientError ?: false
-
-fun Error.isNetworkError(): Boolean = this is NetworkError
