@@ -1,0 +1,43 @@
+# #376: the Compose shell's player (debug ShellActivity). Setup (support/scripts/checks/shell-player.sh):
+# the `playback` fixture (One..Five, 60 s each) queued with PLAY_ALL and paused, then the shell
+# launched at Mini showing "Playback One". Expands the player, plays and pauses, seeks by tapping
+# the middle of the seek bar, skips, then at the Queue level removes Five by swiping it away, drags
+# Four by its handle to the top and taps Three to play it. The wrapper checks the resulting queue.
+appId: com.simplecityapps.shuttle.dev
+---
+- extendedWaitUntil:
+    visible: "Playback One"
+    timeout: 10000
+# Mini -> Now Playing by tapping the mini player
+- tapOn: "Playback One"
+- assertVisible: "Collapse player"
+- assertVisible: "Repeat off"
+# Play, then pause again so the UI goes idle
+- tapOn: "Play"
+- assertVisible: "Pause"
+- tapOn: "Pause"
+- assertVisible: "Play"
+# A tap in the middle of the seek bar lands about half way through the minute-long song
+- tapOn: "Seek"
+- assertVisible: "0:[23]\\d"
+- tapOn: "Next"
+- assertVisible: "Playback Two"
+# Now Playing -> Queue
+- tapOn: "Up Next"
+- assertVisible: "Playback Five"
+# Swipe to remove
+- swipe:
+    from:
+      text: "Playback Five"
+    direction: LEFT
+- assertNotVisible: "Playback Five"
+# Drag Playback Four (the fourth handle) up to the top
+- swipe:
+    from:
+      text: "Reorder"
+      index: 3
+    direction: UP
+    duration: 1500
+# Tap a row to skip to it
+- tapOn: "Playback Three"
+- takeScreenshot: shell-player-queue
