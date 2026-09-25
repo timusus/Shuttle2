@@ -1,4 +1,4 @@
-# #379: first run from a clean install in the Compose shell (the debug ShellActivity, which the
+# #379: first run from a clean install in the Compose shell (MainActivity, which the
 # caller launches), which opens on Home. The Library tab shows its empty state; "Allow access to music" shows the system
 # prompt, and granting it starts the S2 scanner and fills the Library with the seeded `playback`
 # fixture. Run it through support/scripts/checks/first-run.sh.

@@ -1,4 +1,4 @@
-# Opens Settings > Playback and, on Android 14+ where BitPerfectOutput's AudioMixerAttributes API
+# Opens Settings > Playback & sound and, on Android 14+ where BitPerfectOutput's AudioMixerAttributes API
 # exists, toggles "USB DAC direct output" and screenshots it; below that, the row is hidden
 # (PlaybackPreferenceFragment gates it on Build.VERSION_CODES.UPSIDE_DOWN_CAKE) so this only
 # asserts its absence. support/scripts/checks/settings-usb-dac-direct-output.sh drives the
@@ -7,7 +7,7 @@
 appId: com.simplecityapps.shuttle.dev
 ---
 - runFlow: nav/open-settings.yaml
-- tapOn: "Playback"
+- tapOn: "Playback & sound"
 - runFlow:
     when:
       visible: "USB DAC direct output"

@@ -1,4 +1,4 @@
-# #376, #410: the Compose shell's player (debug ShellActivity). Setup (support/scripts/checks/shell-player.sh):
+# #376, #410: the Compose shell's player (MainActivity). Setup (support/scripts/checks/shell-player.sh):
 # the `playback` fixture (One..Five, 60 s each) queued with PLAY_ALL and paused, then the shell
 # launched at Mini showing "Playback One". Expands the player, plays and pauses, seeks by tapping
 # the middle of the seek bar, skips, then opens the queue from the bar, removes Five by swiping it

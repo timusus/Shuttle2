@@ -1,8 +1,7 @@
 # Open the full-screen player from the mini player. Starts with a fresh launch so this runs
-# standalone regardless of the prior screen; selects by id, not text, since the title is the
-# current track (dynamic -- whatever the persisted queue restores).
+# standalone regardless of the prior screen; the mini player has no stable id, so the caller
+# passes the current track's title (the whole mini player row expands the player on tap).
 appId: com.simplecityapps.shuttle.dev
 ---
 - runFlow: launch-fresh.yaml
-- tapOn:
-    id: ".*titleTextView"
+- tapOn: "${TITLE}"

@@ -17,6 +17,7 @@ for attempt in 1 2 3; do
     s2 PAUSE >/dev/null
     MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
         "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
+        -e TITLE="Playback One" \
         "${CHECKS_ROOT}/support/maestro/queue-shuffle.yaml" || fail "the Maestro flow failed (output in ${out})"
     [ "$(state shuffle)" = "On" ] || fail "shuffle is $(state shuffle) after the tap"
     [ "$(s2 DUMP_STATE | python3 -c 'import json,sys; print(",".join(json.load(sys.stdin)["queueTitles"]))')" != "$ordered" ] && break

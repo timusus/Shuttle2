@@ -1,4 +1,4 @@
-# #377: the Compose library in the debug ShellActivity. Setup (support/scripts/checks/library-compose.sh):
+# #377: the Compose library in MainActivity. Setup (support/scripts/checks/library-compose.sh):
 # the `playback` fixture imported (Playback One..Five by Playback Artist on Playback Album, genre
 # Ambient), no playlists, the shell launched. Visits every default tab, opens an album, the artist and
 # the genre, adds a song to a new playlist from the Songs tab, opens the playlist and plays the song.

@@ -20,6 +20,7 @@ out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
 mkdir -p "$out"
 MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
     "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
+    -e TITLE="Playback Five" \
     "${CHECKS_ROOT}/support/maestro/repeat-modes.yaml" || fail "the Maestro flow failed (output in ${out})"
 [ "$(state repeat)" = "One" ] || fail "repeat is $(state repeat) after two taps, not One"
 

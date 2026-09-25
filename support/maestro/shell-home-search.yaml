@@ -1,4 +1,4 @@
-# #377: the Compose shell's Home and Search (debug ShellActivity). Setup
+# #377: the Compose shell's Home and Search (MainActivity). Setup
 # (support/scripts/checks/shell-home-search.sh): the `playback` fixture (One..Five) imported, nothing
 # playing, the shell launched on Home. Checks Home shows the library and a Home album opens the
 # library's album screen, opens Search from its top bar, opens an artist result, finds the artist again

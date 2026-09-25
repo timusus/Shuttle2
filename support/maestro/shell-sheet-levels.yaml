@@ -1,4 +1,4 @@
-# #375, #410: the Compose shell's player sheet (debug ShellActivity). Setup
+# #375, #410: the Compose shell's player sheet (MainActivity). Setup
 # (support/scripts/checks/shell-sheet-levels.sh): the `playback` fixture queued with PLAY_ALL and
 # paused, then the shell launched, so the sheet reveals at Mini showing "Playback One". Faded-out
 # layers leave the accessibility tree, so each level is told apart by what is reachable: Mini has

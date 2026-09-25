@@ -1,4 +1,4 @@
-# #380: the S2 Pro paywall, from Settings in the debug ShellActivity. Setup
+# #380: the S2 Pro paywall, from Settings in MainActivity. Setup
 # (support/scripts/checks/paywall-settings.sh): the shell launched. A debug build is always Pro, so the
 # paywall shows the Pro status and no plans; the free, trial and price states are in the Roborazzi
 # recordings in docs/design/paywall/.

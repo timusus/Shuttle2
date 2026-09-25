@@ -1,4 +1,4 @@
-# #378: the Compose settings in the debug ShellActivity. Setup (support/scripts/checks/settings-compose.sh):
+# #378: the Compose settings in MainActivity. Setup (support/scripts/checks/settings-compose.sh):
 # a reset lane with the shell launched, so every setting is at its default. Opens Settings from the
 # More sheet, turns Pure black on, picks the Dark theme, then opens the equalizer from Playback & sound.
 appId: com.simplecityapps.shuttle.dev

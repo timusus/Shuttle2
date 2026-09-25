@@ -1,4 +1,4 @@
-# #377: the Compose shell's song info and tag editor (debug ShellActivity). Setup
+# #377: the Compose shell's song info and tag editor (MainActivity). Setup
 # (support/scripts/checks/shell-tag-editor.sh): the `taglib` fixture (Taglib One..Five) added as the
 # SAF-backed Shuttle provider, since only that provider can write tags, then the shell launched.
 # Opens the first song's info from its row menu on the Songs tab, then selects the song, edits its title
