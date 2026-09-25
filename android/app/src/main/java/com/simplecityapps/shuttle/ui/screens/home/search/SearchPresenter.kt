@@ -1,18 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.home.search
 
 import android.content.Context
-import com.simplecityapps.mediaprovider.StringComparison
-import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
-import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
-import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
-import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.DeleteSongs
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
@@ -22,21 +15,17 @@ import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import com.simplecityapps.shuttle.ui.screens.search.SearchCategory
+import com.simplecityapps.shuttle.ui.screens.search.SearchLibrary
+import com.simplecityapps.shuttle.ui.screens.search.SearchResults
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 interface SearchContract : BaseContract.Presenter<SearchContract.View> {
     interface View {
-        fun setData(searchResult: Triple<List<ArtistJaroSimilarity>, List<AlbumJaroSimilarity>, List<SongJaroSimilarity>>)
+        fun setData(searchResult: SearchResults)
 
         fun showLoadError(error: Error)
 
@@ -106,9 +95,7 @@ class SearchPresenter
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val songRepository: SongRepository,
-    private val artistRepository: AlbumArtistRepository,
-    private val albumRepository: AlbumRepository,
+    private val searchLibrary: SearchLibrary,
     private val preferenceManager: GeneralPreferenceManager,
     private val resolveSongs: ResolveSongs,
     private val playSongs: PlaySongs,
@@ -119,8 +106,7 @@ constructor(
     SearchContract.Presenter {
     private var query: String? = null
 
-    private var searchResult: Triple<List<ArtistJaroSimilarity>, List<AlbumJaroSimilarity>, List<SongJaroSimilarity>> =
-        Triple(emptyList(), emptyList(), emptyList())
+    private var searchResult = SearchResults()
 
     private var queryJob: Job? = null
 
@@ -134,61 +120,20 @@ constructor(
         queryJob?.cancel()
         if (query.isEmpty()) {
             this.query = query
-            view?.setData(Triple(emptyList(), emptyList(), emptyList()))
+            view?.setData(SearchResults())
             return
+        }
+        val categories = buildSet {
+            if (preferenceManager.searchFilterArtists) add(SearchCategory.Artists)
+            if (preferenceManager.searchFilterAlbums) add(SearchCategory.Albums)
+            if (preferenceManager.searchFilterSongs) add(SearchCategory.Songs)
         }
         queryJob =
             launch {
-                var artistResults: Flow<List<ArtistJaroSimilarity>> = flowOf(emptyList())
-                if (preferenceManager.searchFilterArtists) {
-                    artistResults =
-                        artistRepository.getAlbumArtists(AlbumArtistQuery.All())
-                            .map { albumArtists ->
-                                albumArtists
-                                    .map { albumArtist -> ArtistJaroSimilarity(albumArtist, query) }
-                                    .filter { it.albumArtistNameJaroSimilarity.score > StringComparison.threshold || it.artistNameJaroSimilarity.score > StringComparison.threshold }
-                                    .sortedByDescending { if (it.albumArtistNameJaroSimilarity.score > StringComparison.threshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
-                                    .sortedByDescending { if (it.artistNameJaroSimilarity.score > StringComparison.threshold) it.artistNameJaroSimilarity.score else 0.0 }
-                            }
+                searchLibrary(query, categories).collect { results ->
+                    searchResult = results
+                    view?.setData(results)
                 }
-
-                var albumResults: Flow<List<AlbumJaroSimilarity>> = flowOf(emptyList())
-                if (preferenceManager.searchFilterAlbums) {
-                    albumResults =
-                        albumRepository.getAlbums(AlbumQuery.All())
-                            .map { albums ->
-                                albums.map { album -> AlbumJaroSimilarity(album, query) }
-                                    .filter { it.nameJaroSimilarity.score > StringComparison.threshold || it.albumArtistNameJaroSimilarity.score > StringComparison.threshold || it.artistNameJaroSimilarity.score > StringComparison.threshold }
-                                    .sortedByDescending { if (it.albumArtistNameJaroSimilarity.score > StringComparison.threshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
-                                    .sortedByDescending { if (it.artistNameJaroSimilarity.score > StringComparison.threshold) it.artistNameJaroSimilarity.score else 0.0 }
-                                    .sortedByDescending { it.nameJaroSimilarity.score }
-                            }
-                }
-
-                var songResults: Flow<List<SongJaroSimilarity>> = flowOf(emptyList())
-                if (preferenceManager.searchFilterSongs) {
-                    songResults =
-                        songRepository.getSongs(SongQuery.All())
-                            .map { songs ->
-                                songs.orEmpty()
-                                    .asSequence()
-                                    .map { song -> SongJaroSimilarity(song, query) }
-                                    .filter { it.nameJaroSimilarity.score > StringComparison.threshold || it.albumArtistNameJaroSimilarity.score > StringComparison.threshold || it.artistNameJaroSimilarity.score > StringComparison.threshold || it.albumNameJaroSimilarity.score > StringComparison.threshold }
-                                    .sortedByDescending { if (it.albumArtistNameJaroSimilarity.score > StringComparison.threshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
-                                    .sortedByDescending { if (it.artistNameJaroSimilarity.score > StringComparison.threshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
-                                    .sortedByDescending { if (it.albumNameJaroSimilarity.score > StringComparison.threshold) it.albumNameJaroSimilarity.score else 0.0 }
-                                    .sortedByDescending { if (it.nameJaroSimilarity.score > StringComparison.threshold) it.nameJaroSimilarity.score else 0.0 }.toList()
-                            }
-                }
-
-                combine(artistResults, albumResults, songResults) { artists, albums, songs ->
-                    Triple(artists, albums, songs)
-                }
-                    .flowOn(Dispatchers.IO)
-                    .collect { results ->
-                        searchResult = results
-                        view?.setData(results)
-                    }
             }
         this.query = query
     }
@@ -203,7 +148,7 @@ constructor(
 
     override fun play(song: Song) {
         launch {
-            val songs = searchResult.third.map { it.song }
+            val songs = searchResult.songs.map { it.item }
             play(songs, songs.indexOf(song))
         }
     }

@@ -38,6 +38,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
+import com.simplecityapps.shuttle.ui.screens.search.SearchResults
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
@@ -168,48 +169,48 @@ class SearchFragment :
 
     // SearchContract.View Implementation
 
-    override fun setData(searchResult: Triple<List<ArtistJaroSimilarity>, List<AlbumJaroSimilarity>, List<SongJaroSimilarity>>) {
+    override fun setData(searchResult: SearchResults) {
         // If we're displaying too many items, clear the adapter data, so calculating the diff is faster
         if (adapter.itemCount > 100) {
             adapter.clear()
         }
         val list =
             mutableListOf<ViewBinder>().apply {
-                if (searchResult.first.isNotEmpty()) {
+                if (searchResult.artists.isNotEmpty()) {
                     add(HeaderBinder(getString(R.string.artists)))
                     addAll(
-                        searchResult.first.map { artistResult ->
+                        searchResult.artists.map { artistResult ->
                             SearchAlbumArtistBinder(
-                                albumArtist = artistResult.albumArtist,
+                                albumArtist = artistResult.item,
                                 imageLoader = imageLoader,
                                 listener = albumArtistBinderListener,
-                                jaroSimilarity = artistResult
+                                query = artistResult.query
                             )
                         }
                     )
                 }
-                if (searchResult.second.isNotEmpty()) {
+                if (searchResult.albums.isNotEmpty()) {
                     add(HeaderBinder(getString(R.string.albums)))
                     addAll(
-                        searchResult.second.map { albumResult ->
+                        searchResult.albums.map { albumResult ->
                             SearchAlbumBinder(
-                                album = albumResult.album,
+                                album = albumResult.item,
                                 imageLoader = imageLoader,
                                 listener = albumBinderListener,
-                                jaroSimilarity = albumResult
+                                query = albumResult.query
                             )
                         }
                     )
                 }
-                if (searchResult.third.isNotEmpty()) {
+                if (searchResult.songs.isNotEmpty()) {
                     add(HeaderBinder(getString(R.string.songs)))
                     addAll(
-                        searchResult.third.map { songResult ->
+                        searchResult.songs.map { songResult ->
                             SearchSongBinder(
-                                song = songResult.song,
+                                song = songResult.item,
                                 imageLoader = imageLoader,
                                 listener = songBinderListener,
-                                jaroSimilarity = songResult
+                                query = songResult.query
                             )
                         }
                     )

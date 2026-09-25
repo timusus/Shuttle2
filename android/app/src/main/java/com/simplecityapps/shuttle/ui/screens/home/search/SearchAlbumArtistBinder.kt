@@ -1,9 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.home.search
 
-import android.animation.ArgbEvaluator
-import android.text.Spannable
-import android.text.SpannableStringBuilder
-import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,7 +10,7 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.mediaprovider.StringComparison
+import com.simplecityapps.mediaprovider.search.SearchQuery
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.getAttrColor
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
@@ -27,7 +23,7 @@ class SearchAlbumArtistBinder(
     albumArtist: com.simplecityapps.shuttle.model.AlbumArtist,
     imageLoader: ArtworkImageLoader,
     listener: Listener,
-    private val jaroSimilarity: ArtistJaroSimilarity
+    private val query: SearchQuery
 ) : AlbumArtistBinder(albumArtist, imageLoader, listener) {
     override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_artist, parent, false))
 
@@ -36,7 +32,7 @@ class SearchAlbumArtistBinder(
     override fun areContentsTheSame(other: Any): Boolean {
         if (other !is SearchAlbumArtistBinder) return false
 
-        return super.areContentsTheSame(other) && other.jaroSimilarity == jaroSimilarity
+        return super.areContentsTheSame(other) && other.query == query
     }
 
     class ViewHolder(itemView: View) : AlbumArtistBinder.ViewHolder(itemView) {
@@ -46,7 +42,6 @@ class SearchAlbumArtistBinder(
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
         private val checkImageView: ImageView = itemView.findViewById(R.id.checkImageView)
 
-        private val textColor = itemView.context.getAttrColor(android.R.attr.textColorPrimary)
         private val accentColor = itemView.context.getAttrColor(androidx.appcompat.R.attr.colorAccent)
 
         init {
@@ -66,8 +61,6 @@ class SearchAlbumArtistBinder(
             isPartial: Boolean
         ) {
             super.bind(viewBinder, isPartial)
-
-            title.text = viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName
 
             val albumQuantity =
                 Phrase
@@ -99,28 +92,8 @@ class SearchAlbumArtistBinder(
 
             checkImageView.isVisible = viewBinder.selected
 
-            highlightMatchedStrings(viewBinder as SearchAlbumArtistBinder)
-        }
-
-        private fun highlightMatchedStrings(viewBinder: SearchAlbumArtistBinder) {
-            viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName?.let {
-                val nameStringBuilder = SpannableStringBuilder(viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName)
-                if (viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score >= StringComparison.threshold) {
-                    viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
-                        try {
-                            nameStringBuilder.setSpan(
-                                ForegroundColorSpan(ArgbEvaluator().evaluate(score.toFloat() - 0.25f, textColor, accentColor) as Int),
-                                index,
-                                index + 1,
-                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                            )
-                        } catch (e: IndexOutOfBoundsException) {
-                            // This is possible because the jaro similarity function does string normalisation, so we're not necessarily using the exact same string
-                        }
-                    }
-                }
-                title.text = nameStringBuilder
-            }
+            val name = viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName
+            title.text = name?.let { (viewBinder as SearchAlbumArtistBinder).query.highlight(it, accentColor) }
         }
 
         override fun recycle() {

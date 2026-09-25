@@ -15,15 +15,13 @@ import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.utils.dp
-import com.simplecityapps.shuttle.ui.screens.home.search.SongJaroSimilarity
 import com.squareup.phrase.ListPhrase
 
 open class PlaylistSongBinder(
     val playlistSong: com.simplecityapps.shuttle.model.PlaylistSong,
     val imageLoader: ArtworkImageLoader,
     val listener: Listener,
-    val showDragHandle: Boolean = false,
-    val jaroSimilarity: SongJaroSimilarity? = null
+    val showDragHandle: Boolean = false
 ) : ViewBinder,
     SectionViewBinder {
     var selected: Boolean = false
@@ -69,8 +67,7 @@ open class PlaylistSongBinder(
         playlistSong.song.disc == other.playlistSong.song.disc &&
         playlistSong.song.playCount == other.playlistSong.song.playCount &&
         selected == other.selected &&
-        showDragHandle == other.showDragHandle &&
-        jaroSimilarity == other.jaroSimilarity
+        showDragHandle == other.showDragHandle
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<PlaylistSongBinder>(itemView) {
         private val title: TextView = itemView.findViewById(R.id.title)
