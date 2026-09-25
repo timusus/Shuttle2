@@ -103,7 +103,8 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
   `/sdcard/Music/s2-seed/<fixture>` on the current lane, and triggers a MediaStore scan. Fixtures:
   `two-disc` (one album, 2 discs x 3 tracks, one FLAC), `many-tracks` (3 artists x 2 albums x 8
   tracks), `playlist-basic` (5 songs + an `.m3u`), `playback` (5 x 60 s tracks, for playback checks
-  that must finish before a track ends on its own). `--skip-onboarding` writes the debug app's
+  that must finish before a track ends on its own), `library` (the screenshot tests' invented
+  sample library, 16 albums with embedded generated covers -- for checks that need realistic content). `--skip-onboarding` writes the debug app's
   SharedPreferences directly via `run-as` so it opens straight to the library with the local
   provider selected, then broadcasts to a debug-only receiver (`android/app/src/debug`) that calls
   `MediaImporter.import()` directly — the app's real `MediaStore` `ContentObserver` import path is
