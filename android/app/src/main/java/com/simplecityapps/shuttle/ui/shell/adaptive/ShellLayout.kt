@@ -36,9 +36,6 @@ data class ShellLayout(
             ShellWidth.Large, ShellWidth.ExtraLarge -> PlayerMode.Pane
         }
 
-    /** Tabletop: a horizontal fold splits Now Playing, artwork above, transport below. */
-    val isTabletop: Boolean get() = horizontalFold != null
-
     /**
      * List-detail partitions: two from Expanded, or wherever a vertical fold separates the
      * window (the fold is the pane boundary), and one at compact height.
