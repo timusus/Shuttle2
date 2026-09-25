@@ -12,7 +12,6 @@ import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -33,6 +32,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
+import com.simplecityapps.shuttle.ui.screens.settings.settingsEntries
 
 // Placeholder destinations for the shell spike (#375): enough to exercise tabs, list-detail and
 // back stacks. The real screens replace them one route at a time.
@@ -59,7 +59,7 @@ fun shellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey> = 
     }
     entry<SearchRoute> { SearchScreen() }
     entry<AlbumRoute>(metadata = ListDetailSceneStrategy.detailPane()) { route -> AlbumScreen(route, onNavigateUp = { navigator.back() }) }
-    entry<SettingsRoute> { SettingsScreen(onNavigateUp = { navigator.back() }) }
+    settingsEntries(navigator)
 }
 
 /** A top-level screen: a collapsing `LargeFlexibleTopAppBar` over one list (app-shell.md, section 3). */
@@ -144,15 +144,6 @@ private fun AlbumScreen(
         item { SectionHeader(title = album?.title ?: "Album") }
         items((1..10).toList(), key = { it }) { track ->
             SongRow(title = "Track $track", subtitle = album?.artist.orEmpty(), onClick = {}, trackNumber = track)
-        }
-    }
-}
-
-@Composable
-private fun SettingsScreen(onNavigateUp: () -> Unit) {
-    ShellListScreen(title = "Settings", subtitle = null, onNavigateUp = onNavigateUp) {
-        items(listOf("Appearance", "Playback", "Media providers", "Equalizer", "About"), key = { it }) { title ->
-            ListItem(headlineContent = { Text(title) })
         }
     }
 }

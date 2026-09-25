@@ -1,0 +1,164 @@
+package com.simplecityapps.shuttle.ui.screens.settings
+
+import androidx.annotation.StringRes
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.EntryProviderScope
+import androidx.navigation3.runtime.NavKey
+import com.simplecityapps.shuttle.BuildConfig
+import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesScreen
+import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel
+import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewScreen
+import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewViewModel
+import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerScreen
+import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerViewModel
+import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsScreen
+import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsViewModel
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
+import com.simplecityapps.shuttle.ui.shell.AppNavigator
+import com.simplecityapps.shuttle.ui.shell.SettingsRoute
+import kotlinx.serialization.Serializable
+import timber.log.Timber
+
+// Routes under Settings. SettingsRoute itself lives with the shell's routes, since the shell opens it.
+
+@Serializable
+data class SettingsDestinationRoute(
+    val destination: SettingsDestination
+) : NavKey
+
+@Serializable
+data object EqualizerRoute : NavKey
+
+@Serializable
+data object ExcludedSongsRoute : NavKey
+
+@Serializable
+data object WhatsNewRoute : NavKey
+
+@Serializable
+data object LicencesRoute : NavKey
+
+/** The Settings screens' entries, for the shell's entry provider. */
+fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
+    val navigateUp = { navigator.back() }
+    val openLink = { link: SettingsLink ->
+        when (link) {
+            SettingsLink.Equalizer -> navigator.open(EqualizerRoute)
+
+            SettingsLink.ExcludedSongs -> navigator.open(ExcludedSongsRoute)
+
+            SettingsLink.WhatsNew -> navigator.open(WhatsNewRoute)
+
+            SettingsLink.Licences -> navigator.open(LicencesRoute)
+
+            // Hidden until the Sources redesign brings the media provider screen to the shell
+            SettingsLink.MediaProviders -> Unit
+        }
+    }
+    entry<SettingsRoute> {
+        SettingsRootScreen(onNavigateUp = { navigateUp() }, onOpenDestination = { navigator.open(SettingsDestinationRoute(it)) })
+    }
+    entry<SettingsDestinationRoute> { route -> SettingsDestinationEntry(route.destination, onNavigateUp = { navigateUp() }, onOpenLink = openLink) }
+    entry<EqualizerRoute> { EqualizerEntry(onNavigateUp = { navigateUp() }) }
+    entry<ExcludedSongsRoute> { ExcludedSongsEntry(onNavigateUp = { navigateUp() }) }
+    entry<WhatsNewRoute> {
+        val viewModel: WhatsNewViewModel = hiltViewModel()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        WhatsNewScreen(uiState = uiState, onNavigateUp = { navigateUp() })
+    }
+    entry<LicencesRoute> {
+        val viewModel: LicencesViewModel = hiltViewModel()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        val uriHandler = LocalUriHandler.current
+        LicencesScreen(
+            uiState = uiState,
+            onNavigateUp = { navigateUp() },
+            onOpenWebsite = { url -> runCatching { uriHandler.openUri(url) }.onFailure { Timber.w(it, "No app to open $url") } }
+        )
+    }
+}
+
+@Composable
+private fun SettingsDestinationEntry(
+    destination: SettingsDestination,
+    onNavigateUp: () -> Unit,
+    onOpenLink: (SettingsLink) -> Unit
+) {
+    val viewModel: SettingsViewModel = hiltViewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event -> snackbarHostState.showSnackbar(context.getString(event.message)) }
+    }
+    LifecycleResumeEffect(viewModel) {
+        viewModel.onResume()
+        onPauseOrDispose {}
+    }
+    SettingsDestinationScreen(
+        screen = SettingsCatalog.screen(destination),
+        uiState = uiState,
+        onNavigateUp = onNavigateUp,
+        onSwitchChange = viewModel::onSwitchChange,
+        onChoiceSelect = viewModel::onChoiceSelect,
+        onSliderChange = viewModel::onSliderChange,
+        onAction = viewModel::onAction,
+        onOpenLink = onOpenLink,
+        versionName = BuildConfig.VERSION_NAME,
+        snackbarHostState = snackbarHostState
+    )
+}
+
+@get:StringRes
+private val SettingsUiEvent.message: Int
+    get() = when (this) {
+        SettingsUiEvent.RescanStarted -> R.string.settings_rescan_started
+
+        SettingsUiEvent.ArtworkCacheCleared -> R.string.settings_artwork_cache_cleared
+
+        SettingsUiEvent.ArtworkDownloadStarted -> R.string.settings_artwork_download_started
+
+        is SettingsUiEvent.DebugLogsCopied -> when (result) {
+            CopyDebugLogsResult.Copied -> R.string.settings_logging_clipboard_logs_copied
+            CopyDebugLogsResult.TooLarge -> R.string.settings_logging_clipboard_logs_too_large
+            CopyDebugLogsResult.Empty -> R.string.settings_logging_clipboard_logs_empty
+        }
+    }
+
+@Composable
+private fun EqualizerEntry(onNavigateUp: () -> Unit) {
+    val viewModel: EqualizerViewModel = hiltViewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    EqualizerScreen(
+        uiState = uiState,
+        onNavigateUp = onNavigateUp,
+        onEnabledChange = viewModel::onEnabledChange,
+        onPresetSelect = viewModel::onPresetSelect,
+        onBandGainChange = viewModel::onBandGainChange,
+        onBandGainChangeFinished = viewModel::onBandGainChangeFinished
+    )
+}
+
+@Composable
+private fun ExcludedSongsEntry(onNavigateUp: () -> Unit) {
+    val viewModel: ExcludedSongsViewModel = hiltViewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    ExcludedSongsScreen(
+        uiState = uiState,
+        onNavigateUp = onNavigateUp,
+        onInclude = viewModel::onInclude,
+        onIncludeAll = viewModel::onIncludeAll
+    )
+}

@@ -7,7 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 /**
@@ -20,7 +20,7 @@ class ShellActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
-            S2Theme {
+            S2AppTheme {
                 val viewModel: ShellViewModel = hiltViewModel()
                 val queue by viewModel.queue.collectAsStateWithLifecycle()
                 AppShell(queue = queue)
