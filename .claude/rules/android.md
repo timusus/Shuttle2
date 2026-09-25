@@ -88,6 +88,16 @@ one-off command it doesn't cover (a different fixture, a raw `adb` call, leaving
 `--no-reset` skips the reset step for a fast re-run of the same flow/check on a lane you already
 seeded this session (#412) -- keep the default (reset every time) for the landing verification.
 
+**Batch device validation: `emu-verify.sh --suite` once, then read the results file.** For a full
+device-check pass (queued batches like #452), run `support/scripts/emu-verify.sh --suite` (or
+`--suite --flows <a,b>` for a subset) and read `build/maestro/results.md` -- don't debug flows one
+at a time by hand. It runs every check in the run-all set under a per-flow timeout (`--flow-timeout`,
+default 180s), retries a failure once, keeps going past one, and appends a row (flow, pass/fail/
+timeout/skip, duration, screenshot, last error) as each finishes, so a run that gets cut short still
+leaves a report -- #381's two validation runs (84 and 100 minutes) left none. It exits non-zero if
+any flow failed or timed out; a `skip` row (no dialer, no Photos on the ATD image, ...) isn't a
+failure.
+
 **Standard start state for validation:** a lane that's been reused inherits stale app data and
 media from a previous run. Before validating a UI or playback change, reset the lane and reseed
 known media instead of hand-rolling ffmpeg + adb push + a manual onboarding pass:

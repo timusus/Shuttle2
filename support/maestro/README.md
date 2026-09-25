@@ -6,6 +6,14 @@ receivers (`support/scripts/s2-debug.sh`, the `debug-receivers` skill); Maestro 
 has to be tapped. `support/scripts/emu-verify.sh` runs a lane end to end (start, install, seed,
 checks/flows, stop) in one call -- see its `--help` or `.claude/skills/emulator-check/SKILL.md`.
 
+**Running the full batch: `emu-verify.sh --suite` once, then read the results file.** It runs every
+check below once each under a per-flow timeout, retries a failure once, keeps going past one, and
+appends a row (flow, pass/fail/timeout/skip, duration, screenshot, last error) to
+`build/maestro/results.md` as each finishes, so a cut-short run still leaves a report. Don't debug
+flows one at a time by hand -- that's what left #381's two validation runs (84 and 100 minutes)
+with no report to show for them. `--flows <a,b>` narrows to a subset by name; `--flow-timeout <s>`
+overrides the 180s default.
+
 | Check | Driver | What it proves | Time on a lane |
 |---|---|---|---|
 | `support/scripts/checks/queue-remove-current.sh` | receivers | Removing the playing item plays the next track from its start, no stall | ~4 s |
@@ -48,6 +56,10 @@ over `s2-debug.sh`, and a Maestro flow is used where taps are the subject, with 
 doing the setup first.
 
 ## Running on a WSL lane
+
+For a full batch report in one call, prefer `support/scripts/emu-verify.sh --suite` (see above)
+over hand-rolling the steps below, which run `run-all.sh` directly with no per-flow timeout, retry
+or results file:
 
 ```bash
 support/scripts/remote-emu.sh start && eval "$(support/scripts/remote-emu.sh env)"
