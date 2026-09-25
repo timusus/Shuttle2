@@ -64,7 +64,7 @@ sealed interface AlbumDetailUiEvent {
     data object DeleteFailed : AlbumDetailUiEvent
 }
 
-/** One album's songs and header, loaded by [groupKey]: the legacy fragment passes its argument's key, the shell its route's. */
+/** One album's songs and header, loaded by [groupKey], the key its route carries. */
 @HiltViewModel(assistedFactory = AlbumDetailViewModel.Factory::class)
 class AlbumDetailViewModel @AssistedInject constructor(
     @Assisted private val groupKey: AlbumGroupKey?,

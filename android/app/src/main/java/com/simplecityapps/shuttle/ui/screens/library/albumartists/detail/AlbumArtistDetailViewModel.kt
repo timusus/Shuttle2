@@ -47,7 +47,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** One album artist's albums and songs, loaded by [groupKey]: the legacy fragment passes its argument's key, the shell its route's. */
+/** One album artist's albums and songs, loaded by [groupKey], the key its route carries. */
 @HiltViewModel(assistedFactory = AlbumArtistDetailViewModel.Factory::class)
 class AlbumArtistDetailViewModel @AssistedInject constructor(
     @Assisted private val groupKey: AlbumArtistGroupKey,

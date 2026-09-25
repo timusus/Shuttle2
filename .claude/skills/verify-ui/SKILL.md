@@ -22,7 +22,6 @@ Classify each changed file:
 |---|---|
 | Compose screens/composables under `android/app/src/main/.../ui/screens/` | **UI change** — likely needs a characterisation test |
 | ViewModel, ViewState for a Compose screen | **Behavior change** — needs a characterisation test |
-| Legacy MVP Fragment/Presenter/ViewBinder | Not covered by this skill — these use the old MVP pattern |
 | `mediaprovider/`, `data/`, use cases | **Logic change** — unit test, not this skill |
 | DI modules, navigation wiring | **Wiring change** — verify manually or via instrumented tests |
 

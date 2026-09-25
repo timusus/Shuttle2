@@ -91,12 +91,6 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     }
 }
 
-/** Settings > Sources on its own, for the legacy settings screens until the shell replaces them (#381). */
-@Composable
-fun SourcesSettingsRoute(onNavigateUp: () -> Unit) {
-    SettingsDestinationEntry(SettingsDestination.Sources, onNavigateUp, onOpenLink = {})
-}
-
 @Composable
 private fun SettingsDestinationEntry(
     destination: SettingsDestination,

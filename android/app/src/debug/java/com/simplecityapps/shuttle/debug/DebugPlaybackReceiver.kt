@@ -114,7 +114,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             val queueItem = requireNotNull(queueManager.getQueue().getOrNull(position)) {
                 "no item at --ei position $position (queue size ${queueManager.getSize()})"
             }
-            // The queue screen's "Remove from Queue" path (QueuePresenter.removeFromQueue).
+            // The queue screen's "Remove from Queue" path (PlayerViewModel.removeQueueItem).
             playbackManager.removeQueueItem(queueItem)
             queueItem.song.name
         }
@@ -130,7 +130,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             val playlistSong = playlistRepository.getSongsForPlaylist(playlist).firstOrNull()
                 ?.firstOrNull { it.song.name == songTitle }
                 ?: throw IllegalArgumentException("no song titled '$songTitle' in playlist '$playlistName'")
-            // The playlist screen's per-row "Remove" path (PlaylistDetailPresenter.remove).
+            // The playlist screen's per-row "Remove" path (the RemoveFromPlaylist use case).
             playlistRepository.removeFromPlaylist(playlist, listOf(playlistSong))
             "removed '$songTitle' from '$playlistName'"
         }

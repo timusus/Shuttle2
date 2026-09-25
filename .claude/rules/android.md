@@ -6,7 +6,7 @@ paths:
 # Android
 
 S2 Music Player — Android app for local music playback and streaming via Jellyfin, Emby and Plex.
-Kotlin, mixed legacy MVP (Fragment/Presenter/ViewBinder) and Compose + ViewModel (UDF). Build
+Kotlin, Compose + ViewModel (UDF) in a single-activity Navigation 3 shell. Build
 commands, module layout and code style live in the root `CLAUDE.md` — this file covers testing
 judgement, git scope discipline, and the desktop emulator, which do not belong there.
 
@@ -23,7 +23,7 @@ the root `CLAUDE.md`'s Testing section — this is about *which* test type a cha
 
 | Type | Location | When to use |
 |------|----------|-------------|
-| Unit | `src/test/` | Presenters, use cases, repositories, mappers, business logic |
+| Unit | `src/test/` | ViewModels, use cases, repositories, mappers, business logic |
 | Compose characterisation | `src/test/` (Robolectric) | Compose screens and their ViewModels |
 | Instrumented | `src/androidTest/` | Platform integration only — MediaSession/PlaybackService, Android Auto, SAF document access, Chromecast |
 
@@ -171,18 +171,15 @@ by tap.
 - Navigation recipes (tap-text only, no swipes):
   - Full player: `tap-text` the mini player's title text (dynamic — the currently playing track's
     title, e.g. a seeded track name from `seed-music`).
-  - Queue sheet: open the full player, then `tap-text "Up Next"` (`QueueFragment.kt` ~146, which
-    calls `expandSheet(SECOND)`) — never swipe up for this.
-  - Full player overflow menu: `menu_playback.xml` puts `sleepTimer` as `ifRoom` and
-    `lyrics`/`songInfo`/`editTags`/`clearQueue` as `never`, so most of it lives behind the overflow
-    icon (AppCompat's default content-desc is "More options"; confirm with `dump-texts` first).
-  - Sleep timer: `tap-text "Sleep Timer"` if visible directly on the toolbar, else open the
-    overflow menu first, then `tap-text "Sleep Timer"`.
-  - Queue item actions (remove, play next, add to playlist, exclude): the queue has no per-row
-    overflow icon — long-press the row (`adb shell input swipe <cx> <cy> <cx> <cy> 800`, bounds
-    from `dump-texts`) to open its popup menu, then `tap-text "Remove from Queue"` (or the other
-    item titles from `menu_queue_item.xml`). This is a long-press in the middle of the screen, not
-    a bottom-edge swipe, so it's safe.
+  - Queue: open the full player, then `tap-text "Show queue" --desc` — never swipe up for this.
+    `tap-text "Collapse player" --desc` closes the player.
+  - Full player overflow menu: `tap-text "More options" --desc` (confirm with `dump-texts` first);
+    it holds the sleep timer, speed, song info, edit tags and the rest.
+  - Sleep timer: open the overflow menu, then `tap-text "Sleep timer"`.
+  - Queue item actions (play next, add to playlist, remove): long-press the row
+    (`adb shell input swipe <cx> <cy> <cx> <cy> 800`, bounds from `dump-texts`) to open its menu,
+    then `tap-text "Remove from Queue"` (or another item). This is a long-press in the middle of
+    the screen, not a bottom-edge swipe, so it's safe.
 
 - The box is shared with the owner's podcasts repo and CI runners — sessions may run concurrently,
   **one lane each, up to 3** (lane N = `emulator-555{4,6,8}`, local adb port `5038..5040`, lease

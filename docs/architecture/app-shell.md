@@ -1,6 +1,7 @@
 # Compose App Shell
 
-Status: design, 2026-09-25. Nothing here is built yet.
+Status: design 2026-09-25; built. `MainActivity` has hosted the shell since 2026-09-26 (#381), and
+the legacy UI is deleted. Section 6 records the plan as it was made.
 
 One Compose `MainActivity` with a Navigation 3 `NavDisplay` inside a shell layout replaces
 `MainActivity`'s XML, `MainFragment`/`MainPresenter`, `MultiSheetView`, `CustomBottomSheetBehavior`,
@@ -421,10 +422,13 @@ layouts, menus) in the same change and moves its Maestro flows to test tags (`te
    Safe Args, hilt-navigation-compose, and the AppCompat XML themes beyond the launch theme. Verify:
    build, lint with `UnusedResources` clean, unit tests; no `Fragment()`, `Presenter` or `R.layout`
    left outside an agreed keep list; APK size against the last release.
+   **Done (#381).** Kept, because still reachable with no Compose replacement: the Jellyfin, Emby and
+   Plex sign-in `DialogFragment`s and the paywall `DialogFragment`, with the AppCompat/Material View
+   themes, `CircularLoadingView` and the helpers they use.
 8. **Parity gate, then tag.** Every Maestro flow green on phone, foldable and tablet profiles; the
    `redesign-inventory.md` checklist ticked; the `docs/testing/device-checks.md` batch done on the
    owner's device (predictive back, 3-button and gesture nav, light and dark, Cast, Android Auto).
-   Only then is a release tagged.
+   Only then is a release tagged. The checklist lives in [`docs/testing/parity.md`](../testing/parity.md).
 
 ## 7. Decisions for the owner (decided 2026-09-25, epic #382; each can still be revisited)
 

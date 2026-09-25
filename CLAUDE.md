@@ -79,7 +79,6 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 - **`:android:data`** — Room database, Parcelable data models
 - **`:android:downloads`** — Offline downloads of remote-provider songs
 - **`:android:saf`** — Storage Access Framework helpers
-- **`:android:recyclerview-adapter`** — ViewBinder-based RecyclerView adapter used by legacy MVP screens
 - **`:android:core`** — Shared utilities, logging, Hilt setup
 - **`:android:networking`** — Retrofit + OkHttp + Moshi network layer
 - **`:android:imageloader`** — Glide image loading
@@ -88,7 +87,7 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 
 ### UI Patterns
 
-Legacy screens use **MVP (Model-View-Presenter)** with Fragments, custom `ViewBinder` pattern for RecyclerView items, `BasePresenter<T : View>`, and `BaseContract`. New and migrated screens use **Compose + ViewModel** with unidirectional data flow — see [`docs/architecture/compose-viewmodel-udf.md`](docs/architecture/compose-viewmodel-udf.md) for the canonical patterns and principles. Non-trivial ViewModel action logic is extracted into **use cases** — classes with a single `operator fun invoke`, injected via Hilt (see principle #8a in the UDF doc). Navigation uses Android Navigation Component with Safe Args.
+Screens use **Compose + ViewModel** with unidirectional data flow — see [`docs/architecture/compose-viewmodel-udf.md`](docs/architecture/compose-viewmodel-udf.md) for the canonical patterns and principles. Non-trivial ViewModel action logic is extracted into **use cases** — classes with a single `operator fun invoke`, injected via Hilt (see principle #8a in the UDF doc). `MainActivity` hosts the Compose shell (`ui/shell`: Navigation 3 back stack, Home/Library/Search tabs, the player sheet or pane); see [`docs/architecture/app-shell.md`](docs/architecture/app-shell.md). The only View-based UI left is the Jellyfin/Emby/Plex server sign-in dialogs and the paywall `DialogFragment`.
 
 ### Playback Flow
 

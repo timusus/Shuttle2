@@ -22,7 +22,7 @@ data class LibraryUiState(
 
 /**
  * The library container: which tabs show, in what order, and which one is current. All three persist in the same
- * preferences the legacy LibraryFragment used, so the choice carries across.
+ * preferences the pre-redesign library screen used, so the choice carries across.
  */
 @HiltViewModel
 class LibraryViewModel @Inject constructor(

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # #270: editing a song's title through the batch tag editor propagates to the live queue without
-# restarting playback -- TagEditorPresenter.save calls playbackManager.updateQueueSongs(...), which
+# restarting playback -- WriteSongTags calls playbackManager.updateQueueSongs(...), which
 # is expected to swap the ExoPlayer item's metadata in place rather than reload it. Needs a real
 # SAF-backed TagLib song (tag writes go through the content:// document, not MediaStore), so uses
 # setup_taglib_provider; restored back to the `playback` fixture on exit like m3u-sync.sh.

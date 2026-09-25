@@ -98,7 +98,7 @@ sealed class PlaylistData : Parcelable {
     }
 }
 
-/** The legacy screens' selection as a [MediaSelection], so they share the [com.simplecityapps.shuttle.ui.actions] use cases. */
+/** The selection as a [MediaSelection], so the playlist menu shares the [com.simplecityapps.shuttle.ui.actions] use cases. */
 fun PlaylistData.toMediaSelection(): MediaSelection = when (this) {
     is PlaylistData.Songs -> MediaSelection.Songs(data)
     is PlaylistData.Albums -> MediaSelection.Albums(data)
