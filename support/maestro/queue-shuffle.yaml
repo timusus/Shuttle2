@@ -6,5 +6,8 @@ appId: com.simplecityapps.shuttle.dev
 - runFlow: nav/open-now-playing.yaml
 - tapOn: "Shuffle"
 - tapOn: "Up Next"
-- assertVisible: "Playback One"
+- scrollUntilVisible:
+    element:
+      text: "Playback One"
+    direction: DOWN
 - takeScreenshot: c-shuffled-queue

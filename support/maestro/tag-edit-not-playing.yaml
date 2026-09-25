@@ -10,7 +10,7 @@ appId: com.simplecityapps.shuttle.dev
     text: "Edit Tags"
     waitToSettleTimeoutMs: 500
 - tapOn:
-    id: ".*titleEditText"
+    text: "Title"
     waitToSettleTimeoutMs: 500
 - eraseText
 - inputText: "Taglib Three (edited)"

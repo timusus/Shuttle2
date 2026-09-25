@@ -13,18 +13,21 @@ appId: com.simplecityapps.shuttle.dev
     element:
       text: "Playback Two"
     direction: DOWN
-# Songs are in title order (Five, Four, One, Three, Two), all on screen: the menus by index.
+# Songs are in title order (Five, Four, One, Three, Two), all on screen: the row menus by index
+# (the top bar's own "More options" is last in the tree, past every row).
 - tapOn:
-    text: "Song context menu"
+    text: "More options"
     index: 1
 - tapOn: "Play Next"
 - tapOn:
-    text: "Song context menu"
+    text: "More options"
     index: 4
 - tapOn: "Add to Queue"
+# The songs list is still behind the mini player, so "Playback One" matches twice: the list row,
+# then the mini player.
 - tapOn:
-    id: ".*titleTextView"
     text: "Playback One"
+    index: 1
 - tapOn: "Up Next"
 - assertVisible: "1 of 7"
 - takeScreenshot: d-queue-after-play-next-and-add

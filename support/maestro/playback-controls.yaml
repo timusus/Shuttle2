@@ -15,39 +15,38 @@ appId: com.simplecityapps.shuttle.dev
       text: "Playback One"
     direction: DOWN
 - tapOn: "Playback One"
+# The songs list is still behind the mini player, so "Playback One" now matches twice: the list
+# row, then the mini player.
 - assertVisible:
-    id: ".*titleTextView"
     text: "Playback One"
+    index: 1
 - takeScreenshot: a-mini-player-playing
 - tapOn:
-    id: ".*titleTextView"
     text: "Playback One"
+    index: 1
     waitToSettleTimeoutMs: 500
-- assertVisible: "Toggle Playback"
+- assertVisible: "Pause"
 - takeScreenshot: a-now-playing
 - tapOn:
-    text: "Toggle Playback"
+    text: "Pause"
     waitToSettleTimeoutMs: 500
+- assertVisible: "Play"
 - takeScreenshot: b-paused
 - tapOn:
-    text: "Toggle Playback"
+    text: "Play"
     waitToSettleTimeoutMs: 500
 - tapOn:
-    text: "Skip Next"
+    text: "Next"
     waitToSettleTimeoutMs: 500
-- assertVisible:
-    id: ".*titleTextView"
-    text: "Playback Three"
+- assertVisible: "Playback Three"
 - takeScreenshot: b-skipped-next
 # A Maestro tap takes ~3 s here, past the 2 s after which Skip Previous restarts the song rather
 # than going back one; the wrapper checks going back with a quick PREV broadcast instead.
 - tapOn:
-    text: "Skip Previous"
+    text: "Previous"
     waitToSettleTimeoutMs: 500
-- assertVisible:
-    id: ".*titleTextView"
-    text: "Playback Three"
+- assertVisible: "Playback Three"
 - tapOn:
-    id: ".*seekBar"
+    text: "Seek"
     waitToSettleTimeoutMs: 500
 - takeScreenshot: b-seeked-to-middle

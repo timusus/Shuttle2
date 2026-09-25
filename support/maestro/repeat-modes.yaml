@@ -4,7 +4,9 @@
 appId: com.simplecityapps.shuttle.dev
 ---
 - runFlow: nav/open-now-playing.yaml
-- tapOn: "Repeat"
+- tapOn: "Repeat off"
+- assertVisible: "Repeat all"
 - takeScreenshot: e-repeat-all
-- tapOn: "Repeat"
+- tapOn: "Repeat all"
+- assertVisible: "Repeat one"
 - takeScreenshot: e-repeat-one
