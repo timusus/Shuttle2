@@ -6,17 +6,24 @@
 source "$(dirname "$0")/_lib.sh"
 
 device="${MAESTRO_DEVICE:-$("${CHECKS_ROOT}/support/scripts/remote-emu.sh" serial)}"
-start_playback
-s2 PAUSE >/dev/null
 out="${MAESTRO_OUT:-${CHECKS_ROOT}/tmp/maestro}"
 mkdir -p "$out"
-MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-    "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
-    "${CHECKS_ROOT}/support/maestro/queue-shuffle.yaml" || fail "the Maestro flow failed (output in ${out})"
-[ "$(state shuffle)" = "On" ] || fail "shuffle is $(state shuffle) after the tap"
+ordered="Playback One,Playback Two,Playback Three,Playback Four,Playback Five"
+# One in 24 shuffles of the four songs after the current one keeps them in order, which the sheet
+# can't be told apart from no shuffle by; that draw (the queue's own order, as DUMP_STATE reads it)
+# is retried, up to three times.
+for attempt in 1 2 3; do
+    start_playback
+    s2 PAUSE >/dev/null
+    MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
+        "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
+        "${CHECKS_ROOT}/support/maestro/queue-shuffle.yaml" || fail "the Maestro flow failed (output in ${out})"
+    [ "$(state shuffle)" = "On" ] || fail "shuffle is $(state shuffle) after the tap"
+    [ "$(s2 DUMP_STATE | python3 -c 'import json,sys; print(",".join(json.load(sys.stdin)["queueTitles"]))')" != "$ordered" ] && break
+    echo "  attempt ${attempt}: the shuffle drew the original order, reshuffling"
+done
 shuffled="$(queue_titles)"
 echo "  shuffled queue: ${shuffled}"
-ordered="Playback One,Playback Two,Playback Three,Playback Four,Playback Five"
 [ "${shuffled%%,*}" = "Playback One" ] || fail "the current song isn't first in the shuffled queue: ${shuffled}"
 [ "$shuffled" != "$ordered" ] || fail "the queue shows the original order after shuffling"
 [ "$(tr ',' '\n' <<<"$shuffled" | sort | tr '\n' ',')" = "$(tr ',' '\n' <<<"$ordered" | sort | tr '\n' ',')" ] \

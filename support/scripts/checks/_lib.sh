@@ -137,19 +137,21 @@ setup_taglib_provider() {
 # player's "Now Playing". Each row is title, then an "Artist • Album" subtitle, then a duration; a
 # title is identified structurally (the text node right before a subtitle node), not by fixture
 # name, so this also matches the `taglib` fixture's titles and a tag edit's " (edited)" suffix.
+# A row's node dumped twice at the same bounds (seen once on API 37) is still one row.
 queue_titles() {
     "${CHECKS_ROOT}/support/scripts/remote-emu.sh" dump-texts \
         | python3 -c '
 import re, sys
-titles, inside, prev = [], False, None
+titles, seen, inside, prev = [], set(), False, None
 for line in sys.stdin:
     if line.startswith("text=\"Up Next\""):
         inside = True
     elif line.startswith("text=\"Now Playing\""):
         inside = False  # read on to the end: an early exit would SIGPIPE dump-texts
     elif inside:
-        m = re.match(r"text=\"([^\"]*)\" ", line)
-        if m:
+        m = re.match(r"text=\"([^\"]*)\" bounds=(\S+)", line)
+        if m and m.group(0) not in seen:
+            seen.add(m.group(0))
             text = m.group(1)
             if " • " in text and prev is not None:
                 titles.append(prev)
