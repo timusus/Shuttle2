@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
 
 /** The kinds of action the shared actions sheet offers; [AvailableMediaActions] lists the ones a selection allows. */
@@ -81,6 +82,16 @@ sealed interface MediaAction {
     /** Brings excluded songs back: Exclude's Undo. */
     data class Include(override val selection: MediaSelection) : MediaAction
 
+    /** Takes [entries] out of [playlist]; the result's Undo is a [RestoreToPlaylist]. */
+    data class RemoveFromPlaylist(val playlist: Playlist, val entries: List<PlaylistSong>, val before: List<PlaylistSong>) : MediaAction {
+        override val selection: MediaSelection get() = MediaSelection.Songs(entries.map { it.song })
+    }
+
+    /** Puts [entries] back into [playlist] in the order [before] had. */
+    data class RestoreToPlaylist(val playlist: Playlist, val entries: List<PlaylistSong>, val before: List<PlaylistSong>) : MediaAction {
+        override val selection: MediaSelection get() = MediaSelection.Songs(entries.map { it.song })
+    }
+
     /** Deletes the song files. Unconfirmed, it asks for a confirmation that sends it again with [confirmed] true. */
     data class Delete(override val selection: MediaSelection, val confirmed: Boolean = false) : MediaAction
 
@@ -141,6 +152,7 @@ sealed interface MediaActionMessage {
     data class PlaylistCreated(val playlistName: String) : MediaActionMessage
 
     data class Excluded(val songCount: Int) : MediaActionMessage
+    data class RemovedFromPlaylist(val playlistName: String, val songCount: Int) : MediaActionMessage
 
     /** The Delete confirmation: [itemName] for a single song, else [songCount]. */
     data class ConfirmDelete(val itemName: String?, val songCount: Int) : MediaActionMessage

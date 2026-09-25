@@ -60,7 +60,15 @@ class FakePlaylistRepository : PlaylistRepository {
         playlistSongs.value += playlist.id to playlistSongs.value[playlist.id].orEmpty() + songs
     }
 
-    override suspend fun removeFromPlaylist(playlist: Playlist, playlistSongs: List<PlaylistSong>) {}
+    /** Every [removeFromPlaylist] call, in order. */
+    val removedFromPlaylist = mutableListOf<Pair<Playlist, List<PlaylistSong>>>()
+
+    /** The entries of the last [updatePlaylistSongsSortOder] call. */
+    var reorderedSongs: List<PlaylistSong>? = null
+
+    override suspend fun removeFromPlaylist(playlist: Playlist, playlistSongs: List<PlaylistSong>) {
+        removedFromPlaylist += playlist to playlistSongs
+    }
 
     override suspend fun removeSongsFromPlaylist(playlist: Playlist, songs: List<Song>) {
         playlistSongs.value += playlist.id to playlistSongs.value[playlist.id].orEmpty() - songs.toSet()
@@ -90,7 +98,9 @@ class FakePlaylistRepository : PlaylistRepository {
         }
     }
 
-    override suspend fun updatePlaylistSongsSortOder(playlist: Playlist, playlistSongs: List<PlaylistSong>) {}
+    override suspend fun updatePlaylistSongsSortOder(playlist: Playlist, playlistSongs: List<PlaylistSong>) {
+        reorderedSongs = playlistSongs
+    }
 
     override suspend fun updatePlaylistMediaProviderType(playlist: Playlist, mediaProviderType: MediaProviderType) {}
 

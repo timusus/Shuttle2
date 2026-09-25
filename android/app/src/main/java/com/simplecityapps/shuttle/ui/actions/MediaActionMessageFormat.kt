@@ -34,6 +34,11 @@ fun MediaActionMessage.format(resources: Resources): String = when (this) {
 
     is MediaActionMessage.Excluded -> plural(resources, R.plurals.media_action_excluded, songCount)
 
+    is MediaActionMessage.RemovedFromPlaylist -> Phrase.fromPlural(resources, R.plurals.media_action_removed_from_playlist, songCount)
+        .put("count", songCount)
+        .put("playlist_name", playlistName)
+        .format().toString()
+
     is MediaActionMessage.ConfirmDelete -> if (itemName != null && songCount == 1) {
         Phrase.from(resources, R.string.dialog_delete_message).put("item", itemName).format().toString()
     } else {

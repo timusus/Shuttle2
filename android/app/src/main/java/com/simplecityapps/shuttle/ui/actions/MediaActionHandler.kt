@@ -27,6 +27,7 @@ class MediaActionHandler @Inject constructor(
     private val excludeSongs: ExcludeSongs,
     private val deleteSongs: DeleteSongs,
     private val downloadSongs: DownloadSongs,
+    private val removeFromPlaylist: RemoveFromPlaylist,
 ) {
     suspend fun handle(action: MediaAction): MediaActionResult = when (action) {
         is MediaAction.Play -> play(action)
@@ -55,6 +56,19 @@ class MediaActionHandler @Inject constructor(
 
         is MediaAction.Include -> {
             excludeSongs(action.selection, excluded = false)
+            MediaActionResult.None
+        }
+
+        is MediaAction.RemoveFromPlaylist -> {
+            removeFromPlaylist(action.playlist, action.entries)
+            Message(
+                MediaActionMessage.RemovedFromPlaylist(action.playlist.name, action.entries.size),
+                SnackbarAction(SnackbarAction.Label.Undo, MediaAction.RestoreToPlaylist(action.playlist, action.entries, action.before)),
+            )
+        }
+
+        is MediaAction.RestoreToPlaylist -> {
+            removeFromPlaylist.restore(action.playlist, action.entries, action.before)
             MediaActionResult.None
         }
 

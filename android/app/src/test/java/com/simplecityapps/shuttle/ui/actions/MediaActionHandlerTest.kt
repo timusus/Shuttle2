@@ -10,6 +10,7 @@ import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult.Message
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -102,6 +103,29 @@ class MediaActionHandlerTest {
         )
         handler.handle((result as Message).action!!.action) shouldBe MediaActionResult.None
         songRepository.excludedCalls shouldBe listOf(listOf(song, other) to true, listOf(song, other) to false)
+    }
+
+    @Test
+    fun `remove from playlist runs straight away and its undo restores the old order`() = runTest {
+        val playlist = createPlaylist(id = 7, name = "Road trip")
+        val third = createSong(id = 3, name = "Lucky")
+        val before = listOf(song, other, third).mapIndexed { index, it -> PlaylistSong(id = index.toLong(), sortOrder = index.toLong(), song = it) }
+        val removed = listOf(before[1])
+
+        val result = handler.handle(MediaAction.RemoveFromPlaylist(playlist, removed, before))
+
+        result shouldBe Message(
+            MediaActionMessage.RemovedFromPlaylist("Road trip", 1),
+            SnackbarAction(SnackbarAction.Label.Undo, MediaAction.RestoreToPlaylist(playlist, removed, before)),
+        )
+        playlistRepository.removedFromPlaylist shouldBe listOf(playlist to removed)
+
+        // The repository appends the re-added song, so the playlist reads back as song, third, other.
+        playlistRepository.setSongsForPlaylist(playlist, listOf(song, third, other))
+        handler.handle((result as Message).action!!.action) shouldBe MediaActionResult.None
+
+        playlistRepository.addedToPlaylist shouldBe listOf(playlist to listOf(other))
+        playlistRepository.reorderedSongs!!.map { it.song to it.sortOrder } shouldBe listOf(song to 0L, other to 1L, third to 2L)
     }
 
     @Test

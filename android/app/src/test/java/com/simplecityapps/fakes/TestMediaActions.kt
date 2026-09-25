@@ -17,6 +17,7 @@ import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
 import com.simplecityapps.shuttle.ui.actions.FindGoToTarget
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
+import com.simplecityapps.shuttle.ui.actions.RemoveFromPlaylist
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.actions.ShareSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
@@ -53,6 +54,7 @@ class TestMediaActions(
     val downloadSongs = DownloadSongs(songDownloadManager, AggregateMediaInfoProvider(mutableSetOf(mediaInfoProvider)), resolveSongs)
     val findGoToTarget = FindGoToTarget(albumRepository, albumArtistRepository)
     val shareSongs = ShareSongs(resolveSongs)
+    val removeFromPlaylist = RemoveFromPlaylist(playlistRepository)
     val handler = MediaActionHandler(
         resolveSongs = resolveSongs,
         playSongs = playSongs,
@@ -65,5 +67,6 @@ class TestMediaActions(
         excludeSongs = excludeSongs,
         deleteSongs = deleteSongs,
         downloadSongs = downloadSongs,
+        removeFromPlaylist = removeFromPlaylist,
     )
 }

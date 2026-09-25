@@ -18,6 +18,11 @@
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song excluded</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> songs excluded</item>
     </plurals>
+    <!-- Snackbar shown when songs are removed from a playlist. Offered with 'Undo' -->
+    <plurals name="media_action_removed_from_playlist">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song removed from <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> songs removed from <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
     <!-- Delete confirmation for several songs -->
     <plurals name="media_action_confirm_delete">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song will be permanently deleted</item>
@@ -50,4 +55,12 @@
     </plurals>
     <!-- Snackbar shown when 'Go to album' or 'Go to artist' can't find it in the library -->
     <string name="media_action_not_found">Not in your library</string>
+    <!-- Actions sheet item: open the song's album artist -->
+    <string name="media_action_go_to_artist">Go to artist</string>
+    <!-- Actions sheet item: share the songs' files -->
+    <string name="media_action_share">Share</string>
+    <!-- Actions sheet item: download songs from a server for offline playback -->
+    <string name="media_action_download">Download</string>
+    <!-- Actions sheet item: delete the offline copy of downloaded songs -->
+    <string name="media_action_remove_download">Remove download</string>
 </resources>
