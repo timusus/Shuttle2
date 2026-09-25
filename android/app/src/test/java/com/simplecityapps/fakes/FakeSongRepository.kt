@@ -31,7 +31,16 @@ class FakeSongRepository : SongRepository {
         songs
     }
 
-    override suspend fun setExcluded(songs: List<Song>, excluded: Boolean) {}
+    /** Every [setExcluded] call as (song ids, excluded), in order. */
+    val excludedChanges: MutableList<Pair<List<Long>, Boolean>> = Collections.synchronizedList(mutableListOf())
+
+    /** How many times [clearExcludeList] ran. */
+    var clearExcludeListCount = 0
+        private set
+
+    override suspend fun setExcluded(songs: List<Song>, excluded: Boolean) {
+        excludedChanges += songs.map { it.id } to excluded
+    }
     override suspend fun remove(song: Song) {}
     override suspend fun insert(songs: List<Song>, mediaProviderType: MediaProviderType) {}
     override suspend fun update(song: Song): Int = 0
@@ -46,5 +55,7 @@ class FakeSongRepository : SongRepository {
         playbackPositions += song.id to playbackPosition
     }
 
-    override suspend fun clearExcludeList() {}
+    override suspend fun clearExcludeList() {
+        clearExcludeListCount++
+    }
 }

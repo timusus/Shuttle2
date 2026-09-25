@@ -203,4 +203,22 @@
     <string name="pref_download_wifi_only_summary">Offline downloads wait for Wi-Fi</string>
     <!-- Settings: Name of the amber accent colour -->
     <string name="theme_accent_entry_amber">Amber</string>
+    <!-- Settings: Title of the row showing the app's version number, on the About screen -->
+    <string name="settings_version_title">Version</string>
+    <!-- Settings: Snackbar shown when a library rescan starts -->
+    <string name="settings_rescan_started">Scanning your library</string>
+    <!-- Settings: Snackbar shown once the artwork cache has been cleared -->
+    <string name="settings_artwork_cache_cleared">Artwork cache cleared</string>
+    <!-- Settings: Snackbar shown when downloading all artwork starts -->
+    <string name="settings_artwork_download_started">Downloading artwork</string>
+    <!-- Settings: Title of the switch that turns the equalizer on or off -->
+    <string name="settings_equalizer_enabled">Use equalizer</string>
+    <!-- Excluded songs screen: menu item that returns one excluded song to the library -->
+    <string name="excluded_songs_include">Include in library</string>
+    <!-- Excluded songs screen: button that returns every excluded song to the library -->
+    <string name="excluded_songs_include_all">Include all</string>
+    <!-- Excluded songs screen: title of the dialog confirming that every excluded song returns to the library -->
+    <string name="excluded_songs_include_all_title">Include all songs?</string>
+    <!-- Excluded songs screen: message of the dialog confirming that every excluded song returns to the library -->
+    <string name="excluded_songs_include_all_message">Every excluded song returns to your library.</string>
 </resources>
