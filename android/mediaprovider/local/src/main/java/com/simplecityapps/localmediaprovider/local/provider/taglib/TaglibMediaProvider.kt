@@ -1,8 +1,14 @@
 package com.simplecityapps.localmediaprovider.local.provider.taglib
 
 import android.content.Context
+import android.os.Build
+import android.os.Environment
+import android.provider.DocumentsContract
+import android.provider.MediaStore
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.FolderImage
+import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
+import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.toSong
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.M3uEntryMatcher
@@ -11,7 +17,7 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
-import com.simplecityapps.saf.DocumentNode
+import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNodeTree
 import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.shuttle.coroutines.concurrentMap
@@ -19,6 +25,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.squareup.phrase.Phrase
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
@@ -34,38 +41,95 @@ import timber.log.Timber
 
 class TaglibMediaProvider(
     private val context: Context,
-    private val kTagLib: KTagLib,
-    private val fileScanner: FileScanner
+    private val kTagLib: KTagLib
 ) : MediaProvider {
     override val type = MediaProviderType.Shuttle
 
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
-        getDocumentTrees()?.let { trees ->
-            val nodes =
-                trees
-                    .flatMap { tree -> tree.leavesWithFolderImages() }
-                    .filter { (node, _) -> node.ext != "m3u" && node.ext != "m3u8" && node.ext != "pls" }
-            val songs = mutableListOf<Song>()
-            getSongs(nodes)
-                .collectIndexed { index, song ->
-                    emit(
-                        FlowEvent.Progress(
-                            MessageProgress(
-                                message =
-                                    listOf(
-                                        song.friendlyArtistName ?: song.albumArtist,
-                                        song.name
-                                    ).joinToString(" • "),
-                                progress = Progress(index, nodes.size)
-                            )
+        val startTime = System.currentTimeMillis()
+        val files = findAudioFiles()
+        if (files == null) {
+            emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_directories_empty)))
+            return@flow
+        }
+        val filesWithImages =
+            withContext(Dispatchers.IO) {
+                val folderImageReader = FolderImageReader(sharedStorageListsImages = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
+                files.map { file -> file to folderImageReader.imagesNear(file.path) }
+            }
+        val songs = mutableListOf<Song>()
+        getSongs(filesWithImages)
+            .collectIndexed { index, song ->
+                emit(
+                    FlowEvent.Progress(
+                        MessageProgress(
+                            message =
+                                listOf(
+                                    song.friendlyArtistName ?: song.albumArtist,
+                                    song.name
+                                ).joinToString(" • "),
+                            progress = Progress(index, files.size)
                         )
                     )
-                    songs.add(song)
-                }
-            emit(FlowEvent.Success(songs))
-        } ?: run {
-            Timber.e("No document nodes to scan")
-            emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_directories_empty)))
+                )
+                songs.add(song)
+            }
+        Timber.i("Read ${songs.size} of ${files.size} MediaStore audio files in ${System.currentTimeMillis() - startTime}ms")
+        emit(FlowEvent.Success(songs))
+    }
+
+    /**
+     * The audio files MediaStore has indexed, on every volume, limited to the folders picked for the scanner if there are any.
+     * Null if MediaStore can't be queried, for example without the audio permission.
+     */
+    private suspend fun findAudioFiles(): List<MediaStoreAudioFile>? = withContext(Dispatchers.IO) {
+        val folderFilter = FolderFilter(includes = pickedFolders())
+        try {
+            context.contentResolver.query(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                MEDIA_STORE_AUDIO_PROJECTION,
+                MEDIA_STORE_AUDIO_SELECTION,
+                null,
+                null
+            )?.use { cursor -> cursor.readMediaStoreAudioFiles(folderFilter) }
+        } catch (e: SecurityException) {
+            Timber.e(e, "Failed to query MediaStore for audio files")
+            null
+        }
+    }
+
+    /**
+     * The paths of the folders picked with the SAF folder picker. Folders from a provider other than external storage
+     * have no path, so they don't limit the import.
+     */
+    private fun pickedFolders(): List<String> {
+        @Suppress("DEPRECATION")
+        val primaryStoragePath = Environment.getExternalStorageDirectory().path
+        return context.contentResolver.persistedUriPermissions
+            .filter { uriPermission -> uriPermission.isReadPermission || uriPermission.isWritePermission }
+            .mapNotNull { uriPermission ->
+                val treeDocumentId = runCatching { DocumentsContract.getTreeDocumentId(uriPermission.uri) }.getOrNull() ?: return@mapNotNull null
+                externalStorageTreeFolder(uriPermission.uri.authority, treeDocumentId, primaryStoragePath)
+            }
+    }
+
+    private fun getSongs(files: List<Pair<MediaStoreAudioFile, List<FolderImage>>>): Flow<Song> = files
+        .asFlow()
+        .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { (file, folderImages) ->
+            readAudioFile(file)?.toSong(type, folderImages)
+        }.mapNotNull { it }
+
+    private suspend fun readAudioFile(file: MediaStoreAudioFile): AudioFile? = withContext(Dispatchers.IO) {
+        try {
+            context.contentResolver.openFileDescriptor(file.contentUri, "r")?.use { pfd ->
+                kTagLib.getAudioFile(pfd.detachFd(), file.path, file.displayName, file.lastModified, file.size, file.mimeType)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // The native tag parse can throw anything for a corrupt file; one bad file shouldn't fail the whole import
+            Timber.e(e, "Failed to read audio file: ${file.contentUri} (${file.path})")
+            null
         }
     }
 
@@ -83,12 +147,6 @@ class TaglibMediaProvider(
     }
         ?.merge()
         ?.toList()
-
-    private fun getSongs(documentNodes: List<Pair<DocumentNode, List<FolderImage>>>): Flow<Song> = documentNodes
-        .asFlow()
-        .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { (node, folderImages) ->
-            fileScanner.getAudioFile(context, kTagLib, node.uri)?.toSong(type, folderImages)
-        }.mapNotNull { it }
 
     override fun findPlaylists(
         existingPlaylists: List<Playlist>,
@@ -148,13 +206,4 @@ class TaglibMediaProvider(
             emit(FlowEvent.Failure(context.getString(com.simplecityapps.mediaprovider.R.string.media_import_directories_empty)))
         }
     }
-}
-
-/**
- * Pairs each audio leaf with the images in its directory and the directory above it, for the song's artwork version.
- */
-internal fun DocumentNodeTree.leavesWithFolderImages(parentImages: List<FolderImage> = emptyList()): List<Pair<DocumentNode, List<FolderImage>>> {
-    val images = imageNodes.map { node -> FolderImage(node.displayName, node.lastModified, node.size) }
-    return leafNodes.map { leaf -> leaf to images + parentImages } +
-        treeNodes.flatMap { child -> child.leavesWithFolderImages(parentImages = images) }
 }

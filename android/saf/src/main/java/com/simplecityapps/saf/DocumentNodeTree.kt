@@ -13,9 +13,6 @@ class DocumentNodeTree(
     override val treeNodes: LinkedHashSet<DocumentNodeTree> = linkedSetOf()
     override val leafNodes: LinkedHashSet<DocumentNode> = linkedSetOf()
 
-    // Image files directly in this directory, candidates for folder or artist art
-    val imageNodes: MutableList<DocumentNode> = mutableListOf()
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

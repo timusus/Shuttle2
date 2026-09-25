@@ -30,9 +30,8 @@ class MediaProviderModule {
     @Singleton
     fun provideTagLibSongProvider(
         @ApplicationContext context: Context,
-        kTagLib: KTagLib,
-        fileScanner: FileScanner
-    ): TaglibMediaProvider = TaglibMediaProvider(context, kTagLib, fileScanner)
+        kTagLib: KTagLib
+    ): TaglibMediaProvider = TaglibMediaProvider(context, kTagLib)
 
     @Provides
     @Singleton

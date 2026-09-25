@@ -15,7 +15,6 @@ object SafDirectoryHelper {
      * Traverses the contents of [rootUri], building a [DocumentNodeTree] (Trie) representing the directory structure.
      *
      * Leaves are represented by [FileNode], and only those whose mime type starts with 'audio' are included.
-     * Each directory's image files are recorded in [DocumentNodeTree.imageNodes].
      *
      * This task is resource intensive. Should be called from a background thread.
      */
@@ -47,11 +46,6 @@ object SafDirectoryHelper {
                 is DocumentNodeTree -> traverseDocumentNodes(parent.addTreeNode(documentNode), contentResolver, rootUri)
 
                 else -> {
-                    if (documentNode.mimeType.startsWith("image")) {
-                        parent.imageNodes.add(documentNode)
-                        continue
-                    }
-
                     if (documentNode.mimeType.startsWith("audio")) {
                         // Add files with mimetype "audio/*"
                         parent.addLeafNode(documentNode)
