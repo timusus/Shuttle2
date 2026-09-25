@@ -166,9 +166,8 @@ harness plays the platform's part: `changeAudioFocus` hands the player the focus
 
 **RS-50: a short interruption pauses, and playback resumes when it ends.** Given a song playing, when another app
 takes focus for a moment (a phone call, a voice assistant), then playback shows paused; when the app gives focus
-back, it plays on from where it was. If the user pauses during the interruption, it stays paused after it ends. While
-held off, pressing play does nothing audible until focus comes back (the player is already set to play), unchanged from
-before step 3. (#345) — JVM. The same as before
+back, it plays on from where it was. If the user pauses during the interruption, it stays paused after it ends.
+(#345) — JVM. The same as before
 step 3, now Media3's behaviour.
 
 **RS-51: a navigation prompt ducks playback, without pausing it.** Given a song playing, when another app takes focus
@@ -193,6 +192,13 @@ play is dropped, and the user presses play again after the call. A play on a Cas
 (`AudioFocusSpecTest`, the audio mode set through Robolectric's `AudioManager`); how it sounds on a real call is
 device-only: *Audio focus (#345 step 3)*. The same as before step 3 in effect: S2 used to wait for the delayed focus
 grant a call gives; Media3 takes that grant as focus, so `PlaybackManager` checks the audio mode itself.
+
+**RS-55: pressing play while an interruption holds playback off.** Given playback held paused by a short interruption
+(RS-50), when the user presses play, then during a call nothing plays and it still shows paused, until the call ends
+and gives focus back (RS-54 holds the play); any other interruption (a voice assistant, another app's short sound) loses
+focus to S2, which asks for it again and plays at once. Both unchanged from before step 3, where a call's focus request
+was delayed and any other was granted, and documented rather than changed. (#345) — JVM; the notification and lock
+screen meanwhile are device-only: *Audio focus (#345 step 3)*.
 
 ## Cast
 

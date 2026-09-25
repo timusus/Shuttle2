@@ -514,10 +514,11 @@ class PlaybackManager(
      * A play during a call (ringing or in progress, phone or VoIP) doesn't start playback over it, which the player
      * would: Media3 takes the delayed audio focus a call gives as focus. It waits, paused, and plays when the call ends;
      * a pause, a load or a queue change first drops it. Below API 31, where the end of a call can't be seen, it's
-     * dropped. A play on a Cast receiver, or while already set to play (held off by a short focus loss), goes ahead.
+     * dropped. That includes a play while the call's focus loss holds playback off: setting the player to play again asks
+     * for focus again, and the call's delayed grant would start it. A play on a Cast receiver goes ahead.
      */
     private fun holdForCall(): Boolean {
-        if (isRemote || player.playWhenReady || !callMonitor.isInCall) return false
+        if (isRemote || !callMonitor.isInCall) return false
         if (callMonitor.awaitCallEnd(playerExecutor) { playNow() }) {
             Timber.w("play() held until the call ends")
         } else {

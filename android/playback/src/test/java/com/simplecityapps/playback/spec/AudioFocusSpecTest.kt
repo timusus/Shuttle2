@@ -16,6 +16,7 @@ import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
@@ -222,6 +223,42 @@ class AudioFocusSpecTest {
 
         playback.playbackStateFlow.value shouldBe PlaybackState.Paused
         harness.appPlayer.playWhenReady shouldBe false
+    }
+
+    @Test
+    fun `RS-55 pressing play while a short interruption holds playback off takes focus back and plays`() {
+        startPlaying(listOf(song(1, file = TONE_3S)))
+        harness.changeAudioFocus(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+        val requests = harness.audioFocus.requests
+
+        harness.run { playback.play() }
+        // The player asks for focus on its playback thread.
+        harness.runUntil { harness.audioFocus.requests > requests }
+
+        playback.playbackStateFlow.value shouldBe PlaybackState.Playing
+        val position = playback.getProgress() ?: 0
+        harness.runUntil { (playback.getProgress() ?: 0) > position }
+    }
+
+    @Test
+    fun `RS-55 pressing play while a call holds playback off does nothing until the call ends`() {
+        startPlaying(listOf(song(1, file = TONE_3S)))
+        harness.setAudioMode(AudioManager.MODE_IN_CALL)
+        harness.changeAudioFocus(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+        val requests = harness.audioFocus.requests
+        // What a real device answers during a call, which Media3 takes as focus.
+        shadowOf(harness.audioManager).setNextFocusRequestResponse(AudioManager.AUDIOFOCUS_REQUEST_DELAYED)
+
+        harness.run { playback.play() }
+
+        harness.audioFocus.requests shouldBe requests
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        harness.appPlayer.isPlaying shouldBe false
+
+        harness.setAudioMode(AudioManager.MODE_NORMAL)
+        harness.changeAudioFocus(AudioManager.AUDIOFOCUS_GAIN)
+
+        playback.playbackStateFlow.value shouldBe PlaybackState.Playing
     }
 
     private fun startPlaying(songs: List<Song>) {
