@@ -73,6 +73,22 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
+    /** Changes the queue and lets [frames] frames pass, leaving any animation it starts part-way. */
+    fun setQueueMidAnimation(
+        queue: ShellQueueUiState,
+        frames: Int = 3,
+    ) {
+        rule.mainClock.autoAdvance = false
+        queueState.value = queue
+        repeat(frames) { rule.mainClock.advanceTimeByFrame() }
+    }
+
+    /** Resumes the clock after [setQueueMidAnimation] and waits for everything to settle. */
+    fun settle() {
+        rule.mainClock.autoAdvance = true
+        rule.waitForIdle()
+    }
+
     fun setWindow(window: WindowAdaptiveInfo) {
         windowState.value = window
         rule.waitForIdle()
@@ -104,6 +120,10 @@ class AppShellRobot(
 
     fun assertSheetAbsent() {
         rule.onNodeWithTag(PlayerTestTags.Sheet).assertDoesNotExist()
+    }
+
+    fun assertSheetPresent() {
+        rule.onNodeWithTag(PlayerTestTags.Sheet).assertExists()
     }
 
     fun assertPaneShown() {

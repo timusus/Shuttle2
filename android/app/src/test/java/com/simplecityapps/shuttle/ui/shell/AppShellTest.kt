@@ -48,6 +48,19 @@ class AppShellTest {
     }
 
     @Test
+    fun `emptying the queue under the expanded sheet slides it away rather than cutting it`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.assertLevel(PlayerLevel.NowPlaying)
+
+        robot.setQueueMidAnimation(EmptyShellQueue)
+        robot.assertSheetPresent()
+
+        robot.settle()
+        robot.assertSheetAbsent()
+    }
+
+    @Test
     fun `tapping the mini player expands, and the queue peek opens the queue`() {
         robot.setContent()
         robot.tapMiniPlayer()

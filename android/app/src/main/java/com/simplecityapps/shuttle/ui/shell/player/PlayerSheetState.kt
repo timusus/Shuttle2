@@ -54,6 +54,10 @@ class PlayerSheetState internal constructor(
     internal var revealPending: Boolean by mutableStateOf(false)
         private set
 
+    /** Set when the queue empties under a raised sheet: the shell animates it down to Hidden. */
+    internal var collapsePending: Boolean by mutableStateOf(false)
+        private set
+
     /** The level the player is at, or heading for during a drag or animation. */
     val level: PlayerLevel get() = draggable.targetValue
 
@@ -90,15 +94,26 @@ class PlayerSheetState internal constructor(
         val allowed = allowedLevels
         val target = resolvePlayerLevel(preferred, allowed)
         val reveal = preferred == PlayerLevel.Hidden && target == PlayerLevel.Mini
-        // A revealing sheet keeps Hidden as an anchor until it has animated up to Mini.
-        val anchorLevels = if (reveal || revealPending) allowed + PlayerLevel.Hidden else allowed
+        val collapse = mode != PlayerMode.Pane && hasQueue == false && preferred != PlayerLevel.Hidden
+        // A revealing sheet keeps Hidden as an anchor until it has animated up to Mini, and a collapsing one keeps
+        // its levels until it has animated down to Hidden.
+        val anchorLevels = when {
+            collapse || collapsePending -> playerLevels(mode, hasQueue = true) + PlayerLevel.Hidden
+            reveal || revealPending -> allowed + PlayerLevel.Hidden
+            else -> allowed
+        }
         val anchors = DraggableAnchors { anchorLevels.forEach { it at geometry.offsetOf(it) } }
-        val settleAt = if (reveal) PlayerLevel.Hidden else target
+        val settleAt = when {
+            reveal -> PlayerLevel.Hidden
+            collapse -> preferred
+            else -> target
+        }
         if (reveal) revealPending = true
+        if (collapse) collapsePending = true
         if (anchors != draggable.anchors) {
             draggable.updateAnchors(anchors, settleAt)
             requestedLevel = null
-        } else if (!revealPending && settleAt != draggable.targetValue) {
+        } else if (!revealPending && !collapsePending && settleAt != draggable.targetValue) {
             requestedLevel = settleAt
         }
     }
@@ -117,6 +132,16 @@ class PlayerSheetState internal constructor(
         } finally {
             revealPending = false
             sync(PlayerLevel.Mini)
+        }
+    }
+
+    /** Animates a sheet whose queue emptied down to Hidden, then drops the other anchors. */
+    internal suspend fun collapse() {
+        try {
+            draggable.animateTo(PlayerLevel.Hidden, animationSpec)
+        } finally {
+            collapsePending = false
+            sync(draggable.targetValue)
         }
     }
 

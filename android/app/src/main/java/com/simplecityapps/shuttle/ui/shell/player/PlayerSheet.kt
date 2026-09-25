@@ -24,14 +24,18 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.simplecityapps.shuttle.ui.shell.ShellQueueUiState
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.roundToInt
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,6 +51,7 @@ internal fun PlayerSheet(
     queue: ShellQueueUiState,
     layout: ShellLayout,
     modifier: Modifier = Modifier,
+    collapsedInset: Dp = 0.dp,
 ) {
     val scope = rememberCoroutineScope()
     val flingBehavior = AnchoredDraggableDefaults.flingBehavior(state.draggable, animationSpec = state.animationSpec)
@@ -90,12 +95,33 @@ internal fun PlayerSheet(
                 current = queue.current,
                 interactive = miniInteractive,
                 onClick = { scope.launch { state.moveTo(PlayerLevel.NowPlaying) } },
-                modifier = Modifier.graphicsLayer { alpha = state.geometry.miniAlpha(state.offset) },
+                modifier = Modifier
+                    .collapsedInset(collapsedInset) { state.geometry.expand(state.offset) }
+                    .graphicsLayer { alpha = state.geometry.miniAlpha(state.offset) },
             )
         }
     }
 
     PlayerBackHandler(state)
+}
+
+/**
+ * Narrows the mini player by [inset] and slides it back to the leading edge as the sheet expands,
+ * for a sheet that grows over the rail. [expand] is read in placement only.
+ */
+private fun Modifier.collapsedInset(
+    inset: Dp,
+    expand: () -> Float,
+): Modifier = if (inset == 0.dp) {
+    this
+} else {
+    layout { measurable, constraints ->
+        val insetPx = inset.roundToPx()
+        val placeable = measurable.measure(constraints.copy(minWidth = 0, maxWidth = (constraints.maxWidth - insetPx).coerceAtLeast(0)))
+        layout(constraints.maxWidth, placeable.height) {
+            placeable.placeRelative((insetPx * (1f - expand())).roundToInt(), 0)
+        }
+    }
 }
 
 /** Spoken state of the sheet, which tests also read to find the settled level. */

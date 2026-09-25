@@ -50,12 +50,19 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
@@ -99,6 +106,7 @@ fun AppShell(
     val player = rememberPlayerSheetState(layout.playerMode)
     SideEffect { player.configure(layout.playerMode, queue.hasQueue) }
     LaunchedEffect(player, player.revealPending) { if (player.revealPending) player.reveal() }
+    LaunchedEffect(player, player.collapsePending) { if (player.collapsePending) player.collapse() }
     LaunchedEffect(player, player.requestedLevel) { player.applyRequestedLevel() }
 
     val scope = rememberCoroutineScope()
@@ -247,36 +255,64 @@ private fun RailSheetShell(
     val sheetVisible = rememberSheetVisible(player)
     val bottomPadding = rememberContentBottomPadding(player)
     val coversRail = layout.width == ShellWidth.Expanded
+    val railWidth = with(density) { CollapsedRailWidth.roundToPx() }
 
     Layout(
         contents = listOf(
             { ShellRail(selectedTab, expanded = false, onSelectTab = onSelectTab, onOpenSettings = onOpenSettings) },
             { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding)) { destinations() } },
             { PlayerScrim(player) },
-            { if (sheetVisible) PlayerSheet(player, queue, layout) },
+            { if (sheetVisible) PlayerSheet(player, queue, layout, collapsedInset = if (coversRail) CollapsedRailWidth else 0.dp) },
         ),
     ) { (rail, destination, scrim, sheet), constraints ->
         val width = constraints.maxWidth
         val height = constraints.maxHeight
-        val railPlaceables = rail.map { it.measure(constraints.copy(minWidth = 0, minHeight = 0)) }
-        val railWidth = railPlaceables.maxOfOrNull { it.width } ?: 0
+        val railPlaceables = rail.map { it.measure(Constraints.fixed(railWidth, height)) }
         val contentWidth = width - railWidth
         player.onMeasured(
             PlayerSheetGeometry(height = height.toFloat(), navBarHeight = navigationBarBottom.toFloat(), miniHeight = miniHeight, queueTravel = 0f),
         )
-        // Reading the offset here re-runs layout, not composition, as the sheet grows over the rail.
-        val sheetX = if (coversRail) lerp(railWidth.toFloat(), 0f, player.geometry.expand(player.offset)).roundToInt() else railWidth
         val destinationPlaceables = destination.map { it.measure(Constraints.fixed(contentWidth, height)) }
         val scrimX = if (coversRail) 0 else railWidth
         val scrimPlaceables = scrim.map { it.measure(Constraints.fixed(width - scrimX, height)) }
+        // Measured once at its widest; it grows over the rail by clip alone, so a drag never remeasures it.
+        val sheetX = if (coversRail) 0 else railWidth
         val sheetPlaceables = sheet.map { it.measure(Constraints.fixed(width - sheetX, height)) }
         layout(width, height) {
             railPlaceables.forEach { it.place(0, 0) }
             destinationPlaceables.forEach { it.place(railWidth, 0) }
             scrimPlaceables.forEach { it.place(scrimX, 0) }
+            // Reading the offset here re-runs placement, not measurement or composition.
             val sheetTop = player.geometry.sheetTop(player.offset).roundToInt()
-            sheetPlaceables.forEach { it.place(sheetX, sheetTop) }
+            sheetPlaceables.forEach {
+                if (coversRail) {
+                    it.placeWithLayer(sheetX, sheetTop) {
+                        clip = true
+                        shape = LeadingInsetShape(lerp(railWidth.toFloat(), 0f, player.geometry.expand(player.offset)))
+                    }
+                } else {
+                    it.place(sheetX, sheetTop)
+                }
+            }
         }
+    }
+}
+
+/** The collapsed rail's width (M3's wide navigation rail), which the collapsed sheet leaves uncovered. */
+private val CollapsedRailWidth = 96.dp
+
+/** Clips away the leading [inset] px, so the sheet grows over the rail without being remeasured. */
+private class LeadingInsetShape(
+    private val inset: Float,
+) : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline = if (layoutDirection == LayoutDirection.Ltr) {
+        Outline.Rectangle(Rect(inset, 0f, size.width, size.height))
+    } else {
+        Outline.Rectangle(Rect(0f, 0f, size.width - inset, size.height))
     }
 }
 
