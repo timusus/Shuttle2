@@ -10,24 +10,6 @@ class DebugLoggingTree(
     private val context: Context,
     private val debugSettings: DebugSettings
 ) : Timber.DebugTree() {
-    interface Callback {
-        fun onLog(logMessage: LogMessage)
-    }
-
-    var history = mutableListOf<LogMessage>()
-
-    var callbacks: MutableList<Callback> = mutableListOf()
-
-    fun addCallback(callback: Callback) {
-        if (!callbacks.contains(callback)) {
-            callbacks.add(callback)
-        }
-    }
-
-    fun removeCallback(callback: Callback) {
-        callbacks.remove(callback)
-    }
-
     override fun log(
         priority: Int,
         tag: String?,
@@ -39,15 +21,7 @@ class DebugLoggingTree(
         }
         if (debugSettings.fileLogging.value) {
             synchronized(this) {
-                val logMessage = LogMessage(priority, tag, message, t)
-
-                history.add(logMessage)
-
-                callbacks.forEach { callback -> callback.onLog(logMessage) }
-
-                if (debugSettings.fileLogging.value) {
-                    writeToFile(context, logMessage)
-                }
+                writeToFile(context, LogMessage(priority, tag, message, t))
             }
         }
     }
