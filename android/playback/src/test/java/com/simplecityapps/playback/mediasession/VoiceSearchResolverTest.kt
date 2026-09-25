@@ -77,6 +77,8 @@ class VoiceSearchResolverTest {
         resolve(VoiceSearch("road trip", Focus.Playlist, playlist = "Road Trip")) shouldBe VoiceSearchResult.Songs(listOf(karmaPolice, comeTogether), 0)
         // With no playlists, the words are searched for anything.
         resolve(VoiceSearch("karma police", Focus.Playlist, playlist = "Karma Police"), resolver(playlists = emptyMap())) shouldBe VoiceSearchResult.Songs(okComputer, 2)
+        // Nor with only empty ones, as a new library's Favorites is.
+        resolve(VoiceSearch("karma police", Focus.Playlist), resolver(playlists = mapOf(playlist(2, "Favorites") to emptyList()))) shouldBe VoiceSearchResult.Songs(okComputer, 2)
     }
 
     @Test

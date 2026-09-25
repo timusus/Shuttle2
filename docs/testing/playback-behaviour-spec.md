@@ -326,8 +326,8 @@ by its words, then that plays: an artist's or a genre's songs, an album or a pla
 the rest of its album. A search with no focus matches every kind and plays the best match, an artist over an album,
 a playlist, a song and a genre where they match as well; a song can be named with its artist ("Creep by
 Radiohead"). Case, accents, punctuation and a leading "the" don't count, and a name misheard, misspelt or with words
-around it plays the closest match rather than nothing; a focus with nothing of its kind (no playlists) is searched
-with no focus. (#424) — JVM (`mediasession/VoiceSearchResolverTest` per focus, `spec/MediaSessionSpecTest` through
+around it plays the closest match rather than nothing; a focus with nothing of its kind to play (no playlists, or
+only empty ones) is searched with no focus. (#424) — JVM (`mediasession/VoiceSearchResolverTest` per focus, `spec/MediaSessionSpecTest` through
 the session); on the emulator (`checks/voice-search.sh`); Assistant itself is device-only: *Media session through
 Media3*.
 

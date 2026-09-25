@@ -108,11 +108,15 @@ constructor(
             VoiceSearch.Focus.Genre -> library.genres(search.genre ?: search.query)
             VoiceSearch.Focus.Playlist -> library.playlists(search.playlist ?: search.query)
         }
-        // A focus with nothing of its kind in the library (no playlists, say) is searched as if unstructured.
-        val candidates = focused.ifEmpty { library.everything(search.query ?: listOfNotNull(search.title, search.album, search.artist, search.genre, search.playlist).joinToString(" ")) }
-        val best = candidates.maxByOrNull { it.score } ?: return VoiceSearchResult.Empty
-        return best.songs()
+        // A focus with nothing of its kind to play (no playlists, or only empty ones, say) is searched as if unstructured.
+        return focused.bestPlayable()
+            ?: library.everything(search.query ?: listOfNotNull(search.title, search.album, search.artist, search.genre, search.playlist).joinToString(" ")).bestPlayable()
+            ?: VoiceSearchResult.Empty
     }
+
+    /** The songs of the best match that has any: an empty playlist plays nothing, so the next best plays instead. */
+    private suspend fun List<Candidate>.bestPlayable(): VoiceSearchResult.Songs? = sortedByDescending { it.score }
+        .firstNotNullOfOrNull { candidate -> candidate.songs().takeIf { it.songs.isNotEmpty() } }
 
     /** A thing in the library a search might mean, how well it matches, and the songs to play for it. */
     private class Candidate(val score: Double, val songs: suspend () -> VoiceSearchResult.Songs)
