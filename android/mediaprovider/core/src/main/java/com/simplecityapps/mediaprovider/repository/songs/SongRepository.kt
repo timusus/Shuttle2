@@ -1,5 +1,6 @@
 package com.simplecityapps.mediaprovider.repository.songs
 
+import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
@@ -27,6 +28,13 @@ interface SongRepository {
         deletes: List<Song>,
         mediaProviderType: MediaProviderType
     ): Triple<Int, Int, Int>
+
+    /**
+     * Applies each remap that doesn't clash with a song already stored under its path, in one transaction.
+     *
+     * @return the remaps applied
+     */
+    suspend fun remapPaths(remaps: List<SongPathRemap>): List<SongPathRemap>
 
     suspend fun incrementPlayCount(song: Song)
 

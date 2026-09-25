@@ -4,6 +4,7 @@ import android.content.ContentUris
 import android.database.Cursor
 import android.net.Uri
 import android.provider.MediaStore
+import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
 
 /**
@@ -16,7 +17,9 @@ data class MediaStoreAudioFile(
     val displayName: String,
     val size: Long,
     val lastModified: Long,
-    val mimeType: String?
+    val mimeType: String?,
+    // Milliseconds, as MediaStore read it; null if MediaStore couldn't
+    val duration: Long? = null
 ) {
     // The "external" volume spans every mounted volume (SD cards included), and ids are unique across them
     val contentUri: Uri get() = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id)
@@ -29,7 +32,8 @@ internal val MEDIA_STORE_AUDIO_PROJECTION =
         MediaStore.Audio.Media.DISPLAY_NAME,
         MediaStore.Audio.Media.SIZE,
         MediaStore.Audio.Media.DATE_MODIFIED,
-        MediaStore.Audio.Media.MIME_TYPE
+        MediaStore.Audio.Media.MIME_TYPE,
+        MediaStore.Audio.Media.DURATION
     )
 
 // The same rows the MediaStore provider imports: leaves out ringtones, alarms, notifications and recordings
@@ -46,6 +50,7 @@ internal fun Cursor.readMediaStoreAudioFiles(folderFilter: FolderFilter): List<M
     val sizeColumn = getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)
     val dateModifiedColumn = getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)
     val mimeTypeColumn = getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)
+    val durationColumn = getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
     val files = mutableListOf<MediaStoreAudioFile>()
     while (moveToNext()) {
         val path = getStringOrNull(pathColumn) ?: continue
@@ -58,7 +63,8 @@ internal fun Cursor.readMediaStoreAudioFiles(folderFilter: FolderFilter): List<M
                 size = getLong(sizeColumn),
                 // MediaStore stores seconds
                 lastModified = getLong(dateModifiedColumn) * 1000,
-                mimeType = getStringOrNull(mimeTypeColumn)
+                mimeType = getStringOrNull(mimeTypeColumn),
+                duration = getLongOrNull(durationColumn)
             )
     }
     return files

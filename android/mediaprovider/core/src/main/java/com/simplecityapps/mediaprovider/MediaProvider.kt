@@ -15,6 +15,13 @@ interface MediaProvider {
      */
     fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>>
 
+    /**
+     * Maps [existingSongs] stored under an identity this provider no longer produces to the path [findSongs] now returns
+     * for the same file, so an upgrade keeps their history. Songs it can't match are left out, and the import removes
+     * them as missing. Runs before every song import, so it must return nothing once no old identities are left.
+     */
+    suspend fun remapLegacySongs(existingSongs: List<Song>): List<SongPathRemap> = emptyList()
+
     fun findPlaylists(
         existingPlaylists: List<Playlist>,
         existingSongs: List<Song>

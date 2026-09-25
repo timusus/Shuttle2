@@ -145,8 +145,8 @@ import still walks the SAF trees.
 - `Song.path` is now the MediaStore `DATA` file path (the MediaStore provider already stores
   that), not a SAF document URI. Playback, artwork and m3u matching already handle file paths.
 - Users who had the MediaStore provider keep their song identities. Users who had the S2 provider
-  get new paths, so the import replaces their songs and their play counts and per-song excludes
-  reset. Spike 3 (migration) must map old SAF URIs to file paths before this ships to them.
+  get new paths; spike 3 (below, #414) moves their songs to the new paths in place, so play counts
+  and per-song excludes survive.
 
 ### Folder filters (#207 and the exclude list)
 
@@ -192,7 +192,6 @@ and a `.nomedia` folder, all under `/sdcard/Music/s2-seed`.
 
 ### Still open after run b
 
-- Migration of S2-provider users' paths (spike 3), before release.
 - m3u import without a SAF grant: read playlists from MediaStore `Files` rows or scan the
   included folders by path.
 - An optional SAF "Add folder" for `.nomedia` and unrecognised formats.
@@ -201,3 +200,49 @@ and a `.nomedia` folder, all under `/sdcard/Music/s2-seed`.
 - Folder art on API 33+ for S2 songs: `FolderImageReader` can't list shared images there, and the
   MediaStore thumbnail fallback in the image loader only covers the MediaStore provider.
 - `IS_MUSIC` leaves out audiobooks and recordings, and rows MediaStore hasn't scanned fully.
+
+## Spike 3: keeping S2-provider users' history (#414)
+
+**Done.** 1.0.10 (schema 40) stored each S2-provider song under its SAF document URI, for example
+`content://com.android.externalstorage.documents/tree/primary%3AMusic/document/primary%3AMusic%2FA%2Fb.mp3`.
+Play counts, last played, the exclude flag, playlist entries (Favorites is a playlist) and the
+saved queue all hang off the song's row id; there are no ratings.
+
+**Where it runs: the importer, not a Room migration.** Matching needs MediaStore's rows, which a
+migration can't query (it runs on whatever thread first opens the database, possibly before the
+audio permission is granted). So `MediaImporter` asks each provider for `remapLegacySongs` before
+the diff, applies the result with `SongRepository.remapPaths` in one transaction, and diffs against
+the moved songs. The diff then updates those rows instead of deleting them. No schema change.
+
+**No persisted flag.** The old identity is its own guard: `TaglibMediaProvider` only queries
+MediaStore while some song still has a document URI as its path, and the first import after the
+upgrade leaves none (matched songs move, unmatched ones are removed as missing, as before). An
+interrupted run is safe at every point: the remap is one transaction, and if it or the scan fails,
+nothing is diffed, so the old rows wait for the next import. A remap that throws fails the import
+for that provider rather than letting the diff delete the songs. Without the audio permission
+(1.0.10's S2 provider didn't need it) the MediaStore query fails, so nothing moves and nothing is
+lost until the user grants it.
+
+**Matching** (`LegacySafSongs`):
+
+- The document id gives the volume and relative path: `primary:` is the primary volume, `home:` its
+  Documents folder, any other root a secondary volume id (`04B9-1208`). The MediaStore file on the
+  same volume at the same relative path (case-insensitive) is the match. Downloads documents use
+  `raw:<path>` (matched by path) or `msf:<id>` (matched by id, confirmed by size, date and duration,
+  since MediaStore ids change after a rebuild).
+- Size, last modified (within 2 s) and duration (within 2 s) decide only when the path is ambiguous:
+  the old volume id isn't mounted but the relative path exists on another volume (a reformatted SD
+  card), or the id is opaque (another document provider). Exactly one file must fit, or the song is
+  unmatched.
+- Overlapping folder grants made the old scanner store one file twice. The most played row keeps
+  the file; the others' playlist entries move to it, and the import removes them.
+- A remap onto a path another row already holds (for example the MediaStore provider's row for the
+  same file, since paths are unique across providers) is skipped.
+
+**Unmatched:** files deleted, moved or renamed since the last 1.0.10 scan; files MediaStore doesn't
+index (`.nomedia` folders, unrecognised formats); files outside the new folder filter. They lose
+their history when the import removes them, as any missing file does.
+
+**Tests:** `LegacySafSongsTest` (primary, SD card, `home:`, ambiguous, unmatched, already-migrated,
+duplicates, Downloads ids) and `LegacySafSongsImportTest`, which builds a schema-40 database,
+migrates it and runs `MediaImporter` over a fake MediaStore listing.

@@ -3,6 +3,7 @@ package com.simplecityapps.localmediaprovider.local.repository
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUpdate
+import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -74,6 +75,8 @@ class LocalSongRepository(
         deletes: List<Song>,
         mediaProviderType: MediaProviderType
     ): Triple<Int, Int, Int> = songDataDao.insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongDataUpdate(), deletes.toSongData(mediaProviderType))
+
+    override suspend fun remapPaths(remaps: List<SongPathRemap>): List<SongPathRemap> = songDataDao.remapPaths(remaps)
 
     override suspend fun incrementPlayCount(song: Song) {
         Timber.v("Incrementing play count for song: ${song.name}")

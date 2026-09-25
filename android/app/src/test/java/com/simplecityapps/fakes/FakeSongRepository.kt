@@ -1,5 +1,6 @@
 package com.simplecityapps.fakes
 
+import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -62,6 +63,7 @@ class FakeSongRepository : SongRepository {
     val updatedSongs: MutableList<Song> = Collections.synchronizedList(mutableListOf())
     override suspend fun removeAll(mediaProviderType: MediaProviderType) {}
     override suspend fun insertUpdateAndDelete(inserts: List<Song>, updates: List<Song>, deletes: List<Song>, mediaProviderType: MediaProviderType): Triple<Int, Int, Int> = Triple(0, 0, 0)
+    override suspend fun remapPaths(remaps: List<SongPathRemap>): List<SongPathRemap> = remaps
     override suspend fun incrementPlayCount(song: Song) {
         playCountIncrements += song.id
     }

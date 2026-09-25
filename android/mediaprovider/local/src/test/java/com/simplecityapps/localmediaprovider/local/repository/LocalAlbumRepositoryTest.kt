@@ -77,6 +77,18 @@ class LocalAlbumRepositoryTest {
 
         override suspend fun delete(songData: List<SongData>): Int = throw NotImplementedError()
 
+        override suspend fun idForPath(path: String): Long? = throw NotImplementedError()
+
+        override suspend fun updatePath(
+            id: Long,
+            path: String
+        ): Int = throw NotImplementedError()
+
+        override suspend fun movePlaylistEntries(
+            fromSongIds: List<Long>,
+            songId: Long
+        ) = throw NotImplementedError()
+
         override suspend fun incrementPlayCount(
             id: Long,
             lastCompleted: Date

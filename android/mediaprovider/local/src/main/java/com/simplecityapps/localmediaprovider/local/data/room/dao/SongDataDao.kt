@@ -9,6 +9,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
+import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import java.util.*
@@ -59,6 +60,47 @@ abstract class SongDataDao {
         Timber.i("insertUpdateAndDelete(inserts: ${insertCount.size} inserted, $updateCount updated)")
 
         return Triple(insertCount.size, updateCount, deleteCount)
+    }
+
+    @Query("SELECT id FROM songs WHERE path = :path")
+    abstract suspend fun idForPath(path: String): Long?
+
+    @Query("UPDATE songs SET path = :path WHERE id = :id")
+    abstract suspend fun updatePath(
+        id: Long,
+        path: String
+    ): Int
+
+    @Query("UPDATE playlist_song_join SET songId = :songId WHERE songId IN (:fromSongIds)")
+    abstract suspend fun movePlaylistEntries(
+        fromSongIds: List<Long>,
+        songId: Long
+    )
+
+    /**
+     * Moves each song to its remapped path, keeping its row id and so everything keyed by it. A remap whose path is
+     * already another song's, or whose song is gone, is skipped: paths are unique.
+     *
+     * @return the remaps applied
+     */
+    @Transaction
+    open suspend fun remapPaths(remaps: List<SongPathRemap>): List<SongPathRemap> = remaps.filter { remap ->
+        val pathOwner = idForPath(remap.path)
+        when {
+            pathOwner != null && pathOwner != remap.songId -> {
+                Timber.w("Not remapping song ${remap.songId}: song $pathOwner already has its path")
+                false
+            }
+
+            updatePath(remap.songId, remap.path) == 0 -> false
+
+            else -> {
+                if (remap.duplicateIds.isNotEmpty()) {
+                    movePlaylistEntries(remap.duplicateIds, remap.songId)
+                }
+                true
+            }
+        }
     }
 
     @Query("UPDATE songs SET playCount = (SELECT songs.playCount + 1), lastCompleted = :lastCompleted WHERE id =:id")

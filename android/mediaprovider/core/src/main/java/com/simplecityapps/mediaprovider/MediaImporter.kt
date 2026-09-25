@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import java.util.Date
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -186,7 +187,7 @@ class MediaImporter(
     private fun importSongs(mediaProvider: MediaProvider): Flow<FlowEvent<SongImportResult, MessageProgress>> = flow {
         emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_songs), null)))
 
-        val existingSongs =
+        val storedSongs =
             songRepository.getSongs(
                 SongQuery.All(
                     includeExcluded = true,
@@ -196,6 +197,18 @@ class MediaImporter(
                 .filterNotNull()
                 .firstOrNull()
                 .orEmpty()
+
+        val existingSongs =
+            try {
+                remapLegacySongs(mediaProvider, storedSongs)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Diffing without the remap would delete the songs it failed to move, and their history with them
+                Timber.e(e, "Failed to remap legacy songs")
+                emit(FlowEvent.Failure(context.getString(R.string.media_import_error)))
+                return@flow
+            }
 
         mediaProvider.findSongs(existingSongs).collect { event ->
             when (event) {
@@ -243,6 +256,21 @@ class MediaImporter(
             }
         }
     }.flowOn(Dispatchers.IO)
+
+    /**
+     * Moves songs the provider stored under an old identity to their current path before the diff, so the diff updates
+     * those rows rather than deleting them and inserting new ones without their history.
+     */
+    private suspend fun remapLegacySongs(
+        mediaProvider: MediaProvider,
+        songs: List<Song>
+    ): List<Song> {
+        val remaps = mediaProvider.remapLegacySongs(songs)
+        if (remaps.isEmpty()) return songs
+        val paths = songRepository.remapPaths(remaps).associate { remap -> remap.songId to remap.path }
+        Timber.i("Moved ${paths.size} of ${remaps.size} matched ${mediaProvider.type} songs to their new paths")
+        return songs.map { song -> paths[song.id]?.let { path -> song.copy(path = path) } ?: song }
+    }
 
     data class PlaylistImportResult(
         val mediaProviderType: MediaProviderType

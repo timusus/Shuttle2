@@ -276,8 +276,8 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
 - Spike 1 (#370): **go for API 30+**, and the discovery half has landed. `TaglibMediaProvider`
   queries `Audio.Media`, filters by folder (`FolderFilter`) and reads each content URI with
   KTagLib. Tags match the SAF build on every stored column; imports ran 4–8x faster than the SAF
-  walk on API 36/37. Songs are keyed by file path now, so S2-provider users need spike 3 before
-  release. Evidence in [`spike-taglib-mediastore.md`](spike-taglib-mediastore.md).
+  walk on API 36/37. Songs are keyed by file path now; spike 3 (#414) moves S2-provider users' songs
+  to their paths on the first import after the upgrade, keeping their history. Evidence in [`spike-taglib-mediastore.md`](spike-taglib-mediastore.md).
 - Maestro: none (emulator fixtures seed files, not provider choice).
 
 ### Directory selection (SAF) — Change
@@ -494,12 +494,17 @@ All 12 taken as written on 2026-09-25 (epic #382); each can still be revisited.
    `/storage/emulated/0/Music`; no grants means the whole device); folder excludes come from
    Settings > Sources (#379); the per-song exclude list stays per song, keyed by path. Still open:
    API 23–29 and a real SD card (in `docs/testing/device-checks.md`), m3u import without a grant,
-   an optional SAF "Add folder" for `.nomedia` and unrecognised files, path migration (spike 3).
+   an optional SAF "Add folder" for `.nomedia` and unrecognised files.
 2. **Writes without SAF.** Tag editing and Delete for MediaStore-discovered files:
    `MediaStore.createWriteRequest` / `createDeleteRequest` on 30+, `RecoverableSecurityException`
    on 29, plain file access on 23–28. Decide whether tag editing requires a folder grant below 30.
 3. **Migration of existing users.** Users on MediaStore mode or TagLib with SAF trees: map song ids,
    play counts, playlists and excluded items onto the unified provider without losing history.
+   **Done for TagLib users (#414):** the importer moves each song stored under a SAF document URI to
+   its MediaStore file path in place, matched by volume and relative path (size, date and duration
+   only when that's ambiguous), so its row id and everything keyed by it survive. MediaStore-mode
+   users already had file paths. See spike 3 in
+   [`spike-taglib-mediastore.md`](spike-taglib-mediastore.md).
 4. **Ambient scan progress.** WorkManager foreground import with progress surfaced to the Library
    bar and a notification, cancellable, surviving process death.
 5. **Plex PIN linking.** Confirm the plex.tv PIN flow works with the existing

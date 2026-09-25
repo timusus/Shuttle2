@@ -17,6 +17,7 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
+import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.saf.DocumentNodeTree
 import com.simplecityapps.saf.SafDirectoryHelper
@@ -79,6 +80,19 @@ class TaglibMediaProvider(
     }
 
     /**
+     * Songs this provider stored under a SAF document URI before it found files through MediaStore, mapped to their
+     * file paths. Once none are left, which is after the first import following the upgrade, it doesn't query MediaStore.
+     */
+    override suspend fun remapLegacySongs(existingSongs: List<Song>): List<SongPathRemap> {
+        val legacySongs = existingSongs.filter { song -> legacyLocation(song.path) != null }
+        if (legacySongs.isEmpty()) return emptyList()
+        // Without MediaStore, findSongs fails too, so nothing is diffed and the songs keep their history until next time
+        val files = findAudioFiles() ?: return emptyList()
+        return LegacySafSongs(primaryStoragePath()).remaps(legacySongs, files)
+            .also { remaps -> Timber.i("Matched ${remaps.size} of ${legacySongs.size} songs stored under SAF document URIs to MediaStore files") }
+    }
+
+    /**
      * The audio files MediaStore has indexed, on every volume, limited to the folders picked for the scanner if there are any.
      * Null if MediaStore can't be queried, for example without the audio permission.
      */
@@ -103,8 +117,7 @@ class TaglibMediaProvider(
      * have no path, so they don't limit the import.
      */
     private fun pickedFolders(): List<String> {
-        @Suppress("DEPRECATION")
-        val primaryStoragePath = Environment.getExternalStorageDirectory().path
+        val primaryStoragePath = primaryStoragePath()
         return context.contentResolver.persistedUriPermissions
             .filter { uriPermission -> uriPermission.isReadPermission || uriPermission.isWritePermission }
             .mapNotNull { uriPermission ->
@@ -112,6 +125,9 @@ class TaglibMediaProvider(
                 externalStorageTreeFolder(uriPermission.uri.authority, treeDocumentId, primaryStoragePath)
             }
     }
+
+    @Suppress("DEPRECATION")
+    private fun primaryStoragePath(): String = Environment.getExternalStorageDirectory().path
 
     private fun getSongs(files: List<Pair<MediaStoreAudioFile, List<FolderImage>>>): Flow<Song> = files
         .asFlow()

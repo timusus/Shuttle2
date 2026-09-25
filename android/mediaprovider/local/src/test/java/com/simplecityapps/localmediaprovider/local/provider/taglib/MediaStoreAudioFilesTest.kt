@@ -11,7 +11,7 @@ import org.junit.runner.RunWith
 class MediaStoreAudioFilesTest {
     @Test
     fun `reads each row into an audio file`() {
-        val cursor = cursorOf(arrayOf(7L, "/storage/emulated/0/Music/Album/01 Song.flac", "01 Song.flac", 2_048L, 1_700_000_000L, "audio/flac"))
+        val cursor = cursorOf(arrayOf(7L, "/storage/emulated/0/Music/Album/01 Song.flac", "01 Song.flac", 2_048L, 1_700_000_000L, "audio/flac", 185_000L))
 
         cursor.readMediaStoreAudioFiles(FolderFilter()) shouldBe
             listOf(
@@ -21,7 +21,8 @@ class MediaStoreAudioFilesTest {
                     displayName = "01 Song.flac",
                     size = 2_048,
                     lastModified = 1_700_000_000_000,
-                    mimeType = "audio/flac"
+                    mimeType = "audio/flac",
+                    duration = 185_000
                 )
             )
     }
@@ -37,8 +38,8 @@ class MediaStoreAudioFilesTest {
     fun `a row with no path is skipped`() {
         val cursor =
             cursorOf(
-                arrayOf(1L, null, "orphan.mp3", 1L, 0L, "audio/mpeg"),
-                arrayOf(2L, "/storage/emulated/0/Music/b.mp3", "b.mp3", 1L, 0L, "audio/mpeg")
+                arrayOf(1L, null, "orphan.mp3", 1L, 0L, "audio/mpeg", null),
+                arrayOf(2L, "/storage/emulated/0/Music/b.mp3", "b.mp3", 1L, 0L, "audio/mpeg", null)
             )
 
         cursor.readMediaStoreAudioFiles(FolderFilter()).map { it.id } shouldBe listOf(2L)
@@ -46,7 +47,7 @@ class MediaStoreAudioFilesTest {
 
     @Test
     fun `a missing display name falls back to the file name, which TagLib needs to detect the format`() {
-        val cursor = cursorOf(arrayOf(3L, "/storage/emulated/0/Music/c.opus", null, 1L, 0L, null))
+        val cursor = cursorOf(arrayOf(3L, "/storage/emulated/0/Music/c.opus", null, 1L, 0L, null, null))
 
         val file = cursor.readMediaStoreAudioFiles(FolderFilter()).single()
 
@@ -58,10 +59,10 @@ class MediaStoreAudioFilesTest {
     fun `rows outside the folder filter are left out`() {
         val cursor =
             cursorOf(
-                arrayOf(1L, "/storage/emulated/0/Music/keep.mp3", "keep.mp3", 1L, 0L, "audio/mpeg"),
-                arrayOf(2L, "/storage/emulated/0/Music/Podcasts/skip.mp3", "skip.mp3", 1L, 0L, "audio/mpeg"),
-                arrayOf(3L, "/storage/04B9-1208/Music/sd.mp3", "sd.mp3", 1L, 0L, "audio/mpeg"),
-                arrayOf(4L, "/storage/emulated/0/Download/other.mp3", "other.mp3", 1L, 0L, "audio/mpeg")
+                arrayOf(1L, "/storage/emulated/0/Music/keep.mp3", "keep.mp3", 1L, 0L, "audio/mpeg", null),
+                arrayOf(2L, "/storage/emulated/0/Music/Podcasts/skip.mp3", "skip.mp3", 1L, 0L, "audio/mpeg", null),
+                arrayOf(3L, "/storage/04B9-1208/Music/sd.mp3", "sd.mp3", 1L, 0L, "audio/mpeg", null),
+                arrayOf(4L, "/storage/emulated/0/Download/other.mp3", "other.mp3", 1L, 0L, "audio/mpeg", null)
             )
         val filter =
             FolderFilter(

@@ -8,6 +8,7 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.palette.ColorSet
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
+import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -40,6 +41,8 @@ class FakeSongRepository(private val songs: List<Song>) : SongRepository {
         deletes: List<Song>,
         mediaProviderType: MediaProviderType
     ): Triple<Int, Int, Int> = error("not called")
+
+    override suspend fun remapPaths(remaps: List<SongPathRemap>): List<SongPathRemap> = error("not called")
 
     override suspend fun incrementPlayCount(song: Song) = error("not called")
 
