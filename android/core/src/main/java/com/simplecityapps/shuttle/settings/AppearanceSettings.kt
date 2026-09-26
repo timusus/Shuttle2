@@ -39,8 +39,11 @@ class AppearanceSettings @Inject constructor(
         /** Shown as "Pure black"; the key predates the rename from "Extra dark". */
         val PureBlack = Setting.boolean("pref_theme_extra_dark", false)
 
-        /** Material You wallpaper colours in place of the accent (API 31+). New with the Compose settings. */
-        val DynamicColour = Setting.boolean("pref_theme_dynamic_colour", false)
+        /**
+         * Material You wallpaper colours in place of the accent (API 31+). New with the Compose settings; on for a
+         * new install, settled once on launch by [SettleDynamicColourDefault].
+         */
+        val DynamicColour = Setting.boolean("pref_theme_dynamic_colour", true)
 
         /** Seeds the player and artwork detail screens from their artwork (app-shell decision 1). New with the Compose settings. */
         val ColourFromArtwork = Setting.boolean("pref_theme_colour_from_artwork", true)

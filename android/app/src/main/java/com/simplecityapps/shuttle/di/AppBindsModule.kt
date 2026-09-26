@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.ServerStreamPolicy
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializer
+import com.simplecityapps.shuttle.appinitializers.AppearanceInitializer
 import com.simplecityapps.shuttle.appinitializers.DownloadsInitializer
 import com.simplecityapps.shuttle.appinitializers.EntitlementInitializer
 import com.simplecityapps.shuttle.appinitializers.MediaProviderInitializer
@@ -74,4 +75,8 @@ abstract class AppBindsModule {
     @Binds
     @IntoSet
     abstract fun provideDownloadsInitializer(bind: DownloadsInitializer): AppInitializer
+
+    @Binds
+    @IntoSet
+    abstract fun provideAppearanceInitializer(bind: AppearanceInitializer): AppInitializer
 }

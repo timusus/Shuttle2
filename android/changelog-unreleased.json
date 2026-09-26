@@ -64,6 +64,10 @@
   ],
   "improvements": [
     {
+      "text": "On Android 12 and later, S2 now takes its colours from your wallpaper, unless you have already picked an accent colour. You can switch back to an accent colour in Appearance settings",
+      "commits": []
+    },
+    {
       "text": "The tag editor groups its fields into Song, Album, Numbering and Lyrics sections, and Song Info now shows the artwork with the format, bit rate and sample rate at a glance, with the details grouped below",
       "commits": []
     },

@@ -47,7 +47,7 @@ class SettingsRepositoriesTest {
             "pref_theme" to ThemeMode.DayNight,
             "pref_theme_accent" to Accent.Default,
             "pref_theme_extra_dark" to false,
-            "pref_theme_dynamic_colour" to false,
+            "pref_theme_dynamic_colour" to true,
             "pref_theme_colour_from_artwork" to true,
             "pref_show_home_on_launch" to false,
             "widget_background_opacity" to 100,
