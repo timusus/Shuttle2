@@ -2,8 +2,6 @@ package com.simplecityapps.playback.persistence
 
 import android.content.SharedPreferences
 import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.test.utils.robolectric.TestPlayerRunHelper
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.chromecast.FakeSongRepository
@@ -67,16 +65,6 @@ class QueueStoreTest {
         position: Int = 0
     ) {
         run { queueOperations.setQueue(songs, position = position) }
-        settle()
-    }
-
-    /**
-     * Turns the main looper until the player has handled what it was asked and reported it. [PlaybackHarness.idle] can
-     * finish while the player's thread still holds an event back, which would leave it unsaved.
-     */
-    private fun PlaybackHarness.settle() {
-        idle()
-        TestPlayerRunHelper.runUntilPendingCommandsAreFullyHandled(appPlayer as ExoPlayer)
     }
 
     private fun PlaybackHarness.loadPaused(positionMs: Int) {
@@ -108,7 +96,7 @@ class QueueStoreTest {
         val prefs = preferences.snapshot()
 
         val harness = harness()
-        harness.settle()
+        harness.idle()
 
         preferences.snapshot() shouldBe prefs
     }
@@ -120,7 +108,7 @@ class QueueStoreTest {
         preferences.writes.clear()
 
         harness.queueOperations.skipTo(2)
-        harness.settle()
+        harness.idle()
 
         saved.queuePosition shouldBe 2
         saved.nowPlaying?.songId shouldBe 3L
@@ -136,7 +124,6 @@ class QueueStoreTest {
         // Setting a queue with shuffle on takes a playlist change and a shuffle order change, and moves the current item.
         harness.run { harness.queueOperations.setShuffleMode(ShuffleMode.On, reshuffle = false) }
         harness.run { harness.queueOperations.setQueue(library, library.reversed(), 0) }
-        harness.settle()
 
         preferences.writes["queue_ids"] shouldBe 1
         preferences.writes["shuffle_queue_ids"] shouldBe 1
@@ -155,7 +142,7 @@ class QueueStoreTest {
         // Two runs apart, the current song among them: two removals, the second moving the current index again.
         val items = harness.queueOperations.queueStateFlow.value.items
         harness.queueOperations.remove(listOf(items[0], items[2]))
-        harness.settle()
+        harness.idle()
 
         preferences.values["queue_ids"] shouldBe listOf("2,4")
         preferences.values["shuffle_queue_ids"]?.size shouldBe 1
@@ -168,12 +155,10 @@ class QueueStoreTest {
         val harness = harness()
         harness.run { harness.queueOperations.setShuffleMode(ShuffleMode.On, reshuffle = false) }
         harness.run { harness.queueOperations.setQueue(library.take(3), listOf(library[2], library[0], library[1]), 0) }
-        harness.settle()
         preferences.values.clear()
 
         // A playlist change, which places the new song in the shuffled order as the player sees fit, then the order it takes.
         harness.run { harness.queueOperations.addToNext(listOf(library[3])) }
-        harness.settle()
 
         preferences.values["queue_ids"] shouldBe listOf("1,2,3,4")
         preferences.values["shuffle_queue_ids"] shouldBe listOf("3,4,1,2")
@@ -186,7 +171,7 @@ class QueueStoreTest {
         preferences.values.clear()
 
         harness.queueOperations.move(0, 2)
-        harness.settle()
+        harness.idle()
 
         preferences.values["queue_ids"] shouldBe listOf("2,3,1")
         preferences.values["queue_position"] shouldBe listOf(2)
@@ -199,7 +184,7 @@ class QueueStoreTest {
         preferences.values.clear()
 
         harness.queueOperations.clear()
-        harness.settle()
+        harness.idle()
 
         preferences.values["queue_ids"] shouldBe listOf("")
         preferences.values["queue_position"] shouldBe listOf(-1)
@@ -211,7 +196,7 @@ class QueueStoreTest {
 
         harness.run { harness.queueOperations.setShuffleMode(ShuffleMode.On, reshuffle = false) }
         harness.queueOperations.setRepeatMode(RepeatMode.One)
-        harness.settle()
+        harness.idle()
 
         saved.shuffleMode shouldBe ShuffleMode.On
         saved.repeatMode shouldBe RepeatMode.One
@@ -223,7 +208,6 @@ class QueueStoreTest {
         harness.run { harness.queueOperations.setShuffleMode(ShuffleMode.On, reshuffle = false) }
 
         harness.run { harness.queueOperations.setQueue(library.take(3), listOf(library[2], library[0], library[1]), 2) }
-        harness.settle()
 
         saved.shuffleQueueIds shouldBe "3,1,2"
         saved.queuePosition shouldBe 2
@@ -284,7 +268,7 @@ class QueueStoreTest {
         harness.loadPaused(30_000)
 
         harness.queueOperations.clear()
-        harness.settle()
+        harness.idle()
 
         saved.queueIds shouldBe null
         saved.queuePosition shouldBe null
@@ -306,7 +290,7 @@ class QueueStoreTest {
         harness.playbackOperations.playbackStateFlow.value shouldBe PlaybackState.Playing
 
         harness.playbackOperations.pause()
-        harness.settle()
+        harness.idle()
         saved.playbackPosition shouldBe harness.playbackOperations.getProgress()
     }
 
@@ -318,7 +302,7 @@ class QueueStoreTest {
         saved.playbackPosition shouldBe 30_000
 
         harness.playbackOperations.seekTo(10_000)
-        harness.settle()
+        harness.idle()
 
         saved.playbackPosition shouldBe 10_000
     }
@@ -330,7 +314,7 @@ class QueueStoreTest {
         harness.loadPaused(30_000)
 
         harness.queueOperations.setCurrentItem(harness.queueOperations.queueStateFlow.value.items[1])
-        harness.settle()
+        harness.idle()
 
         saved.playbackPosition shouldBe null
     }
@@ -355,7 +339,7 @@ class QueueStoreTest {
         harness.playbackOperations.play()
         harness.runUntil { harness.queueOperations.queueStateFlow.value.currentPosition == 1 }
         harness.playbackOperations.pause()
-        harness.settle()
+        harness.idle()
 
         preferences.positions shouldNotContain -1
         saved.playbackPosition shouldBe harness.playbackOperations.getProgress()
@@ -374,7 +358,7 @@ class QueueStoreTest {
         harness.playbackOperations.load(30_000, skipUnloadable = false) { result = it }
         harness.runUntil { result != null }
         harness.playbackOperations.pause()
-        harness.settle()
+        harness.idle()
 
         harness.appPlayer.playbackState shouldBe Player.STATE_IDLE
         preferences.positions.distinct() shouldBe listOf(30_000)
@@ -384,10 +368,11 @@ class QueueStoreTest {
         harness.playbackOperations.play()
         harness.runUntil { harness.queueOperations.queueStateFlow.value.currentPosition == 1 }
         harness.playbackOperations.pause()
-        harness.settle()
+        harness.idle()
 
-        preferences.positions.distinct() shouldBe listOf(30_000, -1)
-        saved.playbackPosition shouldBe null
+        // The next song may have started playing before the pause, saving its start.
+        preferences.positions.distinct().take(2) shouldBe listOf(30_000, -1)
+        (saved.playbackPosition ?: 0) shouldBe 0
     }
 
     @Test
@@ -445,7 +430,6 @@ class QueueStoreTest {
         saved.nowPlaying?.songId shouldBe 2L
 
         harness.run { harness.queueOperations.addToQueue(listOf(library[3])) }
-        harness.settle()
         saved.queueIds shouldBe "1,2,3,4"
     }
 
@@ -611,11 +595,10 @@ class QueueStoreTest {
         val first = harness()
         first.run { first.queueOperations.setShuffleMode(ShuffleMode.On, reshuffle = false) }
         first.run { first.queueOperations.setQueue(library, listOf(library[2], library[0], library[3], library[1]), 1) }
-        first.settle()
         first.queueOperations.setRepeatMode(RepeatMode.One)
         first.loadPaused(20_000)
         first.playbackOperations.seekTo(15_000)
-        first.settle()
+        first.idle()
         val presented = first.currentIds()
 
         val restarted = harness()

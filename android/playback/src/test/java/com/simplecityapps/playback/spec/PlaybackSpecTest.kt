@@ -628,13 +628,15 @@ class PlaybackSpecTest {
 
     @Test
     fun `RS-34 a song reached by playing on that fails once playing stops playback`() {
-        val failing = longSong(2)
+        // Long enough that the seek lands past all the player can have buffered, so it opens the file again: what it had
+        // open it can still read after the file's gone.
+        val failing = longSong(2, durationMs = FAILING_SONG_MS)
         val failures = harness.record(playback.playbackFailureFlow)
         startPlaying(listOf(song(1, file = TONE_1S), failing, song(3)))
         harness.runUntil { queue.queueStateFlow.value.currentItem?.song == failing && (playback.getProgress() ?: 0) > 0 }
 
         deleteFile(failing)
-        playback.seekTo(LONG_SONG_MS - 10_000)
+        playback.seekTo(FAILING_SONG_MS - 10_000)
         harness.runUntil { failures.isNotEmpty() }
         harness.idle()
 
@@ -738,5 +740,10 @@ class PlaybackSpecTest {
         harness.runUntil {
             result != null && playback.getDuration() == songs.first().duration && playback.playbackStateFlow.value == PlaybackState.Paused
         }
+    }
+
+    private companion object {
+        /** Five minutes: well past the most the player buffers ahead of where it plays. */
+        const val FAILING_SONG_MS = 300_000
     }
 }

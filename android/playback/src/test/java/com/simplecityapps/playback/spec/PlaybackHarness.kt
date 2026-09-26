@@ -7,16 +7,15 @@ import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Build
-import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
-import androidx.media3.common.util.ConditionVariable
+import androidx.media3.common.util.Clock
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.test.utils.FakeClock
 import androidx.media3.test.utils.TestExoPlayerBuilder
 import androidx.media3.test.utils.robolectric.RobolectricUtil
-import androidx.media3.test.utils.robolectric.TestPlayerRunHelper
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.CallMonitor
@@ -48,6 +47,8 @@ import java.io.IOException
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
@@ -80,9 +81,13 @@ import org.robolectric.shadows.ShadowAudioTrack
  * [audioManager] (and [audioFocus], which counts them). Nothing here reaches into the engine, so the tests hold
  * across the Media3 refactor (#345).
  *
- * Everything runs on the Robolectric main looper, as it does on the main thread in production. [runUntil] turns
- * that looper (and so the player, whose clock advances whenever its threads are idle) until a condition holds.
- * The player takes and gives up audio focus on its playback thread, which [idle] waits for.
+ * Everything runs on the Robolectric main looper, as it does on the main thread in production. [idle] turns that
+ * looper and waits on the playback thread (where the player takes and gives up audio focus) until neither has anything
+ * left to do; [runUntil] also plays the player on until a condition holds.
+ *
+ * The player's clock doesn't advance by itself: it hands out the player's messages due now, in time order, and moves
+ * on only in the steps [runUntil] takes. Elsewhere, however slowly the test thread runs on a loaded machine, playback
+ * time stands still, so a playing song can't play out between two lines of a test (#521).
  */
 class PlaybackHarness(
     replayGainMode: ReplayGainMode = ReplayGainMode.Off,
@@ -181,17 +186,17 @@ class PlaybackHarness(
     /** The player the app plays through, which the media session publishes. */
     val appPlayer: Player
 
-    /** Whether the player changed whether it plays, or stopped, since the playback thread last caught up: either moves audio focus. */
-    private var focusMayChange = false
-
     /** How many times the player's playlist has changed: each change is a timeline rebuild, costing time in the queue's length. */
     var playlistChanges = 0
         private set
 
     private val playbackSettings = PlaybackSettings(SettingsStore(sharedPreferences))
 
-    /** The one clock the player and the crossfade's tail decoders run on, so their work interleaves in order. */
-    private val clock = FakeClock(true)
+    /**
+     * The one clock the player and the crossfade's tail decoders run on, so their work interleaves in order. It moves on
+     * only as [runUntil] lets it.
+     */
+    private val clock = FakeClock(false)
 
     init {
         ShadowAudioTrack.addAudioDataListener(audioDataListener)
@@ -220,18 +225,6 @@ class PlaybackHarness(
                     reason: Int
                 ) {
                     if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) playlistChanges++
-                }
-
-                override fun onPlayWhenReadyChanged(
-                    playWhenReady: Boolean,
-                    reason: Int
-                ) {
-                    focusMayChange = true
-                }
-
-                override fun onPlaybackStateChanged(playbackState: Int) {
-                    // A stopped player gives focus up; buffering and ready leave it as it is.
-                    if (playbackState == Player.STATE_IDLE) focusMayChange = true
                 }
             }
         )
@@ -263,7 +256,6 @@ class PlaybackHarness(
     fun restore() {
         queueStore.restore { positionMs -> playbackOperations.load(positionMs, skipUnloadable = false) {} }
         runUntil { queueOperations.hasRestoredQueue }
-        TestPlayerRunHelper.runUntilPendingCommandsAreFullyHandled(player)
     }
 
     /** Runs a suspending operation to completion, then lets the main looper catch up with what it started. */
@@ -273,65 +265,70 @@ class PlaybackHarness(
     fun launch(block: suspend () -> Unit): Job = scope.launch(start = CoroutineStart.UNDISPATCHED) { block() }
 
     /**
-     * Runs the main looper's due tasks, and what they hand the playback thread (such as taking or giving up audio
-     * focus), without letting playback time pass.
+     * Runs the main looper's due tasks and what they hand the playback thread (such as taking or giving up audio
+     * focus), until the player has handled them and the main looper has had the events they raised, and so on until
+     * neither has anything left to do now, without letting playback time pass.
      */
     fun idle() {
-        shadowOf(Looper.getMainLooper()).idle()
-        // Waiting on the playback thread turns the player's clock, which would play on what's playing.
-        if (!appPlayer.isPlaying && !player.isPlaying) awaitFocusChange()
+        val mainLooper = shadowOf(Looper.getMainLooper())
+        RobolectricUtil.runLooperUntil(Looper.getMainLooper(), { mainLooper.isIdle && clockIdle() }, AWAIT_TIMEOUT_MS, Clock.DEFAULT, 0)
     }
 
     /**
      * Plays on until the player reaches [positionMs] into the item at [mediaItemIndex], then runs [block] on the main
-     * thread while the playback thread waits there, so no playback time passes before what [block] asks of the player
-     * reaches it. Waiting on the position from the main thread ([runUntil]) can't stop at a point: the playback thread
-     * plays on while it's read, turning the clock, and further on a loaded machine.
+     * thread before any more playback time passes. The playback thread marks the point as it plays through it, so the
+     * step that reaches it ends there, with the main thread told of the player's state at that point.
+     *
+     * Waiting on the position from the main thread ([runUntil]) can't stop at a point: the position is the sink's, which
+     * moves on with what it has written and with wall time, not with the player's clock. For the same reason a slow step
+     * can still carry the player past the point before it gets there, rarely (#551).
      */
     fun runAt(
         mediaItemIndex: Int,
         positionMs: Long,
         block: () -> Unit
     ) {
-        val done = AtomicBoolean(false)
+        val reached = AtomicBoolean(false)
         player
-            .createMessage { _, _ ->
-                val held = ConditionVariable()
-                // Posted through the clock, behind what the playback thread has already told the main thread, so the
-                // player there is up to date when [block] runs.
-                clock.createHandler(Looper.getMainLooper(), null).post {
-                    try {
-                        block()
-                    } finally {
-                        done.set(true)
-                        held.open()
-                    }
-                }
-                clock.onThreadBlocked()
-                held.block(10_000)
-            }.setPosition(mediaItemIndex, positionMs)
+            .createMessage { _, _ -> reached.set(true) }
+            .setPosition(mediaItemIndex, positionMs)
             .send()
-        runUntil { done.get() }
+        runUntil { reached.get() }
+        block()
+        idle()
     }
 
     /**
-     * Lets the playback thread take or give up audio focus for the last change to whether the player plays, if there's
-     * been one since the last wait.
+     * Whether the player's clock has handed out every message due now and each has been handled: the clock hands them
+     * out one at a time, in time order, to the main and playback threads alike.
      */
-    private fun awaitFocusChange() {
-        if (focusMayChange) {
-            focusMayChange = false
-            TestPlayerRunHelper.runUntilPendingCommandsAreFullyHandled(player)
-        }
+    private fun clockIdle(): Boolean = synchronized(clock) {
+        val now = clockTime.get(clock) as Long
+        clockActiveLooper.get(clock) == null && (clockMessages.get(clock) as List<*>).none { (messageTime.get(it) as Long) <= now }
     }
 
-    /** Turns the main looper, playing the player on, until [condition] holds. Fails after [timeoutMs] of wall time. */
+    /**
+     * Plays the player on, a step of its clock at a time, each followed by [idle], until [condition] holds. Between
+     * steps the main looper also runs a task it has scheduled up to a second ahead, as Media3's `runMainLooperUntil`
+     * does. Fails after [timeoutMs] of wall time.
+     */
     fun runUntil(
         timeoutMs: Long = 10_000,
         condition: () -> Boolean
     ) {
-        RobolectricUtil.runMainLooperUntil({ condition() }, timeoutMs, androidx.media3.common.util.Clock.DEFAULT)
-        awaitFocusChange()
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs)
+        val mainLooper = shadowOf(Looper.getMainLooper())
+        idle()
+        while (!condition()) {
+            if (System.nanoTime() >= deadline) throw TimeoutException()
+            clock.advanceTime(STEP_MS)
+            idle()
+            val nextTask = mainLooper.nextScheduledTaskTime
+            if (!nextTask.isZero && nextTask.toMillis() <= SystemClock.elapsedRealtime() + MAIN_LOOPER_LOOKAHEAD_MS) {
+                mainLooper.runOneTask()
+                idle()
+            }
+        }
     }
 
     /**
@@ -340,10 +337,9 @@ class PlaybackHarness(
      */
     fun changeAudioFocus(focusChange: Int) {
         val request = checkNotNull(shadowOf(audioManager).lastAudioFocusRequest) { "The player hasn't asked for audio focus" }
-        Handler(player.playbackLooper).post { request.listener.onAudioFocusChange(focusChange) }
-        focusMayChange = true
-        awaitFocusChange()
-        shadowOf(Looper.getMainLooper()).idle()
+        // Through the player's clock, in order with the player's own messages.
+        clock.createHandler(player.playbackLooper, null).post { request.listener.onAudioFocusChange(focusChange) }
+        idle()
     }
 
     /**
@@ -359,7 +355,6 @@ class PlaybackHarness(
     fun unplugHeadphones() {
         context.sendBroadcast(Intent(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
         runUntil { !player.playWhenReady }
-        idle()
     }
 
     /** Every value [flow] emits from now on, collected on the main thread as production consumers do. */
@@ -392,6 +387,25 @@ class PlaybackHarness(
     }
 
     companion object {
+        /** The longest [idle] waits for the player to catch up, in wall time. */
+        private const val AWAIT_TIMEOUT_MS = 10_000L
+
+        /**
+         * FakeClock's state, which it doesn't expose: its time, the looper of the message it has out (if any), and the
+         * messages yet to go. Guarded by the clock.
+         */
+        private val clockTime = FakeClock::class.java.getDeclaredField("timeSinceBootMs").apply { isAccessible = true }
+        private val clockActiveLooper = FakeClock::class.java.getDeclaredField("activeMessageLooper").apply { isAccessible = true }
+        private val clockMessages = FakeClock::class.java.getDeclaredField("handlerMessages").apply { isAccessible = true }
+        private val messageTime =
+            Class.forName("androidx.media3.test.utils.FakeClock\$HandlerMessage").getDeclaredField("timeMs").apply { isAccessible = true }
+
+        /** How far [runUntil] moves the player's clock on at a time: the player's working interval while it plays. */
+        private const val STEP_MS = 10L
+
+        /** How far ahead [runUntil] runs a task the main looper has scheduled, moving its time on to it. */
+        private const val MAIN_LOOPER_LOOKAHEAD_MS = 1_000L
+
         /** 2 s of a 440 Hz sine at half scale, 16 kHz mono 16-bit. */
         const val TONE_2S = "tone-2s.wav"
         const val TONE_2S_MS = 2_000
