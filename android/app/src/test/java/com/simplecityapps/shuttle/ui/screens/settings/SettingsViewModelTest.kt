@@ -128,6 +128,18 @@ class SettingsViewModelTest {
     }
 
     @Test
+    fun `downloading all artwork starts the download and says so`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        val event = backgroundScope.async { viewModel.events.first() }
+        runCurrent()
+
+        viewModel.onAction(SettingsAction.DownloadAllArtwork)
+
+        event.await() shouldBe SettingsUiEvent.ArtworkDownloadStarted
+        effects.artworkDownloads shouldBe 1
+    }
+
+    @Test
     fun `copying debug logs reports the result`() = runTest(mainDispatcherRule.testDispatcher) {
         effects.copyResult = CopyDebugLogsResult.TooLarge
         val viewModel = viewModel()

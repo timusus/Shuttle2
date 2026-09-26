@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.settings
 
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
@@ -137,6 +138,32 @@ class SettingsScreenTest {
         robot.tapText("View changelog")
 
         robot.openedLinks shouldBe listOf(SettingsLink.WhatsNew)
+    }
+
+    @Test
+    fun `about opens the licences`() {
+        robot.setDestinationContent(SettingsDestination.About)
+
+        robot.tapText("View licenses")
+
+        robot.openedLinks shouldBe listOf(SettingsLink.Licences)
+    }
+
+    @Test
+    fun `playback offers keep shuffle, and USB DAC direct output only from Android 14`() {
+        robot.setDestinationContent(SettingsDestination.PlaybackAndSound, sdkInt = 33)
+
+        robot.assertDisplayed("Keep shuffle mode")
+        robot.assertNotShown("USB DAC direct output")
+    }
+
+    @Test
+    fun `USB DAC direct output toggles on Android 14`() {
+        robot.setDestinationContent(SettingsDestination.PlaybackAndSound, sdkInt = 34)
+
+        robot.tapText("USB DAC direct output")
+
+        robot.switchChanges shouldBe listOf(PlaybackSettings.UsbDacDirectOutput.key to true)
     }
 
     @Test
