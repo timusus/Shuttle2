@@ -77,11 +77,12 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `most played albums carry their play count`() {
+    fun `most played albums carry their play count, with its unit, in the subtitle`() {
         robot.setContent(HomeScenarios.content)
 
         robot.scrollTo("Soft Focus")
-        robot.assertDescriptionDisplayed("14 plays")
+        robot.assertTextDisplayed("14 plays · ${HomeScenarios.softFocus.albumArtist}")
+        robot.assertTextNotShown("14")
     }
 
     @Test

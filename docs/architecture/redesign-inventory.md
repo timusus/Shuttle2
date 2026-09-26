@@ -139,9 +139,9 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   Play next, Exclude, Edit tags, Add to playlist. `pref_show_home_on_launch` picks Home or Library
   as the start screen.
 - Gap: an empty or unplayed library gives a **blank screen** — no empty state.
-- Redesign: Home is where the zero-step empty state lives (§6). With a library: carousels
-  (M3 `HorizontalMultiBrowseCarousel`) for Recently played and Recently added, a "Jump back in"
-  hero for the last queue, then Most played / Something different. History/Latest/Favorites move
+- Redesign: Home is where the zero-step empty state lives (§6). With a library: a resume hero
+  for the last queue, then shelves (plain `LazyRow`s of ~140dp tiles; the multi-browse carousel hid
+  the art, #490) for Recently played, Recently added, Most played and Something different. History/Latest/Favorites move
   to Playlists' auto-playlist row. See owner decision 4.
 - Maestro: none.
 

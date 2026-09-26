@@ -1,25 +1,19 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.NewReleases
@@ -32,27 +26,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.carousel.HorizontalMultiBrowseCarousel
-import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.translate
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
@@ -72,6 +51,7 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
+import com.simplecityapps.shuttle.ui.screens.library.pluralString
 
 class HomeCallbacks(
     val onOpenSettings: () -> Unit = {},
@@ -143,8 +123,8 @@ private fun HomeContent(
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks) }
         }
-        albumCarousel(R.string.home_recently_played, "recently-played", content.recentlyPlayed, callbacks)
-        albumCarousel(R.string.home_recently_added, "recently-added", content.recentlyAdded, callbacks)
+        shelf(R.string.home_recently_played, "recently-played", content.recentlyPlayed) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
+        shelf(R.string.home_recently_added, "recently-added", content.recentlyAdded) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
         shelf(R.string.home_most_played, "most-played", content.mostPlayed) { album -> AlbumTile(album, callbacks, showPlayCount = true) }
         shelf(R.string.home_something_different, "something-different", content.somethingDifferent) { artist -> ArtistTile(artist, callbacks) }
     }
@@ -178,91 +158,10 @@ private fun WhatsNewCard(callbacks: HomeCallbacks) {
 }
 
 /**
- * A multi-browse carousel of albums (inventory §3), hidden when there are none. Each album's title and artist sit below
+ * A plain horizontally scrolling row of [GridTile]s, hidden when there are none. The tiles are [ShelfTileWidth] wide so
+ * about two and a half fit a phone and the cut-off one says the row scrolls (#490); each title and artist sits below
  * its cover rather than over it, where they'd clash with text printed on the art (#404).
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
-private fun LazyListScope.albumCarousel(
-    @StringRes title: Int,
-    key: String,
-    albums: List<Album>,
-    callbacks: HomeCallbacks,
-) {
-    if (albums.isEmpty()) return
-    item(key = "$key:header") { SectionHeader(title = stringResource(title)) }
-    item(key = key) {
-        HorizontalMultiBrowseCarousel(
-            state = rememberCarouselState { albums.size },
-            preferredItemWidth = CarouselCoverSize,
-            itemSpacing = 8.dp,
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            modifier = Modifier.fillMaxWidth().height(CarouselCoverSize + CarouselLabelHeight),
-        ) { index ->
-            val album = albums[index]
-            val title = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown)
-            val artist = album.albumArtist ?: album.friendlyArtistName ?: stringResource(com.simplecityapps.core.R.string.unknown)
-            val coverShape = MaterialTheme.shapes.extraLarge
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    // The mask spans the cover and its label; the cover rounds its own visible part below.
-                    .maskClip(RectangleShape)
-                    .combinedClickable(
-                        onClick = { callbacks.onAlbumClick(album) },
-                        onLongClick = { callbacks.onShowActions(MediaActionsTarget(title, artist, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
-                    ),
-            ) {
-                LibraryArtwork(
-                    album,
-                    ArtworkPlaceholder.Album,
-                    Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                        .graphicsLayer {
-                            val mask = carouselItemDrawInfo.maskRect
-                            shape = HorizontalSliceShape(coverShape, mask.left, mask.right)
-                            clip = true
-                        },
-                    size = ArtworkSize.Hero,
-                )
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(CarouselLabelHeight)
-                        // Keep the label at the visible edge and fade it out as the item shrinks toward small.
-                        .graphicsLayer {
-                            val info = carouselItemDrawInfo
-                            translationX = info.maskRect.left
-                            alpha = if (info.maxSize > info.minSize) ((info.size - info.minSize) / (info.maxSize - info.minSize)).coerceIn(0f, 1f).let { it * it } else 1f
-                        }
-                        .padding(start = 4.dp, end = 4.dp, top = 8.dp),
-                ) {
-                    Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(artist, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-            }
-        }
-    }
-}
-
-private val CarouselCoverSize = 200.dp
-
-/** Room below a carousel cover for its title and artist, one line each. */
-private val CarouselLabelHeight = 48.dp
-
-/** [shape] fitted to the horizontal slice [left]..[right] of the bounds, their full height: a carousel item's visible part. */
-private class HorizontalSliceShape(private val shape: Shape, private val left: Float, private val right: Float) : Shape {
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val offset = Offset(left, 0f)
-        return when (val outline = shape.createOutline(Size(right - left, size.height), layoutDirection, density)) {
-            is Outline.Rectangle -> Outline.Rectangle(outline.rect.translate(offset))
-            is Outline.Rounded -> Outline.Rounded(outline.roundRect.translate(offset))
-            is Outline.Generic -> Outline.Generic(Path().apply { addPath(outline.path, offset) })
-        }
-    }
-}
-
-/** A horizontally scrolling row of [GridTile]s, hidden when there are none. */
 private fun <T> LazyListScope.shelf(
     @StringRes title: Int,
     key: String,
@@ -286,17 +185,14 @@ private fun AlbumTile(
 ) {
     val title = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown)
     val artist = album.albumArtist ?: album.friendlyArtistName ?: stringResource(com.simplecityapps.core.R.string.unknown)
+    // The play count leads, so a long artist name is what gets cut short.
+    val subtitle = if (showPlayCount) listOf(pluralString(R.plurals.home_play_count, album.playCount), artist).joinToString(" · ") else artist
     GridTile(
         title = title,
-        subtitle = artist,
+        subtitle = subtitle,
         onClick = { callbacks.onAlbumClick(album) },
         onLongClick = { callbacks.onShowActions(MediaActionsTarget(title, artist, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
-        artwork = {
-            Box {
-                LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid)
-                if (showPlayCount) PlayCountBadge(album.playCount, Modifier.align(Alignment.TopEnd).padding(6.dp))
-            }
-        },
+        artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
     )
 }
 
@@ -316,21 +212,4 @@ private fun ArtistTile(
     )
 }
 
-@Composable
-private fun PlayCountBadge(
-    playCount: Int,
-    modifier: Modifier = Modifier,
-) {
-    val description = pluralStringResource(R.plurals.home_play_count, playCount, playCount)
-    Text(
-        text = playCount.toString(),
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onPrimary,
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.primary, CircleShape)
-            .padding(horizontal = 8.dp, vertical = 2.dp)
-            .semantics { contentDescription = description },
-    )
-}
-
-private val ShelfTileWidth = 148.dp
+private val ShelfTileWidth = 140.dp
