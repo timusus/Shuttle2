@@ -10,8 +10,8 @@ import timber.log.Timber
  * The player the app plays through: [localPlayer] until Cast is attached, then the Cast player built around it, which
  * hands playback to and from a receiver (see [com.simplecityapps.playback.chromecast.CastQueue]).
  *
- * Cast comes later because setting it up reaches into Play services on the main thread, which the app's start (and
- * any process started only in the background, for a library scan, a widget update or Android Auto) shouldn't wait on
+ * Cast comes later because setting it up reaches into Play services on the main thread, which the app's start shouldn't
+ * wait on, and a process started only in the background for a library scan or a widget update doesn't need at all
  * (see [CastStarter]). The Cast player plays through the same [localPlayer] until a Cast session starts, so moving onto
  * it changes nothing its listeners see: they stay on this player throughout.
  *

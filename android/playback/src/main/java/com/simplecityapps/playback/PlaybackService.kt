@@ -78,6 +78,9 @@ class PlaybackService : MediaLibraryService() {
     @Inject
     lateinit var artworkSettings: ArtworkSettings
 
+    @Inject
+    lateinit var castStarter: CastStarter
+
     private val packageValidator: PackageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
 
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -128,6 +131,8 @@ class PlaybackService : MediaLibraryService() {
         }
         addSession(session)
         callback.launchMediaButtonUpdates(session)
+        // A session started with no activity (Android Auto, a media button) casts too.
+        castStarter.startForSession()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession = session
