@@ -12,7 +12,7 @@
         tools:targetApi="n">
 
         <service
-            android:name=".shuttle.imageloading.ArtworkDownloadService"
+            android:name=".ArtworkDownloadService"
             android:label="Artwork service" />
 
     </application>

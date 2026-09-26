@@ -5,8 +5,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.TransactionTooLargeException
-import au.com.simplecityapps.shuttle.imageloading.ArtworkDownloadService
-import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.simplecityapps.imageloading.ArtworkDownloadService
+import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.mediaprovider.worker.ImportFrequency

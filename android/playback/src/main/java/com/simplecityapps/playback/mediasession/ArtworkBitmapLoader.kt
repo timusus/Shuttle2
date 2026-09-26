@@ -13,10 +13,10 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.util.BitmapLoader
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
-import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
+import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.playback.R
 import com.simplecityapps.playback.getArtworkCacheKey
 import com.simplecityapps.shuttle.model.Song

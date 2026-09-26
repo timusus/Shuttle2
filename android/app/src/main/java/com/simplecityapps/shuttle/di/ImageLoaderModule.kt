@@ -1,8 +1,8 @@
 package com.simplecityapps.shuttle.di
 
 import android.content.Context
-import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import com.simplecityapps.imageloading.ArtworkImageLoader
+import com.simplecityapps.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider

@@ -14,9 +14,9 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
-import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PackageValidator
 import com.simplecityapps.playback.mediasession.ArtworkBitmapLoader

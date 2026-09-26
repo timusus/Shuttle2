@@ -4,8 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.widget.ImageView
-import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.palette.ColorSet
+import com.simplecityapps.imageloading.ArtworkImageLoader
+import com.simplecityapps.imageloading.palette.ColorSet
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.SongPathRemap

@@ -1,7 +1,7 @@
 package com.simplecityapps.playback.di
 
 import android.content.Context
-import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.chromecast.CastService

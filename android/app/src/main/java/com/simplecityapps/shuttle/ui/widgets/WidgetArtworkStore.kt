@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.widgets
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Build
-import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.playback.getArtworkCacheKey
 import com.simplecityapps.shuttle.model.Song
 import dagger.hilt.android.qualifiers.ApplicationContext

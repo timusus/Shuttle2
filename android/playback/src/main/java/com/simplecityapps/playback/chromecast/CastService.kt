@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
-import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.query.SongQuery
 import java.io.File
