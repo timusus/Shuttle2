@@ -15,6 +15,7 @@ import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
 import com.simplecityapps.shuttle.ui.preview.toGenre
 import com.simplecityapps.shuttle.ui.preview.toPlaylist
 import com.simplecityapps.shuttle.ui.preview.toSong
+import com.simplecityapps.shuttle.ui.sampleSeed
 import com.simplecityapps.shuttle.ui.screens.library.albums.readyAlbumList
 import com.simplecityapps.shuttle.ui.screens.library.playlists.readyPlaylistList
 import com.simplecityapps.shuttle.ui.screens.library.songs.readySongList
@@ -120,6 +121,16 @@ class LibraryScreenshotTest {
         shot("phone-album-detail")
     }
 
+    /** Colour from artwork on: the cover's seed tints the whole screen (#496). */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneAlbumDetailArtworkTint() {
+        val album = SampleLibrary.album("phase-garden")
+        val tracks = album.songs.map { it.toSong() }
+        detail.setAlbum(readyAlbumDetail(album = album.toAlbum(), songs = tracks, currentSong = tracks[1]).copy(seed = sampleSeed(album.title)))
+        shot("phone-album-detail-artwork-tint")
+    }
+
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneArtistDetail() {
@@ -135,6 +146,19 @@ class LibraryScreenshotTest {
             ),
         )
         shot("phone-artist-detail")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneArtistDetailArtworkTint() {
+        val artist = SampleLibrary.artist("Juniper Static")
+        val artistSongs = artist.albums.flatMap { album -> album.songs.map { it.toSong() } }
+        val artistAlbums = artist.albums.map { album -> albumOf(album.songs.map { it.toSong() }, year = album.year) }
+        detail.setAlbumArtist(
+            readyAlbumArtistDetail(artist = artist.toAlbumArtist(), songs = artistSongs, albums = artistAlbums)
+                .copy(seed = sampleSeed(artist.albums.maxBy { it.year }.title)),
+        )
+        shot("phone-artist-detail-artwork-tint")
     }
 
     @Test

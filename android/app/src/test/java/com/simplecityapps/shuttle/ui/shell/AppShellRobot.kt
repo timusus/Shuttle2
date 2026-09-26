@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.shell
 
-import android.graphics.BitmapFactory
 import androidx.activity.ComponentActivity
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.adaptive.Posture
@@ -53,10 +52,7 @@ import androidx.window.core.layout.computeWindowSizeClass
 import com.simplecityapps.createSong
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
-import com.simplecityapps.shuttle.designsystem.theme.extractSeedColor
-import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -64,6 +60,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.preview.sampleSongs
+import com.simplecityapps.shuttle.ui.sampleSeed
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
@@ -128,12 +125,6 @@ fun sampleShellQueue(
     }
     val current = rows[playing]
     return PlayerUiState(hasQueue = true, current = current, items = rows, seed = sampleSeed(current.album.orEmpty()))
-}
-
-/** The seed the player would extract from the sample album [title]'s cover. */
-private fun sampleSeed(title: String): ArtworkSeed {
-    val bytes = SampleLibrary.albumNamed(title)?.let { SampleLibrary.coverBytes(it.id) } ?: return ArtworkSeed.None
-    return extractSeedColor(BitmapFactory.decodeByteArray(bytes, 0, bytes.size))?.let(ArtworkSeed::Available) ?: ArtworkSeed.None
 }
 
 val EmptyShellQueue = PlayerUiState(hasQueue = false, current = null, items = emptyList())
