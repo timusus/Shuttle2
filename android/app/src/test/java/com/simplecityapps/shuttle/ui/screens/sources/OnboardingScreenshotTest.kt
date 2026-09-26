@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
@@ -74,15 +73,6 @@ class OnboardingScreenshotTest {
 
     @Test
     fun sources() = shot("sources") {
-        val uiState = SourcesUiState(
-            thisDevice = true,
-            folders = FolderLists(
-                excludes = listOf(SourceFolder(uri = null, path = "/storage/emulated/0/Recordings", name = "Recordings")),
-                extras = listOf(SourceFolder(uri = "content://tree/Audiobooks", path = "/storage/emulated/0/Audiobooks", name = "Audiobooks")),
-            ),
-            servers = ServerTypes.map { ServerSource(it, connected = it == MediaProviderType.Jellyfin) },
-        )
-        val actions = SourcesActions(onThisDeviceChange = {}, onAddFolder = {}, onRescan = {}, onServerClick = {}, onShowDialog = {})
         SettingsDestinationScreen(
             screen = SettingsCatalog.screen(SettingsDestination.Sources),
             uiState = SettingsUiState(),
@@ -92,7 +82,7 @@ class OnboardingScreenshotTest {
             onSliderChange = { _, _ -> },
             onAction = {},
             onOpenLink = {},
-            leadingContent = { sourcesContent(uiState, actions) },
+            leadingContent = { sourcesContent(SourcesScenarios.configured, SourcesScenarios.noActions) },
         )
     }
 

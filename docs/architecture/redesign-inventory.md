@@ -460,25 +460,25 @@ Audited against the code on 2026-09-26: [parity-audit.md](parity-audit.md) maps 
 - [ ] Search: artists/albums/songs, fuzzy ranking, filter chips persisted, shared-element open — gap #431
 - [x] Home sections and Shuffle all
 - [ ] Mini player: progress, play/pause, skip, long-press seek — gap #430
-- [ ] Now Playing: artwork swipe skip, shuffle, repeat ×3, seek, long-press seek, audiobook seek buttons, artist/album links, Cast, lyrics, favorite, clear queue — gaps #473, #430, #429
-- [ ] Queue: tap to play, reorder, remove, Play next, scroll to current, save as playlist, clear — gap #472
+- [ ] Now Playing: artwork swipe skip, shuffle, repeat ×3, seek, long-press seek, audiobook seek buttons, artist/album links, Cast, lyrics, favorite, clear queue — gaps #430, #429 (#473 fixed)
+- [x] Queue: tap to play, reorder, remove, Play next, scroll to current, save as playlist, clear (#472)
 - [x] Sleep timer: presets, play to end of track, live countdown, stop
 - [ ] EQ: on/off, presets, custom bands, ReplayGain mode, pre-amp, frequency response — gap #432
 - [x] USB DAC direct output (API 34+), Keep shuffle on new queue
 - [x] Permission in context on API 23–32 (`READ_EXTERNAL_STORAGE`) and 33+ (`READ_MEDIA_AUDIO`), incl. permanent denial
-- [ ] Local scan without folder picking; optional include/exclude folders; revoked grant surfaced — gap #479
-- [ ] Rescan now, rescan frequency, last scan date; scan progress and failures visible — gap #474
+- [x] Local scan without folder picking; optional include/exclude folders; revoked grant surfaced (#479)
+- [x] Rescan now, rescan frequency, last scan date; scan progress and failures visible (#474)
 - [x] Excluded items: view, restore one, clear all
 - [x] Jellyfin, Emby, Plex: connect, edit, remember password, errors with retry, remove source (cleans queue and library), report playback
 - [x] Theme, pure black, accent, dynamic colour, Home-or-Library on launch
 - [x] Artwork: Wi-Fi only, local only, clear cache, download all, media session artwork
 - [x] Widget opacity, both widget sizes still update
-- [ ] Crash reporting and analytics toggles; Remote Config still refreshes as decided — gap #476
+- [x] Crash reporting and analytics toggles; Remote Config still refreshes as decided (#476)
 - [x] File logging, copy logs (the debug live log is dropped on purpose, #471: logcat covers it)
 - [x] Changelog reachable; licences
-- [ ] Purchase (Lifetime, Annual, Monthly plan cards), thank-you, promo code path (visible in Settings > S2 Pro), review prompt — gap #418
+- [ ] Purchase (Lifetime and Annual plan cards; no monthly plan, per #380), thank-you, promo code path (visible in Settings > S2 Pro), review prompt — gap #418
 - [x] Grandfathering: all 5 legacy product IDs (monthly, yearly, yearly_low, iap_full_version, iap_full_version_low) still grant Pro
-- [ ] Server trial: starts on first server connection, 14 days no card, trial chip in Library top bar for the last 3 days — gap #418
+- [ ] Server trial: starts on the first server stream or download (#488), 14 days no card, trial chip in Library top bar for the last 3 days — gap #418
 - [x] Paywall entry points: add-server (before connecting), trial end (on tapping play on a remote song), Settings > S2 Pro
 - [x] Intents: play-from-search, VIEW audio file, default music app; Toggle playback shortcut
 - [x] Android Auto browse and playback; Cast connect from Now Playing

@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
@@ -16,6 +17,8 @@ import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsScre
 import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsUiState
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
+import com.simplecityapps.shuttle.ui.screens.sources.SourcesScenarios
+import com.simplecityapps.shuttle.ui.screens.sources.sourcesContent
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import java.io.File
@@ -53,7 +56,8 @@ class SettingsScreenshotTest {
 
     private fun destination(
         destination: SettingsDestination,
-        uiState: SettingsUiState = SettingsUiState()
+        uiState: SettingsUiState = SettingsUiState(),
+        leadingContent: LazyListScope.() -> Unit = {}
     ): @Composable () -> Unit = {
         SettingsDestinationScreen(
             screen = SettingsCatalog.screen(destination),
@@ -64,7 +68,8 @@ class SettingsScreenshotTest {
             onSliderChange = { _, _ -> },
             onAction = {},
             onOpenLink = {},
-            versionName = "2026.09.25"
+            versionName = "2026.09.25",
+            leadingContent = leadingContent
         )
     }
 
@@ -81,7 +86,10 @@ class SettingsScreenshotTest {
     fun playbackAndSound() = shot("playback-and-sound", content = destination(SettingsDestination.PlaybackAndSound))
 
     @Test
-    fun sources() = shot("sources", content = destination(SettingsDestination.Sources))
+    fun sources() = shot(
+        "sources",
+        content = destination(SettingsDestination.Sources) { sourcesContent(SourcesScenarios.configured, SourcesScenarios.noActions) }
+    )
 
     @Test
     fun library() = shot("library", content = destination(SettingsDestination.Library, SettingsScenarios.scannedWeekly))

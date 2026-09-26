@@ -1,6 +1,8 @@
 # Monetisation model for the redesign
 
-Status: recommendation, 2026-09-25. Nothing here is implemented yet.
+Status: implemented, 2026-09-26. The entitlement layer (`:android:trial`), the server gates and the paywall
+landed with c6066b1d3; the trial starts on the first server stream or download (#488). Sections 1 to 5 are
+the reasoning behind it and read as the original recommendation.
 
 ## Decisions (2026-09-25)
 
@@ -171,7 +173,7 @@ Also expect the "Shuttle+ was abandoned" crowd to reappear in reviews. Draft rep
   - Only the remote-provider playback path and the add-server flow read it. Playback speed never does.
   - Delete `TrialInitializer`'s speed code, `TrialState.Expired.multiplier`, the `pricing_tier` Remote Config key and the `_low` switch.
 - **Server-side verification** isn't needed at this scale. If fraud shows up, verify through the existing `api.shuttlemusicplayer.app` backend using the Play Developer API and Real-time Developer Notifications.
-- **Bug to fix in any case:** `processPurchases` ignores `purchaseState`, so a PENDING purchase unlocks the app today.
+- **Bug to fix in any case (fixed):** `processPurchases` ignored `purchaseState`, so a PENDING purchase unlocked the app. `PlayBilling` now counts only PURCHASED purchases.
 
 ## 6. Measuring it
 
