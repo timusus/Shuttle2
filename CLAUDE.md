@@ -62,8 +62,11 @@ back to plain `./gradlew` when it isn't installed.
 # (never queues for the box; --box / --local force one — see .claude/rules/android.md)
 ./support/scripts/remote-build.sh -q :android:app:assembleDebug
 
-# Landing verify: one invocation on the Mac. Each module's tests run once, in Roborazzi verify
-# mode, so a golden mismatch fails the same task as a test failure (docs/testing/strategy.md)
+# Landing: the scoped check. Affected modules only (plus Roborazzi verify when a Composable changed)
+./support/scripts/unit-test --changed && ./support/scripts/remote-build.sh --local -q :android:app:assembleDebug
+
+# Full verify: on demand, or for build-config/cross-module changes. Each module's tests
+# run once, in Roborazzi verify mode (docs/testing/strategy.md)
 ./support/scripts/remote-build.sh --local -q testDebugUnitTest :android:app:assembleDebug :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug
 
 # Lint (KTLint)

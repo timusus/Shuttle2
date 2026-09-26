@@ -43,7 +43,7 @@ Rules of thumb:
 
 ## Baseline
 
-The landing verify is one Gradle invocation on the Mac (#552):
+The full verify is one Gradle invocation on the Mac (#552). Landings run the scoped check in the table below; this runs on demand:
 
 ```bash
 support/scripts/remote-build.sh --local -q testDebugUnitTest :android:app:assembleDebug \
@@ -184,7 +184,8 @@ Considered and not worth it now:
 | When | Runs | Why |
 |---|---|---|
 | While iterating | `support/scripts/unit-test --changed-tests` (falls back to `--changed`'s module-level mapping, or the full suite, per `.claude/rules/testing.md`), plus `verifyRoborazziDebug --tests` for the screens touched | Only the test classes exercising the changed files, not a whole module (#552) |
-| **Landing verify** (every push to main) | One Mac invocation (`remote-build.sh --local`): `testDebugUnitTest :android:app:assembleDebug :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug` | Catches behaviour, compile and golden breaks with each suite run once; `verifyModuleLayers` comes via architecture-tests |
+| **Landing** (only when the change has behaviour to verify: an icon, copy, docs or asset change needs a compile at most) | `support/scripts/unit-test --changed` (affected modules, plus Roborazzi verify when a Composable changed) and `:android:app:assembleDebug` | Enough to land while iterating; breakage the scope misses is caught by the owner's manual testing and fixed forward |
+| **Full verify** (on demand, and for build-config or cross-module changes) | One invocation: `testDebugUnitTest :android:app:assembleDebug :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug` (the Baseline above) | Catches behaviour, compile and golden breaks across every module; `verifyModuleLayers` comes via architecture-tests |
 | Nightly (GitHub Actions, scheduled) | `:android:app:lintDebug`, report uploaded as an artifact (`.github/workflows/lint-nightly.yml`) | Lint today is a report, not a gate (#537) |
 | Nightly or weekly (box, off-peak) | The uncached full verify for timing drift, the `@Ignore("measurement")` benchmarks, the `*BenchmarkTest` classes (`-Ps2.runBenchmarks=true`, #535) | Catches drift the landing verify no longer runs |
 | Batched device pass | `emu-verify.sh --suite` smoke set, `docs/testing/device-checks.md` | Platform-only behaviour (#452 pattern) |
