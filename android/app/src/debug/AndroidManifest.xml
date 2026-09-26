@@ -64,6 +64,17 @@
             </intent-filter>
         </receiver>
 
+        <!-- Overrides the resolved entitlement (Free/Trial/Pro) for paywall UI checks on the emulator,
+             without a real purchase or trial (#418). Same DUMP guard as above. -->
+        <receiver
+            android:name=".debug.DebugEntitlementReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.simplecityapps.shuttle.debug.SET_ENTITLEMENT" />
+            </intent-filter>
+        </receiver>
+
         <!-- The design system catalogue (#374): boards for review on device, with motion, touch
              and dynamic colour. Debug builds only. No LAUNCHER category: a second launcher activity
              takes over the package's default launch intent, which Maestro's launchApp uses (#392).

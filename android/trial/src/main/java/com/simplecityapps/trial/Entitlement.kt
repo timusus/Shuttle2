@@ -42,3 +42,24 @@ enum class ProSource {
     /** Debug builds are always Pro. */
     Debug
 }
+
+/**
+ * A debug-build-only override of the resolved [Entitlement], for exercising paywall UI on the emulator
+ * without a real purchase or trial. Set through [EntitlementRepository.setDebugOverride], driven by
+ * `DebugEntitlementReceiver` (`android/app/src/debug`).
+ */
+enum class DebugEntitlementOverride {
+    /** No override: debug builds resolve their normal always-Pro entitlement. */
+    None,
+    Free,
+    Trial,
+    Pro
+}
+
+/** The [Entitlement] this override stands in for, or null for [DebugEntitlementOverride.None]. */
+internal fun DebugEntitlementOverride.toEntitlement(now: Instant): Entitlement? = when (this) {
+    DebugEntitlementOverride.None -> null
+    DebugEntitlementOverride.Free -> Entitlement.Free(trialUsed = false)
+    DebugEntitlementOverride.Trial -> Entitlement.Trial(now + Entitlement.TRIAL_LENGTH)
+    DebugEntitlementOverride.Pro -> Entitlement.Pro(ProSource.Debug)
+}

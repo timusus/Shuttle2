@@ -34,11 +34,11 @@ class EntitlementRepositoryTest {
     private val store = FakeStore()
     private val analytics = mockk<MonetisationAnalytics>(relaxed = true)
 
-    private fun TestScope.repository(): EntitlementRepository {
+    private fun TestScope.repository(isDebug: Boolean = false): EntitlementRepository {
         val clock = object : Clock {
             override fun now(): Instant = start + testScheduler.currentTime.milliseconds
         }
-        return EntitlementRepository(owned, store, analytics, clock, backgroundScope, isDebug = false).also { runCurrent() }
+        return EntitlementRepository(owned, store, analytics, clock, backgroundScope, isDebug).also { runCurrent() }
     }
 
     private fun purchase(
@@ -174,5 +174,32 @@ class EntitlementRepositoryTest {
         owned.value = emptySet()
         runCurrent()
         assertNull(store.cachedPro)
+    }
+
+    @Test
+    fun `a debug override replaces the resolved entitlement`() = runTest {
+        val repository = repository(isDebug = true)
+        assertEquals(Entitlement.Pro(ProSource.Debug), repository.entitlement.value)
+
+        repository.setDebugOverride(DebugEntitlementOverride.Free)
+        runCurrent()
+        assertEquals(Entitlement.Free(trialUsed = false), repository.entitlement.value)
+
+        repository.setDebugOverride(DebugEntitlementOverride.Trial)
+        runCurrent()
+        assertEquals(Entitlement.Trial(start + 14.days), repository.entitlement.value)
+
+        repository.setDebugOverride(DebugEntitlementOverride.Pro)
+        runCurrent()
+        assertEquals(Entitlement.Pro(ProSource.Debug), repository.entitlement.value)
+
+        repository.setDebugOverride(DebugEntitlementOverride.None)
+        runCurrent()
+        assertEquals(Entitlement.Pro(ProSource.Debug), repository.entitlement.value)
+    }
+
+    @Test(expected = IllegalStateException::class)
+    fun `a debug override can only be set on a debug build`() = runTest {
+        repository(isDebug = false).setDebugOverride(DebugEntitlementOverride.Pro)
     }
 }

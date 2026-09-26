@@ -38,12 +38,13 @@ class EntitlementRepository(
 ) {
     private val trialStartedAt = MutableStateFlow(store.serverTrialStartedAt)
     private val trialMutex = Mutex()
+    private val debugOverride = MutableStateFlow(DebugEntitlementOverride.None)
 
     val entitlement: StateFlow<Entitlement> =
-        combine(owned, trialStartedAt) { owned, trialStartedAt -> owned to trialStartedAt }
-            .transformLatest { (owned, trialStartedAt) ->
+        combine(owned, trialStartedAt, debugOverride) { owned, trialStartedAt, override -> Triple(owned, trialStartedAt, override) }
+            .transformLatest { (owned, trialStartedAt, override) ->
                 while (true) {
-                    val entitlement = resolveEntitlement(owned, store.cachedPro, trialStartedAt, clock.now(), isDebug)
+                    val entitlement = override.toEntitlement(clock.now()) ?: resolveEntitlement(owned, store.cachedPro, trialStartedAt, clock.now(), isDebug)
                     emit(entitlement)
                     // Re-resolve when the trial runs out, so collectors see it expire.
                     if (entitlement !is Entitlement.Trial) break
@@ -51,7 +52,11 @@ class EntitlementRepository(
                 }
             }
             .onEach { Timber.i("Entitlement: $it") }
-            .stateIn(coroutineScope, SharingStarted.Eagerly, resolveEntitlement(owned.value, store.cachedPro, trialStartedAt.value, clock.now(), isDebug))
+            .stateIn(
+                coroutineScope,
+                SharingStarted.Eagerly,
+                debugOverride.value.toEntitlement(clock.now()) ?: resolveEntitlement(owned.value, store.cachedPro, trialStartedAt.value, clock.now(), isDebug)
+            )
 
     init {
         // Remember Pro from Play, so a Pro user stays Pro for a while if Play is unreachable on a later launch.
@@ -76,5 +81,11 @@ class EntitlementRepository(
         trialStartedAt.value = now
         analytics.trialStarted()
         return true
+    }
+
+    /** Debug builds only: overrides the resolved entitlement for testing paywall UI. */
+    fun setDebugOverride(override: DebugEntitlementOverride) {
+        check(isDebug) { "Debug entitlement override is only for debug builds." }
+        debugOverride.value = override
     }
 }

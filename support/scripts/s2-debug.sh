@@ -14,6 +14,7 @@
 #   support/scripts/s2-debug.sh SLEEP_TIMER --el seconds 3 [--ez play_to_end true]  start the sleep timer
 #   support/scripts/s2-debug.sh DUMP_STATE                 print the state as one JSON line
 #   support/scripts/s2-debug.sh IMPORT                     reimport the library from MediaStore
+#   support/scripts/s2-debug.sh SET_ENTITLEMENT --es state free|trial|pro|real  override the resolved entitlement
 #
 # Honours ANDROID_SERIAL / ANDROID_ADB_SERVER_PORT: on a WSL lane, eval
 # "$(support/scripts/remote-emu.sh env)" first. Extras are passed to `am broadcast` verbatim.
