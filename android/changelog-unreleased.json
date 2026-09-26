@@ -80,7 +80,7 @@
       "commits": []
     },
     {
-      "text": "Playback no longer speeds up after the trial ends, and the trial reminder no longer pops up. Streaming from Jellyfin, Emby and Plex now comes with a 14-day free trial that starts the first time you play or download a song from a server, and everyone who has already bought S2 keeps full access. S2 Pro is a one-time purchase or an annual subscription",
+      "text": "Playback no longer speeds up after the trial ends, and the trial reminder no longer pops up. Streaming from Jellyfin, Emby and Plex now comes with a 14-day free trial that starts the first time you play or download a song from a server, and everyone who has already bought S2 keeps full access. S2 Pro is a one-time purchase or an annual subscription, and the S2 Pro screen says what keeps playing after the trial",
       "commits": []
     },
     {

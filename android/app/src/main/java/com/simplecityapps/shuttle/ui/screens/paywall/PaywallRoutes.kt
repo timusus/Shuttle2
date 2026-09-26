@@ -25,6 +25,8 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import com.simplecityapps.trial.Billing
@@ -46,7 +48,17 @@ data class PaywallRoute(
 
 /** The paywall's entry, for the shell's entry provider. */
 fun EntryProviderScope<NavKey>.paywallEntries(navigator: AppNavigator) {
-    entry<PaywallRoute> { route -> PaywallEntry(route.source, onClose = { navigator.back() }) }
+    entry<PaywallRoute> { route ->
+        PaywallEntry(
+            route.source,
+            onClose = { navigator.back() },
+            // Sources in place of the paywall: the user adds a server there, and their first song from it starts the trial
+            onStartTrial = {
+                navigator.back()
+                navigator.open(SettingsDestinationRoute(SettingsDestination.Sources))
+            }
+        )
+    }
 }
 
 /**
@@ -69,7 +81,9 @@ fun PaywallHost(serverAccessGate: ServerAccessGate) {
             properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
             S2AppTheme {
-                PaywallEntry(source, onClose = { activeSource = null })
+                // The gate opens this only for a user already using a server, so the trial offer just closes it: their
+                // next song from the server starts the trial.
+                PaywallEntry(source, onClose = { activeSource = null }, onStartTrial = { activeSource = null })
             }
         }
     }
@@ -87,6 +101,7 @@ interface PaywallEntryPoint {
 fun PaywallEntry(
     source: PaywallSource,
     onClose: () -> Unit,
+    onStartTrial: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val viewModel = hiltViewModel<PaywallViewModel, PaywallViewModel.Factory> { it.create(source) }
@@ -116,10 +131,15 @@ fun PaywallEntry(
             val url = "https://play.google.com/store/account/subscriptions?package=${context.packageName}"
             runCatching { uriHandler.openUri(url) }.onFailure { Timber.w(it, "No app to open $url") }
         },
+        onStartTrial = onStartTrial,
+        onOpenPrivacyPolicy = { runCatching { uriHandler.openUri(PRIVACY_POLICY_URL) }.onFailure { Timber.w(it, "No app to open $PRIVACY_POLICY_URL") } },
         modifier = modifier,
         snackbarHostState = snackbarHostState
     )
 }
+
+/** The privacy policy the Play listing links to. */
+private const val PRIVACY_POLICY_URL = "https://shuttlemusicplayer.com/privacy"
 
 @get:StringRes
 private val PaywallMessage.text: Int

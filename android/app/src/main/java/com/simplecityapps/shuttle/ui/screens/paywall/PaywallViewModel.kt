@@ -29,7 +29,7 @@ sealed interface PaywallStatus {
     /** Play hasn't answered yet, so it isn't known whether the user already owns Pro. */
     data object Checking : PaywallStatus
 
-    /** Free, and the server trial hasn't started: adding a server starts it. */
+    /** Free, and the server trial hasn't started: the first song played from a server starts it. */
     data object TrialAvailable : PaywallStatus
 
     /** Free, after the trial. */
@@ -52,6 +52,22 @@ data class PaywallUiState(
 
     /** The offer the purchase button buys, or null if there's nothing to buy yet. */
     val selectedOffer: PaywallOffer? get() = available.firstOrNull { it.plan == selectedPlan } ?: available.firstOrNull()
+
+    /** The trial comes first for a user who hasn't had it; everyone else is offered Pro. */
+    val primaryAction: PaywallPrimaryAction
+        get() = if (status == PaywallStatus.TrialAvailable) PaywallPrimaryAction.StartTrial else PaywallPrimaryAction.Purchase
+
+    /** Before and during the trial, the paywall says what stops once it ends, so the trial holds no surprise. */
+    val explainsTrialEnd: Boolean get() = status == PaywallStatus.TrialAvailable || status is PaywallStatus.Trial
+}
+
+/** What the paywall's main button does. */
+enum class PaywallPrimaryAction {
+    /** Opens Sources to add a server, whose first song played starts the trial. Buying moves to a second button. */
+    StartTrial,
+
+    /** Buys the selected plan. */
+    Purchase
 }
 
 enum class PaywallMessage {

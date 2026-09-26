@@ -20,22 +20,48 @@ class PaywallScreenTest {
     fun `a free user sees the trial offer, the benefits and every plan with its price`() {
         robot.setContent(PaywallScenarios.free)
 
-        robot.assertDisplayed("Add a Jellyfin, Emby or Plex server to start a free 14-day trial.")
+        robot.assertDisplayed(TRIAL_AVAILABLE)
+        robot.assertDisplayed(TRIAL_TERMS)
         robot.assertDisplayed("What you get")
         robot.assertDisplayed("Stream from Jellyfin, Emby and Plex")
         robot.assertDisplayed("$9.99 once")
         robot.assertDisplayed("$3.99 / year")
+        robot.assertDisplayed("Renews yearly · cancel anytime in Google Play")
         robot.assertDisplayed("Best value")
         robot.assertPlanSelected("Lifetime")
         robot.assertPlanNotSelected("Yearly")
-        robot.assertEnabled("Get S2 Pro")
     }
 
     @Test
-    fun `the trial shows the days left`() {
+    fun `a free user's main button starts the trial, and buying is the second button`() {
+        robot.setContent(PaywallScenarios.free)
+
+        robot.assertNotShown("Get S2 Pro")
+        robot.tapText("Start free trial")
+        robot.tapText("Buy now")
+
+        robot.trialStarts shouldBe 1
+        robot.purchases shouldBe 1
+    }
+
+    @Test
+    fun `the trial shows the days left, what stops after it, and offers Pro`() {
         robot.setContent(PaywallScenarios.trial)
 
         robot.assertDisplayed("9 days left in your free trial")
+        robot.assertDisplayed(TRIAL_TERMS)
+        robot.assertEnabled("Get S2 Pro")
+        robot.assertNotShown("Start free trial")
+        robot.assertNotShown("Buy now")
+    }
+
+    @Test
+    fun `the privacy policy is linked from the footer`() {
+        robot.setContent(PaywallScenarios.pro)
+
+        robot.tapText("Privacy policy")
+
+        robot.privacyPolicyTaps shouldBe 1
     }
 
     @Test
@@ -43,12 +69,13 @@ class PaywallScreenTest {
         robot.setContent(PaywallScenarios.checking)
 
         robot.assertDisplayed("Checking your purchases with Google Play…")
-        robot.assertNotShown("Add a Jellyfin, Emby or Plex server to start a free 14-day trial.")
+        robot.assertNotShown(TRIAL_AVAILABLE)
+        robot.assertNotShown(TRIAL_TERMS)
     }
 
     @Test
     fun `tapping a plan selects it, and the button buys it`() {
-        robot.setContent(PaywallScenarios.free)
+        robot.setContent(PaywallScenarios.trialEnded)
 
         robot.tapPlan("Yearly")
         robot.tapText("Get S2 Pro")
@@ -74,7 +101,8 @@ class PaywallScreenTest {
 
         robot.assertDisplayed("Lifetime")
         robot.assertShownOnEveryPlan("Loading price…")
-        robot.assertNotEnabled("Get S2 Pro")
+        robot.assertEnabled("Start free trial")
+        robot.assertNotEnabled("Buy now")
         robot.assertNotShown("Couldn't load prices")
     }
 
@@ -106,5 +134,10 @@ class PaywallScreenTest {
         robot.tapText("Manage subscription")
 
         robot.manageTaps shouldBe 1
+    }
+
+    private companion object {
+        const val TRIAL_AVAILABLE = "Try streaming from your server free for 14 days. The trial starts the first time you play a server song."
+        const val TRIAL_TERMS = "After the trial, server songs won't play until you upgrade. Downloaded songs and music on this phone keep playing."
     }
 }

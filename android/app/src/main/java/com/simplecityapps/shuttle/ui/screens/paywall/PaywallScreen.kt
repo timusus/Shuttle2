@@ -1,7 +1,9 @@
 package com.simplecityapps.shuttle.ui.screens.paywall
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,12 +12,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.CloudDownload
-import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.WorkspacePremium
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,10 +37,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.simplecityapps.mediaprovider.iconResId
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ErrorState
 import com.simplecityapps.shuttle.designsystem.component.S2Button
@@ -47,14 +51,16 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
 import com.simplecityapps.shuttle.designsystem.component.StateAction
+import com.simplecityapps.shuttle.ui.screens.sources.ServerTypes
 import com.simplecityapps.trial.PaywallOffers
 import com.simplecityapps.trial.PaywallPlan
 import com.simplecityapps.trial.ProSource
 
 /**
  * The S2 Pro paywall: where the user stands, what Pro unlocks, and the plans with Play's prices. While Play's
- * prices load or can't be loaded the plans show placeholders, and nothing can be bought. A Pro user sees their
- * status instead of the plans, and a subscriber can manage their subscription.
+ * prices load or can't be loaded the plans show placeholders, and nothing can be bought. A user who hasn't had the
+ * trial is offered it first, with buying second. A Pro user sees their status instead of the plans, and a subscriber
+ * can manage their subscription.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +72,8 @@ fun PaywallScreen(
     onRestore: () -> Unit,
     onRetry: () -> Unit,
     onManageSubscription: () -> Unit,
+    onStartTrial: () -> Unit,
+    onOpenPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
@@ -81,7 +89,7 @@ fun PaywallScreen(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item(key = "status") { StatusCard(uiState.status) }
+            item(key = "status") { StatusCard(uiState.status, uiState.explainsTrialEnd) }
             item(key = "benefits") { Benefits() }
             val status = uiState.status
             if (status is PaywallStatus.Pro) {
@@ -108,13 +116,32 @@ fun PaywallScreen(
                 }
                 item(key = "purchase") {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        S2Button(
-                            text = stringResource(R.string.paywall_purchase),
-                            onClick = onPurchase,
-                            size = S2ButtonSize.Medium,
-                            enabled = uiState.selectedOffer != null,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        when (uiState.primaryAction) {
+                            PaywallPrimaryAction.StartTrial -> {
+                                S2Button(
+                                    text = stringResource(R.string.paywall_start_trial),
+                                    onClick = onStartTrial,
+                                    size = S2ButtonSize.Medium,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                S2Button(
+                                    text = stringResource(R.string.paywall_buy_now),
+                                    onClick = onPurchase,
+                                    style = S2ButtonStyle.Outlined,
+                                    size = S2ButtonSize.Medium,
+                                    enabled = uiState.selectedOffer != null,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+
+                            PaywallPrimaryAction.Purchase -> S2Button(
+                                text = stringResource(R.string.paywall_purchase),
+                                onClick = onPurchase,
+                                size = S2ButtonSize.Medium,
+                                enabled = uiState.selectedOffer != null,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                         S2Button(
                             text = stringResource(R.string.paywall_restore),
                             onClick = onRestore,
@@ -125,12 +152,24 @@ fun PaywallScreen(
                     }
                 }
             }
+            item(key = "footer") {
+                S2Button(
+                    text = stringResource(R.string.paywall_privacy_policy),
+                    onClick = onOpenPrivacyPolicy,
+                    style = S2ButtonStyle.Text,
+                    size = S2ButtonSize.ExtraSmall,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun StatusCard(status: PaywallStatus) {
+private fun StatusCard(
+    status: PaywallStatus,
+    explainsTrialEnd: Boolean
+) {
     val text = when (status) {
         PaywallStatus.Checking -> stringResource(R.string.paywall_status_checking)
         PaywallStatus.TrialAvailable -> stringResource(R.string.paywall_status_trial_available)
@@ -150,7 +189,10 @@ private fun StatusCard(status: PaywallStatus) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(Icons.Rounded.WorkspacePremium, contentDescription = null, modifier = Modifier.size(32.dp))
-            Text(text, style = MaterialTheme.typography.bodyLarge)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(text, style = MaterialTheme.typography.bodyLarge)
+                if (explainsTrialEnd) Text(stringResource(R.string.paywall_trial_terms), style = MaterialTheme.typography.bodyMedium)
+            }
         }
     }
 }
@@ -159,22 +201,42 @@ private fun StatusCard(status: PaywallStatus) {
 private fun Benefits() {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SectionTitle(stringResource(R.string.paywall_benefits_heading))
-        Benefit(Icons.Rounded.Dns, stringResource(R.string.paywall_benefit_streaming))
-        Benefit(Icons.Rounded.CloudDownload, stringResource(R.string.paywall_benefit_downloads))
-        Benefit(Icons.Rounded.CheckCircle, stringResource(R.string.paywall_benefit_free))
+        Benefit(stringResource(R.string.paywall_benefit_streaming)) { ServerMarks() }
+        Benefit(stringResource(R.string.paywall_benefit_downloads)) { BenefitIcon(Icons.Rounded.CloudDownload) }
+        Benefit(stringResource(R.string.paywall_benefit_free)) { BenefitIcon(Icons.Rounded.CheckCircle) }
+    }
+}
+
+/** A benefit, with [leading] centred in a slot wide enough for the three server marks, so every row's text lines up. */
+@Composable
+private fun Benefit(
+    text: String,
+    leading: @Composable () -> Unit
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.width(BenefitLeadingWidth), contentAlignment = Alignment.Center) { leading() }
+        Text(text, style = MaterialTheme.typography.bodyLarge)
     }
 }
 
 @Composable
-private fun Benefit(
-    icon: ImageVector,
-    text: String
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-        Text(text, style = MaterialTheme.typography.bodyLarge)
+private fun BenefitIcon(icon: ImageVector) {
+    Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+}
+
+/** The Jellyfin, Emby and Plex marks, in their own colours. Decorative: the benefit's text names them. */
+@Composable
+private fun ServerMarks() {
+    Row(horizontalArrangement = Arrangement.spacedBy(ServerMarkSpacing)) {
+        ServerTypes.forEach { type ->
+            Image(painterResource(type.iconResId()), contentDescription = null, modifier = Modifier.size(ServerMarkSize))
+        }
     }
 }
+
+private val ServerMarkSize = 20.dp
+private val ServerMarkSpacing = 4.dp
+private val BenefitLeadingWidth = ServerMarkSize * 3 + ServerMarkSpacing * 2
 
 @Composable
 private fun SectionTitle(text: String) {
@@ -205,6 +267,14 @@ private fun Plans(
                 enabled = price != null,
                 onClick = { onSelectPlan(plan) }
             )
+            if (plan == PaywallPlan.Annual) {
+                Text(
+                    stringResource(R.string.paywall_annual_terms),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
         }
     }
 }

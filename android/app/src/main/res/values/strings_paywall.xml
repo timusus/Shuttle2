@@ -7,7 +7,9 @@
     <!-- S2 Pro screen: status while Google Play hasn't yet said whether the user owns S2 Pro (e.g. offline) -->
     <string name="paywall_status_checking">Checking your purchases with Google Play…</string>
     <!-- S2 Pro screen: status when the user has never had the server trial -->
-    <string name="paywall_status_trial_available">Add a Jellyfin, Emby or Plex server to start a free 14-day trial.</string>
+    <string name="paywall_status_trial_available">Try streaming from your server free for 14 days. The trial starts the first time you play a server song.</string>
+    <!-- S2 Pro screen: before and during the trial, what stops once it ends -->
+    <string name="paywall_trial_terms">After the trial, server songs won\'t play until you upgrade. Downloaded songs and music on this phone keep playing.</string>
     <!-- S2 Pro screen: status when the server trial has ended -->
     <string name="paywall_status_trial_ended">Your free trial has ended. Upgrade to keep streaming from your servers.</string>
     <!-- S2 Pro screen: status during the trial, e.g. '3 days left in your free trial' -->
@@ -26,6 +28,8 @@
     <string name="paywall_plans_heading">Choose a plan</string>
     <string name="paywall_plan_lifetime">Lifetime</string>
     <string name="paywall_plan_annual">Yearly</string>
+    <!-- S2 Pro screen: the renewal terms under the yearly plan -->
+    <string name="paywall_annual_terms">Renews yearly · cancel anytime in Google Play</string>
     <!-- S2 Pro screen: the lifetime plan's price, e.g. '$14.99 once' -->
     <string name="paywall_price_once"><xliff:g example="$14.99" id="price">%1$s</xliff:g> once</string>
     <!-- S2 Pro screen: badge on the lifetime plan -->
@@ -41,6 +45,12 @@
     <string name="paywall_retry">Retry</string>
     <!-- S2 Pro screen: the purchase button -->
     <string name="paywall_purchase">Get S2 Pro</string>
+    <!-- S2 Pro screen: the main button before the trial has started; opens Sources to add a server -->
+    <string name="paywall_start_trial">Start free trial</string>
+    <!-- S2 Pro screen: the purchase button before the trial has started, below Start free trial -->
+    <string name="paywall_buy_now">Buy now</string>
+    <!-- S2 Pro screen: footer link to the privacy policy -->
+    <string name="paywall_privacy_policy">Privacy policy</string>
     <string name="paywall_restore">Restore purchases</string>
     <string name="paywall_manage_subscription">Manage subscription</string>
     <string name="paywall_purchase_failed">Couldn\'t open Google Play. Please try again.</string>

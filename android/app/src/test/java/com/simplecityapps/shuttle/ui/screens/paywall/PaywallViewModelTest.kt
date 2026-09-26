@@ -64,6 +64,23 @@ class PaywallViewModelTest {
     }
 
     @Test
+    fun `a user who hasn't had the trial is offered it ahead of buying, and told what stops after it`() = runTest {
+        val viewModel = collectedViewModel()
+        viewModel.uiState.value.primaryAction shouldBe PaywallPrimaryAction.StartTrial
+        viewModel.uiState.value.explainsTrialEnd shouldBe true
+
+        entitlement.value = Entitlement.Trial(Clock.System.now() + 3.days)
+        viewModel.uiState.value.primaryAction shouldBe PaywallPrimaryAction.Purchase
+        viewModel.uiState.value.explainsTrialEnd shouldBe true
+
+        listOf(Entitlement.Free(trialUsed = true), Entitlement.Unknown).forEach {
+            entitlement.value = it
+            viewModel.uiState.value.primaryAction shouldBe PaywallPrimaryAction.Purchase
+            viewModel.uiState.value.explainsTrialEnd shouldBe false
+        }
+    }
+
+    @Test
     fun `lifetime is selected by default and a plan can be picked`() = runTest {
         val viewModel = collectedViewModel()
         viewModel.uiState.value.selectedOffer shouldBe FakeBilling.LIFETIME

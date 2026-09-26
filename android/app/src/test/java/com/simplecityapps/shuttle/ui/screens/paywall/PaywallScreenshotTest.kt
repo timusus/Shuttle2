@@ -41,7 +41,9 @@ class PaywallScreenshotTest {
                     onPurchase = {},
                     onRestore = {},
                     onRetry = {},
-                    onManageSubscription = {}
+                    onManageSubscription = {},
+                    onStartTrial = {},
+                    onOpenPrivacyPolicy = {}
                 )
             }
         }
