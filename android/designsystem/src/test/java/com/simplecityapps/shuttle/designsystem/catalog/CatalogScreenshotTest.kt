@@ -11,7 +11,10 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.roborazziEnabled
 import com.github.takahirom.roborazzi.roborazziSystemPropertyOutputDirectory
+import org.junit.Assume.assumeTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -33,6 +36,12 @@ import org.robolectric.annotation.GraphicsMode
 class CatalogScreenshotTest(private val shot: CatalogShot) {
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    // Composing all 350 boards is expensive; skip it (and the class's Robolectric sandbox start)
+    // unless Roborazzi is actually recording or verifying (#538). verifyRoborazziDebug still
+    // renders every board on every landing.
+    @Before
+    fun skipUnlessRoborazziActive() = assumeTrue(roborazziEnabled())
 
     @Test
     fun board() {

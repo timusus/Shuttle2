@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.roborazziEnabled
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
@@ -21,6 +22,7 @@ import com.simplecityapps.shuttle.ui.screens.library.playlists.readyPlaylistList
 import com.simplecityapps.shuttle.ui.screens.library.songs.readySongList
 import java.io.File
 import org.junit.After
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -48,6 +50,11 @@ class LibraryScreenshotTest {
     private val albums = SampleLibrary.albums.map { it.toAlbum() }
 
     private val songs = SampleLibrary.songs.map { it.toSong() }
+
+    // Skip the whole render (#538) unless Roborazzi is recording or verifying;
+    // verifyRoborazziDebug still renders every board on every landing.
+    @Before
+    fun skipUnlessRoborazziActive() = assumeTrue(roborazziEnabled())
 
     @Before
     fun installSampleArtwork() = SampleArtworkCoil.install(ApplicationProvider.getApplicationContext())

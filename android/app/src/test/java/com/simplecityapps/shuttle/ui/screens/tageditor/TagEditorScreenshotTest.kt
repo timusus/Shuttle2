@@ -4,11 +4,14 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.roborazziEnabled
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import java.io.File
+import org.junit.Assume.assumeTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,6 +29,11 @@ import org.robolectric.annotation.GraphicsMode
 class TagEditorScreenshotTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
+
+    // Skip the whole render (#538) unless Roborazzi is recording or verifying;
+    // verifyRoborazziDebug still renders every board on every landing.
+    @Before
+    fun skipUnlessRoborazziActive() = assumeTrue(roborazziEnabled())
 
     private fun shot(name: String, uiState: TagEditorUiState, theme: ThemeMode = ThemeMode.Light) {
         composeTestRule.setContent {

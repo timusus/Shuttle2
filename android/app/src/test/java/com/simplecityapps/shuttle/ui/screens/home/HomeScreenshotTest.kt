@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.roborazziEnabled
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.SampleArtworkCoil
@@ -15,6 +16,7 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
 import java.io.File
 import org.junit.After
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -36,6 +38,11 @@ class HomeScreenshotTest {
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     private val robot = HomeRobot(composeTestRule)
+
+    // Skip the whole render (#538) unless Roborazzi is recording or verifying;
+    // verifyRoborazziDebug still renders every board on every landing.
+    @Before
+    fun skipUnlessRoborazziActive() = assumeTrue(roborazziEnabled())
 
     @Before
     fun installSampleArtwork() = SampleArtworkCoil.install(ApplicationProvider.getApplicationContext())

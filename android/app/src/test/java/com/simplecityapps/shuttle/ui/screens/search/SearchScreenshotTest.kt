@@ -5,11 +5,13 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.github.takahirom.roborazzi.roborazziEnabled
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.SampleArtworkCoil
 import java.io.File
 import org.junit.After
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -31,6 +33,11 @@ class SearchScreenshotTest {
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     private val robot = SearchRobot(composeTestRule)
+
+    // Skip the whole render (#538) unless Roborazzi is recording or verifying;
+    // verifyRoborazziDebug still renders every board on every landing.
+    @Before
+    fun skipUnlessRoborazziActive() = assumeTrue(roborazziEnabled())
 
     @Before
     fun installSampleArtwork() = SampleArtworkCoil.install(ApplicationProvider.getApplicationContext())
