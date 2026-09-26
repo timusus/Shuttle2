@@ -3,7 +3,6 @@
 com.simplecityapps.shuttle.ui.screens.home.AnalyticsConsentViewModel -> com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 com.simplecityapps.shuttle.ui.screens.home.AnalyticsConsentViewModel -> com.simplecityapps.shuttle.settings.PrivacySettings
 com.simplecityapps.shuttle.ui.screens.home.HomeViewModel -> com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel -> com.simplecityapps.shuttle.ui.screens.sources.ScannerFolderStore
 com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel -> com.simplecityapps.playback.PlaybackOperations
 com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel -> com.simplecityapps.playback.queue.QueueOperations
 com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel -> com.simplecityapps.shuttle.ui.shell.player.ColourFromArtworkPreference

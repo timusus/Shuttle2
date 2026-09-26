@@ -27,7 +27,15 @@ class SourcesViewModelTest {
     private val importState = FakeSongImportStateProvider()
     private val entitlement = MutableStateFlow<Entitlement>(Entitlement.Free(trialUsed = false))
 
-    private fun TestScope.viewModel(mediaSources: FakeMediaSources) = SourcesViewModel(mediaSources, folderStore, importState, ServerAccessGate(entitlement)).also { viewModel ->
+    private fun TestScope.viewModel(mediaSources: FakeMediaSources) = SourcesViewModel(
+        mediaSources,
+        ObserveScannerFolders(folderStore),
+        AddScannerFolder(folderStore),
+        RemoveScannerFolder(folderStore),
+        RefreshScannerFolders(folderStore),
+        importState,
+        ServerAccessGate(entitlement),
+    ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
     }
 
@@ -85,13 +93,15 @@ class SourcesViewModelTest {
         val mediaSources = FakeMediaSources(MediaProviderType.Shuttle)
         folderStore.refused = setOf("content://cloud/Remote")
         val viewModel = viewModel(mediaSources)
-        val events = mutableListOf<SourcesEvent>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.collect(events::add) }
 
         viewModel.onFolderPicked(FolderKind.Exclude, "content://cloud/Remote")
 
-        events shouldBe listOf(SourcesEvent.FolderNotOnDevice)
+        val event = viewModel.uiState.value.events.single()
+        event.value shouldBe SourcesEvent.FolderNotOnDevice
         mediaSources.scans shouldBe 0
+
+        viewModel.onEventHandled(event.id)
+        viewModel.uiState.value.events shouldBe emptyList()
     }
 
     @Test

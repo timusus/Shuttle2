@@ -5,16 +5,14 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.ui.common.PendingEvent
+import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
 import com.simplecityapps.trial.ServerAccessGate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
@@ -31,6 +29,7 @@ data class SourcesUiState(
     /** The last scan's failure message, cleared as soon as another scan starts. */
     val scanError: String? = null,
     val servers: List<ServerSource> = ServerTypes.map { ServerSource(it, connected = false) },
+    val events: List<PendingEvent<SourcesEvent>> = emptyList(),
 )
 
 sealed interface SourcesEvent {
@@ -47,12 +46,17 @@ val ServerTypes = listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, Med
 @HiltViewModel
 class SourcesViewModel @Inject constructor(
     private val mediaSources: MediaSources,
-    private val folderStore: ScannerFolderStore,
+    observeScannerFolders: ObserveScannerFolders,
+    private val addScannerFolder: AddScannerFolder,
+    private val removeScannerFolder: RemoveScannerFolder,
+    private val refreshScannerFolders: RefreshScannerFolders,
     importState: SongImportStateProvider,
     private val serverAccessGate: ServerAccessGate,
 ) : ViewModel() {
+    private val events = PendingEvents<SourcesEvent>()
+
     val uiState: StateFlow<SourcesUiState> =
-        combine(mediaSources.enabledTypes, folderStore.folders, importState.songImportState) { types, folders, import ->
+        combine(mediaSources.enabledTypes, observeScannerFolders(), importState.songImportState, events.flow) { types, folders, import, events ->
             SourcesUiState(
                 thisDevice = types.any { it.isLocal },
                 usesAndroidProvider = MediaProviderType.MediaStore in types,
@@ -60,13 +64,11 @@ class SourcesViewModel @Inject constructor(
                 scan = (import as? SongImportState.ImportProgress)?.let { ScanProgress(it.message, it.progress?.asFloat()) },
                 scanError = (import as? SongImportState.ImportComplete)?.error,
                 servers = ServerTypes.map { ServerSource(it, connected = it in types) },
+                events = events,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SourcesUiState())
 
-    private val _events = MutableSharedFlow<SourcesEvent>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    val events: SharedFlow<SourcesEvent> = _events.asSharedFlow()
-
-    fun onResume() = folderStore.refresh()
+    fun onResume() = refreshScannerFolders()
 
     fun onThisDeviceChange(enabled: Boolean) {
         if (enabled) {
@@ -80,15 +82,15 @@ class SourcesViewModel @Inject constructor(
     /** The folder picker's result: null when it was cancelled. */
     fun onFolderPicked(kind: FolderKind, treeUri: String?) {
         if (treeUri == null) return
-        if (folderStore.add(kind, treeUri)) {
+        if (addScannerFolder(kind, treeUri)) {
             mediaSources.scan()
         } else {
-            _events.tryEmit(SourcesEvent.FolderNotOnDevice)
+            events.post(SourcesEvent.FolderNotOnDevice)
         }
     }
 
     fun onRemoveFolder(kind: FolderKind, folder: SourceFolder) {
-        folderStore.remove(kind, folder)
+        removeScannerFolder(kind, folder)
         mediaSources.scan()
     }
 
@@ -104,4 +106,6 @@ class SourcesViewModel @Inject constructor(
     }
 
     fun onRemoveServer(type: MediaProviderType) = mediaSources.disable(type)
+
+    fun onEventHandled(id: Long) = events.consume(id)
 }
