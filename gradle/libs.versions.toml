@@ -21,8 +21,6 @@ firebase-bom = "34.19.0"
 firebase-crashlytics = "3.0.8"
 fragment-ktx = "1.9.0"
 glance = "1.2.0"
-glide = "5.0.9"
-glide-compose = "1.0.0-beta10"
 google-services = "4.5.0"
 hamcrest-library = "3.0"
 hilt-android = "2.60.1"
@@ -61,8 +59,6 @@ moshi-kotlin-codegen = "1.15.2"
 nanohttpd-webserver = "2.3.1"
 navigation3 = "1.2.0"
 okhttp = "5.5.0"
-okhttp3-integration = "5.0.9"
-palette-ktx = "1.0.0"
 phrase = "1.2.0"
 play-services-cast-framework = "22.3.1"
 preference-ktx = "1.2.1"
@@ -108,7 +104,6 @@ androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtim
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle-viewmodel-compose" }
 androidx-material = { module = "androidx.compose.material:material" }
 androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
-androidx-palette-ktx = { module = "androidx.palette:palette-ktx", version.ref = "palette-ktx" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preference-ktx" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room-compiler" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room-compiler" }
@@ -133,11 +128,6 @@ firebase-analytics-ktx = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-config-ktx = { module = "com.google.firebase:firebase-config" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
-glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
-glide-annotations = { module = "com.github.bumptech.glide:annotations", version.ref = "glide" }
-glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glide" }
-glide-okhttp3Integration = { module = "com.github.bumptech.glide:okhttp3-integration", version.ref = "okhttp3-integration" }
-glide-compose = { module = "com.github.bumptech.glide:compose", version.ref = "glide-compose" }
 google-material = { module = "com.google.android.material:material", version.ref = "material" }
 google-play-services-cast-framework = { module = "com.google.android.gms:play-services-cast-framework", version.ref = "play-services-cast-framework" }
 google-review = { module = "com.google.android.play:review", version.ref = "review" }

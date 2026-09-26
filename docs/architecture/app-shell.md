@@ -359,7 +359,7 @@ AppTheme(theme, accent)                       ← user's accent, everywhere
          └─ ArtworkTheme(seed = now-playing art)          ← mini, now playing, queue, pane
 ```
 
-`ArtworkTheme(seed)` is specified in `design-language.md` §1 (MaterialKolor seed from a small Glide
+`ArtworkTheme(seed)` is specified in `design-language.md` §1 (MaterialKolor seed from a small Coil
 bitmap off the main thread, cached by artwork key; crossfade that keeps the last seed until the
 next is ready). The now-playing seed comes from `ShellViewModel` (current song → artwork key →
 seed); detail screens extract in their ViewModel.

@@ -40,7 +40,7 @@ data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:p
 | `:android:mediaprovider:local` | Room DB, DAOs, entities, `Local*Repository`, MediaStore/TagLib | Data |
 | `:android:mediaprovider:{jellyfin,emby,plex}` | HTTP services, DTOs, auth, providers | Data |
 | `:android:playback` | Media3 engine, `PlaybackFacade`, `QueueManager`, Cast, session; **depends on the three remote provider modules** (only `di/PlaybackEngineModule.kt` imports them) | Data; its operations interfaces move to domain (step 5); provider edges removed (step 2) |
-| `:android:imageloader` | Glide loaders; its unused `:emby`/`:jellyfin` edges are gone | Data (platform adapter) |
+| `:android:imageloader` | Coil artwork fetchers, keys and the app `ImageLoader`; its unused `:emby`/`:jellyfin` edges are gone | Data (platform adapter) |
 | `:android:downloads`, `:android:networking`, `:android:saf`, `:android:trial`, `:android:remote-config` | Platform services | Data |
 | `:android:core` | Shared utilities, settings, DI qualifiers | Cross-cutting |
 | `:android:designsystem` | Compose components, theme | Presentation (no domain or data deps) |

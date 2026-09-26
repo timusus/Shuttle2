@@ -117,7 +117,7 @@ batch I lands.
 
 | Function | Lines |
 |---|---:|
-| `ImageLoaderGlideModule.registerComponents` | 170 |
+| `ImageLoaderGlideModule.registerComponents` (deleted with Glide, #461) | 170 |
 | `MediaStoreMediaProvider.findSongs` | 167 |
 | Plex / Jellyfin / Emby `ConfigurationFragment.onCreateDialog` | 104 / 96 / 96 |
 | `LibraryScreen.LibraryPage` | 104 |
@@ -127,7 +127,7 @@ batch I lands.
 | `PlaylistDetailDestination` | 91 |
 | `MediaActionsHost` | 88 |
 | `PackageValidator.isKnownCaller` | 83 |
-| `GlideImageLoader.loadBitmapTarget` | 82 |
+| `GlideImageLoader.loadBitmapTarget` (deleted with Glide, #461) | 82 |
 
 **`!!` (60 in total).**
 
@@ -169,7 +169,7 @@ Batch F (#443) resolved this list:
 | `ReadyWithExpandedAlbum` (may be a preview state; check before deleting) | `app/.../library/albumartists/detail/AlbumArtistDetail.kt` | **Live** — a `@Snapshot @Preview` Roborazzi golden |
 | `isHttpError`, `isHttpServerError`, `isHttpClientError`, `isNetworkError` | `networking/.../ErrorHelper.kt` | Deleted |
 | `HighPassFilter`, `LowPassFilter` | `playback/.../dsp/equalizer/` | Deleted (whole files) |
-| `ColorSetEvaluator` | `imageloader/.../palette/ColorSet.kt` | Owned by batch G, untouched |
+| `ColorSetEvaluator` | `imageloader/.../palette/ColorSet.kt` | Deleted with Glide and the palette library (#461) |
 
 Batch F also swept `:android:app`'s Gradle dependencies for #381 leftovers and dropped three with
 no remaining callers in the module: `androidx.constraintlayout` (no layout XML uses it anymore),
@@ -260,9 +260,9 @@ should be removals only.
 - **G. Imageloader.**
   - Rename `au.com.simplecityapps.shuttle.imageloading` to `com.simplecityapps.imageloading`
     across `:android:imageloader`, plus the importers of it.
-  - Replace the `runBlocking` in the four local-artwork ModelLoaders.
-  - Clean up `ColorSet` (`!!`, `ColorSetEvaluator`).
-  - Split `ImageLoaderGlideModule.registerComponents`.
+  - Replace the `runBlocking` in the four local-artwork ModelLoaders. Done: Coil fetchers replaced them (#461).
+  - Clean up `ColorSet` (`!!`, `ColorSetEvaluator`). Done: deleted with Glide (#461).
+  - Split `ImageLoaderGlideModule.registerComponents`. Done: deleted with Glide (#461).
   - Drop the unused `emby` and `jellyfin` dependencies from `imageloader/build.gradle*`.
   - The rename touches app imports, so G commits last in the wave or rebases on the others.
 - **I. Compose list rows, menus and formatting** (clusters 3, 4, 6).

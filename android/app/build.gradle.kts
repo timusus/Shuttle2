@@ -222,11 +222,6 @@ android {
         // New fragment manager
         implementation(libs.androidx.fragment.ktx)
 
-        // Glide
-        implementation(libs.glide)
-        implementation(libs.glide.okhttp3Integration)
-        implementation(libs.glide.compose)
-
         // Coil
         implementation(libs.coil.compose)
 

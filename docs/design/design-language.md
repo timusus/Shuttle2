@@ -244,7 +244,7 @@ Every component lives in `:android:designsystem` and gets a board (§4). IDs are
   shape scales, the contrast mapping.
 - `component/`: one file per catalogue ID. Components take plain parameters and slots, never
   ViewModels, repositories or image loaders: `Artwork` takes an image slot, and `:android:app`
-  supplies the Glide-backed one.
+  supplies the Coil-backed one.
 - `catalog/`: one `@Composable` *board* per ID, rendering the states from §3 in a grid. Boards are
   shared by the screenshot tests and the on-device screen, so both show the same thing.
 - It replaces `ui/theme/` and `ui/common/components/` in `:android:app`; those are deleted when the

@@ -10,7 +10,6 @@ android {
     defaultConfig {
         minSdkVersion 23
         targetSdkVersion 36
-        consumerProguardFiles "consumer-rules.pro"
     }
 
     compileOptions {
@@ -49,8 +48,8 @@ dependencies {
     implementation libs.hilt
     ksp libs.hilt.compiler
 
-    // Palette
-    implementation libs.androidx.palette.ktx
+    // Folder artwork lists SAF document trees
+    implementation libs.androidx.documentfile
 
     // Coroutines
     implementation libs.kotlinx.coroutinesCore
@@ -59,18 +58,12 @@ dependencies {
     implementation libs.coil.core
     implementation libs.coil.network.okhttp
 
-    // Glide
-    implementation libs.glide
-    ksp libs.glide.ksp
-    implementation libs.glide.okhttp3Integration
-    implementation libs.glide.annotations
-
     implementation project(':android:domain')
 
     testImplementation libs.junit
     testImplementation libs.kotest
     // Song.date is a kotlinx.datetime.LocalDate
     testImplementation libs.kotlinx.datetime
-    // GlideUrl's static init touches android.* framework classes
+    // The fetcher tests decode through Coil and read Android framework classes
     testImplementation libs.robolectric
 }
