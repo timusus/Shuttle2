@@ -116,8 +116,9 @@ run on KSP.
 | 7 | Take timing tests out of `testDebugUnitTest` | Fewer reruns after flakes (each costs a full slot) | Small | #541 |
 
 `SearchIndexBenchmarkTest`'s wall-clock assertion (8000 ms/keystroke budget) flaked under host load
-(measured 8749 ms) independently of these levers; it's now excluded from `testDebugUnitTest` by
-default and opts back in with `-Ps2.runBenchmarks=true` (#535 — landed).
+(measured 8749 ms) independently of these levers. Every `*BenchmarkTest` (it and
+`SearchLibraryBenchmarkTest`) is now excluded from `testDebugUnitTest` by the root build script and
+opts back in with `-Ps2.runBenchmarks=true` (#535, #541 — landed).
 
 Considered and not worth it now:
 
@@ -147,7 +148,7 @@ Considered and not worth it now:
 | While iterating | `support/scripts/unit-test --changed` (`--remote-build` lets `remote-build.sh` pick the host), plus `verifyRoborazziDebug --tests` for the screens touched | Only affected tests |
 | **Landing verify** (every push to main) | `remote-build.sh` (Mac unless loaded, else a free box slot): `testDebugUnitTest :android:app:assembleDebug`. Mac: `:android:app:verifyRoborazziDebug` (consider adding designsystem's, which only CI verifies today) until #539 lets it join the box run | Catches behaviour, compile and golden breaks; `verifyModuleLayers` comes via architecture-tests |
 | Nightly (GitHub Actions, scheduled) | `:android:app:lintDebug`, report uploaded as an artifact (`.github/workflows/lint-nightly.yml`) | Lint today is a report, not a gate (#537) |
-| Nightly or weekly (box, off-peak) | The uncached full verify for timing drift, the `@Ignore("measurement")` benchmarks, `SearchIndexBenchmarkTest` (`-Ps2.runBenchmarks=true`, #535) | Catches drift the landing verify no longer runs |
+| Nightly or weekly (box, off-peak) | The uncached full verify for timing drift, the `@Ignore("measurement")` benchmarks, the `*BenchmarkTest` classes (`-Ps2.runBenchmarks=true`, #535) | Catches drift the landing verify no longer runs |
 | Batched device pass | `emu-verify.sh --suite` smoke set, `docs/testing/device-checks.md` | Platform-only behaviour (#452 pattern) |
 | External PRs (CI) | As today: lint, unit tests, Roborazzi verify, the managed-device smoke group | Owner landings bypass CI (trunk push), so CI is not on the landing path |
 

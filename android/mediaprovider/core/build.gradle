@@ -40,16 +40,6 @@ kotlin {
     }
 }
 
-// SearchIndexBenchmarkTest asserts a wall-clock budget that flakes on a loaded landing machine
-// (#535); exclude it from the default sweep and opt in with -Ps2.runBenchmarks=true.
-tasks.withType(Test).configureEach {
-    if (name == "testDebugUnitTest" && !project.hasProperty("s2.runBenchmarks")) {
-        filter {
-            excludeTestsMatching "com.simplecityapps.mediaprovider.search.SearchIndexBenchmarkTest"
-        }
-    }
-}
-
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 

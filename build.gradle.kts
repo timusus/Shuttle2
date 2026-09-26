@@ -62,6 +62,14 @@ subprojects {
         if (path == ":android:app") {
             maxParallelForks = providers.gradleProperty("s2.testForks").map(String::toInt).getOrElse(1)
         }
+
+        // *BenchmarkTest classes assert wall-clock budgets that flake on a loaded landing machine
+        // (#535, #541); keep them out of the default sweep and opt in with -Ps2.runBenchmarks=true.
+        if (name == "testDebugUnitTest" && !providers.gradleProperty("s2.runBenchmarks").isPresent) {
+            filter {
+                excludeTestsMatching("*BenchmarkTest")
+            }
+        }
     }
 
     // #402: :android:fixtures is compileOnly/debug-only; guard every module's release runtime
