@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 // Domain layer (#443, docs/architecture/layering.md): plain Kotlin models, queries and sort orders, no Android.
 plugins {
     // No version: the Kotlin Gradle plugin is already on the root classpath (via the Compose compiler plugin).
+    `java-library`
     id("org.jetbrains.kotlin.jvm")
 }
 
@@ -20,7 +21,7 @@ kotlin {
 
 dependencies {
     implementation(libs.kotlinx.datetime)
-    implementation(libs.kotlinx.coroutinesCore)
+    api(libs.kotlinx.coroutinesCore)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotest)
