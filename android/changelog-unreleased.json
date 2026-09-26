@@ -258,6 +258,10 @@
     {
       "text": "Favorites is now pinned at the top of the Playlists tab's smart playlists, matching Now Playing's heart button",
       "commits": []
+    },
+    {
+      "text": "A failed library scan now shows its error in Sources, with a tap to retry",
+      "commits": []
     }
   ]
 }

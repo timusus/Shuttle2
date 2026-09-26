@@ -176,6 +176,10 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 
 - [ ] With a library loaded, force-stop and reopen the app on 3 separate calendar days (change the device date between opens). The card appears on Home on the 3rd day, not before, and Analytics in Settings > Privacy stays off the whole time.
 
+## Sources parity (#474)
+
+- [ ] Force a scan to fail (turn off Wi-Fi mid-scan, or point a server sign-in at an unreachable host) and confirm Sources shows "Scan failed" with the error, and tapping it retries (#474).
+
 ## Redesign parity, device-only (#377, #382)
 
 The JVM-proven parts of these items are mapped in `docs/architecture/parity-audit.md`; these are what's left for a device.

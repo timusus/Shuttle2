@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.sources
 import com.simplecityapps.fakes.FakeMediaSources
 import com.simplecityapps.fakes.FakeScannerFolderStore
 import com.simplecityapps.fakes.FakeSongImportStateProvider
+import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.testing.MainDispatcherRule
 import com.simplecityapps.trial.Entitlement
@@ -125,6 +126,17 @@ class SourcesViewModelTest {
 
         viewModel.onRemoveServer(MediaProviderType.Emby)
         mediaSources.enabledTypes.value shouldBe emptyList()
+    }
+
+    @Test
+    fun `a failed scan surfaces its error, cleared by the next scan`() = runTest {
+        val viewModel = viewModel(FakeMediaSources(MediaProviderType.Shuttle))
+
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Shuttle, "Couldn't reach the server"))
+        viewModel.uiState.value.scanError shouldBe "Couldn't reach the server"
+
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Shuttle, null, null))
+        viewModel.uiState.value.scanError shouldBe null
     }
 
     @Test

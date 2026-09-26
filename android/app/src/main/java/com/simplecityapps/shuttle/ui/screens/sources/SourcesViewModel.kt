@@ -28,6 +28,8 @@ data class SourcesUiState(
     val usesAndroidProvider: Boolean = false,
     val folders: FolderLists = FolderLists(),
     val scan: ScanProgress? = null,
+    /** The last scan's failure message, cleared as soon as another scan starts. */
+    val scanError: String? = null,
     val servers: List<ServerSource> = ServerTypes.map { ServerSource(it, connected = false) },
 )
 
@@ -56,6 +58,7 @@ class SourcesViewModel @Inject constructor(
                 usesAndroidProvider = MediaProviderType.MediaStore in types,
                 folders = folders,
                 scan = (import as? SongImportState.ImportProgress)?.let { ScanProgress(it.message, it.progress?.asFloat()) },
+                scanError = (import as? SongImportState.ImportComplete)?.error,
                 servers = ServerTypes.map { ServerSource(it, connected = it in types) },
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SourcesUiState())

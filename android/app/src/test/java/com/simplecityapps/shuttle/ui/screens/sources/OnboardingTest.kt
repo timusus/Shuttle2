@@ -98,4 +98,14 @@ class OnboardingTest {
 
         robot.assertTextNotDisplayed("Music stored on this phone")
     }
+
+    @Test
+    fun `a failed scan shows its error and retries on tap`() {
+        robot.setSources(SourcesUiState(thisDevice = true, scanError = "Couldn't reach the server"))
+
+        robot.assertTextDisplayed("Scan failed: Couldn't reach the server. Tap to try again")
+        robot.clickText("Scan now")
+
+        robot.rescanClicks shouldBe 1
+    }
 }
