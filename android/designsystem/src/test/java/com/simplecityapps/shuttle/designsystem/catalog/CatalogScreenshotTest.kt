@@ -50,22 +50,21 @@ class CatalogScreenshotTest(private val shot: CatalogShot) {
             }
         }
         composeTestRule.mainClock.advanceTimeBy(SETTLE_MILLIS)
+        // Linux AA tolerance: see the root build.gradle.kts (#458).
         composeTestRule.onNodeWithTag(BOARD_TAG).captureRoboImage(
             filePath = "${roborazziSystemPropertyOutputDirectory()}/${shot.path}",
-            roborazziOptions = CATALOG_ROBORAZZI_OPTIONS,
+            roborazziOptions = RoborazziOptions(
+                captureType = RoborazziOptions.CaptureType.Screenshot(),
+                compareOptions = System.getProperty("s2.roborazzi.changeThreshold")?.toFloat()
+                    ?.let { RoborazziOptions.CompareOptions(changeThreshold = it) }
+                    ?: RoborazziOptions.CompareOptions(),
+            ),
         )
     }
 
     companion object {
         private const val BOARD_TAG = "catalog-board"
         private const val SETTLE_MILLIS = 1_000L
-
-        // Linux renders text/rounded-corner AA a little differently than the macOS-recorded
-        // goldens under docs/design/catalog; observed diffs peak at ~0.13% of pixels (#458).
-        private val CATALOG_ROBORAZZI_OPTIONS = RoborazziOptions(
-            captureType = RoborazziOptions.CaptureType.Screenshot(),
-            compareOptions = RoborazziOptions.CompareOptions(changeThreshold = 0.002f),
-        )
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")

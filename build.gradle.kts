@@ -45,6 +45,15 @@ subprojects {
     tasks.withType<Test>().configureEach {
         // Robolectric's NATIVE graphics/sqlite modes need more than the 512m default heap.
         maxHeapSize = "2g"
+
+        // Linux renders Compose text and rounded-corner anti-aliasing a little differently than
+        // the macOS-recorded docs/design Roborazzi goldens (observed diffs peak at ~0.15% of
+        // pixels, #458). Tolerate it only on Linux -- the WSL box and ubuntu-latest CI both hit
+        // this -- via a system property the affected tests read as s2.roborazzi.changeThreshold;
+        // macOS, where the goldens are recorded, gets no override and compares exactly.
+        if (System.getProperty("os.name").orEmpty().contains("Linux", ignoreCase = true)) {
+            systemProperty("s2.roborazzi.changeThreshold", "0.0016")
+        }
     }
 
     // #402: :android:fixtures is compileOnly/debug-only; guard every module's release runtime

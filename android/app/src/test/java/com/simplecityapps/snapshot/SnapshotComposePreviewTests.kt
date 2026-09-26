@@ -32,10 +32,12 @@ class SnapshotComposePreviewTests(
         val snapshot = requireNotNull(preview.getAnnotation<Snapshot>())
         preview.captureRoboImage(
             filePath = "${roborazziSystemPropertyOutputDirectory()}/${preview.screenshotName()}.png",
+            // Linux AA tolerance: see the root build.gradle.kts (#458).
             roborazziOptions = RoborazziOptions(
                 captureType = RoborazziOptions.CaptureType.Screenshot(),
                 compareOptions = RoborazziOptions.CompareOptions(
-                    changeThreshold = snapshot.maxPercentDifference.toFloat() / 100f
+                    changeThreshold = System.getProperty("s2.roborazzi.changeThreshold")?.toFloat()
+                        ?: (snapshot.maxPercentDifference.toFloat() / 100f)
                 )
             ),
             // Inspection mode, as in Android Studio: previews skip their image loads.
