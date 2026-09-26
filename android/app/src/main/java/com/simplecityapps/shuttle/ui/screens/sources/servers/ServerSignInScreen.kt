@@ -231,7 +231,9 @@ private val MediaProviderType.longTitleRes: Int
 
 private val previewActions = ServerSignInActions({}, {}, {}, {}, {}, {}, {}, {})
 
-@Snapshot
+// Linux renders this card's text/rounded-corner AA a little differently than the macOS-recorded
+// golden; observed diff peaks at ~0.03% of pixels (#458).
+@Snapshot(maxPercentDifference = 0.15)
 @Preview
 @Composable
 private fun PlexSignIn() {
@@ -243,7 +245,9 @@ private fun PlexSignIn() {
     }
 }
 
-@Snapshot
+// Linux renders this card's text/rounded-corner AA a little differently than the macOS-recorded
+// golden; observed diff peaks at ~0.04% of pixels (#458).
+@Snapshot(maxPercentDifference = 0.15)
 @Preview
 @Composable
 private fun JellyfinSignInMissingFields() {
@@ -258,7 +262,9 @@ private fun JellyfinSignInMissingFields() {
     }
 }
 
-@Snapshot
+// Linux renders this card's text/rounded-corner AA a little differently than the macOS-recorded
+// golden; observed diff peaks at ~0.12% of pixels (#458).
+@Snapshot(maxPercentDifference = 0.15)
 @Preview
 @Composable
 private fun EmbySignInConnected() {
@@ -267,7 +273,9 @@ private fun EmbySignInConnected() {
     }
 }
 
-@Snapshot
+// Linux renders this card's text/rounded-corner AA a little differently than the macOS-recorded
+// golden; observed diff peaks at ~0.08% of pixels (#458).
+@Snapshot(maxPercentDifference = 0.15)
 @Preview
 @Composable
 private fun JellyfinSignInFailed() {

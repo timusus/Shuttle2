@@ -5,9 +5,9 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
 import com.bumptech.glide.SampleArtworkGlide
-import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.simplecityapps.shuttle.settings.ThemeMode
+import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import java.io.File
 import org.junit.After
 import org.junit.Before
@@ -43,7 +43,7 @@ class SearchScreenshotTest {
         robot.setContent(uiState, theme)
         composeTestRule.onRoot().captureRoboImage(
             filePath = File(shotsDir, "$name.png").path,
-            roborazziOptions = RoborazziOptions(captureType = RoborazziOptions.CaptureType.Screenshot()),
+            roborazziOptions = DocsDesignRoborazziOptions,
         )
     }
 

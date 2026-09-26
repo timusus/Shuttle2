@@ -7,9 +7,9 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
 import com.bumptech.glide.SampleArtworkGlide
-import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.simplecityapps.shuttle.settings.ThemeMode
+import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
@@ -47,7 +47,7 @@ class HomeScreenshotTest {
         robot.setContent(uiState, theme, showConsentCard = showConsentCard)
         composeTestRule.onRoot().captureRoboImage(
             filePath = File(shotsDir, "$name.png").path,
-            roborazziOptions = RoborazziOptions(captureType = RoborazziOptions.CaptureType.Screenshot()),
+            roborazziOptions = DocsDesignRoborazziOptions,
         )
     }
 
@@ -74,7 +74,7 @@ class HomeScreenshotTest {
         robot.setContent(HomeScenarios.empty, emptyContent = emptyContentFor(MusicAccess.NotRequested))
         composeTestRule.onRoot().captureRoboImage(
             filePath = File(shotsDir, "empty-no-permission.png").path,
-            roborazziOptions = RoborazziOptions(captureType = RoborazziOptions.CaptureType.Screenshot()),
+            roborazziOptions = DocsDesignRoborazziOptions,
         )
     }
 
@@ -83,7 +83,7 @@ class HomeScreenshotTest {
         robot.setContent(HomeScenarios.empty, emptyContent = emptyContentFor(MusicAccess.PermanentlyDenied))
         composeTestRule.onRoot().captureRoboImage(
             filePath = File(shotsDir, "empty-denied.png").path,
-            roborazziOptions = RoborazziOptions(captureType = RoborazziOptions.CaptureType.Screenshot()),
+            roborazziOptions = DocsDesignRoborazziOptions,
         )
     }
 

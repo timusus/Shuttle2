@@ -3,9 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.paywall
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
-import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.simplecityapps.shuttle.settings.ThemeMode
+import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import java.io.File
@@ -48,7 +48,7 @@ class PaywallScreenshotTest {
         composeTestRule.waitForIdle()
         composeTestRule.onRoot().captureRoboImage(
             filePath = File(shotsDir, "$name.png").path,
-            roborazziOptions = RoborazziOptions(captureType = RoborazziOptions.CaptureType.Screenshot())
+            roborazziOptions = DocsDesignRoborazziOptions
         )
     }
 

@@ -10,9 +10,9 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
-import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import java.io.File
 import org.junit.Rule
@@ -55,7 +55,7 @@ class PreviewArtworkTest {
 
         composeTestRule.onRoot().captureRoboImage(
             filePath = File(previewsDir, "SongListItemPreview.png").path,
-            roborazziOptions = RoborazziOptions(captureType = RoborazziOptions.CaptureType.Screenshot()),
+            roborazziOptions = DocsDesignRoborazziOptions,
         )
     }
 

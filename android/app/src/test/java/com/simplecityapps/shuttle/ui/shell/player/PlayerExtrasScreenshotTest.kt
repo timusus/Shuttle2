@@ -5,8 +5,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
 import com.bumptech.glide.SampleArtworkGlide
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
-import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureScreenRoboImage
+import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.shell.AppShellRobot
 import com.simplecityapps.shuttle.ui.shell.PhoneSystemBars
 import com.simplecityapps.shuttle.ui.shell.sampleShellQueue
@@ -49,7 +49,7 @@ class PlayerExtrasScreenshotTest {
         composeTestRule.waitForIdle()
         captureScreenRoboImage(
             filePath = File(shotsDir, "$name.png").path,
-            roborazziOptions = RoborazziOptions(captureType = RoborazziOptions.CaptureType.Screenshot()),
+            roborazziOptions = DocsDesignRoborazziOptions,
         )
     }
 
