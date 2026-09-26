@@ -85,6 +85,15 @@ class EqualizerRobot(private val rule: ComposeContentTestRule) {
         preampSlider().assertIsNotEnabled()
     }
 
+    /** Asserts the preamp column, the first bar in the row, shows [label] and [gain] (e.g. "+1.5"). */
+    fun assertPreampShows(
+        label: String,
+        gain: String
+    ) {
+        rule.onNode(hasText(label) and hasAnyAncestor(hasTestTag(PREAMP_TAG))).assertIsDisplayed()
+        rule.onNode(hasText(gain) and hasAnyAncestor(hasTestTag(PREAMP_TAG))).assertIsDisplayed()
+    }
+
     private fun preampSlider() = rule.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress) and hasAnyAncestor(hasTestTag(PREAMP_TAG)))
 
     fun assertDisplayed(text: String) {

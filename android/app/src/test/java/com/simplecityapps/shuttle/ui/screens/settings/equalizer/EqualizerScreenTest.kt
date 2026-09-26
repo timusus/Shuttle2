@@ -76,11 +76,18 @@ class EqualizerScreenTest {
     }
 
     @Test
-    fun `shows the preamp with its gain`() {
-        robot.setContent(state(enabled = true, preampGainDb = 3f))
+    fun `shows the preamp as the first bar with its gain`() {
+        robot.setContent(state(enabled = true, preampGainDb = 1.5f))
 
-        robot.assertDisplayed("Preamp")
-        robot.assertDisplayed("+3.0 dB")
+        robot.assertPreampShows(label = "Pre", gain = "+1.5")
+    }
+
+    @Test
+    fun `states the units once, not on every band`() {
+        robot.setContent(state(enabled = true))
+
+        robot.assertDisplayed("+6")
+        robot.assertDisplayed("Gain in dB, frequency in Hz")
     }
 
     @Test

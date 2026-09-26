@@ -118,7 +118,15 @@ class SettingsScreenshotTest {
     fun about() = shot("about", content = destination(SettingsDestination.About))
 
     @Test
-    fun equalizer() = shot("equalizer") {
+    fun equalizer() = shot("equalizer") { EqualizerScenario() }
+
+    /** Dark and at the narrowest common phone width, where the eleven sliders have the least room. */
+    @Test
+    @Config(qualifiers = "w360dp-h800dp-xhdpi")
+    fun equalizerDarkNarrow() = shot("equalizer-dark-narrow", AppThemeState(theme = ThemeMode.Dark)) { EqualizerScenario() }
+
+    @Composable
+    private fun EqualizerScenario() {
         val preset = Equalizer.Presets.bassBoost
         val bands = preset.bands.map { EqualizerBandState(it.centerFrequency, it.gain.toFloat()) }
         val response = ComputeFrequencyResponse(DefaultEqualizerFrequencyResponse())(bands, preampGainDb = 3f, outputSampleRateHz = null)

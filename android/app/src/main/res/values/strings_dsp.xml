@@ -10,6 +10,8 @@
     <string name="dsp_replay_gain_off">Off</string>
     <!-- Pre-amp, or preamplification - the 'gain' in volume, applied to the sound output, before the Equalizer is used-->
     <string name="dsp_preamp">Preamp</string>
+    <!-- Short label under the Equalizer's preamp slider, which sits beside the band sliders labelled "32", "1k", "16k"; keep it to about three characters -->
+    <string name="dsp_preamp_short">Pre</string>
     <!-- Title of the 'Equalizer'-->
     <string name="dsp_equalizer_title">Equalizer</string>
     <!-- Title of the Equalizer Preset selector-->
