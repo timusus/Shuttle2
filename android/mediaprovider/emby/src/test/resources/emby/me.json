@@ -1,0 +1,5 @@
+{
+  "Name": "shuttle-test",
+  "Id": "user-1",
+  "Policy": { "EnableContentDownloading": true }
+}

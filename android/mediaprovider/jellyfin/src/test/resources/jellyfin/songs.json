@@ -1,0 +1,51 @@
+{
+  "Items": [
+    {
+      "Name": "Opening",
+      "Id": "song-1",
+      "RunTimeTicks": 1800000000,
+      "ProductionYear": 2020,
+      "IndexNumber": 1,
+      "ParentIndexNumber": 1,
+      "Genres": ["Rock", "Indie"],
+      "Artists": ["Artist One"],
+      "ArtistItems": [{ "Name": "Artist One", "Id": "artist-1" }],
+      "Album": "First Album",
+      "AlbumId": "album-1",
+      "AlbumPrimaryImageTag": "album-1-tag",
+      "AlbumArtist": "Artist One",
+      "DateCreated": "2024-03-01T12:34:56.0000000Z"
+    },
+    {
+      "Name": "Duet",
+      "Id": "song-2",
+      "RunTimeTicks": 2400000000,
+      "ProductionYear": 2020,
+      "IndexNumber": 2,
+      "ParentIndexNumber": 1,
+      "Genres": ["Rock"],
+      "Artists": ["Artist One", "Guest Singer"],
+      "ArtistItems": [{ "Name": "Artist One", "Id": "artist-1" }, { "Name": "Guest Singer", "Id": "artist-3" }],
+      "Album": "First Album",
+      "AlbumId": "album-1",
+      "AlbumPrimaryImageTag": "album-1-tag",
+      "AlbumArtist": "Artist One",
+      "DateCreated": "2024-03-01T12:34:57.0000000Z"
+    },
+    {
+      "Name": "B-Side",
+      "Id": "song-3",
+      "RunTimeTicks": 1200000000,
+      "IndexNumber": 1,
+      "ParentIndexNumber": 2,
+      "Genres": [],
+      "Artists": ["Artist Two", ""],
+      "ArtistItems": [{ "Name": "Artist Two", "Id": "artist-2" }],
+      "Album": "Second Album",
+      "AlbumId": "album-2",
+      "AlbumArtist": "Artist Two"
+    }
+  ],
+  "TotalRecordCount": 3,
+  "StartIndex": 0
+}

@@ -1,0 +1,10 @@
+{
+  "User": {
+    "Name": "shuttle-test",
+    "Id": "user-1",
+    "Policy": { "EnableContentDownloading": true }
+  },
+  "SessionInfo": { "DeviceId": "device-1" },
+  "AccessToken": "token-2",
+  "ServerId": "server-1"
+}

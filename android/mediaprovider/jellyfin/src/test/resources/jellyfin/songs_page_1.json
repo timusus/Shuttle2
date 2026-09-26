@@ -1,0 +1,8 @@
+{
+  "Items": [
+    { "Name": "Page One A", "Id": "page-1-a", "Album": "Big Album", "AlbumArtist": "Artist One", "Artists": ["Artist One"] },
+    { "Name": "Page One B", "Id": "page-1-b", "Album": "Big Album", "AlbumArtist": "Artist One", "Artists": ["Artist One"] }
+  ],
+  "TotalRecordCount": 502,
+  "StartIndex": 0
+}

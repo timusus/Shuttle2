@@ -1,0 +1,9 @@
+{
+  "Items": [
+    { "Name": "B-Side", "Id": "song-3" },
+    { "Name": "Removed From Library", "Id": "song-gone" },
+    { "Name": "Opening", "Id": "song-1" }
+  ],
+  "TotalRecordCount": 3,
+  "StartIndex": 0
+}

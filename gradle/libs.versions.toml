@@ -160,6 +160,7 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 nanohttpd-webserver = { module = "org.nanohttpd:nanohttpd-webserver", version.ref = "nanohttpd-webserver" }
 okhttp3-loggingInterceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "logging-interceptor" }
 okhttp3-okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+okhttp3-mockwebserver = { module = "com.squareup.okhttp3:mockwebserver3", version.ref = "okhttp" }
 posthog-android = { module = "com.posthog:posthog-android", version.ref = "posthog" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }

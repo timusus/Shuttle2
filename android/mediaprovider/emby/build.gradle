@@ -23,6 +23,12 @@ android {
     namespace = 'com.simplecityapps.provider.emby'
 
     buildFeatures.buildConfig = true
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
 }
 
 kotlin {
@@ -52,4 +58,6 @@ dependencies {
 
     testImplementation libs.junit
     testImplementation libs.kotest
+    testImplementation libs.robolectric
+    testImplementation libs.okhttp3.mockwebserver
 }
