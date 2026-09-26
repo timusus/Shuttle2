@@ -7,6 +7,12 @@ import kotlin.time.Instant
 /** What the user may do with remote servers (Jellyfin, Emby, Plex). Local playback is never gated. */
 sealed interface Entitlement {
     /**
+     * Play hasn't answered yet, nothing is cached and the trial hasn't started, so a purchaser can't be told apart
+     * from a new user. Resolves once Play answers; the trial never starts meanwhile.
+     */
+    data object Unknown : Entitlement
+
+    /**
      * No Pro and no running trial.
      *
      * @param trialUsed true once the server trial has started, so it can't be offered again.

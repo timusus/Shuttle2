@@ -2,7 +2,6 @@ package com.simplecityapps.trial
 
 import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -19,7 +18,6 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 /**
@@ -71,24 +69,20 @@ class EntitlementRepository(
     }
 
     /**
-     * Starts the server trial, unless it has already started or the user has Pro. Waits briefly for Play first,
-     * so a Pro user whose purchases haven't loaded yet doesn't use up the trial.
+     * Starts the server trial, unless it has already started or the user has Pro. Suspends until Play answers, so
+     * a purchaser whose purchases haven't loaded yet (offline, or a fresh install) doesn't use up the trial.
      *
      * @return true if the trial started.
      */
     suspend fun startServerTrialIfEligible(): Boolean = trialMutex.withLock {
         if (trialStartedAt.value != null) return false
-        withTimeoutOrNull(PLAY_TIMEOUT) { owned.filterNotNull().first() }
+        val owned = owned.filterNotNull().first()
         val now = clock.now()
-        if (resolveEntitlement(owned.value, store.cachedPro, null, now, isDebug) is Entitlement.Pro) return false
+        if (resolveEntitlement(owned, store.cachedPro, null, now, isDebug) is Entitlement.Pro) return false
 
         store.serverTrialStartedAt = now
         trialStartedAt.value = now
         analytics.trialStarted()
         return true
-    }
-
-    companion object {
-        private val PLAY_TIMEOUT = 10.seconds
     }
 }

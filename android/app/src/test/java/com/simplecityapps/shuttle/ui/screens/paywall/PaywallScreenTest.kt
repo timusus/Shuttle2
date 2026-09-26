@@ -39,6 +39,14 @@ class PaywallScreenTest {
     }
 
     @Test
+    fun `before Play answers, the paywall says it is checking rather than offering the trial`() {
+        robot.setContent(PaywallScenarios.checking)
+
+        robot.assertDisplayed("Checking your purchases with Google Play…")
+        robot.assertNotShown("Add a Jellyfin, Emby or Plex server to start a free 14-day trial.")
+    }
+
+    @Test
     fun `tapping a plan selects it, and the button buys it`() {
         robot.setContent(PaywallScenarios.free)
 

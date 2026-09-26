@@ -31,6 +31,16 @@ class ServerAccessGateTest {
     }
 
     @Test
+    fun `while Play hasn't answered, a user may add a server but not stream from one`() {
+        entitlement.value = Entitlement.Unknown
+        val requests = requests {
+            assertTrue(gate.tryAddServer())
+            assertFalse(gate.tryStreamFromServer())
+        }
+        assertEquals(listOf(PaywallSource.ServerPlayback), requests)
+    }
+
+    @Test
     fun `a user whose trial has ended is sent to the paywall to add a server`() {
         entitlement.value = Entitlement.Free(trialUsed = true)
         assertEquals(listOf(PaywallSource.AddServer), requests { assertFalse(gate.tryAddServer()) })

@@ -82,7 +82,19 @@ class EntitlementResolverTest {
     @Test
     fun `cached Pro expires after 7 days`() {
         val cached = CachedPro(ProSource.LegacySubscription, now - 7.days - 1.hours)
-        assertEquals(Entitlement.Free(trialUsed = false), resolve(owned = null, cachedPro = cached))
+        assertEquals(Entitlement.Unknown, resolve(owned = null, cachedPro = cached))
+    }
+
+    @Test
+    fun `a fresh install is Unknown until Play answers, so a purchaser isn't taken for a new user`() {
+        assertEquals(Entitlement.Unknown, resolve(owned = null))
+    }
+
+    @Test
+    fun `the trial is known locally while Play hasn't answered`() {
+        val startedAt = now - 3.days
+        assertEquals(Entitlement.Trial(startedAt + 14.days), resolve(owned = null, trialStartedAt = startedAt))
+        assertEquals(Entitlement.Free(trialUsed = true), resolve(owned = null, trialStartedAt = now - 20.days))
     }
 
     @Test

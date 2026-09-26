@@ -132,6 +132,7 @@ fun PaywallScreen(
 @Composable
 private fun StatusCard(status: PaywallStatus) {
     val text = when (status) {
+        PaywallStatus.Checking -> stringResource(R.string.paywall_status_checking)
         PaywallStatus.TrialAvailable -> stringResource(R.string.paywall_status_trial_available)
         PaywallStatus.TrialEnded -> stringResource(R.string.paywall_status_trial_ended)
         is PaywallStatus.Trial -> pluralStringResource(R.plurals.paywall_status_trial, status.daysLeft, status.daysLeft)

@@ -8,6 +8,8 @@ import com.simplecityapps.trial.ProSource
 object PaywallScenarios {
     val free = PaywallUiState(status = PaywallStatus.TrialAvailable, offers = PaywallOffers.Available(FakeBilling.SAMPLE_OFFERS))
 
+    val checking = free.copy(status = PaywallStatus.Checking, offers = PaywallOffers.Loading)
+
     val trialEnded = free.copy(status = PaywallStatus.TrialEnded)
 
     val trial = free.copy(status = PaywallStatus.Trial(daysLeft = 9))

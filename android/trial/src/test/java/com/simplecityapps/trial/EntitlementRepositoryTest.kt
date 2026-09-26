@@ -132,6 +132,44 @@ class EntitlementRepositoryTest {
     }
 
     @Test
+    fun `a purchaser on a fresh offline install never uses up the trial`() = runTest {
+        owned.value = null
+        val repository = repository()
+        assertEquals(Entitlement.Unknown, repository.entitlement.value)
+
+        repository.onServerConnected(MediaProviderType.Jellyfin)
+        advanceTimeBy(1.hours)
+        runCurrent()
+
+        assertNull(store.serverTrialStartedAt)
+        assertEquals(Entitlement.Unknown, repository.entitlement.value)
+        verify(exactly = 0) { analytics.trialStarted() }
+
+        owned.value = setOf(ProductIds.LEGACY_LIFETIME)
+        runCurrent()
+
+        assertNull(store.serverTrialStartedAt)
+        assertEquals(Entitlement.Pro(ProSource.LegacyLifetime), repository.entitlement.value)
+    }
+
+    @Test
+    fun `a new user who connects a server offline gets the trial once Play answers`() = runTest {
+        owned.value = null
+        val repository = repository()
+
+        repository.onServerConnected(MediaProviderType.Plex)
+        advanceTimeBy(1.hours)
+        runCurrent()
+        assertNull(store.serverTrialStartedAt)
+
+        owned.value = emptySet()
+        runCurrent()
+
+        assertEquals(start + 1.hours, store.serverTrialStartedAt)
+        assertEquals(Entitlement.Trial(start + 1.hours + 14.days), repository.entitlement.value)
+    }
+
+    @Test
     fun `Pro from Play is cached, and cleared when Play no longer reports it`() = runTest {
         owned.value = setOf(ProductIds.PRO_LIFETIME)
         repository()

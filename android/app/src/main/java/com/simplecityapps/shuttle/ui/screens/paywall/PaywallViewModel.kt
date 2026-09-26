@@ -26,6 +26,9 @@ import kotlinx.coroutines.launch
 
 /** Where the user stands, as the paywall shows it. */
 sealed interface PaywallStatus {
+    /** Play hasn't answered yet, so it isn't known whether the user already owns Pro. */
+    data object Checking : PaywallStatus
+
     /** Free, and the server trial hasn't started: adding a server starts it. */
     data object TrialAvailable : PaywallStatus
 
@@ -132,6 +135,7 @@ class PaywallViewModel @AssistedInject constructor(
 }
 
 private fun Entitlement.toStatus(): PaywallStatus = when (this) {
+    Entitlement.Unknown -> PaywallStatus.Checking
     is Entitlement.Free -> if (trialUsed) PaywallStatus.TrialEnded else PaywallStatus.TrialAvailable
     is Entitlement.Trial -> PaywallStatus.Trial(daysRemaining())
     is Entitlement.Pro -> PaywallStatus.Pro(source)

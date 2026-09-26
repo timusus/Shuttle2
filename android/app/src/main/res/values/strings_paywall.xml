@@ -4,6 +4,8 @@
     <string name="paywall_title">S2 Pro</string>
     <!-- Summary of the S2 Pro row in Settings -->
     <string name="paywall_settings_summary">Stream from Jellyfin, Emby and Plex</string>
+    <!-- S2 Pro screen: status while Google Play hasn't yet said whether the user owns S2 Pro (e.g. offline) -->
+    <string name="paywall_status_checking">Checking your purchases with Google Play…</string>
     <!-- S2 Pro screen: status when the user has never had the server trial -->
     <string name="paywall_status_trial_available">Add a Jellyfin, Emby or Plex server to start a free 14-day trial.</string>
     <!-- S2 Pro screen: status when the server trial has ended -->

@@ -58,6 +58,9 @@ class PaywallViewModelTest {
 
         entitlement.value = Entitlement.Pro(ProSource.LegacyLifetime)
         viewModel.uiState.value.status shouldBe PaywallStatus.Pro(ProSource.LegacyLifetime)
+
+        entitlement.value = Entitlement.Unknown
+        viewModel.uiState.value.status shouldBe PaywallStatus.Checking
     }
 
     @Test
