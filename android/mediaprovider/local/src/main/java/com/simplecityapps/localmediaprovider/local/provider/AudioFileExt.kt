@@ -69,53 +69,97 @@ fun KTagLib.getAudioFile(
     mimeType: String?
 ): AudioFile {
     val metadata = getMetadata(fileDescriptor, fileName)
+    val tags = metadata?.propertyMap.orEmpty().toFileTags()
     return AudioFile(
         path = filePath,
         size = size,
         lastModified = lastModified,
         mimeType = mimeType ?: "audio/*",
-        title = metadata?.propertyMap?.get(TagLibProperty.Title.key)?.firstOrNull() ?: fileName.substringBeforeLast("."),
-        albumArtist = metadata?.propertyMap?.get(TagLibProperty.AlbumArtist.key)?.firstOrNull(),
-        artists =
-            metadata?.propertyMap?.get(TagLibProperty.Artist.key).orEmpty().flatMap { artist ->
-                artist.split(';')
-                    .map { artist -> artist.trim() }
-                    .filterNot { artist -> artist.isEmpty() }
-            },
-        album = metadata?.propertyMap?.get(TagLibProperty.Album.key)?.firstOrNull(),
-        track = metadata?.propertyMap?.get(TagLibProperty.Track.key)?.firstOrNull()?.substringBefore('/')?.toIntOrNull(),
-        trackTotal = metadata?.propertyMap?.get(TagLibProperty.Track.key)?.firstOrNull()?.substringAfter('/', "")?.toIntOrNull(),
-        disc = metadata?.propertyMap?.get(TagLibProperty.Disc.key)?.firstOrNull()?.substringBefore('/')?.toIntOrNull(),
-        discTotal = metadata?.propertyMap?.get(TagLibProperty.Disc.key)?.firstOrNull()?.substringAfter('/', "")?.toIntOrNull(),
+        title = tags.title ?: fileName.substringBeforeLast("."),
+        albumArtist = tags.albumArtist,
+        artists = tags.artists,
+        album = tags.album,
+        track = tags.track,
+        trackTotal = tags.trackTotal,
+        disc = tags.disc,
+        discTotal = tags.discTotal,
         duration = metadata?.audioProperties?.duration,
-        year =
-            (
-                metadata?.propertyMap?.get(TagLibProperty.Date.key)?.firstOrNull()
-                    ?: metadata?.propertyMap?.get(TagLibProperty.OriginalDate.key)?.firstOrNull()
-                )?.parseDate()
-                ?: metadata?.propertyMap?.get(TagLibProperty.Year.key)?.firstOrNull()?.parseDate(),
-        genres =
-            metadata?.propertyMap?.get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
-                genre.split(',', ';', '/')
-                    .map { genre -> genre.trim() }
-                    .filterNot { genre -> genre.isEmpty() }
-            },
-        replayGainTrack =
-            metadata?.propertyMap?.getCaseInsensitive(TagLibProperty.ReplayGainTrack.key)
-                ?.firstOrNull()?.replace(oldValue = "db", newValue = "", ignoreCase = true)
-                ?.toDoubleOrNull(),
-        replayGainAlbum =
-            metadata?.propertyMap?.getCaseInsensitive(TagLibProperty.ReplayGainAlbum.key)
-                ?.firstOrNull()?.replace(oldValue = "db", newValue = "", ignoreCase = true)
-                ?.toDoubleOrNull(),
-        lyrics = metadata?.propertyMap?.get(TagLibProperty.Lyrics.key)?.firstOrNull(),
-        grouping = metadata?.propertyMap?.get(TagLibProperty.Grouping.key)?.firstOrNull(),
+        year = tags.year,
+        genres = tags.genres,
+        replayGainTrack = tags.replayGainTrack,
+        replayGainAlbum = tags.replayGainAlbum,
+        lyrics = tags.lyrics,
+        grouping = tags.grouping,
         bitRate = metadata?.audioProperties?.bitrate,
         bitDepth = null,
         sampleRate = metadata?.audioProperties?.sampleRate,
         channelCount = metadata?.audioProperties?.channelCount
     )
 }
+
+/**
+ * The values of a file's tags, as TagLib read them. A null or empty field wasn't tagged: no fallback (such as the file
+ * name for a missing title) is applied here.
+ */
+data class FileTags(
+    val title: String?,
+    val albumArtist: String?,
+    val artists: List<String>,
+    val album: String?,
+    val track: Int?,
+    val trackTotal: Int?,
+    val disc: Int?,
+    val discTotal: Int?,
+    val year: String?,
+    val genres: List<String>,
+    val replayGainTrack: Double?,
+    val replayGainAlbum: Double?,
+    val lyrics: String?,
+    val grouping: String?
+)
+
+/**
+ * Maps a TagLib property map (keyed by [TagLibProperty] keys, whatever the container: ID3, Vorbis comments, MP4 atoms or
+ * Matroska tags) to [FileTags].
+ */
+fun Map<String, List<String>>.toFileTags(): FileTags {
+    fun first(property: TagLibProperty): String? = get(property.key)?.firstOrNull()
+    val trackTag = first(TagLibProperty.Track)
+    val discTag = first(TagLibProperty.Disc)
+    return FileTags(
+        title = first(TagLibProperty.Title),
+        // TagLib passes tag names it doesn't know through unchanged, so a Matroska file tagged by ffmpeg has ALBUM_ARTIST
+        albumArtist = first(TagLibProperty.AlbumArtist) ?: get(MATROSKA_ALBUM_ARTIST)?.firstOrNull(),
+        artists =
+            get(TagLibProperty.Artist.key).orEmpty().flatMap { artist ->
+                artist.split(';')
+                    .map { artist -> artist.trim() }
+                    .filterNot { artist -> artist.isEmpty() }
+            },
+        album = first(TagLibProperty.Album),
+        track = trackTag?.substringBefore('/')?.toIntOrNull(),
+        trackTotal = trackTag?.substringAfter('/', "")?.toIntOrNull(),
+        disc = discTag?.substringBefore('/')?.toIntOrNull(),
+        discTotal = discTag?.substringAfter('/', "")?.toIntOrNull(),
+        year =
+            (first(TagLibProperty.Date) ?: first(TagLibProperty.OriginalDate))?.parseDate()
+                ?: first(TagLibProperty.Year)?.parseDate(),
+        genres =
+            get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
+                genre.split(',', ';', '/')
+                    .map { genre -> genre.trim() }
+                    .filterNot { genre -> genre.isEmpty() }
+            },
+        replayGainTrack = getCaseInsensitive(TagLibProperty.ReplayGainTrack.key)?.firstOrNull()?.parseReplayGain(),
+        replayGainAlbum = getCaseInsensitive(TagLibProperty.ReplayGainAlbum.key)?.firstOrNull()?.parseReplayGain(),
+        lyrics = first(TagLibProperty.Lyrics),
+        grouping = first(TagLibProperty.Grouping)
+    )
+}
+
+private const val MATROSKA_ALBUM_ARTIST = "ALBUM_ARTIST"
+
+private fun String.parseReplayGain(): Double? = replace(oldValue = "db", newValue = "", ignoreCase = true).toDoubleOrNull()
 
 fun String.parseDate(): String? {
     if (length < 4) {

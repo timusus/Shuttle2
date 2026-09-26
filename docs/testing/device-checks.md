@@ -181,6 +181,11 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 
 - [ ] S2 is offered wherever the device picks a music app (the OEM default music app setting, e.g. OnePlus; a Bluetooth autoplay app such as Bluetooth Autoplay Music), and "Hey Google, play <artist> on S2" plays that artist.
 
+## Tags read from the file by the MediaStore provider (#367, #150)
+
+- [ ] Select only the Android Media Store provider, `seed-test-media.sh gapless` and import. The two `.mka` songs show album "Gapless Album", artist "Gapless Artist" and their track numbers, not the folder name; their titles stay the file names until KTagLib returns the Matroska segment title.
+- [ ] With the Media Store provider, import the #150 repro mp3 (`repro_song.zip` on the issue). Its title reads "Chanson d’un jour d’hiver", not "Chanson dâ€™un jour dâ€™hiver".
+
 ## Analytics default-on and the one-time notice (#421, #481)
 
 - [ ] Fresh install: Analytics and Crash reporting in Settings > Privacy are already on, and Home never shows the analytics notice.

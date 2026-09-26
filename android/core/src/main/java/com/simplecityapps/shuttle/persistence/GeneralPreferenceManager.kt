@@ -169,14 +169,15 @@ class GeneralPreferenceManager(
                 .orEmpty()
         }
 
-    // Songs imported via MediaStore before ReplayGain tags were read for them have null ReplayGain values that look
-    // just like untagged files, so the first MediaStore import after the upgrade reads every file once and then sets this
-    var mediaStoreReplayGainBackfilled: Boolean
+    // Songs imported via MediaStore before their tags were read from the file carry MediaStore's tag values (wrong for
+    // Matroska and some UTF-8 tags, no ReplayGain at all), and an unchanged file isn't read again, so the first MediaStore
+    // import after the upgrade reads every file once and then sets this
+    var mediaStoreFileTagsBackfilled: Boolean
         set(value) {
-            sharedPreferences.put("media_store_replay_gain_backfilled", value)
+            sharedPreferences.put("media_store_file_tags_backfilled", value)
         }
         get() {
-            return sharedPreferences.get("media_store_replay_gain_backfilled", false)
+            return sharedPreferences.get("media_store_file_tags_backfilled", false)
         }
 
     var lastMediaImportDate: Date?

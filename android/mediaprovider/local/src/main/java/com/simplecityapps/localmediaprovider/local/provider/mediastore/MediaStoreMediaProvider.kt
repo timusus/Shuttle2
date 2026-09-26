@@ -29,7 +29,7 @@ import kotlinx.datetime.LocalDate
 
 class MediaStoreMediaProvider(
     private val context: Context,
-    private val replayGainReader: MediaStoreReplayGainReader,
+    private val tagReader: MediaStoreTagReader,
     private val preferenceManager: GeneralPreferenceManager
 ) : MediaProvider {
     override val type = MediaProviderType.MediaStore
@@ -142,9 +142,9 @@ class MediaStoreMediaProvider(
         }
 
         var songs = mutableListOf<Song>()
-        val backfillReplayGain = !preferenceManager.mediaStoreReplayGainBackfilled
+        val backfillFileTags = !preferenceManager.mediaStoreFileTagsBackfilled
         rawSongs
-            .withReplayGainTags(existingSongs, replayGainReader, readUnchanged = backfillReplayGain)
+            .withFileTags(existingSongs, tagReader, readUnchanged = backfillFileTags)
             .collectIndexed { index, song ->
                 songs.add(song)
                 emit(
@@ -199,8 +199,8 @@ class MediaStoreMediaProvider(
         }
         emit(FlowEvent.Success(songs))
         // Only once the importer has handled the result, so an import cancelled part way through backfills again next time
-        if (backfillReplayGain) {
-            preferenceManager.mediaStoreReplayGainBackfilled = true
+        if (backfillFileTags) {
+            preferenceManager.mediaStoreFileTagsBackfilled = true
         }
     }
 

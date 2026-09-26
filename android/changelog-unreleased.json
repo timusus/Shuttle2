@@ -294,6 +294,10 @@
     {
       "text": "Album and artist artwork now loads from your Plex server too, matching Jellyfin and Emby",
       "commits": []
+    },
+    {
+      "text": "With the Android media store source, songs now take their title, artist, album and track number from the file itself, so .mka files show their album and artist, and titles with accents or other alphabets no longer appear garbled",
+      "commits": []
     }
   ]
 }
