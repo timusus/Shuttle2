@@ -159,6 +159,18 @@ class SearchViewModelTest {
     }
 
     @Test
+    fun `a new search starts with the categories left off last time`() = runTest(mainDispatcherRule.testDispatcher) {
+        viewModel().onToggleCategory(SearchCategory.Songs)
+        runCurrent()
+
+        val reopened = viewModel()
+        type(reopened, "juniper")
+
+        (SearchCategory.Songs in reopened.uiState.value.categories) shouldBe false
+        reopened.uiState.value.content.shouldBeInstanceOf<SearchContent.Results>().results.songs shouldBe emptyList()
+    }
+
+    @Test
     fun `submitting a query records it as a recent search`() = runTest(mainDispatcherRule.testDispatcher) {
         preferenceManager.recentSearches = listOf("salt")
         val viewModel = viewModel()
