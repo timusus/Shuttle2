@@ -10,7 +10,8 @@
 # 2. takes a box-side build slot (#462: three concurrent remote builds once starved sshd) --
 #    at most REMOTE_BUILD_SLOTS (default 2) run at a time, admission via `flock` on
 #    ~/s2-builds/.slots/N so a dead holder's slot is never wedged; a caller that has to wait prints
-#    one line and blocks (no polling);
+#    one line, then rescans all slots every few seconds and takes whichever frees first (not just
+#    the last one it tried);
 # 3. writes the box's own local.properties and runs ./gradlew there, under `nice`, with the
 #    box-side JDK and Gradle user home (~/s2-builds/.gradle-home, shared by every worktree so the
 #    build cache and daemons stay warm; its gradle.properties caps the daemon heap and worker count
@@ -19,10 +20,9 @@
 #    the default drops to 4 when remote-emu.sh shows a lane leased on the box);
 # 4. streams a condensed log -- failed tasks and tests, compiler errors, the "What went wrong"
 #    block, the BUILD line -- while the whole log goes to build/remote-build/gradle.log;
-# 5. clears the local destination report dirs (build/test-results, build/reports,
-#    build/outputs/roborazzi under every module) so a report a previous run wrote and this one
-#    didn't re-run can't linger (#459), then syncs back APKs (build/outputs/apk), test results and
-#    reports and Roborazzi outputs into the same paths here, plus the full log, and exits with
+# 5. syncs back APKs (build/outputs/apk), test results, reports and Roborazzi outputs into the
+#    same paths here, plus the full log, then drops any of those report dirs the box no longer has
+#    so one a previous run wrote and this one didn't re-run can't linger (#459) -- and exits with
 #    Gradle's exit code.
 #
 # The version comes from the latest vYYMMDDNN tag, read here and passed as -PversionCode and
@@ -104,8 +104,15 @@ rsync -a --delete -e "${SSH[*]}" \
 echo "remote-build: synced $NAME to $BOX:~/$REMOTE_DIR in $((SECONDS - start))s; gradle ${args[*]}" >&2
 
 # ---- build ----------------------------------------------------------------------------------
+# ssh joins every trailing argument with a space into one string for the box's login shell to
+# re-parse, so an unquoted glob or space in a gradle arg (e.g. --tests '*Queue*') would be mangled;
+# %q-quote each one here and pass the whole thing as a single ssh argument instead.
+remote_cmd="bash -s --"
+for a in "$SLOTS" "$NICE" "$REMOTE_DIR" "${args[@]}"; do
+    remote_cmd+=" $(printf '%q' "$a")"
+done
 set +e
-"${SSH[@]}" "$BOX" bash -s -- "$SLOTS" "$NICE" "$REMOTE_DIR" "${args[@]}" <<'REMOTE'
+"${SSH[@]}" "$BOX" "$remote_cmd" <<'REMOTE'
 set -uo pipefail
 slots="$1"; nice_level="$2"
 cd "$HOME/$3" || exit 1
@@ -118,19 +125,22 @@ shift 3
 slot_dir="$HOME/s2-builds/.slots"
 mkdir -p "$slot_dir"
 slot=""
-for s in $(seq 1 "$slots"); do
-    exec {slot_fd}>"$slot_dir/$s"
-    if flock -n "$slot_fd"; then
-        slot="$s"
-        break
-    fi
-    eval "exec ${slot_fd}>&-"
-done
-if [ -z "$slot" ]; then
+try_slots() {
+    for s in $(seq 1 "$slots"); do
+        exec {slot_fd}>"$slot_dir/$s"
+        if flock -n "$slot_fd"; then
+            slot="$s"
+            return 0
+        fi
+        eval "exec ${slot_fd}>&-"
+    done
+    return 1
+}
+if ! try_slots; then
     echo "remote-build: waiting for a box build slot (all $slots busy)" >&2
-    slot="$slots"
-    exec {slot_fd}>"$slot_dir/$slot"
-    flock "$slot_fd"
+    until try_slots; do
+        sleep 3
+    done
 fi
 echo "remote-build: using box build slot $slot" >&2
 
@@ -152,14 +162,9 @@ REMOTE
 rc=$?
 set -e
 
-# ---- clear stale reports (#459) --------------------------------------------------------------
-# rsync only adds/updates, so a report this run didn't regenerate (a test class that got removed,
-# a module that wasn't built) would otherwise linger from a previous run.
-find "$ROOT" -type d \( -path '*/build/test-results' -o -path '*/build/reports' -o -path '*/build/outputs/roborazzi' \) -exec rm -rf {} +
-
-# ---- sync back ------------------------------------------------------------------------------
+# ---- sync back --------------------------------------------------------------------------------
 start=$SECONDS
-rsync -a --prune-empty-dirs -e "${SSH[*]}" \
+if rsync -a --prune-empty-dirs -e "${SSH[*]}" \
     --exclude='.gradle/' --exclude='src/' --exclude='.git/' \
     --exclude='build/intermediates/' --exclude='build/tmp/' --exclude='build/generated/' \
     --exclude='build/kotlin/' --exclude='build/.transforms/' --exclude='build/snapshot/' \
@@ -168,7 +173,30 @@ rsync -a --prune-empty-dirs -e "${SSH[*]}" \
     --include='build/outputs/apk/***' --include='build/outputs/roborazzi/***' \
     --include='build/reports/***' --include='build/test-results/***' \
     --exclude='*' \
-    "$BOX:$REMOTE_DIR/" "$ROOT/" \
-    || echo "remote-build: syncing the outputs back failed (the build's exit code is kept)" >&2
+    "$BOX:$REMOTE_DIR/" "$ROOT/"
+then
+    # ---- clear stale reports (#459, #462) ------------------------------------------------------
+    # The sync above only adds/updates, so a report dir this run didn't regenerate (a test class
+    # that got removed, a module that wasn't built) would otherwise linger from a previous run.
+    # A plain `rsync --delete` on this same command isn't safe: the include/exclude filter above
+    # allows recursion into every directory in the tree (needed to reach nested report dirs), so
+    # --delete would consider every directory under $ROOT for removal -- confirmed by a dry run
+    # that tried to delete android/app, .claude/skills/* and other unrelated dirs (rsync only
+    # refused because they're non-empty; a genuinely empty unrelated dir would have gone). Instead,
+    # ask the box which report dirs it actually has now, using the same restrictive path match as
+    # before, and drop only the local ones it doesn't -- one confirmed-stale directory at a time.
+    if [ -n "$ROOT" ] && [ -n "$REMOTE_DIR" ]; then
+        remote_dirs="$("${SSH[@]}" "$BOX" "cd \"\$HOME/$REMOTE_DIR\" && find . -type d \( -path '*/build/test-results' -o -path '*/build/reports' -o -path '*/build/outputs/roborazzi' \) 2>/dev/null")" || remote_dirs=""
+        while IFS= read -r d; do
+            [ -n "$d" ] || continue
+            rel="${d#"$ROOT"/}"
+            printf '%s\n' "$remote_dirs" | grep -qxF "./$rel" || rm -rf "$d"
+        done < <(find "$ROOT" -type d \( -path '*/build/test-results' -o -path '*/build/reports' -o -path '*/build/outputs/roborazzi' \) 2>/dev/null)
+    else
+        echo "remote-build: ROOT or REMOTE_DIR is empty, skipping stale-report cleanup" >&2
+    fi
+else
+    echo "remote-build: syncing the outputs back failed (the build's exit code is kept); leaving existing local reports as-is" >&2
+fi
 echo "remote-build: outputs synced back in $((SECONDS - start))s; full log: ${LOG_DIR#"$ROOT"/}/gradle.log" >&2
 exit "$rc"
