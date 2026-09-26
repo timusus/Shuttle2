@@ -4,6 +4,10 @@
     <string name="app_name">S2</string>
     <!-- Bottom Navigation menu item (library) - the music library/collection -->
     <string name="title_library">Library</string>
+    <!-- Bottom Navigation menu item (home) - the landing screen of recent and suggested music -->
+    <string name="shell_tab_home">Home</string>
+    <!-- Bottom Navigation menu item (search) - searching the music library -->
+    <string name="shell_tab_search">Search</string>
     <!-- Shown in the queue, to indicate the queue of songs which will play after the current song-->
     <string name="playback_up_next">Up Next</string>
     <!-- Shown at the top of the 'search' screen-->

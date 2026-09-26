@@ -49,6 +49,13 @@ class AppShellTest {
     }
 
     @Test
+    @Config(qualifiers = "de")
+    fun `the nav bar's tab labels are translated`() {
+        robot.setContent()
+        robot.assertTextDisplayed("Bibliothek")
+    }
+
+    @Test
     fun `an empty queue composes no sheet`() {
         robot.setContent(queue = EmptyShellQueue)
         robot.assertSheetAbsent()

@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.shell
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
@@ -51,6 +52,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -65,6 +67,7 @@ import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.NavDisplay
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.S2NavItem
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationRail
@@ -410,21 +413,26 @@ private fun PaneShell(
     }
 }
 
-private val ShellTab.label: String
+@get:StringRes
+private val ShellTab.label: Int
     get() = when (this) {
-        ShellTab.Home -> "Home"
-        ShellTab.Library -> "Library"
-        ShellTab.Search -> "Search"
+        ShellTab.Home -> R.string.shell_tab_home
+        ShellTab.Library -> R.string.title_library
+        ShellTab.Search -> R.string.shell_tab_search
     }
 
-private val ShellTab.navItem: S2NavItem
-    get() = when (this) {
+@Composable
+private fun ShellTab.navItem(): S2NavItem {
+    val label = stringResource(label)
+    return when (this) {
         ShellTab.Home -> S2NavItem(label, Icons.Outlined.Home, Icons.Rounded.Home)
         ShellTab.Library -> S2NavItem(label, Icons.Outlined.LibraryMusic, Icons.Rounded.LibraryMusic)
         ShellTab.Search -> S2NavItem(label, Icons.Outlined.Search, Icons.Rounded.Search)
     }
+}
 
-private val TabItems = ShellTab.entries.map { it.navItem }
+@Composable
+private fun tabItems(): List<S2NavItem> = ShellTab.entries.map { it.navItem() }
 
 @Composable
 private fun ShellNavigationBar(
@@ -433,7 +441,7 @@ private fun ShellNavigationBar(
     modifier: Modifier = Modifier,
 ) {
     S2NavigationBar(
-        items = TabItems,
+        items = tabItems(),
         selectedIndex = selectedTab.ordinal,
         onSelect = { index -> onSelectTab(ShellTab.entries[index]) },
         modifier = modifier,
@@ -449,7 +457,7 @@ private fun ShellRail(
     val state = rememberWideNavigationRailState(if (expanded) WideNavigationRailValue.Expanded else WideNavigationRailValue.Collapsed)
     LaunchedEffect(state, expanded) { if (expanded) state.expand() else state.collapse() }
     S2NavigationRail(
-        items = TabItems,
+        items = tabItems(),
         selectedIndex = selectedTab.ordinal,
         onSelect = { index -> onSelectTab(ShellTab.entries[index]) },
         state = state,
