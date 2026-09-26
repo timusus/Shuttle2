@@ -76,6 +76,10 @@ class FakePlaylistRepository : PlaylistRepository {
         }
     }
 
+    override fun getPlaylistCoverSongs(playlist: Playlist, limit: Int): Flow<List<Song>> = playlistSongs.map { byPlaylist ->
+        byPlaylist[playlist.id].orEmpty().distinctBy { it.album?.lowercase() to it.albumArtist?.lowercase() }.take(limit)
+    }
+
     override suspend fun deletePlaylist(playlist: Playlist) {
         playlists.value = playlists.value.filterNot { it.id == playlist.id }
         playlistSongs.value -= playlist.id

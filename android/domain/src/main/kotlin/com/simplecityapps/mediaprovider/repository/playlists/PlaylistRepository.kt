@@ -38,6 +38,12 @@ interface PlaylistRepository {
 
     fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>>
 
+    /** Up to [limit] songs from [playlist], one per distinct album, in the playlist's order — for a cover mosaic (#534). */
+    fun getPlaylistCoverSongs(
+        playlist: Playlist,
+        limit: Int
+    ): Flow<List<Song>>
+
     suspend fun deletePlaylist(playlist: Playlist)
 
     suspend fun deleteAll(mediaProviderType: MediaProviderType)

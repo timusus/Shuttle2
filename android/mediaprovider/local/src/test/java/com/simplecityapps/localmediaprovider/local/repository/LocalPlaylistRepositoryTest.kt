@@ -70,12 +70,45 @@ class LocalPlaylistRepositoryTest {
         database.playlistDataDao().getAll().first().count { it.name == results.first().name } shouldBe 1
     }
 
+    @Test
+    fun `playlist cover songs are one per distinct album, in playlist order`() = runTest {
+        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+        val songs = insertSongsWithAlbums("First" to "Album A", "Second" to "Album A", "Third" to "Album B", "Fourth" to "Album C", "Fifth" to "Album D")
+        val playlist = repository.createPlaylist("Mixed", MediaProviderType.Shuttle, songs, null)
+
+        repository.getPlaylistCoverSongs(playlist, limit = 3).first().map { it.name } shouldBe listOf("First", "Third", "Fourth")
+    }
+
+    @Test
+    fun `playlist cover songs match on album regardless of case`() = runTest {
+        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+        val songs = insertSongsWithAlbums("First" to "album", "Second" to "ALBUM")
+        val playlist = repository.createPlaylist("Same album", MediaProviderType.Shuttle, songs, null)
+
+        repository.getPlaylistCoverSongs(playlist, limit = 4).first().map { it.name } shouldBe listOf("First")
+    }
+
+    @Test
+    fun `playlist cover songs return fewer than the limit when the playlist has fewer distinct albums`() = runTest {
+        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+        val (song) = insertSongs("Only")
+        val playlist = repository.createPlaylist("Small", MediaProviderType.Shuttle, listOf(song), null)
+
+        repository.getPlaylistCoverSongs(playlist, limit = 4).first().map { it.name } shouldBe listOf("Only")
+    }
+
     private suspend fun insertSongs(vararg names: String): List<Song> {
-        database.songDataDao().insert(names.map(::songData))
+        database.songDataDao().insert(names.map { name -> songData(name) })
         return database.songDataDao().get().map { songData -> songData.toSong() }
     }
 
-    private fun songData(name: String) = SongData(
+    private suspend fun insertSongsWithAlbums(vararg nameToAlbum: Pair<String, String>): List<Song> {
+        database.songDataDao().insert(nameToAlbum.map { (name, album) -> songData(name, album) })
+        val byName = database.songDataDao().get().associateBy { it.name }
+        return nameToAlbum.map { (name, _) -> byName.getValue(name).toSong() }
+    }
+
+    private fun songData(name: String, album: String = "Album") = SongData(
         name = name,
         track = 1,
         disc = 1,
@@ -85,7 +118,7 @@ class LocalPlaylistRepositoryTest {
         path = "/music/$name.mp3",
         albumArtist = "Artist",
         artists = listOf("Artist"),
-        album = "Album",
+        album = album,
         size = 0,
         mimeType = "audio/mpeg",
         lastModified = Date(0),

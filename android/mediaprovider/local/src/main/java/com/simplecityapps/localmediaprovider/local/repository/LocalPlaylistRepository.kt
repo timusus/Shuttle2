@@ -178,6 +178,8 @@ class LocalPlaylistRepository(
             playlistSong.sortedWith(if (playlist.sortDescending) comparator.reversed() else comparator)
         }
 
+    override fun getPlaylistCoverSongs(playlist: Playlist, limit: Int): Flow<List<Song>> = playlistSongJoinDao.getCoverSongsForPlaylist(playlist.id, limit)
+
     override suspend fun deletePlaylist(playlist: Playlist) = playlistDataDao.delete(playlist.id)
 
     override suspend fun deleteAll(mediaProviderType: MediaProviderType) = playlistDataDao.deleteAll(mediaProviderType)

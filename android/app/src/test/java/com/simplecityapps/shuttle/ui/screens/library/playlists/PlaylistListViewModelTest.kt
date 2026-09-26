@@ -47,7 +47,7 @@ class PlaylistListViewModelTest {
         readSetting = ReadLibraryViewSetting(preferences),
         saveSetting = SaveLibraryViewSetting(preferences),
         mediaImportObserver = importState,
-        observePlaylistCovers = ObservePlaylistCovers(actions.observePlaylistSongs),
+        observePlaylistCovers = ObservePlaylistCovers(playlistRepository),
     )
 
     @Test
