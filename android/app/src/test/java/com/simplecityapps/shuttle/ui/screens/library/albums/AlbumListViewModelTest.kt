@@ -11,9 +11,12 @@ import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.fakes.fakeLibraryViewPreferences
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
+import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlin.random.Random
@@ -104,6 +107,7 @@ class AlbumListViewModelTest {
 
     private fun createViewModel(random: Random = Random.Default): AlbumListViewModel {
         val fakePlaybackOperations = FakePlaybackOperations()
+        val preferences = fakeLibraryViewPreferences(sort = fakeSortPreferences, albumList = fakeViewModePreferences)
         val testMediaActions = TestMediaActions(
             fakeSongRepository,
             FakeGenreRepository(),
@@ -116,8 +120,8 @@ class AlbumListViewModelTest {
             observeAlbums = testMediaActions.observeAlbums,
             observeSongs = testMediaActions.observeSongs,
             shuffleAlbums = ShuffleAlbums(fakeQueueOperations, fakePlaybackOperations),
-            sortPreferenceManager = fakeSortPreferences,
-            viewModePreferenceManager = fakeViewModePreferences,
+            readSetting = ReadLibraryViewSetting(preferences),
+            saveSetting = SaveLibraryViewSetting(preferences),
             mediaImportObserver = fakeImportState,
             random = random,
         )

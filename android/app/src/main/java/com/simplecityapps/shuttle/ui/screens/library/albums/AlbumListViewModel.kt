@@ -11,7 +11,9 @@ import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.common.SelectionState
-import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
+import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -32,16 +34,16 @@ class AlbumListViewModel @Inject constructor(
     observeAlbums: ObserveAlbums,
     private val observeSongs: ObserveSongs,
     private val shuffleAlbums: ShuffleAlbums,
-    private val sortPreferenceManager: SortPreferences,
-    private val viewModePreferenceManager: AlbumListPreferences,
+    readSetting: ReadLibraryViewSetting,
+    private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider,
     private val random: Random,
 ) : ViewModel() {
 
     private val selectionState = SelectionState<Album>()
 
-    private val _sortOrder = MutableStateFlow(sortPreferenceManager.sortOrderAlbumList)
-    private val _viewMode = MutableStateFlow(viewModePreferenceManager.albumListViewMode)
+    private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.AlbumSort))
+    private val _viewMode = MutableStateFlow(readSetting(LibraryViewSetting.AlbumViewMode))
 
     // Not persisted: a fresh app process starts with a new shuffle even if Random remains the
     // selected sort order. Only reassigned when the user (re)selects Random, so library
@@ -83,9 +85,6 @@ class AlbumListViewModel @Inject constructor(
         initialValue = AlbumListUiState(),
     )
 
-    private val _events = MutableSharedFlow<AlbumListUiEvent>()
-    val events: SharedFlow<AlbumListUiEvent> = _events.asSharedFlow()
-
     fun onAlbumClick(album: Album) {
         selectionState.toggle(album)
     }
@@ -100,15 +99,13 @@ class AlbumListViewModel @Inject constructor(
             // each album's songs must already be in track order before it shuffles the album order.
             val allSongs = observeSongs().firstOrNull().orEmpty()
                 .sortedWith(compareBy({ it.albumGroupKey.key }, { it.albumGroupKey.albumArtistGroupKey?.key }, { it.disc }, { it.track }))
-            val result = shuffleAlbums(allSongs)
-            if (result is ShuffleAlbums.Result.Failure) {
-                _events.emit(AlbumListUiEvent.PlaybackFailed(result.message))
-            }
+            // A failure isn't shown: nothing ever collected the event this used to emit.
+            shuffleAlbums(allSongs)
         }
     }
 
     fun setSortOrder(sortOrder: AlbumSortOrder) {
-        sortPreferenceManager.sortOrderAlbumList = sortOrder
+        saveSetting(LibraryViewSetting.AlbumSort, sortOrder)
         if (sortOrder == AlbumSortOrder.Random) {
             _randomSeed.value = random.nextLong()
         }
@@ -116,7 +113,7 @@ class AlbumListViewModel @Inject constructor(
     }
 
     fun setViewMode(mode: ViewMode) {
-        viewModePreferenceManager.albumListViewMode = mode
+        saveSetting(LibraryViewSetting.AlbumViewMode, mode)
         _viewMode.value = mode
     }
 

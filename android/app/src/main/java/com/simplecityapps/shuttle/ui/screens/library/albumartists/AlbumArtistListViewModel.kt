@@ -8,6 +8,9 @@ import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbumArtists
 import com.simplecityapps.shuttle.ui.common.SelectionState
+import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -32,13 +35,14 @@ data class AlbumArtistListUiState(
 @HiltViewModel
 class AlbumArtistListViewModel @Inject constructor(
     observeAlbumArtists: ObserveAlbumArtists,
-    private val preferenceManager: ArtistListPreferences,
+    readSetting: ReadLibraryViewSetting,
+    private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider,
 ) : ViewModel() {
 
     private val selectionState = SelectionState<AlbumArtist>()
 
-    private val _viewMode = MutableStateFlow(preferenceManager.artistListViewMode)
+    private val _viewMode = MutableStateFlow(readSetting(LibraryViewSetting.ArtistViewMode))
 
     val uiState: StateFlow<AlbumArtistListUiState> = combine(
         observeAlbumArtists(),
@@ -80,7 +84,7 @@ class AlbumArtistListViewModel @Inject constructor(
     }
 
     fun setViewMode(mode: ViewMode) {
-        preferenceManager.artistListViewMode = mode
+        saveSetting(LibraryViewSetting.ArtistViewMode, mode)
         _viewMode.value = mode
     }
 

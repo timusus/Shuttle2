@@ -11,18 +11,16 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
-import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.common.SelectionState
-import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
+import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -40,15 +38,11 @@ data class SongListUiState(
     val isSelecting: Boolean get() = selectedSongs.isNotEmpty()
 }
 
-sealed interface SongListUiEvent {
-    data class PlaybackFailed(val errorMessage: String?) : SongListUiEvent
-}
-
 @HiltViewModel
 class SongListViewModel @Inject constructor(
     observeSongs: ObserveSongs,
-    private val playSongs: PlaySongs,
-    private val sortPreferenceManager: SortPreferences,
+    readSetting: ReadLibraryViewSetting,
+    private val saveSetting: SaveLibraryViewSetting,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     mediaImportObserver: SongImportStateProvider,
 ) : ViewModel() {
@@ -58,10 +52,10 @@ class SongListViewModel @Inject constructor(
     // set of selected songs with Song.equals, it returns false.
     private val selectionState = SelectionState<Long>()
 
-    private val _sortOrder = MutableStateFlow(sortPreferenceManager.sortOrderSongList)
+    private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.SongSort))
 
     val uiState: StateFlow<SongListUiState> = combine(
-        observeSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList)),
+        observeSongs(SongQuery.All(sortOrder = _sortOrder.value)),
         mediaImportObserver.songImportState,
         selectionState.selectedItems,
         _sortOrder,
@@ -94,44 +88,23 @@ class SongListViewModel @Inject constructor(
         initialValue = SongListUiState(),
     )
 
-    private val _events = MutableSharedFlow<SongListUiEvent>()
-    val events: SharedFlow<SongListUiEvent> = _events.asSharedFlow()
-
+    /** A tap while selecting; outside selection mode the screen plays the song through its MediaActionsHost. */
     fun onSongClick(song: Song) {
-        if (selectionState.isActive()) {
-            selectionState.toggle(song.id)
-        } else {
-            play(song)
-        }
+        selectionState.toggle(song.id)
     }
 
     fun onSongLongClick(song: Song) {
         selectionState.toggle(song.id)
     }
 
-    private fun play(song: Song) {
-        // Snapshot the list synchronously, at click time: uiState's combine() can still be
-        // settling (import in progress, a sort re-emission), and viewModelScope.launch defers
-        // this coroutine's body to a later dispatch, so reading uiState.value.songs inside the
-        // launch block can race a newer emission and land indexOf(song) on the wrong position.
-        val songs = uiState.value.songs.ifEmpty { listOf(song) }
-        val position = songs.indexOf(song)
-        viewModelScope.launch {
-            val result = playSongs(songs, position = position)
-            if (result is PlaySongs.Result.Failure) {
-                _events.emit(SongListUiEvent.PlaybackFailed(result.message))
-            }
-        }
-    }
-
     fun setSortOrder(sortOrder: SongSortOrder) {
-        if (sortPreferenceManager.sortOrderSongList == sortOrder) {
+        if (_sortOrder.value == sortOrder) {
             return
         }
 
         viewModelScope.launch {
             withContext(ioDispatcher) {
-                sortPreferenceManager.sortOrderSongList = sortOrder
+                saveSetting(LibraryViewSetting.SongSort, sortOrder)
                 _sortOrder.value = sortOrder
             }
         }

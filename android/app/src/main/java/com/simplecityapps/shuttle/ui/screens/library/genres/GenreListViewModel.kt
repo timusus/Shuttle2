@@ -9,7 +9,9 @@ import com.simplecityapps.mediaprovider.repository.genres.comparator
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
-import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
+import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,11 +32,12 @@ data class GenreListUiState(
 @HiltViewModel
 class GenreListViewModel @Inject constructor(
     observeGenres: ObserveGenres,
-    private val sortPreferenceManager: SortPreferences,
+    readSetting: ReadLibraryViewSetting,
+    private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider
 ) : ViewModel() {
 
-    private val _sortOrder = MutableStateFlow(sortPreferenceManager.sortOrderGenreList)
+    private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.GenreSort))
 
     val uiState: StateFlow<GenreListUiState> = combine(
         observeGenres(),
@@ -66,7 +69,7 @@ class GenreListViewModel @Inject constructor(
     )
 
     fun setSortOrder(sortOrder: GenreSortOrder) {
-        sortPreferenceManager.sortOrderGenreList = sortOrder
+        saveSetting(LibraryViewSetting.GenreSort, sortOrder)
         _sortOrder.value = sortOrder
     }
 }

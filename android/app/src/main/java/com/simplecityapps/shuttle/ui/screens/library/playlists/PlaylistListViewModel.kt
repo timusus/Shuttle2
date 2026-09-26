@@ -12,8 +12,10 @@ import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.GetFavoritesPlaylist
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
+import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistId
-import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,11 +34,12 @@ class PlaylistListViewModel @Inject constructor(
     private val clearPlaylist: ClearPlaylist,
     private val deletePlaylist: DeletePlaylist,
     getFavoritesPlaylist: GetFavoritesPlaylist,
-    private val sortPreferenceManager: SortPreferences,
+    readSetting: ReadLibraryViewSetting,
+    private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider,
 ) : ViewModel() {
 
-    private val _sortOrder = MutableStateFlow(sortPreferenceManager.sortOrderPlaylistList)
+    private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.PlaylistSort))
     private val favoritesPlaylist = flow { emit(getFavoritesPlaylist()) }
 
     val uiState: StateFlow<PlaylistListUiState> = combine(
@@ -67,7 +70,7 @@ class PlaylistListViewModel @Inject constructor(
     )
 
     fun setSortOrder(sortOrder: PlaylistSortOrder) {
-        sortPreferenceManager.sortOrderPlaylistList = sortOrder
+        saveSetting(LibraryViewSetting.PlaylistSort, sortOrder)
         _sortOrder.value = sortOrder
     }
 

@@ -1,11 +1,5 @@
 # ViewModels must not inject *Operations, *Preference(s) or *Store types; inject a use case (UDF 8a)
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
-com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListViewModel -> com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferences
-com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListViewModel -> com.simplecityapps.shuttle.ui.screens.library.SortPreferences
-com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListViewModel -> com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferences
-com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel -> com.simplecityapps.shuttle.ui.screens.library.SortPreferences
-com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel -> com.simplecityapps.shuttle.ui.screens.library.SortPreferences
-com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel -> com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 com.simplecityapps.shuttle.ui.screens.settings.SettingsViewModel -> com.simplecityapps.shuttle.settings.SettingsStore
 com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel -> com.simplecityapps.shuttle.ui.screens.sources.ScannerFolderStore
 com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel -> com.simplecityapps.playback.PlaybackOperations

@@ -17,7 +17,3 @@ data class AlbumListUiState(
 
     val isSelecting: Boolean get() = selectedAlbums.isNotEmpty()
 }
-
-sealed interface AlbumListUiEvent {
-    data class PlaybackFailed(val errorMessage: String?) : AlbumListUiEvent
-}

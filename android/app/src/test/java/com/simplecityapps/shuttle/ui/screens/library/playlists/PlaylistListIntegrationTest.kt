@@ -6,11 +6,14 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.fakes.fakeLibraryViewPreferences
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
+import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -139,6 +142,7 @@ class PlaylistListIntegrationTest {
 
     private fun createViewModel(): PlaylistListViewModel {
         val actions = TestMediaActions(playlistRepository = fakePlaylistRepository)
+        val preferences = fakeLibraryViewPreferences(sort = fakeSortPreferences)
         return PlaylistListViewModel(
             observePlaylists = actions.observePlaylists,
             createPlaylist = actions.createPlaylist,
@@ -146,7 +150,8 @@ class PlaylistListIntegrationTest {
             clearPlaylist = actions.clearPlaylist,
             deletePlaylist = actions.deletePlaylist,
             getFavoritesPlaylist = actions.getFavoritesPlaylist,
-            sortPreferenceManager = fakeSortPreferences,
+            readSetting = ReadLibraryViewSetting(preferences),
+            saveSetting = SaveLibraryViewSetting(preferences),
             mediaImportObserver = fakeImportState,
         )
     }
