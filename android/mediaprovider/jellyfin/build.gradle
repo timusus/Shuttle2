@@ -60,4 +60,5 @@ dependencies {
     testImplementation libs.kotest
     testImplementation libs.robolectric
     testImplementation libs.okhttp3.mockwebserver
+    testImplementation libs.kotlinx.coroutinesTest
 }

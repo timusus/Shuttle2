@@ -9,6 +9,7 @@ import com.simplecityapps.provider.jellyfin.http.item
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
 
+/** Artwork urls on the signed-in Jellyfin server; null when the server doesn't know the song's album or artist. */
 class JellyfinRemoteArtworkProvider
 @Inject
 constructor(
@@ -18,43 +19,28 @@ constructor(
 ) : RemoteArtworkProvider {
     override fun handles(uri: Uri): Boolean = uri.scheme == "jellyfin"
 
-    override suspend fun getAlbumArtworkUrl(song: Song): String? {
-        val itemId = Uri.parse(song.path).pathSegments.last() ?: return null
+    override suspend fun getAlbumArtworkUrl(song: Song): String? = artworkUrl(song) { item -> item.albumId }
 
+    override suspend fun getArtistArtworkUrl(song: Song): String? = artworkUrl(song) { item -> item.artistItems.firstOrNull()?.id }
+
+    private suspend fun artworkUrl(
+        song: Song,
+        imageItemId: (Item) -> String?
+    ): String? {
+        val itemId = Uri.parse(song.path).pathSegments.lastOrNull() ?: return null
         val address = credentialStore.address ?: return null
-
         val authenticatedCredentials = jellyfinAuthenticationManager.getAuthenticatedCredentials() ?: return null
 
-        val result: NetworkResult<Item> =
+        val result =
             itemsService.item(
                 address,
                 jellyfinAuthenticationManager.authorizationHeader(authenticatedCredentials),
                 authenticatedCredentials.userId,
                 itemId
             )
-        if (result is NetworkResult.Success && result.body.albumId != null) {
-            return "$address/Items/${result.body.albumId}/Images/Primary?maxWidth=1000&maxHeight=1000"
-        }
-
-        return null
-    }
-
-    override suspend fun getArtistArtworkUrl(song: Song): String? {
-        val itemId = Uri.parse(song.path).pathSegments.last() ?: return null
-
-        val address = credentialStore.address ?: return null
-
-        val authenticatedCredentials = jellyfinAuthenticationManager.getAuthenticatedCredentials() ?: return null
-
-        val result: NetworkResult<Item> =
-            itemsService.item(
-                address,
-                jellyfinAuthenticationManager.authorizationHeader(authenticatedCredentials),
-                authenticatedCredentials.userId,
-                itemId
-            )
-        if (result is NetworkResult.Success && result.body.artistItems.isNotEmpty()) {
-            return "$address/Items/${result.body.artistItems.firstOrNull()?.id}/Images/Primary?maxWidth=1000&maxHeight=1000"
+        if (result is NetworkResult.Success) {
+            val id = imageItemId(result.body) ?: return null
+            return "$address/Items/$id/Images/Primary?maxWidth=1000&maxHeight=1000"
         }
 
         return null

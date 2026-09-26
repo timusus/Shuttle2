@@ -1,0 +1,9 @@
+{
+  "Name": "Duet",
+  "Id": "102",
+  "Artists": ["Artist One", "Guest Singer"],
+  "ArtistItems": [{ "Name": "Artist One", "Id": "301" }, { "Name": "Guest Singer", "Id": "303" }],
+  "Album": "First Album",
+  "AlbumId": "201",
+  "AlbumArtist": "Artist One"
+}
