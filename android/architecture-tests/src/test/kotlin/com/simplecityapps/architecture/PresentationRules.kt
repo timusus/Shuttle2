@@ -80,7 +80,7 @@ class PresentationRules {
     }
 
     @Test
-    fun `ViewModels reach operations, preferences and stores only through use cases`() {
+    fun `ViewModels reach operations, preferences, settings and stores only through use cases`() {
         val violations = Production.viewModels.flatMap { viewModel ->
             viewModel.constructorTypeNames()
                 .filter { name -> DIRECT_DEPENDENCY_SUFFIXES.any { name.endsWith(it) } }
@@ -88,7 +88,7 @@ class PresentationRules {
         }
         Baseline.assertMatches(
             "viewmodel-direct-deps",
-            "ViewModels must not inject *Operations, *Preference(s) or *Store types; inject a use case (UDF 8a)",
+            "ViewModels must not inject *Operations, *Preference(s), *PreferenceManager, *Settings or *Store types; inject a use case (UDF 8a)",
             violations,
         )
     }
@@ -145,7 +145,7 @@ class PresentationRules {
     private companion object {
         val CHANNEL_FLOW_CALLS = listOf("receiveAsFlow", "consumeAsFlow")
 
-        val DIRECT_DEPENDENCY_SUFFIXES = listOf("Operations", "Preference", "Preferences", "Store")
+        val DIRECT_DEPENDENCY_SUFFIXES = listOf("Operations", "Preference", "Preferences", "PreferenceManager", "Settings", "Store")
 
         val UI_PACKAGES = listOf(
             "android.view.",
