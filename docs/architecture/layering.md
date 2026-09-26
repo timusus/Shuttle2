@@ -159,9 +159,9 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
    `PlaybackState`, `PlaybackProgress`, `PositionAnchor`, `SongPosition`, `QueueState`, `QueueItem`,
    `ShuffleMode`, `RepeatMode` moved with their packages unchanged. Two Media3 leaks were cut: the
    repeat/shuffle mode conversions to and from `Player` constants stay in playback
-   (`queue/PlayerModes.kt`), and `NewQueue` became a domain interface (songs, shuffle songs,
-   position) that playback's internal `PreparedQueue` implements with the prebuilt `MediaItem`s and
-   shuffle order. `:android:app` is the only module that depends on `:android:playback`, and it
+   (`queue/PlayerModes.kt`), and the prebuilt queue a restore sets (`PreparedQueue`, with its
+   `MediaItem`s and shuffle order) left the domain API: the restore moved into playback's
+   `QueueStore` (#345), so building and setting it are internal to `:android:playback`. `:android:app` is the only module that depends on `:android:playback`, and it
    needs it for the service and DI, so no module edge dropped.)
 6. ~~**Shared use cases**: move `ui/actions` use cases whose dependencies are now all in domain into
    `:android:domain`. The ones that need Android (`ShareSongs`, `DeleteSongs`' SAF deleter) stay in

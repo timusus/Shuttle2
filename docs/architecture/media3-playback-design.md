@@ -34,7 +34,7 @@ Paths are relative to `android/playback/src/main/java/com/simplecityapps/playbac
 | Playback speed (trial slows it) | TrialInitializer.kt:42 → setPlaybackSpeed | Player.setPlaybackParameters; RemoteCastPlayer caps speed at 2.0 | none |
 | Position, progress and anchor | progressFlow, positionAnchorFlow, ProgressTicker | Player.currentPosition + isPlaying + playbackParameters; controllers get position from the session | Facade ticker that derives progressFlow and positionAnchorFlow from the Player |
 | trackEnded / pausePosition / failure events | PlaybackManager SharedFlows (now PlaybackFacade; failures from ItemLoader) | onMediaItemTransition(AUTO or REPEAT), onIsPlayingChanged, onPlayerError | Facade maps them to the same flows |
-| Queue persistence and restore | PlaybackInitializer + prefs queue_ids, shuffle_queue_ids, queue_position, playback_position, shuffle and repeat (persistence/PlaybackPreferenceManager.kt:25-90) | Player.Listener onTimelineChanged / onMediaItemTransition / onShuffle / onRepeat triggers saves. Restore via setMediaItems + setShuffleOrder. MediaSession.Callback.onPlaybackResumption for system resume ([background playback doc](https://developer.android.com/media/media3/session/background-playback)). | QueueStore: same keys and format. Keep the content-version race guard (PlaybackInitializer.kt:85-178). |
+| Queue persistence and restore | PlaybackInitializer + prefs queue_ids, shuffle_queue_ids, queue_position, playback_position, shuffle and repeat (persistence/PlaybackPreferenceManager.kt:25-90) | Player.Listener onTimelineChanged / onMediaItemTransition / onShuffle / onRepeat triggers saves. Restore via setMediaItems + setShuffleOrder. MediaSession.Callback.onPlaybackResumption for system resume ([background playback doc](https://developer.android.com/media/media3/session/background-playback)). | Done (#345): QueueStore (persistence/QueueStore.kt) saves on player events and restores at start-up, same keys and format, with the content-version race guard. |
 | Tag-edit refresh | updateQueueSongs (TagEditorPresenter.kt:290) | Player.replaceMediaItem, which does not interrupt when only metadata changes | none |
 | Media session, Auto, Assistant | MediaSessionManager (play from id, uri or search, shuffle custom action), PlaybackService.onGetRoot/onLoadChildren (:292-307), MediaIdHelper, PackageValidator | MediaLibraryService + MediaLibrarySession.Callback (onGetLibraryRoot, onGetChildren, onSearch, onAddMediaItems, onSetMediaItems). The manifest keeps the android.media.browse.MediaBrowserService action for legacy clients. | Port MediaIdHelper's browse tree. PackageValidator is replaced by ControllerInfo.isTrusted + an allow-list. |
 | Notification | PlaybackNotificationManager (312 lines) | MediaSessionService's own notification; buttons via setMediaButtonPreferences | Delete except the shuffle/repeat CommandButtons |
@@ -146,10 +146,10 @@ price of Android Auto's queue view; a windowed timeline would break the one-queu
 
 **The cold-start restore (#444).** A device trace of a 2,005-song restore spent about 1.6 s, most of it waiting for a
 main thread busy with the app's start: the restore was launched on it, and hopped back to it to set the queue and
-again to load it. `PlaybackInitializer` now reads the saved queue and builds it (`QueueOperations.buildQueue`: the
-MediaItems and both starting orders) on a background thread, and takes the main thread once, for the content-version
-check, `setMediaItems`, the load and marking the queue restored (`setQueueIfContentVersion` is main-thread only, so
-that step can't be split). It sets the saved shuffle mode in that step too, as the saved position is in the order that
+again to load it. The restore (now `QueueStore.restore`, in playback; `PlaybackInitializer` only calls it) reads the
+saved queue and builds it (`QueueFacade.buildQueue`, internal to playback: the MediaItems and both starting orders) on
+a background thread, and takes the main thread once, for the content-version check, `setMediaItems`, the load and
+marking the queue restored (`QueueFacade.setQueueIfContentVersion` is main-thread only, so that step can't be split). It sets the saved shuffle mode in that step too, as the saved position is in the order that
 mode presents, rather than relying on the player's mode having been restored first. Setting a window around the current song first was rejected for the same reason as above:
 the player would no longer hold the queue. The stages are traced as `S2 restore prefs`, `DB`, `build`, `setQueue`
 and `load`, and the log line adds the `main wait` before the main-thread step.
@@ -178,7 +178,7 @@ and `load`, and the log line adds the `main wait` before the main-thread step.
    |---|---|
    | Moving between this device and Cast | `CastHandover` (registered first; the others read `isRemote`/`isSwitching`) |
    | Load completion, skipping items that fail to load, failure events | `ItemLoader` |
-   | The saved resume position | `ResumePositionStore` |
+   | The saved queue, modes and resume position, and the restore at start-up | `QueueStore` (`persistence/`; the only writer of those prefs) |
    | Progress ticks | `ProgressTicker` (driven by the facade, so progress publishes before state) |
    | A play held through a call | `CallHold` |
    | Saved playback speed | `PlaybackSpeedStore` |
@@ -186,7 +186,7 @@ and `load`, and the log line adds the `main wait` before the main-thread step.
    | Derived state, anchor, trackEnded/pausePosition flows; near-end restart on play (RS-11) and previous (RS-33, which Media3's `seekToPrevious` doesn't match: it wraps on repeat-all and uses 3 s) | `PlaybackFacade`, the PlaybackOperations binding |
    | Publishing the queue: `queueStateFlow` and its versions, the shuffle and repeat flows, derived from player events | `QueueStatePublisher` |
    | Each change on the player: the playlist, its S2ShuffleOrder (play next, a move in the shuffled view, restoring the order after an edit), the modes and the current item; changes go to the local player while casting | `PlaylistEditor` |
-   | New items built off the main thread (NewQueue), changes that add them applied on it in the order made | `QueueBuilder` |
+   | New items built off the main thread (`PreparedQueue`), changes that add them applied on it in the order made | `QueueBuilder` |
    | The restore content-version guard (`setQueueIfContentVersion`, main thread only, the restored shuffle mode passed with the queue) and next/previous over the published queue | `QueueFacade`, the QueueOperations binding |
    | The shuffle/repeat enums | top-level `ShuffleMode` and `RepeatMode` in `playback.queue` (the Player's Boolean and Int would lose the types the UI and prefs use) |
 
@@ -203,8 +203,8 @@ and `load`, and the log line adds the `main wait` before the main-thread step.
 - Session, notification, Auto, external controllers: the MediaLibrarySession on that Player.
 - Persisted queue: QueueStore mirrors Player events into the existing prefs.
 - Left custom: the in-process facades (flows plus the Ops API), S2ShuffleOrder, the URI resolver, the ReplayGain and EQ processors, BitPerfectOutput, HttpServer with the Cast converter and transfer callback, SleepTimer, and the library browse tree.
-- LoadCoordinator and PlaybackManager are deleted. `PlaybackFacade` is the PlaybackOperations facade: forwarding plus flows, over small Player listeners (CastHandover, ItemLoader, ResumePositionStore, CallHold, PlaybackSpeedStore, WakeModeUpdater) and ProgressTicker. QueueManager is deleted too: `QueueFacade` is the QueueOperations facade, forwarding plus flows, over `QueueStatePublisher`, `PlaylistEditor` and `QueueBuilder`.
-- `PlaybackOperations`, `QueueOperations` and the state types they expose (`PlaybackState`, `PlaybackProgress`, `PositionAnchor`, `SongPosition`, `QueueState`, `QueueItem`, `ShuffleMode`, `RepeatMode`, `NewQueue`) live in the pure-JVM `:android:domain` (#443 step 5), in their original packages; `:android:playback` implements them. The Media3 conversions (`toRepeatMode`, `toPlayerRepeatMode`, `toShuffleMode`) and the built queue's items and shuffle order (`PreparedQueue`, the playback-internal `NewQueue`) stay in `:android:playback`.
+- LoadCoordinator and PlaybackManager are deleted. `PlaybackFacade` is the PlaybackOperations facade: forwarding plus flows, over small Player listeners (CastHandover, ItemLoader, QueueStore, CallHold, PlaybackSpeedStore, WakeModeUpdater) and ProgressTicker. QueueManager is deleted too: `QueueFacade` is the QueueOperations facade, forwarding plus flows, over `QueueStatePublisher`, `PlaylistEditor` and `QueueBuilder`.
+- `PlaybackOperations`, `QueueOperations` and the state types they expose (`PlaybackState`, `PlaybackProgress`, `PositionAnchor`, `SongPosition`, `QueueState`, `QueueItem`, `ShuffleMode`, `RepeatMode`) live in the pure-JVM `:android:domain` (#443 step 5), in their original packages; `:android:playback` implements them. The Media3 conversions (`toRepeatMode`, `toPlayerRepeatMode`, `toShuffleMode`) and the built queue's items and shuffle order (`PreparedQueue`, which only playback's restore builds and sets) stay in `:android:playback`.
 
 ## Open questions and unverified points
 
