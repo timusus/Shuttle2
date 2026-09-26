@@ -4,6 +4,7 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.testing.MainDispatcherRule
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -46,7 +47,7 @@ class SongInfoViewModelTest {
     fun `rows format the file details`() {
         val song = createSong().copy(size = 5 * 1024 * 1024, bitRate = 320, bitDepth = 24, sampleRate = 44100, replayGainTrack = -6.5, artists = listOf("A", "B"))
 
-        val rows = song.infoRows().associate { it.label to it.value }
+        val rows = song.infoSections().flatMap { it.rows }.associate { it.label to it.value }
 
         rows[R.string.song_info_size] shouldBe "5.00 MB"
         rows[R.string.song_info_bit_rate] shouldBe "320 kb/s"
@@ -55,6 +56,30 @@ class SongInfoViewModelTest {
         rows[R.string.song_info_replay_gain_track] shouldBe "-6.50 dB"
         rows[R.string.song_info_replay_gain_album] shouldBe null
         rows[R.string.song_info_artists] shouldBe "A, B"
+    }
+
+    @Test
+    fun `rows are grouped into tags, file and playback cards`() {
+        val sections = createSong().infoSections().associate { it.title to it.rows.map(SongInfoRow::label) }
+
+        sections.keys.toList() shouldBe listOf(R.string.song_info_section_tags, R.string.song_info_section_file, R.string.song_info_section_playback)
+        sections.getValue(R.string.song_info_section_tags) shouldContain R.string.song_info_album
+        sections.getValue(R.string.song_info_section_file) shouldContain R.string.song_info_path
+        sections.getValue(R.string.song_info_section_playback) shouldContain R.string.song_info_play_count
+    }
+
+    @Test
+    fun `chips show the format, bit rate and sample rate the song has`() {
+        createSong().copy(mimeType = "audio/flac", bitRate = 1024, sampleRate = 96000).infoChips() shouldBe listOf("FLAC", "1024 kb/s", "96 kHz")
+        createSong().copy(mimeType = "audio/mpeg", bitRate = null, sampleRate = 44100).infoChips() shouldBe listOf("MP3", "44.1 kHz")
+    }
+
+    @Test
+    fun `a MIME type reads as its format`() {
+        formatName("audio/x-flac") shouldBe "FLAC"
+        formatName("audio/mp4") shouldBe "M4A"
+        formatName("audio/ogg; codecs=opus") shouldBe "OGG"
+        formatName("") shouldBe null
     }
 
     @Test

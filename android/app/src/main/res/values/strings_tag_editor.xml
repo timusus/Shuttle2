@@ -61,4 +61,12 @@
     <string name="edit_tags_discard">Discard</string>
     <!-- Button in the unsaved-changes dialog that goes back to editing -->
     <string name="edit_tags_keep_editing">Keep editing</string>
+    <!-- Heading over the tag editor's song fields (title, artist, genres) -->
+    <string name="edit_tags_section_song">Song</string>
+    <!-- Heading over the tag editor's album fields (album, album artist, year) -->
+    <string name="edit_tags_section_album">Album</string>
+    <!-- Heading over the tag editor's track and disc number fields -->
+    <string name="edit_tags_section_numbering">Numbering</string>
+    <!-- Heading over the tag editor's lyrics field -->
+    <string name="edit_tags_section_lyrics">Lyrics</string>
 </resources>

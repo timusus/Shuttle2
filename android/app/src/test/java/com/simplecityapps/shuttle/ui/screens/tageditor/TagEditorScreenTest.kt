@@ -59,6 +59,16 @@ class TagEditorScreenTest {
     }
 
     @Test
+    fun `fields are grouped into song, album, numbering and lyrics sections`() {
+        robot.setState(singleSongEditing())
+
+        listOf("Song", "Album", "Numbering", "Lyrics").forEach { section ->
+            robot.scrollToText(section)
+            robot.assertTextDisplayed(section)
+        }
+    }
+
+    @Test
     fun `reset puts a changed field back`() {
         val song = sampleSongs(1).single()
         robot.setState(singleSongEditing(song))

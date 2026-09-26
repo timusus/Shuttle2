@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,13 +21,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Undo
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,9 +52,11 @@ import androidx.lifecycle.lifecycleScope
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ErrorState
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
+import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
+import com.simplecityapps.shuttle.designsystem.component.SettingsHeader
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.squareup.phrase.Phrase
@@ -144,7 +147,13 @@ fun TagEditorScreen(
                 scrollBehavior = scrollBehavior,
                 actions = {
                     if (editing != null) {
-                        TextButton(onClick = onSave, enabled = hasChanges && !writing) { Text(stringResource(R.string.dialog_button_save)) }
+                        S2Button(
+                            text = stringResource(R.string.dialog_button_save),
+                            onClick = onSave,
+                            enabled = hasChanges && !writing,
+                            icon = Icons.Rounded.Check,
+                            modifier = Modifier.padding(end = 8.dp),
+                        )
                     }
                 },
             )
@@ -212,34 +221,27 @@ private fun TagEditorForm(
     val fields = remember(state.fields) { state.fields.associateBy { it.field } }
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         if (state.songCount > 1) {
             Text(
                 text = Phrase.fromPlural(LocalResources.current, R.plurals.edit_tags_editing_count_songs, state.songCount).put("count", state.songCount).format().toString(),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(horizontal = 16.dp),
             )
         }
         if (state.skipped.isNotEmpty()) SkippedSongs(state)
-        // Numbers and their totals share a row, as on a disc sleeve: "3 of 12".
-        val rows = listOf(
-            listOf(TagField.Title),
-            listOf(TagField.Artists),
-            listOf(TagField.Album),
-            listOf(TagField.AlbumArtist),
-            listOf(TagField.Year),
-            listOf(TagField.Track, TagField.TrackTotal),
-            listOf(TagField.Disc, TagField.DiscTotal),
-            listOf(TagField.Genres),
-            listOf(TagField.Lyrics),
-        )
-        rows.forEach { row ->
-            val shown = row.mapNotNull(fields::get)
-            if (shown.isNotEmpty()) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    shown.forEach { field ->
-                        TagTextField(field, onFieldChange, onFieldReset, enabled, Modifier.weight(1f))
+        TagSection.entries.forEach { section ->
+            val rows = section.rows.map { row -> row.mapNotNull(fields::get) }.filter { it.isNotEmpty() }
+            if (rows.isNotEmpty()) {
+                TagSectionCard(stringResource(section.title)) {
+                    rows.forEach { row ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            row.forEach { field ->
+                                TagTextField(field, onFieldChange, onFieldReset, enabled, Modifier.weight(1f))
+                            }
+                        }
                     }
                 }
             }
@@ -247,9 +249,23 @@ private fun TagEditorForm(
     }
 }
 
+/** One section of fields: its heading over a tonal container, the way settings group their rows. */
+@Composable
+private fun TagSectionCard(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column {
+        SettingsHeader(title)
+        Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.largeIncreased, modifier = Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
+        }
+    }
+}
+
 @Composable
 private fun SkippedSongs(state: TagEditorUiState.Editing) {
-    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.fillMaxWidth().testTag("tag-editor-skipped")) {
+    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.largeIncreased, modifier = Modifier.fillMaxWidth().testTag("tag-editor-skipped")) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
                 text = Phrase.fromPlural(LocalResources.current, R.plurals.edit_tags_skipped, state.skipped.size).put("count", state.skipped.size).format().toString(),
@@ -298,7 +314,7 @@ private fun TagTextField(
             null
         },
         singleLine = state.field != TagField.Lyrics,
-        minLines = if (state.field == TagField.Lyrics) 3 else 1,
+        minLines = if (state.field == TagField.Lyrics) 5 else 1,
         keyboardOptions = if (state.field.numeric) KeyboardOptions(keyboardType = KeyboardType.Number) else KeyboardOptions.Default,
     )
 }

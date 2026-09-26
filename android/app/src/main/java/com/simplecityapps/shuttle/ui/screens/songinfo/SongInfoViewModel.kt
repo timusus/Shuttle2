@@ -46,28 +46,56 @@ data class SongInfoRow(
     val value: String?,
 )
 
-/** Everything song info shows about [this] song, in order. */
-fun Song.infoRows(): List<SongInfoRow> = listOf(
-    SongInfoRow(R.string.song_info_track_title, name),
-    SongInfoRow(R.string.song_info_track_number, track?.toString()),
-    SongInfoRow(R.string.song_info_duration, formatDuration(duration.toLong())),
-    SongInfoRow(R.string.song_info_album_artist, albumArtist),
-    SongInfoRow(R.string.song_info_artists, artists.takeIf { it.isNotEmpty() }?.joinToString(", ")),
-    SongInfoRow(R.string.song_info_album, album),
-    SongInfoRow(R.string.song_info_year, date?.year?.toString()),
-    SongInfoRow(R.string.song_info_disc, disc?.toString()),
-    SongInfoRow(R.string.song_info_play_count, playCount.toString()),
-    SongInfoRow(R.string.song_info_genres, genres.takeIf { it.isNotEmpty() }?.joinToString(", ")),
-    SongInfoRow(R.string.song_info_path, displayPath),
-    SongInfoRow(R.string.song_info_mime_type, mimeType),
-    SongInfoRow(R.string.song_info_size, String.format(Locale.getDefault(), "%.2f MB", size / 1024f / 1024f)),
-    SongInfoRow(R.string.song_info_bit_rate, bitRate?.let { "$it kb/s" }),
-    SongInfoRow(R.string.song_info_bit_depth, bitDepth?.let { "$it-bit" }),
-    SongInfoRow(R.string.song_info_sample_rate, sampleRate?.let(::formatSampleRate)),
-    SongInfoRow(R.string.song_info_channel_count, channelCount?.toString()),
-    SongInfoRow(R.string.song_info_replay_gain_track, replayGainTrack?.let(::formatGain)),
-    SongInfoRow(R.string.song_info_replay_gain_album, replayGainAlbum?.let(::formatGain)),
-    SongInfoRow(R.string.song_info_lyrics, lyrics),
+/** A titled group of song info rows, shown as one card. */
+data class SongInfoSection(
+    @StringRes val title: Int,
+    val rows: List<SongInfoRow>,
+)
+
+/** Everything song info shows about [this] song, grouped into its cards, in order. */
+fun Song.infoSections(): List<SongInfoSection> = listOf(
+    SongInfoSection(
+        R.string.song_info_section_tags,
+        listOf(
+            SongInfoRow(R.string.song_info_track_title, name),
+            SongInfoRow(R.string.song_info_artists, artists.takeIf { it.isNotEmpty() }?.joinToString(", ")),
+            SongInfoRow(R.string.song_info_album, album),
+            SongInfoRow(R.string.song_info_album_artist, albumArtist),
+            SongInfoRow(R.string.song_info_year, date?.year?.toString()),
+            SongInfoRow(R.string.song_info_track_number, track?.toString()),
+            SongInfoRow(R.string.song_info_disc, disc?.toString()),
+            SongInfoRow(R.string.song_info_genres, genres.takeIf { it.isNotEmpty() }?.joinToString(", ")),
+            SongInfoRow(R.string.song_info_lyrics, lyrics),
+        ),
+    ),
+    SongInfoSection(
+        R.string.song_info_section_file,
+        listOf(
+            SongInfoRow(R.string.song_info_path, displayPath),
+            SongInfoRow(R.string.song_info_mime_type, mimeType),
+            SongInfoRow(R.string.song_info_size, String.format(Locale.getDefault(), "%.2f MB", size / 1024f / 1024f)),
+            SongInfoRow(R.string.song_info_duration, formatDuration(duration.toLong())),
+            SongInfoRow(R.string.song_info_bit_rate, bitRate?.let(::formatBitRate)),
+            SongInfoRow(R.string.song_info_bit_depth, bitDepth?.let { "$it-bit" }),
+            SongInfoRow(R.string.song_info_sample_rate, sampleRate?.let(::formatSampleRate)),
+            SongInfoRow(R.string.song_info_channel_count, channelCount?.toString()),
+        ),
+    ),
+    SongInfoSection(
+        R.string.song_info_section_playback,
+        listOf(
+            SongInfoRow(R.string.song_info_play_count, playCount.toString()),
+            SongInfoRow(R.string.song_info_replay_gain_track, replayGainTrack?.let(::formatGain)),
+            SongInfoRow(R.string.song_info_replay_gain_album, replayGainAlbum?.let(::formatGain)),
+        ),
+    ),
+)
+
+/** The file's headline facts under the artwork, those the song has: its format, bit rate and sample rate. */
+fun Song.infoChips(): List<String> = listOfNotNull(
+    formatName(mimeType),
+    bitRate?.let(::formatBitRate),
+    sampleRate?.let(::formatSampleRate),
 )
 
 /**
@@ -82,5 +110,19 @@ val Song.displayPath: String
 
 /** A sample rate in Hz as kHz: 44100 as "44.1 kHz", 48000 as "48 kHz". */
 internal fun formatSampleRate(hz: Int): String = if (hz % 1000 == 0) "${hz / 1000} kHz" else String.format(Locale.getDefault(), "%.1f kHz", hz / 1000f)
+
+internal fun formatBitRate(kbps: Int): String = "$kbps kb/s"
+
+/** A MIME type as the format people know it: "audio/flac" as "FLAC", "audio/mpeg" as "MP3"; null when it names none. */
+internal fun formatName(mimeType: String): String? {
+    val subtype = mimeType.substringAfter('/', missingDelimiterValue = "").substringBefore(';').removePrefix("x-").trim().lowercase()
+    return when (subtype) {
+        "" -> null
+        "mpeg", "mp3" -> "MP3"
+        "mp4", "m4a", "mp4a-latm" -> "M4A"
+        "vorbis" -> "OGG"
+        else -> subtype.uppercase()
+    }
+}
 
 internal fun formatGain(db: Double): String = String.format(Locale.getDefault(), "%+.2f dB", db)

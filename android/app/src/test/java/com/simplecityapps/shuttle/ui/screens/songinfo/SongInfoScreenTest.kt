@@ -31,6 +31,24 @@ class SongInfoScreenTest {
     }
 
     @Test
+    fun `the header shows the format, bit rate and sample rate as chips`() {
+        robot.setState(songInfoReady())
+
+        robot.assertTextDisplayedWithoutScrolling("FLAC")
+        robot.assertTextDisplayedWithoutScrolling("1024 kb/s")
+        robot.assertTextDisplayedWithoutScrolling("96 kHz")
+    }
+
+    @Test
+    fun `details are grouped into tags, file and playback cards`() {
+        robot.setState(songInfoReady())
+
+        robot.assertTextDisplayed("Tags")
+        robot.assertTextDisplayed("File")
+        robot.assertTextDisplayed("Playback")
+    }
+
+    @Test
     fun `a missing value reads Unknown`() {
         robot.setState(songInfoReady())
 

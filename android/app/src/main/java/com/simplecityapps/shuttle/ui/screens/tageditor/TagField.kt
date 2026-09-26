@@ -4,7 +4,7 @@ import androidx.annotation.StringRes
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.R
 
-/** The tags the editor offers, in the order it shows them. */
+/** The tags the editor offers. [TagSection] lays them out. */
 enum class TagField(
     @StringRes val hint: Int,
     /** Whether the field is offered when more than one song is being edited. */
@@ -39,6 +39,20 @@ enum class TagField(
         Genres -> file.genres.takeIf { it.isNotEmpty() }?.joinToString(", ")
         Lyrics -> file.lyrics
     }
+}
+
+/**
+ * The editor's sections, in order, and the rows of fields in each. Numbers and their totals share a row, as on a disc
+ * sleeve: "3 of 12".
+ */
+enum class TagSection(
+    @StringRes val title: Int,
+    val rows: List<List<TagField>>,
+) {
+    Song(R.string.edit_tags_section_song, listOf(listOf(TagField.Title), listOf(TagField.Artists), listOf(TagField.Genres))),
+    Album(R.string.edit_tags_section_album, listOf(listOf(TagField.Album), listOf(TagField.AlbumArtist), listOf(TagField.Year))),
+    Numbering(R.string.edit_tags_section_numbering, listOf(listOf(TagField.Track, TagField.TrackTotal), listOf(TagField.Disc, TagField.DiscTotal))),
+    Lyrics(R.string.edit_tags_section_lyrics, listOf(listOf(TagField.Lyrics))),
 }
 
 /**

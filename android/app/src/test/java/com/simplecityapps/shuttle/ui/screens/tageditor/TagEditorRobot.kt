@@ -123,6 +123,12 @@ class TagEditorRobot(private val rule: ComposeContentTestRule) {
         rule.onAllNodesWithText(text, substring = substring)[0].assertIsDisplayed()
     }
 
+    /** Scrolls the form until [text] is on screen. */
+    fun scrollToText(text: String) {
+        rule.onAllNodesWithText(text)[0].performScrollTo()
+        rule.waitForIdle()
+    }
+
     fun assertTextNotDisplayed(text: String) {
         check(rule.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty()) { "\"$text\" is shown" }
     }

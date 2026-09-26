@@ -50,4 +50,10 @@
     <string name="song_info_path_copied">Path copied</string>
     <!-- Shown in song info when the song can't be found in the library (it was removed) -->
     <string name="song_info_not_found">This song is no longer in your library</string>
+    <!-- Heading over the song's tags in song info (title, artists, album, ...) -->
+    <string name="song_info_section_tags">Tags</string>
+    <!-- Heading over the song's file details in song info (path, format, size, ...) -->
+    <string name="song_info_section_file">File</string>
+    <!-- Heading over the song's playback details in song info (play count, ReplayGain) -->
+    <string name="song_info_section_playback">Playback</string>
 </resources>
