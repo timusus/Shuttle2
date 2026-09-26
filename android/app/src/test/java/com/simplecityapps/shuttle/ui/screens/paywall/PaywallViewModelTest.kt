@@ -16,7 +16,6 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -35,6 +34,9 @@ class PaywallViewModelTest {
 
     /** A view model whose state is being collected, as the screen would. */
     private fun TestScope.collectedViewModel() = viewModel().also { viewModel -> backgroundScope.launch(mainDispatcherRule.testDispatcher) { viewModel.uiState.collect {} } }
+
+    /** The oldest pending event, consumed as the screen would once it has handled it. */
+    private fun PaywallViewModel.takeEvent(): PaywallUiEvent = uiState.value.events.first().also { onEventHandled(it.id) }.value
 
     @Test
     fun `opening the paywall logs where it was opened from`() {
@@ -90,7 +92,7 @@ class PaywallViewModelTest {
         billing.offers.value = PaywallOffers.Available(FakeBilling.SAMPLE_OFFERS)
         viewModel.onSelectPlan(PaywallPlan.Annual)
         viewModel.onPurchase()
-        viewModel.events.first() shouldBe PaywallUiEvent.LaunchPurchase(FakeBilling.ANNUAL)
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(PaywallUiEvent.LaunchPurchase(FakeBilling.ANNUAL))
     }
 
     @Test
@@ -100,16 +102,16 @@ class PaywallViewModelTest {
 
         viewModel.onPurchase()
 
-        viewModel.events.first() shouldBe PaywallUiEvent.LaunchPurchase(FakeBilling.ANNUAL)
+        viewModel.takeEvent() shouldBe PaywallUiEvent.LaunchPurchase(FakeBilling.ANNUAL)
     }
 
     @Test
     fun `a purchase sheet that fails to open shows a message`() = runTest {
-        val viewModel = viewModel()
+        val viewModel = collectedViewModel()
 
         viewModel.onPurchaseLaunched(false)
 
-        viewModel.events.first() shouldBe PaywallUiEvent.ShowMessage(PaywallMessage.PurchaseFailed)
+        viewModel.takeEvent() shouldBe PaywallUiEvent.ShowMessage(PaywallMessage.PurchaseFailed)
     }
 
     @Test
@@ -122,7 +124,7 @@ class PaywallViewModelTest {
         )) {
             billing.restoreResult = result
             viewModel.onRestore()
-            viewModel.events.first() shouldBe PaywallUiEvent.ShowMessage(message)
+            viewModel.takeEvent() shouldBe PaywallUiEvent.ShowMessage(message)
             viewModel.uiState.value.restoring shouldBe false
         }
     }

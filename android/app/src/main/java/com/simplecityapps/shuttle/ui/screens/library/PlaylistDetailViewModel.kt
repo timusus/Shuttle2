@@ -16,17 +16,16 @@ import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
 import com.simplecityapps.shuttle.ui.actions.ReorderPlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
+import com.simplecityapps.shuttle.ui.common.PendingEvent
+import com.simplecityapps.shuttle.ui.common.PendingEvents
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -44,6 +43,7 @@ data class PlaylistDetailUiState(
     val selectedIds: Set<Long> = emptySet(),
     val currentSong: Song? = null,
     val loading: Boolean = true,
+    val events: List<PendingEvent<PlaylistDetailEvent>> = emptyList(),
 ) {
     /** Drag to reorder only makes sense while the list shows the playlist's own order. */
     val canReorder: Boolean get() = playlist != null && playlist.sortOrder == PlaylistSongSortOrder.Position && !playlist.sortDescending
@@ -88,8 +88,7 @@ class PlaylistDetailViewModel @AssistedInject constructor(
         fun create(playlistId: Long): PlaylistDetailViewModel
     }
 
-    private val _events = MutableSharedFlow<PlaylistDetailEvent>()
-    val events: SharedFlow<PlaylistDetailEvent> = _events.asSharedFlow()
+    private val events = PendingEvents<PlaylistDetailEvent>()
 
     private val selectedIds = MutableStateFlow(emptySet<Long>())
 
@@ -108,13 +107,15 @@ class PlaylistDetailViewModel @AssistedInject constructor(
         combine(songs, draggedOrder) { persisted, dragged -> dragged ?: persisted },
         selectedIds,
         observeCurrentSong(),
-    ) { playlist, songs, selected, currentSong ->
+        events.flow,
+    ) { playlist, songs, selected, currentSong, events ->
         PlaylistDetailUiState(
             playlist = playlist,
             songs = songs,
             selectedIds = selected.filterTo(mutableSetOf()) { id -> songs.any { it.id == id } },
             currentSong = currentSong,
             loading = false,
+            events = events,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PlaylistDetailUiState())
 
@@ -169,16 +170,14 @@ class PlaylistDetailViewModel @AssistedInject constructor(
         val playlist = uiState.value.playlist ?: return
         viewModelScope.launch {
             deletePlaylist(playlist)
-            _events.emit(PlaylistDetailEvent.Deleted)
+            events.post(PlaylistDetailEvent.Deleted)
         }
     }
 
     fun onExport() {
         val state = uiState.value
         val playlist = state.playlist ?: return
-        viewModelScope.launch {
-            _events.emit(if (state.songs.isEmpty()) PlaylistDetailEvent.ExportEmpty else PlaylistDetailEvent.ExportReady("${playlist.name}.m3u"))
-        }
+        events.post(if (state.songs.isEmpty()) PlaylistDetailEvent.ExportEmpty else PlaylistDetailEvent.ExportReady("${playlist.name}.m3u"))
     }
 
     fun exportTo(destination: String) {
@@ -189,7 +188,9 @@ class PlaylistDetailViewModel @AssistedInject constructor(
                 is ExportPlaylist.Result.Success -> PlaylistDetailEvent.ExportSucceeded
                 is ExportPlaylist.Result.Failure -> PlaylistDetailEvent.ExportFailed(result.message)
             }
-            _events.emit(event)
+            events.post(event)
         }
     }
+
+    fun onEventHandled(id: Long) = events.consume(id)
 }

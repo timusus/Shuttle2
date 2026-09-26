@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.tageditor
 
 import android.content.IntentSender
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.common.PendingEvent
 
 data class TagProgress(
     val done: Int,
@@ -24,6 +25,8 @@ sealed interface TagEditorUiState {
         val skipped: List<Song> = emptyList(),
         /** Set while the save writes the files. */
         val writing: TagProgress? = null,
+        /** What the save still needs the screen to do: ask for consent, or report the result and close. */
+        val events: List<PendingEvent<TagEditorEvent>> = emptyList(),
     ) : TagEditorUiState {
         val hasChanges: Boolean get() = fields.any { it.changed }
     }

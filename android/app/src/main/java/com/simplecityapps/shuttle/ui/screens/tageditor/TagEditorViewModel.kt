@@ -4,17 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.common.PendingEvents
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -36,10 +36,11 @@ class TagEditorViewModel @AssistedInject constructor(
     }
 
     private val _uiState = MutableStateFlow<TagEditorUiState>(TagEditorUiState.Reading(TagProgress(0, songIds.size)))
-    val uiState: StateFlow<TagEditorUiState> = _uiState.asStateFlow()
+    private val events = PendingEvents<TagEditorEvent>()
 
-    private val _events = Channel<TagEditorEvent>(Channel.BUFFERED)
-    val events: Flow<TagEditorEvent> = _events.receiveAsFlow()
+    val uiState: StateFlow<TagEditorUiState> = combine(_uiState, events.flow) { state, events ->
+        if (state is TagEditorUiState.Editing) state.copy(events = events) else state
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), _uiState.value)
 
     private var editable: List<EditableSong> = emptyList()
 
@@ -78,7 +79,7 @@ class TagEditorViewModel @AssistedInject constructor(
                 write(edits)
             } else {
                 pendingEdits = edits
-                _events.send(TagEditorEvent.RequestWriteConsent(consent))
+                events.post(TagEditorEvent.RequestWriteConsent(consent))
             }
         }
     }
@@ -98,8 +99,10 @@ class TagEditorViewModel @AssistedInject constructor(
         val result = writeSongTags(editable, edits) { written, total ->
             _uiState.update { state -> (state as? TagEditorUiState.Editing)?.copy(writing = TagProgress(written, total)) ?: state }
         }
-        _events.send(TagEditorEvent.Saved(result))
+        events.post(TagEditorEvent.Saved(result))
     }
+
+    fun onEventHandled(id: Long) = events.consume(id)
 
     private fun updateField(
         field: TagField,

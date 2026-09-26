@@ -2,6 +2,8 @@ package com.simplecityapps.shuttle.ui.screens.paywall
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simplecityapps.shuttle.ui.common.PendingEvent
+import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.Entitlement
 import com.simplecityapps.trial.MonetisationAnalytics
@@ -15,13 +17,10 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -42,7 +41,8 @@ data class PaywallUiState(
     val status: PaywallStatus = PaywallStatus.TrialAvailable,
     val offers: PaywallOffers = PaywallOffers.Loading,
     val selectedPlan: PaywallPlan = PaywallPlan.Lifetime,
-    val restoring: Boolean = false
+    val restoring: Boolean = false,
+    val events: List<PendingEvent<PaywallUiEvent>> = emptyList()
 ) {
     /** The offer for each plan Play sells, in plan order; empty while loading or unavailable. */
     val available: List<PaywallOffer> get() = (offers as? PaywallOffers.Available)?.offers.orEmpty()
@@ -81,11 +81,10 @@ class PaywallViewModel @AssistedInject constructor(
     private val selectedPlan = MutableStateFlow(PaywallPlan.Lifetime)
     private val restoring = MutableStateFlow(false)
 
-    private val _events = Channel<PaywallUiEvent>(Channel.BUFFERED)
-    val events: Flow<PaywallUiEvent> = _events.receiveAsFlow()
+    private val events = PendingEvents<PaywallUiEvent>()
 
-    val uiState: StateFlow<PaywallUiState> = combine(entitlement, billing.offers, selectedPlan, restoring) { entitlement, offers, plan, restoring ->
-        PaywallUiState(entitlement.toStatus(), offers, plan, restoring)
+    val uiState: StateFlow<PaywallUiState> = combine(entitlement, billing.offers, selectedPlan, restoring, events.flow) { entitlement, offers, plan, restoring, events ->
+        PaywallUiState(entitlement.toStatus(), offers, plan, restoring, events)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -103,12 +102,12 @@ class PaywallViewModel @AssistedInject constructor(
 
     fun onPurchase() {
         val offer = uiState.value.selectedOffer ?: return
-        _events.trySend(PaywallUiEvent.LaunchPurchase(offer))
+        events.post(PaywallUiEvent.LaunchPurchase(offer))
     }
 
     /** Whether Play's purchase sheet opened. The entitlement updates by itself once the purchase completes. */
     fun onPurchaseLaunched(launched: Boolean) {
-        if (!launched) _events.trySend(PaywallUiEvent.ShowMessage(PaywallMessage.PurchaseFailed))
+        if (!launched) events.post(PaywallUiEvent.ShowMessage(PaywallMessage.PurchaseFailed))
     }
 
     fun onRestore() {
@@ -121,13 +120,15 @@ class PaywallViewModel @AssistedInject constructor(
                 RestoreResult.Failed -> PaywallMessage.RestoreFailed
             }
             restoring.value = false
-            _events.send(PaywallUiEvent.ShowMessage(message))
+            events.post(PaywallUiEvent.ShowMessage(message))
         }
     }
 
     fun onRetry() {
         billing.refreshOffers()
     }
+
+    fun onEventHandled(id: Long) = events.consume(id)
 }
 
 private fun Entitlement.toStatus(): PaywallStatus = when (this) {

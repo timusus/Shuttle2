@@ -30,11 +30,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -58,6 +56,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SettingsHeader
 import com.simplecityapps.shuttle.designsystem.component.StateAction
+import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import kotlinx.coroutines.launch
 
@@ -73,21 +72,18 @@ fun TagEditorDestination(
     val snackbarHostState = LocalShellSnackbarHostState.current
     // The snackbar outlives this screen, so it runs in the activity's scope rather than the entry's.
     val activityScope = (LocalActivity.current as? ComponentActivity)?.lifecycleScope
-    val currentOnNavigateUp by rememberUpdatedState(onNavigateUp)
     val writeConsent = rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         viewModel.onWriteConsent(granted = result.resultCode == Activity.RESULT_OK)
     }
 
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is TagEditorEvent.RequestWriteConsent -> writeConsent.launch(IntentSenderRequest.Builder(event.intentSender).build())
+    ConsumeEvents((uiState as? TagEditorUiState.Editing)?.events.orEmpty(), viewModel::onEventHandled) { event ->
+        when (event) {
+            is TagEditorEvent.RequestWriteConsent -> writeConsent.launch(IntentSenderRequest.Builder(event.intentSender).build())
 
-                is TagEditorEvent.Saved -> {
-                    val message = event.result.message(resources)
-                    activityScope?.launch { snackbarHostState.showSnackbar(message) }
-                    currentOnNavigateUp()
-                }
+            is TagEditorEvent.Saved -> {
+                val message = event.result.message(resources)
+                activityScope?.launch { snackbarHostState.showSnackbar(message) }
+                onNavigateUp()
             }
         }
     }

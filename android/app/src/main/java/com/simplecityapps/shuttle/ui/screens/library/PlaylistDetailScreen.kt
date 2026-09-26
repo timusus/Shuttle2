@@ -22,7 +22,6 @@ import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +53,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
@@ -235,27 +235,24 @@ fun PlaylistDetailDestination(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalResources.current
     val snackbarHostState = LocalShellSnackbarHostState.current
-    val currentOnNavigateUp by rememberUpdatedState(onNavigateUp)
     var dialog by remember { mutableStateOf<PlaylistDialog?>(null) }
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("audio/x-mpegurl")) { uri: Uri? ->
         uri?.let { viewModel.exportTo(it.toString()) }
     }
 
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                PlaylistDetailEvent.Deleted -> currentOnNavigateUp()
+    ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
+        when (event) {
+            PlaylistDetailEvent.Deleted -> onNavigateUp()
 
-                is PlaylistDetailEvent.ExportReady -> exportLauncher.launch(event.suggestedName)
+            is PlaylistDetailEvent.ExportReady -> exportLauncher.launch(event.suggestedName)
 
-                PlaylistDetailEvent.ExportEmpty -> snackbarHostState.showSnackbar(resources.getString(R.string.playlist_export_empty))
+            PlaylistDetailEvent.ExportEmpty -> snackbarHostState.showSnackbar(resources.getString(R.string.playlist_export_empty))
 
-                PlaylistDetailEvent.ExportSucceeded -> snackbarHostState.showSnackbar(resources.getString(R.string.playlist_export_success))
+            PlaylistDetailEvent.ExportSucceeded -> snackbarHostState.showSnackbar(resources.getString(R.string.playlist_export_success))
 
-                is PlaylistDetailEvent.ExportFailed -> snackbarHostState.showSnackbar(
-                    resources.getString(R.string.playlist_export_failed, event.error),
-                )
-            }
+            is PlaylistDetailEvent.ExportFailed -> snackbarHostState.showSnackbar(
+                resources.getString(R.string.playlist_export_failed, event.error),
+            )
         }
     }
 

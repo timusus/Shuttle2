@@ -10,7 +10,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
@@ -25,15 +26,18 @@ class TagEditorViewModelTest {
     private val tagFileAccess = FakeTagFileAccess()
     private val playbackOperations = FakePlaybackOperations()
 
-    private fun viewModel(vararg songIds: Long) = TagEditorViewModel(
+    private fun TestScope.viewModel(vararg songIds: Long) = TagEditorViewModel(
         songIds.toList(),
         ObserveSongs(songRepository),
         ReadSongTags(tagFileAccess),
         WriteSongTags(tagFileAccess, songRepository, playbackOperations),
         tagFileAccess,
-    )
+    ).also { viewModel -> backgroundScope.launch { viewModel.uiState.collect {} } }
 
     private val TagEditorViewModel.editing get() = uiState.value.shouldBeInstanceOf<TagEditorUiState.Editing>()
+
+    /** What the screen does once it has acted on the pending events. */
+    private fun TagEditorViewModel.consumeEvents() = editing.events.forEach { onEventHandled(it.id) }
 
     @Test
     fun `one song shows every field with its value`() = runTest {
@@ -115,7 +119,7 @@ class TagEditorViewModelTest {
         viewModel.onSave()
         advanceUntilIdle()
 
-        val saved = viewModel.events.first().shouldBeInstanceOf<TagEditorEvent.Saved>()
+        val saved = viewModel.editing.events.single().value.shouldBeInstanceOf<TagEditorEvent.Saved>()
         saved.result.updated.map { it.id } shouldBe listOf(1L)
         saved.result.failed.map { it.id } shouldBe listOf(2L)
         tagFileAccess.writes.map { it.second } shouldBe List(2) { mapOf("ALBUM" to listOf("New")) }
@@ -149,13 +153,14 @@ class TagEditorViewModelTest {
         viewModel.onSave()
         advanceUntilIdle()
 
-        viewModel.events.first() shouldBe TagEditorEvent.RequestWriteConsent(consent)
+        viewModel.editing.events.map { it.value } shouldBe listOf(TagEditorEvent.RequestWriteConsent(consent))
         tagFileAccess.writes shouldBe emptyList()
+        viewModel.consumeEvents()
 
         viewModel.onWriteConsent(granted = true)
         advanceUntilIdle()
 
-        viewModel.events.first().shouldBeInstanceOf<TagEditorEvent.Saved>().result.updated.map { it.id } shouldBe listOf(1L)
+        viewModel.editing.events.single().value.shouldBeInstanceOf<TagEditorEvent.Saved>().result.updated.map { it.id } shouldBe listOf(1L)
         tagFileAccess.writes.map { it.second } shouldBe listOf(mapOf("ALBUM" to listOf("New")))
     }
 
@@ -170,7 +175,8 @@ class TagEditorViewModelTest {
         viewModel.onFieldChange(TagField.Album, "New")
         viewModel.onSave()
         advanceUntilIdle()
-        viewModel.events.first().shouldBeInstanceOf<TagEditorEvent.RequestWriteConsent>()
+        viewModel.editing.events.single().value.shouldBeInstanceOf<TagEditorEvent.RequestWriteConsent>()
+        viewModel.consumeEvents()
 
         viewModel.onWriteConsent(granted = false)
         advanceUntilIdle()

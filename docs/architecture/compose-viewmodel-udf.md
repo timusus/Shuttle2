@@ -179,7 +179,7 @@ fun onPlay(album: Album) {
 - One-liners over an injected use case: `enqueueSongs(songs)` + post event
 - State mutations: `selectionState.toggle(item)`
 
-**ViewModels never inject `*Operations`, `*Preference(s)` or `*Store` types** (the playback and queue operations, preference holders, the settings store), even for a one-liner: put the call behind a use case such as `ObserveCurrentSong` or `ObserveSongSortOrder`. The `viewmodel-direct-deps` Konsist rule enforces it alongside `viewmodel-data-access` (repositories, DAOs, providers). **Why:** the use case is the seam that can move to domain and be faked in a test with one lambda; a ViewModel holding the operations interface can reach every playback call, not just the one it needs.
+**ViewModels never inject `*Operations`, `*Preference(s)` or `*Store` types** (the playback and queue operations, preference holders, the settings store), even for a one-liner: put the call behind a use case such as `ObserveCurrentSong` or `ReadLibraryViewSetting`. The `viewmodel-direct-deps` Konsist rule enforces it alongside `viewmodel-data-access` (repositories, DAOs, providers). **Why:** the use case is the seam that can move to domain and be faked in a test with one lambda; a ViewModel holding the operations interface can reach every playback call, not just the one it needs.
 
 Use cases are stateless — `@Inject constructor`, no scope annotation, Hilt creates a new instance each time. They can be `suspend` (one-shot operations) or return `Flow` (observable operations). They get their own unit tests when they contain real logic.
 

@@ -29,7 +29,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
@@ -68,11 +67,12 @@ class PlaylistDetailViewModelTest {
         return createViewModel(playlist.id)
     }
 
-    private fun TestScope.collect(viewModel: PlaylistDetailViewModel, events: MutableList<PlaylistDetailEvent>? = null) {
+    private fun TestScope.collect(viewModel: PlaylistDetailViewModel) {
         backgroundScope.launch { viewModel.uiState.collect {} }
-        if (events != null) backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.collect { events.add(it) } }
         advanceUntilIdle()
     }
+
+    private val PlaylistDetailViewModel.pendingEvents get() = uiState.value.events.map { it.value }
 
     @Test
     fun `loads the playlist and its songs in position order`() = runTest {
@@ -143,46 +143,46 @@ class PlaylistDetailViewModelTest {
     }
 
     @Test
-    fun `deleting the playlist emits Deleted`() = runTest {
-        val events = mutableListOf<PlaylistDetailEvent>()
+    fun `deleting the playlist posts Deleted`() = runTest {
         val viewModel = viewModel()
-        collect(viewModel, events)
+        collect(viewModel)
 
         viewModel.onDelete()
         advanceUntilIdle()
 
-        events shouldBe listOf(PlaylistDetailEvent.Deleted)
+        viewModel.pendingEvents shouldBe listOf(PlaylistDetailEvent.Deleted)
     }
 
     @Test
     fun `export of an empty playlist says so instead of opening the picker`() = runTest {
-        val events = mutableListOf<PlaylistDetailEvent>()
         val playlist = createPlaylist(id = 8, name = "Empty")
         playlistRepository.setPlaylists(listOf(playlist))
         val viewModel = createViewModel(playlist.id)
-        collect(viewModel, events)
+        collect(viewModel)
 
         viewModel.onExport()
         advanceUntilIdle()
 
-        events shouldBe listOf(PlaylistDetailEvent.ExportEmpty)
+        viewModel.pendingEvents shouldBe listOf(PlaylistDetailEvent.ExportEmpty)
     }
 
     @Test
     fun `export suggests a file name, then writes the songs to the chosen file`() = runTest {
-        val events = mutableListOf<PlaylistDetailEvent>()
         val viewModel = viewModel(createPlaylist(id = 7, name = "Road Trip"))
-        collect(viewModel, events)
+        collect(viewModel)
 
         viewModel.onExport()
         advanceUntilIdle()
-        events shouldBe listOf(PlaylistDetailEvent.ExportReady("Road Trip.m3u"))
+        viewModel.pendingEvents shouldBe listOf(PlaylistDetailEvent.ExportReady("Road Trip.m3u"))
+        viewModel.onEventHandled(viewModel.uiState.value.events.single().id)
+        advanceUntilIdle()
+        viewModel.pendingEvents shouldBe emptyList()
 
         val file = File.createTempFile("playlist", ".m3u")
         // The exporter writes on Dispatchers.IO, so wait for the result in real time rather than
         // virtual time. The budget is generous (not a precision timing assertion) because a full
         // parallel test run can leave this real IO write contending for host CPU (#464).
-        val result = async(start = CoroutineStart.UNDISPATCHED) { viewModel.events.first() }
+        val result = async(start = CoroutineStart.UNDISPATCHED) { viewModel.uiState.first { it.events.isNotEmpty() }.events.single().value }
         viewModel.exportTo(Uri.fromFile(file).toString())
         withContext(Dispatchers.Default) { withTimeout(30_000) { result.await() } } shouldBe PlaylistDetailEvent.ExportSucceeded
         file.readText() shouldContain "#EXTM3U"

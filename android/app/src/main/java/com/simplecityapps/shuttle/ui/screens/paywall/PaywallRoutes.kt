@@ -8,7 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -24,6 +24,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import com.simplecityapps.trial.Billing
@@ -95,13 +96,13 @@ fun PaywallEntry(
     val activity = LocalActivity.current
     val uriHandler = LocalUriHandler.current
     val billing = remember { EntryPointAccessors.fromApplication<PaywallEntryPoint>(context.applicationContext).billing() }
-    val currentActivity by rememberUpdatedState(activity)
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                is PaywallUiEvent.LaunchPurchase -> viewModel.onPurchaseLaunched(currentActivity?.let { billing.launchPurchaseFlow(it, event.offer) } ?: false)
-                is PaywallUiEvent.ShowMessage -> launch { snackbarHostState.showSnackbar(context.getString(event.message.text)) }
-            }
+    val scope = rememberCoroutineScope()
+    ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
+        when (event) {
+            is PaywallUiEvent.LaunchPurchase -> viewModel.onPurchaseLaunched(activity?.let { billing.launchPurchaseFlow(it, event.offer) } ?: false)
+
+            // Shown without holding back the events after it, such as a purchase launched while it's up
+            is PaywallUiEvent.ShowMessage -> scope.launch { snackbarHostState.showSnackbar(context.getString(event.message.text)) }
         }
     }
     PaywallScreen(
