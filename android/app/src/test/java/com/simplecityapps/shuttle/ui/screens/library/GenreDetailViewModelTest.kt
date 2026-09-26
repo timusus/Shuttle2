@@ -8,6 +8,9 @@ import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
+import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
+import com.simplecityapps.shuttle.ui.actions.ObserveGenres
+import com.simplecityapps.shuttle.ui.actions.ObserveSongsForGenre
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,7 +37,7 @@ class GenreDetailViewModelTest {
         genreRepository.setSongsForGenre("Jazz", songs)
         albumRepository.setAlbums(listOf(createAlbum(name = "Zebra"), createAlbum(name = "apple")))
 
-        val viewModel = GenreDetailViewModel("Jazz", genreRepository, albumRepository, queueManager)
+        val viewModel = GenreDetailViewModel("Jazz", ObserveGenres(genreRepository), ObserveSongsForGenre(genreRepository), ObserveAlbums(albumRepository), queueManager)
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -50,7 +53,7 @@ class GenreDetailViewModelTest {
         genreRepository.setGenres(listOf(createGenre(name = "Empty")))
         albumRepository.setAlbums(listOf(createAlbum(name = "Unrelated")))
 
-        val viewModel = GenreDetailViewModel("Empty", genreRepository, albumRepository, queueManager)
+        val viewModel = GenreDetailViewModel("Empty", ObserveGenres(genreRepository), ObserveSongsForGenre(genreRepository), ObserveAlbums(albumRepository), queueManager)
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
@@ -66,7 +69,7 @@ class GenreDetailViewModelTest {
         val item = song.toQueueItem(true)
         queueManager.queueStateFlow.value = QueueState(listOf(item), item, 0)
 
-        val viewModel = GenreDetailViewModel("Jazz", genreRepository, albumRepository, queueManager)
+        val viewModel = GenreDetailViewModel("Jazz", ObserveGenres(genreRepository), ObserveSongsForGenre(genreRepository), ObserveAlbums(albumRepository), queueManager)
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 

@@ -3,12 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
-import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
-import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
@@ -21,6 +16,10 @@ import com.simplecityapps.shuttle.ui.actions.DeleteSongs
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObserveAlbumArtists
+import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
@@ -40,7 +39,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -51,9 +49,9 @@ import kotlinx.coroutines.launch
 @HiltViewModel(assistedFactory = AlbumArtistDetailViewModel.Factory::class)
 class AlbumArtistDetailViewModel @AssistedInject constructor(
     @Assisted private val groupKey: AlbumArtistGroupKey,
-    private val albumArtistRepository: AlbumArtistRepository,
-    private val albumRepository: AlbumRepository,
-    private val songRepository: SongRepository,
+    private val observeAlbumArtists: ObserveAlbumArtists,
+    private val observeAlbums: ObserveAlbums,
+    private val observeSongs: ObserveSongs,
     private val queueManager: QueueOperations,
     private val playSongs: PlaySongs,
     private val resolveSongs: ResolveSongs,
@@ -63,7 +61,7 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
     private val shuffleSongs: ShuffleSongs,
     private val shuffleAlbums: ShuffleAlbums,
     private val addToPlaylistUseCase: AddToPlaylist,
-    private val playlistRepository: PlaylistRepository,
+    private val observePlaylists: ObservePlaylists,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -78,12 +76,10 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
     private val expandedAlbums = MutableStateFlow<Set<AlbumGroupKey>>(emptySet())
 
     val uiState: StateFlow<AlbumArtistDetailUiState> = combine(
-        albumArtistRepository.getAlbumArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = groupKey)),
-        albumRepository.getAlbums(AlbumQuery.ArtistGroupKey(groupKey)),
-        songRepository
-            .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = groupKey))))
-            .filterNotNull(),
-        playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
+        observeAlbumArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = groupKey)),
+        observeAlbums(AlbumQuery.ArtistGroupKey(groupKey)),
+        observeSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = groupKey)))),
+        observePlaylists(),
         currentSong,
     ) { artists, albums, songs, playlists, currentSong ->
         val sortedAlbums = albums.sortedByDescending { it.year ?: 0 }

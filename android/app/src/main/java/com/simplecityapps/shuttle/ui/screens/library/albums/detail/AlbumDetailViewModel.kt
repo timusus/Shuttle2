@@ -3,10 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
-import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumGroupKey
@@ -18,6 +14,9 @@ import com.simplecityapps.shuttle.ui.actions.DeleteSongs
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -34,7 +33,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -68,8 +66,8 @@ sealed interface AlbumDetailUiEvent {
 @HiltViewModel(assistedFactory = AlbumDetailViewModel.Factory::class)
 class AlbumDetailViewModel @AssistedInject constructor(
     @Assisted private val groupKey: AlbumGroupKey?,
-    private val songRepository: SongRepository,
-    private val albumRepository: AlbumRepository,
+    private val observeSongs: ObserveSongs,
+    private val observeAlbums: ObserveAlbums,
     private val queueManager: QueueOperations,
     private val playSongs: PlaySongs,
     private val enqueueSongs: EnqueueSongs,
@@ -77,7 +75,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
     private val deleteSongs: DeleteSongs,
     private val shuffleSongs: ShuffleSongs,
     private val addToPlaylistUseCase: AddToPlaylist,
-    private val playlistRepository: PlaylistRepository,
+    private val observePlaylists: ObservePlaylists,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -90,12 +88,10 @@ class AlbumDetailViewModel @AssistedInject constructor(
         .distinctUntilChanged()
 
     val uiState: StateFlow<AlbumDetailUiState> = combine(
-        songRepository
-            .getSongs(SongQuery.AlbumGroupKey(key = groupKey))
-            .filterNotNull(),
-        albumRepository.getAlbums(AlbumQuery.AlbumGroupKey(groupKey)),
+        observeSongs(SongQuery.AlbumGroupKey(key = groupKey)),
+        observeAlbums(AlbumQuery.AlbumGroupKey(groupKey)),
         currentSong,
-        playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
+        observePlaylists(),
     ) { songs, albums, currentSong, playlists ->
         AlbumDetailUiState(
             album = albums.firstOrNull(),

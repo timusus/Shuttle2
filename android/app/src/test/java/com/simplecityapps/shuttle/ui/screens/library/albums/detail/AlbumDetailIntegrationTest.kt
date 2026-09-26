@@ -106,11 +106,11 @@ class AlbumDetailIntegrationTest {
         album: Album = testAlbum,
         songRepository: FakeSongRepository = fakeSongRepository,
     ): AlbumDetailViewModel {
-        val testMediaActions = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
+        val testMediaActions = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager(), albumRepository = fakeAlbumRepository)
         return AlbumDetailViewModel(
             groupKey = album.groupKey,
-            songRepository = songRepository,
-            albumRepository = fakeAlbumRepository,
+            observeSongs = testMediaActions.observeSongs,
+            observeAlbums = testMediaActions.observeAlbums,
             queueManager = fakeQueueManager,
             playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
             shuffleSongs = ShuffleSongs(FakePlaybackManager()),
@@ -118,7 +118,7 @@ class AlbumDetailIntegrationTest {
             enqueueSongs = testMediaActions.enqueueSongs,
             excludeSongs = testMediaActions.excludeSongs,
             deleteSongs = testMediaActions.deleteSongs,
-            playlistRepository = fakePlaylistRepository,
+            observePlaylists = testMediaActions.observePlaylists,
         )
     }
 }

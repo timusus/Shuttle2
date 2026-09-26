@@ -80,12 +80,20 @@ class AlbumArtistDetailViewModelTest {
     }
 
     private fun createViewModel(): AlbumArtistDetailViewModel {
-        val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
+        val testMediaActions = TestMediaActions(
+            fakeSongRepository,
+            FakeGenreRepository(),
+            fakePlaylistRepository,
+            FakeQueueManager(),
+            playbackManager = FakePlaybackManager(),
+            albumRepository = fakeAlbumRepository,
+            albumArtistRepository = fakeAlbumArtistRepository,
+        )
         return AlbumArtistDetailViewModel(
             groupKey = testArtist.groupKey,
-            albumArtistRepository = fakeAlbumArtistRepository,
-            albumRepository = fakeAlbumRepository,
-            songRepository = fakeSongRepository,
+            observeAlbumArtists = testMediaActions.observeAlbumArtists,
+            observeAlbums = testMediaActions.observeAlbums,
+            observeSongs = testMediaActions.observeSongs,
             queueManager = fakeQueueManager,
             playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
             shuffleSongs = ShuffleSongs(FakePlaybackManager()),
@@ -95,7 +103,7 @@ class AlbumArtistDetailViewModelTest {
             enqueueSongs = testMediaActions.enqueueSongs,
             excludeSongs = testMediaActions.excludeSongs,
             deleteSongs = testMediaActions.deleteSongs,
-            playlistRepository = fakePlaylistRepository,
+            observePlaylists = testMediaActions.observePlaylists,
         )
     }
 }
