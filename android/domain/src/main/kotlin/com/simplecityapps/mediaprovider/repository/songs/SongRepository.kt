@@ -56,6 +56,12 @@ interface SongRepository {
         playbackPosition: Int
     )
 
+    /** [setPlaybackPosition] to [song]'s own duration and [incrementPlayCount], as one write where the repository can do so. */
+    suspend fun recordPlayedThrough(song: Song) {
+        setPlaybackPosition(song, song.duration)
+        incrementPlayCount(song)
+    }
+
     suspend fun setExcluded(
         songs: List<Song>,
         excluded: Boolean

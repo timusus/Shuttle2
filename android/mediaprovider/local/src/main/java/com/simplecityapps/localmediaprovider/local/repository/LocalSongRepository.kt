@@ -107,6 +107,11 @@ class LocalSongRepository(
         songDataDao.updatePlaybackPosition(song.id, playbackPosition)
     }
 
+    override suspend fun recordPlayedThrough(song: Song) {
+        Timber.v("Recording song played through: ${song.name}")
+        songDataDao.recordPlayedThrough(song.id, song.duration)
+    }
+
     override suspend fun setExcluded(
         songs: List<Song>,
         excluded: Boolean

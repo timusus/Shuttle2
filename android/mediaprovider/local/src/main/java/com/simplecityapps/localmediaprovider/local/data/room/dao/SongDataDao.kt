@@ -139,6 +139,14 @@ abstract class SongDataDao {
         lastPlayed: Date = Date()
     )
 
+    /** [updatePlaybackPosition] and [incrementPlayCount] as one write, for a track playing through to its end. */
+    @Query("UPDATE songs SET playbackPosition = :playbackPosition, lastPlayed = :now, playCount = (SELECT songs.playCount + 1), lastCompleted = :now WHERE id =:id")
+    abstract suspend fun recordPlayedThrough(
+        id: Long,
+        playbackPosition: Int,
+        now: Date = Date()
+    )
+
     @Query("UPDATE songs SET blacklisted = :blacklisted WHERE id IN (:ids)")
     abstract suspend fun setExcluded(
         ids: List<Long>,

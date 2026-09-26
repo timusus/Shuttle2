@@ -35,7 +35,7 @@ class LocalSongRepositoryTest {
     private val songQueries = CopyOnWriteArrayList<String>()
     private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
         .allowMainThreadQueries()
-        .setQueryCallback(RoomDatabase.QueryCallback { sql, _ -> if (sql.contains("FROM songs")) songQueries += sql }, Executor(Runnable::run))
+        .setQueryCallback(RoomDatabase.QueryCallback { sql, _ -> if (sql.contains("FROM songs") || sql.contains("UPDATE songs")) songQueries += sql }, Executor(Runnable::run))
         .build()
 
     @After
@@ -109,6 +109,20 @@ class LocalSongRepositoryTest {
             name shouldBe "Retagged"
             dateAdded shouldBe modified
         }
+    }
+
+    @Test
+    fun `a track played through updates its position and play count in one write`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao())
+        val song = insertSongs(listOf("Song")).single()
+        songQueries.clear()
+
+        repository.recordPlayedThrough(song.copy(duration = 180_000))
+
+        songQueries.count { sql -> sql.contains("UPDATE songs") } shouldBe 1
+        val updated = database.songDataDao().get().single().toSong()
+        updated.playbackPosition shouldBe 180_000
+        updated.playCount shouldBe 1
     }
 
     @Test

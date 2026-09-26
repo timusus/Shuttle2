@@ -110,8 +110,7 @@ constructor(
     private fun recordPlayedThrough(song: Song) {
         appCoroutineScope.launch {
             withContext(ioDispatcher) {
-                songRepository.setPlaybackPosition(song, song.duration)
-                songRepository.incrementPlayCount(song)
+                songRepository.recordPlayedThrough(song)
             }
         }
     }
