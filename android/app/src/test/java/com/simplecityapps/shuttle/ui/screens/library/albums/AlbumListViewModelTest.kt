@@ -1,0 +1,101 @@
+package com.simplecityapps.shuttle.ui.screens.library.albums
+
+import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeAlbumListPreferences
+import com.simplecityapps.fakes.FakeAlbumRepository
+import com.simplecityapps.fakes.FakeGenreRepository
+import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaylistRepository
+import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeSongImportStateProvider
+import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.fakes.FakeSortPreferences
+import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.fakes.importComplete
+import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
+import com.simplecityapps.testing.MainDispatcherRule
+import io.kotest.matchers.shouldBe
+import kotlin.random.Random
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runTest
+import org.junit.Rule
+import org.junit.Test
+
+/**
+ * Focused ViewModel unit tests for behaviour that can't be observed through the UI, notably
+ * [AlbumListViewModel.onShuffle]'s side effects. State derivation and selection are tested via
+ * [AlbumListIntegrationTest] (real ViewModel + real Composable + fakes).
+ */
+@ExperimentalCoroutinesApi
+class AlbumListViewModelTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private val fakeAlbumRepository = FakeAlbumRepository()
+    private val fakeSongRepository = FakeSongRepository()
+    private val fakePlaylistRepository = FakePlaylistRepository()
+    private val fakeImportState = FakeSongImportStateProvider()
+    private val fakeSortPreferences = FakeSortPreferences()
+    private val fakeViewModePreferences = FakeAlbumListPreferences()
+    private val fakeQueueManager = FakeQueueManager()
+
+    @Test
+    fun `onShuffle queues each album's songs together, in track order`() = runTest {
+        fakeSongRepository.setSongs(
+            listOf(
+                createSong(id = 1, name = "Side A Track 2", album = "Side A", track = 2),
+                createSong(id = 2, name = "Side B Track 1", album = "Side B", track = 1),
+                createSong(id = 3, name = "Side A Track 1", album = "Side A", track = 1),
+                createSong(id = 4, name = "Side B Track 2", album = "Side B", track = 2),
+            )
+        )
+        fakeImportState.setState(importComplete())
+        val viewModel = createViewModel()
+
+        viewModel.onShuffle()
+        advanceUntilIdle()
+
+        val queuedNames = fakeQueueManager.lastSetQueue.orEmpty().map { it.name }
+        val possibleOrders = listOf(
+            listOf("Side A Track 1", "Side A Track 2", "Side B Track 1", "Side B Track 2"),
+            listOf("Side B Track 1", "Side B Track 2", "Side A Track 1", "Side A Track 2"),
+        )
+        (queuedNames in possibleOrders) shouldBe true
+    }
+
+    @Test
+    fun `onShuffle does not enable shuffle mode`() = runTest {
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Solo", album = "Only Album")))
+        fakeImportState.setState(importComplete())
+        val viewModel = createViewModel()
+
+        viewModel.onShuffle()
+        advanceUntilIdle()
+
+        fakeQueueManager.shuffleModeFlow.value shouldBe QueueManager.ShuffleMode.Off
+    }
+
+    private fun createViewModel(random: Random = Random.Default): AlbumListViewModel {
+        val fakePlaybackManager = FakePlaybackManager()
+        val testMediaActions = TestMediaActions(
+            fakeSongRepository,
+            FakeGenreRepository(),
+            fakePlaylistRepository,
+            fakeQueueManager,
+            playbackManager = fakePlaybackManager,
+            albumRepository = fakeAlbumRepository,
+        )
+        return AlbumListViewModel(
+            observeAlbums = testMediaActions.observeAlbums,
+            observeSongs = testMediaActions.observeSongs,
+            shuffleAlbums = ShuffleAlbums(fakeQueueManager, fakePlaybackManager),
+            sortPreferenceManager = fakeSortPreferences,
+            viewModePreferenceManager = fakeViewModePreferences,
+            mediaImportObserver = fakeImportState,
+            random = random,
+        )
+    }
+}

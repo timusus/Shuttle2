@@ -9,7 +9,7 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
-import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
+import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.common.SelectionState
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
@@ -31,7 +31,7 @@ import kotlinx.coroutines.launch
 class AlbumListViewModel @Inject constructor(
     observeAlbums: ObserveAlbums,
     private val observeSongs: ObserveSongs,
-    private val shuffleSongs: ShuffleSongs,
+    private val shuffleAlbums: ShuffleAlbums,
     private val sortPreferenceManager: SortPreferences,
     private val viewModePreferenceManager: AlbumListPreferences,
     mediaImportObserver: SongImportStateProvider,
@@ -96,13 +96,12 @@ class AlbumListViewModel @Inject constructor(
 
     fun onShuffle() {
         viewModelScope.launch {
+            // ShuffleAlbums groups songs by album without reordering within a group, so each
+            // album's songs must already be in track order before it shuffles the album order.
             val allSongs = observeSongs().firstOrNull().orEmpty()
-            val shuffledByAlbum = allSongs
-                .groupBy { it.album }
-                .keys.shuffled()
-                .flatMap { albumName -> allSongs.filter { it.album == albumName } }
-            val result = shuffleSongs(shuffledByAlbum)
-            if (result is ShuffleSongs.Result.Failure) {
+                .sortedWith(compareBy({ it.album }, { it.disc }, { it.track }))
+            val result = shuffleAlbums(allSongs)
+            if (result is ShuffleAlbums.Result.Failure) {
                 _events.emit(AlbumListUiEvent.PlaybackFailed(result.message))
             }
         }
