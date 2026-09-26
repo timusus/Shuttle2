@@ -148,16 +148,7 @@ class MediaImporter(
     private fun importSongs(mediaProvider: MediaProvider): Flow<FlowEvent<SongImportResult, MessageProgress>> = flow {
         emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_songs), null)))
 
-        val storedSongs =
-            songRepository.getSongs(
-                SongQuery.All(
-                    includeExcluded = true,
-                    providerType = mediaProvider.type
-                )
-            )
-                .filterNotNull()
-                .firstOrNull()
-                .orEmpty()
+        val storedSongs = songRepository.loadSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type))
 
         val existingSongs =
             try {
@@ -246,16 +237,8 @@ class MediaImporter(
                 .firstOrNull()
                 .orEmpty()
 
-        val existingSongs =
-            songRepository.getSongs(
-                SongQuery.All(
-                    includeExcluded = true,
-                    providerType = mediaProvider.type
-                )
-            )
-                .filterNotNull()
-                .firstOrNull()
-                .orEmpty()
+        // Straight from the database: the songs this pass just stored (or the last pass did) may not be in the shared list yet
+        val existingSongs = songRepository.loadSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type))
 
         mediaProvider.findPlaylists(existingPlaylists, existingSongs).collect { event ->
             when (event) {

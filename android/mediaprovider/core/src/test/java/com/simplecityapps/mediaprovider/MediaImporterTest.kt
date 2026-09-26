@@ -211,10 +211,13 @@ class MediaImporterTest {
     private companion object {
         const val IMPORTS = 8
 
-        /** A repository whose queries all return an empty list; anything else fails the test. */
+        /** A repository whose queries (flows, and `load` reads) all return an empty list; anything else fails the test. */
         inline fun <reified T : Any> emptyRepository(): T = Proxy.newProxyInstance(T::class.java.classLoader, arrayOf(T::class.java)) { _, method, _ ->
-            check(method.returnType == Flow::class.java) { "${T::class.simpleName}.${method.name} isn't faked" }
-            flowOf(emptyList<Any>())
+            when {
+                method.returnType == Flow::class.java -> flowOf(emptyList<Any>())
+                method.name.startsWith("load") -> emptyList<Any>()
+                else -> error("${T::class.simpleName}.${method.name} isn't faked")
+            }
         } as T
     }
 }

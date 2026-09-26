@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
+import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUpdate
 import com.simplecityapps.mediaprovider.SongPathRemap
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class LocalSongRepository(
@@ -42,12 +44,21 @@ class LocalSongRepository(
             } else {
                 songsRelay.map { songs -> songs?.filter(query.predicate)?.sortedWith(query.sortOrder.comparator) }
             }
-        return songs.map { result ->
-            result
-                ?.filter { song -> query.includeExcluded || !song.blacklisted }
-                ?.filter { song -> query.providerType == null || song.mediaProvider == query.providerType }
-        }
+        return songs.map { result -> result?.matching(query) }
     }
+
+    /** Reads the database directly rather than the shared song list, whose requery after a write can take a while for a large library. */
+    override suspend fun loadSongs(query: SongQuery): List<Song> = withContext(Dispatchers.IO) {
+        songDataDao.get()
+            .map { songData -> songData.toSong() }
+            .filter(query.predicate)
+            .sortedWith(query.sortOrder.comparator)
+            .matching(query)
+    }
+
+    private fun List<Song>.matching(query: SongQuery): List<Song> = this
+        .filter { song -> query.includeExcluded || !song.blacklisted }
+        .filter { song -> query.providerType == null || song.mediaProvider == query.providerType }
 
     override suspend fun insert(
         songs: List<Song>,

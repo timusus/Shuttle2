@@ -282,6 +282,10 @@
     {
       "text": "Save your current queue as a new or existing playlist from the Now Playing menu",
       "commits": []
+    },
+    {
+      "text": "Playlists in your music folders now appear after the first scan, including on large libraries, instead of only after a rescan",
+      "commits": []
     }
   ]
 }

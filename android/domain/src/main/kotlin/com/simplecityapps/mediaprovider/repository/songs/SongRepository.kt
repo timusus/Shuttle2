@@ -5,9 +5,18 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 
 interface SongRepository {
     fun getSongs(query: SongQuery): Flow<List<Song>?>
+
+    /**
+     * The songs matching [query] as stored now, including any write that has returned. [getSongs] can lag a write (the local
+     * repository shares one song list across its collectors and requeries it only after the write), so read this when the next
+     * step depends on what was just written.
+     */
+    suspend fun loadSongs(query: SongQuery): List<Song> = getSongs(query).filterNotNull().first()
 
     suspend fun insert(
         songs: List<Song>,
