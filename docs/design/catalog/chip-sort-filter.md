@@ -2,7 +2,7 @@
 
 [All components](index.md)
 
-States: sort field and order; filters selected and unselected; removable source filters; disabled.
+States: sort field and order; filters selected and unselected; removable source filters; read-only info; disabled.
 
 ## Compact, light
 

@@ -16,10 +16,16 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
@@ -96,6 +102,27 @@ fun S2InputChip(
     )
 }
 
+/**
+ * A read-only fact about an item ("FLAC", "96 kHz"): a `SuggestionChip` that can't be tapped. M3
+ * chips are all clickable, so it is the disabled chip drawn in the enabled chip's colours, and it
+ * reads as its [label] alone rather than as a disabled button.
+ */
+@Composable
+fun S2InfoChip(
+    label: String,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    SuggestionChip(
+        onClick = {},
+        label = { Text(label) },
+        modifier = modifier.clearAndSetSemantics { text = AnnotatedString(label) },
+        enabled = false,
+        colors = SuggestionChipDefaults.suggestionChipColors(disabledLabelColor = colors.onSurfaceVariant),
+        border = SuggestionChipDefaults.suggestionChipBorder(enabled = false, disabledBorderColor = colors.outlineVariant),
+    )
+}
+
 @Preview
 @Composable
 private fun ChipsPreview() {
@@ -104,6 +131,7 @@ private fun ChipsPreview() {
             S2SortChip("Title", ascending = true, onClick = {})
             S2FilterChip("Downloaded", selected = true, onClick = {})
             S2InputChip("Jellyfin", onRemove = {})
+            S2InfoChip("FLAC")
         }
     }
 }

@@ -43,6 +43,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2ChoiceList
 import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
 import com.simplecityapps.shuttle.designsystem.component.S2FilterChip
+import com.simplecityapps.shuttle.designsystem.component.S2InfoChip
 import com.simplecityapps.shuttle.designsystem.component.S2InputChip
 import com.simplecityapps.shuttle.designsystem.component.S2MenuContent
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
@@ -80,6 +81,13 @@ fun ChipBoard(width: BoardWidth) {
                 Chips {
                     S2InputChip("Jellyfin", onRemove = {})
                     S2InputChip("Local", onRemove = {})
+                }
+            },
+            BoardSection("Read-only info (song info)") {
+                Chips {
+                    S2InfoChip("FLAC")
+                    S2InfoChip("1024 kb/s")
+                    S2InfoChip("96 kHz")
                 }
             },
             BoardSection("Disabled") {

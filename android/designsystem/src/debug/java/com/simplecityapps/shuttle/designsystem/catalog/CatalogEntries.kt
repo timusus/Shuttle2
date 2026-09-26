@@ -71,7 +71,7 @@ val CatalogEntries = listOf(
     CatalogEntry("search", "Search", listOf("collapsed", "focused empty with recent searches", "typing with results", "no results")) { SearchBoard(it) },
     CatalogEntry("nav-bar", "Navigation bar", listOf("4 items, each selection", "dot and count badges", "3 items", "long count")) { NavBarBoard(it) },
     CatalogEntry("nav-rail", "Navigation rail", listOf("collapsed: selected, badged, secondary selected", "expanded with secondary items")) { NavRailBoard(it) },
-    CatalogEntry("chip-sort-filter", "Sort and filter chips", listOf("sort field and order", "filters selected and unselected", "removable source filters", "disabled")) {
+    CatalogEntry("chip-sort-filter", "Sort and filter chips", listOf("sort field and order", "filters selected and unselected", "removable source filters", "read-only info", "disabled")) {
         ChipBoard(it)
     },
     CatalogEntry("menu", "Menu", listOf("overflow with icons, groups and a destructive item", "sort with checked items")) { MenuBoard(it) },
