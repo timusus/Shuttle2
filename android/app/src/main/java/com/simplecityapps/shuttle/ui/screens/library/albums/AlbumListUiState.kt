@@ -9,7 +9,7 @@ import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 data class AlbumListUiState(
     val albums: List<Album> = emptyList(),
     val selectedAlbums: Set<Album> = emptySet(),
-    val viewMode: ViewMode = ViewMode.List,
+    val viewMode: ViewMode = ViewMode.Grid,
     val sortOrder: AlbumSortOrder = AlbumSortOrder.Default,
     val loadingState: LoadingState = LoadingState.Loading,
     val scanProgress: Progress? = null,

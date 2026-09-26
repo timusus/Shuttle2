@@ -199,7 +199,7 @@ class LibraryScreenTest {
     @Test
     fun `the fast scroller sits at the page's end edge`() {
         val albums = listOf(createAlbum(name = "Phase Garden", albumArtist = "Juniper Static"))
-        robot.setContent(libraryState(currentTab = LibraryTab.Albums), pages = LibraryPageStates(albums = readyAlbumList(albums)))
+        robot.setContent(libraryState(currentTab = LibraryTab.Albums), pages = LibraryPageStates(albums = readyAlbumList(albums, viewMode = ViewMode.List)))
         robot.assertFastScrollerAtEndEdge()
     }
 

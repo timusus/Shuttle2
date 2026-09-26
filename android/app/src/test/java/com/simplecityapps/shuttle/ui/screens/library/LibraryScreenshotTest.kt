@@ -63,7 +63,7 @@ class LibraryScreenshotTest {
         )
     }
 
-    private fun container(tab: LibraryTab, subtitle: String, albumViewMode: ViewMode = ViewMode.List) {
+    private fun container(tab: LibraryTab, subtitle: String, albumViewMode: ViewMode = ViewMode.Grid) {
         library.setContent(
             libraryState(currentTab = tab),
             chromeWithMenu(subtitle = subtitle),
@@ -86,9 +86,16 @@ class LibraryScreenshotTest {
     }
 
     @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneAlbumsList() {
+        container(LibraryTab.Albums, "${albums.size} albums", albumViewMode = ViewMode.List)
+        shot("phone-albums-list")
+    }
+
+    @Test
     @Config(qualifiers = "w1280dp-h800dp-xhdpi")
     fun tabletAlbums() {
-        container(LibraryTab.Albums, "${albums.size} albums", albumViewMode = ViewMode.Grid)
+        container(LibraryTab.Albums, "${albums.size} albums")
         shot("tablet-albums")
     }
 

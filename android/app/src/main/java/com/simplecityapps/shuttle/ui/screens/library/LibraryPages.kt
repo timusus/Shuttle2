@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -60,6 +61,9 @@ import com.simplecityapps.shuttle.ui.screens.library.songs.getFastscrollPopupTex
  * pages' leading section header (48dp at least), so the thumb never covers the header's action, such as Shuffle (#396).
  */
 private val FastScrollerModifier = Modifier.fillMaxSize().padding(top = 48.dp + 8.dp, bottom = 8.dp).testTag("library-fast-scroller")
+
+/** The catalogue's compact grid: two columns of tiles on a phone, more as the width allows. */
+private val LibraryGridColumns = GridCells.Adaptive(minSize = 160.dp)
 
 /** Songs: a count header with Shuffle, then every song. Tap plays from that row; long-press selects. */
 @Composable
@@ -133,7 +137,7 @@ fun LibrarySongRow(
     )
 }
 
-/** Albums: list or adaptive grid, with Shuffle in the header. */
+/** Albums: a grid by default (#491) or a list, with Shuffle in the header. */
 @Composable
 fun AlbumsPage(
     state: AlbumListUiState,
@@ -162,9 +166,11 @@ fun AlbumsPage(
             if (state.viewMode == ViewMode.Grid) {
                 val gridState = rememberLazyGridState()
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 150.dp),
+                    columns = LibraryGridColumns,
                     state = gridState,
-                    contentPadding = PaddingValues(horizontal = 8.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxSize().testTag("library-albums"),
                 ) {
                     item(key = "header", span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { header() }
@@ -175,7 +181,7 @@ fun AlbumsPage(
                             onClick = { onAlbumClick(album) },
                             onLongClick = { onAlbumLongClick(album) },
                             selected = album in state.selectedAlbums,
-                            artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, size = ArtworkSize.Grid) },
+                            artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
                         )
                     }
                 }
@@ -225,9 +231,11 @@ fun ArtistsPage(
             if (state.viewMode == ViewMode.Grid) {
                 val gridState = rememberLazyGridState()
                 LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 150.dp),
+                    columns = LibraryGridColumns,
                     state = gridState,
-                    contentPadding = PaddingValues(8.dp),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxSize().testTag("library-artists"),
                 ) {
                     items(artists, key = { it.groupKey.toString() }) { artist ->
@@ -237,7 +245,7 @@ fun ArtistsPage(
                             onClick = { onArtistClick(artist) },
                             onLongClick = { onArtistLongClick(artist) },
                             selected = artist in state.selectedArtists,
-                            artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, size = ArtworkSize.Grid, shape = ArtworkShape.Circle) },
+                            artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, Modifier.fillMaxSize(), size = ArtworkSize.Grid, shape = ArtworkShape.Circle) },
                         )
                     }
                 }

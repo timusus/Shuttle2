@@ -9,7 +9,7 @@ import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 fun readyAlbumList(
     albums: List<Album> = listOf(createAlbum()),
     selectedAlbums: Set<Album> = emptySet(),
-    viewMode: ViewMode = ViewMode.List,
+    viewMode: ViewMode = ViewMode.Grid,
     sortOrder: AlbumSortOrder = AlbumSortOrder.Default,
 ) = AlbumListUiState(
     albums = albums,
