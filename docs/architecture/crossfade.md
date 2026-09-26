@@ -28,6 +28,9 @@ One playback ExoPlayer and one AudioTrack; the MediaSession sees the same items 
 
   Any other flush (a seek or skip) drops the tail, so those cut hard. Plans are keyed by entry because the sink
   runs ahead of the player's position and can reach the next entry's end before the player moves on.
+- **Pass-through.** A stream with no plan and nothing held, fading or playing out (every stream while
+  crossfade is off) isn't copied. The mixer hands the input buffer on as its output, unconsumed, and the pipeline
+  consumes it when the next stage reads it.
 - **Pipeline quirk.** The pipeline queues end of stream on every pass until the processor ends. The mixer acts
   on the first one only, and emits the playout from `getOutput()`/`isEnded()` so it's never lost behind pending
   output.

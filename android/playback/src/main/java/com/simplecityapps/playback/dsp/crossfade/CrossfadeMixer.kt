@@ -79,6 +79,9 @@ class CrossfadeMixer : BaseAudioProcessor() {
     /** The rest of a tail played out at the end of a stream, emitted once the stream's own output is taken. */
     private var playout: ByteBuffer? = null
 
+    /** An input buffer handed on as the output, untouched (see [queueInput]), until [getOutput] takes it. */
+    private var passThrough: ByteBuffer? = null
+
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
         inputAudioFormat.requirePcm16Or24()
         configuredSinceFlush = true
@@ -91,8 +94,16 @@ class CrossfadeMixer : BaseAudioProcessor() {
         val frameSize = format.bytesPerFrame
         val frames = inputBuffer.remaining() / frameSize
         if (frames == 0) return
-        // Frames past the clip end are played from the tail instead.
         val tail = planForStream()?.tail
+        if (tail == null && fade == null && held == null && playout == null) {
+            // Nothing to cut or mix, as for every stream while crossfade is off: the input goes on as the output, not
+            // copied and not consumed here. The pipeline queues nothing more here until the next processor (or the
+            // sink) has consumed that output, which is this same buffer, so the input reads as consumed only then.
+            passThrough = inputBuffer
+            streamFrame += frames
+            return
+        }
+        // Frames past the clip end are played from the tail instead.
         val kept = if (tail == null) frames else (tail.clipEndFrame - streamFrame).coerceIn(0, frames.toLong()).toInt()
         val output = replaceOutputBuffer(kept * frameSize)
         val fade = fade
@@ -169,6 +180,7 @@ class CrossfadeMixer : BaseAudioProcessor() {
                 else -> null
             }
         playout = null
+        passThrough = null
         streamUid = uid
         val offsetUs = streamMetadata.positionOffsetUs
         streamFrame = if (offsetUs == C.TIME_UNSET) 0 else offsetUs.coerceAtLeast(0).usToFrames(inputAudioFormat.sampleRate)
@@ -185,9 +197,14 @@ class CrossfadeMixer : BaseAudioProcessor() {
         held = null
         fade = null
         playout = null
+        passThrough = null
     }
 
     override fun getOutput(): ByteBuffer {
+        passThrough?.let {
+            passThrough = null
+            return it
+        }
         val output = super.getOutput()
         if (output.hasRemaining()) return output
         val playout = playout ?: return output
@@ -195,7 +212,7 @@ class CrossfadeMixer : BaseAudioProcessor() {
         return playout
     }
 
-    override fun isEnded(): Boolean = super.isEnded() && playout == null
+    override fun isEnded(): Boolean = super.isEnded() && passThrough == null && playout == null
 
     private fun planForStream(): CrossfadePlan? = streamUid?.let { plans[it] }?.takeIf { it.tail.matches(inputAudioFormat) }
 
