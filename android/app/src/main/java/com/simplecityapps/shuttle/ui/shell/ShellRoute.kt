@@ -9,6 +9,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -44,15 +45,16 @@ fun ShellRoute(
     viewModel: PlayerViewModel = hiltViewModel(),
     shellViewModel: ShellViewModel = hiltViewModel(),
 ) {
-    val playerUi by viewModel.uiState.collectAsStateWithLifecycle()
+    val playerState = viewModel.uiState.collectAsStateWithLifecycle()
+    // Read apart from the progress, so a tick recomposes only what reads the progress.
+    val playerUi by remember { derivedStateOf { playerState.value.player } }
     val shellUi by shellViewModel.uiState.collectAsStateWithLifecycle()
-    val progress = viewModel.progress.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val targets = remember { Channel<NavigationTarget>(Channel.UNLIMITED) }
     PlayerEventsEffect(viewModel.events, snackbarHostState, actions = viewModel, onNavigate = { targets.trySend(it) })
     AppShell(
         playerUi = playerUi,
-        progress = { progress.value },
+        progress = { playerState.value.progress },
         actions = viewModel,
         modifier = modifier,
         snackbarHostState = snackbarHostState,

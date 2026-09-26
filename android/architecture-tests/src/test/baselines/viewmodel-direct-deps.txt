@@ -1,7 +1,2 @@
 # ViewModels must not inject *Operations, *Preference(s), *PreferenceManager, *Settings or *Store types; inject a use case (UDF 8a)
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
-com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel -> com.simplecityapps.playback.PlaybackOperations
-com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel -> com.simplecityapps.playback.queue.QueueOperations
-com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel -> com.simplecityapps.shuttle.ui.shell.player.ColourFromArtworkPreference
-com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel -> com.simplecityapps.shuttle.ui.shell.player.ReplayGainPreference
-com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel -> com.simplecityapps.shuttle.ui.shell.player.SleepTimerPreference

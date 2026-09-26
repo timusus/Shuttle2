@@ -9,22 +9,16 @@ import coil3.request.SuccessResult
 import coil3.request.allowHardware
 import coil3.toBitmap
 import com.simplecityapps.playback.chromecast.CastSessionManager
-import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.designsystem.theme.SeedColorCache
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.simplecityapps.shuttle.settings.AppearanceSettings
-import com.simplecityapps.shuttle.ui.screens.settings.SettingsEffects
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.Flow
 import timber.log.Timber
 
 /** Extracts seeds from a small Coil bitmap of the song's artwork, cached per album. */
@@ -72,32 +66,4 @@ object PlayerModule {
 
     @Provides
     fun provideSavedNowPlaying(playbackPreferenceManager: PlaybackPreferenceManager): SavedNowPlaying = SavedNowPlaying { playbackPreferenceManager.nowPlaying }
-
-    @Provides
-    fun provideSleepTimerPreference(preferenceManager: GeneralPreferenceManager): SleepTimerPreference = object : SleepTimerPreference {
-        override var playToEnd: Boolean
-            get() = preferenceManager.sleepTimerPlayToEnd
-            set(value) {
-                preferenceManager.sleepTimerPlayToEnd = value
-            }
-    }
-
-    // The same write and live-processor effect as the Settings screen's ReplayGain choice.
-    @Provides
-    fun provideReplayGainPreference(
-        playbackSettings: PlaybackSettings,
-        settingsEffects: SettingsEffects,
-    ): ReplayGainPreference = object : ReplayGainPreference {
-        override val mode: Flow<ReplayGainMode> = playbackSettings.replayGainMode.flow
-
-        override fun set(mode: ReplayGainMode) {
-            playbackSettings.replayGainMode.value = mode
-            settingsEffects.onSettingChanged(PlaybackSettings.ReplayGain, mode)
-        }
-    }
-
-    @Provides
-    fun provideColourFromArtworkPreference(appearanceSettings: AppearanceSettings): ColourFromArtworkPreference = object : ColourFromArtworkPreference {
-        override val enabled: Flow<Boolean> = appearanceSettings.colourFromArtwork.flow
-    }
 }

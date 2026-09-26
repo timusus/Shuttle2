@@ -3,20 +3,20 @@ package com.simplecityapps.shuttle.ui.shell.player
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
-import com.simplecityapps.playback.sleeptimer.SleepTimer
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
@@ -38,7 +38,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -63,42 +62,29 @@ fun interface SavedNowPlaying {
     fun snapshot(): NowPlayingSnapshot?
 }
 
-/** The sleep timer's remembered "play last song to end" choice. */
-interface SleepTimerPreference {
-    var playToEnd: Boolean
-}
-
-/** The stored ReplayGain mode, which the player's Playback & sound sheet shows and changes. */
-interface ReplayGainPreference {
-    val mode: Flow<ReplayGainMode>
-
-    /** Stores [mode] and applies it to the live audio processor. */
-    fun set(mode: ReplayGainMode)
-}
-
-/** Whether the player seeds its colour scheme from the current song's artwork (the Appearance settings' Colour from artwork toggle). */
-interface ColourFromArtworkPreference {
-    val enabled: Flow<Boolean>
-}
-
 /**
  * The player surfaces' state and actions (docs/architecture/app-shell.md, sections 1 and 5): the
  * queue, playback state and modes, favourite, sleep timer, speed and ReplayGain, the now-playing
- * artwork seed, and the panel Now Playing's bar has open, which survives process death.
+ * artwork seed, and the panel Now Playing's bar has open, which survives process death. Its
+ * uiState carries the playback position beside the rest (see [PlayerScreenState]).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class PlayerViewModel @Inject constructor(
-    private val playbackOperations: PlaybackOperations,
-    private val queueOperations: QueueOperations,
+    observeQueue: ObserveQueue,
+    observePlayback: ObservePlayback,
+    observeProgress: ObserveProgress,
+    private val controlPlayback: ControlPlayback,
+    private val editQueue: EditQueue,
     observeFavouriteSongIds: ObserveFavouriteSongIds,
     private val setFavourite: ToggleFavourite,
     private val observePlaylists: ObservePlaylists,
-    private val sleepTimer: SleepTimer,
-    private val sleepTimerPreference: SleepTimerPreference,
-    private val replayGainPreference: ReplayGainPreference,
+    private val controlSleepTimer: ControlSleepTimer,
+    private val readSleepTimeRemaining: ReadSleepTimeRemaining,
+    readSleepTimerPlayToEnd: ReadSleepTimerPlayToEnd,
+    observeSetting: ObserveSetting,
+    private val setReplayGainMode: SetReplayGainMode,
     private val seedSource: ArtworkSeedSource,
-    private val colourFromArtworkPreference: ColourFromArtworkPreference,
     castAvailability: CastAvailability,
     savedNowPlaying: SavedNowPlaying,
     private val clearQueue: ClearQueue,
@@ -116,7 +102,7 @@ class PlayerViewModel @Inject constructor(
 
     /** Bumped when the sleep timer is started or stopped here. */
     private val sleepTimerChanges = MutableStateFlow(0)
-    private val sleepTimerPlayToEnd = MutableStateFlow(sleepTimerPreference.playToEnd)
+    private val sleepTimerPlayToEnd = MutableStateFlow(readSleepTimerPlayToEnd())
 
     private val _events = MutableSharedFlow<PlayerUiEvent>()
     val events: SharedFlow<PlayerUiEvent> = _events.asSharedFlow()
@@ -127,14 +113,16 @@ class PlayerViewModel @Inject constructor(
 
     private var removedItem: RemovedQueueItem? = null
 
-    private val currentSong: Flow<Song?> = queueOperations.queueStateFlow.map { it.currentItem?.song }.distinctUntilChanged()
+    private val queue: StateFlow<QueueState> = observeQueue()
+
+    private val currentSong: Flow<Song?> = queue.map { it.currentItem?.song }.distinctUntilChanged()
 
     private val favouriteIds: Flow<Set<Long>> = observeFavouriteSongIds()
 
     private val seed: Flow<ArtworkSeed> =
         combine(
             currentSong.map { it?.let(::ArtworkKey) }.distinctUntilChanged(),
-            colourFromArtworkPreference.enabled,
+            observeSetting(AppearanceSettings.ColourFromArtwork),
         ) { key, enabled -> key to enabled }
             .distinctUntilChanged()
             .mapLatest { (key, enabled) ->
@@ -145,11 +133,11 @@ class PlayerViewModel @Inject constructor(
     private val sleepTimerActive: Flow<Boolean> =
         sleepTimerChanges
             .flatMapLatest {
-                if (sleepTimer.timeRemaining() == null) {
+                if (readSleepTimeRemaining() == null) {
                     flowOf(false)
                 } else {
                     flow {
-                        while (sleepTimer.timeRemaining() != null) {
+                        while (readSleepTimeRemaining() != null) {
                             emit(true)
                             delay(SLEEP_TIMER_TICK_MS)
                         }
@@ -158,44 +146,40 @@ class PlayerViewModel @Inject constructor(
                 }
             }.distinctUntilChanged()
 
-    private val sound: Flow<Sound> =
-        combine(playbackOperations.playbackSpeedFlow, replayGainPreference.mode, ::Sound)
-
     private val extras: Flow<Extras> =
-        combine(favouriteIds, seed.onStart { emit(ArtworkSeed.Loading) }, sleepTimerActive, sleepTimerPlayToEnd, sound) { favourites, seed, sleeping, playToEnd, sound ->
-            Extras(favourites, seed, sleeping, playToEnd, sound)
+        combine(
+            favouriteIds,
+            seed.onStart { emit(ArtworkSeed.Loading) },
+            sleepTimerActive,
+            sleepTimerPlayToEnd,
+            observeSetting(PlaybackSettings.ReplayGain),
+        ) { favourites, seed, sleeping, playToEnd, replayGainMode ->
+            Extras(favourites, seed, sleeping, playToEnd, replayGainMode)
         }
 
-    val uiState: StateFlow<PlayerUiState> =
-        combine(
-            queueOperations.queueStateFlow,
-            playbackOperations.playbackStateFlow,
-            queueOperations.shuffleModeFlow,
-            queueOperations.repeatModeFlow,
-            extras,
-        ) { queue, playback, shuffle, repeat, extras ->
+    private val player: Flow<PlayerUiState> =
+        combine(queue, observePlayback(), extras) { queue, playback, extras ->
             queue.toPlayerUiState(savedSong).copy(
-                playing = playback == PlaybackState.Playing,
-                buffering = playback == PlaybackState.Loading,
-                shuffle = shuffle == ShuffleMode.On,
-                repeatMode = repeat.toS2RepeatMode(),
+                playing = playback.state == PlaybackState.Playing,
+                buffering = playback.state == PlaybackState.Loading,
+                shuffle = playback.shuffleMode == ShuffleMode.On,
+                repeatMode = playback.repeatMode.toS2RepeatMode(),
                 favourite = queue.currentItem?.song?.id?.let { it in extras.favouriteIds } ?: false,
                 sleepTimerActive = extras.sleepTimerActive,
                 sleepTimerPlayToEnd = extras.sleepTimerPlayToEnd,
                 castAvailable = castAvailable,
                 seed = extras.seed,
-                playbackSpeed = extras.sound.speed,
-                replayGainMode = extras.sound.replayGainMode,
+                playbackSpeed = playback.speed,
+                replayGainMode = extras.replayGainMode,
             )
         }.combine(panel) { state, panel ->
             // An emptied queue takes the player, and its panel, away.
             state.copy(panel = panel.takeIf { state.hasQueue == true })
         }.distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), queueOperations.queueStateFlow.value.toPlayerUiState(savedSong))
 
     // The total is the song's own duration, as the queue rows show it; the player's reported duration can differ by a rounding second.
-    val progress: StateFlow<PlayerProgress> =
-        combine(playbackOperations.progressFlow, currentSong) { progress, song ->
+    private val progress: Flow<PlayerProgress> =
+        combine(observeProgress(), currentSong) { progress, song ->
             val songDuration = song?.duration?.toLong()?.takeIf { it > 0 }
             when {
                 progress != null -> PlayerProgress(progress.position.toLong(), songDuration ?: progress.duration.toLong())
@@ -203,41 +187,39 @@ class PlayerViewModel @Inject constructor(
                 else -> savedProgress() ?: PlayerProgress.Zero
             }
         }.distinctUntilChanged()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), savedProgress() ?: PlayerProgress.Zero)
+
+    // A tick only replaces the progress: the player state stays the same instance, so its readers skip the tick.
+    val uiState: StateFlow<PlayerScreenState> =
+        combine(player, progress, ::PlayerScreenState)
+            .stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5_000),
+                PlayerScreenState(queue.value.toPlayerUiState(savedSong), savedProgress() ?: PlayerProgress.Zero),
+            )
 
     /** Where the saved song was left, while it stands in for a queue not yet restored. */
     private fun savedProgress(): PlayerProgress? = savedSnapshot
-        ?.takeIf { queueOperations.queueStateFlow.value.isAwaitingRestore }
+        ?.takeIf { queue.value.isAwaitingRestore }
         ?.let { snapshot -> PlayerProgress(snapshot.positionMs.toLong(), snapshot.durationMs.toLong()) }
 
-    override fun togglePlayback() {
-        if (savedSnapshot != null && queueOperations.queueStateFlow.value.isAwaitingRestore) {
-            // Nothing is loaded yet: play once the saved queue is restored and loaded. A restore that brings nothing
-            // back takes the saved song, and the player with it, away, so there's nothing to play.
-            viewModelScope.launch {
-                val restored = queueOperations.queueStateFlow.first { queue -> queue.isRestored }
-                if (restored.items.isNotEmpty()) playbackOperations.play()
-            }
-        } else {
-            playbackOperations.togglePlayback()
-        }
-    }
+    // Nothing is loaded yet while the saved song stands in for the queue: play once the queue is restored.
+    override fun togglePlayback() = control(
+        if (savedSnapshot != null && queue.value.isAwaitingRestore) PlaybackCommand.PlayWhenRestored else PlaybackCommand.TogglePlayback,
+    )
 
-    override fun skipToNext() = playbackOperations.skipToNext(ignoreRepeat = true)
+    override fun skipToNext() = control(PlaybackCommand.SkipToNext)
 
-    override fun skipToPrevious() = playbackOperations.skipToPrev()
+    override fun skipToPrevious() = control(PlaybackCommand.SkipToPrevious)
 
-    override fun seekTo(positionMs: Long) = playbackOperations.seekTo(positionMs.toInt())
+    override fun seekTo(positionMs: Long) = control(PlaybackCommand.SeekTo(positionMs))
 
-    override fun toggleShuffle() {
-        viewModelScope.launch { queueOperations.toggleShuffleMode() }
-    }
+    override fun toggleShuffle() = control(PlaybackCommand.ToggleShuffle)
 
-    override fun cycleRepeatMode() = queueOperations.toggleRepeatMode()
+    override fun cycleRepeatMode() = control(PlaybackCommand.CycleRepeatMode)
 
     override fun toggleFavourite() {
-        val song = queueOperations.getCurrentItem()?.song ?: return
-        val favourite = uiState.value.favourite
+        val song = queue.value.currentItem?.song ?: return
+        val favourite = uiState.value.player.favourite
         viewModelScope.launch { setFavourite(song, favourite) }
     }
 
@@ -245,27 +227,26 @@ class PlayerViewModel @Inject constructor(
         durationMs: Long,
         playToEnd: Boolean,
     ) {
-        sleepTimerPreference.playToEnd = playToEnd
+        controlSleepTimer(SleepTimerCommand.Start(durationMs, playToEnd))
         sleepTimerPlayToEnd.value = playToEnd
-        sleepTimer.startTimer(durationMs, playToEnd)
         sleepTimerChanges.value++
     }
 
     override fun stopSleepTimer() {
-        sleepTimer.stopTimer()
+        controlSleepTimer(SleepTimerCommand.Stop)
         sleepTimerChanges.value++
     }
 
     override fun sleepTimerRemaining(): Flow<Long?> = flow {
         while (true) {
-            emit(sleepTimer.timeRemaining())
+            emit(readSleepTimeRemaining())
             delay(SLEEP_TIMER_TICK_MS)
         }
     }.distinctUntilChanged()
 
-    override fun setPlaybackSpeed(speed: Float) = playbackOperations.setPlaybackSpeed(speed)
+    override fun setPlaybackSpeed(speed: Float) = control(PlaybackCommand.SetSpeed(speed))
 
-    override fun setReplayGainMode(mode: ReplayGainMode) = replayGainPreference.set(mode)
+    override fun setReplayGainMode(mode: ReplayGainMode) = setReplayGainMode.invoke(mode)
 
     override fun togglePanel(panel: NowPlayingPanel) = showPanel(panel.takeUnless { it == this.panel.value })
 
@@ -273,44 +254,31 @@ class PlayerViewModel @Inject constructor(
         savedStateHandle[PANEL_KEY] = panel
     }
 
-    override fun skipToQueueItem(uid: Long) {
-        val index = queueOperations.getQueue().indexOfFirst { it.uid == uid }
-        if (index >= 0) playbackOperations.skipTo(index)
-    }
+    override fun skipToQueueItem(uid: Long) = edit(QueueEdit.SkipTo(uid))
 
     override fun moveQueueItem(
         uid: Long,
         afterUid: Long?,
-    ) {
-        queueMove(queueOperations.getQueue().map { it.uid }, uid, afterUid)?.let { (from, to) -> playbackOperations.moveQueueItem(from, to) }
-    }
+    ) = edit(QueueEdit.Move(uid, afterUid))
 
     override fun removeQueueItem(uid: Long) {
-        val queue = queueOperations.getQueue()
-        val index = queue.indexOfFirst { it.uid == uid }
+        val items = queue.value.items
+        val index = items.indexOfFirst { it.uid == uid }
         if (index < 0) return
-        playbackOperations.removeQueueItem(queue[index])
-        removedItem = RemovedQueueItem(queue[index].song, index)
-        viewModelScope.launch { _events.emit(PlayerUiEvent.QueueItemRemoved) }
-    }
-
-    // Back in as a new row at the end, then moved to where the old row was.
-    override fun undoRemoveQueueItem() {
-        val removed = removedItem ?: return
-        removedItem = null
+        removedItem = RemovedQueueItem(items[index].song, index)
         viewModelScope.launch {
-            playbackOperations.addToQueue(listOf(removed.song))
-            val last = queueOperations.getSize() - 1
-            if (removed.index < last) playbackOperations.moveQueueItem(last, removed.index)
+            editQueue(QueueEdit.Remove(uid))
+            _events.emit(PlayerUiEvent.QueueItemRemoved)
         }
     }
 
-    override fun playNext(uid: Long) {
-        val from = queueOperations.getQueue().indexOfFirst { it.uid == uid }
-        val current = queueOperations.getCurrentPosition() ?: return
-        if (from < 0 || from == current) return
-        playbackOperations.moveQueueItem(from, if (from < current) current else current + 1)
+    override fun undoRemoveQueueItem() {
+        val removed = removedItem ?: return
+        removedItem = null
+        edit(QueueEdit.Reinsert(removed.song, removed.index))
     }
+
+    override fun playNext(uid: Long) = edit(QueueEdit.PlayNext(uid))
 
     override fun clearQueue() {
         val snapshot = clearQueue.invoke() ?: return
@@ -332,6 +300,14 @@ class PlayerViewModel @Inject constructor(
         viewModelScope.launch { _events.emit(PlayerUiEvent.MediaActionDone(mediaActionHandler.handle(action))) }
     }
 
+    private fun control(command: PlaybackCommand) {
+        viewModelScope.launch { controlPlayback(command) }
+    }
+
+    private fun edit(edit: QueueEdit) {
+        viewModelScope.launch { editQueue(edit) }
+    }
+
     private class RemovedQueueItem(
         val song: Song,
         val index: Int,
@@ -342,11 +318,6 @@ class PlayerViewModel @Inject constructor(
         val seed: ArtworkSeed,
         val sleepTimerActive: Boolean,
         val sleepTimerPlayToEnd: Boolean,
-        val sound: Sound,
-    )
-
-    private data class Sound(
-        val speed: Float,
         val replayGainMode: ReplayGainMode,
     )
 
@@ -379,25 +350,6 @@ class PlayerViewModel @Inject constructor(
             MediaActionType.Exclude,
         )
     }
-}
-
-/**
- * The from and to indices that put [uid] just after [afterUid] (at the top when null) in the live
- * queue [uids], or null when either row has gone or the row is already there.
- */
-internal fun queueMove(
-    uids: List<Long>,
-    uid: Long,
-    afterUid: Long?,
-): Pair<Int, Int>? {
-    val from = uids.indexOf(uid).takeIf { it >= 0 } ?: return null
-    val to = if (afterUid == null) {
-        0
-    } else {
-        val anchor = uids.indexOf(afterUid).takeIf { it >= 0 } ?: return null
-        if (anchor < from) anchor + 1 else anchor
-    }
-    return (from to to).takeIf { from != to }
 }
 
 /** Nothing in the queue yet, with the saved queue still to be restored: the saved song stands in for it meanwhile. */

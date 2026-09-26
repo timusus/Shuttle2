@@ -18,11 +18,19 @@ import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.clone
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
+import com.simplecityapps.shuttle.settings.ReadSetting
+import com.simplecityapps.shuttle.settings.SaveSetting
+import com.simplecityapps.shuttle.settings.SettingsStore
+import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
@@ -32,10 +40,10 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
+import com.simplecityapps.shuttle.ui.screens.settings.FakeSettingsEffects
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -48,31 +56,26 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class PlayerViewModelTest {
 
     private val playbackOperations = FakePlaybackOperations()
     private val queueOperations = FakeQueueOperations()
     private var savedNowPlaying: NowPlayingSnapshot? = null
     private val playlistRepository = FakePlaylistRepository()
-    private val sleepTimerPreference = object : SleepTimerPreference {
-        override var playToEnd: Boolean = false
-    }
-    private val replayGainPreference = object : ReplayGainPreference {
-        override val mode = MutableStateFlow(ReplayGainMode.Off)
-
-        override fun set(mode: ReplayGainMode) {
-            this.mode.value = mode
-        }
-    }
+    private val preferences = RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }
+    private val settingsStore = SettingsStore(preferences)
+    private val preferenceManager = GeneralPreferenceManager(preferences)
+    private val settingsEffects = FakeSettingsEffects()
     private val seededSongs = mutableListOf<Song>()
     private val seedSource = ArtworkSeedSource { song ->
         seededSongs += song
         ArtworkSeed.Available(Color.Red)
-    }
-    private val colourFromArtworkPreference = object : ColourFromArtworkPreference {
-        override val enabled = MutableStateFlow(true)
     }
 
     @Before
@@ -89,16 +92,20 @@ class PlayerViewModelTest {
         val sleepTimer = SleepTimer(playbackOperations, backgroundScope, UnconfinedTestDispatcher(testScheduler)) { testScheduler.currentTime }
         val mediaActions = TestMediaActions(playlistRepository = playlistRepository, queueOperations = queueOperations, playbackOperations = playbackOperations)
         return PlayerViewModel(
-            playbackOperations = playbackOperations,
-            queueOperations = queueOperations,
+            observeQueue = ObserveQueue(queueOperations),
+            observePlayback = ObservePlayback(playbackOperations, queueOperations),
+            observeProgress = ObserveProgress(playbackOperations),
+            controlPlayback = ControlPlayback(playbackOperations, queueOperations),
+            editQueue = EditQueue(playbackOperations, queueOperations),
             observeFavouriteSongIds = ObserveFavouriteSongIds(playlistRepository),
             setFavourite = ToggleFavourite(playlistRepository),
             observePlaylists = ObservePlaylists(playlistRepository),
-            sleepTimer = sleepTimer,
-            sleepTimerPreference = sleepTimerPreference,
-            replayGainPreference = replayGainPreference,
+            controlSleepTimer = ControlSleepTimer(sleepTimer, preferenceManager),
+            readSleepTimeRemaining = ReadSleepTimeRemaining(sleepTimer),
+            readSleepTimerPlayToEnd = ReadSleepTimerPlayToEnd(preferenceManager),
+            observeSetting = ObserveSetting(settingsStore),
+            setReplayGainMode = SetReplayGainMode(SaveSetting(settingsStore), settingsEffects),
             seedSource = seedSource,
-            colourFromArtworkPreference = colourFromArtworkPreference,
             castAvailability = { false },
             savedNowPlaying = { savedNowPlaying },
             clearQueue = ClearQueue(queueOperations, playbackOperations),
@@ -108,7 +115,6 @@ class PlayerViewModelTest {
             savedStateHandle = savedStateHandle,
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.progress.collect {} }
         }
     }
 
@@ -127,17 +133,17 @@ class PlayerViewModelTest {
         savedNowPlaying = NowPlayingSnapshot.of(createSong(id = 7, name = "Saved", album = "Album", duration = 180_000)).copy(positionMs = 42_000)
         val viewModel = viewModel()
 
-        viewModel.uiState.value.hasQueue shouldBe true
-        viewModel.uiState.value.current?.title shouldBe "Saved"
-        viewModel.uiState.value.current?.album shouldBe "Album"
-        viewModel.uiState.value.current?.durationMs shouldBe 180_000
-        viewModel.progress.value shouldBe PlayerProgress(42_000, 180_000)
+        viewModel.uiState.value.player.hasQueue shouldBe true
+        viewModel.uiState.value.player.current?.title shouldBe "Saved"
+        viewModel.uiState.value.player.current?.album shouldBe "Album"
+        viewModel.uiState.value.player.current?.durationMs shouldBe 180_000
+        viewModel.uiState.value.progress shouldBe PlayerProgress(42_000, 180_000)
 
         // The restored queue takes over, even when its song isn't the saved one.
         queueOperations.queueStateFlow.value = queueOf(songs("Restored"))
 
-        viewModel.uiState.value.current?.title shouldBe "Restored"
-        viewModel.uiState.value.items.map { it.title } shouldBe listOf("Restored")
+        viewModel.uiState.value.player.current?.title shouldBe "Restored"
+        viewModel.uiState.value.player.items.map { it.title } shouldBe listOf("Restored")
     }
 
     @Test
@@ -147,8 +153,8 @@ class PlayerViewModelTest {
 
         queueOperations.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
 
-        viewModel.uiState.value.hasQueue shouldBe false
-        viewModel.uiState.value.current shouldBe null
+        viewModel.uiState.value.player.hasQueue shouldBe false
+        viewModel.uiState.value.player.current shouldBe null
     }
 
     @Test
@@ -173,7 +179,7 @@ class PlayerViewModelTest {
         queueOperations.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
 
         playbackOperations.calls shouldBe emptyList()
-        viewModel.uiState.value.hasQueue shouldBe false
+        viewModel.uiState.value.player.hasQueue shouldBe false
     }
 
     @Test
@@ -203,15 +209,15 @@ class PlayerViewModelTest {
         queueOperations.shuffleModeFlow.value = ShuffleMode.On
         queueOperations.repeatModeFlow.value = RepeatMode.One
 
-        val state = viewModel.uiState.value
+        val state = viewModel.uiState.value.player
         state.current?.title shouldBe "One"
         state.playing shouldBe true
         state.shuffle shouldBe true
         state.repeatMode shouldBe S2RepeatMode.One
 
         playbackOperations.playbackStateFlow.value = PlaybackState.Loading
-        viewModel.uiState.value.buffering shouldBe true
-        viewModel.uiState.value.playing shouldBe false
+        viewModel.uiState.value.player.buffering shouldBe true
+        viewModel.uiState.value.player.playing shouldBe false
     }
 
     @Test
@@ -222,8 +228,8 @@ class PlayerViewModelTest {
         viewModel.toggleShuffle()
         viewModel.cycleRepeatMode()
 
-        viewModel.uiState.value.shuffle shouldBe true
-        viewModel.uiState.value.repeatMode shouldBe S2RepeatMode.All
+        viewModel.uiState.value.player.shuffle shouldBe true
+        viewModel.uiState.value.player.repeatMode shouldBe S2RepeatMode.All
     }
 
     @Test
@@ -241,11 +247,11 @@ class PlayerViewModelTest {
     fun `progress falls back to the song's saved position until playback reports one`() = runTest {
         val viewModel = viewModel()
         queueOperations.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 200_000)))
-        viewModel.progress.value shouldBe PlayerProgress(1, 200_000)
+        viewModel.uiState.value.progress shouldBe PlayerProgress(1, 200_000)
 
         playbackOperations.progressFlow.value = PlaybackProgress(position = 50_000, duration = 200_000)
-        viewModel.progress.value shouldBe PlayerProgress(50_000, 200_000)
-        viewModel.progress.value.fraction shouldBe 0.25f
+        viewModel.uiState.value.progress shouldBe PlayerProgress(50_000, 200_000)
+        viewModel.uiState.value.progress.fraction shouldBe 0.25f
     }
 
     @Test
@@ -253,7 +259,7 @@ class PlayerViewModelTest {
         val viewModel = viewModel()
         queueOperations.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 60_000)))
         playbackOperations.progressFlow.value = PlaybackProgress(position = 10_000, duration = 59_950)
-        viewModel.progress.value shouldBe PlayerProgress(10_000, 60_000)
+        viewModel.uiState.value.progress shouldBe PlayerProgress(10_000, 60_000)
     }
 
     @Test
@@ -261,7 +267,7 @@ class PlayerViewModelTest {
         val viewModel = viewModel()
         queueOperations.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 0)))
         playbackOperations.progressFlow.value = PlaybackProgress(position = 10_000, duration = 59_950)
-        viewModel.progress.value shouldBe PlayerProgress(10_000, 59_950)
+        viewModel.uiState.value.progress shouldBe PlayerProgress(10_000, 59_950)
     }
 
     @Test
@@ -271,21 +277,21 @@ class PlayerViewModelTest {
         val viewModel = viewModel()
         val song = songs("One").single()
         queueOperations.queueStateFlow.value = queueOf(listOf(song))
-        viewModel.uiState.value.favourite shouldBe false
+        viewModel.uiState.value.player.favourite shouldBe false
 
         viewModel.toggleFavourite()
-        viewModel.uiState.value.favourite shouldBe true
+        viewModel.uiState.value.player.favourite shouldBe true
         playlistRepository.getSongsForPlaylist(favourites).first().map { it.song } shouldBe listOf(song)
 
         viewModel.toggleFavourite()
-        viewModel.uiState.value.favourite shouldBe false
+        viewModel.uiState.value.player.favourite shouldBe false
     }
 
     @Test
     fun `without a favourites playlist nothing is a favourite`() = runTest {
         val viewModel = viewModel()
         queueOperations.queueStateFlow.value = queueOf(songs("One"))
-        viewModel.uiState.value.favourite shouldBe false
+        viewModel.uiState.value.player.favourite shouldBe false
     }
 
     @Test
@@ -293,7 +299,7 @@ class PlayerViewModelTest {
         val viewModel = viewModel()
         val firstAlbum = songs("One", "Two", album = "First")
         queueOperations.queueStateFlow.value = queueOf(firstAlbum + createSong(id = 7, name = "Three", album = "Second"))
-        viewModel.uiState.value.seed shouldBe ArtworkSeed.Available(Color.Red)
+        viewModel.uiState.value.player.seed shouldBe ArtworkSeed.Available(Color.Red)
 
         queueOperations.queueStateFlow.value = queueOf(firstAlbum, current = 1)
         seededSongs.map { it.name } shouldBe listOf("One")
@@ -304,12 +310,12 @@ class PlayerViewModelTest {
 
     @Test
     fun `turning off Colour from artwork drops the seed, and no extraction runs`() = runTest {
-        colourFromArtworkPreference.enabled.value = false
+        SaveSetting(settingsStore)(AppearanceSettings.ColourFromArtwork, false)
         val viewModel = viewModel()
 
         queueOperations.queueStateFlow.value = queueOf(songs("One"))
 
-        viewModel.uiState.value.seed shouldBe ArtworkSeed.None
+        viewModel.uiState.value.player.seed shouldBe ArtworkSeed.None
         seededSongs shouldBe emptyList()
     }
 
@@ -483,15 +489,16 @@ class PlayerViewModelTest {
     @Test
     fun `the speed follows the player and the ReplayGain mode follows its setting`() = runTest {
         val viewModel = viewModel()
-        viewModel.uiState.value.playbackSpeed shouldBe 1f
+        viewModel.uiState.value.player.playbackSpeed shouldBe 1f
 
         viewModel.setPlaybackSpeed(1.5f)
-        viewModel.uiState.value.playbackSpeed shouldBe 1.5f
+        viewModel.uiState.value.player.playbackSpeed shouldBe 1.5f
         playbackOperations.getPlaybackSpeed() shouldBe 1.5f
 
         viewModel.setReplayGainMode(ReplayGainMode.Album)
-        viewModel.uiState.value.replayGainMode shouldBe ReplayGainMode.Album
-        replayGainPreference.mode.value shouldBe ReplayGainMode.Album
+        viewModel.uiState.value.player.replayGainMode shouldBe ReplayGainMode.Album
+        ReadSetting(settingsStore)(PlaybackSettings.ReplayGain) shouldBe ReplayGainMode.Album
+        settingsEffects.changes shouldBe listOf(PlaybackSettings.ReplayGain.key to ReplayGainMode.Album)
     }
 
     @Test
@@ -500,13 +507,13 @@ class PlayerViewModelTest {
         queueOperations.queueStateFlow.value = queueOf(songs("One"))
 
         viewModel.startSleepTimer(durationMs = 5_000, playToEnd = true)
-        viewModel.uiState.value.sleepTimerActive shouldBe true
-        viewModel.uiState.value.sleepTimerPlayToEnd shouldBe true
-        sleepTimerPreference.playToEnd shouldBe true
+        viewModel.uiState.value.player.sleepTimerActive shouldBe true
+        viewModel.uiState.value.player.sleepTimerPlayToEnd shouldBe true
+        preferenceManager.sleepTimerPlayToEnd shouldBe true
         viewModel.sleepTimerRemaining().first() shouldBe 5_000
 
         viewModel.stopSleepTimer()
-        viewModel.uiState.value.sleepTimerActive shouldBe false
+        viewModel.uiState.value.player.sleepTimerActive shouldBe false
         viewModel.sleepTimerRemaining().first() shouldBe null
     }
 
@@ -517,25 +524,25 @@ class PlayerViewModelTest {
 
         viewModel.startSleepTimer(durationMs = 3_000, playToEnd = false)
         advanceTimeBy(4_500)
-        viewModel.uiState.value.sleepTimerActive shouldBe false
+        viewModel.uiState.value.player.sleepTimerActive shouldBe false
     }
 
     @Test
     fun `a panel toggles open and shut, and showing another replaces it`() = runTest {
         val viewModel = viewModel()
         queueOperations.queueStateFlow.value = queueOf(songs("One"))
-        viewModel.uiState.value.panel shouldBe null
+        viewModel.uiState.value.player.panel shouldBe null
 
         viewModel.togglePanel(NowPlayingPanel.SleepTimer)
-        viewModel.uiState.value.panel shouldBe NowPlayingPanel.SleepTimer
+        viewModel.uiState.value.player.panel shouldBe NowPlayingPanel.SleepTimer
         viewModel.togglePanel(NowPlayingPanel.PlaybackSound)
-        viewModel.uiState.value.panel shouldBe NowPlayingPanel.PlaybackSound
+        viewModel.uiState.value.player.panel shouldBe NowPlayingPanel.PlaybackSound
         viewModel.togglePanel(NowPlayingPanel.PlaybackSound)
-        viewModel.uiState.value.panel shouldBe null
+        viewModel.uiState.value.player.panel shouldBe null
         viewModel.showPanel(NowPlayingPanel.Queue)
-        viewModel.uiState.value.panel shouldBe NowPlayingPanel.Queue
+        viewModel.uiState.value.player.panel shouldBe NowPlayingPanel.Queue
         viewModel.showPanel(null)
-        viewModel.uiState.value.panel shouldBe null
+        viewModel.uiState.value.player.panel shouldBe null
     }
 
     @Test
@@ -545,7 +552,7 @@ class PlayerViewModelTest {
 
         val restored = viewModel(SavedStateHandle(mapOf(PlayerViewModel.PANEL_KEY to handle.get<NowPlayingPanel>(PlayerViewModel.PANEL_KEY))))
         queueOperations.queueStateFlow.value = queueOf(songs("One"))
-        restored.uiState.value.panel shouldBe NowPlayingPanel.Queue
+        restored.uiState.value.player.panel shouldBe NowPlayingPanel.Queue
     }
 
     @Test
@@ -555,6 +562,6 @@ class PlayerViewModelTest {
         viewModel.showPanel(NowPlayingPanel.SleepTimer)
 
         queueOperations.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
-        viewModel.uiState.value.panel shouldBe null
+        viewModel.uiState.value.player.panel shouldBe null
     }
 }

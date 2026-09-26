@@ -104,6 +104,8 @@ Use a `LoadingState` enum inside the data class for mutually exclusive screen mo
 
 The ViewModel's public properties are exactly `uiState: StateFlow<...>` and, for transient signals only (principle 4), one `events` Flow. Everything else the screen reads lives in the UiState; the `viewmodel-public-api` Konsist rule enforces this, so a screen has one thing to collect and one place to read its state.
 
+**A value that ticks goes beside the rest, not among it.** The player's playback position changes ten times a second while playing. As a field of `PlayerUiState`, every tick would make a new state and recompose everything that reads it: the whole player, queue included. So `PlayerViewModel`'s uiState is `PlayerScreenState(player, progress)`: it combines a distinct `player` flow with a distinct `progress` flow, so a tick replaces only `progress` and `player` stays the same instance. `ShellRoute` reads `player` through `derivedStateOf`, which only changes when `player` does, and hands the progress on as a lambda that only the seek bar and the mini player's bar call. Still one uiState to collect; the split is inside it.
+
 **Why:** A sealed interface (`Loading | Ready | Error`) forces the UI to `when`-branch at the top level and prevents sharing fields across states. Most screens in this app always have the same structural shape — a list with a loading indicator. A data class with a `LoadingState` enum models this naturally.
 
 ## 7. No stability annotations

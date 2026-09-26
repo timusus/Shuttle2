@@ -34,7 +34,7 @@ enum class NowPlayingPanel { Queue, SleepTimer, PlaybackSound }
 
 /**
  * Everything the player surfaces show except the playback position, which ticks too often to live
- * here (see [PlayerProgress]).
+ * here (see [PlayerScreenState]).
  *
  * [hasQueue] is null until the queue has been restored (or holds items), so on a cold start the
  * saved player level stands until the first real emission instead of flashing the mini player.
@@ -63,6 +63,17 @@ data class PlayerUiState(
         val Unknown = PlayerUiState(hasQueue = null, current = null, items = emptyList())
     }
 }
+
+/**
+ * The player's whole state, [PlayerViewModel]'s uiState: what the player surfaces show, and the
+ * position, which ticks ten times a second while playing. The two are kept apart so the route hands
+ * the surfaces a [player] that is the same instance from tick to tick, and only the seek bar and the
+ * mini player's bar read [progress] (UDF doc, principle 6).
+ */
+data class PlayerScreenState(
+    val player: PlayerUiState,
+    val progress: PlayerProgress,
+)
 
 /** The current song's position and duration, in milliseconds. */
 @Immutable
