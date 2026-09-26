@@ -84,7 +84,6 @@
 
 # Keep all Shuttle model classes
 -keep class com.simplecityapps.shuttle.model.** { *; }
--keep class com.simplecityapps.shuttle.parcel.** { *; }
 -keep class com.simplecityapps.shuttle.query.** { *; }
 -keep class com.simplecityapps.shuttle.sorting.** { *; }
 
@@ -109,5 +108,3 @@
 -keepclasseswithmembers class com.simplecityapps.shuttle.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
-
--keep @kotlinx.parcelize.Parcelize public class *

@@ -1,26 +1,21 @@
 package com.simplecityapps.shuttle.query
 
-import android.os.Parcelable
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.SongFolder
-import com.simplecityapps.shuttle.parcel.InstantParceler
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-import kotlinx.parcelize.Parcelize
-import kotlinx.parcelize.TypeParceler
 
 sealed class SongQuery(
     open val predicate: (Song) -> Boolean,
     open val sortOrder: SongSortOrder = SongSortOrder.Default,
     open val includeExcluded: Boolean = false,
     open val providerType: MediaProviderType? = null
-) : Parcelable {
-    @Parcelize
+) {
     data class All(
         override val includeExcluded: Boolean = false,
         override val sortOrder: SongSortOrder = SongSortOrder.Default,
@@ -32,14 +27,12 @@ sealed class SongQuery(
         providerType = providerType
     )
 
-    @Parcelize
     data class ArtistGroupKey(
         val key: AlbumArtistGroupKey?
     ) : SongQuery(
         predicate = { song -> song.albumArtistGroupKey == key }
     )
 
-    @Parcelize
     data class ArtistGroupKeys(
         private val artistGroupKeys: List<ArtistGroupKey>
     ) : SongQuery(
@@ -47,14 +40,12 @@ sealed class SongQuery(
         sortOrder = SongSortOrder.Track
     )
 
-    @Parcelize
     data class AlbumGroupKey(
         val key: com.simplecityapps.shuttle.model.AlbumGroupKey?
     ) : SongQuery(
         predicate = { song -> song.albumGroupKey == key }
     )
 
-    @Parcelize
     data class AlbumGroupKeys(
         val albumGroupKeys: List<AlbumGroupKey>
     ) : SongQuery(
@@ -63,7 +54,6 @@ sealed class SongQuery(
     )
 
     /** The songs with these ids, in no particular order. */
-    @Parcelize
     data class SongIds(
         val songIds: List<Long>
     ) : SongQuery(
@@ -71,15 +61,12 @@ sealed class SongQuery(
     )
 
     /** Local songs in the folder at [path] (see [SongFolder]) or any of its subfolders. */
-    @Parcelize
     data class Folder(
         val path: List<String>
     ) : SongQuery(
         predicate = { song -> !song.mediaProvider.remote && SongFolder.isUnder(song.path, path) }
     )
 
-    @Parcelize
-    @TypeParceler<Instant, InstantParceler>
     data class LastPlayed(
         val after: Instant
     ) : SongQuery(
@@ -87,8 +74,6 @@ sealed class SongQuery(
         sortOrder = SongSortOrder.LastCompleted
     )
 
-    @Parcelize
-    @TypeParceler<Instant, InstantParceler>
     data class LastCompleted(
         val after: Instant
     ) : SongQuery(
@@ -96,14 +81,12 @@ sealed class SongQuery(
         sortOrder = SongSortOrder.LastCompleted
     )
 
-    @Parcelize
     data class Search(
         val query: String
     ) : SongQuery(
         predicate = { song -> song.name?.contains(query, true) ?: false || song.album?.contains(query, true) ?: false || song.albumArtist?.contains(query, true) ?: false }
     )
 
-    @Parcelize
     data class PlayCount(
         val count: Int,
         override val sortOrder: SongSortOrder
@@ -115,7 +98,6 @@ sealed class SongQuery(
     // Todo: This isn't really 'recently added', any songs which have had their contents modified will show up here.
     //   Best to add a 'dateAdded' column.
     @OptIn(ExperimentalTime::class)
-    @Parcelize
     data class RecentlyAdded(val days: Int = 14) :
         SongQuery(
             predicate = { song -> song.lastModified?.let { it > Clock.System.now().minus(days.days) } ?: false },

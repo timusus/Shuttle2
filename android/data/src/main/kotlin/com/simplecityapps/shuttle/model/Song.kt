@@ -1,17 +1,8 @@
 package com.simplecityapps.shuttle.model
 
-import android.os.Parcelable
-import com.simplecityapps.shuttle.parcel.InstantParceler
-import com.simplecityapps.shuttle.parcel.LocalDateParceler
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
-import kotlinx.parcelize.IgnoredOnParcel
-import kotlinx.parcelize.Parcelize
-import kotlinx.parcelize.TypeParceler
 
-@Parcelize
-@TypeParceler<Instant?, InstantParceler>
-@TypeParceler<LocalDate?, LocalDateParceler>
 data class Song(
     val id: Long,
     val name: String?,
@@ -45,7 +36,7 @@ data class Song(
     // Opaque token from the song's provider that changes whenever its artwork does; null when the
     // provider has none. Artwork cache keys include it, so art refreshes on the next sync after a change.
     val artworkVersion: String? = null
-) : Parcelable {
+) {
     val type: Type
         get() {
             return when {
@@ -55,7 +46,6 @@ data class Song(
             }
         }
 
-    @IgnoredOnParcel
     val albumArtistGroupKey: AlbumArtistGroupKey by lazy {
         AlbumArtistGroupKey(
             albumArtist?.lowercase()?.removeArticles()
@@ -63,7 +53,6 @@ data class Song(
         )
     }
 
-    @IgnoredOnParcel
     val albumGroupKey by lazy { AlbumGroupKey(album?.lowercase()?.removeArticles(), albumArtistGroupKey) }
 
     enum class Type {
@@ -72,7 +61,6 @@ data class Song(
         Podcast
     }
 
-    @IgnoredOnParcel
     val friendlyArtistName: String? by lazy {
         if (artists.isNotEmpty()) {
             if (artists.size == 1) {

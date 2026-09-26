@@ -1,10 +1,7 @@
 package com.simplecityapps.shuttle.model
 
-import android.os.Parcelable
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
-import kotlinx.parcelize.Parcelize
 
-@Parcelize
 data class Playlist(
     val id: Long,
     val name: String,
@@ -14,4 +11,4 @@ data class Playlist(
     val sortDescending: Boolean = false,
     val mediaProvider: MediaProviderType,
     val externalId: String?
-) : Parcelable
+)

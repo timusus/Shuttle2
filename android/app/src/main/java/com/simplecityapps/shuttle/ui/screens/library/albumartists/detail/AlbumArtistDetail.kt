@@ -181,7 +181,7 @@ fun AlbumArtistDetail(
                         SectionHeader(text = stringResource(R.string.albums))
                     }
 
-                    items(albums.size, key = { albums[it].groupKey ?: it }) { index ->
+                    items(albums.size, key = { albums[it].groupKey?.toString() ?: it }) { index ->
                         val album = albums[index]
                         ExpandableAlbumItem(
                             album = album,

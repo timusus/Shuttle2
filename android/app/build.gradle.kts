@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     id("com.android.application")
     id("com.mikepenz.aboutlibraries.plugin.android")
-    id("kotlin-parcelize")
     id("dagger.hilt.android.plugin")
     id("com.google.firebase.crashlytics")
     id("com.google.devtools.ksp")
