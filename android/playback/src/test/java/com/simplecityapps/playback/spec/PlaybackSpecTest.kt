@@ -68,20 +68,20 @@ class PlaybackSpecTest {
     }
 
     @Test
-    fun `RS-02 a skip anchors at the new song's start straight away`() {
+    fun `RS-02 a skip publishes the new song's start straight away`() {
         loadPaused(listOf(song(1), song(2)), positionMs = 1_500)
-        playback.positionAnchorFlow.value.positionMs shouldBe 1_500
+        playback.progressFlow.value?.position shouldBe 1_500
 
         playback.skipToNext()
 
-        playback.positionAnchorFlow.value.positionMs shouldBe 0
+        playback.progressFlow.value?.position shouldBe 0
         queue.queueStateFlow.value.currentPosition shouldBe 1
         harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
-        playback.positionAnchorFlow.value.positionMs!!.shouldBeBetween(0, TONE_2S_MS)
+        playback.progressFlow.value!!.position.shouldBeBetween(0, TONE_2S_MS)
     }
 
     @Test
-    fun `RS-03 a seek while paused moves the published progress and anchor, and playback resumes from it`() {
+    fun `RS-03 a seek while paused moves the published progress, and playback resumes from it`() {
         loadPaused(listOf(song(1)))
         val ended = harness.record(playback.trackEndedFlow)
 
@@ -89,8 +89,7 @@ class PlaybackSpecTest {
         harness.idle()
 
         playback.progressFlow.value shouldBe PlaybackProgress(1_200, TONE_2S_MS)
-        playback.positionAnchorFlow.value.positionMs shouldBe 1_200
-        playback.positionAnchorFlow.value.state shouldBe PlaybackState.Paused
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
 
         harness.clearAudioOutput()
         playback.play()
@@ -195,7 +194,7 @@ class PlaybackSpecTest {
         queue.queueStateFlow.value.currentItem?.uid shouldBe uid
         states shouldNotContain PlaybackState.Loading
         playback.getProgress() shouldBe 1_200
-        playback.positionAnchorFlow.value.positionMs shouldBe 1_200
+        playback.progressFlow.value?.position shouldBe 1_200
     }
 
     @Test
@@ -303,7 +302,7 @@ class PlaybackSpecTest {
         playback.setPlaybackSpeed(1.5f)
 
         playback.getPlaybackSpeed() shouldBe 1.5f
-        playback.positionAnchorFlow.value.speed shouldBe 1.5f
+        playback.playbackSpeedFlow.value shouldBe 1.5f
         harness.appPlayer.playbackParameters.pitch shouldBe 1f
     }
 
@@ -315,7 +314,7 @@ class PlaybackSpecTest {
         val restarted = PlaybackHarness(sharedPreferences = harness.sharedPreferences)
         try {
             restarted.playbackOperations.getPlaybackSpeed() shouldBe 1.25f
-            restarted.playbackOperations.positionAnchorFlow.value.speed shouldBe 1.25f
+            restarted.playbackOperations.playbackSpeedFlow.value shouldBe 1.25f
         } finally {
             restarted.release()
         }

@@ -159,7 +159,7 @@ class PlayerViewModel @Inject constructor(
             }.distinctUntilChanged()
 
     private val sound: Flow<Sound> =
-        combine(playbackOperations.positionAnchorFlow.map { it.speed }.distinctUntilChanged(), replayGainPreference.mode, ::Sound)
+        combine(playbackOperations.playbackSpeedFlow, replayGainPreference.mode, ::Sound)
 
     private val extras: Flow<Extras> =
         combine(favouriteIds, seed.onStart { emit(ArtworkSeed.Loading) }, sleepTimerActive, sleepTimerPlayToEnd, sound) { favourites, seed, sleeping, playToEnd, sound ->

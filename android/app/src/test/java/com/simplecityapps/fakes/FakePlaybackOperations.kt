@@ -3,7 +3,6 @@ package com.simplecityapps.fakes
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.PositionAnchor
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.model.Song
@@ -13,7 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class FakePlaybackOperations : PlaybackOperations {
     override val playbackStateFlow = MutableStateFlow<PlaybackState>(PlaybackState.Paused)
     override val progressFlow = MutableStateFlow<PlaybackProgress?>(null)
-    override val positionAnchorFlow = MutableStateFlow(PositionAnchor(PlaybackState.Paused, positionMs = null, elapsedRealtimeMs = 0, speed = 1f))
+    override val playbackSpeedFlow = MutableStateFlow(1f)
     override val trackEndedFlow = MutableSharedFlow<Song>(extraBufferCapacity = 64)
     override val pausePositionFlow = MutableSharedFlow<SongPosition>(extraBufferCapacity = 64)
     override val playbackFailureFlow = MutableSharedFlow<Song>(extraBufferCapacity = 64)
@@ -82,9 +81,9 @@ class FakePlaybackOperations : PlaybackOperations {
     override fun playbackState(): PlaybackState = playbackStateFlow.value
     override fun getProgress(): Int? = savedProgress
     override fun getDuration(): Int? = null
-    override fun getPlaybackSpeed(): Float = positionAnchorFlow.value.speed
+    override fun getPlaybackSpeed(): Float = playbackSpeedFlow.value
     override fun setPlaybackSpeed(multiplier: Float) {
-        positionAnchorFlow.value = positionAnchorFlow.value.copy(speed = multiplier)
+        playbackSpeedFlow.value = multiplier
     }
     override fun moveQueueItem(from: Int, to: Int) {
         calls += "moveQueueItem($from, $to)"

@@ -15,11 +15,11 @@ interface PlaybackOperations {
     /** The player's playback state: loading until the current item is ready, then playing or paused. */
     val playbackStateFlow: StateFlow<PlaybackState>
 
-    /** The last published progress; null until the first. A seek is a discontinuity, observed on [positionAnchorFlow]. */
+    /** The last published progress; null until the first. Ticks while playing, and is republished on every jump (a seek or a track change). */
     val progressFlow: StateFlow<PlaybackProgress?>
 
-    /** Where playback was at the last discontinuity, for consumers that extrapolate position between anchors. */
-    val positionAnchorFlow: StateFlow<PositionAnchor>
+    /** The playback speed, 1 being normal; republished each time it changes. */
+    val playbackSpeedFlow: StateFlow<Float>
 
     /**
      * Each song that plays to its end, emitted before the queue moves on. An event, not state: nothing is

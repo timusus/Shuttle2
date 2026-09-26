@@ -64,7 +64,7 @@ class MediaSessionSpecTest {
         harness.playback.runUntil { playback.playbackStateFlow.value == PlaybackState.Paused }
 
         browser.seekTo(1_000)
-        harness.playback.runUntil { playback.positionAnchorFlow.value.positionMs == 1_000 }
+        harness.playback.runUntil { playback.progressFlow.value?.position == 1_000 }
 
         // Next skips even with repeat-one on, as the app's own next button does.
         queue.setRepeatMode(RepeatMode.One)

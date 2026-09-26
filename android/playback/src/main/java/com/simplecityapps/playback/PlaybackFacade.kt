@@ -1,6 +1,5 @@
 package com.simplecityapps.playback
 
-import android.os.SystemClock
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
@@ -57,9 +56,7 @@ class PlaybackFacade(
     callMonitor: CallMonitor,
     appCoroutineScope: CoroutineScope,
     /** Keeps a Cast receiver's queue in line, and says when it has played the queue out; null when there's no Cast. */
-    castQueue: CastQueue?,
-    /** The anchor clock, on the `SystemClock.elapsedRealtime` timebase media controllers expect. */
-    private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime
+    castQueue: CastQueue?
 ) : PlaybackOperations {
     private val playerThread = PlayerThread(player)
 
@@ -87,13 +84,9 @@ class PlaybackFacade(
     /** Ticks while playing or loading, and is republished on every jump. */
     override val progressFlow: StateFlow<PlaybackProgress?> = progressTicker.progressFlow
 
-    private val _positionAnchorFlow = MutableStateFlow(positionAnchor())
+    private val _playbackSpeedFlow = MutableStateFlow(player.playbackParameters.speed)
 
-    /**
-     * Republished on every discontinuity: a state change (even a repeated one), a seek, a speed change, or a track
-     * change. Never on a progress tick.
-     */
-    override val positionAnchorFlow: StateFlow<PositionAnchor> = _positionAnchorFlow.asStateFlow()
+    override val playbackSpeedFlow: StateFlow<Float> = _playbackSpeedFlow.asStateFlow()
 
     /**
      * Buffered, so a collector on the main thread misses no track end even when two arrive before it resumes
@@ -181,11 +174,12 @@ class PlaybackFacade(
                     _trackEndedFlow.tryEmit(entry.song)
                 }
             }
-            reanchor()
             progressTicker.publish()
         }
 
-        override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) = reanchor()
+        override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
+            _playbackSpeedFlow.value = playbackParameters.speed
+        }
     }
 
     private val currentEntry: QueueEntry?
@@ -233,22 +227,10 @@ class PlaybackFacade(
         val state = derivedState()
         val previous = _playbackStateFlow.value
         _playbackStateFlow.value = state
-        reanchor()
         if (state != previous && state is PlaybackState.Paused && !handover.isSwitching) {
             reportPausePosition()
         }
         progressTicker.setTicking(state is PlaybackState.Playing || state is PlaybackState.Loading)
-    }
-
-    private fun positionAnchor(): PositionAnchor = PositionAnchor(
-        state = derivedState(),
-        positionMs = getProgress(),
-        elapsedRealtimeMs = elapsedRealtime(),
-        speed = getPlaybackSpeed()
-    )
-
-    private fun reanchor() {
-        _positionAnchorFlow.value = positionAnchor()
     }
 
     /**
@@ -423,7 +405,7 @@ class PlaybackFacade(
         progressFlow.value?.duration
     }
 
-    override fun getPlaybackSpeed(): Float = if (playerThread.isCurrent) player.playbackParameters.speed else _positionAnchorFlow.value.speed
+    override fun getPlaybackSpeed(): Float = if (playerThread.isCurrent) player.playbackParameters.speed else playbackSpeedFlow.value
 
     // Pitch stays put: a faster song should sound like the same voice, just quicker.
     override fun setPlaybackSpeed(multiplier: Float) = playerThread.run {
