@@ -48,7 +48,7 @@ back to plain `./gradlew` when it isn't installed.
 ./support/scripts/unit-test
 
 # One module / filter (short name or Gradle path; see the `check` skill)
-./support/scripts/unit-test playback --tests '*QueueManager*'
+./support/scripts/unit-test playback --tests '*SleepTimerTest*'
 
 # Run instrumented tests (Gradle Managed Device — auto-provisions emulator)
 ./gradlew :android:app:pixel6Api34AtdDebugAndroidTest

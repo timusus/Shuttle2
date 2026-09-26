@@ -19,9 +19,11 @@
 #    the default drops to 4 when remote-emu.sh shows a lane leased on the box);
 # 4. streams a condensed log -- failed tasks and tests, compiler errors, the "What went wrong"
 #    block, the BUILD line -- while the whole log goes to build/remote-build/gradle.log;
-# 5. syncs back APKs (build/outputs/apk), test results and reports (build/test-results,
-#    build/reports) and Roborazzi outputs (build/outputs/roborazzi) into the same paths here, plus
-#    the full log, and exits with Gradle's exit code.
+# 5. clears the local destination report dirs (build/test-results, build/reports,
+#    build/outputs/roborazzi under every module) so a report a previous run wrote and this one
+#    didn't re-run can't linger (#459), then syncs back APKs (build/outputs/apk), test results and
+#    reports and Roborazzi outputs into the same paths here, plus the full log, and exits with
+#    Gradle's exit code.
 #
 # The version comes from the latest vYYMMDDNN tag, read here and passed as -PversionCode and
 # -PversionName, since a worktree's .git is a pointer file that means nothing on the box.
@@ -149,6 +151,11 @@ exit "${PIPESTATUS[0]}"
 REMOTE
 rc=$?
 set -e
+
+# ---- clear stale reports (#459) --------------------------------------------------------------
+# rsync only adds/updates, so a report this run didn't regenerate (a test class that got removed,
+# a module that wasn't built) would otherwise linger from a previous run.
+find "$ROOT" -type d \( -path '*/build/test-results' -o -path '*/build/reports' -o -path '*/build/outputs/roborazzi' \) -exec rm -rf {} +
 
 # ---- sync back ------------------------------------------------------------------------------
 start=$SECONDS
