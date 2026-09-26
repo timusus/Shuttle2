@@ -102,5 +102,5 @@ class TrialModule {
 
     @Provides
     @Singleton
-    fun provideServerAccessGate(entitlementRepository: EntitlementRepository): ServerAccessGate = ServerAccessGate(entitlementRepository.entitlement)
+    fun provideServerAccessGate(entitlementRepository: EntitlementRepository): ServerAccessGate = ServerAccessGate(entitlementRepository.entitlement, entitlementRepository::startServerTrialIfEligible)
 }

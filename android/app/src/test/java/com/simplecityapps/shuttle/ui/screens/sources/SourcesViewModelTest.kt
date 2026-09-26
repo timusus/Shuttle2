@@ -34,7 +34,7 @@ class SourcesViewModelTest {
         RemoveScannerFolder(folderStore),
         RefreshScannerFolders(folderStore),
         importState,
-        ServerAccessGate(entitlement),
+        ServerAccessGate(entitlement, startTrial = { false }),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
     }

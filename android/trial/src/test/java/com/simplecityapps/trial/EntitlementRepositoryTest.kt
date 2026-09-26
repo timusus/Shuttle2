@@ -1,7 +1,6 @@
 package com.simplecityapps.trial
 
 import com.android.billingclient.api.Purchase
-import com.simplecityapps.shuttle.model.MediaProviderType
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -65,15 +64,14 @@ class EntitlementRepositoryTest {
     }
 
     @Test
-    fun `connecting the first server starts a 14-day trial, which then expires`() = runTest {
+    fun `the trial lasts 14 days from when it starts, then expires`() = runTest {
         val repository = repository()
 
-        repository.onServerConnected(MediaProviderType.Jellyfin)
+        assertTrue(repository.startServerTrialIfEligible())
         runCurrent()
 
         assertEquals(Entitlement.Trial(start + 14.days), repository.entitlement.value)
         assertEquals(start, store.serverTrialStartedAt)
-        verify { analytics.serverConnected(MediaProviderType.Jellyfin) }
         verify(exactly = 1) { analytics.trialStarted() }
 
         advanceTimeBy(14.days - 1.hours)
@@ -90,8 +88,6 @@ class EntitlementRepositoryTest {
         val repository = repository()
         assertTrue(repository.startServerTrialIfEligible())
         advanceTimeBy(20.days)
-
-        repository.onServerConnected(MediaProviderType.Plex)
         runCurrent()
 
         assertFalse(repository.startServerTrialIfEligible())
@@ -137,7 +133,7 @@ class EntitlementRepositoryTest {
         val repository = repository()
         assertEquals(Entitlement.Unknown, repository.entitlement.value)
 
-        repository.onServerConnected(MediaProviderType.Jellyfin)
+        backgroundScope.launch { repository.startServerTrialIfEligible() }
         advanceTimeBy(1.hours)
         runCurrent()
 
@@ -153,11 +149,11 @@ class EntitlementRepositoryTest {
     }
 
     @Test
-    fun `a new user who connects a server offline gets the trial once Play answers`() = runTest {
+    fun `a trial asked for before Play answers starts once Play says the user has no Pro`() = runTest {
         owned.value = null
         val repository = repository()
 
-        repository.onServerConnected(MediaProviderType.Plex)
+        backgroundScope.launch { repository.startServerTrialIfEligible() }
         advanceTimeBy(1.hours)
         runCurrent()
         assertNull(store.serverTrialStartedAt)

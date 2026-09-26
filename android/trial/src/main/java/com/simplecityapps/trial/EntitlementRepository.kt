@@ -1,6 +1,5 @@
 package com.simplecityapps.trial
 
-import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,7 +14,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transformLatest
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
@@ -24,8 +22,8 @@ import timber.log.Timber
  * The single source of the user's [Entitlement].
  *
  * Pro comes from any completed purchase of a [ProductIds] product, legacy ones included. Otherwise the user gets
- * one 14-day server trial, which starts when they first connect a remote server; the old first-launch trial
- * doesn't count against it.
+ * one 14-day server trial, which [ServerAccessGate] starts the first time they stream or download from a remote server;
+ * the old first-launch trial doesn't count against it.
  *
  * @param owned completed purchases from Play, or null until Play has answered.
  */
@@ -60,12 +58,6 @@ class EntitlementRepository(
         owned.filterNotNull()
             .onEach { owned -> store.cachedPro = owned.proSource()?.let { CachedPro(it, clock.now()) } }
             .launchIn(coroutineScope)
-    }
-
-    /** A remote server of [type] was connected. Starts the server trial if the user hasn't had one. */
-    fun onServerConnected(type: MediaProviderType) {
-        analytics.serverConnected(type)
-        coroutineScope.launch { startServerTrialIfEligible() }
     }
 
     /**

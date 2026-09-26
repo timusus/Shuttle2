@@ -16,7 +16,7 @@ import org.junit.Test
 class EntitledServerStreamPolicyTest {
     private val entitlement = MutableStateFlow<Entitlement>(Entitlement.Free(trialUsed = true))
     private val downloads = FakeSongDownloadRepository()
-    private val policy = EntitledServerStreamPolicy(downloads, ServerAccessGate(entitlement))
+    private val policy = EntitledServerStreamPolicy(downloads, ServerAccessGate(entitlement, startTrial = { false }))
     private val song = createSong(id = 1, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://1")
 
     private fun download(state: SongDownload.State) {

@@ -68,7 +68,7 @@ class TestMediaActions(
 
     /** The user's entitlement, which gates server downloads; Pro by default. */
     val entitlement = MutableStateFlow<Entitlement>(Entitlement.Pro(ProSource.Lifetime))
-    val serverAccessGate = ServerAccessGate(entitlement)
+    val serverAccessGate = ServerAccessGate(entitlement, startTrial = { false })
     val downloadSongs = DownloadSongs(songDownloadManager, AggregateMediaInfoProvider(mutableSetOf(mediaInfoProvider)), resolveSongs, serverAccessGate)
     val findGoToTarget = FindGoToTarget(albumRepository, albumArtistRepository)
     val shareSongs = ShareSongs(resolveSongs)

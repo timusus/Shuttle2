@@ -12,12 +12,12 @@ class SignInToServerTest {
     private val connected = mutableListOf<MediaProviderType>()
     private val signIn = SignInToServer(
         mapOf(MediaProviderType.Plex to plex, MediaProviderType.Jellyfin to jellyfin),
-        ServerTrial { connected += it },
+        ServerSignInAnalytics { connected += it },
     )
     private val login = ServerLogin("http://server:8096", "sam", "secret")
 
     @Test
-    fun `a successful sign-in tells the trial and remembers the login when asked`() = runTest {
+    fun `a successful sign-in is recorded and remembers the login when asked`() = runTest {
         signIn(MediaProviderType.Jellyfin, login, rememberLogin = true) shouldBe SignInToServer.Result.Success
 
         jellyfin.authenticated shouldBe listOf(login)
@@ -35,7 +35,7 @@ class SignInToServerTest {
     }
 
     @Test
-    fun `a failed sign-in reports why, and neither remembers the login nor tells the trial`() = runTest {
+    fun `a failed sign-in reports why, and neither remembers the login nor is recorded`() = runTest {
         plex.failure = IllegalStateException("boom")
 
         signIn(MediaProviderType.Plex, login, rememberLogin = true) shouldBe SignInToServer.Result.Failure("An unknown error occurred.")

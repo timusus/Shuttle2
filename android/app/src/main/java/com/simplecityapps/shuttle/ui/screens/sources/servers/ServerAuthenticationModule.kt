@@ -4,7 +4,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.screens.sources.servers.emby.EmbyServerAuthentication
 import com.simplecityapps.shuttle.ui.screens.sources.servers.jellyfin.JellyfinServerAuthentication
 import com.simplecityapps.shuttle.ui.screens.sources.servers.plex.PlexServerAuthentication
-import com.simplecityapps.trial.EntitlementRepository
+import com.simplecityapps.trial.MonetisationAnalytics
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -32,6 +32,6 @@ abstract class ServerAuthenticationModule {
 
     companion object {
         @Provides
-        fun provideServerTrial(entitlementRepository: EntitlementRepository): ServerTrial = ServerTrial(entitlementRepository::onServerConnected)
+        fun provideServerSignInAnalytics(analytics: MonetisationAnalytics): ServerSignInAnalytics = ServerSignInAnalytics(analytics::serverConnected)
     }
 }

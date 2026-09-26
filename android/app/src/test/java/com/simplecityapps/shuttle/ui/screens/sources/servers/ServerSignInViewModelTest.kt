@@ -28,7 +28,7 @@ class ServerSignInViewModelTest {
         return ServerSignInViewModel(
             type,
             ReadServerLogin(servers),
-            SignInToServer(servers, ServerTrial { connected += it }),
+            SignInToServer(servers, ServerSignInAnalytics { connected += it }),
             ForgetServerLogin(servers),
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }

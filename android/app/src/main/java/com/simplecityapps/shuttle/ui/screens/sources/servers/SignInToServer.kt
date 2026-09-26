@@ -6,12 +6,13 @@ import javax.inject.Inject
 import timber.log.Timber
 
 /**
- * Signs in to a [type] server with [login][invoke]. Once it's in, the trial hears of it, and the login is saved for
- * next time if the user asked to remember it.
+ * Signs in to a [type] server with [login][invoke]. Once it's in, the sign-in is recorded for analytics, and the login
+ * is saved for next time if the user asked to remember it. Signing in doesn't start the server trial: the first stream
+ * or download does (ServerAccessGate), so a sign-in the user backs out of doesn't use it up.
  */
 class SignInToServer @Inject constructor(
     private val authentications: Map<MediaProviderType, @JvmSuppressWildcards ServerAuthentication>,
-    private val serverTrial: ServerTrial,
+    private val analytics: ServerSignInAnalytics,
 ) {
     sealed interface Result {
         data object Success : Result
@@ -28,7 +29,7 @@ class SignInToServer @Inject constructor(
         val authentication = authentications.getValue(type)
         return authentication.authenticate(login).fold(
             onSuccess = {
-                serverTrial.onServerConnected(type)
+                analytics.onServerConnected(type)
                 if (rememberLogin) authentication.rememberLogin(login)
                 Result.Success
             },

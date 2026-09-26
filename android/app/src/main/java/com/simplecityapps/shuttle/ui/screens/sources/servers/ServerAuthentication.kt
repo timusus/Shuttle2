@@ -30,8 +30,8 @@ interface ServerAuthentication {
     fun forgetLogin()
 }
 
-/** Tells the trial a server connected: it starts the server trial for a user who hasn't had one. */
-fun interface ServerTrial {
+/** Records a successful server sign-in for the monetisation funnel. */
+fun interface ServerSignInAnalytics {
     fun onServerConnected(type: MediaProviderType)
 }
 

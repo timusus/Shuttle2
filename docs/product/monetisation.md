@@ -12,8 +12,9 @@ Decided by the owner on epic #382; each can still be revisited:
 - **Pricing decided on #380:** lifetime $9.99, annual $3.99, **no monthly plan** (the 14-day trial
   covers trying it, and twelve monthly payments would cost more than lifetime). A 30-day launch
   sale keeps lifetime at today's $7.99. See §5 for the full breakdown.
-- **A 14-day trial, no card**, starting when the first server is connected. Current non-payers get
-  one fresh trial at cutover.
+- **A 14-day trial, no card**, starting the first time a server song is streamed or downloaded (#488),
+  not at sign-in, so a cancelled sign-in or a long first sync doesn't use it up. Current non-payers get
+  one fresh trial the same way.
 - **All five legacy products are grandfathered to Pro**, indefinitely.
 - **No nag dialogs.** The paywall appears at add-server, at trial end, and in Settings.
 - **Pro for local-only users** takes nothing away; Pro adds optional supporter extras only
@@ -128,7 +129,7 @@ The owner kept downloads free, but downloading from a server needs server access
 
 ### Trial mechanics
 
-- **A 14-day remote trial, with no card, starting the first time a server is connected.** It is app-side and deliberately not a Play free-trial offer: a card-required Play trial would put off exactly the self-hosters who arrive to evaluate a Jellyfin client, and it can't cover the lifetime product. S2's own A/B test found no trial length that beat 14 days.
+- **A 14-day remote trial, with no card, starting the first time a server song is streamed or downloaded (#488).** It is app-side and deliberately not a Play free-trial offer: a card-required Play trial would put off exactly the self-hosters who arrive to evaluate a Jellyfin client, and it can't cover the lifetime product. S2's own A/B test found no trial length that beat 14 days.
 - Record the trial start on the existing device backend (`DeviceService`, keyed on ANDROID_ID) as a new `remoteTrialStartedAt` field, so reinstalling doesn't reset it. This is a backend change.
 - **At expiry**, remote libraries stay visible and browsable, with a small lock. Tapping play on a remote song opens the paywall sheet, and remote items already in the queue are skipped with a snackbar. Local playback, settings and downloaded songs are untouched. There are no nag dialogs, no speed change, and nothing reduced in quality.
 - **At cutover**, every existing non-paying user gets one fresh 14-day remote trial when they update. Announce it in the changelog. This converts the people who have been tolerating the speed penalty rather than cutting them off overnight.
