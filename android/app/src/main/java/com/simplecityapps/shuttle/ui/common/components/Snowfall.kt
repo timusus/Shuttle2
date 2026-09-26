@@ -44,6 +44,7 @@ private fun SnowfallCanvas(modifier: Modifier) {
     val snowflakes = remember { mutableListOf<Snowflake>() }
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     var generation by remember { mutableStateOf(0) }
+    var stopping by remember { mutableStateOf(false) }
 
     LaunchedEffect(canvasSize) {
         if (canvasSize == IntSize.Zero) return@LaunchedEffect
@@ -59,21 +60,14 @@ private fun SnowfallCanvas(modifier: Modifier) {
             }
             delay(TimeUnit.SECONDS.toMillis(random.nextInt(8).coerceAtLeast(2).toLong()))
         }
+        stopping = true
     }
 
     LaunchedEffect(canvasSize) {
         if (canvasSize == IntSize.Zero) return@LaunchedEffect
-        while (true) {
+        while (!stopping || snowflakes.isNotEmpty()) {
             delay(FRAME_INTERVAL_MS)
-            val iterator = snowflakes.iterator()
-            while (iterator.hasNext()) {
-                val flake = iterator.next()
-                flake.snowX += flake.velX
-                flake.snowY += flake.velY
-                if (flake.snowY > canvasSize.height) {
-                    iterator.remove()
-                }
-            }
+            snowflakes.fall(canvasSize.height, stopping)
             generation++
         }
     }
@@ -106,14 +100,41 @@ private fun newSnowflake(random: SecureRandom, canvasSize: IntSize): Snowflake {
     return Snowflake(startX, startY, velX, velY, size, alpha)
 }
 
-private class Snowflake(
-    var snowX: Float,
-    var snowY: Float,
+/**
+ * Moves each flake one frame. A flake that falls past [height] goes back to where it started, so the snow stays as dense
+ * for as long as it lasts, or, once [stopping], is dropped, so the snow thins out and ends.
+ */
+internal fun MutableList<Snowflake>.fall(
+    height: Int,
+    stopping: Boolean
+) {
+    val iterator = iterator()
+    while (iterator.hasNext()) {
+        val flake = iterator.next()
+        flake.snowX += flake.velX
+        flake.snowY += flake.velY
+        if (flake.snowY > height) {
+            if (stopping) iterator.remove() else flake.reset()
+        }
+    }
+}
+
+internal class Snowflake(
+    private val startX: Float,
+    private val startY: Float,
     val velX: Float,
     val velY: Float,
     val snowR: Float,
     val alpha: Int
-)
+) {
+    var snowX: Float = startX
+    var snowY: Float = startY
+
+    fun reset() {
+        snowX = startX
+        snowY = startY
+    }
+}
 
 /** The total number of snowflakes to generate */
 private const val TOTAL_FLAKES = 200
