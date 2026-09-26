@@ -334,6 +334,10 @@
     {
       "text": "Editing a song's tags or rescanning your library now updates its title, artist and album in the queue, the notification and Now Playing straight away, without interrupting playback",
       "commits": []
+    },
+    {
+      "text": "Album artist art now shows on Android 13 and later when using the Android media scanner, matching album art",
+      "commits": []
     }
   ]
 }

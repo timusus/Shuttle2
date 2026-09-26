@@ -25,6 +25,7 @@ import com.simplecityapps.imageloading.coil.source.FolderSongArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaServerAlbumArtistArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaServerAlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaServerSongArtworkSource
+import com.simplecityapps.imageloading.coil.source.MediaStoreAlbumArtistArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaStoreAlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaStoreSongArtworkSource
 import com.simplecityapps.imageloading.coil.source.S2AlbumArtistArtworkSource
@@ -103,6 +104,7 @@ object CoilModule {
         val albumArtistSources =
             buildList<ArtworkSource<AlbumArtist>> {
                 add(FolderAlbumArtistArtworkSource(context, songRepository, sharedStorageListsImages))
+                if (!sharedStorageListsImages) add(MediaStoreAlbumArtistArtworkSource(context, songRepository))
                 add(MediaServerAlbumArtistArtworkSource(artworkSettings, songRepository, remoteArtworkProvider))
                 add(S2AlbumArtistArtworkSource(artworkSettings))
             }

@@ -14,6 +14,9 @@ internal suspend fun SongRepository.songsOf(album: Album): List<Song> = getSongs
 
 internal suspend fun SongRepository.firstSongOf(album: Album): Song? = songsOf(album).firstOrNull()
 
-internal suspend fun SongRepository.firstSongOf(albumArtist: AlbumArtist): Song? = getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(albumArtist.groupKey))))
+/** The artist's songs, which stand in for the artist when a source only knows how to find artwork for a song. */
+internal suspend fun SongRepository.songsOf(albumArtist: AlbumArtist): List<Song> = getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(albumArtist.groupKey))))
     .firstOrNull()
-    ?.firstOrNull()
+    .orEmpty()
+
+internal suspend fun SongRepository.firstSongOf(albumArtist: AlbumArtist): Song? = songsOf(albumArtist).firstOrNull()
