@@ -204,10 +204,11 @@ class PlayerViewModel @Inject constructor(
 
     override fun togglePlayback() {
         if (savedSnapshot != null && queueOperations.queueStateFlow.value.isAwaitingRestore) {
-            // Nothing is loaded yet: play once the saved queue is restored and loaded.
+            // Nothing is loaded yet: play once the saved queue is restored and loaded. A restore that brings nothing
+            // back takes the saved song, and the player with it, away, so there's nothing to play.
             viewModelScope.launch {
-                queueOperations.queueStateFlow.first { queue -> queue.isRestored }
-                playbackOperations.play()
+                val restored = queueOperations.queueStateFlow.first { queue -> queue.isRestored }
+                if (restored.items.isNotEmpty()) playbackOperations.play()
             }
         } else {
             playbackOperations.togglePlayback()

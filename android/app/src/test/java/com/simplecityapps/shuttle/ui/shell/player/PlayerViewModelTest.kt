@@ -155,6 +155,18 @@ class PlayerViewModelTest {
     }
 
     @Test
+    fun `play on the saved song does nothing when the restore brings nothing back`() = runTest {
+        savedNowPlaying = NowPlayingSnapshot.of(createSong(id = 7, name = "Saved"))
+        val viewModel = viewModel()
+
+        viewModel.togglePlayback()
+        queueManager.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
+
+        playbackManager.calls shouldBe emptyList()
+        viewModel.uiState.value.hasQueue shouldBe false
+    }
+
+    @Test
     fun `an unrestored empty queue is unknown, so the saved level stands`() {
         QueueState.Empty.toPlayerUiState().hasQueue shouldBe null
     }
