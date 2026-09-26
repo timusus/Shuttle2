@@ -216,6 +216,62 @@ class AppShellTest {
     }
 
     @Test
+    fun `on a phone song info opens in a bottom sheet over the destination, with the player at Mini`() {
+        robot.setContent()
+        robot.openSongInfo()
+
+        robot.assertSongInfo(inSheet = true)
+        robot.assertLevel(PlayerLevel.Mini)
+        robot.assertTextDisplayed("Recently played")
+    }
+
+    @Test
+    fun `back in the song info sheet dismisses it, leaving the destination and the player at Mini`() {
+        robot.setContent()
+        robot.openSongInfo()
+
+        robot.pressBackInSheet()
+        robot.assertSongInfoAbsent()
+        robot.assertLevel(PlayerLevel.Mini)
+        robot.assertTextDisplayed("Recently played")
+    }
+
+    @Test
+    fun `a screen opened over the song info sheet slides the sheet away rather than cutting it`() {
+        robot.setContent()
+        robot.openSongInfo()
+
+        robot.navigateMidAnimation(NavigationTarget.Album(SampleLibrary.albums.first { it.title == "Slow Bloom" }.toAlbum()))
+        robot.assertSongInfoSheetPresent()
+
+        robot.settle()
+        robot.assertSongInfoAbsent()
+        robot.assertTextDisplayed("Morning Glory")
+    }
+
+    @Test
+    fun `the song info sheet reopens after saved state restoration`() {
+        val restoration = StateRestorationTester(composeTestRule)
+        robot.setContent(restoration = restoration)
+        robot.openSongInfo()
+
+        restoration.emulateSavedInstanceStateRestore()
+        composeTestRule.waitForIdle()
+        robot.assertSongInfo(inSheet = true)
+    }
+
+    @Test
+    @Config(qualifiers = "w840dp-h900dp")
+    fun `from 600 dp song info stays a detail pane beside the list`() {
+        robot.setContent(window = windowInfo(840, 900))
+        robot.tapText("Library")
+        robot.openSongInfo()
+
+        robot.assertSongInfo(inSheet = false)
+        robot.assertTextDisplayed("Albums")
+    }
+
+    @Test
     fun `the level survives saved state restoration`() {
         val restoration = StateRestorationTester(composeTestRule)
         robot.setContent(restoration = restoration)

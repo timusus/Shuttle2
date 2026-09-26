@@ -76,7 +76,7 @@
       "commits": []
     },
     {
-      "text": "The tag editor groups its fields into Song, Album, Numbering and Lyrics sections, and Song Info now shows the artwork with the format, bit rate and sample rate at a glance, with the details grouped below",
+      "text": "The tag editor groups its fields into Song, Album, Numbering and Lyrics sections, and Song Info now opens as a sheet on phones, showing the artwork with the format, bit rate and sample rate at a glance, with the details grouped below",
       "commits": []
     },
     {

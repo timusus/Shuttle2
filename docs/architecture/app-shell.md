@@ -31,6 +31,7 @@ opt-in annotations), 2026-09-25.
 | API | Artifact / version | Status |
 |---|---|---|
 | `NavDisplay`, `SceneStrategy`, `SinglePaneSceneStrategy`, `DialogSceneStrategy` | `androidx.navigation3:navigation3-ui` 1.2.0 | stable, no opt-in; not cached, not a dependency |
+| `OverlayScene` (with `onRemove`), `NavMetadataKey`, `metadata {}` | `androidx.navigation3:navigation3-runtime` 1.2.0 | stable, no opt-in. No bottom-sheet strategy ships; `ShellSheetSceneStrategy` is the nav3-recipes one, copied (#463) |
 | `NavKey`, `NavBackStack`, `rememberNavBackStack`, `entryProvider`, `rememberSaveableStateHolderNavEntryDecorator` | `androidx.navigation3:navigation3-runtime` 1.2.0 | stable, no opt-in; not a dependency |
 | `rememberViewModelStoreNavEntryDecorator` | `androidx.lifecycle:lifecycle-viewmodel-navigation3` 2.11.0 | stable; matches the catalog's lifecycle 2.11.0 |
 | `ListDetailSceneStrategy`, `SupportingPaneSceneStrategy` | `androidx.compose.material3.adaptive:adaptive-navigation3` 1.3.0 | stable artifact, but the classes are `@ExperimentalMaterial3AdaptiveApi` |
@@ -215,6 +216,30 @@ capped at 2, and 1 below Expanded or at compact height; the player pane is the t
 outside `NavDisplay`. This resolves decision 5: at 840–1199 dp there is no persistent pane, so
 list-detail has the whole content area; from 1200 dp the pane takes its fixed width.
 
+### Sheets (#463)
+
+`ShellSheetSceneStrategy` (`ui/shell`, adapted from the nav3-recipes bottom-sheet strategy) shows
+the top entry in a `ModalBottomSheet` over the entries below it when the entry carries `sheet()`
+metadata. It comes first in `sceneStrategies` (sheet, list-detail, single pane) and is enabled
+at compact width only. Song info carries both `detailPane()` and `sheet()` (`SongInfoMetadata`),
+so a phone gets a quick-look sheet and from 600 dp it stays the detail pane beside the list.
+Inside the sheet `LocalInShellSheet` is true: song info drops its back arrow and shrinks its
+artwork, so the half-height sheet shows the title and format chips.
+
+- Back: the sheet is its own window, so back and predictive back go to it. The sheet animates
+  away and then pops its entry; neither `NavDisplay` nor the player's `BackHandler` sees it.
+- A pop the sheet didn't start (a screen pushed over it, a route removed from under it) still
+  slides it away: the scene's `onRemove` hides the `SheetState`, and `NavDisplay` keeps the
+  scene composed until that returns.
+- The route is `@Serializable` in the tab's back stack, so the sheet reopens after rotation or
+  process death; its partial or expanded position is not saved.
+
+A sheet is a route when it is a screen in its own right: its own ViewModel, loaded by id, worth
+restoring. Otherwise it is local state of its host screen. The media actions sheet, the
+add-to-playlist picker, Edit tabs and the dialogs stay local: their inputs (selections, pending
+confirmations) aren't route keys, and their results go back to the host's ViewModel (a snackbar
+with Undo). Song info is the only route sheet today.
+
 ### Folds and postures
 
 A separating fold (`isSeparating`, from `Posture.hingeList`) is the pane boundary at any width;
@@ -291,7 +316,7 @@ Parcelable models:
 ```
 
 `NavDisplay(backStack, entryDecorators = listOf(rememberSaveableStateHolderNavEntryDecorator(),
-rememberViewModelStoreNavEntryDecorator()), sceneStrategy = listDetail then single pane,
+rememberViewModelStoreNavEntryDecorator()), sceneStrategies = sheet, then listDetail, then single pane,
 entryProvider = entryProvider { entry<AlbumRoute> { key -> AlbumDetailRoute(key, navigator) } … })`.
 Each entry gets its own `ViewModelStore`, cleared when the entry leaves the stack.
 

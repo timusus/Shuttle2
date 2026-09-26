@@ -50,6 +50,7 @@ import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoRoute
+import com.simplecityapps.shuttle.ui.shell.LocalInShellSheet
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import kotlinx.coroutines.launch
 
@@ -76,7 +77,10 @@ fun SongInfoDestination(
     )
 }
 
-/** Song info (inventory §5): the song's artwork and headline file facts, then every tag and file detail in cards, with its path to copy. */
+/**
+ * Song info (inventory §5): the song's artwork and headline file facts, then every tag and file detail in cards, with its
+ * path to copy. In the phone's sheet it has no back arrow: a swipe, a tap outside or back dismisses the sheet.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SongInfoScreen(
@@ -92,7 +96,7 @@ fun SongInfoScreen(
         topBar = {
             S2TopBar(
                 title = stringResource(R.string.song_info_dialog_title),
-                onBack = onNavigateUp,
+                onBack = onNavigateUp.takeUnless { LocalInShellSheet.current },
                 scrollBehavior = scrollBehavior,
                 actions = {
                     if (song != null) {
@@ -138,7 +142,7 @@ private fun SongInfoContent(
     }
 }
 
-/** The artwork, title and artist, over the file's format, bit rate and sample rate as chips. */
+/** The artwork, title and artist, over the file's format, bit rate and sample rate as chips. The artwork is smaller in the sheet, so its half height shows them. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SongInfoHero(
@@ -150,7 +154,7 @@ private fun SongInfoHero(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Hero, modifier = Modifier.padding(bottom = 12.dp))
+        LibraryArtwork(song, ArtworkPlaceholder.Song, size = if (LocalInShellSheet.current) ArtworkSize.Grid else ArtworkSize.Hero, modifier = Modifier.padding(bottom = 12.dp))
         Text(song.name ?: unknown, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
         song.friendlyArtistName?.let {
             Text(it, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)

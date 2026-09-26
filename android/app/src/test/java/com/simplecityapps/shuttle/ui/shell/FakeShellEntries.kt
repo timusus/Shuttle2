@@ -23,10 +23,14 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryDetailScaffold
 import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.shuttle.ui.screens.settings.EqualizerRoute
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoScreen
+import com.simplecityapps.shuttle.ui.screens.songinfo.songInfoReady
+import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoMetadata
+import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoRoute
 
 /**
  * Stand-in screens for the shell's own tests: the real destinations need the Hilt graph, and these tests exercise
- * tabs, list-detail and back stacks rather than any one screen. Home lists the first eight sample albums and Library
+ * tabs, list-detail, sheets and back stacks rather than any one screen. Home lists the first eight sample albums and Library
  * all of them; an album lists its tracks under the library's detail header; an artist lists its albums.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -55,6 +59,8 @@ fun fakeShellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey
         val artist = SampleLibrary.artists.firstOrNull { it.toAlbumArtist().route == route }
         FakeList(artist?.name ?: route.albumArtistKey.orEmpty(), artist?.albums.orEmpty(), openAlbum)
     }
+    // The real screen, so a sheet shows what a phone would; its ViewModel needs the Hilt graph.
+    entry<SongInfoRoute>(metadata = SongInfoMetadata) { SongInfoScreen(uiState = songInfoReady(), onNavigateUp = { navigator.back() }, onCopyPath = {}) }
     entry<SettingsRoute> { FakeList("Settings", emptyList(), openAlbum) }
     entry<EqualizerRoute> { FakeList("Equalizer screen", emptyList(), openAlbum) }
     entry<SettingsDestinationRoute> { route -> FakeList("Settings: ${route.destination.name}", emptyList(), openAlbum) }

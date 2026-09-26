@@ -197,6 +197,15 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 - [ ] Force a scan to fail (turn off Wi-Fi mid-scan, or point a server sign-in at an unreachable host) and confirm Sources shows "Scan failed" with the error, and tapping it retries (#474).
 - [ ] Revoke a folder's access in Settings > Apps > S2 > Permissions > Files and media (or via `adb shell content revoke_persistable_uri_permission`), confirm Sources flags it with "Access removed", and that re-picking the same folder or removing it clears the flag (#479).
 
+## Song info sheet on phones (#463)
+
+`ModalBottomSheet` is a separate window, so the JVM tests prove the scene and the pop, not the window's insets or gestures.
+
+- [ ] On a phone in portrait with gesture navigation, open a song's menu → Song Info. It opens as a sheet over the screen, above the mini player and nav bar; the drag handle clears the status bar when the sheet is dragged to full height, and the last row scrolls clear of the gesture bar. Repeat with three-button navigation.
+- [ ] With the sheet open, start a predictive back swipe: the sheet shrinks and follows the gesture, and cancelling it restores the sheet. Completing it dismisses only the sheet: the screen underneath and the mini player stay as they were. Swiping the sheet down and tapping the scrim dismiss it the same way.
+- [ ] Open Song Info from Now Playing's More options. The player settles to the mini player first, then the sheet opens; back closes the sheet and leaves the player at Mini.
+- [ ] Rotate to landscape with the sheet open (width 600 dp and up): song info shows as a screen rather than a sheet, and rotating back shows the sheet again.
+
 ## Redesign parity, device-only (#377, #382)
 
 The JVM-proven parts of these items are mapped in `docs/architecture/parity-audit.md`; these are what's left for a device.

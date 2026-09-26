@@ -191,6 +191,8 @@ private fun ShellNavDisplay(
 ) {
     val directive = remember(layout, windowAdaptiveInfo) { layout.listDetailDirective(windowAdaptiveInfo) }
     val listDetail = rememberListDetailSceneStrategy<NavKey>(directive = directive)
+    // Routes marked sheet() open in a bottom sheet on a phone; from 600 dp their detail-pane marker applies instead.
+    val sheet = remember(layout.width) { ShellSheetSceneStrategy<NavKey>(enabled = layout.width == ShellWidth.Compact) }
     val saveableState = rememberSaveableStateHolderNavEntryDecorator<NavKey>()
     val viewModelStores = rememberViewModelStoreNavEntryDecorator<NavKey>()
     val decorators = remember(saveableState, viewModelStores) { listOf(saveableState, viewModelStores) }
@@ -199,7 +201,7 @@ private fun ShellNavDisplay(
     val entriesByTab = ShellTab.entries.associateWith { tab -> rememberDecoratedNavEntries(navigator.stack(tab), decorators, entries) }
     NavDisplay(
         entries = navigator.visibleTabs.flatMap { entriesByTab.getValue(it) },
-        sceneStrategies = listOf(listDetail, SinglePaneSceneStrategy()),
+        sceneStrategies = listOf(sheet, listDetail, SinglePaneSceneStrategy()),
         onBack = { navigator.back() },
     )
 }

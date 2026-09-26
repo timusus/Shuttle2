@@ -100,6 +100,14 @@ class ShellScreenshotTest {
     }
 
     @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneSongInfoSheet() {
+        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 891), systemBars = PhoneSystemBars)
+        robot.openSongInfo()
+        shot("phone-song-info-sheet")
+    }
+
+    @Test
     @Config(qualifiers = "w411dp-h891dp-night-xhdpi")
     fun phoneDark() {
         robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(411, 891), systemBars = PhoneSystemBars)

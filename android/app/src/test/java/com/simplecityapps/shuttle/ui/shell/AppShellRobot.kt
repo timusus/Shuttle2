@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell
 
 import androidx.activity.ComponentActivity
+import androidx.activity.ComponentDialog
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.adaptive.Posture
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
@@ -58,6 +59,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.preview.sampleSongs
 import com.simplecityapps.shuttle.ui.sampleSeed
@@ -76,6 +78,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
+import org.robolectric.shadows.ShadowDialog
 
 /** A queue of [titles], each on "Phase Garden" by "Juniper Static", three minutes long, playing the one at [playing]. */
 fun shellQueue(
@@ -275,6 +278,8 @@ data class SystemBars(
 )
 
 val PhoneSystemBars = SystemBars()
+
+private const val SongInfoTag = "song-info"
 
 val CompactWindow = windowInfo(411, 891)
 val MediumWindow = windowInfo(700, 900)
@@ -565,6 +570,49 @@ class AppShellRobot(
     ) {
         val nodes = rule.onAllNodes(hasText(text) or hasContentDescription(text))
         if (reachable) nodes.onFirst().assertExists() else nodes.assertCountEquals(0)
+    }
+
+    /** Opens song info from the Now Playing menu, which answers with the playing song's info route. */
+    fun openSongInfo() {
+        actions.mediaActionResult = { action -> MediaActionResult.Navigate(NavigationTarget.SongInfo((action.selection as MediaSelection.Songs).songs.single())) }
+        tapMiniPlayer()
+        tapDescription("More options")
+        tapText("Song Info")
+    }
+
+    /** Song info shows in the phone's bottom sheet, with no back arrow, or else as a pane of the display. */
+    fun assertSongInfo(inSheet: Boolean) {
+        val songInfo = rule.onNodeWithTag(SongInfoTag)
+        songInfo.assertIsDisplayed()
+        songInfo.assert(if (inSheet) hasAnyAncestor(hasTestTag(ShellSheetTestTag)) else !hasAnyAncestor(hasTestTag(ShellSheetTestTag)))
+        val backArrow = rule.onAllNodes(hasContentDescription("Back") and hasAnyAncestor(hasTestTag(SongInfoTag)))
+        if (inSheet) backArrow.assertCountEquals(0) else backArrow.onFirst().assertExists()
+    }
+
+    fun assertSongInfoAbsent() {
+        rule.onNodeWithTag(SongInfoTag).assertDoesNotExist()
+        rule.onNodeWithTag(ShellSheetTestTag).assertDoesNotExist()
+    }
+
+    fun assertSongInfoSheetPresent() {
+        rule.onNodeWithTag(ShellSheetTestTag).assertExists()
+    }
+
+    /** Back in the sheet's own window, where a phone sends back while the sheet is up. */
+    fun pressBackInSheet() {
+        val dialog = ShadowDialog.getLatestDialog() as ComponentDialog
+        rule.runOnUiThread { dialog.onBackPressedDispatcher.onBackPressed() }
+        rule.waitForIdle()
+    }
+
+    /** Opens [target] as a song action's result would and lets [frames] frames pass, leaving any animation it starts part-way; [settle] finishes it. */
+    fun navigateMidAnimation(
+        target: NavigationTarget,
+        frames: Int = 3,
+    ) {
+        rule.mainClock.autoAdvance = false
+        actions.events.tryEmit(PlayerUiEvent.MediaActionDone(MediaActionResult.Navigate(target)))
+        repeat(frames) { rule.mainClock.advanceTimeByFrame() }
     }
 
     /** [outsideQueue] skips the queue's rows, which show their songs' lengths too. */
