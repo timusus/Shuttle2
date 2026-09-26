@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 
 MAX_FAILURES = 20
 
-STACK_FRAME_RE = re.compile(r"^\s*at com\.simplecityapps.*?\(([^)]+)\)")
+STACK_FRAME_RE = re.compile(r"^\s*at (com\.simplecityapps\S*?)\.[^.(]+\(([^():]+:\d+)\)")
 
 
 def first_line(fail):
@@ -26,12 +26,17 @@ def first_line(fail):
     return ""
 
 
-def first_project_frame(fail):
+def failure_location(fail, classname):
+    """The test class's own frame, else the first project frame (e.g. a shared helper)."""
+    fallback = ""
     for line in (fail.text or "").splitlines():
         match = STACK_FRAME_RE.match(line)
-        if match:
-            return match.group(1)
-    return ""
+        if not match:
+            continue
+        if match.group(1).split("$")[0] == classname:
+            return match.group(2)
+        fallback = fallback or match.group(2)
+    return fallback
 
 
 def collect_failures(paths):
@@ -50,7 +55,7 @@ def collect_failures(paths):
             classname = testcase.get("classname", "?")
             name = testcase.get("name", "?")
             failures.append(
-                (classname, name, first_line(fail), first_project_frame(fail))
+                (classname, name, first_line(fail), failure_location(fail, classname))
             )
     return failures
 
