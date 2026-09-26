@@ -7,9 +7,9 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeGenreRepository
-import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -41,7 +41,7 @@ class AlbumArtistDetailIntegrationTest {
     private val fakeAlbumRepository = FakeAlbumRepository()
     private val fakeSongRepository = FakeSongRepository()
     private val fakePlaylistRepository = FakePlaylistRepository()
-    private val fakeQueueManager = FakeQueueManager()
+    private val fakeQueueOperations = FakeQueueOperations()
 
     private val robot = AlbumArtistDetailRobot(composeTestRule)
 
@@ -133,8 +133,8 @@ class AlbumArtistDetailIntegrationTest {
             songRepository,
             FakeGenreRepository(),
             fakePlaylistRepository,
-            FakeQueueManager(),
-            playbackManager = FakePlaybackManager(),
+            FakeQueueOperations(),
+            playbackOperations = FakePlaybackOperations(),
             albumRepository = fakeAlbumRepository,
             albumArtistRepository = fakeAlbumArtistRepository,
         )
@@ -143,10 +143,10 @@ class AlbumArtistDetailIntegrationTest {
             observeAlbumArtists = testMediaActions.observeAlbumArtists,
             observeAlbums = testMediaActions.observeAlbums,
             observeSongs = testMediaActions.observeSongs,
-            queueManager = fakeQueueManager,
-            playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-            shuffleSongs = ShuffleSongs(FakePlaybackManager()),
-            shuffleAlbums = ShuffleAlbums(FakeQueueManager(), FakePlaybackManager()),
+            queueOperations = fakeQueueOperations,
+            playSongs = PlaySongs(FakeQueueOperations(), FakePlaybackOperations()),
+            shuffleSongs = ShuffleSongs(FakePlaybackOperations()),
+            shuffleAlbums = ShuffleAlbums(FakeQueueOperations(), FakePlaybackOperations()),
             addToPlaylistUseCase = testMediaActions.addToPlaylist,
             resolveSongs = testMediaActions.resolveSongs,
             enqueueSongs = testMediaActions.enqueueSongs,

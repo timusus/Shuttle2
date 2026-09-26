@@ -43,7 +43,7 @@ class GenreDetailViewModel @AssistedInject constructor(
     observeGenres: ObserveGenres,
     observeSongsForGenre: ObserveSongsForGenre,
     observeAlbums: ObserveAlbums,
-    queueManager: QueueOperations,
+    queueOperations: QueueOperations,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
@@ -64,7 +64,7 @@ class GenreDetailViewModel @AssistedInject constructor(
     val uiState: StateFlow<GenreDetailUiState> = combine(
         observeGenres(GenreQuery.GenreName(genreName)).map { it.firstOrNull() },
         songsAndAlbums,
-        queueManager.queueStateFlow.map { it.currentItem?.song }.distinctUntilChanged(),
+        queueOperations.queueStateFlow.map { it.currentItem?.song }.distinctUntilChanged(),
     ) { genre, (songs, albums), currentSong ->
         GenreDetailUiState(genre = genre, albums = albums, songs = songs, currentSong = currentSong, loading = false)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GenreDetailUiState())

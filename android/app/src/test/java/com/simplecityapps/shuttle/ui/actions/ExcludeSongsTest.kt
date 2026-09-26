@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueState
@@ -14,15 +14,15 @@ import org.junit.Test
 class ExcludeSongsTest {
 
     private val songRepository = FakeSongRepository()
-    private val queueManager = FakeQueueManager()
-    private val excludeSongs = TestMediaActions(songRepository = songRepository, queueManager = queueManager).excludeSongs
+    private val queueOperations = FakeQueueOperations()
+    private val excludeSongs = TestMediaActions(songRepository = songRepository, queueOperations = queueOperations).excludeSongs
 
     private val excluded = createSong(id = 1)
     private val kept = createSong(id = 2)
     private val queue = listOf(excluded, kept, excluded).map { it.toQueueItem(isCurrent = false) }
 
     init {
-        queueManager.queueStateFlow.value = QueueState(items = queue, currentItem = null, currentPosition = null)
+        queueOperations.queueStateFlow.value = QueueState(items = queue, currentItem = null, currentPosition = null)
     }
 
     @Test
@@ -30,7 +30,7 @@ class ExcludeSongsTest {
         excludeSongs(MediaSelection.Songs(excluded)) shouldBe listOf(excluded)
 
         songRepository.excludedCalls shouldBe listOf(listOf(excluded) to true)
-        queueManager.removedItems shouldBe listOf(queue[0], queue[2])
+        queueOperations.removedItems shouldBe listOf(queue[0], queue[2])
     }
 
     @Test
@@ -38,7 +38,7 @@ class ExcludeSongsTest {
         excludeSongs(MediaSelection.Songs(excluded), excluded = false)
 
         songRepository.excludedCalls shouldBe listOf(listOf(excluded) to false)
-        queueManager.removedItems.shouldBeEmpty()
+        queueOperations.removedItems.shouldBeEmpty()
     }
 
     @Test

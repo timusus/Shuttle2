@@ -3,8 +3,8 @@ package com.simplecityapps.shuttle.appinitializers
 import android.app.Application
 import android.content.Context
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakePlaybackManager
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakePlaybackOperations
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.mediaprovider.AggregatePlaybackReporter
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.PlaybackSession
@@ -40,8 +40,8 @@ class PlaybackReportingInitializerTest {
 
     private val application: Application = RuntimeEnvironment.getApplication()
     private val song = createSong(id = 1, duration = 200_000, mediaProvider = MediaProviderType.Jellyfin)
-    private val playbackManager = FakePlaybackManager()
-    private val queueManager = FakeQueueManager()
+    private val playbackOperations = FakePlaybackOperations()
+    private val queueOperations = FakeQueueOperations()
     private val reporter = FakeReporter()
     private val playbackReporter = AggregatePlaybackReporter(setOf(reporter))
     private val librarySettings = LibrarySettings(
@@ -54,8 +54,8 @@ class PlaybackReportingInitializerTest {
     // Lazy, so the sender starts its work loop once MainDispatcherRule has set the main dispatcher.
     private val initializer by lazy {
         PlaybackReportingInitializer(
-            playbackManager = playbackManager,
-            queueManager = queueManager,
+            playbackOperations = playbackOperations,
+            queueOperations = queueOperations,
             playbackReporter = playbackReporter,
             sender = PlaybackReportSender(
                 reporter = playbackReporter,
@@ -71,9 +71,9 @@ class PlaybackReportingInitializerTest {
     }
 
     private fun playSongAt(positionMs: Int) {
-        queueManager.queueStateFlow.value = song.toQueueItem(isCurrent = true).let { item -> QueueState(items = listOf(item), currentItem = item, currentPosition = 0) }
-        playbackManager.progressFlow.value = PlaybackProgress(position = positionMs, duration = song.duration)
-        playbackManager.playbackStateFlow.value = PlaybackState.Playing
+        queueOperations.queueStateFlow.value = song.toQueueItem(isCurrent = true).let { item -> QueueState(items = listOf(item), currentItem = item, currentPosition = 0) }
+        playbackOperations.progressFlow.value = PlaybackProgress(position = positionMs, duration = song.duration)
+        playbackOperations.playbackStateFlow.value = PlaybackState.Playing
     }
 
     @After

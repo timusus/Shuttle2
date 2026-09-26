@@ -71,8 +71,8 @@ class DefaultMediaSources @Inject constructor(
     private val plexMediaProvider: PlexMediaProvider,
     private val songRepository: SongRepository,
     private val playlistRepository: PlaylistRepository,
-    private val queueManager: QueueOperations,
-    private val playbackManager: PlaybackOperations,
+    private val queueOperations: QueueOperations,
+    private val playbackOperations: PlaybackOperations,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
 ) : MediaSources {
     private val _enabledTypes = MutableStateFlow(preferences.mediaProviderTypes)
@@ -92,8 +92,8 @@ class DefaultMediaSources @Inject constructor(
         if (type in _enabledTypes.value) save(_enabledTypes.value - type)
         mediaImporter.mediaProviders -= type.provider()
 
-        if (queueManager.getCurrentItem()?.song?.mediaProvider == type) playbackManager.pause()
-        queueManager.remove(queueManager.getQueue().filter { it.song.mediaProvider == type })
+        if (queueOperations.getCurrentItem()?.song?.mediaProvider == type) playbackOperations.pause()
+        queueOperations.remove(queueOperations.getQueue().filter { it.song.mediaProvider == type })
         appCoroutineScope.launch {
             songRepository.removeAll(type)
             playlistRepository.deleteAll(type)

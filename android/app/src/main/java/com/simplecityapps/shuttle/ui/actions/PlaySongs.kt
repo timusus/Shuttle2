@@ -8,8 +8,8 @@ import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 class PlaySongs @Inject constructor(
-    private val queueManager: QueueOperations,
-    private val playbackManager: PlaybackOperations,
+    private val queueOperations: QueueOperations,
+    private val playbackOperations: PlaybackOperations,
 ) {
     sealed interface Result {
         data object Success : Result
@@ -17,13 +17,13 @@ class PlaySongs @Inject constructor(
     }
 
     suspend operator fun invoke(songs: List<Song>, position: Int = 0): Result {
-        if (!queueManager.setQueue(songs, position = position)) {
+        if (!queueOperations.setQueue(songs, position = position)) {
             return Result.Failure(null)
         }
         return suspendCancellableCoroutine { cont ->
-            playbackManager.load { result ->
+            playbackOperations.load { result ->
                 result.onSuccess {
-                    playbackManager.play()
+                    playbackOperations.play()
                     cont.resume(Result.Success)
                 }
                 result.onFailure { error ->

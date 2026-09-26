@@ -18,7 +18,7 @@ import timber.log.Timber
  * [PlaybackOperations.trackEndedFlow], which replays nothing, so only a track end after the deadline counts.
  */
 class SleepTimer(
-    private val playbackManager: PlaybackOperations,
+    private val playbackOperations: PlaybackOperations,
     private val appCoroutineScope: CoroutineScope,
     private val context: CoroutineContext = Dispatchers.Main.immediate,
     /** The clock [timeRemaining] is measured on, in milliseconds. */
@@ -51,7 +51,7 @@ class SleepTimer(
             appCoroutineScope.launch(context) {
                 delay(delay)
                 if (playToEnd) {
-                    val song = playbackManager.trackEndedFlow.first()
+                    val song = playbackOperations.trackEndedFlow.first()
                     Timber.v("Track ended after the deadline: ${song.name}")
                 }
                 sleep()
@@ -82,7 +82,7 @@ class SleepTimer(
 
     private fun sleep() {
         Timber.v("sleep() called")
-        playbackManager.pause()
+        playbackOperations.pause()
         stopTimer()
     }
 }

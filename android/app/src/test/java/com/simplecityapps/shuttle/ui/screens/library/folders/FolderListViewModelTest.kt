@@ -3,9 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.library.folders
 import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
-import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
@@ -32,8 +32,8 @@ class FolderListViewModelTest {
     private val fakeSongRepository = FakeSongRepository().apply { applyQueryPredicates = true }
     private val fakePlaylistRepository = FakePlaylistRepository()
     private val fakeImportState = FakeSongImportStateProvider()
-    private val fakeQueueManager = FakeQueueManager()
-    private val fakePlaybackManager = FakePlaybackManager()
+    private val fakeQueueOperations = FakeQueueOperations()
+    private val fakePlaybackOperations = FakePlaybackOperations()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -151,7 +151,7 @@ class FolderListViewModelTest {
     }
 
     private fun createViewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()): FolderListViewModel {
-        val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, fakeQueueManager, playbackManager = fakePlaybackManager)
+        val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, fakeQueueOperations, playbackOperations = fakePlaybackOperations)
         return FolderListViewModel(
             observeSongs = testMediaActions.observeSongs,
             savedStateHandle = savedStateHandle,

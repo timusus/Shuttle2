@@ -39,8 +39,8 @@ class DefaultMediaSourcesTest {
     private val mediaImporter = mockk<MediaImporter>(relaxed = true) { every { mediaProviders } returns importerProviders }
     private val songRepository = mockk<SongRepository>(relaxed = true)
     private val playlistRepository = mockk<PlaylistRepository>(relaxed = true)
-    private val queueManager = mockk<QueueOperations>(relaxed = true)
-    private val playbackManager = mockk<PlaybackOperations>(relaxed = true)
+    private val queueOperations = mockk<QueueOperations>(relaxed = true)
+    private val playbackOperations = mockk<PlaybackOperations>(relaxed = true)
     private val scope = TestScope(StandardTestDispatcher())
 
     private val mediaSources = DefaultMediaSources(
@@ -54,8 +54,8 @@ class DefaultMediaSourcesTest {
         plexMediaProvider = mockk(relaxed = true),
         songRepository = songRepository,
         playlistRepository = playlistRepository,
-        queueManager = queueManager,
-        playbackManager = playbackManager,
+        queueOperations = queueOperations,
+        playbackOperations = playbackOperations,
         appCoroutineScope = scope,
     )
 
@@ -65,8 +65,8 @@ class DefaultMediaSourcesTest {
     @Test
     fun `removing a server forgets it, drops its songs and playlists, and takes its songs out of the queue`() {
         mediaSources.enable(MediaProviderType.Jellyfin)
-        every { queueManager.getQueue() } returns listOf(localItem, serverItem)
-        every { queueManager.getCurrentItem() } returns serverItem
+        every { queueOperations.getQueue() } returns listOf(localItem, serverItem)
+        every { queueOperations.getCurrentItem() } returns serverItem
 
         mediaSources.disable(MediaProviderType.Jellyfin)
         scope.testScheduler.advanceUntilIdle()
@@ -74,20 +74,20 @@ class DefaultMediaSourcesTest {
         mediaSources.enabledTypes.value shouldBe listOf(MediaProviderType.Shuttle)
         preferences.mediaProviderTypes shouldBe listOf(MediaProviderType.Shuttle)
         importerProviders shouldBe emptySet()
-        verify { playbackManager.pause() }
-        verify { queueManager.remove(listOf(serverItem)) }
+        verify { playbackOperations.pause() }
+        verify { queueOperations.remove(listOf(serverItem)) }
         coVerify { songRepository.removeAll(MediaProviderType.Jellyfin) }
         coVerify { playlistRepository.deleteAll(MediaProviderType.Jellyfin) }
     }
 
     @Test
     fun `removing a server whose song isn't playing leaves playback alone`() {
-        every { queueManager.getQueue() } returns listOf(localItem)
-        every { queueManager.getCurrentItem() } returns localItem
+        every { queueOperations.getQueue() } returns listOf(localItem)
+        every { queueOperations.getCurrentItem() } returns localItem
 
         mediaSources.disable(MediaProviderType.Jellyfin)
 
-        verify(exactly = 0) { playbackManager.pause() }
-        verify { queueManager.remove(emptyList()) }
+        verify(exactly = 0) { playbackOperations.pause() }
+        verify { queueOperations.remove(emptyList()) }
     }
 }

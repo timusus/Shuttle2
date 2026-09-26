@@ -42,7 +42,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
     lateinit var playbackOperations: PlaybackOperations
 
     @Inject
-    lateinit var queueManager: QueueOperations
+    lateinit var queueOperations: QueueOperations
 
     @Inject
     lateinit var songRepository: SongRepository
@@ -113,8 +113,8 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
 
         "REMOVE_QUEUE_ITEM" -> {
             val position = intent.getIntExtra("position", -1)
-            val queueItem = requireNotNull(queueManager.getQueue().getOrNull(position)) {
-                "no item at --ei position $position (queue size ${queueManager.getSize()})"
+            val queueItem = requireNotNull(queueOperations.getQueue().getOrNull(position)) {
+                "no item at --ei position $position (queue size ${queueOperations.getSize()})"
             }
             // The queue screen's "Remove from Queue" path (PlayerViewModel.removeQueueItem).
             playbackOperations.removeQueueItem(queueItem)
@@ -140,36 +140,36 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
         "REORDER_QUEUE" -> {
             val from = intent.getIntExtra("from", -1)
             val to = intent.getIntExtra("to", -1)
-            val size = queueManager.getSize()
+            val size = queueOperations.getSize()
             require(from in 0 until size && to in 0 until size) { "--ei from and --ei to must be within the queue (size $size)" }
             // The queue screen's drag-to-reorder path (QueueOperations.move), in the order getQueue()/DUMP_STATE's
             // queueTitles present -- shuffle-aware, same as the "Up Next" list.
-            queueManager.move(from, to)
+            queueOperations.move(from, to)
             "moved $from -> $to"
         }
 
         "SHUFFLE" -> {
             if (intent.hasExtra("enabled")) {
                 val mode = if (intent.getBooleanExtra("enabled", false)) ShuffleMode.On else ShuffleMode.Off
-                queueManager.setShuffleMode(mode, reshuffle = true)
+                queueOperations.setShuffleMode(mode, reshuffle = true)
             } else {
-                queueManager.toggleShuffleMode()
+                queueOperations.toggleShuffleMode()
             }
-            queueManager.getShuffleMode().name
+            queueOperations.getShuffleMode().name
         }
 
         "REPEAT" -> {
             val mode = intent.getStringExtra("mode")
             if (mode != null) {
-                queueManager.setRepeatMode(
+                queueOperations.setRepeatMode(
                     requireNotNull(RepeatMode.entries.firstOrNull { it.name.equals(mode, ignoreCase = true) }) {
                         "--es mode must be off, all or one"
                     }
                 )
             } else {
-                queueManager.toggleRepeatMode()
+                queueOperations.toggleRepeatMode()
             }
-            queueManager.getRepeatMode().name
+            queueOperations.getRepeatMode().name
         }
 
         "SPEED" -> {
@@ -193,7 +193,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
     }
 
     private suspend fun dumpState(): JSONObject {
-        val currentSong = queueManager.getCurrentItem()?.song
+        val currentSong = queueOperations.getCurrentItem()?.song
         return JSONObject().apply {
             put("state", playbackOperations.playbackState().toString())
             put("reportedState", playbackOperations.playbackStateFlow.value.toString())
@@ -201,13 +201,13 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             put("progressMs", playbackOperations.progressFlow.value?.position ?: JSONObject.NULL)
             put("durationMs", playbackOperations.getDuration() ?: JSONObject.NULL)
             put("savedPositionMs", playbackPreferenceManager.playbackPosition ?: JSONObject.NULL)
-            put("queuePosition", queueManager.getCurrentPosition() ?: JSONObject.NULL)
-            put("queueSize", queueManager.getSize())
+            put("queuePosition", queueOperations.getCurrentPosition() ?: JSONObject.NULL)
+            put("queueSize", queueOperations.getSize())
             put("title", currentSong?.name ?: JSONObject.NULL)
             put("inLibrary", currentSong?.isInLibrary ?: JSONObject.NULL)
-            put("queueTitles", JSONArray(queueManager.getQueue().map { it.song.name }))
-            put("shuffle", queueManager.getShuffleMode().name)
-            put("repeat", queueManager.getRepeatMode().name)
+            put("queueTitles", JSONArray(queueOperations.getQueue().map { it.song.name }))
+            put("shuffle", queueOperations.getShuffleMode().name)
+            put("repeat", queueOperations.getRepeatMode().name)
             put("speed", playbackOperations.getPlaybackSpeed())
             put("pendingLoad", pendingLoad())
             put("libraryImporting", mediaImporter.isImporting)

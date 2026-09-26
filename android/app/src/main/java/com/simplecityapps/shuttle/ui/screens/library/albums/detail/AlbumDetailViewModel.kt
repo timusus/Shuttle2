@@ -68,7 +68,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
     @Assisted private val groupKey: AlbumGroupKey?,
     private val observeSongs: ObserveSongs,
     private val observeAlbums: ObserveAlbums,
-    private val queueManager: QueueOperations,
+    private val queueOperations: QueueOperations,
     private val playSongs: PlaySongs,
     private val enqueueSongs: EnqueueSongs,
     private val excludeSongs: ExcludeSongs,
@@ -83,7 +83,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
         fun create(groupKey: AlbumGroupKey?): AlbumDetailViewModel
     }
 
-    private val currentSong: Flow<Song?> = queueManager.queueStateFlow
+    private val currentSong: Flow<Song?> = queueOperations.queueStateFlow
         .map { queueState -> queueState.currentItem?.song }
         .distinctUntilChanged()
 

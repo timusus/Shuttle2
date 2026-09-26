@@ -81,7 +81,7 @@ class PlaylistDetailViewModel @AssistedInject constructor(
     private val clearPlaylist: ClearPlaylist,
     private val deletePlaylist: DeletePlaylist,
     private val exportPlaylist: ExportPlaylist,
-    queueManager: QueueOperations,
+    queueOperations: QueueOperations,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
@@ -107,7 +107,7 @@ class PlaylistDetailViewModel @AssistedInject constructor(
         playlist,
         combine(songs, draggedOrder) { persisted, dragged -> dragged ?: persisted },
         selectedIds,
-        queueManager.queueStateFlow.map { it.currentItem?.song }.distinctUntilChanged(),
+        queueOperations.queueStateFlow.map { it.currentItem?.song }.distinctUntilChanged(),
     ) { playlist, songs, selected, currentSong ->
         PlaylistDetailUiState(
             playlist = playlist,

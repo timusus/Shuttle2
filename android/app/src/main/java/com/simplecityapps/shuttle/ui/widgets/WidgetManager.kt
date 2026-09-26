@@ -45,8 +45,8 @@ class WidgetManager
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val playbackManager: PlaybackOperations,
-    private val queueManager: QueueOperations,
+    private val playbackOperations: PlaybackOperations,
+    private val queueOperations: QueueOperations,
     private val artworkStore: WidgetArtworkStore,
     private val appearanceSettings: AppearanceSettings,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
@@ -87,10 +87,10 @@ constructor(
         if (changesJob == null) {
             changesJob =
                 appCoroutineScope.launchWidgetUpdateRequests(
-                    playbackStateFlow = playbackManager.playbackStateFlow,
-                    queueStateFlow = queueManager.queueStateFlow,
-                    shuffleModeFlow = queueManager.shuffleModeFlow,
-                    repeatModeFlow = queueManager.repeatModeFlow,
+                    playbackStateFlow = playbackOperations.playbackStateFlow,
+                    queueStateFlow = queueOperations.queueStateFlow,
+                    shuffleModeFlow = queueOperations.shuffleModeFlow,
+                    repeatModeFlow = queueOperations.repeatModeFlow,
                     context = Dispatchers.Main.immediate,
                     onChange = ::requestUpdate
                 )
@@ -136,10 +136,10 @@ constructor(
 
     private suspend fun updateWidgets() {
         // Until the queue is restored we don't know what's playing, so keep showing the last saved state.
-        if (!queueManager.hasRestoredQueue) return
+        if (!queueOperations.hasRestoredQueue) return
         if (GlanceAppWidgetManager(context).getGlanceIds(NowPlayingWidget::class.java).isEmpty()) return
 
-        val song = queueManager.getCurrentItem()?.song
+        val song = queueOperations.getCurrentItem()?.song
         if (song == null) {
             publish(NowPlayingWidgetState.Idle.copy(backgroundOpacity = appearanceSettings.widgetBackgroundOpacity.value))
             artworkStore.prune(emptyList())
@@ -160,7 +160,7 @@ constructor(
         }
 
         // Have the next track's artwork ready, so skipping shows it straight away.
-        val next = queueManager.getNext(ignoreRepeat = true)?.song
+        val next = queueOperations.getNext(ignoreRepeat = true)?.song
         next?.let { withTimeoutOrNull(ARTWORK_MAX_WAIT_MS) { artworkStore.artworkPath(it) } }
         artworkStore.prune(listOfNotNull(song, next))
     }
@@ -170,9 +170,9 @@ constructor(
         artworkPath: String?
     ) = nowPlayingWidgetState(
         song = song,
-        playbackState = playbackManager.playbackState(),
-        shuffleMode = queueManager.getShuffleMode(),
-        repeatMode = queueManager.getRepeatMode(),
+        playbackState = playbackOperations.playbackState(),
+        shuffleMode = queueOperations.getShuffleMode(),
+        repeatMode = queueOperations.getRepeatMode(),
         artworkPath = artworkPath,
         backgroundOpacity = appearanceSettings.widgetBackgroundOpacity.value
     )

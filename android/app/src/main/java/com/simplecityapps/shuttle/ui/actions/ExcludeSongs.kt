@@ -11,7 +11,7 @@ import javax.inject.Inject
  */
 class ExcludeSongs @Inject constructor(
     private val songRepository: SongRepository,
-    private val queueManager: QueueOperations,
+    private val queueOperations: QueueOperations,
     private val resolveSongs: ResolveSongs,
 ) {
     /**
@@ -23,7 +23,7 @@ class ExcludeSongs @Inject constructor(
         songRepository.setExcluded(songs, excluded)
         if (excluded) {
             val ids = songs.mapTo(mutableSetOf()) { it.id }
-            queueManager.remove(queueManager.getQueue().filter { it.song.id in ids })
+            queueOperations.remove(queueOperations.getQueue().filter { it.song.id in ids })
         }
         return songs
     }

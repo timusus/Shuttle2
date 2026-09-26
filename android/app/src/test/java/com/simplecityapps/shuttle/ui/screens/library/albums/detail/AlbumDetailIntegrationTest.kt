@@ -5,9 +5,9 @@ import com.simplecityapps.createAlbum
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeGenreRepository
-import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueState
@@ -40,7 +40,7 @@ class AlbumDetailIntegrationTest {
     private val fakeSongRepository = FakeSongRepository()
     private val fakeAlbumRepository = FakeAlbumRepository()
     private val fakePlaylistRepository = FakePlaylistRepository()
-    private val fakeQueueManager = FakeQueueManager()
+    private val fakeQueueOperations = FakeQueueOperations()
 
     private val robot = AlbumDetailRobot(composeTestRule)
 
@@ -100,7 +100,7 @@ class AlbumDetailIntegrationTest {
         viewModel.uiState.value.currentSong shouldBe null
 
         val queueItem = song.toQueueItem(isCurrent = true)
-        fakeQueueManager.queueStateFlow.value = QueueState(items = listOf(queueItem), currentItem = queueItem, currentPosition = 0)
+        fakeQueueOperations.queueStateFlow.value = QueueState(items = listOf(queueItem), currentItem = queueItem, currentPosition = 0)
         composeTestRule.waitForIdle()
 
         viewModel.uiState.value.currentSong shouldBe song
@@ -112,14 +112,14 @@ class AlbumDetailIntegrationTest {
         album: Album = testAlbum,
         songRepository: FakeSongRepository = fakeSongRepository,
     ): AlbumDetailViewModel {
-        val testMediaActions = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager(), albumRepository = fakeAlbumRepository)
+        val testMediaActions = TestMediaActions(songRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueOperations(), playbackOperations = FakePlaybackOperations(), albumRepository = fakeAlbumRepository)
         return AlbumDetailViewModel(
             groupKey = album.groupKey,
             observeSongs = testMediaActions.observeSongs,
             observeAlbums = testMediaActions.observeAlbums,
-            queueManager = fakeQueueManager,
-            playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-            shuffleSongs = ShuffleSongs(FakePlaybackManager()),
+            queueOperations = fakeQueueOperations,
+            playSongs = PlaySongs(FakeQueueOperations(), FakePlaybackOperations()),
+            shuffleSongs = ShuffleSongs(FakePlaybackOperations()),
             addToPlaylistUseCase = testMediaActions.addToPlaylist,
             enqueueSongs = testMediaActions.enqueueSongs,
             excludeSongs = testMediaActions.excludeSongs,

@@ -5,7 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.mediaprovider.PlaylistExporter
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
@@ -58,7 +58,7 @@ class PlaylistDetailViewModelTest {
         ClearPlaylist(playlistRepository),
         DeletePlaylist(playlistRepository),
         ExportPlaylist(PlaylistExporter(ApplicationProvider.getApplicationContext())),
-        FakeQueueManager(),
+        FakeQueueOperations(),
     )
 
     private fun viewModel(playlist: Playlist = createPlaylist(id = 7)): PlaylistDetailViewModel {

@@ -6,7 +6,7 @@ import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueState
@@ -20,8 +20,8 @@ class ResolveSongsTest {
     private val songRepository = FakeSongRepository()
     private val genreRepository = FakeGenreRepository()
     private val playlistRepository = FakePlaylistRepository()
-    private val queueManager = FakeQueueManager()
-    private val resolveSongs = TestMediaActions(songRepository, genreRepository, playlistRepository, queueManager).resolveSongs
+    private val queueOperations = FakeQueueOperations()
+    private val resolveSongs = TestMediaActions(songRepository, genreRepository, playlistRepository, queueOperations).resolveSongs
 
     @Test
     fun `songs resolve to themselves, in their order`() = runTest {
@@ -59,7 +59,7 @@ class ResolveSongsTest {
     @Test
     fun `the queue resolves to its songs`() = runTest {
         val items = listOf(createSong(id = 1), createSong(id = 2)).map { it.toQueueItem(isCurrent = false) }
-        queueManager.queueStateFlow.value = QueueState(items = items, currentItem = null, currentPosition = null)
+        queueOperations.queueStateFlow.value = QueueState(items = items, currentItem = null, currentPosition = null)
 
         resolveSongs(MediaSelection.Queue) shouldBe items.map { it.song }
     }

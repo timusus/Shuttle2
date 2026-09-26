@@ -2,9 +2,9 @@ package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
-import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
@@ -70,8 +70,8 @@ class SongListViewModelTest {
         val songB = createSong(id = 2, name = "Song B")
         fakeSongRepository.setSongs(listOf(songA, songB))
         fakeImportState.setState(importComplete())
-        val fakeQueueManager = FakeQueueManager()
-        val viewModel = createViewModel(fakeQueueManager)
+        val fakeQueueOperations = FakeQueueOperations()
+        val viewModel = createViewModel(fakeQueueOperations)
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
         viewModel.uiState.value.songs shouldBe listOf(songA, songB)
@@ -83,15 +83,15 @@ class SongListViewModelTest {
         viewModel.onSongClick(songA)
         advanceUntilIdle()
 
-        fakeQueueManager.lastSetQueue shouldBe listOf(songA, songB)
-        fakeQueueManager.lastSetQueuePosition shouldBe 0
+        fakeQueueOperations.lastSetQueue shouldBe listOf(songA, songB)
+        fakeQueueOperations.lastSetQueuePosition shouldBe 0
     }
 
-    private fun createViewModel(queueManager: FakeQueueManager = FakeQueueManager()): SongListViewModel {
-        val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueManager(), playbackManager = FakePlaybackManager())
+    private fun createViewModel(queueOperations: FakeQueueOperations = FakeQueueOperations()): SongListViewModel {
+        val testMediaActions = TestMediaActions(fakeSongRepository, FakeGenreRepository(), fakePlaylistRepository, FakeQueueOperations(), playbackOperations = FakePlaybackOperations())
         return SongListViewModel(
             observeSongs = testMediaActions.observeSongs,
-            playSongs = PlaySongs(queueManager, FakePlaybackManager()),
+            playSongs = PlaySongs(queueOperations, FakePlaybackOperations()),
             sortPreferenceManager = fakeSortPreferences,
             ioDispatcher = testDispatcher,
             mediaImportObserver = fakeImportState,

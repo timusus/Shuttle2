@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.tageditor
 
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
@@ -11,8 +11,8 @@ import org.junit.Test
 class WriteSongTagsTest {
     private val tagFileAccess = FakeTagFileAccess()
     private val songRepository = FakeSongRepository()
-    private val playbackManager = FakePlaybackManager()
-    private val writeSongTags = WriteSongTags(tagFileAccess, songRepository, playbackManager)
+    private val playbackOperations = FakePlaybackOperations()
+    private val writeSongTags = WriteSongTags(tagFileAccess, songRepository, playbackOperations)
 
     @Test
     fun `writes only the changed fields`() = runTest {
@@ -35,7 +35,7 @@ class WriteSongTagsTest {
         val updated = song.copy(name = "New", artists = listOf("A", "B"), date = LocalDate(1999, 1, 1), genres = listOf("Rock", "Pop"), track = 4)
         result shouldBe TagWriteResult(updated = listOf(updated), failed = emptyList())
         songRepository.updatedSongs shouldBe listOf(updated)
-        playbackManager.queueSongUpdates shouldBe listOf(listOf(updated))
+        playbackOperations.queueSongUpdates shouldBe listOf(listOf(updated))
     }
 
     @Test

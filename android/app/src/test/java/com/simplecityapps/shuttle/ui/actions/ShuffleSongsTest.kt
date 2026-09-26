@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaybackOperations
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.test.runTest
@@ -9,8 +9,8 @@ import org.junit.Test
 
 class ShuffleSongsTest {
 
-    private val fakePlaybackManager = FakePlaybackManager()
-    private val shuffleSongs = ShuffleSongs(fakePlaybackManager)
+    private val fakePlaybackOperations = FakePlaybackOperations()
+    private val shuffleSongs = ShuffleSongs(fakePlaybackOperations)
 
     @Test
     fun `returns Success when shuffle and load succeed`() = runTest {
@@ -23,7 +23,7 @@ class ShuffleSongsTest {
 
     @Test
     fun `returns Failure when shuffle fails`() = runTest {
-        fakePlaybackManager.shuffleResult = Result.failure(Exception("shuffle error"))
+        fakePlaybackOperations.shuffleResult = Result.failure(Exception("shuffle error"))
         val songs = listOf(createSong(id = 1))
 
         val result = shuffleSongs(songs)

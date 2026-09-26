@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueState
@@ -14,15 +14,15 @@ import org.junit.Test
 class DeleteSongsTest {
 
     private val songRepository = FakeSongRepository()
-    private val queueManager = FakeQueueManager()
-    private val actions = TestMediaActions(songRepository = songRepository, queueManager = queueManager)
+    private val queueOperations = FakeQueueOperations()
+    private val actions = TestMediaActions(songRepository = songRepository, queueOperations = queueOperations)
 
     private val song = createSong(id = 1, path = "content://a")
     private val other = createSong(id = 2, path = "content://b")
     private val queue = listOf(song, other).map { it.toQueueItem(isCurrent = false) }
 
     init {
-        queueManager.queueStateFlow.value = QueueState(items = queue, currentItem = null, currentPosition = null)
+        queueOperations.queueStateFlow.value = QueueState(items = queue, currentItem = null, currentPosition = null)
     }
 
     @Test
@@ -31,7 +31,7 @@ class DeleteSongsTest {
 
         result shouldBe DeleteSongs.Result(deleted = listOf(song), failed = emptyList())
         songRepository.removed shouldBe listOf(song)
-        queueManager.removedItems shouldBe listOf(queue[0])
+        queueOperations.removedItems shouldBe listOf(queue[0])
     }
 
     @Test
@@ -57,6 +57,6 @@ class DeleteSongsTest {
 
         result shouldBe DeleteSongs.Result(deleted = emptyList(), failed = listOf(remote))
         attempted.shouldBeEmpty()
-        queueManager.removedItems.shouldBeEmpty()
+        queueOperations.removedItems.shouldBeEmpty()
     }
 }

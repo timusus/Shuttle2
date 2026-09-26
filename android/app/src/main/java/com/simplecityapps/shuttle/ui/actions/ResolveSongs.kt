@@ -21,7 +21,7 @@ class ResolveSongs @Inject constructor(
     private val songRepository: SongRepository,
     private val genreRepository: GenreRepository,
     private val playlistRepository: PlaylistRepository,
-    private val queueManager: QueueOperations,
+    private val queueOperations: QueueOperations,
     private val resolveFolderSongs: ResolveFolderSongs,
 ) {
     suspend operator fun invoke(selection: MediaSelection): List<Song> = when (selection) {
@@ -54,6 +54,6 @@ class ResolveSongs @Inject constructor(
 
         is MediaSelection.Folders -> resolveFolderSongs(selection.paths)
 
-        is MediaSelection.Queue -> queueManager.getQueue().map { it.song }
+        is MediaSelection.Queue -> queueOperations.getQueue().map { it.song }
     }
 }

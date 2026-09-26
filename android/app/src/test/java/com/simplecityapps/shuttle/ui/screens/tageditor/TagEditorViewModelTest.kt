@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.tageditor
 
 import android.content.IntentSender
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.testing.MainDispatcherRule
@@ -23,13 +23,13 @@ class TagEditorViewModelTest {
 
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
     private val tagFileAccess = FakeTagFileAccess()
-    private val playbackManager = FakePlaybackManager()
+    private val playbackOperations = FakePlaybackOperations()
 
     private fun viewModel(vararg songIds: Long) = TagEditorViewModel(
         songIds.toList(),
         ObserveSongs(songRepository),
         ReadSongTags(tagFileAccess),
-        WriteSongTags(tagFileAccess, songRepository, playbackManager),
+        WriteSongTags(tagFileAccess, songRepository, playbackOperations),
         tagFileAccess,
     )
 

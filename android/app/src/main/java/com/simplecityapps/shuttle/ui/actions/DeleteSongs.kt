@@ -23,7 +23,7 @@ import timber.log.Timber
  */
 class DeleteSongs @Inject constructor(
     private val songRepository: SongRepository,
-    private val queueManager: QueueOperations,
+    private val queueOperations: QueueOperations,
     private val resolveSongs: ResolveSongs,
     private val fileDeleter: SongFileDeleter,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
@@ -38,7 +38,7 @@ class DeleteSongs @Inject constructor(
         deleted.forEach { songRepository.remove(it) }
         if (deleted.isNotEmpty()) {
             val ids = deleted.mapTo(mutableSetOf()) { it.id }
-            queueManager.remove(queueManager.getQueue().filter { it.song.id in ids })
+            queueOperations.remove(queueOperations.getQueue().filter { it.song.id in ids })
         }
         return Result(deleted, failed)
     }

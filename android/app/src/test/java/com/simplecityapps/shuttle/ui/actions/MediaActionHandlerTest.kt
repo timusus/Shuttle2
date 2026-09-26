@@ -4,9 +4,9 @@ import com.simplecityapps.createAlbum
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumRepository
-import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -24,14 +24,14 @@ class MediaActionHandlerTest {
 
     private val songRepository = FakeSongRepository()
     private val playlistRepository = FakePlaylistRepository()
-    private val queueManager = FakeQueueManager()
-    private val playbackManager = FakePlaybackManager()
+    private val queueOperations = FakeQueueOperations()
+    private val playbackOperations = FakePlaybackOperations()
     private val albumRepository = FakeAlbumRepository()
     private val actions = TestMediaActions(
         songRepository = songRepository,
         playlistRepository = playlistRepository,
-        queueManager = queueManager,
-        playbackManager = playbackManager,
+        queueOperations = queueOperations,
+        playbackOperations = playbackOperations,
         albumRepository = albumRepository,
     )
     private val handler = actions.handler
@@ -44,13 +44,13 @@ class MediaActionHandlerTest {
     fun `play queues the songs from the position and plays`() = runTest {
         handler.handle(MediaAction.Play(songs, position = 1)) shouldBe MediaActionResult.None
 
-        queueManager.lastSetQueue shouldBe listOf(song, other)
-        queueManager.lastSetQueuePosition shouldBe 1
+        queueOperations.lastSetQueue shouldBe listOf(song, other)
+        queueOperations.lastSetQueuePosition shouldBe 1
     }
 
     @Test
     fun `play reports a load failure`() = runTest {
-        playbackManager.loadResult = Result.failure(Exception("codec error"))
+        playbackOperations.loadResult = Result.failure(Exception("codec error"))
 
         handler.handle(MediaAction.Play(songs)) shouldBe Message(MediaActionMessage.PlaybackFailed("codec error"))
     }
@@ -69,8 +69,8 @@ class MediaActionHandlerTest {
         handler.handle(MediaAction.PlayNext(songs)) shouldBe Message(MediaActionMessage.AddedToQueue(2))
         handler.handle(MediaAction.AddToQueue(MediaSelection.Songs(song))) shouldBe Message(MediaActionMessage.AddedToQueue(1))
 
-        playbackManager.playedNext shouldBe listOf(song, other)
-        playbackManager.addedToQueue shouldBe listOf(song)
+        playbackOperations.playedNext shouldBe listOf(song, other)
+        playbackOperations.addedToQueue shouldBe listOf(song)
     }
 
     @Test

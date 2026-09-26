@@ -1,8 +1,8 @@
 package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakePlaybackManager
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakePlaybackOperations
+import com.simplecityapps.fakes.FakeQueueOperations
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.test.runTest
@@ -10,9 +10,9 @@ import org.junit.Test
 
 class PlaySongsTest {
 
-    private val fakeQueueManager = FakeQueueManager()
-    private val fakePlaybackManager = FakePlaybackManager()
-    private val playSongs = PlaySongs(fakeQueueManager, fakePlaybackManager)
+    private val fakeQueueOperations = FakeQueueOperations()
+    private val fakePlaybackOperations = FakePlaybackOperations()
+    private val playSongs = PlaySongs(fakeQueueOperations, fakePlaybackOperations)
 
     @Test
     fun `returns Success when queue set and load succeeds`() = runTest {
@@ -25,7 +25,7 @@ class PlaySongsTest {
 
     @Test
     fun `returns Failure when load fails`() = runTest {
-        fakePlaybackManager.loadResult = Result.failure(Exception("codec error"))
+        fakePlaybackOperations.loadResult = Result.failure(Exception("codec error"))
         val songs = listOf(createSong(id = 1))
 
         val result = playSongs(songs)
@@ -36,7 +36,7 @@ class PlaySongsTest {
 
     @Test
     fun `returns Failure when setQueue returns false`() = runTest {
-        fakeQueueManager.setQueueResult = false
+        fakeQueueOperations.setQueueResult = false
         val songs = listOf(createSong(id = 1))
 
         val result = playSongs(songs)

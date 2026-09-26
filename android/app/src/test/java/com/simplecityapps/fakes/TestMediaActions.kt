@@ -47,22 +47,22 @@ class TestMediaActions(
     songRepository: SongRepository = FakeSongRepository(),
     genreRepository: GenreRepository = FakeGenreRepository(),
     playlistRepository: PlaylistRepository = FakePlaylistRepository(),
-    queueManager: QueueOperations = FakeQueueManager(),
-    playbackManager: PlaybackOperations = FakePlaybackManager(),
+    queueOperations: QueueOperations = FakeQueueOperations(),
+    playbackOperations: PlaybackOperations = FakePlaybackOperations(),
     albumRepository: AlbumRepository = FakeAlbumRepository(),
     albumArtistRepository: AlbumArtistRepository = FakeAlbumArtistRepository(),
 ) {
     /** Whether a song's file deletes; every delete succeeds by default. */
     var fileDeleter: SongFileDeleter = SongFileDeleter { true }
 
-    val resolveSongs = ResolveSongs(songRepository, genreRepository, playlistRepository, queueManager, ResolveFolderSongs(songRepository))
-    val playSongs = PlaySongs(queueManager, playbackManager)
-    val shuffleSongs = ShuffleSongs(playbackManager)
-    val enqueueSongs = EnqueueSongs(playbackManager, resolveSongs)
+    val resolveSongs = ResolveSongs(songRepository, genreRepository, playlistRepository, queueOperations, ResolveFolderSongs(songRepository))
+    val playSongs = PlaySongs(queueOperations, playbackOperations)
+    val shuffleSongs = ShuffleSongs(playbackOperations)
+    val enqueueSongs = EnqueueSongs(playbackOperations, resolveSongs)
     val addToPlaylist = AddToPlaylist(playlistRepository, resolveSongs)
     val createPlaylist = CreatePlaylist(playlistRepository, resolveSongs)
-    val excludeSongs = ExcludeSongs(songRepository, queueManager, resolveSongs)
-    val deleteSongs = DeleteSongs(songRepository, queueManager, resolveSongs, { fileDeleter.delete(it) }, Dispatchers.Unconfined)
+    val excludeSongs = ExcludeSongs(songRepository, queueOperations, resolveSongs)
+    val deleteSongs = DeleteSongs(songRepository, queueOperations, resolveSongs, { fileDeleter.delete(it) }, Dispatchers.Unconfined)
     val songDownloadManager = FakeSongDownloadManager()
     val mediaInfoProvider = FakeMediaInfoProvider()
 

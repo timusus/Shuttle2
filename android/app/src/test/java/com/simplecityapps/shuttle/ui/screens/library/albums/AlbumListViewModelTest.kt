@@ -4,9 +4,9 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumListPreferences
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeGenreRepository
-import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
@@ -40,7 +40,7 @@ class AlbumListViewModelTest {
     private val fakeImportState = FakeSongImportStateProvider()
     private val fakeSortPreferences = FakeSortPreferences()
     private val fakeViewModePreferences = FakeAlbumListPreferences()
-    private val fakeQueueManager = FakeQueueManager()
+    private val fakeQueueOperations = FakeQueueOperations()
 
     @Test
     fun `onShuffle queues each album's songs together, in track order`() = runTest {
@@ -58,7 +58,7 @@ class AlbumListViewModelTest {
         viewModel.onShuffle()
         advanceUntilIdle()
 
-        val queuedNames = fakeQueueManager.lastSetQueue.orEmpty().map { it.name }
+        val queuedNames = fakeQueueOperations.lastSetQueue.orEmpty().map { it.name }
         val possibleOrders = listOf(
             listOf("Side A Track 1", "Side A Track 2", "Side B Track 1", "Side B Track 2"),
             listOf("Side B Track 1", "Side B Track 2", "Side A Track 1", "Side A Track 2"),
@@ -82,7 +82,7 @@ class AlbumListViewModelTest {
         viewModel.onShuffle()
         advanceUntilIdle()
 
-        val queuedNames = fakeQueueManager.lastSetQueue.orEmpty().map { it.name }
+        val queuedNames = fakeQueueOperations.lastSetQueue.orEmpty().map { it.name }
         val possibleOrders = listOf(
             listOf("Artist A Track 1", "Artist A Track 2", "Artist B Track 1", "Artist B Track 2"),
             listOf("Artist B Track 1", "Artist B Track 2", "Artist A Track 1", "Artist A Track 2"),
@@ -99,23 +99,23 @@ class AlbumListViewModelTest {
         viewModel.onShuffle()
         advanceUntilIdle()
 
-        fakeQueueManager.shuffleModeFlow.value shouldBe ShuffleMode.Off
+        fakeQueueOperations.shuffleModeFlow.value shouldBe ShuffleMode.Off
     }
 
     private fun createViewModel(random: Random = Random.Default): AlbumListViewModel {
-        val fakePlaybackManager = FakePlaybackManager()
+        val fakePlaybackOperations = FakePlaybackOperations()
         val testMediaActions = TestMediaActions(
             fakeSongRepository,
             FakeGenreRepository(),
             fakePlaylistRepository,
-            fakeQueueManager,
-            playbackManager = fakePlaybackManager,
+            fakeQueueOperations,
+            playbackOperations = fakePlaybackOperations,
             albumRepository = fakeAlbumRepository,
         )
         return AlbumListViewModel(
             observeAlbums = testMediaActions.observeAlbums,
             observeSongs = testMediaActions.observeSongs,
-            shuffleAlbums = ShuffleAlbums(fakeQueueManager, fakePlaybackManager),
+            shuffleAlbums = ShuffleAlbums(fakeQueueOperations, fakePlaybackOperations),
             sortPreferenceManager = fakeSortPreferences,
             viewModePreferenceManager = fakeViewModePreferences,
             mediaImportObserver = fakeImportState,

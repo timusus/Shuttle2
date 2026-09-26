@@ -6,9 +6,9 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeGenreRepository
-import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.model.Song
@@ -41,9 +41,9 @@ class AlbumArtistDetailViewModelTest {
     private val fakeAlbumRepository = FakeAlbumRepository()
     private val fakeSongRepository = FakeSongRepository()
     private val fakePlaylistRepository = FakePlaylistRepository()
-    private val fakeQueueManager = FakeQueueManager()
-    private val shuffleQueueManager = FakeQueueManager()
-    private val shufflePlaybackManager = FakePlaybackManager()
+    private val fakeQueueOperations = FakeQueueOperations()
+    private val shuffleQueueOperations = FakeQueueOperations()
+    private val shufflePlaybackOperations = FakePlaybackOperations()
 
     private val testArtist = createAlbumArtist(name = "The Tin Orchards", albumCount = 2, songCount = 2)
 
@@ -102,9 +102,9 @@ class AlbumArtistDetailViewModelTest {
         viewModel.onShuffleAlbums()
         advanceUntilIdle()
 
-        val queue = shuffleQueueManager.lastSetQueue.orEmpty()
+        val queue = shuffleQueueOperations.lastSetQueue.orEmpty()
         queue.chunkedByAlbum() shouldBeIn listOf(listOf(cassette, change), listOf(change, cassette))
-        shufflePlaybackManager.calls shouldBe listOf("play()")
+        shufflePlaybackOperations.calls shouldBe listOf("play()")
     }
 
     private fun List<Song>.chunkedByAlbum(): List<List<Song>> = fold(mutableListOf<MutableList<Song>>()) { runs, song ->
@@ -117,8 +117,8 @@ class AlbumArtistDetailViewModelTest {
             fakeSongRepository,
             FakeGenreRepository(),
             fakePlaylistRepository,
-            FakeQueueManager(),
-            playbackManager = FakePlaybackManager(),
+            FakeQueueOperations(),
+            playbackOperations = FakePlaybackOperations(),
             albumRepository = fakeAlbumRepository,
             albumArtistRepository = fakeAlbumArtistRepository,
         )
@@ -127,10 +127,10 @@ class AlbumArtistDetailViewModelTest {
             observeAlbumArtists = testMediaActions.observeAlbumArtists,
             observeAlbums = testMediaActions.observeAlbums,
             observeSongs = testMediaActions.observeSongs,
-            queueManager = fakeQueueManager,
-            playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
-            shuffleSongs = ShuffleSongs(FakePlaybackManager()),
-            shuffleAlbums = ShuffleAlbums(shuffleQueueManager, shufflePlaybackManager),
+            queueOperations = fakeQueueOperations,
+            playSongs = PlaySongs(FakeQueueOperations(), FakePlaybackOperations()),
+            shuffleSongs = ShuffleSongs(FakePlaybackOperations()),
+            shuffleAlbums = ShuffleAlbums(shuffleQueueOperations, shufflePlaybackOperations),
             addToPlaylistUseCase = testMediaActions.addToPlaylist,
             resolveSongs = testMediaActions.resolveSongs,
             enqueueSongs = testMediaActions.enqueueSongs,

@@ -8,8 +8,8 @@ import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 class ShuffleAlbums @Inject constructor(
-    private val queueManager: QueueOperations,
-    private val playbackManager: PlaybackOperations,
+    private val queueOperations: QueueOperations,
+    private val playbackOperations: PlaybackOperations,
 ) {
     sealed interface Result {
         data object Success : Result
@@ -23,13 +23,13 @@ class ShuffleAlbums @Inject constructor(
             .shuffled()
             .flatMap { it.value }
 
-        if (!queueManager.setQueue(shuffled)) {
+        if (!queueOperations.setQueue(shuffled)) {
             return Result.Failure(null)
         }
         return suspendCancellableCoroutine { cont ->
-            playbackManager.load { result ->
+            playbackOperations.load { result ->
                 result.onSuccess {
-                    playbackManager.play()
+                    playbackOperations.play()
                     cont.resume(Result.Success)
                 }
                 result.onFailure { error ->

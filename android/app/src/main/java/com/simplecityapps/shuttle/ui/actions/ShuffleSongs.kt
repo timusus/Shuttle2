@@ -5,7 +5,7 @@ import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
 
 class ShuffleSongs @Inject constructor(
-    private val playbackManager: PlaybackOperations,
+    private val playbackOperations: PlaybackOperations,
 ) {
     sealed interface Result {
         data object Success : Result
@@ -14,9 +14,9 @@ class ShuffleSongs @Inject constructor(
 
     suspend operator fun invoke(songs: List<Song>): Result {
         var invokeResult: Result = Result.Success
-        playbackManager.shuffle(songs) { result ->
+        playbackOperations.shuffle(songs) { result ->
             result
-                .onSuccess { playbackManager.play() }
+                .onSuccess { playbackOperations.play() }
                 .onFailure { error -> invokeResult = Result.Failure(error.message) }
         }
         return invokeResult

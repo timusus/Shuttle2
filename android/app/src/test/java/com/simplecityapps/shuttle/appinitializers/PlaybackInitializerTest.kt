@@ -3,8 +3,8 @@ package com.simplecityapps.shuttle.appinitializers
 import android.app.Application
 import android.content.Context
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakePlaybackManager
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakePlaybackOperations
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackProgress
@@ -52,9 +52,9 @@ class PlaybackInitializerTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val application: Application = RuntimeEnvironment.getApplication()
-    private val playbackManager = FakePlaybackManager()
+    private val playbackOperations = FakePlaybackOperations()
     private val songRepository = FakeSongRepository()
-    private val queueManager = FakeQueueManager()
+    private val queueOperations = FakeQueueOperations()
     private val startedComponents = mutableListOf<String>()
     private val preferences = PlaybackPreferenceManager(
         application.getSharedPreferences("playback_initializer_test", Context.MODE_PRIVATE),
@@ -70,8 +70,8 @@ class PlaybackInitializerTest {
     ) = PlaybackInitializer(
         context = application,
         songRepository = songRepository,
-        playbackManager = playbackManager,
-        queueManager = queueManager,
+        playbackOperations = playbackOperations,
+        queueOperations = queueOperations,
         playbackPreferenceManager = preferences,
         castStarter = Lazy {
             startedComponents += "cast"
@@ -100,8 +100,8 @@ class PlaybackInitializerTest {
         preferences.queueIds = "7,8"
         preferences.shuffleMode = ShuffleMode.On
         preferences.repeatMode = RepeatMode.All
-        playbackManager.playbackStateFlow.value = PlaybackState.Playing
-        playbackManager.progressFlow.value = PlaybackProgress(position = 90_000, duration = 200_000)
+        playbackOperations.playbackStateFlow.value = PlaybackState.Playing
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 90_000, duration = 200_000)
 
         initializer.init(application)
 
@@ -139,8 +139,8 @@ class PlaybackInitializerTest {
     fun `shuffle and repeat changes are saved`() {
         initializer.init(application)
 
-        queueManager.shuffleModeFlow.value = ShuffleMode.On
-        queueManager.repeatModeFlow.value = RepeatMode.One
+        queueOperations.shuffleModeFlow.value = ShuffleMode.On
+        queueOperations.repeatModeFlow.value = RepeatMode.One
 
         preferences.shuffleMode shouldBe ShuffleMode.On
         preferences.repeatMode shouldBe RepeatMode.One
@@ -150,7 +150,7 @@ class PlaybackInitializerTest {
     fun `playback starting starts the playback service`() {
         initializer.init(application)
 
-        playbackManager.playbackStateFlow.value = PlaybackState.Playing
+        playbackOperations.playbackStateFlow.value = PlaybackState.Playing
 
         shadowOf(application).nextStartedService?.component?.className shouldBe PlaybackService::class.java.name
     }
@@ -161,26 +161,26 @@ class PlaybackInitializerTest {
 
         // The first observed progress is the initial anchor: no prior save to compare against, so it
         // writes straight away rather than waiting for a second tick to establish a baseline.
-        playbackManager.progressFlow.value = PlaybackProgress(position = 5_000, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 5_000, duration = 200_000)
         preferences.playbackPosition shouldBe 5_000
 
-        playbackManager.progressFlow.value = PlaybackProgress(position = 5_900, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 5_900, duration = 200_000)
         preferences.playbackPosition shouldBe 5_000
 
-        playbackManager.progressFlow.value = PlaybackProgress(position = 6_500, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 6_500, duration = 200_000)
         preferences.playbackPosition shouldBe 6_500
     }
 
     @Test
     fun `sub-second progress ticks in either direction do not write to preferences`() {
         initializer.init(application)
-        playbackManager.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
         preferences.playbackPosition shouldBe 65_000
 
         // Small forward and backward ticks stay under the throttle: no further writes.
-        playbackManager.progressFlow.value = PlaybackProgress(position = 65_400, duration = 200_000)
-        playbackManager.progressFlow.value = PlaybackProgress(position = 65_100, duration = 200_000)
-        playbackManager.progressFlow.value = PlaybackProgress(position = 65_700, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 65_400, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 65_100, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 65_700, duration = 200_000)
         preferences.playbackPosition shouldBe 65_000
     }
 
@@ -188,13 +188,13 @@ class PlaybackInitializerTest {
     fun `restarting a track saves the reset position, so a force-stop restores from 0`() {
         initializer.init(application)
 
-        playbackManager.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
         preferences.playbackPosition shouldBe 65_000
 
         // Restarting the track seeks back to 0 - a discontinuity, so it's saved immediately, rather
         // than being masked by the old (higher) high-water mark. A restore after a force-stop reads
         // this value straight back as the seek position.
-        playbackManager.positionAnchorFlow.value = PositionAnchor(PlaybackState.Playing, positionMs = 0, elapsedRealtimeMs = 1_000, speed = 1f)
+        playbackOperations.positionAnchorFlow.value = PositionAnchor(PlaybackState.Playing, positionMs = 0, elapsedRealtimeMs = 1_000, speed = 1f)
 
         preferences.playbackPosition shouldBe 0
     }
@@ -203,10 +203,10 @@ class PlaybackInitializerTest {
     fun `seeking backwards saves the earlier position immediately`() {
         initializer.init(application)
 
-        playbackManager.progressFlow.value = PlaybackProgress(position = 90_000, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 90_000, duration = 200_000)
         preferences.playbackPosition shouldBe 90_000
 
-        playbackManager.positionAnchorFlow.value = PositionAnchor(PlaybackState.Playing, positionMs = 30_000, elapsedRealtimeMs = 1_000, speed = 1f)
+        playbackOperations.positionAnchorFlow.value = PositionAnchor(PlaybackState.Playing, positionMs = 30_000, elapsedRealtimeMs = 1_000, speed = 1f)
 
         preferences.playbackPosition shouldBe 30_000
     }
@@ -215,12 +215,12 @@ class PlaybackInitializerTest {
     fun `a track change saves the new track's position immediately, even under the throttle`() {
         initializer.init(application)
 
-        playbackManager.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
         preferences.playbackPosition shouldBe 65_000
 
         // The new track starts close to the old saved position - under the throttle, but a track
         // change is a discontinuity, so it's still saved immediately.
-        playbackManager.positionAnchorFlow.value = PositionAnchor(PlaybackState.Playing, positionMs = 65_200, elapsedRealtimeMs = 1_000, speed = 1f)
+        playbackOperations.positionAnchorFlow.value = PositionAnchor(PlaybackState.Playing, positionMs = 65_200, elapsedRealtimeMs = 1_000, speed = 1f)
 
         preferences.playbackPosition shouldBe 65_200
     }
@@ -237,30 +237,30 @@ class PlaybackInitializerTest {
     @Test
     fun `a cleared saved position lets the next progress be saved straight away`() {
         initializer.init(application)
-        playbackManager.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
         preferences.playbackPosition shouldBe 65_000
 
         // The playback manager clears it on a pause with no position.
         preferences.playbackPosition = null
 
         // Under a second from the cleared position: with no saved position there's nothing to throttle against.
-        playbackManager.progressFlow.value = PlaybackProgress(position = 65_500, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 65_500, duration = 200_000)
         preferences.playbackPosition shouldBe 65_500
     }
 
     @Test
     fun `progress is throttled against the saved position, even one the playback manager saved`() {
         initializer.init(application)
-        playbackManager.progressFlow.value = PlaybackProgress(position = 195_000, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 195_000, duration = 200_000)
         preferences.playbackPosition shouldBe 195_000
 
         // A track end resets the saved position to 0 for the next track.
         preferences.playbackPosition = 0
 
-        playbackManager.progressFlow.value = PlaybackProgress(position = 400, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 400, duration = 200_000)
         preferences.playbackPosition shouldBe 0
 
-        playbackManager.progressFlow.value = PlaybackProgress(position = 1_200, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 1_200, duration = 200_000)
         preferences.playbackPosition shouldBe 1_200
     }
 
@@ -269,7 +269,7 @@ class PlaybackInitializerTest {
         initializer.init(application)
         val endedSong = createSong(id = 4, duration = 200_000)
 
-        playbackManager.trackEndedFlow.tryEmit(endedSong)
+        playbackOperations.trackEndedFlow.tryEmit(endedSong)
 
         awaitUntil { songRepository.playCountIncrements.isNotEmpty() }
         songRepository.playbackPositions.toList() shouldBe listOf(4L to 200_000)
@@ -281,7 +281,7 @@ class PlaybackInitializerTest {
         initializer.init(application)
         val pausedSong = createSong(id = 5, duration = 200_000)
 
-        playbackManager.pausePositionFlow.tryEmit(SongPosition(pausedSong, 42_000))
+        playbackOperations.pausePositionFlow.tryEmit(SongPosition(pausedSong, 42_000))
 
         awaitUntil { songRepository.playbackPositions.isNotEmpty() }
         songRepository.playbackPositions.toList() shouldBe listOf(5L to 42_000)
@@ -366,7 +366,7 @@ class PlaybackInitializerTest {
 
         initializer.init(application)
 
-        awaitUntil { queueManager.hasRestoredQueue }
+        awaitUntil { queueOperations.hasRestoredQueue }
         awaitUntil { preferences.nowPlaying == null }
     }
 
@@ -380,17 +380,17 @@ class PlaybackInitializerTest {
 
         initializer.init(application)
 
-        awaitUntil { queueManager.hasRestoredQueue }
-        queueManager.lastSetQueue?.map { song -> song.id } shouldBe listOf(1L, 3L, 1L, 4L)
-        queueManager.lastSetQueuePosition shouldBe 3
-        playbackManager.loadedPositions shouldBe listOf(30_000)
+        awaitUntil { queueOperations.hasRestoredQueue }
+        queueOperations.lastSetQueue?.map { song -> song.id } shouldBe listOf(1L, 3L, 1L, 4L)
+        queueOperations.lastSetQueuePosition shouldBe 3
+        playbackOperations.loadedPositions shouldBe listOf(30_000)
     }
 
     @Test
     fun `a restore that brings back every saved song doesn't save the queue again, and a change after it is saved`() {
         songRepository.applyQueryPredicates = true
         songRepository.setSongs(songs)
-        queueManager.publishesRestoredQueue = true
+        queueOperations.publishesRestoredQueue = true
         preferences.queueIds = "1,2,3"
         preferences.shuffleQueueIds = "1,2,3"
         preferences.queuePosition = 1
@@ -398,10 +398,10 @@ class PlaybackInitializerTest {
         val main = initAndRestore()
 
         preferences.nowPlaying?.songId shouldBe 2L
-        queueManager.shuffleModeQueueReads shouldBe 0
+        queueOperations.shuffleModeQueueReads shouldBe 0
         preferences.queuePosition shouldBe 1
 
-        publishQueue(listOf(createSong(id = 3), createSong(id = 1)), currentPosition = 0, contentVersion = queueManager.queueStateFlow.value.contentVersion + 1)
+        publishQueue(listOf(createSong(id = 3), createSong(id = 1)), currentPosition = 0, contentVersion = queueOperations.queueStateFlow.value.contentVersion + 1)
         main.runUntilIdle()
         preferences.queueIds shouldBe "3,1"
     }
@@ -410,7 +410,7 @@ class PlaybackInitializerTest {
     fun `a restore that drops songs saves the queue that's left`() {
         songRepository.applyQueryPredicates = true
         songRepository.setSongs(listOf(createSong(id = 1), createSong(id = 3)))
-        queueManager.publishesRestoredQueue = true
+        queueOperations.publishesRestoredQueue = true
         preferences.queueIds = "1,2,3"
         preferences.shuffleQueueIds = "1,2,3"
         preferences.queuePosition = 2
@@ -433,10 +433,10 @@ class PlaybackInitializerTest {
         // The fake's shuffle mode stays off, as if restoring the mode on its own came after the queue.
         initAndRestore()
 
-        queueManager.shuffleModeFlow.value shouldBe ShuffleMode.Off
-        queueManager.lastSetQueueShuffleMode shouldBe ShuffleMode.On
-        queueManager.lastSetShuffleQueue?.map { song -> song.id } shouldBe listOf(3L, 1L, 2L)
-        queueManager.lastSetQueuePosition shouldBe 0
+        queueOperations.shuffleModeFlow.value shouldBe ShuffleMode.Off
+        queueOperations.lastSetQueueShuffleMode shouldBe ShuffleMode.On
+        queueOperations.lastSetShuffleQueue?.map { song -> song.id } shouldBe listOf(3L, 1L, 2L)
+        queueOperations.lastSetQueuePosition shouldBe 0
     }
 
     @Test
@@ -449,9 +449,9 @@ class PlaybackInitializerTest {
 
         initializer.init(application)
 
-        awaitUntil { queueManager.hasRestoredQueue }
-        queueManager.lastSetQueuePosition shouldBe 1
-        playbackManager.loadedPositions shouldBe listOf(0)
+        awaitUntil { queueOperations.hasRestoredQueue }
+        queueOperations.lastSetQueuePosition shouldBe 1
+        playbackOperations.loadedPositions shouldBe listOf(0)
         preferences.playbackPosition shouldBe 0
     }
 
@@ -466,9 +466,9 @@ class PlaybackInitializerTest {
 
         initializer.init(application)
 
-        awaitUntil { queueManager.hasRestoredQueue }
-        queueManager.lastSetQueuePosition shouldBe 1
-        playbackManager.loadedPositions shouldBe listOf(0)
+        awaitUntil { queueOperations.hasRestoredQueue }
+        queueOperations.lastSetQueuePosition shouldBe 1
+        playbackOperations.loadedPositions shouldBe listOf(0)
     }
 
     @Test
@@ -484,7 +484,7 @@ class PlaybackInitializerTest {
         try {
             createInitializer(failingRepository, failingScope).init(application)
 
-            awaitUntil { queueManager.hasRestoredQueue }
+            awaitUntil { queueOperations.hasRestoredQueue }
             awaitUntil { failures.isNotEmpty() }
             failures.single().message shouldBe "database unavailable"
         } finally {
@@ -510,9 +510,9 @@ class PlaybackInitializerTest {
         publishQueue(listOf(createSong(id = 9)), currentPosition = 0, contentVersion = 1)
         songsLoaded.complete(Unit)
 
-        awaitUntil { queueManager.hasRestoredQueue }
-        queueManager.lastSetQueue shouldBe null
-        playbackManager.loadedPositions shouldBe emptyList()
+        awaitUntil { queueOperations.hasRestoredQueue }
+        queueOperations.lastSetQueue shouldBe null
+        playbackOperations.loadedPositions shouldBe emptyList()
     }
 
     @Test
@@ -536,18 +536,18 @@ class PlaybackInitializerTest {
         songsLoaded.complete(Unit)
 
         awaitUntil { main.pending == 1 }
-        queueManager.buildThreads.single() shouldNotBe Thread.currentThread()
-        queueManager.lastSetQueue shouldBe null
-        playbackManager.loadedPositions shouldBe emptyList()
-        queueManager.hasRestoredQueue shouldBe false
+        queueOperations.buildThreads.single() shouldNotBe Thread.currentThread()
+        queueOperations.lastSetQueue shouldBe null
+        playbackOperations.loadedPositions shouldBe emptyList()
+        queueOperations.hasRestoredQueue shouldBe false
 
         main.runPending() shouldBe 1
 
-        queueManager.setQueueThreads shouldBe listOf(Thread.currentThread())
-        queueManager.lastSetQueue shouldBe songs
-        queueManager.lastSetQueuePosition shouldBe 1
-        playbackManager.loadedPositions shouldBe listOf(30_000)
-        queueManager.hasRestoredQueue shouldBe true
+        queueOperations.setQueueThreads shouldBe listOf(Thread.currentThread())
+        queueOperations.lastSetQueue shouldBe songs
+        queueOperations.lastSetQueuePosition shouldBe 1
+        playbackOperations.loadedPositions shouldBe listOf(30_000)
+        queueOperations.hasRestoredQueue shouldBe true
     }
 
     /**
@@ -560,7 +560,7 @@ class PlaybackInitializerTest {
         initializer.init(application)
         awaitUntil {
             main.runPending()
-            queueManager.hasRestoredQueue
+            queueOperations.hasRestoredQueue
         }
         main.runUntilIdle()
         return main
@@ -615,8 +615,8 @@ class PlaybackInitializerTest {
         contentVersion: Long
     ) {
         val items = songs.mapIndexed { index, song -> song.toQueueItem(isCurrent = index == currentPosition) }
-        val previous = queueManager.queueStateFlow.value
-        queueManager.queueStateFlow.value = QueueState(
+        val previous = queueOperations.queueStateFlow.value
+        queueOperations.queueStateFlow.value = QueueState(
             items = items,
             currentItem = items[currentPosition],
             currentPosition = currentPosition,

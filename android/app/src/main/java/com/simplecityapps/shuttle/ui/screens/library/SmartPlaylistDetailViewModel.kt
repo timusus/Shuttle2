@@ -31,7 +31,7 @@ data class SmartPlaylistDetailUiState(
 class SmartPlaylistDetailViewModel @AssistedInject constructor(
     @Assisted smartPlaylistId: String,
     observeSongs: ObserveSongs,
-    queueManager: QueueOperations,
+    queueOperations: QueueOperations,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
@@ -46,7 +46,7 @@ class SmartPlaylistDetailViewModel @AssistedInject constructor(
 
     val uiState: StateFlow<SmartPlaylistDetailUiState> = combine(
         songs,
-        queueManager.queueStateFlow.map { it.currentItem?.song }.distinctUntilChanged(),
+        queueOperations.queueStateFlow.map { it.currentItem?.song }.distinctUntilChanged(),
     ) { songs, currentSong ->
         SmartPlaylistDetailUiState(smartPlaylist = smartPlaylist, songs = songs, currentSong = currentSong, loading = false)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SmartPlaylistDetailUiState())

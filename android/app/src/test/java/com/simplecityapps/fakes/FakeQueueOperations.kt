@@ -10,7 +10,7 @@ import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class FakeQueueManager : QueueOperations {
+class FakeQueueOperations : QueueOperations {
     override val queueStateFlow = MutableStateFlow(QueueState.Empty)
     override val shuffleModeFlow = MutableStateFlow(ShuffleMode.Off)
     override val repeatModeFlow = MutableStateFlow(RepeatMode.Off)

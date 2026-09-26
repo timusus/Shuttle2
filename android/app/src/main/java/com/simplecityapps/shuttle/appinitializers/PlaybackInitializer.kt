@@ -60,8 +60,8 @@ class PlaybackInitializer
 constructor(
     @ApplicationContext private val context: Context,
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackOperations,
-    private val queueManager: QueueOperations,
+    private val playbackOperations: PlaybackOperations,
+    private val queueOperations: QueueOperations,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val castStarter: Lazy<CastStarter>,
     private val playRequests: Lazy<PlayRequests>,
@@ -94,13 +94,13 @@ constructor(
         val queuePosition = playbackPreferenceManager.queuePosition
         // A request to play something waits for the restore only so long (see PlayRequests), then sets its
         // own queue, and a restore finishing after that mustn't replace it.
-        val initialContentVersion = queueManager.queueStateFlow.value.contentVersion
+        val initialContentVersion = queueOperations.queueStateFlow.value.contentVersion
 
         // Set now, so a request played before the restore finishes finds them (a new queue can keep the shuffle mode).
         // The restore doesn't rely on it: it sets the shuffle mode its saved position is in with the queue it sets.
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            queueManager.setShuffleMode(shuffleMode, reshuffle = false)
-            queueManager.setRepeatMode(repeatMode)
+            queueOperations.setShuffleMode(shuffleMode, reshuffle = false)
+            queueOperations.setRepeatMode(repeatMode)
         }
 
         // Started off the main thread, which is busy with the app's start: only setting the queue and loading it
@@ -116,8 +116,8 @@ constructor(
             } finally {
                 // Requests to play something else wait for it (see PlayRequests), so a restore that throws before
                 // its main thread step mustn't leave them waiting.
-                if (!queueManager.hasRestoredQueue) {
-                    queueManager.hasRestoredQueue = true
+                if (!queueOperations.hasRestoredQueue) {
+                    queueOperations.hasRestoredQueue = true
                 }
             }
         }
@@ -156,7 +156,7 @@ constructor(
             try {
                 applyRestoredQueue(savedQueue, shuffleMode, initialContentVersion, seekPosition, restoredSeekPosition, timings)
             } finally {
-                queueManager.hasRestoredQueue = true
+                queueOperations.hasRestoredQueue = true
             }
         }
 
@@ -194,7 +194,7 @@ constructor(
         val restoredWhole = songs.size == songIds.size && shuffleSongs != null && shuffleSongs.size == shuffleSongIds.size
 
         return SavedQueue(
-            queue = timings.measureSuspending("build") { queueManager.buildQueue(songs, shuffleSongs, restoredPosition.position) },
+            queue = timings.measureSuspending("build") { queueOperations.buildQueue(songs, shuffleSongs, restoredPosition.position) },
             fromStart = restoredPosition.fromStart || playbackPreferenceManager.restoreQueuePositionFromStart,
             unchanged = when {
                 !restoredWhole -> null
@@ -219,19 +219,19 @@ constructor(
         if (savedQueue != null) {
             unchangedRestoredQueue = savedQueue.unchanged
             val restoredContentVersion = timings.measure("setQueue") {
-                queueManager.setQueueIfContentVersion(initialContentVersion, savedQueue.queue, shuffleMode)
+                queueOperations.setQueueIfContentVersion(initialContentVersion, savedQueue.queue, shuffleMode)
             }
             if (restoredContentVersion == null) {
                 unchangedRestoredQueue = null
                 Timber.w("The queue was set while it was being restored; the saved queue is dropped")
                 return
             }
-        } else if (queueManager.queueStateFlow.value.contentVersion != initialContentVersion) {
+        } else if (queueOperations.queueStateFlow.value.contentVersion != initialContentVersion) {
             Timber.w("The queue was set while it was being restored; the saved queue is dropped")
             return
         }
 
-        if (queueManager.queueStateFlow.value.items.isEmpty()) {
+        if (queueOperations.queueStateFlow.value.items.isEmpty()) {
             // Nothing to show for a queue that's gone.
             playbackPreferenceManager.nowPlaying = null
         }
@@ -240,7 +240,7 @@ constructor(
             playbackPreferenceManager.playbackPosition = restoredSeekPosition
         }
         // A saved song that can't load (a server out of reach, a file not there yet) stays where it was left.
-        timings.measure("load") { playbackManager.load(restoredSeekPosition, skipUnloadable = false) {} }
+        timings.measure("load") { playbackOperations.load(restoredSeekPosition, skipUnloadable = false) {} }
     }
 
     /**
@@ -249,44 +249,44 @@ constructor(
      * initial state), and a change made in between isn't missed.
      */
     private fun collectPlaybackState() {
-        val queueState = queueManager.queueStateFlow.value
-        val shuffleMode = queueManager.shuffleModeFlow.value
-        val repeatMode = queueManager.repeatModeFlow.value
-        val playbackState = playbackManager.playbackStateFlow.value
-        val progress = playbackManager.progressFlow.value
-        val positionAnchor = playbackManager.positionAnchorFlow.value
+        val queueState = queueOperations.queueStateFlow.value
+        val shuffleMode = queueOperations.shuffleModeFlow.value
+        val repeatMode = queueOperations.repeatModeFlow.value
+        val playbackState = playbackOperations.playbackStateFlow.value
+        val progress = playbackOperations.progressFlow.value
+        val positionAnchor = playbackOperations.positionAnchorFlow.value
 
-        appCoroutineScope.launchCollectingChanges(queueManager.queueStateFlow, queueState, Dispatchers.Main.immediate) { previous, current ->
+        appCoroutineScope.launchCollectingChanges(queueOperations.queueStateFlow, queueState, Dispatchers.Main.immediate) { previous, current ->
             onQueueStateChanged(previous, current)
         }
-        appCoroutineScope.launchCollectingChanges(queueManager.shuffleModeFlow, shuffleMode, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(queueOperations.shuffleModeFlow, shuffleMode, Dispatchers.Main.immediate) { _, current ->
             playbackPreferenceManager.shuffleMode = current
         }
-        appCoroutineScope.launchCollectingChanges(queueManager.repeatModeFlow, repeatMode, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(queueOperations.repeatModeFlow, repeatMode, Dispatchers.Main.immediate) { _, current ->
             playbackPreferenceManager.repeatMode = current
         }
-        appCoroutineScope.launchCollectingChanges(playbackManager.playbackStateFlow, playbackState, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackOperations.playbackStateFlow, playbackState, Dispatchers.Main.immediate) { _, current ->
             if (current is PlaybackState.Playing) {
                 startPlaybackService()
             }
         }
-        appCoroutineScope.launchCollectingChanges(playbackManager.progressFlow, progress, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackOperations.progressFlow, progress, Dispatchers.Main.immediate) { _, current ->
             current?.let { saveProgress(it.position, force = false) }
         }
         // positionAnchorFlow republishes only on discontinuities (state changes, seeks, track changes,
         // speed changes, playback switches), so every emission is worth an immediate save - that's what
         // keeps the saved position current after a restart or a seek backwards, without a high-water mark.
-        appCoroutineScope.launchCollectingChanges(playbackManager.positionAnchorFlow, positionAnchor, Dispatchers.Main.immediate) { _, current ->
+        appCoroutineScope.launchCollectingChanges(playbackOperations.positionAnchorFlow, positionAnchor, Dispatchers.Main.immediate) { _, current ->
             current.positionMs?.let { saveProgress(it, force = true) }
         }
     }
 
     private fun collectSongPositions() {
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackManager.trackEndedFlow.collect { song -> recordPlayedThrough(song) }
+            playbackOperations.trackEndedFlow.collect { song -> recordPlayedThrough(song) }
         }
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackManager.pausePositionFlow.collect { songPosition -> saveSongPosition(songPosition) }
+            playbackOperations.pausePositionFlow.collect { songPosition -> saveSongPosition(songPosition) }
         }
     }
 
@@ -301,12 +301,12 @@ constructor(
             unchangedRestoredQueue = null
             if (!savedAlready) {
                 playbackPreferenceManager.queueIds =
-                    queueManager.getQueue(ShuffleMode.Off)
+                    queueOperations.getQueue(ShuffleMode.Off)
                         .filter { queueItem -> queueItem.song.isInLibrary }
                         .joinToString(",") { queueItem -> queueItem.song.id.toString() }
 
                 playbackPreferenceManager.shuffleQueueIds =
-                    queueManager.getQueue(ShuffleMode.On)
+                    queueOperations.getQueue(ShuffleMode.On)
                         .filter { queueItem -> queueItem.song.isInLibrary }
                         .joinToString(",") { queueItem -> queueItem.song.id.toString() }
             }

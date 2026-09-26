@@ -4,9 +4,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongDownloadRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.PlaybackProgress
@@ -52,8 +52,8 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlayerViewModelTest {
 
-    private val playbackManager = FakePlaybackManager()
-    private val queueManager = FakeQueueManager()
+    private val playbackOperations = FakePlaybackOperations()
+    private val queueOperations = FakeQueueOperations()
     private var savedNowPlaying: NowPlayingSnapshot? = null
     private val playlistRepository = FakePlaylistRepository()
     private val sleepTimerPreference = object : SleepTimerPreference {
@@ -86,11 +86,11 @@ class PlayerViewModelTest {
     }
 
     private fun TestScope.viewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()): PlayerViewModel {
-        val sleepTimer = SleepTimer(playbackManager, backgroundScope, UnconfinedTestDispatcher(testScheduler)) { testScheduler.currentTime }
-        val mediaActions = TestMediaActions(playlistRepository = playlistRepository, queueManager = queueManager, playbackManager = playbackManager)
+        val sleepTimer = SleepTimer(playbackOperations, backgroundScope, UnconfinedTestDispatcher(testScheduler)) { testScheduler.currentTime }
+        val mediaActions = TestMediaActions(playlistRepository = playlistRepository, queueOperations = queueOperations, playbackOperations = playbackOperations)
         return PlayerViewModel(
-            playbackOperations = playbackManager,
-            queueOperations = queueManager,
+            playbackOperations = playbackOperations,
+            queueOperations = queueOperations,
             observeFavouriteSongIds = ObserveFavouriteSongIds(playlistRepository),
             setFavourite = ToggleFavourite(playlistRepository),
             observePlaylists = ObservePlaylists(playlistRepository),
@@ -101,8 +101,8 @@ class PlayerViewModelTest {
             colourFromArtworkPreference = colourFromArtworkPreference,
             castAvailability = { false },
             savedNowPlaying = { savedNowPlaying },
-            clearQueue = ClearQueue(queueManager, playbackManager),
-            restoreQueue = RestoreQueue(queueManager, playbackManager),
+            clearQueue = ClearQueue(queueOperations, playbackOperations),
+            restoreQueue = RestoreQueue(queueOperations, playbackOperations),
             availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, FakeSongDownloadRepository()),
             mediaActionHandler = mediaActions.handler,
             savedStateHandle = savedStateHandle,
@@ -134,7 +134,7 @@ class PlayerViewModelTest {
         viewModel.progress.value shouldBe PlayerProgress(42_000, 180_000)
 
         // The restored queue takes over, even when its song isn't the saved one.
-        queueManager.queueStateFlow.value = queueOf(songs("Restored"))
+        queueOperations.queueStateFlow.value = queueOf(songs("Restored"))
 
         viewModel.uiState.value.current?.title shouldBe "Restored"
         viewModel.uiState.value.items.map { it.title } shouldBe listOf("Restored")
@@ -145,7 +145,7 @@ class PlayerViewModelTest {
         savedNowPlaying = NowPlayingSnapshot.of(createSong(id = 7, name = "Saved"))
         val viewModel = viewModel()
 
-        queueManager.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
+        queueOperations.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
 
         viewModel.uiState.value.hasQueue shouldBe false
         viewModel.uiState.value.current shouldBe null
@@ -157,11 +157,11 @@ class PlayerViewModelTest {
         val viewModel = viewModel()
 
         viewModel.togglePlayback()
-        playbackManager.calls shouldBe emptyList()
+        playbackOperations.calls shouldBe emptyList()
 
-        queueManager.queueStateFlow.value = queueOf(songs("Saved"))
+        queueOperations.queueStateFlow.value = queueOf(songs("Saved"))
 
-        playbackManager.calls shouldBe listOf("play()")
+        playbackOperations.calls shouldBe listOf("play()")
     }
 
     @Test
@@ -170,9 +170,9 @@ class PlayerViewModelTest {
         val viewModel = viewModel()
 
         viewModel.togglePlayback()
-        queueManager.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
+        queueOperations.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
 
-        playbackManager.calls shouldBe emptyList()
+        playbackOperations.calls shouldBe emptyList()
         viewModel.uiState.value.hasQueue shouldBe false
     }
 
@@ -198,10 +198,10 @@ class PlayerViewModelTest {
     @Test
     fun `the state follows the queue, playback and modes`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(songs("One"))
-        playbackManager.playbackStateFlow.value = PlaybackState.Playing
-        queueManager.shuffleModeFlow.value = ShuffleMode.On
-        queueManager.repeatModeFlow.value = RepeatMode.One
+        queueOperations.queueStateFlow.value = queueOf(songs("One"))
+        playbackOperations.playbackStateFlow.value = PlaybackState.Playing
+        queueOperations.shuffleModeFlow.value = ShuffleMode.On
+        queueOperations.repeatModeFlow.value = RepeatMode.One
 
         val state = viewModel.uiState.value
         state.current?.title shouldBe "One"
@@ -209,7 +209,7 @@ class PlayerViewModelTest {
         state.shuffle shouldBe true
         state.repeatMode shouldBe S2RepeatMode.One
 
-        playbackManager.playbackStateFlow.value = PlaybackState.Loading
+        playbackOperations.playbackStateFlow.value = PlaybackState.Loading
         viewModel.uiState.value.buffering shouldBe true
         viewModel.uiState.value.playing shouldBe false
     }
@@ -217,7 +217,7 @@ class PlayerViewModelTest {
     @Test
     fun `shuffle and repeat toggle the queue's modes`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(songs("One"))
+        queueOperations.queueStateFlow.value = queueOf(songs("One"))
 
         viewModel.toggleShuffle()
         viewModel.cycleRepeatMode()
@@ -234,16 +234,16 @@ class PlayerViewModelTest {
         viewModel.skipToPrevious()
         viewModel.seekTo(42_000)
 
-        playbackManager.calls shouldBe listOf("togglePlayback()", "skipToNext(true)", "skipToPrev()", "seekTo(42000)")
+        playbackOperations.calls shouldBe listOf("togglePlayback()", "skipToNext(true)", "skipToPrev()", "seekTo(42000)")
     }
 
     @Test
     fun `progress falls back to the song's saved position until playback reports one`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 200_000)))
+        queueOperations.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 200_000)))
         viewModel.progress.value shouldBe PlayerProgress(1, 200_000)
 
-        playbackManager.progressFlow.value = PlaybackProgress(position = 50_000, duration = 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 50_000, duration = 200_000)
         viewModel.progress.value shouldBe PlayerProgress(50_000, 200_000)
         viewModel.progress.value.fraction shouldBe 0.25f
     }
@@ -251,16 +251,16 @@ class PlayerViewModelTest {
     @Test
     fun `the total is the song's duration, as the queue rows show it, not the player's`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 60_000)))
-        playbackManager.progressFlow.value = PlaybackProgress(position = 10_000, duration = 59_950)
+        queueOperations.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 60_000)))
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 10_000, duration = 59_950)
         viewModel.progress.value shouldBe PlayerProgress(10_000, 60_000)
     }
 
     @Test
     fun `without a song duration the total is the player's`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 0)))
-        playbackManager.progressFlow.value = PlaybackProgress(position = 10_000, duration = 59_950)
+        queueOperations.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 0)))
+        playbackOperations.progressFlow.value = PlaybackProgress(position = 10_000, duration = 59_950)
         viewModel.progress.value shouldBe PlayerProgress(10_000, 59_950)
     }
 
@@ -270,7 +270,7 @@ class PlayerViewModelTest {
         playlistRepository.favorites = favourites
         val viewModel = viewModel()
         val song = songs("One").single()
-        queueManager.queueStateFlow.value = queueOf(listOf(song))
+        queueOperations.queueStateFlow.value = queueOf(listOf(song))
         viewModel.uiState.value.favourite shouldBe false
 
         viewModel.toggleFavourite()
@@ -284,7 +284,7 @@ class PlayerViewModelTest {
     @Test
     fun `without a favourites playlist nothing is a favourite`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(songs("One"))
+        queueOperations.queueStateFlow.value = queueOf(songs("One"))
         viewModel.uiState.value.favourite shouldBe false
     }
 
@@ -292,13 +292,13 @@ class PlayerViewModelTest {
     fun `the seed is extracted once per album`() = runTest {
         val viewModel = viewModel()
         val firstAlbum = songs("One", "Two", album = "First")
-        queueManager.queueStateFlow.value = queueOf(firstAlbum + createSong(id = 7, name = "Three", album = "Second"))
+        queueOperations.queueStateFlow.value = queueOf(firstAlbum + createSong(id = 7, name = "Three", album = "Second"))
         viewModel.uiState.value.seed shouldBe ArtworkSeed.Available(Color.Red)
 
-        queueManager.queueStateFlow.value = queueOf(firstAlbum, current = 1)
+        queueOperations.queueStateFlow.value = queueOf(firstAlbum, current = 1)
         seededSongs.map { it.name } shouldBe listOf("One")
 
-        queueManager.queueStateFlow.value = queueOf(firstAlbum + createSong(id = 7, name = "Three", album = "Second"), current = 2)
+        queueOperations.queueStateFlow.value = queueOf(firstAlbum + createSong(id = 7, name = "Three", album = "Second"), current = 2)
         seededSongs.map { it.name } shouldBe listOf("One", "Three")
     }
 
@@ -307,7 +307,7 @@ class PlayerViewModelTest {
         colourFromArtworkPreference.enabled.value = false
         val viewModel = viewModel()
 
-        queueManager.queueStateFlow.value = queueOf(songs("One"))
+        queueOperations.queueStateFlow.value = queueOf(songs("One"))
 
         viewModel.uiState.value.seed shouldBe ArtworkSeed.None
         seededSongs shouldBe emptyList()
@@ -316,7 +316,7 @@ class PlayerViewModelTest {
     @Test
     fun `queue actions resolve rows by uid`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(songs("One", "Two", "Three", "Four"), current = 1)
+        queueOperations.queueStateFlow.value = queueOf(songs("One", "Two", "Three", "Four"), current = 1)
 
         viewModel.skipToQueueItem(102)
         viewModel.moveQueueItem(103, afterUid = null)
@@ -326,7 +326,7 @@ class PlayerViewModelTest {
         viewModel.playNext(100)
         viewModel.playNext(101)
 
-        playbackManager.calls shouldBe listOf(
+        playbackOperations.calls shouldBe listOf(
             "skipTo(2)",
             "moveQueueItem(3, 0)",
             "removeQueueItem(100)",
@@ -341,27 +341,27 @@ class PlayerViewModelTest {
         val viewModel = viewModel()
         val songs = songs("One", "Two", "Three", "Four")
         // The drag began on One, Two, Three, Four (uids 100-103): One was dragged to follow Three.
-        queueManager.queueStateFlow.value = queueOf(songs)
+        queueOperations.queueStateFlow.value = queueOf(songs)
         // Before the drop, auto-advance and a removal changed the queue: Two is gone, a new row leads.
         val live = listOf(QueueItem(uid = 200, song = createSong(id = 9, name = "New"), isCurrent = true)) +
             queueOf(songs).items.filter { it.uid != 101L }.map { it.clone(isCurrent = false) }
-        queueManager.queueStateFlow.value = QueueState.Empty.copy(items = live, currentItem = live.first(), currentPosition = 0, isRestored = true)
+        queueOperations.queueStateFlow.value = QueueState.Empty.copy(items = live, currentItem = live.first(), currentPosition = 0, isRestored = true)
 
         viewModel.moveQueueItem(100, afterUid = 102)
 
         // Live order New, One, Three, Four: One moves from 1 to just after Three, 2.
-        playbackManager.calls shouldBe listOf("moveQueueItem(1, 2)")
+        playbackOperations.calls shouldBe listOf("moveQueueItem(1, 2)")
     }
 
     @Test
     fun `a move is dropped when the dragged row or its new neighbour has left the queue`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(songs("One", "Two", "Three"))
+        queueOperations.queueStateFlow.value = queueOf(songs("One", "Two", "Three"))
 
         viewModel.moveQueueItem(999, afterUid = 102)
         viewModel.moveQueueItem(100, afterUid = 999)
 
-        playbackManager.calls shouldBe emptyList<String>()
+        playbackOperations.calls shouldBe emptyList<String>()
     }
 
     @Test
@@ -378,38 +378,38 @@ class PlayerViewModelTest {
     fun `removing a row reports it, and undo puts its song back where it was`() = runTest {
         val viewModel = viewModel()
         val (one, two, three, four) = songs("One", "Two", "Three", "Four")
-        queueManager.queueStateFlow.value = queueOf(listOf(one, two, three, four))
+        queueOperations.queueStateFlow.value = queueOf(listOf(one, two, three, four))
         val events = mutableListOf<PlayerUiEvent>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.toList(events) }
 
         viewModel.removeQueueItem(101)
         events shouldBe listOf(PlayerUiEvent.QueueItemRemoved)
-        queueManager.queueStateFlow.value = queueOf(listOf(one, three, four))
-        playbackManager.onAddToQueue = { songs -> queueManager.queueStateFlow.value = queueOf(listOf(one, three, four) + songs) }
+        queueOperations.queueStateFlow.value = queueOf(listOf(one, three, four))
+        playbackOperations.onAddToQueue = { songs -> queueOperations.queueStateFlow.value = queueOf(listOf(one, three, four) + songs) }
 
         viewModel.undoRemoveQueueItem()
-        playbackManager.addedToQueue shouldBe listOf(two)
+        playbackOperations.addedToQueue shouldBe listOf(two)
         // Re-added at the end (3), then back to where it was (1).
-        playbackManager.calls shouldBe listOf("removeQueueItem(101)", "moveQueueItem(3, 1)")
+        playbackOperations.calls shouldBe listOf("removeQueueItem(101)", "moveQueueItem(3, 1)")
 
         // Undo is spent once used.
         viewModel.undoRemoveQueueItem()
-        playbackManager.addedToQueue shouldBe listOf(two)
+        playbackOperations.addedToQueue shouldBe listOf(two)
     }
 
     @Test
     fun `undoing the removal of the last row leaves it at the end`() = runTest {
         val viewModel = viewModel()
         val (one, two) = songs("One", "Two")
-        queueManager.queueStateFlow.value = queueOf(listOf(one, two))
+        queueOperations.queueStateFlow.value = queueOf(listOf(one, two))
 
         viewModel.removeQueueItem(101)
-        queueManager.queueStateFlow.value = queueOf(listOf(one))
-        playbackManager.onAddToQueue = { songs -> queueManager.queueStateFlow.value = queueOf(listOf(one) + songs) }
+        queueOperations.queueStateFlow.value = queueOf(listOf(one))
+        playbackOperations.onAddToQueue = { songs -> queueOperations.queueStateFlow.value = queueOf(listOf(one) + songs) }
         viewModel.undoRemoveQueueItem()
 
-        playbackManager.addedToQueue shouldBe listOf(two)
-        playbackManager.calls shouldBe listOf("removeQueueItem(101)")
+        playbackOperations.addedToQueue shouldBe listOf(two)
+        playbackOperations.calls shouldBe listOf("removeQueueItem(101)")
     }
 
     @Test
@@ -439,45 +439,45 @@ class PlayerViewModelTest {
     fun `clearing the queue reports it, and undo puts it back where it was`() = runTest {
         val viewModel = viewModel()
         val songs = songs("One", "Two", "Three")
-        queueManager.queueStateFlow.value = queueOf(songs, current = 1)
-        playbackManager.playbackStateFlow.value = PlaybackState.Playing
-        playbackManager.savedProgress = 30_000
+        queueOperations.queueStateFlow.value = queueOf(songs, current = 1)
+        playbackOperations.playbackStateFlow.value = PlaybackState.Playing
+        playbackOperations.savedProgress = 30_000
         val events = mutableListOf<PlayerUiEvent>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.toList(events) }
 
         viewModel.clearQueue()
         events shouldBe listOf(PlayerUiEvent.QueueCleared(3))
-        playbackManager.calls shouldBe listOf("clearQueue()")
+        playbackOperations.calls shouldBe listOf("clearQueue()")
 
         viewModel.undoClearQueue()
-        queueManager.lastSetQueue shouldBe songs
-        queueManager.lastSetShuffleQueue shouldBe null
-        queueManager.lastSetQueuePosition shouldBe 1
-        playbackManager.loadedPositions shouldBe listOf(30_000)
-        playbackManager.calls shouldBe listOf("clearQueue()", "play()")
+        queueOperations.lastSetQueue shouldBe songs
+        queueOperations.lastSetShuffleQueue shouldBe null
+        queueOperations.lastSetQueuePosition shouldBe 1
+        playbackOperations.loadedPositions shouldBe listOf(30_000)
+        playbackOperations.calls shouldBe listOf("clearQueue()", "play()")
 
         // Undo is spent once used.
         viewModel.undoClearQueue()
-        playbackManager.loadedPositions shouldBe listOf(30_000)
+        playbackOperations.loadedPositions shouldBe listOf(30_000)
     }
 
     @Test
     fun `clearing an empty queue does nothing`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
+        queueOperations.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
         viewModel.clearQueue()
-        playbackManager.calls shouldBe emptyList<String>()
+        playbackOperations.calls shouldBe emptyList<String>()
     }
 
     @Test
     fun `undo leaves a paused queue paused`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(songs("One"))
+        queueOperations.queueStateFlow.value = queueOf(songs("One"))
         viewModel.clearQueue()
         viewModel.undoClearQueue()
-        playbackManager.calls shouldBe listOf("clearQueue()")
+        playbackOperations.calls shouldBe listOf("clearQueue()")
         // A restored song that can't load stays where it was left, rather than the queue moving on (RS-56).
-        playbackManager.loadedSkipUnloadable shouldBe listOf(false)
+        playbackOperations.loadedSkipUnloadable shouldBe listOf(false)
     }
 
     @Test
@@ -487,7 +487,7 @@ class PlayerViewModelTest {
 
         viewModel.setPlaybackSpeed(1.5f)
         viewModel.uiState.value.playbackSpeed shouldBe 1.5f
-        playbackManager.getPlaybackSpeed() shouldBe 1.5f
+        playbackOperations.getPlaybackSpeed() shouldBe 1.5f
 
         viewModel.setReplayGainMode(ReplayGainMode.Album)
         viewModel.uiState.value.replayGainMode shouldBe ReplayGainMode.Album
@@ -497,7 +497,7 @@ class PlayerViewModelTest {
     @Test
     fun `the sleep timer shows as running until it goes off, and remembers play to end`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(songs("One"))
+        queueOperations.queueStateFlow.value = queueOf(songs("One"))
 
         viewModel.startSleepTimer(durationMs = 5_000, playToEnd = true)
         viewModel.uiState.value.sleepTimerActive shouldBe true
@@ -513,7 +513,7 @@ class PlayerViewModelTest {
     @Test
     fun `a sleep timer going off clears the running state`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(songs("One"))
+        queueOperations.queueStateFlow.value = queueOf(songs("One"))
 
         viewModel.startSleepTimer(durationMs = 3_000, playToEnd = false)
         advanceTimeBy(4_500)
@@ -523,7 +523,7 @@ class PlayerViewModelTest {
     @Test
     fun `a panel toggles open and shut, and showing another replaces it`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(songs("One"))
+        queueOperations.queueStateFlow.value = queueOf(songs("One"))
         viewModel.uiState.value.panel shouldBe null
 
         viewModel.togglePanel(NowPlayingPanel.SleepTimer)
@@ -544,17 +544,17 @@ class PlayerViewModelTest {
         viewModel(handle).showPanel(NowPlayingPanel.Queue)
 
         val restored = viewModel(SavedStateHandle(mapOf(PlayerViewModel.PANEL_KEY to handle.get<NowPlayingPanel>(PlayerViewModel.PANEL_KEY))))
-        queueManager.queueStateFlow.value = queueOf(songs("One"))
+        queueOperations.queueStateFlow.value = queueOf(songs("One"))
         restored.uiState.value.panel shouldBe NowPlayingPanel.Queue
     }
 
     @Test
     fun `an emptied queue shows no panel`() = runTest {
         val viewModel = viewModel()
-        queueManager.queueStateFlow.value = queueOf(songs("One"))
+        queueOperations.queueStateFlow.value = queueOf(songs("One"))
         viewModel.showPanel(NowPlayingPanel.SleepTimer)
 
-        queueManager.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
+        queueOperations.queueStateFlow.value = QueueState.Empty.copy(isRestored = true)
         viewModel.uiState.value.panel shouldBe null
     }
 }

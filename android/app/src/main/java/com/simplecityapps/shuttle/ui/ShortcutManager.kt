@@ -16,7 +16,7 @@ class ShortcutManager
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val playbackManager: PlaybackOperations,
+    private val playbackOperations: PlaybackOperations,
     private val shortcutHelper: ShortcutHelper,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) {
@@ -24,15 +24,15 @@ constructor(
     fun registerCallbacks() {
         // The shortcut is created from a live read, which is at least as new as the flow's value, so the flow
         // is snapshotted before that read and a change after it is still delivered.
-        val initialPlaybackState = playbackManager.playbackStateFlow.value
+        val initialPlaybackState = playbackOperations.playbackStateFlow.value
 
         // Initialize shortcut with current state
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
-            val isPlaying = playbackManager.playbackState() == PlaybackState.Playing
+            val isPlaying = playbackOperations.playbackState() == PlaybackState.Playing
             shortcutHelper.createPlaybackShortcut(context, isPlaying)
         }
 
-        appCoroutineScope.launchCollectingChanges(playbackManager.playbackStateFlow, initialPlaybackState) { _, playbackState ->
+        appCoroutineScope.launchCollectingChanges(playbackOperations.playbackStateFlow, initialPlaybackState) { _, playbackState ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
                 val isPlaying = playbackState == PlaybackState.Playing
                 shortcutHelper.updatePlaybackShortcut(context, isPlaying)

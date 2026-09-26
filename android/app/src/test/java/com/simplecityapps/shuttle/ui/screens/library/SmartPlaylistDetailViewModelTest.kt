@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
@@ -28,7 +28,7 @@ class SmartPlaylistDetailViewModelTest {
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
 
     private fun TestScope.viewModel(id: String): SmartPlaylistDetailViewModel {
-        val viewModel = SmartPlaylistDetailViewModel(id, ObserveSongs(songRepository), FakeQueueManager())
+        val viewModel = SmartPlaylistDetailViewModel(id, ObserveSongs(songRepository), FakeQueueOperations())
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
         return viewModel

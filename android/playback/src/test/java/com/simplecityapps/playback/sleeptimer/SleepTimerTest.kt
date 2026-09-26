@@ -17,19 +17,19 @@ import org.junit.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SleepTimerTest {
-    private val playbackManager = FakePlaybackOperations()
+    private val playbackOperations = FakePlaybackOperations()
 
     /** The number of pauses the timer asked for. */
-    private fun pauses() = playbackManager.pauses
+    private fun pauses() = playbackOperations.pauses
 
     /** Ends the current track the way the playback reports it, and runs whatever it resumes. */
     private fun TestScope.endTrack() {
-        playbackManager.trackEndedFlow.tryEmit(testSong(1))
+        playbackOperations.trackEndedFlow.tryEmit(testSong(1))
         runCurrent()
     }
 
     private fun TestScope.sleepTimer() = SleepTimer(
-        playbackManager = playbackManager,
+        playbackOperations = playbackOperations,
         appCoroutineScope = backgroundScope,
         context = StandardTestDispatcher(testScheduler),
         elapsedRealtime = { testScheduler.currentTime }
