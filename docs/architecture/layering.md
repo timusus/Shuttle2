@@ -35,8 +35,8 @@ data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:p
 
 | Module | Today | Target |
 |---|---|---|
-| `:android:domain` | Models, sorting, queries; a plain Kotlin/JVM module (was the Android library `:android:data`) | Domain (step 3 done) |
-| `:android:mediaprovider:core` | Repository interfaces, `MediaProvider`, `MediaInfoProvider`, `MediaImporter`, M3U, import worker | Interfaces move to domain (step 4); importer, worker and M3U stay as data |
+| `:android:domain` | Models, sorting, queries, repository interfaces; a plain Kotlin/JVM module (was the Android library `:android:data`) | Domain (steps 3-4 done) |
+| `:android:mediaprovider:core` | `MediaProvider`, `MediaInfoProvider`, `MediaImporter`, M3U, import worker | Data (step 4 done: repository interfaces moved to domain) |
 | `:android:mediaprovider:local` | Room DB, DAOs, entities, `Local*Repository`, MediaStore/TagLib | Data |
 | `:android:mediaprovider:{jellyfin,emby,plex}` | HTTP services, DTOs, auth, providers | Data |
 | `:android:playback` | Media3 engine, `PlaybackFacade`, `QueueManager`, Cast, session; **depends on the three remote provider modules** (only `di/PlaybackEngineModule.kt` imports them) | Data; its operations interfaces move to domain (step 5); provider edges removed (step 2) |
@@ -145,8 +145,13 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
    real use was a lazy-list key built from `AlbumGroupKey`, now its string form; the parcelers and
    the `kotlin-parcelize` plugin went with no replacement, and `:android:domain` is a
    `kotlin("jvm")` module.)
-4. **Repository interfaces**: move `mediaprovider/core/.../repository/**` (interfaces, queries,
-   sort orders) into domain. `mediaprovider:core` keeps `MediaImporter`, workers and M3U.
+4. ~~**Repository interfaces**: move `mediaprovider/core/.../repository/**` (interfaces, queries,
+   sort orders) into domain. `mediaprovider:core` keeps `MediaImporter`, workers and M3U.~~ (done:
+   the 14 files plus `SongPathRemap` moved with their package names unchanged. Every module that used
+   them (`app`, `imageloader`, `playback`, `mediaprovider:local`) also uses other `mediaprovider:core`
+   symbols (`MediaImporter`, `MediaInfoProvider`, `RemoteArtworkProvider`, `FlowEvent`, M3U, search,
+   workers, ...), so no module's `mediaprovider:core` edge dropped — each gained `:android:domain`
+   where it didn't already have it.)
 5. **Playback interfaces**: move `QueueOperations`, `PlaybackOperations` and the state types they
    expose into domain; `:android:playback` implements them.
 6. **Shared use cases**: move `ui/actions` use cases whose dependencies are now all in domain into

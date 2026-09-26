@@ -73,10 +73,10 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 
 - **`:android:app`** — Main application: UI screens, DI setup, presenters, navigation
 - **`:android:playback`** — ExoPlayer wrapper, PlaybackFacade, PlaybackService, queue management, audio focus
-- **`:android:mediaprovider:core`** — MediaProvider interface, MediaImporter, repository interfaces (Song, Album, Playlist, Genre)
+- **`:android:mediaprovider:core`** — MediaProvider interface, MediaImporter, M3U, import worker
 - **`:android:mediaprovider:local`** — Local MediaStore/TagLib provider implementation
 - **`:android:mediaprovider:jellyfin|emby|plex`** — Remote streaming provider implementations
-- **`:android:domain`** — Plain Kotlin/JVM domain models, song queries and sort orders (no Android)
+- **`:android:domain`** — Plain Kotlin/JVM domain models, song queries and sort orders, and the repository interfaces (Song, Album, Playlist, Genre) (no Android)
 - **`:android:downloads`** — Offline downloads of remote-provider songs
 - **`:android:saf`** — Storage Access Framework helpers
 - **`:android:core`** — Shared utilities, logging, Hilt setup
