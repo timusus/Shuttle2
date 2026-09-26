@@ -191,7 +191,7 @@ The JVM-proven parts of these items are mapped in `docs/architecture/parity-audi
 - [ ] With Artwork → Wi-Fi only on and Wi-Fi off, a song without cached artwork shows its placeholder; on Wi-Fi it loads. With Local only on, remote artwork never loads.
 - [ ] With Media session artwork on, the notification, lock screen and a Bluetooth head unit show the cover; with it off they don't.
 - [ ] Add both widget sizes to the home screen, then play, pause and skip. Both update their title, artwork and play state.
-- [ ] Crash reporting: with it on, force a crash on a debug build, reopen the app, and the report reaches Crashlytics; with it off, nothing does.
+- [ ] Crash reporting: with it on, force a crash on a debug build, reopen the app, and the report reaches Sentry; with it off, nothing does. With usage analytics on, events reach PostHog; with it off, none do.
 - [ ] Remote Config: change a flag in the console, reopen the app (decision 6: fetch on launch, `MainActivity`), and the new value applies.
 - [ ] Set S2 as the default music app, then open an audio file from Files and from a messaging app. S2 plays it.
 - [ ] Long-press the launcher icon and tap the Toggle playback shortcut. Playback starts, and a second tap pauses.

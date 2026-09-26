@@ -56,8 +56,8 @@ Code paths are relative to `android/app/src/main/java/com/simplecityapps/shuttle
 | Widget ✅ | opacity | `ui/widgets/NowPlayingWidget.kt:103` | `WidgetLayoutTest`, `NowPlayingWidgetStateTest`, `AndroidSettingsEffectsTest` | proven |
 | | both sizes still update | `ui/widgets/` | none | device-only |
 | Crash and analytics | toggles stored | `ui/screens/settings/model/SettingsCatalog.kt:245` | `SettingsCatalogTest`, `SettingsViewModelTest` | proven |
-| | analytics consent applied to Firebase | `ui/screens/settings/SettingsEffects.kt:64` | none | gap #476 |
-| | crash reporting after a restart; Remote Config refresh (decision 6) | `ui/MainActivity.kt:123` | none | device-only |
+| | consent applied to Sentry and PostHog, live | `telemetry/TelemetryConsentGate.kt` | `TelemetryConsentGateTest` | proven |
+| | reports reach Sentry and PostHog | `telemetry/` | none | device-only |
 | Logging ✅ | file logging | `debug/DebugLoggingTree.kt:9` | `DebugLoggingTreeTest` | proven |
 | | copy logs | `ui/screens/settings/SettingsEffects.kt:64` | `AndroidSettingsEffectsTest`, `SettingsScreenTest` | proven |
 | | debug live log | | | dropped on purpose (#471) |
