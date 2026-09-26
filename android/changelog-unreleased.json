@@ -114,6 +114,10 @@
     {
       "text": "The server sign-in screen now says that streaming from Jellyfin, Emby and Plex is part of S2 Pro, free for 14 days, before you connect",
       "commits": []
+    },
+    {
+      "text": "Skipping a song from Jellyfin, Emby or Plex in your queue because streaming needs S2 Pro now shows a message explaining why",
+      "commits": []
     }
   ],
   "fixes": [

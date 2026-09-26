@@ -10,6 +10,8 @@ import com.simplecityapps.trial.ServerAccessGate
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -49,5 +51,26 @@ class EntitledServerStreamPolicyTest {
 
         entitlement.value = Entitlement.Pro(ProSource.Subscription)
         policy.allows(song) shouldBe true
+    }
+
+    @Test
+    fun `a denied song is reported as gated`() = runTest(UnconfinedTestDispatcher()) {
+        val gated = mutableListOf<com.simplecityapps.shuttle.model.Song>()
+        backgroundScope.launch { policy.gatedSongs.collect { gated += it } }
+
+        policy.allows(song)
+
+        gated shouldBe listOf(song)
+    }
+
+    @Test
+    fun `an allowed song isn't reported as gated`() = runTest(UnconfinedTestDispatcher()) {
+        entitlement.value = Entitlement.Pro(ProSource.Subscription)
+        val gated = mutableListOf<com.simplecityapps.shuttle.model.Song>()
+        backgroundScope.launch { policy.gatedSongs.collect { gated += it } }
+
+        policy.allows(song)
+
+        gated shouldBe emptyList()
     }
 }

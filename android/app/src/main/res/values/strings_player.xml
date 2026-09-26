@@ -36,6 +36,8 @@
     <string name="player_more_sound_settings_summary">Pre-amp, USB audio output and shuffle</string>
     <!-- Snackbar shown after a song is removed from the queue -->
     <string name="player_removed_from_queue">Removed from queue</string>
+    <!-- Snackbar shown when a queued song is skipped because streaming it needs S2 Pro; %1$s is the song title -->
+    <string name="player_server_song_skipped">Skipped “%1$s” — streaming needs S2 Pro</string>
     <!-- Song menu option: opens the song's album -->
     <string name="player_go_to_album">Go to album</string>
     <!-- Song menu option: opens the song's album artist -->

@@ -98,6 +98,9 @@ sealed interface PlayerUiEvent {
 
     /** A song action ran; the shell shows its message, opens its screen or runs its snackbar's action. */
     data class MediaActionDone(val result: MediaActionResult) : PlayerUiEvent
+
+    /** A queued server song was skipped because streaming it needs S2 Pro (monetisation.md, line 136). */
+    data class ServerSongSkipped(val songTitle: String) : PlayerUiEvent
 }
 
 /**

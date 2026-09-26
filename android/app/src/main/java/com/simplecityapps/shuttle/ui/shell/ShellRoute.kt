@@ -98,6 +98,13 @@ internal fun PlayerEventsEffect(
                     }
 
                     is PlayerUiEvent.MediaActionDone -> onMediaActionResult(event.result, snackbarHostState, resources, activity, currentActions, navigate)
+
+                    is PlayerUiEvent.ServerSongSkipped -> launch {
+                        snackbarHostState.showSnackbar(
+                            resources.getString(R.string.player_server_song_skipped, event.songTitle),
+                            duration = SnackbarDuration.Short,
+                        )
+                    }
                 }
             }
         }

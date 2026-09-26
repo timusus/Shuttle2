@@ -46,6 +46,7 @@ import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -75,6 +76,7 @@ class PlayerViewModelTest {
         seededSongs += song
         ArtworkSeed.Available(Color.Red)
     }
+    private val gatedSongs = MutableSharedFlow<Song>()
 
     @Before
     fun setUp() {
@@ -93,6 +95,7 @@ class PlayerViewModelTest {
             observeQueue = ObserveQueue(queueOperations),
             observePlayback = ObservePlayback(playbackOperations, queueOperations),
             observeProgress = ObserveProgress(playbackOperations),
+            observeGatedServerSkip = ObserveGatedServerSkip { gatedSongs },
             controlPlayback = ControlPlayback(playbackOperations, queueOperations),
             editQueue = EditQueue(playbackOperations, queueOperations),
             observeFavouriteSongIds = ObserveFavouriteSongIds(playlistRepository),
@@ -552,6 +555,17 @@ class PlayerViewModelTest {
         val restored = viewModel(SavedStateHandle(mapOf(PlayerViewModel.PANEL_KEY to handle.get<NowPlayingPanel>(PlayerViewModel.PANEL_KEY))))
         queueOperations.queueStateFlow.value = queueOf(songs("One"))
         restored.uiState.value.player.panel shouldBe NowPlayingPanel.Queue
+    }
+
+    @Test
+    fun `a gated server song is reported as a skip event`() = runTest {
+        val viewModel = viewModel()
+        val events = mutableListOf<PlayerUiEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.toList(events) }
+
+        gatedSongs.emit(createSong(name = "Remote Song"))
+
+        events shouldBe listOf(PlayerUiEvent.ServerSongSkipped("Remote Song"))
     }
 
     @Test

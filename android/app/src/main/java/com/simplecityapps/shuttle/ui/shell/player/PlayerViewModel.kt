@@ -55,6 +55,11 @@ fun interface SavedNowPlaying {
     fun snapshot(): NowPlayingSnapshot?
 }
 
+/** A queued song, each time it's skipped because streaming it needs S2 Pro. */
+fun interface ObserveGatedServerSkip {
+    operator fun invoke(): Flow<Song>
+}
+
 /**
  * The player surfaces' state and actions (docs/architecture/app-shell.md, sections 1 and 5): the
  * queue, playback state and modes, favourite, sleep timer, speed and ReplayGain, the now-playing
@@ -67,6 +72,7 @@ class PlayerViewModel @Inject constructor(
     observeQueue: ObserveQueue,
     observePlayback: ObservePlayback,
     observeProgress: ObserveProgress,
+    observeGatedServerSkip: ObserveGatedServerSkip,
     private val controlPlayback: ControlPlayback,
     private val editQueue: EditQueue,
     observeFavouriteSongIds: ObserveFavouriteSongIds,
@@ -105,6 +111,12 @@ class PlayerViewModel @Inject constructor(
     private val panel: StateFlow<NowPlayingPanel?> = savedStateHandle.getStateFlow(PANEL_KEY, null)
 
     private var removedItem: RemovedQueueItem? = null
+
+    init {
+        viewModelScope.launch {
+            observeGatedServerSkip().collect { song -> _events.emit(PlayerUiEvent.ServerSongSkipped(song.name.orEmpty())) }
+        }
+    }
 
     private val queue: StateFlow<QueueState> = observeQueue()
 

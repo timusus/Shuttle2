@@ -24,6 +24,7 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.IntoSet
+import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)
 @Module
@@ -32,6 +33,7 @@ abstract class AppBindsModule {
     abstract fun bindSongImportStateProvider(impl: MediaImporter): SongImportStateProvider
 
     @Binds
+    @Singleton
     abstract fun bindServerStreamPolicy(impl: EntitledServerStreamPolicy): ServerStreamPolicy
 
     @Binds
