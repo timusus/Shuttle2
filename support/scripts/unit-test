@@ -99,7 +99,9 @@ Usage: support/scripts/unit-test [module ...] [--tests <filter>]
                           ":android:playback"). Short names are resolved by
                           reading settings.gradle(.kts) for the last path
                           segment.
-  --tests <filter>        Passed through to Gradle's --tests filter.
+  --tests <filter>        Passed through to Gradle's --tests filter. May be
+                          repeated (also accepts --tests=<filter>); each one
+                          is forwarded to Gradle.
 
   --changed               Map changed files (committed since <ref>, plus
                            uncommitted/untracked) to Gradle modules, compile
@@ -746,7 +748,7 @@ if [ "$#" -eq 0 ]; then
 fi
 
 modules=()
-tests_filter=""
+tests_filters=()
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -760,7 +762,11 @@ while [ "$#" -gt 0 ]; do
         echo "error: --tests requires an argument" >&2
         exit 2
       fi
-      tests_filter="$1"
+      tests_filters+=("$1")
+      shift
+      ;;
+    --tests=*)
+      tests_filters+=("${1#--tests=}")
       shift
       ;;
     *)
@@ -770,11 +776,13 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
+filter_args=()
+for filter in "${tests_filters[@]+"${tests_filters[@]}"}"; do
+  filter_args+=(--tests "${filter}")
+done
+
 if [ "${#modules[@]}" -eq 0 ]; then
-  whole_project_args=(testDebugUnitTest)
-  if [ -n "${tests_filter}" ]; then
-    whole_project_args+=(--tests "${tests_filter}")
-  fi
+  whole_project_args=(testDebugUnitTest "${filter_args[@]+"${filter_args[@]}"}")
   run_and_report "${whole_project_args[@]}"
   exit $?
 fi
@@ -785,10 +793,7 @@ for module in "${modules[@]}"; do
   tasks+=("${resolved}:testDebugUnitTest")
 done
 
-gradle_args=("${tasks[@]}")
-if [ -n "${tests_filter}" ]; then
-  gradle_args+=(--tests "${tests_filter}")
-fi
+gradle_args=("${tasks[@]}" "${filter_args[@]+"${filter_args[@]}"}")
 
 run_and_report "${gradle_args[@]}"
 exit $?
