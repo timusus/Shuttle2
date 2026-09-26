@@ -82,6 +82,9 @@ submenu. One shared `ObservePlaylists` use case removes most of those entries.
 - Callback interfaces: `CircularLoadingView.Listener`, `DebugLoggingTree.Callback` and
   `MediaImporter.Listener`. `MediaImportObserver` is its only remaining user; it should become a
   Flow.
+- All of these are gone: the paywall is a `PaywallHost` composable collecting
+  `ServerAccessGate.paywallRequests`, the snow a `Snowfall` composable, and `MediaImporter` publishes
+  its `SongImportState` as a `StateFlow` itself, with `MediaImportObserver` deleted.
 
 **Package root.** `:android:imageloader` declares 30 files under `au.com.simplecityapps.shuttle.imageloading`,
 and 34 files reference that package.
@@ -246,7 +249,7 @@ should be removals only.
     layouts.
   - Also `ui/screens/paywall/PaywallDialogFragment.kt` and its callers.
   - Clears the 4 `fragments` entries and 30 `!!`.
-- **E. Callbacks and custom Views.**
+- **E. Callbacks and custom Views (done).**
   - Files: `ui/common/view/CircularLoadingView.kt`, `ui/common/view/SnowfallView.kt`,
     `debug/DebugLoggingTree.kt`.
   - Also `mediaprovider/core/.../MediaImporter.kt` and `MediaImportObserver.kt`, moving
