@@ -1,12 +1,15 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
 import android.content.Context
+import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
+import com.simplecityapps.shuttle.settings.StreamingQuality
+import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
@@ -74,6 +77,16 @@ class SettingsViewModelTest {
         store.preference(AppearanceSettings.Theme).value shouldBe ThemeMode.Dark
         context.defaultSharedPreferences().getString(AppearanceSettings.Theme.key, null) shouldBe "2"
         effects.changes shouldBe listOf(AppearanceSettings.Theme.key to ThemeMode.Dark)
+    }
+
+    @Test
+    fun `a streaming quality is stored by name and caps that network's streams`() {
+        viewModel().onChoiceSelect(item<SettingItem.Choice<*>>(StreamingSettings.MeteredQuality.key), 3)
+
+        store.preference(StreamingSettings.MeteredQuality).value shouldBe StreamingQuality.Kbps128
+        store.preference(StreamingSettings.UnmeteredQuality).value shouldBe StreamingQuality.Original
+        context.defaultSharedPreferences().getString(StreamingSettings.MeteredQuality.key, null) shouldBe "Kbps128"
+        StreamingBitrateCap(StreamingSettings(store)) { true }.maxBitrateKbps() shouldBe 128
     }
 
     @Test

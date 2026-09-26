@@ -143,6 +143,20 @@
     <string name="pref_download_wifi_only_title">Download on Wi-Fi only</string>
     <!-- Settings: Summary of the download on Wi-Fi only switch -->
     <string name="pref_download_wifi_only_summary">Offline downloads wait for Wi-Fi</string>
+    <!-- Settings: Header of the Sources group that caps the bitrate of songs streamed from Jellyfin, Emby and Plex -->
+    <string name="pref_category_title_streaming_quality">Streaming quality</string>
+    <!-- Settings: Title of the streaming quality choice used on Wi-Fi and other unmetered networks -->
+    <string name="pref_streaming_quality_unmetered_title">On Wi-Fi</string>
+    <!-- Settings: Title of the streaming quality choice used on mobile data and other metered networks -->
+    <string name="pref_streaming_quality_metered_title">On mobile data</string>
+    <!-- Settings: Streaming quality option that streams each song's original file, uncapped -->
+    <string name="pref_streaming_quality_original">Original</string>
+    <!-- Settings: Streaming quality option capping streams at 320 kilobits per second -->
+    <string name="pref_streaming_quality_320">320 kbps</string>
+    <!-- Settings: Streaming quality option capping streams at 192 kilobits per second -->
+    <string name="pref_streaming_quality_192">192 kbps</string>
+    <!-- Settings: Streaming quality option capping streams at 128 kilobits per second -->
+    <string name="pref_streaming_quality_128">128 kbps</string>
     <!-- Settings: Name of the amber accent colour -->
     <string name="theme_accent_entry_amber">Amber</string>
     <!-- Settings: Title of the row showing the app's version number, on the About screen -->

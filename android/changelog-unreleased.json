@@ -64,6 +64,10 @@
     {
       "text": "Album and artist pages take their colours from the album artwork when Colour from artwork is on in Appearance settings",
       "commits": []
+    },
+    {
+      "text": "Choose a streaming quality for Jellyfin, Emby and Plex in Sources settings, separately for Wi-Fi and mobile data, to save data on the go",
+      "commits": ["51d8a0807"]
     }
   ],
   "improvements": [

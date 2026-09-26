@@ -13,6 +13,8 @@ import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
+import com.simplecityapps.shuttle.settings.StreamingQuality
+import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
 import kotlin.math.roundToInt
 
@@ -24,6 +26,13 @@ import kotlin.math.roundToInt
  * media provider list, not a preference), and About's version, rate and contact rows, which aren't settings.
  */
 object SettingsCatalog {
+    private val streamingQualityOptions = listOf(
+        ChoiceOption(StreamingQuality.Original, R.string.pref_streaming_quality_original),
+        ChoiceOption(StreamingQuality.Kbps320, R.string.pref_streaming_quality_320),
+        ChoiceOption(StreamingQuality.Kbps192, R.string.pref_streaming_quality_192),
+        ChoiceOption(StreamingQuality.Kbps128, R.string.pref_streaming_quality_128)
+    )
+
     val appearance = SettingsScreen(
         destination = SettingsDestination.Appearance,
         groups = listOf(
@@ -156,6 +165,21 @@ object SettingsCatalog {
                         setting = DownloadSettings.WifiOnly,
                         title = R.string.pref_download_wifi_only_title,
                         summary = R.string.pref_download_wifi_only_summary
+                    )
+                )
+            ),
+            SettingsGroup(
+                title = R.string.pref_category_title_streaming_quality,
+                items = listOf(
+                    SettingItem.Choice(
+                        setting = StreamingSettings.UnmeteredQuality,
+                        title = R.string.pref_streaming_quality_unmetered_title,
+                        options = streamingQualityOptions
+                    ),
+                    SettingItem.Choice(
+                        setting = StreamingSettings.MeteredQuality,
+                        title = R.string.pref_streaming_quality_metered_title,
+                        options = streamingQualityOptions
                     )
                 )
             )

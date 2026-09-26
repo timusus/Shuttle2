@@ -91,6 +91,13 @@ class SettingsScreenshotTest {
         content = destination(SettingsDestination.Sources) { sourcesContent(SourcesScenarios.configured, SourcesScenarios.noActions) }
     )
 
+    /** The catalog's own Sources rows, below the source list the full screen leads with. */
+    @Test
+    fun sourcesStreamingQuality() = shot(
+        "sources-streaming-quality",
+        content = destination(SettingsDestination.Sources, SettingsScenarios.streamingCappedOnMobileData)
+    )
+
     @Test
     fun library() = shot("library", content = destination(SettingsDestination.Library, SettingsScenarios.scannedWeekly))
 

@@ -225,3 +225,11 @@ The JVM-proven parts of these items are mapped in `docs/architecture/parity-audi
 - [ ] Edit a Jellyfin, Emby and Plex server's address and user from Sources. The change saves and the library reimports (View-based dialogs until #434).
 - [ ] Now Playing → More options → Save Queue to Playlist → New Playlist, name it and tap Create (#472). The new playlist holds the queue's songs in queue order; picking an existing playlist instead appends them.
 - [ ] `support/scripts/emu-verify.sh --suite` passes with every flow green in `build/maestro/results.md`.
+
+## Streaming quality (#504)
+
+Set Settings → Sources → Streaming quality → On mobile data to 128 kbps and leave On Wi-Fi at Original. The S2 Transcode Test album on each server has a FLAC to try.
+
+- [ ] Jellyfin: on Wi-Fi a FLAC plays as the original (the server's dashboard shows Direct Play). On mobile data the next song transcodes (the dashboard shows Transcode at about 128 kbps) and sounds right; seeking forward and back while it transcodes lands at the right position and keeps playing. A song already under 128 kbps direct-plays.
+- [ ] Emby: the same as Jellyfin. On mobile data the dashboard shows the stream transcoding at about 128 kbps (the parameter is untested against Emby), and seeking while it transcodes works.
+- [ ] Plex: on Wi-Fi a FLAC plays as the original file. On mobile data the next song plays through Plex's transcoder (Plex Web → Dashboard shows a transcode at about 128 kbps); seeking while it transcodes lands at the right position, and a song whose bitrate is already under the cap plays the original.

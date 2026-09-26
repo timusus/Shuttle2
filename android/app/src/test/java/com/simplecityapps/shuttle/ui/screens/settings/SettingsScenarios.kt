@@ -4,6 +4,8 @@ import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.mediaprovider.worker.ImportFrequency
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
+import com.simplecityapps.shuttle.settings.StreamingQuality
+import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
 import java.util.Date
 
@@ -27,5 +29,12 @@ object SettingsScenarios {
     val scannedWeekly = SettingsUiState(
         values = mapOf(LibrarySettings.RescanFrequency.key to ImportFrequency.Weekly),
         lastScanDate = Date(0)
+    )
+
+    val streamingCappedOnMobileData = SettingsUiState(
+        values = mapOf(
+            StreamingSettings.UnmeteredQuality.key to StreamingQuality.Original,
+            StreamingSettings.MeteredQuality.key to StreamingQuality.Kbps128
+        )
     )
 }

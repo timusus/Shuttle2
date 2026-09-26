@@ -4,6 +4,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
@@ -200,6 +201,28 @@ class SettingsScreenTest {
 
         robot.assertNotShown("Media providers")
         robot.assertDisplayed("Report playback to server")
+    }
+
+    @Test
+    fun `sources shows the streaming quality on Wi-Fi and on mobile data`() {
+        robot.setDestinationContent(SettingsDestination.Sources, SettingsScenarios.streamingCappedOnMobileData)
+
+        robot.assertDisplayed("Streaming quality")
+        robot.assertDisplayed("On Wi-Fi")
+        robot.assertDisplayed("Original")
+        robot.assertDisplayed("On mobile data")
+        robot.assertDisplayed("128 kbps")
+    }
+
+    @Test
+    fun `picking a mobile data streaming quality reports the option`() {
+        robot.setDestinationContent(SettingsDestination.Sources)
+
+        robot.tapText("On mobile data")
+        robot.assertDialogDisplayed("320 kbps")
+        robot.tapDialogText("192 kbps")
+
+        robot.choiceSelections shouldBe listOf(StreamingSettings.MeteredQuality.key to 2)
     }
 
     @Test
