@@ -43,7 +43,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.ui.snapshot.Snapshot
 
 /** What the sign-in form asks its host to do. */
 class ServerSignInActions(
@@ -231,7 +230,6 @@ private val MediaProviderType.longTitleRes: Int
 
 private val previewActions = ServerSignInActions({}, {}, {}, {}, {}, {}, {}, {})
 
-@Snapshot
 @Preview
 @Composable
 private fun PlexSignIn() {
@@ -243,7 +241,6 @@ private fun PlexSignIn() {
     }
 }
 
-@Snapshot
 @Preview
 @Composable
 private fun JellyfinSignInMissingFields() {
@@ -258,7 +255,6 @@ private fun JellyfinSignInMissingFields() {
     }
 }
 
-@Snapshot
 @Preview
 @Composable
 private fun EmbySignInConnected() {
@@ -267,7 +263,6 @@ private fun EmbySignInConnected() {
     }
 }
 
-@Snapshot
 @Preview
 @Composable
 private fun JellyfinSignInFailed() {

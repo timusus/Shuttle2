@@ -16,7 +16,7 @@ per test and removes a source of flakes.
 | Compose semantics: what's on screen, taps, back handling, sheet levels, selection | **Robolectric + Robot** (`.claude/rules/testing.md`) | `AppShellTest`, `LibraryScreenTest`, `SongListIntegrationTest` |
 | Room schema/migrations, MediaStore, SAF, WorkManager, Glance, `AudioManager` focus | **Robolectric** | `MediaDatabaseMigrationTest`, `ShortcutManagerTest`, `CallHoldTest` |
 | Real Media3 player behaviour: queue, shuffle order, repeat, focus, session, Cast handover | **Robolectric + `PlaybackHarness`** (real ExoPlayer, `FakeClock`, WAV media) | `PlaybackSpecTest`, `AudioFocusSpecTest`, `MediaSessionSpecTest`, `CastSpecTest` |
-| How it looks: layout, colour, typography, density, dark theme | **Roborazzi**, compared on `verifyRoborazziDebug` only; no behaviour asserts | `CatalogScreenshotTest` (`docs/design/catalog`), `HomeScreenshotTest`, `SnapshotComposePreviewTests` |
+| How it looks: layout, colour, typography, density, dark theme | **Roborazzi**, compared on `verifyRoborazziDebug` only; no behaviour asserts | `CatalogScreenshotTest` (`docs/design/catalog`), `HomeScreenshotTest` |
 | Code shape: layering, naming, banned APIs | **Konsist / `verifyModuleLayers`** | `ConventionRules`, `LegacyApiRules`, `module-layers.txt` baseline |
 | The real platform: the service and its notification, System UI, runtime permissions, process death, widget, voice, open-file intents, audio routing | **Maestro / device check** (`support/maestro/CLASSIFICATION.md`) | `notification-controls`, `first-run`, `restore-queue`, `settings-usb-dac-direct-output` |
 | Real hardware, real servers, a car or a Cast receiver | **Owner device check** (`docs/testing/device-checks.md`) | Android Auto, Chromecast, Jellyfin transcoding |

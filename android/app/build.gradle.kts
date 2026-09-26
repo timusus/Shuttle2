@@ -136,8 +136,6 @@ android {
         implementation(libs.androidx.activity.compose)
         testImplementation(libs.roborazzi)
         testImplementation(libs.roborazzi.compose)
-        testImplementation(libs.roborazzi.composePreviewScannerSupport)
-        testImplementation(libs.compose.preview.scanner)
         implementation(libs.kotlinx.collections.immutable)
         implementation(libs.kotlinx.datetime)
         implementation(libs.androidx.material3)

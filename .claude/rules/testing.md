@@ -128,8 +128,7 @@ albums or songs, and never hand-typed "Artist"/"Album" stand-ins where content i
   `Artwork(model = ...)`; app previews use `S2Preview(artwork = SampleAppCovers)` or
   `SampleArtwork { }` inside their own theme, with models from `ui/preview/SamplePreviews.kt`.
   Covers draw synchronously through `LocalPreviewArtwork`, no Coil; keep fixture data in
-  previews out of top-level fields (release has no fixtures). `SnapshotComposePreviewTests` renders
-  every `@Preview` with its covers.
+  previews out of top-level fields (release has no fixtures).
 - **Boards:** `SampleArt(albumId)` for a row naming a sample album, `SampleArt(variant)` for
   generic art matched to the scheme column.
 

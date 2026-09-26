@@ -1,7 +1,6 @@
 [versions]
 activity = "1.13.0"
 aboutlibraries = "15.2.0"
-composable-preview-scanner = "0.9.3"
 annotation = "1.10.0"
 appcompat = "1.8.0"
 agp = "9.4.1"
@@ -121,7 +120,6 @@ coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" 
 coil-core = { module = "io.coil-kt.coil3:coil-core", version.ref = "coil" }
 coil-network-okhttp = { module = "io.coil-kt.coil3:coil-network-okhttp", version.ref = "coil" }
 compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "compose-lint-checks" }
-compose-preview-scanner = { module = "io.github.sergio-sastre.ComposablePreviewScanner:android", version.ref = "composable-preview-scanner" }
 google-material = { module = "com.google.android.material:material", version.ref = "material" }
 google-play-services-cast-framework = { module = "com.google.android.gms:play-services-cast-framework", version.ref = "play-services-cast-framework" }
 google-review = { module = "com.google.android.play:review", version.ref = "review" }
@@ -167,7 +165,6 @@ reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reo
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 roborazzi = { module = "io.github.takahirom.roborazzi:roborazzi", version.ref = "roborazzi" }
 roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose", version.ref = "roborazzi" }
-roborazzi-composePreviewScannerSupport = { module = "io.github.takahirom.roborazzi:roborazzi-compose-preview-scanner-support", version.ref = "roborazzi" }
 retrofit2-converterMoshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converter-moshi" }
 retrofit2-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "converter-moshi" }
 sentry-android = { module = "io.sentry:sentry-android", version.ref = "sentry" }
