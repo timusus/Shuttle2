@@ -196,7 +196,7 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
    data as a build failure, and the Konsist import rules become a second line of defence.
    - ~~**8.0 Guard**: `ui-module-imports` (`UiModuleRules.kt`) bans new imports of data, provider or
      app-only declarations from the code that's moving to `:android:ui`, ahead of the module split
-     itself.~~ (done: baseline of 116 existing violations — 95 data, 18 provider, 3 app-only —
+     itself.~~ (done: baseline of 119 existing violations,
      covering imports of top-level functions and properties as well as types; every later prep slice
      shrinks it.)
 
