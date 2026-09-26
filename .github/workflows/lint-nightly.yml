@@ -2,7 +2,8 @@ name: Nightly Lint
 
 # AGP Lint (:android:app:lintDebug) is off the landing verify (#537): abortOnError = false and 353
 # existing errors mean it can't fail a landing yet, so it runs here on a schedule instead, purely to
-# keep the report visible while a baseline gate is designed.
+# keep the report visible while a baseline gate is designed. ktlint (support/scripts/lint) is off the
+# landing verify too: a hook formats every edit, and CI only runs it on pull requests.
 on:
   schedule:
     - cron: "0 3 * * *"
@@ -13,7 +14,7 @@ env:
 
 jobs:
   lint:
-    name: "Lint (:android:app:lintDebug)"
+    name: "Lint (ktlint + :android:app:lintDebug)"
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -37,7 +38,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: "ktlint"
+        run: "support/scripts/lint"
+
       - name: "Run Lint"
+        if: always()
         run: "./gradlew :android:app:lintDebug"
 
       - name: "Lint Report"
