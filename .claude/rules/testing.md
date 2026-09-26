@@ -45,8 +45,10 @@ same diff `--changed` uses down to individual test classes, one Gradle invocatio
 `unit-test --changed` or a plain `unit-test` (or the landing verify).
 
 Rules:
-- A changed `src/test/*.kt` file selects its own class, unless it's a screenshot test (any
+- A changed `src/test/*Test.kt` file selects its own class, unless it's a screenshot test (any
   `*ScreenshotTest.kt`) — those run under `verifyRoborazziDebug` in the final verify, not here.
+- A changed test helper (`src/test/*.kt` not ending in `Test`: a Robot, Scenarios, a fake) has no
+  `@Test` methods, so it maps like a main file below: the `*Test.kt` classes that reference it.
 - A changed `src/main/*.kt` file's class `Foo` selects `FooTest` (if it exists anywhere under the
   module's `src/test`), plus any `*Test.kt` that references `Foo` by name — a plain, case-sensitive
   substring grep over the module's test sources, kept simple and predictable. A `FooViewModel` also

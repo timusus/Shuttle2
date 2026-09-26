@@ -318,8 +318,13 @@ run_changed_mode() {
       src/test/*.kt)
         # Only filter on classes that still exist; a deleted test file must
         # not add a --tests filter for a class Gradle can no longer find.
-        if [ -f "${REPO_ROOT}/${f}" ]; then
-          cls="$(basename "${rel}" .kt)"
+        # A helper (a Robot, Scenarios, a fake) has no @Test methods, and
+        # filtering on it fails with "No tests found": run the module whole.
+        cls="$(basename "${rel}" .kt)"
+        if [ "${cls%Test}" = "${cls}" ]; then
+          echo "note: '${f}' is a test helper; running ${mpath} whole"
+          touch "${WORK_DIR}/${id}.unmappable"
+        elif [ -f "${REPO_ROOT}/${f}" ]; then
           echo "${cls}" >> "${WORK_DIR}/${id}.classes"
         fi
         ;;
@@ -566,7 +571,7 @@ run_changed_tests_mode() {
     test_dir="${REPO_ROOT}/${mdir}/src/test"
 
     case "${rel}" in
-      src/test/*.kt)
+      src/test/*Test.kt)
         # A screenshot test belongs to the final verify (Roborazzi runs in
         # verify mode there), not a --tests run here; treat it like any
         # other change that maps to no runnable class.
@@ -582,7 +587,9 @@ run_changed_tests_mode() {
         echo "note: '${f}' is an androidTest source; falling back to a whole run of ${mpath}"
         touch "${WORK_DIR}/${id}.unmappable"
         ;;
-      src/main/*.kt)
+      src/main/*.kt | src/test/*.kt)
+        # A main file, or a test helper (a Robot, Scenarios, a fake), selects
+        # the test classes that use it; a helper has no @Test methods itself.
         local found=0 name
         while IFS= read -r name; do
           [ -z "${name}" ] && continue
