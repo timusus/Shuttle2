@@ -354,11 +354,14 @@ run_changed_mode() {
 
   if [ -n "${full_suite_trigger}" ]; then
     echo "Build-system file changed ('${full_suite_trigger}'); running the full test suite."
-    local full_rc=0
-    print_and_run testDebugUnitTest || full_rc=$?
+    # One invocation: a module's verifyRoborazziDebug in the task graph switches that module's
+    # testDebugUnitTest to verify mode, so its suite runs once rather than twice (#552).
+    local full_tasks=(testDebugUnitTest)
     if [ "${roborazzi}" -eq 1 ]; then
-      print_and_run ":android:app:verifyRoborazziDebug" || full_rc=$?
+      full_tasks+=(":android:app:verifyRoborazziDebug" ":android:designsystem:verifyRoborazziDebug")
     fi
+    local full_rc=0
+    print_and_run "${full_tasks[@]}" || full_rc=$?
     return "${full_rc}"
   fi
 

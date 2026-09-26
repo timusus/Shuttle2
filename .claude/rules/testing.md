@@ -33,7 +33,9 @@ Rules, in order:
   `build.gradle*`, `settings.gradle*` or `gradle.properties` runs the full suite instead of mapping by
   module, since it can affect any module's classpath or task graph.
 - `docs/design/**` or any changed file containing `@Composable` also runs
-  `:android:app:verifyRoborazziDebug`. Other paths outside `android/` (docs, scripts) run nothing.
+  `:android:app:verifyRoborazziDebug` (plus designsystem's on a full-suite run), in the same Gradle
+  invocation as the tests so each suite runs once, in verify mode (#552). Other paths outside
+  `android/` (docs, scripts) run nothing.
 
 ### Compose UI Characterisation Tests
 

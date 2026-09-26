@@ -57,7 +57,11 @@ back to plain `./gradlew` when it isn't installed.
 
 # Build on whichever host has room: the Mac unless it's loaded, else a free WSL box slot
 # (never queues for the box; --box / --local force one — see .claude/rules/android.md)
-./support/scripts/remote-build.sh -q testDebugUnitTest :android:app:assembleDebug
+./support/scripts/remote-build.sh -q :android:app:assembleDebug
+
+# Landing verify: one invocation on the Mac. Each module's tests run once, in Roborazzi verify
+# mode, so a golden mismatch fails the same task as a test failure (docs/testing/strategy.md)
+./support/scripts/remote-build.sh --local -q testDebugUnitTest :android:app:assembleDebug :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug
 
 # Lint (KTLint)
 ./support/scripts/lint

@@ -254,16 +254,19 @@ was built -- a box build is synced back first). Line for briefs:
 > Build with `support/scripts/unit-test --remote-build [module]`, `support/scripts/emu-verify.sh
 > --remote-build ...`, or `support/scripts/remote-build.sh <tasks>` for anything else (foreground,
 > generous timeout): it builds on the Mac unless the Mac is loaded, and uses the box only when a
-> slot is free. Keep `verifyRoborazziDebug` on the Mac.
+> slot is free. Keep `verifyRoborazziDebug` on the Mac. The landing verify is one Mac invocation:
+> `support/scripts/remote-build.sh --local -q testDebugUnitTest :android:app:assembleDebug
+> :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug`.
 
 **Keep `verifyRoborazziDebug`/`recordRoborazziDebug` on the Mac.** The `docs/design/**` screenshot
 goldens are recorded on macOS; #458 added a Linux anti-aliasing tolerance
 (`s2.roborazzi.changeThreshold`) that fixed every other screenshot class, but all 7
 `HomeScreenshotTest` shots still fail there with a colour diff, not anti-aliasing (the LFS preview
 goldens under `android/app/src/test/snapshots` verify identically). Plain `testDebugUnitTest` is
-unaffected: the `docs/design` shots are a no-op outside `verify`/`record` (#538). **#539 is the one
-remaining blocker** to folding `verifyRoborazziDebug` into the box landing run instead of a second
-Mac build — fix `HomeScreenshotTest`'s goldens there first.
+unaffected: the `docs/design` shots are a no-op outside `verify`/`record` (#538). The landing runs
+the verify tasks in the same invocation as `testDebugUnitTest` (#552): Roborazzi switches a
+module's test task into verify mode when that module's `verifyRoborazziDebug` is in the task graph,
+so each suite runs once. #539 is what keeps that invocation off the box.
 
 Measured 2026-09-26, the full verify (`testDebugUnitTest :android:architecture-tests:test
 :android:app:verifyRoborazziDebug :android:app:assembleDebug --continue`): cold (no build outputs,
