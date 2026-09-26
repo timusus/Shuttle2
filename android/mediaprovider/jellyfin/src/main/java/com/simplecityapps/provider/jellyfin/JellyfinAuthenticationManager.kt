@@ -105,9 +105,15 @@ class JellyfinAuthenticationManager(
         credentialStore.authenticatedCredentials = credentialStore.authenticatedCredentials?.copy(canDownload = false)
     }
 
+    /**
+     * The universal stream URL. The server direct-plays the original when it's a format the player decodes and, with a
+     * [maxBitrateKbps] cap, when its bitrate is under the cap; otherwise it transcodes to AAC over HLS, which stays
+     * seekable. A null cap streams the original, whatever its bitrate.
+     */
     fun buildJellyfinPath(
         itemId: String,
-        authenticatedCredentials: AuthenticatedCredentials
+        authenticatedCredentials: AuthenticatedCredentials,
+        maxBitrateKbps: Int?
     ): String? {
         if (credentialStore.address == null) {
             Timber.w("Invalid jellyfin address (${credentialStore.address})")
@@ -126,6 +132,7 @@ class JellyfinAuthenticationManager(
             "&EnableRedirection=true" +
             "&EnableRemoteMedia=true" +
             "&AudioCodec=aac" +
+            maxBitrateKbps?.let { kbps -> "&MaxStreamingBitrate=${kbps * 1000}" }.orEmpty() +
             "&ApiKey=${authenticatedCredentials.accessToken}"
     }
 

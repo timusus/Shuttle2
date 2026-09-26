@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkInterceptor
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.plex.CredentialStore
 import com.simplecityapps.provider.plex.PlexArtworkTokenInterceptor
@@ -98,7 +99,10 @@ open class PlexMediaProviderModule {
     @Singleton
     @IntoMap
     @MediaProviderTypeKey(MediaProviderType.Plex)
-    fun providePlexMediaInfoProvider(authenticationManager: PlexAuthenticationManager): MediaInfoProvider = PlexMediaInfoProvider(authenticationManager)
+    fun providePlexMediaInfoProvider(
+        authenticationManager: PlexAuthenticationManager,
+        streamingBitrateCap: StreamingBitrateCap
+    ): MediaInfoProvider = PlexMediaInfoProvider(authenticationManager, streamingBitrateCap)
 
     @Provides
     @Singleton

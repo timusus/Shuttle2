@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.jellyfin.BuildConfig
 import com.simplecityapps.provider.jellyfin.CredentialStore
@@ -111,8 +112,9 @@ open class JellyfinMediaProviderModule {
     @MediaProviderTypeKey(MediaProviderType.Jellyfin)
     fun provideJellyfinMediaInfoProvider(
         authenticationManager: JellyfinAuthenticationManager,
-        transcodeService: JellyfinTranscodeService
-    ): MediaInfoProvider = JellyfinMediaInfoProvider(authenticationManager, transcodeService)
+        transcodeService: JellyfinTranscodeService,
+        streamingBitrateCap: StreamingBitrateCap
+    ): MediaInfoProvider = JellyfinMediaInfoProvider(authenticationManager, transcodeService, streamingBitrateCap)
 
     @Provides
     @Singleton

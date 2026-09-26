@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.core.net.toUri
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
+import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
@@ -12,7 +13,8 @@ class EmbyMediaInfoProvider
 @Inject
 constructor(
     private val embyAuthenticationManager: EmbyAuthenticationManager,
-    private val embyTranscodeService: EmbyTranscodeService
+    private val embyTranscodeService: EmbyTranscodeService,
+    private val streamingBitrateCap: StreamingBitrateCap
 ) : MediaInfoProvider {
     override fun handles(uri: Uri): Boolean = uri.scheme == "emby"
 
@@ -21,23 +23,28 @@ constructor(
         song: Song,
         castCompatibilityMode: Boolean
     ): MediaInfo {
-        val embyPath =
-            embyAuthenticationManager.getAuthenticatedCredentials()?.let { authenticatedCredentials ->
-                embyAuthenticationManager.buildEmbyPath(
-                    Uri.parse(song.path).pathSegments.last(),
-                    authenticatedCredentials
-                )?.toUri() ?: run {
-                    throw IllegalStateException("Failed to build emby path")
-                }
-            } ?: run {
-                throw IllegalStateException("Failed to authenticate")
-            }
+        val embyPath = buildPlaybackPathString(song).toUri()
 
         return MediaInfo(
             path = embyPath,
             mimeType = if (castCompatibilityMode) getMimeType(embyPath, song.mimeType) else song.mimeType,
             isRemote = true
         )
+    }
+
+    /**
+     * String form of [getMediaInfo]'s path, capped by the current [StreamingBitrateCap], kept separate so tests can
+     * assert on it without pulling Robolectric into this module for `Uri.parse`.
+     */
+    @Throws(IllegalStateException::class)
+    internal fun buildPlaybackPathString(song: Song): String {
+        val authenticatedCredentials = embyAuthenticationManager.getAuthenticatedCredentials()
+            ?: throw IllegalStateException("Failed to authenticate")
+        return embyAuthenticationManager.buildEmbyPath(
+            itemId = song.path.substringAfterLast('/'),
+            authenticatedCredentials = authenticatedCredentials,
+            maxBitrateKbps = streamingBitrateCap.maxBitrateKbps()
+        ) ?: throw IllegalStateException("Failed to build emby path")
     }
 
     private suspend fun getMimeType(

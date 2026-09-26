@@ -4,13 +4,15 @@ import android.net.Uri
 import androidx.core.net.toUri
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
+import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
 
 class PlexMediaInfoProvider
 @Inject
 constructor(
-    private val plexAuthenticationManager: PlexAuthenticationManager
+    private val plexAuthenticationManager: PlexAuthenticationManager,
+    private val streamingBitrateCap: StreamingBitrateCap
 ) : MediaInfoProvider {
     override fun handles(uri: Uri): Boolean = uri.scheme == "plex"
 
@@ -19,20 +21,44 @@ constructor(
         song: Song,
         castCompatibilityMode: Boolean
     ): MediaInfo {
-        val authenticatedCredentials = plexAuthenticationManager.getAuthenticatedCredentials()
-            ?: throw IllegalStateException("Failed to authenticate")
-        val plexPathString = plexAuthenticationManager.buildPlexPath(song = song, authenticatedCredentials = authenticatedCredentials)
-            ?: throw IllegalStateException("Failed to build plex path")
-
+        val stream = buildStream(song)
         return MediaInfo(
-            path = plexPathString.toUri(),
-            mimeType = song.mimeType,
+            path = stream.path.toUri(),
+            mimeType = stream.mimeType,
             isRemote = true
         )
     }
 
+    /** A stream URL and the MIME type it serves. */
+    internal data class PlexStream(
+        val path: String,
+        val mimeType: String
+    )
+
+    /**
+     * [getMediaInfo]'s stream, kept separate so tests can assert on it without pulling Robolectric into this module
+     * for `Uri.parse`. The original part file when there's no [StreamingBitrateCap] or the song's bitrate is known to
+     * be within it; otherwise an HLS transcode at the cap. An unknown bitrate transcodes, as Jellyfin does.
+     */
+    @Throws(IllegalStateException::class)
+    internal fun buildStream(song: Song): PlexStream {
+        val authenticatedCredentials = plexAuthenticationManager.getAuthenticatedCredentials()
+            ?: throw IllegalStateException("Failed to authenticate")
+        val maxBitrateKbps = streamingBitrateCap.maxBitrateKbps()
+        val bitRate = song.bitRate
+        return if (maxBitrateKbps == null || (bitRate != null && bitRate <= maxBitrateKbps)) {
+            val path = plexAuthenticationManager.buildPlexPath(song = song, authenticatedCredentials = authenticatedCredentials)
+                ?: throw IllegalStateException("Failed to build plex path")
+            PlexStream(path, song.mimeType)
+        } else {
+            val path = plexAuthenticationManager.buildPlexTranscodePath(song, authenticatedCredentials, maxBitrateKbps)
+                ?: throw IllegalStateException("Failed to build plex transcode path")
+            PlexStream(path, HLS_MIME_TYPE)
+        }
+    }
+
     // Plex's part-file path (song.externalId) is already the original, untranscoded file, so the
-    // download URL is the same one used for streaming.
+    // download URL is the same one used for streaming without a bitrate cap.
     override suspend fun downloadUri(song: Song): Uri? = buildDownloadPathString(song)?.toUri()
 
     // Plex has no separate download permission to fall back from: downloadUri is already the
@@ -43,11 +69,15 @@ constructor(
     ): Uri? = null
 
     /**
-     * String form of [downloadUri]'s path (also used for streaming, see above), kept separate so
+     * String form of [downloadUri]'s path (also used for uncapped streaming, see above), kept separate so
      * tests can assert on it without pulling Robolectric into this module just for `Uri.parse`.
      */
     internal suspend fun buildDownloadPathString(song: Song): String? {
         val authenticatedCredentials = plexAuthenticationManager.getAuthenticatedCredentials() ?: return null
         return plexAuthenticationManager.buildPlexPath(song = song, authenticatedCredentials = authenticatedCredentials)
+    }
+
+    private companion object {
+        const val HLS_MIME_TYPE = "application/x-mpegURL"
     }
 }

@@ -9,7 +9,10 @@ import com.simplecityapps.provider.plex.http.AuthenticationResult
 import com.simplecityapps.provider.plex.http.LoginCredentials
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.provider.plex.http.authenticate
+import com.simplecityapps.provider.plex.http.plexClientHeaders
 import com.simplecityapps.shuttle.model.Song
+import java.net.URLEncoder
+import java.util.UUID
 import timber.log.Timber
 
 class PlexAuthenticationManager(
@@ -74,5 +77,40 @@ class PlexAuthenticationManager(
             "?X-Plex-Token=${authenticatedCredentials.accessToken}" +
             "&X-Plex-Client-Identifier=${clientIdentity.id}" +
             "&X-Plex-Device=Android"
+    }
+
+    /**
+     * An HLS stream of [song] transcoded to AAC at up to [maxBitrateKbps], from Plex's universal transcoder. HLS keeps
+     * the transcode seekable. The client identity goes in the query, since the player's requests don't carry the
+     * `X-Plex-*` headers; the profile extra asks for AAC in MPEG-TS whatever profile the server picks for the client.
+     * Null when the address or the song's ratingKey is missing.
+     */
+    fun buildPlexTranscodePath(
+        song: Song,
+        authenticatedCredentials: AuthenticatedCredentials,
+        maxBitrateKbps: Int,
+        session: String = UUID.randomUUID().toString()
+    ): String? {
+        val address = credentialStore.address ?: run {
+            Timber.w("Invalid plex address (null)")
+            return null
+        }
+        val ratingKey = plexRatingKey(song.path) ?: run {
+            Timber.w("No plex ratingKey in ${song.path}")
+            return null
+        }
+        val query = linkedMapOf(
+            "path" to "$METADATA_PATH$ratingKey",
+            "protocol" to "hls",
+            "directPlay" to "0",
+            "directStream" to "0",
+            "musicBitrate" to maxBitrateKbps.toString(),
+            "session" to session,
+            "X-Plex-Session-Identifier" to session,
+            "X-Plex-Client-Profile-Extra" to "add-transcode-target(type=musicProfile&context=streaming&protocol=hls&container=mpegts&audioCodec=aac)"
+        ) + plexClientHeaders(clientIdentity) + ("X-Plex-Token" to authenticatedCredentials.accessToken)
+
+        return "$address/music/:/transcode/universal/start.m3u8?" +
+            query.entries.joinToString("&") { (name, value) -> "$name=${URLEncoder.encode(value, "UTF-8")}" }
     }
 }

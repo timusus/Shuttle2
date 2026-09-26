@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.emby.BuildConfig
 import com.simplecityapps.provider.emby.CredentialStore
@@ -111,8 +112,9 @@ open class EmbyMediaProviderModule {
     @MediaProviderTypeKey(MediaProviderType.Emby)
     fun provideEmbyMediaInfoProvider(
         authenticationManager: EmbyAuthenticationManager,
-        embyTranscodeService: EmbyTranscodeService
-    ): MediaInfoProvider = EmbyMediaInfoProvider(authenticationManager, embyTranscodeService)
+        embyTranscodeService: EmbyTranscodeService,
+        streamingBitrateCap: StreamingBitrateCap
+    ): MediaInfoProvider = EmbyMediaInfoProvider(authenticationManager, embyTranscodeService, streamingBitrateCap)
 
     @Provides
     @Singleton

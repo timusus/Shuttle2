@@ -68,7 +68,7 @@ class JellyfinAuthenticationTest {
 
     @Test
     fun `stream url authenticates with ApiKey, not api_key`() {
-        val path = authenticationManager.buildJellyfinPath("item789", credentials)!!
+        val path = authenticationManager.buildJellyfinPath("item789", credentials, maxBitrateKbps = null)!!
 
         path shouldContain "&ApiKey=token123"
         path shouldNotContain "api_key"

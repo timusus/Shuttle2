@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.core.net.toUri
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
+import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
@@ -12,7 +13,8 @@ class JellyfinMediaInfoProvider
 @Inject
 constructor(
     private val jellyfinAuthenticationManager: JellyfinAuthenticationManager,
-    private val jellyfinTranscodeService: JellyfinTranscodeService
+    private val jellyfinTranscodeService: JellyfinTranscodeService,
+    private val streamingBitrateCap: StreamingBitrateCap
 ) : MediaInfoProvider {
     override fun handles(uri: Uri): Boolean = uri.scheme == "jellyfin"
 
@@ -21,23 +23,28 @@ constructor(
         song: Song,
         castCompatibilityMode: Boolean
     ): MediaInfo {
-        val jellyfinPath =
-            jellyfinAuthenticationManager.getAuthenticatedCredentials()?.let { authenticatedCredentials ->
-                jellyfinAuthenticationManager.buildJellyfinPath(
-                    Uri.parse(song.path).pathSegments.last(),
-                    authenticatedCredentials
-                )?.toUri() ?: run {
-                    throw IllegalStateException("Failed to build jellyfin path")
-                }
-            } ?: run {
-                throw IllegalStateException("Failed to authenticate")
-            }
+        val jellyfinPath = buildPlaybackPathString(song).toUri()
 
         return MediaInfo(
             path = jellyfinPath,
             mimeType = if (castCompatibilityMode) getMimeType(jellyfinPath, song.mimeType) else song.mimeType,
             isRemote = true
         )
+    }
+
+    /**
+     * String form of [getMediaInfo]'s path, capped by the current [StreamingBitrateCap], kept separate so tests can
+     * assert on it without pulling Robolectric into this module for `Uri.parse`.
+     */
+    @Throws(IllegalStateException::class)
+    internal fun buildPlaybackPathString(song: Song): String {
+        val authenticatedCredentials = jellyfinAuthenticationManager.getAuthenticatedCredentials()
+            ?: throw IllegalStateException("Failed to authenticate")
+        return jellyfinAuthenticationManager.buildJellyfinPath(
+            itemId = song.path.substringAfterLast('/'),
+            authenticatedCredentials = authenticatedCredentials,
+            maxBitrateKbps = streamingBitrateCap.maxBitrateKbps()
+        ) ?: throw IllegalStateException("Failed to build jellyfin path")
     }
 
     private suspend fun getMimeType(

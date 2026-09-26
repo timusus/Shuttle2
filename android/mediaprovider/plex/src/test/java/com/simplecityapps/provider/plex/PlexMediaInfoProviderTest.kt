@@ -1,6 +1,7 @@
 package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.plex.http.AuthenticatedCredentials
 import com.simplecityapps.provider.plex.http.AuthenticationResult
@@ -8,7 +9,12 @@ import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
+import com.simplecityapps.shuttle.settings.SettingsStore
+import com.simplecityapps.shuttle.settings.StreamingQuality
+import com.simplecityapps.shuttle.settings.StreamingSettings
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
+import io.kotest.matchers.string.shouldStartWith
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -39,7 +45,10 @@ class PlexMediaInfoProviderTest {
         clientIdentity = clientIdentity
     )
 
-    private val provider = PlexMediaInfoProvider(authenticationManager)
+    private val streamingSettings = StreamingSettings(SettingsStore(FakeSharedPreferences()))
+    private var metered = false
+
+    private val provider = PlexMediaInfoProvider(authenticationManager, StreamingBitrateCap(streamingSettings) { metered })
 
     @Test
     fun `download path is the same original part-file url used for streaming`() = runTest {
@@ -68,7 +77,65 @@ class PlexMediaInfoProviderTest {
         provider.downloadFallbackUri("plex://item/107898", 403) shouldBe null
     }
 
-    private fun song(externalId: String?) = Song(
+    @Test
+    fun `stream is the original part file when there's no cap`() {
+        credentialStore.authenticatedCredentials = credentials
+
+        val stream = provider.buildStream(song(externalId = PART, bitRate = 1_411))
+
+        stream.path shouldStartWith "http://plex.local:32400$PART?"
+        stream.mimeType shouldBe "audio/mpeg"
+    }
+
+    @Test
+    fun `stream is the original part file when its bitrate is within the cap`() {
+        credentialStore.authenticatedCredentials = credentials
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps320
+
+        provider.buildStream(song(externalId = PART, bitRate = 256)).path shouldStartWith "http://plex.local:32400$PART?"
+    }
+
+    @Test
+    fun `stream is an HLS transcode at the cap when the song is over it`() {
+        credentialStore.authenticatedCredentials = credentials
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps192
+
+        val stream = provider.buildStream(song(externalId = PART, bitRate = 1_411))
+
+        stream.path shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.m3u8?"
+        stream.path shouldContain "&musicBitrate=192&"
+        stream.mimeType shouldBe "application/x-mpegURL"
+    }
+
+    @Test
+    fun `stream transcodes a song of unknown bitrate`() {
+        credentialStore.authenticatedCredentials = credentials
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps320
+
+        provider.buildStream(song(externalId = PART, bitRate = null)).path shouldContain "/transcode/universal/start.m3u8?"
+    }
+
+    @Test
+    fun `stream uses the metered cap on a metered network`() {
+        credentialStore.authenticatedCredentials = credentials
+        streamingSettings.meteredQuality.value = StreamingQuality.Kbps128
+        metered = true
+
+        provider.buildStream(song(externalId = PART, bitRate = 320)).path shouldContain "&musicBitrate=128&"
+    }
+
+    @Test
+    fun `download path stays the original part file under a cap`() = runTest {
+        credentialStore.authenticatedCredentials = credentials
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
+
+        provider.buildDownloadPathString(song(externalId = PART, bitRate = 1_411))!! shouldStartWith "http://plex.local:32400$PART?"
+    }
+
+    private fun song(
+        externalId: String?,
+        bitRate: Int? = null
+    ) = Song(
         id = 0,
         name = "Song",
         albumArtist = "Artist",
@@ -79,7 +146,7 @@ class PlexMediaInfoProviderTest {
         duration = 180_000,
         date = null,
         genres = emptyList(),
-        path = "plex://item/107898",
+        path = "plex:///library/metadata/107898",
         size = 0,
         mimeType = "audio/mpeg",
         lastModified = null,
@@ -92,9 +159,13 @@ class PlexMediaInfoProviderTest {
         mediaProvider = MediaProviderType.Plex,
         lyrics = null,
         grouping = null,
-        bitRate = null,
+        bitRate = bitRate,
         bitDepth = null,
         sampleRate = null,
         channelCount = null
     )
+
+    private companion object {
+        const val PART = "/library/parts/42/file.flac"
+    }
 }

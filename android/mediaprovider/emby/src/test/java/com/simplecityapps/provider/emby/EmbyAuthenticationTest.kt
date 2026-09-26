@@ -45,7 +45,7 @@ class EmbyAuthenticationTest {
 
     @Test
     fun `stream url authenticates with api_key`() {
-        val path = authenticationManager.buildEmbyPath("item789", credentials)!!
+        val path = authenticationManager.buildEmbyPath("item789", credentials, maxBitrateKbps = null)!!
 
         path shouldContain "&api_key=token123"
         path shouldContain "http://emby.local:8096/emby/Audio/item789/universal?UserId=user456"
@@ -53,7 +53,7 @@ class EmbyAuthenticationTest {
 
     @Test
     fun `stream url carries the persisted client identity's device id`() {
-        val path = authenticationManager.buildEmbyPath("item789", credentials)!!
+        val path = authenticationManager.buildEmbyPath("item789", credentials, maxBitrateKbps = null)!!
 
         path shouldContain "&DeviceId=${clientIdentity.id}"
     }
