@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import java.time.Clock
@@ -46,7 +47,7 @@ class AnalyticsConsentViewModelTest {
 
     private fun TestScope.viewModel(day: Int): AnalyticsConsentViewModel {
         val clock = Clock.fixed(Instant.EPOCH.plusSeconds(day * SecondsPerDay), ZoneOffset.UTC)
-        return AnalyticsConsentViewModel(songs, settings, privacySettings, clock).also { viewModel ->
+        return AnalyticsConsentViewModel(ObserveSongs(songs), settings, privacySettings, clock).also { viewModel ->
             backgroundScope.launch { viewModel.showCard.collect {} }
             runCurrent()
         }

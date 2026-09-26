@@ -2,10 +2,9 @@ package com.simplecityapps.shuttle.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
 import java.time.LocalDate
@@ -24,7 +23,7 @@ import kotlinx.coroutines.flow.stateIn
  */
 @HiltViewModel
 class AnalyticsConsentViewModel @Inject constructor(
-    songRepository: SongRepository,
+    observeSongs: ObserveSongs,
     private val settings: AnalyticsConsentSettings,
     private val privacySettings: PrivacySettings,
     clock: Clock,
@@ -39,7 +38,7 @@ class AnalyticsConsentViewModel @Inject constructor(
 
     val showCard: StateFlow<Boolean> =
         combine(
-            songRepository.getSongs(SongQuery.All()).map { songs -> songs?.isNotEmpty() == true }.distinctUntilChanged(),
+            observeSongs().map { songs -> songs.isNotEmpty() }.distinctUntilChanged(),
             settings.asked.flow,
             settings.daysOpened.flow,
         ) { hasSongs, asked, daysOpened -> hasSongs && !asked && daysOpened >= DaysBeforeAsking }
