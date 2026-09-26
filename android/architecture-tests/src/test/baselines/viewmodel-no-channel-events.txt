@@ -1,3 +1,2 @@
 # ViewModels model events whose loss is a bug as consumable UiState, not Channel.receiveAsFlow()/consumeAsFlow() (UDF 4)
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
-com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInViewModel: receiveAsFlow()

@@ -22,7 +22,6 @@ class ServerSignInViewModelTest {
 
     private val server = FakeServerAuthentication()
     private val connected = mutableListOf<MediaProviderType>()
-    private val events = mutableListOf<ServerSignInEvent>()
 
     private fun TestScope.viewModel(type: MediaProviderType = MediaProviderType.Jellyfin): ServerSignInViewModel {
         val servers = mapOf(type to server)
@@ -33,11 +32,12 @@ class ServerSignInViewModelTest {
             ForgetServerLogin(servers),
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
-            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.collect { events += it } }
         }
     }
 
     private val ServerSignInViewModel.form get() = uiState.value.form
+
+    private val ServerSignInViewModel.events get() = uiState.value.events.map { it.value }
 
     @Test
     fun `the form starts from the saved login, and a saved password can't be revealed`() = runTest {
@@ -126,10 +126,13 @@ class ServerSignInViewModelTest {
         server.authenticated shouldBe listOf(ServerLogin("http://plex:32400", "sam", "secret", "123456"))
         server.remembered shouldBe ServerLogin("http://plex:32400", "sam", "secret", "123456")
         connected shouldBe listOf(MediaProviderType.Plex)
-        events shouldBe listOf(ServerSignInEvent.Connected)
+        viewModel.events shouldBe listOf(ServerSignInEvent.Connected)
 
         advanceTimeBy(1_001)
-        events shouldBe listOf(ServerSignInEvent.Connected, ServerSignInEvent.Finished)
+        viewModel.events shouldBe listOf(ServerSignInEvent.Connected, ServerSignInEvent.Finished)
+
+        viewModel.onEventHandled(viewModel.uiState.value.events.first().id)
+        viewModel.events shouldBe listOf(ServerSignInEvent.Finished)
     }
 
     @Test
@@ -152,7 +155,7 @@ class ServerSignInViewModelTest {
         viewModel.onAuthenticate()
         runCurrent()
         viewModel.uiState.value.step shouldBe ServerSignInStep.Failed("An unknown error occurred.")
-        events shouldBe emptyList()
+        viewModel.events shouldBe emptyList()
 
         viewModel.onRetry()
         viewModel.uiState.value.step shouldBe ServerSignInStep.Form

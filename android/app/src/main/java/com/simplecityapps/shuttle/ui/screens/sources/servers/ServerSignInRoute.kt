@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -9,6 +8,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 
 /**
  * Shows a [type] server's sign-in dialog. Its ViewModel lives only as long as the dialog, so each opening starts
@@ -29,12 +29,10 @@ fun ServerSignInRoute(
     val currentOnConnected by rememberUpdatedState(onConnected)
     val currentOnDismiss by rememberUpdatedState(onDismiss)
 
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                ServerSignInEvent.Connected -> currentOnConnected(type)
-                ServerSignInEvent.Finished -> currentOnDismiss()
-            }
+    ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
+        when (event) {
+            ServerSignInEvent.Connected -> currentOnConnected(type)
+            ServerSignInEvent.Finished -> currentOnDismiss()
         }
     }
 

@@ -3,18 +3,17 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.ui.common.PendingEvent
+import com.simplecityapps.shuttle.ui.common.PendingEvents
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -49,6 +48,7 @@ data class ServerSignInUiState(
     val type: MediaProviderType,
     val form: ServerSignInForm = ServerSignInForm(),
     val step: ServerSignInStep = ServerSignInStep.Form,
+    val events: List<PendingEvent<ServerSignInEvent>> = emptyList(),
 ) {
     /** Plex takes a two-factor code, and needs the password. */
     val asksForAuthCode: Boolean get() = type == MediaProviderType.Plex
@@ -89,13 +89,11 @@ class ServerSignInViewModel @AssistedInject constructor(
         },
     )
     private val step = MutableStateFlow<ServerSignInStep>(ServerSignInStep.Form)
+    private val events = PendingEvents<ServerSignInEvent>()
 
     val uiState: StateFlow<ServerSignInUiState> =
-        combine(form, step) { form, step -> ServerSignInUiState(type, form, step) }
+        combine(form, step, events.flow) { form, step, events -> ServerSignInUiState(type, form, step, events) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ServerSignInUiState(type, form.value, step.value))
-
-    private val _events = Channel<ServerSignInEvent>(Channel.BUFFERED)
-    val events: Flow<ServerSignInEvent> = _events.receiveAsFlow()
 
     fun onAddressChange(address: String) = form.update { it.copy(address = address, missing = it.missing - ServerSignInField.Address) }
 
@@ -127,9 +125,9 @@ class ServerSignInViewModel @AssistedInject constructor(
             when (val result = signInToServer(type, login, form.rememberPassword)) {
                 SignInToServer.Result.Success -> {
                     step.value = ServerSignInStep.Connected
-                    _events.send(ServerSignInEvent.Connected)
+                    events.post(ServerSignInEvent.Connected)
                     delay(SUCCESS_SHOWN_MILLIS)
-                    _events.send(ServerSignInEvent.Finished)
+                    events.post(ServerSignInEvent.Finished)
                 }
 
                 is SignInToServer.Result.Failure -> step.value = ServerSignInStep.Failed(result.message)
@@ -141,6 +139,8 @@ class ServerSignInViewModel @AssistedInject constructor(
     fun onRetry() {
         step.value = ServerSignInStep.Form
     }
+
+    fun onEventHandled(id: Long) = events.consume(id)
 
     private fun missingFields(form: ServerSignInForm): Set<ServerSignInField> = buildSet {
         if (form.address.isEmpty()) add(ServerSignInField.Address)
