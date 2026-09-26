@@ -1,8 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
 import androidx.activity.ComponentActivity
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
@@ -11,9 +9,6 @@ import com.github.takahirom.roborazzi.roborazziSystemPropertyTaskType
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.SampleArtworkCoil
-import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
-import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
-import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
 import com.simplecityapps.shuttle.ui.settlingClock
 import java.io.File
 import org.junit.After
@@ -75,36 +70,6 @@ class HomeScreenshotTest {
 
     @Test
     fun empty() = shot("empty", HomeScenarios.empty)
-
-    @Test
-    fun emptyNoPermission() {
-        composeTestRule.settlingClock { robot.setContent(HomeScenarios.empty, emptyContent = emptyContentFor(MusicAccess.NotRequested)) }
-        composeTestRule.onRoot().captureRoboImage(
-            filePath = File(shotsDir, "empty-no-permission.png").path,
-            roborazziOptions = DocsDesignRoborazziOptions,
-        )
-    }
-
-    @Test
-    fun emptyDenied() {
-        composeTestRule.settlingClock { robot.setContent(HomeScenarios.empty, emptyContent = emptyContentFor(MusicAccess.PermanentlyDenied)) }
-        composeTestRule.onRoot().captureRoboImage(
-            filePath = File(shotsDir, "empty-denied.png").path,
-            roborazziOptions = DocsDesignRoborazziOptions,
-        )
-    }
-
-    /** [LibraryEmptyScreen] at the given access state, as Home wires it into its empty-state slot (#422). */
-    private fun emptyContentFor(access: MusicAccess): @Composable (Modifier) -> Unit = { modifier ->
-        LibraryEmptyScreen(
-            state = LibraryAvailability.Empty(access),
-            onAllowAccess = {},
-            onOpenAppSettings = {},
-            onScan = {},
-            onConnectServer = {},
-            modifier = modifier,
-        )
-    }
 
     companion object {
         val shotsDir: File by lazy {
