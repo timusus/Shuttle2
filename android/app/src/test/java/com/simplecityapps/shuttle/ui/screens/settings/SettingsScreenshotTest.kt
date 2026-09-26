@@ -121,18 +121,22 @@ class SettingsScreenshotTest {
     fun equalizer() = shot("equalizer") {
         val preset = Equalizer.Presets.bassBoost
         val bands = preset.bands.map { EqualizerBandState(it.centerFrequency, it.gain.toFloat()) }
+        val response = ComputeFrequencyResponse(DefaultEqualizerFrequencyResponse())(bands, preampGainDb = 3f, outputSampleRateHz = null)
         EqualizerScreen(
             uiState = EqualizerUiState(
                 enabled = true,
                 selectedPreset = preset,
                 bands = bands,
-                frequencyResponse = ComputeFrequencyResponse(DefaultEqualizerFrequencyResponse())(bands, outputSampleRateHz = null)
+                preampGainDb = 3f,
+                frequencyResponse = response.points,
+                headroomAttenuationDb = response.headroomAttenuationDb
             ),
             onNavigateUp = {},
             onEnabledChange = {},
             onPresetSelect = {},
             onBandGainChange = { _, _ -> },
-            onBandGainChangeFinished = {}
+            onBandGainChangeFinished = {},
+            onPreampGainChange = {}
         )
     }
 

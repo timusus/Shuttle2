@@ -9,24 +9,29 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ChoiceSetting
 import com.simplecityapps.shuttle.designsystem.component.EqBand
+import com.simplecityapps.shuttle.designsystem.component.EqGainRange
 import com.simplecityapps.shuttle.designsystem.component.S2ChoiceList
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
+import com.simplecityapps.shuttle.designsystem.component.SliderSetting
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.simplecityapps.shuttle.ui.screens.equalizer.FrequencyResponseChart
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
+import java.util.Locale
 
 @Composable
 fun EqualizerScreen(
@@ -36,6 +41,7 @@ fun EqualizerScreen(
     onPresetSelect: (Equalizer.Presets.Preset) -> Unit,
     onBandGainChange: (frequency: Int, gainDb: Float) -> Unit,
     onBandGainChangeFinished: () -> Unit,
+    onPreampGainChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var choosingPreset by rememberSaveable { mutableStateOf(false) }
@@ -60,6 +66,18 @@ fun EqualizerScreen(
                             enabled = uiState.enabled,
                             shapes = shapes
                         )
+                    },
+                    { shapes: ListItemShapes ->
+                        SliderSetting(
+                            title = stringResource(R.string.dsp_preamp),
+                            value = uiState.preampGainDb,
+                            onValueChange = onPreampGainChange,
+                            modifier = Modifier.testTag(PREAMP_TAG),
+                            valueRange = EqGainRange,
+                            valueLabel = String.format(Locale.getDefault(), "%+.1f dB", uiState.preampGainDb),
+                            enabled = uiState.enabled,
+                            shapes = shapes
+                        )
                     }
                 )
             )
@@ -72,6 +90,14 @@ fun EqualizerScreen(
                         modifier = Modifier.fillMaxWidth().height(140.dp).padding(horizontal = 8.dp),
                         enabled = uiState.enabled
                     )
+                    if (uiState.headroomAttenuationDb < -0.05f) {
+                        Text(
+                            text = stringResource(R.string.settings_equalizer_headroom, String.format(Locale.getDefault(), "%.1f", -uiState.headroomAttenuationDb)),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                     Row(Modifier.fillMaxWidth()) {
                         uiState.bands.forEach { band ->
                             EqBand(
@@ -106,6 +132,9 @@ fun EqualizerScreen(
         }
     }
 }
+
+/** Tags the preamp row, so tests can find its slider among the bands'. */
+internal const val PREAMP_TAG = "equalizerPreamp"
 
 /** "32", "500", "1k", "16k": short enough for ten bands across a phone. */
 internal fun frequencyLabel(hz: Int): String = if (hz >= 1000) "${hz / 1000}k" else "$hz"

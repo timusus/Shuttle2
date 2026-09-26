@@ -13,35 +13,54 @@ import com.simplecityapps.playback.dsp.equalizer.toNyquistBand
 import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
 import java.nio.ByteBuffer
+import kotlin.math.pow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 
 /**
- * Applies the selected [preset] to 16 and 24 bit PCM.
+ * Applies the selected [preset] and the [preampGainDb] to 16 and 24 bit PCM.
  *
- * [enabled] and [preset] are set on the main thread and read on the playback thread. Each change
+ * [enabled], [preset] and [preampGainDb] are set on the main thread and read on the playback thread. Each change
  * publishes one immutable [Settings] snapshot through a volatile field, so the audio thread sees a
  * change whole, and picks it up from its next buffer. The band filters are built from the snapshot
  * on the playback thread and only ever touched there. [outputSampleRateHz] carries state the other
  * way: the playback thread publishes it through a [StateFlow] for the main thread to read.
  */
-class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
+class EqualizerAudioProcessor(
+    enabled: Boolean,
+    preampGainDb: Float = 0f
+) : BaseAudioProcessor() {
     /** What the audio thread applies. [bands] are copies: the custom preset's bands are edited in place. */
     private class Settings(
         val enabled: Boolean,
-        val bands: List<EqualizerBand>
-    )
+        val bands: List<EqualizerBand>,
+        val preampGainDb: Float
+    ) {
+        /** [preampGainDb] as a linear factor. */
+        val preampGain: Float = 10f.pow(preampGainDb / 20f)
+    }
 
     @Volatile
-    private var settings = Settings(enabled, Equalizer.Presets.flat.snapshot())
+    private var settings = Settings(enabled, Equalizer.Presets.flat.snapshot(), preampGainDb)
 
     /** Set on the main thread. The band gains are captured when it's set; edits made after that apply once it's set again. */
     var preset: Equalizer.Presets.Preset = Equalizer.Presets.flat
         set(value) {
             field = value
-            settings = Settings(settings.enabled, value.snapshot())
+            settings = Settings(settings.enabled, value.snapshot(), settings.preampGainDb)
+        }
+
+    /**
+     * A user gain in dB, within ±[maxPreampGain], applied on top of the automatic [attenuation]: it trades back the
+     * level a boosted preset loses to headroom, at the risk of clipping, which the clamp at the end of the stage
+     * still bounds. Set on the main thread; applies from the next buffer.
+     */
+    var preampGainDb: Float
+        get() = settings.preampGainDb
+        set(value) {
+            settings = Settings(settings.enabled, settings.bands, value)
         }
 
     /**
@@ -54,10 +73,13 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
     // Maximum allowed gain/cut for each band
     val maxBandGain = 12
 
+    // Maximum allowed preamp gain/cut
+    val maxPreampGain = 12
+
     var enabled: Boolean
         get() = settings.enabled
         set(value) {
-            settings = Settings(value, settings.bands)
+            settings = Settings(value, settings.bands, settings.preampGainDb)
 
             Timber.v("Equalizer enabled: $value")
         }
@@ -171,7 +193,7 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
             val bandProcessors = bandProcessors
             val size = inputBuffer.remaining()
             val buffer = replaceOutputBuffer(size)
-            val preAttenuation = attenuation
+            val gain = attenuation * settings.preampGain
 
             when (outputAudioFormat.encoding) {
                 C.ENCODING_PCM_16BIT -> {
@@ -182,7 +204,7 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
                             for (band in bandProcessors) {
                                 targetSample = band.processSample(targetSample, channelIndex)
                             }
-                            targetSample *= preAttenuation
+                            targetSample *= gain
                             buffer.putShort(clamp(targetSample, Short.MIN_VALUE.toFloat(), Short.MAX_VALUE.toFloat()).toInt().toShort())
                             if (!inputBuffer.hasRemaining()) {
                                 break
@@ -199,7 +221,7 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
                             for (band in bandProcessors) {
                                 targetSample = band.processSample(targetSample, channelIndex)
                             }
-                            targetSample *= preAttenuation
+                            targetSample *= gain
                             buffer.putInt24(clamp(targetSample, ByteUtils.Int24_MIN_VALUE.toFloat(), ByteUtils.Int24_MAX_VALUE.toFloat()).toInt())
                             if (!inputBuffer.hasRemaining()) {
                                 break

@@ -149,7 +149,8 @@ private fun EqualizerEntry(onNavigateUp: () -> Unit) {
         onEnabledChange = viewModel::onEnabledChange,
         onPresetSelect = viewModel::onPresetSelect,
         onBandGainChange = viewModel::onBandGainChange,
-        onBandGainChangeFinished = viewModel::onBandGainChangeFinished
+        onBandGainChangeFinished = viewModel::onBandGainChangeFinished,
+        onPreampGainChange = viewModel::onPreampGainChange
     )
 }
 

@@ -14,6 +14,7 @@ class PlaybackSettings @Inject constructor(
     val retainShuffleOnNewQueue = store.preference(RetainShuffleOnNewQueue)
     val usbDacDirectOutput = store.preference(UsbDacDirectOutput)
     val equalizerEnabled = store.preference(EqualizerEnabled)
+    val equalizerPreampGain = store.preference(EqualizerPreampGain)
     val replayGainMode = store.preference(ReplayGain)
     val preAmpGain = store.preference(PreAmpGain)
     val playbackSpeed = store.preference(PlaybackSpeed)
@@ -27,6 +28,9 @@ class PlaybackSettings @Inject constructor(
         val UsbDacDirectOutput = Setting.boolean("pref_bit_perfect_usb", false)
 
         val EqualizerEnabled = Setting.boolean("equalizer_enabled", false)
+
+        /** The equalizer's preamp, in dB, within ±[com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor.maxPreampGain]. */
+        val EqualizerPreampGain = Setting.float("equalizer_preamp_gain", 0f)
 
         val ReplayGain = Setting.enumOrdinalInt("replaygain_mode", ReplayGainMode.Off, ReplayGainMode.entries)
 

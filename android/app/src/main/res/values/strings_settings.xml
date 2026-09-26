@@ -169,6 +169,8 @@
     <string name="settings_artwork_download_started">Downloading artwork</string>
     <!-- Settings: Title of the switch that turns the equalizer on or off -->
     <string name="settings_equalizer_enabled">Use equalizer</string>
+    <!-- Settings: Equalizer screen, note under the frequency response chart when boosted bands are turned down to avoid distortion. %s is the amount in decibels, e.g. "6.0" -->
+    <string name="settings_equalizer_headroom">Turned down %s dB to avoid distortion</string>
     <!-- Excluded songs screen: menu item that returns one excluded song to the library -->
     <string name="excluded_songs_include">Include in library</string>
     <!-- Excluded songs screen: button that returns every excluded song to the library -->

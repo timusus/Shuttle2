@@ -8,6 +8,7 @@ import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.comparables.shouldBeLessThanOrEqualTo
+import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import java.nio.ByteBuffer
@@ -89,6 +90,64 @@ class EqualizerAudioProcessorTest {
 
         equalizer.attenuation shouldBe 1f
         output.toList() shouldBe input.toList()
+    }
+
+    @Test
+    fun `the preamp scales the output by its gain`() {
+        val equalizer =
+            EqualizerAudioProcessor(enabled = true, preampGainDb = -6f).apply {
+                preset = Equalizer.Presets.flat
+            }.configured(44100)
+
+        val input = whiteNoise(44100)
+        val output = equalizer.process(input)
+
+        val gain = 10.0.pow(-6.0 / 20.0)
+        output.indices.forEach { index -> abs(output[index] - (input[index] * gain)) shouldBeLessThan 1.5 }
+    }
+
+    @Test
+    fun `the preamp applies on top of the headroom attenuation`() {
+        val input = logSineSweep(44100)
+        val withoutPreamp = equalizerWithAllBandsAt(12.0, sampleRate = 44100).process(input)
+        val equalizer = equalizerWithAllBandsAt(12.0, sampleRate = 44100).also { processor -> processor.preampGainDb = -6f }
+
+        val output = equalizer.process(input)
+
+        equalizer.attenuation shouldBeLessThan 1f
+        output.peak() / withoutPreamp.peak() shouldBe (10.0.pow(-6.0 / 20.0) plusOrMinus 0.01)
+    }
+
+    @Test
+    fun `a preamp boost past full scale is clamped rather than wrapped`() {
+        val equalizer =
+            EqualizerAudioProcessor(enabled = true, preampGainDb = 12f).apply {
+                preset = Equalizer.Presets.flat
+            }.configured(44100)
+
+        val input = whiteNoise(44100)
+        val output = equalizer.process(input)
+
+        output.saturatedSampleCount() shouldBeGreaterThan 0
+        // Without the clamp, samples past full scale wrap around and flip sign.
+        output.indices.forEach { index ->
+            if (input[index] > 0) output[index] shouldBeGreaterThanOrEqualTo input[index]
+            if (input[index] < 0) output[index] shouldBeLessThanOrEqualTo input[index]
+        }
+    }
+
+    @Test
+    fun `a preamp change during playback applies from the next buffer`() {
+        val equalizer =
+            EqualizerAudioProcessor(enabled = true).apply {
+                preset = Equalizer.Presets.flat
+            }.configured(44100)
+        val input = whiteNoise(44100)
+        equalizer.process(input).toList() shouldBe input.toList()
+
+        equalizer.preampGainDb = -6f
+
+        equalizer.process(input).peak() shouldBeLessThan input.peak()
     }
 
     @Test

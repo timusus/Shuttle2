@@ -2,6 +2,7 @@ package com.simplecityapps.playback.dsp.equalizer
 
 import com.simplecityapps.playback.equalizer.EqualizerBandGain
 import com.simplecityapps.playback.equalizer.EqualizerFrequencyResponse
+import com.simplecityapps.playback.equalizer.EqualizerResponse
 import com.simplecityapps.playback.equalizer.FrequencyResponsePoint
 import javax.inject.Inject
 import kotlin.math.log10
@@ -13,18 +14,20 @@ internal const val FALLBACK_OUTPUT_SAMPLE_RATE_HZ = 48_000
 /**
  * Builds the equalizer's plotted frequency response: the band cascade's magnitude response
  * ([frequencyResponseDb]), minus the headroom attenuation [cascadeAttenuation] applies at that sample rate -
- * the same function `EqualizerAudioProcessor` uses - so the chart matches what actually reaches the output (#312).
+ * the same function `EqualizerAudioProcessor` uses - plus the user's preamp, so the chart matches what actually
+ * reaches the output (#312, #236).
  */
 class DefaultEqualizerFrequencyResponse
 @Inject
 constructor() : EqualizerFrequencyResponse {
     override fun invoke(
         bands: List<EqualizerBandGain>,
+        preampGainDb: Float,
         outputSampleRateHz: Int?,
         minFrequencyHz: Float,
         maxFrequencyHz: Float,
         pointCount: Int
-    ): List<FrequencyResponsePoint> {
+    ): EqualizerResponse {
         val sampleRateHz = outputSampleRateHz ?: FALLBACK_OUTPUT_SAMPLE_RATE_HZ
         val bandProcessors = bands.map { band ->
             BandProcessor(
@@ -40,10 +43,11 @@ constructor() : EqualizerFrequencyResponse {
         val maxHz = minOf(maxFrequencyHz.toDouble(), sampleRateHz / 2.0)
         val span = maxHz / minHz
 
-        return (0 until pointCount).map { index ->
+        val points = (0 until pointCount).map { index ->
             val frequencyHz = minHz * span.pow(index.toDouble() / (pointCount - 1))
-            val gainDb = frequencyResponseDb(bandProcessors, preAmpGainDb = attenuationDb, frequencyHz, sampleRateHz)
+            val gainDb = frequencyResponseDb(bandProcessors, preAmpGainDb = attenuationDb + preampGainDb, frequencyHz, sampleRateHz)
             FrequencyResponsePoint(frequencyHz.toFloat(), gainDb.toFloat())
         }
+        return EqualizerResponse(points, attenuationDb.toFloat())
     }
 }

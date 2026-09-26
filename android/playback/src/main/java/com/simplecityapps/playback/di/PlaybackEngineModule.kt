@@ -51,7 +51,7 @@ class PlaybackEngineModule {
     fun provideEqualizer(
         playbackPreferenceManager: PlaybackPreferenceManager,
         playbackSettings: PlaybackSettings
-    ): EqualizerAudioProcessor = EqualizerAudioProcessor(playbackSettings.equalizerEnabled.value).apply {
+    ): EqualizerAudioProcessor = EqualizerAudioProcessor(playbackSettings.equalizerEnabled.value, playbackSettings.equalizerPreampGain.value).apply {
         // Restore custom eq bands first: setting the preset captures its band gains
         playbackPreferenceManager.customPresetBands?.forEach { restoredBand ->
             Equalizer.Presets.custom.bands.forEach { customBand ->

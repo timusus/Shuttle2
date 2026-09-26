@@ -2,11 +2,14 @@ package com.simplecityapps.shuttle.ui.screens.settings.equalizer
 
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -24,6 +27,7 @@ class EqualizerRobot(private val rule: ComposeContentTestRule) {
     val enabledChanges = mutableListOf<Boolean>()
     val presetsSelected = mutableListOf<Equalizer.Presets.Preset>()
     val bandChanges = mutableListOf<Pair<Int, Float>>()
+    val preampChanges = mutableListOf<Float>()
     var bandChangesFinished = 0
         private set
 
@@ -36,7 +40,8 @@ class EqualizerRobot(private val rule: ComposeContentTestRule) {
                     onEnabledChange = { enabledChanges += it },
                     onPresetSelect = { presetsSelected += it },
                     onBandGainChange = { frequency, gain -> bandChanges += frequency to gain },
-                    onBandGainChangeFinished = { bandChangesFinished++ }
+                    onBandGainChangeFinished = { bandChangesFinished++ },
+                    onPreampGainChange = { preampChanges += it }
                 )
             }
         }
@@ -52,7 +57,8 @@ class EqualizerRobot(private val rule: ComposeContentTestRule) {
                     onEnabledChange = viewModel::onEnabledChange,
                     onPresetSelect = viewModel::onPresetSelect,
                     onBandGainChange = viewModel::onBandGainChange,
-                    onBandGainChangeFinished = viewModel::onBandGainChangeFinished
+                    onBandGainChangeFinished = viewModel::onBandGainChangeFinished,
+                    onPreampGainChange = viewModel::onPreampGainChange
                 )
             }
         }
@@ -70,8 +76,27 @@ class EqualizerRobot(private val rule: ComposeContentTestRule) {
         rule.onNodeWithContentDescription(frequency).performSemanticsAction(SemanticsActions.SetProgress) { it(gainDb) }
     }
 
+    /** Sets the preamp slider to [gainDb]. */
+    fun setPreamp(gainDb: Float) {
+        preampSlider().performSemanticsAction(SemanticsActions.SetProgress) { it(gainDb) }
+    }
+
+    fun assertPreampNotEnabled() {
+        preampSlider().assertIsNotEnabled()
+    }
+
+    private fun preampSlider() = rule.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.SetProgress) and hasAnyAncestor(hasTestTag(PREAMP_TAG)))
+
     fun assertDisplayed(text: String) {
         rule.onNodeWithText(text).assertIsDisplayed()
+    }
+
+    fun assertTextContainingDisplayed(text: String) {
+        rule.onNodeWithText(text, substring = true).assertIsDisplayed()
+    }
+
+    fun assertNoTextContaining(text: String) {
+        rule.onNodeWithText(text, substring = true).assertDoesNotExist()
     }
 
     fun assertSwitchOn() {

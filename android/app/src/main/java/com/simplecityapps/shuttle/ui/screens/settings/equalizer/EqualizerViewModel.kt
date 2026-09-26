@@ -29,11 +29,14 @@ data class EqualizerUiState(
     val presets: List<Equalizer.Presets.Preset> = Equalizer.Presets.all,
     val selectedPreset: Equalizer.Presets.Preset = Equalizer.Presets.flat,
     val bands: List<EqualizerBandState> = emptyList(),
-    val frequencyResponse: ImmutableList<FrequencyResponsePoint> = persistentListOf()
+    val preampGainDb: Float = 0f,
+    val frequencyResponse: ImmutableList<FrequencyResponsePoint> = persistentListOf(),
+    /** The automatic attenuation that keeps boosted bands from clipping, in dB: 0, or negative. */
+    val headroomAttenuationDb: Float = 0f
 )
 
 /**
- * The equalizer: the on/off switch, the preset and the band gains. Changes go to the live
+ * The equalizer: the on/off switch, the preset, the preamp and the band gains. Changes go to the live
  * [EqualizerAudioProcessor] straight away, as the legacy DSP screen did; moving a band switches to the
  * Custom preset, which is stored once the drag ends.
  */
@@ -53,24 +56,38 @@ class EqualizerViewModel @Inject constructor(
         observeSetting(PlaybackSettings.EqualizerEnabled),
         preset,
         bands,
-        equalizerAudioProcessor.outputSampleRateHz
-    ) { enabled, preset, bands, outputSampleRateHz ->
-        EqualizerUiState(
+        observeSetting(PlaybackSettings.EqualizerPreampGain),
+        equalizerAudioProcessor.outputSampleRateHz,
+        ::stateOf
+    ).stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = stateOf(
+            enabled = readSetting(PlaybackSettings.EqualizerEnabled),
+            preset = preset.value,
+            bands = bands.value,
+            preampGainDb = readSetting(PlaybackSettings.EqualizerPreampGain),
+            outputSampleRateHz = equalizerAudioProcessor.outputSampleRateHz.value
+        )
+    )
+
+    private fun stateOf(
+        enabled: Boolean,
+        preset: Equalizer.Presets.Preset,
+        bands: List<EqualizerBandState>,
+        preampGainDb: Float,
+        outputSampleRateHz: Int?
+    ): EqualizerUiState {
+        val response = computeFrequencyResponse(bands, preampGainDb, outputSampleRateHz)
+        return EqualizerUiState(
             enabled = enabled,
             selectedPreset = preset,
             bands = bands,
-            frequencyResponse = computeFrequencyResponse(bands, outputSampleRateHz)
+            preampGainDb = preampGainDb,
+            frequencyResponse = response.points,
+            headroomAttenuationDb = response.headroomAttenuationDb
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = EqualizerUiState(
-            enabled = readSetting(PlaybackSettings.EqualizerEnabled),
-            selectedPreset = preset.value,
-            bands = bands.value,
-            frequencyResponse = computeFrequencyResponse(bands.value, equalizerAudioProcessor.outputSampleRateHz.value)
-        )
-    )
+    }
 
     fun onEnabledChange(enabled: Boolean) {
         saveSetting(PlaybackSettings.EqualizerEnabled, enabled)
@@ -96,6 +113,14 @@ class EqualizerViewModel @Inject constructor(
         equalizerAudioProcessor.preset = custom
         preset.value = custom
         bands.value = gains
+    }
+
+    /** Plays and stores the preamp at [gainDb], within the processor's limit. */
+    fun onPreampGainChange(gainDb: Float) {
+        val maxGain = equalizerAudioProcessor.maxPreampGain.toFloat()
+        val gain = gainDb.coerceIn(-maxGain, maxGain)
+        saveSetting(PlaybackSettings.EqualizerPreampGain, gain)
+        equalizerAudioProcessor.preampGainDb = gain
     }
 
     /** Stores the Custom preset once a band stops moving. */

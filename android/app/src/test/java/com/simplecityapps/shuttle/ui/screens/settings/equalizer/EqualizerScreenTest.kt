@@ -18,11 +18,15 @@ class EqualizerScreenTest {
 
     private fun state(
         enabled: Boolean,
-        preset: Equalizer.Presets.Preset = Equalizer.Presets.bassBoost
+        preset: Equalizer.Presets.Preset = Equalizer.Presets.bassBoost,
+        preampGainDb: Float = 0f,
+        headroomAttenuationDb: Float = 0f
     ) = EqualizerUiState(
         enabled = enabled,
         selectedPreset = preset,
-        bands = preset.bands.map { EqualizerBandState(it.centerFrequency, it.gain.toFloat()) }
+        bands = preset.bands.map { EqualizerBandState(it.centerFrequency, it.gain.toFloat()) },
+        preampGainDb = preampGainDb,
+        headroomAttenuationDb = headroomAttenuationDb
     )
 
     @Test
@@ -69,5 +73,43 @@ class EqualizerScreenTest {
         robot.setBand("1k", 3f)
 
         robot.bandChanges shouldBe listOf(1000 to 3f)
+    }
+
+    @Test
+    fun `shows the preamp with its gain`() {
+        robot.setContent(state(enabled = true, preampGainDb = 3f))
+
+        robot.assertDisplayed("Preamp")
+        robot.assertDisplayed("+3.0 dB")
+    }
+
+    @Test
+    fun `moving the preamp reports its gain`() {
+        robot.setContent(state(enabled = true))
+
+        robot.setPreamp(4f)
+
+        robot.preampChanges shouldBe listOf(4f)
+    }
+
+    @Test
+    fun `the preamp is disabled while the equalizer is off`() {
+        robot.setContent(state(enabled = false))
+
+        robot.assertPreampNotEnabled()
+    }
+
+    @Test
+    fun `says how far boosted bands are turned down`() {
+        robot.setContent(state(enabled = true, headroomAttenuationDb = -6f))
+
+        robot.assertTextContainingDisplayed("Turned down 6.0 dB")
+    }
+
+    @Test
+    fun `says nothing about headroom when nothing is turned down`() {
+        robot.setContent(state(enabled = true, preset = Equalizer.Presets.flat))
+
+        robot.assertNoTextContaining("Turned down")
     }
 }

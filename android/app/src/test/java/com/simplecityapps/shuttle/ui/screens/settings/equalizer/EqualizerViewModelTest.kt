@@ -15,6 +15,8 @@ import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.testing.MainDispatcherRule
 import com.squareup.moshi.Moshi
+import io.kotest.matchers.comparables.shouldBeLessThan
+import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.launch
@@ -120,6 +122,52 @@ class EqualizerViewModelTest {
         processor.flush(AudioProcessor.StreamMetadata.DEFAULT)
 
         viewModel.uiState.value.frequencyResponse shouldNotBe beforeConfigure
+    }
+
+    @Test
+    fun `the preamp plays and is stored`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = collectedViewModel()
+
+        viewModel.onPreampGainChange(4.5f)
+
+        processor.preampGainDb shouldBe 4.5f
+        playbackSettings.equalizerPreampGain.value shouldBe 4.5f
+        viewModel.uiState.value.preampGainDb shouldBe 4.5f
+    }
+
+    @Test
+    fun `the preamp can't go past the processor's limit`() {
+        viewModel().onPreampGainChange(-40f)
+
+        processor.preampGainDb shouldBe -processor.maxPreampGain.toFloat()
+        playbackSettings.equalizerPreampGain.value shouldBe -processor.maxPreampGain.toFloat()
+    }
+
+    @Test
+    fun `the state starts from the stored preamp`() {
+        playbackSettings.equalizerPreampGain.value = -2f
+
+        viewModel().uiState.value.preampGainDb shouldBe -2f
+    }
+
+    @Test
+    fun `the preamp shifts the frequency response`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = collectedViewModel()
+        val before = viewModel.uiState.value.frequencyResponse
+
+        viewModel.onPreampGainChange(6f)
+
+        viewModel.uiState.value.frequencyResponse.zip(before).forEach { (after, flat) -> after.gainDb shouldBe ((flat.gainDb + 6f) plusOrMinus 0.01f) }
+    }
+
+    @Test
+    fun `a boosted preset reports its headroom attenuation, a flat one none`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = collectedViewModel()
+        viewModel.uiState.value.headroomAttenuationDb shouldBe 0f
+
+        viewModel.onPresetSelect(Equalizer.Presets.bassBoost)
+
+        viewModel.uiState.value.headroomAttenuationDb shouldBeLessThan 0f
     }
 
     @Test
