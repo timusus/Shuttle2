@@ -35,11 +35,11 @@ data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:p
 
 | Module | Today | Target |
 |---|---|---|
-| `:android:domain` | Models, sorting, queries, repository interfaces; a plain Kotlin/JVM module (was the Android library `:android:data`) | Domain (steps 3-4 done) |
+| `:android:domain` | Models, sorting, queries, repository interfaces, the playback and queue operations interfaces; a plain Kotlin/JVM module (was the Android library `:android:data`) | Domain (steps 3-4 done) |
 | `:android:mediaprovider:core` | `MediaProvider`, `MediaInfoProvider`, `MediaImporter`, M3U, import worker | Data (step 4 done: repository interfaces moved to domain) |
 | `:android:mediaprovider:local` | Room DB, DAOs, entities, `Local*Repository`, MediaStore/TagLib | Data |
 | `:android:mediaprovider:{jellyfin,emby,plex}` | HTTP services, DTOs, auth, providers | Data |
-| `:android:playback` | Media3 engine, `PlaybackFacade`, `QueueFacade`, Cast, session; **depends on the three remote provider modules** (only `di/PlaybackEngineModule.kt` imports them) | Data; its operations interfaces move to domain (step 5); provider edges removed (step 2) |
+| `:android:playback` | Media3 engine, `PlaybackFacade`, `QueueFacade`, Cast, session; **depends on the three remote provider modules** (only `di/PlaybackEngineModule.kt` imports them) | Data; its operations interfaces are in domain (step 5 done); provider edges removed (step 2) |
 | `:android:imageloader` | Coil artwork fetchers, keys and the app `ImageLoader`; its unused `:emby`/`:jellyfin` edges are gone | Data (platform adapter) |
 | `:android:downloads`, `:android:networking`, `:android:saf`, `:android:trial`, `:android:remote-config` | Platform services | Data |
 | `:android:core` | Shared utilities, settings, DI qualifiers | Cross-cutting |
@@ -152,8 +152,15 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
    symbols (`MediaImporter`, `MediaInfoProvider`, `RemoteArtworkProvider`, `FlowEvent`, M3U, search,
    workers, ...), so no module's `mediaprovider:core` edge dropped — each gained `:android:domain`
    where it didn't already have it.)
-5. **Playback interfaces**: move `QueueOperations`, `PlaybackOperations` and the state types they
-   expose into domain; `:android:playback` implements them.
+5. ~~**Playback interfaces**: move `QueueOperations`, `PlaybackOperations` and the state types they
+   expose into domain; `:android:playback` implements them.~~ (done: the two interfaces and
+   `PlaybackState`, `PlaybackProgress`, `PositionAnchor`, `SongPosition`, `QueueState`, `QueueItem`,
+   `ShuffleMode`, `RepeatMode` moved with their packages unchanged. Two Media3 leaks were cut: the
+   repeat/shuffle mode conversions to and from `Player` constants stay in playback
+   (`queue/PlayerModes.kt`), and `NewQueue` became a domain interface (songs, shuffle songs,
+   position) that playback's internal `PreparedQueue` implements with the prebuilt `MediaItem`s and
+   shuffle order. `:android:app` is the only module that depends on `:android:playback`, and it
+   needs it for the service and DI, so no module edge dropped.)
 6. **Shared use cases**: move `ui/actions` use cases whose dependencies are now all in domain into
    `:android:domain`. The ones that need Android (`ShareSongs`, `DeleteSongs`' SAF deleter) stay in
    the app behind a domain interface.

@@ -204,6 +204,7 @@ and `load`, and the log line adds the `main wait` before the main-thread step.
 - Persisted queue: QueueStore mirrors Player events into the existing prefs.
 - Left custom: the in-process facades (flows plus the Ops API), S2ShuffleOrder, the URI resolver, the ReplayGain and EQ processors, BitPerfectOutput, HttpServer with the Cast converter and transfer callback, SleepTimer, and the library browse tree.
 - LoadCoordinator and PlaybackManager are deleted. `PlaybackFacade` is the PlaybackOperations facade: forwarding plus flows, over small Player listeners (CastHandover, ItemLoader, ResumePositionStore, CallHold, PlaybackSpeedStore, WakeModeUpdater) and ProgressTicker. QueueManager is deleted too: `QueueFacade` is the QueueOperations facade, forwarding plus flows, over `QueueStatePublisher`, `PlaylistEditor` and `QueueBuilder`.
+- `PlaybackOperations`, `QueueOperations` and the state types they expose (`PlaybackState`, `PlaybackProgress`, `PositionAnchor`, `SongPosition`, `QueueState`, `QueueItem`, `ShuffleMode`, `RepeatMode`, `NewQueue`) live in the pure-JVM `:android:domain` (#443 step 5), in their original packages; `:android:playback` implements them. The Media3 conversions (`toRepeatMode`, `toPlayerRepeatMode`, `toShuffleMode`) and the built queue's items and shuffle order (`PreparedQueue`, the playback-internal `NewQueue`) stay in `:android:playback`.
 
 ## Open questions and unverified points
 
