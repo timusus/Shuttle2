@@ -250,6 +250,10 @@
     {
       "text": "Turning off Colour from artwork in Appearance settings now actually stops the player using colours from the song's artwork",
       "commits": []
+    },
+    {
+      "text": "Show Home on launch in Appearance settings now actually opens S2 on Home; it previously had no effect",
+      "commits": []
     }
   ]
 }

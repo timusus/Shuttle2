@@ -34,11 +34,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-/** The shell wired to the player's ViewModel: its state, progress and actions, and its events as snackbars. */
+/**
+ * The shell wired to its ViewModels: the start tab from [shellViewModel], and the player's state, progress and
+ * actions, with its events as snackbars.
+ */
 @Composable
 fun ShellRoute(
     modifier: Modifier = Modifier,
     viewModel: PlayerViewModel = hiltViewModel(),
+    shellViewModel: ShellViewModel = hiltViewModel(),
 ) {
     val playerUi by viewModel.uiState.collectAsStateWithLifecycle()
     val progress = viewModel.progress.collectAsStateWithLifecycle()
@@ -51,6 +55,7 @@ fun ShellRoute(
         actions = viewModel,
         modifier = modifier,
         snackbarHostState = snackbarHostState,
+        startTab = shellViewModel.startTab,
         navigationRequests = remember(targets) { targets.receiveAsFlow() },
     )
 }

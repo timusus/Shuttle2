@@ -306,8 +306,8 @@ it to its root. Its API is `open(route)`, `selectTab(tab)`, `back()`. Screens ne
 composables take lambdas (`onOpenAlbum`) that the entry provider wires to it. The rules are unit
 tests on the navigator, with no Compose.
 
-The start tab (Home or Library by `showHomeOnLaunch`) and whether onboarding comes first are
-computed in `MainActivity.onCreate` from preferences, as now.
+The start tab (Home or Library by `showHomeOnLaunch`) comes from `ShellViewModel`, read once per
+activity, so a change in Settings applies from the next launch.
 
 The settings drawer (`BottomDrawerSettingsFragment`, a `<dialog>` destination today) becomes a
 shell-owned `ModalBottomSheet` (Shuffle all, Sleep timer, Equalizer, Settings); on rail widths the

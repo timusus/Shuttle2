@@ -180,6 +180,7 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 
 The JVM-proven parts of these items are mapped in `docs/architecture/parity-audit.md`; these are what's left for a device.
 
+- [ ] Turn Settings → Appearance → Show Home on launch off, swipe S2 away and reopen it. It opens on Library, and back from Home returns to Library; with the setting on it opens on Home.
 - [ ] Now Playing's Cast button finds a Chromecast on the network and connects; playback moves to the receiver.
 - [ ] Turn on Settings → Playback → Keep shuffle mode, turn shuffle on, then play a different album. The new queue starts shuffled; with the setting off it starts in order.
 - [ ] With Artwork → Wi-Fi only on and Wi-Fi off, a song without cached artwork shows its placeholder; on Wi-Fi it loads. With Local only on, remote artwork never loads.

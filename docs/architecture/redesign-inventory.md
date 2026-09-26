@@ -470,7 +470,7 @@ Audited against the code on 2026-09-26: [parity-audit.md](parity-audit.md) maps 
 - [ ] Rescan now, rescan frequency, last scan date; scan progress and failures visible — gap #474
 - [x] Excluded items: view, restore one, clear all
 - [x] Jellyfin, Emby, Plex: connect, edit, remember password, errors with retry, remove source (cleans queue and library), report playback
-- [ ] Theme, pure black, accent, dynamic colour, Home-or-Library on launch — gap #475
+- [x] Theme, pure black, accent, dynamic colour, Home-or-Library on launch
 - [x] Artwork: Wi-Fi only, local only, clear cache, download all, media session artwork
 - [x] Widget opacity, both widget sizes still update
 - [ ] Crash reporting and analytics toggles; Remote Config still refreshes as decided — gap #476

@@ -48,9 +48,9 @@ Code paths are relative to `android/app/src/main/java/com/simplecityapps/shuttle
 | Servers ✅ | connect, remember password, retry, report playback | `ui/screens/sources/SourcesViewModel.kt:46` | `SourcesViewModelTest`, `SettingsScreenTest` | proven |
 | | remove source cleans queue and library | `ui/screens/sources/MediaSources.kt:63` | `DefaultMediaSourcesTest` | proven |
 | | edit a server (View-based dialogs until #434) | `ui/screens/sources/SourcesScreen.kt:153` | none | device-only |
-| Theme | theme, pure black | `ui/theme/S2AppTheme.kt:34` | `S2AppThemeTest`, `AndroidSettingsEffectsTest` | proven |
+| Theme ✅ | theme, pure black | `ui/theme/S2AppTheme.kt:34` | `S2AppThemeTest`, `AndroidSettingsEffectsTest` | proven |
 | | accent, dynamic colour (API gated) | `ui/theme/S2AppTheme.kt:34` | `SettingsCatalogTest`, `SettingsScreenTest` | proven |
-| | Home-or-Library on launch | `ui/screens/settings/model/SettingsCatalog.kt:88` | none | gap #475 |
+| | Home-or-Library on launch | `ui/shell/ShellViewModel.kt:17` | `ShellViewModelTest`, `AppNavigatorTest` | proven |
 | Artwork ✅ | clear cache, download all | `ui/screens/settings/SettingsEffects.kt:64` | `SettingsViewModelTest`, `AndroidSettingsEffectsTest` | proven |
 | | Wi-Fi only, local only, media session artwork | `:android:imageloader`, `:android:playback` | none | device-only |
 | Widget ✅ | opacity | `ui/widgets/NowPlayingWidget.kt:103` | `WidgetLayoutTest`, `NowPlayingWidgetStateTest`, `AndroidSettingsEffectsTest` | proven |
