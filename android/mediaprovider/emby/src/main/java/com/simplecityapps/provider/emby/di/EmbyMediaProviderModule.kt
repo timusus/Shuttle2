@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
+import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.emby.BuildConfig
 import com.simplecityapps.provider.emby.CredentialStore
@@ -13,6 +14,7 @@ import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.emby.EmbyPlaybackReporter
+import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.provider.emby.http.ItemsService
 import com.simplecityapps.provider.emby.http.LoginCredentials
@@ -121,4 +123,8 @@ open class EmbyMediaProviderModule {
     @Provides
     @IntoSet
     fun providePlaybackReporter(reporter: EmbyPlaybackReporter): PlaybackReporter = reporter
+
+    @Provides
+    @IntoSet
+    fun provideRemoteArtworkProvider(provider: EmbyRemoteArtworkProvider): RemoteArtworkProvider = provider
 }

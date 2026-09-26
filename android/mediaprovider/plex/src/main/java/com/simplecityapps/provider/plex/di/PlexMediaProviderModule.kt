@@ -6,12 +6,14 @@ import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
+import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.plex.CredentialStore
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.provider.plex.PlexPlaybackReporter
+import com.simplecityapps.provider.plex.PlexRemoteArtworkProvider
 import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.PlaybackReportingService
 import com.simplecityapps.provider.plex.http.PlexClientHeaderInterceptor
@@ -104,4 +106,8 @@ open class PlexMediaProviderModule {
     @Provides
     @IntoSet
     fun providePlaybackReporter(reporter: PlexPlaybackReporter): PlaybackReporter = reporter
+
+    @Provides
+    @IntoSet
+    fun provideRemoteArtworkProvider(provider: PlexRemoteArtworkProvider): RemoteArtworkProvider = provider
 }

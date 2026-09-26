@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
+import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.jellyfin.BuildConfig
 import com.simplecityapps.provider.jellyfin.CredentialStore
@@ -13,6 +14,7 @@ import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinPlaybackReporter
+import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.LoginCredentials
@@ -121,4 +123,8 @@ open class JellyfinMediaProviderModule {
     @Provides
     @IntoSet
     fun providePlaybackReporter(reporter: JellyfinPlaybackReporter): PlaybackReporter = reporter
+
+    @Provides
+    @IntoSet
+    fun provideRemoteArtworkProvider(provider: JellyfinRemoteArtworkProvider): RemoteArtworkProvider = provider
 }

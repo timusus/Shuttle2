@@ -1,8 +1,7 @@
 package com.simplecityapps.shuttle.di
 
 import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
-import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
-import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
+import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,15 +11,10 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 @Module
 class ImageLoaderModule {
+    // Each provider module contributes its own artwork provider to the set.
     @Singleton
     @Provides
     fun provideAggregateRemoteArtworkProvider(
-        embyRemoteArtworkProvider: EmbyRemoteArtworkProvider,
-        jellyfinRemoteArtworkProvider: JellyfinRemoteArtworkProvider
-    ): AggregateRemoteArtworkProvider = AggregateRemoteArtworkProvider(
-        mutableSetOf(
-            embyRemoteArtworkProvider,
-            jellyfinRemoteArtworkProvider
-        )
-    )
+        providers: Set<@JvmSuppressWildcards RemoteArtworkProvider>
+    ): AggregateRemoteArtworkProvider = AggregateRemoteArtworkProvider(providers)
 }

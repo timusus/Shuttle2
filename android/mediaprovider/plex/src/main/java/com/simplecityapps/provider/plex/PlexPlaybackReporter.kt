@@ -87,7 +87,7 @@ constructor(
     }
 }
 
-private const val METADATA_PATH = "/library/metadata/"
+internal const val METADATA_PATH = "/library/metadata/"
 
 /**
  * The track's ratingKey, from a Plex song's `path` (`plex://` + its metadata key,

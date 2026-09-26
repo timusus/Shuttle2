@@ -8,7 +8,7 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 
-/** Album art served by the Jellyfin or Emby server a song streams from. */
+/** Album art served by the media server a song streams from. */
 internal class MediaServerSongArtworkSource(
     private val artworkSettings: ArtworkSettings,
     private val remoteArtworkProvider: RemoteArtworkProvider

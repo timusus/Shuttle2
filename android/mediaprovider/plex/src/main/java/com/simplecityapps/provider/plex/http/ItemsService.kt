@@ -39,3 +39,12 @@ suspend fun ItemsService.sections(
     url = "$url/library/sections",
     token = token
 )
+
+suspend fun ItemsService.item(
+    url: String,
+    token: String,
+    key: String
+): NetworkResult<QueryResult> = itemsImpl(
+    url = "$url$key",
+    token = token
+)

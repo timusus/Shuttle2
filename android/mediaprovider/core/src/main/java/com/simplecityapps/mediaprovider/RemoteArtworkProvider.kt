@@ -11,7 +11,8 @@ interface RemoteArtworkProvider {
     suspend fun getArtistArtworkUrl(song: Song): String?
 }
 
-class AggregateRemoteArtworkProvider(val providers: MutableSet<RemoteArtworkProvider>) : RemoteArtworkProvider {
+/** Routes each call to the first of [providers] that handles the song's uri; each provider module contributes its own via `@IntoSet`. */
+class AggregateRemoteArtworkProvider(private val providers: Set<RemoteArtworkProvider>) : RemoteArtworkProvider {
     override fun handles(uri: Uri): Boolean = providers.any { it.handles(uri) }
 
     override suspend fun getAlbumArtworkUrl(song: Song): String? {

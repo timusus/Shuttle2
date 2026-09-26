@@ -36,7 +36,11 @@ data class Metadata(
     @Json(name = "Media") val media: List<Media>,
     // Epoch seconds
     @Json(name = "addedAt") val addedAt: Long? = null,
-    @Json(name = "updatedAt") val updatedAt: Long? = null
+    @Json(name = "updatedAt") val updatedAt: Long? = null,
+    // Server-relative image paths, resolved against the server address and signed with its token
+    @Json(name = "thumb") val thumb: String? = null,
+    @Json(name = "parentThumb") val parentThumb: String? = null,
+    @Json(name = "grandparentThumb") val grandparentThumb: String? = null
 )
 
 @JsonClass(generateAdapter = true)
