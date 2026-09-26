@@ -71,6 +71,9 @@ class PlayerViewModelTest {
         seededSongs += song
         ArtworkSeed.Available(Color.Red)
     }
+    private val colourFromArtworkPreference = object : ColourFromArtworkPreference {
+        override val enabled = MutableStateFlow(true)
+    }
 
     @Before
     fun setUp() {
@@ -95,6 +98,7 @@ class PlayerViewModelTest {
             sleepTimerPreference = sleepTimerPreference,
             replayGainPreference = replayGainPreference,
             seedSource = seedSource,
+            colourFromArtworkPreference = colourFromArtworkPreference,
             castAvailability = { false },
             savedNowPlaying = { savedNowPlaying },
             clearQueue = ClearQueue(queueManager, playbackManager),
@@ -296,6 +300,17 @@ class PlayerViewModelTest {
 
         queueManager.queueStateFlow.value = queueOf(firstAlbum + createSong(id = 7, name = "Three", album = "Second"), current = 2)
         seededSongs.map { it.name } shouldBe listOf("One", "Three")
+    }
+
+    @Test
+    fun `turning off Colour from artwork drops the seed, and no extraction runs`() = runTest {
+        colourFromArtworkPreference.enabled.value = false
+        val viewModel = viewModel()
+
+        queueManager.queueStateFlow.value = queueOf(songs("One"))
+
+        viewModel.uiState.value.seed shouldBe ArtworkSeed.None
+        seededSongs shouldBe emptyList()
     }
 
     @Test

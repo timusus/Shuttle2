@@ -246,6 +246,10 @@
     {
       "text": "Shuffle on the Albums tab now plays whole albums in a random order, with each album's songs in their normal track order, instead of shuffling every song individually",
       "commits": ["0e280089"]
+    },
+    {
+      "text": "Turning off Colour from artwork in Appearance settings now actually stops the player using colours from the song's artwork",
+      "commits": []
     }
   ]
 }

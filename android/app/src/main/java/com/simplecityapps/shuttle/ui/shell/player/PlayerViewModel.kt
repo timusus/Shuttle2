@@ -76,6 +76,11 @@ interface ReplayGainPreference {
     fun set(mode: ReplayGainMode)
 }
 
+/** Whether the player seeds its colour scheme from the current song's artwork (the Appearance settings' Colour from artwork toggle). */
+interface ColourFromArtworkPreference {
+    val enabled: Flow<Boolean>
+}
+
 /**
  * The player surfaces' state and actions (docs/architecture/app-shell.md, sections 1 and 5): the
  * queue, playback state and modes, favourite, sleep timer, speed and ReplayGain, the now-playing
@@ -93,6 +98,7 @@ class PlayerViewModel @Inject constructor(
     private val sleepTimerPreference: SleepTimerPreference,
     private val replayGainPreference: ReplayGainPreference,
     private val seedSource: ArtworkSeedSource,
+    private val colourFromArtworkPreference: ColourFromArtworkPreference,
     castAvailability: CastAvailability,
     savedNowPlaying: SavedNowPlaying,
     private val clearQueue: ClearQueue,
@@ -126,10 +132,14 @@ class PlayerViewModel @Inject constructor(
     private val favouriteIds: Flow<Set<Long>> = observeFavouriteSongIds()
 
     private val seed: Flow<ArtworkSeed> =
-        currentSong
-            .map { it?.let(::ArtworkKey) }
+        combine(
+            currentSong.map { it?.let(::ArtworkKey) }.distinctUntilChanged(),
+            colourFromArtworkPreference.enabled,
+        ) { key, enabled -> key to enabled }
             .distinctUntilChanged()
-            .mapLatest { key -> key?.let { seedSource.seedFor(it.song) } ?: ArtworkSeed.None }
+            .mapLatest { (key, enabled) ->
+                if (enabled) key?.let { seedSource.seedFor(it.song) } ?: ArtworkSeed.None else ArtworkSeed.None
+            }
 
     // Ticks only while a timer runs, so it notices the timer going off (the timer has no flow of its own).
     private val sleepTimerActive: Flow<Boolean> =

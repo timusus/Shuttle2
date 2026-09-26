@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.designsystem.theme.SeedColorCache
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsEffects
 import dagger.Module
 import dagger.Provides
@@ -83,5 +84,10 @@ object PlayerModule {
             playbackSettings.replayGainMode.value = mode
             settingsEffects.onSettingChanged(PlaybackSettings.ReplayGain, mode)
         }
+    }
+
+    @Provides
+    fun provideColourFromArtworkPreference(appearanceSettings: AppearanceSettings): ColourFromArtworkPreference = object : ColourFromArtworkPreference {
+        override val enabled: Flow<Boolean> = appearanceSettings.colourFromArtwork.flow
     }
 }
