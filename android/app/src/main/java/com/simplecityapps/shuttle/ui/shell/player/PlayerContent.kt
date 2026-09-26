@@ -167,6 +167,7 @@ internal object PlayerTestTags {
     const val MiniPlayer = "player_mini"
     const val NowPlaying = "player_now_playing"
     const val NowPlayingList = "player_now_playing_list"
+    const val NowPlayingArtwork = "player_now_playing_artwork"
     const val QueueList = "player_queue_list"
     const val QueueHeader = "player_queue_header"
     const val QueueRow = "player_queue_row"

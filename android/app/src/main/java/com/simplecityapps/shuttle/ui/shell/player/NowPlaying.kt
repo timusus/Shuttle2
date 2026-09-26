@@ -75,14 +75,17 @@ internal fun CastButton(modifier: Modifier = Modifier) {
     )
 }
 
-/** The artwork, square and as large as its slot allows, up to [MaxArtworkSize], with [gap] above and below it. */
+/** The artwork, square and as large as its slot allows, up to [MaxArtworkSize], with [gap] above and below it. Swiping it sideways skips. */
 @Composable
 internal fun NowPlayingArtwork(
     player: PlayerUiState,
+    actions: PlayerActions,
     gap: Dp,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier.fillMaxWidth().padding(horizontal = NowPlayingMargin, vertical = gap), contentAlignment = Alignment.Center) {
+    var boxModifier = modifier.fillMaxWidth().padding(horizontal = NowPlayingMargin, vertical = gap).testTag(PlayerTestTags.NowPlayingArtwork)
+    if (player.current != null) boxModifier = boxModifier.skipSwipe(onNext = actions::skipToNext, onPrevious = actions::skipToPrevious)
+    Box(boxModifier, contentAlignment = Alignment.Center) {
         player.current?.let { current ->
             SongArtwork(current.song, Modifier.widthIn(max = MaxArtworkSize).aspectRatio(1f, matchHeightConstraintsFirst = true), size = ArtworkSize.Hero)
         }
@@ -134,7 +137,7 @@ internal fun NowPlayingSong(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier, verticalArrangement = Arrangement.Center) {
-        NowPlayingArtwork(player, gap, Modifier.weight(1f, fill = fillHeight))
+        NowPlayingArtwork(player, actions, gap, Modifier.weight(1f, fill = fillHeight))
         NowPlayingTitle(player, actions)
     }
 }

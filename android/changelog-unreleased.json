@@ -274,6 +274,10 @@
     {
       "text": "Shuffle albums now says when it couldn't start playing, instead of doing nothing",
       "commits": []
+    },
+    {
+      "text": "Swiping the Now Playing artwork sideways now skips to the next or previous song, matching the mini player",
+      "commits": []
     }
   ]
 }

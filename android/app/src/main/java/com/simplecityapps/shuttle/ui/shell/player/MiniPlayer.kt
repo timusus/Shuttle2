@@ -77,7 +77,7 @@ internal fun MiniPlayer(
 
 /** A sideways drag that follows the finger and springs back, skipping when let go past the threshold. */
 @Composable
-private fun Modifier.skipSwipe(
+internal fun Modifier.skipSwipe(
     onNext: () -> Unit,
     onPrevious: () -> Unit,
 ): Modifier {

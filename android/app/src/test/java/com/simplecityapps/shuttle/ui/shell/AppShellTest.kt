@@ -296,6 +296,18 @@ class AppShellTest {
     }
 
     @Test
+    fun `swiping the now playing artwork skips, and leaves the sheet at rest`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.swipeNowPlayingArtwork(towardsStart = true)
+        robot.swipeNowPlayingArtwork(towardsStart = false)
+
+        robot.calls shouldBe listOf("skipToNext", "skipToPrevious")
+        robot.assertLevel(PlayerLevel.NowPlaying)
+    }
+
+    @Test
     fun `the mini player's next button skips`() {
         robot.setContent()
         robot.tapDescription("Next")

@@ -437,6 +437,12 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
+    /** Swipes the Now Playing artwork a third of its width towards the start (next) or the end (previous). */
+    fun swipeNowPlayingArtwork(towardsStart: Boolean) {
+        rule.onNodeWithTag(PlayerTestTags.NowPlayingArtwork).performTouchInput { if (towardsStart) swipeLeft() else swipeRight() }
+        rule.waitForIdle()
+    }
+
     /** Seeks the Now Playing seek bar to [fraction] of the song, as accessibility would. */
     fun seekTo(fraction: Float) {
         rule.onNodeWithContentDescription("Seek").performSemanticsAction(SemanticsActions.SetProgress) { it(fraction) }

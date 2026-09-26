@@ -128,7 +128,9 @@ internal fun NowPlayingList(
     LazyColumn(state = listState, modifier = modifier.testTag(PlayerTestTags.NowPlayingList)) {
         item(key = "handle") { DragHandle(onCollapse) }
         item(key = "artwork") {
-            Box(Modifier.fillMaxWidth().height(artworkSlotHeight).padding(vertical = NowPlayingGap), contentAlignment = Alignment.Center) {
+            var artworkSlotModifier = Modifier.fillMaxWidth().height(artworkSlotHeight).padding(vertical = NowPlayingGap).testTag(PlayerTestTags.NowPlayingArtwork)
+            if (player.current != null) artworkSlotModifier = artworkSlotModifier.skipSwipe(onNext = actions::skipToNext, onPrevious = actions::skipToPrevious)
+            Box(artworkSlotModifier, contentAlignment = Alignment.Center) {
                 player.current?.let { current -> SongArtwork(current.song, Modifier.size(artworkSize), size = ArtworkSize.Hero) }
                     ?: Spacer(Modifier.size(artworkSize))
             }
