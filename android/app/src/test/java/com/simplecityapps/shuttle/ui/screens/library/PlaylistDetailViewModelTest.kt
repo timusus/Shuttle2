@@ -178,10 +178,12 @@ class PlaylistDetailViewModelTest {
         events shouldBe listOf(PlaylistDetailEvent.ExportReady("Road Trip.m3u"))
 
         val file = File.createTempFile("playlist", ".m3u")
-        // The exporter writes on Dispatchers.IO, so wait for the result in real time rather than virtual time.
+        // The exporter writes on Dispatchers.IO, so wait for the result in real time rather than
+        // virtual time. The budget is generous (not a precision timing assertion) because a full
+        // parallel test run can leave this real IO write contending for host CPU (#464).
         val result = async(start = CoroutineStart.UNDISPATCHED) { viewModel.events.first() }
         viewModel.exportTo(Uri.fromFile(file).toString())
-        withContext(Dispatchers.Default) { withTimeout(5_000) { result.await() } } shouldBe PlaylistDetailEvent.ExportSucceeded
+        withContext(Dispatchers.Default) { withTimeout(30_000) { result.await() } } shouldBe PlaylistDetailEvent.ExportSucceeded
         file.readText() shouldContain "#EXTM3U"
     }
 }
