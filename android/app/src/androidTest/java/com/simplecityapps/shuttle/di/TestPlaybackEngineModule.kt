@@ -17,7 +17,7 @@ import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
-import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
 import dagger.Module
@@ -80,14 +80,14 @@ class TestPlaybackEngineModule {
         queueOperations: QueueOperations,
         player: Player,
         localPlayer: ExoPlayer,
-        playbackPreferenceManager: PlaybackPreferenceManager,
+        queueStore: QueueStore,
         playbackSettings: PlaybackSettings,
         @AppCoroutineScope coroutineScope: CoroutineScope
     ): PlaybackOperations = PlaybackFacade(
         queueOperations,
         player,
         localPlayer,
-        playbackPreferenceManager,
+        queueStore,
         playbackSettings.playbackSpeed,
         CallMonitor(context.getSystemService()),
         coroutineScope,

@@ -16,11 +16,13 @@ import androidx.media3.test.utils.FakeClock
 import androidx.media3.test.utils.TestExoPlayerBuilder
 import androidx.media3.test.utils.robolectric.RobolectricUtil
 import androidx.media3.test.utils.robolectric.TestPlayerRunHelper
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.CallMonitor
 import com.simplecityapps.playback.PlaybackFacade
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.chromecast.CastQueue
+import com.simplecityapps.playback.chromecast.FakeSongRepository
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.engine.SongUriResolver
@@ -32,6 +34,7 @@ import com.simplecityapps.playback.exoplayer.ResolvedMedia
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueFacade
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
@@ -47,6 +50,7 @@ import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -89,14 +93,18 @@ class PlaybackHarness(
     activePlayer: (ExoPlayer) -> Player = { it },
     /** What keeps a Cast receiver in line, around the local player: none, as when there's no Cast. Built before [activePlayer]. */
     castQueue: (ExoPlayer) -> CastQueue? = { null },
-    /** Where settings are kept. Pass one harness's to the next to model the app starting again. */
-    val sharedPreferences: SharedPreferences = FakeSharedPreferences()
+    /** Where settings, and the saved queue and position, are kept. Pass one harness's to the next to model the app starting again. */
+    val sharedPreferences: SharedPreferences = FakeSharedPreferences(),
+    /** The library the saved queue is restored from ([restore]). */
+    songRepository: SongRepository = FakeSongRepository(emptyList()),
+    /** Handles what the harness's coroutines throw, where a test expects them to; by default they fail the test. */
+    exceptionHandler: CoroutineExceptionHandler? = null
 ) {
     val context: Context = RuntimeEnvironment.getApplication()
 
     val audioManager: AudioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate + (exceptionHandler ?: EmptyCoroutineContext))
 
     /**
      * Every write to an AudioTrack since the output was last cleared, in order, plus the audio the sink wrote ahead,
@@ -141,7 +149,7 @@ class PlaybackHarness(
 
     val replayGain = ReplayGainAudioProcessor(replayGainMode)
 
-    val playbackPreferenceManager = PlaybackPreferenceManager(FakeSharedPreferences(), Moshi.Builder().build())
+    val playbackPreferenceManager = PlaybackPreferenceManager(sharedPreferences, Moshi.Builder().build())
 
     val audioEffectSessionManager = AudioEffectSessionManager(context)
 
@@ -162,6 +170,9 @@ class PlaybackHarness(
     val queueOperations: QueueOperations
 
     val playbackOperations: PlaybackOperations
+
+    /** Saves the queue and the position to resume from, and restores them ([restore]). */
+    val queueStore: QueueStore
 
     /** The player the app plays through, which the media session publishes. */
     val appPlayer: Player
@@ -215,17 +226,28 @@ class PlaybackHarness(
         val playbackSettings = PlaybackSettings(SettingsStore(sharedPreferences))
         val queueFacade = QueueFacade(player, playbackSettings, songUriResolver, buildContext, active)
         queueOperations = queueFacade
+        queueStore = QueueStore(active, player, queueFacade, playbackPreferenceManager, songRepository, scope)
         playbackOperations =
             PlaybackFacade(
                 queueOperations = queueFacade,
                 player = active,
                 localPlayer = player,
-                playbackPreferenceManager = playbackPreferenceManager,
+                queueStore = queueStore,
                 playbackSpeed = playbackSettings.playbackSpeed,
                 callMonitor = CallMonitor(audioManager),
                 appCoroutineScope = scope,
                 castQueue = cast
             )
+    }
+
+    /**
+     * Restores the saved queue as the app does when it starts, loading it paused at the position to resume from, and
+     * turns the main looper until the restore is done and the player has reported it.
+     */
+    fun restore() {
+        queueStore.restore { positionMs -> playbackOperations.load(positionMs, skipUnloadable = false) {} }
+        runUntil { queueOperations.hasRestoredQueue }
+        TestPlayerRunHelper.runUntilPendingCommandsAreFullyHandled(player)
     }
 
     /** Runs a suspending operation to completion, then lets the main looper catch up with what it started. */

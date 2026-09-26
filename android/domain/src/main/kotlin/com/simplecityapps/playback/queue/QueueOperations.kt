@@ -17,19 +17,6 @@ interface QueueOperations {
 
     suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>? = null, position: Int = 0): Boolean
 
-    /** Builds a queue for [setQueueIfContentVersion], off the main thread: a long queue takes a while to build. */
-    suspend fun buildQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): NewQueue
-
-    /**
-     * Sets [queue] as [setQueue] does, only if the queue's [QueueState.contentVersion] is still [contentVersion], and
-     * sets the shuffle mode to [shuffleMode] with it: the mode says which order [NewQueue.position] is in, so it's the
-     * caller's, not whatever the player's mode happens to be. Main thread only, so the check and the set are one step,
-     * which no other change can come between, and a caller can do more in that same step.
-     *
-     * @return the content version the queue is left at, or null if it had changed and was left alone.
-     */
-    fun setQueueIfContentVersion(contentVersion: Long, queue: NewQueue, shuffleMode: ShuffleMode): Long?
-
     fun getQueue(): List<QueueItem>
     fun getQueue(shuffleMode: ShuffleMode): List<QueueItem>
     fun getCurrentItem(): QueueItem?

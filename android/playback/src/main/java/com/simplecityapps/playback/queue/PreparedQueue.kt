@@ -5,13 +5,16 @@ import com.simplecityapps.playback.engine.S2ShuffleOrder
 import com.simplecityapps.shuttle.model.Song
 
 /**
- * The [NewQueue] this module builds: the playlist items for [songs] and both the orders it could start in, so setting
- * it on the main thread only hands them to the player.
+ * A queue built ready to set: the playlist items for [songs] and both the orders it could start in, so setting it on
+ * the main thread only hands them to the player.
+ *
+ * [position] is an index into [shuffleSongs] when they're given and shuffle is on when it's set, else into [songs].
+ * Without [shuffleSongs], a new shuffled order starts at the item at [position].
  */
 internal class PreparedQueue private constructor(
-    override val songs: List<Song>,
-    override val shuffleSongs: List<Song>?,
-    override val position: Int,
+    val songs: List<Song>,
+    val shuffleSongs: List<Song>?,
+    val position: Int,
     val items: List<MediaItem>,
     val shuffleOrder: S2ShuffleOrder,
     /**
@@ -20,7 +23,7 @@ internal class PreparedQueue private constructor(
      * out of their range.
      */
     val shuffledIndex: Int?
-) : NewQueue {
+) {
     companion object {
         /** Builds new entries for [songs]. It takes a while for a long queue, so it's best done off the main thread. */
         fun build(

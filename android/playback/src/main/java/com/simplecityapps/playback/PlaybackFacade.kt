@@ -9,7 +9,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.engine.PlayerThread
-import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueOperations
@@ -34,7 +34,7 @@ import timber.log.Timber
  * and the queue, and flows derived from the player's events and state. Nothing here keeps its own copy of the
  * position, the current item or the queue. What the player doesn't do itself is done by the listeners this puts on it,
  * one concern each: [CastHandover] (playback moving to and from a Cast receiver), [ItemLoader] (load completion and
- * skipping songs that fail to load), [ResumePositionStore] (the saved position to resume from), [PlaybackSpeedStore],
+ * skipping songs that fail to load), [QueueStore] (the saved queue and position to resume from), [PlaybackSpeedStore],
  * [WakeModeUpdater] and [CallHold] (a play during a call waits for it to end), plus [ProgressTicker]. The player
  * handles audio focus and headphones being unplugged itself (see [com.simplecityapps.playback.exoplayer.ExoPlayerFactory]).
  *
@@ -49,7 +49,8 @@ class PlaybackFacade(
     private val player: Player,
     /** The local player: [player] itself, or the one a Cast player plays through when not casting. */
     localPlayer: ExoPlayer,
-    playbackPreferenceManager: PlaybackPreferenceManager,
+    /** Saves the queue and the position to resume from; registered here with the other listeners. */
+    private val queueStore: QueueStore,
     /** Where the player's speed is kept across restarts. */
     playbackSpeed: Preference<Float>,
     /** Says when a call is on, and when it ends, so a play during one waits for it. */
@@ -62,11 +63,9 @@ class PlaybackFacade(
 ) : PlaybackOperations {
     private val playerThread = PlayerThread(player)
 
-    private val handover: CastHandover = CastHandover(player) { remote -> if (!remote) resumePositions.saveHandedBack() }
+    private val handover: CastHandover = CastHandover(player) { remote -> if (!remote) queueStore.saveHandedBack() }
 
     private val loader = ItemLoader(player, localPlayer, giveUp = ::pause)
-
-    private val resumePositions: ResumePositionStore = ResumePositionStore(player, playbackPreferenceManager, isSwitching = { handover.isSwitching })
 
     private val speedStore = PlaybackSpeedStore(player, playbackSpeed)
 
@@ -118,7 +117,8 @@ class PlaybackFacade(
         // Individual callbacks, not onEvents: they arrive within the player call that caused them, so state published
         // here is current by the time that call returns. The player calls its listeners in the order they're added, so
         // the handover sees a move first, and this layer, which publishes what the others changed, last.
-        listOf(handover, loader, resumePositions, speedStore, WakeModeUpdater(localPlayer), callHold, stateListener()).forEach(player::addListener)
+        queueStore.isSwitching = { handover.isSwitching }
+        listOf(handover, loader, queueStore, speedStore, WakeModeUpdater(localPlayer), callHold, stateListener()).forEach(player::addListener)
 
         playerThread.run(speedStore::restore)
     }
@@ -235,7 +235,7 @@ class PlaybackFacade(
         _playbackStateFlow.value = state
         reanchor()
         if (state != previous && state is PlaybackState.Paused && !handover.isSwitching) {
-            savePausePosition()
+            reportPausePosition()
         }
         progressTicker.setTicking(state is PlaybackState.Playing || state is PlaybackState.Loading)
     }
@@ -252,14 +252,12 @@ class PlaybackFacade(
     }
 
     /**
-     * Saves where playback paused as the position to resume from, and reports it. Nothing is saved while playback is
-     * on something not in the queue, as a Cast receiver can be.
+     * Reports where playback paused, for the song's own position ([QueueStore] saves it as the position to resume
+     * from). Nothing is reported while playback is on something not in the queue, as a Cast receiver can be.
      */
-    private fun savePausePosition() {
+    private fun reportPausePosition() {
         val song = currentEntry?.song ?: return
-        val position = getProgress()
-        resumePositions.savePause(position)
-        _pausePositionFlow.tryEmit(SongPosition(song, position ?: 0))
+        _pausePositionFlow.tryEmit(SongPosition(song, getProgress() ?: 0))
     }
 
     // PlaybackOperations
@@ -282,7 +280,7 @@ class PlaybackFacade(
             Timber.v("load(seekPosition: $seekPosition) ${entry.song.name}")
             callHold.cancel()
             player.playWhenReady = false
-            loadCurrent(seekPosition ?: ResumePositionStore.startOf(entry.song), skipUnloadable, completion)
+            loadCurrent(seekPosition ?: QueueStore.startOf(entry.song), skipUnloadable, completion)
         }
     }
 
@@ -310,7 +308,7 @@ class PlaybackFacade(
         if (callHold.holds(::playNow)) return
         when {
             player.playbackState == Player.STATE_IDLE -> {
-                var startPosition = resumePositions.resumePosition(currentEntry?.song)
+                var startPosition = queueStore.resumePosition(currentEntry?.song)
                 if (isNearEndOfCurrentSong(startPosition)) {
                     startPosition = 0
                 }

@@ -20,6 +20,7 @@ import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.mediasession.UriSongResolver
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueFacade
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
@@ -39,12 +40,26 @@ import kotlinx.coroutines.CoroutineScope
 class PlaybackModule {
     @Singleton
     @Provides
-    fun provideQueueOperations(
+    fun provideQueueFacade(
         player: ExoPlayer,
         activePlayer: Player,
         playbackSettings: PlaybackSettings,
         songUriResolver: SongUriResolver
-    ): QueueOperations = QueueFacade(player, playbackSettings, songUriResolver, activePlayer = activePlayer)
+    ): QueueFacade = QueueFacade(player, playbackSettings, songUriResolver, activePlayer = activePlayer)
+
+    @Provides
+    fun provideQueueOperations(queueFacade: QueueFacade): QueueOperations = queueFacade
+
+    @Singleton
+    @Provides
+    fun provideQueueStore(
+        activePlayer: Player,
+        localPlayer: ExoPlayer,
+        queueFacade: QueueFacade,
+        playbackPreferenceManager: PlaybackPreferenceManager,
+        songRepository: SongRepository,
+        @AppCoroutineScope appCoroutineScope: CoroutineScope
+    ): QueueStore = QueueStore(activePlayer, localPlayer, queueFacade, playbackPreferenceManager, songRepository, appCoroutineScope)
 
     @Singleton
     @Provides

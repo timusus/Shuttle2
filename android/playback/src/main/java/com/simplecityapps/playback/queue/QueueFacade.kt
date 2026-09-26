@@ -63,19 +63,27 @@ class QueueFacade(
         position: Int
     ): Boolean = builder.buildThenApply({ PreparedQueue.build(songs, shuffleSongs, position) }) { queue -> editor.setQueue(queue) }
 
-    override suspend fun buildQueue(
+    /** Builds a queue for [setQueueIfContentVersion], off the main thread: a long queue takes a while to build. */
+    internal suspend fun buildQueue(
         songs: List<Song>,
         shuffleSongs: List<Song>?,
         position: Int
-    ): NewQueue = builder.build(songs, shuffleSongs, position)
+    ): PreparedQueue = builder.build(songs, shuffleSongs, position)
 
-    override fun setQueueIfContentVersion(
+    /**
+     * Sets [queue] as [setQueue] does, only if the queue's [QueueState.contentVersion] is still [contentVersion], and
+     * sets the shuffle mode to [shuffleMode] with it: the mode says which order [PreparedQueue.position] is in, so it's
+     * the caller's, not whatever the player's mode happens to be. Main thread only, so the check and the set are one
+     * step, which no other change can come between, and a caller can do more in that same step.
+     *
+     * @return the content version the queue is left at, or null if it had changed and was left alone.
+     */
+    internal fun setQueueIfContentVersion(
         contentVersion: Long,
-        queue: NewQueue,
+        queue: PreparedQueue,
         shuffleMode: ShuffleMode
     ): Long? {
         check(playerThread.isCurrent) { "setQueueIfContentVersion is main thread only" }
-        require(queue is PreparedQueue) { "setQueueIfContentVersion takes a queue buildQueue built" }
         if (queueStateFlow.value.contentVersion != contentVersion) return null
         editor.setQueue(queue, shuffleMode)
         return queueStateFlow.value.contentVersion

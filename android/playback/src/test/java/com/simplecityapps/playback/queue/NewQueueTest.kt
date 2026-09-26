@@ -25,8 +25,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
 /**
- * A queue built off the main thread with [QueueOperations.buildQueue] and set with
- * [QueueOperations.setQueueIfContentVersion], as the app's restore does: the same queue [QueueOperations.setQueue] sets.
+ * A queue built off the main thread with [QueueFacade.buildQueue] and set with [QueueFacade.setQueueIfContentVersion],
+ * as the restore does: the same queue [QueueFacade.setQueue] sets.
  */
 @RunWith(RobolectricTestRunner::class)
 class NewQueueTest {
@@ -154,18 +154,6 @@ class NewQueueTest {
             .join()
 
         shouldThrow<IllegalStateException> { error?.let { throw it } }
-        queue.queueStateFlow.value.items.size shouldBe 0
-    }
-
-    @Test
-    fun `a queue another QueueOperations built is refused`() {
-        val foreign = object : NewQueue {
-            override val songs = listOf(song(1))
-            override val shuffleSongs: List<Song>? = null
-            override val position = 0
-        }
-
-        shouldThrow<IllegalArgumentException> { queue.setQueueIfContentVersion(queue.queueStateFlow.value.contentVersion, foreign, ShuffleMode.Off) }
         queue.queueStateFlow.value.items.size shouldBe 0
     }
 
