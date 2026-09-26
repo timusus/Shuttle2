@@ -118,14 +118,14 @@ albums or songs, and never hand-typed "Artist"/"Album" stand-ins where content i
   by `@Preview`s and tests. Release compiles against `:android:fixtures` but never packages it
   (`releaseCompileOnly`); `check` runs `verifyFixturesNotInReleaseClasspath`, which fails if any
   module's release runtime classpath resolves `:android:fixtures`.
-- **Artwork through Glide:** call `SampleArtworkGlide.install(context)` in `@Before` and
+- **Artwork through Coil:** call `SampleArtworkCoil.install(context)` in `@Before` and
   `uninstall()` in `@After`. Songs, albums and album artists named after sample ones then
   load their covers synchronously. Nothing else loads, so other content keeps its placeholder.
   Production image loading is untouched. See `ShellScreenshotTest`.
 - **Previews:** wrap a `@Preview` in `S2Preview { }` (designsystem) and pass the sample model as
   `Artwork(model = ...)`; app previews use `S2Preview(artwork = SampleAppCovers)` or
   `SampleArtwork { }` inside their own theme, with models from `ui/preview/SamplePreviews.kt`.
-  Covers draw synchronously through `LocalPreviewArtwork`, no Glide; keep fixture data in
+  Covers draw synchronously through `LocalPreviewArtwork`, no Coil; keep fixture data in
   previews out of top-level fields (release has no fixtures). `SnapshotComposePreviewTests` renders
   every `@Preview` with its covers.
 - **Boards:** `SampleArt(albumId)` for a row naming a sample album, `SampleArt(variant)` for
