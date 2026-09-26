@@ -41,6 +41,12 @@
 #    same paths here, plus the full log, then drops any of those report dirs the box no longer has
 #    so one a previous run wrote and this one didn't re-run can't linger (#459).
 #
+# On a failing test task (either host), prints "Failed tests:" followed by each failing
+# Class.method and the first line of its failure message (cap 20, then "+N more"), read from
+# TEST-*.xml under build/test-results/ written since the build started -- so stale XML from an
+# earlier run is never reported (#468). A box run's own "See the report at: file:///home/..."
+# line is rewritten to the local synced copy.
+#
 # The version comes from the latest vYYMMDDNN tag, read here and passed as -PversionCode and
 # -PversionName, since a worktree's .git is a pointer file that means nothing on the box.
 #
@@ -84,7 +90,8 @@ until mkdir "$LOCK" 2>/dev/null; do
     sleep 10
 done
 echo $$ > "$LOCK/pid"
-trap 'rm -rf "$LOCK"' EXIT
+FAIL_MARKER="$(mktemp -t remote-build-marker)"
+trap 'rm -rf "$LOCK" "$FAIL_MARKER"' EXIT
 
 # ---- local load -----------------------------------------------------------------------------
 CORES="$(sysctl -n hw.ncpu 2>/dev/null || nproc)"
@@ -124,6 +131,7 @@ run_local() {
     rc=$?
     set -e
     echo "remote-build: gradle wall time $((SECONDS - gradle_start))s on the Mac" >&2
+    if [ "$rc" -ne 0 ]; then "$ROOT/support/scripts/report-test-failures.sh" "$FAIL_MARKER" "$ROOT" || true; fi
     exit "$rc"
 }
 
@@ -195,7 +203,10 @@ case " $* " in
 esac
 
 # ---- sync up --------------------------------------------------------------------------------
-"${SSH[@]}" "$BOX" "mkdir -p $REMOTE_DIR"
+# $HOME on the box (not assumed) is needed below to rewrite the box's own
+# "See the report at: file:///home/.../s2-builds/..." lines to the local
+# synced copy (#468).
+BOX_HOME="$("${SSH[@]}" "$BOX" "mkdir -p $REMOTE_DIR && printf '%s' \"\$HOME\"")"
 start=$SECONDS
 rsync -a --delete -e "${SSH[*]}" \
     --exclude='build/' --exclude='.gradle/' --exclude='.idea/' --exclude='.kotlin/' \
@@ -213,7 +224,7 @@ for a in "$SLOTS" "$NICE" "$wait_for_slot" "$NO_SLOT" "$REMOTE_DIR" "${args[@]}"
     remote_cmd+=" $(printf '%q' "$a")"
 done
 set +e
-"${SSH[@]}" "$BOX" "$remote_cmd" <<'REMOTE'
+"${SSH[@]}" "$BOX" "$remote_cmd" <<'REMOTE' | sed "s#file://$BOX_HOME/$REMOTE_DIR#file://$ROOT#g"
 set -uo pipefail
 slots="$1"; nice_level="$2"; wait_for_slot="$3"; no_slot="$4"
 cd "$HOME/$5" || exit 1
@@ -267,7 +278,7 @@ gradle_wall=$((SECONDS - gradle_start))
 echo "remote-build: slot wait ${slot_wait}s; gradle wall time ${gradle_wall}s" >&2
 exit "$gradle_rc"
 REMOTE
-rc=$?
+rc="${PIPESTATUS[0]}"
 set -e
 if [ "$wait_for_slot" = no ] && [ "$rc" -eq "$NO_SLOT" ]; then
     run_local "every box build slot filled up during the sync"
@@ -315,4 +326,5 @@ else
     echo "remote-build: syncing the outputs back failed (the build's exit code is kept); leaving existing local reports as-is" >&2
 fi
 echo "remote-build: outputs synced back in $((SECONDS - start))s; full log: ${LOG_DIR#"$ROOT"/}/gradle.log" >&2
+if [ "$rc" -ne 0 ]; then "$ROOT/support/scripts/report-test-failures.sh" "$FAIL_MARKER" "$ROOT" || true; fi
 exit "$rc"

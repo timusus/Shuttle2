@@ -237,8 +237,12 @@ worktree's own) at `--max-workers=6` (4 when `remote-emu.sh` shows a lane leased
 the args say otherwise (`REMOTE_BUILD_MAX_WORKERS` changes the default), streams a condensed log
 (full log: `build/remote-build/gradle.log`), prints the slot wait and Gradle wall time, then syncs
 back APKs, test results, test reports and Roborazzi outputs and drops any of those report dirs the
-box no longer has so a stale one can't linger. Either host exits with Gradle's exit code. The
-version tag is read on the Mac and passed as `-PversionCode`/`-PversionName`. Different worktrees
+box no longer has so a stale one can't linger. On a failing test task, either host, the script's
+final output names each failing test as `Class.method: first line of the failure message` (cap 20,
+then `+N more`), read from fresh `TEST-*.xml` under `build/test-results/`; a box run's own "See the
+report at: file:///home/..." line is rewritten to the local synced copy (#468). Either host exits
+with Gradle's exit code. The version tag is read on the Mac and passed as
+`-PversionCode`/`-PversionName`. Different worktrees
 build side by side (bounded by the box-side slot above); two calls from one worktree queue on a
 separate local lock. One-time box setup: `support/scripts/remote-build-setup.sh` (idempotent; it
 only checks the CI-shared SDK at `/opt/android-sdk` and never installs into it).

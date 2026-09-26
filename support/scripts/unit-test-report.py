@@ -1,29 +1,26 @@
 #!/usr/bin/env python3
 """Print failed/errored JUnit testcases from the given TEST-*.xml files.
 
-Invoked by support/scripts/unit-test after a failing run (#334): the
-condensed build-brief/Gradle console output names the failing test but not
-the assertion's expected/actual or the failing line, which only exist in
-the XML report.
+Invoked via support/scripts/report-test-failures.sh, shared by
+support/scripts/unit-test and support/scripts/remote-build.sh (#334, #468):
+the condensed build-brief/Gradle console output names that a test task
+failed but not which test, which only exists in the XML report.
 """
 import sys
 import xml.etree.ElementTree as ET
 
-MAX_FAILURES = 15
-PACKAGE_PREFIX = "com.simplecityapps"
+MAX_FAILURES = 20
 
 
-def first_project_frame(stack_text):
-    for line in stack_text.splitlines():
+def first_line(fail):
+    message = (fail.get("message") or "").strip()
+    if message:
+        return message.splitlines()[0].strip()
+    for line in (fail.text or "").splitlines():
         line = line.strip()
-        if not line.startswith("at ") or PACKAGE_PREFIX not in line:
-            continue
-        rest = line[3:]
-        if rest.endswith(")") and "(" in rest:
-            location = rest[rest.rindex("(") + 1:-1]
-            if ":" in location:
-                return location
-    return None
+        if line:
+            return line
+    return ""
 
 
 def collect_failures(paths):
@@ -41,12 +38,7 @@ def collect_failures(paths):
                 continue
             classname = testcase.get("classname", "?")
             name = testcase.get("name", "?")
-            message = (fail.get("message") or "").strip()
-            body = fail.text or ""
-            detail_source = message if message else body
-            detail_lines = [l.strip() for l in detail_source.splitlines() if l.strip()][:5]
-            frame = first_project_frame(body)
-            failures.append((classname, name, detail_lines, frame))
+            failures.append((classname, name, first_line(fail)))
     return failures
 
 
@@ -56,17 +48,12 @@ def main():
         return
 
     shown = failures[:MAX_FAILURES]
-    for classname, name, detail_lines, frame in shown:
-        print(f"{classname}.{name}")
-        for line in detail_lines:
-            print(f"    {line}")
-        if frame:
-            print(f"    at {frame}")
-        print()
+    for classname, name, message in shown:
+        print(f"{classname}.{name}: {message}")
 
     remaining = len(failures) - len(shown)
     if remaining > 0:
-        print(f"... {remaining} more")
+        print(f"+{remaining} more")
 
 
 if __name__ == "__main__":

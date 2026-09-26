@@ -35,22 +35,11 @@ if [ "${S2_REMOTE_BUILD:-0}" = "1" ]; then
 fi
 
 # Parse the TEST-*.xml files written since ${marker} and print each failed/
-# errored testcase's class.method, assertion message and first project
-# stack frame (see #334). Silently does nothing without python3.
+# errored testcase's class.method and the first line of its failure message
+# (see #334, #468), via the helper shared with remote-build.sh.
 report_test_failures() {
   local marker="$1"
-  command -v python3 >/dev/null 2>&1 || return 0
-
-  local xml_files=()
-  while IFS= read -r -d '' f; do
-    xml_files+=("${f}")
-  done < <(find "${REPO_ROOT}" -path '*/build/test-results/*/TEST-*.xml' -newer "${marker}" -print0 2>/dev/null)
-
-  [ "${#xml_files[@]}" -eq 0 ] && return 0
-
-  echo
-  echo "Failed tests:"
-  python3 "${SCRIPT_DIR}/unit-test-report.py" "${xml_files[@]}"
+  "${SCRIPT_DIR}/report-test-failures.sh" "${marker}" "${REPO_ROOT}"
 }
 
 # Run Gradle (via build-brief when available), retry once with plain
