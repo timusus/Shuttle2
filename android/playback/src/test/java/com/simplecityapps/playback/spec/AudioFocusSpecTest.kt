@@ -172,7 +172,7 @@ class AudioFocusSpecTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.M])
+    @Config(sdk = [Build.VERSION_CODES.N])
     fun `RS-54 below API 31, where the end of a call can't be seen, a play during a call is dropped`() {
         startPlaying(listOf(song(1, file = TONE_3S)))
         harness.run { playback.pause() }
