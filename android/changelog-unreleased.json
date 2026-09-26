@@ -15,7 +15,7 @@
     },
     {
       "text": "Browse your music by folder in a new Folders library tab, which you can turn on in Appearance settings",
-      "commits": []
+      "commits": ["566cf1db7"]
     },
     {
       "text": "Sort your playlists list by name",

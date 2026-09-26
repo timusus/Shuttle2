@@ -44,6 +44,8 @@ import com.simplecityapps.shuttle.ui.screens.library.albums.getAlbumFastscrollPo
 import com.simplecityapps.shuttle.ui.screens.library.albums.getAlbumPopupText
 import com.simplecityapps.shuttle.ui.screens.library.folders.Folder
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListUiState
+import com.simplecityapps.shuttle.ui.screens.library.folders.displayName
+import com.simplecityapps.shuttle.ui.screens.library.folders.displayPath
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListUiState
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
@@ -369,7 +371,7 @@ fun FoldersPage(
             state.currentFolder?.let { folder ->
                 item(key = "path") {
                     SectionHeader(
-                        title = folder.path.joinToString(" / "),
+                        title = folder.displayPath(),
                         action = stringResource(R.string.library_navigate_up),
                         onAction = onNavigateUp,
                     )
@@ -377,7 +379,7 @@ fun FoldersPage(
             }
             items(state.folders, key = { "folder-" + it.path.joinToString("/") }) { folder ->
                 FolderRow(
-                    name = folder.name,
+                    name = folder.displayName(),
                     kind = FolderEntryKind.Folder,
                     summary = pluralString(R.plurals.songsPlural, folder.songCount),
                     onClick = { onFolderClick(folder) },

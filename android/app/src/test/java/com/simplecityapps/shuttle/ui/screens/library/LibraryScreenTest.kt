@@ -260,4 +260,39 @@ class LibraryScreenTest {
 
         robot.lastFolderClicked shouldBe folder
     }
+
+    @Test
+    fun `folders page shows friendly names for storage volumes`() {
+        robot.setContent(
+            libraryState(enabledTabs = setOf(LibraryTab.Folders), currentTab = LibraryTab.Folders),
+            pages = LibraryPageStates(
+                folders = readyFolderList(
+                    folders = listOf(
+                        createFolder("primary"),
+                        createFolder("1234-ABCD"),
+                        createFolder("<other>"),
+                    ),
+                ),
+            ),
+        )
+
+        robot.assertTextDisplayed("Internal storage")
+        robot.assertTextDisplayed("1234-ABCD")
+        robot.assertTextDisplayed("Other locations")
+    }
+
+    @Test
+    fun `folders page header drops the volume segment from the path`() {
+        robot.setContent(
+            libraryState(enabledTabs = setOf(LibraryTab.Folders), currentTab = LibraryTab.Folders),
+            pages = LibraryPageStates(
+                folders = readyFolderList(
+                    currentFolder = createFolder("primary", "Music", "Juniper Static"),
+                    folders = emptyList(),
+                ),
+            ),
+        )
+
+        robot.assertTextDisplayed("Music / Juniper Static")
+    }
 }
