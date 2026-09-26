@@ -63,7 +63,7 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
             albums = sortedAlbums,
             songs = sortedSongs,
             currentSong = currentSong,
-            expandedAlbums = expanded,
+            expandedAlbums = expanded.intersect(sortedAlbums.mapNotNullTo(HashSet()) { it.groupKey }),
             loadingState = if (albums.isEmpty() && songs.isEmpty()) {
                 AlbumArtistDetailUiState.LoadingState.Empty
             } else {
@@ -79,8 +79,11 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
 
     fun onAlbumClick(album: Album) {
         val key = album.groupKey ?: return
+        // Drop keys of albums a rescan removed, so they don't re-expand if the album comes back
+        val present = uiState.value.albums.mapNotNullTo(HashSet()) { it.groupKey }
         expandedAlbums.update { expanded ->
-            if (key in expanded) expanded - key else expanded + key
+            val kept = expanded.intersect(present)
+            if (key in kept) kept - key else kept + key
         }
     }
 

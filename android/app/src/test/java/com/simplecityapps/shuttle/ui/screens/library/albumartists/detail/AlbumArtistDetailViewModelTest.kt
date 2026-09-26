@@ -114,6 +114,51 @@ class AlbumArtistDetailViewModelTest {
     }
 
     @Test
+    fun `an expanded album that a rescan removes drops out of the expanded albums`() = runTest {
+        val cassette = createAlbum(name = "Cassette Summer", albumArtist = "The Tin Orchards", year = 1969)
+        val change = createAlbum(name = "Loose Change", albumArtist = "The Tin Orchards", year = 1970)
+        fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
+        fakeAlbumRepository.setAlbums(listOf(cassette, change))
+        fakeSongRepository.setSongs(listOf(createSong(albumArtist = "The Tin Orchards")))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onAlbumClick(cassette)
+        viewModel.onAlbumClick(change)
+        advanceUntilIdle()
+
+        fakeAlbumRepository.setAlbums(listOf(change))
+        advanceUntilIdle()
+
+        viewModel.uiState.value.expandedAlbums shouldBe setOf(change.groupKey)
+    }
+
+    @Test
+    fun `a removed album comes back collapsed once another album has been toggled`() = runTest {
+        val cassette = createAlbum(name = "Cassette Summer", albumArtist = "The Tin Orchards", year = 1969)
+        val change = createAlbum(name = "Loose Change", albumArtist = "The Tin Orchards", year = 1970)
+        fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
+        fakeAlbumRepository.setAlbums(listOf(cassette, change))
+        fakeSongRepository.setSongs(listOf(createSong(albumArtist = "The Tin Orchards")))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onAlbumClick(cassette)
+        advanceUntilIdle()
+        fakeAlbumRepository.setAlbums(listOf(change))
+        advanceUntilIdle()
+        viewModel.onAlbumClick(change)
+        advanceUntilIdle()
+
+        fakeAlbumRepository.setAlbums(listOf(cassette, change))
+        advanceUntilIdle()
+
+        viewModel.uiState.value.expandedAlbums shouldBe setOf(change.groupKey)
+    }
+
+    @Test
     fun `shuffle albums plays every album in turn, each in track order`() = runTest {
         val cassette = listOf(1, 2, 3).map { createSong(id = it.toLong(), name = "Cassette $it", albumArtist = "The Tin Orchards", album = "Cassette Summer", track = it) }
         val change = listOf(1, 2).map { createSong(id = 10L + it, name = "Change $it", albumArtist = "The Tin Orchards", album = "Loose Change", track = it) }
