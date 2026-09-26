@@ -5,12 +5,16 @@ import androidx.media3.common.MediaItem
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.analytics.PlayerId
 import androidx.media3.exoplayer.hls.HlsMediaSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
+import androidx.media3.exoplayer.upstream.Loader
+import androidx.media3.exoplayer.util.ReleasableExecutor
 import androidx.test.core.app.ApplicationProvider
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import java.util.concurrent.Executor
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -22,7 +26,15 @@ import org.robolectric.Shadows.shadowOf
 @RunWith(RobolectricTestRunner::class)
 class StreamSniffingMediaSourceFactoryTest {
     private val server = FakeStreamServer()
-    private val factory = StreamSniffingMediaSourceFactory(DefaultHttpDataSource.Factory())
+    private val dataSourceFactory = DefaultHttpDataSource.Factory()
+
+    // The probe loads on the test thread, so preparing a source makes its request before it returns.
+    private val factory = StreamSniffingMediaSourceFactory(
+        dataSourceFactory,
+        DefaultMediaSourceFactory(dataSourceFactory),
+        HlsMediaSource.Factory(dataSourceFactory),
+        newProbeLoader = { Loader(ReleasableExecutor.from(Executor(Runnable::run)) {}) }
+    )
     private val caller = MediaSource.MediaSourceCaller { _, _ -> }
 
     @Before
@@ -40,14 +52,10 @@ class StreamSniffingMediaSourceFactoryTest {
         mimeType: String? = "Audio/*"
     ) = MediaItem.Builder().setUri(uri).setMimeType(mimeType).build()
 
-    /** Prepares [source] on the main looper and waits for the probe to pick a child source. */
+    /** Prepares [source] on the main looper, then delivers the probe's result, which picks a child source. */
     private fun resolve(source: StreamSniffingMediaSource): MediaSource {
         source.prepareSource(caller, PlayerId.UNSET, DefaultBandwidthMeter.Builder(RuntimeEnvironment.getApplication()).build())
-        val deadline = System.currentTimeMillis() + 10_000
-        while (source.childSource == null && System.currentTimeMillis() < deadline) {
-            shadowOf(Looper.getMainLooper()).idle()
-            Thread.sleep(10)
-        }
+        shadowOf(Looper.getMainLooper()).idle()
         return checkNotNull(source.childSource).also { source.releaseSource(caller) }
     }
 

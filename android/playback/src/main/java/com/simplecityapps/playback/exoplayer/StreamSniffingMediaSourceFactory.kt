@@ -28,18 +28,20 @@ import timber.log.Timber
  *
  * Items that [StreamTypeProbe.needsProbe] get a [StreamSniffingMediaSource], which probes the
  * stream when the player prepares it and then delegates to an [HlsMediaSource] or to
- * [defaultFactory]'s progressive source. Everything else (local files, content URIs, known MIME
- * types, URLs with an extension) goes straight to [defaultFactory] with no extra request.
+ * [defaultFactory]'s progressive source, probing on the [Loader] that [newProbeLoader] makes (a
+ * thread of its own by default). Everything else (local files, content URIs, known MIME types,
+ * URLs with an extension) goes straight to [defaultFactory] with no extra request.
  */
 class StreamSniffingMediaSourceFactory(
     private val dataSourceFactory: DataSource.Factory,
     private val defaultFactory: MediaSource.Factory = DefaultMediaSourceFactory(dataSourceFactory),
-    private val hlsFactory: MediaSource.Factory = HlsMediaSource.Factory(dataSourceFactory)
+    private val hlsFactory: MediaSource.Factory = HlsMediaSource.Factory(dataSourceFactory),
+    private val newProbeLoader: () -> Loader = { Loader("S2:StreamTypeProbe") }
 ) : MediaSource.Factory {
     override fun createMediaSource(mediaItem: MediaItem): MediaSource {
         val localConfiguration = mediaItem.localConfiguration
         return if (localConfiguration != null && StreamTypeProbe.needsProbe(localConfiguration.uri, localConfiguration.mimeType)) {
-            StreamSniffingMediaSource(mediaItem, dataSourceFactory, hlsFactory, defaultFactory)
+            StreamSniffingMediaSource(mediaItem, dataSourceFactory, hlsFactory, defaultFactory, newProbeLoader)
         } else {
             defaultFactory.createMediaSource(mediaItem)
         }
@@ -79,7 +81,8 @@ class StreamSniffingMediaSource(
     private val mediaItem: MediaItem,
     private val dataSourceFactory: DataSource.Factory,
     private val hlsFactory: MediaSource.Factory,
-    private val progressiveFactory: MediaSource.Factory
+    private val progressiveFactory: MediaSource.Factory,
+    private val newProbeLoader: () -> Loader
 ) : CompositeMediaSource<Unit>() {
     private var loader: Loader? = null
     private var streamType: StreamType? = null
@@ -98,7 +101,7 @@ class StreamSniffingMediaSource(
 
     private fun startProbe() {
         val uri = checkNotNull(mediaItem.localConfiguration).uri
-        val loader = Loader("S2:StreamTypeProbe").also { loader = it }
+        val loader = newProbeLoader().also { loader = it }
         loader.startLoading(
             ProbeLoadable(dataSourceFactory.createDataSource(), uri),
             object : Loader.Callback<ProbeLoadable> {

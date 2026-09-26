@@ -14,8 +14,9 @@ import com.simplecityapps.playback.chromecast.isRemote
  * Once [attach]ed, it follows the local player's session, and closes while playback is on a Cast
  * receiver. At most one effect control session is open at a time.
  *
- * Thread-safe: binds are serialised, and each closes exactly the session the previous bind opened,
- * so no session is closed twice, left open, or closed after a newer one was opened.
+ * Confined to the player's application thread: every bind comes from [attach]'s player listeners.
+ * Each bind closes exactly the session the previous one opened, so no session is closed twice or
+ * left open.
  */
 class AudioEffectSessionManager(
     private val openSession: (sessionId: Int) -> Unit,
@@ -30,7 +31,6 @@ class AudioEffectSessionManager(
      * The session id the effect control session is currently open on, or null if none is open.
      */
     var sessionId: Int? = null
-        @Synchronized get
         private set
 
     /**
@@ -64,7 +64,6 @@ class AudioEffectSessionManager(
      * and opens one on [sessionId] if it's a real session. A [sessionId] of zero or less (e.g. a
      * Chromecast playback, which has no local audio session) just closes. No-op if already bound.
      */
-    @Synchronized
     fun bindTo(sessionId: Int) {
         val newSessionId = sessionId.takeIf { it > 0 }
         if (newSessionId == this.sessionId) {

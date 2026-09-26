@@ -55,7 +55,8 @@ class PlaybackInitializerTest {
             startedComponents += "bit-perfect"
             mockk(relaxed = true)
         },
-        appCoroutineScope = appCoroutineScope
+        appCoroutineScope = appCoroutineScope,
+        ioDispatcher = mainDispatcherRule.testDispatcher
     )
 
     @After
@@ -88,7 +89,6 @@ class PlaybackInitializerTest {
 
         playbackOperations.trackEndedFlow.tryEmit(endedSong)
 
-        awaitUntil { songRepository.playCountIncrements.isNotEmpty() }
         songRepository.playbackPositions.toList() shouldBe listOf(4L to 200_000)
         songRepository.playCountIncrements.toList() shouldBe listOf(4L)
     }
@@ -100,7 +100,6 @@ class PlaybackInitializerTest {
 
         playbackOperations.pausePositionFlow.tryEmit(SongPosition(pausedSong, 42_000))
 
-        awaitUntil { songRepository.playbackPositions.isNotEmpty() }
         songRepository.playbackPositions.toList() shouldBe listOf(5L to 42_000)
         songRepository.playCountIncrements.toList() shouldBe emptyList()
     }
@@ -114,14 +113,5 @@ class PlaybackInitializerTest {
         load.captured(30_000)
 
         playbackOperations.loadedPositions shouldBe listOf(30_000)
-    }
-
-    /** Waits for a write the initializer hands off to [kotlinx.coroutines.Dispatchers.IO]. */
-    private fun awaitUntil(condition: () -> Boolean) {
-        val deadline = System.currentTimeMillis() + 5_000
-        while (!condition()) {
-            check(System.currentTimeMillis() < deadline) { "Timed out waiting for the condition" }
-            Thread.sleep(10)
-        }
     }
 }
