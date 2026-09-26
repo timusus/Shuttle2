@@ -13,7 +13,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.common.mediaactions.CreatePlaylistDialog
-import com.squareup.phrase.Phrase
 
 /** A playlist management dialog: rename, or confirm clear / delete. The Playlists tab and playlist detail share them. */
 sealed interface PlaylistDialog {
@@ -82,7 +81,4 @@ fun PlaylistDialogHost(
 }
 
 @Composable
-private fun playlistSubtitle(id: Int, playlist: Playlist): String {
-    val pattern = stringResource(id)
-    return if (pattern.contains("{playlist_name}")) Phrase.from(pattern).put("playlist_name", playlist.name).format().toString() else pattern
-}
+private fun playlistSubtitle(id: Int, playlist: Playlist): String = stringResource(id, playlist.name)

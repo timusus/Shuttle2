@@ -50,7 +50,6 @@ import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.trial.PaywallOffers
 import com.simplecityapps.trial.PaywallPlan
 import com.simplecityapps.trial.ProSource
-import com.squareup.phrase.Phrase
 
 /**
  * The S2 Pro paywall: where the user stands, what Pro unlocks, and the plans with Play's prices. While Play's
@@ -134,14 +133,8 @@ fun PaywallScreen(
 private fun StatusCard(status: PaywallStatus) {
     val text = when (status) {
         PaywallStatus.TrialAvailable -> stringResource(R.string.paywall_status_trial_available)
-
         PaywallStatus.TrialEnded -> stringResource(R.string.paywall_status_trial_ended)
-
-        is PaywallStatus.Trial -> Phrase.from(pluralStringResource(R.plurals.paywall_status_trial, status.daysLeft))
-            .put("count", status.daysLeft)
-            .format()
-            .toString()
-
+        is PaywallStatus.Trial -> pluralStringResource(R.plurals.paywall_status_trial, status.daysLeft, status.daysLeft)
         is PaywallStatus.Pro -> stringResource(R.string.paywall_status_pro)
     }
     Surface(
@@ -274,5 +267,5 @@ private fun PaywallPlan.priceText(price: String): String {
         PaywallPlan.Lifetime -> R.string.paywall_price_once
         PaywallPlan.Annual -> R.string.purchase_price_annual
     }
-    return Phrase.from(stringResource(pattern)).put("price", price).format().toString()
+    return stringResource(pattern, price)
 }

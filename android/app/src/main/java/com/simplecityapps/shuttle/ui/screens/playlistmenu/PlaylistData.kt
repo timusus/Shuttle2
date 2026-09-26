@@ -7,7 +7,6 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
-import com.squareup.phrase.Phrase
 
 sealed class PlaylistData {
     abstract fun getPlaylistSavedMessage(
@@ -21,11 +20,7 @@ sealed class PlaylistData {
         override fun getPlaylistSavedMessage(
             resources: Resources,
             playlistName: String
-        ): String = Phrase.fromPlural(resources, R.plurals.playlist_songs_added, data.size)
-            .put("count", data.size)
-            .put("playlist_name", playlistName)
-            .format()
-            .toString()
+        ): String = resources.getQuantityString(R.plurals.playlist_songs_added, data.size, data.size, playlistName)
     }
 
     class Albums(val data: List<com.simplecityapps.shuttle.model.Album>) : PlaylistData() {
@@ -34,11 +29,7 @@ sealed class PlaylistData {
         override fun getPlaylistSavedMessage(
             resources: Resources,
             playlistName: String
-        ): String = Phrase.fromPlural(resources, R.plurals.playlist_albums_added, data.size)
-            .put("count", data.size)
-            .put("playlist_name", playlistName)
-            .format()
-            .toString()
+        ): String = resources.getQuantityString(R.plurals.playlist_albums_added, data.size, data.size, playlistName)
     }
 
     class AlbumArtists(val data: List<com.simplecityapps.shuttle.model.AlbumArtist>) : PlaylistData() {
@@ -47,11 +38,7 @@ sealed class PlaylistData {
         override fun getPlaylistSavedMessage(
             resources: Resources,
             playlistName: String
-        ): String = Phrase.fromPlural(resources, R.plurals.playlist_artists_added, data.size)
-            .put("count", data.size)
-            .put("playlist_name", playlistName)
-            .format()
-            .toString()
+        ): String = resources.getQuantityString(R.plurals.playlist_artists_added, data.size, data.size, playlistName)
     }
 
     class Genres(val data: List<com.simplecityapps.shuttle.model.Genre>) : PlaylistData() {
@@ -60,11 +47,7 @@ sealed class PlaylistData {
         override fun getPlaylistSavedMessage(
             resources: Resources,
             playlistName: String
-        ): String = Phrase.fromPlural(resources, R.plurals.playlist_genres_added, data.size)
-            .put("count", data.size)
-            .put("playlist_name", playlistName)
-            .format()
-            .toString()
+        ): String = resources.getQuantityString(R.plurals.playlist_genres_added, data.size, data.size, playlistName)
     }
 
     /** Local library folders, each identified by its [com.simplecityapps.shuttle.model.SongFolder] path. */
@@ -72,21 +55,14 @@ sealed class PlaylistData {
         override fun getPlaylistSavedMessage(
             resources: Resources,
             playlistName: String
-        ): String = Phrase.fromPlural(resources, R.plurals.playlist_folders_added, data.size)
-            .put("count", data.size)
-            .put("playlist_name", playlistName)
-            .format()
-            .toString()
+        ): String = resources.getQuantityString(R.plurals.playlist_folders_added, data.size, data.size, playlistName)
     }
 
     object Queue : PlaylistData() {
         override fun getPlaylistSavedMessage(
             resources: Resources,
             playlistName: String
-        ): String = Phrase.from(resources, R.string.playlist_queue_added)
-            .put("playlist_name", playlistName)
-            .format()
-            .toString()
+        ): String = resources.getString(R.string.playlist_queue_added, playlistName)
     }
 }
 

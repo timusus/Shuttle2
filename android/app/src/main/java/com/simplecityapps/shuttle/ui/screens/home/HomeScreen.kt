@@ -171,7 +171,7 @@ private fun WhatsNewCard(callbacks: HomeCallbacks) {
             S2IconButton(icon = Icons.Rounded.Close, contentDescription = stringResource(R.string.home_whats_new_dismiss), onClick = callbacks.onDismissWhatsNew)
         }
         Text(
-            text = stringResource(R.string.home_whats_new_message).replace("{version}", BuildConfig.VERSION_NAME),
+            text = stringResource(R.string.home_whats_new_message, BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp),
@@ -375,7 +375,7 @@ private fun PlayCountBadge(
     playCount: Int,
     modifier: Modifier = Modifier,
 ) {
-    val description = pluralStringResource(R.plurals.home_play_count, playCount, playCount).replace("{count}", playCount.toString())
+    val description = pluralStringResource(R.plurals.home_play_count, playCount, playCount)
     Text(
         text = playCount.toString(),
         style = MaterialTheme.typography.labelMedium,

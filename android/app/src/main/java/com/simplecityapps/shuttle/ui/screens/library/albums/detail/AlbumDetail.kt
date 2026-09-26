@@ -63,13 +63,11 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
-import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
+import com.simplecityapps.shuttle.ui.common.joinSafely
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongMenu
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.snapshot.Snapshot
 import com.simplecityapps.shuttle.ui.theme.ColorSchemePreviewParameterProvider
-import com.squareup.phrase.ListPhrase
-import com.squareup.phrase.Phrase
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -171,10 +169,7 @@ fun AlbumDetail(
                     if (hasMultipleDiscs) {
                         item {
                             DiscNumberHeader(
-                                text = Phrase.from(context, R.string.disc_number)
-                                    .put("disc_number", discNumber)
-                                    .format()
-                                    .toString()
+                                text = context.getString(R.string.disc_number, discNumber)
                             )
                         }
                     }
@@ -315,19 +310,15 @@ private fun albumSubtitle(
     context: Context,
     album: Album,
 ): String? {
-    val songsQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, album.songCount)
-        .put("count", album.songCount)
-        .format()
-    return ListPhrase
-        .from(" · ")
-        .joinSafely(
-            listOf(
-                album.year?.toString(),
-                songsQuantity,
-                formatDuration(album.duration.toLong(), padded = true),
-            )
+    val songsQuantity = context.resources.getQuantityString(R.plurals.songsPlural, album.songCount, album.songCount)
+    return joinSafely(
+        " · ",
+        listOf(
+            album.year?.toString(),
+            songsQuantity,
+            formatDuration(album.duration.toLong(), padded = true),
         )
-        ?.toString()
+    )
 }
 
 @Composable

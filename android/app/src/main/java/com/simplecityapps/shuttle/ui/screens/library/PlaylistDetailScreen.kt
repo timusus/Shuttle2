@@ -57,7 +57,6 @@ import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
-import com.squareup.phrase.Phrase
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -136,7 +135,7 @@ fun PlaylistDetailScreen(
                 if (playlist != null && !uiState.canReorder && uiState.songs.isNotEmpty()) {
                     val sortLabel = stringResource(PlaylistSorts.firstOrNull { it.first == playlist.sortOrder }?.second ?: R.string.menu_title_sort_custom)
                     Text(
-                        text = Phrase.from(stringResource(R.string.playlist_detail_reorder_hint)).put("sort", sortLabel).format().toString(),
+                        text = stringResource(R.string.playlist_detail_reorder_hint, sortLabel),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 12.dp).testTag("playlist-reorder-hint"),
@@ -254,7 +253,7 @@ fun PlaylistDetailDestination(
                 PlaylistDetailEvent.ExportSucceeded -> snackbarHostState.showSnackbar(resources.getString(R.string.playlist_export_success))
 
                 is PlaylistDetailEvent.ExportFailed -> snackbarHostState.showSnackbar(
-                    Phrase.from(resources, R.string.playlist_export_failed).put("error_message", event.error).format().toString(),
+                    resources.getString(R.string.playlist_export_failed, event.error),
                 )
             }
         }

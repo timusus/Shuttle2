@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import coil3.compose.AsyncImage
 import com.simplecityapps.mediaprovider.Progress
@@ -20,7 +20,6 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.model.Song
-import com.squareup.phrase.Phrase
 
 // Pieces the Compose library screens share: artwork loaded through Coil into the catalogue's Artwork slot, the
 // loading / scanning / empty states, and count text.
@@ -79,9 +78,9 @@ fun LibraryContent(
     }
 }
 
-/** A `{count}` plural, formatted. */
+/** A count plural, formatted. */
 @Composable
-fun pluralString(@PluralsRes id: Int, count: Int): String = Phrase.fromPlural(LocalResources.current, id, count).put("count", count).format().toString()
+fun pluralString(@PluralsRes id: Int, count: Int): String = pluralStringResource(id, count, count)
 
 /** "Artist · Album", the second line of a song row outside its album. */
 val Song.rowSubtitle: String

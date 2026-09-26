@@ -23,7 +23,6 @@ import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
-import com.squareup.phrase.Phrase
 
 /** Album detail (inventory §1): the album's songs by disc, Play / Shuffle, and the album's actions in the overflow. */
 @Composable
@@ -59,7 +58,7 @@ fun AlbumDetailScreen(
         discs.forEach { (disc, discSongs) ->
             if (discs.size > 1) {
                 item(key = "disc-$disc", contentType = "disc") {
-                    SectionHeader(title = Phrase.from(stringResource(R.string.album_detail_disc)).put("disc", disc).format().toString())
+                    SectionHeader(title = stringResource(R.string.album_detail_disc, disc))
                 }
             }
             items(discSongs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->

@@ -53,7 +53,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
-import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
+import com.simplecityapps.shuttle.ui.common.joinSafely
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumMenu
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.DetailArtwork
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.DetailHeroImage
@@ -68,8 +68,6 @@ import com.simplecityapps.shuttle.ui.screens.library.songs.SongMenu
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.snapshot.Snapshot
 import com.simplecityapps.shuttle.ui.theme.ColorSchemePreviewParameterProvider
-import com.squareup.phrase.ListPhrase
-import com.squareup.phrase.Phrase
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -269,16 +267,9 @@ private fun albumArtistSubtitle(
     context: Context,
     albumArtist: AlbumArtist,
 ): String? {
-    val albumQuantity = Phrase.fromPlural(context.resources, R.plurals.albumsPlural, albumArtist.albumCount)
-        .put("count", albumArtist.albumCount)
-        .format()
-    val songQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, albumArtist.songCount)
-        .put("count", albumArtist.songCount)
-        .format()
-    return ListPhrase
-        .from(" · ")
-        .joinSafely(listOf(albumQuantity, songQuantity))
-        ?.toString()
+    val albumQuantity = context.resources.getQuantityString(R.plurals.albumsPlural, albumArtist.albumCount, albumArtist.albumCount)
+    val songQuantity = context.resources.getQuantityString(R.plurals.songsPlural, albumArtist.songCount, albumArtist.songCount)
+    return joinSafely(" · ", listOf(albumQuantity, songQuantity))
 }
 
 @Composable
@@ -436,15 +427,11 @@ private fun ExpandableAlbumItem(
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                 )
-                val songsQuantity = Phrase.fromPlural(context, R.plurals.songsPlural, album.songCount)
-                    .put("count", album.songCount)
-                    .format()
-                val subtitle = ListPhrase.from(" · ").joinSafely(
-                    listOf(album.year?.toString(), songsQuantity)
-                )
+                val songsQuantity = context.resources.getQuantityString(R.plurals.songsPlural, album.songCount, album.songCount)
+                val subtitle = joinSafely(" · ", listOf(album.year?.toString(), songsQuantity))
                 if (subtitle != null) {
                     Text(
-                        text = subtitle.toString(),
+                        text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -477,10 +464,7 @@ private fun ExpandableAlbumItem(
                 discGroupingSongs.forEach { (discNumber, groupingMap) ->
                     if (hasMultipleDiscs) {
                         DiscNumberHeader(
-                            text = Phrase.from(context, R.string.disc_number)
-                                .put("disc_number", discNumber)
-                                .format()
-                                .toString()
+                            text = context.getString(R.string.disc_number, discNumber)
                         )
                     }
 
@@ -568,12 +552,10 @@ private fun AlbumArtistDetailSongItem(
                     MaterialTheme.colorScheme.onBackground
                 },
             )
-            val subtitle = ListPhrase.from(" · ").joinSafely(
-                listOf(song.friendlyArtistName ?: song.albumArtist, song.album)
-            )
+            val subtitle = joinSafely(" · ", listOf(song.friendlyArtistName ?: song.albumArtist, song.album))
             if (subtitle != null) {
                 Text(
-                    text = subtitle.toString(),
+                    text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
