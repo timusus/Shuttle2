@@ -244,10 +244,13 @@ installs the synced-back copy over the lane's tunnel). Not the default yet. Line
 > for anything else (foreground, generous timeout). Keep `verifyRoborazziDebug` on the Mac.
 
 **Keep `verifyRoborazziDebug`/`recordRoborazziDebug` on the Mac.** The `docs/design/**` screenshot
-goldens are recorded on macOS, and on Linux 25 of them differ by anti-aliasing at text and rounded
-corner edges, so a Linux verify fails where the Mac passes (the LFS preview goldens under
-`android/app/src/test/snapshots` verify identically). Plain `testDebugUnitTest` is unaffected: the
-`docs/design` shots are a no-op outside `verify`/`record`.
+goldens are recorded on macOS; #458 added a Linux anti-aliasing tolerance
+(`s2.roborazzi.changeThreshold`) that fixed every other screenshot class, but all 7
+`HomeScreenshotTest` shots still fail there with a colour diff, not anti-aliasing (the LFS preview
+goldens under `android/app/src/test/snapshots` verify identically). Plain `testDebugUnitTest` is
+unaffected: the `docs/design` shots are a no-op outside `verify`/`record` (#538). **#539 is the one
+remaining blocker** to folding `verifyRoborazziDebug` into the box landing run instead of a second
+Mac build — fix `HomeScreenshotTest`'s goldens there first.
 
 Measured 2026-09-26, the full verify (`testDebugUnitTest :android:architecture-tests:test
 :android:app:verifyRoborazziDebug :android:app:assembleDebug --continue`): cold (no build outputs,

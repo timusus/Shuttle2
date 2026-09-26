@@ -36,9 +36,18 @@ Rules of thumb:
 
 ## Baseline
 
-The landing verify is `remote-build.sh --max-workers=6 -q verifyModuleLayers testDebugUnitTest
-:android:architecture-tests:test :android:app:assembleDebug :android:app:lintDebug` on the WSL box,
-then `./gradlew :android:app:verifyRoborazziDebug` on the Mac.
+The landing verify is `remote-build.sh --max-workers=6 -q testDebugUnitTest :android:app:assembleDebug`
+on the WSL box, then `./gradlew :android:app:verifyRoborazziDebug` on the Mac. `verifyModuleLayers`
+and the Konsist rules run automatically as dependencies of `:android:architecture-tests`'
+`testDebugUnitTest` (registered as a twin of `test` for exactly this reason), so a separate
+`:android:architecture-tests:test` invocation was redundant and is dropped; `lintDebug` moved to the
+nightly `lint-nightly.yml` workflow since `abortOnError = false` means it can't fail a landing yet
+(#537 — decision: drop it from the landing verify now, revisit a lint baseline as a gate later).
+
+The measurements below were taken against the fuller command this baseline replaces
+(`verifyModuleLayers testDebugUnitTest :android:architecture-tests:test :android:app:assembleDebug
+:android:app:lintDebug`) — the lint and architecture-tests rows in "Where the uncached run's
+~25 task-minutes went" are what levers 1 and 2 removed.
 
 | Run | Slot wait | Gradle wall | Task time | Notes |
 |---|---|---|---|---|
@@ -96,13 +105,17 @@ run on KSP.
 
 | # | Lever | Saving per landing | Cost | Issue |
 |---|---|---|---|---|
-| 1 | Drop `lintDebug` from the landing; lint nightly, or gate on a baseline with `abortOnError = true` and `ignoreTestSources` | ~2.5 CPU-min and 25-35 s wall incremental; ~10 CPU-min and ~1.5 min wall uncached | Brief text only; a baseline is one task run | #537 |
-| 2 | Drop `:android:architecture-tests:test` (it duplicates `testDebugUnitTest`) | 10-13 CPU-s | None | #537 |
-| 3 | Skip docs/design boards unless Roborazzi records or verifies | 40-90 CPU-s whenever designsystem tests rerun, ~30 s in app | Small test change | #538 |
+| 1 | Drop `lintDebug` from the landing; lint nightly, or gate on a baseline with `abortOnError = true` and `ignoreTestSources` | ~2.5 CPU-min and 25-35 s wall incremental; ~10 CPU-min and ~1.5 min wall uncached | Brief text only; a baseline is one task run | #537 — landed |
+| 2 | Drop `:android:architecture-tests:test` (it duplicates `testDebugUnitTest`) | 10-13 CPU-s | None | #537 — landed |
+| 3 | Skip docs/design boards unless Roborazzi records or verifies | 40-90 CPU-s whenever designsystem tests rerun, ~30 s in app | Small test change | #538 — landed (measured `:android:designsystem:testDebugUnitTest`: 22s → 15s) |
 | 4 | Fix the Home goldens on Linux, then run `verifyRoborazziDebug` in the same box run as the landing | The Mac's second build (2-4 min on a loaded Mac) and one extra Gradle run | Depends on #539 | #539 |
 | 5 | Move the 15 Robolectric ViewModel/use-case tests to plain JVM | ~20-25 CPU-s per app run; fewer looper races | Prefs fake in fixtures | #540 |
-| 6 | `maxParallelForks = 2` for app tests, property-gated (Mac, CI, quiet box) | App test wall 115 → 73 s; **no CPU saving** (each fork adds a sandbox start and a 2 GB heap) | One build line | #542 |
+| 6 | `maxParallelForks = 2` for app tests, property-gated (Mac, CI, quiet box) | App test wall 115 → 73 s; **no CPU saving** (each fork adds a sandbox start and a 2 GB heap) | One build line | #542 — landed (measured on the Mac: 48s → 36s at `-Ps2.testForks=2`) |
 | 7 | Take timing tests out of `testDebugUnitTest` | Fewer reruns after flakes (each costs a full slot) | Small | #541 |
+
+`SearchIndexBenchmarkTest`'s wall-clock assertion (8000 ms/keystroke budget) flaked under host load
+(measured 8749 ms) independently of these levers; it's now excluded from `testDebugUnitTest` by
+default and opts back in with `-Ps2.runBenchmarks=true` (#535 — landed).
 
 Considered and not worth it now:
 
@@ -131,10 +144,10 @@ Considered and not worth it now:
 |---|---|---|
 | While iterating | `support/scripts/unit-test --changed` (box with `--remote-build`), plus `verifyRoborazziDebug --tests` for the screens touched | Only affected tests |
 | **Landing verify** (every push to main) | Box: `testDebugUnitTest :android:app:assembleDebug`. Mac: `:android:app:verifyRoborazziDebug` (consider adding designsystem's, which only CI verifies today) until #539 lets it join the box run | Catches behaviour, compile and golden breaks; `verifyModuleLayers` comes via architecture-tests |
-| Nightly or weekly (box, off-peak) | `lintDebug` (all modules), the uncached full verify for timing drift, the `@Ignore("measurement")` benchmarks | Lint today is a report, not a gate |
+| Nightly (GitHub Actions, scheduled) | `:android:app:lintDebug`, report uploaded as an artifact (`.github/workflows/lint-nightly.yml`) | Lint today is a report, not a gate (#537) |
+| Nightly or weekly (box, off-peak) | The uncached full verify for timing drift, the `@Ignore("measurement")` benchmarks, `SearchIndexBenchmarkTest` (`-Ps2.runBenchmarks=true`, #535) | Catches drift the landing verify no longer runs |
 | Batched device pass | `emu-verify.sh --suite` smoke set, `docs/testing/device-checks.md` | Platform-only behaviour (#452 pattern) |
 | External PRs (CI) | As today: lint, unit tests, Roborazzi verify, the managed-device smoke group | Owner landings bypass CI (trunk push), so CI is not on the landing path |
 
-Proposed script change (outside this doc's scope, `support/**` is untouched): `remote-build.sh`
-could print the slot wait and the Gradle wall separately at the end, so the queue cost stays
-visible in every landing.
+`remote-build.sh` now prints the slot wait and the Gradle wall separately at the end, so the queue
+cost stays visible in every landing.
