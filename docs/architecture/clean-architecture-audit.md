@@ -140,8 +140,8 @@ batch I lands.
 
 **`runBlocking` (8).**
 
-- `playback/chromecast/HttpServer.kt`: 3, all on the NanoHTTPD serve thread.
-- `playback/engine/SongUriResolver.kt`: 1.
+- `playback/chromecast/HttpServer.kt`: 3, all on the NanoHTTPD serve thread. Gone (batch H).
+- `playback/engine/SongUriResolver.kt`: 1. Gone (batch H).
 - `imageloader`, one in each of four local-artwork `ModelLoader`s: `MediaStoreAlbum`,
   `DirectoryAlbum`, `TagLibAlbum` and `DirectoryAlbumArtist`, at lines 53–54.
 - The ModelLoader and NanoHTTPD calls sit on background threads owned by Glide and the server,
@@ -279,12 +279,13 @@ should be removals only.
     `LibraryEmptyViewModel`, `LicencesViewModel`, `WhatsNewViewModel`, `ExcludedSongsViewModel`,
     `SongInfoViewModel`, `TagEditorViewModel` (and its `IntentSender`).
   - Use cases: `ui/actions/AddToPlaylist.kt` and `RemoveFromPlaylist.kt`.
-- **H. Playback and graph guard** (layering step 2).
+- **H. Playback and graph guard (done)** (layering step 2).
   - Files: `playback/di/PlaybackEngineModule.kt`, the provider `di/` modules gaining `@IntoMap`
-    bindings, `playback/build.gradle*`. The `buildSrc` `VerifyModuleLayers` guard is done; its
-    baseline (`module-layers.txt`) holds the three playback → provider edges this batch removes.
-  - Also `runBlocking` in `chromecast/HttpServer.kt` and `engine/SongUriResolver.kt`.
-  - H can run in wave 1 if G has already dropped the imageloader edges.
+    bindings, `playback/build.gradle*`. The `buildSrc` `VerifyModuleLayers` guard is in, and the
+    three playback → provider edges are gone, so `module-layers.txt` is empty.
+  - Also `runBlocking` in `chromecast/HttpServer.kt` and `engine/SongUriResolver.kt`. Done: both
+    run their lookups in a scope they own and wait on them with `awaitBlocking`, and the Cast
+    server answers a pre-resolved remote stream without waiting at all.
 
 **Wave 3:**
 

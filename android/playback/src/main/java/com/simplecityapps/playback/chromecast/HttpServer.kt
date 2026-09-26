@@ -1,10 +1,20 @@
 package com.simplecityapps.playback.chromecast
 
+import com.simplecityapps.playback.awaitBlocking
 import fi.iki.elonen.NanoHTTPD
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
-import kotlinx.coroutines.runBlocking
+import java.io.InterruptedIOException
+import java.util.concurrent.TimeoutException
+import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelChildren
 import timber.log.Timber
 
 /**
@@ -15,12 +25,24 @@ import timber.log.Timber
  * stream is an HLS playlist whose segments the receiver resolves against the server's URL, which a proxy would have to
  * rewrite, and every byte would otherwise pass through the phone, and stop when it sleeps. The redirect's URL holds
  * the provider's credential, so only a holder of the key, which rides in the queue sent to the receiver, can read it.
+ *
+ * NanoHTTPD answers each request on a thread of its own, and wants the response returned there. A remote song's
+ * stream, resolved before the song was sent (see [CastStreams]), is answered at once; anything else is looked up (see
+ * [lookUp]) in [scope] while the request's thread waits, and stopping the server cancels what's still being looked up.
  */
 class HttpServer(
     private val castService: CastService,
     private val streams: CastStreams,
-    port: Int = CastMediaItemConverter.PORT
+    port: Int = CastMediaItemConverter.PORT,
+    ioContext: CoroutineContext = Dispatchers.IO
 ) : NanoHTTPD(port) {
+    private val scope = CoroutineScope(SupervisorJob() + ioContext)
+
+    override fun stop() {
+        super.stop()
+        scope.coroutineContext.cancelChildren()
+    }
+
     override fun serve(session: IHTTPSession): Response {
         val paths = session.uri.trim('/').split('/')
         if (!streams.isValid(paths.firstOrNull())) {
@@ -30,24 +52,54 @@ class HttpServer(
             ?: return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/html", "Invalid request url")
 
         return when (paths[3]) {
-            "audio" -> runBlocking {
-                castService.getRemoteAudioUrl(songId)?.let { url ->
-                    return@runBlocking redirect(url)
-                }
-                castService.getAudio(songId)?.let { audioStream ->
-                    serveAudio(session.headers, audioStream.stream, audioStream.length, audioStream.mimeType)
-                } ?: newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
-            }
-
-            "artwork" -> runBlocking {
-                castService.getArtwork(songId)?.let { byteArray ->
-                    serveArtwork(ByteArrayInputStream(byteArray), "image/jpeg", byteArray.size.toLong())
-                } ?: newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
-            }
-
+            "audio" -> streams.resolvedUrl(songId)?.let(::redirect) ?: lookUp { audio(session.headers, songId) }
+            "artwork" -> lookUp { artwork(songId) }
             else -> newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/html", "Invalid request url")
         }
     }
+
+    private suspend fun audio(
+        headers: MutableMap<String, String>,
+        songId: Long
+    ): Response {
+        castService.getRemoteAudioUrl(songId)?.let { url -> return redirect(url) }
+        return castService.getAudio(songId)?.let { audioStream ->
+            serveAudio(headers, audioStream.stream, audioStream.length, audioStream.mimeType)
+        } ?: notFound()
+    }
+
+    private suspend fun artwork(songId: Long): Response = castService.getArtwork(songId)?.let { byteArray ->
+        serveArtwork(ByteArrayInputStream(byteArray), "image/jpeg", byteArray.size.toLong())
+    } ?: notFound()
+
+    /**
+     * Runs [lookup] in [scope] and waits for its response on the request's thread (see [awaitBlocking]). One that's
+     * still running after [LOOKUP_TIMEOUT], or that the server stopped, answers 503, so no request thread waits on it.
+     */
+    private fun lookUp(lookup: suspend () -> Response): Response {
+        val response = scope.async { lookup() }
+        return try {
+            response.awaitBlocking(LOOKUP_TIMEOUT)
+        } catch (e: InterruptedIOException) {
+            response.cancel()
+            unavailable(e)
+        } catch (e: TimeoutException) {
+            response.cancel()
+            unavailable(e)
+        } catch (e: CancellationException) {
+            unavailable(e)
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to serve a Cast request")
+            newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "text/html", "Internal error")
+        }
+    }
+
+    private fun unavailable(e: Exception): Response {
+        Timber.w(e, "Gave up on a Cast request")
+        return newFixedLengthResponse(Response.Status.SERVICE_UNAVAILABLE, "text/html", "Unavailable")
+    }
+
+    private fun notFound(): Response = newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
 
     private fun serveAudio(
         headers: MutableMap<String, String>,
@@ -112,4 +164,8 @@ class HttpServer(
         mimeType: String,
         length: Long
     ): Response = newFixedLengthResponse(Response.Status.OK, mimeType, inputStream, length)
+
+    companion object {
+        private val LOOKUP_TIMEOUT = 30.seconds
+    }
 }

@@ -70,6 +70,9 @@ class CastStreams(
         }
     }
 
+    /** Where the server streams the remote-provider song [songId] from, if that's been resolved; else null. */
+    fun resolvedUrl(songId: Long): String? = streams[songId]?.url
+
     /** Where the server streams a remote-provider [song] from; null for a local song. */
     suspend fun remoteUrl(song: Song): String? {
         if (!song.mediaProvider.remote) return null
