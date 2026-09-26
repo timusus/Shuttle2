@@ -310,6 +310,10 @@
     {
       "text": "Song titles, artists and albums with accents or other alphabets no longer appear garbled, and with the Android media store source, .mka files now show their album, artist and track number",
       "commits": []
+    },
+    {
+      "text": "Jellyfin and Emby playlists with more than 500 songs now sync the right songs after the first 500, instead of songs from elsewhere in your library",
+      "commits": []
     }
   ]
 }

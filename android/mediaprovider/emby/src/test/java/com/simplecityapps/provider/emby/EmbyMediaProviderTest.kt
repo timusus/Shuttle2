@@ -204,6 +204,24 @@ class EmbyMediaProviderTest {
     }
 
     @Test
+    fun `a playlist longer than a page keeps paging through the playlist's items (#524)`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("IncludeItemTypes" to "Audio"))
+        server.respond(ITEMS, "long_playlist.json", query = mapOf("IncludeItemTypes" to "Playlist"))
+        server.respond("/Playlists/403/Items", "long_playlist_items_page_1.json", query = mapOf("StartIndex" to "0"))
+        server.respond("/Playlists/403/Items", "long_playlist_items_page_2.json", query = mapOf("StartIndex" to "500"))
+        val library = sync()
+        server.requests.clear()
+
+        val playlist = syncPlaylists(library).single()
+
+        playlist.songs.map { it.externalId } shouldContainExactly listOf("101", "102")
+        server.requestsTo("/Playlists/403/Items").map { it.url.queryParameter("StartIndex") to it.url.queryParameter("Limit") } shouldContainExactly
+            listOf("0" to "500", "500" to "1")
+        server.requestsTo(ITEMS).map { it.url.queryParameter("IncludeItemTypes") } shouldContainExactly listOf("Playlist")
+    }
+
+    @Test
     fun `no playlists syncs to an empty list`() {
         signedIn()
         server.respond(ITEMS, "empty.json", query = mapOf("IncludeItemTypes" to "Playlist"))

@@ -205,6 +205,24 @@ class JellyfinMediaProviderTest {
     }
 
     @Test
+    fun `a playlist longer than a page keeps paging through the playlist's items (#524)`() {
+        signedIn()
+        server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
+        server.respond(ITEMS, "long_playlist.json", query = mapOf("includeItemTypes" to "Playlist"))
+        server.respond("/Playlists/playlist-long/Items", "long_playlist_items_page_1.json", query = mapOf("startIndex" to "0"))
+        server.respond("/Playlists/playlist-long/Items", "long_playlist_items_page_2.json", query = mapOf("startIndex" to "500"))
+        val library = sync()
+        server.requests.clear()
+
+        val playlist = syncPlaylists(library).single()
+
+        playlist.songs.map { it.externalId } shouldContainExactly listOf("song-1", "song-2")
+        server.requestsTo("/Playlists/playlist-long/Items").map { it.url.queryParameter("startIndex") to it.url.queryParameter("limit") } shouldContainExactly
+            listOf("0" to "500", "500" to "1")
+        server.requestsTo(ITEMS).map { it.url.queryParameter("includeItemTypes") } shouldContainExactly listOf("Playlist")
+    }
+
+    @Test
     fun `no playlists syncs to an empty list`() {
         signedIn()
         server.respond(ITEMS, "empty.json", query = mapOf("includeItemTypes" to "Playlist"))

@@ -222,9 +222,10 @@ class JellyfinMediaProvider(
 
                 if (lastIndex < totalRecordCount) {
                     emitAll(
-                        queryItems(
+                        queryPlaylistItems(
                             address = address,
                             credentials = credentials,
+                            playlistId = playlistId,
                             startIndex = lastIndex,
                             pageSize = min(pageSize, totalRecordCount - lastIndex),
                             items = items
