@@ -21,6 +21,7 @@ import com.simplecityapps.playback.dsp.crossfade.CapturingAudioOutputProvider
 import com.simplecityapps.playback.dsp.crossfade.Crossfade
 import com.simplecityapps.playback.dsp.crossfade.CrossfadeClippingMediaSourceFactory
 import com.simplecityapps.playback.dsp.crossfade.CrossfadeMixer
+import com.simplecityapps.playback.dsp.crossfade.CrossfadeSkip
 import com.simplecityapps.playback.dsp.crossfade.TailDecoder
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.engine.S2LoadErrorHandlingPolicy
@@ -45,6 +46,8 @@ class ExoPlayerFactory(
     private val songUriResolver: SongUriResolver,
     /** The crossfade length, 0 when it's off; read whenever the queue or the current item changes. */
     private val crossfadeDurationMs: () -> Long = { 0 },
+    /** Told of each song that should have crossfaded into the next but didn't, and why. */
+    private val onCrossfadeSkipped: (CrossfadeSkip) -> Unit = {},
     /** Builds the ExoPlayer around these renderers and sources. A test builds it on a fake clock. */
     private val buildPlayer: (RenderersFactory, MediaSource.Factory) -> ExoPlayer = { renderersFactory, mediaSourceFactory ->
         ExoPlayer.Builder(context, renderersFactory)
@@ -55,6 +58,10 @@ class ExoPlayerFactory(
 ) {
     /** Plays each item's clipped-off tail over the next item's head, between ReplayGain and the equalizer. */
     private val crossfadeMixer = CrossfadeMixer()
+
+    /** The crossfade that [create] set up on its player, once it has. */
+    lateinit var crossfade: Crossfade
+        private set
 
     private val renderersFactory by lazy {
         renderersFactory { context, enableFloatOutput, enableAudioOutputPlaybackParams ->
@@ -98,7 +105,8 @@ class ExoPlayerFactory(
 
     fun create(): ExoPlayer {
         val player = buildPlayer(renderersFactory, CrossfadeClippingMediaSourceFactory(mediaSourceFactory))
-        val crossfade = Crossfade(player, crossfadeMixer, TailDecoder(::decoderPlayer, replayGainAudioProcessor), crossfadeDurationMs)
+        val crossfade = Crossfade(player, crossfadeMixer, TailDecoder(::decoderPlayer, replayGainAudioProcessor), crossfadeDurationMs, onCrossfadeSkipped)
+        this.crossfade = crossfade
         player.setHandleAudioBecomingNoisy(true)
         player.setAudioAttributes(MUSIC, true)
         val owner = AudioTrackReopener(player)
@@ -109,6 +117,7 @@ class ExoPlayerFactory(
                     audioTrackConfig: AudioSink.AudioTrackConfig
                 ) {
                     audioTrackMonitor.onAudioTrackInitialized(owner, audioTrackConfig.toOutputFormat())
+                    crossfade.onAudioTrackInitialized(audioTrackConfig)
                 }
 
                 override fun onPlayerReleased(eventTime: AnalyticsListener.EventTime) {

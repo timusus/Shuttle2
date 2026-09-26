@@ -4,7 +4,9 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import androidx.media3.common.TrackSelectionParameters.AudioOffloadPreferences
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.drm.DrmSessionManagerProvider
 import androidx.media3.exoplayer.source.ClippingMediaSource
 import androidx.media3.exoplayer.source.ForwardingTimeline
@@ -12,6 +14,7 @@ import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.TimelineWithUpdatedMediaItem
 import androidx.media3.exoplayer.source.WrappingMediaSource
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
+import com.simplecityapps.playback.chromecast.isRemote
 import com.simplecityapps.playback.dsp.crossfade.CrossfadePlan.Next
 import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.queueEntryOrNull
@@ -134,12 +137,17 @@ private const val CLIP_CHANGE_MARGIN_MS = 3_000L
  * is dropped (the entry leaves the current and next, or the crossfade length changes). A playing item's clip only
  * moves while its end is [CLIP_CHANGE_MARGIN_MS] ahead and the player hasn't loaded past the item: past that, it keeps
  * the clip and tail it has, or plays whole.
+ *
+ * It stands down, as though crossfade were off, where the mixer can't run (see [fallback]): while casting, and while
+ * the audio goes out as float PCM or offloaded, which skip the app's audio processors. Each song that should have
+ * crossfaded into the next, but played into it without, is reported to [onSkipped] with the reason, once.
  */
 class Crossfade(
     private val player: ExoPlayer,
     private val mixer: CrossfadeMixer,
     private val decoder: TailSource,
-    private val crossfadeMs: () -> Long
+    private val crossfadeMs: () -> Long,
+    private val onSkipped: (CrossfadeSkip) -> Unit = {}
 ) : Player.Listener {
     /** The tails decoded for the current and next entries, which may not be applied yet. */
     private val tails = mutableMapOf<Long, Decoded>()
@@ -150,10 +158,22 @@ class Crossfade(
      */
     private val clips = mutableMapOf<Long, Decoded>()
 
-    /** Entries whose tail couldn't be decoded, which aren't tried again. */
-    private val undecodable = mutableSetOf<Long>()
+    /** Entries whose tail couldn't be decoded, which aren't tried again, and why. */
+    private val undecodable = mutableMapOf<Long, CrossfadeSkip>()
+
+    /** The wanted entries whose tail is ready but whose clip can't move to it any more, and why. */
+    private val blocked = mutableMapOf<Long, CrossfadeSkip>()
 
     private var decoding: Long? = null
+
+    /** The current entry as of the last [update]: the one a transition leaves. */
+    private var current: QueueEntry? = null
+
+    /** Whether the app plays through a Cast receiver, as [followCast] sees it. */
+    private var casting = false
+
+    /** Why the audio sink's output skips the mixer, from the last AudioTrack it set up, or null if it doesn't. */
+    private var outputSkip: CrossfadeSkip? = null
 
     fun attach() {
         player.addListener(this)
@@ -166,6 +186,95 @@ class Crossfade(
         mixer.plans = emptyMap()
     }
 
+    /**
+     * Follows the player the app plays through, [appPlayer], to stand down while it casts (the local player is idle
+     * then, and the receiver plays each song whole), and to report the transitions the receiver makes without a
+     * crossfade.
+     */
+    fun followCast(appPlayer: Player) {
+        appPlayer.addListener(
+            object : Player.Listener {
+                /** The app player's current entry as of its last events. */
+                private var last: QueueEntry? = appPlayer.currentMediaItem?.queueEntryOrNull
+
+                override fun onMediaItemTransition(
+                    mediaItem: MediaItem?,
+                    reason: Int
+                ) {
+                    if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && appPlayer.isRemote && wantedCrossfade(last, mediaItem?.queueEntryOrNull, appPlayer.repeatMode)) {
+                        onSkipped(CrossfadeSkip.Cast)
+                    }
+                }
+
+                override fun onEvents(
+                    player: Player,
+                    events: Player.Events
+                ) {
+                    last = player.currentMediaItem?.queueEntryOrNull
+                    if (player.isRemote != casting) {
+                        casting = player.isRemote
+                        update()
+                    }
+                }
+            }
+        )
+    }
+
+    /** Takes note of the AudioTrack the audio sink set up: float or offloaded output skips the mixer. */
+    fun onAudioTrackInitialized(config: AudioSink.AudioTrackConfig) {
+        val skip =
+            when {
+                config.offload -> CrossfadeSkip.Offload
+                config.encoding == C.ENCODING_PCM_FLOAT -> CrossfadeSkip.FloatOutput
+                else -> null
+            }
+        if (skip != outputSkip) {
+            outputSkip = skip
+            update()
+        }
+    }
+
+    /**
+     * Why the mixer can't crossfade at all right now, or null if it can: the app is casting; audio offload is allowed
+     * (the sink offloads what it can, and processors don't run on offloaded audio); or the last AudioTrack wasn't
+     * 16/24-bit PCM through the processors.
+     */
+    private fun fallback(): CrossfadeSkip? = when {
+        casting -> CrossfadeSkip.Cast
+        player.trackSelectionParameters.audioOffloadPreferences.audioOffloadMode != AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED -> CrossfadeSkip.Offload
+        else -> outputSkip
+    }
+
+    override fun onMediaItemTransition(
+        mediaItem: MediaItem?,
+        reason: Int
+    ) {
+        // This comes before onEvents, so [current] is still the entry left.
+        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) skipped(current, mediaItem?.queueEntryOrNull)?.let(onSkipped)
+    }
+
+    /** Why [from], having played into [to], didn't crossfade into it when it should have, or null if it did or shouldn't. */
+    private fun skipped(
+        from: QueueEntry?,
+        to: QueueEntry?
+    ): CrossfadeSkip? {
+        if (!wantedCrossfade(from, to, player.repeatMode)) return null
+        val uid = checkNotNull(from).uid
+        mixer.takeSkip(uid)?.let { return it }
+        return if (clips[uid]?.entry == from) fallback() else fallback() ?: blocked[uid] ?: undecodable[uid] ?: CrossfadeSkip.TailLate
+    }
+
+    /** Whether [from] should crossfade into [to], as it plays into it under [repeatMode], with crossfade on. */
+    private fun wantedCrossfade(
+        from: QueueEntry?,
+        to: QueueEntry?,
+        repeatMode: Int
+    ): Boolean {
+        if (from == null || to == null) return false
+        val crossfadeMs = crossfadeMs()
+        return crossfadeClipEndMs(from, crossfadeMs) != null && next(from, to, crossfadeMs, repeatMode) is Next.MixInto
+    }
+
     override fun onEvents(
         player: Player,
         events: Player.Events
@@ -174,7 +283,8 @@ class Crossfade(
                 Player.EVENT_TIMELINE_CHANGED,
                 Player.EVENT_MEDIA_ITEM_TRANSITION,
                 Player.EVENT_REPEAT_MODE_CHANGED,
-                Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED
+                Player.EVENT_SHUFFLE_MODE_ENABLED_CHANGED,
+                Player.EVENT_TRACK_SELECTION_PARAMETERS_CHANGED
             )
         ) {
             update()
@@ -182,9 +292,12 @@ class Crossfade(
     }
 
     private fun update() {
-        val crossfadeMs = crossfadeMs()
+        val fallback = fallback()
+        // Standing down drops the tails and unclips the items, as crossfade off does.
+        val crossfadeMs = if (fallback != null) 0 else crossfadeMs()
         // The current entry and the next (the same one, on repeat with one item).
         val currentIndex = player.currentMediaItemIndex
+        current = mediaItemAt(currentIndex)?.queueEntryOrNull
         val wanted =
             listOf(currentIndex, followingIndex(currentIndex)).distinct().mapNotNull { index ->
                 val entry = mediaItemAt(index)?.queueEntryOrNull ?: return@mapNotNull null
@@ -193,17 +306,27 @@ class Crossfade(
             }
         // Keep only the tails still wanted, decoded for the current length.
         tails.entries.retainAll { (uid, decoded) -> wanted.any { it.entry.uid == uid && it.entry == decoded.entry && decoded.tail.clipEndUs == it.clipEndMs * 1000 } }
+        blocked.keys.retainAll { uid -> wanted.any { it.entry.uid == uid } }
         if (decoding != null && wanted.none { it.entry.uid == decoding }) {
             decoder.cancel()
             decoding = null
         }
 
-        // Clip each wanted entry to its tail once it's ready, and unclip the rest, where the clip can still move.
+        // Clip each wanted entry to its tail once it's ready, and unclip the rest, where the clip can still move. A
+        // clip left on an item while standing down would cut the song short, so that one goes even at the cost of the
+        // next item's preload.
+        val keepPreload = fallback == null
         val changes = mutableListOf<Pair<Int, Decoded?>>()
         for (want in wanted) {
             val tail = tails[want.entry.uid]
             val clip = clips[want.entry.uid]?.takeIf { it.entry == want.entry }
-            if (clip !== tail && canMoveClip(want.index, clip, tail)) changes += want.index to tail
+            if (clip === tail) continue
+            val block = clipBlock(want.index, clip, tail, keepPreload)
+            if (block == null) {
+                changes += want.index to tail
+            } else if (tail != null && clip == null) {
+                blocked[want.entry.uid] = block
+            }
         }
         for ((uid, clip) in clips.toList()) {
             if (wanted.any { it.entry.uid == uid }) continue
@@ -212,7 +335,7 @@ class Crossfade(
                 // Gone, or replaced by an unclipped item for a changed song.
                 index == null || mediaItemAt(index)?.queueEntryOrNull != clip.entry -> clips -= uid
 
-                canMoveClip(index, clip, null) -> changes += index to null
+                clipBlock(index, clip, null, keepPreload) == null -> changes += index to null
             }
         }
         // Entries replaced since they were clipped play unclipped.
@@ -234,32 +357,40 @@ class Crossfade(
             val want = wanted.firstOrNull { it.entry.uid !in tails && it.entry.uid !in undecodable } ?: return
             val item = checkNotNull(mediaItemAt(want.index))
             decoding = want.entry.uid
-            decoder.decode(item, want.clipEndMs, onDecoded = { tail ->
+            decoder.decode(item, want.clipEndMs, onDecoded = { outcome ->
                 decoding = null
-                if (tail != null) tails[want.entry.uid] = Decoded(want.entry, tail) else undecodable += want.entry.uid
+                when (outcome) {
+                    is TailOutcome.Ready -> tails[want.entry.uid] = Decoded(want.entry, outcome.tail)
+                    is TailOutcome.Missing -> undecodable[want.entry.uid] = outcome.reason
+                }
                 update()
             })
         }
     }
 
     /**
-     * Whether the item at [index] can go from clipped to [from]'s tail to clipped to [to]'s (null: unclipped): any but
-     * the playing item can, and that one only while both ends are [CLIP_CHANGE_MARGIN_MS] ahead of its position and
-     * the player is still loading it.
+     * Why the item at [index] can't go from clipped to [from]'s tail to clipped to [to]'s (null: unclipped), or null if
+     * it can: any but the playing item can, and that one only while both ends are [CLIP_CHANGE_MARGIN_MS] ahead of its
+     * position and, if it's to [keepPreload], the player is still loading it.
      *
      * A clip changes the item's period duration, and Media3 drops every period queued after one whose duration changes
      * (`MediaPeriodQueue.updateQueuedPeriods` calls `removeAfter`). The player queues the next item's period once the
      * playing one is loaded to its end, so moving the clip after that would throw away the next item's preload, and
      * a remote item would open, probe and buffer again just as the crossfade starts (#562).
      */
-    private fun canMoveClip(
+    private fun clipBlock(
         index: Int,
         from: Decoded?,
-        to: Decoded?
-    ): Boolean {
-        if (index != player.currentMediaItemIndex) return true
+        to: Decoded?,
+        keepPreload: Boolean
+    ): CrossfadeSkip? {
+        if (index != player.currentMediaItemIndex) return null
         val ends = listOfNotNull(from, to).map { it.tail.clipEndUs / 1000 }
-        return ends.all { player.currentPosition < it - CLIP_CHANGE_MARGIN_MS } && !isLoadedToEnd(from)
+        return when {
+            ends.any { player.currentPosition >= it - CLIP_CHANGE_MARGIN_MS } -> CrossfadeSkip.TailLate
+            keepPreload && isLoadedToEnd(from) -> CrossfadeSkip.ShortSongLoaded
+            else -> null
+        }
     }
 
     /**
@@ -303,9 +434,10 @@ class Crossfade(
     private fun next(
         current: QueueEntry,
         next: QueueEntry?,
-        crossfadeMs: Long
+        crossfadeMs: Long,
+        repeatMode: Int = player.repeatMode
     ): Next = when {
-        player.repeatMode == Player.REPEAT_MODE_ONE -> Next.Join
+        repeatMode == Player.REPEAT_MODE_ONE -> Next.Join
         next == null -> Next.FadeOut
         sameAlbum(current, next) -> Next.Join
         crossfadeClipEndMs(next, crossfadeMs) == null -> Next.Join

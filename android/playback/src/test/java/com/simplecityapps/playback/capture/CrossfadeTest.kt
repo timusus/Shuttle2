@@ -1,5 +1,6 @@
 package com.simplecityapps.playback.capture
 
+import com.simplecityapps.playback.dsp.crossfade.CrossfadeSkip
 import com.simplecityapps.playback.spec.PlaybackHarness
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.comparables.shouldBeGreaterThan
@@ -69,7 +70,10 @@ class CrossfadeTest {
 
     @Test
     fun `one song fades into the next over the crossfade, and the last fades out`() {
-        val output = PlaybackHarness(crossfadeDurationMs = CROSSFADE_MS).use { it.playWithTails(listOf(a.song(id = 1), b.song(id = 2))) }
+        val output =
+            PlaybackHarness(crossfadeDurationMs = CROSSFADE_MS).use { harness ->
+                harness.playWithTails(listOf(a.song(id = 1), b.song(id = 2))).also { harness.crossfadeSkips shouldBe emptyList() }
+            }
 
         output.frameCount shouldBe a.frameCount + b.frameCount - CROSSFADE_FRAMES
         val samples = output.channel()
@@ -173,9 +177,15 @@ class CrossfadeTest {
     @Test
     fun `a song whose tail can't be decoded plays whole`() {
         // A stream the decoder can't seek in, so it has no tail, then a song that has one.
-        val output = PlaybackHarness(crossfadeDurationMs = CROSSFADE_MS).use { it.playWithTails(listOf(a.unseekableSong(id = 1), b.song(id = 2))) }
+        val skips = mutableListOf<CrossfadeSkip>()
+        val output =
+            PlaybackHarness(crossfadeDurationMs = CROSSFADE_MS).use { harness ->
+                harness.playWithTails(listOf(a.unseekableSong(id = 1), b.song(id = 2))).also { skips += harness.crossfadeSkips }
+            }
 
         decodeLog.first() shouldContain "can't seek"
+        // Reported once, as A plays into B.
+        skips shouldBe listOf(CrossfadeSkip.Unseekable)
         // A plays to its end, then B, with no crossfade between them (B's own tail still fades it out).
         output.frameCount shouldBe a.frameCount + b.frameCount
         val expected = a.int16Samples() + b.int16Samples().copyOfRange(0, b.frameCount - CROSSFADE_FRAMES)

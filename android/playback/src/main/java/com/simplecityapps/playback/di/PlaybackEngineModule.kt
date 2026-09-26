@@ -19,6 +19,7 @@ import com.simplecityapps.playback.chromecast.CastMediaItemConverter
 import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.chromecast.CastStreams
+import com.simplecityapps.playback.dsp.crossfade.crossfadeSkipped
 import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyResponse
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
@@ -32,6 +33,7 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.analytics.Analytics
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dagger.Lazy
@@ -88,19 +90,30 @@ class PlaybackEngineModule {
     @Provides
     fun provideSongUriResolver(mediaInfoProvider: AggregateMediaInfoProvider): SongUriResolver = SongUriResolver(MediaInfoMediaResolver(mediaInfoProvider))
 
-    // The local player: it owns the queue, and plays it when not casting. It lives on the main looper.
     @Singleton
     @Provides
-    fun provideExoPlayer(
+    fun provideExoPlayerFactory(
         @ApplicationContext context: Context,
         equalizerAudioProcessor: EqualizerAudioProcessor,
         replayGainAudioProcessor: ReplayGainAudioProcessor,
         audioTrackMonitor: AudioTrackMonitor,
         songUriResolver: SongUriResolver,
-        playbackSettings: PlaybackSettings
-    ): ExoPlayer = trace("S2 build ExoPlayer") {
-        ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver, { playbackSettings.crossfadeDurationMs.value.toLong() }).create()
-    }
+        playbackSettings: PlaybackSettings,
+        analytics: Analytics
+    ): ExoPlayerFactory = ExoPlayerFactory(
+        context,
+        equalizerAudioProcessor,
+        replayGainAudioProcessor,
+        audioTrackMonitor,
+        songUriResolver,
+        { playbackSettings.crossfadeDurationMs.value.toLong() },
+        analytics::crossfadeSkipped
+    )
+
+    // The local player: it owns the queue, and plays it when not casting. It lives on the main looper.
+    @Singleton
+    @Provides
+    fun provideExoPlayer(exoPlayerFactory: ExoPlayerFactory): ExoPlayer = trace("S2 build ExoPlayer") { exoPlayerFactory.create() }
 
     @Singleton
     @Provides
@@ -126,6 +139,7 @@ class PlaybackEngineModule {
     fun provideAppPlayer(
         @ApplicationContext context: Context,
         exoPlayer: ExoPlayer,
+        exoPlayerFactory: ExoPlayerFactory,
         converter: Lazy<CastMediaItemConverter>,
         castQueue: CastQueue,
         castSessionManager: Lazy<CastSessionManager>,
@@ -141,7 +155,10 @@ class PlaybackEngineModule {
         } else {
             null
         }
-    }.also { player -> audioEffectSessionManager.attach(player, exoPlayer) }
+    }.also { player ->
+        audioEffectSessionManager.attach(player, exoPlayer)
+        exoPlayerFactory.crossfade.followCast(player)
+    }
 
     @Provides
     fun providePlayer(appPlayer: AppPlayer): Player = appPlayer

@@ -20,6 +20,7 @@ import com.simplecityapps.playback.PlaybackFacade
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.chromecast.FakeSongRepository
+import com.simplecityapps.playback.dsp.crossfade.CrossfadeSkip
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.engine.SongUriResolver
@@ -184,6 +185,9 @@ class PlaybackHarness(
     /** The player the app plays through, which the media session publishes. */
     val appPlayer: Player
 
+    /** Each crossfade the player skipped, with its reason, in order. */
+    val crossfadeSkips = mutableListOf<CrossfadeSkip>()
+
     /** How many times the player's playlist has changed: each change is a timeline rebuild, costing time in the queue's length. */
     var playlistChanges = 0
         private set
@@ -203,14 +207,15 @@ class PlaybackHarness(
         ClockedShadowAudioTrack.clock = clock
         ShadowAudioTrack.addAudioDataListener(audioDataListener)
         crossfadeDurationMs?.let { playbackSettings.crossfadeDurationMs.value = it }
-        player =
+        val factory =
             ExoPlayerFactory(
                 context,
                 equalizer,
                 replayGain,
                 AudioTrackMonitor(),
                 songUriResolver,
-                { playbackSettings.crossfadeDurationMs.value.toLong() }
+                { playbackSettings.crossfadeDurationMs.value.toLong() },
+                crossfadeSkips::add
             ) { renderersFactory, mediaSourceFactory ->
                 TestExoPlayerBuilder(context)
                     .setClock(clock)
@@ -219,7 +224,8 @@ class PlaybackHarness(
                     .setRenderersFactory(renderersFactory)
                     .setMediaSourceFactory(mediaSourceFactory)
                     .build()
-            }.create()
+            }
+        player = factory.create()
         driver = ClockDriver(clock, player)
         player.addListener(
             object : Player.Listener {
@@ -235,6 +241,7 @@ class PlaybackHarness(
         val active = activePlayer(player)
         appPlayer = active
         audioEffectSessionManager.attach(active, player)
+        factory.crossfade.followCast(active)
         audioFocus = AudioFocusCounts(Shadow.extract(audioManager))
         val queueFacade = QueueFacade(player, playbackSettings, songUriResolver, buildContext, active)
         queueOperations = queueFacade

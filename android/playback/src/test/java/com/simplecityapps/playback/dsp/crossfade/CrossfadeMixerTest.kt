@@ -84,6 +84,47 @@ class CrossfadeMixerTest {
         mixer.isEnded().shouldBeTrue()
     }
 
+    @Test
+    fun `a stream that ends into the next of the same format mixes, with no skip recorded`() {
+        endWithMixIntoNext(nextFormat = AudioProcessor.AudioFormat(SAMPLE_RATE, 2, C.ENCODING_PCM_16BIT))
+
+        mixer.takeSkip(1) shouldBe null
+    }
+
+    @Test
+    fun `a stream that ends into the next at another sample rate records a format mismatch`() {
+        endWithMixIntoNext(nextFormat = AudioProcessor.AudioFormat(48_000, 2, C.ENCODING_PCM_16BIT))
+
+        mixer.takeSkip(1) shouldBe CrossfadeSkip.FormatMismatch
+        mixer.takeSkip(1) shouldBe null
+    }
+
+    @Test
+    fun `a stream that ends without the next following gaplessly records it as not gapless`() {
+        endWithMixIntoNext(nextFormat = null)
+
+        mixer.takeSkip(1) shouldBe CrossfadeSkip.NotGapless
+    }
+
+    @Test
+    fun `the entry playing again clears the skip recorded for its last ending`() {
+        endWithMixIntoNext(nextFormat = null)
+
+        mixer.flush(streamOf(1))
+        mixer.flush(streamOf(0))
+
+        mixer.takeSkip(1) shouldBe null
+    }
+
+    /** Plays the first stream to its clip end, planned to mix into the second, then ends it with [nextFormat] configured (null: none). */
+    private fun endWithMixIntoNext(nextFormat: AudioProcessor.AudioFormat?) {
+        mixer.plans = mapOf(1L to CrossfadePlan(tail(uid = 1, clipEndFrame = 441), CrossfadePlan.Next.MixInto(2)))
+        mixer.queueInput(pcm(frames = 1_000))
+        mixer.getOutput().let { it.position(it.limit()) }
+        nextFormat?.let(mixer::configure)
+        mixer.queueEndOfStream()
+    }
+
     private fun streamOf(index: Int): AudioProcessor.StreamMetadata = AudioProcessor.StreamMetadata.Builder()
         .setTimeline(timeline)
         .setPeriodUid(timeline.periodUid(index))

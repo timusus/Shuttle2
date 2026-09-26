@@ -8,6 +8,7 @@ import com.simplecityapps.playback.dsp.mediaItem
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -30,6 +31,8 @@ import kotlin.math.sin
  * counts the frames of each stream from the position its flush gives, drops any past the clip end, and plays the tail
  * from the frame the stream actually stopped at: nothing repeats or goes missing.
  *
+ * A [Next.MixInto] plan that ends without mixing records why in [takeSkip]'s map.
+ *
  * [plans] is set on the main thread and read on the playback thread.
  */
 class CrossfadeMixer : BaseAudioProcessor() {
@@ -39,6 +42,15 @@ class CrossfadeMixer : BaseAudioProcessor() {
      */
     @Volatile
     var plans: Map<Long, CrossfadePlan> = emptyMap()
+
+    /**
+     * Why each entry whose plan was [Next.MixInto] ended without mixing, by entry uid: recorded on the playback thread
+     * as the entry's stream ends, which is before the player moves on to the next entry, and taken on the main thread.
+     */
+    private val skips = ConcurrentHashMap<Long, CrossfadeSkip>()
+
+    /** Why the entry [uid], ending with a [Next.MixInto] plan, didn't mix into the next, or null if it did (or hasn't ended). */
+    fun takeSkip(uid: Long): CrossfadeSkip? = skips.remove(uid)
 
     // Only touched on the playback thread.
 
@@ -151,10 +163,16 @@ class CrossfadeMixer : BaseAudioProcessor() {
             is Next.MixInto ->
                 when {
                     // The queue ends here after all (the next item isn't being played gaplessly).
-                    !configuredSinceFlush -> playout = playout(tail, index.toInt(), fadeOut = true)
+                    !configuredSinceFlush -> {
+                        skips[tail.entryUid] = CrossfadeSkip.NotGapless
+                        playout = playout(tail, index.toInt(), fadeOut = true)
+                    }
 
                     // Mixing streams of different rates or channel counts needs resampling first.
-                    !tail.matches(configuredFormat) -> playout = playout(tail, index.toInt(), fadeOut = false)
+                    !tail.matches(configuredFormat) -> {
+                        skips[tail.entryUid] = CrossfadeSkip.FormatMismatch
+                        playout = playout(tail, index.toInt(), fadeOut = false)
+                    }
 
                     else -> held = Held(tail, index.toInt(), next.entryUid)
                 }
@@ -181,6 +199,8 @@ class CrossfadeMixer : BaseAudioProcessor() {
             }
         playout = null
         passThrough = null
+        // The entry plays again (a repeat, or a seek back into it): what became of its last ending is old news.
+        if (uid != null && !continuing) skips.remove(uid)
         streamUid = uid
         val offsetUs = streamMetadata.positionOffsetUs
         streamFrame = if (offsetUs == C.TIME_UNSET) 0 else offsetUs.coerceAtLeast(0).usToFrames(inputAudioFormat.sampleRate)

@@ -24,16 +24,24 @@ import timber.log.Timber
 interface TailSource {
     /**
      * Decodes [item]'s audio from shortly before [clipEndMs] to its end, then calls [onDecoded] with the tail, or with
-     * null if it can't. A new decode cancels the one in progress.
+     * why it can't. A new decode cancels the one in progress.
      */
     fun decode(
         item: MediaItem,
         clipEndMs: Long,
-        onDecoded: (Tail?) -> Unit
+        onDecoded: (TailOutcome) -> Unit
     )
 
     /** Stops the decode in progress, if there is one, without reporting it. */
     fun cancel()
+}
+
+/** What a tail decode came to: the tail, or why there's none. */
+sealed interface TailOutcome {
+    class Ready(val tail: Tail) : TailOutcome
+
+    /** [reason] is [CrossfadeSkip.Unseekable] or [CrossfadeSkip.DecodeFailed]. */
+    class Missing(val reason: CrossfadeSkip) : TailOutcome
 }
 
 /** How far before the clip end [TailDecoder] starts a tail: the mixer plays it from wherever the clipped item stopped. */
@@ -59,7 +67,7 @@ class TailDecoder(
     override fun decode(
         item: MediaItem,
         clipEndMs: Long,
-        onDecoded: (Tail?) -> Unit
+        onDecoded: (TailOutcome) -> Unit
     ) {
         cancel()
         val capture = TailCaptureProcessor()
@@ -68,10 +76,10 @@ class TailDecoder(
         this.player = player
         val started = System.nanoTime()
 
-        fun finish(tail: Tail?) {
+        fun finish(outcome: TailOutcome) {
             if (this.player !== player) return
             cancel()
-            onDecoded(tail)
+            onDecoded(outcome)
         }
         player.addListener(
             object : Player.Listener {
@@ -82,7 +90,7 @@ class TailDecoder(
                     val window = if (timeline.isEmpty) return else timeline.getWindow(0, Timeline.Window())
                     if (!window.isPlaceholder && !window.isSeekable) {
                         Timber.w("Crossfade: ${item.mediaId} can't seek, so it has no tail")
-                        finish(null)
+                        finish(TailOutcome.Missing(CrossfadeSkip.Unseekable))
                     }
                 }
 
@@ -90,12 +98,12 @@ class TailDecoder(
                     if (playbackState != Player.STATE_ENDED) return
                     val tail = capture.tail(item.queueEntry.uid, clipEndUs = clipEndMs * 1000, decodeNanos = System.nanoTime() - started)
                     tail?.let { Timber.d("Crossfade: decoded ${it.frameCount * 1000L / it.sampleRate} ms of ${item.mediaId} at ${"%.1f".format(it.decodeSpeed)}x real time") }
-                    finish(tail)
+                    finish(tail?.let(TailOutcome::Ready) ?: TailOutcome.Missing(CrossfadeSkip.DecodeFailed))
                 }
 
                 override fun onPlayerError(error: PlaybackException) {
                     Timber.w(error, "Crossfade: couldn't decode the tail of ${item.mediaId}")
-                    finish(null)
+                    finish(TailOutcome.Missing(CrossfadeSkip.DecodeFailed))
                 }
             }
         )

@@ -2,9 +2,14 @@ package com.simplecityapps.playback.dsp.crossfade
 
 import android.os.Looper
 import androidx.media3.common.C
+import androidx.media3.common.DeviceInfo
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.SimpleBasePlayer
 import androidx.media3.common.Timeline
+import androidx.media3.common.TrackSelectionParameters.AudioOffloadPreferences
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.drm.DrmSessionManagerProvider
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
@@ -14,12 +19,16 @@ import androidx.media3.test.utils.FakeMediaPeriod
 import androidx.media3.test.utils.FakeMediaSource
 import androidx.media3.test.utils.FakeTimeline
 import androidx.media3.test.utils.TestExoPlayerBuilder
+import com.google.common.util.concurrent.Futures
+import com.google.common.util.concurrent.ListenableFuture
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.queueEntry
 import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.queue.toQueueEntry
 import com.simplecityapps.playback.spec.ClockDriver
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.maps.shouldBeEmpty
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.maps.shouldNotContainKey
 import io.kotest.matchers.shouldBe
@@ -61,7 +70,10 @@ class CrossfadeClipTest {
 
     private val mixer = CrossfadeMixer()
 
-    private val crossfade = Crossfade(player, mixer, tails) { CROSSFADE_MS }
+    /** The crossfades skipped, with their reasons, in order. */
+    private val skips = mutableListOf<CrossfadeSkip>()
+
+    private val crossfade = Crossfade(player, mixer, tails, { CROSSFADE_MS }, skips::add)
 
     private val a = testSong(1, duration = SONG_MS).toQueueEntry()
 
@@ -81,6 +93,39 @@ class CrossfadeClipTest {
     }
 
     private fun MediaItem.clipEndMs() = clippingConfiguration.endPositionMs
+
+    /** Queues A and B with A's period held unprepared, and clips A to its tail. */
+    private fun queueWithAClipped() {
+        unprepared += a.uid
+        queue(a, b)
+        driver.runUntil { player.duration != C.TIME_UNSET }
+        tails.land(a)
+        driver.idle()
+        player.getMediaItemAt(0).clipEndMs() shouldBe SONG_MS - CROSSFADE_MS
+    }
+
+    /** Plays A on until B takes over. */
+    private fun playIntoB() {
+        player.play()
+        driver.runUntil(limitMs = 2L * SONG_MS) { player.currentMediaItemIndex == 1 }
+    }
+
+    /** Crossfade has stood down: A plays whole, the mixer has no plans and no tail is being decoded. */
+    private fun shouldHaveStoodDown() {
+        player.getMediaItemAt(0).clipEndMs() shouldBe C.TIME_END_OF_SOURCE
+        mixer.plans.shouldBeEmpty()
+        tails.decoding shouldBe null
+    }
+
+    private fun audioTrack(encoding: Int) = AudioSink.AudioTrackConfig(encoding, 44_100, 12, false, false, 4096)
+
+    private fun allowOffload() {
+        player.trackSelectionParameters =
+            player.trackSelectionParameters
+                .buildUpon()
+                .setAudioOffloadPreferences(AudioOffloadPreferences.Builder().setAudioOffloadMode(AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED).build())
+                .build()
+    }
 
     @Test
     fun `a tail that lands once the next item is preloaded leaves the playing item whole and the preload alone`() {
@@ -140,6 +185,123 @@ class CrossfadeClipTest {
         sources.getValue(b.uid).createdMediaPeriods.size shouldBe 1
     }
 
+    @Test
+    fun `a song whose tail never lands in time plays into the next, reported as late`() {
+        queue(a, b)
+
+        playIntoB()
+
+        skips shouldBe listOf(CrossfadeSkip.TailLate)
+    }
+
+    @Test
+    fun `a tail that lands once the playing song is loaded to its end is reported as a short song loaded first`() {
+        queue(a, b)
+        driver.runUntil { sources[b.uid]?.createdMediaPeriods?.size == 1 }
+        tails.land(a)
+
+        playIntoB()
+
+        skips shouldBe listOf(CrossfadeSkip.ShortSongLoaded)
+    }
+
+    @Test
+    fun `a song whose tail can't be decoded is reported with the decoder's reason`() {
+        queue(a, b)
+        tails.fail(a, CrossfadeSkip.DecodeFailed)
+
+        playIntoB()
+
+        skips shouldBe listOf(CrossfadeSkip.DecodeFailed)
+    }
+
+    @Test
+    fun `no skip is reported where no crossfade was wanted`() {
+        val sameAlbumA = testSong(1, duration = SONG_MS, album = "Album").toQueueEntry()
+        val sameAlbumB = testSong(2, duration = SONG_MS, album = "Album").toQueueEntry()
+        queue(sameAlbumA, sameAlbumB)
+
+        playIntoB()
+
+        skips.shouldBeEmpty()
+    }
+
+    @Test
+    fun `float output stands crossfade down, unclipping the playing item, and 16-bit output brings it back`() {
+        queueWithAClipped()
+
+        crossfade.onAudioTrackInitialized(audioTrack(C.ENCODING_PCM_FLOAT))
+        driver.idle()
+        shouldHaveStoodDown()
+
+        crossfade.onAudioTrackInitialized(audioTrack(C.ENCODING_PCM_16BIT))
+        tails.land(a)
+        driver.idle()
+        player.getMediaItemAt(0).clipEndMs() shouldBe SONG_MS - CROSSFADE_MS
+        mixer.plans shouldContainKey a.uid
+    }
+
+    @Test
+    fun `a song played into the next on float output is reported as skipped for float output`() {
+        queue(a, b)
+        crossfade.onAudioTrackInitialized(audioTrack(C.ENCODING_PCM_FLOAT))
+        driver.idle()
+        tails.decoding shouldBe null
+
+        playIntoB()
+
+        skips shouldBe listOf(CrossfadeSkip.FloatOutput)
+    }
+
+    @Test
+    fun `allowing audio offload mid-song stands crossfade down`() {
+        queueWithAClipped()
+
+        allowOffload()
+        driver.idle()
+
+        shouldHaveStoodDown()
+    }
+
+    @Test
+    fun `with audio offload allowed from the start, no tail is decoded and the skip is reported as offload`() {
+        allowOffload()
+        queue(a, b)
+        driver.idle()
+        tails.decoding shouldBe null
+
+        playIntoB()
+
+        skips shouldBe listOf(CrossfadeSkip.Offload)
+    }
+
+    @Test
+    fun `casting stands crossfade down, and the receiver playing on is reported as skipped for Cast`() {
+        queueWithAClipped()
+        val cast = FakeRemote(listOf(a, b).map { it.toMediaItem() })
+        crossfade.followCast(cast)
+
+        cast.connect()
+        driver.idle()
+        shouldHaveStoodDown()
+
+        cast.playOnToNext()
+        driver.idle()
+        skips shouldBe listOf(CrossfadeSkip.Cast)
+    }
+
+    @Test
+    fun `the app player moving on before casting reports nothing for Cast`() {
+        queue(a, b)
+        val cast = FakeRemote(listOf(a, b).map { it.toMediaItem() })
+        crossfade.followCast(cast)
+
+        cast.playOnToNext()
+        driver.idle()
+
+        skips.shouldBeEmpty()
+    }
+
     /**
      * Builds each item's source from its song's duration, its period starting with its window (as a progressive
      * stream's does), with samples 100 ms apart across it (so the renderers read through an item as it plays, not
@@ -179,12 +341,15 @@ class CrossfadeClipTest {
 
     /** Takes one decode at a time, as [TailDecoder] does, and finishes it only when the test lands its tail. */
     private class FakeTails : TailSource {
-        private var pending: Triple<MediaItem, Long, (Tail?) -> Unit>? = null
+        private var pending: Triple<MediaItem, Long, (TailOutcome) -> Unit>? = null
+
+        /** The uid of the entry whose tail is being decoded, or null. */
+        val decoding get() = pending?.first?.queueEntry?.uid
 
         override fun decode(
             item: MediaItem,
             clipEndMs: Long,
-            onDecoded: (Tail?) -> Unit
+            onDecoded: (TailOutcome) -> Unit
         ) {
             pending = Triple(item, clipEndMs, onDecoded)
         }
@@ -195,12 +360,63 @@ class CrossfadeClipTest {
 
         /** Finishes the decode of [entry]'s tail, in progress, with a silent tail. */
         fun land(entry: QueueEntry) {
-            val (item, clipEndMs, onDecoded) = checkNotNull(pending) { "No decode in progress" }
-            check(item.queueEntry.uid == entry.uid) { "The decode in progress is ${item.mediaId}'s" }
-            pending = null
+            val (_, clipEndMs, onDecoded) = take(entry)
             val startUs = (clipEndMs - 500) * 1000
             val frames = ((entry.song.duration * 1000L - startUs) * 44_100 / 1_000_000).toInt()
-            onDecoded(Tail(entry.uid, 44_100, 2, startUs, clipEndMs * 1000, FloatArray(frames * 2), decodeNanos = 1))
+            onDecoded(TailOutcome.Ready(Tail(entry.uid, 44_100, 2, startUs, clipEndMs * 1000, FloatArray(frames * 2), decodeNanos = 1)))
         }
+
+        /** Finishes the decode of [entry]'s tail, in progress, without one, for [reason]. */
+        fun fail(
+            entry: QueueEntry,
+            reason: CrossfadeSkip
+        ) {
+            take(entry).third(TailOutcome.Missing(reason))
+        }
+
+        private fun take(entry: QueueEntry): Triple<MediaItem, Long, (TailOutcome) -> Unit> {
+            val decode = checkNotNull(pending) { "No decode in progress" }
+            check(decode.first.queueEntry.uid == entry.uid) { "The decode in progress is ${decode.first.mediaId}'s" }
+            pending = null
+            return decode
+        }
+    }
+
+    /**
+     * Stands in for the app player: playing [items] locally until [connect], then on a remote device, where it plays on
+     * to the next item by itself ([playOnToNext]).
+     */
+    private class FakeRemote(private val items: List<MediaItem>) : SimpleBasePlayer(Looper.getMainLooper()) {
+        private var remote = false
+
+        private var index = 0
+
+        private var autoTransition = false
+
+        fun connect() {
+            remote = true
+            invalidateState()
+        }
+
+        fun playOnToNext() {
+            index++
+            autoTransition = true
+            invalidateState()
+        }
+
+        override fun getState(): State = State
+            .Builder()
+            .setAvailableCommands(Player.Commands.Builder().addAllCommands().build())
+            .setPlaylist(items.map { MediaItemData.Builder(it.queueEntry.uid).setMediaItem(it).build() })
+            .setCurrentMediaItemIndex(index)
+            .setDeviceInfo(DeviceInfo.Builder(if (remote) DeviceInfo.PLAYBACK_TYPE_REMOTE else DeviceInfo.PLAYBACK_TYPE_LOCAL).build())
+            .apply {
+                if (autoTransition) {
+                    autoTransition = false
+                    setPositionDiscontinuity(Player.DISCONTINUITY_REASON_AUTO_TRANSITION, 0)
+                }
+            }.build()
+
+        override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> = Futures.immediateVoidFuture()
     }
 }
