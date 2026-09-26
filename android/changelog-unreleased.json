@@ -126,6 +126,10 @@
     {
       "text": "Hold the previous or next button in the mini player or Now Playing to seek instead of skipping, and audiobooks and podcasts show seek back and forward buttons there instead of skip",
       "commits": []
+    },
+    {
+      "text": "Connect a server from Home or the Library tab now asks which type straight away and signs you in, instead of sending you to Settings first",
+      "commits": []
     }
   ],
   "fixes": [

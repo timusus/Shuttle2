@@ -84,8 +84,7 @@ import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
-import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
-import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
+import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import kotlinx.coroutines.launch
@@ -302,6 +301,10 @@ fun LibraryDestination(
     val emptyViewModel: LibraryEmptyViewModel = hiltViewModel()
     val content by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
+    var connectingServer by rememberSaveable { mutableStateOf(false) }
+    if (connectingServer) {
+        ServerTypePickerRoute(onDismissRequest = { connectingServer = false })
+    }
 
     // The only tabs that support selection (#225); Genres/Playlists/Folders have none to clear.
     val songViewModel: SongListViewModel = hiltViewModel()
@@ -338,7 +341,7 @@ fun LibraryDestination(
                         onAllowAccess = accessRequests.request,
                         onOpenAppSettings = accessRequests.openAppSettings,
                         onScan = emptyViewModel::onScan,
-                        onConnectServer = { onOpen(SettingsDestinationRoute(SettingsDestination.Sources)) },
+                        onConnectServer = { connectingServer = true },
                         modifier = modifier,
                     )
                 }

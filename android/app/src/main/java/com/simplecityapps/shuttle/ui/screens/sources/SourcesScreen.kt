@@ -251,7 +251,7 @@ fun SourcesDialogHost(
 }
 
 @get:StringRes
-private val MediaProviderType.titleRes: Int
+internal val MediaProviderType.titleRes: Int
     get() = when (this) {
         MediaProviderType.Jellyfin -> R.string.media_provider_title_jellyfin
         MediaProviderType.Emby -> R.string.media_provider_title_emby

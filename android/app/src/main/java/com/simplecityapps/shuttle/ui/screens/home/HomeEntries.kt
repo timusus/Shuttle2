@@ -4,6 +4,9 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -23,6 +26,7 @@ import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.WhatsNewRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
+import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerRoute
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.HomeRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
@@ -47,6 +51,10 @@ private fun HomeDestination(
     val snackbarHostState = LocalShellSnackbarHostState.current
     val analyticsNoticeMessage = stringResource(R.string.home_analytics_notice_message)
     val analyticsNoticeAction = stringResource(R.string.home_analytics_notice_action)
+    var connectingServer by rememberSaveable { mutableStateOf(false) }
+    if (connectingServer) {
+        ServerTypePickerRoute(onDismissRequest = { connectingServer = false })
+    }
     (uiState as? HomeUiState.Content)?.let { content ->
         ConsumeEvents(content.events, onConsumed = viewModel::onEventHandled) { event ->
             when (event) {
@@ -81,7 +89,7 @@ private fun HomeDestination(
                         onAllowAccess = accessRequests.request,
                         onOpenAppSettings = accessRequests.openAppSettings,
                         onScan = emptyViewModel::onScan,
-                        onConnectServer = { onOpen(SettingsDestinationRoute(SettingsDestination.Sources)) },
+                        onConnectServer = { connectingServer = true },
                         modifier = modifier,
                     )
                 }

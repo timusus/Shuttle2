@@ -35,6 +35,7 @@ class SourcesViewModelTest {
         RefreshScannerFolders(folderStore),
         importState,
         ServerAccessGate(entitlement, startTrial = { false }),
+        ConnectServer(mediaSources),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
     }

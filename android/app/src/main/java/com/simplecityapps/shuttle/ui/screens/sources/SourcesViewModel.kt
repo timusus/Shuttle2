@@ -52,6 +52,7 @@ class SourcesViewModel @Inject constructor(
     private val refreshScannerFolders: RefreshScannerFolders,
     importState: SongImportStateProvider,
     private val serverAccessGate: ServerAccessGate,
+    private val connectServer: ConnectServer,
 ) : ViewModel() {
     private val events = PendingEvents<SourcesEvent>()
 
@@ -100,10 +101,7 @@ class SourcesViewModel @Inject constructor(
     fun onAddServer(): Boolean = serverAccessGate.tryAddServer()
 
     /** A server's sign-in dialog succeeded. */
-    fun onServerConnected(type: MediaProviderType) {
-        mediaSources.enable(type)
-        mediaSources.scan()
-    }
+    fun onServerConnected(type: MediaProviderType) = connectServer(type)
 
     fun onRemoveServer(type: MediaProviderType) = mediaSources.disable(type)
 
