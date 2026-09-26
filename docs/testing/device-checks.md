@@ -233,3 +233,11 @@ Set Settings → Sources → Streaming quality → On mobile data to 128 kbps an
 - [ ] Jellyfin: on Wi-Fi a FLAC plays as the original (the server's dashboard shows Direct Play). On mobile data the next song transcodes (the dashboard shows Transcode at about 128 kbps) and sounds right; seeking forward and back while it transcodes lands at the right position and keeps playing. A song already under 128 kbps direct-plays.
 - [ ] Emby: the same as Jellyfin. On mobile data the dashboard shows the stream transcoding at about 128 kbps (the parameter is untested against Emby), and seeking while it transcodes works.
 - [ ] Plex: on Wi-Fi a FLAC plays as the original file. On mobile data the next song plays through Plex's transcoder (Plex Web → Dashboard shows a transcode at about 128 kbps); seeking while it transcodes lands at the right position, and a song whose bitrate is already under the cap plays the original.
+
+## Crossfade clipping and the equalizer preamp (#544, #545, #236)
+
+Crossfade is not user-enabled yet; turn it on with a debug build's crossfade setting (or leave it for when it ships). Test with a local album and a Jellyfin album.
+
+- [ ] Crossfade off: local and server albums play gaplessly end to end, seeking works, and renaming a playing song's tag updates the title without a skip or glitch.
+- [ ] Crossfade on (e.g. 6 s): consecutive local songs overlap and fade smoothly; a transcoded server song (mobile-data quality 128 kbps) whose tail can't be decoded plays to its real end instead of cutting off early.
+- [ ] Equalizer: Bass boost with the preamp at 0 dB is quieter than EQ off, as expected; raising the preamp brings the level back, and at +12 dB with a loud track it clips cleanly (no crackle or wrap-around noise).
