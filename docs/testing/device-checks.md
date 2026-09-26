@@ -63,6 +63,7 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [x] 24-bit PCM goes through EQ and ReplayGain to the end cleanly. — automated: `AudioOutputSpecTest` (RS-17, 24-bit WAV)
 - [ ] A real 24-bit FLAC plays cleanly (FLAC decoding is native, device-only).
 - [x] Jellyfin streaming: play, skip, seek and resume after a force-stop. — automated: `emu-verify.sh --remote jellyfin --check remote-playback`
+- [ ] Plex streaming (#362): from the first song of "S2 Transcode Test", one skip lands on the WMA track, which plays (transcoded), as do the ALAC and AIFF ones; pause, force-stop and reopen, and the queue restores on the same song and position. — automated: `emu-verify.sh --remote plex --check remote-playback`
 
 ## Ported PRs (Sep 2026)
 

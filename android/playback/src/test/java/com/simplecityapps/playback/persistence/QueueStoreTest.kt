@@ -14,6 +14,7 @@ import com.simplecityapps.playback.spec.PlaybackHarness.Companion.LONG_SONG_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.longSong
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
+import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unreadableSong
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unresolvableSong
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
@@ -610,6 +611,32 @@ class QueueStoreTest {
         restarted.currentIds() shouldBe presented
         restarted.queueOperations.queueStateFlow.value.currentItem?.song?.id shouldBe 1L
         restarted.playbackOperations.getProgress() shouldBe 15_000
+    }
+
+    @Test
+    fun `a skip past a song that can't be played is saved where it lands, and restored there (#362)`() {
+        // The first song is short enough to be buffered whole, so the player moves on to prepare the one after while it plays.
+        val songs = listOf(song(1), unreadableSong(2), library[2], library[3])
+        val first = harness(songRepository = FakeSongRepository(songs))
+        first.setQueue(songs)
+        first.playbackOperations.play()
+        first.runUntil { first.playbackOperations.playbackStateFlow.value == PlaybackState.Playing && first.playbackOperations.getProgress()!! > 500 }
+
+        first.playbackOperations.skipToNext()
+        first.runUntil { first.playbackOperations.playbackStateFlow.value == PlaybackState.Playing }
+        first.playbackOperations.pause()
+        first.idle()
+
+        first.queueOperations.queueStateFlow.value.currentPosition shouldBe 2
+        saved.queueIds shouldBe "1,2,3,4"
+        saved.queuePosition shouldBe 2
+        saved.nowPlaying?.songId shouldBe 3L
+
+        val restarted = harness(songRepository = FakeSongRepository(songs))
+        restarted.restore()
+
+        restarted.currentIds() shouldBe listOf(1L, 2L, 3L, 4L)
+        restarted.queueOperations.queueStateFlow.value.currentItem?.song?.id shouldBe 3L
     }
 
     // Helpers
