@@ -26,7 +26,6 @@ import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import com.squareup.phrase.Phrase
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -231,7 +230,7 @@ class TaglibMediaProvider(
                             emit(
                                 FlowEvent.Progress(
                                     MessageProgress(
-                                        Phrase.from(context, com.simplecityapps.mediaprovider.R.string.media_import_m3u_scan).put("playlist_name", m3uPlaylist.name).format().toString(),
+                                        context.getString(com.simplecityapps.mediaprovider.R.string.media_import_m3u_scan, m3uPlaylist.name),
                                         Progress(index, m3uPlaylist.entries.size)
                                     )
                                 )

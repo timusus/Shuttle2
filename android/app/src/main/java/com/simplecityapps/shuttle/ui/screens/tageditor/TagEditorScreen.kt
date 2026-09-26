@@ -59,7 +59,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SettingsHeader
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
-import com.squareup.phrase.Phrase
 import kotlinx.coroutines.launch
 
 /** The tag editor route: loads the songs' tags, saves the changes, reports how the save went and closes. */
@@ -103,10 +102,10 @@ fun TagEditorDestination(
 }
 
 private fun TagWriteResult.message(resources: Resources): String = if (failed.isEmpty()) {
-    Phrase.fromPlural(resources, R.plurals.edit_tags_success, updated.size).put("count", updated.size).format().toString()
+    resources.getQuantityString(R.plurals.edit_tags_success, updated.size, updated.size)
 } else {
     val total = updated.size + failed.size
-    Phrase.fromPlural(resources, R.plurals.edit_tags_failure, total).putOptional("count", failed.size).putOptional("total", total).format().toString()
+    resources.getQuantityString(R.plurals.edit_tags_failure, total, failed.size, total)
 }
 
 /**
@@ -208,7 +207,7 @@ private fun progressText(
     progress: TagProgress,
 ): String {
     val resources = LocalResources.current
-    return Phrase.from(resources, resId).put("progress", progress.done).put("total", progress.total).format().toString()
+    return resources.getString(resId, progress.done, progress.total)
 }
 
 @Composable
@@ -225,7 +224,7 @@ private fun TagEditorForm(
     ) {
         if (state.songCount > 1) {
             Text(
-                text = Phrase.fromPlural(LocalResources.current, R.plurals.edit_tags_editing_count_songs, state.songCount).put("count", state.songCount).format().toString(),
+                text = pluralStringResource(R.plurals.edit_tags_editing_count_songs, state.songCount, state.songCount),
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -268,7 +267,7 @@ private fun SkippedSongs(state: TagEditorUiState.Editing) {
     Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.largeIncreased, modifier = Modifier.fillMaxWidth().testTag("tag-editor-skipped")) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = Phrase.fromPlural(LocalResources.current, R.plurals.edit_tags_skipped, state.skipped.size).put("count", state.skipped.size).format().toString(),
+                text = pluralStringResource(R.plurals.edit_tags_skipped, state.skipped.size, state.skipped.size),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onErrorContainer,
             )
@@ -305,7 +304,7 @@ private fun TagTextField(
             {
                 S2IconButton(
                     icon = Icons.AutoMirrored.Rounded.Undo,
-                    contentDescription = Phrase.from(LocalResources.current, R.string.edit_tags_reset_field).put("field", label).format().toString(),
+                    contentDescription = stringResource(R.string.edit_tags_reset_field, label),
                     onClick = { onFieldReset(state.field) },
                     enabled = enabled,
                 )

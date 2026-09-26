@@ -84,7 +84,4 @@ dependencies {
 
     // Material Design Components
     implementation libs.google.material
-
-    // Phrase string formatting helper
-    api libs.square.phrase
 }

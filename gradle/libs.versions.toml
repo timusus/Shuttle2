@@ -59,7 +59,6 @@ moshi-kotlin-codegen = "1.15.2"
 nanohttpd-webserver = "2.3.1"
 navigation3 = "1.2.0"
 okhttp = "5.5.0"
-phrase = "1.2.0"
 play-services-cast-framework = "22.3.1"
 preference-ktx = "1.2.1"
 reorderable = "3.1.0"
@@ -172,7 +171,6 @@ roborazzi-compose = { module = "io.github.takahirom.roborazzi:roborazzi-compose"
 roborazzi-composePreviewScannerSupport = { module = "io.github.takahirom.roborazzi:roborazzi-compose-preview-scanner-support", version.ref = "roborazzi" }
 retrofit2-converterMoshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converter-moshi" }
 retrofit2-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "converter-moshi" }
-square-phrase = { module = "com.squareup.phrase:phrase", version.ref = "phrase" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 androidx-tracing = { module = "androidx.tracing:tracing-ktx", version.ref = "tracing" }
 timusus-ktaglib = { module = "com.simplecityapps:ktaglib", version.ref = "ktaglib" }

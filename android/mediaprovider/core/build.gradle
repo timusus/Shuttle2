@@ -62,9 +62,6 @@ dependencies {
     // AndroidX Annotations
     api libs.androidx.annotation
 
-    // Phrase string formatting helper
-    api libs.square.phrase
-
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.androidx.hilt.work)
