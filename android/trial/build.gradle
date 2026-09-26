@@ -63,9 +63,6 @@ dependencies {
     // Coroutines
     api(libs.kotlinx.coroutinesCore)
 
-    // Remote config
-    implementation project(':android:remote-config')
-
     implementation project(':android:networking')
     implementation project(':android:core')
     implementation project(':android:domain')

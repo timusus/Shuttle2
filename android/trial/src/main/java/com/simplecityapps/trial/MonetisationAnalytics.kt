@@ -1,7 +1,7 @@
 package com.simplecityapps.trial
 
+import com.simplecityapps.shuttle.analytics.Analytics
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.remote_config.AnalyticsManager
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -10,17 +10,17 @@ import javax.inject.Singleton
 class MonetisationAnalytics
 @Inject
 constructor(
-    private val analyticsManager: AnalyticsManager
+    private val analytics: Analytics
 ) {
-    fun paywallShown(source: PaywallSource) = analyticsManager.logEvent("paywall_shown", mapOf("source" to source.value))
+    fun paywallShown(source: PaywallSource) = analytics.capture("paywall_shown", mapOf("source" to source.value))
 
-    fun purchaseStarted(productId: String) = analyticsManager.logEvent("purchase_started", mapOf("product" to productId))
+    fun purchaseStarted(productId: String) = analytics.capture("purchase_started", mapOf("product" to productId))
 
-    fun purchaseCompleted(productId: String) = analyticsManager.logEvent("purchase_completed", mapOf("product" to productId))
+    fun purchaseCompleted(productId: String) = analytics.capture("purchase_completed", mapOf("product" to productId))
 
-    fun trialStarted() = analyticsManager.logEvent("trial_started")
+    fun trialStarted() = analytics.capture("trial_started")
 
-    fun serverConnected(type: MediaProviderType) = analyticsManager.logEvent("server_connected", mapOf("type" to type.name.lowercase()))
+    fun serverConnected(type: MediaProviderType) = analytics.capture("server_connected", mapOf("type" to type.name.lowercase()))
 }
 
 /** Where the paywall was opened from. */

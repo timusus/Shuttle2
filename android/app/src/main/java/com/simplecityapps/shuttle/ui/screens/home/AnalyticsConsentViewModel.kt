@@ -19,7 +19,8 @@ import kotlinx.coroutines.flow.stateIn
 /**
  * The Home analytics consent card (#421): shown once a library is loaded and the app has been opened on
  * [DaysBeforeAsking] separate days. Either answer, or dismissing the card, marks it asked so it never shows again;
- * analytics stays off until the user chooses [onShare].
+ * analytics stays off until the user chooses [onShare]. The choice is [PrivacySettings.analytics], which
+ * TelemetryConsentGate applies to PostHog as soon as it changes.
  */
 @HiltViewModel
 class AnalyticsConsentViewModel @Inject constructor(
@@ -44,7 +45,7 @@ class AnalyticsConsentViewModel @Inject constructor(
         ) { hasSongs, asked, daysOpened -> hasSongs && !asked && daysOpened >= DaysBeforeAsking }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
-    /** The user chose Share: turns analytics on and marks the card answered. */
+    /** The user chose Share: turns analytics on, starting PostHog, and marks the card answered. */
     fun onShare() {
         privacySettings.analytics.value = true
         settings.asked.value = true

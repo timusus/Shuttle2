@@ -75,11 +75,19 @@
             </intent-filter>
         </activity>
 
-        <!-- Firebase Analytics -->
+        <!-- Sentry starts only once the user allows crash reporting (TelemetryConsentGate), never on its own.
+             Its content providers would still run before Application.onCreate, so they are removed too. -->
         <meta-data
-            android:name="firebase_analytics_collection_enabled"
+            android:name="io.sentry.auto-init"
             android:value="false" />
-
+        <provider
+            android:name="io.sentry.android.core.SentryInitProvider"
+            android:authorities="${applicationId}.SentryInitProvider"
+            tools:node="remove" />
+        <provider
+            android:name="io.sentry.android.core.SentryPerformanceProvider"
+            android:authorities="${applicationId}.SentryPerformanceProvider"
+            tools:node="remove" />
 
         <!-- Widget -->
 
@@ -106,11 +114,6 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_now_playing_large_info" />
         </receiver>
-
-        <!-- Crashlytics -->
-        <meta-data
-            android:name="firebase_crashlytics_collection_enabled"
-            android:value="false" />
 
         <!-- WorkManager -->
 

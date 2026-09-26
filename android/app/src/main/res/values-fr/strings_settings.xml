@@ -62,8 +62,6 @@
     <string name="pref_view_changelog_title">Voir le journal des modifications</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">Rapports de plantage</string>
-    <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">S2 recueille les données de plantage via Firebase. Éteindre pour désactiver</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Afficher les licences</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
@@ -96,6 +94,4 @@
     <string name="theme_accent_entry_green">Vert</string>
     <!-- Settings title for the orange theme option -->
     <string name="theme_accent_entry_orange">Orange</string>
-    <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_title">Firebase Analytics</string>
 </resources>

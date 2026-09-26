@@ -1,8 +1,6 @@
 package com.simplecityapps.shuttle.persistence
 
 import android.content.SharedPreferences
-import com.simplecityapps.shuttle.settings.PrivacySettings
-import com.simplecityapps.shuttle.settings.preference
 import java.util.Date
 
 class GeneralPreferenceManager(
@@ -55,10 +53,6 @@ class GeneralPreferenceManager(
             }
             return null
         }
-
-    // Kept for the trial module; the setting itself is [PrivacySettings.analytics].
-    val firebaseAnalyticsEnabled: Boolean
-        get() = sharedPreferences.preference(PrivacySettings.Analytics).value
 
     var artistListViewMode: String?
         set(value) {

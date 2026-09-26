@@ -61,7 +61,7 @@
     <!-- Settings: Title for the option to view the changelog -->
     <string name="pref_view_changelog_title">Änderungsprotokoll anzeigen</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_title">Firebase Absturzbericht</string>
+    <string name="pref_crash_reporting_title">Absturzbericht</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_subtitle">Anonyme Absturzdaten Statistiken, die helfen Probleme zu finden und zu lösen.</string>
     <!-- Settings: Title for the option to view open source licenses -->
@@ -96,8 +96,4 @@
     <string name="theme_accent_entry_green">Grün</string>
     <!-- Settings title for the orange theme option -->
     <string name="theme_accent_entry_orange">Orange</string>
-    <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_title">Firebase Analyse</string>
-    <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_subtitle">Aktiviert A/B Testung von Funktionen, und verfolgt wie Benutzer mit der interagieren.</string>
 </resources>

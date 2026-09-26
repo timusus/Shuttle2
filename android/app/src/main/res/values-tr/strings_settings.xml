@@ -97,8 +97,4 @@
     <string name="theme_accent_entry_green">Yeşil</string>
     <!-- Settings title for the orange theme option -->
     <string name="theme_accent_entry_orange">Turuncu</string>
-    <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_title">Firebase analitikleri</string>
-    <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_subtitle">Özelliklerin A/B testini etkinleştirir ve kullanıcıların uygulamayla nasıl etkileşimde bulunduğunu izler</string>
 </resources>

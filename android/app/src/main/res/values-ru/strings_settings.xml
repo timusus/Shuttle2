@@ -62,8 +62,6 @@
     <string name="pref_view_changelog_title">Посмотреть журнал изменений</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">Отчеты о сбоях</string>
-    <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">S2 собирает данные о сбоях через Firebase. Выключите, чтобы отказаться</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Просмотреть лицензии</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->

@@ -62,8 +62,6 @@
     <string name="pref_view_changelog_title">Ver registro de cambios</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">Informe de fallos</string>
-    <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">S2 recopila datos de fallos a través de \'Firebase\'. Desactivar para excluirme</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Ver licencias</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
@@ -96,10 +94,6 @@
     <string name="theme_accent_entry_green">Verde</string>
     <!-- Settings title for the orange theme option -->
     <string name="theme_accent_entry_orange">Naranja</string>
-    <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_title">Análisis de Firebase</string>
-    <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_subtitle">Permite realizar pruebas A/B de funciones y realiza un seguimiento de cómo interactúan los usuarios con la aplicación</string>
     <!-- Settings: Title for the automatic rescan frequency (never rescan)-->
     <string name="pref_rescan_frequency_never">Nunca</string>
     <!-- Settings: Title for the automatic rescan frequency (daily rescan)-->

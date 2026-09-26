@@ -15,7 +15,7 @@ domain        :android:domain  (pure Kotlin/JVM: models, repository and service 
       |
 data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:playback,
               :android:downloads, :android:networking, :android:imageloader, :android:saf,
-              :android:trial, :android:remote-config
+              :android:trial
 ```
 
 - **Domain** is a `org.jetbrains.kotlin.jvm` module: no Android SDK, no Room, no Retrofit, no Hilt
@@ -41,7 +41,7 @@ data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:p
 | `:android:mediaprovider:{jellyfin,emby,plex}` | HTTP services, DTOs, auth, providers | Data |
 | `:android:playback` | Media3 engine, `PlaybackFacade`, `QueueFacade`, Cast, session; resolves remote songs through the `MediaInfoProvider` map the provider modules contribute, with no edge to them | Data; its operations interfaces are in domain (step 5 done); provider edges removed (step 2 done) |
 | `:android:imageloader` | Coil artwork fetchers, keys and the app `ImageLoader`; its unused `:emby`/`:jellyfin` edges are gone | Data (platform adapter) |
-| `:android:downloads`, `:android:networking`, `:android:saf`, `:android:trial`, `:android:remote-config` | Platform services | Data |
+| `:android:downloads`, `:android:networking`, `:android:saf`, `:android:trial` | Platform services | Data |
 | `:android:core` | Shared utilities, settings, DI qualifiers | Cross-cutting |
 | `:android:designsystem` | Compose components, theme | Presentation (no domain or data deps) |
 | `:android:app` | Everything UI plus DI root | Presentation + composition root |
@@ -75,7 +75,7 @@ forbidden edges that only shrinks (the same ratchet as the Konsist baselines).
 |---|---|---|
 | core | `core` | nothing of ours |
 | domain | `domain` | core |
-| data | `mediaprovider:core`, `downloads`, `imageloader`, `networking`, `playback`, `remote-config`, `saf`, `trial` | core, domain, data |
+| data | `mediaprovider:core`, `downloads`, `imageloader`, `networking`, `playback`, `saf`, `trial` | core, domain, data |
 | provider | `mediaprovider:{local,jellyfin,emby,plex}` | core, domain, data (never another provider) |
 | presentation | `designsystem` | core, domain, presentation, fixtures |
 | composition root | `app` | everything but tooling |

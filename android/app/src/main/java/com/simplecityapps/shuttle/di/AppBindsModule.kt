@@ -4,14 +4,13 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.ServerStreamPolicy
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializer
-import com.simplecityapps.shuttle.appinitializers.CrashReportingInitializer
 import com.simplecityapps.shuttle.appinitializers.DownloadsInitializer
 import com.simplecityapps.shuttle.appinitializers.EntitlementInitializer
 import com.simplecityapps.shuttle.appinitializers.MediaProviderInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackReportingInitializer
-import com.simplecityapps.shuttle.appinitializers.RemoteConfigInitializer
 import com.simplecityapps.shuttle.appinitializers.ShortcutInitializer
+import com.simplecityapps.shuttle.appinitializers.TelemetryInitializer
 import com.simplecityapps.shuttle.appinitializers.TimberInitializer
 import com.simplecityapps.shuttle.appinitializers.WidgetInitializer
 import com.simplecityapps.shuttle.entitlement.EntitledServerStreamPolicy
@@ -42,7 +41,7 @@ abstract class AppBindsModule {
 
     @Binds
     @IntoSet
-    abstract fun provideCrashReportingInitializer(bind: CrashReportingInitializer): AppInitializer
+    abstract fun provideTelemetryInitializer(bind: TelemetryInitializer): AppInitializer
 
     @Binds
     @IntoSet
@@ -67,10 +66,6 @@ abstract class AppBindsModule {
     @Binds
     @IntoSet
     abstract fun provideEntitlementInitializer(bind: EntitlementInitializer): AppInitializer
-
-    @Binds
-    @IntoSet
-    abstract fun provideRemoteConfigInitializer(bind: RemoteConfigInitializer): AppInitializer
 
     @Binds
     @IntoSet

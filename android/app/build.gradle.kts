@@ -1,14 +1,21 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
     id("com.mikepenz.aboutlibraries.plugin.android")
     id("dagger.hilt.android.plugin")
-    id("com.google.firebase.crashlytics")
+    alias(libs.plugins.sentry)
     id("com.google.devtools.ksp")
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.roborazzi)
     alias(libs.plugins.kotlin.serialization)
+}
+
+// Local development keys (see [secret]); declared before `android`, which reads them while the script runs
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use(::load)
 }
 
 android {
@@ -28,6 +35,13 @@ android {
             debugSymbolLevel = "FULL"
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
+
+        // Crash reporting (Sentry) and product analytics (PostHog). Never committed: each comes from local.properties
+        // or a Gradle property (local builds), else an environment variable (CI secrets). Blank, the SDK is never
+        // started, so local builds and tests send nothing.
+        buildConfigField("String", "SENTRY_DSN", "\"${secret("sentry.dsn", "SENTRY_DSN").orEmpty()}\"")
+        buildConfigField("String", "POSTHOG_API_KEY", "\"${secret("posthog.api.key", "POSTHOG_API_KEY").orEmpty()}\"")
+        buildConfigField("String", "POSTHOG_HOST", "\"${secret("posthog.host", "POSTHOG_HOST") ?: "https://eu.i.posthog.com"}\"")
     }
 
     signingConfigs {
@@ -243,9 +257,9 @@ android {
         // Core Library Desugaring - Required for KotlinX DateTime on API < 27
         coreLibraryDesugaring(libs.tools.desugar.jdk.libs)
 
-        // Firebase
-        implementation(platform(libs.firebase.bom))
-        implementation(libs.firebase.crashlytics)
+        // Crash reporting and product analytics, both off until the user opts in (TelemetryConsentGate)
+        implementation(libs.sentry.android)
+        implementation(libs.posthog.android)
 
         // Testing
         testImplementation(libs.kotest)
@@ -273,9 +287,6 @@ android {
         androidTestImplementation(libs.androidx.ui.test.junit4)
         debugImplementation(libs.androidx.ui.test.manifest)
         androidTestUtil("androidx.test:orchestrator:1.5.1")
-
-        // Remote config
-        implementation(project(":android:remote-config"))
 
         testImplementation(libs.junit)
 
@@ -308,7 +319,26 @@ kotlin {
     }
 }
 
-apply(plugin = "com.google.gms.google-services")
+// Uploads the R8 mapping so release stack traces read, but only when CI provides the auth token
+sentry {
+    val token = System.getenv("SENTRY_AUTH_TOKEN")
+    includeProguardMapping = !token.isNullOrEmpty()
+    autoUploadProguardMapping = !token.isNullOrEmpty()
+    org = "simplecity-apps"
+    projectName = "s2-android"
+    authToken = token
+    // The SDK is declared above, and nothing uses tracing, so no bytecode instrumentation either
+    autoInstallation.enabled = false
+    tracingInstrumentation.enabled = false
+    telemetry = false
+}
+
+/** A key from local.properties or a Gradle property, else the [envName] environment variable; null when none is set. */
+fun secret(name: String, envName: String): String? = (
+    localProperties.getProperty(name)
+        ?: providers.gradleProperty(name).orNull
+        ?: System.getenv(envName)
+    )?.takeIf { it.isNotBlank() }
 
 /**
  * Retrieves an Environment Variable, or throws [MissingEnvVarException]

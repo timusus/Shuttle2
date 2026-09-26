@@ -62,8 +62,6 @@
     <string name="pref_view_changelog_title">परिवर्तन लॉग देखें</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">क्रैश रिपोर्टिंग</string>
-    <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">S2 Firebase के माध्यम से क्रैश डेटा एकत्र करता है. ऑप्ट-आउट करने के लिए बंद करें</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">लाइसेंस देखें</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->

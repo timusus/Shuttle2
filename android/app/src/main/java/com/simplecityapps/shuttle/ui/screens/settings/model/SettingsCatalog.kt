@@ -234,7 +234,6 @@ object SettingsCatalog {
         )
     )
 
-    /** Remote Config only fetches while analytics is on, so it has no row of its own. */
     val privacy = SettingsScreen(
         destination = SettingsDestination.Privacy,
         groups = listOf(
@@ -248,8 +247,8 @@ object SettingsCatalog {
                     ),
                     SettingItem.Switch(
                         setting = PrivacySettings.Analytics,
-                        title = R.string.pref_firebase_analytics_title,
-                        summary = R.string.pref_firebase_analytics_subtitle
+                        title = R.string.pref_analytics_title,
+                        summary = R.string.pref_analytics_subtitle
                     )
                 )
             )

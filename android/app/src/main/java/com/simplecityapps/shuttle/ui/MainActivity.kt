@@ -6,18 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Box
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.play.core.review.ReviewManagerFactory
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.simplecityapps.playback.mediasession.PlayRequests
-import com.simplecityapps.shuttle.di.AppCoroutineScope
-import com.simplecityapps.shuttle.ui.common.components.Snowfall
 import com.simplecityapps.shuttle.ui.screens.paywall.PaywallHost
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
@@ -29,10 +22,7 @@ import com.simplecityapps.trial.EntitlementRepository
 import com.simplecityapps.trial.ServerAccessGate
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withTimeout
 import timber.log.Timber
 
 /**
@@ -51,14 +41,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var serverAccessGate: ServerAccessGate
 
     @Inject
-    lateinit var remoteConfig: FirebaseRemoteConfig
-
-    @Inject
     lateinit var playRequests: PlayRequests
-
-    @Inject
-    @AppCoroutineScope
-    lateinit var scope: CoroutineScope
 
     @Inject
     lateinit var mediaSources: MediaSources
@@ -71,8 +54,6 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var reviewPrompt: ReviewPrompt
-
-    private var snowForecast by mutableDoubleStateOf(0.0)
 
     private val musicPermissionRequest =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -91,11 +72,7 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             S2AppTheme {
-                Box {
-                    ShellRoute()
-                    // Over the shell, and blind to touches, so they reach it
-                    Snowfall(forecast = snowForecast)
-                }
+                ShellRoute()
                 PaywallHost(serverAccessGate)
             }
         }
@@ -116,13 +93,6 @@ class MainActivity : AppCompatActivity() {
         recordPurchase()
         if (savedInstanceState == null && reviewPrompt.takeIfDue()) {
             launchReviewFlow()
-        }
-
-        scope.launch {
-            withTimeout(5000) {
-                remoteConfig.fetchAndActivate().await()
-            }
-            snowForecast = remoteConfig.getDouble("snow_forecast")
         }
     }
 

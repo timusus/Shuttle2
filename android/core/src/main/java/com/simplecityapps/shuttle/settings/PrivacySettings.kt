@@ -12,16 +12,16 @@ class PrivacySettings @Inject constructor(
 
     companion object {
         /**
-         * Read once at startup, so a change applies after a restart, with the opt-out in Settings > Privacy. A new
-         * install stores it on (owner decision 3, #379; see InstallDefaults); this default, off, is what existing users
-         * who never chose have always had.
+         * Sentry crash reporting, applied at startup and whenever it changes (TelemetryConsentGate), with the opt-out in
+         * Settings > Privacy. A new install stores it on (owner decision 3, #379; see InstallDefaults); this default,
+         * off, is what existing users who never chose have always had.
          */
         val CrashReporting = Setting.boolean("pref_crash_reporting", false)
 
         /**
-         * Firebase Analytics. Off until the user turns it on, via the Home consent card (#421) or here. Remote Config
-         * (trial length, pricing tier, snowfall) is only fetched while this is on, so it changes trial and pricing
-         * behaviour too.
+         * PostHog product analytics. Off until the user turns it on, via the Home consent card (#421) or Settings >
+         * Privacy, and applied at startup and whenever it changes (TelemetryConsentGate). The key predates PostHog: it
+         * keeps the choice users made for Firebase Analytics.
          */
         val Analytics = Setting.boolean("pref_firebase_analytics", false)
     }

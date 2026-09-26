@@ -61,7 +61,7 @@
     <!-- Settings: Title for the option to view the changelog -->
     <string name="pref_view_changelog_title">変更ログを表示</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_title">Firebaseクラッシュレポート</string>
+    <string name="pref_crash_reporting_title">クラッシュレポート</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_subtitle">匿名のクラッシュ統計データは、バグの追跡と解決に役立ちます</string>
     <!-- Settings: Title for the option to view open source licenses -->
@@ -96,8 +96,4 @@
     <string name="theme_accent_entry_green">緑</string>
     <!-- Settings title for the orange theme option -->
     <string name="theme_accent_entry_orange">オレンジ</string>
-    <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_title">Firebase分析</string>
-    <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_subtitle">機能のA/Bテストを有効にし、ユーザーがどのようにアプリを操作するかを解析します（今後の使い勝手の向上に役立ちます）</string>
 </resources>

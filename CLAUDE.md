@@ -83,7 +83,6 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 - **`:android:networking`** — Retrofit + OkHttp + Moshi network layer
 - **`:android:imageloader`** — Coil artwork loading: per-model fetchers, keys and the app ImageLoader
 - **`:android:trial`** — Trial/subscription management via Play Billing
-- **`:android:remote-config`** — Firebase Remote Config wrapper
 
 ### UI Patterns
 

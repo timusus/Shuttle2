@@ -62,8 +62,6 @@
     <string name="pref_view_changelog_title">Przeglądać zmiany rejestru</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">Zgłaszanie awarii</string>
-    <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">Shuttle zbiera dane o awariach za pośrednictwem „Firebase”. Wyłącz, aby zrezygnować</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Wyświetl licencje</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->

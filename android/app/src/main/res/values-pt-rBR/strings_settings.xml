@@ -62,8 +62,6 @@
     <string name="pref_view_changelog_title">Visualizar o Log de Alteração</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">Relatório de falha</string>
-    <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">O S2 coleta dados da falha via Firebase. Desative para cancelar</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Visualizar licenças</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->

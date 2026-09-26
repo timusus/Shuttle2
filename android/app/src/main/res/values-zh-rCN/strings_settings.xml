@@ -96,8 +96,4 @@
     <string name="theme_accent_entry_green">绿色</string>
     <!-- Settings title for the orange theme option -->
     <string name="theme_accent_entry_orange">橙色</string>
-    <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_title">Firebase 分析服务</string>
-    <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_subtitle">启用应用功能的 A/B 测试，用以追踪用户与应用间的交互行为</string>
 </resources>
