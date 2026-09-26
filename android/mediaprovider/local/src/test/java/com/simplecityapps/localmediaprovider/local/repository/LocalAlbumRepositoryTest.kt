@@ -113,6 +113,20 @@ class LocalAlbumRepositoryTest {
 
         override suspend fun clearExcludeList() = throw NotImplementedError()
 
+        override suspend fun keepFavourite(
+            fromSongIds: List<Long>,
+            songId: Long
+        ) = throw NotImplementedError()
+
+        override suspend fun favourite(
+            ids: List<Long>,
+            now: Date
+        ): Int = throw NotImplementedError()
+
+        override suspend fun unfavourite(ids: List<Long>): Int = throw NotImplementedError()
+
+        override fun getFavouriteIds(): Flow<List<Long>> = throw NotImplementedError()
+
         override suspend fun deleteAll(mediaProviderType: MediaProviderType) = throw NotImplementedError()
 
         override suspend fun deleteAll(songData: List<SongData>): Int = throw NotImplementedError()

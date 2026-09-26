@@ -39,8 +39,6 @@ class FakePlaylistRepository(private val playlists: Map<Playlist, List<Song>> = 
         limit: Int
     ): Flow<List<Song>> = error("not called")
 
-    override suspend fun getFavoritesPlaylist(): Playlist = error("not called")
-
     override suspend fun createPlaylist(
         name: String,
         mediaProviderType: MediaProviderType,

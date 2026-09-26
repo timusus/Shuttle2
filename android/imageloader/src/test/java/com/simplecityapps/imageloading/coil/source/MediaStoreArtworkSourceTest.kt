@@ -176,5 +176,10 @@ class MediaStoreArtworkSourceTest {
         ) {}
 
         override suspend fun clearExcludeList() {}
+
+        override suspend fun setFavourite(
+            songs: List<Song>,
+            favourite: Boolean
+        ) {}
     }
 }

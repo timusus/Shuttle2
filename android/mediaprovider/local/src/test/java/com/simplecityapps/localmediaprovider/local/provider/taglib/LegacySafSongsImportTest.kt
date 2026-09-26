@@ -22,6 +22,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import java.util.Date
 import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
@@ -90,7 +91,7 @@ class LegacySafSongsImportTest {
 
             execSQL("INSERT INTO playlists (id, name, sortOrder, mediaProvider, externalId) VALUES ($FAVOURITES, 'Favorites', 'Position', 'Shuttle', NULL)")
             execSQL("INSERT INTO playlists (id, name, sortOrder, mediaProvider, externalId) VALUES ($ROAD_TRIP, 'Road trip', 'Position', 'Shuttle', NULL)")
-            listOf(FAVOURITES to 1L, ROAD_TRIP to 2L, ROAD_TRIP to 4L, ROAD_TRIP to 5L).forEachIndexed { index, (playlistId, songId) ->
+            listOf(FAVOURITES to 5L, ROAD_TRIP to 2L, ROAD_TRIP to 4L, ROAD_TRIP to 5L).forEachIndexed { index, (playlistId, songId) ->
                 execSQL("INSERT INTO playlist_song_join (playlistId, songId, sortOrder) VALUES ($playlistId, $songId, $index)")
             }
             close()
@@ -132,8 +133,11 @@ class LegacySafSongsImportTest {
         }
         songs.getValue(newSong.path).playCount shouldBe 0
 
-        // Song 4's file is gone, so the import removed it with its playlist entry; song 5's entry moved to song 1
-        playlistEntries() shouldBe listOf(FAVOURITES to 1L, ROAD_TRIP to 2L, ROAD_TRIP to 1L)
+        // Song 4's file is gone, so the import removed it with its playlist entry; song 5's entry moved to song 1. The
+        // Favorites playlist became a flag on song 5 (#497), which song 1 keeps
+        playlistEntries() shouldBe listOf(ROAD_TRIP to 2L, ROAD_TRIP to 1L)
+        songs.getValue(primarySong.path).favouritedAt shouldNotBe null
+        songs.getValue(sdCardSong.path).favouritedAt shouldBe null
 
         // The MediaStore provider's own copy is untouched
         database.songDataDao().get().single { song -> song.id == 6L }.playCount shouldBe 4
@@ -155,7 +159,8 @@ class LegacySafSongsImportTest {
         import(FakeTaglibMediaProvider(mediaStore, failRemap = true))
 
         shuttleSongs().map { song -> song.id } shouldBe listOf(1L, 2L, 3L, 4L, 5L)
-        playlistEntries().size shouldBe 4
+        // The Favorites entry is a flag since #497, so only Road trip's three entries remain
+        playlistEntries().size shouldBe 3
     }
 
     @Test

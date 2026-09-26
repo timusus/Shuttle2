@@ -14,7 +14,6 @@ import org.junit.Test
 class SmartRulesPredicateTest {
     private val now = Instant.parse("2026-06-15T12:00:00Z")
     private val context = SmartRulesContext(
-        favouriteSongIds = setOf(7L),
         clock = object : Clock {
             override fun now(): Instant = now
         },
@@ -227,7 +226,7 @@ class SmartRulesPredicateTest {
 
     @Test
     fun `provider, type and favourite rules`() {
-        val plex = song(id = 7, mediaProvider = MediaProviderType.Plex)
+        val plex = song(id = 7, mediaProvider = MediaProviderType.Plex).copy(favouritedAt = now)
         val audiobook = song(id = 8, path = "/music/Book.m4b")
         listOf(
             Case(Rule.Provider(EnumOperator.Is, MediaProviderType.Plex), plex, true),
@@ -263,11 +262,5 @@ class SmartRulesPredicateTest {
     fun `no rules match every song, whether all or any`() {
         SmartRules(match = SmartRules.Match.All).predicate(context)(song()) shouldBe true
         SmartRules(match = SmartRules.Match.Any).predicate(context)(song()) shouldBe true
-    }
-
-    @Test
-    fun `usesFavourites is true only with a favourite rule`() {
-        SmartRules(rules = listOf(Rule.Text(TextField.Title, TextOperator.Is, "x"))).usesFavourites shouldBe false
-        SmartRules(rules = listOf(Rule.Favourite())).usesFavourites shouldBe true
     }
 }

@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 interface SongRepository {
     fun getSongs(query: SongQuery): Flow<List<Song>?>
@@ -70,4 +71,18 @@ interface SongRepository {
     )
 
     suspend fun clearExcludeList()
+
+    /**
+     * Makes [songs] favourites, or with [favourite] false stops them being ones. Stored with the song whatever its provider,
+     * so it's where a provider's own favourites (Jellyfin, Emby, Plex) will be written back and read in from (#497).
+     */
+    suspend fun setFavourite(
+        songs: List<Song>,
+        favourite: Boolean
+    )
+
+    /** The ids of the favourite songs (excluded ones included), again whenever they change. */
+    fun getFavouriteSongIds(): Flow<Set<Long>> = getSongs(SongQuery.Favourites)
+        .filterNotNull()
+        .map { songs -> songs.mapTo(mutableSetOf()) { song -> song.id } }
 }

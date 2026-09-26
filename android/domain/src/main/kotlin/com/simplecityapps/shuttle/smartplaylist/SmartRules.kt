@@ -73,7 +73,7 @@ sealed interface Rule {
         val value: Song.Type,
     ) : Rule
 
-    /** The song is (or, with [isFavourite] false, isn't) in the Favorites playlist. */
+    /** The song is (or, with [isFavourite] false, isn't) a favourite. */
     @Serializable
     @SerialName("favourite")
     data class Favourite(

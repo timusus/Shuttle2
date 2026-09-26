@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -129,6 +130,20 @@ class LocalSongRepository(
         val count = songDataDao.setExcluded(songs.map { it.id }, excluded)
         Timber.v("$count song(s) excluded")
     }
+
+    override suspend fun setFavourite(
+        songs: List<Song>,
+        favourite: Boolean
+    ) {
+        val count = songDataDao.setFavourite(songs.map { it.id }, favourite)
+        Timber.v("$count song(s) ${if (favourite) "favourited" else "unfavourited"}")
+    }
+
+    /** Read on its own rather than from the shared song list, so the heart follows a toggle without a whole-library requery. */
+    override fun getFavouriteSongIds(): Flow<Set<Long>> = songDataDao.getFavouriteIds()
+        .map { ids -> ids.toSet() }
+        .distinctUntilChanged()
+        .flowOn(Dispatchers.IO)
 
     override suspend fun clearExcludeList() {
         Timber.v("Clearing excluded")

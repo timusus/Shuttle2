@@ -122,23 +122,6 @@ abstract class PlaylistDataDao {
 
     suspend fun getPlaylist(playlistId: Long): Playlist = getPlaylistData(playlistId).toPlaylist()
 
-    @Query(
-        """
-            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, playlists.sortOrder as sortOrder, playlists.sortDescending as sortDescending, playlists.mediaProvider, playlists.externalId
-            FROM playlists
-            LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId
-            LEFT JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0
-            WHERE playlists.name = :name
-            GROUP BY playlists.id
-            ORDER BY playlists.id
-            LIMIT 1
-            """
-    )
-    abstract suspend fun getPlaylistDataByName(name: String): PlaylistEntity?
-
-    /** Reads the current DB state directly, rather than [getAll]'s flow, whose emissions can lag a write. */
-    suspend fun getPlaylistByName(name: String): Playlist? = getPlaylistDataByName(name)?.toPlaylist()
-
     @Query("DELETE FROM playlist_song_join WHERE playlistId = :playlistId")
     abstract suspend fun clear(playlistId: Long)
 

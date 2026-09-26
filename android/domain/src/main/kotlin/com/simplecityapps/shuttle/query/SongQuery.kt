@@ -98,6 +98,12 @@ sealed class SongQuery(
         sortOrder = sortOrder
     )
 
+    /** The favourite songs, most recently made one first. */
+    data object Favourites : SongQuery(
+        predicate = { song -> song.isFavourite },
+        sortOrder = SongSortOrder.Favourited
+    )
+
     /**
      * The songs matching a user smart playlist's [rules], in no particular order: `SongQuery` has neither a sort
      * direction nor a limit, so `EvaluateSmartPlaylist` sorts and limits them after.

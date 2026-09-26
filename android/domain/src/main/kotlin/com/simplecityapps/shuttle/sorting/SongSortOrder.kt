@@ -10,5 +10,8 @@ enum class SongSortOrder {
     Track,
     PlayCount,
     LastModified,
-    LastCompleted
+    LastCompleted,
+
+    /** Most recently made a favourite first: the Favourites smart playlist's order. */
+    Favourited
 }

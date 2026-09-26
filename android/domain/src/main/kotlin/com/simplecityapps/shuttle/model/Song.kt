@@ -38,8 +38,13 @@ data class Song(
     val artworkVersion: String? = null,
     // When the song first reached the library: stamped on first import and kept through later updates, unlike
     // [lastModified], which moves with every tag edit. Null for a song that isn't in the library.
-    val dateAdded: Instant? = null
+    val dateAdded: Instant? = null,
+    // When the song was made a favourite (the player's heart, or "Add to Favorites"); null when it isn't one.
+    val favouritedAt: Instant? = null
 ) {
+    val isFavourite: Boolean
+        get() = favouritedAt != null
+
     val type: Type
         get() {
             return when {

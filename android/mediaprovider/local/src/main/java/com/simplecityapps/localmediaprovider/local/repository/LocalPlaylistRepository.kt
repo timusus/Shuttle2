@@ -33,8 +33,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -61,9 +59,6 @@ class LocalPlaylistRepository(
     private val m3uWriter = M3uWriter()
     private val m3uParser = M3uParser()
 
-    /** Serialises [getFavoritesPlaylist]'s lookup-or-create so concurrent first calls can't both create it. */
-    private val favoritesMutex = Mutex()
-
     private val playlistsRelay: StateFlow<List<Playlist>?> by lazy {
         playlistDataDao
             .getAll()
@@ -79,21 +74,6 @@ class LocalPlaylistRepository(
                 .toMutableList()
                 .sortedWith(query.sortOrder.comparator)
         }
-
-    override suspend fun getFavoritesPlaylist(): Playlist {
-        val favoritesName = context.getString(com.simplecityapps.mediaprovider.R.string.playlist_title_favorites)
-        return withContext(Dispatchers.IO) {
-            favoritesMutex.withLock {
-                playlistDataDao.getPlaylistByName(favoritesName)
-                    ?: createPlaylist(
-                        name = favoritesName,
-                        mediaProviderType = MediaProviderType.Shuttle,
-                        songs = null,
-                        externalId = null
-                    )
-            }
-        }
-    }
 
     override suspend fun createPlaylist(
         name: String,

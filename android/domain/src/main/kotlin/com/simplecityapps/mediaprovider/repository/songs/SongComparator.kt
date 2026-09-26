@@ -18,6 +18,7 @@ val SongSortOrder.comparator: Comparator<Song>
             SongSortOrder.PlayCount -> SongComparator.playCountComparator
             SongSortOrder.LastModified -> SongComparator.lastModifiedComparator
             SongSortOrder.LastCompleted -> SongComparator.lastCompletedComparator
+            SongSortOrder.Favourited -> SongComparator.favouritedComparator
         }
     }
 
@@ -78,6 +79,11 @@ object SongComparator {
 
     val lastCompletedComparator: Comparator<Song> by lazy {
         compareByDescending<Song> { song -> song.lastCompleted }
+            .then(defaultComparator)
+    }
+
+    val favouritedComparator: Comparator<Song> by lazy {
+        compareByDescending<Song> { song -> song.favouritedAt }
             .then(defaultComparator)
     }
 }

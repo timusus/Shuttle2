@@ -154,6 +154,50 @@ class LocalSongRepositoryTest {
         repository.loadSongs(SongQuery.All()).single().dateAdded!! shouldBeLessThanOrEqualTo Clock.System.now()
     }
 
+    @Test
+    fun `a favourite keeps the time it was first made one, and unfavouriting clears it`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao())
+        val (first, second) = insertSongs(listOf("First", "Second"))
+
+        repository.setFavourite(listOf(first), true)
+        val favouritedAt = repository.loadSongs(SongQuery.Favourites).single().favouritedAt!!
+        repository.setFavourite(listOf(first, second), true)
+
+        repository.loadSongs(SongQuery.All()).associate { song -> song.id to song.favouritedAt }.run {
+            getValue(first.id) shouldBe favouritedAt
+            (getValue(second.id) != null) shouldBe true
+        }
+
+        repository.setFavourite(listOf(first), false)
+
+        repository.getFavouriteSongIds().first() shouldBe setOf(second.id)
+    }
+
+    @Test
+    fun `more favourites than SQLite binds in one statement are all set`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao())
+        val songs = insertSongs((1..1_500).map { index -> "Song $index" })
+
+        repository.setFavourite(songs, true)
+
+        repository.getFavouriteSongIds().first() shouldBe songs.map(Song::id).toSet()
+    }
+
+    @Test
+    fun `a rescan or retag keeps a song a favourite`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao())
+        val song = insertSongs(listOf("Song")).single()
+        repository.setFavourite(listOf(song), true)
+
+        repository.update(song.copy(name = "Retagged"))
+        repository.insertUpdateAndDelete(inserts = emptyList(), updates = listOf(song.copy(name = "Rescanned")), deletes = emptyList(), mediaProviderType = MediaProviderType.Shuttle)
+
+        repository.loadSongs(SongQuery.All()).single().run {
+            name shouldBe "Rescanned"
+            isFavourite shouldBe true
+        }
+    }
+
     private suspend fun insertSongs(names: List<String>): List<Song> {
         database.songDataDao().insert(names.map(::songData))
         return database.songDataDao().get().map { songData -> songData.toSong() }.sortedBy(Song::id)

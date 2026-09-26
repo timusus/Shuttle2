@@ -11,16 +11,11 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.plus
 
-/** What rules are evaluated against besides the song: the favourites, the time now, and the zone dates fall in. */
+/** What rules are evaluated against besides the song: the time now, and the zone dates fall in. */
 data class SmartRulesContext(
-    val favouriteSongIds: Set<Long> = emptySet(),
     val clock: Clock = Clock.System,
     val timeZone: TimeZone = TimeZone.currentSystemDefault(),
 )
-
-/** Whether any rule needs the favourites, so evaluation only observes them when it does. */
-val SmartRules.usesFavourites: Boolean
-    get() = rules.any { rule -> rule is Rule.Favourite }
 
 /** Whether a song matches all (or any) of the rules; every song does when there are none. */
 fun SmartRules.predicate(context: SmartRulesContext): (Song) -> Boolean {
@@ -88,7 +83,7 @@ private fun Rule.predicate(context: SmartRulesContext): (Song) -> Boolean = when
     is Rule.Date -> predicate(context)
     is Rule.Provider -> { song -> (song.mediaProvider == value) == (operator == EnumOperator.Is) }
     is Rule.Type -> { song -> (song.type == value) == (operator == EnumOperator.Is) }
-    is Rule.Favourite -> { song -> (song.id in context.favouriteSongIds) == isFavourite }
+    is Rule.Favourite -> { song -> song.isFavourite == isFavourite }
 }
 
 private fun Rule.Text.predicate(): (Song) -> Boolean {

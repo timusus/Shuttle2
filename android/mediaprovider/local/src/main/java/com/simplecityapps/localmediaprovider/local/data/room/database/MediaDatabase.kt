@@ -23,7 +23,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
         PinnedCollectionData::class,
         SmartPlaylistData::class
     ],
-    version = 45,
+    version = 46,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

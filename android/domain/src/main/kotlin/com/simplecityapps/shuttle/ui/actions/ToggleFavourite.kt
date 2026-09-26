@@ -1,19 +1,14 @@
 package com.simplecityapps.shuttle.ui.actions
 
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
 
-/** Adds [song] to the Favorites playlist, or removes it when [isFavourite] is already true. */
+/** Makes [song] a favourite, or stops it being one when [isFavourite] is already true: the player's heart. */
 class ToggleFavourite @Inject constructor(
-    private val playlistRepository: PlaylistRepository,
+    private val songRepository: SongRepository,
 ) {
     suspend operator fun invoke(song: Song, isFavourite: Boolean) {
-        val favourites = playlistRepository.getFavoritesPlaylist()
-        if (isFavourite) {
-            playlistRepository.removeSongsFromPlaylist(favourites, listOf(song))
-        } else {
-            playlistRepository.addToPlaylist(favourites, listOf(song))
-        }
+        songRepository.setFavourite(listOf(song), favourite = !isFavourite)
     }
 }

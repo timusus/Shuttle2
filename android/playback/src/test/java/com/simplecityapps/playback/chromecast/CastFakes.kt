@@ -71,6 +71,11 @@ class FakeSongRepository(private var songs: List<Song>) : SongRepository {
     ) = error("not called")
 
     override suspend fun clearExcludeList() = error("not called")
+
+    override suspend fun setFavourite(
+        songs: List<Song>,
+        favourite: Boolean
+    ) = error("not called")
 }
 
 /** Artwork that is [bytes] for every song. */

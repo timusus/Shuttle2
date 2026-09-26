@@ -120,6 +120,7 @@ abstract class SongDataDao {
             else -> {
                 if (remap.duplicateIds.isNotEmpty()) {
                     movePlaylistEntries(remap.duplicateIds, remap.songId)
+                    keepFavourite(remap.duplicateIds, remap.songId)
                 }
                 true
             }
@@ -140,6 +141,36 @@ abstract class SongDataDao {
         playbackPosition: Int,
         now: Date = Date()
     )
+
+    /** Makes [songId] a favourite if any of [fromSongIds] (duplicates of it about to go) is one, from the earliest of them. */
+    @Query("UPDATE songs SET favouritedAt = (SELECT MIN(favouritedAt) FROM songs WHERE id IN (:fromSongIds)) WHERE id = :songId AND favouritedAt IS NULL")
+    abstract suspend fun keepFavourite(
+        fromSongIds: List<Long>,
+        songId: Long
+    )
+
+    /** Makes the songs with [ids] favourites as of [now]; one that already is keeps its time, and so its place in the list. */
+    @Query("UPDATE songs SET favouritedAt = :now WHERE id IN (:ids) AND favouritedAt IS NULL")
+    abstract suspend fun favourite(
+        ids: List<Long>,
+        now: Date = Date()
+    ): Int
+
+    @Query("UPDATE songs SET favouritedAt = NULL WHERE id IN (:ids)")
+    abstract suspend fun unfavourite(ids: List<Long>): Int
+
+    /** [favourite] or [unfavourite] [ids], in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a statement. */
+    @Transaction
+    open suspend fun setFavourite(
+        ids: List<Long>,
+        favourite: Boolean
+    ): Int {
+        val now = Date()
+        return ids.distinct().chunked(MAX_BOUND_VARIABLES - 1).sumOf { chunk -> if (favourite) favourite(chunk, now) else unfavourite(chunk) }
+    }
+
+    @Query("SELECT id FROM songs WHERE favouritedAt IS NOT NULL")
+    abstract fun getFavouriteIds(): Flow<List<Long>>
 
     @Query("UPDATE songs SET blacklisted = :blacklisted WHERE id IN (:ids)")
     abstract suspend fun setExcluded(
@@ -193,5 +224,6 @@ fun SongData.toSong(): Song = Song(
     sampleRate = sampleRate,
     channelCount = channelCount,
     artworkVersion = artworkVersion,
-    dateAdded = dateAdded?.let { Instant.fromEpochMilliseconds(it.time) }
+    dateAdded = dateAdded?.let { Instant.fromEpochMilliseconds(it.time) },
+    favouritedAt = favouritedAt?.let { Instant.fromEpochMilliseconds(it.time) }
 )

@@ -46,7 +46,10 @@ data class SongData(
     @ColumnInfo(name = "artworkVersion") var artworkVersion: String? = null,
     // Written only on insert ([SongDataUpdate] leaves it out), so it survives rescans and tag edits. Nullable only so
     // the migration to version 45 could add it without a default: every row has one, backfilled from lastModified.
-    @ColumnInfo(name = "dateAdded") var dateAdded: Date? = null
+    @ColumnInfo(name = "dateAdded") var dateAdded: Date? = null,
+    // When the song was made a favourite; null when it isn't one. Left out of [SongDataUpdate], so a rescan or a remote
+    // sync keeps it, and written only by [com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao.setFavourite].
+    @ColumnInfo(name = "favouritedAt") var favouritedAt: Date? = null
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -82,7 +85,8 @@ fun Song.toSongData(mediaProviderType: MediaProviderType): SongData = SongData(
     sampleRate = sampleRate,
     channelCount = channelCount,
     artworkVersion = artworkVersion,
-    dateAdded = dateAddedOnInsert()
+    dateAdded = dateAddedOnInsert(),
+    favouritedAt = favouritedAt?.let { Date(it.toEpochMilliseconds()) }
 ).apply {
     id = this@toSongData.id
 }

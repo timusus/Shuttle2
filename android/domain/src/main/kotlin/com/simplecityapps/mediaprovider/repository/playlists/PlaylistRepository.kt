@@ -12,8 +12,6 @@ import kotlinx.coroutines.flow.Flow
 interface PlaylistRepository {
     fun getPlaylists(query: PlaylistQuery): Flow<List<Playlist>>
 
-    suspend fun getFavoritesPlaylist(): Playlist
-
     suspend fun createPlaylist(
         name: String,
         mediaProviderType: MediaProviderType,
