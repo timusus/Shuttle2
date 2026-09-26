@@ -309,11 +309,11 @@ tests on the navigator, with no Compose.
 The start tab (Home or Library by `showHomeOnLaunch`) comes from `ShellViewModel`, read once per
 activity, so a change in Settings applies from the next launch.
 
-The settings drawer (`BottomDrawerSettingsFragment`, a `<dialog>` destination today) becomes a
-shell-owned `ModalBottomSheet` (Shuffle all, Sleep timer, Equalizer, Settings); on rail widths the
-same entries are the rail's secondary items. Screen dialogs (tag editor, song info, create playlist,
-delete confirmations) are Compose dialogs owned by the screen that raises them; `DialogSceneStrategy`
-is only for a dialog that must survive as its own back stack entry, and none does yet.
+The settings drawer (`BottomDrawerSettingsFragment`) is gone: Settings is a gear action in the Home
+and Library top bars at every width (#485), not a nav item or rail entry. Screen dialogs (tag
+editor, song info, create playlist, delete confirmations) are Compose dialogs owned by the screen
+that raises them; `DialogSceneStrategy` is only for a dialog that must survive as its own back
+stack entry, and none does yet.
 
 **The player is not a route.** `PlayerLevel` is shell state: it overlays every route and must not
 pop with the back stack. Anything that wants to open the player sends an intent extra the shell maps

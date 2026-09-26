@@ -105,14 +105,16 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `shuffle all and search are wired`() {
+    fun `shuffle all, search and settings are wired`() {
         robot.setContent(HomeScenarios.content)
 
         robot.tapText("Shuffle all")
         robot.tapDescription("Search")
+        robot.tapDescription("Settings")
 
         robot.shuffles shouldBe 1
         robot.searches shouldBe 1
+        robot.settingsOpened shouldBe 1
     }
 
     @Test

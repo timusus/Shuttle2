@@ -25,6 +25,8 @@ import io.kotest.matchers.shouldBe
 class HomeRobot(private val rule: ComposeContentTestRule) {
     var searches = 0
         private set
+    var settingsOpened = 0
+        private set
     var shuffles = 0
         private set
     var whatsNewOpened = 0
@@ -54,6 +56,7 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
 
     private fun callbacks() = HomeCallbacks(
         onSearch = { searches++ },
+        onOpenSettings = { settingsOpened++ },
         onShuffleAll = { shuffles++ },
         onOpenWhatsNew = { whatsNewOpened++ },
         onDismissWhatsNew = { whatsNewDismissed++ },

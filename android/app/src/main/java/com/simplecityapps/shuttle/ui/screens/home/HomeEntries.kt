@@ -26,6 +26,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.HomeRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import com.simplecityapps.shuttle.ui.shell.ShellTab
 
 fun EntryProviderScope<NavKey>.homeEntries(navigator: AppNavigator) {
@@ -63,6 +64,7 @@ private fun HomeDestination(
             uiState = uiState,
             callbacks = HomeCallbacks(
                 onSearch = onSearch,
+                onOpenSettings = { onOpen(SettingsRoute) },
                 onShuffleAll = { viewModel.shuffleAll()?.let(actions::dispatch) },
                 onOpenWhatsNew = {
                     viewModel.onWhatsNewHandled()

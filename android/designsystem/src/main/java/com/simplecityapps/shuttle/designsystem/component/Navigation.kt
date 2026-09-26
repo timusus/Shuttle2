@@ -1,7 +1,5 @@
 package com.simplecityapps.shuttle.designsystem.component
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuOpen
@@ -66,10 +64,9 @@ fun S2NavigationBar(
 }
 
 /**
- * The navigation for Medium width and up: a `WideNavigationRail` of [items], then the
- * [secondaryItems] (Settings, Equalizer) after a gap. The header button toggles [state] between
- * the collapsed rail (icons over labels) and the expanded one (icons beside labels). Indices in
- * [secondaryItems] continue after [items], so [selectedIndex] and [onSelect] cover both lists.
+ * The navigation for Medium width and up: a `WideNavigationRail` of [items]. The header button
+ * toggles [state] between the collapsed rail (icons over labels) and the expanded one (icons beside
+ * labels).
  */
 @Composable
 fun S2NavigationRail(
@@ -77,7 +74,6 @@ fun S2NavigationRail(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    secondaryItems: List<S2NavItem> = emptyList(),
     state: WideNavigationRailState = rememberWideNavigationRailState(),
 ) {
     val scope = rememberCoroutineScope()
@@ -94,8 +90,7 @@ fun S2NavigationRail(
             )
         },
     ) {
-        (items + secondaryItems).forEachIndexed { index, item ->
-            if (index == items.size) Spacer(Modifier.height(24.dp))
+        items.forEachIndexed { index, item ->
             val selected = index == selectedIndex
             WideNavigationRailItem(
                 selected = selected,

@@ -77,6 +77,15 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun `the settings action opens settings`() {
+        robot.setContent(libraryState())
+
+        robot.openSettings()
+
+        robot.settingsOpened shouldBe true
+    }
+
+    @Test
     fun `the overflow lists the tab's options above Edit tabs`() {
         var sorted = false
         robot.setContent(libraryState(), chromeWithMenu(menu = listOf(listOf(S2Action("Song Name", { sorted = true }, selected = true)))))

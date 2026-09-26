@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.shell
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,20 +20,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LibraryMusic
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
-import androidx.compose.material.icons.rounded.MoreHoriz
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.WideNavigationRailValue
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
@@ -48,10 +39,8 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -144,7 +133,6 @@ fun AppShell(
         }
     }
     val onSelectTab: (ShellTab) -> Unit = { tab -> navigate { navigator.selectTab(tab) } }
-    val onOpenSettings: () -> Unit = { navigate { navigator.open(SettingsRoute) } }
     // Screens the player's song actions open, such as Go to album.
     LaunchedEffect(navigationRequests) { navigationRequests.collect { target -> navigate { navigator.openTarget(target) } } }
     // Screens post to the shell's one snackbar host, which sits above the nav bar and mini player.
@@ -159,9 +147,9 @@ fun AppShell(
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Box(Modifier.fillMaxSize()) {
             when (layout.playerMode) {
-                PlayerMode.CompactSheet -> CompactShell(player, playerContent, layout, navigator.selectedTab, onSelectTab, onOpenSettings, destinations)
-                PlayerMode.Sheet -> RailSheetShell(player, playerContent, layout, navigator.selectedTab, onSelectTab, onOpenSettings, destinations)
-                PlayerMode.Pane -> PaneShell(player, playerContent, layout, navigator.selectedTab, onSelectTab, onOpenSettings, destinations)
+                PlayerMode.CompactSheet -> CompactShell(player, playerContent, layout, navigator.selectedTab, onSelectTab, destinations)
+                PlayerMode.Sheet -> RailSheetShell(player, playerContent, layout, navigator.selectedTab, onSelectTab, destinations)
+                PlayerMode.Pane -> PaneShell(player, playerContent, layout, navigator.selectedTab, onSelectTab, destinations)
             }
             S2SnackbarHost(
                 snackbarHostState,
@@ -235,10 +223,8 @@ private fun CompactShell(
     layout: ShellLayout,
     selectedTab: ShellTab,
     onSelectTab: (ShellTab) -> Unit,
-    onOpenSettings: () -> Unit,
     destinations: @Composable () -> Unit,
 ) {
-    var showMore by rememberSaveable { mutableStateOf(false) }
     val density = LocalDensity.current
     val statusBarTop = WindowInsets.statusBars.getTop(density)
     val navigationBarBottom = WindowInsets.navigationBars.getBottom(density)
@@ -255,7 +241,6 @@ private fun CompactShell(
                 ShellNavigationBar(
                     selectedTab = selectedTab,
                     onSelectTab = onSelectTab,
-                    onMore = { showMore = true },
                     modifier = Modifier.graphicsLayer { translationY = player.geometry.navBarTranslation(player.offset) },
                 )
             },
@@ -285,13 +270,6 @@ private fun CompactShell(
             navBarPlaceables.forEach { it.place(0, height - navBarHeight) }
         }
     }
-
-    if (showMore) {
-        ShellMoreSheet(onDismiss = { showMore = false }, onOpenSettings = {
-            showMore = false
-            onOpenSettings()
-        })
-    }
 }
 
 /**
@@ -306,7 +284,6 @@ private fun RailSheetShell(
     layout: ShellLayout,
     selectedTab: ShellTab,
     onSelectTab: (ShellTab) -> Unit,
-    onOpenSettings: () -> Unit,
     destinations: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
@@ -320,7 +297,7 @@ private fun RailSheetShell(
 
     Layout(
         contents = listOf(
-            { ShellRail(selectedTab, expanded = false, onSelectTab = onSelectTab, onOpenSettings = onOpenSettings) },
+            { ShellRail(selectedTab, expanded = false, onSelectTab = onSelectTab) },
             { Box(Modifier.fillMaxSize().padding(bottom = bottomPadding)) { destinations() } },
             { PlayerScrim(player) },
             {
@@ -396,7 +373,6 @@ private fun PaneShell(
     layout: ShellLayout,
     selectedTab: ShellTab,
     onSelectTab: (ShellTab) -> Unit,
-    onOpenSettings: () -> Unit,
     destinations: @Composable () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -404,7 +380,7 @@ private fun PaneShell(
     val docked = player.level == PlayerLevel.Mini
     val spec = MaterialTheme.motionScheme.slowSpatialSpec<IntSize>()
     Row(Modifier.fillMaxSize()) {
-        ShellRail(selectedTab, expanded = layout.railExpanded, onSelectTab = onSelectTab, onOpenSettings = onOpenSettings)
+        ShellRail(selectedTab, expanded = layout.railExpanded, onSelectTab = onSelectTab)
         Column(Modifier.weight(1f)) {
             Box(
                 Modifier
@@ -450,23 +426,16 @@ private val ShellTab.navItem: S2NavItem
 
 private val TabItems = ShellTab.entries.map { it.navItem }
 
-/** The tabs, then More, which opens the settings drawer. */
-private val NavigationBarItems = TabItems + S2NavItem("More", Icons.Rounded.MoreHoriz)
-
-/** The settings drawer's entries are the rail's secondary items (app-shell.md, section 4). */
-private val RailSecondaryItems = listOf(S2NavItem("Settings", Icons.Outlined.Settings, Icons.Rounded.Settings))
-
 @Composable
 private fun ShellNavigationBar(
     selectedTab: ShellTab,
     onSelectTab: (ShellTab) -> Unit,
-    onMore: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     S2NavigationBar(
-        items = NavigationBarItems,
+        items = TabItems,
         selectedIndex = selectedTab.ordinal,
-        onSelect = { index -> ShellTab.entries.getOrNull(index)?.let(onSelectTab) ?: onMore() },
+        onSelect = { index -> onSelectTab(ShellTab.entries[index]) },
         modifier = modifier,
     )
 }
@@ -476,31 +445,13 @@ private fun ShellRail(
     selectedTab: ShellTab,
     expanded: Boolean,
     onSelectTab: (ShellTab) -> Unit,
-    onOpenSettings: () -> Unit,
 ) {
     val state = rememberWideNavigationRailState(if (expanded) WideNavigationRailValue.Expanded else WideNavigationRailValue.Collapsed)
     LaunchedEffect(state, expanded) { if (expanded) state.expand() else state.collapse() }
     S2NavigationRail(
         items = TabItems,
         selectedIndex = selectedTab.ordinal,
-        onSelect = { index -> ShellTab.entries.getOrNull(index)?.let(onSelectTab) ?: onOpenSettings() },
-        secondaryItems = RailSecondaryItems,
+        onSelect = { index -> onSelectTab(ShellTab.entries[index]) },
         state = state,
     )
-}
-
-/** The compact settings drawer: a shell-owned bottom sheet. Only Settings is wired in the spike. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ShellMoreSheet(
-    onDismiss: () -> Unit,
-    onOpenSettings: () -> Unit,
-) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        ListItem(
-            headlineContent = { Text("Settings") },
-            leadingContent = { Icon(Icons.Rounded.Settings, contentDescription = null) },
-            modifier = Modifier.clickable(onClick = onOpenSettings),
-        )
-    }
 }

@@ -11,14 +11,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.QueueMusic
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LibraryMusic
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.rounded.Equalizer
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -168,11 +165,6 @@ internal fun navItems(playlistBadge: String? = null, searchBadge: String? = null
     S2NavItem("Search", Icons.Rounded.Search, badge = searchBadge),
 )
 
-private val secondaryNavItems = listOf(
-    S2NavItem("Equalizer", Icons.Rounded.Equalizer),
-    S2NavItem("Settings", Icons.Outlined.Settings, Icons.Rounded.Settings),
-)
-
 @Composable
 fun NavBarBoard(width: BoardWidth) {
     Board(
@@ -191,7 +183,6 @@ fun NavBarBoard(width: BoardWidth) {
 private fun Rail(expanded: Boolean, selectedIndex: Int, playlistBadge: String? = null) {
     S2NavigationRail(
         items = navItems(playlistBadge = playlistBadge),
-        secondaryItems = secondaryNavItems,
         selectedIndex = selectedIndex,
         onSelect = {},
         state = rememberWideNavigationRailState(if (expanded) WideNavigationRailValue.Expanded else WideNavigationRailValue.Collapsed),
@@ -205,11 +196,11 @@ fun NavRailBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("Collapsed: Library selected; badged; Settings selected") {
+            BoardSection("Collapsed: Library selected; badged; Search selected") {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Rail(expanded = false, selectedIndex = 1)
                     Rail(expanded = false, selectedIndex = 2, playlistBadge = "3")
-                    Rail(expanded = false, selectedIndex = 5)
+                    Rail(expanded = false, selectedIndex = 3)
                 }
             },
             BoardSection("Expanded: Home selected, badged") { Rail(expanded = true, selectedIndex = 0, playlistBadge = "") },

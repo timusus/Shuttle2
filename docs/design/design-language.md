@@ -183,7 +183,7 @@ Every component lives in `:android:designsystem` and gets a board (§4). IDs are
 | `top-bar` | `LargeFlexibleTopAppBar`, `TopAppBar` (detail), `MediumFlexibleTopAppBar` | title, title + subtitle, actions, back | expanded, collapsed, with overflow menu. No collapsing hero |
 | `top-bar-contextual` | `TopAppBar` swapped in by `AnimatedContent` | count title, close, actions | 1 selected, many, all |
 | `nav-bar` | `ShortNavigationBar` | 3 and 4 items | selected per item, badge, pressed |
-| `nav-rail` | `WideNavigationRail` | collapsed, expanded; secondary items (Settings, EQ) | selected, expanding |
+| `nav-rail` | `WideNavigationRail` | collapsed, expanded | selected, expanding |
 | `search` | `SearchBar` with `SearchBarState`, `ExpandedFullScreenSearchBar` (compact), `ExpandedDockedSearchBar` (expanded+) | — | collapsed, focused empty, typing, results, no results |
 
 ### Content

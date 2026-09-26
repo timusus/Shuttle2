@@ -42,9 +42,10 @@ class AppShellTest {
     }
 
     @Test
-    fun `the compact nav bar shows every tab on screen`() {
+    fun `the compact nav bar shows every tab on screen, and nothing else`() {
         robot.setContent()
-        listOf("Library", "Search", "More").forEach(robot::assertTextDisplayed)
+        listOf("Library", "Search").forEach(robot::assertTextDisplayed)
+        robot.assertReachable("More", reachable = false)
     }
 
     @Test

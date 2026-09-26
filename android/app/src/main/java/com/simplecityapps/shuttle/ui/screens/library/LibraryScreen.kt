@@ -21,6 +21,7 @@ import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -86,6 +87,7 @@ import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import kotlinx.coroutines.launch
 
 /** What the container's chrome shows for the current tab: its count, selection and overflow options. */
@@ -110,6 +112,7 @@ fun LibraryScreen(
     onTabSelected: (LibraryTab) -> Unit,
     onTabsChanged: (order: List<LibraryTab>, enabled: Set<LibraryTab>) -> Unit,
     onSelectionAction: (MediaActionType) -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     /** Shown in place of the tabs while the library has no songs (#379). */
     emptyLibrary: (@Composable (Modifier) -> Unit)? = null,
@@ -156,6 +159,7 @@ fun LibraryScreen(
                         subtitle = chrome.subtitle?.let { { Text(it) } },
                         actions = {
                             var menuOpen by remember { mutableStateOf(false) }
+                            S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
                             S2IconButton(
                                 icon = Icons.Rounded.MoreVert,
                                 contentDescription = stringResource(R.string.library_more_options),
@@ -326,6 +330,7 @@ fun LibraryDestination(
                 chrome.selection?.let { actions.perform(type, it) }
                 chrome.onClearSelection()
             },
+            onOpenSettings = { onOpen(SettingsRoute) },
             emptyLibrary = (content as? LibraryAvailability.Empty)?.let { empty ->
                 @Composable { modifier: Modifier ->
                     LibraryEmptyScreen(

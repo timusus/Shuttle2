@@ -86,6 +86,8 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         private set
     var shuffleClicked = false
         private set
+    var settingsOpened = false
+        private set
     var newPlaylistClicked = false
         private set
 
@@ -117,6 +119,7 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
                     onTabSelected = { lastTabSelected = it },
                     onTabsChanged = { order, enabled -> lastTabsChanged = order to enabled },
                     onSelectionAction = { lastSelectionAction = it },
+                    onOpenSettings = { settingsOpened = true },
                 ) { tab -> Page(tab, pages) }
             }
         }
@@ -217,6 +220,11 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
             repeat(steps) { moveBy(Offset(0f, (bottom - thumb.y) / steps)) }
             up()
         }
+        rule.waitForIdle()
+    }
+
+    fun openSettings() {
+        rule.onNodeWithContentDescription("Settings").performClick()
         rule.waitForIdle()
     }
 

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -75,6 +76,7 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 
 class HomeCallbacks(
     val onSearch: () -> Unit = {},
+    val onOpenSettings: () -> Unit = {},
     val onShuffleAll: () -> Unit = {},
     val onOpenWhatsNew: () -> Unit = {},
     val onDismissWhatsNew: () -> Unit = {},
@@ -101,7 +103,10 @@ fun HomeScreen(
         topBar = {
             S2LargeTopBar(
                 title = stringResource(R.string.home_title),
-                actions = { S2IconButton(icon = Icons.Rounded.Search, contentDescription = stringResource(R.string.home_search), onClick = callbacks.onSearch) },
+                actions = {
+                    S2IconButton(icon = Icons.Rounded.Search, contentDescription = stringResource(R.string.home_search), onClick = callbacks.onSearch)
+                    S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = callbacks.onOpenSettings)
+                },
                 scrollBehavior = scrollBehavior,
             )
         },
