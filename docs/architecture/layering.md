@@ -194,6 +194,10 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
    screen use cases) that depends on domain and designsystem only; `:android:app` keeps the
    Application, `MainActivity`, services and DI. `VerifyModuleLayers` then enforces presentation →
    data as a build failure, and the Konsist import rules become a second line of defence.
+   - ~~**8.0 Guard**: `ui-module-imports` (`UiModuleRules.kt`) bans new imports of data, provider or
+     app-only declarations from the code that's moving to `:android:ui`, ahead of the module split
+     itself.~~ (done: baseline of 111 existing violations — 93 data, 15 provider, 3 app-only; every
+     later prep slice shrinks it.)
 
 ## Open decisions
 
