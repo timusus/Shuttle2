@@ -68,6 +68,10 @@
       "commits": []
     },
     {
+      "text": "The accent colours are brighter, with the default blue a more vivid azure",
+      "commits": []
+    },
+    {
       "text": "The tag editor groups its fields into Song, Album, Numbering and Lyrics sections, and Song Info now shows the artwork with the format, bit rate and sample rate at a glance, with the details grouped below",
       "commits": []
     },

@@ -51,12 +51,16 @@ fun seedColorScheme(
     specVersion = ColorSpec.SpecVersion.SPEC_2025,
 )
 
-/** The root scheme for a user-picked [accent]. */
+/**
+ * The root scheme for a user-picked [accent]. Fidelity keeps the seed's own chroma in the accent roles
+ * (tonal spot holds primary to chroma 32 whatever the seed, which read muted, #496) and puts the seed
+ * itself in `primaryContainer`, while the neutral surfaces stay near grey.
+ */
 fun accentColorScheme(
     accent: S2Accent,
     isDark: Boolean,
     contrast: S2Contrast = S2Contrast.Default,
-): ColorScheme = seedColorScheme(accent.seed, isDark, PaletteStyle.TonalSpot, contrast)
+): ColorScheme = seedColorScheme(accent.seed, isDark, PaletteStyle.Fidelity, contrast)
 
 /**
  * The scheme for an artwork [seed], or null when the seed is too grey to use and the caller

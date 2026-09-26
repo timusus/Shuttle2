@@ -49,7 +49,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.simplecityapps.shuttle.ui.theme.AppTheme
+import com.simplecityapps.shuttle.ui.theme.AppThemeState
+import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -303,7 +304,7 @@ fun noPopupText(index: Int): String? = null
 @Preview(showBackground = true)
 @Composable
 private fun FastScrollPreview() {
-    AppTheme {
+    S2AppTheme(AppThemeState()) {
         val state = rememberLazyListState(initialFirstVisibleItemIndex = 2)
         Box(modifier = Modifier.padding(vertical = 16.dp)) {
             LazyColumn(

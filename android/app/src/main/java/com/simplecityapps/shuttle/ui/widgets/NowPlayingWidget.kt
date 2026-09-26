@@ -58,8 +58,9 @@ import com.simplecityapps.core.R as CoreR
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.R as PlaybackR
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.designsystem.theme.S2Accent
+import com.simplecityapps.shuttle.designsystem.theme.accentColorScheme
 import com.simplecityapps.shuttle.ui.MainActivity
-import com.simplecityapps.shuttle.ui.theme.ShuttleTheme
 
 /**
  * The now playing widget, shared by the small and large widget receivers. It only draws
@@ -87,15 +88,11 @@ class NowPlayingWidget : GlanceAppWidget() {
     }
 }
 
-/**
- * The widget palette where dynamic colour isn't available, taken from the app's own theme. The accent is
- * adjusted in both modes: the app's primary blues are tuned for filled surfaces, and as icon tints on the
- * widget background they fall short of 3:1 contrast.
- */
+/** The widget palette where dynamic colour isn't available: the app's Shuttle blue scheme. */
 private val fallbackColors =
     ColorProviders(
-        light = ShuttleTheme.light.copy(primary = Color(0xFF0061A4)),
-        dark = ShuttleTheme.dark.copy(primary = Color(0xFF9ECAFF))
+        light = accentColorScheme(S2Accent.Default, isDark = false),
+        dark = accentColorScheme(S2Accent.Default, isDark = true)
     )
 
 /** Visible to tests, which render it directly with a fixed [state] and [layout] instead of the live widget state. */

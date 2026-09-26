@@ -17,8 +17,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.settings.Accent
-import com.simplecityapps.shuttle.ui.theme.AppTheme
+import com.simplecityapps.shuttle.ui.theme.AppThemeState
+import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 
 @Composable
 fun ShuffleListItem(
@@ -51,9 +51,7 @@ fun ShuffleListItem(
 @Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES)
 @Composable
 private fun ShuffleListItemPreview() {
-    AppTheme(
-        accent = Accent.Default
-    ) {
+    S2AppTheme(AppThemeState()) {
         ShuffleListItem()
     }
 }

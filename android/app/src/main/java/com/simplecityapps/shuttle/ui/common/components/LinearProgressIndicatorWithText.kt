@@ -16,7 +16,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import com.simplecityapps.shuttle.ui.theme.AppTheme
+import com.simplecityapps.shuttle.ui.theme.AppThemeState
+import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 
 @Composable
 fun HorizontalLoadingView(
@@ -52,7 +53,7 @@ fun HorizontalLoadingView(
 @PreviewLightDark
 @Composable
 private fun HorizontalLoadingViewPreview() {
-    AppTheme {
+    S2AppTheme(AppThemeState()) {
         Box(
             modifier = Modifier.background(MaterialTheme.colorScheme.background)
         ) {
@@ -67,7 +68,7 @@ private fun HorizontalLoadingViewPreview() {
 @PreviewLightDark
 @Composable
 private fun HorizontalLoadingViewPreview2() {
-    AppTheme {
+    S2AppTheme(AppThemeState()) {
         Box(
             modifier = Modifier.background(MaterialTheme.colorScheme.background)
         ) {

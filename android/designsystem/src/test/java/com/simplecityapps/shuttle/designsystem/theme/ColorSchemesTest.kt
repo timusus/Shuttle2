@@ -50,6 +50,27 @@ class ColorSchemesTest {
     }
 
     @Test
+    fun `the default accent is a lively blue, not a muted steel blue`() {
+        // Tonal spot, the old accent style, holds primary to chroma 32 whatever the seed (#496)
+        accentColorScheme(S2Accent.Default, isDark = false).primary.toHct().chroma shouldBeGreaterThan 45.0
+        accentColorScheme(S2Accent.Default, isDark = true).primary.toHct().chroma shouldBeGreaterThan 32.0
+        accentColorScheme(S2Accent.Default, isDark = false).primaryContainer.toHct().chroma shouldBeGreaterThan 55.0
+    }
+
+    @Test
+    fun `every accent keeps accessible text contrast on its accent roles`() {
+        for (accent in S2Accent.entries) {
+            for (isDark in listOf(false, true)) {
+                val scheme = accentColorScheme(accent, isDark)
+                scheme.onPrimary.contrastRatio(scheme.primary) shouldBeGreaterThan 4.5
+                scheme.onPrimaryContainer.contrastRatio(scheme.primaryContainer) shouldBeGreaterThan 4.5
+                scheme.onSecondaryContainer.contrastRatio(scheme.secondaryContainer) shouldBeGreaterThan 4.5
+                scheme.primary.contrastRatio(scheme.surface) shouldBeGreaterThan 4.5
+            }
+        }
+    }
+
+    @Test
     fun `a grey seed falls back`() {
         isUsableSeed(grey) shouldBe false
         artworkColorScheme(grey, isDark = false).shouldBeNull()
