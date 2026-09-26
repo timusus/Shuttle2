@@ -8,32 +8,26 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.repeatOnLifecycle
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.actions.format
 import com.simplecityapps.shuttle.ui.actions.toIntent
+import com.simplecityapps.shuttle.ui.common.ConsumeEvents
+import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 
 /**
  * The shell wired to its ViewModels: the start tab from [shellViewModel], and the player's state, progress and
@@ -51,7 +45,7 @@ fun ShellRoute(
     val shellUi by shellViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val targets = remember { Channel<NavigationTarget>(Channel.UNLIMITED) }
-    PlayerEventsEffect(viewModel.events, snackbarHostState, actions = viewModel, onNavigate = { targets.trySend(it) })
+    PlayerEventsEffect(playerState.value.events, viewModel::onEventHandled, snackbarHostState, actions = viewModel, onNavigate = { targets.trySend(it) })
     AppShell(
         playerUi = playerUi,
         progress = { playerState.value.progress },
@@ -64,13 +58,14 @@ fun ShellRoute(
 }
 
 /**
- * Carries out the player's events while the screen is started: a cleared queue or removed row offers
- * Undo, and a song action's result shows its message, opens its album or artist screen through
- * [onNavigate] or opens the legacy tag editor and song info dialogs.
+ * Carries out the player's events, one at a time, as the state holds them pending: a cleared queue or
+ * removed row offers Undo, and a song action's result shows its message, opens its album or artist
+ * screen through [onNavigate] or opens the legacy tag editor and song info dialogs.
  */
 @Composable
 internal fun PlayerEventsEffect(
-    events: Flow<PlayerUiEvent>,
+    events: List<PendingEvent<PlayerUiEvent>>,
+    onEventHandled: (Long) -> Unit,
     snackbarHostState: SnackbarHostState,
     actions: PlayerActions,
     onNavigate: (NavigationTarget) -> Unit,
@@ -80,38 +75,29 @@ internal fun PlayerEventsEffect(
     val undo = stringResource(R.string.player_undo)
     val resources = LocalContext.current.resources
     val activity = LocalActivity.current
-    val currentActions by rememberUpdatedState(actions)
-    val navigate by rememberUpdatedState(onNavigate)
-    val lifecycleOwner = LocalLifecycleOwner.current
-    LaunchedEffect(events, snackbarHostState, lifecycleOwner) {
-        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            events.collect { event ->
-                when (event) {
-                    is PlayerUiEvent.QueueCleared -> launch {
-                        val result = snackbarHostState.showSnackbar(queueCleared, actionLabel = undo, duration = SnackbarDuration.Long)
-                        if (result == SnackbarResult.ActionPerformed) currentActions.undoClearQueue()
-                    }
-
-                    is PlayerUiEvent.QueueItemRemoved -> launch {
-                        val result = snackbarHostState.showSnackbar(removedFromQueue, actionLabel = undo, duration = SnackbarDuration.Long)
-                        if (result == SnackbarResult.ActionPerformed) currentActions.undoRemoveQueueItem()
-                    }
-
-                    is PlayerUiEvent.MediaActionDone -> onMediaActionResult(event.result, snackbarHostState, resources, activity, currentActions, navigate)
-
-                    is PlayerUiEvent.ServerSongSkipped -> launch {
-                        snackbarHostState.showSnackbar(
-                            resources.getString(R.string.player_server_song_skipped, event.songTitle),
-                            duration = SnackbarDuration.Short,
-                        )
-                    }
-                }
+    ConsumeEvents(events, onEventHandled) { event ->
+        when (event) {
+            is PlayerUiEvent.QueueCleared -> {
+                val result = snackbarHostState.showSnackbar(queueCleared, actionLabel = undo, duration = SnackbarDuration.Long)
+                if (result == SnackbarResult.ActionPerformed) actions.undoClearQueue()
             }
+
+            is PlayerUiEvent.QueueItemRemoved -> {
+                val result = snackbarHostState.showSnackbar(removedFromQueue, actionLabel = undo, duration = SnackbarDuration.Long)
+                if (result == SnackbarResult.ActionPerformed) actions.undoRemoveQueueItem()
+            }
+
+            is PlayerUiEvent.MediaActionDone -> onMediaActionResult(event.result, snackbarHostState, resources, activity, actions, onNavigate)
+
+            is PlayerUiEvent.ServerSongSkipped -> snackbarHostState.showSnackbar(
+                resources.getString(R.string.player_server_song_skipped, event.songTitle),
+                duration = SnackbarDuration.Short,
+            )
         }
     }
 }
 
-private fun CoroutineScope.onMediaActionResult(
+private suspend fun onMediaActionResult(
     result: MediaActionResult,
     snackbarHostState: SnackbarHostState,
     resources: Resources,
@@ -122,7 +108,7 @@ private fun CoroutineScope.onMediaActionResult(
     when (result) {
         is MediaActionResult.None -> Unit
 
-        is MediaActionResult.Message -> launch {
+        is MediaActionResult.Message -> {
             val action = result.action
             val shown = snackbarHostState.showSnackbar(
                 result.message.format(resources),

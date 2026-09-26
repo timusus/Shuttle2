@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
+import com.simplecityapps.shuttle.ui.common.PendingEvent
 import kotlinx.coroutines.flow.Flow
 
 /** A song in the queue, and the one Now Playing shows when it is the current item. */
@@ -73,6 +74,7 @@ data class PlayerUiState(
 data class PlayerScreenState(
     val player: PlayerUiState,
     val progress: PlayerProgress,
+    val events: List<PendingEvent<PlayerUiEvent>> = emptyList(),
 )
 
 /** The current song's position and duration, in milliseconds. */

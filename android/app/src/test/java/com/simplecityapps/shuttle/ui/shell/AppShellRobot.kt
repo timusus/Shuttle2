@@ -7,6 +7,7 @@ import androidx.compose.material3.adaptive.Posture
 import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,6 +62,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.preview.sampleSongs
 import com.simplecityapps.shuttle.ui.sampleSeed
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
@@ -74,7 +76,6 @@ import com.simplecityapps.shuttle.ui.shell.player.PlayerUiState
 import com.simplecityapps.shuttle.ui.shell.player.description
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -141,7 +142,7 @@ class RecordingPlayerActions(
 ) : PlayerActions {
     val calls = mutableListOf<String>()
     val mediaActions = mutableListOf<MediaAction>()
-    val events = MutableSharedFlow<PlayerUiEvent>(extraBufferCapacity = 8)
+    val events = PendingEvents<PlayerUiEvent>()
     var songActions: List<MediaActionType> = listOf(
         MediaActionType.AddToPlaylist,
         MediaActionType.GoToAlbum,
@@ -224,7 +225,7 @@ class RecordingPlayerActions(
 
     override fun removeQueueItem(uid: Long) {
         calls += "removeQueueItem($uid)"
-        events.tryEmit(PlayerUiEvent.QueueItemRemoved)
+        events.post(PlayerUiEvent.QueueItemRemoved)
     }
 
     override fun undoRemoveQueueItem() {
@@ -237,7 +238,7 @@ class RecordingPlayerActions(
 
     override fun clearQueue() {
         calls += "clearQueue"
-        events.tryEmit(PlayerUiEvent.QueueCleared(state.value.items.size))
+        events.post(PlayerUiEvent.QueueCleared(state.value.items.size))
     }
 
     override fun undoClearQueue() {
@@ -257,8 +258,10 @@ class RecordingPlayerActions(
 
     override fun onMediaAction(action: MediaAction) {
         mediaActions += action
-        events.tryEmit(PlayerUiEvent.MediaActionDone(mediaActionResult(action)))
+        events.post(PlayerUiEvent.MediaActionDone(mediaActionResult(action)))
     }
+
+    fun onEventHandled(id: Long) = events.consume(id)
 }
 
 /** A window of the given size in dp, with no fold unless [posture] has one. */
@@ -313,12 +316,14 @@ class AppShellRobot(
             val currentQueue by queueState
             val currentWindow by windowState
             val currentProgress by progressState
+            val currentEvents by actions.events.flow.collectAsState()
             val snackbarHostState = remember { SnackbarHostState() }
             val targets = remember { Channel<NavigationTarget>(Channel.UNLIMITED) }
             WithSystemBars(systemBars) {
                 S2Theme {
                     PlayerEventsEffect(
-                        actions.events,
+                        currentEvents,
+                        actions::onEventHandled,
                         snackbarHostState,
                         actions = actions,
                         onNavigate = { targets.trySend(it) },
@@ -611,7 +616,7 @@ class AppShellRobot(
         frames: Int = 3,
     ) {
         rule.mainClock.autoAdvance = false
-        actions.events.tryEmit(PlayerUiEvent.MediaActionDone(MediaActionResult.Navigate(target)))
+        actions.events.post(PlayerUiEvent.MediaActionDone(MediaActionResult.Navigate(target)))
         repeat(frames) { rule.mainClock.advanceTimeByFrame() }
     }
 

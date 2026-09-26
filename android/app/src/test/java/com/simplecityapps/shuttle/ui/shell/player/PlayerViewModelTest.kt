@@ -48,7 +48,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -387,11 +386,9 @@ class PlayerViewModelTest {
         val viewModel = viewModel()
         val (one, two, three, four) = songs("One", "Two", "Three", "Four")
         queueOperations.queueStateFlow.value = queueOf(listOf(one, two, three, four))
-        val events = mutableListOf<PlayerUiEvent>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.toList(events) }
 
         viewModel.removeQueueItem(101)
-        events shouldBe listOf(PlayerUiEvent.QueueItemRemoved)
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(PlayerUiEvent.QueueItemRemoved)
         queueOperations.queueStateFlow.value = queueOf(listOf(one, three, four))
         playbackOperations.onAddToQueue = { songs -> queueOperations.queueStateFlow.value = queueOf(listOf(one, three, four) + songs) }
 
@@ -434,13 +431,11 @@ class PlayerViewModelTest {
     @Test
     fun `a song action reports the handler's result`() = runTest {
         val viewModel = viewModel()
-        val events = mutableListOf<PlayerUiEvent>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.toList(events) }
 
         // The fake library has no albums, so Go to album finds nothing.
         viewModel.onMediaAction(MediaAction.GoToAlbum(MediaSelection.Songs(createSong(id = 1))))
 
-        events shouldBe listOf(PlayerUiEvent.MediaActionDone(MediaActionResult.Message(MediaActionMessage.NotFound)))
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(PlayerUiEvent.MediaActionDone(MediaActionResult.Message(MediaActionMessage.NotFound)))
     }
 
     @Test
@@ -450,11 +445,9 @@ class PlayerViewModelTest {
         queueOperations.queueStateFlow.value = queueOf(songs, current = 1)
         playbackOperations.playbackStateFlow.value = PlaybackState.Playing
         playbackOperations.savedProgress = 30_000
-        val events = mutableListOf<PlayerUiEvent>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.toList(events) }
 
         viewModel.clearQueue()
-        events shouldBe listOf(PlayerUiEvent.QueueCleared(3))
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(PlayerUiEvent.QueueCleared(3))
         playbackOperations.calls shouldBe listOf("clearQueue()")
 
         viewModel.undoClearQueue()
@@ -560,12 +553,10 @@ class PlayerViewModelTest {
     @Test
     fun `a gated server song is reported as a skip event`() = runTest {
         val viewModel = viewModel()
-        val events = mutableListOf<PlayerUiEvent>()
-        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.events.toList(events) }
 
         gatedSongs.emit(createSong(name = "Remote Song"))
 
-        events shouldBe listOf(PlayerUiEvent.ServerSongSkipped("Remote Song"))
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(PlayerUiEvent.ServerSongSkipped("Remote Song"))
     }
 
     @Test

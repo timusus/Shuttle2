@@ -24,18 +24,16 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
+import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -103,8 +101,7 @@ class PlayerViewModel @Inject constructor(
     private val sleepTimerChanges = MutableStateFlow(0)
     private val sleepTimerPlayToEnd = MutableStateFlow(readSleepTimerPlayToEnd())
 
-    private val _events = MutableSharedFlow<PlayerUiEvent>()
-    val events: SharedFlow<PlayerUiEvent> = _events.asSharedFlow()
+    private val events = PendingEvents<PlayerUiEvent>()
 
     private var clearedQueue: QueueSnapshot? = null
 
@@ -114,7 +111,7 @@ class PlayerViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            observeGatedServerSkip().collect { song -> _events.emit(PlayerUiEvent.ServerSongSkipped(song.name.orEmpty())) }
+            observeGatedServerSkip().collect { song -> events.post(PlayerUiEvent.ServerSongSkipped(song.name.orEmpty())) }
         }
     }
 
@@ -187,7 +184,7 @@ class PlayerViewModel @Inject constructor(
 
     // A tick only replaces the progress: the player state stays the same instance, so its readers skip the tick.
     val uiState: StateFlow<PlayerScreenState> =
-        combine(player, progress, ::PlayerScreenState)
+        combine(player, progress, events.flow, ::PlayerScreenState)
             .stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5_000),
@@ -265,7 +262,7 @@ class PlayerViewModel @Inject constructor(
         removedItem = RemovedQueueItem(items[index].song, index)
         viewModelScope.launch {
             editQueue(QueueEdit.Remove(uid))
-            _events.emit(PlayerUiEvent.QueueItemRemoved)
+            events.post(PlayerUiEvent.QueueItemRemoved)
         }
     }
 
@@ -280,7 +277,7 @@ class PlayerViewModel @Inject constructor(
     override fun clearQueue() {
         val snapshot = clearQueue.invoke() ?: return
         clearedQueue = snapshot
-        viewModelScope.launch { _events.emit(PlayerUiEvent.QueueCleared(snapshot.songs.size)) }
+        events.post(PlayerUiEvent.QueueCleared(snapshot.songs.size))
     }
 
     override fun undoClearQueue() {
@@ -294,8 +291,10 @@ class PlayerViewModel @Inject constructor(
     override fun playlists(): Flow<List<Playlist>> = observePlaylists()
 
     override fun onMediaAction(action: MediaAction) {
-        viewModelScope.launch { _events.emit(PlayerUiEvent.MediaActionDone(mediaActionHandler.handle(action))) }
+        viewModelScope.launch { events.post(PlayerUiEvent.MediaActionDone(mediaActionHandler.handle(action))) }
     }
+
+    fun onEventHandled(id: Long) = events.consume(id)
 
     private fun control(command: PlaybackCommand) {
         viewModelScope.launch { controlPlayback(command) }
