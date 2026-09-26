@@ -4,12 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
+import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
 import com.simplecityapps.shuttle.ui.actions.ObserveSongsForGenre
 import dagger.assisted.Assisted
@@ -43,7 +43,7 @@ class GenreDetailViewModel @AssistedInject constructor(
     observeGenres: ObserveGenres,
     observeSongsForGenre: ObserveSongsForGenre,
     observeAlbums: ObserveAlbums,
-    queueOperations: QueueOperations,
+    observeCurrentSong: ObserveCurrentSong,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
@@ -64,7 +64,7 @@ class GenreDetailViewModel @AssistedInject constructor(
     val uiState: StateFlow<GenreDetailUiState> = combine(
         observeGenres(GenreQuery.GenreName(genreName)).map { it.firstOrNull() },
         songsAndAlbums,
-        queueOperations.queueStateFlow.map { it.currentItem?.song }.distinctUntilChanged(),
+        observeCurrentSong(),
     ) { genre, (songs, albums), currentSong ->
         GenreDetailUiState(genre = genre, albums = albums, songs = songs, currentSong = currentSong, loading = false)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GenreDetailUiState())

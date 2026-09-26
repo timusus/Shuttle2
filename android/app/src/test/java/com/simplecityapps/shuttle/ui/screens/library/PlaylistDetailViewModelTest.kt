@@ -12,6 +12,7 @@ import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.ExportPlaylist
+import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
@@ -58,7 +59,7 @@ class PlaylistDetailViewModelTest {
         ClearPlaylist(playlistRepository),
         DeletePlaylist(playlistRepository),
         ExportPlaylist(PlaylistExporter(ApplicationProvider.getApplicationContext())),
-        FakeQueueOperations(),
+        ObserveCurrentSong(FakeQueueOperations()),
     )
 
     private fun viewModel(playlist: Playlist = createPlaylist(id = 7)): PlaylistDetailViewModel {

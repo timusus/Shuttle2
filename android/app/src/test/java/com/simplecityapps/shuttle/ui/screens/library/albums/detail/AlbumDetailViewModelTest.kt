@@ -11,6 +11,7 @@ import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
+import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -106,8 +107,7 @@ class AlbumDetailViewModelTest {
             groupKey = testAlbum.groupKey,
             observeSongs = testMediaActions.observeSongs,
             observeAlbums = testMediaActions.observeAlbums,
-            queueOperations = fakeQueueOperations,
-            observePlaylists = testMediaActions.observePlaylists,
+            observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
         )
     }
 }

@@ -12,6 +12,7 @@ import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.collections.shouldBeIn
@@ -156,9 +157,8 @@ class AlbumArtistDetailViewModelTest {
             observeAlbumArtists = testMediaActions.observeAlbumArtists,
             observeAlbums = testMediaActions.observeAlbums,
             observeSongs = testMediaActions.observeSongs,
-            queueOperations = fakeQueueOperations,
+            observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
             shuffleAlbums = ShuffleAlbums(shuffleQueueOperations, shufflePlaybackOperations),
-            observePlaylists = testMediaActions.observePlaylists,
         )
     }
 }

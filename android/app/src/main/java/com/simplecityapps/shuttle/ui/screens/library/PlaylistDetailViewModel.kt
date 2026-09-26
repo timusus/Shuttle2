@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
@@ -11,6 +10,7 @@ import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.ExportPlaylist
+import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
@@ -81,7 +81,7 @@ class PlaylistDetailViewModel @AssistedInject constructor(
     private val clearPlaylist: ClearPlaylist,
     private val deletePlaylist: DeletePlaylist,
     private val exportPlaylist: ExportPlaylist,
-    queueOperations: QueueOperations,
+    observeCurrentSong: ObserveCurrentSong,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
@@ -107,7 +107,7 @@ class PlaylistDetailViewModel @AssistedInject constructor(
         playlist,
         combine(songs, draggedOrder) { persisted, dragged -> dragged ?: persisted },
         selectedIds,
-        queueOperations.queueStateFlow.map { it.currentItem?.song }.distinctUntilChanged(),
+        observeCurrentSong(),
     ) { playlist, songs, selected, currentSong ->
         PlaylistDetailUiState(
             playlist = playlist,

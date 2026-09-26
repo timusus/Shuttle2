@@ -4,6 +4,7 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.mediaprovider.R as MediaProviderR
+import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
@@ -28,7 +29,7 @@ class SmartPlaylistDetailViewModelTest {
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
 
     private fun TestScope.viewModel(id: String): SmartPlaylistDetailViewModel {
-        val viewModel = SmartPlaylistDetailViewModel(id, ObserveSongs(songRepository), FakeQueueOperations())
+        val viewModel = SmartPlaylistDetailViewModel(id, ObserveSongs(songRepository), ObserveCurrentSong(FakeQueueOperations()))
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
         return viewModel

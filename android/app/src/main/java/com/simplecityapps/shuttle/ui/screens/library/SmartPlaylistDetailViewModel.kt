@@ -3,9 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.songs.comparator
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
@@ -31,7 +31,7 @@ data class SmartPlaylistDetailUiState(
 class SmartPlaylistDetailViewModel @AssistedInject constructor(
     @Assisted smartPlaylistId: String,
     observeSongs: ObserveSongs,
-    queueOperations: QueueOperations,
+    observeCurrentSong: ObserveCurrentSong,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
@@ -46,7 +46,7 @@ class SmartPlaylistDetailViewModel @AssistedInject constructor(
 
     val uiState: StateFlow<SmartPlaylistDetailUiState> = combine(
         songs,
-        queueOperations.queueStateFlow.map { it.currentItem?.song }.distinctUntilChanged(),
+        observeCurrentSong(),
     ) { songs, currentSong ->
         SmartPlaylistDetailUiState(smartPlaylist = smartPlaylist, songs = songs, currentSong = currentSong, loading = false)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SmartPlaylistDetailUiState())
