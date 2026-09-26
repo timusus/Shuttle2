@@ -30,6 +30,7 @@ import com.simplecityapps.shuttle.ui.actions.RemoveFromPlaylist
 import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
 import com.simplecityapps.shuttle.ui.actions.ReorderPlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
+import com.simplecityapps.shuttle.ui.actions.RestorePlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ShareSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
@@ -72,6 +73,7 @@ class TestMediaActions(
     val findGoToTarget = FindGoToTarget(albumRepository, albumArtistRepository)
     val shareSongs = ShareSongs(resolveSongs)
     val removeFromPlaylist = RemoveFromPlaylist(playlistRepository)
+    val restorePlaylistSongs = RestorePlaylistSongs(playlistRepository)
     val renamePlaylist = RenamePlaylist(playlistRepository)
     val clearPlaylist = ClearPlaylist(playlistRepository)
     val deletePlaylist = DeletePlaylist(playlistRepository)
@@ -97,5 +99,6 @@ class TestMediaActions(
         deleteSongs = deleteSongs,
         downloadSongs = downloadSongs,
         removeFromPlaylist = removeFromPlaylist,
+        restorePlaylistSongs = restorePlaylistSongs,
     )
 }

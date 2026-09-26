@@ -5,14 +5,11 @@ import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.util.LruCache
 import com.simplecityapps.mediaprovider.PlaylistExporter
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.ui.ThemeManager
-import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
-import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferenceManager
@@ -79,10 +76,4 @@ class AppModule {
 
     @Provides
     fun provideClock(): Clock = Clock.systemDefaultZone()
-
-    @Provides
-    fun provideAddToPlaylist(
-        playlistRepository: PlaylistRepository,
-        resolveSongs: ResolveSongs,
-    ): AddToPlaylist = AddToPlaylist(playlistRepository, resolveSongs)
 }

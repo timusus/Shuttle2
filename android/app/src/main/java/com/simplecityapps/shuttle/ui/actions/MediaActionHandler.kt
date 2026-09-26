@@ -28,6 +28,7 @@ class MediaActionHandler @Inject constructor(
     private val deleteSongs: DeleteSongs,
     private val downloadSongs: DownloadSongs,
     private val removeFromPlaylist: RemoveFromPlaylist,
+    private val restorePlaylistSongs: RestorePlaylistSongs,
 ) {
     suspend fun handle(action: MediaAction): MediaActionResult = when (action) {
         is MediaAction.Play -> play(action)
@@ -68,7 +69,7 @@ class MediaActionHandler @Inject constructor(
         }
 
         is MediaAction.RestoreToPlaylist -> {
-            removeFromPlaylist.restore(action.playlist, action.entries, action.before)
+            restorePlaylistSongs(action.playlist, action.entries, action.before)
             MediaActionResult.None
         }
 

@@ -1,4 +1,2 @@
 # Use cases (classes declaring operator fun invoke) expose only that one public invoke, are @Inject-constructed, and import no Android UI
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
-com.simplecityapps.shuttle.ui.actions.AddToPlaylist: no @Inject constructor
-com.simplecityapps.shuttle.ui.actions.RemoveFromPlaylist: public fun restore

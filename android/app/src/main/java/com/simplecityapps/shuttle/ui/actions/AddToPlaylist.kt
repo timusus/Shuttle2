@@ -3,13 +3,14 @@ package com.simplecityapps.shuttle.ui.actions
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import javax.inject.Inject
 import kotlinx.coroutines.flow.firstOrNull
 
 /**
  * Adds a selection's songs to [Playlist]. Songs already in the playlist stop the add with [Result.DuplicatesFound],
  * unless the caller passes `ignoreDuplicates` ("Add anyway").
  */
-class AddToPlaylist(
+class AddToPlaylist @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val resolveSongs: ResolveSongs,
 ) {
