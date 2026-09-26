@@ -1,12 +1,9 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
-import android.net.Uri
-import androidx.test.core.app.ApplicationProvider
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
-import com.simplecityapps.mediaprovider.PlaylistExporter
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
@@ -20,8 +17,8 @@ import com.simplecityapps.shuttle.ui.actions.ReorderPlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
-import java.io.File
+import io.mockk.coEvery
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -29,11 +26,8 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class PlaylistDetailViewModelTest {
 
     @get:Rule
@@ -41,6 +35,10 @@ class PlaylistDetailViewModelTest {
 
     private val playlistRepository = FakePlaylistRepository()
     private val songs = listOf(createSong(id = 1, name = "One"), createSong(id = 2, name = "Two"), createSong(id = 3, name = "Three"))
+
+    // Real Uri/ContentResolver export I/O is covered by ExportPlaylistTest; this ViewModel only
+    // cares about the Success/Failure event mapping.
+    private val exportPlaylist = mockk<ExportPlaylist>()
 
     private fun createViewModel(playlistId: Long): PlaylistDetailViewModel = PlaylistDetailViewModel(
         playlistId,
@@ -51,7 +49,7 @@ class PlaylistDetailViewModelTest {
         RenamePlaylist(playlistRepository),
         ClearPlaylist(playlistRepository),
         DeletePlaylist(playlistRepository),
-        ExportPlaylist(PlaylistExporter(ApplicationProvider.getApplicationContext(), mainDispatcherRule.testDispatcher)),
+        exportPlaylist,
         ObserveCurrentSong(FakeQueueOperations()),
     )
 
@@ -161,7 +159,8 @@ class PlaylistDetailViewModelTest {
     }
 
     @Test
-    fun `export suggests a file name, then writes the songs to the chosen file`() = runTest {
+    fun `export suggests a file name, then posts the exporter's result`() = runTest {
+        coEvery { exportPlaylist(any(), any(), any()) } returns ExportPlaylist.Result.Success
         val viewModel = viewModel(createPlaylist(id = 7, name = "Road Trip"))
         collect(viewModel)
 
@@ -172,10 +171,19 @@ class PlaylistDetailViewModelTest {
         advanceUntilIdle()
         viewModel.pendingEvents shouldBe emptyList()
 
-        val file = File.createTempFile("playlist", ".m3u")
-        viewModel.exportTo(Uri.fromFile(file).toString())
+        viewModel.exportTo("content://picked-destination")
         advanceUntilIdle()
         viewModel.pendingEvents shouldBe listOf(PlaylistDetailEvent.ExportSucceeded)
-        file.readText() shouldContain "#EXTM3U"
+    }
+
+    @Test
+    fun `a failed export posts the exporter's error`() = runTest {
+        coEvery { exportPlaylist(any(), any(), any()) } returns ExportPlaylist.Result.Failure("permission denied")
+        val viewModel = viewModel(createPlaylist(id = 7, name = "Road Trip"))
+        collect(viewModel)
+
+        viewModel.exportTo("content://picked-destination")
+        advanceUntilIdle()
+        viewModel.pendingEvents shouldBe listOf(PlaylistDetailEvent.ExportFailed("permission denied"))
     }
 }
