@@ -15,7 +15,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -25,6 +24,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
+import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -42,15 +42,8 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-
-/** Loads the seed colour of a song's artwork for the player's artwork scheme. */
-fun interface ArtworkSeedSource {
-    suspend fun seedFor(song: Song): ArtworkSeed
-}
 
 /** Whether the Cast framework could start on this device. */
 fun interface CastAvailability {
@@ -84,7 +77,7 @@ class PlayerViewModel @Inject constructor(
     readSleepTimerPlayToEnd: ReadSleepTimerPlayToEnd,
     observeSetting: ObserveSetting,
     private val setReplayGainMode: SetReplayGainMode,
-    private val seedSource: ArtworkSeedSource,
+    observeArtworkSeed: ObserveArtworkSeed,
     castAvailability: CastAvailability,
     savedNowPlaying: SavedNowPlaying,
     private val clearQueue: ClearQueue,
@@ -119,15 +112,7 @@ class PlayerViewModel @Inject constructor(
 
     private val favouriteIds: Flow<Set<Long>> = observeFavouriteSongIds()
 
-    private val seed: Flow<ArtworkSeed> =
-        combine(
-            currentSong.map { it?.let(::ArtworkKey) }.distinctUntilChanged(),
-            observeSetting(AppearanceSettings.ColourFromArtwork),
-        ) { key, enabled -> key to enabled }
-            .distinctUntilChanged()
-            .mapLatest { (key, enabled) ->
-                if (enabled) key?.let { seedSource.seedFor(it.song) } ?: ArtworkSeed.None else ArtworkSeed.None
-            }
+    private val seed: Flow<ArtworkSeed> = observeArtworkSeed(currentSong)
 
     // Ticks only while a timer runs, so it notices the timer going off (the timer has no flow of its own).
     private val sleepTimerActive: Flow<Boolean> =
@@ -149,7 +134,7 @@ class PlayerViewModel @Inject constructor(
     private val extras: Flow<Extras> =
         combine(
             favouriteIds,
-            seed.onStart { emit(ArtworkSeed.Loading) },
+            seed,
             sleepTimerActive,
             sleepTimerPlayToEnd,
             observeSetting(PlaybackSettings.ReplayGain),
@@ -320,17 +305,6 @@ class PlayerViewModel @Inject constructor(
         val sleepTimerPlayToEnd: Boolean,
         val replayGainMode: ReplayGainMode,
     )
-
-    /** Songs on one album share artwork, so they share a seed. */
-    private class ArtworkKey(
-        val song: Song,
-    ) {
-        private val key = song.albumGroupKey
-
-        override fun equals(other: Any?) = other is ArtworkKey && other.key == key
-
-        override fun hashCode() = key.hashCode()
-    }
 
     internal companion object {
         private const val SLEEP_TIMER_TICK_MS = 1_000L

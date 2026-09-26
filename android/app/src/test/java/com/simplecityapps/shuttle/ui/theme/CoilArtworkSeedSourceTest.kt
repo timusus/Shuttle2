@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.shell.player
+package com.simplecityapps.shuttle.ui.theme
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -12,6 +12,7 @@ import com.simplecityapps.createSong
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,7 @@ import org.robolectric.RuntimeEnvironment
 class CoilArtworkSeedSourceTest {
     private val context: Context = RuntimeEnvironment.getApplication()
 
-    /** Serves each song's artwork from [artwork], failing the load when it has none. */
+    /** Serves each song's artwork from [artwork], by title and then by album, failing the load when it has none. */
     private val artwork = mutableMapOf<String, ByteArray>()
 
     private val imageLoader =
@@ -38,7 +39,7 @@ class CoilArtworkSeedSourceTest {
                 add(
                     Fetcher.Factory<Song> { song, options, _ ->
                         Fetcher {
-                            val bytes = artwork[song.album] ?: throw IOException("No artwork for ${song.album}")
+                            val bytes = artwork[song.name] ?: artwork[song.album] ?: throw IOException("No artwork for ${song.album}")
                             SourceFetchResult(ImageSource(Buffer().write(bytes), options.fileSystem), null, DataSource.MEMORY) as FetchResult
                         }
                     },
@@ -68,6 +69,19 @@ class CoilArtworkSeedSourceTest {
         artwork["Late"] = solidPng(0xFF1E88E5.toInt())
 
         seedSource.seedFor(song).shouldBeInstanceOf<ArtworkSeed.Available>()
+    }
+
+    @Test
+    fun `tracks on one album with their own artwork get their own seeds`() = runBlocking<Unit> {
+        artwork["Red"] = solidPng(0xFFE53935.toInt())
+        artwork["Blue"] = solidPng(0xFF1E88E5.toInt())
+
+        val red = seedSource.seedFor(createSong(id = 1, name = "Red", album = "Mixed"))
+        val blue = seedSource.seedFor(createSong(id = 2, name = "Blue", album = "Mixed"))
+
+        red.shouldBeInstanceOf<ArtworkSeed.Available>()
+        blue.shouldBeInstanceOf<ArtworkSeed.Available>()
+        red shouldNotBe blue
     }
 
     private fun solidPng(argb: Int): ByteArray {

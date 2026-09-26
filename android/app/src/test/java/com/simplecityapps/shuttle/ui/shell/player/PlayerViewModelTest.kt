@@ -41,6 +41,8 @@ import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import com.simplecityapps.shuttle.ui.screens.settings.FakeSettingsEffects
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
+import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -105,7 +107,7 @@ class PlayerViewModelTest {
             readSleepTimerPlayToEnd = ReadSleepTimerPlayToEnd(preferenceManager),
             observeSetting = ObserveSetting(settingsStore),
             setReplayGainMode = SetReplayGainMode(SaveSetting(settingsStore), settingsEffects),
-            seedSource = seedSource,
+            observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
             castAvailability = { false },
             savedNowPlaying = { savedNowPlaying },
             clearQueue = ClearQueue(queueOperations, playbackOperations),
@@ -295,17 +297,18 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `the seed is extracted once per album`() = runTest {
+    fun `the seed follows the playing song's own artwork, and a queue change around it doesn't extract again`() = runTest {
         val viewModel = viewModel()
-        val firstAlbum = songs("One", "Two", album = "First")
-        queueOperations.queueStateFlow.value = queueOf(firstAlbum + createSong(id = 7, name = "Three", album = "Second"))
+        val album = songs("One", "Two", album = "First")
+        queueOperations.queueStateFlow.value = queueOf(album)
         viewModel.uiState.value.player.seed shouldBe ArtworkSeed.Available(Color.Red)
 
-        queueOperations.queueStateFlow.value = queueOf(firstAlbum, current = 1)
+        queueOperations.queueStateFlow.value = queueOf(album + createSong(id = 7, name = "Three", album = "Second"))
         seededSongs.map { it.name } shouldBe listOf("One")
 
-        queueOperations.queueStateFlow.value = queueOf(firstAlbum + createSong(id = 7, name = "Three", album = "Second"), current = 2)
-        seededSongs.map { it.name } shouldBe listOf("One", "Three")
+        // A track on the same album can carry its own artwork, so it seeds on its own
+        queueOperations.queueStateFlow.value = queueOf(album, current = 1)
+        seededSongs.map { it.name } shouldBe listOf("One", "Two")
     }
 
     @Test

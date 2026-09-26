@@ -6,8 +6,11 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
 
-/** Keys a song's artwork in both caches; the prefix keeps it apart from an album or artist whose names happen to match. */
-internal fun Song.artworkCacheKey(): String = "song:${albumArtist ?: friendlyArtistName}_${album}_$name".withArtworkVersion(artworkVersion)
+/**
+ * Keys a song's artwork in both caches; the prefix keeps it apart from an album or artist whose names happen to match.
+ * Public so the artwork seed can be cached under the same identity as the image it's extracted from.
+ */
+fun Song.artworkCacheKey(): String = "song:${albumArtist ?: friendlyArtistName}_${album}_$name".withArtworkVersion(artworkVersion)
 
 internal fun Album.artworkCacheKey(): String = "album:${albumArtist ?: friendlyArtistName}_$name".withArtworkVersion(artworkVersion)
 

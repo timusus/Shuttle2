@@ -21,7 +21,7 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
-import com.simplecityapps.shuttle.ui.shell.player.ArtworkSeedSource
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.collections.shouldBeIn
