@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -44,12 +45,16 @@ import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.common.components.AlphabetFastScroller
+import com.simplecityapps.shuttle.ui.common.components.FastScrollableState
 import com.simplecityapps.shuttle.ui.common.components.FastScroller
+import com.simplecityapps.shuttle.ui.common.components.NoPopup
+import com.simplecityapps.shuttle.ui.common.components.letterSections
 import com.simplecityapps.shuttle.ui.common.components.rememberFastScrollableState
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListUiState
-import com.simplecityapps.shuttle.ui.screens.library.albums.getAlbumFastscrollPopup
-import com.simplecityapps.shuttle.ui.screens.library.albums.getAlbumPopupText
+import com.simplecityapps.shuttle.ui.screens.library.albums.albumLetterKey
+import com.simplecityapps.shuttle.ui.screens.library.albums.albumThumbLabel
 import com.simplecityapps.shuttle.ui.screens.library.folders.Folder
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListUiState
 import com.simplecityapps.shuttle.ui.screens.library.folders.displayName
@@ -57,8 +62,8 @@ import com.simplecityapps.shuttle.ui.screens.library.folders.displayPath
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListUiState
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
-import com.simplecityapps.shuttle.ui.screens.library.songs.getFastscrollPopup
-import com.simplecityapps.shuttle.ui.screens.library.songs.getFastscrollPopupText
+import com.simplecityapps.shuttle.ui.screens.library.songs.songLetterKey
+import com.simplecityapps.shuttle.ui.screens.library.songs.songThumbLabel
 
 // The library tabs' pages: state in, events out, restyled with catalogue rows. The ViewModels are the existing
 // tab ViewModels; LibraryScreen wires them.
@@ -82,6 +87,32 @@ private fun PlayShuffleHeader(onPlay: () -> Unit, onShuffle: () -> Unit) {
         S2ButtonGroup(
             primary = S2GroupAction(stringResource(R.string.menu_title_play), onPlay, Icons.Rounded.PlayArrow),
             secondary = listOf(S2GroupAction(stringResource(R.string.menu_title_shuffle), onShuffle, Icons.Rounded.Shuffle)),
+        )
+    }
+}
+
+/**
+ * The fast scroller for a page of [items] sorted by [sortOrder]: by first letter of [letterKey] when the sort is by a
+ * name (#491), else a plain thumb with [thumbLabel] in its popup, or none. [headerCount] items lead [items] in the list.
+ */
+@Composable
+private fun <T> LibraryFastScroller(
+    items: List<T>,
+    sortOrder: Any,
+    letterKey: ((T) -> String?)?,
+    scrollableState: FastScrollableState,
+    headerCount: Int,
+    thumbLabel: ((T) -> String?)? = null,
+) {
+    if (letterKey != null) {
+        val sections = remember(items, sortOrder) { letterSections(items, letterKey) }
+        AlphabetFastScroller(sections, scrollableState, FastScrollerModifier, itemOffset = headerCount)
+    } else {
+        FastScroller(
+            getPopupText = { index -> items.getOrNull(index - headerCount)?.let { thumbLabel?.invoke(it) } },
+            scrollableState = scrollableState,
+            modifier = FastScrollerModifier,
+            popup = if (thumbLabel == null) ::NoPopup else null,
         )
     }
 }
@@ -121,11 +152,13 @@ fun SongsPage(
                     )
                 }
             }
-            FastScroller(
-                modifier = FastScrollerModifier,
-                getPopupText = { index -> state.songs.getOrNull(index - 1)?.let { getFastscrollPopupText(it, state.sortOrder) } },
-                state = listState,
-                popup = getFastscrollPopup(state.sortOrder),
+            LibraryFastScroller(
+                items = state.songs,
+                sortOrder = state.sortOrder,
+                letterKey = songLetterKey(state.sortOrder),
+                scrollableState = rememberFastScrollableState(listState),
+                headerCount = 1,
+                thumbLabel = songThumbLabel(state.sortOrder),
             )
         }
     }
@@ -175,7 +208,9 @@ fun AlbumsPage(
     }
     LibraryContent(content, stringResource(R.string.album_list_empty), modifier, state.scanProgress) {
         val header: @Composable () -> Unit = { PlayShuffleHeader(onPlay, onShuffle) }
-        val popupText = { index: Int -> state.albums.getOrNull(index - 1)?.let { getAlbumPopupText(it, state.sortOrder) } }
+        val fastScroller: @Composable (FastScrollableState) -> Unit = { scrollableState ->
+            LibraryFastScroller(state.albums, state.sortOrder, albumLetterKey(state.sortOrder), scrollableState, headerCount = 1, thumbLabel = albumThumbLabel(state.sortOrder))
+        }
         Box(modifier.fillMaxSize()) {
             if (state.viewMode == ViewMode.Grid) {
                 val gridState = rememberLazyGridState()
@@ -199,7 +234,7 @@ fun AlbumsPage(
                         )
                     }
                 }
-                FastScroller(modifier = FastScrollerModifier, getPopupText = popupText, scrollableState = rememberFastScrollableState(gridState), popup = getAlbumFastscrollPopup(state.sortOrder))
+                fastScroller(rememberFastScrollableState(gridState))
             } else {
                 val listState = rememberLazyListState()
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-albums")) {
@@ -217,7 +252,7 @@ fun AlbumsPage(
                         )
                     }
                 }
-                FastScroller(modifier = FastScrollerModifier, getPopupText = popupText, state = listState, popup = getAlbumFastscrollPopup(state.sortOrder))
+                fastScroller(rememberFastScrollableState(listState))
             }
         }
     }
@@ -240,7 +275,8 @@ fun ArtistsPage(
     }
     LibraryContent(content, stringResource(R.string.artist_list_empty), modifier, state.scanProgress) {
         val artists = state.albumArtists
-        val popupText = { index: Int -> artists.getOrNull(index)?.name?.firstOrNull()?.uppercase() }
+        // Artists are always sorted by their group key, which drops a leading "The".
+        val sections = remember(artists) { letterSections(artists) { it.groupKey.key } }
         Box(modifier.fillMaxSize()) {
             if (state.viewMode == ViewMode.Grid) {
                 val gridState = rememberLazyGridState()
@@ -263,7 +299,7 @@ fun ArtistsPage(
                         )
                     }
                 }
-                FastScroller(modifier = FastScrollerModifier, getPopupText = popupText, scrollableState = rememberFastScrollableState(gridState))
+                AlphabetFastScroller(sections, rememberFastScrollableState(gridState), FastScrollerModifier)
             } else {
                 val listState = rememberLazyListState()
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-artists")) {
@@ -279,7 +315,7 @@ fun ArtistsPage(
                         )
                     }
                 }
-                FastScroller(modifier = FastScrollerModifier, getPopupText = popupText, state = listState)
+                AlphabetFastScroller(sections, rememberFastScrollableState(listState), FastScrollerModifier)
             }
         }
     }

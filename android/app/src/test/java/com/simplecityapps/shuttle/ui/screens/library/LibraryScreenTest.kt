@@ -8,6 +8,7 @@ import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.persistence.LibraryTab
+import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.readyAlbumArtistList
 import com.simplecityapps.shuttle.ui.screens.library.albums.readyAlbumList
@@ -197,9 +198,20 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun `dragging the songs page's fast scroller to the bottom scrolls to the last song`() {
-        val songs = (1..48).map { createSong(id = it.toLong(), name = "Track $it") }
-        robot.setContent(libraryState(currentTab = LibraryTab.Songs), pages = LibraryPageStates(songs = readySongList(songs)))
+    fun `dragging the songs page's letter scroller to the bottom jumps to the last letter (#491)`() {
+        val songs = ('A'..'Z').mapIndexed { i, letter -> createSong(id = i.toLong(), name = "$letter song") }
+        robot.setContent(libraryState(currentTab = LibraryTab.Songs), pages = LibraryPageStates(songs = readySongList(songs, sortOrder = SongSortOrder.SongName)))
+
+        robot.dragFastScrollerToBottom()
+
+        robot.assertTextNotDisplayed("A song")
+        robot.assertTextDisplayed("Z song")
+    }
+
+    @Test
+    fun `songs sorted by duration keep a plain thumb that still reaches the end`() {
+        val songs = (1..48).map { createSong(id = it.toLong(), name = "Track $it", duration = it) }
+        robot.setContent(libraryState(currentTab = LibraryTab.Songs), pages = LibraryPageStates(songs = readySongList(songs, sortOrder = SongSortOrder.Duration)))
 
         robot.dragFastScrollerToBottom()
 
