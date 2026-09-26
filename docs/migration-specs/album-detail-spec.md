@@ -91,8 +91,8 @@ Presenter implements `QueueChangeCallback`. On `onQueuePositionChanged`, it re-r
 |-----------|-----------|------|
 | SongRepository | Yes | FakeSongRepository |
 | AlbumRepository | Yes | FakeAlbumRepository |
-| PlaybackOperations | Yes | FakePlaybackManager |
-| QueueOperations | Yes | FakeQueueManager |
+| PlaybackOperations | Yes | FakePlaybackOperations |
+| QueueOperations | Yes | FakeQueueOperations |
 | QueueWatcher | No (concrete) | Need FakeQueueWatcher |
 | PlaySongs | Use case | Compose from fakes |
 | ShuffleSongs | Use case | Compose from fakes |

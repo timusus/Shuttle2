@@ -102,8 +102,8 @@ Create `FakePlaylistRepository` in `fakes/`.
 @HiltViewModel
 class PlaylistListViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
-    private val playbackManager: PlaybackOperations,
-    private val queueManager: QueueOperations,
+    private val playbackOperations: PlaybackOperations,
+    private val queueOperations: QueueOperations,
 ) : ViewModel() {
 ```
 

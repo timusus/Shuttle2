@@ -76,7 +76,7 @@ ViewModels depend on the interfaces, not the concrete classes. The interfaces we
 
 ### The Playback Boundary
 
-`PlaybackManager` and `QueueManager` are concrete classes with deep dependency trees (ExoPlayer, AudioFocus, services). They're a true system boundary — the ViewModel fires actions into the playback subsystem and doesn't observe results (principle #8: fire-and-forget).
+`PlaybackOperations` and `QueueOperations` are bound to concrete classes with deep dependency trees (ExoPlayer, AudioFocus, services). They're a true system boundary — the ViewModel fires actions into the playback subsystem and doesn't observe results (principle #8: fire-and-forget).
 
 **Current approach:** Mock these. This is acceptable because:
 - The ViewModel's contract with playback is simple: "play these songs", "add to queue", "shuffle"
@@ -85,7 +85,7 @@ ViewModels depend on the interfaces, not the concrete classes. The interfaces we
 
 **Long-term:** If playback state ever feeds back into ViewModel UiState (e.g., "now playing" indicator in the song list), extract a `PlaybackController` interface and build a fake.
 
-For now, don't write ViewModel tests that verify `PlaybackManager` mock interactions. The playback calls are side effects triggered by user actions — test the user actions through UI integration tests (tap song → verify state change), not through mock verification.
+For now, don't write ViewModel tests that verify `PlaybackOperations` mock interactions. The playback calls are side effects triggered by user actions — test the user actions through UI integration tests (tap song → verify state change), not through mock verification.
 
 ## Fixture Suite
 
@@ -197,13 +197,13 @@ Use cases (see [compose-viewmodel-udf.md](compose-viewmodel-udf.md) principle #8
 
 ```kotlin
 class PlaySongsTest {
-    private val fakeQueueManager = FakeQueueManager()
-    private val fakePlaybackManager = FakePlaybackManager()
-    private val playSongs = PlaySongs(fakeQueueManager, fakePlaybackManager)
+    private val fakeQueueOperations = FakeQueueOperations()
+    private val fakePlaybackOperations = FakePlaybackOperations()
+    private val playSongs = PlaySongs(fakeQueueOperations, fakePlaybackOperations)
 
     @Test
     fun `returns failure when setQueue fails`() = runTest {
-        fakeQueueManager.setQueueResult = false
+        fakeQueueOperations.setQueueResult = false
         val result = playSongs(listOf(createSong()))
         result shouldBe PlaySongs.Result.Failure(null)
     }
@@ -216,7 +216,7 @@ class PlaySongsTest {
 
 ## What Not to Test at the ViewModel Level
 
-- **Mock interaction verification** — don't write `coVerify { mockPlaybackManager.play() }`. The ViewModel's fire-and-forget actions cross the playback boundary. If they break, you'll know from manual testing or integration tests at a higher level.
+- **Mock interaction verification** — don't write `coVerify { mockPlaybackOperations.play() }`. The ViewModel's fire-and-forget actions cross the playback boundary. If they break, you'll know from manual testing or integration tests at a higher level.
 - **Trivial property forwarding** — if the ViewModel just passes a repository value through to UiState with no transformation, the UI integration test covers it.
 - **Event emissions for user actions** — toasts and snackbars triggered by button taps. These are visible in UI integration tests.
 

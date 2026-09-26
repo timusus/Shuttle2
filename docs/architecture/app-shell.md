@@ -153,7 +153,7 @@ back stacks are `rememberNavBackStack`, saved through the `@Serializable` route 
 
 ### Hidden when nothing is queued
 
-`ShellViewModel` exposes `hasQueue` from `QueueManager.queueStateFlow`. Empty queue: anchors
+`ShellViewModel` exposes `hasQueue` from `QueueOperations.queueStateFlow`. Empty queue: anchors
 `{Hidden}` only, padding drops to `N`, and no panel shows. Non-empty: `{Mini, NowPlaying}` plus
 Expanded on a partial rest, animating to Mini. Hidden is not user-reachable (decision 3). On cold
 start the saved level stands until the first queue emission, so a restoring queue never flashes the

@@ -23,8 +23,8 @@ Study these to understand what we're migrating from:
 - `AlbumArtistBinder.kt` / `ListAlbumArtistBinder.kt` / `GridAlbumArtistBinder.kt` — current ViewBinders
 
 Existing fakes and test infrastructure (reuse these, don't recreate):
-- `android/app/src/test/java/com/simplecityapps/fakes/FakePlaybackManager.kt`
-- `android/app/src/test/java/com/simplecityapps/fakes/FakeQueueManager.kt`
+- `android/app/src/test/java/com/simplecityapps/fakes/FakePlaybackOperations.kt`
+- `android/app/src/test/java/com/simplecityapps/fakes/FakeQueueOperations.kt`
 - `android/app/src/test/java/com/simplecityapps/fakes/FakeSongRepository.kt`
 - `android/app/src/test/java/com/simplecityapps/fakes/FakeSongImportStateProvider.kt`
 - `android/app/src/test/java/com/simplecityapps/creationFunctions.kt` — model factories
@@ -150,7 +150,7 @@ class FakeAlbumArtistRepository : AlbumArtistRepository {
 }
 ```
 
-Reuse existing fakes: `FakePlaybackManager`, `FakeQueueManager`, `FakeSongRepository`, `FakeSongImportStateProvider`.
+Reuse existing fakes: `FakePlaybackOperations`, `FakeQueueOperations`, `FakeSongRepository`, `FakeSongImportStateProvider`.
 
 Test through the UI: set up fake state → render with real ViewModel → robot asserts visible output.
 
@@ -167,8 +167,8 @@ Create `AlbumArtistListViewModel.kt` following the canonical pattern:
 class AlbumArtistListViewModel @Inject constructor(
     private val albumArtistRepository: AlbumArtistRepository,
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackOperations,
-    private val queueManager: QueueOperations,
+    private val playbackOperations: PlaybackOperations,
+    private val queueOperations: QueueOperations,
     mediaImportObserver: SongImportStateProvider,
     private val preferenceManager: GeneralPreferenceManager,
 ) : ViewModel() {
@@ -180,7 +180,7 @@ Key patterns:
 - `WhileSubscribed(5_000)` — principle #3
 - Typed events (`PlaybackFailed`, `AddedToQueue`, `EditTags`) — principle #4
 - No `Application`, no `Context`, no Android framework dependencies — principle #8a
-- For play/queue/exclude/tags: query `songRepository.getSongs(SongQuery.ArtistGroupKeys(...))` then delegate to `playbackManager`/`queueManager`
+- For play/queue/exclude/tags: query `songRepository.getSongs(SongQuery.ArtistGroupKeys(...))` then delegate to `playbackOperations`/`queueOperations`
 
 Make the integration and ViewModel tests pass.
 
@@ -247,7 +247,7 @@ Make multiple focused commits as you go:
 - Do NOT collapse callbacks into a sealed action class (principle #10)
 - Do NOT add `@Stable` or `@Immutable` annotations (principle #7)
 - Do NOT use `AndroidViewModel` or inject `Context` — ViewModel has no Android dependencies (principle #8a)
-- Do NOT use `mockk` for playback/queue — use `FakePlaybackManager`/`FakeQueueManager`
+- Do NOT use `mockk` for playback/queue — use `FakePlaybackOperations`/`FakeQueueOperations`
 - Do NOT use `MediaImporter` — use `SongImportStateProvider` (a StateFlow, not a listener)
 - Follow the existing code style — the lint hook will auto-format on save
 - If you discover something the principles doc doesn't cover, note it but don't deviate

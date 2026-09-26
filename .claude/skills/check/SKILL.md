@@ -35,7 +35,7 @@ Run lint and unit tests to verify changes. Investigate and fix any failures.
    compiling first so a compile error surfaces before any test runs. See `.claude/rules/testing.md`
    for the mapping rules. Otherwise use the module-scoped form, e.g.
    `support/scripts/unit-test playback` or `support/scripts/unit-test playback app --tests
-   '*QueueManager*'`. It accepts a short module name or a full Gradle path.
+   '*QueueOperations*'`. It accepts a short module name or a full Gradle path.
 
    If tests fail, read the failure output. The output shows the test class and method that
    failed, plus the assertion message. Open the failing test to understand what it expects,

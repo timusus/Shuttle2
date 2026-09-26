@@ -192,7 +192,9 @@ and `load`, and the log line adds the `main wait` before the main-thread step.
 
    - **A (landed):** the PlaybackManager side. PlaybackManager is deleted; `PlaybackFacade` builds the listeners above and keeps only forwarding and flows. Consumers inject PlaybackOperations.
    - **B (landed):** the QueueManager side. QueueManager is deleted; `QueueFacade` builds the pieces above and keeps only forwarding and flows. Every consumer already injected QueueOperations (most under the old `queueManager` name); what moved was PlaybackFacade, the DI modules, the debug receiver, and the enums' call sites.
-   - **C:** cleanup. The app tests' `FakePlaybackManager` and `FakeQueueManager` become `FakePlaybackOperations` and `FakeQueueOperations`; `queueManager`/`playbackManager` parameter and field names become `queueOperations`/`playbackOperations`; stale PlaybackManager/QueueManager names leave the older architecture docs, prompts and skills.
+   - **C (landed):** cleanup. The app tests' `FakePlaybackManager` and `FakeQueueManager` became `FakePlaybackOperations` and `FakeQueueOperations`; `queueManager`/`playbackManager` parameter and field names became `queueOperations`/`playbackOperations`; stale PlaybackManager/QueueManager names left the older architecture docs, prompts and skills.
+
+   Step 3 is done.
 4. **Rollout.** Full unit suite, smoke group, Maestro, the device-checks batch, then one release.
 
 ## 6. End state

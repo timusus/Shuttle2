@@ -103,7 +103,7 @@ Don't add `@Stable` or `@Immutable` to data classes. Use `kotlinx.collections.im
 ```kotlin
 fun onAddToQueue(song: Song) {
     viewModelScope.launch {
-        playbackManager.addToQueue(listOf(song))
+        playbackOperations.addToQueue(listOf(song))
         _events.emit(UiEvent.AddedToQueue(1))
     }
 }
@@ -120,8 +120,8 @@ When a ViewModel action method has more than ~5 lines, branching, error handling
 ```kotlin
 // Use case — lives in the same package as the ViewModel
 class PlaySongs @Inject constructor(
-    private val queueManager: QueueOperations,
-    private val playbackManager: PlaybackOperations,
+    private val queueOperations: QueueOperations,
+    private val playbackOperations: PlaybackOperations,
 ) {
     sealed interface Result {
         data object Success : Result
@@ -129,11 +129,11 @@ class PlaySongs @Inject constructor(
     }
 
     suspend operator fun invoke(songs: List<Song>, position: Int = 0): Result {
-        if (!queueManager.setQueue(songs, position)) return Result.Failure(null)
+        if (!queueOperations.setQueue(songs, position)) return Result.Failure(null)
         return suspendCancellableCoroutine { cont ->
-            playbackManager.load { result ->
+            playbackOperations.load { result ->
                 result.onSuccess {
-                    playbackManager.play()
+                    playbackOperations.play()
                     cont.resume(Result.Success)
                 }
                 result.onFailure { error ->
@@ -162,7 +162,7 @@ fun onPlay(album: Album) {
 - The method coordinates 3+ dependencies
 
 **When to leave inline:**
-- One-liners: `playbackManager.addToQueue(songs)` + emit event
+- One-liners: `playbackOperations.addToQueue(songs)` + emit event
 - Simple sequential calls: `repository.setExcluded(songs, true)`
 - Preference writes: `preferenceManager.sortOrder = order`
 - State mutations: `selectionState.toggle(item)`

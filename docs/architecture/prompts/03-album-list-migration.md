@@ -23,8 +23,8 @@ Study these to understand what we're migrating from:
 - `AlbumBinder.kt` / `ListAlbumBinder.kt` / `GridAlbumBinder.kt` — current ViewBinders
 
 Existing fakes and test infrastructure (reuse these, don't recreate):
-- `android/app/src/test/java/com/simplecityapps/fakes/FakePlaybackManager.kt`
-- `android/app/src/test/java/com/simplecityapps/fakes/FakeQueueManager.kt`
+- `android/app/src/test/java/com/simplecityapps/fakes/FakePlaybackOperations.kt`
+- `android/app/src/test/java/com/simplecityapps/fakes/FakeQueueOperations.kt`
 - `android/app/src/test/java/com/simplecityapps/fakes/FakeSongRepository.kt`
 - `android/app/src/test/java/com/simplecityapps/fakes/FakeSongImportStateProvider.kt`
 - `android/app/src/test/java/com/simplecityapps/fakes/FakeArtistListPreferences.kt` — pattern for view mode preference faking
@@ -118,8 +118,8 @@ Create `FakeAlbumListPreferences` for view mode.
 class AlbumListViewModel @Inject constructor(
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackOperations,
-    private val queueManager: QueueOperations,
+    private val playbackOperations: PlaybackOperations,
+    private val queueOperations: QueueOperations,
     private val sortPreferenceManager: SortPreferences,
     private val viewModePreferenceManager: AlbumListPreferences,
     mediaImportObserver: SongImportStateProvider,

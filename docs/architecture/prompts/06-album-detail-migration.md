@@ -53,7 +53,7 @@ sealed interface AlbumDetailUiEvent {
 }
 ```
 
-For current-song tracking: the ViewModel can observe `QueueManager.getCurrentItem()` (or equivalent) as a combine input. When the current queue item matches a song in the album, `currentSong` is set.
+For current-song tracking: the ViewModel can observe `QueueOperations.getCurrentItem()` (or equivalent) as a combine input. When the current queue item matches a song in the album, `currentSong` is set.
 
 ## Step 3–6: Follow the standard TDD migration order
 

@@ -63,8 +63,8 @@ Migrate `AlbumArtistDetailFragment` from MVP (Presenter + ViewBinders + Recycler
 | `AlbumArtistRepository` | Yes | `FakeAlbumArtistRepository` |
 | `AlbumRepository` | Yes | `FakeAlbumRepository` |
 | `SongRepository` | Yes | `FakeSongRepository` |
-| `PlaybackOperations` | Yes | `FakePlaybackManager` |
-| `QueueOperations` | Yes | `FakeQueueManager` |
+| `PlaybackOperations` | Yes | `FakePlaybackOperations` |
+| `QueueOperations` | Yes | `FakeQueueOperations` |
 | `PlaylistRepository` | Yes | `FakePlaylistRepository` |
 | `QueueWatcher` | Class | `createTestQueueWatcher()` |
 
@@ -79,7 +79,7 @@ All dependencies already have fakes. No new interfaces or fakes needed.
 | Shuffle albums | None | New — `ShuffleAlbums` use case |
 | Add to playlist | `AddToPlaylist` | Reuse |
 
-**ShuffleAlbums:** Groups songs by album, shuffles album order, keeps song order within albums, then plays. Extract as a use case because it coordinates queueManager + playbackManager with non-trivial logic.
+**ShuffleAlbums:** Groups songs by album, shuffles album order, keeps song order within albums, then plays. Extract as a use case because it coordinates queueOperations + playbackOperations with non-trivial logic.
 
 ## New Architecture
 
