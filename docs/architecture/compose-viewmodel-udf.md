@@ -2,7 +2,7 @@
 
 Canonical patterns for Compose screens backed by ViewModels. Apply these when migrating screens from MVP/Presenter to Compose/ViewModel.
 
-**Canonical examples:** `SongListViewModel` / `SongList`, `GenreListViewModel` / `GenreList`.
+**Canonical examples:** `SongListViewModel` / `SongsPage`, `GenreListViewModel` / `GenresPage` (both in `LibraryPages.kt`).
 
 ## 1. State is derived, not mutated
 
