@@ -78,8 +78,6 @@
     <string name="button_toggle_playback">प्लेबैक को टॉगल करें</string>
     <!-- Button to skip to the previous track-->
     <string name="button_skip_previous">पिछला छोड़ें</string>
-    <!-- 'Loading' text. Shown on various screens as their content is loading-->
-    <string name="loading">लोड हो रहा है…</string>
     <!-- Shown when the playback queue is empty -->
     <string name="queue_empty">कतार खाली</string>
 </resources>

@@ -20,10 +20,6 @@
     <string name="playlist_dialog_subtitle_clear">すべての曲が<xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g>から削除されます</string>
     <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">クリア</string>
-    <!-- Title of the list of Playlists -->
-    <string name="playlists_title_playlists">プレイリスト</string>
-    <!-- Title of the list of Smart Playlists. Smart Playlists are like regular playlists, but automatically populated under certain conditions (like, most-played) -->
-    <string name="playlists_title_smart_playlists">スマートプレイリスト</string>
     <!-- Dialog title, shown when user selects 'rename playlist'-->
     <string name="playlist_dialog_title_rename">プレイリスト名</string>
 </resources>

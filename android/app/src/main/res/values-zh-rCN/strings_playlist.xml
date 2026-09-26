@@ -20,10 +20,6 @@
     <string name="playlist_dialog_subtitle_clear">所有歌曲将从播放列表 <xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g> 中移除</string>
     <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">清除</string>
-    <!-- Title of the list of Playlists -->
-    <string name="playlists_title_playlists">播放列表</string>
-    <!-- Title of the list of Smart Playlists. Smart Playlists are like regular playlists, but automatically populated under certain conditions (like, most-played) -->
-    <string name="playlists_title_smart_playlists">智能播放列表</string>
     <!-- Dialog title, shown when user selects 'rename playlist'-->
     <string name="playlist_dialog_title_rename">播放列表名称</string>
 </resources>

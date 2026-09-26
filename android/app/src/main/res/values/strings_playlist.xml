@@ -20,10 +20,6 @@
     <string name="playlist_dialog_subtitle_clear">All songs will be removed from <xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g></string>
     <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">Clear</string>
-    <!-- Title of the list of Playlists -->
-    <string name="playlists_title_playlists">Playlists</string>
-    <!-- Title of the list of Smart Playlists. Smart Playlists are like regular playlists, but automatically populated under certain conditions (like, most-played) -->
-    <string name="playlists_title_smart_playlists">Smart Playlists</string>
     <!-- Dialog title, shown when user selects 'rename playlist'-->
     <string name="playlist_dialog_title_rename">Playlist Name</string>
     <!-- Menu option to export a playlist to an m3u file -->

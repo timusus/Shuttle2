@@ -46,8 +46,6 @@
     <string name="button_toggle_playback">切换播放</string>
     <!-- Button to skip to the previous track-->
     <string name="button_skip_previous">上一首</string>
-    <!-- 'Loading' text. Shown on various screens as their content is loading-->
-    <string name="loading">正在加载……</string>
     <!-- Shown when the playback queue is empty -->
     <string name="queue_empty">队列空</string>
 </resources>

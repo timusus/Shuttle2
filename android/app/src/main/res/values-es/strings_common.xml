@@ -51,8 +51,6 @@
     <string name="button_toggle_playback">Alternar reproducción</string>
     <!-- Button to skip to the previous track-->
     <string name="button_skip_previous">Saltar anterior</string>
-    <!-- 'Loading' text. Shown on various screens as their content is loading-->
-    <string name="loading">Cargando…</string>
     <!-- Shown when the playback queue is empty -->
     <string name="queue_empty">Cola vacía</string>
 </resources>
