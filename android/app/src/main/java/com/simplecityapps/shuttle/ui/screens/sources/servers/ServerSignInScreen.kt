@@ -116,6 +116,9 @@ private fun SignInFields(
         modifier = Modifier.verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
+        if (uiState.showProDisclosure) {
+            Text(stringResource(R.string.paywall_server_disclosure))
+        }
         val addressMissing = ServerSignInField.Address in form.missing
         OutlinedTextField(
             value = form.address,

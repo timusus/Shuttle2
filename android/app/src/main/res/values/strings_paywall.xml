@@ -57,4 +57,6 @@
     <string name="paywall_restored">Your purchase has been restored</string>
     <string name="paywall_nothing_to_restore">No S2 Pro purchase found for this Google account</string>
     <string name="paywall_restore_failed">Couldn\'t reach Google Play. Please try again.</string>
+    <!-- Add-server sign-in dialog: shown to Free users before they connect to a Jellyfin, Emby or Plex server -->
+    <string name="paywall_server_disclosure">Streaming from Jellyfin, Emby and Plex is part of S2 Pro. Free for 14 days.</string>
 </resources>

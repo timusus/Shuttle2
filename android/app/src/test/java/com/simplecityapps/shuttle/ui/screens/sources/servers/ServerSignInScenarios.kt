@@ -5,7 +5,8 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 fun serverSignInForm(
     type: MediaProviderType = MediaProviderType.Jellyfin,
     form: ServerSignInForm = ServerSignInForm(address = "http://"),
-) = ServerSignInUiState(type, form)
+    showProDisclosure: Boolean = false,
+) = ServerSignInUiState(type, form, showProDisclosure = showProDisclosure)
 
 fun serverSignInAuthenticating(type: MediaProviderType = MediaProviderType.Jellyfin) = ServerSignInUiState(type, step = ServerSignInStep.Authenticating)
 

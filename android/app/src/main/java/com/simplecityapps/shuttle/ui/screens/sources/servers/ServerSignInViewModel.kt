@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
+import com.simplecityapps.trial.Entitlement
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -49,6 +50,8 @@ data class ServerSignInUiState(
     val form: ServerSignInForm = ServerSignInForm(),
     val step: ServerSignInStep = ServerSignInStep.Form,
     val events: List<PendingEvent<ServerSignInEvent>> = emptyList(),
+    /** True for a Free user, who hasn't had the server trial yet or has used it up: streaming is S2 Pro. */
+    val showProDisclosure: Boolean = false,
 ) {
     /** Plex takes a two-factor code, and needs the password. */
     val asksForAuthCode: Boolean get() = type == MediaProviderType.Plex
@@ -72,6 +75,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     readServerLogin: ReadServerLogin,
     private val signInToServer: SignInToServer,
     private val forgetServerLogin: ForgetServerLogin,
+    entitlement: @JvmSuppressWildcards StateFlow<Entitlement>,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
@@ -92,8 +96,13 @@ class ServerSignInViewModel @AssistedInject constructor(
     private val events = PendingEvents<ServerSignInEvent>()
 
     val uiState: StateFlow<ServerSignInUiState> =
-        combine(form, step, events.flow) { form, step, events -> ServerSignInUiState(type, form, step, events) }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ServerSignInUiState(type, form.value, step.value))
+        combine(form, step, events.flow, entitlement) { form, step, events, entitlement ->
+            ServerSignInUiState(type, form, step, events, showProDisclosure = entitlement is Entitlement.Free)
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000),
+            ServerSignInUiState(type, form.value, step.value, showProDisclosure = entitlement.value is Entitlement.Free),
+        )
 
     fun onAddressChange(address: String) = form.update { it.copy(address = address, missing = it.missing - ServerSignInField.Address) }
 

@@ -110,6 +110,10 @@
     {
       "text": "The Equalizer screen now shows a chart of your equalizer's frequency response, live as you adjust it",
       "commits": []
+    },
+    {
+      "text": "The server sign-in screen now says that streaming from Jellyfin, Emby and Plex is part of S2 Pro, free for 14 days, before you connect",
+      "commits": []
     }
   ],
   "fixes": [
