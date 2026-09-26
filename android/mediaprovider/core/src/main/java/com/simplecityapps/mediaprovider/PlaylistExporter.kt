@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.simplecityapps.shuttle.model.Song
 import java.io.IOException
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -14,13 +14,14 @@ import timber.log.Timber
  */
 class PlaylistExporter(
     private val context: Context,
+    private val ioDispatcher: CoroutineDispatcher,
     private val m3uWriter: M3uWriter = M3uWriter()
 ) {
     suspend fun exportToUri(
         playlistName: String,
         songs: List<Song>,
         destinationUri: Uri
-    ): ExportResult = withContext(Dispatchers.IO) {
+    ): ExportResult = withContext(ioDispatcher) {
         try {
             val content = m3uWriter.write(songs)
             context.contentResolver.openOutputStream(destinationUri)?.use { outputStream ->

@@ -22,17 +22,11 @@ import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import java.io.File
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -57,7 +51,7 @@ class PlaylistDetailViewModelTest {
         RenamePlaylist(playlistRepository),
         ClearPlaylist(playlistRepository),
         DeletePlaylist(playlistRepository),
-        ExportPlaylist(PlaylistExporter(ApplicationProvider.getApplicationContext())),
+        ExportPlaylist(PlaylistExporter(ApplicationProvider.getApplicationContext(), mainDispatcherRule.testDispatcher)),
         ObserveCurrentSong(FakeQueueOperations()),
     )
 
@@ -179,12 +173,9 @@ class PlaylistDetailViewModelTest {
         viewModel.pendingEvents shouldBe emptyList()
 
         val file = File.createTempFile("playlist", ".m3u")
-        // The exporter writes on Dispatchers.IO, so wait for the result in real time rather than
-        // virtual time. The budget is generous (not a precision timing assertion) because a full
-        // parallel test run can leave this real IO write contending for host CPU (#464).
-        val result = async(start = CoroutineStart.UNDISPATCHED) { viewModel.uiState.first { it.events.isNotEmpty() }.events.single().value }
         viewModel.exportTo(Uri.fromFile(file).toString())
-        withContext(Dispatchers.Default) { withTimeout(30_000) { result.await() } } shouldBe PlaylistDetailEvent.ExportSucceeded
+        advanceUntilIdle()
+        viewModel.pendingEvents shouldBe listOf(PlaylistDetailEvent.ExportSucceeded)
         file.readText() shouldContain "#EXTM3U"
     }
 }

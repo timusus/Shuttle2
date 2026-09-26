@@ -8,6 +8,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
 import java.io.File
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,7 +17,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class ExportPlaylistTest {
 
-    private val exportPlaylist = ExportPlaylist(PlaylistExporter(ApplicationProvider.getApplicationContext()))
+    private val exportPlaylist = ExportPlaylist(PlaylistExporter(ApplicationProvider.getApplicationContext(), UnconfinedTestDispatcher()))
 
     @Test
     fun `writes the songs to the destination as m3u`() = runTest {

@@ -25,6 +25,7 @@ import java.time.Clock
 import java.util.*
 import javax.inject.Named
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 
 @InstallIn(SingletonComponent::class)
 @Module(includes = [AppBindsModule::class])
@@ -49,7 +50,8 @@ class AppModule {
     @Provides
     fun providePlaylistExporter(
         @ApplicationContext context: Context,
-    ): PlaylistExporter = PlaylistExporter(context)
+        @IoDispatcher ioDispatcher: CoroutineDispatcher,
+    ): PlaylistExporter = PlaylistExporter(context, ioDispatcher)
 
     @Provides
     fun provideSortPreferences(preference: SharedPreferences): SortPreferences = SortPreferenceManager(preference)
