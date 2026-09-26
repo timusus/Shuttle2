@@ -12,9 +12,7 @@ import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
-import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.shouldBe
@@ -25,12 +23,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
-/**
- * Focused ViewModel unit tests for behaviour that can't be observed through the UI.
- *
- * State derivation and selection are tested via [AlbumArtistDetailIntegrationTest] (real
- * ViewModel + real Composable + fakes). This file only covers side effects invisible to the UI.
- */
+/** Focused ViewModel unit tests for behaviour that can't be observed through the UI. */
 @ExperimentalCoroutinesApi
 class AlbumArtistDetailViewModelTest {
 
@@ -128,14 +121,7 @@ class AlbumArtistDetailViewModelTest {
             observeAlbums = testMediaActions.observeAlbums,
             observeSongs = testMediaActions.observeSongs,
             queueOperations = fakeQueueOperations,
-            playSongs = PlaySongs(FakeQueueOperations(), FakePlaybackOperations()),
-            shuffleSongs = ShuffleSongs(FakePlaybackOperations()),
             shuffleAlbums = ShuffleAlbums(shuffleQueueOperations, shufflePlaybackOperations),
-            addToPlaylistUseCase = testMediaActions.addToPlaylist,
-            resolveSongs = testMediaActions.resolveSongs,
-            enqueueSongs = testMediaActions.enqueueSongs,
-            excludeSongs = testMediaActions.excludeSongs,
-            deleteSongs = testMediaActions.deleteSongs,
             observePlaylists = testMediaActions.observePlaylists,
         )
     }
