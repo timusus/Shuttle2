@@ -187,7 +187,9 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
    | `FindGoToTarget` | app | Returns the presentation `NavigationTarget`; moves if it returns the album or artist instead |
    | `MediaAction` (`MediaActionType`, `MediaAction`, `MediaActionResult`, `SnackbarAction`, `NavigationTarget`, `MediaActionMessage`) | app | Presentation: the actions sheet's entries and what the UI shows afterwards |
    | `MediaActionMessageFormat` | app | Presentation: formats messages with Android resources |
-7. **Burn down `viewmodel-data-access`** screen by screen (audit batches A–C).
+7. ~~**Burn down `viewmodel-data-access`** screen by screen (audit batches A–C).~~ (done: the
+   last ViewModels moved onto use cases in 6dc03d5b4, and the `viewmodel-data-access` and
+   `presentation-data-imports` baselines are empty, so any new violation fails the build.)
 8. **Split presentation** out of `:android:app` into `:android:ui` (screens, ViewModels,
    screen use cases) that depends on domain and designsystem only; `:android:app` keeps the
    Application, `MainActivity`, services and DI. `VerifyModuleLayers` then enforces presentation →
