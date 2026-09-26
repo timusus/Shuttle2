@@ -19,7 +19,9 @@
 #    --max-workers=6 unless the args name their own (REMOTE_BUILD_MAX_WORKERS changes the default;
 #    the default drops to 4 when remote-emu.sh shows a lane leased on the box);
 # 4. streams a condensed log -- failed tasks and tests, compiler errors, the "What went wrong"
-#    block, the BUILD line -- while the whole log goes to build/remote-build/gradle.log;
+#    block, the BUILD line -- while the whole log goes to build/remote-build/gradle.log; prints the
+#    slot wait time and the Gradle wall time separately once the build finishes, so a slow run can
+#    be told apart from a starved one;
 # 5. syncs back APKs (build/outputs/apk), test results, reports and Roborazzi outputs into the
 #    same paths here, plus the full log, then drops any of those report dirs the box no longer has
 #    so one a previous run wrote and this one didn't re-run can't linger (#459) -- and exits with
@@ -136,13 +138,15 @@ try_slots() {
     done
     return 1
 }
+slot_wait_start=$SECONDS
 if ! try_slots; then
     echo "remote-build: waiting for a box build slot (all $slots busy)" >&2
     until try_slots; do
         sleep 3
     done
 fi
-echo "remote-build: using box build slot $slot" >&2
+slot_wait=$((SECONDS - slot_wait_start))
+echo "remote-build: using box build slot $slot (waited ${slot_wait}s)" >&2
 
 export JAVA_HOME="$HOME/opt/jdk-21"
 export ANDROID_HOME=/opt/android-sdk ANDROID_SDK_ROOT=/opt/android-sdk
@@ -151,13 +155,17 @@ export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
 [ -x "$JAVA_HOME/bin/java" ] || { echo "remote-build: no JDK on the box; run support/scripts/remote-build-setup.sh" >&2; exit 1; }
 printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
 mkdir -p build/remote-build
+gradle_start=$SECONDS
 nice -n "$nice_level" ./gradlew --console=plain "$@" </dev/null 2>&1 | tee build/remote-build/gradle.log | awk '
     /^\* What went wrong:/ { block = 1 }
     /^\* Try:/ { block = 0 }
     block || /^e: / || /: error:/ || / FAILED$/ || /^FAILURE:/ || /^BUILD (SUCCESSFUL|FAILED)/ \
         || /tests completed/ || / actionable tasks:/ { print; fflush() }
 '
-exit "${PIPESTATUS[0]}"
+gradle_rc="${PIPESTATUS[0]}"
+gradle_wall=$((SECONDS - gradle_start))
+echo "remote-build: slot wait ${slot_wait}s; gradle wall time ${gradle_wall}s" >&2
+exit "$gradle_rc"
 REMOTE
 rc=$?
 set -e
