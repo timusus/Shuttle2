@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
-import android.content.Context
+import android.content.SharedPreferences
+import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
@@ -11,7 +12,6 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
-import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
@@ -27,23 +27,19 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class SettingsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
 
-    private val context: Context = RuntimeEnvironment.getApplication()
+    private val prefs: SharedPreferences = FakeSharedPreferences()
     private val effects = FakeSettingsEffects()
     private lateinit var store: SettingsStore
 
     @Before
     fun setUp() {
-        store = SettingsStore(context.defaultSharedPreferences().apply { edit().clear().commit() })
+        store = SettingsStore(prefs)
     }
 
     private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects)
@@ -75,7 +71,7 @@ class SettingsViewModelTest {
         viewModel().onChoiceSelect(item<SettingItem.Choice<*>>(AppearanceSettings.Theme.key), 2)
 
         store.preference(AppearanceSettings.Theme).value shouldBe ThemeMode.Dark
-        context.defaultSharedPreferences().getString(AppearanceSettings.Theme.key, null) shouldBe "2"
+        prefs.getString(AppearanceSettings.Theme.key, null) shouldBe "2"
         effects.changes shouldBe listOf(AppearanceSettings.Theme.key to ThemeMode.Dark)
     }
 
@@ -85,7 +81,7 @@ class SettingsViewModelTest {
 
         store.preference(StreamingSettings.MeteredQuality).value shouldBe StreamingQuality.Kbps128
         store.preference(StreamingSettings.UnmeteredQuality).value shouldBe StreamingQuality.Original
-        context.defaultSharedPreferences().getString(StreamingSettings.MeteredQuality.key, null) shouldBe "Kbps128"
+        prefs.getString(StreamingSettings.MeteredQuality.key, null) shouldBe "Kbps128"
         StreamingBitrateCap(StreamingSettings(store)) { true }.maxBitrateKbps() shouldBe 128
     }
 
