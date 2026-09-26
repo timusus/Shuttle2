@@ -14,6 +14,7 @@ class SourcesSettings @Inject constructor(
     val excludedFolders = store.preference(ExcludedFolders)
     val extraFolders = store.preference(ExtraFolders)
     val includedFolders = store.preference(IncludedFolders)
+    val includedFoldersMigrated = store.preference(IncludedFoldersMigrated)
 
     companion object {
         /** Whether the music permission has been asked for, so a later refusal without a rationale reads as permanent. */
@@ -30,6 +31,12 @@ class SourcesSettings @Inject constructor(
          * flag them instead of them silently vanishing (#479).
          */
         val IncludedFolders = stringList("scanner_included_folders")
+
+        /**
+         * Whether the SAF grants held before [IncludedFolders] existed have been carried into it. Adopted once, so a
+         * grant taken or left behind later never becomes an include by itself, and an emptied list stays empty.
+         */
+        val IncludedFoldersMigrated = Setting.boolean("scanner_included_folders_migrated", false)
 
         private fun stringList(key: String): Setting<List<String>> = Setting.string(
             key = key,
