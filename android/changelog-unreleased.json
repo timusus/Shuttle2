@@ -245,7 +245,7 @@
     },
     {
       "text": "Shuffle on the Albums tab now plays whole albums in a random order, with each album's songs in their normal track order, instead of shuffling every song individually",
-      "commits": []
+      "commits": ["0e280089"]
     }
   ]
 }

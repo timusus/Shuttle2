@@ -18,7 +18,7 @@ class ShuffleAlbums @Inject constructor(
 
     suspend operator fun invoke(songs: List<Song>): Result {
         val shuffled = songs
-            .groupBy { it.album }
+            .groupBy { it.albumGroupKey }
             .entries
             .shuffled()
             .flatMap { it.value }

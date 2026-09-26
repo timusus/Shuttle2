@@ -96,10 +96,10 @@ class AlbumListViewModel @Inject constructor(
 
     fun onShuffle() {
         viewModelScope.launch {
-            // ShuffleAlbums groups songs by album without reordering within a group, so each
-            // album's songs must already be in track order before it shuffles the album order.
+            // ShuffleAlbums groups songs by albumGroupKey without reordering within a group, so
+            // each album's songs must already be in track order before it shuffles the album order.
             val allSongs = observeSongs().firstOrNull().orEmpty()
-                .sortedWith(compareBy({ it.album }, { it.disc }, { it.track }))
+                .sortedWith(compareBy({ it.albumGroupKey.key }, { it.albumGroupKey.albumArtistGroupKey?.key }, { it.disc }, { it.track }))
             val result = shuffleAlbums(allSongs)
             if (result is ShuffleAlbums.Result.Failure) {
                 _events.emit(AlbumListUiEvent.PlaybackFailed(result.message))

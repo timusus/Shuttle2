@@ -67,6 +67,30 @@ class AlbumListViewModelTest {
     }
 
     @Test
+    fun `onShuffle keeps same-titled albums by different artists as separate units`() = runTest {
+        fakeSongRepository.setSongs(
+            listOf(
+                createSong(id = 1, name = "Artist A Track 2", albumArtist = "Artist A", album = "Greatest Hits", track = 2),
+                createSong(id = 2, name = "Artist B Track 1", albumArtist = "Artist B", album = "Greatest Hits", track = 1),
+                createSong(id = 3, name = "Artist A Track 1", albumArtist = "Artist A", album = "Greatest Hits", track = 1),
+                createSong(id = 4, name = "Artist B Track 2", albumArtist = "Artist B", album = "Greatest Hits", track = 2),
+            )
+        )
+        fakeImportState.setState(importComplete())
+        val viewModel = createViewModel()
+
+        viewModel.onShuffle()
+        advanceUntilIdle()
+
+        val queuedNames = fakeQueueManager.lastSetQueue.orEmpty().map { it.name }
+        val possibleOrders = listOf(
+            listOf("Artist A Track 1", "Artist A Track 2", "Artist B Track 1", "Artist B Track 2"),
+            listOf("Artist B Track 1", "Artist B Track 2", "Artist A Track 1", "Artist A Track 2"),
+        )
+        (queuedNames in possibleOrders) shouldBe true
+    }
+
+    @Test
     fun `onShuffle does not enable shuffle mode`() = runTest {
         fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Solo", album = "Only Album")))
         fakeImportState.setState(importComplete())
