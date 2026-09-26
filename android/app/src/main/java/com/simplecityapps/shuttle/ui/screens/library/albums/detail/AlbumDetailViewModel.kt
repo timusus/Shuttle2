@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Song
@@ -10,6 +11,7 @@ import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -17,6 +19,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 
 data class AlbumDetailUiState(
@@ -24,6 +28,8 @@ data class AlbumDetailUiState(
     val songs: List<Song> = emptyList(),
     val currentSong: Song? = null,
     val loadingState: LoadingState = LoadingState.Loading,
+    /** The album artwork's seed, which tints the screen when Colour from artwork is on. */
+    val seed: ArtworkSeed = ArtworkSeed.None,
 ) {
     enum class LoadingState { Loading, Ready, Empty }
 }
@@ -38,6 +44,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
     observeSongs: ObserveSongs,
     observeAlbums: ObserveAlbums,
     observeCurrentSong: ObserveCurrentSong,
+    observeArtworkSeed: ObserveArtworkSeed,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -45,11 +52,15 @@ class AlbumDetailViewModel @AssistedInject constructor(
         fun create(groupKey: AlbumGroupKey?): AlbumDetailViewModel
     }
 
+    private val songs = observeSongs(SongQuery.AlbumGroupKey(key = groupKey))
+        .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
+
     val uiState: StateFlow<AlbumDetailUiState> = combine(
-        observeSongs(SongQuery.AlbumGroupKey(key = groupKey)),
+        songs,
         observeAlbums(AlbumQuery.AlbumGroupKey(groupKey)),
         observeCurrentSong(),
-    ) { songs, albums, currentSong ->
+        observeArtworkSeed(songs.map { it.firstOrNull() }),
+    ) { songs, albums, currentSong, seed ->
         AlbumDetailUiState(
             album = albums.firstOrNull(),
             songs = songs,
@@ -59,6 +70,7 @@ class AlbumDetailViewModel @AssistedInject constructor(
             } else {
                 AlbumDetailUiState.LoadingState.Ready
             },
+            seed = seed,
         )
     }.stateIn(
         scope = viewModelScope,

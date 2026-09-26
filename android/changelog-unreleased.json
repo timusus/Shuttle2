@@ -60,6 +60,10 @@
     {
       "text": "S2 now shares anonymous usage stats to help improve the app, alongside crash reports, unless you've turned either off. You can turn either off any time in Settings, Privacy, where changes take effect straight away without restarting the app. If you already had S2 and never chose, usage stats turn on with this update, and Home shows a one-time message about it",
       "commits": ["0852f1db", "89175fc6a"]
+    },
+    {
+      "text": "Album and artist pages take their colours from the album artwork when Colour from artwork is on in Appearance settings",
+      "commits": []
     }
   ],
   "improvements": [

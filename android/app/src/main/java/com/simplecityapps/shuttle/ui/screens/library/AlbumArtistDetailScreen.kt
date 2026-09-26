@@ -22,6 +22,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.designsystem.component.formatDuration
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
@@ -59,62 +60,65 @@ fun AlbumArtistDetailScreen(
         else -> DetailContentState.Ready
     }
     val unknown = stringResource(com.simplecityapps.core.R.string.unknown)
-    LibraryDetailScaffold(
-        state = state,
-        title = artist?.name ?: artist?.friendlyArtistName ?: unknown,
-        subtitle = artist?.let { listOf(pluralString(R.plurals.albumsPlural, uiState.albums.size), pluralString(R.plurals.songsPlural, uiState.songs.size)).joinToString(" · ") },
-        artwork = artist,
-        placeholder = ArtworkPlaceholder.Artist,
-        artworkShape = ArtworkShape.Circle,
-        onNavigateUp = onNavigateUp,
-        onPlay = { onPlay(uiState.songs, 0) },
-        onShuffle = onShuffle,
-        onMore = { artist?.let(onArtistMore) },
-        modifier = modifier.testTag("artist-detail"),
-    ) {
-        if (uiState.albums.isNotEmpty()) {
-            item(key = "albums-header", contentType = "header") { SectionHeader(title = stringResource(R.string.artist_detail_albums)) }
-        }
-        uiState.albums.forEach { album ->
-            val expanded = album.groupKey in uiState.expandedAlbums
-            item(key = "album-${album.groupKey}", contentType = "album") {
-                AlbumRow(
-                    title = album.name ?: unknown,
-                    artist = listOfNotNull(album.year?.toString(), pluralString(R.plurals.songsPlural, album.songCount)).joinToString(" · "),
-                    onClick = { onAlbumClick(album) },
-                    artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, size = ArtworkSize.Medium) },
-                    selected = expanded,
-                    onMore = { onAlbumMore(album) },
-                )
+    // The artwork tints the whole screen, as the player does, when Colour from artwork is on (#496).
+    ArtworkTheme(uiState.seed) {
+        LibraryDetailScaffold(
+            state = state,
+            title = artist?.name ?: artist?.friendlyArtistName ?: unknown,
+            subtitle = artist?.let { listOf(pluralString(R.plurals.albumsPlural, uiState.albums.size), pluralString(R.plurals.songsPlural, uiState.songs.size)).joinToString(" · ") },
+            artwork = artist,
+            placeholder = ArtworkPlaceholder.Artist,
+            artworkShape = ArtworkShape.Circle,
+            onNavigateUp = onNavigateUp,
+            onPlay = { onPlay(uiState.songs, 0) },
+            onShuffle = onShuffle,
+            onMore = { artist?.let(onArtistMore) },
+            modifier = modifier.testTag("artist-detail"),
+        ) {
+            if (uiState.albums.isNotEmpty()) {
+                item(key = "albums-header", contentType = "header") { SectionHeader(title = stringResource(R.string.artist_detail_albums)) }
             }
-            if (expanded) {
-                val albumSongs = uiState.songsForAlbum(album)
-                items(albumSongs, key = { "album-${album.groupKey}-song-${it.id}" }, contentType = { "song" }) { song ->
-                    SongRow(
-                        title = song.name ?: unknown,
-                        subtitle = song.friendlyArtistName.orEmpty(),
-                        onClick = { onPlay(albumSongs, albumSongs.indexOf(song)) },
-                        trackNumber = song.track,
-                        duration = formatDuration(song.duration.toLong()),
-                        playing = song.id == uiState.currentSong?.id,
-                        onMore = { onSongMore(song) },
+            uiState.albums.forEach { album ->
+                val expanded = album.groupKey in uiState.expandedAlbums
+                item(key = "album-${album.groupKey}", contentType = "album") {
+                    AlbumRow(
+                        title = album.name ?: unknown,
+                        artist = listOfNotNull(album.year?.toString(), pluralString(R.plurals.songsPlural, album.songCount)).joinToString(" · "),
+                        onClick = { onAlbumClick(album) },
+                        artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, size = ArtworkSize.Medium) },
+                        selected = expanded,
+                        onMore = { onAlbumMore(album) },
                     )
                 }
+                if (expanded) {
+                    val albumSongs = uiState.songsForAlbum(album)
+                    items(albumSongs, key = { "album-${album.groupKey}-song-${it.id}" }, contentType = { "song" }) { song ->
+                        SongRow(
+                            title = song.name ?: unknown,
+                            subtitle = song.friendlyArtistName.orEmpty(),
+                            onClick = { onPlay(albumSongs, albumSongs.indexOf(song)) },
+                            trackNumber = song.track,
+                            duration = formatDuration(song.duration.toLong()),
+                            playing = song.id == uiState.currentSong?.id,
+                            onMore = { onSongMore(song) },
+                        )
+                    }
+                }
             }
-        }
-        if (uiState.songs.isNotEmpty()) {
-            item(key = "songs-header", contentType = "header") { SectionHeader(title = stringResource(R.string.artist_detail_songs)) }
-        }
-        items(uiState.songs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
-            SongRow(
-                title = song.name ?: unknown,
-                subtitle = song.album.orEmpty(),
-                onClick = { onPlay(uiState.songs, uiState.songs.indexOf(song)) },
-                artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
-                duration = formatDuration(song.duration.toLong()),
-                playing = song.id == uiState.currentSong?.id,
-                onMore = { onSongMore(song) },
-            )
+            if (uiState.songs.isNotEmpty()) {
+                item(key = "songs-header", contentType = "header") { SectionHeader(title = stringResource(R.string.artist_detail_songs)) }
+            }
+            items(uiState.songs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
+                SongRow(
+                    title = song.name ?: unknown,
+                    subtitle = song.album.orEmpty(),
+                    onClick = { onPlay(uiState.songs, uiState.songs.indexOf(song)) },
+                    artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
+                    duration = formatDuration(song.duration.toLong()),
+                    playing = song.id == uiState.currentSong?.id,
+                    onMore = { onSongMore(song) },
+                )
+            }
         }
     }
 }

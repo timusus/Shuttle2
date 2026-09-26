@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
+import androidx.compose.ui.graphics.Color
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumRepository
@@ -11,10 +12,15 @@ import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
+import com.simplecityapps.shuttle.ui.shell.player.ArtworkSeedSource
+import com.simplecityapps.shuttle.ui.shell.player.ColourFromArtworkPreference
+import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -27,6 +33,15 @@ class AlbumDetailViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    private val seededAlbums = mutableListOf<String?>()
+    private val seedSource = ArtworkSeedSource { song ->
+        seededAlbums += song.album
+        ArtworkSeed.Available(Color.Red)
+    }
+    private val colourFromArtwork = object : ColourFromArtworkPreference {
+        override val enabled = MutableStateFlow(true)
+    }
 
     private val fakeSongRepository = FakeSongRepository()
     private val fakeAlbumRepository = FakeAlbumRepository()
@@ -94,6 +109,31 @@ class AlbumDetailViewModelTest {
         viewModel.uiState.value.currentSong shouldBe song
     }
 
+    @Test
+    fun `the album artwork tints the screen while Colour from artwork is on`() = runTest {
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, album = "Cassette Summer", albumArtist = "The Tin Orchards")))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.seed shouldBe ArtworkSeed.Available(Color.Red)
+        seededAlbums shouldBe listOf("Cassette Summer")
+    }
+
+    @Test
+    fun `no tint while Colour from artwork is off`() = runTest {
+        colourFromArtwork.enabled.value = false
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, album = "Cassette Summer", albumArtist = "The Tin Orchards")))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.seed shouldBe ArtworkSeed.None
+        seededAlbums shouldBe emptyList()
+    }
+
     private fun createViewModel(): AlbumDetailViewModel {
         val testMediaActions = TestMediaActions(
             fakeSongRepository,
@@ -108,6 +148,7 @@ class AlbumDetailViewModelTest {
             observeSongs = testMediaActions.observeSongs,
             observeAlbums = testMediaActions.observeAlbums,
             observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
+            observeArtworkSeed = ObserveArtworkSeed(seedSource, colourFromArtwork),
         )
     }
 }

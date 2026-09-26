@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.designsystem.component.formatDuration
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -42,35 +43,38 @@ fun AlbumDetailScreen(
         else -> DetailContentState.Ready
     }
     val songs = uiState.songs
-    LibraryDetailScaffold(
-        state = state,
-        title = album?.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-        subtitle = album?.let { albumSubtitle(it) },
-        artwork = album,
-        placeholder = ArtworkPlaceholder.Album,
-        onNavigateUp = onNavigateUp,
-        onPlay = { onPlay(songs, 0) },
-        onShuffle = onShuffle,
-        onMore = { album?.let(onAlbumMore) },
-        modifier = modifier.testTag("album-detail"),
-    ) {
-        val discs = songs.groupBy { it.disc ?: 1 }.toSortedMap()
-        discs.forEach { (disc, discSongs) ->
-            if (discs.size > 1) {
-                item(key = "disc-$disc", contentType = "disc") {
-                    SectionHeader(title = stringResource(R.string.album_detail_disc, disc))
+    // The artwork tints the whole screen, as the player does, when Colour from artwork is on (#496).
+    ArtworkTheme(uiState.seed) {
+        LibraryDetailScaffold(
+            state = state,
+            title = album?.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+            subtitle = album?.let { albumSubtitle(it) },
+            artwork = album,
+            placeholder = ArtworkPlaceholder.Album,
+            onNavigateUp = onNavigateUp,
+            onPlay = { onPlay(songs, 0) },
+            onShuffle = onShuffle,
+            onMore = { album?.let(onAlbumMore) },
+            modifier = modifier.testTag("album-detail"),
+        ) {
+            val discs = songs.groupBy { it.disc ?: 1 }.toSortedMap()
+            discs.forEach { (disc, discSongs) ->
+                if (discs.size > 1) {
+                    item(key = "disc-$disc", contentType = "disc") {
+                        SectionHeader(title = stringResource(R.string.album_detail_disc, disc))
+                    }
                 }
-            }
-            items(discSongs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
-                SongRow(
-                    title = song.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-                    subtitle = song.friendlyArtistName.orEmpty(),
-                    onClick = { onPlay(songs, songs.indexOf(song)) },
-                    trackNumber = song.track,
-                    duration = formatDuration(song.duration.toLong()),
-                    playing = song.id == uiState.currentSong?.id,
-                    onMore = { onSongMore(song) },
-                )
+                items(discSongs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
+                    SongRow(
+                        title = song.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                        subtitle = song.friendlyArtistName.orEmpty(),
+                        onClick = { onPlay(songs, songs.indexOf(song)) },
+                        trackNumber = song.track,
+                        duration = formatDuration(song.duration.toLong()),
+                        playing = song.id == uiState.currentSong?.id,
+                        onMore = { onSongMore(song) },
+                    )
+                }
             }
         }
     }

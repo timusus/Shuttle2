@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
+import androidx.compose.ui.graphics.Color
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createSong
@@ -11,13 +12,18 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
+import com.simplecityapps.shuttle.ui.shell.player.ArtworkSeedSource
+import com.simplecityapps.shuttle.ui.shell.player.ColourFromArtworkPreference
+import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -30,6 +36,15 @@ class AlbumArtistDetailViewModelTest {
 
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    private val seededAlbums = mutableListOf<String?>()
+    private val seedSource = ArtworkSeedSource { song ->
+        seededAlbums += song.album
+        ArtworkSeed.Available(Color.Red)
+    }
+    private val colourFromArtwork = object : ColourFromArtworkPreference {
+        override val enabled = MutableStateFlow(true)
+    }
 
     private val fakeAlbumArtistRepository = FakeAlbumArtistRepository()
     private val fakeAlbumRepository = FakeAlbumRepository()
@@ -208,6 +223,41 @@ class AlbumArtistDetailViewModelTest {
         runs
     }
 
+    @Test
+    fun `the newest album's artwork tints the screen`() = runTest {
+        val lanternHours = createSong(id = 1, album = "Lantern Hours", albumArtist = "The Tin Orchards")
+        val looseChange = createSong(id = 2, album = "Loose Change", albumArtist = "The Tin Orchards")
+        fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
+        fakeAlbumRepository.setAlbums(
+            listOf(
+                createAlbum(name = "Lantern Hours", albumArtist = "The Tin Orchards", year = 1963, groupKey = lanternHours.albumGroupKey),
+                createAlbum(name = "Loose Change", albumArtist = "The Tin Orchards", year = 1970, groupKey = looseChange.albumGroupKey),
+            ),
+        )
+        fakeSongRepository.setSongs(listOf(lanternHours, looseChange))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.seed shouldBe ArtworkSeed.Available(Color.Red)
+        seededAlbums shouldBe listOf("Loose Change")
+    }
+
+    @Test
+    fun `turning Colour from artwork off drops the tint`() = runTest {
+        fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
+        fakeAlbumRepository.setAlbums(listOf(createAlbum(name = "Loose Change", albumArtist = "The Tin Orchards", year = 1970)))
+        fakeSongRepository.setSongs(listOf(createSong(id = 2, album = "Loose Change", albumArtist = "The Tin Orchards")))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        colourFromArtwork.enabled.value = false
+        advanceUntilIdle()
+
+        viewModel.uiState.value.seed shouldBe ArtworkSeed.None
+    }
+
     private fun createViewModel(): AlbumArtistDetailViewModel {
         val testMediaActions = TestMediaActions(
             fakeSongRepository,
@@ -224,6 +274,7 @@ class AlbumArtistDetailViewModelTest {
             observeAlbums = testMediaActions.observeAlbums,
             observeSongs = testMediaActions.observeSongs,
             observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
+            observeArtworkSeed = ObserveArtworkSeed(seedSource, colourFromArtwork),
             shuffleAlbums = ShuffleAlbums(shuffleQueueOperations, shufflePlaybackOperations),
         )
     }

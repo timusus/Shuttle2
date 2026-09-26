@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
+import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumGroupKey
@@ -15,6 +16,8 @@ data class AlbumArtistDetailUiState(
     val expandedAlbums: Set<AlbumGroupKey> = emptySet(),
     val loadingState: LoadingState = LoadingState.Loading,
     val events: List<PendingEvent<AlbumArtistDetailEvent>> = emptyList(),
+    /** The newest album's artwork seed, which tints the screen when Colour from artwork is on. */
+    val seed: ArtworkSeed = ArtworkSeed.None,
 ) {
     enum class LoadingState { Loading, Ready, Empty }
 
