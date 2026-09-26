@@ -698,6 +698,90 @@ class PlaybackSpecTest {
         }
     }
 
+    @Test
+    fun `toggling shuffle on reshuffles the queue keeping the current song first, and toggling it off restores the original order`() {
+        val songs = (1L..5L).map { song(it) }
+        loadPaused(songs)
+
+        harness.run { queue.toggleShuffleMode() }
+
+        queue.shuffleModeFlow.value shouldBe ShuffleMode.On
+        val shuffled = queue.queueStateFlow.value.items
+        shuffled.first().song shouldBe songs[0]
+        shuffled.map { it.song }.toSet() shouldBe songs.toSet()
+        queue.getQueue(ShuffleMode.Off).map { it.song } shouldBe songs
+
+        harness.run { queue.toggleShuffleMode() }
+
+        queue.shuffleModeFlow.value shouldBe ShuffleMode.Off
+        queue.queueStateFlow.value.items.map { it.song } shouldBe songs
+        queue.queueStateFlow.value.currentItem?.song shouldBe songs[0]
+    }
+
+    @Test
+    fun `repeat all plays on from the last song back to the first`() {
+        // The wrapped-to song (index 0) is the long file: the wraparound is a discontinuity seek, not a plain
+        // auto-transition, and #551's wall-time overshoot is more likely to carry a step past a short one.
+        val songs = listOf(song(1, file = TONE_3S), song(2, file = TONE_1S), song(3, file = TONE_1S))
+        startPlaying(songs)
+        queue.setRepeatMode(RepeatMode.All)
+        playback.skipTo(2)
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
+        val ended = harness.record(playback.trackEndedFlow)
+
+        harness.runUntil { ended.isNotEmpty() }
+
+        ended.first() shouldBe songs[2]
+        queue.queueStateFlow.value.currentItem?.song shouldBe songs[0]
+        playback.playbackStateFlow.value shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `repeat off stops playback at the end of the queue, keeping audio focus`() {
+        val songs = listOf(song(1, file = TONE_1S), song(2, file = TONE_1S))
+        startPlaying(songs)
+        queue.setRepeatMode(RepeatMode.Off)
+        playback.skipTo(1)
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
+        val ended = harness.record(playback.trackEndedFlow)
+
+        harness.runUntil { ended.isNotEmpty() }
+        harness.idle()
+
+        ended shouldBe listOf(songs[1])
+        queue.queueStateFlow.value.currentItem?.song shouldBe songs[1]
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        harness.audioFocus.abandons shouldBe 0
+    }
+
+    @Test
+    fun `play next and add to queue insert new items even when the song is already queued, and moving and removing act on the item chosen`() {
+        val songs = (1L..5L).map { song(it) }
+        loadPaused(songs)
+        val originalThird = queue.queueStateFlow.value.items[2]
+
+        harness.run { playback.playNext(listOf(songs[3])) }
+        harness.idle()
+        harness.run { playback.addToQueue(listOf(songs[1])) }
+        harness.idle()
+        queue.remove(listOf(originalThird))
+        harness.idle()
+        val fifthIndex = queue.queueStateFlow.value.items.indexOfFirst { it.song == songs[4] }
+        playback.moveQueueItem(fifthIndex, 1)
+        harness.idle()
+
+        queue.queueStateFlow.value.items.map { it.song } shouldBe
+            listOf(songs[0], songs[4], songs[3], songs[1], songs[3], songs[1])
+        queue.queueStateFlow.value.items.map { it.uid }.toSet().size shouldBe 6
+        queue.queueStateFlow.value.currentItem?.song shouldBe songs[0]
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+
+        playback.skipToNext()
+        harness.runUntil { queue.queueStateFlow.value.currentItem?.song == songs[4] }
+        playback.skipToNext()
+        harness.runUntil { queue.queueStateFlow.value.currentItem?.song == songs[3] }
+    }
+
     /** Holds the builds dispatched to it until [runAll], which finishes the latest first. */
     private class HeldDispatcher : CoroutineDispatcher() {
         private val tasks = ArrayDeque<Runnable>()

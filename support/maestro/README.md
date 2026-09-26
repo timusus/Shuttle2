@@ -57,7 +57,7 @@ To run a flow by hand:
 
 ```bash
 maestro --device "$(support/scripts/remote-emu.sh serial)" test --test-output-dir tmp/maestro \
-  support/maestro/queue-shuffle.yaml
+  support/maestro/playback-controls.yaml
 ```
 
 ## Writing a flow
@@ -110,15 +110,15 @@ or `env:` from a parent flow's `runFlow` step:
       TAB: Albums
 ```
 
-`support/maestro/queue-shuffle.yaml` is a worked example: it composes `nav/open-now-playing.yaml`
-plus a couple of taps and a screenshot, instead of hand-rolling the player-to-queue navigation.
+`support/maestro/playback-controls.yaml` is a worked example: it composes `nav/open-library-tab.yaml`
+plus a run of taps and screenshots, instead of hand-rolling the library-to-player navigation.
 
 ## Adding a new check
 
 1. Decide UI-only vs. device-only against `CLASSIFICATION.md`'s criteria (above). A UI-only
    behaviour goes into a Robolectric test instead, not a new flow.
 2. Write the flow (or reuse a `nav/` one via `runFlow`) under `support/maestro/`.
-3. Write a `support/scripts/checks/<name>.sh` wrapper (see `queue-shuffle.sh`): set up
+3. Write a `support/scripts/checks/<name>.sh` wrapper (see `playback-controls.sh`): set up
    playback state with the receivers, pause, then run `maestro test --device "$(remote-emu.sh
    serial)"` against the flow, `fail` on a non-zero exit.
 4. Add a row to `CLASSIFICATION.md`'s "Device-only (kept)" table.

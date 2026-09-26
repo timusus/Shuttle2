@@ -53,8 +53,8 @@ The rows are the parity checklist in
 | Search: artists, albums, songs; fuzzy ranking; filter chips persisted; shared-element open | `screens/search/SearchScreen`, `SearchViewModel`, `LibrarySearchIndex` | `SearchScreenTest`, `SearchViewModelTest`, `SearchLibraryTest`, `SearchScreenshotTest` | Shared-element open: #431 |
 | Home sections and Shuffle all (redesigned per owner decision 4) | `screens/home/HomeScreen`, `HomeSections`, `HomeViewModel` | `HomeScreenTest`, `HomeSectionsTest`, `HomeViewModelTest`, `HomeScreenshotTest` | |
 | Mini player: progress, play/pause, skip, long-press seek | `shell/player/MiniPlayer` | `AppShellTest`, `ShellScreenshotTest`; `playback-controls` | Long-press seek: #430 |
-| Now Playing: artwork swipe skip, shuffle, repeat ×3, seek, long-press seek, audiobook seek buttons, artist/album links, Cast, lyrics, favorite, clear queue | `shell/player/NowPlaying`, `PlayerContent`, `PlayerViewModel` | `PlayerViewModelTest`, `PlayerLevelTest`, `PlayerExtrasScreenshotTest`, `AppShellTest`; `repeat-modes` | Long-press and audiobook seek: #430. Lyrics: #429 |
-| Queue: tap to play, reorder, remove, Play next, scroll to current, save as playlist, clear | `shell/player/QueueList` | `PlayerViewModelTest`, `NewPlaylistFormTest`, `AppShellTest`; `queue-actions`, `queue-shuffle` | |
+| Now Playing: artwork swipe skip, shuffle, repeat ×3, seek, long-press seek, audiobook seek buttons, artist/album links, Cast, lyrics, favorite, clear queue | `shell/player/NowPlaying`, `PlayerContent`, `PlayerViewModel` | `PlayerViewModelTest`, `PlayerLevelTest`, `PlayerExtrasScreenshotTest`, `AppShellTest`; `PlaybackSpecTest` (repeat modes, #543) | Long-press and audiobook seek: #430. Lyrics: #429 |
+| Queue: tap to play, reorder, remove, Play next, scroll to current, save as playlist, clear | `shell/player/QueueList` | `PlayerViewModelTest`, `NewPlaylistFormTest`, `AppShellTest`; `PlaybackSpecTest` (queue actions, shuffle, #543) | |
 
 ## Sources and settings
 

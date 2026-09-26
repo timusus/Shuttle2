@@ -44,8 +44,9 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
 - Multi-select bar: Add to queue, Add to playlist, Edit tags (sanitised per provider).
 - States: loading, "scan in progress" bar, `song_list_empty`.
 - Redesign: already Compose; restyle rows, Shuffle becomes an extended FAB or header button.
-- Maestro: `queue-actions` (Play next / Add to queue from this tab), `nav/create-testlist`. `select-song` +
-  `song-still-selected`, `songs-fast-scroll-drag` and `library-multiselect-back` ported to JVM tests (#450).
+- Maestro: `nav/create-testlist`. `select-song` + `song-still-selected`, `songs-fast-scroll-drag` and
+  `library-multiselect-back` ported to JVM tests (#450); Play next / Add to queue from this tab in
+  `PlaybackSpecTest` (#543, was `queue-actions`).
 
 ### Albums tab (Compose) — Keep
 - List or 3-column grid (`pref_album_view_mode`); sort by name, artist, year, Random (reseeded only
@@ -168,7 +169,8 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   entry in the overflow (owner decision 2); tabletop split (app-shell §2). Done (#377, #400): the
   overflow's "Playback & sound" sheet sets speed (0.5–2×, pitch kept) and ReplayGain mode and links
   to the Equalizer and Settings > Playback & sound; a speed other than 1× shows as a header chip.
-- Maestro: `playback-controls`, `repeat-modes`, `queue-shuffle`, `nav/open-now-playing` (`sleep-timer` ported to `AppShellTest`, #450).
+- Maestro: `playback-controls`, `nav/open-now-playing` (`sleep-timer` ported to `AppShellTest`, #450;
+  `repeat-modes` and `queue-shuffle` ported to `PlaybackSpecTest`, #543).
 
 ### Queue — Change
 - Tap a row to play it; drag-to-reorder; **no swipe-to-remove**; long-press row menu: Play next,
@@ -177,7 +179,8 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   No multi-select.
 - Redesign: Compose `LazyColumn` with reorder (app-shell slice 3); add swipe-to-remove with an Undo
   snackbar; keep the row menu; auto-scroll to current on open.
-- Maestro: `queue-actions`, `queue-shuffle`, `nav/open-queue` (`open-queue-by-taps` ported to `AppShellTest`, #450).
+- Maestro: `nav/open-queue` (`open-queue-by-taps` ported to `AppShellTest`, #450; `queue-actions` and
+  `queue-shuffle` ported to `PlaybackSpecTest`, #543).
 
 ## 5. Actions, dialogs and tools
 
@@ -190,7 +193,8 @@ today (`nav/*` = the reusable navigation subflows); "none" means no on-device ch
   not from the Compose library tabs.
 - Redesign: one `MediaActionsSheet` (modal bottom sheet with artwork header) used everywhere;
   Exclude and Remove become immediate with an Undo snackbar; Delete keeps its confirm.
-- Maestro: `queue-actions` (Play next, Add to queue), `nav/create-testlist` (Add to playlist).
+- Maestro: `nav/create-testlist` (Add to playlist); Play next, Add to queue in `PlaybackSpecTest`
+  (#543, was `queue-actions`).
 
 ### Add to playlist, create playlist, duplicates — Change
 - Submenu lists "Create playlist…" then every playlist; create validates non-empty only (duplicate

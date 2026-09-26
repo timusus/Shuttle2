@@ -17,8 +17,8 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [x] A sleep timer with "play to end" lets the current track finish, then pauses. — automated: `emu-verify.sh --check sleep-timer-expiry`
 
 ### Repeat, shuffle and speed
-- [x] Repeat one, repeat all and off each behave correctly at the end of a track and the end of the queue. — automated: `emu-verify.sh --check repeat-modes`
-- [x] Turn shuffle on mid-queue. The next track comes from the shuffled order. — automated: `emu-verify.sh --check queue-shuffle`
+- [x] Repeat one, repeat all and off each behave correctly at the end of a track and the end of the queue. — automated: `PlaybackSpecTest` (#543, was `emu-verify.sh --check repeat-modes`)
+- [x] Turn shuffle on mid-queue. The next track comes from the shuffled order. — automated: `PlaybackSpecTest` (#543, was `emu-verify.sh --check queue-shuffle`)
 - [x] Set playback speed ≠ 1.0×, then change repeat mode. The speed doesn't reset. — automated: `emu-verify.sh --check speed-survives-repeat`
 
 ### Service and notification

@@ -28,7 +28,7 @@ Rules of thumb:
 - A screenshot test asserts nothing but pixels. If a board needs "the button is disabled", write
   a Robolectric test for it.
 - A device flow that drives only Compose navigation or Media3 queue logic belongs in Robolectric
-  (#450's rule; #543 applies it to `queue-shuffle`, `repeat-modes`, `queue-actions`).
+  (#450's rule; #543 ported `queue-shuffle`, `repeat-modes` and `queue-actions` this way).
 - No wall-clock time in `src/test`: no `Thread.sleep`, no `System.currentTimeMillis()` deadlines,
   no timing thresholds, no waits on `Dispatchers.IO`/`Default`. Inject the dispatcher or clock.
   Measurements go behind `@Ignore("measurement")` like the `LargeQueue*` spikes (#541).

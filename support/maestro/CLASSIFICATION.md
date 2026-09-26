@@ -20,6 +20,9 @@ emulator suite only spends time on what a JVM test cannot see. A new UI check be
 | `paywall-settings` (#380) | `paywall-settings.sh` | `SettingsScreenTest` "the root opens S2 Pro"; `PaywallScreenTest` "a Pro user sees their status and no plans", "restore and back reach the caller" |
 | `playlists-fast-scroller` (#223) | `playlists-fast-scroller.sh` | `LibraryScreenTest` "the playlists page has a fast scroller at its end edge too" |
 | `playlists-multiselect-back` (#185) | `playlists-multiselect-back.sh` | `PlaylistDetailScreenTest` "back while selecting clears the selection rather than leaving the playlist", "without a selection back is left to the back stack" |
+| `queue-actions` (#543) | `queue-actions.sh` | `PlaybackSpecTest` "play next and add to queue insert new items even when the song is already queued, and moving and removing act on the item chosen" |
+| `queue-shuffle` (#543) | `queue-shuffle.sh` | `PlaybackSpecTest` "toggling shuffle on reshuffles the queue keeping the current song first, and toggling it off restores the original order"; skip-plays-next is `RS-02`'s queue-order mechanics |
+| `repeat-modes` (#543) | `repeat-modes.sh` | `PlaybackSpecTest` "RS-12 repeat one set before anything plays repeats the song", "repeat all plays on from the last song back to the first", "repeat off stops playback at the end of the queue, keeping audio focus" |
 | `select-song`, `song-still-selected` (#224) | `song-selected-across-play-pause.sh` | `SongListIntegrationTest` "selection survives a song mutation like play count changing" |
 | `settings-compose` | `settings-compose.sh` | `SettingsIntegrationTest` (Pure black, Dark theme stored); `SettingsScreenTest` "playback opens the equalizer"; `EqualizerScreenTest` |
 | `shell-home-search` (#378) | `shell-home-search.sh` | `HomeScreenTest`; `SearchScreenTest` (artist, genre and song taps); `SearchLibraryTest` (typo tolerance) |
@@ -40,9 +43,6 @@ needs Hilt, so no JVM test reaches it. That part is not ported; see the #450 rep
 | `notification-controls`, `notification-controls-play` | `notification-controls.sh` | The media notification, driven through System UI |
 | `playback-controls` | `playback-controls.sh` | Real playback through the service, checked against the notification |
 | `playlist-export-m3u` | `playlist-export-m3u.sh` | SAF create-document picker and the written file |
-| `queue-actions` | `queue-actions.sh` | Queue edits checked against the real Media3 queue over the debug receiver |
-| `queue-shuffle` | `queue-shuffle.sh` | Real Media3 shuffle order and playback |
-| `repeat-modes` | `repeat-modes.sh` | Repeat modes observed through real playback crossing track ends |
 | `settings-usb-dac-direct-output` | `settings-usb-dac-direct-output.sh` | Audio output routing, API 34+ |
 | `shell-tag-editor`, `shell-tag-editor-rescanned` | `shell-tag-editor.sh` | SAF tag write on the `taglib` provider and the rescan that reads it back |
 | `tag-edit-playing`, `tag-edit-not-playing` | `tag-edit-queued.sh` | Tag write to a file the player holds open, then playback continuity |
