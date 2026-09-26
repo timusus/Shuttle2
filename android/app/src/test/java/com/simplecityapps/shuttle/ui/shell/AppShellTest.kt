@@ -380,6 +380,41 @@ class AppShellTest {
     }
 
     @Test
+    fun `the mini player seeks forward for an audiobook instead of skipping`() {
+        robot.setContent(queue = audiobookShellQueue(), progress = PlayerProgress(60_000, 180_000))
+        robot.tapDescription("Seek forward")
+
+        robot.calls shouldBe listOf("seekTo(90000)")
+    }
+
+    @Test
+    fun `now playing shows seek buttons for a podcast, not skip`() {
+        robot.setContent(queue = audiobookShellQueue(), progress = PlayerProgress(60_000, 180_000))
+        robot.tapMiniPlayer()
+
+        robot.tapPlayerControl("Seek backward")
+        robot.tapPlayerControl("Seek forward")
+
+        robot.calls shouldBe listOf("seekTo(50000)", "seekTo(90000)")
+    }
+
+    @Test
+    fun `holding the now playing next button repeats seeking forward instead of skipping`() {
+        robot.setContent(progress = PlayerProgress(60_000, 180_000))
+        robot.tapMiniPlayer()
+
+        composeTestRule.mainClock.autoAdvance = false
+        robot.holdPlayerControl("Next")
+        composeTestRule.mainClock.advanceTimeByFrame()
+        composeTestRule.mainClock.advanceTimeBy(700L)
+        composeTestRule.mainClock.advanceTimeBy(700L)
+        robot.releasePlayerControl("Next")
+
+        // The fake doesn't advance progress between calls, so each hold-tick seeks 15s from the same fixed 60s base.
+        robot.calls shouldBe listOf("seekTo(75000)", "seekTo(75000)")
+    }
+
+    @Test
     fun `the mini player shows how far through the song it is`() {
         robot.setContent(progress = PlayerProgress(60_000, 180_000))
 

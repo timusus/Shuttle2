@@ -150,6 +150,14 @@ fun S2PlayerControls(
     modifier: Modifier = Modifier,
     buffering: Boolean = false,
     size: S2PlayerControlsSize = S2PlayerControlsSize.Regular,
+    previousIcon: ImageVector = Icons.Rounded.SkipPrevious,
+    previousContentDescription: String = stringResource(R.string.ds_previous),
+    /** Holding the previous button repeats this instead of calling [onPrevious] (1.0.10's `SkipButton`). */
+    onPreviousHold: (() -> Unit)? = null,
+    nextIcon: ImageVector = Icons.Rounded.SkipNext,
+    nextContentDescription: String = stringResource(R.string.ds_next),
+    /** Holding the next button repeats this instead of calling [onNext] (1.0.10's `SkipButton`). */
+    onNextHold: (() -> Unit)? = null,
 ) {
     val sources = remember { List(5) { MutableInteractionSource() } }
     val skipModifier = size.skipContainer?.let { Modifier.size(it) } ?: Modifier
@@ -162,11 +170,12 @@ fun S2PlayerControls(
         )
         customItem(
             buttonGroupContent = {
-                S2IconButton(
-                    Icons.Rounded.SkipPrevious,
-                    stringResource(R.string.ds_previous),
+                S2TransportButton(
+                    previousIcon,
+                    previousContentDescription,
                     onPrevious,
                     Modifier.animateWidth(sources[1]).then(skipModifier),
+                    onHold = onPreviousHold,
                     size = size.skip,
                     interactionSource = sources[1],
                 )
@@ -181,11 +190,12 @@ fun S2PlayerControls(
         )
         customItem(
             buttonGroupContent = {
-                S2IconButton(
-                    Icons.Rounded.SkipNext,
-                    stringResource(R.string.ds_next),
+                S2TransportButton(
+                    nextIcon,
+                    nextContentDescription,
                     onNext,
                     Modifier.animateWidth(sources[3]).then(skipModifier),
+                    onHold = onNextHold,
                     size = size.skip,
                     interactionSource = sources[3],
                 )

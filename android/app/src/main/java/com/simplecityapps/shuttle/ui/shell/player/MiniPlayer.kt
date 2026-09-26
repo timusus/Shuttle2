@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Forward30
+import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +28,7 @@ import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.R as DesignR
 import com.simplecityapps.shuttle.designsystem.component.S2MiniPlayer
 
@@ -49,13 +53,18 @@ internal fun MiniPlayer(
         val current = player.current
         if (interactive && current != null) {
             val previousLabel = stringResource(DesignR.string.ds_previous)
+            val seekable = current.song.type.isSeekable
             S2MiniPlayer(
                 title = current.title,
                 subtitle = current.artist.orEmpty(),
                 playing = player.playing,
                 progress = { progress().fraction },
                 onPlayPause = actions::togglePlayback,
-                onNext = actions::skipToNext,
+                onNext = if (seekable) {
+                    { actions.seekBy(progress(), SeekForwardSeconds) }
+                } else {
+                    actions::skipToNext
+                },
                 onClick = onClick,
                 modifier = Modifier
                     .fillMaxSize()
@@ -70,6 +79,13 @@ internal fun MiniPlayer(
                     },
                 artwork = { SongArtwork(current.song) },
                 buffering = player.buffering,
+                nextIcon = if (seekable) Icons.Rounded.Forward30 else Icons.Rounded.SkipNext,
+                nextContentDescription = if (seekable) stringResource(R.string.player_seek_forward) else stringResource(DesignR.string.ds_next),
+                onNextHold = if (seekable) {
+                    null
+                } else {
+                    { actions.seekBy(progress(), SkipHoldSeekSeconds) }
+                },
             )
         }
     }

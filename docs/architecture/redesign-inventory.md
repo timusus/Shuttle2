@@ -463,7 +463,7 @@ Audited against the code on 2026-09-26: [parity-audit.md](parity-audit.md) maps 
 - [x] Song info: all 17 fields
 - [ ] Search: artists/albums/songs, fuzzy ranking, filter chips persisted, shared-element open — gap #431
 - [x] Home sections and Shuffle all
-- [ ] Mini player: progress, play/pause, skip, long-press seek — gap #430
+- [x] Mini player: progress, play/pause, skip, long-press seek — gap #430
 - [ ] Now Playing: artwork swipe skip, shuffle, repeat ×3, seek, long-press seek, audiobook seek buttons, artist/album links, Cast, lyrics, favorite, clear queue — gaps #430, #429 (#473 fixed)
 - [x] Queue: tap to play, reorder, remove, Play next, scroll to current, save as playlist, clear (#472)
 - [x] Sleep timer: presets, play to end of track, live countdown, stop

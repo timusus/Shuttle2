@@ -17,9 +17,13 @@ import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.ClearAll
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Forward30
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.MoreVert
+import androidx.compose.material.icons.rounded.Replay10
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -161,17 +165,40 @@ internal fun Transport(
     ) {
         SeekBar(player, progress, actions)
         Box(Modifier.weight(1f).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+            val seekable = player.current?.song?.type?.isSeekable == true
             S2PlayerControls(
                 playing = player.playing,
                 onPlayPause = actions::togglePlayback,
-                onPrevious = actions::skipToPrevious,
-                onNext = actions::skipToNext,
+                onPrevious = if (seekable) {
+                    { actions.seekBy(progress(), -SeekBackwardSeconds) }
+                } else {
+                    actions::skipToPrevious
+                },
+                onNext = if (seekable) {
+                    { actions.seekBy(progress(), SeekForwardSeconds) }
+                } else {
+                    actions::skipToNext
+                },
                 shuffle = player.shuffle,
                 onShuffleChange = { actions.toggleShuffle() },
                 repeatMode = player.repeatMode,
                 onRepeatClick = actions::cycleRepeatMode,
                 buffering = player.buffering,
                 size = S2PlayerControlsSize.Large,
+                previousIcon = if (seekable) Icons.Rounded.Replay10 else Icons.Rounded.SkipPrevious,
+                previousContentDescription = if (seekable) stringResource(R.string.player_seek_backward) else stringResource(DesignR.string.ds_previous),
+                onPreviousHold = if (seekable) {
+                    null
+                } else {
+                    { actions.seekBy(progress(), -SkipHoldSeekSeconds) }
+                },
+                nextIcon = if (seekable) Icons.Rounded.Forward30 else Icons.Rounded.SkipNext,
+                nextContentDescription = if (seekable) stringResource(R.string.player_seek_forward) else stringResource(DesignR.string.ds_next),
+                onNextHold = if (seekable) {
+                    null
+                } else {
+                    { actions.seekBy(progress(), SkipHoldSeekSeconds) }
+                },
             )
         }
     }

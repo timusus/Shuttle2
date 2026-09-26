@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -40,6 +41,10 @@ fun S2MiniPlayer(
     modifier: Modifier = Modifier,
     artwork: (@Composable () -> Unit)? = null,
     buffering: Boolean = false,
+    nextIcon: ImageVector = Icons.Rounded.SkipNext,
+    nextContentDescription: String = stringResource(R.string.ds_next),
+    /** Holding the next button repeats this instead of calling [onNext] (1.0.10's `SkipButton`). */
+    onNextHold: (() -> Unit)? = null,
 ) {
     Surface(onClick = onClick, modifier = modifier, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
         Column {
@@ -62,7 +67,7 @@ fun S2MiniPlayer(
                     )
                 }
                 S2PlayPauseButton(playing, onPlayPause, buffering = buffering, size = 44.dp)
-                S2IconButton(Icons.Rounded.SkipNext, stringResource(R.string.ds_next), onNext)
+                S2TransportButton(nextIcon, nextContentDescription, onNext, onHold = onNextHold)
             }
             S2PlaybackProgress(
                 progress = if (buffering) null else progress,

@@ -122,6 +122,10 @@
     {
       "text": "Skipping a song from Jellyfin, Emby or Plex in your queue because streaming needs S2 Pro now shows a message explaining why",
       "commits": []
+    },
+    {
+      "text": "Hold the previous or next button in the mini player or Now Playing to seek instead of skipping, and audiobooks and podcasts show seek back and forward buttons there instead of skip",
+      "commits": []
     }
   ],
   "fixes": [

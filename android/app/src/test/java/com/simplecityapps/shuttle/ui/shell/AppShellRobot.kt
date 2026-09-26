@@ -26,6 +26,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.down
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
@@ -45,6 +46,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
+import androidx.compose.ui.test.up
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.Insets
 import androidx.core.view.WindowInsetsCompat
@@ -132,6 +134,21 @@ fun sampleShellQueue(
 }
 
 val EmptyShellQueue = PlayerUiState(hasQueue = false, current = null, items = emptyList())
+
+/** A single-song queue whose path marks it an audiobook (Song.Type.Audiobook, #430's seek buttons). */
+fun audiobookShellQueue(title: String = "Chapter One"): PlayerUiState {
+    val song = createSong(id = 0, name = title, albumArtist = "Juniper Static", album = "Phase Garden", duration = 180_000, path = "/audiobook/chapter-one.mp3")
+    val row = PlayerSong(
+        uid = 0,
+        title = title,
+        artist = "Juniper Static",
+        album = "Phase Garden",
+        durationMs = 180_000,
+        position = QueuePosition.Current,
+        song = song,
+    )
+    return PlayerUiState(hasQueue = true, current = row, items = listOf(row))
+}
 
 /**
  * Records each action by name, plays and pauses [state] in place, reports a cleared queue or removed
@@ -427,6 +444,21 @@ class AppShellRobot(
         rule
             .onNode(hasContentDescription(description) and hasAnyAncestor(hasTestTag(PlayerTestTags.MiniPlayer)).not())
             .performClick()
+        rule.waitForIdle()
+    }
+
+    /** Presses down on the Now Playing control labelled [description], without releasing (see [releasePlayerControl]). */
+    fun holdPlayerControl(description: String) {
+        rule
+            .onNode(hasContentDescription(description) and hasAnyAncestor(hasTestTag(PlayerTestTags.MiniPlayer)).not())
+            .performTouchInput { down(center) }
+    }
+
+    /** Releases a press started by [holdPlayerControl]. */
+    fun releasePlayerControl(description: String) {
+        rule
+            .onNode(hasContentDescription(description) and hasAnyAncestor(hasTestTag(PlayerTestTags.MiniPlayer)).not())
+            .performTouchInput { up() }
         rule.waitForIdle()
     }
 
