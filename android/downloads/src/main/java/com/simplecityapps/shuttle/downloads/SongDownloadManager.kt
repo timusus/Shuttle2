@@ -14,10 +14,14 @@ import timber.log.Timber
 
 /** Starts and removes song downloads. Their state is read through [SongDownloadRepository]. */
 interface SongDownloadManager {
-    /** Downloads [song] from [uri], keyed by the song's path. */
+    /**
+     * Downloads [song] from [uri], keyed by the song's path, recorded as [mimeType] — the MIME type of what's
+     * actually at [uri], which for a transcoded download isn't [Song.mimeType].
+     */
     fun download(
         song: Song,
-        uri: Uri
+        uri: Uri,
+        mimeType: String
     )
 
     /** Downloads the song at [path] from [uri], e.g. to retry a failed download with a fallback URL. */
@@ -52,8 +56,9 @@ class DefaultSongDownloadManager @Inject constructor(
 ) : SongDownloadManager {
     override fun download(
         song: Song,
-        uri: Uri
-    ) = download(song.path, song.mimeType, uri)
+        uri: Uri,
+        mimeType: String
+    ) = download(song.path, mimeType, uri)
 
     override fun download(
         path: String,

@@ -1,6 +1,7 @@
 package com.simplecityapps.fakes
 
 import android.net.Uri
+import com.simplecityapps.mediaprovider.DownloadInfo
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.shuttle.downloads.SongDownload
@@ -23,10 +24,12 @@ private fun fakeUri(value: String): Uri {
 /** Records the downloads started and removed. */
 class FakeSongDownloadManager : SongDownloadManager {
     val downloaded = mutableListOf<Pair<Song, Uri>>()
+    val downloadedMimeTypes = mutableListOf<String>()
     val removed = mutableListOf<Song>()
 
-    override fun download(song: Song, uri: Uri) {
+    override fun download(song: Song, uri: Uri, mimeType: String) {
         downloaded += song to uri
+        downloadedMimeTypes += mimeType
     }
 
     override fun download(path: String, mimeType: String, uri: Uri) {}
@@ -54,7 +57,10 @@ class FakeSongDownloadRepository : SongDownloadRepository {
     override suspend fun getDownload(path: String): SongDownload? = downloads.value.firstOrNull { it.path == path }
 }
 
-/** Hands out a download URL for every song except those whose path is in [unavailable]. */
+/**
+ * Hands out download info for every song except those whose path is in [unavailable], with a MIME type distinct
+ * from [Song.mimeType] so a test can tell whether the caller forwarded it rather than falling back to the song's own.
+ */
 class FakeMediaInfoProvider : MediaInfoProvider {
     val unavailable = mutableSetOf<String>()
 
@@ -62,7 +68,7 @@ class FakeMediaInfoProvider : MediaInfoProvider {
 
     override suspend fun getMediaInfo(song: Song, castCompatibilityMode: Boolean): MediaInfo = MediaInfo(fakeUri(song.path), song.mimeType, isRemote = true)
 
-    override suspend fun downloadUri(song: Song): Uri? = if (song.path in unavailable) null else fakeUri("https://example.com/download/${song.id}")
+    override suspend fun downloadInfo(song: Song): DownloadInfo? = if (song.path in unavailable) null else DownloadInfo(fakeUri("https://example.com/download/${song.id}"), "audio/download-transcode")
 
     override suspend fun downloadFallbackUri(path: String, responseCode: Int): Uri? = null
 }

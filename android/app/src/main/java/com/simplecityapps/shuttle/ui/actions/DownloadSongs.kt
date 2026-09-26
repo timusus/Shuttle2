@@ -33,11 +33,11 @@ class DownloadSongs @Inject constructor(
         val changed = mutableListOf<Song>()
         val failed = mutableListOf<Song>()
         songs.forEach { song ->
-            val uri = mediaInfoProvider.downloadUri(song)
-            if (uri == null) {
+            val downloadInfo = mediaInfoProvider.downloadInfo(song)
+            if (downloadInfo == null) {
                 failed += song
             } else {
-                songDownloadManager.download(song, uri)
+                songDownloadManager.download(song, downloadInfo.uri, downloadInfo.mimeType)
                 changed += song
             }
         }

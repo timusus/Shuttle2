@@ -2,6 +2,7 @@ package com.simplecityapps.provider.emby
 
 import android.net.Uri
 import androidx.core.net.toUri
+import com.simplecityapps.mediaprovider.DownloadInfo
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
@@ -59,10 +60,11 @@ constructor(
         }
     }
 
-    override suspend fun downloadUri(song: Song): Uri? {
+    override suspend fun downloadInfo(song: Song): DownloadInfo? {
         val authenticatedCredentials = embyAuthenticationManager.getAuthenticatedCredentials() ?: return null
         val itemId = Uri.parse(song.path).pathSegments.last()
-        return embyAuthenticationManager.buildDownloadPath(itemId, authenticatedCredentials)?.toUri()
+        val uri = embyAuthenticationManager.buildDownloadPath(itemId, authenticatedCredentials)?.toUri() ?: return null
+        return DownloadInfo(uri, song.mimeType)
     }
 
     override suspend fun downloadFallbackUri(

@@ -113,4 +113,36 @@ class PlexAuthenticationManager(
         return "$address/music/:/transcode/universal/start.m3u8?" +
             query.entries.joinToString("&") { (name, value) -> "$name=${URLEncoder.encode(value, "UTF-8")}" }
     }
+
+    /**
+     * A single-file MP3 transcode of [song] at [bitrateKbps], from Plex's universal transcoder, for downloading a
+     * format the player can't decode. `protocol=http` (rather than [buildPlexTranscodePath]'s `hls`) asks for one
+     * continuous file instead of a manifest and segments, since Media3's downloader saves whatever's at the URL as
+     * a single item (#567). Null when the address or the song's ratingKey is missing.
+     */
+    fun buildPlexProgressiveTranscodePath(
+        song: Song,
+        authenticatedCredentials: AuthenticatedCredentials,
+        bitrateKbps: Int
+    ): String? {
+        val address = credentialStore.address ?: run {
+            Timber.w("Invalid plex address (null)")
+            return null
+        }
+        val ratingKey = plexRatingKey(song.path) ?: run {
+            Timber.w("No plex ratingKey in ${song.path}")
+            return null
+        }
+        val query = linkedMapOf(
+            "path" to "$METADATA_PATH$ratingKey",
+            "protocol" to "http",
+            "directPlay" to "0",
+            "directStream" to "0",
+            "musicBitrate" to bitrateKbps.toString(),
+            "X-Plex-Client-Profile-Extra" to "add-transcode-target(type=musicProfile&context=static&protocol=http&container=mp3&audioCodec=mp3)"
+        ) + plexClientHeaders(clientIdentity) + ("X-Plex-Token" to authenticatedCredentials.accessToken)
+
+        return "$address/music/:/transcode/universal/start.mp3?" +
+            query.entries.joinToString("&") { (name, value) -> "$name=${URLEncoder.encode(value, "UTF-8")}" }
+    }
 }

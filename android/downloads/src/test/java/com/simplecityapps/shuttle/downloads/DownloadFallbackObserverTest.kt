@@ -12,6 +12,7 @@ import androidx.media3.exoplayer.offline.DownloadRequest
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
+import com.simplecityapps.mediaprovider.DownloadInfo
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.shuttle.model.Song
@@ -148,7 +149,8 @@ private class RecordingSongDownloadManager : SongDownloadManager {
 
     override fun download(
         song: Song,
-        uri: Uri
+        uri: Uri,
+        mimeType: String
     ) = Unit
 
     override fun download(
@@ -177,7 +179,7 @@ private class FakeMediaInfoProvider : MediaInfoProvider {
         castCompatibilityMode: Boolean
     ): MediaInfo = error("not called")
 
-    override suspend fun downloadUri(song: Song): Uri? = error("not called")
+    override suspend fun downloadInfo(song: Song): DownloadInfo? = error("not called")
 
     override suspend fun downloadFallbackUri(
         path: String,

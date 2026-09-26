@@ -21,7 +21,7 @@ class AggregateMediaInfoProviderTest {
             castCompatibilityMode: Boolean
         ): MediaInfo = MediaInfo(Uri.parse("https://$scheme.example/stream"), song.mimeType, isRemote = true)
 
-        override suspend fun downloadUri(song: Song): Uri = Uri.parse("https://$scheme.example/download")
+        override suspend fun downloadInfo(song: Song): DownloadInfo = DownloadInfo(Uri.parse("https://$scheme.example/download"), song.mimeType)
 
         override suspend fun downloadFallbackUri(
             path: String,
@@ -60,13 +60,13 @@ class AggregateMediaInfoProviderTest {
     }
 
     @Test
-    fun `download uri reaches the provider for its scheme`() = runTest {
-        provider.downloadUri(createSong("jellyfin://item/107898")).toString() shouldBe "https://jellyfin.example/download"
+    fun `download info reaches the provider for its scheme`() = runTest {
+        provider.downloadInfo(createSong("jellyfin://item/107898"))!!.uri.toString() shouldBe "https://jellyfin.example/download"
     }
 
     @Test
-    fun `local songs have no download uri`() = runTest {
-        provider.downloadUri(createSong("/storage/emulated/0/Music/Track #1.mp3")) shouldBe null
+    fun `local songs have no download info`() = runTest {
+        provider.downloadInfo(createSong("/storage/emulated/0/Music/Track #1.mp3")) shouldBe null
     }
 
     @Test
@@ -100,7 +100,7 @@ class AggregateMediaInfoProviderTest {
     fun `downloads don't ask the stream policy`() = runTest {
         val refusing = AggregateMediaInfoProvider(mutableSetOf(SchemeProvider("jellyfin")), ServerStreamPolicy { error("asked") })
 
-        refusing.downloadUri(createSong("jellyfin://item/107898")).toString() shouldBe "https://jellyfin.example/download"
+        refusing.downloadInfo(createSong("jellyfin://item/107898"))!!.uri.toString() shouldBe "https://jellyfin.example/download"
     }
 
     private fun createSong(path: String) = Song(

@@ -2,6 +2,7 @@ package com.simplecityapps.provider.plex
 
 import android.net.Uri
 import androidx.core.net.toUri
+import com.simplecityapps.mediaprovider.DownloadInfo
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
@@ -80,33 +81,37 @@ constructor(
     }
 
     // Plex's part-file path (song.externalId) is the original, untranscoded file, used for download when the player
-    // can decode it; otherwise the same HLS transcode streaming falls back to, so an offline copy is playable.
-    override suspend fun downloadUri(song: Song): Uri? = buildDownloadPathString(song)?.toUri()
+    // can decode it; otherwise a progressive (single-file) transcode, so Media3's downloader saves real, playable
+    // audio under the mime type it's actually saving (#567).
+    override suspend fun downloadInfo(song: Song): DownloadInfo? = buildDownloadStream(song)?.let { stream -> DownloadInfo(stream.path.toUri(), stream.mimeType) }
 
-    // Plex has no separate download permission to fall back from: downloadUri is already the
-    // only URL there is.
+    // Plex has no separate download permission to fall back from: downloadInfo's URI is already the
+    // only one there is.
     override suspend fun downloadFallbackUri(
         path: String,
         responseCode: Int
     ): Uri? = null
 
     /**
-     * String form of [downloadUri]'s path, kept separate so tests can assert on it without pulling Robolectric into
-     * this module just for `Uri.parse`. The original part file when the player can decode it; otherwise an HLS
-     * transcode at [UNCAPPED_TRANSCODE_KBPS], same as an uncapped stream, so a downloaded WMA, AIFF or ALAC song is
-     * still playable offline (#567).
+     * [downloadInfo]'s stream, kept separate so tests can assert on it without pulling Robolectric into this module
+     * for `Uri.parse`. The original part file when the player can decode it; otherwise a progressive MP3 transcode
+     * at [UNCAPPED_TRANSCODE_KBPS], same bitrate as an uncapped stream — not the HLS transcode streaming uses, since
+     * an HLS manifest URL downloaded as one "file" saves the manifest text rather than the audio (#567).
      */
-    internal suspend fun buildDownloadPathString(song: Song): String? {
+    internal suspend fun buildDownloadStream(song: Song): PlexStream? {
         val authenticatedCredentials = plexAuthenticationManager.getAuthenticatedCredentials() ?: return null
         return if (isDecodable(song.externalId, song.audioCodec)) {
-            plexAuthenticationManager.buildPlexPath(song = song, authenticatedCredentials = authenticatedCredentials)
+            val path = plexAuthenticationManager.buildPlexPath(song = song, authenticatedCredentials = authenticatedCredentials) ?: return null
+            PlexStream(path, song.mimeType)
         } else {
-            plexAuthenticationManager.buildPlexTranscodePath(song, authenticatedCredentials, UNCAPPED_TRANSCODE_KBPS)
+            val path = plexAuthenticationManager.buildPlexProgressiveTranscodePath(song, authenticatedCredentials, UNCAPPED_TRANSCODE_KBPS) ?: return null
+            PlexStream(path, PROGRESSIVE_TRANSCODE_MIME_TYPE)
         }
     }
 
     private companion object {
         const val HLS_MIME_TYPE = "application/x-mpegURL"
+        const val PROGRESSIVE_TRANSCODE_MIME_TYPE = "audio/mpeg"
 
         /** The bitrate a format the player can't decode is transcoded to when streaming isn't capped. */
         const val UNCAPPED_TRANSCODE_KBPS = 320

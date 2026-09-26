@@ -28,6 +28,13 @@ class DownloadSongsTest {
     }
 
     @Test
+    fun `downloads with the provider's mime type, not the song's own (#567)`() = runTest {
+        actions.downloadSongs(MediaSelection.Songs(remote))
+
+        actions.songDownloadManager.downloadedMimeTypes shouldBe listOf("audio/download-transcode")
+    }
+
+    @Test
     fun `a song without a download URL fails`() = runTest {
         actions.mediaInfoProvider.unavailable += remote.path
 

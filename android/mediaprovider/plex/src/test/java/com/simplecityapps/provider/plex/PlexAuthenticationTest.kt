@@ -73,6 +73,35 @@ class PlexAuthenticationTest {
         ) shouldBe null
     }
 
+    @Test
+    fun `progressive transcode url asks the universal transcoder for a single MP3 file, not HLS (#567)`() {
+        val path = authenticationManager.buildPlexProgressiveTranscodePath(
+            song = song(externalId = "/library/parts/42/file.wma", path = "plex:///library/metadata/107898"),
+            authenticatedCredentials = credentials,
+            bitrateKbps = 320
+        )!!.toHttpUrl()
+
+        path.encodedPath shouldBe "/music/:/transcode/universal/start.mp3"
+        path.queryParameter("path") shouldBe "/library/metadata/107898"
+        path.queryParameter("protocol") shouldBe "http"
+        path.queryParameter("directPlay") shouldBe "0"
+        path.queryParameter("directStream") shouldBe "0"
+        path.queryParameter("musicBitrate") shouldBe "320"
+        path.queryParameter("X-Plex-Client-Profile-Extra") shouldBe
+            "add-transcode-target(type=musicProfile&context=static&protocol=http&container=mp3&audioCodec=mp3)"
+        path.queryParameter("X-Plex-Token") shouldBe "token123"
+        path.queryParameter("X-Plex-Client-Identifier") shouldBe clientIdentity.id
+    }
+
+    @Test
+    fun `progressive transcode url is null for a song with no ratingKey`() {
+        authenticationManager.buildPlexProgressiveTranscodePath(
+            song = song(externalId = "/library/parts/42/file.wma", path = "plex:///library/parts/42/file.wma"),
+            authenticatedCredentials = credentials,
+            bitrateKbps = 320
+        ) shouldBe null
+    }
+
     private fun song(
         externalId: String?,
         path: String = "plex://item/107898"

@@ -3,6 +3,7 @@ package com.simplecityapps.playback.chromecast
 import android.graphics.Bitmap
 import android.net.Uri
 import com.simplecityapps.imageloading.ArtworkImageLoader
+import com.simplecityapps.mediaprovider.DownloadInfo
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.SongPathRemap
@@ -123,7 +124,7 @@ class FakeMediaInfoProvider(private val transcodedType: String = TRANSCODED) : M
         }
     }
 
-    override suspend fun downloadUri(song: Song): Uri? = error("not called")
+    override suspend fun downloadInfo(song: Song): DownloadInfo? = error("not called")
 
     override suspend fun downloadFallbackUri(
         path: String,

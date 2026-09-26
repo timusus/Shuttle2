@@ -8,6 +8,11 @@ import java.io.File
 
 data class MediaInfo(val path: Uri, val mimeType: String, val isRemote: Boolean)
 
+/** Where to download [song] from, and the MIME type of what's actually at [uri] — a provider that transcodes an
+ * undecodable format for download (see [MediaInfoProvider.downloadInfo]) returns the transcode's MIME type here,
+ * not the song's original one, so the download is recorded as what it actually is. */
+data class DownloadInfo(val uri: Uri, val mimeType: String)
+
 interface MediaInfoProvider {
     /** Whether this provider handles a song whose path has [scheme] (`null` for a path with none). */
     @Throws(IllegalStateException::class)
@@ -19,13 +24,14 @@ interface MediaInfoProvider {
     ): MediaInfo
 
     /**
-     * The URL of [song]'s original, non-transcoded file, for offline download. Null when this
-     * provider can't produce one (e.g. auth failure).
+     * Where to download [song]'s file from, and its real MIME type — [song]'s original, non-transcoded file where
+     * the player can decode it, otherwise a playable transcode. Null when this provider can't produce one (e.g. auth
+     * failure).
      */
-    suspend fun downloadUri(song: Song): Uri?
+    suspend fun downloadInfo(song: Song): DownloadInfo?
 
     /**
-     * A fallback download URL for [path] (a `Song.path`), used when [downloadUri]'s URL was
+     * A fallback download URL for [path] (a `Song.path`), used when [downloadInfo]'s URL was
      * rejected by the server with the given [responseCode] (401 or 403). A 403 persists the
      * change, so later downloads for this provider go straight to the fallback; a 401 does not,
      * since it can also mean the cached session expired rather than a permission change. Null when
@@ -81,7 +87,7 @@ class AggregateMediaInfoProvider(
 
     // Local songs are already on disk, so there's nothing to download; only a remote provider
     // (matched below by scheme) can produce a download URL.
-    override suspend fun downloadUri(song: Song): Uri? = providers.firstOrNull { it.handles(schemeOf(song.path)) }?.downloadUri(song)
+    override suspend fun downloadInfo(song: Song): DownloadInfo? = providers.firstOrNull { it.handles(schemeOf(song.path)) }?.downloadInfo(song)
 
     override suspend fun downloadFallbackUri(
         path: String,
