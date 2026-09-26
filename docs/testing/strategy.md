@@ -13,6 +13,7 @@ per test and removes a source of flakes.
 |---|---|---|
 | Only Kotlin: state machines, mapping, sorting, search, use cases, ViewModel logic, repository rules over fakes | **Plain JVM** (`src/test`, no runner) | `HomeSectionsTest`, `EntitlementRepositoryTest`, the Jellyfin/Emby/Plex mappers, `ModuleLayerRulesTest` |
 | `SharedPreferences`, `Context.getString`, `Uri` in an otherwise plain ViewModel test | **Plain JVM with a fake or seam**. Robolectric only if the seam doesn't exist yet (#540) | `PlayerViewModelTest`, `HomeViewModelTest` (currently Robolectric just for prefs) |
+| A test only needs a `Uri`/`Context` value to exist and pass through, not real `Uri.parse`/`ContentResolver` behaviour | **Plain JVM**: `mockk<Uri>(relaxed = true)` (or a `FakeUri` stubbing the `Uri.parse`/`fromFile` statics) for the value; `mockk` the use case/collaborator that would otherwise need a real `Context` (#552) | `CastHandoverTest`, `PlaylistDetailViewModelTest` (mocks `ExportPlaylist` instead of wiring a real `PlaylistExporter`) |
 | Compose semantics: what's on screen, taps, back handling, sheet levels, selection | **Robolectric + Robot** (`.claude/rules/testing.md`) | `AppShellTest`, `LibraryScreenTest`, `SongListIntegrationTest` |
 | Room schema/migrations, MediaStore, SAF, WorkManager, Glance, `AudioManager` focus | **Robolectric** | `MediaDatabaseMigrationTest`, `ShortcutManagerTest`, `CallHoldTest` |
 | Real Media3 player behaviour: queue, shuffle order, repeat, focus, session, Cast handover | **Robolectric + `PlaybackHarness`** (real ExoPlayer, `FakeClock`, WAV media) | `PlaybackSpecTest`, `AudioFocusSpecTest`, `MediaSessionSpecTest`, `CastSpecTest` |
@@ -33,6 +34,12 @@ Rules of thumb:
   Measurements go behind `@Ignore("measurement")` like the `LargeQueue*` spikes (#541).
 - Fakes over mocks. The fixtures module has fakes for the repositories and the playback and queue
   operations; `DefaultMediaSourcesTest` still mocks them and asserts interactions.
+- **Keep a test on Robolectric when it exercises real Android behaviour, not just an Android type.**
+  `ExportPlaylistTest` opens a real file through `ContentResolver.openOutputStream` and asserts a
+  `content://` URI with no provider fails — that's genuine SAF semantics, not a value that could be
+  mocked away (#552). Same reasoning for a real `TestExoPlayerBuilder`-backed `ExoPlayer`,
+  `RuntimeEnvironment`'s Context/AudioManager/HTTP server, a `PlaybackHarness` spec test, and the
+  Google Cast SDK's `MediaMetadata.putString()` calling real `android.text.TextUtils`.
 
 ## Baseline
 

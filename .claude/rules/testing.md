@@ -167,6 +167,18 @@ albums or songs, and never hand-typed "Artist"/"Album" stand-ins where content i
 3. Create `*Test.kt` — `@RunWith(RobolectricTestRunner::class)`, instantiate robot from `composeTestRule`
 4. Add model factories to `creationFunctions.kt` if needed
 
+## Moving a test off Robolectric
+
+Full guidance and the layer table live in `docs/testing/strategy.md`. The short version: if the only
+Android type in the test is a `Uri` or a `Context` passed through to a collaborator, stub it —
+`mockk<Uri>(relaxed = true)` (or a `FakeUri` stubbing `Uri.parse`/`fromFile`) for the value, `mockk`
+the collaborator that would otherwise need a real `Context` (`PlaylistDetailViewModelTest` mocks
+`ExportPlaylist` instead of wiring a real `PlaylistExporter`/`ApplicationProvider`) — then drop
+`@RunWith(RobolectricTestRunner::class)`. Leave it on Robolectric when the test exercises real
+Android behaviour rather than just an Android *type*: a real `ContentResolver`/SAF file open
+(`ExportPlaylistTest`), a real `ExoPlayer`/`RuntimeEnvironment` Context/AudioManager, a
+`PlaybackHarness` spec test, or a library (Cast SDK) calling real Android internals under the hood.
+
 ## Known Robolectric Limitations
 
 - **FastScroller + DropdownMenu:** The `FastScroller` overlay causes `DropdownMenu` popups to be immediately dismissed under Robolectric. Context menu tests that need dropdowns should render the list *item* composable directly (e.g. `GenreListItem`) rather than the full list. The robots encapsulate this — see `setItemContent()` in `GenreListRobot`, `PlaylistListRobot`, `AlbumListRobot`, `AlbumArtistListRobot` and `FolderListRobot`.
