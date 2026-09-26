@@ -7,6 +7,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.drm.DrmSessionManagerProvider
 import androidx.media3.exoplayer.source.ClippingMediaSource
+import androidx.media3.exoplayer.source.ForwardingTimeline
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.TimelineWithUpdatedMediaItem
 import androidx.media3.exoplayer.source.WrappingMediaSource
@@ -39,12 +40,13 @@ class CrossfadeClippingMediaSourceFactory(
     override fun createMediaSource(mediaItem: MediaItem): MediaSource {
         if (mediaItem.queueEntryOrNull == null) return delegate.createMediaSource(mediaItem)
         val unclipped = mediaItem.buildUpon().setClippingConfiguration(MediaItem.ClippingConfiguration.UNSET).build()
+        val source = DurationRecordingMediaSource(delegate.createMediaSource(unclipped))
         val clipping =
-            ClippingMediaSource.Builder(delegate.createMediaSource(unclipped))
+            ClippingMediaSource.Builder(source)
                 .setClippingConfiguration(mediaItem.clippingConfiguration)
                 .setEnableClippingInMediaPeriod(true)
                 .build()
-        return UpdatedItemMediaSource(clipping, mediaItem)
+        return UpdatedItemMediaSource(clipping, mediaItem, source)
     }
 
     override fun getSupportedTypes(): IntArray = delegate.supportedTypes
@@ -55,13 +57,21 @@ class CrossfadeClippingMediaSourceFactory(
 }
 
 /**
- * Shows the latest item given to [updateMediaItem] in the timeline. A [ClippingMediaSource] refreshes its timeline
- * from its child's, which keeps the item the child was prepared with, so without this an item updated in place (a
- * song renamed by a library update, or re-clipped) would revert to the old one.
+ * Shows the latest item given to [updateMediaItem] in the timeline, at its unclipped duration.
+ *
+ * A [ClippingMediaSource] refreshes its timeline from its child's, which keeps the item the child was prepared with,
+ * so without this an item updated in place (a song renamed by a library update, or re-clipped) would revert to the
+ * old one.
+ *
+ * It also shortens the window to the clip, so once a tail was ready the player's duration, and with it the session's
+ * and notification's seek bars, came up the crossfade's length short, and changed as the item was clipped and
+ * unclipped (#561). The window here keeps the song's whole duration, from [unclipped]; the period stays clipped, so
+ * the item still ends, and hands over to the next, at the clip. A seek past the clip end lands at the period's end.
  */
 private class UpdatedItemMediaSource(
     source: MediaSource,
-    private var item: MediaItem
+    private var item: MediaItem,
+    private val unclipped: DurationRecordingMediaSource
 ) : WrappingMediaSource(source) {
     override fun getMediaItem(): MediaItem = item
 
@@ -73,7 +83,37 @@ private class UpdatedItemMediaSource(
     }
 
     override fun onChildSourceInfoRefreshed(newTimeline: Timeline) {
-        refreshSourceInfo(TimelineWithUpdatedMediaItem.create(newTimeline, item))
+        refreshSourceInfo(UnclippedWindowTimeline(TimelineWithUpdatedMediaItem.create(newTimeline, item), unclipped.durationUs))
+    }
+}
+
+/** Records the duration of its child's window, from below a [ClippingMediaSource], for [UpdatedItemMediaSource]. */
+private class DurationRecordingMediaSource(
+    source: MediaSource
+) : WrappingMediaSource(source) {
+    /** The unclipped window's duration, or [C.TIME_UNSET] before the child's timeline is known. On the playback thread. */
+    var durationUs = C.TIME_UNSET
+        private set
+
+    override fun onChildSourceInfoRefreshed(newTimeline: Timeline) {
+        durationUs = newTimeline.getWindow(0, Timeline.Window()).durationUs
+        refreshSourceInfo(newTimeline)
+    }
+}
+
+/** [timeline], a single window, with the window's duration [durationUs] when that's known. */
+private class UnclippedWindowTimeline(
+    timeline: Timeline,
+    private val durationUs: Long
+) : ForwardingTimeline(timeline) {
+    override fun getWindow(
+        windowIndex: Int,
+        window: Timeline.Window,
+        defaultPositionProjectionUs: Long
+    ): Timeline.Window {
+        super.getWindow(windowIndex, window, defaultPositionProjectionUs)
+        if (durationUs != C.TIME_UNSET) window.durationUs = durationUs
+        return window
     }
 }
 

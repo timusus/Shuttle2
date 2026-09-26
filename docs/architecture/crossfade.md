@@ -49,9 +49,11 @@ One playback ExoPlayer and one AudioTrack; the MediaSession sees the same items 
    frame. Open until tested with MP3/FLAC.
 3. **Sample rate or channel count mismatch: skipped.** The tail plays out unfaded (a `Join`) instead of
    mixing. Resampling, or mixing through a common output format, is a follow-up.
-4. **Shown duration: open. Re-clipping: handled.** Once a tail is ready, the player's timeline shows the
-   clipped duration (`duration - F`), so anything reading the window duration (the session's seek bar) is F
-   short. A change to F takes effect at the next timeline or item change. The current and next entries' tails
+4. **Shown duration: handled (#561). Re-clipping: handled.** The player's window shows the song's whole
+   duration, clipped or not, so the session, notification, Android Auto and the app's progress all show the real
+   length, and it doesn't jump by F as the item is clipped. Only the period is clipped, so the item still ends,
+   and hands over, at `duration - F`: the position runs to there and the next song starts, as in other players
+   that crossfade. A seek past the clip end lands at the period's end and cuts to the next song. A change to F takes effect at the next timeline or item change. The current and next entries' tails
    are then dropped, their items unclipped, and new tails decoded and clipped. The playing item is the
    exception once it's near its end (see below).
 5. **Unseekable streams and failed decodes: handled.** An item is clipped only once its tail is decoded. A
@@ -98,7 +100,8 @@ Details that make it hold:
 - **The timeline shows the updated item.** A `ClippingMediaSource` refreshes its timeline from its child's, which
   keeps the item the child was prepared with. So an item updated in place (re-clipped, or renamed by a library
   update) would revert to the old one. The factory wraps the clipping source in `UpdatedItemMediaSource`, which
-  puts the latest item back into the timeline.
+  puts the latest item back into the timeline. It also puts back the unclipped window duration, which a
+  `DurationRecordingMediaSource` under the clipping source records from the delegate's timeline (risk 4).
 - **The delegate never sees a clip.** The delegate source factory (and `TailDecoder`) get the item without its
   clipping. Otherwise `DefaultMediaSourceFactory` would add a second, fixed `ClippingMediaSource`.
 
@@ -121,7 +124,6 @@ the fake clock runs the whole queue through the sink at once.
 
 - A settings UI for F.
 - Resampling (risk 3).
-- The displayed duration: report the unclipped duration to the session and UI (risk 4).
 - Observing F: a change applies at the next timeline or item change, not straight away (risk 4).
 - Float output (the mixer and capture handle 16/24-bit PCM only).
 - Device verification: decode speed with the extension decoders, audible joins, Cast, and Android Auto.

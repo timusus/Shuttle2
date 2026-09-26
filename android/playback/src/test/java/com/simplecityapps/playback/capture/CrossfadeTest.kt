@@ -132,6 +132,19 @@ class CrossfadeTest {
     }
 
     @Test
+    fun `a clipped song shows its whole duration to the session`() {
+        val lengthMs = a.frameCount * 1000L / SAMPLE_RATE
+        PlaybackHarness(crossfadeDurationMs = CROSSFADE_MS).use { harness ->
+            harness.playWithTails(listOf(a.song(id = 1), b.song(id = 2))) {
+                harness.runAt(mediaItemIndex = 0, positionMs = 1_000) {
+                    harness.appPlayer.duration shouldBe lengthMs
+                    harness.playbackOperations.getDuration() shouldBe lengthMs.toInt()
+                }
+            }
+        }
+    }
+
+    @Test
     fun `with crossfade off, songs play back to back unchanged`() {
         val output = PlaybackHarness(crossfadeDurationMs = 0).use { it.playToEnd(listOf(a.song(id = 1), b.song(id = 2))) }
 

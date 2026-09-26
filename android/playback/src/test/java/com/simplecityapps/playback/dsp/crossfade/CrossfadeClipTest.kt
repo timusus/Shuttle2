@@ -3,6 +3,7 @@ package com.simplecityapps.playback.dsp.crossfade
 import android.os.Looper
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.drm.DrmSessionManagerProvider
 import androidx.media3.exoplayer.source.MediaSource
@@ -110,6 +111,21 @@ class CrossfadeClipTest {
     }
 
     @Test
+    fun `a clipped item shows the song's whole duration, and ends at the clip`() {
+        unprepared += a.uid
+        queue(a, b)
+        driver.runUntil { player.duration != C.TIME_UNSET }
+        player.duration shouldBe SONG_MS.toLong()
+
+        tails.land(a)
+        driver.idle()
+
+        player.getMediaItemAt(0).clipEndMs() shouldBe SONG_MS - CROSSFADE_MS
+        player.duration shouldBe SONG_MS.toLong()
+        player.currentTimeline.getPeriod(0, Timeline.Period()).durationMs shouldBe SONG_MS - CROSSFADE_MS
+    }
+
+    @Test
     fun `the next item is clipped once its tail lands, keeping its preloaded period`() {
         queue(a, b)
         driver.runUntil { sources[b.uid]?.createdMediaPeriods?.size == 1 }
@@ -125,8 +141,9 @@ class CrossfadeClipTest {
     }
 
     /**
-     * Builds each item's source from its song's duration, with samples 100 ms apart across it (so the renderers read
-     * through an item as it plays, not straight to its end), and remembers it by entry.
+     * Builds each item's source from its song's duration, its period starting with its window (as a progressive
+     * stream's does), with samples 100 ms apart across it (so the renderers read through an item as it plays, not
+     * straight to its end), and remembers it by entry.
      */
     private inner class FakeSourceFactory : MediaSource.Factory {
         override fun createMediaSource(mediaItem: MediaItem): MediaSource {
@@ -137,6 +154,7 @@ class CrossfadeClipTest {
                     .Builder()
                     .setUid(entry.uid)
                     .setDurationUs(durationUs)
+                    .setWindowPositionInFirstPeriodUs(0)
                     .setMediaItem(mediaItem)
                     .build()
             return FakeMediaSource
