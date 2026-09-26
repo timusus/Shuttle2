@@ -35,18 +35,10 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     val openedArtists = mutableListOf<AlbumArtist>()
     val shownActions = mutableListOf<MediaActionsTarget>()
 
-    var consentShared = 0
-        private set
-    var consentDeclined = 0
-        private set
-    var privacySettingsOpened = 0
-        private set
-
     fun setContent(
         uiState: HomeUiState,
         theme: ThemeMode = ThemeMode.Light,
         emptyContent: (@Composable (Modifier) -> Unit)? = null,
-        showConsentCard: Boolean = false,
     ) {
         rule.setContent {
             S2AppTheme(AppThemeState(theme = theme)) {
@@ -54,17 +46,6 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
                     uiState = uiState,
                     callbacks = callbacks(),
                     emptyContent = emptyContent,
-                    consentCard = if (showConsentCard) {
-                        @Composable {
-                            AnalyticsConsentCard(
-                                onShare = { consentShared++ },
-                                onNoThanks = { consentDeclined++ },
-                                onOpenPrivacySettings = { privacySettingsOpened++ },
-                            )
-                        }
-                    } else {
-                        null
-                    },
                 )
             }
         }

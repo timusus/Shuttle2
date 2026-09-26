@@ -132,40 +132,4 @@ class HomeScreenTest {
 
         robot.assertTextNotShown("What's new in S2")
     }
-
-    @Test
-    fun `the consent card is hidden unless asked for`() {
-        robot.setContent(HomeScenarios.content)
-
-        robot.assertTextNotShown("Help improve S2?")
-    }
-
-    @Test
-    fun `sharing on the consent card is wired`() {
-        robot.setContent(HomeScenarios.content, showConsentCard = true)
-
-        robot.tapText("Share")
-
-        robot.consentShared shouldBe 1
-        robot.consentDeclined shouldBe 0
-    }
-
-    @Test
-    fun `declining or dismissing the consent card is wired`() {
-        robot.setContent(HomeScenarios.content, showConsentCard = true)
-
-        robot.tapText("No thanks")
-        robot.tapDescription("Dismiss")
-
-        robot.consentDeclined shouldBe 2
-    }
-
-    @Test
-    fun `the consent card links to privacy settings`() {
-        robot.setContent(HomeScenarios.content, showConsentCard = true)
-
-        robot.tapText("Privacy settings")
-
-        robot.privacySettingsOpened shouldBe 1
-    }
 }

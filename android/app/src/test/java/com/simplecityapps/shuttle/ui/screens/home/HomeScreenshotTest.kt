@@ -43,8 +43,8 @@ class HomeScreenshotTest {
     @After
     fun uninstallSampleArtwork() = SampleArtworkCoil.uninstall()
 
-    private fun shot(name: String, uiState: HomeUiState, theme: ThemeMode = ThemeMode.Light, showConsentCard: Boolean = false) {
-        robot.setContent(uiState, theme, showConsentCard = showConsentCard)
+    private fun shot(name: String, uiState: HomeUiState, theme: ThemeMode = ThemeMode.Light) {
+        robot.setContent(uiState, theme)
         composeTestRule.onRoot().captureRoboImage(
             filePath = File(shotsDir, "$name.png").path,
             roborazziOptions = DocsDesignRoborazziOptions,
@@ -53,9 +53,6 @@ class HomeScreenshotTest {
 
     @Test
     fun content() = shot("content", HomeScenarios.content)
-
-    @Test
-    fun consent() = shot("consent", HomeScenarios.content, showConsentCard = true)
 
     @Test
     fun contentDark() = shot("content-dark", HomeScenarios.content, ThemeMode.Dark)

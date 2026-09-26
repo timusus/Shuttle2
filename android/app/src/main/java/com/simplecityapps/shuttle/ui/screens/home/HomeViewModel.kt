@@ -2,13 +2,16 @@ package com.simplecityapps.shuttle.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
+import com.simplecityapps.shuttle.settings.ReadSetting
+import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.common.PendingEvent
+import com.simplecityapps.shuttle.ui.common.PendingEvents
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,17 +33,35 @@ sealed interface HomeUiState {
         val mostPlayed: List<Album>,
         val somethingDifferent: List<AlbumArtist>,
         val songs: List<Song>,
+        val events: List<PendingEvent<HomeEvent>> = emptyList(),
     ) : HomeUiState
+}
+
+/** An event Home's UI must handle once, whose loss would be a bug. */
+enum class HomeEvent {
+    /** Analytics just turned on for this upgrader who never chose (#481); shown once. */
+    AnalyticsNowOn,
 }
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     homeSections: HomeSections,
-    private val preferenceManager: GeneralPreferenceManager,
+    private val isWhatsNewPending: IsWhatsNewPending,
+    private val markChangelogViewed: MarkChangelogViewed,
+    private val readSetting: ReadSetting,
+    private val saveSetting: SaveSetting,
 ) : ViewModel() {
     private val whatsNewPending = MutableStateFlow(isWhatsNewPending())
+    private val events = PendingEvents<HomeEvent>()
 
-    val uiState: StateFlow<HomeUiState> = combine(homeSections(), whatsNewPending) { sections, whatsNew ->
+    init {
+        if (!readSetting(AnalyticsConsentSettings.NoticeShown)) {
+            saveSetting(AnalyticsConsentSettings.NoticeShown, true)
+            events.post(HomeEvent.AnalyticsNowOn)
+        }
+    }
+
+    val uiState: StateFlow<HomeUiState> = combine(homeSections(), whatsNewPending, events.flow) { sections, whatsNew, pendingEvents ->
         if (sections.songs.isEmpty()) {
             HomeUiState.Empty
         } else {
@@ -51,6 +72,7 @@ class HomeViewModel @Inject constructor(
                 mostPlayed = sections.mostPlayed,
                 somethingDifferent = sections.somethingDifferent,
                 songs = sections.songs,
+                events = pendingEvents,
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
@@ -60,9 +82,9 @@ class HomeViewModel @Inject constructor(
 
     /** Opening the changelog or dismissing the card marks this version's notes as seen. */
     fun onWhatsNewHandled() {
-        preferenceManager.lastViewedChangelogVersion = BuildConfig.VERSION_NAME
+        markChangelogViewed()
         whatsNewPending.value = false
     }
 
-    private fun isWhatsNewPending(): Boolean = preferenceManager.showChangelogOnLaunch && preferenceManager.lastViewedChangelogVersion != BuildConfig.VERSION_NAME
+    fun onEventHandled(id: Long) = events.consume(id)
 }

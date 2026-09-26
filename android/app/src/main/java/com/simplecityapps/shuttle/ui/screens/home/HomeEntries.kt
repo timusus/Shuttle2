@@ -1,13 +1,18 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
@@ -20,6 +25,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.WhatsNewRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.HomeRoute
+import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.shell.ShellTab
 
 fun EntryProviderScope<NavKey>.homeEntries(navigator: AppNavigator) {
@@ -34,13 +40,24 @@ private fun HomeDestination(
     onNavigate: (NavigationTarget) -> Unit,
     onSearch: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
-    consentViewModel: AnalyticsConsentViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val emptyViewModel: LibraryEmptyViewModel = hiltViewModel()
     val emptyState by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
-    val consentState by consentViewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = LocalShellSnackbarHostState.current
+    val analyticsNoticeMessage = stringResource(R.string.home_analytics_notice_message)
+    val analyticsNoticeAction = stringResource(R.string.home_analytics_notice_action)
+    (uiState as? HomeUiState.Content)?.let { content ->
+        ConsumeEvents(content.events, onConsumed = viewModel::onEventHandled) { event ->
+            when (event) {
+                HomeEvent.AnalyticsNowOn -> {
+                    val result = snackbarHostState.showSnackbar(analyticsNoticeMessage, actionLabel = analyticsNoticeAction, duration = SnackbarDuration.Long)
+                    if (result == SnackbarResult.ActionPerformed) onOpen(SettingsDestinationRoute(SettingsDestination.Privacy))
+                }
+            }
+        }
+    }
     MediaActionsHost(onNavigate = onNavigate) { actions ->
         HomeScreen(
             uiState = uiState,
@@ -67,17 +84,6 @@ private fun HomeDestination(
                         modifier = modifier,
                     )
                 }
-            },
-            consentCard = if (consentState.showCard) {
-                @Composable {
-                    AnalyticsConsentCard(
-                        onShare = consentViewModel::onShare,
-                        onNoThanks = consentViewModel::onNoThanks,
-                        onOpenPrivacySettings = { onOpen(SettingsDestinationRoute(SettingsDestination.Privacy)) },
-                    )
-                }
-            } else {
-                null
             },
         )
     }

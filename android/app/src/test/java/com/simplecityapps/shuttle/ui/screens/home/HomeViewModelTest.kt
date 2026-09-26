@@ -8,9 +8,15 @@ import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
+import com.simplecityapps.shuttle.settings.ReadSetting
+import com.simplecityapps.shuttle.settings.SaveSetting
+import com.simplecityapps.shuttle.settings.SettingsStore
+import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.testing.MainDispatcherRule
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -35,6 +41,8 @@ class HomeViewModelTest {
 
     private val context: Context = RuntimeEnvironment.getApplication()
     private lateinit var preferenceManager: GeneralPreferenceManager
+    private lateinit var settingsStore: SettingsStore
+    private lateinit var analyticsConsentSettings: AnalyticsConsentSettings
     private val songs = FakeSongRepository()
     private val albums = FakeAlbumRepository()
 
@@ -44,11 +52,20 @@ class HomeViewModelTest {
     fun setUp() {
         preferenceManager = GeneralPreferenceManager(context.getSharedPreferences("home-test", Context.MODE_PRIVATE).apply { edit().clear().commit() })
         preferenceManager.lastViewedChangelogVersion = BuildConfig.VERSION_NAME
+        val prefs = context.defaultSharedPreferences().apply { edit().clear().commit() }
+        settingsStore = SettingsStore(prefs)
+        analyticsConsentSettings = AnalyticsConsentSettings(settingsStore)
     }
 
     private fun TestScope.viewModel(): HomeViewModel {
         val sections = HomeSections(albums, FakeAlbumArtistRepository(), songs, seed = 1, dispatcher = mainDispatcherRule.testDispatcher)
-        return HomeViewModel(sections, preferenceManager).also { viewModel ->
+        return HomeViewModel(
+            sections,
+            IsWhatsNewPending(preferenceManager),
+            MarkChangelogViewed(preferenceManager),
+            ReadSetting(settingsStore),
+            SaveSetting(settingsStore),
+        ).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
             runCurrent()
         }
@@ -103,5 +120,37 @@ class HomeViewModelTest {
         songs.setSongs(listOf(chlorophyllLoop))
 
         (viewModel().uiState.value as HomeUiState.Content).showWhatsNew shouldBe false
+    }
+
+    @Test
+    fun `the analytics notice shows once when the notice hasn't been shown yet`() = runTest(mainDispatcherRule.testDispatcher) {
+        songs.setSongs(listOf(chlorophyllLoop))
+
+        val viewModel = viewModel()
+
+        val content = viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
+        content.events.map { it.value } shouldBe listOf(HomeEvent.AnalyticsNowOn)
+        analyticsConsentSettings.noticeShown.value shouldBe true
+    }
+
+    @Test
+    fun `consuming the analytics notice event removes it`() = runTest(mainDispatcherRule.testDispatcher) {
+        songs.setSongs(listOf(chlorophyllLoop))
+        val viewModel = viewModel()
+        val pending = (viewModel.uiState.value as HomeUiState.Content).events.single()
+
+        viewModel.onEventHandled(pending.id)
+        runCurrent()
+
+        (viewModel.uiState.value as HomeUiState.Content).events.shouldBeEmpty()
+    }
+
+    @Test
+    fun `the analytics notice does not show once already marked shown`() = runTest(mainDispatcherRule.testDispatcher) {
+        analyticsConsentSettings.noticeShown.value = true
+        songs.setSongs(listOf(chlorophyllLoop))
+
+        val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
+        content.events.shouldBeEmpty()
     }
 }

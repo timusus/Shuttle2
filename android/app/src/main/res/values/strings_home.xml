@@ -33,16 +33,8 @@
     <string name="home_empty_message">Music on this device and on servers you connect shows up here</string>
     <!-- Home: content description for the top bar button that opens Search -->
     <string name="home_search">Search</string>
-    <!-- Home: title of the card asking for analytics consent, shown after 3 days of use (#421) -->
-    <string name="home_consent_title">Help improve S2?</string>
-    <!-- Home: message of the analytics consent card -->
-    <string name="home_consent_message">Share anonymous usage stats. No listening history or file names.</string>
-    <!-- Home: button on the analytics consent card that turns analytics on -->
-    <string name="home_consent_share">Share</string>
-    <!-- Home: button on the analytics consent card that declines analytics -->
-    <string name="home_consent_no_thanks">No thanks</string>
-    <!-- Home: link on the analytics consent card to Settings > Privacy, where the choice can be changed later -->
-    <string name="home_consent_privacy_settings">Privacy settings</string>
-    <!-- Home: content description for the button that dismisses the analytics consent card, which counts as No thanks -->
-    <string name="home_consent_dismiss">Dismiss</string>
+    <!-- Home: one-time snackbar telling an upgrader analytics is now on, since it never was before (#481) -->
+    <string name="home_analytics_notice_message">S2 now shares anonymous usage data to help improve the app. You can turn this off in Settings.</string>
+    <!-- Home: action on the analytics notice snackbar, opens Settings > Privacy -->
+    <string name="home_analytics_notice_action">Settings</string>
 </resources>

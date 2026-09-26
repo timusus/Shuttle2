@@ -172,10 +172,11 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 - [ ] On a real 10k-track library, time a full import with the S2 provider (`Import complete in` in logcat) and compare it with the last Play build, which walks SAF folders.
 - [x] Put music in a folder containing `.nomedia` and grant that folder under Media > Directories. Those songs don't import (expected until the optional SAF "Add folder" lands); nothing else breaks. — automated: `emu-verify.sh --check nomedia-import`
 
-## Home analytics consent card (#421, #481)
+## Analytics default-on and the one-time notice (#421, #481)
 
-- [ ] Fresh install: Analytics in Settings > Privacy is already on, and the card never appears on Home no matter how many days the app is opened.
-- [ ] Simulate an upgrade from a user who never chose (Analytics off in Settings > Privacy), with a library loaded: force-stop and reopen the app on 3 separate calendar days (change the device date between opens). The card appears on Home on the 3rd day, not before, and Analytics stays off the whole time.
+- [ ] Fresh install: Analytics and Crash reporting in Settings > Privacy are already on, and Home never shows the analytics notice.
+- [ ] Simulate an upgrade from a user who never chose (clear the app's data, downgrade `previousVersionCode`, or use an old build's data if you have one) with a library loaded: Analytics and Crash reporting turn on, and Home shows the one-time "S2 now shares anonymous usage data..." message once, with a Settings action that opens Settings > Privacy. Reopening Home doesn't show it again.
+- [ ] Simulate the same upgrade for a user who had answered or dismissed the old consent card (no longer present) without an explicit choice: Analytics stays off, and Home never shows the notice.
 
 ## Sources parity (#474, #479)
 
