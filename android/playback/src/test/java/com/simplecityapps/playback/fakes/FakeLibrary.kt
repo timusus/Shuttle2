@@ -34,6 +34,11 @@ class FakePlaylistRepository(private val playlists: Map<Playlist, List<Song>> = 
         playlists[playlist].orEmpty().mapIndexed { index, song -> PlaylistSong(id = index.toLong(), sortOrder = index.toLong(), song = song) }
     )
 
+    override fun getPlaylistCoverSongs(
+        playlist: Playlist,
+        limit: Int
+    ): Flow<List<Song>> = error("not called")
+
     override suspend fun getFavoritesPlaylist(): Playlist = error("not called")
 
     override suspend fun createPlaylist(
