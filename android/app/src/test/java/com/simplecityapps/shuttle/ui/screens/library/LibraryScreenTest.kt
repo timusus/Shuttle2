@@ -209,6 +209,28 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun `songs sorted by album sit under one header per album, with track numbers instead of covers (#491)`() {
+        val songs = listOf(
+            createSong(id = 1, name = "Opening", album = "Phase Garden", albumArtist = "Juniper Static", track = 1),
+            createSong(id = 2, name = "Closing", album = "Phase Garden", albumArtist = "Juniper Static", track = 2),
+            createSong(id = 3, name = "Lone", album = "Salt Lines", albumArtist = "Harbour Owl", track = 1),
+        )
+        robot.setContent(libraryState(currentTab = LibraryTab.Songs), pages = LibraryPageStates(songs = readySongList(songs, sortOrder = SongSortOrder.AlbumGroupKey)))
+
+        robot.countOfText("Phase Garden") shouldBe 1
+        robot.countOfText("Salt Lines") shouldBe 1
+        robot.assertTextDisplayed("Closing")
+    }
+
+    @Test
+    fun `songs sorted by name keep the album in each row`() {
+        val songs = listOf(createSong(id = 1, name = "Opening", album = "Phase Garden", albumArtist = "Juniper Static"))
+        robot.setContent(libraryState(currentTab = LibraryTab.Songs), pages = LibraryPageStates(songs = readySongList(songs, sortOrder = SongSortOrder.SongName)))
+
+        robot.countOfText("Phase Garden") shouldBe 1
+    }
+
+    @Test
     fun `songs sorted by duration keep a plain thumb that still reaches the end`() {
         val songs = (1..48).map { createSong(id = it.toLong(), name = "Track $it", duration = it) }
         robot.setContent(libraryState(currentTab = LibraryTab.Songs), pages = LibraryPageStates(songs = readySongList(songs, sortOrder = SongSortOrder.Duration)))

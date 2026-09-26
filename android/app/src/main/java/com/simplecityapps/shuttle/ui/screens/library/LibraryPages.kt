@@ -2,7 +2,9 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,11 +19,15 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.AlbumRow
@@ -45,6 +51,7 @@ import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.components.AlphabetFastScroller
 import com.simplecityapps.shuttle.ui.common.components.FastScrollableState
 import com.simplecityapps.shuttle.ui.common.components.FastScroller
@@ -139,32 +146,90 @@ fun SongsPage(
     }
     LibraryContent(content, stringResource(R.string.song_list_empty), modifier, state.scanProgress) {
         val listState = rememberLazyListState()
+        val byAlbum = state.sortOrder == SongSortOrder.AlbumGroupKey || state.sortOrder == SongSortOrder.Default
+        val entries = remember(state.songs, byAlbum) { songEntries(state.songs, byAlbum) }
         Box(modifier.fillMaxSize()) {
             LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-songs")) {
                 item(key = "header") { PlayShuffleHeader(onPlay, onShuffle) }
-                items(state.songs, key = { it.id }) { song ->
-                    LibrarySongRow(
-                        song = song,
-                        selected = song in state.selectedSongs,
-                        onClick = { onSongClick(song) },
-                        onLongClick = { onSongLongClick(song) },
-                        onMore = { onSongMore(song) },
-                    )
+                items(entries, key = SongEntry::key, contentType = { it::class }) { entry ->
+                    when (entry) {
+                        is SongEntry.AlbumHeader -> SongAlbumHeader(entry.song)
+
+                        is SongEntry.Row -> LibrarySongRow(
+                            song = entry.song,
+                            selected = entry.song in state.selectedSongs,
+                            onClick = { onSongClick(entry.song) },
+                            onLongClick = { onSongLongClick(entry.song) },
+                            onMore = { onSongMore(entry.song) },
+                            underAlbumHeader = byAlbum,
+                        )
+                    }
                 }
             }
             LibraryFastScroller(
-                items = state.songs,
+                items = entries,
                 sortOrder = state.sortOrder,
-                letterKey = songLetterKey(state.sortOrder),
+                letterKey = songLetterKey(state.sortOrder)?.let { key -> { entry: SongEntry -> key(entry.song) } },
                 scrollableState = rememberFastScrollableState(listState),
                 headerCount = 1,
-                thumbLabel = songThumbLabel(state.sortOrder),
+                thumbLabel = songThumbLabel(state.sortOrder)?.let { label -> { entry: SongEntry -> label(entry.song) } },
             )
         }
     }
 }
 
-/** A song in a list outside its album: artwork, "artist · album", duration. */
+/**
+ * A row of the Songs page. Sorted by album, each album's songs follow an [AlbumHeader] that shows its cover once, rather
+ * than every row repeating it (#491).
+ */
+private sealed interface SongEntry {
+    val song: Song
+    val key: Any
+
+    /** The album [song] opens. */
+    data class AlbumHeader(override val song: Song) : SongEntry {
+        override val key: Any get() = "album-${song.id}"
+    }
+
+    data class Row(override val song: Song) : SongEntry {
+        override val key: Any get() = song.id
+    }
+}
+
+/** [songs] as rows, with an album header wherever the album changes when [byAlbum]. */
+private fun songEntries(songs: List<Song>, byAlbum: Boolean): List<SongEntry> = if (!byAlbum) {
+    songs.map(SongEntry::Row)
+} else {
+    buildList {
+        songs.forEachIndexed { index, song ->
+            if (index == 0 || songs[index - 1].albumGroupKey != song.albumGroupKey) add(SongEntry.AlbumHeader(song))
+            add(SongEntry.Row(song))
+        }
+    }
+}
+
+/** The cover, name and album artist of the album the rows under it belong to. */
+@Composable
+private fun SongAlbumHeader(song: Song) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        LibraryArtwork(song, ArtworkPlaceholder.Album, size = ArtworkSize.Medium)
+        Column(Modifier.weight(1f)) {
+            Text(song.album.orEmpty(), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            song.albumArtist?.let {
+                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+/**
+ * A song in a list: artwork and "artist · album" outside its album; under an album header, the track number and the
+ * artist, since the header already shows the cover and album.
+ */
 @Composable
 fun LibrarySongRow(
     song: Song,
@@ -174,13 +239,15 @@ fun LibrarySongRow(
     playing: Boolean = false,
     onLongClick: (() -> Unit)? = null,
     onMore: (() -> Unit)? = null,
+    underAlbumHeader: Boolean = false,
 ) {
     SongRow(
         title = song.name.orEmpty(),
-        subtitle = song.rowSubtitle,
+        subtitle = if (underAlbumHeader) (song.friendlyArtistName ?: song.albumArtist).orEmpty() else song.rowSubtitle,
         onClick = onClick,
         modifier = modifier,
-        artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
+        artwork = if (underAlbumHeader) null else ({ LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) }),
+        trackNumber = if (underAlbumHeader) song.track else null,
         duration = formatDuration(song.duration.toLong()),
         playing = playing,
         selected = selected,
