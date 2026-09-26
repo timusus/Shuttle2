@@ -43,7 +43,10 @@ data class SongData(
     @ColumnInfo(name = "bitDepth") var bitDepth: Int?,
     @ColumnInfo(name = "sampleRate") var sampleRate: Int?,
     @ColumnInfo(name = "channelCount") var channelCount: Int?,
-    @ColumnInfo(name = "artworkVersion") var artworkVersion: String? = null
+    @ColumnInfo(name = "artworkVersion") var artworkVersion: String? = null,
+    // Written only on insert ([SongDataUpdate] leaves it out), so it survives rescans and tag edits. Nullable only so
+    // the migration to version 45 could add it without a default: every row has one, backfilled from lastModified.
+    @ColumnInfo(name = "dateAdded") var dateAdded: Date? = null
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -78,9 +81,21 @@ fun Song.toSongData(mediaProviderType: MediaProviderType): SongData = SongData(
     bitDepth = bitDepth,
     sampleRate = sampleRate,
     channelCount = channelCount,
-    artworkVersion = artworkVersion
+    artworkVersion = artworkVersion,
+    dateAdded = dateAddedOnInsert()
 ).apply {
     id = this@toSongData.id
+}
+
+/**
+ * When a song first reaches the library: the file's modification time, as the migration to version 45 backfilled for
+ * the songs already there, so a first scan doesn't make the whole library "recently added". A modification time in the
+ * future (a wrong clock) counts as now.
+ */
+private fun Song.dateAddedOnInsert(): Date {
+    val now = Date()
+    val added = (dateAdded ?: lastModified)?.let { Date(it.toEpochMilliseconds()) } ?: return now
+    return if (added.after(now)) now else added
 }
 
 fun List<Song>.toSongData(mediaProviderType: MediaProviderType): List<SongData> = map { song -> song.toSongData(mediaProviderType) }

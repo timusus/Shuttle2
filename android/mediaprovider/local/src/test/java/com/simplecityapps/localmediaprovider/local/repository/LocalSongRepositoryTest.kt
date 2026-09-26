@@ -8,14 +8,19 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.comparables.shouldBeLessThanOrEqualTo
 import io.kotest.matchers.shouldBe
 import java.util.Date
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executor
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -88,6 +93,31 @@ class LocalSongRepositoryTest {
         val sorted = repository.getSongs(SongQuery.All(sortOrder = SongSortOrder.SongName)).filterNotNull().first()
 
         sorted.map(Song::name) shouldBe listOf("Apple", "Banana", "Cherry")
+    }
+
+    @Test
+    fun `a new song's date added is its modification time, and later updates keep it`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao())
+        val modified = Instant.fromEpochMilliseconds(1_700_000_000_000)
+        val template = songData("Template").toSong()
+        repository.insert(listOf(template.copy(lastModified = modified, dateAdded = null)), MediaProviderType.Shuttle)
+        val inserted = repository.loadSongs(SongQuery.All()).single()
+
+        repository.update(inserted.copy(name = "Retagged", lastModified = modified + 1.days))
+
+        repository.loadSongs(SongQuery.All()).single().run {
+            name shouldBe "Retagged"
+            dateAdded shouldBe modified
+        }
+    }
+
+    @Test
+    fun `a modification time in the future counts as added now`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao())
+        val template = songData("Template").toSong()
+        repository.insert(listOf(template.copy(lastModified = Clock.System.now() + 365.days, dateAdded = null)), MediaProviderType.Shuttle)
+
+        repository.loadSongs(SongQuery.All()).single().dateAdded!! shouldBeLessThanOrEqualTo Clock.System.now()
     }
 
     private suspend fun insertSongs(names: List<String>): List<Song> {

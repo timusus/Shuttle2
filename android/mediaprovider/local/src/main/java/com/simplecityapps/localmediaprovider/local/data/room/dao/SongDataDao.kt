@@ -190,5 +190,6 @@ fun SongData.toSong(): Song = Song(
     bitDepth = bitDepth,
     sampleRate = sampleRate,
     channelCount = channelCount,
-    artworkVersion = artworkVersion
+    artworkVersion = artworkVersion,
+    dateAdded = dateAdded?.let { Instant.fromEpochMilliseconds(it.time) }
 )

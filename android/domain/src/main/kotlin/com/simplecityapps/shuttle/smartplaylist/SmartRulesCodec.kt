@@ -21,7 +21,10 @@ object SmartRulesCodec {
 
     fun encode(rules: SmartRules): String = json.encodeToString(Stored.serializer(), Stored(VERSION, rules))
 
-    /** @throws SerializationException if [text] isn't smart playlist JSON, or holds a rule this version doesn't know. */
+    /**
+     * @throws SerializationException (an [IllegalArgumentException]) if [text] isn't smart playlist JSON, or holds a rule
+     *   this version doesn't know.
+     */
     fun decode(text: String): SmartRules = json.decodeFromString(Stored.serializer(), text).rules
 
     @Serializable

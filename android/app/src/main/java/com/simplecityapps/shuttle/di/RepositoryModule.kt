@@ -6,6 +6,7 @@ import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumArtistRe
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalGenreRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalPlaylistRepository
+import com.simplecityapps.localmediaprovider.local.repository.LocalSmartPlaylistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepository
 import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImporter
@@ -13,6 +14,7 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.smartplaylists.SmartPlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.Module
@@ -69,6 +71,10 @@ class RepositoryModule {
 
     @Provides
     fun provideImportedPlaylistStore(playlistRepository: LocalPlaylistRepository): ImportedPlaylistStore = playlistRepository
+
+    @Provides
+    @Singleton
+    fun provideSmartPlaylistRepository(database: MediaDatabase): SmartPlaylistRepository = LocalSmartPlaylistRepository(database.smartPlaylistDao())
 
     @Provides
     @Singleton
