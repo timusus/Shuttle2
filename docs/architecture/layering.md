@@ -35,7 +35,7 @@ data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:p
 
 | Module | Today | Target |
 |---|---|---|
-| `:android:domain` | Models, sorting, queries, repository interfaces, the playback and queue operations interfaces; a plain Kotlin/JVM module (was the Android library `:android:data`) | Domain (steps 3-4 done) |
+| `:android:domain` | Models, sorting, queries, repository interfaces, the playback and queue operations interfaces, the shared use cases; a plain Kotlin/JVM module (was the Android library `:android:data`) | Domain (steps 3-6 done) |
 | `:android:mediaprovider:core` | `MediaProvider`, `MediaInfoProvider`, `MediaImporter`, M3U, import worker | Data (step 4 done: repository interfaces moved to domain) |
 | `:android:mediaprovider:local` | Room DB, DAOs, entities, `Local*Repository`, MediaStore/TagLib | Data |
 | `:android:mediaprovider:{jellyfin,emby,plex}` | HTTP services, DTOs, auth, providers | Data |
@@ -161,9 +161,30 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
    position) that playback's internal `PreparedQueue` implements with the prebuilt `MediaItem`s and
    shuffle order. `:android:app` is the only module that depends on `:android:playback`, and it
    needs it for the service and DI, so no module edge dropped.)
-6. **Shared use cases**: move `ui/actions` use cases whose dependencies are now all in domain into
+6. ~~**Shared use cases**: move `ui/actions` use cases whose dependencies are now all in domain into
    `:android:domain`. The ones that need Android (`ShareSongs`, `DeleteSongs`' SAF deleter) stay in
-   the app behind a domain interface.
+   the app behind a domain interface.~~ (done: 27 files moved with their package names unchanged,
+   plus `ResolveFolderSongs`, which `ResolveSongs` needs. Domain applies KSP with `dagger-compiler`
+   and depends on the `dagger` runtime for `javax.inject`. The use-case unit tests stay in
+   `:android:app`'s tests: they build the use cases through `TestMediaActions` and the app's fakes,
+   which the screen tests share; moving them needs the domain-interface fakes in a domain
+   `testFixtures` source set first.)
+
+   | `ui/actions` file | Where | Why |
+   |---|---|---|
+   | `AddToPlaylist`, `ClearPlaylist`, `CreatePlaylist`, `DeletePlaylist`, `RemoveFromPlaylist`, `RenamePlaylist`, `ReorderPlaylistSongs`, `RestorePlaylistSongs`, `UpdatePlaylistSortOrder` | domain | Playlist repository only |
+   | `ObserveAlbumArtists`, `ObserveAlbums`, `ObserveFavouriteSongIds`, `ObserveGenres`, `ObservePlaylistSongs`, `ObservePlaylists`, `ObserveSongs`, `ObserveSongsForGenre`, `ToggleFavourite` | domain | Repository reads and writes only |
+   | `EnqueueSongs`, `ExcludeSongs`, `PlaySongs`, `ShuffleAlbums`, `ShuffleSongs` | domain | Repositories plus `PlaybackOperations`/`QueueOperations` |
+   | `MediaSelection`, `ResolveSongs` (+ `ui/screens/library/folders/ResolveFolderSongs`) | domain | Models and repositories only; every selection-based use case needs them |
+   | `DeleteSongs` | domain, behind `SongFileDeleter` | The file deletion is the domain interface (now `suspend`, so the implementation picks its own dispatcher); the app's `SafSongFileDeleter` implements it with `DocumentFile` on the IO dispatcher and `SongFileDeleterModule` binds it |
+   | `ShareSongs` (+ `ShareRequest`) | domain; `toIntent()` in the app | The request is plain data; building the `Intent` is an app extension (`ShareRequestIntent.kt`) |
+   | `DownloadSongs` | app | Needs `SongDownloadManager` (`:downloads`), `AggregateMediaInfoProvider` (`mediaprovider:core`) and `ServerAccessGate` (`:trial`): three domain interfaces, a bigger redesign |
+   | `AvailableMediaActions` | app | Reads `SongDownloadRepository` (`:downloads`); moves once that interface and `SongDownload` are in domain. Also presentation: it lists the actions sheet's entries |
+   | `ExportPlaylist` | app | `android.net.Uri` and `PlaylistExporter` (`mediaprovider:core`) |
+   | `MediaActionHandler` | app | Composes `DownloadSongs`, and maps results to snackbars, navigation and share sheets |
+   | `FindGoToTarget` | app | Returns the presentation `NavigationTarget`; moves if it returns the album or artist instead |
+   | `MediaAction` (`MediaActionType`, `MediaAction`, `MediaActionResult`, `SnackbarAction`, `NavigationTarget`, `MediaActionMessage`) | app | Presentation: the actions sheet's entries and what the UI shows afterwards |
+   | `MediaActionMessageFormat` | app | Presentation: formats messages with Android resources |
 7. **Burn down `viewmodel-data-access`** screen by screen (audit batches A–C).
 8. **Split presentation** out of `:android:app` into `:android:ui` (screens, ViewModels,
    screen use cases) that depends on domain and designsystem only; `:android:app` keeps the

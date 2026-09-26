@@ -187,7 +187,7 @@ Things that need `Context` belong in the route composable's effect collector:
 ### 8c. Use case conventions
 
 - **Naming:** Verb phrase describing the action — `PlaySongs`, `ShuffleAlbums`, `ResolveSongsForAlbum`. Not `PlaySongsUseCase` — the suffix adds nothing.
-- **Location:** Same package as the ViewModel that uses them. If shared, promote to a common package.
+- **Location:** Same package as the ViewModel that uses them. If shared, promote to `ui/actions`: in `:android:domain` (same package) when every dependency is a domain type, otherwise in the app (see [layering step 6](layering.md#migration-in-shippable-steps)).
 - **Single `operator fun invoke`:** Either `suspend` for one-shot work, or returning `Flow` for observable work.
 - **Result types:** Use a sealed interface nested in the use case for operations that can fail. For infallible operations, return `Unit` or the data directly.
 - **Dependencies:** Injected via `@Inject constructor`. Same fakes-not-mocks rule as ViewModels.
