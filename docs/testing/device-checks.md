@@ -242,6 +242,7 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 - [ ] Crossfade off: local and server albums play gaplessly end to end, seeking works, and renaming a playing song's tag updates the title without a skip or glitch.
 - [ ] Crossfade on (e.g. 6 s): consecutive local songs overlap and fade smoothly; a transcoded server song (mobile-data quality 128 kbps) whose tail can't be decoded plays to its real end instead of cutting off early.
 - [ ] Crossfade on (#561, #562): the notification, lock screen and Android Auto show each song's full length, which doesn't change a few seconds into the song; the next Jellyfin song starts crossfading without a buffering pause.
+- [ ] Crossfade on (#569): start casting mid-song; the receiver plays each song whole (no early cut), and coming back crossfades locally again. PostHog shows a `crossfade_skipped` event with `reason` `cast` as the receiver moves on, and `unseekable` or `tail_late` for a transcoded server song that plays whole.
 - [ ] Equalizer: Bass boost with the preamp at 0 dB is quieter than EQ off, as expected; raising the preamp brings the level back, and at +12 dB with a loud track it clips cleanly (no crackle or wrap-around noise).
 
 ## Favourites as a song flag (#528, #497)

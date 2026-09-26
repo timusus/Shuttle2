@@ -31,9 +31,46 @@ One playback ExoPlayer and one AudioTrack; the MediaSession sees the same items 
 - **Pass-through.** A stream with no plan and nothing held, fading or playing out (every stream while
   crossfade is off) isn't copied. The mixer hands the input buffer on as its output, unconsumed, and the pipeline
   consumes it when the next stage reads it.
+- **Fall back where the mixer can't run (#569).** `Crossfade` stands down, as though F were 0 (tails dropped,
+  the decode cancelled, items unclipped), while any of these holds, and picks up again once none does:
+  - **Casting.** `Crossfade.followCast` listens to the app player (`AppPlayer`); while it `isRemote`, the local
+    ExoPlayer is idle and the receiver plays each song whole (the Cast converter ignores clipping).
+  - **Audio offload allowed.** The player's `trackSelectionParameters` ask for offload
+    (`audioOffloadMode != AUDIO_OFFLOAD_MODE_DISABLED`). Offloaded audio never runs through the app's processors.
+  - **Float output.** The last AudioTrack the sink opened is `ENCODING_PCM_FLOAT` (or offloaded), from
+    `onAudioTrackInitialized`. `DefaultAudioSink` runs the app's processors only on its integer PCM path, so the
+    mixer (which takes 16/24-bit PCM) never sees float output.
+
+  It checks at every update (item, timeline, repeat, shuffle and track selection parameter changes) and when a
+  new AudioTrack or a Cast handover changes the answer, so a change mid-song unclips the playing item. Standing
+  down lets that item's clip move even after the next item is preloaded (#562): a clip left on it would cut the
+  song short, as nothing plays its tail. S2 enables neither float output nor offload today (the renderers
+  factory's default, and `audioOffloadPreferences` left disabled), so those two are guards against a later change.
 - **Pipeline quirk.** The pipeline queues end of stream on every pass until the processor ends. The mixer acts
   on the first one only, and emits the playout from `getOutput()`/`isEnded()` so it's never lost behind pending
   output.
+
+## Telemetry: `crossfade_skipped`
+
+Each song that should have crossfaded into the next (F on, the song long enough, the next plays after it on its
+own, a `MixInto` plan) but played into it without is reported once, as an Analytics `crossfade_skipped` event
+with a `reason` (`CrossfadeSkip`). `Crossfade` works it out as the player moves on to the next item on its own
+(`MEDIA_ITEM_TRANSITION_REASON_AUTO`): first any reason the mixer recorded as the song's stream ended
+(`CrossfadeMixer.takeSkip`), then the fallback in force, then why the song was never clipped.
+
+| `reason` | When |
+|---|---|
+| `tail_late` | The tail wasn't ready before the playing item came within `CLIP_CHANGE_MARGIN_MS` of its end, or never landed |
+| `unseekable` | `TailDecoder` couldn't seek in the stream |
+| `decode_failed` | The tail decode failed or produced no audio |
+| `format_mismatch` | The next song's sample rate or channel count differs: the tail played out unfaded (risk 3) |
+| `short_song_loaded` | The tail landed after the player had loaded the item to its end, so clipping it would drop the next item's preload (#562) |
+| `not_gapless` | The next song didn't follow gaplessly in the sink (a new AudioTrack), so the tail faded out |
+| `cast` | The receiver moved on by itself while casting (reported from the app player's transition) |
+| `float_output` / `offload` | The fallbacks above |
+
+Seeks and skips aren't reported: they cut hard by design. `ExoPlayerFactory` takes the reporting callback;
+`PlaybackEngineModule` passes `Analytics.crossfadeSkipped`.
 
 ## The five risks
 
@@ -48,7 +85,7 @@ One playback ExoPlayer and one AudioTrack; the MediaSession sees the same items 
    Compressed formats that drop decode-only samples at buffer granularity may not start the tail on that
    frame. Open until tested with MP3/FLAC.
 3. **Sample rate or channel count mismatch: skipped.** The tail plays out unfaded (a `Join`) instead of
-   mixing. Resampling, or mixing through a common output format, is a follow-up.
+   mixing, reported as `format_mismatch`. Resampling, or mixing through a common output format, is a follow-up.
 4. **Shown duration: handled (#561). Re-clipping: handled.** The player's window shows the song's whole
    duration, clipped or not, so the session, notification, Android Auto and the app's progress all show the real
    length, and it doesn't jump by F as the item is clipped. Only the period is clipped, so the item still ends,
@@ -58,7 +95,8 @@ One playback ExoPlayer and one AudioTrack; the MediaSession sees the same items 
    exception once it's near its end (see below).
 5. **Unseekable streams and failed decodes: handled.** An item is clipped only once its tail is decoded. A
    stream `TailDecoder` can't seek in, a decode error, or a decode still running when the sink reaches the
-   end all leave the item whole. It plays to its end with no crossfade.
+   end all leave the item whole. It plays to its end with no crossfade, reported as `unseekable`,
+   `decode_failed` or `tail_late`.
 
 ## Why clip late
 
@@ -115,7 +153,14 @@ Details that make it hold:
 - F = 0 leaves the output identical to back-to-back playback, and `GaplessJoinTest` still passes.
 - Songs of one album join sample for sample, with their clipped tails played out unfaded.
 - A song whose tail can't be decoded (a Matroska file with no cues, so it can't seek) plays whole, sample for
-  sample, then the next song plays with its own tail faded out at the end: the length is `lenA + lenB`.
+  sample, then the next song plays with its own tail faded out at the end: the length is `lenA + lenB`. It's
+  reported once, as `unseekable`; the crossfade that mixed reports nothing.
+
+`CrossfadeClipTest` (a real player over fake sources and a fake tail source) covers the other reasons and the
+fallbacks: `tail_late`, `short_song_loaded`, `decode_failed`, nothing reported between songs of one album; float
+output unclipping the playing item and 16-bit output bringing the clip back; offload allowed mid-song and from the
+start; casting standing down and a receiver's own transition reported as `cast`. `CrossfadeMixerTest` covers
+`format_mismatch` and `not_gapless`.
 
 The test queues the songs, waits for the first two tails, then plays. The decoder works in wall time while
 the fake clock runs the whole queue through the sink at once.
@@ -125,6 +170,8 @@ the fake clock runs the whole queue through the sink at once.
 - A settings UI for F.
 - Resampling (risk 3).
 - Observing F: a change applies at the next timeline or item change, not straight away (risk 4).
-- Float output (the mixer and capture handle 16/24-bit PCM only).
-- Device verification: decode speed with the extension decoders, audible joins, Cast, and Android Auto.
+- Crossfade with float output or offload: both fall back to none (the mixer and capture handle 16/24-bit PCM only,
+  and offloaded audio skips the processors).
+- Device verification: decode speed with the extension decoders, audible joins, Cast, and Android Auto, and the
+  `crossfade_skipped` rates from the testing tracks.
 - Crossfade into a song that starts with silence (no trim).
