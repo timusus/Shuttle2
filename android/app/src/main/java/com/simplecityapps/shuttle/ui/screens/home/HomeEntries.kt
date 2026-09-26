@@ -27,11 +27,10 @@ import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.HomeRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
-import com.simplecityapps.shuttle.ui.shell.ShellTab
 
 fun EntryProviderScope<NavKey>.homeEntries(navigator: AppNavigator) {
     entry<HomeRoute> {
-        HomeDestination(onOpen = navigator::open, onNavigate = navigator::openTarget, onSearch = { navigator.selectTab(ShellTab.Search) })
+        HomeDestination(onOpen = navigator::open, onNavigate = navigator::openTarget)
     }
 }
 
@@ -39,7 +38,6 @@ fun EntryProviderScope<NavKey>.homeEntries(navigator: AppNavigator) {
 private fun HomeDestination(
     onOpen: (NavKey) -> Unit,
     onNavigate: (NavigationTarget) -> Unit,
-    onSearch: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -63,7 +61,6 @@ private fun HomeDestination(
         HomeScreen(
             uiState = uiState,
             callbacks = HomeCallbacks(
-                onSearch = onSearch,
                 onOpenSettings = { onOpen(SettingsRoute) },
                 onShuffleAll = { viewModel.shuffleAll()?.let(actions::dispatch) },
                 onOpenWhatsNew = {

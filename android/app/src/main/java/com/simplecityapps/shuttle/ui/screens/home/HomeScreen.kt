@@ -23,7 +23,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.NewReleases
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.ElevatedCard
@@ -66,7 +65,7 @@ import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
-import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
+import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -75,7 +74,6 @@ import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 
 class HomeCallbacks(
-    val onSearch: () -> Unit = {},
     val onOpenSettings: () -> Unit = {},
     val onShuffleAll: () -> Unit = {},
     val onOpenWhatsNew: () -> Unit = {},
@@ -85,7 +83,10 @@ class HomeCallbacks(
     val onShowActions: (MediaActionsTarget) -> Unit = {},
 )
 
-/** Home: the library's shelves under a collapsing top bar, or the empty state when there's no music yet. */
+/**
+ * Home: the library's shelves, or the empty state when there's no music yet. There's no page title (#490): the bar
+ * holds only Shuffle all and the Settings gear, so the first screen is music. Search is its own tab.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -95,16 +96,18 @@ fun HomeScreen(
     /** Shown in place of the generic empty state while the library has no songs (#422), so it can offer access. */
     emptyContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
         topBar = {
-            S2LargeTopBar(
-                title = stringResource(R.string.home_title),
+            S2TopBar(
+                title = "",
                 actions = {
-                    S2IconButton(icon = Icons.Rounded.Search, contentDescription = stringResource(R.string.home_search), onClick = callbacks.onSearch)
+                    if (uiState is HomeUiState.Content) {
+                        S2IconButton(icon = Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.home_shuffle_all), onClick = callbacks.onShuffleAll)
+                    }
                     S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = callbacks.onOpenSettings)
                 },
                 scrollBehavior = scrollBehavior,
@@ -137,15 +140,6 @@ private fun HomeContent(
     modifier: Modifier,
 ) {
     LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = 16.dp)) {
-        item(key = "shuffle") {
-            S2Button(
-                text = stringResource(R.string.home_shuffle_all),
-                onClick = callbacks.onShuffleAll,
-                icon = Icons.Rounded.Shuffle,
-                style = S2ButtonStyle.Tonal,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            )
-        }
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks) }
         }

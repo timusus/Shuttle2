@@ -27,7 +27,7 @@ class HomeScreenTest {
         robot.setContent(HomeScenarios.empty)
 
         robot.assertTextDisplayed("No music yet")
-        robot.assertTextNotShown("Shuffle all")
+        robot.assertDescriptionNotShown("Shuffle all")
     }
 
     @Test
@@ -105,16 +105,22 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `shuffle all, search and settings are wired`() {
+    fun `shuffle all and settings are wired from the top bar`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.tapText("Shuffle all")
-        robot.tapDescription("Search")
+        robot.tapDescription("Shuffle all")
         robot.tapDescription("Settings")
 
         robot.shuffles shouldBe 1
-        robot.searches shouldBe 1
         robot.settingsOpened shouldBe 1
+    }
+
+    @Test
+    fun `home has no page title and no search button, which the Search tab covers`() {
+        robot.setContent(HomeScenarios.content)
+
+        robot.assertTextNotShown("Home")
+        robot.assertDescriptionNotShown("Search")
     }
 
     @Test

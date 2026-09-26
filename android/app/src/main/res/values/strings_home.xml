@@ -2,9 +2,7 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Button to shuffle all songs -->
     <string name="btn_shuffle">Shuffle</string>
-    <!-- Home screen title -->
-    <string name="home_title">Home</string>
-    <!-- Home: button that shuffles every song in the library -->
+    <!-- Home: content description for the top bar button that shuffles every song in the library -->
     <string name="home_shuffle_all">Shuffle all</string>
     <!-- Home: shelf of albums the user played most recently -->
     <string name="home_recently_played">Recently played</string>
@@ -31,8 +29,6 @@
     <string name="home_empty_title">No music yet</string>
     <!-- Home: message of the empty state when the library has no songs -->
     <string name="home_empty_message">Music on this device and on servers you connect shows up here</string>
-    <!-- Home: content description for the top bar button that opens Search -->
-    <string name="home_search">Search</string>
     <!-- Home: one-time snackbar telling an upgrader analytics is now on, since it never was before (#481) -->
     <string name="home_analytics_notice_message">S2 now shares anonymous usage data to help improve the app. You can turn this off in Settings.</string>
     <!-- Home: action on the analytics notice snackbar, opens Settings > Privacy -->

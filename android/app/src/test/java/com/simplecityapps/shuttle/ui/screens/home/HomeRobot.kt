@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -23,8 +24,6 @@ import io.kotest.matchers.shouldBe
 
 /** Test robot for [HomeScreen]: records every callback so tests assert on what the screen asked for. */
 class HomeRobot(private val rule: ComposeContentTestRule) {
-    var searches = 0
-        private set
     var settingsOpened = 0
         private set
     var shuffles = 0
@@ -55,7 +54,6 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     }
 
     private fun callbacks() = HomeCallbacks(
-        onSearch = { searches++ },
         onOpenSettings = { settingsOpened++ },
         onShuffleAll = { shuffles++ },
         onOpenWhatsNew = { whatsNewOpened++ },
@@ -99,5 +97,9 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
 
     fun assertDescriptionDisplayed(description: String) {
         rule.onNodeWithContentDescription(description).assertIsDisplayed()
+    }
+
+    fun assertDescriptionNotShown(description: String) {
+        rule.onAllNodesWithContentDescription(description).fetchSemanticsNodes().size shouldBe 0
     }
 }

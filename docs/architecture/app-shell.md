@@ -246,11 +246,13 @@ The saveable state sits above the class branch, so one instance survives the swi
 The shell draws no top bar. Each destination owns a `Scaffold(topBar = …)` and the status-bar
 inset through the bar's default `windowInsets`.
 
-- **Top-level and list screens** (Home, Library, Search, Playlists, Settings): `LargeFlexibleTopAppBar`
+- **Top-level and list screens** (Library, Search, Playlists, Settings): `LargeFlexibleTopAppBar`
   with title and subtitle (for example the library count), `exitUntilCollapsedScrollBehavior`
   connected to the screen's list. This is a collapsing *bar*, not a hero.
 - **Settings sub-pages** (Appearance, Sources, the equalizer, and the rest under the Settings root):
   the pinned small `TopAppBar`, so they read as a level below the root (#496).
+- **Home**: a pinned small bar with no title, holding only Shuffle all and the Settings gear (#490),
+  so the first screen opens on the resume hero and shelves rather than the word "Home".
 - **Artwork detail** (album, artist, genre, playlist): the existing `DetailScaffold`: pinned small
   bar, artwork as a list item. No collapsing hero; the NestedScrollConnection and graphics-layer
   attempts failed and are not retried.
