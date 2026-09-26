@@ -29,6 +29,8 @@ class SearchRobot(private val rule: ComposeContentTestRule) {
     val queryState = TextFieldState()
     var searches = 0
         private set
+    var allSelected = 0
+        private set
     val toggledCategories = mutableListOf<SearchCategory>()
     val removedRecentSearches = mutableListOf<String>()
     val playedSongs = mutableListOf<Int>()
@@ -49,6 +51,7 @@ class SearchRobot(private val rule: ComposeContentTestRule) {
 
     fun callbacks() = SearchCallbacks(
         onSearch = { searches++ },
+        onSelectAll = { allSelected++ },
         onToggleCategory = { toggledCategories += it },
         onRemoveRecentSearch = { removedRecentSearches += it },
         onSongClick = { playedSongs += it },

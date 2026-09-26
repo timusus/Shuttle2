@@ -37,7 +37,8 @@ sealed interface SearchContent {
 }
 
 data class SearchUiState(
-    val categories: Set<SearchCategory> = SearchCategory.entries.toSet(),
+    /** The type chips selected; empty means the All chip is. */
+    val categories: Set<SearchCategory> = emptySet(),
     val content: SearchContent = SearchContent.Recent(emptyList()),
 )
 
@@ -59,7 +60,7 @@ class SearchViewModel @Inject constructor(
             if (query.isEmpty()) {
                 recentSearches.searches.map { SearchContent.Recent(it) }
             } else {
-                searchLibrary(query, categories)
+                searchLibrary(query, categories.ifEmpty { SearchCategory.entries.toSet() })
                     .map { results -> if (results.isEmpty) SearchContent.NoResults(query) else SearchContent.Results(query, results) }
                     .onStart<SearchContent> { emit(SearchContent.Searching) }
             }
@@ -77,8 +78,14 @@ class SearchViewModel @Inject constructor(
         this.query.value = query
     }
 
+    /** Selecting a type deselects All; deselecting the last one, or selecting every one, is All again. */
     fun onToggleCategory(category: SearchCategory) {
-        categories.update { if (category in it) it - category else it + category }
+        categories.update { (if (category in it) it - category else it + category).asFilter() }
+        saveSearchCategories(categories.value)
+    }
+
+    fun onSelectAll() {
+        categories.value = emptySet()
         saveSearchCategories(categories.value)
     }
 

@@ -9,6 +9,7 @@
     <!-- Shown under the search field before anything has been searched for -->
     <string name="search_start_message">Find artists, albums, songs, genres and playlists</string>
     <!-- Filter chip and results header: artists -->
+    <string name="search_category_all">All</string>
     <string name="search_category_artists">Artists</string>
     <!-- Filter chip and results header: albums -->
     <string name="search_category_albums">Albums</string>

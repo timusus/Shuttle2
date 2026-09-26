@@ -106,11 +106,22 @@ class SearchScreenTest {
     fun `filter chips reflect and toggle the categories`() {
         robot.setContent(SearchScenarios.songsOnly)
 
+        robot.assertChipSelected("All", selected = false)
         robot.assertChipSelected("Songs", selected = true)
         robot.assertChipSelected("Albums", selected = false)
         robot.tapChip("Albums")
+        robot.tapChip("All")
 
         robot.toggledCategories shouldBe listOf(SearchCategory.Albums)
+        robot.allSelected shouldBe 1
+    }
+
+    @Test
+    fun `search starts with only the All chip selected`() {
+        robot.setContent(SearchUiState())
+
+        robot.assertChipSelected("All", selected = true)
+        listOf("Artists", "Albums", "Songs", "Genres", "Playlists").forEach { robot.assertChipSelected(it, selected = false) }
     }
 
     @Test

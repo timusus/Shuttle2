@@ -56,6 +56,7 @@ import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 /** What the user can do on the Search screen; the destination wires each to the ViewModel, navigator or actions host. */
 class SearchCallbacks(
     val onSearch: () -> Unit,
+    val onSelectAll: () -> Unit,
     val onToggleCategory: (SearchCategory) -> Unit,
     val onRemoveRecentSearch: (String) -> Unit,
     val onSongClick: (index: Int) -> Unit,
@@ -118,6 +119,11 @@ fun SearchScreen(
                 .horizontalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp),
         ) {
+            S2FilterChip(
+                label = stringResource(R.string.search_category_all),
+                selected = uiState.categories.isEmpty(),
+                onClick = callbacks.onSelectAll,
+            )
             SearchCategory.entries.forEach { category ->
                 S2FilterChip(
                     label = category.label(),

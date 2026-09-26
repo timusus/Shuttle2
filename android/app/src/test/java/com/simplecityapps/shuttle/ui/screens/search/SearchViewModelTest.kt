@@ -67,6 +67,12 @@ class SearchViewModelTest {
         return shown
     }
 
+    private fun TestScope.toggle(viewModel: SearchViewModel, category: SearchCategory) {
+        viewModel.onToggleCategory(category)
+        advanceTimeBy(SearchViewModel.SearchDebounce.inWholeMilliseconds + 1)
+        runCurrent()
+    }
+
     private fun TestScope.type(viewModel: SearchViewModel, query: String) {
         viewModel.onQueryChange(query)
         advanceTimeBy(SearchViewModel.SearchDebounce.inWholeMilliseconds + 1)
@@ -143,31 +149,81 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `toggling a category filters the results and is remembered`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `a fresh search has All selected, with no type chips`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
         type(viewModel, "juniper")
 
-        viewModel.onToggleCategory(SearchCategory.Songs)
-        advanceTimeBy(SearchViewModel.SearchDebounce.inWholeMilliseconds + 1)
-        runCurrent()
-
+        viewModel.uiState.value.categories shouldBe emptySet()
         val content = viewModel.uiState.value.content.shouldBeInstanceOf<SearchContent.Results>()
-        content.results.songs shouldBe emptyList()
         content.results.albums.map { it.item.name } shouldBe listOf("Phase Garden")
-        (SearchCategory.Songs in viewModel.uiState.value.categories) shouldBe false
-        preferenceManager.searchFilterSongs shouldBe false
+        content.results.songs.isEmpty() shouldBe false
     }
 
     @Test
-    fun `a new search starts with the categories left off last time`() = runTest(mainDispatcherRule.testDispatcher) {
-        viewModel().onToggleCategory(SearchCategory.Songs)
+    fun `selecting a type deselects All and narrows the results to it`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        type(viewModel, "juniper")
+
+        toggle(viewModel, SearchCategory.Albums)
+
+        viewModel.uiState.value.categories shouldBe setOf(SearchCategory.Albums)
+        val content = viewModel.uiState.value.content.shouldBeInstanceOf<SearchContent.Results>()
+        content.results.songs shouldBe emptyList()
+        content.results.albums.map { it.item.name } shouldBe listOf("Phase Garden")
+    }
+
+    @Test
+    fun `deselecting the last type reselects All`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        type(viewModel, "juniper")
+
+        toggle(viewModel, SearchCategory.Albums)
+        toggle(viewModel, SearchCategory.Albums)
+
+        viewModel.uiState.value.categories shouldBe emptySet()
+        viewModel.uiState.value.content.shouldBeInstanceOf<SearchContent.Results>().results.songs.isEmpty() shouldBe false
+    }
+
+    @Test
+    fun `selecting All clears the type chips`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        toggle(viewModel, SearchCategory.Albums)
+        toggle(viewModel, SearchCategory.Songs)
+
+        viewModel.onSelectAll()
         runCurrent()
+
+        viewModel.uiState.value.categories shouldBe emptySet()
+    }
+
+    @Test
+    fun `selecting every type is the same as All`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+
+        SearchCategory.entries.forEach { toggle(viewModel, it) }
+
+        viewModel.uiState.value.categories shouldBe emptySet()
+    }
+
+    @Test
+    fun `a new search starts with the types left selected last time`() = runTest(mainDispatcherRule.testDispatcher) {
+        toggle(viewModel(), SearchCategory.Albums)
 
         val reopened = viewModel()
         type(reopened, "juniper")
 
-        (SearchCategory.Songs in reopened.uiState.value.categories) shouldBe false
+        reopened.uiState.value.categories shouldBe setOf(SearchCategory.Albums)
         reopened.uiState.value.content.shouldBeInstanceOf<SearchContent.Results>().results.songs shouldBe emptyList()
+    }
+
+    @Test
+    fun `a search left on All starts on All`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        toggle(viewModel, SearchCategory.Albums)
+        viewModel.onSelectAll()
+        runCurrent()
+
+        viewModel().uiState.value.categories shouldBe emptySet()
     }
 
     @Test

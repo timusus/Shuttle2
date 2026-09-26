@@ -42,6 +42,7 @@ private fun SearchDestination(
             queryState = queryState,
             callbacks = SearchCallbacks(
                 onSearch = viewModel::onSearch,
+                onSelectAll = viewModel::onSelectAll,
                 onToggleCategory = viewModel::onToggleCategory,
                 onRemoveRecentSearch = viewModel::onRemoveRecentSearch,
                 onSongClick = { index -> viewModel.playSong(index)?.let(actions::dispatch) },
