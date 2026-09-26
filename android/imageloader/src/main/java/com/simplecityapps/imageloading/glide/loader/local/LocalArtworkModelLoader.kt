@@ -50,7 +50,9 @@ class LocalArtworkModelLoader(
         private val coroutineScope: CoroutineScope,
         private val localArtworkProvider: LocalArtworkProvider
     ) : DataFetcher<InputStream> {
-        private var job: Job? = null
+        @Volatile private var cancelled = false
+
+        @Volatile private var job: Job? = null
 
         override fun getDataClass(): Class<InputStream> = InputStream::class.java
 
@@ -60,18 +62,26 @@ class LocalArtworkModelLoader(
         override fun getDataSource(): DataSource = DataSource.REMOTE
 
         override fun cancel() {
+            cancelled = true
             job?.cancel()
         }
 
+        // Glide requires exactly one callback per load, and none after cancel().
         override fun loadData(
             priority: Priority,
             callback: DataFetcher.DataCallback<in InputStream>
         ) {
             job = coroutineScope.launch(Dispatchers.IO) {
-                localArtworkProvider.getInputStream()?.let { inputStream ->
-                    callback.onDataReady(inputStream)
-                } ?: run {
-                    callback.onLoadFailed(GlideException("Local artwork not found (${localArtworkProvider.javaClass.simpleName})"))
+                val inputStream = try {
+                    localArtworkProvider.getInputStream()
+                } catch (e: Exception) {
+                    if (!cancelled) callback.onLoadFailed(e)
+                    return@launch
+                }
+                when {
+                    cancelled -> inputStream?.close()
+                    inputStream != null -> callback.onDataReady(inputStream)
+                    else -> callback.onLoadFailed(GlideException("Local artwork not found (${localArtworkProvider.javaClass.simpleName})"))
                 }
             }
         }
