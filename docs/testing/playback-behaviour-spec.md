@@ -9,7 +9,7 @@ Each JVM rule has one test named with its RS id, in `android/playback/src/test/j
 `AudioFocusSpecTest` for other apps taking audio focus and headphones being unplugged; a Cast rule
 names its test, in `chromecast/` or `spec/CastSpecTest`; a media session rule is in `spec/MediaSessionSpecTest`, driven
 through a Media3 `MediaBrowser` connected to the session. The tests run
-the real `PlaybackFacade` and `QueueManager` over a real ExoPlayer whose playlist is the queue, built by the
+the real `PlaybackFacade` and `QueueFacade` over a real ExoPlayer whose playlist is the queue, built by the
 production `ExoPlayerFactory` (fake clock, lazy preparation as in production, production renderers, audio sink and
 EQ/ReplayGain processors, WAV files from the test resources). They call only
 `PlaybackOperations` and `QueueOperations` and observe their flows, the PCM written to the AudioTrack, and audio

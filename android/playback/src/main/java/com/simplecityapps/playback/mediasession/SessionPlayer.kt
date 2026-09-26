@@ -5,8 +5,8 @@ import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.playback.queue.toRepeatMode
 import kotlinx.coroutines.CoroutineScope
@@ -92,7 +92,7 @@ class SessionPlayer(
 
     override fun setShuffleModeEnabled(shuffleModeEnabled: Boolean) {
         scope.launch {
-            queueOperations.setShuffleMode(if (shuffleModeEnabled) QueueManager.ShuffleMode.On else QueueManager.ShuffleMode.Off, reshuffle = true)
+            queueOperations.setShuffleMode(if (shuffleModeEnabled) ShuffleMode.On else ShuffleMode.Off, reshuffle = true)
         }
     }
 

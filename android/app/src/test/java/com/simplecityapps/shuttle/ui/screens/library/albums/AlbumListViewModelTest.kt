@@ -12,7 +12,7 @@ import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.fakes.importComplete
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
@@ -99,7 +99,7 @@ class AlbumListViewModelTest {
         viewModel.onShuffle()
         advanceUntilIdle()
 
-        fakeQueueManager.shuffleModeFlow.value shouldBe QueueManager.ShuffleMode.Off
+        fakeQueueManager.shuffleModeFlow.value shouldBe ShuffleMode.Off
     }
 
     private fun createViewModel(random: Random = Random.Default): AlbumListViewModel {

@@ -12,7 +12,8 @@ import com.simplecityapps.playback.engine.PlayerThread
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.QueueItem
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.Preference
@@ -29,7 +30,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
- * [PlaybackOperations] over [player], whose playlist is the queue (see [QueueManager]): calls forwarded to the player
+ * [PlaybackOperations] over [player], whose playlist is the queue (see [QueueFacade][com.simplecityapps.playback.queue.QueueFacade]): calls forwarded to the player
  * and the queue, and flows derived from the player's events and state. Nothing here keeps its own copy of the
  * position, the current item or the queue. What the player doesn't do itself is done by the listeners this puts on it,
  * one concern each: [CastHandover] (playback moving to and from a Cast receiver), [ItemLoader] (load completion and
@@ -44,7 +45,7 @@ import timber.log.Timber
  * player lives, straight away if made there, else posted to it; a read made off it returns the last published state.
  */
 class PlaybackFacade(
-    private val queueManager: QueueManager,
+    private val queueOperations: QueueOperations,
     private val player: Player,
     /** The local player: [player] itself, or the one a Cast player plays through when not casting. */
     localPlayer: ExoPlayer,
@@ -348,7 +349,7 @@ class PlaybackFacade(
         completion: ((Result<Any?>) -> Unit)?
     ) = playerThread.run {
         Timber.v("skipToNext()")
-        if (queueManager.skipToNext(ignoreRepeat)) {
+        if (queueOperations.skipToNext(ignoreRepeat)) {
             playFromStart(completion)
         } else {
             completion?.invoke(Result.failure(IllegalStateException("No next item")))
@@ -362,7 +363,7 @@ class PlaybackFacade(
     ) = playerThread.run {
         Timber.v("skipToPrev()")
         if (force || (getProgress() ?: 0) < RESTART_THRESHOLD_MS) {
-            queueManager.skipToPrevious()
+            queueOperations.skipToPrevious()
             playFromStart(completion)
         } else {
             seekTo(0)
@@ -371,8 +372,8 @@ class PlaybackFacade(
     }
 
     override fun skipTo(position: Int) = playerThread.run {
-        if (position != queueManager.getCurrentPosition()) {
-            queueManager.skipTo(position)
+        if (position != queueOperations.getCurrentPosition()) {
+            queueOperations.skipTo(position)
             playFromStart(null)
         }
     }
@@ -384,11 +385,11 @@ class PlaybackFacade(
     }
 
     override suspend fun addToQueue(songs: List<Song>) {
-        if (queueManager.addToQueue(songs)) playNewQueue()
+        if (queueOperations.addToQueue(songs)) playNewQueue()
     }
 
     override suspend fun playNext(songs: List<Song>) {
-        if (queueManager.addToNext(songs)) playNewQueue()
+        if (queueOperations.addToNext(songs)) playNewQueue()
     }
 
     /** Plays a queue just set by adding songs to an empty one. */
@@ -400,8 +401,8 @@ class PlaybackFacade(
         songs: List<Song>,
         completion: (Result<Any?>) -> Unit
     ) = withContext(Dispatchers.Main.immediate) {
-        queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
-        queueManager.setQueue(songs, songs.shuffled(), 0)
+        queueOperations.setShuffleMode(ShuffleMode.On, reshuffle = false)
+        queueOperations.setQueue(songs, songs.shuffled(), 0)
         load(0, completion = completion)
     }
 
@@ -435,7 +436,7 @@ class PlaybackFacade(
         from: Int,
         to: Int
     ) = playerThread.run {
-        queueManager.move(from, to)
+        queueOperations.move(from, to)
     }
 
     /**
@@ -443,29 +444,29 @@ class PlaybackFacade(
      * if playback was playing; removing the last item left stops playback.
      */
     override fun removeQueueItem(queueItem: QueueItem) = playerThread.run {
-        val queue = queueManager.getQueue()
+        val queue = queueOperations.getQueue()
         if (queue.none { it.uid == queueItem.uid }) return@run
-        if (queueItem.uid == queueManager.getCurrentItem()?.uid) {
+        if (queueItem.uid == queueOperations.getCurrentItem()?.uid) {
             if (queue.size == 1) {
                 pause()
             } else {
-                queueManager.getNext(ignoreRepeat = true)?.let(queueManager::setCurrentItem)
+                queueOperations.getNext(ignoreRepeat = true)?.let(queueOperations::setCurrentItem)
             }
         }
-        queueManager.remove(listOf(queueItem))
+        queueOperations.remove(listOf(queueItem))
     }
 
     /** Clears the queue; while playing, the current item stays and plays on. */
     override fun clearQueue() = playerThread.run {
         if (playbackState() == PlaybackState.Playing) {
-            queueManager.remove(queueManager.getQueue().filterNot { it.isCurrent })
+            queueOperations.remove(queueOperations.getQueue().filterNot { it.isCurrent })
         } else {
-            queueManager.clear()
+            queueOperations.clear()
         }
     }
 
     override fun updateQueueSongs(songs: List<Song>) = playerThread.run {
-        queueManager.updateSongs(songs)
+        queueOperations.updateSongs(songs)
     }
 
     companion object {

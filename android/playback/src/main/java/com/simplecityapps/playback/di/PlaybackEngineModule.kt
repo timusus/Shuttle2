@@ -26,7 +26,7 @@ import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
@@ -152,7 +152,7 @@ class PlaybackEngineModule {
     @Provides
     fun providePlaybackOperations(
         @ApplicationContext context: Context,
-        queueManager: QueueManager,
+        queueOperations: QueueOperations,
         player: Player,
         localPlayer: ExoPlayer,
         playbackPreferenceManager: PlaybackPreferenceManager,
@@ -160,7 +160,7 @@ class PlaybackEngineModule {
         @AppCoroutineScope coroutineScope: CoroutineScope,
         castQueue: CastQueue
     ): PlaybackOperations = PlaybackFacade(
-        queueManager,
+        queueOperations,
         player,
         localPlayer,
         playbackPreferenceManager,

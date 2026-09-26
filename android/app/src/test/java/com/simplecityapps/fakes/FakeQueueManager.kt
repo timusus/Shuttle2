@@ -2,17 +2,18 @@ package com.simplecityapps.fakes
 
 import com.simplecityapps.playback.queue.NewQueue
 import com.simplecityapps.playback.queue.QueueItem
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakeQueueManager : QueueOperations {
     override val queueStateFlow = MutableStateFlow(QueueState.Empty)
-    override val shuffleModeFlow = MutableStateFlow(QueueManager.ShuffleMode.Off)
-    override val repeatModeFlow = MutableStateFlow(QueueManager.RepeatMode.Off)
+    override val shuffleModeFlow = MutableStateFlow(ShuffleMode.Off)
+    override val repeatModeFlow = MutableStateFlow(RepeatMode.Off)
 
     override var hasRestoredQueue: Boolean = false
 
@@ -26,7 +27,7 @@ class FakeQueueManager : QueueOperations {
         private set
 
     /** The shuffle mode the last [setQueueIfContentVersion] set its queue with. */
-    var lastSetQueueShuffleMode: QueueManager.ShuffleMode? = null
+    var lastSetQueueShuffleMode: ShuffleMode? = null
         private set
 
     var nextItem: QueueItem? = null
@@ -57,7 +58,7 @@ class FakeQueueManager : QueueOperations {
     /** The thread each [setQueueIfContentVersion] ran on. */
     val setQueueThreads = mutableListOf<Thread>()
 
-    override fun setQueueIfContentVersion(contentVersion: Long, queue: NewQueue, shuffleMode: QueueManager.ShuffleMode): Long? {
+    override fun setQueueIfContentVersion(contentVersion: Long, queue: NewQueue, shuffleMode: ShuffleMode): Long? {
         setQueueThreads += Thread.currentThread()
         val previous = queueStateFlow.value
         if (previous.contentVersion != contentVersion) return null
@@ -73,7 +74,7 @@ class FakeQueueManager : QueueOperations {
         return contentVersion + 1
     }
     override fun getQueue(): List<QueueItem> = queueStateFlow.value.items
-    override fun getQueue(shuffleMode: QueueManager.ShuffleMode): List<QueueItem> = queueStateFlow.value.items.also { shuffleModeQueueReads++ }
+    override fun getQueue(shuffleMode: ShuffleMode): List<QueueItem> = queueStateFlow.value.items.also { shuffleModeQueueReads++ }
     override fun getCurrentItem(): QueueItem? = queueStateFlow.value.currentItem
     override fun getCurrentPosition(): Int? = queueStateFlow.value.currentPosition
     override fun getSize(): Int = queueStateFlow.value.items.size
@@ -96,18 +97,18 @@ class FakeQueueManager : QueueOperations {
     }
     override fun remove(song: Song) {}
     override fun clear() {}
-    override fun getShuffleMode(): QueueManager.ShuffleMode = shuffleModeFlow.value
-    override suspend fun setShuffleMode(shuffleMode: QueueManager.ShuffleMode, reshuffle: Boolean) {}
+    override fun getShuffleMode(): ShuffleMode = shuffleModeFlow.value
+    override suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {}
     override suspend fun toggleShuffleMode() {
-        shuffleModeFlow.value = if (shuffleModeFlow.value == QueueManager.ShuffleMode.On) QueueManager.ShuffleMode.Off else QueueManager.ShuffleMode.On
+        shuffleModeFlow.value = if (shuffleModeFlow.value == ShuffleMode.On) ShuffleMode.Off else ShuffleMode.On
     }
-    override fun getRepeatMode(): QueueManager.RepeatMode = repeatModeFlow.value
-    override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {}
+    override fun getRepeatMode(): RepeatMode = repeatModeFlow.value
+    override fun setRepeatMode(repeatMode: RepeatMode) {}
     override fun toggleRepeatMode() {
         repeatModeFlow.value = when (repeatModeFlow.value) {
-            QueueManager.RepeatMode.Off -> QueueManager.RepeatMode.All
-            QueueManager.RepeatMode.All -> QueueManager.RepeatMode.One
-            QueueManager.RepeatMode.One -> QueueManager.RepeatMode.Off
+            RepeatMode.Off -> RepeatMode.All
+            RepeatMode.All -> RepeatMode.One
+            RepeatMode.One -> RepeatMode.Off
         }
     }
 }

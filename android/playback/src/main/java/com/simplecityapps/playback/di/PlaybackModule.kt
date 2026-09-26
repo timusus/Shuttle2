@@ -20,7 +20,7 @@ import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.mediasession.UriSongResolver
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueFacade
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
@@ -39,15 +39,12 @@ import kotlinx.coroutines.CoroutineScope
 class PlaybackModule {
     @Singleton
     @Provides
-    fun provideQueueManager(
+    fun provideQueueOperations(
         player: ExoPlayer,
         activePlayer: Player,
         playbackSettings: PlaybackSettings,
         songUriResolver: SongUriResolver
-    ): QueueManager = QueueManager(player, playbackSettings, songUriResolver, activePlayer = activePlayer)
-
-    @Provides
-    fun provideQueueOperations(queueManager: QueueManager): QueueOperations = queueManager
+    ): QueueOperations = QueueFacade(player, playbackSettings, songUriResolver, activePlayer = activePlayer)
 
     @Singleton
     @Provides

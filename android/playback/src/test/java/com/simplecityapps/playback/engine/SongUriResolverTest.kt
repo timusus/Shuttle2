@@ -10,7 +10,7 @@ import com.simplecityapps.playback.exoplayer.MediaResolver
 import com.simplecityapps.playback.exoplayer.ResolvedMedia
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testSong
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueFacade
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.SettingsStore
 import io.kotest.matchers.shouldBe
@@ -29,7 +29,7 @@ class SongUriResolverTest {
 
     private val player = TestExoPlayerBuilder(RuntimeEnvironment.getApplication()).build()
 
-    private val queue = QueueManager(player, PlaybackSettings(SettingsStore(FakeSharedPreferences())), resolver, buildContext = EmptyCoroutineContext)
+    private val queue = QueueFacade(player, PlaybackSettings(SettingsStore(FakeSharedPreferences())), resolver, buildContext = EmptyCoroutineContext)
 
     private val upstream = RecordingDataSource()
 

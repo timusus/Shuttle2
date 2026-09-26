@@ -2,8 +2,8 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
 
@@ -25,10 +25,10 @@ class ClearQueue @Inject constructor(
 ) {
     operator fun invoke(): QueueSnapshot? {
         if (queueOperations.getSize() == 0) return null
-        val shuffled = queueOperations.getShuffleMode() == QueueManager.ShuffleMode.On
+        val shuffled = queueOperations.getShuffleMode() == ShuffleMode.On
         val snapshot = QueueSnapshot(
-            songs = queueOperations.getQueue(QueueManager.ShuffleMode.Off).map { it.song },
-            shuffleSongs = if (shuffled) queueOperations.getQueue(QueueManager.ShuffleMode.On).map { it.song } else null,
+            songs = queueOperations.getQueue(ShuffleMode.Off).map { it.song },
+            shuffleSongs = if (shuffled) queueOperations.getQueue(ShuffleMode.On).map { it.song } else null,
             position = queueOperations.getCurrentPosition() ?: 0,
             seekPositionMs = playbackOperations.getProgress(),
             playing = playbackOperations.playbackState() == PlaybackState.Playing,

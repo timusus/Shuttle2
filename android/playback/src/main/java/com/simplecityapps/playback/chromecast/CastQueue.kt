@@ -22,7 +22,7 @@ import timber.log.Timber
  * Hands playback between the local player and a Cast receiver, and keeps the receiver's queue in line with S2's while
  * casting.
  *
- * The local player always holds the whole queue, and stays S2's queue while casting: [com.simplecityapps.playback.queue.QueueManager]
+ * The local player always holds the whole queue, and stays S2's queue while casting: [com.simplecityapps.playback.queue.QueueFacade]
  * changes it, not the receiver. The receiver holds a [CastWindow] of it in play order, since it has no shuffle order
  * of its own. Changes to the local queue are sent on; the receiver moving on to another item moves the local
  * player's current item with it. A remote-provider song is only sent once its stream is resolved (see [CastStreams]),

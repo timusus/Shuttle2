@@ -14,8 +14,9 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.queue.QueueItem
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.clone
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
@@ -195,8 +196,8 @@ class PlayerViewModelTest {
         val viewModel = viewModel()
         queueManager.queueStateFlow.value = queueOf(songs("One"))
         playbackManager.playbackStateFlow.value = PlaybackState.Playing
-        queueManager.shuffleModeFlow.value = QueueManager.ShuffleMode.On
-        queueManager.repeatModeFlow.value = QueueManager.RepeatMode.One
+        queueManager.shuffleModeFlow.value = ShuffleMode.On
+        queueManager.repeatModeFlow.value = RepeatMode.One
 
         val state = viewModel.uiState.value
         state.current?.title shouldBe "One"

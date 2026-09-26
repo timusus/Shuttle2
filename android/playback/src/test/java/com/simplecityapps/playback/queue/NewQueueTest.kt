@@ -35,7 +35,7 @@ class NewQueueTest {
     private val player: ExoPlayer = TestExoPlayerBuilder(RuntimeEnvironment.getApplication()).build()
 
     private val queue =
-        QueueManager(
+        QueueFacade(
             player,
             PlaybackSettings(SettingsStore(FakeSharedPreferences())),
             SongUriResolver(MediaResolver { song -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false) }),
@@ -52,7 +52,7 @@ class NewQueueTest {
         songs: List<Song>,
         shuffleSongs: List<Song>?,
         position: Int,
-        shuffleMode: QueueManager.ShuffleMode = QueueManager.ShuffleMode.Off
+        shuffleMode: ShuffleMode = ShuffleMode.Off
     ): Long? = runBlocking {
         val newQueue = queue.buildQueue(songs, shuffleSongs, position)
         queue.setQueueIfContentVersion(queue.queueStateFlow.value.contentVersion, newQueue, shuffleMode)
@@ -70,7 +70,7 @@ class NewQueueTest {
         state.items.map { it.song } shouldBe songs
         state.currentItem?.song shouldBe songs[3]
         state.currentPosition shouldBe 3
-        queue.getQueue(QueueManager.ShuffleMode.On).map { it.song } shouldBe songs.reversed()
+        queue.getQueue(ShuffleMode.On).map { it.song } shouldBe songs.reversed()
     }
 
     @Test
@@ -78,10 +78,10 @@ class NewQueueTest {
         val a = song(1)
         val b = song(2)
         val c = song(3)
-        runBlocking { queue.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false) }
-        queue.setRepeatMode(QueueManager.RepeatMode.All)
+        runBlocking { queue.setShuffleMode(ShuffleMode.On, reshuffle = false) }
+        queue.setRepeatMode(RepeatMode.All)
 
-        restore(listOf(a, b, a, c), shuffleSongs = listOf(a, c, b, a), position = 3, shuffleMode = QueueManager.ShuffleMode.On)
+        restore(listOf(a, b, a, c), shuffleSongs = listOf(a, c, b, a), position = 3, shuffleMode = ShuffleMode.On)
 
         val state = queue.queueStateFlow.value
         state.items.map { it.song } shouldBe listOf(a, c, b, a)
@@ -89,9 +89,9 @@ class NewQueueTest {
         state.currentPosition shouldBe 3
         // The second copy of a, not the first.
         player.currentMediaItemIndex shouldBe 2
-        queue.getQueue(QueueManager.ShuffleMode.Off).map { it.song } shouldBe listOf(a, b, a, c)
-        queue.shuffleModeFlow.value shouldBe QueueManager.ShuffleMode.On
-        queue.repeatModeFlow.value shouldBe QueueManager.RepeatMode.All
+        queue.getQueue(ShuffleMode.Off).map { it.song } shouldBe listOf(a, b, a, c)
+        queue.shuffleModeFlow.value shouldBe ShuffleMode.On
+        queue.repeatModeFlow.value shouldBe RepeatMode.All
     }
 
     @Test
@@ -99,9 +99,9 @@ class NewQueueTest {
         val a = song(1)
         val b = song(2)
         val c = song(3)
-        runBlocking { queue.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false) }
+        runBlocking { queue.setShuffleMode(ShuffleMode.On, reshuffle = false) }
 
-        restore(listOf(a, b, c), shuffleSongs = listOf(c, song(9), a, b), position = 1, shuffleMode = QueueManager.ShuffleMode.On)
+        restore(listOf(a, b, c), shuffleSongs = listOf(c, song(9), a, b), position = 1, shuffleMode = ShuffleMode.On)
 
         queue.queueStateFlow.value.items.map { it.song } shouldBe listOf(c, a, b)
         queue.queueStateFlow.value.currentItem?.song shouldBe c
@@ -113,9 +113,9 @@ class NewQueueTest {
         val shuffleSongs = listOf(songs[2], songs[0], songs[3], songs[1])
 
         // Shuffle is still off: nothing has set the saved mode yet.
-        restore(songs, shuffleSongs, position = 0, shuffleMode = QueueManager.ShuffleMode.On)
+        restore(songs, shuffleSongs, position = 0, shuffleMode = ShuffleMode.On)
 
-        queue.shuffleModeFlow.value shouldBe QueueManager.ShuffleMode.On
+        queue.shuffleModeFlow.value shouldBe ShuffleMode.On
         queue.queueStateFlow.value.items.map { it.song } shouldBe shuffleSongs
         queue.queueStateFlow.value.currentItem?.song shouldBe songs[2]
     }
@@ -123,11 +123,11 @@ class NewQueueTest {
     @Test
     fun `a queue set with shuffle off is in the saved order, though the player's shuffle was on`() {
         val songs = (1L..4L).map { song(it) }
-        runBlocking { queue.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false) }
+        runBlocking { queue.setShuffleMode(ShuffleMode.On, reshuffle = false) }
 
-        restore(songs, shuffleSongs = songs.reversed(), position = 1, shuffleMode = QueueManager.ShuffleMode.Off)
+        restore(songs, shuffleSongs = songs.reversed(), position = 1, shuffleMode = ShuffleMode.Off)
 
-        queue.shuffleModeFlow.value shouldBe QueueManager.ShuffleMode.Off
+        queue.shuffleModeFlow.value shouldBe ShuffleMode.Off
         queue.queueStateFlow.value.items.map { it.song } shouldBe songs
         queue.queueStateFlow.value.currentItem?.song shouldBe songs[1]
     }
@@ -138,7 +138,7 @@ class NewQueueTest {
         val version = queue.queueStateFlow.value.contentVersion
         runBlocking { queue.setQueue(listOf(song(3))) }
 
-        queue.setQueueIfContentVersion(version, newQueue, QueueManager.ShuffleMode.Off).shouldBeNull()
+        queue.setQueueIfContentVersion(version, newQueue, ShuffleMode.Off).shouldBeNull()
 
         queue.queueStateFlow.value.items.map { it.song.id } shouldBe listOf(3L)
     }
@@ -149,7 +149,7 @@ class NewQueueTest {
         val version = queue.queueStateFlow.value.contentVersion
         var error: Throwable? = null
 
-        Thread { error = runCatching { queue.setQueueIfContentVersion(version, newQueue, QueueManager.ShuffleMode.Off) }.exceptionOrNull() }
+        Thread { error = runCatching { queue.setQueueIfContentVersion(version, newQueue, ShuffleMode.Off) }.exceptionOrNull() }
             .apply { start() }
             .join()
 

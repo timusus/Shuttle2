@@ -13,7 +13,8 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.mediasession.SessionCallback
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
@@ -66,7 +67,7 @@ class MediaSessionSpecTest {
         harness.playback.runUntil { playback.positionAnchorFlow.value.positionMs == 1_000 }
 
         // Next skips even with repeat-one on, as the app's own next button does.
-        queue.setRepeatMode(QueueManager.RepeatMode.One)
+        queue.setRepeatMode(RepeatMode.One)
         browser.seekToNext()
         harness.playback.runUntil { queue.queueStateFlow.value.currentPosition == 1 }
 
@@ -176,10 +177,10 @@ class MediaSessionSpecTest {
         browser.mediaButtonPreferences.map { it.icon } shouldBe listOf(CommandButton.ICON_SHUFFLE_OFF, CommandButton.ICON_REPEAT_OFF)
 
         harness.await(browser.sendCustomCommand(SessionCallback.TOGGLE_SHUFFLE, Bundle.EMPTY)).resultCode shouldBe SessionResult.RESULT_SUCCESS
-        harness.playback.runUntil { queue.getShuffleMode() == QueueManager.ShuffleMode.On }
+        harness.playback.runUntil { queue.getShuffleMode() == ShuffleMode.On }
 
         harness.await(browser.sendCustomCommand(SessionCallback.TOGGLE_REPEAT, Bundle.EMPTY))
-        queue.getRepeatMode() shouldBe QueueManager.RepeatMode.All
+        queue.getRepeatMode() shouldBe RepeatMode.All
         harness.playback.runUntil { browser.mediaButtonPreferences.map { it.icon } == listOf(CommandButton.ICON_SHUFFLE_ON, CommandButton.ICON_REPEAT_ALL) }
 
         harness.await(browser.sendCustomCommand(SessionCallback.TOGGLE_REPEAT, Bundle.EMPTY))

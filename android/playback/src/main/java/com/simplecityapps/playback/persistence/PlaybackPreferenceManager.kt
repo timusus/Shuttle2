@@ -3,7 +3,8 @@ package com.simplecityapps.playback.persistence
 import android.content.SharedPreferences
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.get
 import com.simplecityapps.shuttle.persistence.put
@@ -71,20 +72,20 @@ class PlaybackPreferenceManager(
             return if (playbackPosition == -1) null else playbackPosition
         }
 
-    var shuffleMode: QueueManager.ShuffleMode
+    var shuffleMode: ShuffleMode
         set(value) {
             sharedPreferences.put("shuffle_mode", value.ordinal)
         }
         get() {
-            return QueueManager.ShuffleMode.init(sharedPreferences.get("shuffle_mode", -1))
+            return ShuffleMode.init(sharedPreferences.get("shuffle_mode", -1))
         }
 
-    var repeatMode: QueueManager.RepeatMode
+    var repeatMode: RepeatMode
         set(value) {
             sharedPreferences.put("repeat_mode", value.ordinal)
         }
         get() {
-            return QueueManager.RepeatMode.init(sharedPreferences.get("repeat_mode", -1))
+            return RepeatMode.init(sharedPreferences.get("repeat_mode", -1))
         }
 
     var mediaProviderTypes: List<MediaProviderType>

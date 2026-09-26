@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.StateFlow
 interface QueueOperations {
     /** The queue as the active shuffle mode presents it, with the current item and position. */
     val queueStateFlow: StateFlow<QueueState>
-    val shuffleModeFlow: StateFlow<QueueManager.ShuffleMode>
-    val repeatModeFlow: StateFlow<QueueManager.RepeatMode>
+    val shuffleModeFlow: StateFlow<ShuffleMode>
+    val repeatModeFlow: StateFlow<RepeatMode>
 
     suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>? = null, position: Int = 0): Boolean
 
@@ -28,10 +28,10 @@ interface QueueOperations {
      *
      * @return the content version the queue is left at, or null if it had changed and was left alone.
      */
-    fun setQueueIfContentVersion(contentVersion: Long, queue: NewQueue, shuffleMode: QueueManager.ShuffleMode): Long?
+    fun setQueueIfContentVersion(contentVersion: Long, queue: NewQueue, shuffleMode: ShuffleMode): Long?
 
     fun getQueue(): List<QueueItem>
-    fun getQueue(shuffleMode: QueueManager.ShuffleMode): List<QueueItem>
+    fun getQueue(shuffleMode: ShuffleMode): List<QueueItem>
     fun getCurrentItem(): QueueItem?
     fun getCurrentPosition(): Int?
     fun getSize(): Int
@@ -58,11 +58,11 @@ interface QueueOperations {
     fun remove(items: List<QueueItem>)
     fun remove(song: Song)
     fun clear()
-    fun getShuffleMode(): QueueManager.ShuffleMode
-    suspend fun setShuffleMode(shuffleMode: QueueManager.ShuffleMode, reshuffle: Boolean)
+    fun getShuffleMode(): ShuffleMode
+    suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean)
     suspend fun toggleShuffleMode()
-    fun getRepeatMode(): QueueManager.RepeatMode
-    fun setRepeatMode(repeatMode: QueueManager.RepeatMode)
+    fun getRepeatMode(): RepeatMode
+    fun setRepeatMode(repeatMode: RepeatMode)
     fun toggleRepeatMode()
     var hasRestoredQueue: Boolean
 }

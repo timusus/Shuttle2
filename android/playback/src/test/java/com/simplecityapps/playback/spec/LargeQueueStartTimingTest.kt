@@ -1,7 +1,7 @@
 package com.simplecityapps.playback.spec
 
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.longSong
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.shuttle.model.Song
@@ -11,7 +11,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 /**
- * How long a long queue takes from being set to playing, through PlaybackFacade and QueueManager over the real
+ * How long a long queue takes from being set to playing, through PlaybackFacade and QueueFacade over the real
  * player (docs/architecture/media3-playback-design.md, "10k queue spike"), with lazy preparation (production's
  * default) and with every item prepared, for comparison.
  *
@@ -94,7 +94,7 @@ class LargeQueueStartTimingTest {
             }
             val elapsedMs = (System.nanoTime() - start) / 1_000_000
 
-            if (scenario == Scenario.ShuffleAll) check(queue.getShuffleMode() == QueueManager.ShuffleMode.On)
+            if (scenario == Scenario.ShuffleAll) check(queue.getShuffleMode() == ShuffleMode.On)
             return elapsedMs
         } finally {
             harness.release()

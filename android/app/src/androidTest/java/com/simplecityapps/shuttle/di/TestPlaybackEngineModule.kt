@@ -18,7 +18,7 @@ import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
 import dagger.Module
 import dagger.Provides
@@ -77,14 +77,14 @@ class TestPlaybackEngineModule {
     @Provides
     fun providePlaybackOperations(
         @ApplicationContext context: Context,
-        queueManager: QueueManager,
+        queueOperations: QueueOperations,
         player: Player,
         localPlayer: ExoPlayer,
         playbackPreferenceManager: PlaybackPreferenceManager,
         playbackSettings: PlaybackSettings,
         @AppCoroutineScope coroutineScope: CoroutineScope
     ): PlaybackOperations = PlaybackFacade(
-        queueManager,
+        queueOperations,
         player,
         localPlayer,
         playbackPreferenceManager,

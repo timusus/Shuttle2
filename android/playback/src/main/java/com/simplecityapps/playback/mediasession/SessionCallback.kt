@@ -22,8 +22,9 @@ import com.google.common.util.concurrent.SettableFuture
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PlayQueue
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.queue.toQueueEntry
 import com.simplecityapps.shuttle.model.Song
@@ -89,24 +90,24 @@ class SessionCallback(
     }
 
     /** The shuffle and repeat buttons, showing the modes they're in. */
-    fun mediaButtonPreferences(shuffleMode: QueueManager.ShuffleMode, repeatMode: QueueManager.RepeatMode): ImmutableList<CommandButton> = ImmutableList.of(
-        CommandButton.Builder(if (shuffleMode == QueueManager.ShuffleMode.On) CommandButton.ICON_SHUFFLE_ON else CommandButton.ICON_SHUFFLE_OFF)
-            .setDisplayName(context.getString(if (shuffleMode == QueueManager.ShuffleMode.On) com.simplecityapps.core.R.string.shuffle_on else com.simplecityapps.core.R.string.shuffle_off))
+    fun mediaButtonPreferences(shuffleMode: ShuffleMode, repeatMode: RepeatMode): ImmutableList<CommandButton> = ImmutableList.of(
+        CommandButton.Builder(if (shuffleMode == ShuffleMode.On) CommandButton.ICON_SHUFFLE_ON else CommandButton.ICON_SHUFFLE_OFF)
+            .setDisplayName(context.getString(if (shuffleMode == ShuffleMode.On) com.simplecityapps.core.R.string.shuffle_on else com.simplecityapps.core.R.string.shuffle_off))
             .setSessionCommand(TOGGLE_SHUFFLE)
             .build(),
         CommandButton.Builder(
             when (repeatMode) {
-                QueueManager.RepeatMode.Off -> CommandButton.ICON_REPEAT_OFF
-                QueueManager.RepeatMode.All -> CommandButton.ICON_REPEAT_ALL
-                QueueManager.RepeatMode.One -> CommandButton.ICON_REPEAT_ONE
+                RepeatMode.Off -> CommandButton.ICON_REPEAT_OFF
+                RepeatMode.All -> CommandButton.ICON_REPEAT_ALL
+                RepeatMode.One -> CommandButton.ICON_REPEAT_ONE
             }
         )
             .setDisplayName(
                 context.getString(
                     when (repeatMode) {
-                        QueueManager.RepeatMode.Off -> com.simplecityapps.core.R.string.repeat_off
-                        QueueManager.RepeatMode.All -> com.simplecityapps.core.R.string.repeat_all
-                        QueueManager.RepeatMode.One -> com.simplecityapps.core.R.string.repeat_one
+                        RepeatMode.Off -> com.simplecityapps.core.R.string.repeat_off
+                        RepeatMode.All -> com.simplecityapps.core.R.string.repeat_all
+                        RepeatMode.One -> com.simplecityapps.core.R.string.repeat_one
                     }
                 )
             )

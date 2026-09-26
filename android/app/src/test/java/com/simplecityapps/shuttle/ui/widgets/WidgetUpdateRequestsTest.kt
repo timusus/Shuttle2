@@ -1,8 +1,9 @@
 package com.simplecityapps.shuttle.ui.widgets
 
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -14,8 +15,8 @@ import org.junit.Test
 class WidgetUpdateRequestsTest {
     private val playbackStateFlow = MutableStateFlow<PlaybackState>(PlaybackState.Paused)
     private val queueStateFlow = MutableStateFlow(QueueState.Empty)
-    private val shuffleModeFlow = MutableStateFlow(QueueManager.ShuffleMode.Off)
-    private val repeatModeFlow = MutableStateFlow(QueueManager.RepeatMode.Off)
+    private val shuffleModeFlow = MutableStateFlow(ShuffleMode.Off)
+    private val repeatModeFlow = MutableStateFlow(RepeatMode.Off)
 
     private var requests = 0
 
@@ -63,8 +64,8 @@ class WidgetUpdateRequestsTest {
     fun `shuffle and repeat changes request an update`() = runTest {
         launchRequests()
 
-        shuffleModeFlow.value = QueueManager.ShuffleMode.On
-        repeatModeFlow.value = QueueManager.RepeatMode.All
+        shuffleModeFlow.value = ShuffleMode.On
+        repeatModeFlow.value = RepeatMode.All
 
         requests shouldBe 2
     }
@@ -79,7 +80,7 @@ class WidgetUpdateRequestsTest {
             context = StandardTestDispatcher(testScheduler),
             onChange = { requests++ }
         )
-        repeatModeFlow.value = QueueManager.RepeatMode.One
+        repeatModeFlow.value = RepeatMode.One
 
         testScheduler.runCurrent()
 

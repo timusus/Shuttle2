@@ -11,7 +11,9 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
@@ -40,7 +42,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
     lateinit var playbackOperations: PlaybackOperations
 
     @Inject
-    lateinit var queueManager: QueueManager
+    lateinit var queueManager: QueueOperations
 
     @Inject
     lateinit var songRepository: SongRepository
@@ -140,7 +142,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             val to = intent.getIntExtra("to", -1)
             val size = queueManager.getSize()
             require(from in 0 until size && to in 0 until size) { "--ei from and --ei to must be within the queue (size $size)" }
-            // The queue screen's drag-to-reorder path (QueueManager.move), in the order getQueue()/DUMP_STATE's
+            // The queue screen's drag-to-reorder path (QueueOperations.move), in the order getQueue()/DUMP_STATE's
             // queueTitles present -- shuffle-aware, same as the "Up Next" list.
             queueManager.move(from, to)
             "moved $from -> $to"
@@ -148,7 +150,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
 
         "SHUFFLE" -> {
             if (intent.hasExtra("enabled")) {
-                val mode = if (intent.getBooleanExtra("enabled", false)) QueueManager.ShuffleMode.On else QueueManager.ShuffleMode.Off
+                val mode = if (intent.getBooleanExtra("enabled", false)) ShuffleMode.On else ShuffleMode.Off
                 queueManager.setShuffleMode(mode, reshuffle = true)
             } else {
                 queueManager.toggleShuffleMode()
@@ -160,7 +162,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             val mode = intent.getStringExtra("mode")
             if (mode != null) {
                 queueManager.setRepeatMode(
-                    requireNotNull(QueueManager.RepeatMode.entries.firstOrNull { it.name.equals(mode, ignoreCase = true) }) {
+                    requireNotNull(RepeatMode.entries.firstOrNull { it.name.equals(mode, ignoreCase = true) }) {
                         "--es mode must be off, all or one"
                     }
                 )

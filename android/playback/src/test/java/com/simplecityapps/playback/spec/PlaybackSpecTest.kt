@@ -3,7 +3,8 @@ package com.simplecityapps.playback.spec
 import android.media.AudioManager
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.BYTES_PER_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.LONG_SONG_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S
@@ -155,9 +156,9 @@ class PlaybackSpecTest {
 
         harness.run { playback.addToQueue(added) }
 
-        queue.shuffleModeFlow.value shouldBe QueueManager.ShuffleMode.On
+        queue.shuffleModeFlow.value shouldBe ShuffleMode.On
         queue.queueStateFlow.value.items.map { it.song }.takeLast(3) shouldBe added
-        queue.getQueue(QueueManager.ShuffleMode.Off).map { it.song }.takeLast(3) shouldBe added
+        queue.getQueue(ShuffleMode.Off).map { it.song }.takeLast(3) shouldBe added
     }
 
     @Test
@@ -169,7 +170,7 @@ class PlaybackSpecTest {
         val shuffled = listOf(a, c, b, a)
 
         harness.run {
-            queue.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
+            queue.setShuffleMode(ShuffleMode.On, reshuffle = false)
             queue.setQueue(base, shuffled, 1)
         }
 
@@ -177,7 +178,7 @@ class PlaybackSpecTest {
         items.map { it.song } shouldBe shuffled
         items.map { it.uid }.toSet().size shouldBe 4
         queue.queueStateFlow.value.currentItem?.song shouldBe c
-        queue.getQueue(QueueManager.ShuffleMode.Off).map { it.song } shouldBe base
+        queue.getQueue(ShuffleMode.Off).map { it.song } shouldBe base
     }
 
     @Test
@@ -288,7 +289,7 @@ class PlaybackSpecTest {
     fun `RS-12 repeat one set before anything plays repeats the song`() {
         val first = song(1)
         val ended = harness.record(playback.trackEndedFlow)
-        queue.setRepeatMode(QueueManager.RepeatMode.One)
+        queue.setRepeatMode(RepeatMode.One)
 
         harness.run { playback.addToQueue(listOf(first, song(2))) }
         harness.runUntil { ended.size >= 2 }
@@ -432,7 +433,7 @@ class PlaybackSpecTest {
         val songs = (1L..5L).map { song(it) }
         val shuffled = listOf(songs[0], songs[3], songs[1], songs[4], songs[2])
         harness.run {
-            queue.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
+            queue.setShuffleMode(ShuffleMode.On, reshuffle = false)
             queue.setQueue(songs, shuffled, 0)
         }
         val before = queue.queueStateFlow.value.items.map { it.uid }
@@ -445,7 +446,7 @@ class PlaybackSpecTest {
         items.map { it.song.id } shouldBe shuffled.map { it.id }
         items[2].song.name shouldBe "Renamed"
         items[1].song.path shouldBe resourceUri(TONE_1S)
-        queue.getQueue(QueueManager.ShuffleMode.Off).map { it.song.id } shouldBe songs.map { it.id }
+        queue.getQueue(ShuffleMode.Off).map { it.song.id } shouldBe songs.map { it.id }
     }
 
     @Test
@@ -476,7 +477,7 @@ class PlaybackSpecTest {
 
         listOf(2 to c, 3 to b).forEach { (position, current) ->
             harness.run {
-                queue.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
+                queue.setShuffleMode(ShuffleMode.On, reshuffle = false)
                 queue.setQueue(listOf(a, b, c), shuffled, position).shouldBe(true)
             }
 
@@ -575,7 +576,7 @@ class PlaybackSpecTest {
         harness.run { playback.shuffle(songs) {} }
         val current = queue.queueStateFlow.value.currentItem!!
         val shuffled = queue.queueStateFlow.value.items
-        val unshuffled = queue.getQueue(QueueManager.ShuffleMode.Off)
+        val unshuffled = queue.getQueue(ShuffleMode.Off)
 
         harness.run { playback.playNext(added) }
 
@@ -583,7 +584,7 @@ class PlaybackSpecTest {
         queue.queueStateFlow.value.items.map { it.song } shouldBe
             shuffled.take(position + 1).map { it.song } + added + shuffled.drop(position + 1).map { it.song }
         val unshuffledPosition = unshuffled.indexOfFirst { it.uid == current.uid }
-        queue.getQueue(QueueManager.ShuffleMode.Off).map { it.song } shouldBe
+        queue.getQueue(ShuffleMode.Off).map { it.song } shouldBe
             unshuffled.take(unshuffledPosition + 1).map { it.song } + added + unshuffled.drop(unshuffledPosition + 1).map { it.song }
         queue.queueStateFlow.value.currentItem?.uid shouldBe current.uid
     }

@@ -2,7 +2,8 @@ package com.simplecityapps.shuttle.ui.widgets
 
 import com.simplecityapps.createSong
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import io.kotest.matchers.shouldBe
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -13,8 +14,8 @@ import org.junit.Test
 class NowPlayingWidgetStateTest {
     private fun stateFor(
         playbackState: PlaybackState = PlaybackState.Playing,
-        shuffleMode: QueueManager.ShuffleMode = QueueManager.ShuffleMode.Off,
-        repeatMode: QueueManager.RepeatMode = QueueManager.RepeatMode.Off,
+        shuffleMode: ShuffleMode = ShuffleMode.Off,
+        repeatMode: RepeatMode = RepeatMode.Off,
         artworkPath: String? = null
     ) = nowPlayingWidgetState(
         song = createSong(name = "Title", albumArtist = "Album Artist", album = "Album"),
@@ -26,7 +27,7 @@ class NowPlayingWidgetStateTest {
 
     @Test
     fun `no song is the idle state`() {
-        nowPlayingWidgetState(null, PlaybackState.Playing, QueueManager.ShuffleMode.On, QueueManager.RepeatMode.All, "/art.jpg") shouldBe
+        nowPlayingWidgetState(null, PlaybackState.Playing, ShuffleMode.On, RepeatMode.All, "/art.jpg") shouldBe
             NowPlayingWidgetState.Idle
     }
 
@@ -51,10 +52,10 @@ class NowPlayingWidgetStateTest {
 
     @Test
     fun `maps shuffle and repeat`() {
-        stateFor(shuffleMode = QueueManager.ShuffleMode.On).shuffleOn shouldBe true
-        stateFor(repeatMode = QueueManager.RepeatMode.Off).repeatMode shouldBe WidgetRepeatMode.Off
-        stateFor(repeatMode = QueueManager.RepeatMode.All).repeatMode shouldBe WidgetRepeatMode.All
-        stateFor(repeatMode = QueueManager.RepeatMode.One).repeatMode shouldBe WidgetRepeatMode.One
+        stateFor(shuffleMode = ShuffleMode.On).shuffleOn shouldBe true
+        stateFor(repeatMode = RepeatMode.Off).repeatMode shouldBe WidgetRepeatMode.Off
+        stateFor(repeatMode = RepeatMode.All).repeatMode shouldBe WidgetRepeatMode.All
+        stateFor(repeatMode = RepeatMode.One).repeatMode shouldBe WidgetRepeatMode.One
     }
 
     @Test
@@ -62,7 +63,7 @@ class NowPlayingWidgetStateTest {
         listOf(
             NowPlayingWidgetState.Idle,
             NowPlayingWidgetState.Idle.copy(backgroundOpacity = 40),
-            stateFor(shuffleMode = QueueManager.ShuffleMode.On, repeatMode = QueueManager.RepeatMode.One, artworkPath = "/art.jpg")
+            stateFor(shuffleMode = ShuffleMode.On, repeatMode = RepeatMode.One, artworkPath = "/art.jpg")
         ).forEach { state ->
             val output = ByteArrayOutputStream()
             NowPlayingWidgetStateSerializer.writeTo(state, output)
@@ -100,7 +101,7 @@ class NowPlayingWidgetStateTest {
 
     @Test
     fun `the opacity setting carries into the idle state`() {
-        nowPlayingWidgetState(null, PlaybackState.Playing, QueueManager.ShuffleMode.Off, QueueManager.RepeatMode.Off, null, backgroundOpacity = 60)
+        nowPlayingWidgetState(null, PlaybackState.Playing, ShuffleMode.Off, RepeatMode.Off, null, backgroundOpacity = 60)
             .backgroundOpacity shouldBe 60
     }
 }

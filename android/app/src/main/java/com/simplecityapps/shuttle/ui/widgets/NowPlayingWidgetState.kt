@@ -1,7 +1,8 @@
 package com.simplecityapps.shuttle.ui.widgets
 
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.Song
 
 enum class WidgetRepeatMode {
@@ -34,8 +35,8 @@ data class NowPlayingWidgetState(
 fun nowPlayingWidgetState(
     song: Song?,
     playbackState: PlaybackState,
-    shuffleMode: QueueManager.ShuffleMode,
-    repeatMode: QueueManager.RepeatMode,
+    shuffleMode: ShuffleMode,
+    repeatMode: RepeatMode,
     artworkPath: String?,
     backgroundOpacity: Int = 100
 ): NowPlayingWidgetState {
@@ -47,12 +48,12 @@ fun nowPlayingWidgetState(
         album = song.album.orEmpty(),
         // Loading means playback is starting, so offer pause.
         isPlaying = playbackState != PlaybackState.Paused,
-        shuffleOn = shuffleMode == QueueManager.ShuffleMode.On,
+        shuffleOn = shuffleMode == ShuffleMode.On,
         repeatMode =
             when (repeatMode) {
-                QueueManager.RepeatMode.Off -> WidgetRepeatMode.Off
-                QueueManager.RepeatMode.All -> WidgetRepeatMode.All
-                QueueManager.RepeatMode.One -> WidgetRepeatMode.One
+                RepeatMode.Off -> WidgetRepeatMode.Off
+                RepeatMode.All -> WidgetRepeatMode.All
+                RepeatMode.One -> WidgetRepeatMode.One
             },
         artworkPath = artworkPath,
         backgroundOpacity = backgroundOpacity

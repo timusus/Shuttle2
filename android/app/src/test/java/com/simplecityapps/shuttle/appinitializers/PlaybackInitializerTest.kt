@@ -14,8 +14,9 @@ import com.simplecityapps.playback.PositionAnchor
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.testing.MainDispatcherRule
@@ -97,16 +98,16 @@ class PlaybackInitializerTest {
     @Test
     fun `the state held when collection starts is not saved over the preferences`() {
         preferences.queueIds = "7,8"
-        preferences.shuffleMode = QueueManager.ShuffleMode.On
-        preferences.repeatMode = QueueManager.RepeatMode.All
+        preferences.shuffleMode = ShuffleMode.On
+        preferences.repeatMode = RepeatMode.All
         playbackManager.playbackStateFlow.value = PlaybackState.Playing
         playbackManager.progressFlow.value = PlaybackProgress(position = 90_000, duration = 200_000)
 
         initializer.init(application)
 
         preferences.queueIds shouldBe "7,8"
-        preferences.shuffleMode shouldBe QueueManager.ShuffleMode.On
-        preferences.repeatMode shouldBe QueueManager.RepeatMode.All
+        preferences.shuffleMode shouldBe ShuffleMode.On
+        preferences.repeatMode shouldBe RepeatMode.All
         preferences.playbackPosition shouldBe null
         shadowOf(application).nextStartedService shouldBe null
     }
@@ -138,11 +139,11 @@ class PlaybackInitializerTest {
     fun `shuffle and repeat changes are saved`() {
         initializer.init(application)
 
-        queueManager.shuffleModeFlow.value = QueueManager.ShuffleMode.On
-        queueManager.repeatModeFlow.value = QueueManager.RepeatMode.One
+        queueManager.shuffleModeFlow.value = ShuffleMode.On
+        queueManager.repeatModeFlow.value = RepeatMode.One
 
-        preferences.shuffleMode shouldBe QueueManager.ShuffleMode.On
-        preferences.repeatMode shouldBe QueueManager.RepeatMode.One
+        preferences.shuffleMode shouldBe ShuffleMode.On
+        preferences.repeatMode shouldBe RepeatMode.One
     }
 
     @Test
@@ -424,7 +425,7 @@ class PlaybackInitializerTest {
     fun `a restore sets the saved shuffle mode with the queue, whether or not the mode was restored first`() {
         songRepository.applyQueryPredicates = true
         songRepository.setSongs(songs)
-        preferences.shuffleMode = QueueManager.ShuffleMode.On
+        preferences.shuffleMode = ShuffleMode.On
         preferences.queueIds = "1,2,3"
         preferences.shuffleQueueIds = "3,1,2"
         preferences.queuePosition = 0
@@ -432,8 +433,8 @@ class PlaybackInitializerTest {
         // The fake's shuffle mode stays off, as if restoring the mode on its own came after the queue.
         initAndRestore()
 
-        queueManager.shuffleModeFlow.value shouldBe QueueManager.ShuffleMode.Off
-        queueManager.lastSetQueueShuffleMode shouldBe QueueManager.ShuffleMode.On
+        queueManager.shuffleModeFlow.value shouldBe ShuffleMode.Off
+        queueManager.lastSetQueueShuffleMode shouldBe ShuffleMode.On
         queueManager.lastSetShuffleQueue?.map { song -> song.id } shouldBe listOf(3L, 1L, 2L)
         queueManager.lastSetQueuePosition shouldBe 0
     }

@@ -20,9 +20,9 @@ import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.NewQueue
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.Song
@@ -136,7 +136,7 @@ constructor(
      * other than by this restore: something else was played before the restore finished.
      */
     private suspend fun restoreQueue(
-        shuffleMode: QueueManager.ShuffleMode,
+        shuffleMode: ShuffleMode,
         queuePosition: Int?,
         seekPosition: Int,
         initialContentVersion: Long
@@ -165,7 +165,7 @@ constructor(
 
     /** The saved queue, built ready to set, or null if there's none or none of its songs are left. */
     private suspend fun readSavedQueue(
-        shuffleMode: QueueManager.ShuffleMode,
+        shuffleMode: ShuffleMode,
         queuePosition: Int,
         timings: RestoreTimings
     ): SavedQueue? {
@@ -185,7 +185,7 @@ constructor(
         // the songs that are left, in the list the shuffle mode presents.
         val songs = songIds.mapNotNull { songId -> songsById[songId] }
         val shuffleSongs = shuffleSongIds?.mapNotNull { songId -> songsById[songId] }
-        val positionIds = if (shuffleMode == QueueManager.ShuffleMode.On && shuffleSongIds != null) shuffleSongIds else songIds
+        val positionIds = if (shuffleMode == ShuffleMode.On && shuffleSongIds != null) shuffleSongIds else songIds
         val restoredPosition = restoredQueuePosition(positionIds, queuePosition, songsById.keys)
         if (restoredPosition == null) {
             Timber.w("Queue restoration failed: none of the saved songs are in the library")
@@ -198,7 +198,7 @@ constructor(
             fromStart = restoredPosition.fromStart || playbackPreferenceManager.restoreQueuePositionFromStart,
             unchanged = when {
                 !restoredWhole -> null
-                shuffleMode == QueueManager.ShuffleMode.On -> shuffleSongs
+                shuffleMode == ShuffleMode.On -> shuffleSongs
                 else -> songs
             }
         )
@@ -210,7 +210,7 @@ constructor(
      */
     private fun applyRestoredQueue(
         savedQueue: SavedQueue?,
-        shuffleMode: QueueManager.ShuffleMode,
+        shuffleMode: ShuffleMode,
         initialContentVersion: Long,
         seekPosition: Int,
         restoredSeekPosition: Int,
@@ -301,12 +301,12 @@ constructor(
             unchangedRestoredQueue = null
             if (!savedAlready) {
                 playbackPreferenceManager.queueIds =
-                    queueManager.getQueue(QueueManager.ShuffleMode.Off)
+                    queueManager.getQueue(ShuffleMode.Off)
                         .filter { queueItem -> queueItem.song.isInLibrary }
                         .joinToString(",") { queueItem -> queueItem.song.id.toString() }
 
                 playbackPreferenceManager.shuffleQueueIds =
-                    queueManager.getQueue(QueueManager.ShuffleMode.On)
+                    queueManager.getQueue(ShuffleMode.On)
                         .filter { queueItem -> queueItem.song.isInLibrary }
                         .joinToString(",") { queueItem -> queueItem.song.id.toString() }
             }

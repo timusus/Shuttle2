@@ -7,9 +7,10 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.Song
@@ -204,8 +205,8 @@ constructor(
 internal fun CoroutineScope.launchWidgetUpdateRequests(
     playbackStateFlow: StateFlow<PlaybackState>,
     queueStateFlow: StateFlow<QueueState>,
-    shuffleModeFlow: StateFlow<QueueManager.ShuffleMode>,
-    repeatModeFlow: StateFlow<QueueManager.RepeatMode>,
+    shuffleModeFlow: StateFlow<ShuffleMode>,
+    repeatModeFlow: StateFlow<RepeatMode>,
     context: CoroutineContext,
     onChange: () -> Unit
 ): Job {

@@ -32,7 +32,7 @@ import com.simplecityapps.playback.exoplayer.ResolvedMedia
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueFacade
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.model.Song
@@ -65,7 +65,7 @@ import org.robolectric.shadows.ShadowAudioManager
 import org.robolectric.shadows.ShadowAudioTrack
 
 /**
- * The real playback stack (PlaybackFacade and QueueManager over the ExoPlayer that owns the queue), built by the
+ * The real playback stack (PlaybackFacade and QueueFacade over the ExoPlayer that owns the queue), built by the
  * production [ExoPlayerFactory] (its renderers, audio sink, EQ and ReplayGain processors and media source factory)
  * on a [FakeClock]. Media comes from WAV files in the test resources.
  *
@@ -213,11 +213,11 @@ class PlaybackHarness(
         audioEffectSessionManager.attach(active, player)
         audioFocus = AudioFocusCounts(Shadow.extract(audioManager))
         val playbackSettings = PlaybackSettings(SettingsStore(sharedPreferences))
-        val queueManager = QueueManager(player, playbackSettings, songUriResolver, buildContext, active)
-        queueOperations = queueManager
+        val queueFacade = QueueFacade(player, playbackSettings, songUriResolver, buildContext, active)
+        queueOperations = queueFacade
         playbackOperations =
             PlaybackFacade(
-                queueManager = queueManager,
+                queueOperations = queueFacade,
                 player = active,
                 localPlayer = player,
                 playbackPreferenceManager = playbackPreferenceManager,

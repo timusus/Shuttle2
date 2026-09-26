@@ -7,9 +7,10 @@ import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
@@ -166,7 +167,7 @@ class PlayerViewModel @Inject constructor(
             queue.toPlayerUiState(savedSong).copy(
                 playing = playback == PlaybackState.Playing,
                 buffering = playback == PlaybackState.Loading,
-                shuffle = shuffle == QueueManager.ShuffleMode.On,
+                shuffle = shuffle == ShuffleMode.On,
                 repeatMode = repeat.toS2RepeatMode(),
                 favourite = queue.currentItem?.song?.id?.let { it in extras.favouriteIds } ?: false,
                 sleepTimerActive = extras.sleepTimerActive,
@@ -427,8 +428,8 @@ private fun Song.toPlayerSong(
 /** The saved song, as the current and only row of a queue not yet restored; no queue row has its uid. */
 internal fun NowPlayingSnapshot.toPlayerSong(): PlayerSong = toSong().toPlayerSong(uid = -1, position = QueuePosition.Current)
 
-private fun QueueManager.RepeatMode.toS2RepeatMode(): S2RepeatMode = when (this) {
-    QueueManager.RepeatMode.Off -> S2RepeatMode.Off
-    QueueManager.RepeatMode.All -> S2RepeatMode.All
-    QueueManager.RepeatMode.One -> S2RepeatMode.One
+private fun RepeatMode.toS2RepeatMode(): S2RepeatMode = when (this) {
+    RepeatMode.Off -> S2RepeatMode.Off
+    RepeatMode.All -> S2RepeatMode.All
+    RepeatMode.One -> S2RepeatMode.One
 }

@@ -10,7 +10,7 @@ import com.simplecityapps.playback.chromecast.CastWindow.SIZE
 import com.simplecityapps.playback.chromecast.FakeCastPlayer
 import com.simplecityapps.playback.chromecast.FakeMediaInfoProvider
 import com.simplecityapps.playback.chromecast.FakeReceiver
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -234,7 +234,7 @@ class CastSpecTest {
     @Test
     fun `RS-40 under repeat-all, the receiver plays on from the last song to the first`() {
         harness.run { queue.setQueue(songs(150), position = 145) }
-        queue.setRepeatMode(QueueManager.RepeatMode.All)
+        queue.setRepeatMode(RepeatMode.All)
         var loaded = false
         playback.load { loaded = true }
         harness.runUntil { loaded && playback.playbackStateFlow.value == PlaybackState.Paused }
@@ -255,7 +255,7 @@ class CastSpecTest {
     @Test
     fun `under repeat-all, a receiver holding the whole queue repeats it by itself`() {
         start(count = 3)
-        queue.setRepeatMode(QueueManager.RepeatMode.All)
+        queue.setRepeatMode(RepeatMode.All)
         connect()
         receiver.skipTo(2)
         settle()

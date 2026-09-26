@@ -184,11 +184,15 @@ and `load`, and the log line adds the `main wait` before the main-thread step.
    | Saved playback speed | `PlaybackSpeedStore` |
    | Wake mode per item | `WakeModeUpdater` |
    | Derived state, anchor, trackEnded/pausePosition flows; near-end restart on play (RS-11) and previous (RS-33, which Media3's `seekToPrevious` doesn't match: it wraps on repeat-all and uses 3 s) | `PlaybackFacade`, the PlaybackOperations binding |
-   | S2ShuffleOrder, NewQueue building off the main thread, the restore content-version guard, the shuffle/repeat enums | QueueManager's side (part B) |
+   | Publishing the queue: `queueStateFlow` and its versions, the shuffle and repeat flows, derived from player events | `QueueStatePublisher` |
+   | Each change on the player: the playlist, its S2ShuffleOrder (play next, a move in the shuffled view, restoring the order after an edit), the modes and the current item; changes go to the local player while casting | `PlaylistEditor` |
+   | New items built off the main thread (NewQueue), changes that add them applied on it in the order made | `QueueBuilder` |
+   | The restore content-version guard (`setQueueIfContentVersion`, main thread only, the restored shuffle mode passed with the queue) and next/previous over the published queue | `QueueFacade`, the QueueOperations binding |
+   | The shuffle/repeat enums | top-level `ShuffleMode` and `RepeatMode` in `playback.queue` (the Player's Boolean and Int would lose the types the UI and prefs use) |
 
    - **A (landed):** the PlaybackManager side. PlaybackManager is deleted; `PlaybackFacade` builds the listeners above and keeps only forwarding and flows. Consumers inject PlaybackOperations.
-   - **B:** the QueueManager side, the same way, then the ~30 consumers that inject QueueManager directly move to QueueOperations (and PlaybackOperations where they reach through it).
-   - **C:** cleanup. The app tests' `FakePlaybackManager` becomes `FakePlaybackOperations`; stale PlaybackManager/QueueManager names leave the older architecture docs and prompts.
+   - **B (landed):** the QueueManager side. QueueManager is deleted; `QueueFacade` builds the pieces above and keeps only forwarding and flows. Every consumer already injected QueueOperations (most under the old `queueManager` name); what moved was PlaybackFacade, the DI modules, the debug receiver, and the enums' call sites.
+   - **C:** cleanup. The app tests' `FakePlaybackManager` and `FakeQueueManager` become `FakePlaybackOperations` and `FakeQueueOperations`; `queueManager`/`playbackManager` parameter and field names become `queueOperations`/`playbackOperations`; stale PlaybackManager/QueueManager names leave the older architecture docs, prompts and skills.
 4. **Rollout.** Full unit suite, smoke group, Maestro, the device-checks batch, then one release.
 
 ## 6. End state
@@ -196,8 +200,8 @@ and `load`, and the log line adds the `main wait` before the main-thread step.
 - Queue, current item, shuffle order, repeat, play/pause, position, speed, errors: the Player (CastPlayer wrapping ExoPlayer) is the only source.
 - Session, notification, Auto, external controllers: the MediaLibrarySession on that Player.
 - Persisted queue: QueueStore mirrors Player events into the existing prefs.
-- Left custom: the in-process facade (flows plus the Ops API), S2ShuffleOrder, the URI resolver, the ReplayGain and EQ processors, BitPerfectOutput, HttpServer with the Cast converter and transfer callback, SleepTimer, and the library browse tree.
-- LoadCoordinator and PlaybackManager are deleted. `PlaybackFacade` is the PlaybackOperations facade: forwarding plus flows, over small Player listeners (CastHandover, ItemLoader, ResumePositionStore, CallHold, PlaybackSpeedStore, WakeModeUpdater) and ProgressTicker. QueueManager remains as the QueueOperations facade until step 3 part B.
+- Left custom: the in-process facades (flows plus the Ops API), S2ShuffleOrder, the URI resolver, the ReplayGain and EQ processors, BitPerfectOutput, HttpServer with the Cast converter and transfer callback, SleepTimer, and the library browse tree.
+- LoadCoordinator and PlaybackManager are deleted. `PlaybackFacade` is the PlaybackOperations facade: forwarding plus flows, over small Player listeners (CastHandover, ItemLoader, ResumePositionStore, CallHold, PlaybackSpeedStore, WakeModeUpdater) and ProgressTicker. QueueManager is deleted too: `QueueFacade` is the QueueOperations facade, forwarding plus flows, over `QueueStatePublisher`, `PlaylistEditor` and `QueueBuilder`.
 
 ## Open questions and unverified points
 
