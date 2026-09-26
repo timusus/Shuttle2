@@ -18,9 +18,12 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -32,11 +35,11 @@ class SearchLibraryTest {
     private val genres = FakeGenreRepository()
     private val playlists = FakePlaylistRepository()
 
-    /** A [SearchLibrary] over the fakes, its index shared in the test's background scope. */
-    private fun TestScope.searchLibrary(query: String, categories: Set<SearchCategory>) = SearchLibrary(
-        LibrarySearchIndex(artists, albums, songs, genres, playlists, backgroundScope, Dispatchers.Unconfined),
-        Dispatchers.Unconfined,
-    )(query, categories)
+    /** A [SearchLibrary] over the fakes, its index shared in the test's background scope, all on the test's scheduler. */
+    private fun TestScope.searchLibrary(query: String, categories: Set<SearchCategory>): Flow<SearchResults> {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        return SearchLibrary(LibrarySearchIndex(artists, albums, songs, genres, playlists, backgroundScope, dispatcher), dispatcher)(query, categories)
+    }
 
     @Before
     fun setUp() {
@@ -86,9 +89,15 @@ class SearchLibraryTest {
 
     @Test
     fun `re-emits when the library changes`() = runTest {
-        songs.setSongs(listOf(createSong(id = 9, name = "Brand New Song", albumArtist = "Juniper Static", album = "Phase Garden")))
+        val results = mutableListOf<SearchResults>()
+        backgroundScope.launch { searchLibrary("brand new song", setOf(SearchCategory.Songs)).collect { results += it } }
+        runCurrent()
+        results.last().songs.map { it.item.id } shouldNotContain 9L
 
-        searchLibrary("brand new song", setOf(SearchCategory.Songs)).first().songs.map { it.item.id } shouldContainExactly listOf(9L)
+        songs.setSongs(listOf(createSong(id = 9, name = "Brand New Song", albumArtist = "Juniper Static", album = "Phase Garden")))
+        runCurrent()
+
+        results.last().songs.map { it.item.id } shouldContainExactly listOf(9L)
     }
 
     @Test
