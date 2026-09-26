@@ -1,0 +1,58 @@
+# #467: one pass through each library page after the pre-cutover list composables were deleted --
+# each page lists the `playback` fixture, a row menu opens, and the overflow shows the tab's
+# options. #466: with the Folders tab turned on, the top level names the primary volume "Internal
+# storage", and a nested folder's header path drops the volume segment ("Music / s2-seed").
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Songs
+- assertVisible: "Playback One"
+- tapOn:
+    text: "More options"
+    rightOf: "Playback One"
+- assertVisible: "Play Next"
+- takeScreenshot: dc-467-songs-row-menu
+- back
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Albums
+- assertVisible: "Playback Album"
+- takeScreenshot: dc-467-albums
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Artists
+- assertVisible: "Playback Artist"
+- takeScreenshot: dc-467-artists
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Genres
+- assertVisible: "Ambient"
+- takeScreenshot: dc-467-genres
+# The page overflow (the top bar's "More options", first in the tree) lists "Edit tabs"
+- tapOn:
+    text: "More options"
+    index: 0
+- takeScreenshot: dc-467-genres-overflow
+- tapOn: "Edit tabs"
+- tapOn: "Folders"
+- back
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Folders
+- extendedWaitUntil:
+    visible: "Internal storage"
+    timeout: 10000
+- assertNotVisible: "primary"
+- takeScreenshot: dc-466-folders-top
+- tapOn: "Internal storage"
+- tapOn: "Music"
+- tapOn: "s2-seed"
+- assertVisible: "Music / s2-seed"
+- takeScreenshot: dc-466-folders-nested

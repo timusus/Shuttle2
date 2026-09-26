@@ -1,0 +1,24 @@
+# #481: after a clean install (emu-verify resets the app), Settings > Privacy has crash reporting
+# and usage analytics both on (analytics default-on, #421), Home shows no analytics notice, and
+# Privacy no longer mentions Firebase.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- runFlow: _dismiss-first-run.yaml
+- extendedWaitUntil:
+    visible: "Home"
+    timeout: 10000
+- tapOn: "Home"
+- assertNotVisible: ".*anonymous usage data.*"
+- runFlow: ../nav/open-settings.yaml
+- tapOn: "Privacy"
+- assertVisible:
+    text: "Crash reporting"
+- assertVisible:
+    text: "Crash reporting.*"
+    checked: true
+- assertVisible:
+    text: "Usage analytics.*"
+    checked: true
+- assertNotVisible: ".*Firebase.*"
+- takeScreenshot: dc-481-privacy

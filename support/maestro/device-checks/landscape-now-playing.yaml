@@ -1,0 +1,23 @@
+# #381: Now Playing in landscape. Opens the player from the mini player (tapped by position: its
+# title also matches the Songs page row behind it), rotates, and checks the title and transport
+# controls are still there. Setup: something queued and paused (the wrapper, or any earlier check).
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- tapOn:
+    point: "30%, 86%"
+- extendedWaitUntil:
+    visible: "Up Next"
+    timeout: 10000
+- takeScreenshot: dc-381-now-playing-portrait
+- setOrientation: LANDSCAPE_LEFT
+- extendedWaitUntil:
+    visible: "Playback .*"
+    timeout: 10000
+- assertVisible: "Play|Pause"
+- assertVisible: "Next"
+- takeScreenshot: dc-381-now-playing-landscape
+- setOrientation: PORTRAIT
+- extendedWaitUntil:
+    visible: "Up Next"
+    timeout: 10000

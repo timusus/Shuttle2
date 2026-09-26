@@ -1,0 +1,64 @@
+# #456: a library multi-select clears on a library tab switch only. Rotating with a selection,
+# leaving Library for another shell tab, and coming back all keep it; back still clears it. Songs,
+# Albums and Artists are the selectable tabs. Fixture: `playback`.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Songs
+- longPressOn: "Playback One"
+- tapOn: "Playback Two"
+- assertVisible: "2 selected"
+- takeScreenshot: dc-456-songs-selected
+# A tab switch clears the tab being left
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Albums
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Songs
+- assertNotVisible: ".* selected"
+# Albums: rotation and leaving Library keep the selection, back clears it
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Albums
+- longPressOn: "Playback Album"
+- assertVisible: "1 selected"
+- setOrientation: LANDSCAPE_LEFT
+- extendedWaitUntil:
+    visible: "1 selected"
+    timeout: 10000
+- takeScreenshot: dc-456-albums-selected-landscape
+- setOrientation: PORTRAIT
+- extendedWaitUntil:
+    visible: "1 selected"
+    timeout: 10000
+- tapOn: "Home"
+- tapOn:
+    text: "Library"
+    index: -1
+- assertVisible: "1 selected"
+- takeScreenshot: dc-456-albums-selected-after-home
+- back
+- assertNotVisible: ".* selected"
+# Artists: a tab switch clears it
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Artists
+- longPressOn: "Playback Artist"
+- assertVisible: "1 selected"
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Albums
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Artists
+- assertNotVisible: ".* selected"

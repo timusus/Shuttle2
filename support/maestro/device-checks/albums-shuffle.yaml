@@ -1,0 +1,13 @@
+# Helper for albums-shuffle.sh (#447): tap Shuffle on Library > Albums.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Albums
+- extendedWaitUntil:
+    visible: "Greatest Hits"
+    timeout: 15000
+- takeScreenshot: dc-447-albums
+- tapOn: "Shuffle"

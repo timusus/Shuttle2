@@ -1,0 +1,9 @@
+# Helper: start a new queue by tapping a song on Library > Songs. Pass `SONG` (its title).
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Songs
+- tapOn: "${SONG}"

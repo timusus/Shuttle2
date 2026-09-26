@@ -1,0 +1,47 @@
+# #405: song info shows the artwork hero with format chips and Tags/File/Playback cards, and Copy
+# path still copies; the tag editor shows Song/Album/Numbering/Lyrics section cards and a Save
+# button. Saving tags is covered by shell-tag-editor and tag-edit-queued. Fixture: `playback`.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Songs
+# Row menus by the row title (by index, the top bar's own "More options" comes first)
+- tapOn:
+    text: "More options"
+    rightOf: "Playback One"
+- tapOn: "Song Info"
+- extendedWaitUntil:
+    visible: "Playback One"
+    timeout: 10000
+- assertVisible: "Tags"
+- assertVisible: "MP3"
+- takeScreenshot: dc-405-song-info
+- scrollUntilVisible:
+    element: "Copy path"
+- assertVisible: "File"
+- tapOn: "Copy path"
+- assertVisible: "Path copied"
+- scrollUntilVisible:
+    element: "Playback"
+- takeScreenshot: dc-405-song-info-bottom
+- back
+- tapOn:
+    text: "More options"
+    rightOf: "Playback One"
+- tapOn: "Edit Tags"
+- extendedWaitUntil:
+    visible: "Song"
+    timeout: 15000
+- assertVisible: "Save"
+- takeScreenshot: dc-405-tag-editor-top
+- scrollUntilVisible:
+    element: "Album"
+- scrollUntilVisible:
+    element: "Numbering"
+- scrollUntilVisible:
+    element: "Lyrics"
+- takeScreenshot: dc-405-tag-editor-bottom
+- back

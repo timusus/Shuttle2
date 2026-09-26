@@ -1,0 +1,29 @@
+# Helper, not a check: open Library, then one of its sub-tabs by name. The tab row scrolls
+# horizontally and restores the last tab, so a tab past its edge isn't on screen -- swipe the row
+# (portrait, ~24% down) until it is. Pass `TAB` (Genres|Playlists|Artists|Albums|Songs|Folders).
+appId: com.simplecityapps.shuttle.dev
+---
+- tapOn:
+    text: "Library"
+    index: -1
+- repeat:
+    while:
+      notVisible: "${TAB}"
+    times: 3
+    commands:
+      - swipe:
+          start: "85%, 24%"
+          end: "15%, 24%"
+          duration: 400
+- repeat:
+    while:
+      notVisible: "${TAB}"
+    times: 3
+    commands:
+      - swipe:
+          start: "15%, 24%"
+          end: "85%, 24%"
+          duration: 400
+- tapOn:
+    text: "${TAB}"
+    index: 0

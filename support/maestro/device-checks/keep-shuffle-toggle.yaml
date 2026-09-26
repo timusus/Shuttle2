@@ -1,0 +1,7 @@
+# Helper for keep-shuffle.sh: flip Settings > Playback & sound > Keep shuffle mode.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/open-settings.yaml
+- tapOn: "Playback & sound"
+- tapOn: "Keep shuffle mode"
+- takeScreenshot: dc-377-keep-shuffle-toggled

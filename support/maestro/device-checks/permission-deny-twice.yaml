@@ -1,0 +1,25 @@
+# Parity audit (#377): deny the in-context music prompt twice (API 33+ READ_MEDIA_AUDIO) and the
+# Library offers to open the app settings instead; Home shows the same state. Launched by
+# permission-states.sh on a clean app.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: _dismiss-first-run.yaml
+- tapOn:
+    text: "Library"
+    index: -1
+- tapOn: "Allow access to music"
+- tapOn:
+    id: "com.android.permissioncontroller:id/permission_deny_button"
+- extendedWaitUntil:
+    visible: "Without access to your music.*"
+    timeout: 10000
+- tapOn: "Allow access to music"
+- tapOn:
+    id: "com.android.permissioncontroller:id/permission_deny_button"
+- extendedWaitUntil:
+    visible: "Open app settings"
+    timeout: 10000
+- takeScreenshot: dc-377-library-denied-twice
+- tapOn: "Home"
+- assertVisible: "Open app settings"
+- takeScreenshot: dc-377-home-denied-twice

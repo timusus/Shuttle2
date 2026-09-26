@@ -1,0 +1,67 @@
+# Helper for server-sign-in.sh (#443 batch D2): the Compose server sign-in dialog. For Jellyfin, a
+# wrong password against the real test server shows the server's error with Retry, Retry returns to
+# the filled-in form, and the form survives rotation. Plex alone shows "2FA Code"; each dialog has
+# Remember password and its own title. No test account password exists, so a successful sign-in
+# isn't covered here. Env: SERVER_URL (the Jellyfin test server).
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- tapOn: "More"
+- tapOn: "Settings"
+- tapOn: "Sources"
+- scrollUntilVisible:
+    element: "Connect a server"
+    direction: DOWN
+- tapOn: "Connect a server"
+- tapOn: "Jellyfin"
+- extendedWaitUntil:
+    visible: "Jellyfin Media Server"
+    timeout: 5000
+- assertVisible: "Remember password"
+- assertNotVisible: "2FA Code"
+- tapOn: "Address"
+- eraseText
+- inputText: ${SERVER_URL}
+- tapOn: "Username"
+- inputText: "s2-device-check"
+- tapOn: "Password"
+- inputText: "wrong-password"
+- hideKeyboard
+- setOrientation: LANDSCAPE_LEFT
+- extendedWaitUntil:
+    visible: "s2-device-check"
+    timeout: 5000
+- setOrientation: PORTRAIT
+- extendedWaitUntil:
+    visible: "Authenticate"
+    timeout: 5000
+- takeScreenshot: dc-d2-filled
+- tapOn: "Authenticate"
+- extendedWaitUntil:
+    visible: "Retry"
+    timeout: 30000
+- takeScreenshot: dc-d2-wrong-password
+- tapOn: "Retry"
+- extendedWaitUntil:
+    visible: "s2-device-check"
+    timeout: 5000
+- assertVisible: "Jellyfin Media Server"
+- tapOn: "Close"
+- assertNotVisible: "Jellyfin Media Server"
+- tapOn: "Connect a server"
+- tapOn: "Plex"
+- extendedWaitUntil:
+    visible: "Plex Media Server"
+    timeout: 5000
+- assertVisible: "2FA Code"
+- assertVisible: "Remember password"
+- takeScreenshot: dc-d2-plex
+- tapOn: "Close"
+- tapOn: "Connect a server"
+- tapOn: "Emby"
+- extendedWaitUntil:
+    visible: "Emby Media Server"
+    timeout: 5000
+- assertNotVisible: "2FA Code"
+- assertNotVisible: "s2-device-check"
+- tapOn: "Close"

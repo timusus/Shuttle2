@@ -1,0 +1,21 @@
+# #461: Settings > Library > Clear artwork confirms and reports the cache cleared; Download all
+# artwork starts. The wrapper checks logcat for artwork errors afterwards.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/open-settings.yaml
+- tapOn: "Library"
+- scrollUntilVisible:
+    element: "Clear artwork"
+- tapOn: "Clear artwork"
+- tapOn: "Clear"
+- extendedWaitUntil:
+    visible: "Artwork cache cleared"
+    timeout: 10000
+- scrollUntilVisible:
+    element: "Download all artwork"
+- tapOn: "Download all artwork"
+- tapOn: "Download"
+- extendedWaitUntil:
+    visible: "Downloading artwork"
+    timeout: 10000
+- takeScreenshot: dc-461-artwork-download

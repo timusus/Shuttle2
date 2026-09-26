@@ -1,0 +1,8 @@
+# Helper, not a check: dismiss what a clean install can show over the shell on first launch.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    when:
+      visible: "Thank You"
+    commands:
+      - tapOn: "CLOSE"

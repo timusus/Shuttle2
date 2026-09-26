@@ -1,0 +1,25 @@
+# Helper for artwork-local.sh (#461): Library > Albums with the two art-check albums on screen.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Albums
+- extendedWaitUntil:
+    visible: "Embedded Art Check"
+    timeout: 15000
+- extendedWaitUntil:
+    visible: "Folder Art Check"
+    timeout: 15000
+# Give the artwork time to cross-fade in
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: dc-461-albums
+- tapOn: "Embedded Art Check"
+- extendedWaitUntil:
+    visible: "Embedded Art Song"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: dc-461-album-hero

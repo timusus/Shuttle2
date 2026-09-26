@@ -1,0 +1,30 @@
+# #441/#427: a fresh install without the music permission shows the access prompt on Home and on
+# Library; granting it from Home fills the Library and clears the prompt on both. Launched by
+# permission-states.sh on a clean app with the `playback` files on the device.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: _dismiss-first-run.yaml
+- extendedWaitUntil:
+    visible: "Allow access to music"
+    timeout: 15000
+- takeScreenshot: dc-441-home-no-access
+- tapOn:
+    text: "Library"
+    index: -1
+- assertVisible: "Allow access to music"
+- takeScreenshot: dc-441-library-no-access
+- tapOn: "Home"
+- tapOn: "Allow access to music"
+- tapOn:
+    id: "com.android.permissioncontroller:id/permission_allow_button"
+- tapOn:
+    text: "Library"
+    index: -1
+- extendedWaitUntil:
+    visible: "Playback .*"
+    timeout: 60000
+- assertNotVisible: "Allow access to music"
+- takeScreenshot: dc-441-library-granted
+- tapOn: "Home"
+- assertNotVisible: "Allow access to music"
+- takeScreenshot: dc-441-home-granted

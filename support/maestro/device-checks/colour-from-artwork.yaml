@@ -1,0 +1,44 @@
+# Helper for artwork-local.sh (#465): screenshot Now Playing with Colour from artwork on, turn it
+# off in Settings > Appearance and screenshot again, then turn it back on -- all in one app session,
+# so the change has to apply without a restart. Setup: the orange-art song queued and paused.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- tapOn:
+    point: "30%, 86%"
+- extendedWaitUntil:
+    visible: "Up Next"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: dc-465-on
+- back
+- tapOn: "More"
+- tapOn: "Settings"
+- tapOn: "Appearance"
+- tapOn: "Colour from artwork"
+- back
+- back
+- tapOn:
+    point: "30%, 86%"
+- extendedWaitUntil:
+    visible: "Up Next"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: dc-465-off
+- back
+- tapOn: "More"
+- tapOn: "Settings"
+- tapOn: "Appearance"
+- tapOn: "Colour from artwork"
+- back
+- back
+- tapOn:
+    point: "30%, 86%"
+- extendedWaitUntil:
+    visible: "Up Next"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: dc-465-on-again

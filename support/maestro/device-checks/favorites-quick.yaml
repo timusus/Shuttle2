@@ -1,0 +1,45 @@
+# #500: on a fresh install, favoriting several songs quickly (list row menus, then the Now Playing
+# heart) makes one Favorites playlist holding every song. Fixture: `playback`, fresh app data.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: ../nav/launch-fresh.yaml
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Songs
+# Row menus by the row title (by index, the top bar's own "More options" comes first)
+- tapOn:
+    text: "More options"
+    rightOf: "Playback Five"
+- tapOn: "Favorite"
+- tapOn:
+    text: "More options"
+    rightOf: "Playback Four"
+- tapOn: "Favorite"
+- tapOn:
+    text: "More options"
+    rightOf: "Playback Three"
+- tapOn: "Favorite"
+# Play Playback Two and favorite it from Now Playing
+- tapOn: "Playback Two"
+- tapOn:
+    point: "30%, 86%"
+- extendedWaitUntil:
+    visible: "Up Next"
+    timeout: 10000
+- tapOn: "Favorite"
+- back
+- runFlow:
+    file: _library-tab.yaml
+    env:
+      TAB: Playlists
+- extendedWaitUntil:
+    visible: "4 songs"
+    timeout: 10000
+- takeScreenshot: dc-500-playlists
+- tapOn: "Favorites"
+- assertVisible: "Playback Five"
+- assertVisible: "Playback Four"
+- assertVisible: "Playback Three"
+- assertVisible: "Playback Two"
+- takeScreenshot: dc-500-favorites
