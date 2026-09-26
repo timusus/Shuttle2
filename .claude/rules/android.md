@@ -216,14 +216,22 @@ by tap.
 ## Remote Gradle Builds (WSL Box, opt-in)
 
 `support/scripts/remote-build.sh <gradle args...>` runs a Gradle build on the same box (#451): it
-rsyncs the worktree to `~/s2-builds/<worktree name>`, runs `./gradlew` there with a box-side JDK
-(Temurin 21 in `~/opt/jdk-21`) and Gradle user home (`~/s2-builds/.gradle-home`) at
-`--max-workers=8` unless the args say otherwise (`REMOTE_BUILD_MAX_WORKERS` changes the default),
-streams a condensed log (full log: `build/remote-build/gradle.log`), and syncs back APKs, test
-results, test reports and Roborazzi outputs with Gradle's exit code. The version tag is read on the
-Mac and passed as `-PversionCode`/`-PversionName`. Different worktrees build side by side; two calls
-from one worktree queue. One-time box setup: `support/scripts/remote-build-setup.sh` (idempotent;
-it only checks the CI-shared SDK at `/opt/android-sdk` and never installs into it).
+rsyncs the worktree to `~/s2-builds/<worktree name>`, takes a box-side build slot (`flock` on
+`~/s2-builds/.slots/N`, at most `REMOTE_BUILD_SLOTS` concurrent builds, default 2 -- a caller past
+the limit prints one line and blocks, no polling; the lock lives on an fd the remote shell holds,
+so it releases itself on exit or ssh disconnect and never wedges) then runs `./gradlew` there under
+`nice` with a box-side JDK (Temurin 21 in `~/opt/jdk-21`) and Gradle user home
+(`~/s2-builds/.gradle-home`, whose `gradle.properties` caps the daemon heap and worker count for
+remote runs without touching this worktree's own) at `--max-workers=6` (4 when `remote-emu.sh` shows
+a lane leased on the box) unless the args say otherwise (`REMOTE_BUILD_MAX_WORKERS` changes the
+default), streams a condensed log (full log: `build/remote-build/gradle.log`), clears the local
+destination report dirs (`build/test-results`, `build/reports`, `build/outputs/roborazzi`) so a
+stale report can't linger, then syncs back APKs, test results, test reports and Roborazzi outputs
+with Gradle's exit code. The version tag is read on the Mac and passed as
+`-PversionCode`/`-PversionName`. Different worktrees build side by side (bounded by the box-side
+slot above); two calls from one worktree queue on a separate local lock. One-time box setup:
+`support/scripts/remote-build-setup.sh` (idempotent; it only checks the CI-shared SDK at
+`/opt/android-sdk` and never installs into it).
 
 Opt in with `S2_REMOTE_BUILD=1`, or `--remote-build` as the first argument to
 `support/scripts/unit-test` / an argument to `emu-verify.sh` (which builds the APK remotely and
