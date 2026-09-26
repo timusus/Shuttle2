@@ -20,19 +20,6 @@
     <string name="media_provider_title_plex">Pleks</string>
     <!-- The description of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_description_plex">Personal media server</string>
-    <!-- Shown when a media provider is being scanned. Indicates the current progress of that scan -->
-    <string name="media_provider_scan_progress">Przeskanowano 
-    <xliff:g example="5" id="progress">%1$d</xliff:g>
-    /
-    <xliff:g example="25" id="total">%2$d</xliff:g>
-     utworów</string>
-    <!-- Shown when a media provider scan has completed -->
-    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">%1$d</xliff:g>
-     wstawia,
-    <xliff:g example="15" id="updates">%2$d</xliff:g>
-     aktualizacje,
-    <xliff:g example="25" id="deletes">%3$d</xliff:g>
-     usuwa</string>
     <!-- Shown when a media provider scan has failed -->
     <string name="media_provider_scan_failure_title">Skanowanie nie powiodło się</string>
     <!-- Dialog button shown to authenticate with Jellyfin/Emby/Plex (submits the user's credentials for authentication)-->
@@ -59,12 +46,6 @@
     <string name="media_provider_toolbar_title_onboarding">Odkryj swoją muzykę</string>
     <!-- Title of the screen where users can select their media providers. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_toolbar_title">Dostawcy mediów</string>
-    <!-- Option to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_provider_dialog_remove_title">Usuń 
-    <xliff:g example="Jellyfin" id="provider_type">%1$s</xliff:g></string>
-    <!-- Warning when user attempts to remove a media provider, that their media associated with that provider will be deleted. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc.-->
-    <string name="media_provider_dialog_remove_subtitle">Spowoduje to usunięcie wszystkich utworów, playlist i liczby odtworzeń powiązanych z dostawcą mediów 
-    <xliff:g example="Jellyfin" id="provider_type">%1$s</xliff:g></string>
     <!-- Button to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_dialog_button_remove">Usuń</string>
     <!-- The address (url) of the user's Emby/Jellyfin/Plex media provider. -->
