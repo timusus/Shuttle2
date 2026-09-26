@@ -175,3 +175,21 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 ## Home analytics consent card (#421)
 
 - [ ] With a library loaded, force-stop and reopen the app on 3 separate calendar days (change the device date between opens). The card appears on Home on the 3rd day, not before, and Analytics in Settings > Privacy stays off the whole time.
+
+## Redesign parity, device-only (#377, #382)
+
+The JVM-proven parts of these items are mapped in `docs/architecture/parity-audit.md`; these are what's left for a device.
+
+- [ ] Now Playing's Cast button finds a Chromecast on the network and connects; playback moves to the receiver.
+- [ ] Turn on Settings → Playback → Keep shuffle mode, turn shuffle on, then play a different album. The new queue starts shuffled; with the setting off it starts in order.
+- [ ] With Artwork → Wi-Fi only on and Wi-Fi off, a song without cached artwork shows its placeholder; on Wi-Fi it loads. With Local only on, remote artwork never loads.
+- [ ] With Media session artwork on, the notification, lock screen and a Bluetooth head unit show the cover; with it off they don't.
+- [ ] Add both widget sizes to the home screen, then play, pause and skip. Both update their title, artwork and play state.
+- [ ] Crash reporting: with it on, force a crash on a debug build, reopen the app, and the report reaches Crashlytics; with it off, nothing does.
+- [ ] Remote Config: change a flag in the console, reopen the app (decision 6: fetch on launch, `MainActivity`), and the new value applies.
+- [ ] Set S2 as the default music app, then open an audio file from Files and from a messaging app. S2 plays it.
+- [ ] Long-press the launcher icon and tap the Toggle playback shortcut. Playback starts, and a second tap pauses.
+- [ ] On an Android Auto head unit (or the DHU), browse the library and play a song; the transport controls work.
+- [ ] Grant music access through the in-context prompt on API 32 (`READ_EXTERNAL_STORAGE` dialog) and on API 33+ (`READ_MEDIA_AUDIO`); deny it twice and the Library offers to open the app settings instead.
+- [ ] Edit a Jellyfin, Emby and Plex server's address and user from Sources. The change saves and the library reimports (View-based dialogs until #434).
+- [ ] `support/scripts/emu-verify.sh --suite` passes with every flow green in `build/maestro/results.md`.

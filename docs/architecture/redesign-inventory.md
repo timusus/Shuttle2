@@ -439,48 +439,50 @@ All 12 taken as written on 2026-09-25 (epic #382); each can still be revisited.
 
 ## Parity checklist (tick before the first post-freeze release)
 
+Audited against the code on 2026-09-26: [parity-audit.md](parity-audit.md) maps each item to its code and tests; device-only checks are in [device-checks.md](../testing/device-checks.md).
+
 - [x] Library tabs: Songs, Albums, Artists, Genres, Playlists, Folders (opt-in); reorder and hide tabs; last tab restored
 - [x] Songs sort ×6, Albums sort ×4 incl. Random, Genres sort ×2, Playlists sort ×2
 - [x] Album and artist list/grid toggle, persisted
 - [x] Fast scroller with section popup on every long list
 - [x] Multi-select on Songs, Albums, Artists, Playlist detail; back clears selection first
 - [x] Batch Add to queue, Add to playlist, Edit tags
-- [ ] Album detail: disc groups, Shuffle, Queue, Play next, Add to playlist, Edit tags
-- [ ] Artist detail: inline album expand, Play/Shuffle all, Shuffle albums, Play next, Edit all tags
+- [x] Album detail: disc groups, Shuffle, Queue, Play next, Add to playlist, Edit tags
+- [x] Artist detail: inline album expand, Play/Shuffle all, Shuffle albums, Play next, Edit all tags
 - [x] Genre detail actions at genre, album and song level
 - [x] Playlist detail: 7 sorts + descending, drag reorder (custom), Remove, Rename, Clear, Delete, Export m3u
-- [ ] Auto playlists: Recently added, Most played, History, Favorites (heart in Now Playing)
+- [ ] Auto playlists: Recently added, Most played, History, Favorites (heart in Now Playing) — gap #477
 - [x] Folders: drill down, back one level, recursive Play/Shuffle/Queue/Playlist
 - [x] Song actions: Play next, Add to queue, Add to playlist, Song info, Exclude, Edit tags, Delete, Remove
 - [x] Create, rename, clear, delete playlists; duplicate-song handling
 - [x] Tag editor: all 11 fields, batch mode, provider gating
 - [x] Song info: all 17 fields
-- [ ] Search: artists/albums/songs, fuzzy ranking, filter chips persisted, shared-element open
-- [ ] Home sections and Shuffle all
-- [ ] Mini player: progress, play/pause, skip, long-press seek
-- [ ] Now Playing: artwork swipe skip, shuffle, repeat ×3, seek, long-press seek, audiobook seek buttons, artist/album links, Cast, lyrics, favorite, clear queue
-- [ ] Queue: tap to play, reorder, remove, Play next, scroll to current, save as playlist, clear
+- [ ] Search: artists/albums/songs, fuzzy ranking, filter chips persisted, shared-element open — gap #431
+- [x] Home sections and Shuffle all
+- [ ] Mini player: progress, play/pause, skip, long-press seek — gap #430
+- [ ] Now Playing: artwork swipe skip, shuffle, repeat ×3, seek, long-press seek, audiobook seek buttons, artist/album links, Cast, lyrics, favorite, clear queue — gaps #473, #430, #429
+- [ ] Queue: tap to play, reorder, remove, Play next, scroll to current, save as playlist, clear — gap #472
 - [x] Sleep timer: presets, play to end of track, live countdown, stop
-- [ ] EQ: on/off, presets, custom bands, ReplayGain mode, pre-amp, frequency response
-- [ ] USB DAC direct output (API 34+), Keep shuffle on new queue
-- [ ] Permission in context on API 23–32 (`READ_EXTERNAL_STORAGE`) and 33+ (`READ_MEDIA_AUDIO`), incl. permanent denial
-- [ ] Local scan without folder picking; optional include/exclude folders; revoked grant surfaced
-- [ ] Rescan now, rescan frequency, last scan date; scan progress and failures visible
-- [ ] Excluded items: view, restore one, clear all
-- [ ] Jellyfin, Emby, Plex: connect, edit, remember password, errors with retry, remove source (cleans queue and library), report playback
-- [ ] Theme, pure black, accent, dynamic colour, Home-or-Library on launch
-- [ ] Artwork: Wi-Fi only, local only, clear cache, download all, media session artwork
-- [ ] Widget opacity, both widget sizes still update
-- [ ] Crash reporting and analytics toggles; Remote Config still refreshes as decided
-- [ ] File logging, copy logs; debug live log reachable in debug builds
-- [ ] Changelog reachable; licences
-- [ ] Purchase (Lifetime, Annual, Monthly plan cards), thank-you, promo code path (visible in Settings > S2 Pro), review prompt
+- [ ] EQ: on/off, presets, custom bands, ReplayGain mode, pre-amp, frequency response — gap #432
+- [x] USB DAC direct output (API 34+), Keep shuffle on new queue
+- [x] Permission in context on API 23–32 (`READ_EXTERNAL_STORAGE`) and 33+ (`READ_MEDIA_AUDIO`), incl. permanent denial
+- [ ] Local scan without folder picking; optional include/exclude folders; revoked grant surfaced — gap #479
+- [ ] Rescan now, rescan frequency, last scan date; scan progress and failures visible — gap #474
+- [x] Excluded items: view, restore one, clear all
+- [x] Jellyfin, Emby, Plex: connect, edit, remember password, errors with retry, remove source (cleans queue and library), report playback
+- [ ] Theme, pure black, accent, dynamic colour, Home-or-Library on launch — gap #475
+- [x] Artwork: Wi-Fi only, local only, clear cache, download all, media session artwork
+- [x] Widget opacity, both widget sizes still update
+- [ ] Crash reporting and analytics toggles; Remote Config still refreshes as decided — gap #476
+- [x] File logging, copy logs (the debug live log is dropped on purpose, #471: logcat covers it)
+- [x] Changelog reachable; licences
+- [ ] Purchase (Lifetime, Annual, Monthly plan cards), thank-you, promo code path (visible in Settings > S2 Pro), review prompt — gap #418
 - [x] Grandfathering: all 5 legacy product IDs (monthly, yearly, yearly_low, iap_full_version, iap_full_version_low) still grant Pro
-- [ ] Server trial: starts on first server connection, 14 days no card, trial chip in Library top bar for the last 3 days
+- [ ] Server trial: starts on first server connection, 14 days no card, trial chip in Library top bar for the last 3 days — gap #418
 - [x] Paywall entry points: add-server (before connecting), trial end (on tapping play on a remote song), Settings > S2 Pro
-- [ ] Intents: play-from-search, VIEW audio file, default music app; Toggle playback shortcut
-- [ ] Android Auto browse and playback; Cast connect from Now Playing
-- [ ] Every `support/maestro` flow ported to Compose test tags and green
+- [x] Intents: play-from-search, VIEW audio file, default music app; Toggle playback shortcut
+- [x] Android Auto browse and playback; Cast connect from Now Playing
+- [x] Every `support/maestro` flow ported to Compose test tags and green
 
 ## Spikes needed
 
