@@ -270,6 +270,10 @@
     {
       "text": "Favorites can no longer be duplicated",
       "commits": []
+    },
+    {
+      "text": "Shuffle albums now says when it couldn't start playing, instead of doing nothing",
+      "commits": []
     }
   ]
 }

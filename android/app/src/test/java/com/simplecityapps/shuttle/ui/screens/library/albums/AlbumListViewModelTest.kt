@@ -21,6 +21,7 @@ import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlin.random.Random
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
@@ -44,6 +45,7 @@ class AlbumListViewModelTest {
     private val fakeSortPreferences = FakeSortPreferences()
     private val fakeViewModePreferences = FakeAlbumListPreferences()
     private val fakeQueueOperations = FakeQueueOperations()
+    private val fakePlaybackOperations = FakePlaybackOperations()
 
     @Test
     fun `onShuffle queues each album's songs together, in track order`() = runTest {
@@ -105,8 +107,27 @@ class AlbumListViewModelTest {
         fakeQueueOperations.shuffleModeFlow.value shouldBe ShuffleMode.Off
     }
 
+    @Test
+    fun `a failed shuffle holds a message until the screen consumes it`() = runTest {
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Solo", album = "Only Album")))
+        fakeImportState.setState(importComplete())
+        fakePlaybackOperations.loadResult = Result.failure(IllegalStateException("File not found"))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        viewModel.onShuffle()
+        advanceUntilIdle()
+
+        val event = viewModel.uiState.value.events.single()
+        event.value shouldBe AlbumListEvent.ShuffleFailed("File not found")
+
+        viewModel.onEventHandled(event.id)
+        advanceUntilIdle()
+
+        viewModel.uiState.value.events shouldBe emptyList()
+    }
+
     private fun createViewModel(random: Random = Random.Default): AlbumListViewModel {
-        val fakePlaybackOperations = FakePlaybackOperations()
         val preferences = fakeLibraryViewPreferences(sort = fakeSortPreferences, albumList = fakeViewModePreferences)
         val testMediaActions = TestMediaActions(
             fakeSongRepository,

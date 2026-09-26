@@ -28,10 +28,13 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailEvent
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailViewModel
+import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 
 /**
  * Album artist detail (inventory §1): albums newest first, each expanding its tracks inline when tapped, then every
@@ -126,6 +129,14 @@ fun AlbumArtistDetailDestination(
     val viewModel = hiltViewModel<AlbumArtistDetailViewModel, AlbumArtistDetailViewModel.Factory> { it.create(route.groupKey) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalResources.current
+    val snackbarHostState = LocalShellSnackbarHostState.current
+    ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
+        when (event) {
+            is AlbumArtistDetailEvent.ShuffleAlbumsFailed -> snackbarHostState.showSnackbar(
+                resources.getString(R.string.shuffle_albums_failed, event.reason ?: resources.getString(R.string.error_unknown)),
+            )
+        }
+    }
     MediaActionsHost(onNavigate = onNavigate) { actions ->
         AlbumArtistDetailScreen(
             uiState = uiState,

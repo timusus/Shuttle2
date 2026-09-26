@@ -70,12 +70,14 @@ import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
+import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.mediaactions.CreatePlaylistDialog
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsState
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.label
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListViewModel
+import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListEvent
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
@@ -83,6 +85,7 @@ import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewM
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
+import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import kotlinx.coroutines.launch
 
 /** What the container's chrome shows for the current tab: its count, selection and overflow options. */
@@ -363,6 +366,15 @@ private fun LibraryPage(
         LibraryTab.Albums -> {
             val viewModel: AlbumListViewModel = hiltViewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
+            val snackbarHostState = LocalShellSnackbarHostState.current
+            val resources = LocalResources.current
+            ConsumeEvents(state.events, viewModel::onEventHandled) { event ->
+                when (event) {
+                    is AlbumListEvent.ShuffleFailed -> snackbarHostState.showSnackbar(
+                        resources.getString(R.string.shuffle_albums_failed, event.reason ?: resources.getString(R.string.error_unknown)),
+                    )
+                }
+            }
             AlbumsPage(
                 state = state,
                 onAlbumClick = { album -> if (state.isSelecting) viewModel.onAlbumClick(album) else onOpen(album.route) },

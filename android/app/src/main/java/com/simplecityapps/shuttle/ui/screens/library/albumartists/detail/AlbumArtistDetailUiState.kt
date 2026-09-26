@@ -4,6 +4,7 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.common.PendingEvent
 
 data class AlbumArtistDetailUiState(
     val albumArtist: AlbumArtist? = null,
@@ -13,6 +14,7 @@ data class AlbumArtistDetailUiState(
     /** Albums whose track list is unfolded in place, keyed the same way songs are grouped. */
     val expandedAlbums: Set<AlbumGroupKey> = emptySet(),
     val loadingState: LoadingState = LoadingState.Loading,
+    val events: List<PendingEvent<AlbumArtistDetailEvent>> = emptyList(),
 ) {
     enum class LoadingState { Loading, Ready, Empty }
 
@@ -20,4 +22,9 @@ data class AlbumArtistDetailUiState(
     fun songsForAlbum(album: Album): List<Song> = album.groupKey?.let { key ->
         songs.filter { it.albumGroupKey == key }
     }.orEmpty()
+}
+
+sealed interface AlbumArtistDetailEvent {
+    /** Shuffle albums couldn't start playback; [reason] is the player's error, if it gave one. */
+    data class ShuffleAlbumsFailed(val reason: String?) : AlbumArtistDetailEvent
 }

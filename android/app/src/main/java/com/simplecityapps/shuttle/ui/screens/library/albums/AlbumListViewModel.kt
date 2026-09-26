@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
+import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.common.SelectionState
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
@@ -38,6 +39,7 @@ class AlbumListViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val selectionState = SelectionState<Album>()
+    private val events = PendingEvents<AlbumListEvent>()
 
     private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.AlbumSort))
     private val _viewMode = MutableStateFlow(readSetting(LibraryViewSetting.AlbumViewMode))
@@ -52,8 +54,8 @@ class AlbumListViewModel @Inject constructor(
         mediaImportObserver.songImportState,
         selectionState.selectedItems,
         _sortOrder,
-        combine(_viewMode, _randomSeed) { viewMode, randomSeed -> viewMode to randomSeed },
-    ) { albums, songImportState, selectedAlbums, sortOrder, (viewMode, randomSeed) ->
+        combine(_viewMode, _randomSeed, events.flow, ::Triple),
+    ) { albums, songImportState, selectedAlbums, sortOrder, (viewMode, randomSeed, events) ->
         if (songImportState is SongImportState.ImportProgress) {
             AlbumListUiState(
                 loadingState = AlbumListUiState.LoadingState.Scanning,
@@ -61,6 +63,7 @@ class AlbumListViewModel @Inject constructor(
                 sortOrder = sortOrder,
                 viewMode = viewMode,
                 selectedAlbums = selectedAlbums,
+                events = events,
             )
         } else {
             val sortedAlbums = albums.sortedWith(sortOrder.comparator(randomSeed))
@@ -74,6 +77,7 @@ class AlbumListViewModel @Inject constructor(
                 } else {
                     AlbumListUiState.LoadingState.Ready
                 },
+                events = events,
             )
         }
     }.stateIn(
@@ -96,10 +100,12 @@ class AlbumListViewModel @Inject constructor(
             // each album's songs must already be in track order before it shuffles the album order.
             val allSongs = observeSongs().firstOrNull().orEmpty()
                 .sortedWith(compareBy({ it.albumGroupKey.key }, { it.albumGroupKey.albumArtistGroupKey?.key }, { it.disc }, { it.track }))
-            // A failure isn't shown: nothing ever collected the event this used to emit.
-            shuffleAlbums(allSongs)
+            val result = shuffleAlbums(allSongs)
+            if (result is ShuffleAlbums.Result.Failure) events.post(AlbumListEvent.ShuffleFailed(result.message))
         }
     }
+
+    fun onEventHandled(id: Long) = events.consume(id)
 
     fun setSortOrder(sortOrder: AlbumSortOrder) {
         saveSetting(LibraryViewSetting.AlbumSort, sortOrder)

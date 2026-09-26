@@ -78,6 +78,8 @@
     <string name="artist_detail_songs">Songs</string>
     <!-- Detail screen action: shuffle the artist's albums in album order -->
     <string name="detail_shuffle_albums">Shuffle albums</string>
+    <!-- Snackbar shown when Shuffle albums couldn't start playback -->
+    <string name="shuffle_albums_failed">Couldn\'t shuffle albums: <xliff:g example="File not found" id="reason">%1$s</xliff:g></string>
     <!-- Library empty state when every tab is hidden -->
     <string name="library_all_tabs_hidden">Every tab is hidden</string>
     <!-- Disc header on album detail -->

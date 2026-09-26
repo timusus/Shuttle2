@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
+import com.simplecityapps.shuttle.ui.common.PendingEvents
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -45,14 +46,15 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
     }
 
     private val expandedAlbums = MutableStateFlow<Set<AlbumGroupKey>>(emptySet())
+    private val events = PendingEvents<AlbumArtistDetailEvent>()
 
     val uiState: StateFlow<AlbumArtistDetailUiState> = combine(
         observeAlbumArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = groupKey)),
         observeAlbums(AlbumQuery.ArtistGroupKey(groupKey)),
         observeSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = groupKey)))),
         observeCurrentSong(),
-        expandedAlbums,
-    ) { artists, albums, songs, currentSong, expanded ->
+        combine(expandedAlbums, events.flow, ::Pair),
+    ) { artists, albums, songs, currentSong, (expanded, events) ->
         val sortedAlbums = albums.sortedByDescending { it.year ?: 0 }
         val albumOrder = sortedAlbums.withIndex().associate { (index, album) -> album.groupKey to index }
         val sortedSongs = songs.sortedWith(compareBy({ albumOrder[it.albumGroupKey] ?: Int.MAX_VALUE }, { it.disc }, { it.track }))
@@ -67,6 +69,7 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
             } else {
                 AlbumArtistDetailUiState.LoadingState.Ready
             },
+            events = events,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -85,8 +88,10 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val songs = uiState.value.songs
             if (songs.isEmpty()) return@launch
-            // A failure isn't shown: nothing ever collected the event this used to emit.
-            shuffleAlbums(songs)
+            val result = shuffleAlbums(songs)
+            if (result is ShuffleAlbums.Result.Failure) events.post(AlbumArtistDetailEvent.ShuffleAlbumsFailed(result.message))
         }
     }
+
+    fun onEventHandled(id: Long) = events.consume(id)
 }

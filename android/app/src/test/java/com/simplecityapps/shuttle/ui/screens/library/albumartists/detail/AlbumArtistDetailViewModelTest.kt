@@ -137,6 +137,27 @@ class AlbumArtistDetailViewModelTest {
         shufflePlaybackOperations.calls shouldBe listOf("play()")
     }
 
+    @Test
+    fun `a failed shuffle albums holds a message until the screen consumes it`() = runTest {
+        fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
+        fakeSongRepository.setSongs(listOf(createSong(albumArtist = "The Tin Orchards")))
+        shufflePlaybackOperations.loadResult = Result.failure(IllegalStateException("File not found"))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onShuffleAlbums()
+        advanceUntilIdle()
+
+        val event = viewModel.uiState.value.events.single()
+        event.value shouldBe AlbumArtistDetailEvent.ShuffleAlbumsFailed("File not found")
+
+        viewModel.onEventHandled(event.id)
+        advanceUntilIdle()
+
+        viewModel.uiState.value.events shouldBe emptyList()
+    }
+
     private fun List<Song>.chunkedByAlbum(): List<List<Song>> = fold(mutableListOf<MutableList<Song>>()) { runs, song ->
         if (runs.lastOrNull()?.last()?.album == song.album) runs.last() += song else runs += mutableListOf(song)
         runs
