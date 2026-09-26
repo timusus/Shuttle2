@@ -35,6 +35,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -295,6 +296,24 @@ fun LibraryDestination(
     val emptyViewModel: LibraryEmptyViewModel = hiltViewModel()
     val content by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
+
+    // The only tabs that support selection (#225); Genres/Playlists/Folders have none to clear.
+    val songViewModel: SongListViewModel = hiltViewModel()
+    val albumViewModel: AlbumListViewModel = hiltViewModel()
+    val artistViewModel: AlbumArtistListViewModel = hiltViewModel()
+    val selectionCoordinator = remember(songViewModel, albumViewModel, artistViewModel) {
+        LibrarySelectionCoordinator { tab ->
+            when (tab) {
+                LibraryTab.Songs -> songViewModel.clearSelection()
+                LibraryTab.Albums -> albumViewModel.clearSelection()
+                LibraryTab.Artists -> artistViewModel.clearSelection()
+                LibraryTab.Genres, LibraryTab.Playlists, LibraryTab.Folders -> {}
+            }
+        }
+    }
+    LaunchedEffect(uiState.currentTab) { selectionCoordinator.onTabChanged(uiState.currentTab) }
+    DisposableEffect(Unit) { onDispose { selectionCoordinator.onDestinationLeft() } }
+
     MediaActionsHost(onNavigate = onNavigate) { actions ->
         val chrome = tabChrome(uiState.currentTab)
         LibraryScreen(

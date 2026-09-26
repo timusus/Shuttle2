@@ -228,7 +228,7 @@
       "commits": []
     },
     {
-      "text": "The back button now exits multi-select mode on the Songs, Albums and Artists tabs instead of leaving the library",
+      "text": "The back button now exits multi-select mode on the Songs, Albums and Artists tabs instead of leaving the library, and switching tabs or leaving the Library screen now clears your selection too",
       "commits": []
     },
     {
