@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -36,6 +37,13 @@ import com.simplecityapps.shuttle.designsystem.preview.S2Preview
  * hands each row its `ListItemDefaults.segmentedShapes` for its place in the group, so the first
  * and last rows round their outer corners. A row outside a group takes the default shapes.
  */
+
+/**
+ * How a settings row draws its leading icon. [Tonal] sets it in a tonal cookie-shaped container and is
+ * for top-level rows; [Plain] is the bare icon, for the rows under them, so the containers mark the
+ * hierarchy instead of flattening it (#496).
+ */
+enum class SettingIconStyle { Tonal, Plain }
 
 /** The title over a [SettingsGroup]. */
 @Composable
@@ -73,6 +81,7 @@ fun LinkSetting(
     modifier: Modifier = Modifier,
     summary: String? = null,
     icon: ImageVector? = null,
+    iconStyle: SettingIconStyle = SettingIconStyle.Tonal,
     enabled: Boolean = true,
     shapes: ListItemShapes = ListItemDefaults.shapes(),
 ) {
@@ -82,7 +91,7 @@ fun LinkSetting(
         modifier = modifier,
         colors = settingColors(),
         enabled = enabled,
-        leadingContent = icon?.let { { SettingIcon(it, enabled) } },
+        leadingContent = icon?.let { { SettingIcon(it, iconStyle, enabled) } },
         trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null) },
         supportingContent = summary?.let { { Text(it) } },
     ) { Text(title) }
@@ -108,7 +117,7 @@ fun SwitchSetting(
         modifier = modifier,
         colors = settingColors(),
         enabled = enabled,
-        leadingContent = icon?.let { { SettingIcon(it, enabled) } },
+        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled) } },
         trailingContent = { Switch(checked = checked, onCheckedChange = null, enabled = enabled) },
         supportingContent = summary?.let { { Text(it) } },
     ) { Text(title) }
@@ -132,7 +141,7 @@ fun ChoiceSetting(
         modifier = modifier,
         colors = settingColors(),
         enabled = enabled,
-        leadingContent = icon?.let { { SettingIcon(it, enabled) } },
+        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled) } },
         supportingContent = { Text(value) },
     ) { Text(title) }
 }
@@ -157,7 +166,7 @@ fun SliderSetting(
         modifier = modifier,
         colors = settingColors(),
         enabled = enabled,
-        leadingContent = icon?.let { { SettingIcon(it, enabled) } },
+        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled) } },
         trailingContent = valueLabel?.let {
             {
                 Text(
@@ -187,7 +196,7 @@ fun InfoSetting(
         shapes = shapes,
         modifier = modifier,
         colors = settingColors(),
-        leadingContent = icon?.let { { SettingIcon(it, enabled = true) } },
+        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled = true) } },
         supportingContent = { Text(summary) },
     ) { Text(title) }
 }
@@ -210,10 +219,17 @@ private fun settingColors(): ListItemColors {
     )
 }
 
-/** The leading icon in a `MaterialShapes.Cookie4Sided` container, as design-language.md allows for settings. */
+/**
+ * The leading icon: for [SettingIconStyle.Tonal], in a `MaterialShapes.Cookie4Sided` container, as
+ * design-language.md allows for settings; for [SettingIconStyle.Plain], bare, in the row's own colour.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun SettingIcon(icon: ImageVector, enabled: Boolean) {
+private fun SettingIcon(icon: ImageVector, style: SettingIconStyle, enabled: Boolean) {
+    if (style == SettingIconStyle.Plain) {
+        Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
+        return
+    }
     Box(
         modifier = Modifier
             .size(40.dp)
@@ -235,6 +251,7 @@ private fun SettingsGroupPreview() {
             rows = listOf(
                 { ChoiceSetting("Theme", "Follow system", {}, icon = Icons.Rounded.Palette, shapes = it) },
                 { SwitchSetting("Dynamic colour", checked = true, onCheckedChange = {}, shapes = it) },
+                { LinkSetting("Music", onClick = {}, summary = "/storage/emulated/0/Music", icon = Icons.Rounded.Folder, iconStyle = SettingIconStyle.Plain, shapes = it) },
             ),
         )
     }

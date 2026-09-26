@@ -119,6 +119,9 @@ screens never see it.
   a tonal secondary (Shuffle) in a `ButtonGroup`; everything else tonal, outlined or text.
 - **Lists are uncontained** on `surface`; settings group into `SegmentedListItem` containers;
   cards only for grid tiles and Home shelves.
+- **Tonal icon containers mark top-level rows only**: a settings row that opens a section or stands
+  for a source gets its icon in a tonal container; the rows under it (a folder, "Add folder") get the
+  bare icon, so the containers keep the hierarchy readable.
 - **Selection** uses `secondaryContainer` for rows and the checked state of the component; never a
   custom highlight colour.
 
@@ -230,7 +233,7 @@ Every component lives in `:android:designsystem` and gets a board (§4). IDs are
 
 | ID | M3 basis | Variants | States |
 |---|---|---|---|
-| `setting-row` | `ListItem` / `SegmentedListItem` | link, switch (`Switch`), single choice (dialog), slider (`Slider`), info | enabled, disabled, checked, with summary |
+| `setting-row` | `ListItem` / `SegmentedListItem` | link, switch (`Switch`), single choice (dialog), slider (`Slider`), info; tonal or plain icon | enabled, disabled, checked, with summary |
 | `eq-band` | `VerticalSlider` | band with frequency and gain labels | 0 dB, boosted, cut, disabled (EQ off) |
 | `eq-curve` | custom `EqualizerCurve` (§2) | over the bands | flat, preset, custom |
 

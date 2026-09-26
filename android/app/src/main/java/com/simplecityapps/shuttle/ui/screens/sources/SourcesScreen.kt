@@ -26,6 +26,7 @@ import com.simplecityapps.shuttle.designsystem.component.LinkSetting
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
+import com.simplecityapps.shuttle.designsystem.component.SettingIconStyle
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -141,6 +142,7 @@ private fun LazyListScope.folderGroup(
                             actions.onShowDialog(if (folder.hasAccess) SourcesDialog.RemoveFolder(kind, folder) else SourcesDialog.RevokedFolder(kind, folder))
                         },
                         icon = if (folder.hasAccess) Icons.Rounded.Folder else Icons.Rounded.FolderOff,
+                        iconStyle = SettingIconStyle.Plain,
                         shapes = shapes,
                     )
                 }
@@ -150,6 +152,7 @@ private fun LazyListScope.folderGroup(
                     summary = emptySummary?.takeIf { folders.isEmpty() }?.let { stringResource(it) },
                     onClick = { actions.onAddFolder(kind) },
                     icon = Icons.Rounded.Add,
+                    iconStyle = SettingIconStyle.Plain,
                     shapes = shapes,
                     modifier = Modifier.testTag("sources-add-folder-${kind.name}"),
                 )

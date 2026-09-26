@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.VolumeUp
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Info
@@ -17,6 +18,7 @@ import com.simplecityapps.shuttle.designsystem.component.EqBand
 import com.simplecityapps.shuttle.designsystem.component.EqualizerCurve
 import com.simplecityapps.shuttle.designsystem.component.InfoSetting
 import com.simplecityapps.shuttle.designsystem.component.LinkSetting
+import com.simplecityapps.shuttle.designsystem.component.SettingIconStyle
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SliderSetting
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
@@ -33,6 +35,15 @@ fun SettingRowBoard(width: BoardWidth) {
                         { ChoiceSetting("Theme", "Follow system", {}, icon = Icons.Rounded.DarkMode, shapes = it) },
                         { LinkSetting("Accent colour", {}, summary = "Artwork", icon = Icons.Rounded.Palette, shapes = it) },
                         { SwitchSetting("Dynamic colour", checked = true, onCheckedChange = {}, icon = Icons.Rounded.Palette, shapes = it) },
+                    ),
+                )
+            },
+            BoardSection("Sub-rows: plain icon") {
+                SettingsGroup(
+                    title = "Included folders",
+                    rows = listOf(
+                        { LinkSetting("Music", {}, summary = "/storage/emulated/0/Music", icon = Icons.Rounded.Folder, iconStyle = SettingIconStyle.Plain, shapes = it) },
+                        { LinkSetting("Add folder", {}, icon = Icons.Rounded.Add, iconStyle = SettingIconStyle.Plain, shapes = it) },
                     ),
                 )
             },
