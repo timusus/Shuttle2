@@ -87,6 +87,34 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun `the accent is disabled, with a hint, while dynamic colour is on`() {
+        robot.setDestinationContent(SettingsDestination.Appearance, SettingsScenarios.dynamicColourOn)
+
+        robot.assertNotEnabled("Accent")
+        robot.assertDisplayed("Dynamic colour uses your wallpaper instead")
+    }
+
+    @Test
+    fun `the accent can be picked with dynamic colour off`() {
+        robot.setDestinationContent(SettingsDestination.Appearance, SettingsScenarios.dynamicColourOff)
+
+        robot.assertEnabled("Accent")
+        robot.assertNotShown("Dynamic colour uses your wallpaper instead")
+        robot.tapText("Accent")
+        robot.tapDialogText("Orange")
+
+        robot.choiceSelections shouldBe listOf(AppearanceSettings.AccentColour.key to 1)
+    }
+
+    @Test
+    fun `below Android 12 dynamic colour can't take the accent over`() {
+        robot.setDestinationContent(SettingsDestination.Appearance, SettingsScenarios.dynamicColourOn, sdkInt = 30)
+
+        robot.assertEnabled("Accent")
+        robot.assertNotShown("Dynamic colour uses your wallpaper instead")
+    }
+
+    @Test
     fun `a confirmed action runs only after confirming`() {
         robot.setDestinationContent(SettingsDestination.Library)
 

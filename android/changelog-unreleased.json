@@ -68,7 +68,7 @@
   ],
   "improvements": [
     {
-      "text": "On Android 12 and later, S2 now takes its colours from your wallpaper, unless you have already picked an accent colour. You can switch back to an accent colour in Appearance settings",
+      "text": "On Android 12 and later, S2 now takes its colours from your wallpaper, unless you have already picked an accent colour. To pick an accent colour instead, turn off Dynamic colour in Appearance settings",
       "commits": []
     },
     {

@@ -133,6 +133,8 @@
     <string name="pref_dynamic_colour_title">Dynamic colour</string>
     <!-- Settings: Summary of the dynamic colour switch -->
     <string name="pref_dynamic_colour_summary">Use colours from your wallpaper</string>
+    <!-- Settings: Shown on the disabled accent row while dynamic colour is on, saying why picking an accent does nothing -->
+    <string name="pref_theme_accent_dynamic_colour_hint">Dynamic colour uses your wallpaper instead</string>
     <!-- Settings: Title of the switch that tints the player with colours from the album artwork -->
     <string name="pref_colour_from_artwork_title">Colour from artwork</string>
     <!-- Settings: Summary of the colour from artwork switch -->

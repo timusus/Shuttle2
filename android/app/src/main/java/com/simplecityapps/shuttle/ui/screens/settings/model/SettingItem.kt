@@ -53,6 +53,12 @@ data class Confirmation(
     @StringRes val confirm: Int
 )
 
+/** A switch that takes a row over while it's on: the row is disabled and shows [hint] in place of its value. */
+data class SettingOverride(
+    val setting: Setting<Boolean>,
+    @StringRes val hint: Int
+)
+
 data class ChoiceOption<T>(
     val value: T,
     @StringRes val label: Int
@@ -94,7 +100,9 @@ sealed interface SettingItem {
         val options: List<ChoiceOption<T>>,
         @StringRes override val summary: Int? = null,
         override val minSdk: Int = 1,
-        override val dependsOn: Setting<Boolean>? = null
+        override val dependsOn: Setting<Boolean>? = null,
+        /** Only while its switch's row is shown: a switch hidden below its API level takes nothing over. */
+        val overriddenBy: SettingOverride? = null
     ) : SettingItem {
         override val key: String get() = setting.key
     }

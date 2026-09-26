@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
@@ -57,6 +58,20 @@ class SettingsIntegrationTest {
         robot.assertDisplayed("Dark")
         store.preference(AppearanceSettings.Theme).value shouldBe ThemeMode.Dark
         effects.changes shouldBe listOf(AppearanceSettings.Theme.key to ThemeMode.Dark)
+    }
+
+    @Test
+    fun `turning dynamic colour off frees the accent to be picked`() {
+        store.preference(AppearanceSettings.DynamicColour).value = true
+        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects))
+        robot.assertNotEnabled("Accent")
+
+        robot.tapText("Dynamic colour")
+        robot.tapText("Accent")
+        robot.tapDialogText("Green")
+
+        store.preference(AppearanceSettings.DynamicColour).value shouldBe false
+        store.preference(AppearanceSettings.AccentColour).value shouldBe Accent.Green
     }
 
     @Test

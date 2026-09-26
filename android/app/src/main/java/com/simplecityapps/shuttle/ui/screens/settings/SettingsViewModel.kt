@@ -162,7 +162,7 @@ class SettingsViewModel @Inject constructor(
                     is SettingItem.Slider<*> -> item.setting
                     is SettingItem.Navigate, is SettingItem.Action -> null
                 }
-                listOfNotNull(stored, item.dependsOn)
+                listOfNotNull(stored, item.dependsOn, (item as? SettingItem.Choice<*>)?.overriddenBy?.setting)
             }
             .distinctBy { it.key }
     }

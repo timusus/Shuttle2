@@ -16,6 +16,10 @@ object SettingsScenarios {
         )
     )
 
+    val dynamicColourOn = SettingsUiState(values = mapOf(AppearanceSettings.DynamicColour.key to true))
+
+    val dynamicColourOff = SettingsUiState(values = mapOf(AppearanceSettings.DynamicColour.key to false))
+
     val fileLoggingOff = SettingsUiState(values = mapOf(DebugSettings.FileLogging.key to false))
 
     val fileLoggingOn = SettingsUiState(values = mapOf(DebugSettings.FileLogging.key to true))

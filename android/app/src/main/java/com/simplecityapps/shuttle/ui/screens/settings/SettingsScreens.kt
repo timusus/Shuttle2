@@ -51,6 +51,7 @@ import com.simplecityapps.shuttle.designsystem.component.SliderSetting
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingOverride
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
@@ -150,8 +151,8 @@ private val SettingsDestination.icon: ImageVector
 
 /**
  * One settings destination, rendered from its catalog [screen] after any [leadingContent]. Rows below [sdkInt]'s
- * level are left out; a row whose `dependsOn` switch is off is disabled. About gets a version row when
- * [versionName] is set.
+ * level are left out; a row whose `dependsOn` switch is off is disabled, as is a choice whose `overriddenBy`
+ * switch is shown and on. About gets a version row when [versionName] is set.
  */
 @Composable
 fun SettingsDestinationScreen(
@@ -176,6 +177,7 @@ fun SettingsDestinationScreen(
     val groups = screen.groups
         .map { group -> group to group.items.filter { it.minSdk <= sdkInt } }
         .filter { (_, items) -> items.isNotEmpty() }
+    val shownKeys = groups.flatMap { (_, items) -> items.mapNotNull { it.key } }.toSet()
 
     SettingsScaffold(
         title = stringResource(screen.destination.title),
@@ -193,6 +195,7 @@ fun SettingsDestinationScreen(
                             SettingRow(
                                 item = item,
                                 uiState = uiState,
+                                override = (item as? SettingItem.Choice<*>)?.overriddenBy?.takeIf { it.setting.key in shownKeys && uiState.value(it.setting) },
                                 shapes = shapes,
                                 onSwitchChange = onSwitchChange,
                                 onSliderChange = onSliderChange,
@@ -253,6 +256,7 @@ fun SettingsDestinationScreen(
 private fun SettingRow(
     item: SettingItem,
     uiState: SettingsUiState,
+    override: SettingOverride?,
     shapes: ListItemShapes,
     onSwitchChange: (SettingItem.Switch, Boolean) -> Unit,
     onSliderChange: (SettingItem.Slider<*>, Float) -> Unit,
@@ -274,9 +278,9 @@ private fun SettingRow(
 
         is SettingItem.Choice<*> -> ChoiceSetting(
             title = stringResource(item.title),
-            value = choiceValueLabel(item, uiState),
+            value = override?.let { stringResource(it.hint) } ?: choiceValueLabel(item, uiState),
             onClick = { onOpenChoice(item) },
-            enabled = enabled,
+            enabled = enabled && override == null,
             shapes = shapes
         )
 

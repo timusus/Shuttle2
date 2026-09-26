@@ -55,7 +55,8 @@ object SettingsCatalog {
                             ChoiceOption(Accent.Purple, R.string.theme_accent_entry_purple),
                             ChoiceOption(Accent.Green, R.string.theme_accent_entry_green),
                             ChoiceOption(Accent.Amber, R.string.theme_accent_entry_amber)
-                        )
+                        ),
+                        overriddenBy = SettingOverride(AppearanceSettings.DynamicColour, R.string.pref_theme_accent_dynamic_colour_hint)
                     ),
                     SettingItem.Switch(
                         setting = AppearanceSettings.ColourFromArtwork,
