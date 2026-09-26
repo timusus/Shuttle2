@@ -138,7 +138,7 @@
       "commits": []
     },
     {
-      "text": "Plex songs in formats your phone can't play as they are, such as WMA and AIFF, now play instead of being skipped",
+      "text": "Plex songs in formats your phone can't play as they are, such as WMA, AIFF and ALAC, now play instead of being skipped, and downloading one of these songs for offline saves a version you can actually play",
       "commits": ["c328767a7"]
     },
     {

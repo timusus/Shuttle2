@@ -104,6 +104,7 @@ internal fun Metadata.toSong(type: MediaProviderType): Song = Song(
     bitRate = media.firstOrNull()?.bitrate,
     bitDepth = null,
     sampleRate = null,
-    channelCount = media.firstOrNull()?.audioChannels
+    channelCount = media.firstOrNull()?.audioChannels,
+    audioCodec = media.firstOrNull()?.audioCodec
     // No artworkVersion: Plex songs have no server artwork loader, only the S2 artwork API, whose cache is keyed by URL
 )

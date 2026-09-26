@@ -32,9 +32,20 @@ class MetadataToSongTest {
         parse(addedAt = 1_700_000_000, updatedAt = null).toSong(MediaProviderType.Plex).artworkVersion shouldBe null
     }
 
+    @Test
+    fun `the song's audio codec comes from its Media entry`() {
+        parse(addedAt = null, updatedAt = null, media = "{\"id\": 1, \"audioCodec\": \"alac\", \"Part\": []}").toSong(MediaProviderType.Plex).audioCodec shouldBe "alac"
+    }
+
+    @Test
+    fun `a song with no Media entries has no audio codec`() {
+        parse(addedAt = null, updatedAt = null).toSong(MediaProviderType.Plex).audioCodec shouldBe null
+    }
+
     private fun parse(
         addedAt: Long?,
-        updatedAt: Long?
+        updatedAt: Long?,
+        media: String? = null
     ): Metadata {
         val fields =
             listOfNotNull(
@@ -48,7 +59,7 @@ class MetadataToSongTest {
                 "\"parentTitle\": \"Album\"",
                 "\"grandparentTitle\": \"Artist\"",
                 "\"parentYear\": 2024",
-                "\"Media\": []",
+                "\"Media\": [${media.orEmpty()}]",
                 addedAt?.let { seconds -> "\"addedAt\": $seconds" },
                 updatedAt?.let { seconds -> "\"updatedAt\": $seconds" }
             )

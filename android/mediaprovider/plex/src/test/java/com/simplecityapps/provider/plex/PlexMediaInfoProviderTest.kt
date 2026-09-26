@@ -157,6 +157,24 @@ class PlexMediaInfoProviderTest {
     }
 
     @Test
+    fun `stream transcodes ALAC even inside a container the player otherwise decodes (#567)`() {
+        credentialStore.authenticatedCredentials = credentials
+
+        val stream = provider.buildStream(song(externalId = "/library/parts/46/1600000000/file.m4a", bitRate = 1_000, audioCodec = "alac"))
+
+        stream.path shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.m3u8?"
+        stream.path shouldContain "&musicBitrate=320&"
+        stream.mimeType shouldBe "application/x-mpegURL"
+    }
+
+    @Test
+    fun `stream plays a song whose codec is known and decodable`() {
+        credentialStore.authenticatedCredentials = credentials
+
+        provider.buildStream(song(externalId = PART, bitRate = 1_000, audioCodec = "flac")).path shouldStartWith "http://plex.local:32400$PART?"
+    }
+
+    @Test
     fun `download path stays the original part file under a cap`() = runTest {
         credentialStore.authenticatedCredentials = credentials
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
@@ -164,9 +182,29 @@ class PlexMediaInfoProviderTest {
         provider.buildDownloadPathString(song(externalId = PART, bitRate = 1_411))!! shouldStartWith "http://plex.local:32400$PART?"
     }
 
+    @Test
+    fun `download path transcodes a format the player can't decode, so it plays back offline (#567)`() = runTest {
+        credentialStore.authenticatedCredentials = credentials
+
+        val path = provider.buildDownloadPathString(song(externalId = "/library/parts/47/1600000000/file.wma", bitRate = 128))!!
+
+        path shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.m3u8?"
+        path shouldContain "&musicBitrate=320&"
+    }
+
+    @Test
+    fun `download path transcodes ALAC even inside a container the player otherwise decodes (#567)`() = runTest {
+        credentialStore.authenticatedCredentials = credentials
+
+        val path = provider.buildDownloadPathString(song(externalId = "/library/parts/48/1600000000/file.m4a", bitRate = 1_000, audioCodec = "alac"))!!
+
+        path shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.m3u8?"
+    }
+
     private fun song(
         externalId: String?,
-        bitRate: Int? = null
+        bitRate: Int? = null,
+        audioCodec: String? = null
     ) = Song(
         id = 0,
         name = "Song",
@@ -194,7 +232,8 @@ class PlexMediaInfoProviderTest {
         bitRate = bitRate,
         bitDepth = null,
         sampleRate = null,
-        channelCount = null
+        channelCount = null,
+        audioCodec = audioCodec
     )
 
     private companion object {
