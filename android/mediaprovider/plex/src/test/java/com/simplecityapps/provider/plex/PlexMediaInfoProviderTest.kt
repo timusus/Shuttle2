@@ -125,6 +125,38 @@ class PlexMediaInfoProviderTest {
     }
 
     @Test
+    fun `stream transcodes a format the player can't decode, with no cap (#362)`() {
+        credentialStore.authenticatedCredentials = credentials
+
+        val stream = provider.buildStream(song(externalId = "/library/parts/43/1600000000/file.wma", bitRate = 128))
+
+        stream.path shouldStartWith "http://plex.local:32400/music/:/transcode/universal/start.m3u8?"
+        stream.path shouldContain "&musicBitrate=320&"
+        stream.mimeType shouldBe "application/x-mpegURL"
+    }
+
+    @Test
+    fun `stream transcodes a format the player can't decode even within the cap`() {
+        credentialStore.authenticatedCredentials = credentials
+        streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps192
+
+        val stream = provider.buildStream(song(externalId = "/library/parts/44/1600000000/file.aiff", bitRate = 128))
+
+        stream.path shouldContain "/transcode/universal/start.m3u8?"
+        stream.path shouldContain "&musicBitrate=192&"
+    }
+
+    @Test
+    fun `stream is the original part file for each format the player decodes`() {
+        credentialStore.authenticatedCredentials = credentials
+
+        listOf("mp3", "m4a", "mp4", "flac", "ogg", "opus", "wav").forEach { extension ->
+            val part = "/library/parts/45/1600000000/file.$extension"
+            provider.buildStream(song(externalId = part, bitRate = 256)).path shouldStartWith "http://plex.local:32400$part?"
+        }
+    }
+
+    @Test
     fun `download path stays the original part file under a cap`() = runTest {
         credentialStore.authenticatedCredentials = credentials
         streamingSettings.unmeteredQuality.value = StreamingQuality.Kbps128
