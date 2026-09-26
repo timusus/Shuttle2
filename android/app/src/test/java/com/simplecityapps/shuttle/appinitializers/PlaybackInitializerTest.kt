@@ -93,8 +93,8 @@ class PlaybackInitializerTest {
 
         playbackOperations.trackEndedFlow.tryEmit(endedSong)
 
-        songRepository.playbackPositions.toList() shouldBe listOf(4L to 200_000)
-        songRepository.playCountIncrements.toList() shouldBe listOf(4L)
+        songRepository.playedThroughSongs.toList() shouldBe listOf(4L)
+        songRepository.playbackPositions.toList() shouldBe emptyList()
     }
 
     @Test
@@ -105,7 +105,7 @@ class PlaybackInitializerTest {
         playbackOperations.pausePositionFlow.tryEmit(SongPosition(pausedSong, 42_000))
 
         songRepository.playbackPositions.toList() shouldBe listOf(5L to 42_000)
-        songRepository.playCountIncrements.toList() shouldBe emptyList()
+        songRepository.playedThroughSongs.toList() shouldBe emptyList()
     }
 
     @Test

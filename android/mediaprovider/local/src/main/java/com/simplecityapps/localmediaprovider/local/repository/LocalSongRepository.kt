@@ -109,11 +109,6 @@ class LocalSongRepository(
         mediaProviderType: MediaProviderType
     ): List<SongPathRemap> = songDataDao.remapPaths(remaps, mediaProviderType)
 
-    override suspend fun incrementPlayCount(song: Song) {
-        Timber.v("Incrementing play count for song: ${song.name}")
-        songDataDao.incrementPlayCount(song.id)
-    }
-
     override suspend fun setPlaybackPosition(
         song: Song,
         playbackPosition: Int

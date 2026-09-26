@@ -58,12 +58,12 @@ class FakeSongRepository(private var songs: List<Song>) : SongRepository {
         mediaProviderType: MediaProviderType
     ): List<SongPathRemap> = error("not called")
 
-    override suspend fun incrementPlayCount(song: Song) = error("not called")
-
     override suspend fun setPlaybackPosition(
         song: Song,
         playbackPosition: Int
     ) = error("not called")
+
+    override suspend fun recordPlayedThrough(song: Song) = error("not called")
 
     override suspend fun setExcluded(
         songs: List<Song>,

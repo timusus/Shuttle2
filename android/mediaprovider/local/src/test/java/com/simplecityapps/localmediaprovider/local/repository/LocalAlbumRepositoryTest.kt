@@ -94,11 +94,6 @@ class LocalAlbumRepositoryTest {
             songId: Long
         ) = throw NotImplementedError()
 
-        override suspend fun incrementPlayCount(
-            id: Long,
-            lastCompleted: Date
-        ) = throw NotImplementedError()
-
         override suspend fun updatePlaybackPosition(
             id: Long,
             playbackPosition: Int,

@@ -56,18 +56,13 @@ interface SongRepository {
         mediaProviderType: MediaProviderType
     ): List<SongPathRemap>
 
-    suspend fun incrementPlayCount(song: Song)
-
     suspend fun setPlaybackPosition(
         song: Song,
         playbackPosition: Int
     )
 
-    /** [setPlaybackPosition] to [song]'s own duration and [incrementPlayCount], as one write where the repository can do so. */
-    suspend fun recordPlayedThrough(song: Song) {
-        setPlaybackPosition(song, song.duration)
-        incrementPlayCount(song)
-    }
+    /** Sets [song]'s playback position to its own duration and increments its play count, as one write. */
+    suspend fun recordPlayedThrough(song: Song)
 
     suspend fun setExcluded(
         songs: List<Song>,

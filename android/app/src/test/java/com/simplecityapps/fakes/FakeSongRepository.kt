@@ -21,8 +21,8 @@ class FakeSongRepository : SongRepository {
     /** Every [setPlaybackPosition] call as (song id, position), in order. Written from whichever thread calls it. */
     val playbackPositions: MutableList<Pair<Long, Int>> = Collections.synchronizedList(mutableListOf())
 
-    /** The id of every song passed to [incrementPlayCount], in order. */
-    val playCountIncrements: MutableList<Long> = Collections.synchronizedList(mutableListOf())
+    /** The id of every song passed to [recordPlayedThrough], in order. */
+    val playedThroughSongs: MutableList<Long> = Collections.synchronizedList(mutableListOf())
 
     /** When true, [getSongs] applies the query's predicate, like the real repository. Off by default: most tests ignore queries. */
     var applyQueryPredicates: Boolean = false
@@ -70,12 +70,12 @@ class FakeSongRepository : SongRepository {
         remaps: List<SongPathRemap>,
         mediaProviderType: MediaProviderType
     ): List<SongPathRemap> = remaps
-    override suspend fun incrementPlayCount(song: Song) {
-        playCountIncrements += song.id
-    }
-
     override suspend fun setPlaybackPosition(song: Song, playbackPosition: Int) {
         playbackPositions += song.id to playbackPosition
+    }
+
+    override suspend fun recordPlayedThrough(song: Song) {
+        playedThroughSongs += song.id
     }
 
     override suspend fun clearExcludeList() {

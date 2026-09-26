@@ -126,12 +126,6 @@ abstract class SongDataDao {
         }
     }
 
-    @Query("UPDATE songs SET playCount = (SELECT songs.playCount + 1), lastCompleted = :lastCompleted WHERE id =:id")
-    abstract suspend fun incrementPlayCount(
-        id: Long,
-        lastCompleted: Date = Date()
-    )
-
     @Query("UPDATE songs SET playbackPosition = :playbackPosition, lastPlayed = :lastPlayed WHERE id =:id")
     abstract suspend fun updatePlaybackPosition(
         id: Long,
@@ -139,7 +133,7 @@ abstract class SongDataDao {
         lastPlayed: Date = Date()
     )
 
-    /** [updatePlaybackPosition] and [incrementPlayCount] as one write, for a track playing through to its end. */
+    /** [updatePlaybackPosition] and incrementing the play count as one write, for a track playing through to its end. */
     @Query("UPDATE songs SET playbackPosition = :playbackPosition, lastPlayed = :now, playCount = (SELECT songs.playCount + 1), lastCompleted = :now WHERE id =:id")
     abstract suspend fun recordPlayedThrough(
         id: Long,
