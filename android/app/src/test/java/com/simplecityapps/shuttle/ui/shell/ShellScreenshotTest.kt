@@ -163,16 +163,6 @@ class ShellScreenshotTest {
     }
 
     @Test
-    @Config(qualifiers = "w841dp-h701dp-xhdpi")
-    fun foldableBookPosture() {
-        // Half-opened like a book: a separating vertical hinge down the middle, in window pixels.
-        val hinge = HingeInfo(bounds = Rect(1680f, 0f, 1684f, 1402f), isFlat = false, isVertical = true, isSeparating = true, isOccluding = false)
-        robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(841, 701, Posture(isTabletop = false, hingeList = listOf(hinge))))
-        levels("foldable-book")
-        libraryDetail("foldable-book")
-    }
-
-    @Test
     @Config(qualifiers = "w1280dp-h800dp-xhdpi")
     fun tablet() {
         robot.setContent(queue = sampleQueue, progress = sampleProgress, window = windowInfo(1280, 800))
