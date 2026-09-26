@@ -53,6 +53,15 @@ subprojects {
         if (System.getProperty("os.name").orEmpty().contains("Linux", ignoreCase = true)) {
             systemProperty("s2.roborazzi.changeThreshold", "0.0016")
         }
+
+        // :android:app's 896 tests (562 Robolectric) run in one JVM by default -- the longest task
+        // on the landing critical path (#542). Forks are a wall-time lever, not a CPU one: each
+        // extra fork repeats Robolectric's ~6-10s sandbox start and can take up to the 2g test
+        // heap, so this stays opt-in (a shared build box with other work running gets no benefit)
+        // rather than a new default. Set -Ps2.testForks=2 on a quiet Mac or CI.
+        if (path == ":android:app") {
+            maxParallelForks = providers.gradleProperty("s2.testForks").map(String::toInt).getOrElse(1)
+        }
     }
 
     // #402: :android:fixtures is compileOnly/debug-only; guard every module's release runtime
