@@ -16,7 +16,7 @@ constructor(
     private val embyTranscodeService: EmbyTranscodeService,
     private val streamingBitrateCap: StreamingBitrateCap
 ) : MediaInfoProvider {
-    override fun handles(uri: Uri): Boolean = uri.scheme == "emby"
+    override fun handles(scheme: String?): Boolean = scheme == "emby"
 
     @Throws(IllegalStateException::class)
     override suspend fun getMediaInfo(

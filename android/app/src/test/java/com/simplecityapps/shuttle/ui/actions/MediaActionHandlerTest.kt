@@ -16,12 +16,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
-// Robolectric: the download tests go through AggregateMediaInfoProvider.uriFor, which calls the real
-// android.net.Uri.parse/fromFile — unmocked under plain JVM (#540).
-@RunWith(RobolectricTestRunner::class)
 class MediaActionHandlerTest {
 
     private val songRepository = FakeSongRepository()

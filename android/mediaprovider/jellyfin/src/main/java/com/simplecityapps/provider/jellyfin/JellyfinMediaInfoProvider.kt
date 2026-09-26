@@ -16,7 +16,7 @@ constructor(
     private val jellyfinTranscodeService: JellyfinTranscodeService,
     private val streamingBitrateCap: StreamingBitrateCap
 ) : MediaInfoProvider {
-    override fun handles(uri: Uri): Boolean = uri.scheme == "jellyfin"
+    override fun handles(scheme: String?): Boolean = scheme == "jellyfin"
 
     @Throws(IllegalStateException::class)
     override suspend fun getMediaInfo(

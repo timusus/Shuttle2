@@ -9,8 +9,9 @@ import java.io.File
 data class MediaInfo(val path: Uri, val mimeType: String, val isRemote: Boolean)
 
 interface MediaInfoProvider {
+    /** Whether this provider handles a song whose path has [scheme] (`null` for a path with none). */
     @Throws(IllegalStateException::class)
-    fun handles(uri: Uri): Boolean
+    fun handles(scheme: String?): Boolean
 
     suspend fun getMediaInfo(
         song: Song,
@@ -66,33 +67,44 @@ class AggregateMediaInfoProvider(
     private val providers: Collection<MediaInfoProvider> = emptyList(),
     private val streamPolicy: ServerStreamPolicy = ServerStreamPolicy.AllowAll
 ) : MediaInfoProvider {
-    override fun handles(uri: Uri): Boolean = true
+    override fun handles(scheme: String?): Boolean = true
 
     override suspend fun getMediaInfo(
         song: Song,
         castCompatibilityMode: Boolean
     ): MediaInfo {
-        val uri = uriFor(song)
-        val provider = providers.firstOrNull { it.handles(uri) } ?: return MediaInfo(path = uri, mimeType = song.mimeType, isRemote = false)
+        val provider = providers.firstOrNull { it.handles(schemeOf(song.path)) }
+            ?: return MediaInfo(path = uriFor(song.path), mimeType = song.mimeType, isRemote = false)
         if (!streamPolicy.allows(song)) throw ServerStreamDeniedException(song)
         return provider.getMediaInfo(song, castCompatibilityMode)
     }
 
     // Local songs are already on disk, so there's nothing to download; only a remote provider
     // (matched below by scheme) can produce a download URL.
-    override suspend fun downloadUri(song: Song): Uri? = providers.firstOrNull { it.handles(uriFor(song)) }?.downloadUri(song)
+    override suspend fun downloadUri(song: Song): Uri? = providers.firstOrNull { it.handles(schemeOf(song.path)) }?.downloadUri(song)
 
     override suspend fun downloadFallbackUri(
         path: String,
         responseCode: Int
-    ): Uri? = providers.firstOrNull { it.handles(Uri.parse(path)) }?.downloadFallbackUri(path, responseCode)
+    ): Uri? = providers.firstOrNull { it.handles(schemeOf(path)) }?.downloadFallbackUri(path, responseCode)
 
     // MediaStore songs carry raw file paths, which may contain '#' or '?', so they're built as
     // file URIs rather than parsed. Everything else (content://, emby://, jellyfin://, plex://)
     // is already a URI, and parsing keeps its scheme so the matching provider handles it.
-    private fun uriFor(song: Song): Uri = if (song.path.startsWith("/")) {
-        Uri.fromFile(File(song.path))
+    private fun uriFor(path: String): Uri = if (path.startsWith("/")) {
+        Uri.fromFile(File(path))
     } else {
-        Uri.parse(song.path)
+        Uri.parse(path)
     }
+}
+
+/**
+ * The scheme a [MediaInfoProvider] matches [path] against, without building a [Uri] — the only place that still
+ * needs one is [AggregateMediaInfoProvider]'s local-file fallback, so provider matching (including from plain-JVM
+ * tests) stays off `Uri.parse`/`Uri.fromFile`, which aren't mocked outside Robolectric (#552).
+ */
+private fun schemeOf(path: String): String? = if (path.startsWith("/")) {
+    "file"
+} else {
+    path.substringBefore("://", missingDelimiterValue = "").takeIf { it.isNotEmpty() }
 }

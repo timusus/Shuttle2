@@ -14,7 +14,7 @@ import org.robolectric.RobolectricTestRunner
 class AggregateMediaInfoProviderTest {
     /** Stands in for a remote provider: claims its scheme and returns a stream URL. */
     private class SchemeProvider(private val scheme: String) : MediaInfoProvider {
-        override fun handles(uri: Uri): Boolean = uri.scheme == scheme
+        override fun handles(scheme: String?): Boolean = scheme == this.scheme
 
         override suspend fun getMediaInfo(
             song: Song,

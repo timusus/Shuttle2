@@ -88,7 +88,7 @@ class FakeMediaInfoProvider(private val transcodedType: String = TRANSCODED) : M
     /** Songs whose stream fails to resolve. */
     val failing = mutableSetOf<Long>()
 
-    override fun handles(uri: Uri): Boolean = true
+    override fun handles(scheme: String?): Boolean = true
 
     override suspend fun getMediaInfo(
         song: Song,

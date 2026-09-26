@@ -11,12 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
-// Robolectric: AggregateMediaInfoProvider.uriFor calls the real android.net.Uri.parse/fromFile,
-// unmocked under plain JVM (#540).
-@RunWith(RobolectricTestRunner::class)
 class DownloadSongsTest {
 
     private val actions = TestMediaActions()

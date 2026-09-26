@@ -170,7 +170,7 @@ private class FakeMediaInfoProvider : MediaInfoProvider {
     var fallbackUri: Uri? = null
     var disableCalled = false
 
-    override fun handles(uri: Uri): Boolean = uri.scheme == "jellyfin"
+    override fun handles(scheme: String?): Boolean = scheme == "jellyfin"
 
     override suspend fun getMediaInfo(
         song: Song,

@@ -7,9 +7,18 @@ import com.simplecityapps.shuttle.downloads.SongDownload
 import com.simplecityapps.shuttle.downloads.SongDownloadManager
 import com.simplecityapps.shuttle.downloads.SongDownloadRepository
 import com.simplecityapps.shuttle.model.Song
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+
+/** A [Uri] standing in for [value], off `Uri.parse` so this fake runs on plain JVM as well as Robolectric (#552). */
+private fun fakeUri(value: String): Uri {
+    val uri = mockk<Uri>(relaxed = true)
+    every { uri.toString() } returns value
+    return uri
+}
 
 /** Records the downloads started and removed. */
 class FakeSongDownloadManager : SongDownloadManager {
@@ -49,11 +58,11 @@ class FakeSongDownloadRepository : SongDownloadRepository {
 class FakeMediaInfoProvider : MediaInfoProvider {
     val unavailable = mutableSetOf<String>()
 
-    override fun handles(uri: Uri): Boolean = true
+    override fun handles(scheme: String?): Boolean = true
 
-    override suspend fun getMediaInfo(song: Song, castCompatibilityMode: Boolean): MediaInfo = MediaInfo(Uri.parse(song.path), song.mimeType, isRemote = true)
+    override suspend fun getMediaInfo(song: Song, castCompatibilityMode: Boolean): MediaInfo = MediaInfo(fakeUri(song.path), song.mimeType, isRemote = true)
 
-    override suspend fun downloadUri(song: Song): Uri? = if (song.path in unavailable) null else Uri.parse("https://example.com/download/${song.id}")
+    override suspend fun downloadUri(song: Song): Uri? = if (song.path in unavailable) null else fakeUri("https://example.com/download/${song.id}")
 
     override suspend fun downloadFallbackUri(path: String, responseCode: Int): Uri? = null
 }
