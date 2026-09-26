@@ -76,8 +76,15 @@ private fun Context.openFolderCover(song: Song): InputStream? {
         } else {
             File(song.path).parentFile?.let { parent -> DocumentFile.fromFile(parent) }
         }
-    return openLargestImage(listOfNotNull(folder)) { name -> coverPattern.matcher(name).matches() }
+    return openLargestImage(listOfNotNull(folder)) { name -> matchesFolderCoverName(name) }
 }
+
+/**
+ * True for a folder image name S2 treats as cover art: `folder`, `cover`, `album`, `albumart`, `front` or
+ * `artwork`, any case, with an optional leading dot, followed by anything, then a jpg/jpeg/png/webp
+ * extension (#169: `albumart.jpg` didn't match until `albumart` was added to the name list).
+ */
+internal fun matchesFolderCoverName(name: String): Boolean = coverPattern.matcher(name).matches()
 
 /** Opens the largest image over 1 KB in [folders] whose name matches, skipping tiny thumbnails and placeholders. */
 private fun Context.openLargestImage(
