@@ -40,11 +40,11 @@ class PlexRemoteArtworkProviderTest {
     private val song = song(path = "plex:///library/metadata/107898")
 
     @Test
-    fun `album artwork url is the item's parent thumb, signed with the plex token`() = runTest {
+    fun `album artwork url is the item's parent thumb, without the plex token`() = runTest {
         service.metadata = metadata(parentThumb = "/library/metadata/107898/thumb/1700000000")
 
         provider.getAlbumArtworkUrl(song) shouldBe
-            "http://plex.local:32400/library/metadata/107898/thumb/1700000000?X-Plex-Token=token123"
+            "http://plex.local:32400/library/metadata/107898/thumb/1700000000"
 
         service.requestedKey shouldBe "/library/metadata/107898"
     }
@@ -54,7 +54,7 @@ class PlexRemoteArtworkProviderTest {
         service.metadata = metadata(parentThumb = null, thumb = "/library/metadata/107898/thumb/1700000000")
 
         provider.getAlbumArtworkUrl(song) shouldBe
-            "http://plex.local:32400/library/metadata/107898/thumb/1700000000?X-Plex-Token=token123"
+            "http://plex.local:32400/library/metadata/107898/thumb/1700000000"
     }
 
     @Test
@@ -62,7 +62,7 @@ class PlexRemoteArtworkProviderTest {
         service.metadata = metadata(grandparentThumb = "/library/metadata/1/thumb/1700000000")
 
         provider.getArtistArtworkUrl(song) shouldBe
-            "http://plex.local:32400/library/metadata/1/thumb/1700000000?X-Plex-Token=token123"
+            "http://plex.local:32400/library/metadata/1/thumb/1700000000"
     }
 
     @Test

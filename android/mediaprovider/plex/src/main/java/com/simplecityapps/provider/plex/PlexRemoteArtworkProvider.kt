@@ -9,6 +9,7 @@ import com.simplecityapps.provider.plex.http.item
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
 
+/** Artwork urls on the signed-in Plex server; they carry no token, which [PlexArtworkTokenInterceptor] adds at request time. */
 class PlexRemoteArtworkProvider
 @Inject
 constructor(
@@ -32,7 +33,7 @@ constructor(
         val result = itemsService.item(url = address, token = credentials.accessToken, key = "$METADATA_PATH$ratingKey")
         if (result is NetworkResult.Success) {
             val path = result.body.mediaContainer.metadata?.firstOrNull()?.let(thumb) ?: return null
-            return "$address$path?X-Plex-Token=${credentials.accessToken}"
+            return "$address$path"
         }
 
         return null

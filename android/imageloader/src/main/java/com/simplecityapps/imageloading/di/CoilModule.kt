@@ -32,6 +32,7 @@ import com.simplecityapps.imageloading.coil.source.S2AlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.S2SongArtworkSource
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
+import com.simplecityapps.mediaprovider.RemoteArtworkInterceptor
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -42,13 +43,24 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dagger.multibindings.Multibinds
 import java.io.IOException
 import javax.inject.Singleton
 import okhttp3.Credentials
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okio.Path.Companion.toOkioPath
 
 object NoConnectivityException : IOException("No connectivity")
+
+@Module
+@InstallIn(SingletonComponent::class)
+interface RemoteArtworkInterceptorModule {
+    // Empty unless a provider module contributes one
+    @Multibinds
+    @RemoteArtworkInterceptor
+    fun remoteArtworkInterceptors(): Set<Interceptor>
+}
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -61,9 +73,10 @@ object CoilModule {
         artworkSettings: ArtworkSettings,
         songRepository: SongRepository,
         kTagLib: KTagLib,
-        remoteArtworkProvider: AggregateRemoteArtworkProvider
+        remoteArtworkProvider: AggregateRemoteArtworkProvider,
+        @RemoteArtworkInterceptor remoteArtworkInterceptors: Set<@JvmSuppressWildcards Interceptor>
     ): ImageLoader {
-        val artworkClient = artworkHttpClient(context, okHttpClient, artworkSettings)
+        val artworkClient = artworkHttpClient(context, okHttpClient, artworkSettings, remoteArtworkInterceptors)
 
         // Android 13+ grants a music player only READ_MEDIA_AUDIO, so listing a shared storage folder leaves its images out. There
         // MediaProvider finds them instead: after embedded art, fall back to MediaStore's audio thumbnail, which is the folder
@@ -126,15 +139,20 @@ object CoilModule {
     /**
      * The app client, plus the S2 artwork API's credentials and its wifi-only rule. The rule covers only the S2 API, as it always
      * has: media server artwork comes from the server the user is already streaming from.
+     *
+     * Media servers that need credentials for artwork get them from [remoteArtworkInterceptors], which run as network interceptors so each hop of
+     * a redirect is checked against the server they belong to.
      */
     private fun artworkHttpClient(
         context: Context,
         okHttpClient: OkHttpClient,
-        artworkSettings: ArtworkSettings
+        artworkSettings: ArtworkSettings,
+        remoteArtworkInterceptors: Set<Interceptor>
     ): OkHttpClient {
         val connectivityManager: ConnectivityManager? = context.getSystemService()
         return okHttpClient
             .newBuilder()
+            .apply { remoteArtworkInterceptors.forEach(::addNetworkInterceptor) }
             .authenticator { route, response ->
                 if (route?.address?.url?.host == S2_ARTWORK_HOST && response.request.header("Authorization") == null) {
                     response.request

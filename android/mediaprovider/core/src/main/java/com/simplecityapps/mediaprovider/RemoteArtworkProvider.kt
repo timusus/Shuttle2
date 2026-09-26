@@ -2,6 +2,7 @@ package com.simplecityapps.mediaprovider
 
 import android.net.Uri
 import com.simplecityapps.shuttle.model.Song
+import javax.inject.Qualifier
 
 interface RemoteArtworkProvider {
     fun handles(uri: Uri): Boolean
@@ -25,3 +26,11 @@ class AggregateRemoteArtworkProvider(private val providers: Set<RemoteArtworkPro
         return providers.firstOrNull { it.handles(uri) }?.getArtistArtworkUrl(song)
     }
 }
+
+/**
+ * Qualifies the OkHttp interceptors a provider module contributes via `@IntoSet` to authenticate its artwork requests. Artwork urls stay free of
+ * credentials, since they end up in logs; each interceptor adds its server's credentials at request time, and only for that server.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class RemoteArtworkInterceptor

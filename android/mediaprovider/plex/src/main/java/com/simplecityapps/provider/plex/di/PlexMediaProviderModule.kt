@@ -6,9 +6,11 @@ import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
+import com.simplecityapps.mediaprovider.RemoteArtworkInterceptor
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.plex.CredentialStore
+import com.simplecityapps.provider.plex.PlexArtworkTokenInterceptor
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
@@ -31,6 +33,7 @@ import dagger.multibindings.IntoSet
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
@@ -110,4 +113,9 @@ open class PlexMediaProviderModule {
     @Provides
     @IntoSet
     fun provideRemoteArtworkProvider(provider: PlexRemoteArtworkProvider): RemoteArtworkProvider = provider
+
+    @Provides
+    @IntoSet
+    @RemoteArtworkInterceptor
+    fun provideArtworkTokenInterceptor(credentialStore: CredentialStore): Interceptor = PlexArtworkTokenInterceptor(credentialStore)
 }
