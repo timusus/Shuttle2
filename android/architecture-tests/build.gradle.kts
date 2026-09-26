@@ -37,6 +37,8 @@ val testDebugUnitTest = tasks.register<Test>("testDebugUnitTest") {
 }
 
 tasks.withType<Test>().configureEach {
+    // The module layer rules (root `verifyModuleLayers`, #443) gate landings alongside the Konsist rules.
+    dependsOn(":verifyModuleLayers")
     // The rules read sources outside this module, so declare them as inputs to keep up-to-date checks honest.
     inputs.files(
         fileTree(rootDir.resolve("android")) {

@@ -15,7 +15,33 @@ buildscript {
     }
 }
 
+// #443: fail on project dependencies the layer rules forbid (ModuleLayers in buildSrc, docs/architecture/layering.md),
+// ratcheted by the baseline next to the Konsist ones. Every module's `check` and the architecture tests depend on it.
+val verifyModuleLayers = tasks.register<VerifyModuleLayers>("verifyModuleLayers") {
+    group = "verification"
+    description = "Fails on project dependencies that break the module layer rules (#443)."
+    modules.set(subprojects.filter { it.buildFile.exists() }.map { it.path })
+    baselineFile.set(layout.projectDirectory.file("android/architecture-tests/src/test/baselines/module-layers.txt"))
+    updateBaseline.set(providers.gradleProperty("updateArchitectureBaselines").map { it != "false" }.orElse(false))
+}
+
 subprojects {
+    // Collect declared production project dependencies as plain strings while each module configures, so the
+    // task never touches another project's model (configuration-cache safe, no afterEvaluate ordering).
+    val from = path
+    configurations.configureEach {
+        if (ModuleLayers.isProductionBucket(name)) {
+            val configuration = name
+            dependencies.withType<ProjectDependency>().configureEach {
+                val entry = "$from\t$path\t$configuration"
+                verifyModuleLayers.configure { declaredDependencies.add(entry) }
+            }
+        }
+    }
+    tasks.matching { it.name == "check" }.configureEach {
+        dependsOn(verifyModuleLayers)
+    }
+
     tasks.withType<Test>().configureEach {
         // Robolectric's NATIVE graphics/sqlite modes need more than the 512m default heap.
         maxHeapSize = "2g"
