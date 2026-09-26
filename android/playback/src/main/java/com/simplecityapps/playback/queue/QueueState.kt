@@ -22,7 +22,7 @@ package com.simplecityapps.playback.queue
  * so it moves unless every change since was a move.
  * @param songDataVersion bumped when [QueueManager.updateSongs] replaces one or more items' song data
  * in place, without changing which items are in the queue or their order. Kept separate from
- * [contentVersion] so consumers that reload playback on a content change (e.g. [PlaybackManager]) are
+ * [contentVersion] so consumers that reload playback on a content change are
  * unaffected by a metadata-only edit; consumers that only need to re-render (queue screen, now
  * playing, notification, media session) watch this field, or compare [currentItem]'s song directly.
  * @param isRestored mirrors [QueueOperations.hasRestoredQueue]; its switch to true is the restore.

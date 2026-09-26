@@ -12,7 +12,7 @@ import org.junit.Test
 
 /**
  * The effect control session follows the active playback's audio session id, as bound by
- * [PlaybackManager] on init and on every playback switch. Chromecast has no local audio session
+ * [AudioEffectSessionManager.attach] on init and on every playback switch. Chromecast has no local audio session
  * (its id is 0).
  */
 class AudioEffectSessionManagerTest {

@@ -9,7 +9,7 @@ Each JVM rule has one test named with its RS id, in `android/playback/src/test/j
 `AudioFocusSpecTest` for other apps taking audio focus and headphones being unplugged; a Cast rule
 names its test, in `chromecast/` or `spec/CastSpecTest`; a media session rule is in `spec/MediaSessionSpecTest`, driven
 through a Media3 `MediaBrowser` connected to the session. The tests run
-the real `PlaybackManager` and `QueueManager` over a real ExoPlayer whose playlist is the queue, built by the
+the real `PlaybackFacade` and `QueueManager` over a real ExoPlayer whose playlist is the queue, built by the
 production `ExoPlayerFactory` (fake clock, lazy preparation as in production, production renderers, audio sink and
 EQ/ReplayGain processors, WAV files from the test resources). They call only
 `PlaybackOperations` and `QueueOperations` and observe their flows, the PCM written to the AudioTrack, and audio
@@ -192,7 +192,7 @@ new queue is loaded or the queue changes first, which drops it. Below API 31, wh
 play is dropped, and the user presses play again after the call. A play on a Cast receiver goes ahead. (#345) — JVM
 (`AudioFocusSpecTest`, the audio mode set through Robolectric's `AudioManager`); how it sounds on a real call is
 device-only: *Audio focus (#345 step 3)*. The same as before step 3 in effect: S2 used to wait for the delayed focus
-grant a call gives; Media3 takes that grant as focus, so `PlaybackManager` checks the audio mode itself.
+grant a call gives; Media3 takes that grant as focus, so `CallHold` checks the audio mode itself.
 
 **RS-55: pressing play while an interruption holds playback off.** Given playback held paused by a short interruption
 (RS-50), when the user presses play, then during a call nothing plays and it still shows paused, until the call ends

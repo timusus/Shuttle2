@@ -18,7 +18,7 @@ import androidx.media3.test.utils.robolectric.RobolectricUtil
 import androidx.media3.test.utils.robolectric.TestPlayerRunHelper
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.CallMonitor
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackFacade
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
@@ -65,7 +65,7 @@ import org.robolectric.shadows.ShadowAudioManager
 import org.robolectric.shadows.ShadowAudioTrack
 
 /**
- * The real playback stack (PlaybackManager and QueueManager over the ExoPlayer that owns the queue), built by the
+ * The real playback stack (PlaybackFacade and QueueManager over the ExoPlayer that owns the queue), built by the
  * production [ExoPlayerFactory] (its renderers, audio sink, EQ and ReplayGain processors and media source factory)
  * on a [FakeClock]. Media comes from WAV files in the test resources.
  *
@@ -216,7 +216,7 @@ class PlaybackHarness(
         val queueManager = QueueManager(player, playbackSettings, songUriResolver, buildContext, active)
         queueOperations = queueManager
         playbackOperations =
-            PlaybackManager(
+            PlaybackFacade(
                 queueManager = queueManager,
                 player = active,
                 localPlayer = player,

@@ -133,7 +133,7 @@ notification is Media3's own, with shuffle and repeat as its extra buttons.
 
 ## Audio focus (#345 step 3)
 
-ExoPlayer handles audio focus now, in place of S2's own helper, and keeps focus while paused; `PlaybackManager` holds
+ExoPlayer handles audio focus now, in place of S2's own helper, and keeps focus while paused; `CallHold` holds
 a play during a call. Rules in `docs/testing/playback-behaviour-spec.md`.
 
 - [x] RS-50: while playing, take a phone call. Playback pauses; end the call and it resumes by itself. — automated: `emu-verify.sh --check phone-call`

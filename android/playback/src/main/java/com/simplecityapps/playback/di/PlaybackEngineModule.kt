@@ -12,7 +12,7 @@ import com.simplecityapps.mediaprovider.ServerStreamPolicy
 import com.simplecityapps.playback.AppPlayer
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.CallMonitor
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackFacade
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.chromecast.CastMediaItemConverter
 import com.simplecityapps.playback.chromecast.CastQueue
@@ -150,7 +150,7 @@ class PlaybackEngineModule {
 
     @Singleton
     @Provides
-    fun providePlaybackManager(
+    fun providePlaybackOperations(
         @ApplicationContext context: Context,
         queueManager: QueueManager,
         player: Player,
@@ -159,7 +159,7 @@ class PlaybackEngineModule {
         playbackSettings: PlaybackSettings,
         @AppCoroutineScope coroutineScope: CoroutineScope,
         castQueue: CastQueue
-    ): PlaybackManager = PlaybackManager(
+    ): PlaybackOperations = PlaybackFacade(
         queueManager,
         player,
         localPlayer,
@@ -169,7 +169,4 @@ class PlaybackEngineModule {
         coroutineScope,
         castQueue
     )
-
-    @Provides
-    fun providePlaybackOperations(playbackManager: PlaybackManager): PlaybackOperations = playbackManager
 }

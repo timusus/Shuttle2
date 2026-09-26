@@ -7,7 +7,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.playback.AppPlayer
 import com.simplecityapps.playback.CallMonitor
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackFacade
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.di.PlaybackEngineModule
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
@@ -75,7 +75,7 @@ class TestPlaybackEngineModule {
 
     @Singleton
     @Provides
-    fun providePlaybackManager(
+    fun providePlaybackOperations(
         @ApplicationContext context: Context,
         queueManager: QueueManager,
         player: Player,
@@ -83,7 +83,7 @@ class TestPlaybackEngineModule {
         playbackPreferenceManager: PlaybackPreferenceManager,
         playbackSettings: PlaybackSettings,
         @AppCoroutineScope coroutineScope: CoroutineScope
-    ): PlaybackManager = PlaybackManager(
+    ): PlaybackOperations = PlaybackFacade(
         queueManager,
         player,
         localPlayer,
@@ -93,7 +93,4 @@ class TestPlaybackEngineModule {
         coroutineScope,
         castQueue = null
     )
-
-    @Provides
-    fun providePlaybackOperations(playbackManager: PlaybackManager): PlaybackOperations = playbackManager
 }

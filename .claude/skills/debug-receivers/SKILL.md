@@ -20,15 +20,15 @@ failing.
 | Action | Extras | Does |
 |---|---|---|
 | `PLAY_ALL` | `[--ei index N] [--es album NAME]` | Queue every library song (`SongRepository`, `SongQuery.All()`), or only album NAME's, and play from index N, via the `PlaySongs` use case the song list uses |
-| `PLAY` / `PAUSE` | | `PlaybackManager.play()` / `pause()` |
+| `PLAY` / `PAUSE` | | `PlaybackOperations.play()` / `pause()` |
 | `NEXT` / `PREV` | | `skipToNext()` / `skipToPrev()` (`PREV` restarts the track past 2 s, as the UI does) |
 | `SEEK` | `--el ms 20000` | `seekTo(ms)` |
-| `REMOVE_QUEUE_ITEM` | `--ei position N` | `PlaybackManager.removeQueueItem`, the queue screen's "Remove from Queue" path. N indexes the queue in its displayed (shuffle-aware) order |
+| `REMOVE_QUEUE_ITEM` | `--ei position N` | `PlaybackOperations.removeQueueItem`, the queue screen's "Remove from Queue" path. N indexes the queue in its displayed (shuffle-aware) order |
 | `REMOVE_PLAYLIST_SONG` | `--es playlist NAME --es song TITLE` | `PlaylistRepository.removeFromPlaylist`, the playlist detail screen's per-row "Remove" path (the `RemoveFromPlaylist` use case) |
 | `REORDER_QUEUE` | `--ei from N --ei to N` | `QueueManager.move(from, to)`, the queue screen's drag-to-reorder path. Both indices are in the displayed (shuffle-aware) order |
 | `SHUFFLE` | `[--ez enabled true\|false]` | Toggle, or set, the shuffle mode |
 | `REPEAT` | `[--es mode off\|all\|one]` | Toggle (Off → All → One), or set, the repeat mode |
-| `SPEED` | `--ef multiplier 1.5` | `PlaybackManager.setPlaybackSpeed(multiplier)` |
+| `SPEED` | `--ef multiplier 1.5` | `PlaybackOperations.setPlaybackSpeed(multiplier)` |
 | `SLEEP_TIMER` | `--el seconds 3 [--ez play_to_end true\|false]` | `SleepTimer.startTimer`, the same timer the Sleep Timer dialog starts |
 | `DUMP_STATE` | | Print the state as one JSON line (below) |
 | `DOWNLOAD_SONG` | `[--el song_id N]` | `DebugDownloadReceiver`: download a song for offline use (default: the first remote song) from its current stream URI, keyed by `song.path` |
@@ -41,14 +41,13 @@ Replies: `<ACTION> ok[: detail]` (e.g. `PLAY_ALL ok: 5 songs from index 0`,
 `REMOVE_QUEUE_ITEM ok: <removed title>`) or `<ACTION> error: <reason>`. An action not in the
 manifest's intent filter is never delivered, so the wrapper times out on typos.
 
-`DUMP_STATE` fields: `state` (`PlaybackManager.playbackState()`), `reportedState` (the
+`DUMP_STATE` fields: `state` (`PlaybackOperations.playbackState()`), `reportedState` (the
 `playbackStateFlow` value), `positionMs` (`getProgress()`), `progressMs` (`progressFlow`),
 `durationMs`, `savedPositionMs` (the persisted resume position), `queuePosition`, `queueSize`,
 `title` (current song), `inLibrary` (false for a file opened from another app that isn't in the library,
 playing as a transient song), `queueTitles` (every song name in the queue's displayed, shuffle-aware
 order -- `queueTitles[queuePosition + 1]` is the item that will auto-advance to next), `shuffle`,
-`repeat`, `speed` (`getPlaybackSpeed()`), `pendingLoad` (a track load in flight; read reflectively
-from `PlaybackManager`'s private `LoadCoordinator`, `null` if that field moves).
+`repeat`, `speed` (`getPlaybackSpeed()`), `pendingLoad` (a track load in flight: the state is `Loading`).
 
 ```json
 {"state":"Playing","reportedState":"Playing","positionMs":3225,"progressMs":3153,"durationMs":60029,"savedPositionMs":3050,"queuePosition":0,"queueSize":5,"title":"Playback One","queueTitles":["Playback One","Playback Two","Playback Three","Playback Four","Playback Five"],"shuffle":"Off","repeat":"Off","speed":1.0,"pendingLoad":false}

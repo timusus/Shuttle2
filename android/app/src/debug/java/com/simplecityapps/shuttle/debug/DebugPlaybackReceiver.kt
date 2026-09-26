@@ -8,7 +8,7 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
@@ -37,7 +37,7 @@ import org.json.JSONObject
 @AndroidEntryPoint
 class DebugPlaybackReceiver : BroadcastReceiver() {
     @Inject
-    lateinit var playbackManager: PlaybackManager
+    lateinit var playbackOperations: PlaybackOperations
 
     @Inject
     lateinit var queueManager: QueueManager
@@ -94,18 +94,18 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             "${songs.size} songs from index $index"
         }
 
-        "PLAY" -> null.also { playbackManager.play() }
+        "PLAY" -> null.also { playbackOperations.play() }
 
-        "PAUSE" -> null.also { playbackManager.pause() }
+        "PAUSE" -> null.also { playbackOperations.pause() }
 
-        "NEXT" -> null.also { playbackManager.skipToNext() }
+        "NEXT" -> null.also { playbackOperations.skipToNext() }
 
-        "PREV" -> null.also { playbackManager.skipToPrev() }
+        "PREV" -> null.also { playbackOperations.skipToPrev() }
 
         "SEEK" -> {
             val ms = intent.getLongExtra("ms", -1L)
             require(ms >= 0) { "missing --el ms <position>" }
-            playbackManager.seekTo(ms.toInt())
+            playbackOperations.seekTo(ms.toInt())
             "${ms}ms"
         }
 
@@ -115,7 +115,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
                 "no item at --ei position $position (queue size ${queueManager.getSize()})"
             }
             // The queue screen's "Remove from Queue" path (PlayerViewModel.removeQueueItem).
-            playbackManager.removeQueueItem(queueItem)
+            playbackOperations.removeQueueItem(queueItem)
             queueItem.song.name
         }
 
@@ -173,7 +173,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
         "SPEED" -> {
             val multiplier = intent.getFloatExtra("multiplier", -1f)
             require(multiplier > 0f) { "missing --ef multiplier <speed>" }
-            playbackManager.setPlaybackSpeed(multiplier)
+            playbackOperations.setPlaybackSpeed(multiplier)
             "${multiplier}x"
         }
 
@@ -193,11 +193,11 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
     private suspend fun dumpState(): JSONObject {
         val currentSong = queueManager.getCurrentItem()?.song
         return JSONObject().apply {
-            put("state", playbackManager.playbackState().toString())
-            put("reportedState", playbackManager.playbackStateFlow.value.toString())
-            put("positionMs", playbackManager.getProgress() ?: JSONObject.NULL)
-            put("progressMs", playbackManager.progressFlow.value?.position ?: JSONObject.NULL)
-            put("durationMs", playbackManager.getDuration() ?: JSONObject.NULL)
+            put("state", playbackOperations.playbackState().toString())
+            put("reportedState", playbackOperations.playbackStateFlow.value.toString())
+            put("positionMs", playbackOperations.getProgress() ?: JSONObject.NULL)
+            put("progressMs", playbackOperations.progressFlow.value?.position ?: JSONObject.NULL)
+            put("durationMs", playbackOperations.getDuration() ?: JSONObject.NULL)
             put("savedPositionMs", playbackPreferenceManager.playbackPosition ?: JSONObject.NULL)
             put("queuePosition", queueManager.getCurrentPosition() ?: JSONObject.NULL)
             put("queueSize", queueManager.getSize())
@@ -206,7 +206,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             put("queueTitles", JSONArray(queueManager.getQueue().map { it.song.name }))
             put("shuffle", queueManager.getShuffleMode().name)
             put("repeat", queueManager.getRepeatMode().name)
-            put("speed", playbackManager.getPlaybackSpeed())
+            put("speed", playbackOperations.getPlaybackSpeed())
             put("pendingLoad", pendingLoad())
             put("libraryImporting", mediaImporter.isImporting)
             put("librarySongCount", songRepository.getSongs(SongQuery.All()).firstOrNull()?.size ?: JSONObject.NULL)
@@ -215,7 +215,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
     }
 
     /** Whether a track load is in flight: the player hasn't made the current item ready yet. */
-    private fun pendingLoad(): Boolean = playbackManager.playbackState() is PlaybackState.Loading
+    private fun pendingLoad(): Boolean = playbackOperations.playbackState() is PlaybackState.Loading
 
     companion object {
         private const val TAG = "S2Debug"

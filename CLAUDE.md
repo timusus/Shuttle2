@@ -72,7 +72,7 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 ### Module Structure
 
 - **`:android:app`** — Main application: UI screens, DI setup, presenters, navigation
-- **`:android:playback`** — ExoPlayer wrapper, PlaybackManager, PlaybackService, queue management, audio focus
+- **`:android:playback`** — ExoPlayer wrapper, PlaybackFacade, PlaybackService, queue management, audio focus
 - **`:android:mediaprovider:core`** — MediaProvider interface, MediaImporter, repository interfaces (Song, Album, Playlist, Genre)
 - **`:android:mediaprovider:local`** — Local MediaStore/TagLib provider implementation
 - **`:android:mediaprovider:jellyfin|emby|plex`** — Remote streaming provider implementations
@@ -91,7 +91,7 @@ Screens use **Compose + ViewModel** with unidirectional data flow — see [`docs
 
 ### Playback Flow
 
-PlaybackManager orchestrates playback over a Media3 player (ExoPlayer, or the Cast player while casting), which also handles audio focus and unplugged headphones. It coordinates QueueManager, and PlaybackService (a Media3 MediaLibraryService) publishes the session. State is published as flows: PlaybackManager exposes `playbackStateFlow`, `progressFlow`, `positionAnchorFlow`, `trackEndedFlow` and `pausePositionFlow`; QueueManager exposes `queueStateFlow`, `shuffleModeFlow` and `repeatModeFlow`. Consumers collect them against a baseline snapshot (`launchCollectingChanges` in `:android:core`).
+The Media3 player (ExoPlayer, or the Cast player while casting) is the source of truth for the queue and playback state, and also handles audio focus and unplugged headphones; PlaybackService (a Media3 MediaLibraryService) publishes its session. Consumers inject `PlaybackOperations` and `QueueOperations`. `PlaybackFacade` (the PlaybackOperations binding) forwards to the player and QueueManager and derives flows from player events; each remaining concern is a small `Player.Listener` it registers: `CastHandover`, `ItemLoader` (load completion, skipping failed items), `ResumePositionStore`, `CallHold`, `PlaybackSpeedStore`, `WakeModeUpdater`. State is published as flows: PlaybackOperations exposes `playbackStateFlow`, `progressFlow`, `positionAnchorFlow`, `trackEndedFlow` and `pausePositionFlow`; QueueOperations exposes `queueStateFlow`, `shuffleModeFlow` and `repeatModeFlow`. Consumers collect them against a baseline snapshot (`launchCollectingChanges` in `:android:core`).
 
 ### Data Layer
 

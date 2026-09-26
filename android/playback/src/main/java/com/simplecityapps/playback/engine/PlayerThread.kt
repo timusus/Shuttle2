@@ -5,7 +5,7 @@ import android.os.Looper
 import androidx.media3.common.Player
 
 /**
- * The thread [player] must be called on: its application looper, the main thread. [PlaybackManager][com.simplecityapps.playback.PlaybackManager]
+ * The thread [player] must be called on: its application looper, the main thread. [PlaybackFacade][com.simplecityapps.playback.PlaybackFacade]
  * and [QueueManager][com.simplecityapps.playback.queue.QueueManager] follow the same rule: a call that changes playback
  * or the queue runs on it, straight away if made there, else posted to it; a read made off it returns the last
  * published state instead of asking the player.

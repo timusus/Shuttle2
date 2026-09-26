@@ -11,7 +11,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 /**
- * How long a long queue takes from being set to playing, through PlaybackManager and QueueManager over the real
+ * How long a long queue takes from being set to playing, through PlaybackFacade and QueueManager over the real
  * player (docs/architecture/media3-playback-design.md, "10k queue spike"), with lazy preparation (production's
  * default) and with every item prepared, for comparison.
  *
