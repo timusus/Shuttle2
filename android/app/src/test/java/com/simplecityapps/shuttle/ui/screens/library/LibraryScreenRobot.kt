@@ -84,6 +84,8 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         private set
     var lastMore: Any? = null
         private set
+    var playClicked = false
+        private set
     var shuffleClicked = false
         private set
     var settingsOpened = false
@@ -130,11 +132,11 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
     private fun Page(tab: LibraryTab, pages: LibraryPageStates) {
         when (tab) {
             LibraryTab.Songs -> pages.songs?.let {
-                SongsPage(it, onSongClick = { s -> lastSongClicked = s }, onSongLongClick = { s -> lastSongLongClicked = s }, onSongMore = { s -> lastMore = s }, onShuffle = { shuffleClicked = true })
+                SongsPage(it, onSongClick = { s -> lastSongClicked = s }, onSongLongClick = { s -> lastSongLongClicked = s }, onSongMore = { s -> lastMore = s }, onPlay = { playClicked = true }, onShuffle = { shuffleClicked = true })
             }
 
             LibraryTab.Albums -> pages.albums?.let {
-                AlbumsPage(it, onAlbumClick = { a -> lastAlbumClicked = a }, onAlbumLongClick = {}, onAlbumMore = { a -> lastMore = a }, onShuffle = { shuffleClicked = true })
+                AlbumsPage(it, onAlbumClick = { a -> lastAlbumClicked = a }, onAlbumLongClick = {}, onAlbumMore = { a -> lastMore = a }, onPlay = { playClicked = true }, onShuffle = { shuffleClicked = true })
             }
 
             LibraryTab.Artists -> pages.artists?.let {
@@ -166,6 +168,9 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
     fun assertTextDisplayed(text: String) {
         rule.onNodeWithText(text).assertIsDisplayed()
     }
+
+    /** How many times [text] appears on screen, such as a count shown in both the top bar and the list. */
+    fun countOfText(text: String): Int = rule.onAllNodesWithText(text).fetchSemanticsNodes().size
 
     fun assertTextNotDisplayed(text: String) {
         rule.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() || error("\"$text\" is shown")

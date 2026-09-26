@@ -157,12 +157,40 @@ class LibraryScreenTest {
     // -- Pages --
 
     @Test
-    fun `songs page plays a tapped song, selects on long press and shuffles`() {
+    fun `songs page plays a tapped song, plays everything and shuffles`() {
         val song = createSong(id = 1, name = "Chlorophyll Loop")
         robot.setContent(libraryState(currentTab = LibraryTab.Songs), pages = LibraryPageStates(songs = readySongList(listOf(song, createSong(id = 2, name = "Lucky")))))
 
         robot.clickText("Chlorophyll Loop")
         robot.lastSongClicked shouldBe song
+
+        robot.clickText("Play")
+        robot.playClicked shouldBe true
+
+        robot.clickText("Shuffle")
+        robot.shuffleClicked shouldBe true
+    }
+
+    @Test
+    fun `the song count shows once, in the top bar (#491)`() {
+        robot.setContent(
+            libraryState(currentTab = LibraryTab.Songs),
+            chromeWithMenu(subtitle = "2 songs"),
+            LibraryPageStates(songs = readySongList(listOf(createSong(id = 1, name = "Chlorophyll Loop"), createSong(id = 2, name = "Lucky")))),
+        )
+
+        robot.countOfText("2 songs") shouldBe 1
+    }
+
+    @Test
+    fun `albums page plays and shuffles every album, with the count once in the top bar`() {
+        val albums = listOf(createAlbum(name = "Phase Garden", albumArtist = "Juniper Static"))
+        robot.setContent(libraryState(currentTab = LibraryTab.Albums), chromeWithMenu(subtitle = "1 album"), LibraryPageStates(albums = readyAlbumList(albums)))
+
+        robot.countOfText("1 album") shouldBe 1
+
+        robot.clickText("Play")
+        robot.playClicked shouldBe true
 
         robot.clickText("Shuffle")
         robot.shuffleClicked shouldBe true

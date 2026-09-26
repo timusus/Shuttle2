@@ -364,6 +364,7 @@ private fun LibraryPage(
                 },
                 onSongLongClick = viewModel::onSongLongClick,
                 onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
+                onPlay = { actions.dispatch(MediaAction.Play(MediaSelection.Songs(state.songs))) },
                 onShuffle = { actions.dispatch(MediaAction.Shuffle(MediaSelection.Songs(state.songs))) },
             )
         }
@@ -385,6 +386,7 @@ private fun LibraryPage(
                 onAlbumClick = { album -> if (state.isSelecting) viewModel.onAlbumClick(album) else onOpen(album.route) },
                 onAlbumLongClick = viewModel::onAlbumLongClick,
                 onAlbumMore = { album -> actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
+                onPlay = { actions.dispatch(MediaAction.Play(MediaSelection.Albums(state.albums))) },
                 // Album-grouped shuffle has no MediaAction yet; the tab ViewModel keeps it.
                 onShuffle = viewModel::onShuffle,
             )
