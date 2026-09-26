@@ -89,7 +89,7 @@ class LargeQueueStartTimingTest {
 
                 Scenario.ShuffleAll -> harness.run { playback.shuffle(songs, playOnLoad) }
             }
-            harness.runUntil(TIMEOUT_MS) {
+            harness.runUntil {
                 queue.getSize() >= songs.size && playback.playbackState() == PlaybackState.Playing
             }
             val elapsedMs = (System.nanoTime() - start) / 1_000_000
@@ -109,6 +109,5 @@ class LargeQueueStartTimingTest {
         /** Preparing every item of a 5k queue runs the test JVM (512 MB heap) out of memory. */
         private const val EAGER_MAX_SIZE = 2_000
         private const val RESTORE_POSITION_MS = 1_000
-        private const val TIMEOUT_MS = 300_000L
     }
 }

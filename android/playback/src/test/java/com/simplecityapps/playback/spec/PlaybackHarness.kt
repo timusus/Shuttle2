@@ -8,14 +8,11 @@ import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Build
 import android.os.Looper
-import android.os.SystemClock
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
-import androidx.media3.common.util.Clock
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.test.utils.FakeClock
 import androidx.media3.test.utils.TestExoPlayerBuilder
-import androidx.media3.test.utils.robolectric.RobolectricUtil
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.CallMonitor
@@ -48,8 +45,6 @@ import java.io.IOException
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
@@ -201,6 +196,9 @@ class PlaybackHarness(
      */
     private val clock = FakeClock(false)
 
+    /** Settles and plays on the player on [clock]: [idle] and [runUntil]. */
+    private val driver: ClockDriver
+
     init {
         ClockedShadowAudioTrack.clock = clock
         ShadowAudioTrack.addAudioDataListener(audioDataListener)
@@ -222,6 +220,7 @@ class PlaybackHarness(
                     .setMediaSourceFactory(mediaSourceFactory)
                     .build()
             }.create()
+        driver = ClockDriver(clock, player)
         player.addListener(
             object : Player.Listener {
                 override fun onTimelineChanged(
@@ -274,10 +273,7 @@ class PlaybackHarness(
      * focus), until the player has handled them and the main looper has had the events they raised, and so on until
      * neither has anything left to do now, without letting playback time pass.
      */
-    fun idle() {
-        val mainLooper = shadowOf(Looper.getMainLooper())
-        RobolectricUtil.runLooperUntil(Looper.getMainLooper(), { mainLooper.isIdle && clockIdle() }, AWAIT_TIMEOUT_MS, Clock.DEFAULT, 0)
-    }
+    fun idle() = driver.idle()
 
     /**
      * Plays on until the player reaches [positionMs] into the item at [mediaItemIndex], then runs [block] on the main
@@ -302,37 +298,13 @@ class PlaybackHarness(
     }
 
     /**
-     * Whether the player's clock has handed out every message due now and each has been handled: the clock hands them
-     * out one at a time, in time order, to the main and playback threads alike.
-     */
-    private fun clockIdle(): Boolean = synchronized(clock) {
-        val now = clockTime.get(clock) as Long
-        clockActiveLooper.get(clock) == null && (clockMessages.get(clock) as List<*>).none { (messageTime.get(it) as Long) <= now }
-    }
-
-    /**
-     * Plays the player on, a step of its clock at a time, each followed by [idle], until [condition] holds. Between
-     * steps the main looper also runs a task it has scheduled up to a second ahead, as Media3's `runMainLooperUntil`
-     * does. Fails after [timeoutMs] of wall time.
+     * Plays the player on, a step of its clock at a time, each followed by [idle], until [condition] holds. Fails once
+     * the player's clock has moved on [limitMs] without it holding.
      */
     fun runUntil(
-        timeoutMs: Long = 10_000,
+        limitMs: Long = ClockDriver.DEFAULT_LIMIT_MS,
         condition: () -> Boolean
-    ) {
-        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs)
-        val mainLooper = shadowOf(Looper.getMainLooper())
-        idle()
-        while (!condition()) {
-            if (System.nanoTime() >= deadline) throw TimeoutException()
-            clock.advanceTime(STEP_MS)
-            idle()
-            val nextTask = mainLooper.nextScheduledTaskTime
-            if (!nextTask.isZero && nextTask.toMillis() <= SystemClock.elapsedRealtime() + MAIN_LOOPER_LOOKAHEAD_MS) {
-                mainLooper.runOneTask()
-                idle()
-            }
-        }
-    }
+    ) = driver.runUntil(limitMs, condition)
 
     /**
      * Another app taking audio focus or giving it back ([focusChange] is one of AudioManager's `AUDIOFOCUS_` changes),
@@ -391,25 +363,6 @@ class PlaybackHarness(
     }
 
     companion object {
-        /** The longest [idle] waits for the player to catch up, in wall time. */
-        private const val AWAIT_TIMEOUT_MS = 10_000L
-
-        /**
-         * FakeClock's state, which it doesn't expose: its time, the looper of the message it has out (if any), and the
-         * messages yet to go. Guarded by the clock.
-         */
-        private val clockTime = FakeClock::class.java.getDeclaredField("timeSinceBootMs").apply { isAccessible = true }
-        private val clockActiveLooper = FakeClock::class.java.getDeclaredField("activeMessageLooper").apply { isAccessible = true }
-        private val clockMessages = FakeClock::class.java.getDeclaredField("handlerMessages").apply { isAccessible = true }
-        private val messageTime =
-            Class.forName("androidx.media3.test.utils.FakeClock\$HandlerMessage").getDeclaredField("timeMs").apply { isAccessible = true }
-
-        /** How far [runUntil] moves the player's clock on at a time: the player's working interval while it plays. */
-        const val STEP_MS = 10L
-
-        /** How far ahead [runUntil] runs a task the main looper has scheduled, moving its time on to it. */
-        private const val MAIN_LOOPER_LOOKAHEAD_MS = 1_000L
-
         /** 2 s of a 440 Hz sine at half scale, 16 kHz mono 16-bit. */
         const val TONE_2S = "tone-2s.wav"
         const val TONE_2S_MS = 2_000

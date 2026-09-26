@@ -1,8 +1,8 @@
 package com.simplecityapps.playback.spec
 
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.spec.ClockDriver.Companion.STEP_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.BYTES_PER_MS
-import com.simplecityapps.playback.spec.PlaybackHarness.Companion.STEP_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe

@@ -1,14 +1,13 @@
 package com.simplecityapps.playback
 
 import android.os.Looper
-import androidx.media3.common.util.Clock
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.test.utils.FakeClock
 import androidx.media3.test.utils.TestExoPlayerBuilder
-import androidx.media3.test.utils.robolectric.RobolectricUtil
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.queue.toQueueEntry
+import com.simplecityapps.playback.spec.ClockDriver
 import com.simplecityapps.playback.spec.PlaybackHarness
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
@@ -27,7 +26,11 @@ import org.robolectric.Shadows.shadowOf
 // Robolectric: drives a real TestExoPlayerBuilder-backed ExoPlayer.
 @RunWith(RobolectricTestRunner::class)
 class ItemLoaderTest {
-    private val player: ExoPlayer = TestExoPlayerBuilder(RuntimeEnvironment.getApplication()).setClock(FakeClock(true)).build()
+    private val clock = FakeClock(false)
+
+    private val player: ExoPlayer = TestExoPlayerBuilder(RuntimeEnvironment.getApplication()).setClock(clock).build()
+
+    private val driver = ClockDriver(clock, player)
 
     private var gaveUp = 0
 
@@ -54,7 +57,7 @@ class ItemLoaderTest {
         var result: Result<Boolean>? = null
         loader.load(0, skipUnloadable) { result = it }
         loader.isLoading shouldBe true
-        RobolectricUtil.runMainLooperUntil({ result != null }, 10_000, Clock.DEFAULT)
+        driver.runUntil { result != null }
         return checkNotNull(result)
     }
 
