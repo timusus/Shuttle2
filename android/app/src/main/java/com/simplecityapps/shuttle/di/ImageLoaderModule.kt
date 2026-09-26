@@ -1,27 +1,17 @@
 package com.simplecityapps.shuttle.di
 
-import android.content.Context
-import com.simplecityapps.imageloading.ArtworkImageLoader
-import com.simplecityapps.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)
 @Module
 class ImageLoaderModule {
-    @Singleton
-    @Provides
-    fun provideImageLoader(
-        @ApplicationContext context: Context
-    ): ArtworkImageLoader = GlideImageLoader(context)
-
     @Singleton
     @Provides
     fun provideAggregateRemoteArtworkProvider(

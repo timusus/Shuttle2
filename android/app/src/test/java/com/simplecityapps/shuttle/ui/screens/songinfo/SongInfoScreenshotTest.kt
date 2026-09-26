@@ -4,10 +4,10 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
-import com.bumptech.glide.SampleArtworkGlide
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
+import com.simplecityapps.shuttle.ui.SampleArtworkCoil
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import java.io.File
@@ -32,10 +32,10 @@ class SongInfoScreenshotTest {
     val composeTestRule = createAndroidComposeRule<ComponentActivity>()
 
     @Before
-    fun installSampleArtwork() = SampleArtworkGlide.install(ApplicationProvider.getApplicationContext())
+    fun installSampleArtwork() = SampleArtworkCoil.install(ApplicationProvider.getApplicationContext())
 
     @After
-    fun uninstallSampleArtwork() = SampleArtworkGlide.uninstall()
+    fun uninstallSampleArtwork() = SampleArtworkCoil.uninstall()
 
     private fun shot(name: String, uiState: SongInfoUiState, theme: ThemeMode = ThemeMode.Light) {
         composeTestRule.setContent {

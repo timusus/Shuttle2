@@ -9,8 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
+import coil3.compose.AsyncImage
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.Artwork
@@ -23,11 +22,10 @@ import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.model.Song
 import com.squareup.phrase.Phrase
 
-// Pieces the Compose library screens share: artwork loaded through Glide into the catalogue's Artwork slot, the
+// Pieces the Compose library screens share: artwork loaded through Coil into the catalogue's Artwork slot, the
 // loading / scanning / empty states, and count text.
 
 /** Catalogue [Artwork] showing [model]'s image (a Song, Album, AlbumArtist...) over its [placeholder]. */
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun LibraryArtwork(
     model: Any?,
@@ -47,7 +45,7 @@ fun LibraryArtwork(
                 // The glyph under the image, so art that's still loading or never loads isn't a blank tile (#398).
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     ArtworkPlaceholderGlyph(placeholder, size)
-                    GlideImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                    AsyncImage(model = it, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 }
             }
         },

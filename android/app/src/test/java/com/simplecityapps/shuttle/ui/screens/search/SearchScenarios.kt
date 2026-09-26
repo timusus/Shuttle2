@@ -9,7 +9,7 @@ import com.simplecityapps.shuttle.ui.preview.toGenre
 import com.simplecityapps.shuttle.ui.preview.toPlaylist
 import com.simplecityapps.shuttle.ui.preview.toSong
 
-/** Search over the sample library, so rows load the generated covers under `SampleArtworkGlide`. */
+/** Search over the sample library, so rows load the generated covers under `SampleArtworkCoil`. */
 object SearchScenarios {
     /** What the sample library holds for "night": an artist, two albums, songs by name and by artist, and a playlist. */
     val nightjar = SampleLibrary.artist("Nightjar & the Loom").toAlbumArtist()

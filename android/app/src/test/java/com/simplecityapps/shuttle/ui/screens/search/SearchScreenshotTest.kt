@@ -4,10 +4,10 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
-import com.bumptech.glide.SampleArtworkGlide
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
+import com.simplecityapps.shuttle.ui.SampleArtworkCoil
 import java.io.File
 import org.junit.After
 import org.junit.Before
@@ -21,7 +21,7 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * Records the Search screen at phone size into `docs/design/search/` for review (#377). A no-op under plain
  * `testDebugUnitTest`; record with `./gradlew :android:app:recordRoborazziDebug --tests '*SearchScreenshotTest*'`. Results
- * show the sample library with its generated covers ([SampleArtworkGlide]).
+ * show the sample library with its generated covers ([SampleArtworkCoil]).
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -33,10 +33,10 @@ class SearchScreenshotTest {
     private val robot = SearchRobot(composeTestRule)
 
     @Before
-    fun installSampleArtwork() = SampleArtworkGlide.install(ApplicationProvider.getApplicationContext())
+    fun installSampleArtwork() = SampleArtworkCoil.install(ApplicationProvider.getApplicationContext())
 
     @After
-    fun uninstallSampleArtwork() = SampleArtworkGlide.uninstall()
+    fun uninstallSampleArtwork() = SampleArtworkCoil.uninstall()
 
     private fun shot(name: String, uiState: SearchUiState, theme: ThemeMode = ThemeMode.Light, query: String = "") {
         robot.queryState.edit { replace(0, length, query) }

@@ -43,10 +43,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Album
@@ -58,7 +54,6 @@ import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
-import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumMenu
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.DetailArtwork
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.DetailHeroImage
@@ -431,12 +426,7 @@ private fun ExpandableAlbumItem(
                     .height(40.dp)
                     .clickable { onOpenAlbum(album) },
                 shape = RoundedCornerShape(8.dp),
-            ) {
-                it
-                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .transform(CenterCrop(), RoundedCorners(8.dpToInt))
-                    .transition(withCrossFade(200))
-            }
+            )
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -564,12 +554,7 @@ private fun AlbumArtistDetailSongItem(
                 .width(40.dp)
                 .height(40.dp),
             shape = RoundedCornerShape(8.dp),
-        ) {
-            it
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .transform(CenterCrop(), RoundedCorners(8.dpToInt))
-                .transition(withCrossFade(200))
-        }
+        )
 
         Column(
             modifier = Modifier.weight(1f),

@@ -1,11 +1,8 @@
 package com.simplecityapps.playback.chromecast
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
-import android.widget.ImageView
 import com.simplecityapps.imageloading.ArtworkImageLoader
-import com.simplecityapps.imageloading.palette.ColorSet
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.SongPathRemap
@@ -64,15 +61,7 @@ class FakeSongRepository(private val songs: List<Song>) : SongRepository {
 
 /** Artwork that is [bytes] for every song. */
 class FakeArtworkImageLoader(private val bytes: ByteArray?) : ArtworkImageLoader {
-    override fun loadBitmap(data: Any): ByteArray? = bytes
-
-    override fun loadArtwork(
-        imageView: ImageView,
-        data: Any,
-        options: List<ArtworkImageLoader.Options>,
-        onCompletion: ((Result<Unit>) -> Unit)?,
-        onColorSetGenerated: ((ColorSet) -> Unit)?
-    ) = error("not called")
+    override suspend fun loadBitmap(data: Any): ByteArray? = bytes
 
     override fun loadBitmap(
         data: Any,
@@ -82,14 +71,7 @@ class FakeArtworkImageLoader(private val bytes: ByteArray?) : ArtworkImageLoader
         onCompletion: (Bitmap?) -> Unit
     ): ArtworkImageLoader.Request = error("not called")
 
-    override fun loadColorSet(
-        data: Any,
-        callback: (ColorSet?) -> Unit
-    ) = error("not called")
-
-    override fun clear(imageView: ImageView) = error("not called")
-
-    override suspend fun clearCache(context: Context?) = error("not called")
+    override suspend fun clearCache() = error("not called")
 }
 
 /**

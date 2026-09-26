@@ -5,7 +5,7 @@ import com.simplecityapps.shuttle.ui.preview.toAlbum
 import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
 import com.simplecityapps.shuttle.ui.preview.toSong
 
-/** Home over the sample library, so its tiles load the generated covers under `SampleArtworkGlide`. */
+/** Home over the sample library, so its tiles load the generated covers under `SampleArtworkCoil`. */
 object HomeScenarios {
     val phaseGarden = SampleLibrary.album("phase-garden").toAlbum()
     val nightBus = SampleLibrary.album("night-bus-frequencies").toAlbum()

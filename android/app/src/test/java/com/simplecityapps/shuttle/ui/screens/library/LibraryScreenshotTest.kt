@@ -4,11 +4,11 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.core.app.ApplicationProvider
-import com.bumptech.glide.SampleArtworkGlide
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
+import com.simplecityapps.shuttle.ui.SampleArtworkCoil
 import com.simplecityapps.shuttle.ui.preview.sampleSongs
 import com.simplecityapps.shuttle.ui.preview.toAlbum
 import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
@@ -30,7 +30,7 @@ import org.robolectric.annotation.GraphicsMode
 
 /**
  * Records the Compose library container and its detail screens into `docs/design/library/` for review (#377),
- * showing the sample library with its generated covers ([SampleArtworkGlide]).
+ * showing the sample library with its generated covers ([SampleArtworkCoil]).
  * A no-op under plain `testDebugUnitTest`; record with
  * `./gradlew :android:app:recordRoborazziDebug --tests '*LibraryScreenshotTest*'`.
  */
@@ -49,10 +49,10 @@ class LibraryScreenshotTest {
     private val songs = SampleLibrary.songs.map { it.toSong() }
 
     @Before
-    fun installSampleArtwork() = SampleArtworkGlide.install(ApplicationProvider.getApplicationContext())
+    fun installSampleArtwork() = SampleArtworkCoil.install(ApplicationProvider.getApplicationContext())
 
     @After
-    fun uninstallSampleArtwork() = SampleArtworkGlide.uninstall()
+    fun uninstallSampleArtwork() = SampleArtworkCoil.uninstall()
 
     private fun shot(name: String) {
         composeTestRule.waitForIdle()

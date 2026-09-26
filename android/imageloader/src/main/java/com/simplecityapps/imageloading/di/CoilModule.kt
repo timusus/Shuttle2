@@ -9,10 +9,12 @@ import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.serviceLoaderEnabled
+import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.imageloading.coil.AlbumArtistArtworkKeyer
 import com.simplecityapps.imageloading.coil.AlbumArtworkKeyer
 import com.simplecityapps.imageloading.coil.ArtworkFetcher
 import com.simplecityapps.imageloading.coil.ArtworkSource
+import com.simplecityapps.imageloading.coil.CoilArtworkImageLoader
 import com.simplecityapps.imageloading.coil.SongArtworkKeyer
 import com.simplecityapps.imageloading.coil.artworkCacheKey
 import com.simplecityapps.imageloading.coil.source.EmbeddedAlbumArtworkSource
@@ -118,9 +120,12 @@ object CoilModule {
             .build()
     }
 
+    @Provides
+    fun provideArtworkImageLoader(imageLoader: CoilArtworkImageLoader): ArtworkImageLoader = imageLoader
+
     /**
-     * The app client, plus the S2 artwork API's credentials and its wifi-only rule. The rule covers only the S2 API, as it did
-     * under Glide: media server artwork comes from the server the user is already streaming from.
+     * The app client, plus the S2 artwork API's credentials and its wifi-only rule. The rule covers only the S2 API, as it always
+     * has: media server artwork comes from the server the user is already streaming from.
      */
     private fun artworkHttpClient(
         context: Context,

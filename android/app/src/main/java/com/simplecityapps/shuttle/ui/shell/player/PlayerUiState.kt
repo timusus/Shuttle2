@@ -21,7 +21,7 @@ data class PlayerSong(
     val album: String?,
     val durationMs: Int,
     val position: QueuePosition,
-    /** The artwork model: Glide loads a song's artwork by the song itself. */
+    /** The artwork model: Coil loads a song's artwork by the song itself. */
     val song: Song,
 )
 

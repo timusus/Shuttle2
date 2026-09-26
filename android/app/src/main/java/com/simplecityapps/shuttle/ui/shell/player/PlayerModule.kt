@@ -2,7 +2,12 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import android.content.Context
 import android.graphics.Bitmap
-import com.bumptech.glide.Glide
+import coil3.ImageLoader
+import coil3.request.ErrorResult
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.toBitmap
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -19,27 +24,31 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-/** Extracts seeds from a small Glide bitmap of the song's artwork, cached per album. */
-class GlideArtworkSeedSource(
+/** Extracts seeds from a small Coil bitmap of the song's artwork, cached per album. */
+class CoilArtworkSeedSource(
     private val context: Context,
+    private val imageLoader: ImageLoader,
     private val cache: SeedColorCache = SeedColorCache(),
 ) : ArtworkSeedSource {
     override suspend fun seedFor(song: Song): ArtworkSeed = cache.getOrExtract(song.albumGroupKey.toString()) { loadBitmap(song) }
 
-    private suspend fun loadBitmap(song: Song): Bitmap? = withContext(Dispatchers.IO) {
-        val target = Glide.with(context).asBitmap().load(song).submit(SEED_BITMAP_SIZE, SEED_BITMAP_SIZE)
-        try {
-            target.get()
-        } catch (e: Exception) {
-            Timber.v(e, "No artwork seed for ${song.name}")
-            null
-        } finally {
-            Glide.with(context).clear(target)
+    private suspend fun loadBitmap(song: Song): Bitmap? {
+        val request = ImageRequest.Builder(context)
+            .data(song)
+            .size(SEED_BITMAP_SIZE)
+            // Extraction reads the pixels, which a hardware bitmap doesn't allow
+            .allowHardware(false)
+            .build()
+        return when (val result = imageLoader.execute(request)) {
+            is SuccessResult -> result.image.toBitmap()
+
+            is ErrorResult -> {
+                Timber.v(result.throwable, "No artwork seed for ${song.name}")
+                null
+            }
         }
     }
 
@@ -55,7 +64,8 @@ object PlayerModule {
     @Singleton
     fun provideArtworkSeedSource(
         @ApplicationContext context: Context,
-    ): ArtworkSeedSource = GlideArtworkSeedSource(context)
+        imageLoader: ImageLoader,
+    ): ArtworkSeedSource = CoilArtworkSeedSource(context, imageLoader)
 
     @Provides
     fun provideCastAvailability(castSessionManager: CastSessionManager): CastAvailability = CastAvailability { castSessionManager.isAvailable }

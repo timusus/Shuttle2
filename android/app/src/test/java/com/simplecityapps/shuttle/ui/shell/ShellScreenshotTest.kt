@@ -7,10 +7,10 @@ import androidx.compose.material3.adaptive.WindowAdaptiveInfo
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
-import com.bumptech.glide.SampleArtworkGlide
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
+import com.simplecityapps.shuttle.ui.SampleArtworkCoil
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingItems
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
@@ -28,7 +28,7 @@ import org.robolectric.annotation.GraphicsMode
  * Records the shell at phone, foldable and tablet sizes into `docs/design/shell/` for review
  * (#375). A no-op under plain `testDebugUnitTest`; record with
  * `./gradlew :android:app:recordRoborazziDebug --tests '*ShellScreenshotTest*'`. The player shows a
- * sample-library queue with its generated covers ([SampleArtworkGlide]).
+ * sample-library queue with its generated covers ([SampleArtworkCoil]).
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -40,10 +40,10 @@ class ShellScreenshotTest {
     private val robot = AppShellRobot(composeTestRule)
 
     @Before
-    fun installSampleArtwork() = SampleArtworkGlide.install(ApplicationProvider.getApplicationContext())
+    fun installSampleArtwork() = SampleArtworkCoil.install(ApplicationProvider.getApplicationContext())
 
     @After
-    fun uninstallSampleArtwork() = SampleArtworkGlide.uninstall()
+    fun uninstallSampleArtwork() = SampleArtworkCoil.uninstall()
 
     // The whole screen: with system bars the shell sits in a second compose root (the insets override).
     @OptIn(ExperimentalRoborazziApi::class)

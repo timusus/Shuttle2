@@ -3,10 +3,10 @@ package com.simplecityapps.shuttle.ui.shell.player
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
-import com.bumptech.glide.SampleArtworkGlide
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
+import com.simplecityapps.shuttle.ui.SampleArtworkCoil
 import com.simplecityapps.shuttle.ui.shell.AppShellRobot
 import com.simplecityapps.shuttle.ui.shell.PhoneSystemBars
 import com.simplecityapps.shuttle.ui.shell.sampleShellQueue
@@ -38,10 +38,10 @@ class PlayerExtrasScreenshotTest {
     private val robot = AppShellRobot(composeTestRule)
 
     @Before
-    fun installSampleArtwork() = SampleArtworkGlide.install(ApplicationProvider.getApplicationContext())
+    fun installSampleArtwork() = SampleArtworkCoil.install(ApplicationProvider.getApplicationContext())
 
     @After
-    fun uninstallSampleArtwork() = SampleArtworkGlide.uninstall()
+    fun uninstallSampleArtwork() = SampleArtworkCoil.uninstall()
 
     /** The whole screen, sheets included: they sit in windows of their own. */
     @OptIn(ExperimentalRoborazziApi::class)

@@ -91,7 +91,7 @@ class AndroidSettingsEffects @Inject constructor(
     }
 
     override suspend fun clearArtworkCache() {
-        imageLoader.clearCache(context)
+        imageLoader.clearCache()
     }
 
     override fun downloadAllArtwork() {

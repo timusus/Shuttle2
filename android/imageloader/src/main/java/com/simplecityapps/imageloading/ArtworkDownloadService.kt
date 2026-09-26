@@ -13,7 +13,10 @@ import android.os.IBinder
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.content.getSystemService
-import com.simplecityapps.imageloading.glide.GlideImageLoader
+import coil3.ImageLoader
+import coil3.request.CachePolicy
+import coil3.request.ErrorResult
+import coil3.request.ImageRequest
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
@@ -22,7 +25,6 @@ import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -35,6 +37,7 @@ import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 @AndroidEntryPoint
@@ -57,6 +60,9 @@ class ArtworkDownloadService :
 
     @Inject
     lateinit var artworkSettings: ArtworkSettings
+
+    @Inject
+    lateinit var imageLoader: ImageLoader
 
     private var job = SupervisorJob()
 
@@ -83,8 +89,6 @@ class ArtworkDownloadService :
             job = SupervisorJob()
         }
 
-        val imageLoader = GlideImageLoader(this)
-
         createNotificationChannel()
 
         val serviceName = ComponentName(this, ArtworkDownloadService::class.java)
@@ -103,40 +107,32 @@ class ArtworkDownloadService :
         notificationManager?.notify(NOTIFICATION_ID, notificationBuilder.build())
 
         launch {
-            val albumFutures =
-                albumRepository.getAlbums(AlbumQuery.All()).first().map {
-                    imageLoader.requestManager
-                        .downloadOnly()
-                        .load(it)
-                        .submit()
-                }
+            val models: List<Any> =
+                albumRepository.getAlbums(AlbumQuery.All()).first() +
+                    albumArtistRepository.getAlbumArtists(AlbumArtistQuery.All()).first()
 
-            val artistFutures =
-                albumArtistRepository.getAlbumArtists(AlbumArtistQuery.All()).first().map {
-                    imageLoader.requestManager
-                        .downloadOnly()
-                        .load(it)
-                        .load(it)
-                        .submit()
-                }
-
-            val futures = albumFutures + artistFutures
-
-            futures
+            models
                 .asFlow()
-                .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { future ->
+                .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { model ->
                     ensureActive()
-                    try {
-                        future.get(10, TimeUnit.SECONDS)
-                        imageLoader.requestManager.clear(future)
-                    } catch (e: Exception) {
-                        Timber.e(e, "Failed to retrieve artwork")
+                    // Fetching fills the disk cache; nothing is shown, so skip the decode's memory cache entry and keep it small
+                    val request =
+                        ImageRequest.Builder(this@ArtworkDownloadService)
+                            .data(model)
+                            .size(DOWNLOAD_DECODE_SIZE_PX)
+                            .memoryCachePolicy(CachePolicy.DISABLED)
+                            .build()
+                    val result = withTimeoutOrNull(DOWNLOAD_TIMEOUT_MILLIS) { imageLoader.execute(request) }
+                    when (result) {
+                        null -> Timber.e("Timed out retrieving artwork")
+                        is ErrorResult -> Timber.e(result.throwable, "Failed to retrieve artwork")
+                        else -> Unit
                     }
                     null
                 }
                 .flowOn(Dispatchers.IO)
                 .collectIndexed { index, _ ->
-                    notificationBuilder.setProgress(futures.size, index, false)
+                    notificationBuilder.setProgress(models.size, index, false)
                     notificationManager?.notify(NOTIFICATION_ID, notificationBuilder.build())
                 }
 
@@ -194,5 +190,7 @@ class ArtworkDownloadService :
         private const val ACTION_CANCEL = "com.simplecityapps.shuttle.artwork_cancel"
         const val NOTIFICATION_CHANNEL_ID = "1"
         const val NOTIFICATION_ID = 2
+        private const val DOWNLOAD_TIMEOUT_MILLIS = 10_000L
+        private const val DOWNLOAD_DECODE_SIZE_PX = 64
     }
 }

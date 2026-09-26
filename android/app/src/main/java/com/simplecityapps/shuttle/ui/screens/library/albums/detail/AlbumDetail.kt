@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -50,12 +49,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.RequestBuilderTransform
-import com.bumptech.glide.integration.compose.placeholder
-import com.bumptech.glide.load.engine.DiskCacheStrategy
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.request.error
+import coil3.request.placeholder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.designsystem.component.previewArtwork
@@ -239,28 +237,22 @@ internal fun DetailHeroImage(
                 .fillMaxWidth()
                 .then(if (isWideOrShort) Modifier.heightIn(max = HeroMaxHeight) else Modifier)
                 .aspectRatio(aspectRatio),
-        ) {
-            it
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .transition(withCrossFade(200))
-        }
+        )
     }
 }
 
 /**
- * Artwork loaded through Glide, with a flat surface standing in under inspection mode.
+ * Artwork loaded through Coil, cross-fading in over its placeholder, with a flat surface standing in under inspection mode.
  *
- * Previews and snapshot tests never load an image, and Glide's placeholder drawables resolve a
+ * Previews and snapshot tests never load an image, and the placeholder drawables resolve a
  * theme attribute that layoutlib cannot inflate, so the request is skipped entirely there.
  */
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 internal fun DetailArtwork(
     model: Any?,
     placeholderResId: Int,
     modifier: Modifier = Modifier,
     shape: Shape = RectangleShape,
-    requestBuilderTransform: RequestBuilderTransform<Drawable> = { it },
 ) {
     val artworkDescription = stringResource(R.string.artwork)
     val preview = previewArtwork(model)
@@ -277,13 +269,17 @@ internal fun DetailArtwork(
         )
         return
     }
-    GlideImage(
-        model = model,
+    // The placeholders are layer-list drawables, which painterResource can't load, so the request inflates them
+    AsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(model)
+            .placeholder(placeholderResId)
+            .error(placeholderResId)
+            .crossfade(DETAIL_ARTWORK_CROSSFADE_MILLIS)
+            .build(),
         contentDescription = artworkDescription,
         contentScale = ContentScale.Crop,
-        loading = placeholder(placeholderResId),
-        modifier = modifier,
-        requestBuilderTransform = requestBuilderTransform,
+        modifier = modifier.clip(shape),
     )
 }
 
@@ -546,3 +542,5 @@ private fun Ready(@PreviewParameter(ColorSchemePreviewParameterProvider::class) 
         }
     }
 }
+
+private const val DETAIL_ARTWORK_CROSSFADE_MILLIS = 200
