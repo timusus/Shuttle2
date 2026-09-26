@@ -17,6 +17,9 @@ import com.simplecityapps.imageloading.coil.SongArtworkKeyer
 import com.simplecityapps.imageloading.coil.artworkCacheKey
 import com.simplecityapps.imageloading.coil.source.EmbeddedAlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.EmbeddedSongArtworkSource
+import com.simplecityapps.imageloading.coil.source.FolderAlbumArtistArtworkSource
+import com.simplecityapps.imageloading.coil.source.FolderAlbumArtworkSource
+import com.simplecityapps.imageloading.coil.source.FolderSongArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaStoreAlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaStoreSongArtworkSource
 import com.simplecityapps.ktaglib.KTagLib
@@ -52,22 +55,28 @@ object CoilModule {
     ): ImageLoader {
         val artworkClient = artworkHttpClient(context, okHttpClient, artworkSettings)
 
-        // Where the app can't list folder images (Android 13+ grants a music player only READ_MEDIA_AUDIO), MediaProvider can:
-        // after embedded art, fall back to MediaStore's audio thumbnail, which is the folder image when the song has no embedded art
-        val mediaStoreThumbnails = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+        // Android 13+ grants a music player only READ_MEDIA_AUDIO, so listing a shared storage folder leaves its images out. There
+        // MediaProvider finds them instead: after embedded art, fall back to MediaStore's audio thumbnail, which is the folder
+        // image when the song has no embedded art.
+        val sharedStorageListsImages = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
 
         // Each model's sources, in the order they're tried
         val songSources =
             buildList<ArtworkSource<Song>> {
+                add(FolderSongArtworkSource(context, sharedStorageListsImages))
                 add(EmbeddedSongArtworkSource(context, kTagLib))
-                if (mediaStoreThumbnails) add(MediaStoreSongArtworkSource(context))
+                if (!sharedStorageListsImages) add(MediaStoreSongArtworkSource(context))
             }
         val albumSources =
             buildList<ArtworkSource<Album>> {
+                add(FolderAlbumArtworkSource(context, songRepository, sharedStorageListsImages))
                 add(EmbeddedAlbumArtworkSource(context, kTagLib, songRepository))
-                if (mediaStoreThumbnails) add(MediaStoreAlbumArtworkSource(context, songRepository))
+                if (!sharedStorageListsImages) add(MediaStoreAlbumArtworkSource(context, songRepository))
             }
-        val albumArtistSources = listOf<ArtworkSource<AlbumArtist>>()
+        val albumArtistSources =
+            buildList<ArtworkSource<AlbumArtist>> {
+                add(FolderAlbumArtistArtworkSource(context, songRepository, sharedStorageListsImages))
+            }
 
         return ImageLoader.Builder(context)
             // Every component is registered here, so a stray library can't add fetchers or decoders behind our back
