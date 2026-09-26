@@ -105,6 +105,12 @@ class LocalAlbumRepositoryTest {
             lastPlayed: Date
         ) = throw NotImplementedError()
 
+        override suspend fun recordPlayedThrough(
+            id: Long,
+            playbackPosition: Int,
+            now: Date
+        ) = throw NotImplementedError()
+
         override suspend fun setExcluded(
             ids: List<Long>,
             blacklisted: Boolean
