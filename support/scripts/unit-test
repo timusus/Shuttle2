@@ -239,6 +239,33 @@ module_id() {
   printf '%s' "${1#:}" | tr ':' '_'
 }
 
+# True (exit 0) if a module's build file doesn't apply the Android Gradle plugin: a plain
+# Kotlin/JVM module (:android:domain, :android:architecture-tests) compiles its unit-test
+# sources under the plain Kotlin task name, not the Android variant-specific one.
+module_is_jvm_only() {
+  local mpath="$1" dir build_file
+  dir="android$(printf '%s' "${mpath#:android}" | tr ':' '/')"
+  for build_file in "${REPO_ROOT}/${dir}/build.gradle.kts" "${REPO_ROOT}/${dir}/build.gradle"; do
+    [ -f "${build_file}" ] || continue
+    ! grep -Eq 'com\.android\.(application|library)' "${build_file}"
+    return
+  done
+  return 1
+}
+
+# The task that compiles a module's unit-test sources: the plain Kotlin/JVM name for a module
+# without the Android plugin, the Android variant task otherwise. :android:domain and
+# :android:architecture-tests each register a testDebugUnitTest task as a twin of `test` so the
+# *test-run* task name needs no such handling (#556), but there is no equivalent twin for the
+# compile task.
+compile_test_task_for() {
+  if module_is_jvm_only "$1"; then
+    echo "compileTestKotlin"
+  else
+    echo "compileDebugUnitTestKotlin"
+  fi
+}
+
 # Echoes the changed files: committed since the merge-base with ${base},
 # plus uncommitted (staged/unstaged) and untracked changes. One path per
 # line, deduplicated.
@@ -429,7 +456,7 @@ run_changed_mode() {
   if [ "${#compile_modules[@]}" -gt 0 ]; then
     local compile_tasks=() cm
     for cm in "${compile_modules[@]}"; do
-      compile_tasks+=("${cm}:compileDebugUnitTestKotlin")
+      compile_tasks+=("${cm}:$(compile_test_task_for "${cm}")")
     done
     if ! print_and_run "${compile_tasks[@]}"; then
       echo "Compile failed; stopping before running tests." >&2
