@@ -124,6 +124,16 @@ class AnalyticsConsentViewModelTest {
         viewModel(day = 3).uiState.value.showCard shouldBe false
     }
 
+    @Test
+    fun `the card never shows once analytics is already on, as it is for a new install`() = runTest(mainDispatcherRule.testDispatcher) {
+        privacySettings.analytics.value = true
+
+        viewModel(day = 1)
+        viewModel(day = 2)
+
+        viewModel(day = 3).showCard.value shouldBe false
+    }
+
     companion object {
         private const val SecondsPerDay = 86_400L
     }

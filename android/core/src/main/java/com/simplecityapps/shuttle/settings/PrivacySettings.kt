@@ -19,9 +19,10 @@ class PrivacySettings @Inject constructor(
         val CrashReporting = Setting.boolean("pref_crash_reporting", false)
 
         /**
-         * PostHog product analytics. Off until the user turns it on, via the Home consent card (#421) or Settings >
-         * Privacy, and applied at startup and whenever it changes (TelemetryConsentGate). The key predates PostHog: it
-         * keeps the choice users made for Firebase Analytics.
+         * PostHog product analytics, applied at startup and whenever it changes (TelemetryConsentGate), with the
+         * opt-out in Settings > Privacy. A new install stores it on (owner decision, #481; see InstallDefaults); this
+         * default, off, is what existing users who never chose have always had — the Home consent card (#421) offers
+         * them the same choice. The key predates PostHog: it keeps the choice users made for Firebase Analytics.
          */
         val Analytics = Setting.boolean("pref_firebase_analytics", false)
     }

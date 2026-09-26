@@ -172,9 +172,10 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 - [ ] On a real 10k-track library, time a full import with the S2 provider (`Import complete in` in logcat) and compare it with the last Play build, which walks SAF folders.
 - [x] Put music in a folder containing `.nomedia` and grant that folder under Media > Directories. Those songs don't import (expected until the optional SAF "Add folder" lands); nothing else breaks. — automated: `emu-verify.sh --check nomedia-import`
 
-## Home analytics consent card (#421)
+## Home analytics consent card (#421, #481)
 
-- [ ] With a library loaded, force-stop and reopen the app on 3 separate calendar days (change the device date between opens). The card appears on Home on the 3rd day, not before, and Analytics in Settings > Privacy stays off the whole time.
+- [ ] Fresh install: Analytics in Settings > Privacy is already on, and the card never appears on Home no matter how many days the app is opened.
+- [ ] Simulate an upgrade from a user who never chose (Analytics off in Settings > Privacy), with a library loaded: force-stop and reopen the app on 3 separate calendar days (change the device date between opens). The card appears on Home on the 3rd day, not before, and Analytics stays off the whole time.
 
 ## Sources parity (#474, #479)
 

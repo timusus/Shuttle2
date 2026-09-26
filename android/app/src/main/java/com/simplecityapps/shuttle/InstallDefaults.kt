@@ -16,8 +16,9 @@ class InstallDefaults @Inject constructor(
         if (preferenceManager.previousVersionCode == -1) {
             // Nothing to catch up on: the changelog is for upgrades
             preferenceManager.lastViewedChangelogVersion = versionName
-            // On for new installs (#379). Existing users who never chose keep the old default, off
+            // On for new installs (#379, #481). Existing users who never chose keep the old default, off
             privacySettings.crashReporting.value = true
+            privacySettings.analytics.value = true
         }
         if (preferenceManager.previousVersionCode != versionCode) {
             preferenceManager.previousVersionCode = versionCode

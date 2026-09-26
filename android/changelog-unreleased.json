@@ -58,7 +58,7 @@
       "commits": ["234486a7"]
     },
     {
-      "text": "After using S2 for a few days, Home may show a one-time card asking if you'd like to share anonymous usage stats to help improve the app. Analytics stays off unless you choose to share, and you can change your choice any time in Settings, Privacy. Changes to usage stats and crash reports there now take effect straight away, without restarting the app",
+      "text": "New installs now share anonymous usage stats to help improve the app, alongside crash reports. You can turn either off any time in Settings, Privacy, where changes take effect straight away without restarting the app. If you already have S2 and never chose, usage stats stay off; after using the app for a few days, Home may show a one-time card asking if you'd like to turn them on",
       "commits": ["0852f1db"]
     }
   ],

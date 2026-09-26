@@ -21,10 +21,11 @@ data class AnalyticsConsentUiState(
 )
 
 /**
- * The Home analytics consent card (#421): shown once a library is loaded and the app has been opened on
- * [DaysBeforeAsking] separate days. Either answer, or dismissing the card, marks it asked so it never shows again;
- * analytics stays off until the user chooses [onShare]. The choice is [PrivacySettings.analytics], which
- * TelemetryConsentGate applies to PostHog as soon as it changes.
+ * The Home analytics consent card (#421): the opt-in prompt for existing users whose analytics is still off, shown
+ * once a library is loaded and the app has been opened on [DaysBeforeAsking] separate days. It never shows once
+ * analytics is already on (including every new install, #481), so it never asks a user who has nothing to opt into.
+ * Either answer, or dismissing the card, marks it asked so it never shows again. The choice is
+ * [PrivacySettings.analytics], which TelemetryConsentGate applies to PostHog as soon as it changes.
  */
 @HiltViewModel
 class AnalyticsConsentViewModel @Inject constructor(
@@ -46,8 +47,10 @@ class AnalyticsConsentViewModel @Inject constructor(
             observeSongs().map { songs -> songs.isNotEmpty() }.distinctUntilChanged(),
             settings.asked.flow,
             settings.daysOpened.flow,
-        ) { hasSongs, asked, daysOpened -> AnalyticsConsentUiState(showCard = hasSongs && !asked && daysOpened >= DaysBeforeAsking) }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AnalyticsConsentUiState())
+            privacySettings.analytics.flow,
+        ) { hasSongs, asked, daysOpened, analyticsOn ->
+            AnalyticsConsentUiState(showCard = hasSongs && !asked && !analyticsOn && daysOpened >= DaysBeforeAsking)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AnalyticsConsentUiState())
 
     /** The user chose Share: turns analytics on, starting PostHog, and marks the card answered. */
     fun onShare() {
