@@ -411,8 +411,6 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
-    /** Types into the one text field on screen. */
-
     fun pressBack() {
         rule.runOnUiThread { rule.activity.onBackPressedDispatcher.onBackPressed() }
         rule.waitForIdle()
