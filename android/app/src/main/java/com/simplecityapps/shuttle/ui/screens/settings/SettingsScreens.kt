@@ -45,6 +45,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ChoiceList
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
+import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SliderSetting
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
@@ -58,25 +59,35 @@ import java.text.DateFormat
 import java.util.Locale
 import kotlin.math.roundToInt
 
-/** A settings screen: a collapsing large top bar over one list, as the shell's top-level screens use. */
+/**
+ * A settings screen: a top bar over one list. The Settings [root] takes the collapsing large top bar the shell's
+ * top-level screens use; its sub-pages take the standard one-row bar, so they read as a level down (#496).
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SettingsScaffold(
     title: String,
     onNavigateUp: () -> Unit,
     modifier: Modifier = Modifier,
+    root: Boolean = false,
     snackbarHostState: SnackbarHostState? = null,
     actions: @Composable RowScope.() -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(16.dp),
     content: LazyListScope.() -> Unit
 ) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = if (root) TopAppBarDefaults.exitUntilCollapsedScrollBehavior() else TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
-        topBar = { S2LargeTopBar(title = title, onBack = onNavigateUp, actions = actions, scrollBehavior = scrollBehavior) },
+        topBar = {
+            if (root) {
+                S2LargeTopBar(title = title, onBack = onNavigateUp, actions = actions, scrollBehavior = scrollBehavior)
+            } else {
+                S2TopBar(title = title, onBack = onNavigateUp, actions = actions, scrollBehavior = scrollBehavior)
+            }
+        },
         snackbarHost = { snackbarHostState?.let { S2SnackbarHost(it) } }
     ) { padding ->
         LazyColumn(
@@ -96,7 +107,7 @@ fun SettingsRootScreen(
     onOpenPro: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    SettingsScaffold(title = stringResource(R.string.settings_menu_settings), onNavigateUp = onNavigateUp, modifier = modifier) {
+    SettingsScaffold(title = stringResource(R.string.settings_menu_settings), onNavigateUp = onNavigateUp, modifier = modifier, root = true) {
         item {
             SettingsGroup(
                 rows = listOf { shapes: ListItemShapes ->

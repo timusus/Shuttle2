@@ -249,6 +249,8 @@ inset through the bar's default `windowInsets`.
 - **Top-level and list screens** (Home, Library, Search, Playlists, Settings): `LargeFlexibleTopAppBar`
   with title and subtitle (for example the library count), `exitUntilCollapsedScrollBehavior`
   connected to the screen's list. This is a collapsing *bar*, not a hero.
+- **Settings sub-pages** (Appearance, Sources, the equalizer, and the rest under the Settings root):
+  the pinned small `TopAppBar`, so they read as a level below the root (#496).
 - **Artwork detail** (album, artist, genre, playlist): the existing `DetailScaffold`: pinned small
   bar, artwork as a list item. No collapsing hero; the NestedScrollConnection and graphics-layer
   attempts failed and are not retried.
