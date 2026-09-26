@@ -515,6 +515,20 @@ class AppShellTest {
     }
 
     @Test
+    fun `Save Queue to Playlist adds the queue to the playlist picked`() {
+        val roadTrip = createPlaylist(name = "Road trip")
+        robot.actions.playlists = listOf(roadTrip)
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.tapDescription("More options")
+        robot.tapText("Save Queue to Playlist")
+        robot.tapText("Road trip")
+
+        robot.actions.mediaActions shouldBe listOf(MediaAction.AddToPlaylist(MediaSelection.Queue, roadTrip))
+    }
+
+    @Test
     fun `a song action's snackbar button sends its action back`() {
         val include = MediaAction.Include(MediaSelection.Songs(emptyList()))
         robot.actions.mediaActionResult = { action ->

@@ -3,7 +3,10 @@ package com.simplecityapps.shuttle.ui.actions
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaylistRepository
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.toQueueItem
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.test.runTest
@@ -12,7 +15,8 @@ import org.junit.Test
 class AddToPlaylistTest {
 
     private val fakePlaylistRepository = FakePlaylistRepository()
-    private val actions = TestMediaActions(playlistRepository = fakePlaylistRepository)
+    private val queueOperations = FakeQueueOperations()
+    private val actions = TestMediaActions(playlistRepository = fakePlaylistRepository, queueOperations = queueOperations)
     private val addToPlaylist = actions.addToPlaylist
     private val playlist = createPlaylist(id = 1L, name = "My Playlist")
 
@@ -21,6 +25,17 @@ class AddToPlaylistTest {
         val songs = listOf(createSong(id = 1), createSong(id = 2))
 
         val result = addToPlaylist(playlist, MediaSelection.Songs(songs))
+
+        result shouldBe AddToPlaylist.Result.Success(playlist, songs)
+        fakePlaylistRepository.addedToPlaylist shouldBe listOf(playlist to songs)
+    }
+
+    @Test
+    fun `saves the queue's songs, in queue order`() = runTest {
+        val songs = listOf(createSong(id = 2), createSong(id = 1))
+        queueOperations.queueStateFlow.value = QueueState(items = songs.map { it.toQueueItem(isCurrent = false) }, currentItem = null, currentPosition = null)
+
+        val result = addToPlaylist(playlist, MediaSelection.Queue)
 
         result shouldBe AddToPlaylist.Result.Success(playlist, songs)
         fakePlaylistRepository.addedToPlaylist shouldBe listOf(playlist to songs)

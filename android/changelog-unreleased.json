@@ -278,6 +278,10 @@
     {
       "text": "Swiping the Now Playing artwork sideways now skips to the next or previous song, matching the mini player",
       "commits": []
+    },
+    {
+      "text": "Save your current queue as a new or existing playlist from the Now Playing menu",
+      "commits": []
     }
   ]
 }

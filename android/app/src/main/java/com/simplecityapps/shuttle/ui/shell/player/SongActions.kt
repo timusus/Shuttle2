@@ -29,28 +29,31 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2ActionsSheet
 import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 
 /**
  * Which of the player's song sheets is open: a song's actions, then the playlist picker and the new
- * playlist dialog that Add to playlist leads to. One at a time, so each replaces the last.
+ * playlist dialog that Add to playlist (or Save queue to playlist) leads to. One at a time, so each
+ * replaces the last.
  */
 @Stable
 internal class SongActionsState {
     var menuFor by mutableStateOf<PlayerSong?>(null)
-    var playlistFor by mutableStateOf<Song?>(null)
-    var newPlaylistFor by mutableStateOf<Song?>(null)
+    var playlistFor by mutableStateOf<PlaylistPick?>(null)
+    var newPlaylistFor by mutableStateOf<MediaSelection?>(null)
 }
+
+/** What the playlist picker adds: [selection], named under the picker's title by [subtitle]. */
+internal data class PlaylistPick(val selection: MediaSelection, val subtitle: String?)
 
 @Composable
 internal fun rememberSongActionsState(): SongActionsState = remember { SongActionsState() }
 
 /**
  * The open song sheet of [state]: the queue's own [leading] actions (Play next, Remove), the shared
- * actions [PlayerActions.songActions] allows, sent through [PlayerActions.onMediaAction], then [trailing] (Clear queue).
+ * actions [PlayerActions.songActions] allows, sent through [PlayerActions.onMediaAction], then [trailing] (Save queue to playlist, Clear queue).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +69,7 @@ internal fun SongActionsHost(
         val shared = available.mapNotNull { type ->
             val label = type.labelRes?.let { stringResource(it) } ?: return@mapNotNull null
             val onClick = if (type == MediaActionType.AddToPlaylist) {
-                { state.playlistFor = row.song }
+                { state.playlistFor = PlaylistPick(selection, row.song.name) }
             } else {
                 { type.actionFor(selection)?.let(actions::onMediaAction) ?: Unit }
             }
@@ -80,22 +83,21 @@ internal fun SongActionsHost(
             onDismissRequest = { state.menuFor = null },
         )
     }
-    state.playlistFor?.let { song ->
+    state.playlistFor?.let { (selection, subtitle) ->
         val playlists by remember { actions.playlists() }.collectAsState(initial = emptyList())
-        val selection = MediaSelection.Songs(song)
         S2ActionsSheet(
             title = stringResource(R.string.menu_title_add_to_playlist),
-            subtitle = song.name,
-            actions = listOf(S2Action(stringResource(R.string.playlist_menu_create_playlist), { state.newPlaylistFor = song }, Icons.Rounded.Add)) +
+            subtitle = subtitle,
+            actions = listOf(S2Action(stringResource(R.string.playlist_menu_create_playlist), { state.newPlaylistFor = selection }, Icons.Rounded.Add)) +
                 playlists.map { playlist ->
                     S2Action(playlist.name, { actions.onMediaAction(MediaAction.AddToPlaylist(selection, playlist)) }, Icons.AutoMirrored.Rounded.QueueMusic)
                 },
             onDismissRequest = { state.playlistFor = null },
         )
     }
-    state.newPlaylistFor?.let { song ->
+    state.newPlaylistFor?.let { selection ->
         NewPlaylistDialog(
-            onCreate = { name -> actions.onMediaAction(MediaAction.CreatePlaylist(MediaSelection.Songs(song), name)) },
+            onCreate = { name -> actions.onMediaAction(MediaAction.CreatePlaylist(selection, name)) },
             onDismiss = { state.newPlaylistFor = null },
         )
     }

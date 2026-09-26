@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.ClearAll
@@ -66,6 +67,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2IconButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2IconToggleButton
+import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -367,11 +369,18 @@ internal fun NowPlayingBar(
         BarButton(Icons.AutoMirrored.Rounded.QueueMusic, stringResource(R.string.player_show_queue), selected == NowPlayingPanel.Queue) { onPanel(NowPlayingPanel.Queue) }
         S2IconButton(icon = Icons.Rounded.MoreVert, contentDescription = stringResource(DesignR.string.ds_more_options), onClick = { songActions.menuFor = player.current })
     }
-    val clearQueue = stringResource(R.string.menu_title_sort_clear_queue)
+    val upNext = stringResource(R.string.playback_up_next)
     SongActionsHost(
         songActions,
         actions,
-        trailing = listOf(S2Action(label = clearQueue, onClick = actions::clearQueue, icon = Icons.Rounded.ClearAll, destructive = true)),
+        trailing = listOf(
+            S2Action(
+                label = stringResource(R.string.menu_title_save_queue_to_playlist),
+                onClick = { songActions.playlistFor = PlaylistPick(MediaSelection.Queue, upNext) },
+                icon = Icons.AutoMirrored.Rounded.PlaylistAdd,
+            ),
+            S2Action(label = stringResource(R.string.menu_title_sort_clear_queue), onClick = actions::clearQueue, icon = Icons.Rounded.ClearAll, destructive = true),
+        ),
     )
 }
 

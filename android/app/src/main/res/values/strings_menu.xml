@@ -64,4 +64,6 @@
     <string name="menu_title_remove_from_queue">Remove from Queue</string>
     <!-- Menu option to remove all items from the queue -->
     <string name="menu_title_sort_clear_queue">Clear Queue</string>
+    <!-- Menu option to save the current queue as a new or existing playlist -->
+    <string name="menu_title_save_queue_to_playlist">Save Queue to Playlist</string>
 </resources>

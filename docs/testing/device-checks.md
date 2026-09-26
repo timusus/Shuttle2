@@ -198,4 +198,5 @@ The JVM-proven parts of these items are mapped in `docs/architecture/parity-audi
 - [ ] On an Android Auto head unit (or the DHU), browse the library and play a song; the transport controls work.
 - [ ] Grant music access through the in-context prompt on API 32 (`READ_EXTERNAL_STORAGE` dialog) and on API 33+ (`READ_MEDIA_AUDIO`); deny it twice and the Library offers to open the app settings instead.
 - [ ] Edit a Jellyfin, Emby and Plex server's address and user from Sources. The change saves and the library reimports (View-based dialogs until #434).
+- [ ] Now Playing → More options → Save Queue to Playlist → New Playlist, name it and tap Create (#472). The new playlist holds the queue's songs in queue order; picking an existing playlist instead appends them.
 - [ ] `support/scripts/emu-verify.sh --suite` passes with every flow green in `build/maestro/results.md`.
