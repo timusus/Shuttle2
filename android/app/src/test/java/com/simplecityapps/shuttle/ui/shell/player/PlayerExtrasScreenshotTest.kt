@@ -8,6 +8,7 @@ import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.github.takahirom.roborazzi.roborazziSystemPropertyTaskType
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.SampleArtworkCoil
+import com.simplecityapps.shuttle.ui.settlingClock
 import com.simplecityapps.shuttle.ui.shell.AppShellRobot
 import com.simplecityapps.shuttle.ui.shell.PhoneSystemBars
 import com.simplecityapps.shuttle.ui.shell.sampleShellQueue
@@ -50,10 +51,13 @@ class PlayerExtrasScreenshotTest {
     @After
     fun uninstallSampleArtwork() = SampleArtworkCoil.uninstall()
 
-    /** The whole screen, sheets included: they sit in windows of their own. */
+    // ArtworkTheme animates the colour scheme via a spring (animateColorScheme) on every Now
+    // Playing render. It's a spring, not a fixed-duration tween, so plain waitForIdle() can chase
+    // it past a loaded host's real-time idle budget (AppNotIdleException, #532): pause the clock
+    // and step it forward a fixed amount instead of waiting for exact rest.
     @OptIn(ExperimentalRoborazziApi::class)
     private fun shot(name: String) {
-        composeTestRule.waitForIdle()
+        composeTestRule.settlingClock()
         captureScreenRoboImage(
             filePath = File(shotsDir, "$name.png").path,
             roborazziOptions = DocsDesignRoborazziOptions,
