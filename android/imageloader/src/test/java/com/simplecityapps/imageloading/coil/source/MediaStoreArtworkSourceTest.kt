@@ -161,7 +161,9 @@ class MediaStoreArtworkSourceTest {
             mediaProviderType: MediaProviderType
         ): List<SongPathRemap> = remaps
 
-        override suspend fun incrementPlayCount(song: Song) {}
+        override val updatedSongIds: Flow<Set<Long>> = flowOf()
+
+        override suspend fun recordPlayedThrough(song: Song) {}
 
         override suspend fun setPlaybackPosition(
             song: Song,
