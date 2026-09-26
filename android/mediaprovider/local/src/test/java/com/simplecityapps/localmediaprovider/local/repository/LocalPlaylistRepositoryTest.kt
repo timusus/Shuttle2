@@ -13,6 +13,9 @@ import com.simplecityapps.shuttle.model.Song
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import java.util.Date
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -55,6 +58,16 @@ class LocalPlaylistRepositoryTest {
         }
 
         database.playlistDataDao().getAll().first() shouldBe emptyList()
+    }
+
+    @Test
+    fun `concurrent first calls to getFavoritesPlaylist create only one playlist`() = runTest {
+        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+
+        val results = (1..10).map { async(Dispatchers.Default) { repository.getFavoritesPlaylist() } }.awaitAll()
+
+        results.map { it.id }.distinct() shouldBe listOf(results.first().id)
+        database.playlistDataDao().getAll().first().count { it.name == results.first().name } shouldBe 1
     }
 
     private suspend fun insertSongs(vararg names: String): List<Song> {
