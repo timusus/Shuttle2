@@ -39,10 +39,6 @@ dependencies {
     // Shuttle MediaProvider Core
     implementation project(':android:mediaprovider:core')
 
-    // Remote media providers
-    implementation project(':android:mediaprovider:emby')
-    implementation project(':android:mediaprovider:jellyfin')
-
     // TagLib
     implementation(libs.timusus.ktaglib)
 
