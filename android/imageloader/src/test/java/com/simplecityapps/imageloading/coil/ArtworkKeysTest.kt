@@ -1,4 +1,4 @@
-package com.simplecityapps.imageloading.glide.loader.common
+package com.simplecityapps.imageloading.coil
 
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -10,60 +10,68 @@ import io.kotest.matchers.shouldNotBe
 import kotlin.time.Instant
 import org.junit.Test
 
-class ArtworkProviderCacheKeyTest {
+class ArtworkKeysTest {
     @Test
     fun `song key is stable when the artwork version is unchanged`() {
         // A rescan can move lastModified without the artwork changing; only the version counts
         val first = createSong(artworkVersion = "v1", lastModified = Instant.fromEpochMilliseconds(1_000))
         val second = createSong(artworkVersion = "v1", lastModified = Instant.fromEpochMilliseconds(2_000))
 
-        SongArtworkProvider(first).getCacheKey() shouldBe SongArtworkProvider(second).getCacheKey()
+        first.artworkCacheKey() shouldBe second.artworkCacheKey()
     }
 
     @Test
     fun `song key changes when the artwork version changes`() {
-        SongArtworkProvider(createSong(artworkVersion = "v1")).getCacheKey() shouldNotBe
-            SongArtworkProvider(createSong(artworkVersion = "v2")).getCacheKey()
+        createSong(artworkVersion = "v1").artworkCacheKey() shouldNotBe
+            createSong(artworkVersion = "v2").artworkCacheKey()
     }
 
     @Test
     fun `song key keeps its unversioned form without an artwork version`() {
-        SongArtworkProvider(createSong(artworkVersion = null)).getCacheKey() shouldBe "Artist_Album_Song"
-        SongArtworkProvider(createSong(artworkVersion = "v1")).getCacheKey() shouldBe "Artist_Album_Song_v1"
+        createSong(artworkVersion = null).artworkCacheKey() shouldBe "song:Artist_Album_Song"
+        createSong(artworkVersion = "v1").artworkCacheKey() shouldBe "song:Artist_Album_Song_v1"
     }
 
     @Test
     fun `album key is stable when the artwork version is unchanged`() {
-        AlbumArtworkProvider(createAlbum(artworkVersion = "v1")).getCacheKey() shouldBe
-            AlbumArtworkProvider(createAlbum(artworkVersion = "v1")).getCacheKey()
+        createAlbum(artworkVersion = "v1").artworkCacheKey() shouldBe
+            createAlbum(artworkVersion = "v1").artworkCacheKey()
     }
 
     @Test
     fun `album key changes when the artwork version changes`() {
-        AlbumArtworkProvider(createAlbum(artworkVersion = "v1")).getCacheKey() shouldNotBe
-            AlbumArtworkProvider(createAlbum(artworkVersion = "v2")).getCacheKey()
+        createAlbum(artworkVersion = "v1").artworkCacheKey() shouldNotBe
+            createAlbum(artworkVersion = "v2").artworkCacheKey()
     }
 
     @Test
     fun `album key keeps its unversioned form without an artwork version`() {
-        AlbumArtworkProvider(createAlbum(artworkVersion = null)).getCacheKey() shouldBe "Artist_Album"
+        createAlbum(artworkVersion = null).artworkCacheKey() shouldBe "album:Artist_Album"
     }
 
     @Test
     fun `album artist key is stable when the artwork version is unchanged`() {
-        AlbumArtistArtworkProvider(createAlbumArtist(artworkVersion = "v1")).getCacheKey() shouldBe
-            AlbumArtistArtworkProvider(createAlbumArtist(artworkVersion = "v1")).getCacheKey()
+        createAlbumArtist(artworkVersion = "v1").artworkCacheKey() shouldBe
+            createAlbumArtist(artworkVersion = "v1").artworkCacheKey()
     }
 
     @Test
     fun `album artist key changes when the artwork version changes`() {
-        AlbumArtistArtworkProvider(createAlbumArtist(artworkVersion = "v1")).getCacheKey() shouldNotBe
-            AlbumArtistArtworkProvider(createAlbumArtist(artworkVersion = "v2")).getCacheKey()
+        createAlbumArtist(artworkVersion = "v1").artworkCacheKey() shouldNotBe
+            createAlbumArtist(artworkVersion = "v2").artworkCacheKey()
     }
 
     @Test
     fun `album artist key keeps its unversioned form without an artwork version`() {
-        AlbumArtistArtworkProvider(createAlbumArtist(artworkVersion = null)).getCacheKey() shouldBe "Artist"
+        createAlbumArtist(artworkVersion = null).artworkCacheKey() shouldBe "artist:Artist"
+    }
+
+    @Test
+    fun `a song never shares a key with an album whose names line up with it`() {
+        // Unprefixed, the album "Artist" by "Album_Song"... and the song Artist/Album/Song both came out as "Artist_Album_Song"
+        val album = createAlbum(artworkVersion = null).copy(albumArtist = "Artist", name = "Album_Song")
+
+        createSong(artworkVersion = null).artworkCacheKey() shouldNotBe album.artworkCacheKey()
     }
 
     private fun createSong(

@@ -8,6 +8,19 @@ import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.serviceLoaderEnabled
+import com.simplecityapps.imageloading.coil.AlbumArtistArtworkKeyer
+import com.simplecityapps.imageloading.coil.AlbumArtworkKeyer
+import com.simplecityapps.imageloading.coil.ArtworkFetcher
+import com.simplecityapps.imageloading.coil.ArtworkSource
+import com.simplecityapps.imageloading.coil.SongArtworkKeyer
+import com.simplecityapps.imageloading.coil.artworkCacheKey
+import com.simplecityapps.imageloading.coil.source.EmbeddedAlbumArtworkSource
+import com.simplecityapps.imageloading.coil.source.EmbeddedSongArtworkSource
+import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.shuttle.model.Album
+import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import dagger.Module
 import dagger.Provides
@@ -30,14 +43,34 @@ object CoilModule {
     fun provideImageLoader(
         @ApplicationContext context: Context,
         okHttpClient: OkHttpClient,
-        artworkSettings: ArtworkSettings
+        artworkSettings: ArtworkSettings,
+        songRepository: SongRepository,
+        kTagLib: KTagLib
     ): ImageLoader {
         val artworkClient = artworkHttpClient(context, okHttpClient, artworkSettings)
+
+        // Each model's sources, in the order they're tried
+        val songSources =
+            listOf<ArtworkSource<Song>>(
+                EmbeddedSongArtworkSource(context, kTagLib)
+            )
+        val albumSources =
+            listOf<ArtworkSource<Album>>(
+                EmbeddedAlbumArtworkSource(context, kTagLib, songRepository)
+            )
+        val albumArtistSources = listOf<ArtworkSource<AlbumArtist>>()
+
         return ImageLoader.Builder(context)
             // Every component is registered here, so a stray library can't add fetchers or decoders behind our back
             .serviceLoaderEnabled(false)
             .components {
                 add(OkHttpNetworkFetcherFactory(callFactory = { artworkClient }))
+                add(SongArtworkKeyer)
+                add(AlbumArtworkKeyer)
+                add(AlbumArtistArtworkKeyer)
+                add(ArtworkFetcher.Factory(Song::artworkCacheKey, songSources))
+                add(ArtworkFetcher.Factory(Album::artworkCacheKey, albumSources))
+                add(ArtworkFetcher.Factory(AlbumArtist::artworkCacheKey, albumArtistSources))
             }
             .memoryCache {
                 MemoryCache.Builder()
