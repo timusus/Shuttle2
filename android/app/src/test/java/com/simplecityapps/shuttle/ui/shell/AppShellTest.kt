@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.simplecityapps.createPlaylist
+import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
@@ -16,7 +17,9 @@ import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingItems
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
+import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
 import io.kotest.matchers.collections.shouldContain
+import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
@@ -290,6 +293,68 @@ class AppShellTest {
 
         robot.calls shouldBe listOf("togglePlayback", "skipToNext", "skipToPrevious")
         robot.assertLevel(PlayerLevel.Mini)
+    }
+
+    @Test
+    fun `the mini player's next button skips`() {
+        robot.setContent()
+        robot.tapDescription("Next")
+
+        robot.calls shouldBe listOf("skipToNext")
+    }
+
+    @Test
+    fun `the mini player shows how far through the song it is`() {
+        robot.setContent(progress = PlayerProgress(60_000, 180_000))
+
+        robot.miniPlayerProgress() shouldBe (1f / 3 plusOrMinus 0.001f)
+    }
+
+    @Test
+    fun `now playing toggles shuffle, cycles repeat and toggles the favourite`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.tapPlayerControl("Shuffle")
+        robot.tapPlayerControl("Repeat off")
+        robot.tapPlayerControl("Favorite")
+
+        robot.calls shouldBe listOf("toggleShuffle", "cycleRepeatMode", "toggleFavourite")
+    }
+
+    @Test
+    fun `now playing shows each of the three repeat modes`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.setQueue(shellQueue("First song").copy(repeatMode = S2RepeatMode.All))
+        robot.assertReachable("Repeat all", reachable = true)
+        robot.setQueue(shellQueue("First song").copy(repeatMode = S2RepeatMode.One))
+        robot.assertReachable("Repeat one", reachable = true)
+        robot.setQueue(shellQueue("First song").copy(repeatMode = S2RepeatMode.Off))
+        robot.assertReachable("Repeat off", reachable = true)
+    }
+
+    @Test
+    fun `now playing shows whether shuffle is on and the song is a favourite`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.assertToggle("Shuffle", on = false)
+        robot.assertToggle("Favorite", on = false)
+
+        robot.setQueue(shellQueue("First song").copy(shuffle = true, favourite = true))
+        robot.assertToggle("Shuffle", on = true)
+        robot.assertToggle("Favorite", on = true)
+    }
+
+    @Test
+    fun `opening the queue scrolls to the songs after the current one`() {
+        robot.setContent(queue = shellQueue(*Array(30) { "Song ${it + 1}" }, playing = 20))
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+
+        robot.assertQueueRowDisplayed("Song 22", displayed = true)
+        robot.assertQueueRowDisplayed("Song 1", displayed = false)
     }
 
     @Test

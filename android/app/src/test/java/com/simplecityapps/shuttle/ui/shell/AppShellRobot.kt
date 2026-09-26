@@ -22,6 +22,9 @@ import androidx.compose.ui.test.WindowInsets
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
@@ -77,8 +80,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 
-/** A queue of [titles], each on "Phase Garden" by "Juniper Static", three minutes long, playing the first. */
-fun shellQueue(vararg titles: String): PlayerUiState {
+/** A queue of [titles], each on "Phase Garden" by "Juniper Static", three minutes long, playing the one at [playing]. */
+fun shellQueue(
+    vararg titles: String,
+    playing: Int = 0,
+): PlayerUiState {
     val rows = titles.mapIndexed { index, title ->
         PlayerSong(
             uid = index.toLong(),
@@ -86,11 +92,15 @@ fun shellQueue(vararg titles: String): PlayerUiState {
             artist = "Juniper Static",
             album = "Phase Garden",
             durationMs = 180_000,
-            position = if (index == 0) QueuePosition.Current else QueuePosition.Upcoming,
+            position = when {
+                index < playing -> QueuePosition.Played
+                index == playing -> QueuePosition.Current
+                else -> QueuePosition.Upcoming
+            },
             song = createSong(id = index.toLong(), name = title, albumArtist = "Juniper Static", album = "Phase Garden", duration = 180_000),
         )
     }
-    return PlayerUiState(hasQueue = rows.isNotEmpty(), current = rows.firstOrNull(), items = rows)
+    return PlayerUiState(hasQueue = rows.isNotEmpty(), current = rows.getOrNull(playing), items = rows)
 }
 
 /**
@@ -474,6 +484,32 @@ class AppShellRobot(
         rule.mainClock.advanceTimeBy(holdMs)
         handle.performTouchInput { up() }
         rule.waitForIdle()
+    }
+
+    fun assertQueueRowDisplayed(
+        title: String,
+        displayed: Boolean,
+    ) {
+        if (displayed) queueRow(title).assertIsDisplayed() else queueRow(title).assertIsNotDisplayed()
+    }
+
+    /** The fraction of the song the mini player's progress bar shows. */
+    fun miniPlayerProgress(): Float = rule
+        .onNode(
+            SemanticsMatcher.keyIsDefined(SemanticsProperties.ProgressBarRangeInfo) and hasAnyAncestor(hasTestTag(PlayerTestTags.MiniPlayer)),
+            useUnmergedTree = true,
+        )
+        .fetchSemanticsNode()
+        .config[SemanticsProperties.ProgressBarRangeInfo]
+        .current
+
+    /** Asserts the Now Playing toggle labelled [description] is [on] or off. */
+    fun assertToggle(
+        description: String,
+        on: Boolean,
+    ) {
+        val node = rule.onNode(hasContentDescription(description) and hasAnyAncestor(hasTestTag(PlayerTestTags.MiniPlayer)).not())
+        if (on) node.assertIsOn() else node.assertIsOff()
     }
 
     private fun queueRow(title: String) = rule.onNode(hasText(title) and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueRow)))
