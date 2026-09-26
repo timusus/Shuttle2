@@ -296,7 +296,7 @@ fun GenresPage(
     }
 }
 
-/** Playlists: the smart playlists pinned first, then the user's, with "New playlist" in their header. */
+/** Playlists: Favorites, then the smart playlists, pinned first, then the user's, with "New playlist" in their header. */
 @Composable
 fun PlaylistsPage(
     state: PlaylistListUiState,
@@ -316,10 +316,20 @@ fun PlaylistsPage(
     }
     LibraryContent(content, stringResource(R.string.playlist_list_empty), modifier, state.scanProgress) {
         val listState = rememberLazyListState()
-        val headerCount = 1 + state.smartPlaylists.size + 1
+        val headerCount = 1 + (if (state.favoritesPlaylist != null) 1 else 0) + state.smartPlaylists.size + 1
         Box(modifier.fillMaxSize()) {
             LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-playlists")) {
                 item(key = "smart-header") { SectionHeader(title = stringResource(R.string.library_smart_playlists)) }
+                state.favoritesPlaylist?.let { favorites ->
+                    item(key = "favorites") {
+                        PlaylistRow(
+                            name = favorites.name,
+                            summary = pluralString(R.plurals.songsPlural, favorites.songCount),
+                            onClick = { onPlaylistClick(favorites) },
+                            artwork = { LibraryArtwork(null, ArtworkPlaceholder.SmartPlaylist) },
+                        )
+                    }
+                }
                 items(state.smartPlaylists, key = { "smart-${it.nameResId}" }) { smartPlaylist ->
                     PlaylistRow(
                         name = stringResource(smartPlaylist.nameResId),

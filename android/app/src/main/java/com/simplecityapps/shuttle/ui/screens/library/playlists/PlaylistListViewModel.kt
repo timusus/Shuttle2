@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
 import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
+import com.simplecityapps.shuttle.ui.actions.GetFavoritesPlaylist
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
 import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistId
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -29,17 +31,20 @@ class PlaylistListViewModel @Inject constructor(
     private val renamePlaylist: RenamePlaylist,
     private val clearPlaylist: ClearPlaylist,
     private val deletePlaylist: DeletePlaylist,
+    getFavoritesPlaylist: GetFavoritesPlaylist,
     private val sortPreferenceManager: SortPreferences,
     mediaImportObserver: SongImportStateProvider,
 ) : ViewModel() {
 
     private val _sortOrder = MutableStateFlow(sortPreferenceManager.sortOrderPlaylistList)
+    private val favoritesPlaylist = flow { emit(getFavoritesPlaylist()) }
 
     val uiState: StateFlow<PlaylistListUiState> = combine(
         observePlaylists(),
         mediaImportObserver.songImportState,
         _sortOrder,
-    ) { playlists, songImportState, sortOrder ->
+        favoritesPlaylist,
+    ) { playlists, songImportState, sortOrder, favorites ->
         if (songImportState is SongImportState.ImportProgress) {
             PlaylistListUiState(
                 loadingState = PlaylistListUiState.LoadingState.Scanning,
@@ -48,8 +53,9 @@ class PlaylistListViewModel @Inject constructor(
             )
         } else {
             PlaylistListUiState(
-                playlists = playlists.sortedWith(sortOrder.comparator),
+                playlists = playlists.filterNot { it.id == favorites.id }.sortedWith(sortOrder.comparator),
                 smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist },
+                favoritesPlaylist = favorites,
                 sortOrder = sortOrder,
                 loadingState = PlaylistListUiState.LoadingState.Ready,
             )

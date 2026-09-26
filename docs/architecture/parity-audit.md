@@ -15,9 +15,9 @@ Code paths are relative to `android/app/src/main/java/com/simplecityapps/shuttle
 | Artist detail ✅ | inline expand, Play, Shuffle | `ui/screens/library/AlbumArtistDetailScreen.kt:41` | `AlbumArtistDetailScreenTest` | proven |
 | | Shuffle albums | `ui/actions/ShuffleAlbums.kt:10` | `AlbumArtistDetailViewModelTest` | proven |
 | | Play next, Edit all tags | `ui/common/mediaactions/MediaActionsHost.kt:72` | `MediaActionsStateTest` | proven |
-| Auto playlists | Recently added, Most played, History | `ui/screens/library/SmartPlaylistDetailViewModel.kt:31` | `SmartPlaylistDetailViewModelTest` | proven |
+| Auto playlists ✅ | Recently added, Most played, History | `ui/screens/library/SmartPlaylistDetailViewModel.kt:31` | `SmartPlaylistDetailViewModelTest` | proven |
 | | heart in Now Playing | `ui/actions/ToggleFavourite.kt:12` | `AppShellTest`, `PlayerViewModelTest` | proven |
-| | Favorites pinned in the auto-playlist row | `ui/screens/library/LibraryRoutes.kt:56` | none | gap #477 |
+| | Favorites pinned in the auto-playlist row | `ui/screens/library/playlists/PlaylistListViewModel.kt:1`, `ui/screens/library/LibraryPages.kt` | `PlaylistListViewModelTest`, `LibraryScreenTest` | proven |
 | Search | artists/albums/songs, fuzzy ranking | `ui/screens/search/SearchViewModel.kt:47` | `SearchViewModelTest`, `SearchIndexTest` | proven |
 | | filter chips persisted | `ui/screens/search/SearchViewModel.kt:47` | `SearchViewModelTest` | proven |
 | | shared-element open | `ui/screens/search/SearchScreen.kt:76` | none | gap #431 |

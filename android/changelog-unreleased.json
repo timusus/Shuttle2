@@ -254,6 +254,10 @@
     {
       "text": "Show Home on launch in Appearance settings now actually opens S2 on Home; it previously had no effect",
       "commits": []
+    },
+    {
+      "text": "Favorites is now pinned at the top of the Playlists tab's smart playlists, matching Now Playing's heart button",
+      "commits": []
     }
   ]
 }

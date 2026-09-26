@@ -43,7 +43,7 @@ class PlaylistListIntegrationTest {
     @get:Rule(order = 1)
     val composeTestRule = createComposeRule()
 
-    private val fakePlaylistRepository = FakePlaylistRepository()
+    private val fakePlaylistRepository = FakePlaylistRepository().apply { favorites = createPlaylist(id = 99, name = "Favorites") }
     private val fakeImportState = FakeSongImportStateProvider()
     private val fakeSortPreferences = FakeSortPreferences()
 
@@ -145,6 +145,7 @@ class PlaylistListIntegrationTest {
             renamePlaylist = actions.renamePlaylist,
             clearPlaylist = actions.clearPlaylist,
             deletePlaylist = actions.deletePlaylist,
+            getFavoritesPlaylist = actions.getFavoritesPlaylist,
             sortPreferenceManager = fakeSortPreferences,
             mediaImportObserver = fakeImportState,
         )

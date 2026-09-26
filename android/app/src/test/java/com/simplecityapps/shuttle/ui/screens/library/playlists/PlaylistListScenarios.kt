@@ -8,9 +8,11 @@ import com.simplecityapps.shuttle.model.SmartPlaylist
 fun readyPlaylistList(
     playlists: List<Playlist> = listOf(createPlaylist()),
     smartPlaylists: List<SmartPlaylist> = emptyList(),
+    favoritesPlaylist: Playlist? = null,
 ) = PlaylistListUiState(
     playlists = playlists,
     smartPlaylists = smartPlaylists,
+    favoritesPlaylist = favoritesPlaylist,
     loadingState = PlaylistListUiState.LoadingState.Ready,
 )
 

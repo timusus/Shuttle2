@@ -249,6 +249,21 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun `playlists page pins Favorites first, ahead of the smart playlists`() {
+        val favorites = createPlaylist(name = "Favorites")
+        val smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist }
+        robot.setContent(
+            libraryState(currentTab = LibraryTab.Playlists),
+            pages = LibraryPageStates(playlists = readyPlaylistList(smartPlaylists = smartPlaylists, favoritesPlaylist = favorites)),
+        )
+
+        robot.assertTextDisplayed("Favorites")
+
+        robot.clickText("Favorites")
+        robot.lastPlaylistClicked shouldBe favorites
+    }
+
+    @Test
     fun `folders page opens a tapped folder`() {
         val folder = createFolder("primary", "Music")
         robot.setContent(

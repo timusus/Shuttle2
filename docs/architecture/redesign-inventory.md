@@ -451,7 +451,7 @@ Audited against the code on 2026-09-26: [parity-audit.md](parity-audit.md) maps 
 - [x] Artist detail: inline album expand, Play/Shuffle all, Shuffle albums, Play next, Edit all tags
 - [x] Genre detail actions at genre, album and song level
 - [x] Playlist detail: 7 sorts + descending, drag reorder (custom), Remove, Rename, Clear, Delete, Export m3u
-- [ ] Auto playlists: Recently added, Most played, History, Favorites (heart in Now Playing) — gap #477
+- [x] Auto playlists: Recently added, Most played, History, Favorites (heart in Now Playing, pinned in the list)
 - [x] Folders: drill down, back one level, recursive Play/Shuffle/Queue/Playlist
 - [x] Song actions: Play next, Add to queue, Add to playlist, Song info, Exclude, Edit tags, Delete, Remove
 - [x] Create, rename, clear, delete playlists; duplicate-song handling
