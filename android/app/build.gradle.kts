@@ -386,7 +386,6 @@ fun versionName(): String = findProperty("versionName")?.toString() ?: getVersio
 
 fun versionCode(): Int = findProperty("versionCode")?.toString()?.toIntOrNull() ?: getVersionFromGitTag().first
 
-// The @Snapshot preview tests record into the LFS-tracked goldens beside them.
 roborazzi {
     outputDir.set(file("src/test/snapshots/images"))
 }
