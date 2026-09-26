@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.github.takahirom.roborazzi.roborazziEnabled
+import com.github.takahirom.roborazzi.roborazziSystemPropertyTaskType
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
@@ -47,7 +47,7 @@ class SettingsScreenshotTest {
     // Skip the whole render (#538) unless Roborazzi is recording or verifying;
     // verifyRoborazziDebug still renders every board on every landing.
     @Before
-    fun skipUnlessRoborazziActive() = assumeTrue(roborazziEnabled())
+    fun skipUnlessRoborazziActive() = assumeTrue(roborazziSystemPropertyTaskType().isEnabled())
 
     private fun shot(
         name: String,

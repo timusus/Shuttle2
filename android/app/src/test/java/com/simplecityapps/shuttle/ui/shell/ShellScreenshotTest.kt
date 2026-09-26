@@ -9,7 +9,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.captureScreenRoboImage
-import com.github.takahirom.roborazzi.roborazziEnabled
+import com.github.takahirom.roborazzi.roborazziSystemPropertyTaskType
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.SampleArtworkCoil
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingItems
@@ -44,7 +44,7 @@ class ShellScreenshotTest {
     // Skip the whole render (#538) unless Roborazzi is recording or verifying;
     // verifyRoborazziDebug still renders every board on every landing.
     @Before
-    fun skipUnlessRoborazziActive() = assumeTrue(roborazziEnabled())
+    fun skipUnlessRoborazziActive() = assumeTrue(roborazziSystemPropertyTaskType().isEnabled())
 
     @Before
     fun installSampleArtwork() = SampleArtworkCoil.install(ApplicationProvider.getApplicationContext())

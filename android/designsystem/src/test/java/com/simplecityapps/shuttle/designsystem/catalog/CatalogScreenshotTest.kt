@@ -11,8 +11,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
-import com.github.takahirom.roborazzi.roborazziEnabled
 import com.github.takahirom.roborazzi.roborazziSystemPropertyOutputDirectory
+import com.github.takahirom.roborazzi.roborazziSystemPropertyTaskType
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
@@ -41,7 +41,7 @@ class CatalogScreenshotTest(private val shot: CatalogShot) {
     // unless Roborazzi is actually recording or verifying (#538). verifyRoborazziDebug still
     // renders every board on every landing.
     @Before
-    fun skipUnlessRoborazziActive() = assumeTrue(roborazziEnabled())
+    fun skipUnlessRoborazziActive() = assumeTrue(roborazziSystemPropertyTaskType().isEnabled())
 
     @Test
     fun board() {
