@@ -149,7 +149,8 @@ main thread busy with the app's start: the restore was launched on it, and hoppe
 again to load it. `PlaybackInitializer` now reads the saved queue and builds it (`QueueOperations.buildQueue`: the
 MediaItems and both starting orders) on a background thread, and takes the main thread once, for the content-version
 check, `setMediaItems`, the load and marking the queue restored (`setQueueIfContentVersion` is main-thread only, so
-that step can't be split). Setting a window around the current song first was rejected for the same reason as above:
+that step can't be split). It sets the saved shuffle mode in that step too, as the saved position is in the order that
+mode presents, rather than relying on the player's mode having been restored first. Setting a window around the current song first was rejected for the same reason as above:
 the player would no longer hold the queue. The stages are traced as `S2 restore prefs`, `DB`, `build`, `setQueue`
 and `load`, and the log line adds the `main wait` before the main-thread step.
 

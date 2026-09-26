@@ -160,11 +160,12 @@ class QueueManager(
 
     override fun setQueueIfContentVersion(
         contentVersion: Long,
-        queue: NewQueue
+        queue: NewQueue,
+        shuffleMode: ShuffleMode
     ): Long? {
         check(playerThread.isCurrent) { "setQueueIfContentVersion is main thread only" }
         if (_queueState.value.contentVersion != contentVersion) return null
-        applyQueue(queue)
+        applyQueue(queue, shuffleMode)
         return _queueState.value.contentVersion
     }
 
@@ -186,13 +187,18 @@ class QueueManager(
 
     /**
      * Replaces the playlist with [queue]'s items, unless it already holds those songs, and moves to its position. When
-     * it already holds them, it keeps its items and takes the queue's songs' data.
+     * it already holds them, it keeps its items and takes the queue's songs' data. Sets the shuffle mode to
+     * [shuffleMode] if given, else keeps the player's, which says which order the position is in.
      */
-    private fun applyQueue(queue: NewQueue): Boolean {
+    private fun applyQueue(
+        queue: NewQueue,
+        shuffleMode: ShuffleMode? = null
+    ): Boolean {
         val songs = queue.songs
         val shuffleSongs = queue.shuffleSongs
         val position = queue.position
-        val savedShuffle = shuffleSongs?.takeIf { player.shuffleModeEnabled }
+        val shuffleEnabled = shuffleMode?.let { it == ShuffleMode.On } ?: player.shuffleModeEnabled
+        val savedShuffle = shuffleSongs?.takeIf { shuffleEnabled }
         val size = savedShuffle?.size ?: songs.size
         if (position < 0 || position >= size || songs.isEmpty()) {
             Timber.e("Invalid queue position: $position (size: $size, songs.size: ${songs.size})")
@@ -200,7 +206,9 @@ class QueueManager(
         }
 
         batch {
-            if (shuffleSongs == null && !playbackSettings.retainShuffleOnNewQueue.value) {
+            if (shuffleMode != null) {
+                writer.shuffleModeEnabled = shuffleEnabled
+            } else if (shuffleSongs == null && !playbackSettings.retainShuffleOnNewQueue.value) {
                 writer.shuffleModeEnabled = false
             }
 

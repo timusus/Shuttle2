@@ -51,10 +51,11 @@ class NewQueueTest {
     private fun restore(
         songs: List<Song>,
         shuffleSongs: List<Song>?,
-        position: Int
+        position: Int,
+        shuffleMode: QueueManager.ShuffleMode = QueueManager.ShuffleMode.Off
     ): Long? = runBlocking {
         val newQueue = queue.buildQueue(songs, shuffleSongs, position)
-        queue.setQueueIfContentVersion(queue.queueStateFlow.value.contentVersion, newQueue)
+        queue.setQueueIfContentVersion(queue.queueStateFlow.value.contentVersion, newQueue, shuffleMode)
     }
 
     @Test
@@ -80,7 +81,7 @@ class NewQueueTest {
         runBlocking { queue.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false) }
         queue.setRepeatMode(QueueManager.RepeatMode.All)
 
-        restore(listOf(a, b, a, c), shuffleSongs = listOf(a, c, b, a), position = 3)
+        restore(listOf(a, b, a, c), shuffleSongs = listOf(a, c, b, a), position = 3, shuffleMode = QueueManager.ShuffleMode.On)
 
         val state = queue.queueStateFlow.value
         state.items.map { it.song } shouldBe listOf(a, c, b, a)
@@ -100,10 +101,35 @@ class NewQueueTest {
         val c = song(3)
         runBlocking { queue.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false) }
 
-        restore(listOf(a, b, c), shuffleSongs = listOf(c, song(9), a, b), position = 1)
+        restore(listOf(a, b, c), shuffleSongs = listOf(c, song(9), a, b), position = 1, shuffleMode = QueueManager.ShuffleMode.On)
 
         queue.queueStateFlow.value.items.map { it.song } shouldBe listOf(c, a, b)
         queue.queueStateFlow.value.currentItem?.song shouldBe c
+    }
+
+    @Test
+    fun `the shuffle mode is set with the queue, so the position is in its order whatever the player's mode was`() {
+        val songs = (1L..4L).map { song(it) }
+        val shuffleSongs = listOf(songs[2], songs[0], songs[3], songs[1])
+
+        // Shuffle is still off: nothing has set the saved mode yet.
+        restore(songs, shuffleSongs, position = 0, shuffleMode = QueueManager.ShuffleMode.On)
+
+        queue.shuffleModeFlow.value shouldBe QueueManager.ShuffleMode.On
+        queue.queueStateFlow.value.items.map { it.song } shouldBe shuffleSongs
+        queue.queueStateFlow.value.currentItem?.song shouldBe songs[2]
+    }
+
+    @Test
+    fun `a queue set with shuffle off is in the saved order, though the player's shuffle was on`() {
+        val songs = (1L..4L).map { song(it) }
+        runBlocking { queue.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false) }
+
+        restore(songs, shuffleSongs = songs.reversed(), position = 1, shuffleMode = QueueManager.ShuffleMode.Off)
+
+        queue.shuffleModeFlow.value shouldBe QueueManager.ShuffleMode.Off
+        queue.queueStateFlow.value.items.map { it.song } shouldBe songs
+        queue.queueStateFlow.value.currentItem?.song shouldBe songs[1]
     }
 
     @Test
@@ -112,7 +138,7 @@ class NewQueueTest {
         val version = queue.queueStateFlow.value.contentVersion
         runBlocking { queue.setQueue(listOf(song(3))) }
 
-        queue.setQueueIfContentVersion(version, newQueue).shouldBeNull()
+        queue.setQueueIfContentVersion(version, newQueue, QueueManager.ShuffleMode.Off).shouldBeNull()
 
         queue.queueStateFlow.value.items.map { it.song.id } shouldBe listOf(3L)
     }
@@ -123,7 +149,7 @@ class NewQueueTest {
         val version = queue.queueStateFlow.value.contentVersion
         var error: Throwable? = null
 
-        Thread { error = runCatching { queue.setQueueIfContentVersion(version, newQueue) }.exceptionOrNull() }
+        Thread { error = runCatching { queue.setQueueIfContentVersion(version, newQueue, QueueManager.ShuffleMode.Off) }.exceptionOrNull() }
             .apply { start() }
             .join()
 

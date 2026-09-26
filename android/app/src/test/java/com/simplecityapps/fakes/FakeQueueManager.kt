@@ -25,6 +25,10 @@ class FakeQueueManager : QueueOperations {
     var lastSetShuffleQueue: List<Song>? = null
         private set
 
+    /** The shuffle mode the last [setQueueIfContentVersion] set its queue with. */
+    var lastSetQueueShuffleMode: QueueManager.ShuffleMode? = null
+        private set
+
     var nextItem: QueueItem? = null
 
     override suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Boolean {
@@ -53,7 +57,7 @@ class FakeQueueManager : QueueOperations {
     /** The thread each [setQueueIfContentVersion] ran on. */
     val setQueueThreads = mutableListOf<Thread>()
 
-    override fun setQueueIfContentVersion(contentVersion: Long, queue: NewQueue): Long? {
+    override fun setQueueIfContentVersion(contentVersion: Long, queue: NewQueue, shuffleMode: QueueManager.ShuffleMode): Long? {
         setQueueThreads += Thread.currentThread()
         val previous = queueStateFlow.value
         if (previous.contentVersion != contentVersion) return null
@@ -62,6 +66,7 @@ class FakeQueueManager : QueueOperations {
         lastSetQueue = songs
         lastSetShuffleQueue = queue.shuffleSongs
         lastSetQueuePosition = position
+        lastSetQueueShuffleMode = shuffleMode
         if (!publishesRestoredQueue) return contentVersion
         val items = songs.mapIndexed { index, song -> song.toQueueItem(isCurrent = index == position) }
         queueStateFlow.value = QueueState(items = items, currentItem = items[position], currentPosition = position, version = previous.version + 1, contentVersion = contentVersion + 1)

@@ -394,16 +394,15 @@ class PlaybackInitializerTest {
         preferences.shuffleQueueIds = "1,2,3"
         preferences.queuePosition = 1
 
-        initializer.init(application)
-        awaitUntil { queueManager.hasRestoredQueue }
-        // The restored queue has been handled once its song is saved.
-        awaitUntil { preferences.nowPlaying?.songId == 2L }
+        val main = initAndRestore()
 
+        preferences.nowPlaying?.songId shouldBe 2L
         queueManager.shuffleModeQueueReads shouldBe 0
         preferences.queuePosition shouldBe 1
 
         publishQueue(listOf(createSong(id = 3), createSong(id = 1)), currentPosition = 0, contentVersion = queueManager.queueStateFlow.value.contentVersion + 1)
-        awaitUntil { preferences.queueIds == "3,1" }
+        main.runUntilIdle()
+        preferences.queueIds shouldBe "3,1"
     }
 
     @Test
@@ -415,10 +414,28 @@ class PlaybackInitializerTest {
         preferences.shuffleQueueIds = "1,2,3"
         preferences.queuePosition = 2
 
-        initializer.init(application)
-        awaitUntil { queueManager.hasRestoredQueue }
-        awaitUntil { preferences.queueIds == "1,3" }
-        awaitUntil { preferences.queuePosition == 1 }
+        initAndRestore()
+
+        preferences.queueIds shouldBe "1,3"
+        preferences.queuePosition shouldBe 1
+    }
+
+    @Test
+    fun `a restore sets the saved shuffle mode with the queue, whether or not the mode was restored first`() {
+        songRepository.applyQueryPredicates = true
+        songRepository.setSongs(songs)
+        preferences.shuffleMode = QueueManager.ShuffleMode.On
+        preferences.queueIds = "1,2,3"
+        preferences.shuffleQueueIds = "3,1,2"
+        preferences.queuePosition = 0
+
+        // The fake's shuffle mode stays off, as if restoring the mode on its own came after the queue.
+        initAndRestore()
+
+        queueManager.shuffleModeFlow.value shouldBe QueueManager.ShuffleMode.Off
+        queueManager.lastSetQueueShuffleMode shouldBe QueueManager.ShuffleMode.On
+        queueManager.lastSetShuffleQueue?.map { song -> song.id } shouldBe listOf(3L, 1L, 2L)
+        queueManager.lastSetQueuePosition shouldBe 0
     }
 
     @Test
@@ -532,6 +549,22 @@ class PlaybackInitializerTest {
         queueManager.hasRestoredQueue shouldBe true
     }
 
+    /**
+     * Inits with the main thread on the test's, waits for the restore to finish, then runs what's left on the main
+     * thread (the collectors handling the restored queue), so what the restore saves is settled.
+     */
+    private fun initAndRestore(): QueuedDispatcher {
+        val main = QueuedDispatcher()
+        Dispatchers.setMain(main)
+        initializer.init(application)
+        awaitUntil {
+            main.runPending()
+            queueManager.hasRestoredQueue
+        }
+        main.runUntilIdle()
+        return main
+    }
+
     /** A main thread that runs what's dispatched to it only when the test says, on the test's thread. */
     private class QueuedDispatcher : CoroutineDispatcher() {
         private val tasks = ConcurrentLinkedQueue<Runnable>()
@@ -553,6 +586,11 @@ class PlaybackInitializerTest {
                 count++
             }
             return count
+        }
+
+        /** Runs what's dispatched, and what that dispatches, until there's nothing left. */
+        fun runUntilIdle() {
+            while (runPending() > 0) Unit
         }
     }
 

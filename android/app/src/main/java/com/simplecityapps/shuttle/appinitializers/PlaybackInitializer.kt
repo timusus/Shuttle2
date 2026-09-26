@@ -96,7 +96,8 @@ constructor(
         // own queue, and a restore finishing after that mustn't replace it.
         val initialContentVersion = queueManager.queueStateFlow.value.contentVersion
 
-        // Set now, on the main thread, as the restored queue is set in the order the shuffle mode presents.
+        // Set now, so a request played before the restore finishes finds them (a new queue can keep the shuffle mode).
+        // The restore doesn't rely on it: it sets the shuffle mode its saved position is in with the queue it sets.
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
             queueManager.setShuffleMode(shuffleMode, reshuffle = false)
             queueManager.setRepeatMode(repeatMode)
@@ -130,8 +131,8 @@ constructor(
     }
 
     /**
-     * Reads the saved queue and builds it off the main thread, then sets it, loads it and marks the queue restored in
-     * one main thread step. Leaves the queue and playback alone if the queue changes from [initialContentVersion]
+     * Reads the saved queue and builds it off the main thread, then sets it with [shuffleMode], loads it and marks the
+     * queue restored in one main thread step. Leaves the queue and playback alone if the queue changes from [initialContentVersion]
      * other than by this restore: something else was played before the restore finished.
      */
     private suspend fun restoreQueue(
@@ -153,7 +154,7 @@ constructor(
         withContext(Dispatchers.Main) {
             timings.add("main wait", mainWait)
             try {
-                applyRestoredQueue(savedQueue, initialContentVersion, seekPosition, restoredSeekPosition, timings)
+                applyRestoredQueue(savedQueue, shuffleMode, initialContentVersion, seekPosition, restoredSeekPosition, timings)
             } finally {
                 queueManager.hasRestoredQueue = true
             }
@@ -204,11 +205,12 @@ constructor(
     }
 
     /**
-     * Sets [savedQueue] and loads the current song, on the main thread, where nothing that sets the queue can come
-     * between the check and the set, or the set and the load.
+     * Sets [savedQueue] with the [shuffleMode] its position is in, and loads the current song, on the main thread, where
+     * nothing that sets the queue can come between the check and the set, or the set and the load.
      */
     private fun applyRestoredQueue(
         savedQueue: SavedQueue?,
+        shuffleMode: QueueManager.ShuffleMode,
         initialContentVersion: Long,
         seekPosition: Int,
         restoredSeekPosition: Int,
@@ -217,7 +219,7 @@ constructor(
         if (savedQueue != null) {
             unchangedRestoredQueue = savedQueue.unchanged
             val restoredContentVersion = timings.measure("setQueue") {
-                queueManager.setQueueIfContentVersion(initialContentVersion, savedQueue.queue)
+                queueManager.setQueueIfContentVersion(initialContentVersion, savedQueue.queue, shuffleMode)
             }
             if (restoredContentVersion == null) {
                 unchangedRestoredQueue = null
