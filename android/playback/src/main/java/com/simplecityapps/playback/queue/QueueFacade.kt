@@ -61,7 +61,7 @@ class QueueFacade(
         songs: List<Song>,
         shuffleSongs: List<Song>?,
         position: Int
-    ): Boolean = builder.buildThenApply({ NewQueue.build(songs, shuffleSongs, position) }) { queue -> editor.setQueue(queue) }
+    ): Boolean = builder.buildThenApply({ PreparedQueue.build(songs, shuffleSongs, position) }) { queue -> editor.setQueue(queue) }
 
     override suspend fun buildQueue(
         songs: List<Song>,
@@ -75,6 +75,7 @@ class QueueFacade(
         shuffleMode: ShuffleMode
     ): Long? {
         check(playerThread.isCurrent) { "setQueueIfContentVersion is main thread only" }
+        require(queue is PreparedQueue) { "setQueueIfContentVersion takes a queue buildQueue built" }
         if (queueStateFlow.value.contentVersion != contentVersion) return null
         editor.setQueue(queue, shuffleMode)
         return queueStateFlow.value.contentVersion

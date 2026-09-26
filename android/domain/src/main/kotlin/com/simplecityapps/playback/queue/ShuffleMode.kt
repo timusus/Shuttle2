@@ -14,5 +14,3 @@ enum class ShuffleMode {
         }
     }
 }
-
-internal fun Boolean.toShuffleMode(): ShuffleMode = if (this) ShuffleMode.On else ShuffleMode.Off

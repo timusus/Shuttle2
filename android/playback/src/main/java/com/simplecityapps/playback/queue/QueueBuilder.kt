@@ -20,7 +20,7 @@ internal class QueueBuilder(private val buildContext: CoroutineContext) {
         songs: List<Song>,
         shuffleSongs: List<Song>?,
         position: Int
-    ): NewQueue = withContext(buildContext) { NewQueue.build(songs, shuffleSongs, position) }
+    ): PreparedQueue = withContext(buildContext) { PreparedQueue.build(songs, shuffleSongs, position) }
 
     /**
      * Builds what [apply] takes off the main thread, then runs [apply] with it on it. Changes made this way take

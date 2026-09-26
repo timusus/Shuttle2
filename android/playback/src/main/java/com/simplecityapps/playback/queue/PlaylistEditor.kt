@@ -38,7 +38,7 @@ internal class PlaylistEditor(
      * [shuffleMode] if given, else keeps the player's, which says which order the position is in.
      */
     fun setQueue(
-        queue: NewQueue,
+        queue: PreparedQueue,
         shuffleMode: ShuffleMode? = null
     ): Boolean {
         val songs = queue.songs
@@ -99,7 +99,7 @@ internal class PlaylistEditor(
         songs: List<Song>,
         items: List<MediaItem>
     ): Boolean {
-        if (player.mediaItemCount == 0) return setQueue(NewQueue.of(songs, items, null, 0))
+        if (player.mediaItemCount == 0) return setQueue(PreparedQueue.of(songs, items, null, 0))
         songUriResolver.queued(items)
         writer.addMediaItems(items)
         return false
@@ -113,7 +113,7 @@ internal class PlaylistEditor(
         songs: List<Song>,
         items: List<MediaItem>
     ): Boolean {
-        if (player.mediaItemCount == 0) return setQueue(NewQueue.of(songs, items, null, 0))
+        if (player.mediaItemCount == 0) return setQueue(PreparedQueue.of(songs, items, null, 0))
         publisher.batch {
             songUriResolver.queued(items)
             val current = player.currentMediaItemIndex

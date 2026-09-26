@@ -5,40 +5,37 @@ import com.simplecityapps.playback.engine.S2ShuffleOrder
 import com.simplecityapps.shuttle.model.Song
 
 /**
- * A queue built ready to set: the playlist items for [songs] and both the orders it could start in, so setting it on
- * the main thread only hands them to the player. [QueueOperations.buildQueue] builds one off the main thread.
- *
- * [position] is an index into [shuffleSongs] when they're given and shuffle is on when it's set, else into [songs].
- * Without [shuffleSongs], a new shuffled order starts at the item at [position].
+ * The [NewQueue] this module builds: the playlist items for [songs] and both the orders it could start in, so setting
+ * it on the main thread only hands them to the player.
  */
-class NewQueue private constructor(
-    val songs: List<Song>,
-    val shuffleSongs: List<Song>?,
-    val position: Int,
-    internal val items: List<MediaItem>,
-    internal val shuffleOrder: S2ShuffleOrder,
+internal class PreparedQueue private constructor(
+    override val songs: List<Song>,
+    override val shuffleSongs: List<Song>?,
+    override val position: Int,
+    val items: List<MediaItem>,
+    val shuffleOrder: S2ShuffleOrder,
     /**
      * The playlist index [position] names in [shuffleSongs]: the first copy of a saved shuffled song the queue no
      * longer holds, if any, else the start of the shuffled order. Null without [shuffleSongs], or when [position] is
      * out of their range.
      */
-    internal val shuffledIndex: Int?
-) {
+    val shuffledIndex: Int?
+) : NewQueue {
     companion object {
         /** Builds new entries for [songs]. It takes a while for a long queue, so it's best done off the main thread. */
         fun build(
             songs: List<Song>,
             shuffleSongs: List<Song>?,
             position: Int
-        ): NewQueue = of(songs, songs.map { song -> song.toQueueEntry().toMediaItem() }, shuffleSongs, position)
+        ): PreparedQueue = of(songs, songs.map { song -> song.toQueueEntry().toMediaItem() }, shuffleSongs, position)
 
         /** A queue of [items], built for [songs]. */
-        internal fun of(
+        fun of(
             songs: List<Song>,
             items: List<MediaItem>,
             shuffleSongs: List<Song>?,
             position: Int
-        ): NewQueue {
+        ): PreparedQueue {
             val songIds = songs.map { it.id }
             val shuffleIds = shuffleSongs?.map { it.id }
             val shuffleOrder =
@@ -52,7 +49,7 @@ class NewQueue private constructor(
                     ?: songIds.indexOf(shuffleIds[position]).takeIf { it != -1 }
                     ?: shuffleOrder.firstIndex
             }
-            return NewQueue(songs, shuffleSongs, position, items, shuffleOrder, shuffledIndex)
+            return PreparedQueue(songs, shuffleSongs, position, items, shuffleOrder, shuffledIndex)
         }
     }
 }

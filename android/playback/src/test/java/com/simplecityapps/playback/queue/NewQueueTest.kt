@@ -157,6 +157,18 @@ class NewQueueTest {
         queue.queueStateFlow.value.items.size shouldBe 0
     }
 
+    @Test
+    fun `a queue another QueueOperations built is refused`() {
+        val foreign = object : NewQueue {
+            override val songs = listOf(song(1))
+            override val shuffleSongs: List<Song>? = null
+            override val position = 0
+        }
+
+        shouldThrow<IllegalArgumentException> { queue.setQueueIfContentVersion(queue.queueStateFlow.value.contentVersion, foreign, ShuffleMode.Off) }
+        queue.queueStateFlow.value.items.size shouldBe 0
+    }
+
     /** Runs builds on a thread of its own, recording it. */
     private class BuildDispatcher : CoroutineDispatcher() {
         private val executor = Executors.newSingleThreadExecutor()

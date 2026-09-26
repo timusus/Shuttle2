@@ -50,7 +50,7 @@ class FakeQueueOperations : QueueOperations {
      * Leaves [queueStateFlow] as it is, so the content version a set leaves is the one it was set at, unless it
      * [publishesRestoredQueue].
      */
-    override suspend fun buildQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): NewQueue = NewQueue.build(songs, shuffleSongs, position).also { buildThreads += Thread.currentThread() }
+    override suspend fun buildQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): NewQueue = FakeNewQueue(songs, shuffleSongs, position).also { buildThreads += Thread.currentThread() }
 
     /** The thread each [buildQueue] ran on. */
     val buildThreads = mutableListOf<Thread>()
@@ -112,3 +112,9 @@ class FakeQueueOperations : QueueOperations {
         }
     }
 }
+
+private data class FakeNewQueue(
+    override val songs: List<Song>,
+    override val shuffleSongs: List<Song>?,
+    override val position: Int
+) : NewQueue

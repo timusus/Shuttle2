@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
-// Domain layer (#443, docs/architecture/layering.md): plain Kotlin models, queries and sort orders, no Android.
+// Domain layer (#443, docs/architecture/layering.md): plain Kotlin models, queries, sort orders, repository and
+// playback operations interfaces, no Android.
 plugins {
     // No version: the Kotlin Gradle plugin is already on the root classpath (via the Compose compiler plugin).
     `java-library`
