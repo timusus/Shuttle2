@@ -1,0 +1,7 @@
+# A ViewModel's public properties are one uiState: StateFlow and at most one events Flow (UDF 6)
+# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
+com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel: public playlists
+com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel: public results
+com.simplecityapps.shuttle.ui.screens.home.AnalyticsConsentViewModel: public showCard
+com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel: public progress
+com.simplecityapps.shuttle.ui.theme.AppThemeViewModel: public state

@@ -41,28 +41,40 @@ fun setSortOrder(order: SortOrder) {
 
 **Why:** `Eagerly` and `Lazily` keep upstream flows alive for the entire ViewModel lifetime — database queries, network observers, import watchers all running even when the user has navigated to a different screen. `WhileSubscribed` cancels them when nobody's listening. The 5-second grace period avoids restarting during config changes (rotation takes ~1-2s). The `initialValue` replaces `.onStart { emit(Loading) }` — that hack only worked when emitting to a separate MutableStateFlow. With `stateIn`, the initial value is the natural mechanism.
 
-## 4. One-off effects stay as SharedFlow
+## 4. Events whose loss would be a bug are consumable state
+
+An event the user must see or the UI must act on -- a snackbar message, an error, navigation after an action completes, a result the UI hands to the system -- is **state**: a list field in the UiState, which the ViewModel appends to and the UI clears through a consume action once it has handled the event (after Manuel Vivo's "ViewModel: One-off event antipatterns").
 
 ```kotlin
-private val _events = MutableSharedFlow<UiEvent>()
-val events: SharedFlow<UiEvent> = _events.asSharedFlow()
+data class PlaylistDetailUiState(
+    ...,
+    val events: List<PendingEvent<PlaylistDetailEvent>> = emptyList(),
+)
+
+private val events = PendingEvents<PlaylistDetailEvent>()   // ui/common/PendingEvents.kt
+
+val uiState = combine(..., events.flow) { ..., events -> PlaylistDetailUiState(..., events = events) }
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PlaylistDetailUiState())
+
+fun onDelete() = viewModelScope.launch { deletePlaylist(id); events.post(PlaylistDetailEvent.Deleted) }
+fun onEventHandled(id: Long) = events.consume(id)
 ```
 
-Toasts, snackbars, navigation triggers — collected in the route composable (a `LaunchedEffect` over the flow, with `repeatOnLifecycle(STARTED)`).
-
-Events are **typed by what happened**, not by what the UI should display:
+The route composable hands the oldest pending event to `ConsumeEvents`, which runs the handler and then calls the consume action:
 
 ```kotlin
-sealed interface SongListUiEvent {
-    data class AddedToQueue(val songCount: Int) : SongListUiEvent
-    data class PlaybackFailed(val errorMessage: String?) : SongListUiEvent
-    data object LibraryEmpty : SongListUiEvent
+ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
+    when (event) { PlaylistDetailEvent.Deleted -> onBack() ... }
 }
 ```
 
-The route composable maps events to user-facing text using string resources. The ViewModel never resolves string resources — it doesn't have a `Context`.
+Events are **typed by what happened**, not by what the UI should display (`AddedToQueue(songCount)`, `PlaybackFailed(message)`). The route composable maps them to user-facing text using string resources; the ViewModel never resolves string resources -- it doesn't have a `Context`.
 
-**Why:** Google recommends reducing events to state to guarantee delivery across config changes. But in this app, all events are user-triggered button taps — they can only happen when the UI is STARTED, so there's no window where an event fires and nobody's listening. Reducing to state would add a `userMessage` field, an `onMessageShown()` callback, and a `LaunchedEffect` per screen — real boilerplate for zero practical benefit. Revisit if we move to full Compose navigation where config change timing is different.
+A `MutableSharedFlow` exposed as `events` is kept only for a truly transient signal whose drop is harmless (a scroll-to or haptic cue), with a one-line comment saying why. Never a `Channel` (`receiveAsFlow()`/`consumeAsFlow()`): it still loses an event received by a collector that is cancelled before handling it, and it hides the event from the state the UI and tests can inspect.
+
+**Why:** A `SharedFlow` without replay drops anything emitted while nothing collects -- after rotation, while the screen is in the back stack, or while an effect restarts -- and a `Channel` only narrows that window. State survives all of them and is delivered exactly once, because only the UI's consume action removes it. It is also visible to tests as plain state rather than a flow to race.
+
+**Enforced by** the `viewmodel-no-channel-events` Konsist rule (a Channel-backed event flow fails) and `viewmodel-public-api` (at most one `events` Flow).
 
 ## 5. `collectAsStateWithLifecycle()` everywhere
 
@@ -90,6 +102,8 @@ data class SongListUiState(
 
 Use a `LoadingState` enum inside the data class for mutually exclusive screen modes. Only use a sealed interface for UiState if the screen has fundamentally different structural shapes (rare).
 
+The ViewModel's public properties are exactly `uiState: StateFlow<...>` and, for transient signals only (principle 4), one `events` Flow. Everything else the screen reads lives in the UiState; the `viewmodel-public-api` Konsist rule enforces this, so a screen has one thing to collect and one place to read its state.
+
 **Why:** A sealed interface (`Loading | Ready | Error`) forces the UI to `when`-branch at the top level and prevents sharing fields across states. Most screens in this app always have the same structural shape — a list with a loading indicator. A data class with a `LoadingState` enum models this naturally.
 
 ## 7. No stability annotations
@@ -103,13 +117,13 @@ Don't add `@Stable` or `@Immutable` to data classes. Use `kotlinx.collections.im
 ```kotlin
 fun onAddToQueue(song: Song) {
     viewModelScope.launch {
-        playbackOperations.addToQueue(listOf(song))
-        _events.emit(UiEvent.AddedToQueue(1))
+        enqueueSongs(listOf(song))
+        events.post(UiEvent.AddedToQueue(1))
     }
 }
 ```
 
-Methods launch coroutines, perform side effects, and emit events. They don't return values to the UI.
+Methods launch coroutines, perform side effects, and post events (principle 4). They don't return values to the UI.
 
 **Why:** If a ViewModel method returns a value, the UI has to store it, react to it, pass it somewhere — that breaks unidirectional flow. The UI's job is to render state and forward user intent. The ViewModel's job is to process intent, update sources (which re-derive state), and emit events.
 
@@ -149,7 +163,7 @@ fun onPlay(album: Album) {
     viewModelScope.launch {
         val songs = getSongsForAlbum(album)
         when (val result = playSongs(songs)) {
-            is PlaySongs.Result.Failure -> _events.emit(UiEvent.PlaybackFailed(result.message))
+            is PlaySongs.Result.Failure -> events.post(UiEvent.PlaybackFailed(result.message))
             is PlaySongs.Result.Success -> {}
         }
     }
@@ -162,10 +176,10 @@ fun onPlay(album: Album) {
 - The method coordinates 3+ dependencies
 
 **When to leave inline:**
-- One-liners: `playbackOperations.addToQueue(songs)` + emit event
-- Simple sequential calls: `repository.setExcluded(songs, true)`
-- Preference writes: `preferenceManager.sortOrder = order`
+- One-liners over an injected use case: `enqueueSongs(songs)` + post event
 - State mutations: `selectionState.toggle(item)`
+
+**ViewModels never inject `*Operations`, `*Preference(s)` or `*Store` types** (the playback and queue operations, preference holders, the settings store), even for a one-liner: put the call behind a use case such as `ObserveCurrentSong` or `ObserveSongSortOrder`. The `viewmodel-direct-deps` Konsist rule enforces it alongside `viewmodel-data-access` (repositories, DAOs, providers). **Why:** the use case is the seam that can move to domain and be faked in a test with one lambda; a ViewModel holding the operations interface can reach every playback call, not just the one it needs.
 
 Use cases are stateless — `@Inject constructor`, no scope annotation, Hilt creates a new instance each time. They can be `suspend` (one-shot operations) or return `Flow` (observable operations). They get their own unit tests when they contain real logic.
 

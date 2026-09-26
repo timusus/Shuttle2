@@ -47,6 +47,53 @@ class PresentationRules {
     }
 
     @Test
+    fun `ViewModels expose one uiState StateFlow and at most one events Flow`() {
+        val violations = Production.viewModels.flatMap { viewModel ->
+            viewModel.properties(includeNested = false)
+                .filter { it.hasPublicOrDefaultModifier }
+                .filterNot { property ->
+                    val type = property.type?.text.orEmpty()
+                    (property.name == "uiState" && type.startsWith("StateFlow<")) ||
+                        (property.name == "events" && type.substringBefore('<').endsWith("Flow"))
+                }
+                .map { viewModel.violation(": public ${it.name}") }
+        }
+        Baseline.assertMatches(
+            "viewmodel-public-api",
+            "A ViewModel's public properties are one uiState: StateFlow and at most one events Flow (UDF 6)",
+            violations,
+        )
+    }
+
+    @Test
+    fun `ViewModels do not expose Channel-backed event flows`() {
+        val violations = Production.viewModels.flatMap { viewModel ->
+            CHANNEL_FLOW_CALLS
+                .filter { "$it()" in viewModel.text }
+                .map { viewModel.violation(": $it()") }
+        }
+        Baseline.assertMatches(
+            "viewmodel-no-channel-events",
+            "ViewModels model events whose loss is a bug as consumable UiState, not Channel.receiveAsFlow()/consumeAsFlow() (UDF 4)",
+            violations,
+        )
+    }
+
+    @Test
+    fun `ViewModels reach operations, preferences and stores only through use cases`() {
+        val violations = Production.viewModels.flatMap { viewModel ->
+            viewModel.constructorTypeNames()
+                .filter { name -> DIRECT_DEPENDENCY_SUFFIXES.any { name.endsWith(it) } }
+                .map { viewModel.violation(" -> ${viewModel.containingFile.resolve(it)}") }
+        }
+        Baseline.assertMatches(
+            "viewmodel-direct-deps",
+            "ViewModels must not inject *Operations, *Preference(s) or *Store types; inject a use case (UDF 8a)",
+            violations,
+        )
+    }
+
+    @Test
     fun `use cases have a single public operator invoke and no UI dependencies`() {
         val violations = useCases().flatMap { useCase ->
             val functions = useCase.functions(includeNested = false, includeLocal = false)
@@ -96,6 +143,10 @@ class PresentationRules {
         Production.viewModels.any { it.containingFile.path == path }
 
     private companion object {
+        val CHANNEL_FLOW_CALLS = listOf("receiveAsFlow", "consumeAsFlow")
+
+        val DIRECT_DEPENDENCY_SUFFIXES = listOf("Operations", "Preference", "Preferences", "Store")
+
         val UI_PACKAGES = listOf(
             "android.view.",
             "android.widget.",

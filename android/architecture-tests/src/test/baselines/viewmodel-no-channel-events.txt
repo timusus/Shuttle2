@@ -1,0 +1,6 @@
+# ViewModels model events whose loss is a bug as consumable UiState, not Channel.receiveAsFlow()/consumeAsFlow() (UDF 4)
+# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
+com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel: receiveAsFlow()
+com.simplecityapps.shuttle.ui.screens.paywall.PaywallViewModel: receiveAsFlow()
+com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInViewModel: receiveAsFlow()
+com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorViewModel: receiveAsFlow()
