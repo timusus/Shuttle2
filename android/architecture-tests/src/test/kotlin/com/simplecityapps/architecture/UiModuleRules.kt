@@ -1,8 +1,6 @@
 package com.simplecityapps.architecture
 
 import com.lemonappdev.konsist.api.declaration.KoFileDeclaration
-import com.lemonappdev.konsist.api.provider.KoContainingFileProvider
-import com.lemonappdev.konsist.api.provider.KoFullyQualifiedNameProvider
 import org.junit.Test
 
 /**
@@ -16,16 +14,21 @@ class UiModuleRules {
 
     @Test
     fun `ui screens do not import data, provider or app-only declarations`() {
-        val declaringFile = declaredFqnToFile()
+        val declaringFiles = declaredFqnToFiles()
         val violations = movingUiFiles().flatMap { file ->
             file.importNames.mapNotNull { fqn ->
-                val target = declaringFile[fqn] ?: return@mapNotNull null
-                val reason = when {
-                    target.module in DATA_AND_PROVIDER_MODULES -> target.module
-                    target.module == APP_MODULE && !target.isMovingUiFile() -> "app-only"
-                    else -> return@mapNotNull null
-                }
-                file.violation("${file.fqn} -> $fqn ($reason)")
+                // An import names every declaration with that FQN: all overloads of a top-level
+                // function, which can be spread over several modules sharing a package. Without type
+                // resolution the rule can't tell which one a call binds to, so any banned declarer counts.
+                val reasons = declaringFiles[fqn].orEmpty().mapNotNull { target ->
+                    when {
+                        target.module in DATA_AND_PROVIDER_MODULES -> target.module
+                        target.module == APP_MODULE && !target.isMovingUiFile() -> "app-only"
+                        else -> null
+                    }
+                }.distinct().sorted()
+                if (reasons.isEmpty()) return@mapNotNull null
+                file.violation("${file.fqn} -> $fqn (${reasons.joinToString()})")
             }
         }
         Baseline.assertMatches(
@@ -39,14 +42,26 @@ class UiModuleRules {
 
     private fun movingUiFiles() = Production.scope.files.filter { it.isMovingUiFile() }
 
-    /** Every top-level class/interface/object/type alias in production code, mapped to its declaring file. */
-    private fun declaredFqnToFile(): Map<String, KoFileDeclaration> = buildMap {
-        Production.scope.classesAndInterfacesAndObjects(includeNested = true, includeLocal = false).forEach { record(it) }
-        Production.scope.typeAliases.forEach { record(it) }
-    }
-
-    private fun <T> MutableMap<String, KoFileDeclaration>.record(declaration: T) where T : KoFullyQualifiedNameProvider, T : KoContainingFileProvider {
-        declaration.fullyQualifiedName?.let { put(it, declaration.containingFile) }
+    /**
+     * Every importable production declaration, mapped to the files declaring it: classes, interfaces
+     * and objects (nested too), type aliases, and top-level functions (extensions included) and
+     * properties. One FQN can have several declaring files, e.g. overloads of a top-level function in
+     * different modules that share a package.
+     */
+    private fun declaredFqnToFiles(): Map<String, Set<KoFileDeclaration>> {
+        val index = mutableMapOf<String, MutableSet<KoFileDeclaration>>()
+        fun record(fqn: String?, file: KoFileDeclaration) {
+            if (fqn != null) index.getOrPut(fqn) { mutableSetOf() } += file
+        }
+        Production.scope.classesAndInterfacesAndObjects(includeNested = true, includeLocal = false)
+            .forEach { record(it.fullyQualifiedName, it.containingFile) }
+        Production.scope.typeAliases.forEach { record(it.fullyQualifiedName, it.containingFile) }
+        Production.scope.files.forEach { file ->
+            val topLevelNames = file.functions(includeNested = false, includeLocal = false).map { it.name } +
+                file.properties(includeNested = false).map { it.name }
+            topLevelNames.forEach { name -> record(listOfNotNull(file.packagee?.name, name).joinToString("."), file) }
+        }
+        return index
     }
 
     /**
