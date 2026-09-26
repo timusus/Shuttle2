@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.entitlement
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.shell.player.ObserveGatedServerSkip
 import com.simplecityapps.trial.Entitlement
+import com.simplecityapps.trial.ServerAccessGate
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,4 +35,10 @@ object EntitlementBindsModule {
 
     @Provides
     fun provideObserveGatedServerSkip(policy: EntitledServerStreamPolicy): ObserveGatedServerSkip = ObserveGatedServerSkip { policy.gatedSongs }
+
+    @Provides
+    fun provideTryAddServer(serverAccessGate: ServerAccessGate): TryAddServer = TryAddServer(serverAccessGate::tryAddServer)
+
+    @Provides
+    fun provideTryDownloadFromServer(serverAccessGate: ServerAccessGate): TryDownloadFromServer = TryDownloadFromServer(serverAccessGate::tryDownloadFromServer)
 }

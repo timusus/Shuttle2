@@ -4,6 +4,7 @@ import com.simplecityapps.fakes.FakeMediaSources
 import com.simplecityapps.fakes.FakeScannerFolderStore
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.mediaprovider.SongImportState
+import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.testing.MainDispatcherRule
 import com.simplecityapps.trial.Entitlement
@@ -34,7 +35,7 @@ class SourcesViewModelTest {
         RemoveScannerFolder(folderStore),
         RefreshScannerFolders(folderStore),
         importState,
-        ServerAccessGate(entitlement, startTrial = { false }),
+        TryAddServer(ServerAccessGate(entitlement, startTrial = { false })::tryAddServer),
         ConnectServer(mediaSources),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }

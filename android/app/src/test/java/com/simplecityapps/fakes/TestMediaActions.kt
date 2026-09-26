@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.shuttle.entitlement.TryDownloadFromServer
 import com.simplecityapps.shuttle.ui.actions.AddToPlaylist
 import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
@@ -69,7 +70,7 @@ class TestMediaActions(
     /** The user's entitlement, which gates server downloads; Pro by default. */
     val entitlement = MutableStateFlow<Entitlement>(Entitlement.Pro(ProSource.Lifetime))
     val serverAccessGate = ServerAccessGate(entitlement, startTrial = { false })
-    val downloadSongs = DownloadSongs(songDownloadManager, AggregateMediaInfoProvider(mutableSetOf(mediaInfoProvider)), resolveSongs, serverAccessGate)
+    val downloadSongs = DownloadSongs(songDownloadManager, AggregateMediaInfoProvider(mutableSetOf(mediaInfoProvider)), resolveSongs, TryDownloadFromServer(serverAccessGate::tryDownloadFromServer))
     val findGoToTarget = FindGoToTarget(albumRepository, albumArtistRepository)
     val shareSongs = ShareSongs(resolveSongs)
     val removeFromPlaylist = RemoveFromPlaylist(playlistRepository)

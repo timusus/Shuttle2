@@ -4,11 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
-import com.simplecityapps.trial.ServerAccessGate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -51,7 +51,7 @@ class SourcesViewModel @Inject constructor(
     private val removeScannerFolder: RemoveScannerFolder,
     private val refreshScannerFolders: RefreshScannerFolders,
     importState: SongImportStateProvider,
-    private val serverAccessGate: ServerAccessGate,
+    private val tryAddServer: TryAddServer,
     private val connectServer: ConnectServer,
 ) : ViewModel() {
     private val events = PendingEvents<SourcesEvent>()
@@ -98,7 +98,7 @@ class SourcesViewModel @Inject constructor(
     fun onRescan() = mediaSources.scan()
 
     /** Whether a server's sign-in may open: once the trial is over without Pro, the gate opens the paywall instead. */
-    fun onAddServer(): Boolean = serverAccessGate.tryAddServer()
+    fun onAddServer(): Boolean = tryAddServer()
 
     /** A server's sign-in dialog succeeded. */
     fun onServerConnected(type: MediaProviderType) = connectServer(type)

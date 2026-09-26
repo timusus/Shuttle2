@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.sources
 
 import com.simplecityapps.fakes.FakeMediaSources
+import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.trial.Entitlement
 import com.simplecityapps.trial.ServerAccessGate
@@ -11,10 +12,13 @@ import org.junit.Test
 class ServerTypePickerViewModelTest {
     private val entitlement = MutableStateFlow<Entitlement>(Entitlement.Free(trialUsed = false))
 
-    private fun viewModel(mediaSources: FakeMediaSources) = ServerTypePickerViewModel(
-        ServerAccessGate(entitlement, startTrial = { false }),
-        ConnectServer(mediaSources),
-    )
+    private fun viewModel(mediaSources: FakeMediaSources): ServerTypePickerViewModel {
+        val serverAccessGate = ServerAccessGate(entitlement, startTrial = { false })
+        return ServerTypePickerViewModel(
+            TryAddServer(serverAccessGate::tryAddServer),
+            ConnectServer(mediaSources),
+        )
+    }
 
     @Test
     fun `a new server needs Pro once the trial is used up`() {
