@@ -190,7 +190,9 @@ then
             while IFS= read -r d; do
                 [ -n "$d" ] || continue
                 rel="${d#"$ROOT"/}"
-                printf '%s\n' "$remote_dirs" | grep -qxF "./$rel" || rm -rf "$d"
+                # A here-string, not a pipe: under pipefail, grep -q exiting on a match SIGPIPEs the
+                # writer and fails the pipeline, which would delete a dir the box still has.
+                grep -qxF "./$rel" <<<"$remote_dirs" || rm -rf "$d"
             done < <(find "$ROOT" -type d \( -path '*/build/test-results' -o -path '*/build/reports' -o -path '*/build/outputs/roborazzi' \) 2>/dev/null)
         else
             echo "remote-build: listing remote report dirs failed; leaving existing local reports as-is" >&2
