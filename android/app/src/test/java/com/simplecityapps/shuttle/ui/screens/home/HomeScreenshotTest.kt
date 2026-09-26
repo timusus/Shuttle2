@@ -50,8 +50,12 @@ class HomeScreenshotTest {
     @After
     fun uninstallSampleArtwork() = SampleArtworkCoil.uninstall()
 
+    // The pinned TopAppBar animates its container colour (animateColorAsState); without settling
+    // the clock the capture frame depends on host timing (#539). Mirrors CatalogScreenshotTest.
     private fun shot(name: String, uiState: HomeUiState, theme: ThemeMode = ThemeMode.Light) {
+        composeTestRule.mainClock.autoAdvance = false
         robot.setContent(uiState, theme)
+        composeTestRule.mainClock.advanceTimeBy(SETTLE_MILLIS)
         composeTestRule.onRoot().captureRoboImage(
             filePath = File(shotsDir, "$name.png").path,
             roborazziOptions = DocsDesignRoborazziOptions,
@@ -75,7 +79,9 @@ class HomeScreenshotTest {
 
     @Test
     fun emptyNoPermission() {
+        composeTestRule.mainClock.autoAdvance = false
         robot.setContent(HomeScenarios.empty, emptyContent = emptyContentFor(MusicAccess.NotRequested))
+        composeTestRule.mainClock.advanceTimeBy(SETTLE_MILLIS)
         composeTestRule.onRoot().captureRoboImage(
             filePath = File(shotsDir, "empty-no-permission.png").path,
             roborazziOptions = DocsDesignRoborazziOptions,
@@ -84,7 +90,9 @@ class HomeScreenshotTest {
 
     @Test
     fun emptyDenied() {
+        composeTestRule.mainClock.autoAdvance = false
         robot.setContent(HomeScenarios.empty, emptyContent = emptyContentFor(MusicAccess.PermanentlyDenied))
+        composeTestRule.mainClock.advanceTimeBy(SETTLE_MILLIS)
         composeTestRule.onRoot().captureRoboImage(
             filePath = File(shotsDir, "empty-denied.png").path,
             roborazziOptions = DocsDesignRoborazziOptions,
@@ -104,6 +112,8 @@ class HomeScreenshotTest {
     }
 
     companion object {
+        private const val SETTLE_MILLIS = 1_000L
+
         val shotsDir: File by lazy {
             generateSequence(File(System.getProperty("user.dir")).absoluteFile) { it.parentFile }
                 .first { File(it, "gradlew").exists() && File(it, "docs/design").isDirectory }
