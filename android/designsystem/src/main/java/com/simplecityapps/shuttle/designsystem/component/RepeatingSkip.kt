@@ -73,7 +73,9 @@ internal fun S2TransportButton(
             .combinedClickable(
                 interactionSource = source,
                 indication = ripple(),
-                onLongClick = {},
+                // A touch hold is already seeking through the pressed timer above; with no press in
+                // progress this is the accessibility long-click action, so seek one step.
+                onLongClick = { if (!pressed) onHold() },
                 onClick = onClick,
             )
             .semantics {

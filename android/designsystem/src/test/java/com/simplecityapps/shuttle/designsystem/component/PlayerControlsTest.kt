@@ -2,10 +2,12 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.down
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.up
 import androidx.compose.ui.unit.Dp
@@ -109,6 +111,30 @@ class PlayerControlsTest {
         holds shouldBe 2
         composeTestRule.onNodeWithContentDescription("Next").performTouchInput { up() }
         composeTestRule.mainClock.advanceTimeBy(600L)
+        clicks shouldBe 0
+    }
+
+    @Test
+    fun `the accessibility long-click action on next seeks once`() {
+        var clicks = 0
+        var holds = 0
+        composeTestRule.setContent {
+            S2Theme {
+                S2PlayerControls(
+                    playing = false,
+                    onPlayPause = {},
+                    onPrevious = {},
+                    onNext = { clicks++ },
+                    shuffle = false,
+                    onShuffleChange = {},
+                    repeatMode = S2RepeatMode.Off,
+                    onRepeatClick = {},
+                    onNextHold = { holds++ },
+                )
+            }
+        }
+        composeTestRule.onNodeWithContentDescription("Next").performSemanticsAction(SemanticsActions.OnLongClick)
+        holds shouldBe 1
         clicks shouldBe 0
     }
 }
