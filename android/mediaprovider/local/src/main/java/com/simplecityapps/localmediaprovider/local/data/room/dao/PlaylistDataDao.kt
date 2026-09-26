@@ -87,7 +87,7 @@ abstract class PlaylistDataDao {
             LEFT JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0
             WHERE playlists.name = :name
             GROUP BY playlists.id
-            ORDER BY playlists.name
+            ORDER BY playlists.id
             LIMIT 1
             """
     )
