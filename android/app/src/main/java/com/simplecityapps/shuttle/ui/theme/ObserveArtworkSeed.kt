@@ -2,8 +2,9 @@ package com.simplecityapps.shuttle.ui.theme
 
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.ui.shell.player.ArtworkSeedSource
-import com.simplecityapps.shuttle.ui.shell.player.ColourFromArtworkPreference
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -20,9 +21,9 @@ import kotlinx.coroutines.flow.onStart
 @OptIn(ExperimentalCoroutinesApi::class)
 class ObserveArtworkSeed @Inject constructor(
     private val seedSource: ArtworkSeedSource,
-    private val colourFromArtwork: ColourFromArtworkPreference,
+    private val observeSetting: ObserveSetting,
 ) {
-    operator fun invoke(song: Flow<Song?>): Flow<ArtworkSeed> = combine(song, colourFromArtwork.enabled) { song, enabled -> song?.takeIf { enabled } }
+    operator fun invoke(song: Flow<Song?>): Flow<ArtworkSeed> = combine(song, observeSetting(AppearanceSettings.ColourFromArtwork)) { song, enabled -> song?.takeIf { enabled } }
         .distinctUntilChanged(::sameArtwork)
         .mapLatest { song -> song?.let { seedSource.seedFor(it) } ?: ArtworkSeed.None }
         .onStart { emit(ArtworkSeed.Loading) }
