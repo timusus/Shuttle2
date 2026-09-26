@@ -239,7 +239,7 @@ fun PlaylistDetailDestination(
     val currentOnNavigateUp by rememberUpdatedState(onNavigateUp)
     var dialog by remember { mutableStateOf<PlaylistDialog?>(null) }
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("audio/x-mpegurl")) { uri: Uri? ->
-        uri?.let(viewModel::exportTo)
+        uri?.let { viewModel.exportTo(it.toString()) }
     }
 
     LaunchedEffect(viewModel) {

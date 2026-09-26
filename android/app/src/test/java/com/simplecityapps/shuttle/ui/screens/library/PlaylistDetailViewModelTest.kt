@@ -9,6 +9,14 @@ import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.mediaprovider.PlaylistExporter
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
+import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
+import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
+import com.simplecityapps.shuttle.ui.actions.ExportPlaylist
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
+import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
+import com.simplecityapps.shuttle.ui.actions.ReorderPlaylistSongs
+import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -40,10 +48,23 @@ class PlaylistDetailViewModelTest {
     private val playlistRepository = FakePlaylistRepository()
     private val songs = listOf(createSong(id = 1, name = "One"), createSong(id = 2, name = "Two"), createSong(id = 3, name = "Three"))
 
+    private fun createViewModel(playlistId: Long): PlaylistDetailViewModel = PlaylistDetailViewModel(
+        playlistId,
+        ObservePlaylists(playlistRepository),
+        ObservePlaylistSongs(playlistRepository),
+        UpdatePlaylistSortOrder(playlistRepository),
+        ReorderPlaylistSongs(playlistRepository),
+        RenamePlaylist(playlistRepository),
+        ClearPlaylist(playlistRepository),
+        DeletePlaylist(playlistRepository),
+        ExportPlaylist(PlaylistExporter(ApplicationProvider.getApplicationContext())),
+        FakeQueueManager(),
+    )
+
     private fun viewModel(playlist: Playlist = createPlaylist(id = 7)): PlaylistDetailViewModel {
         playlistRepository.setPlaylists(listOf(playlist))
         playlistRepository.setSongsForPlaylist(playlist, songs)
-        return PlaylistDetailViewModel(playlist.id, playlistRepository, PlaylistExporter(ApplicationProvider.getApplicationContext()), FakeQueueManager())
+        return createViewModel(playlist.id)
     }
 
     private fun TestScope.collect(viewModel: PlaylistDetailViewModel, events: MutableList<PlaylistDetailEvent>? = null) {
@@ -137,7 +158,7 @@ class PlaylistDetailViewModelTest {
         val events = mutableListOf<PlaylistDetailEvent>()
         val playlist = createPlaylist(id = 8, name = "Empty")
         playlistRepository.setPlaylists(listOf(playlist))
-        val viewModel = PlaylistDetailViewModel(playlist.id, playlistRepository, PlaylistExporter(ApplicationProvider.getApplicationContext()), FakeQueueManager())
+        val viewModel = createViewModel(playlist.id)
         collect(viewModel, events)
 
         viewModel.onExport()
@@ -159,7 +180,7 @@ class PlaylistDetailViewModelTest {
         val file = File.createTempFile("playlist", ".m3u")
         // The exporter writes on Dispatchers.IO, so wait for the result in real time rather than virtual time.
         val result = async(start = CoroutineStart.UNDISPATCHED) { viewModel.events.first() }
-        viewModel.exportTo(Uri.fromFile(file))
+        viewModel.exportTo(Uri.fromFile(file).toString())
         withContext(Dispatchers.Default) { withTimeout(5_000) { result.await() } } shouldBe PlaylistDetailEvent.ExportSucceeded
         file.readText() shouldContain "#EXTM3U"
     }

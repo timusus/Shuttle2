@@ -2,11 +2,11 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -31,7 +30,7 @@ data class SmartPlaylistDetailUiState(
 @HiltViewModel(assistedFactory = SmartPlaylistDetailViewModel.Factory::class)
 class SmartPlaylistDetailViewModel @AssistedInject constructor(
     @Assisted smartPlaylistId: String,
-    songRepository: SongRepository,
+    observeSongs: ObserveSongs,
     queueManager: QueueOperations,
 ) : ViewModel() {
     @AssistedFactory
@@ -42,7 +41,7 @@ class SmartPlaylistDetailViewModel @AssistedInject constructor(
     private val smartPlaylist = SmartPlaylistId.fromId(smartPlaylistId)?.smartPlaylist
 
     private val songs = smartPlaylist
-        ?.let { playlist -> songRepository.getSongs(playlist.songQuery).filterNotNull().map { songs -> songs.sortedWith(playlist.songQuery.sortOrder.comparator) } }
+        ?.let { playlist -> observeSongs(playlist.songQuery).map { songs -> songs.sortedWith(playlist.songQuery.sortOrder.comparator) } }
         ?: flowOf(emptyList())
 
     val uiState: StateFlow<SmartPlaylistDetailUiState> = combine(

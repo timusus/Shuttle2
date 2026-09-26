@@ -21,15 +21,19 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbumArtists
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.actions.ObserveSongsForGenre
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.RemoveFromPlaylist
 import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
+import com.simplecityapps.shuttle.ui.actions.ReorderPlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.actions.ShareSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
+import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.trial.Entitlement
 import com.simplecityapps.trial.ProSource
@@ -75,7 +79,11 @@ class TestMediaActions(
     val observeAlbums = ObserveAlbums(albumRepository)
     val observeAlbumArtists = ObserveAlbumArtists(albumArtistRepository)
     val observeGenres = ObserveGenres(genreRepository)
+    val observeSongsForGenre = ObserveSongsForGenre(genreRepository)
     val observePlaylists = ObservePlaylists(playlistRepository)
+    val observePlaylistSongs = ObservePlaylistSongs(playlistRepository)
+    val updatePlaylistSortOrder = UpdatePlaylistSortOrder(playlistRepository)
+    val reorderPlaylistSongs = ReorderPlaylistSongs(playlistRepository)
     val handler = MediaActionHandler(
         resolveSongs = resolveSongs,
         playSongs = playSongs,
