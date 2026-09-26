@@ -764,9 +764,7 @@ class PlaybackSpecTest {
 
     @Test
     fun `repeat all plays on from the last song back to the first`() {
-        // The wrapped-to song (index 0) is the long file: the wraparound is a discontinuity seek, not a plain
-        // auto-transition, and #551's wall-time overshoot is more likely to carry a step past a short one.
-        val songs = listOf(song(1, file = TONE_3S), song(2, file = TONE_1S), song(3, file = TONE_1S))
+        val songs = listOf(song(1, file = TONE_1S), song(2, file = TONE_1S), song(3, file = TONE_1S))
         startPlaying(songs)
         queue.setRepeatMode(RepeatMode.All)
         playback.skipTo(2)

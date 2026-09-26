@@ -88,7 +88,9 @@ import org.robolectric.shadows.ShadowAudioTrack
  *
  * The player's clock doesn't advance by itself: it hands out the player's messages due now, in time order, and moves
  * on only in the steps [runUntil] takes. Elsewhere, however slowly the test thread runs on a loaded machine, playback
- * time stands still, so a playing song can't play out between two lines of a test (#521).
+ * time stands still, so a playing song can't play out between two lines of a test (#521). The AudioTracks' heads move
+ * on with the same clock ([ClockedShadowAudioTrack]), so the position a song has played to is a function of that
+ * clock's time, however far ahead the sink has written (#551).
  */
 class PlaybackHarness(
     replayGainMode: ReplayGainMode = ReplayGainMode.Off,
@@ -123,7 +125,7 @@ class PlaybackHarness(
      */
     private val writes = mutableListOf<Write>()
 
-    private class Write(val track: AudioTrack, val audio: ByteArray, val headPosition: Int, val whilePlaying: Boolean) {
+    private class Write(val track: AudioTrack, val audio: ByteArray, val flushes: Int, val whilePlaying: Boolean) {
         /** Written before the output was cleared, to a track that hadn't started. */
         var aheadOfClear = false
 
@@ -144,10 +146,10 @@ class PlaybackHarness(
         ShadowAudioTrack.OnAudioDataWrittenListener { track, audioData, format ->
             audioOutputFormat = format
             synchronized(writes) {
-                val write = Write(track, audioData.copyOf(), track.playbackHeadPosition, track.playState == AudioTrack.PLAYSTATE_PLAYING)
+                val flushes = Shadow.extract<ClockedShadowAudioTrack>(track).flushes
+                val write = Write(track, audioData.copyOf(), flushes, track.playState == AudioTrack.PLAYSTATE_PLAYING)
                 writes.forEach { earlier ->
-                    // A write only moves its track's head on, so a head behind an earlier write's means a flush.
-                    val flushed = earlier.track === track && earlier.headPosition > write.headPosition
+                    val flushed = earlier.track === track && earlier.flushes < write.flushes
                     val leftBehind = earlier.track !== track && !writes.hasPlayed(earlier.track)
                     if (flushed || leftBehind) earlier.dropped = true
                 }
@@ -200,6 +202,7 @@ class PlaybackHarness(
     private val clock = FakeClock(false)
 
     init {
+        ClockedShadowAudioTrack.clock = clock
         ShadowAudioTrack.addAudioDataListener(audioDataListener)
         crossfadeDurationMs?.let { playbackSettings.crossfadeDurationMs.value = it }
         player =
@@ -281,9 +284,7 @@ class PlaybackHarness(
      * thread before any more playback time passes. The playback thread marks the point as it plays through it, so the
      * step that reaches it ends there, with the main thread told of the player's state at that point.
      *
-     * Waiting on the position from the main thread ([runUntil]) can't stop at a point: the position is the sink's, which
-     * moves on with what it has written and with wall time, not with the player's clock. For the same reason a slow step
-     * can still carry the player past the point before it gets there, rarely (#551).
+     * Waiting on the position from the main thread ([runUntil]) can overshoot a point by up to a step.
      */
     fun runAt(
         mediaItemIndex: Int,
@@ -383,6 +384,7 @@ class PlaybackHarness(
 
     fun release() {
         ShadowAudioTrack.removeAudioDataListener(audioDataListener)
+        ClockedShadowAudioTrack.clock = null
         scope.cancel()
         player.release()
         shadowOf(Looper.getMainLooper()).idle()
@@ -403,7 +405,7 @@ class PlaybackHarness(
             Class.forName("androidx.media3.test.utils.FakeClock\$HandlerMessage").getDeclaredField("timeMs").apply { isAccessible = true }
 
         /** How far [runUntil] moves the player's clock on at a time: the player's working interval while it plays. */
-        private const val STEP_MS = 10L
+        const val STEP_MS = 10L
 
         /** How far ahead [runUntil] runs a task the main looper has scheduled, moving its time on to it. */
         private const val MAIN_LOOPER_LOOKAHEAD_MS = 1_000L
