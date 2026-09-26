@@ -61,12 +61,12 @@ class FakeSongRepository : SongRepository {
     override fun getFavouriteSongIds(): Flow<Set<Long>> = songs.filterNotNull().map { songs -> songs.filter { it.isFavourite }.map { it.id }.toSet() }
 
     override suspend fun setFavourite(songs: List<Song>, favourite: Boolean) {
-        val ids = songs.map { it.id }.toSet()
-        favouriteChanges += ids.toList() to favourite
+        val byId = songs.associateBy { it.id }
+        favouriteChanges += byId.keys.toList() to favourite
         this.songs.value = this.songs.value?.map { song ->
+            val passedIn = byId[song.id] ?: return@map song
             when {
-                song.id !in ids -> song
-                favourite -> if (song.isFavourite) song else song.copy(favouritedAt = Clock.System.now())
+                favourite -> if (song.isFavourite) song else song.copy(favouritedAt = passedIn.favouritedAt ?: Clock.System.now())
                 else -> song.copy(favouritedAt = null)
             }
         }

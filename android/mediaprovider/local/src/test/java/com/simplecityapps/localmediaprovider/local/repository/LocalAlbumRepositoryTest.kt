@@ -123,6 +123,11 @@ class LocalAlbumRepositoryTest {
             now: Date
         ): Int = throw NotImplementedError()
 
+        override suspend fun favourite(
+            id: Long,
+            favouritedAt: Date
+        ): Int = throw NotImplementedError()
+
         override suspend fun unfavourite(ids: List<Long>): Int = throw NotImplementedError()
 
         override fun getFavouriteIds(): Flow<List<Long>> = throw NotImplementedError()

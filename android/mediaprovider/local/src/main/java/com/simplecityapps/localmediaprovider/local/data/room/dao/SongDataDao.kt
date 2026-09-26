@@ -156,17 +156,32 @@ abstract class SongDataDao {
         now: Date = Date()
     ): Int
 
+    /** Makes the song with [id] a favourite as of [favouritedAt], if it isn't one already: an Undo restoring [Song.favouritedAt] gets its original place back rather than moving to the top (#564). */
+    @Query("UPDATE songs SET favouritedAt = :favouritedAt WHERE id = :id AND favouritedAt IS NULL")
+    abstract suspend fun favourite(
+        id: Long,
+        favouritedAt: Date
+    ): Int
+
     @Query("UPDATE songs SET favouritedAt = NULL WHERE id IN (:ids)")
     abstract suspend fun unfavourite(ids: List<Long>): Int
 
-    /** [favourite] or [unfavourite] [ids], in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a statement. */
+    /**
+     * [favourite] or [unfavourite] [songs], in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a
+     * statement. A song that already carries a [Song.favouritedAt] (an Undo restoring one just removed) is set to that
+     * exact time rather than now, so it keeps its original place in the list (#564).
+     */
     @Transaction
     open suspend fun setFavourite(
-        ids: List<Long>,
+        songs: List<Song>,
         favourite: Boolean
     ): Int {
+        if (!favourite) return songs.map { it.id }.distinct().chunked(MAX_BOUND_VARIABLES - 1).sumOf { chunk -> unfavourite(chunk) }
+        val (toRestore, toStamp) = songs.distinctBy { it.id }.partition { it.favouritedAt != null }
+        val restored = toRestore.sumOf { song -> favourite(song.id, Date(song.favouritedAt!!.toEpochMilliseconds())) }
         val now = Date()
-        return ids.distinct().chunked(MAX_BOUND_VARIABLES - 1).sumOf { chunk -> if (favourite) favourite(chunk, now) else unfavourite(chunk) }
+        val stamped = toStamp.map { it.id }.chunked(MAX_BOUND_VARIABLES - 1).sumOf { chunk -> favourite(chunk, now) }
+        return restored + stamped
     }
 
     @Query("SELECT id FROM songs WHERE favouritedAt IS NOT NULL")

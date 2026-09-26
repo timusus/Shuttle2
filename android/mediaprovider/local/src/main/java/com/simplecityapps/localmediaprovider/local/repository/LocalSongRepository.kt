@@ -135,7 +135,7 @@ class LocalSongRepository(
         songs: List<Song>,
         favourite: Boolean
     ) {
-        val count = songDataDao.setFavourite(songs.map { it.id }, favourite)
+        val count = songDataDao.setFavourite(songs, favourite)
         Timber.v("$count song(s) ${if (favourite) "favourited" else "unfavourited"}")
     }
 

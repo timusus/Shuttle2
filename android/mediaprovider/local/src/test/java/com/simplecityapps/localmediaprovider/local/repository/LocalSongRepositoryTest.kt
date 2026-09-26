@@ -174,6 +174,21 @@ class LocalSongRepositoryTest {
     }
 
     @Test
+    fun `undoing a remove restores the song's original favourited time, not now (#564)`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao())
+        val song = insertSongs(listOf("Song")).single()
+
+        repository.setFavourite(listOf(song), true)
+        val originalFavouritedSong = repository.loadSongs(SongQuery.Favourites).single()
+        repository.setFavourite(listOf(song), false)
+
+        // Undo: FavouriteSongs resolves the selection before removal, so the Undo carries the song with its original favouritedAt.
+        repository.setFavourite(listOf(originalFavouritedSong), true)
+
+        repository.loadSongs(SongQuery.Favourites).single().favouritedAt shouldBe originalFavouritedSong.favouritedAt
+    }
+
+    @Test
     fun `more favourites than SQLite binds in one statement are all set`() = runTest {
         val repository = LocalSongRepository(backgroundScope, database.songDataDao())
         val songs = insertSongs((1..1_500).map { index -> "Song $index" })
