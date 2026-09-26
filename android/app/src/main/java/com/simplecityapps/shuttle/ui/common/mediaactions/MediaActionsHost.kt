@@ -51,6 +51,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.actions.format
+import com.simplecityapps.shuttle.ui.actions.toIntent
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import kotlinx.coroutines.launch
 

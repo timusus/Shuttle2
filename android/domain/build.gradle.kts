@@ -1,11 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 // Domain layer (#443, docs/architecture/layering.md): plain Kotlin models, queries, sort orders, repository and
-// playback operations interfaces, no Android.
+// playback operations interfaces, and the shared use cases, no Android.
 plugins {
     // No version: the Kotlin Gradle plugin is already on the root classpath (via the Compose compiler plugin).
     `java-library`
     id("org.jetbrains.kotlin.jvm")
+    // Dagger (not Hilt) generates the use cases' `@Inject` factories here, where the classes live.
+    id("com.google.devtools.ksp")
 }
 
 java {
@@ -23,6 +25,8 @@ kotlin {
 dependencies {
     implementation(libs.kotlinx.datetime)
     api(libs.kotlinx.coroutinesCore)
+    implementation(libs.dagger)
+    ksp(libs.dagger.compiler)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotest)

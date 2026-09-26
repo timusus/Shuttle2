@@ -39,7 +39,6 @@ import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.trial.Entitlement
 import com.simplecityapps.trial.ProSource
 import com.simplecityapps.trial.ServerAccessGate
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /** The shared media action and library use cases, wired to a test's fakes. */
@@ -62,7 +61,7 @@ class TestMediaActions(
     val addToPlaylist = AddToPlaylist(playlistRepository, resolveSongs)
     val createPlaylist = CreatePlaylist(playlistRepository, resolveSongs)
     val excludeSongs = ExcludeSongs(songRepository, queueOperations, resolveSongs)
-    val deleteSongs = DeleteSongs(songRepository, queueOperations, resolveSongs, { fileDeleter.delete(it) }, Dispatchers.Unconfined)
+    val deleteSongs = DeleteSongs(songRepository, queueOperations, resolveSongs, { fileDeleter.delete(it) })
     val songDownloadManager = FakeSongDownloadManager()
     val mediaInfoProvider = FakeMediaInfoProvider()
 
