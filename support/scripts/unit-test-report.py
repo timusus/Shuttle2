@@ -6,10 +6,13 @@ support/scripts/unit-test and support/scripts/remote-build.sh (#334, #468):
 the condensed build-brief/Gradle console output names that a test task
 failed but not which test, which only exists in the XML report.
 """
+import re
 import sys
 import xml.etree.ElementTree as ET
 
 MAX_FAILURES = 20
+
+STACK_FRAME_RE = re.compile(r"^\s*at com\.simplecityapps.*?\(([^)]+)\)")
 
 
 def first_line(fail):
@@ -20,6 +23,14 @@ def first_line(fail):
         line = line.strip()
         if line:
             return line
+    return ""
+
+
+def first_project_frame(fail):
+    for line in (fail.text or "").splitlines():
+        match = STACK_FRAME_RE.match(line)
+        if match:
+            return match.group(1)
     return ""
 
 
@@ -38,7 +49,9 @@ def collect_failures(paths):
                 continue
             classname = testcase.get("classname", "?")
             name = testcase.get("name", "?")
-            failures.append((classname, name, first_line(fail)))
+            failures.append(
+                (classname, name, first_line(fail), first_project_frame(fail))
+            )
     return failures
 
 
@@ -48,8 +61,9 @@ def main():
         return
 
     shown = failures[:MAX_FAILURES]
-    for classname, name, message in shown:
-        print(f"{classname}.{name}: {message}")
+    for classname, name, message, location in shown:
+        suffix = f" ({location})" if location else ""
+        print(f"{classname}.{name}: {message}{suffix}")
 
     remaining = len(failures) - len(shown)
     if remaining > 0:
