@@ -31,10 +31,16 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class PlaylistListIntegrationTest {
 
-    @get:Rule
+    // Ordered explicitly (JUnit doesn't guarantee declaration order for unordered @Rules):
+    // Dispatchers.Main must already be the test dispatcher before composeTestRule builds its
+    // Compose test environment, and must stay set until that environment (and its recomposer
+    // coroutine, which dispatches onto Main) has fully torn down -- otherwise resetMain() can
+    // race a still-live recomposer dispatch and throw "Dispatchers.Main is used concurrently
+    // with setting it" (#437).
+    @get:Rule(order = 0)
     val mainDispatcherRule = MainDispatcherRule()
 
-    @get:Rule
+    @get:Rule(order = 1)
     val composeTestRule = createComposeRule()
 
     private val fakePlaylistRepository = FakePlaylistRepository()
