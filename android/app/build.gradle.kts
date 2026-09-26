@@ -227,6 +227,9 @@ android {
         implementation(libs.glide.okhttp3Integration)
         implementation(libs.glide.compose)
 
+        // Coil
+        implementation(libs.coil.compose)
+
         // Drag to reorder in lazy lists (playlist detail)
         implementation(libs.reorderable)
 

@@ -5,11 +5,15 @@ import android.content.Intent
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.tracing.trace
 import androidx.work.Configuration
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.MainActivity
 import com.simplecityapps.shuttle.ui.ThemeManager
+import dagger.Lazy
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +25,8 @@ import timber.log.Timber
 class ShuttleApplication :
     Application(),
     ActivityIntentProvider,
-    Configuration.Provider {
+    Configuration.Provider,
+    SingletonImageLoader.Factory {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
@@ -37,6 +42,9 @@ class ShuttleApplication :
     @AppCoroutineScope
     @Inject
     lateinit var appCoroutineScope: CoroutineScope
+
+    @Inject
+    lateinit var imageLoader: Lazy<ImageLoader>
 
     override fun onCreate() = trace("S2 Application.onCreate") {
         super.onCreate()
@@ -72,4 +80,8 @@ class ShuttleApplication :
             Configuration.Builder()
                 .setWorkerFactory(workerFactory)
                 .build()
+
+    // Coil: AsyncImage and every other singleton-loader call use the Hilt ImageLoader and its artwork fetchers
+
+    override fun newImageLoader(context: PlatformContext): ImageLoader = imageLoader.get()
 }

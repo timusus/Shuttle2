@@ -55,6 +55,10 @@ dependencies {
     // Coroutines
     implementation libs.kotlinx.coroutinesCore
 
+    // Coil
+    implementation libs.coil.core
+    implementation libs.coil.network.okhttp
+
     // Glide
     implementation libs.glide
     ksp libs.glide.ksp
