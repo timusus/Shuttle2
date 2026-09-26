@@ -2,6 +2,9 @@ package com.simplecityapps.shuttle.ui.screens.settings
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
+import com.simplecityapps.shuttle.settings.ReadSetting
+import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
@@ -35,7 +38,7 @@ class SettingsIntegrationTest {
 
     @Test
     fun `toggling a switch stores it and redraws it`() {
-        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, SettingsViewModel(store, effects))
+        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects))
         robot.assertSwitchOff("Pure black")
 
         robot.tapText("Pure black")
@@ -46,7 +49,7 @@ class SettingsIntegrationTest {
 
     @Test
     fun `picking a theme stores it and shows it`() {
-        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, SettingsViewModel(store, effects))
+        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects))
 
         robot.tapText("Theme")
         robot.tapDialogText("Dark")
@@ -58,7 +61,7 @@ class SettingsIntegrationTest {
 
     @Test
     fun `a change made elsewhere shows up`() {
-        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, SettingsViewModel(store, effects))
+        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects))
 
         store.preference(AppearanceSettings.PureBlack).value = true
 

@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.settings
 import androidx.annotation.StringRes
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -15,6 +14,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.screens.paywall.PaywallRoute
 import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesScreen
 import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel
@@ -101,8 +101,8 @@ private fun SettingsDestinationEntry(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event -> snackbarHostState.showSnackbar(context.getString(event.message)) }
+    ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
+        snackbarHostState.showSnackbar(context.getString(event.message))
     }
     LifecycleResumeEffect(viewModel) {
         viewModel.onResume()

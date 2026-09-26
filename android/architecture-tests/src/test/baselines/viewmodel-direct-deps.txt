@@ -1,6 +1,5 @@
 # ViewModels must not inject *Operations, *Preference(s) or *Store types; inject a use case (UDF 8a)
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
-com.simplecityapps.shuttle.ui.screens.settings.SettingsViewModel -> com.simplecityapps.shuttle.settings.SettingsStore
 com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel -> com.simplecityapps.shuttle.ui.screens.sources.ScannerFolderStore
 com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel -> com.simplecityapps.playback.PlaybackOperations
 com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel -> com.simplecityapps.playback.queue.QueueOperations

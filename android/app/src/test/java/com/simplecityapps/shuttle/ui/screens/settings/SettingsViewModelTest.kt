@@ -3,6 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.settings
 import android.content.Context
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
+import com.simplecityapps.shuttle.settings.ReadSetting
+import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
@@ -13,8 +16,6 @@ import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import java.util.Date
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
@@ -42,7 +43,7 @@ class SettingsViewModelTest {
         store = SettingsStore(context.defaultSharedPreferences().apply { edit().clear().commit() })
     }
 
-    private fun viewModel() = SettingsViewModel(store, effects)
+    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects)
 
     private inline fun <reified T : SettingItem> item(key: String): T = SettingsCatalog.items.filterIsInstance<T>().first { it.key == key }
 
@@ -106,36 +107,39 @@ class SettingsViewModelTest {
     @Test
     fun `rescan starts an import and says so`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
-        val event = backgroundScope.async { viewModel.events.first() }
+        backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
 
         viewModel.onAction(SettingsAction.Rescan)
+        runCurrent()
 
-        event.await() shouldBe SettingsUiEvent.RescanStarted
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(SettingsUiEvent.RescanStarted)
         effects.rescans shouldBe 1
     }
 
     @Test
     fun `clearing the artwork cache reports when it's done`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
-        val event = backgroundScope.async { viewModel.events.first() }
+        backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
 
         viewModel.onAction(SettingsAction.ClearArtworkCache)
+        runCurrent()
 
-        event.await() shouldBe SettingsUiEvent.ArtworkCacheCleared
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(SettingsUiEvent.ArtworkCacheCleared)
         effects.cacheClears shouldBe 1
     }
 
     @Test
     fun `downloading all artwork starts the download and says so`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
-        val event = backgroundScope.async { viewModel.events.first() }
+        backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
 
         viewModel.onAction(SettingsAction.DownloadAllArtwork)
+        runCurrent()
 
-        event.await() shouldBe SettingsUiEvent.ArtworkDownloadStarted
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(SettingsUiEvent.ArtworkDownloadStarted)
         effects.artworkDownloads shouldBe 1
     }
 
@@ -143,12 +147,26 @@ class SettingsViewModelTest {
     fun `copying debug logs reports the result`() = runTest(mainDispatcherRule.testDispatcher) {
         effects.copyResult = CopyDebugLogsResult.TooLarge
         val viewModel = viewModel()
-        val event = backgroundScope.async { viewModel.events.first() }
+        backgroundScope.launch { viewModel.uiState.collect {} }
         runCurrent()
 
         viewModel.onAction(SettingsAction.CopyDebugLogs)
+        runCurrent()
 
-        event.await() shouldBe SettingsUiEvent.DebugLogsCopied(CopyDebugLogsResult.TooLarge)
+        viewModel.uiState.value.events.map { it.value } shouldBe listOf(SettingsUiEvent.DebugLogsCopied(CopyDebugLogsResult.TooLarge))
+    }
+
+    @Test
+    fun `a handled confirmation is consumed`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        viewModel.onAction(SettingsAction.Rescan)
+        runCurrent()
+
+        viewModel.onEventHandled(viewModel.uiState.value.events.single().id)
+        runCurrent()
+
+        viewModel.uiState.value.events shouldBe emptyList()
     }
 
     @Test
