@@ -10,7 +10,6 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -63,7 +62,7 @@ class ConflictingProviderImportTest {
             MediaImporter(
                 context = context,
                 songRepository = LocalSongRepository(scope, database.songDataDao()),
-                playlistRepository = LocalPlaylistRepository(context, scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao()),
+                playlistStore = LocalPlaylistRepository(context, scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao()),
                 preferenceManager = GeneralPreferenceManager(context.getSharedPreferences("conflicting-import-test", Context.MODE_PRIVATE))
             )
         importer.mediaProviders += FakeProvider(MediaProviderType.MediaStore)
@@ -117,9 +116,6 @@ class ConflictingProviderImportTest {
             )
         )
 
-        override fun findPlaylists(
-            existingPlaylists: List<Playlist>,
-            existingSongs: List<Song>
-        ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flowOf(FlowEvent.Success(emptyList()))
+        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flowOf(FlowEvent.Success(emptyList()))
     }
 }

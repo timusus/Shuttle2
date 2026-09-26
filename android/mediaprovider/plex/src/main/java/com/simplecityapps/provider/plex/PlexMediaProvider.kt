@@ -12,7 +12,6 @@ import com.simplecityapps.provider.plex.http.QueryResult
 import com.simplecityapps.provider.plex.http.items
 import com.simplecityapps.provider.plex.http.sections
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -74,10 +73,7 @@ class PlexMediaProvider(
         }
     }
 
-    override fun findPlaylists(
-        existingPlaylists: List<Playlist>,
-        existingSongs: List<Song>
-    ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flowOf(FlowEvent.Success(emptyList()))
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flowOf(FlowEvent.Success(emptyList()))
 }
 
 internal fun Metadata.toSong(type: MediaProviderType): Song = Song(

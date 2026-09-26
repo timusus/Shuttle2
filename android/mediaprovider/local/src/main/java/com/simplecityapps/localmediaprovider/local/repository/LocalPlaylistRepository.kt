@@ -8,9 +8,11 @@ import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
+import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.M3uEntryMatcher
 import com.simplecityapps.mediaprovider.M3uParser
 import com.simplecityapps.mediaprovider.M3uWriter
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.comparator
@@ -41,7 +43,12 @@ import timber.log.Timber
  * SAF document URI, set by `TaglibMediaProvider.findPlaylists`) - the only ones with a file to
  * keep in sync when their songs change.
  */
-internal fun Playlist.isM3uSynced(): Boolean = mediaProvider == MediaProviderType.Shuttle && externalId != null
+internal fun Playlist.isM3uSynced(): Boolean = isM3uSynced(mediaProvider, externalId)
+
+private fun isM3uSynced(
+    mediaProvider: MediaProviderType,
+    externalId: String?
+): Boolean = mediaProvider == MediaProviderType.Shuttle && externalId != null
 
 class LocalPlaylistRepository(
     private val context: Context,
@@ -49,7 +56,8 @@ class LocalPlaylistRepository(
     private val playlistDataDao: PlaylistDataDao,
     private val playlistSongJoinDao: PlaylistSongJoinDao,
     private val songDataDao: SongDataDao
-) : PlaylistRepository {
+) : PlaylistRepository,
+    ImportedPlaylistStore {
     private val m3uWriter = M3uWriter()
     private val m3uParser = M3uParser()
 
@@ -106,6 +114,24 @@ class LocalPlaylistRepository(
         val playlist = playlistDataDao.getPlaylist(playlistId)
         Timber.v("Created playlist: ${playlist.name} with ${playlist.songCount} songs}")
         return playlist
+    }
+
+    /**
+     * Doesn't write the playlist back to its m3u file: it has just been read from it. That file already holds the edits made to
+     * the playlist in S2 ([syncM3uFile]), so the playlist is given exactly its songs; a media server's playlist never hears of
+     * them, so it keeps the songs added in S2 and gains the server's new ones.
+     */
+    override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = withContext(Dispatchers.IO) {
+        playlistDataDao.storeImported(
+            PlaylistData(
+                name = playlist.name,
+                sortOrder = PlaylistSongSortOrder.Position,
+                mediaProviderType = playlist.mediaProviderType,
+                externalId = playlist.externalId
+            ),
+            songIds = playlist.songs.inLibrary().map { song -> song.id },
+            replaceSongs = isM3uSynced(playlist.mediaProviderType, playlist.externalId)
+        )
     }
 
     override suspend fun addToPlaylist(

@@ -17,7 +17,6 @@ import com.simplecityapps.provider.emby.http.audioItems
 import com.simplecityapps.provider.emby.http.playlistItems
 import com.simplecityapps.provider.emby.http.playlists
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import kotlin.math.min
 import kotlin.time.Instant
@@ -74,10 +73,7 @@ class EmbyMediaProvider(
         }
     }
 
-    override fun findPlaylists(
-        existingPlaylists: List<Playlist>,
-        existingSongs: List<Song>
-    ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> {
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> {
         val address =
             authenticationManager.getAddress() ?: run {
                 return flowOf(FlowEvent.Failure(context.getString(R.string.media_provider_address_missing)))

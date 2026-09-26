@@ -24,7 +24,6 @@ import com.simplecityapps.saf.DocumentNodeTree
 import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -199,10 +198,7 @@ class TaglibMediaProvider(
         ?.merge()
         ?.toList()
 
-    override fun findPlaylists(
-        existingPlaylists: List<Playlist>,
-        existingSongs: List<Song>
-    ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {
         val sanitisedSongPaths = M3uEntryMatcher.sanitisedPathsByFilename(existingSongs)
 
         getDocumentTrees()?.flatMap { tree -> tree.getLeaves() }?.let { nodes ->

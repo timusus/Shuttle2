@@ -3,7 +3,6 @@ package com.simplecityapps.mediaprovider
 import android.content.Context
 import androidx.annotation.DrawableRes
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.Flow
 
@@ -22,10 +21,7 @@ interface MediaProvider {
      */
     suspend fun remapLegacySongs(existingSongs: List<Song>): List<SongPathRemap> = emptyList()
 
-    fun findPlaylists(
-        existingPlaylists: List<Playlist>,
-        existingSongs: List<Song>
-    ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>>
+    fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>>
 }
 
 fun MediaProviderType.title(context: Context): String = when (this) {

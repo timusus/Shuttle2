@@ -7,6 +7,7 @@ import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumReposito
 import com.simplecityapps.localmediaprovider.local.repository.LocalGenreRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalPlaylistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepository
+import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
@@ -37,9 +38,9 @@ class RepositoryModule {
     fun provideMediaImporter(
         @ApplicationContext context: Context,
         songRepository: SongRepository,
-        playlistRepository: PlaylistRepository,
+        playlistStore: ImportedPlaylistStore,
         preferenceManager: GeneralPreferenceManager
-    ): MediaImporter = MediaImporter(context, songRepository, playlistRepository, preferenceManager)
+    ): MediaImporter = MediaImporter(context, songRepository, playlistStore, preferenceManager)
 
     @Provides
     @Singleton
@@ -57,11 +58,17 @@ class RepositoryModule {
 
     @Provides
     @Singleton
-    fun providePlaylistRepository(
+    fun provideLocalPlaylistRepository(
         @ApplicationContext context: Context,
         database: MediaDatabase,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): PlaylistRepository = LocalPlaylistRepository(context, appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+    ): LocalPlaylistRepository = LocalPlaylistRepository(context, appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+
+    @Provides
+    fun providePlaylistRepository(playlistRepository: LocalPlaylistRepository): PlaylistRepository = playlistRepository
+
+    @Provides
+    fun provideImportedPlaylistStore(playlistRepository: LocalPlaylistRepository): ImportedPlaylistStore = playlistRepository
 
     @Provides
     @Singleton

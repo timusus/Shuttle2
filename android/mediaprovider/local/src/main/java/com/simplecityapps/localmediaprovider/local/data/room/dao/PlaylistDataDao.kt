@@ -31,20 +31,63 @@ abstract class PlaylistDataDao {
         songIds: List<Long>
     ): Long {
         val playlistId = insert(playlistData)
-        insertSongJoins(
-            songIds.mapIndexed { i, songId ->
-                PlaylistSongJoin(
-                    playlistId = playlistId,
-                    songId = songId,
-                    sortOrder = i.toLong()
-                )
-            }
-        )
+        insertSongJoins(songJoins(playlistId, songIds, firstSortOrder = 0))
         return playlistId
     }
 
     @Update
     abstract suspend fun update(playlistData: PlaylistData)
+
+    @Query("SELECT * FROM playlists WHERE mediaProvider = :mediaProviderType AND externalId = :externalId ORDER BY id LIMIT 1")
+    abstract suspend fun getImportedPlaylistData(
+        mediaProviderType: MediaProviderType,
+        externalId: String
+    ): PlaylistData?
+
+    @Query("SELECT songId FROM playlist_song_join WHERE playlistId = :playlistId ORDER BY sortOrder")
+    abstract suspend fun getSongIds(playlistId: Long): List<Long>
+
+    /**
+     * Stores the playlist [playlistData]'s provider imported from its [PlaylistData.externalId] source, holding the songs with
+     * [songIds], as one transaction: inserts it the first time that source is found, and afterwards renames the playlist
+     * imported from it, then gives it exactly [songIds] if [replaceSongs], or else adds those of them it doesn't hold yet.
+     */
+    @Transaction
+    open suspend fun storeImported(
+        playlistData: PlaylistData,
+        songIds: List<Long>,
+        replaceSongs: Boolean
+    ) {
+        val existing = getImportedPlaylistData(playlistData.mediaProviderType, checkNotNull(playlistData.externalId))
+        if (existing == null) {
+            insert(playlistData, songIds)
+            return
+        }
+        if (existing.name != playlistData.name) {
+            update(existing.copy(name = playlistData.name))
+        }
+        val heldSongIds = getSongIds(existing.id)
+        if (replaceSongs) {
+            if (heldSongIds != songIds) {
+                clear(existing.id)
+                insertSongJoins(songJoins(existing.id, songIds, firstSortOrder = 0))
+            }
+        } else {
+            insertSongJoins(songJoins(existing.id, songIds.filterNot { songId -> songId in heldSongIds }, firstSortOrder = heldSongIds.size))
+        }
+    }
+
+    private fun songJoins(
+        playlistId: Long,
+        songIds: List<Long>,
+        firstSortOrder: Int
+    ): List<PlaylistSongJoin> = songIds.mapIndexed { i, songId ->
+        PlaylistSongJoin(
+            playlistId = playlistId,
+            songId = songId,
+            sortOrder = (firstSortOrder + i).toLong()
+        )
+    }
 
     @Query(
         """

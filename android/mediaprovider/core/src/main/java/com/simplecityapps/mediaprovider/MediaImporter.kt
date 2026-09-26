@@ -2,11 +2,8 @@ package com.simplecityapps.mediaprovider
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
@@ -20,8 +17,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.sync.Mutex
@@ -31,7 +26,7 @@ import timber.log.Timber
 class MediaImporter(
     private val context: Context,
     private val songRepository: SongRepository,
-    private val playlistRepository: PlaylistRepository,
+    private val playlistStore: ImportedPlaylistStore,
     private val preferenceManager: GeneralPreferenceManager
 ) : SongImportStateProvider {
     /** Held for the length of an import, so a second [import] finds it taken and returns rather than scanning again. */
@@ -231,16 +226,10 @@ class MediaImporter(
     private fun importPlaylists(mediaProvider: MediaProvider): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> = flow {
         emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_playlists), null)))
 
-        val existingPlaylists =
-            playlistRepository.getPlaylists(query = PlaylistQuery.All(mediaProviderType = mediaProvider.type))
-                .filterNotNull()
-                .firstOrNull()
-                .orEmpty()
-
         // Straight from the database: the songs this pass just stored (or the last pass did) may not be in the shared list yet
         val existingSongs = songRepository.loadSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type))
 
-        mediaProvider.findPlaylists(existingPlaylists, existingSongs).collect { event ->
+        mediaProvider.findPlaylists(existingSongs).collect { event ->
             when (event) {
                 is FlowEvent.Progress -> {
                     emit(FlowEvent.Progress<PlaylistImportResult, MessageProgress>(event.data))
@@ -249,7 +238,9 @@ class MediaImporter(
                 is FlowEvent.Success -> {
                     event.result.forEachIndexed { i, playlistUpdateData ->
                         emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_updating_database), Progress(i, event.result.size))))
-                        createOrUpdatePlaylist(playlistUpdateData, existingPlaylists)
+                        if (playlistUpdateData.songs.isNotEmpty()) {
+                            playlistStore.storePlaylist(playlistUpdateData)
+                        }
                     }
                 }
 
@@ -261,53 +252,11 @@ class MediaImporter(
         emit(FlowEvent.Success(PlaylistImportResult(mediaProvider.type)))
     }
 
+    /** A playlist [mediaProviderType] found, holding the [songs] of its source, which [externalId] identifies within that provider. */
     data class PlaylistUpdateData(
         val mediaProviderType: MediaProviderType,
         val name: String,
         val songs: List<Song>,
-        val externalId: String?
+        val externalId: String
     )
-
-    private suspend fun createOrUpdatePlaylist(
-        playlistUpdateData: PlaylistUpdateData,
-        existingPlaylists: List<Playlist>
-    ) {
-        val existingPlaylist =
-            existingPlaylists.find { playlist ->
-                playlist.mediaProvider == playlistUpdateData.mediaProviderType && (playlist.name == playlistUpdateData.name || playlist.externalId == playlistUpdateData.externalId)
-            }
-
-        var songsToInsert = playlistUpdateData.songs
-        if (songsToInsert.isNotEmpty()) {
-            if (existingPlaylist == null) {
-                playlistRepository.createPlaylist(
-                    playlistUpdateData.name,
-                    playlistUpdateData.mediaProviderType,
-                    songsToInsert,
-                    playlistUpdateData.externalId
-                )
-            } else {
-                // Update possibly stale values
-                playlistRepository.renamePlaylist(existingPlaylist, playlistUpdateData.name)
-                playlistRepository.updatePlaylistMediaProviderType(existingPlaylist, playlistUpdateData.mediaProviderType)
-                playlistRepository.updatePlaylistExternalId(existingPlaylist, playlistUpdateData.externalId)
-
-                // Look for duplicates
-                val existingSongs =
-                    playlistRepository.getSongsForPlaylist(existingPlaylist)
-                        .firstOrNull()
-                        .orEmpty()
-                        .map { it.song }
-                songsToInsert = songsToInsert.filterNot { songToInsert -> existingSongs.any { existingSong -> existingSong.id == songToInsert.id } }
-                if (songsToInsert.isNotEmpty()) {
-                    Timber.v("Adding ${songsToInsert.size} songs to playlist")
-                    playlistRepository.addToPlaylist(existingPlaylist, songsToInsert)
-                } else {
-                    Timber.v("Failed to update playlist: songs empty")
-                }
-            }
-        } else {
-            Timber.v("No songs to insert")
-        }
-    }
 }

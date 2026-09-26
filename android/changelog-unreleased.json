@@ -286,6 +286,10 @@
     {
       "text": "Playlists in your music folders now appear after the first scan, including on large libraries, instead of only after a rescan",
       "commits": []
+    },
+    {
+      "text": "Rescanning your music folders now updates a playlist to match its .m3u file, instead of keeping songs removed from the file, and leaves the file itself untouched",
+      "commits": []
     }
   ]
 }

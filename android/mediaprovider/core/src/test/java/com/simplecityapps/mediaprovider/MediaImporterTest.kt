@@ -1,9 +1,7 @@
 package com.simplecityapps.mediaprovider
 
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.shouldBe
@@ -38,7 +36,7 @@ class MediaImporterTest {
         MediaImporter(
             context = RuntimeEnvironment.getApplication(),
             songRepository = emptyRepository<SongRepository>(),
-            playlistRepository = emptyRepository<PlaylistRepository>(),
+            playlistStore = emptyRepository<ImportedPlaylistStore>(),
             preferenceManager = GeneralPreferenceManager(FakeSharedPreferences())
         ).apply { mediaProviders += provider }
 
@@ -202,10 +200,7 @@ class MediaImporterTest {
             scanFailure?.let { message -> emit(FlowEvent.Failure(message)) }
         }
 
-        override fun findPlaylists(
-            existingPlaylists: List<Playlist>,
-            existingSongs: List<Song>
-        ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = emptyFlow()
+        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = emptyFlow()
     }
 
     private companion object {

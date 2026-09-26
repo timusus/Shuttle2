@@ -13,7 +13,6 @@ import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import kotlin.math.abs
@@ -220,10 +219,7 @@ class MediaStoreMediaProvider(
 
     // Playlists
 
-    override fun findPlaylists(
-        existingPlaylists: List<Playlist>,
-        existingSongs: List<Song>
-    ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flow {
         val mediaStorePlaylists = findMediaStorePlaylists().toList()
         val updates =
             mediaStorePlaylists.mapIndexed { i, mediaStorePlaylist ->

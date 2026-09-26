@@ -18,7 +18,6 @@ import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -181,7 +180,7 @@ class LegacySafSongsImportTest {
             MediaImporter(
                 context = context,
                 songRepository = LocalSongRepository(scope, database.songDataDao()),
-                playlistRepository = LocalPlaylistRepository(context, scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao()),
+                playlistStore = LocalPlaylistRepository(context, scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao()),
                 preferenceManager = GeneralPreferenceManager(context.getSharedPreferences("import-test", Context.MODE_PRIVATE))
             )
         importer.mediaProviders += provider
@@ -211,10 +210,7 @@ class LegacySafSongsImportTest {
 
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flowOf(FlowEvent.Success(files.map { file -> file.toScannedSong() }))
 
-        override fun findPlaylists(
-            existingPlaylists: List<Playlist>,
-            existingSongs: List<Song>
-        ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flowOf(FlowEvent.Success(emptyList()))
+        override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flowOf(FlowEvent.Success(emptyList()))
 
         private fun MediaStoreAudioFile.toScannedSong() = Song(
             id = 0,
