@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import io.kotest.matchers.doubles.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlin.time.Instant
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -79,6 +80,24 @@ class VoiceSearchResolverTest {
         resolve(VoiceSearch("karma police", Focus.Playlist, playlist = "Karma Police"), resolver(playlists = emptyMap())) shouldBe VoiceSearchResult.Songs(okComputer, 2)
         // Nor with only empty ones, as a new library's Favorites is.
         resolve(VoiceSearch("karma police", Focus.Playlist), resolver(playlists = mapOf(playlist(2, "Favorites") to emptyList()))) shouldBe VoiceSearchResult.Songs(okComputer, 2)
+    }
+
+    @Test
+    fun `RS-67 a playlist focus for Favorites or Favourites plays the favourited songs, newest first`() = runTest {
+        val favouritedLibrary = listOf(
+            creep.copy(favouritedAt = Instant.fromEpochMilliseconds(1_000)),
+            airbag.copy(favouritedAt = Instant.fromEpochMilliseconds(3_000)),
+            karmaPolice.copy(favouritedAt = Instant.fromEpochMilliseconds(2_000)),
+            you,
+        )
+        val newestFirst = listOf(favouritedLibrary[1], favouritedLibrary[2], favouritedLibrary[0])
+        val favouritesResolver = resolver(songs = favouritedLibrary)
+
+        resolve(VoiceSearch("favorites", Focus.Playlist, playlist = "Favorites"), favouritesResolver) shouldBe VoiceSearchResult.Songs(newestFirst, 0)
+        // The UK spelling matches too, regardless of the assistant's locale.
+        resolve(VoiceSearch("favourites", Focus.Playlist, playlist = "Favourites"), favouritesResolver) shouldBe VoiceSearchResult.Songs(newestFirst, 0)
+        // And unstructured, since Favourites isn't a stored playlist to be found among the user's own (#497, #563).
+        resolve(VoiceSearch("favorites"), favouritesResolver) shouldBe VoiceSearchResult.Songs(newestFirst, 0)
     }
 
     @Test

@@ -347,6 +347,12 @@ there (RS-48), waits for the saved queue's restore, and plays the search's songs
 and isn't run again when S2 is reopened from recents. (#424) — JVM (`spec/ForegroundStartSpecTest`); the cold start
 on the emulator (`checks/voice-search.sh`).
 
+**RS-67: a voice search for Favorites or Favourites plays the favourites.** Given favourite songs, when a voice
+search names "Favorites" or "Favourites" (either spelling, regardless of the assistant's locale), then the favourited
+songs play, newest first; Favourites is a flag on each song rather than a stored playlist (RS-66), so it isn't among
+the user's own playlists a name search would otherwise find. (#497, #563) — JVM
+(`mediasession/VoiceSearchResolverTest`).
+
 ## Cold start
 
 **RS-63: a cold start shows the saved song straight away.** Given a saved queue, when S2 starts, then the player

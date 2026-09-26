@@ -170,12 +170,19 @@ constructor(
 
         fun playlists(query: String?, bonus: Double = 0.0): List<Candidate> {
             val key = query?.searchKey().orEmpty()
-            return playlists.map { playlist ->
+            val stored = playlists.map { playlist ->
                 Candidate(matchScore(key, playlist.name.searchKey()) + bonus) {
                     val songs = withContext(Dispatchers.IO) { playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song } }
                     VoiceSearchResult.Songs(songs, 0)
                 }
             }
+            // Favourites is a flag on each song rather than a stored playlist (#497), so it isn't among [playlists] above;
+            // both spellings are matched regardless of locale, since a voice search can use either (#563).
+            val favouritesScore = max(matchScore(key, "favorites"), matchScore(key, "favourites"))
+            val favourites = Candidate(favouritesScore + bonus) {
+                VoiceSearchResult.Songs(songs.filter { it.isFavourite }.sortedByDescending { it.favouritedAt }, 0)
+            }
+            return stored + favourites
         }
 
         /** Every kind of thing; where two match as well, an artist wins over an album, then a playlist, a song, a genre. */
