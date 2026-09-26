@@ -22,13 +22,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -52,6 +51,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.actions.format
 import com.simplecityapps.shuttle.ui.actions.toIntent
+import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import kotlinx.coroutines.launch
 
@@ -98,7 +98,7 @@ class MediaActionsState internal constructor(
 }
 
 /**
- * Hosts one destination's media actions: collects [MediaActionsViewModel.results] into the shell snackbar (with
+ * Hosts one destination's media actions: hands [MediaActionsUiState.events] to the shell snackbar (with
  * Undo / Add anyway), confirmation dialogs, shares and [onNavigate]; renders the actions sheet and the
  * add-to-playlist picker.
  */
@@ -114,28 +114,27 @@ fun MediaActionsHost(
     val resources = LocalResources.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val currentOnNavigate by rememberUpdatedState(onNavigate)
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(viewModel) {
-        viewModel.results.collect { result ->
-            when (result) {
-                is MediaActionResult.Message -> scope.launch {
-                    val snackbarResult = snackbarHostState.showSnackbar(
-                        message = result.message.format(resources),
-                        actionLabel = result.action?.label?.format(resources),
-                        withDismissAction = result.action != null,
-                    )
-                    if (snackbarResult == SnackbarResult.ActionPerformed) result.action?.let { viewModel.dispatch(it.action) }
-                }
-
-                is MediaActionResult.ConfirmationRequired -> state.confirmation = result
-
-                is MediaActionResult.Navigate -> currentOnNavigate(result.target)
-
-                is MediaActionResult.Share -> context.startActivity(Intent.createChooser(result.request.toIntent(), null))
-
-                MediaActionResult.None -> Unit
+    ConsumeEvents(uiState.events, viewModel::onEventHandled) { result ->
+        when (result) {
+            // Shown without holding back the results after it
+            is MediaActionResult.Message -> scope.launch {
+                val snackbarResult = snackbarHostState.showSnackbar(
+                    message = result.message.format(resources),
+                    actionLabel = result.action?.label?.format(resources),
+                    withDismissAction = result.action != null,
+                )
+                if (snackbarResult == SnackbarResult.ActionPerformed) result.action?.let { viewModel.dispatch(it.action) }
             }
+
+            is MediaActionResult.ConfirmationRequired -> state.confirmation = result
+
+            is MediaActionResult.Navigate -> onNavigate(result.target)
+
+            is MediaActionResult.Share -> context.startActivity(Intent.createChooser(result.request.toIntent(), null))
+
+            MediaActionResult.None -> Unit
         }
     }
 
@@ -160,9 +159,12 @@ fun MediaActionsHost(
     }
 
     state.playlistPicker?.let { selection ->
-        val playlists by viewModel.playlists.collectAsStateWithLifecycle()
+        DisposableEffect(viewModel) {
+            viewModel.onPlaylistPickerShown(true)
+            onDispose { viewModel.onPlaylistPickerShown(false) }
+        }
         PlaylistPickerSheet(
-            playlists = playlists,
+            playlists = uiState.playlists,
             onPick = { playlist -> viewModel.dispatch(MediaAction.AddToPlaylist(selection, playlist)) },
             onCreate = { state.createPlaylist = selection },
             onDismissRequest = { state.playlistPicker = null },

@@ -4,12 +4,12 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionResult.Message
 import javax.inject.Inject
 
 /**
- * Carries out a [MediaAction] and says what the UI should do next. A ViewModel delegates to it and forwards the
- * result to its screen as a one-off event:
+ * Carries out a [MediaAction] and says what the UI should do next. A ViewModel delegates to it and hands the
+ * result to its screen as a consumable UiState event:
  *
  * ```
  * fun onMediaAction(action: MediaAction) {
- *     viewModelScope.launch { _events.emit(UiEvent.MediaActionDone(mediaActionHandler.handle(action))) }
+ *     viewModelScope.launch { events.post(mediaActionHandler.handle(action)) }
  * }
  * ```
  *
