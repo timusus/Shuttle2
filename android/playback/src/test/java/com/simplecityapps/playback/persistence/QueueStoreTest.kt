@@ -1,6 +1,7 @@
 package com.simplecityapps.playback.persistence
 
 import android.content.SharedPreferences
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.test.utils.robolectric.TestPlayerRunHelper
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
@@ -11,9 +12,11 @@ import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.spec.PlaybackHarness
+import com.simplecityapps.playback.spec.PlaybackHarness.Companion.LONG_SONG_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.longSong
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
+import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unresolvableSong
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.squareup.moshi.Moshi
@@ -141,6 +144,65 @@ class QueueStoreTest {
         saved.shuffleQueueIds shouldBe "4,3,2,1"
         saved.queuePosition shouldBe 0
         saved.nowPlaying?.songId shouldBe 4L
+    }
+
+    @Test
+    fun `a removal made in several player calls saves only the queue it leaves`() {
+        val harness = harness()
+        harness.setQueue(library, position = 2)
+        preferences.values.clear()
+
+        // Two runs apart, the current song among them: two removals, the second moving the current index again.
+        val items = harness.queueOperations.queueStateFlow.value.items
+        harness.queueOperations.remove(listOf(items[0], items[2]))
+        harness.settle()
+
+        preferences.values["queue_ids"] shouldBe listOf("2,4")
+        preferences.values["shuffle_queue_ids"]?.size shouldBe 1
+        preferences.values["queue_position"] shouldBe listOf(1)
+        saved.nowPlaying?.songId shouldBe 4L
+    }
+
+    @Test
+    fun `songs added next with shuffle on save the shuffled order they leave, not the one the player gives them first`() {
+        val harness = harness()
+        harness.run { harness.queueOperations.setShuffleMode(ShuffleMode.On, reshuffle = false) }
+        harness.run { harness.queueOperations.setQueue(library.take(3), listOf(library[2], library[0], library[1]), 0) }
+        harness.settle()
+        preferences.values.clear()
+
+        // A playlist change, which places the new song in the shuffled order as the player sees fit, then the order it takes.
+        harness.run { harness.queueOperations.addToNext(listOf(library[3])) }
+        harness.settle()
+
+        preferences.values["queue_ids"] shouldBe listOf("1,2,3,4")
+        preferences.values["shuffle_queue_ids"] shouldBe listOf("3,4,1,2")
+    }
+
+    @Test
+    fun `a move saves the moved queue and the current song's new position once`() {
+        val harness = harness()
+        harness.setQueue(library.take(3))
+        preferences.values.clear()
+
+        harness.queueOperations.move(0, 2)
+        harness.settle()
+
+        preferences.values["queue_ids"] shouldBe listOf("2,3,1")
+        preferences.values["queue_position"] shouldBe listOf(2)
+    }
+
+    @Test
+    fun `clearing the queue saves the empty queue once`() {
+        val harness = harness()
+        harness.setQueue(library.take(3), position = 1)
+        preferences.values.clear()
+
+        harness.queueOperations.clear()
+        harness.settle()
+
+        preferences.values["queue_ids"] shouldBe listOf("")
+        preferences.values["queue_position"] shouldBe listOf(-1)
     }
 
     @Test
@@ -297,6 +359,35 @@ class QueueStoreTest {
 
         preferences.positions shouldNotContain -1
         saved.playbackPosition shouldBe harness.playbackOperations.getProgress()
+    }
+
+    @Test
+    fun `a song that fails to load keeps the position it was to resume from, until playback moves past it`() {
+        saved(playbackPosition = 30_000)
+        val harness = harness()
+        // One whose stream can't be resolved, as a remote song's when its server can't be reached.
+        harness.setQueue(listOf(unresolvableSong(1).copy(duration = LONG_SONG_MS), library[1]))
+        preferences.positions.clear()
+
+        // The player fails and goes idle at the position it was asked for, and a pause there saves nothing else.
+        var result: Result<Boolean>? = null
+        harness.playbackOperations.load(30_000, skipUnloadable = false) { result = it }
+        harness.runUntil { result != null }
+        harness.playbackOperations.pause()
+        harness.settle()
+
+        harness.appPlayer.playbackState shouldBe Player.STATE_IDLE
+        preferences.positions.distinct() shouldBe listOf(30_000)
+        saved.playbackPosition shouldBe 30_000
+
+        // A play tries it again from there, fails, and moves on to the next song, which resumes from its own start.
+        harness.playbackOperations.play()
+        harness.runUntil { harness.queueOperations.queueStateFlow.value.currentPosition == 1 }
+        harness.playbackOperations.pause()
+        harness.settle()
+
+        preferences.positions.distinct() shouldBe listOf(30_000, -1)
+        saved.playbackPosition shouldBe null
     }
 
     @Test
@@ -571,6 +662,9 @@ class QueueStoreTest {
         /** Each playback position written, -1 for none. */
         val positions = mutableListOf<Int>()
 
+        /** Each value written to each key, in order. */
+        val values = mutableMapOf<String, MutableList<Any?>>()
+
         fun snapshot(): Map<String, Any?> = delegate.all.toMap()
 
         override fun edit(): SharedPreferences.Editor = RecordingEditor(delegate.edit())
@@ -578,17 +672,23 @@ class QueueStoreTest {
         private inner class RecordingEditor(
             private val editor: SharedPreferences.Editor
         ) : SharedPreferences.Editor by editor {
-            private fun record(key: String) = apply { writes[key] = (writes[key] ?: 0) + 1 }
+            private fun record(
+                key: String,
+                value: Any?
+            ) = apply {
+                writes[key] = (writes[key] ?: 0) + 1
+                values.getOrPut(key) { mutableListOf() } += value
+            }
 
             override fun putString(
                 key: String,
                 value: String?
-            ) = record(key).also { editor.putString(key, value) }
+            ) = record(key, value).also { editor.putString(key, value) }
 
             override fun putInt(
                 key: String,
                 value: Int
-            ) = record(key).also {
+            ) = record(key, value).also {
                 if (key == "playback_position") positions += value
                 editor.putInt(key, value)
             }
@@ -596,12 +696,12 @@ class QueueStoreTest {
             override fun putBoolean(
                 key: String,
                 value: Boolean
-            ) = record(key).also { editor.putBoolean(key, value) }
+            ) = record(key, value).also { editor.putBoolean(key, value) }
 
             override fun putLong(
                 key: String,
                 value: Long
-            ) = record(key).also { editor.putLong(key, value) }
+            ) = record(key, value).also { editor.putLong(key, value) }
         }
     }
 

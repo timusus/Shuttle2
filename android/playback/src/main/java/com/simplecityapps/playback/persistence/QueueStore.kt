@@ -189,8 +189,11 @@ class QueueStore(
         reason: Int
     ) {
         // A seek, or playing on to the next item or back to the start on repeat. Not the first item of a queue set on an
-        // empty one taking its place.
-        if (oldPosition.mediaItem?.queueEntryOrNull != null) saveCurrentPosition()
+        // empty one taking its place, nor a skip or a queue change moving to another item, whose transition clears the
+        // position instead (onMediaItemTransition).
+        val oldUid = oldPosition.mediaItem?.queueEntryOrNull?.uid ?: return
+        if (reason != Player.DISCONTINUITY_REASON_AUTO_TRANSITION && newPosition.mediaItem?.queueEntryOrNull?.uid != oldUid) return
+        saveCurrentPosition()
     }
 
     override fun onIsPlayingChanged(isPlaying: Boolean) {

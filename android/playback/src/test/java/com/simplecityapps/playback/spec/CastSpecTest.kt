@@ -341,6 +341,24 @@ class CastSpecTest {
     }
 
     @Test
+    fun `a pause while casting, before the receiver reports a position, saves nothing over the one playback left`() {
+        start(count = 3, positionMs = 1_000)
+        playback.pause()
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Paused }
+        playback.play()
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
+        val left = checkNotNull(harness.playbackPreferenceManager.playbackPosition)
+        left shouldBeGreaterThan 0
+
+        castPlayer.connect()
+        harness.idle()
+        playback.pause()
+        harness.idle()
+
+        harness.playbackPreferenceManager.playbackPosition shouldBe left
+    }
+
+    @Test
     fun `casting and coming back before the receiver reports never saves position zero`() {
         start(count = 3, positionMs = 0, play = false)
         harness.playbackPreferenceManager.playbackPosition = 1_234
