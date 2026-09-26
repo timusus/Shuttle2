@@ -5,6 +5,9 @@ import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
+import com.simplecityapps.shuttle.settings.ReadSetting
+import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.testing.MainDispatcherRule
@@ -26,11 +29,12 @@ class EqualizerViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val prefs: SharedPreferences = RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }
-    private val playbackSettings = PlaybackSettings(SettingsStore(prefs))
+    private val store = SettingsStore(prefs)
+    private val playbackSettings = PlaybackSettings(store)
     private val preferenceManager = PlaybackPreferenceManager(prefs, Moshi.Builder().build())
     private val processor = EqualizerAudioProcessor(enabled = false).apply { preset = Equalizer.Presets.flat }
 
-    private fun viewModel() = EqualizerViewModel(playbackSettings, preferenceManager, processor)
+    private fun viewModel() = EqualizerViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), SaveEqualizerPreset(preferenceManager), processor)
 
     /** A view model whose state is being collected, as the screen would. */
     private fun TestScope.collectedViewModel() = viewModel().also { viewModel -> backgroundScope.launch { viewModel.uiState.collect {} } }

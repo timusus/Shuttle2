@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
-import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
+import com.simplecityapps.shuttle.settings.ReadSetting
+import com.simplecityapps.shuttle.settings.SaveSetting
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,29 +35,31 @@ data class EqualizerUiState(
  */
 @HiltViewModel
 class EqualizerViewModel @Inject constructor(
-    private val playbackSettings: PlaybackSettings,
-    private val playbackPreferenceManager: PlaybackPreferenceManager,
+    observeSetting: ObserveSetting,
+    readSetting: ReadSetting,
+    private val saveSetting: SaveSetting,
+    private val saveEqualizerPreset: SaveEqualizerPreset,
     private val equalizerAudioProcessor: EqualizerAudioProcessor
 ) : ViewModel() {
     private val preset = MutableStateFlow(equalizerAudioProcessor.preset)
     private val bands = MutableStateFlow(equalizerAudioProcessor.preset.bandStates())
 
-    val uiState: StateFlow<EqualizerUiState> = combine(playbackSettings.equalizerEnabled.flow, preset, bands) { enabled, preset, bands ->
+    val uiState: StateFlow<EqualizerUiState> = combine(observeSetting(PlaybackSettings.EqualizerEnabled), preset, bands) { enabled, preset, bands ->
         EqualizerUiState(enabled = enabled, selectedPreset = preset, bands = bands)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = EqualizerUiState(enabled = playbackSettings.equalizerEnabled.value, selectedPreset = preset.value, bands = bands.value)
+        initialValue = EqualizerUiState(enabled = readSetting(PlaybackSettings.EqualizerEnabled), selectedPreset = preset.value, bands = bands.value)
     )
 
     fun onEnabledChange(enabled: Boolean) {
-        playbackSettings.equalizerEnabled.value = enabled
+        saveSetting(PlaybackSettings.EqualizerEnabled, enabled)
         equalizerAudioProcessor.enabled = enabled
     }
 
     fun onPresetSelect(selected: Equalizer.Presets.Preset) {
         equalizerAudioProcessor.preset = selected
-        playbackPreferenceManager.preset = selected
+        saveEqualizerPreset(selected)
         preset.value = selected
         bands.value = selected.bandStates()
     }
@@ -76,8 +80,7 @@ class EqualizerViewModel @Inject constructor(
 
     /** Stores the Custom preset once a band stops moving. */
     fun onBandGainChangeFinished() {
-        playbackPreferenceManager.preset = Equalizer.Presets.custom
-        playbackPreferenceManager.customPresetBands = Equalizer.Presets.custom.bands
+        saveEqualizerPreset(Equalizer.Presets.custom)
     }
 
     private fun Equalizer.Presets.Preset.bandStates(): List<EqualizerBandState> = bands.map { EqualizerBandState(it.centerFrequency, it.gain.toFloat()) }

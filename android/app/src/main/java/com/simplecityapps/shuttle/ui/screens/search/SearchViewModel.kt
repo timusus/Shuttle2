@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.search
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,10 +46,11 @@ data class SearchUiState(
 class SearchViewModel @Inject constructor(
     private val searchLibrary: SearchLibrary,
     private val recentSearches: RecentSearches,
-    private val preferenceManager: GeneralPreferenceManager,
+    readSearchCategories: ReadSearchCategories,
+    private val saveSearchCategories: SaveSearchCategories,
 ) : ViewModel() {
     private val query = MutableStateFlow("")
-    private val categories = MutableStateFlow(preferenceManager.searchCategories())
+    private val categories = MutableStateFlow(readSearchCategories())
 
     private val content = combine(query, categories) { query, categories -> query.trim() to categories }
         // Typing waits out the debounce; clearing the field shows the recent searches at once.
@@ -79,7 +79,7 @@ class SearchViewModel @Inject constructor(
 
     fun onToggleCategory(category: SearchCategory) {
         categories.update { if (category in it) it - category else it + category }
-        preferenceManager.saveSearchCategories(categories.value)
+        saveSearchCategories(categories.value)
     }
 
     /** The query was submitted from the keyboard. */
@@ -106,20 +106,4 @@ class SearchViewModel @Inject constructor(
     companion object {
         val SearchDebounce = 100.milliseconds
     }
-}
-
-private fun GeneralPreferenceManager.searchCategories(): Set<SearchCategory> = buildSet {
-    if (searchFilterArtists) add(SearchCategory.Artists)
-    if (searchFilterAlbums) add(SearchCategory.Albums)
-    if (searchFilterSongs) add(SearchCategory.Songs)
-    if (searchFilterGenres) add(SearchCategory.Genres)
-    if (searchFilterPlaylists) add(SearchCategory.Playlists)
-}
-
-private fun GeneralPreferenceManager.saveSearchCategories(categories: Set<SearchCategory>) {
-    searchFilterArtists = SearchCategory.Artists in categories
-    searchFilterAlbums = SearchCategory.Albums in categories
-    searchFilterSongs = SearchCategory.Songs in categories
-    searchFilterGenres = SearchCategory.Genres in categories
-    searchFilterPlaylists = SearchCategory.Playlists in categories
 }

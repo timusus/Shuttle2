@@ -53,7 +53,7 @@ class SearchViewModelTest {
         val dispatcher = mainDispatcherRule.testDispatcher
         val index = LibrarySearchIndex(FakeAlbumArtistRepository(), albums, songs, FakeGenreRepository(), FakePlaylistRepository(), backgroundScope, dispatcher)
         val searchLibrary = SearchLibrary(index, dispatcher)
-        return SearchViewModel(searchLibrary, RecentSearches(preferenceManager), preferenceManager).also { viewModel ->
+        return SearchViewModel(searchLibrary, RecentSearches(preferenceManager), ReadSearchCategories(preferenceManager), SaveSearchCategories(preferenceManager)).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
             runCurrent()
         }

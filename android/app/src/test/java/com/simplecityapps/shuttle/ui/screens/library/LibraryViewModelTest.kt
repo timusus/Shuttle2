@@ -16,9 +16,11 @@ class LibraryViewModelTest {
         ApplicationProvider.getApplicationContext<Context>().getSharedPreferences("library-test", Context.MODE_PRIVATE),
     )
 
+    private fun viewModel() = LibraryViewModel(ReadLibraryTabs(preferences), SaveLibraryTabs(preferences), SaveCurrentLibraryTab(preferences))
+
     @Test
     fun `defaults to every tab but Folders, opening on Artists`() {
-        val state = LibraryViewModel(preferences).uiState.value
+        val state = viewModel().uiState.value
 
         state.tabs shouldBe LibraryTab.entries - LibraryTab.Folders
         state.currentTab shouldBe LibraryTab.Artists
@@ -26,26 +28,26 @@ class LibraryViewModelTest {
 
     @Test
     fun `the selected tab persists across view models`() {
-        LibraryViewModel(preferences).onTabSelected(LibraryTab.Songs)
+        viewModel().onTabSelected(LibraryTab.Songs)
 
-        LibraryViewModel(preferences).uiState.value.currentTab shouldBe LibraryTab.Songs
+        viewModel().uiState.value.currentTab shouldBe LibraryTab.Songs
     }
 
     @Test
     fun `editing tabs reorders, hides and shows them, and persists the result`() {
-        val viewModel = LibraryViewModel(preferences)
+        val viewModel = viewModel()
         val order = listOf(LibraryTab.Folders, LibraryTab.Songs, LibraryTab.Albums, LibraryTab.Artists, LibraryTab.Genres, LibraryTab.Playlists)
 
         viewModel.onTabsChanged(order, enabled = setOf(LibraryTab.Folders, LibraryTab.Songs, LibraryTab.Artists))
 
         viewModel.uiState.value.allTabs shouldBe order
         viewModel.uiState.value.tabs shouldBe listOf(LibraryTab.Folders, LibraryTab.Songs, LibraryTab.Artists)
-        LibraryViewModel(preferences).uiState.value.tabs shouldBe listOf(LibraryTab.Folders, LibraryTab.Songs, LibraryTab.Artists)
+        viewModel().uiState.value.tabs shouldBe listOf(LibraryTab.Folders, LibraryTab.Songs, LibraryTab.Artists)
     }
 
     @Test
     fun `hiding the current tab falls back to Artists, then to the first shown tab`() {
-        val viewModel = LibraryViewModel(preferences)
+        val viewModel = viewModel()
         viewModel.onTabSelected(LibraryTab.Songs)
 
         viewModel.onTabsChanged(LibraryTab.entries, enabled = setOf(LibraryTab.Albums, LibraryTab.Artists))
@@ -57,7 +59,7 @@ class LibraryViewModelTest {
 
     @Test
     fun `hiding every tab leaves no current tab`() {
-        val viewModel = LibraryViewModel(preferences)
+        val viewModel = viewModel()
 
         viewModel.onTabsChanged(LibraryTab.entries, enabled = emptySet())
 

@@ -14,6 +14,8 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Accent
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ObserveSetting
+import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -32,22 +34,23 @@ data class AppThemeState(
 /** The Appearance settings the Compose theme follows, live, so a change in Settings restyles the app without a restart. */
 @HiltViewModel
 class AppThemeViewModel @Inject constructor(
-    appearanceSettings: AppearanceSettings
+    observeSetting: ObserveSetting,
+    readSetting: ReadSetting
 ) : ViewModel() {
     val uiState: StateFlow<AppThemeState> = combine(
-        appearanceSettings.theme.flow,
-        appearanceSettings.accent.flow,
-        appearanceSettings.dynamicColour.flow,
-        appearanceSettings.pureBlack.flow,
+        observeSetting(AppearanceSettings.Theme),
+        observeSetting(AppearanceSettings.AccentColour),
+        observeSetting(AppearanceSettings.DynamicColour),
+        observeSetting(AppearanceSettings.PureBlack),
         ::AppThemeState
     ).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = AppThemeState(
-            theme = appearanceSettings.theme.value,
-            accent = appearanceSettings.accent.value,
-            dynamicColour = appearanceSettings.dynamicColour.value,
-            pureBlack = appearanceSettings.pureBlack.value
+            theme = readSetting(AppearanceSettings.Theme),
+            accent = readSetting(AppearanceSettings.AccentColour),
+            dynamicColour = readSetting(AppearanceSettings.DynamicColour),
+            pureBlack = readSetting(AppearanceSettings.PureBlack)
         )
     )
 }

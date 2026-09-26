@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.shell
 
 import androidx.lifecycle.ViewModel
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ReadSetting
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,9 +20,9 @@ data class ShellUiState(
 /** The shell's launch state, from Settings. */
 @HiltViewModel
 class ShellViewModel @Inject constructor(
-    appearanceSettings: AppearanceSettings,
+    readSetting: ReadSetting,
 ) : ViewModel() {
     val uiState: StateFlow<ShellUiState> = MutableStateFlow(
-        ShellUiState(startTab = if (appearanceSettings.showHomeOnLaunch.value) ShellTab.Home else ShellTab.Library),
+        ShellUiState(startTab = if (readSetting(AppearanceSettings.ShowHomeOnLaunch)) ShellTab.Home else ShellTab.Library),
     ).asStateFlow()
 }

@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.lifecycle.ViewModel
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -21,33 +20,35 @@ data class LibraryUiState(
 }
 
 /**
- * The library container: which tabs show, in what order, and which one is current. All three persist in the same
- * preferences the pre-redesign library screen used, so the choice carries across.
+ * The library container: which tabs show, in what order, and which one is current. All three persist through
+ * [ReadLibraryTabs], [SaveLibraryTabs] and [SaveCurrentLibraryTab].
  */
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
-    private val preferences: GeneralPreferenceManager,
+    private val readLibraryTabs: ReadLibraryTabs,
+    private val saveLibraryTabs: SaveLibraryTabs,
+    private val saveCurrentLibraryTab: SaveCurrentLibraryTab,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(load())
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()
 
     fun onTabSelected(tab: LibraryTab) {
         if (tab == _uiState.value.currentTab) return
-        preferences.currentLibraryTab = tab
+        saveCurrentLibraryTab(tab)
         _uiState.update { it.copy(currentTab = tab) }
     }
 
     /** Saves the Edit tabs sheet: [order] is every tab, [enabled] the ones shown. */
     fun onTabsChanged(order: List<LibraryTab>, enabled: Set<LibraryTab>) {
-        preferences.allLibraryTabs = order
-        preferences.enabledLibraryTabs = order.filter { it in enabled }
+        saveLibraryTabs(order, enabled)
         _uiState.value = load()
     }
 
     private fun load(): LibraryUiState {
-        val state = LibraryUiState(allTabs = preferences.allLibraryTabs, enabledTabs = preferences.enabledLibraryTabs.toSet())
+        val saved = readLibraryTabs()
+        val state = LibraryUiState(allTabs = saved.all, enabledTabs = saved.enabled.toSet())
         // Artists is the legacy default when nothing was saved, or the saved tab has since been hidden.
-        val current = preferences.currentLibraryTab?.takeIf { it in state.tabs }
+        val current = saved.current?.takeIf { it in state.tabs }
             ?: LibraryTab.Artists.takeIf { it in state.tabs }
             ?: state.tabs.firstOrNull()
         return state.copy(currentTab = current)

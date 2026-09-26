@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell
 
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import io.kotest.matchers.shouldBe
@@ -11,23 +12,24 @@ import org.robolectric.RuntimeEnvironment
 
 @RunWith(RobolectricTestRunner::class)
 class ShellViewModelTest {
-    private val settings = AppearanceSettings(SettingsStore(RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }))
+    private val store = SettingsStore(RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() })
+    private val settings = AppearanceSettings(store)
 
     @Test
     fun `opens on Library by default, as 1_0_10 did`() {
-        ShellViewModel(settings).uiState.value.startTab shouldBe ShellTab.Library
+        ShellViewModel(ReadSetting(store)).uiState.value.startTab shouldBe ShellTab.Library
     }
 
     @Test
     fun `opens on Home when Show Home on launch is on`() {
         settings.showHomeOnLaunch.value = true
 
-        ShellViewModel(settings).uiState.value.startTab shouldBe ShellTab.Home
+        ShellViewModel(ReadSetting(store)).uiState.value.startTab shouldBe ShellTab.Home
     }
 
     @Test
     fun `a change after launch waits for the next launch`() {
-        val viewModel = ShellViewModel(settings)
+        val viewModel = ShellViewModel(ReadSetting(store))
 
         settings.showHomeOnLaunch.value = true
 
