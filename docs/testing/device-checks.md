@@ -177,6 +177,10 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 
 - [ ] On a device or profile without Google Play services and the Play Store (GrapheneOS without sandboxed Play, or an AOSP emulator image), install S2 and play a local song. It launches without crashing, Now Playing shows no Cast button, and the S2 Pro screen says prices are unavailable.
 
+## Default music app (#106)
+
+- [ ] S2 is offered wherever the device picks a music app (the OEM default music app setting, e.g. OnePlus; a Bluetooth autoplay app such as Bluetooth Autoplay Music), and "Hey Google, play <artist> on S2" plays that artist.
+
 ## Analytics default-on and the one-time notice (#421, #481)
 
 - [ ] Fresh install: Analytics and Crash reporting in Settings > Privacy are already on, and Home never shows the analytics notice.
