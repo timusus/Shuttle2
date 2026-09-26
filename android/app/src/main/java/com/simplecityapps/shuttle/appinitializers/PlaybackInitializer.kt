@@ -19,6 +19,7 @@ import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.queue.NewQueue
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
@@ -95,13 +96,16 @@ constructor(
         // own queue, and a restore finishing after that mustn't replace it.
         val initialContentVersion = queueManager.queueStateFlow.value.contentVersion
 
-        appCoroutineScope.launch {
-            // Set however the restore ends: requests to play something else wait for it (see
-            // PlayRequests), so a restore that throws mustn't leave them waiting.
-            try {
-                queueManager.setShuffleMode(shuffleMode, reshuffle = false)
-                queueManager.setRepeatMode(repeatMode)
+        // Set now, on the main thread, as the restored queue is set in the order the shuffle mode presents.
+        appCoroutineScope.launch(Dispatchers.Main.immediate) {
+            queueManager.setShuffleMode(shuffleMode, reshuffle = false)
+            queueManager.setRepeatMode(repeatMode)
+        }
 
+        // Started off the main thread, which is busy with the app's start: only setting the queue and loading it
+        // wait for it, in one step.
+        appCoroutineScope.launch(Dispatchers.IO) {
+            try {
                 restoreQueue(
                     shuffleMode = shuffleMode,
                     queuePosition = queuePosition,
@@ -109,7 +113,11 @@ constructor(
                     initialContentVersion = initialContentVersion
                 )
             } finally {
-                queueManager.hasRestoredQueue = true
+                // Requests to play something else wait for it (see PlayRequests), so a restore that throws before
+                // its main thread step mustn't leave them waiting.
+                if (!queueManager.hasRestoredQueue) {
+                    queueManager.hasRestoredQueue = true
+                }
             }
         }
     }
@@ -122,8 +130,9 @@ constructor(
     }
 
     /**
-     * Leaves the queue and playback alone if the queue changes from [initialContentVersion] other than by this
-     * restore: something else was played before the restore finished.
+     * Reads the saved queue and builds it off the main thread, then sets it, loads it and marks the queue restored in
+     * one main thread step. Leaves the queue and playback alone if the queue changes from [initialContentVersion]
+     * other than by this restore: something else was played before the restore finished.
      */
     private suspend fun restoreQueue(
         shuffleMode: QueueManager.ShuffleMode,
@@ -131,83 +140,105 @@ constructor(
         seekPosition: Int,
         initialContentVersion: Long
     ) {
-        var restoredContentVersion = initialContentVersion
-
         val timings = RestoreTimings()
-        var restoredSeekPosition = seekPosition
-        queuePosition?.let {
-            withContext(Dispatchers.IO) {
-                val songIds = timings.measure("prefs") { playbackPreferenceManager.queueIds.toSongIds().orEmpty() }
-                if (songIds.isEmpty()) return@withContext
-                val shuffleSongIds = timings.measure("prefs") { playbackPreferenceManager.shuffleQueueIds.toSongIds() }
-
-                val songsById = timings.measureSuspending("DB") {
-                    songRepository.getSongs(SongQuery.SongIds((songIds + shuffleSongIds.orEmpty()).distinct()))
-                        .filterNotNull()
-                        .firstOrNull()
-                        .orEmpty()
-                        .associateBy { song -> song.id }
-                }
-
-                // A song gone from the library since the queue was saved is dropped, so the position is
-                // found again among the songs that are left, in the list the shuffle mode presents.
-                val songs = songIds.mapNotNull { songId -> songsById[songId] }
-                val shuffleSongs = shuffleSongIds?.mapNotNull { songId -> songsById[songId] }
-                val positionIds = if (shuffleMode == QueueManager.ShuffleMode.On && shuffleSongIds != null) shuffleSongIds else songIds
-                val restoredPosition = restoredQueuePosition(positionIds, queuePosition, songsById.keys)
-                val restoredWhole = songs.size == songIds.size && shuffleSongs != null && shuffleSongs.size == shuffleSongIds.size
-
-                if (restoredPosition != null) {
-                    if (restoredPosition.fromStart || playbackPreferenceManager.restoreQueuePositionFromStart) {
-                        restoredSeekPosition = 0
-                    }
-                    withContext(Dispatchers.Main) {
-                        // A request's setQueue can't come between the check and the set, and one that follows
-                        // it leaves the queue at another version.
-                        unchangedRestoredQueue = if (!restoredWhole) {
-                            null
-                        } else if (shuffleMode == QueueManager.ShuffleMode.On) {
-                            shuffleSongs
-                        } else {
-                            songs
-                        }
-                        timings.measureSuspending("setQueue") {
-                            queueManager.setQueueIfContentVersion(
-                                contentVersion = initialContentVersion,
-                                songs = songs,
-                                shuffleSongs = shuffleSongs,
-                                position = restoredPosition.position
-                            )
-                        }?.let { contentVersion -> restoredContentVersion = contentVersion } ?: run { unchangedRestoredQueue = null }
-                    }
-                } else {
-                    Timber.w("Queue restoration failed: none of the saved songs are in the library")
-                }
-            }
-        } ?: run {
+        val savedQueue = if (queuePosition != null) {
+            readSavedQueue(shuffleMode, queuePosition, timings)
+        } else {
             Timber.w("Queue restoration failed: queue position null")
+            null
         }
+        val restoredSeekPosition = if (savedQueue?.fromStart == true) 0 else seekPosition
 
-        // On the main thread, where the check and the load can't have anything that sets the queue between them.
+        val mainWait = TimeSource.Monotonic.markNow()
         withContext(Dispatchers.Main) {
-            if (queueManager.queueStateFlow.value.contentVersion != restoredContentVersion) {
-                Timber.w("The queue was set while it was being restored; the saved queue is dropped")
-                return@withContext
+            timings.add("main wait", mainWait)
+            try {
+                applyRestoredQueue(savedQueue, initialContentVersion, seekPosition, restoredSeekPosition, timings)
+            } finally {
+                queueManager.hasRestoredQueue = true
             }
-
-            if (queueManager.queueStateFlow.value.items.isEmpty()) {
-                // Nothing to show for a queue that's gone.
-                playbackPreferenceManager.nowPlaying = null
-            }
-            if (restoredSeekPosition != seekPosition) {
-                // It's what a reload reads back as the position to resume from.
-                playbackPreferenceManager.playbackPosition = restoredSeekPosition
-            }
-            // A saved song that can't load (a server out of reach, a file not there yet) stays where it was left.
-            timings.measure("load") { playbackManager.load(restoredSeekPosition, skipUnloadable = false) {} }
         }
 
         Timber.v("Queue restored in ${timings.total}ms (${timings.stages}) (Time since app init: ${System.currentTimeMillis() - initTime}ms)")
+    }
+
+    /** The saved queue, built ready to set, or null if there's none or none of its songs are left. */
+    private suspend fun readSavedQueue(
+        shuffleMode: QueueManager.ShuffleMode,
+        queuePosition: Int,
+        timings: RestoreTimings
+    ): SavedQueue? {
+        val songIds = timings.measure("prefs") { playbackPreferenceManager.queueIds.toSongIds().orEmpty() }
+        if (songIds.isEmpty()) return null
+        val shuffleSongIds = timings.measure("prefs") { playbackPreferenceManager.shuffleQueueIds.toSongIds() }
+
+        val songsById = timings.measureSuspending("DB") {
+            songRepository.getSongs(SongQuery.SongIds((songIds + shuffleSongIds.orEmpty()).distinct()))
+                .filterNotNull()
+                .firstOrNull()
+                .orEmpty()
+                .associateBy { song -> song.id }
+        }
+
+        // A song gone from the library since the queue was saved is dropped, so the position is found again among
+        // the songs that are left, in the list the shuffle mode presents.
+        val songs = songIds.mapNotNull { songId -> songsById[songId] }
+        val shuffleSongs = shuffleSongIds?.mapNotNull { songId -> songsById[songId] }
+        val positionIds = if (shuffleMode == QueueManager.ShuffleMode.On && shuffleSongIds != null) shuffleSongIds else songIds
+        val restoredPosition = restoredQueuePosition(positionIds, queuePosition, songsById.keys)
+        if (restoredPosition == null) {
+            Timber.w("Queue restoration failed: none of the saved songs are in the library")
+            return null
+        }
+        val restoredWhole = songs.size == songIds.size && shuffleSongs != null && shuffleSongs.size == shuffleSongIds.size
+
+        return SavedQueue(
+            queue = timings.measureSuspending("build") { queueManager.buildQueue(songs, shuffleSongs, restoredPosition.position) },
+            fromStart = restoredPosition.fromStart || playbackPreferenceManager.restoreQueuePositionFromStart,
+            unchanged = when {
+                !restoredWhole -> null
+                shuffleMode == QueueManager.ShuffleMode.On -> shuffleSongs
+                else -> songs
+            }
+        )
+    }
+
+    /**
+     * Sets [savedQueue] and loads the current song, on the main thread, where nothing that sets the queue can come
+     * between the check and the set, or the set and the load.
+     */
+    private fun applyRestoredQueue(
+        savedQueue: SavedQueue?,
+        initialContentVersion: Long,
+        seekPosition: Int,
+        restoredSeekPosition: Int,
+        timings: RestoreTimings
+    ) {
+        if (savedQueue != null) {
+            unchangedRestoredQueue = savedQueue.unchanged
+            val restoredContentVersion = timings.measure("setQueue") {
+                queueManager.setQueueIfContentVersion(initialContentVersion, savedQueue.queue)
+            }
+            if (restoredContentVersion == null) {
+                unchangedRestoredQueue = null
+                Timber.w("The queue was set while it was being restored; the saved queue is dropped")
+                return
+            }
+        } else if (queueManager.queueStateFlow.value.contentVersion != initialContentVersion) {
+            Timber.w("The queue was set while it was being restored; the saved queue is dropped")
+            return
+        }
+
+        if (queueManager.queueStateFlow.value.items.isEmpty()) {
+            // Nothing to show for a queue that's gone.
+            playbackPreferenceManager.nowPlaying = null
+        }
+        if (restoredSeekPosition != seekPosition) {
+            // It's what a reload reads back as the position to resume from.
+            playbackPreferenceManager.playbackPosition = restoredSeekPosition
+        }
+        // A saved song that can't load (a server out of reach, a file not there yet) stays where it was left.
+        timings.measure("load") { playbackManager.load(restoredSeekPosition, skipUnloadable = false) {} }
     }
 
     /**
@@ -350,6 +381,18 @@ constructor(
         }
     }
 }
+
+/**
+ * A saved queue, read and built ready to set.
+ *
+ * @param fromStart true when the song it starts at plays from the beginning rather than the saved position.
+ * @param unchanged the queue as the shuffle mode presents it, when it's every song that was saved.
+ */
+private class SavedQueue(
+    val queue: NewQueue,
+    val fromStart: Boolean,
+    val unchanged: List<Song>?
+)
 
 /**
  * A queue position to save or restore.

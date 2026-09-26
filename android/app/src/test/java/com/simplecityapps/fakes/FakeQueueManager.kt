@@ -1,5 +1,6 @@
 package com.simplecityapps.fakes
 
+import com.simplecityapps.playback.queue.NewQueue
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
@@ -44,10 +45,23 @@ class FakeQueueManager : QueueOperations {
      * Leaves [queueStateFlow] as it is, so the content version a set leaves is the one it was set at, unless it
      * [publishesRestoredQueue].
      */
-    override suspend fun setQueueIfContentVersion(contentVersion: Long, songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Long? {
+    override suspend fun buildQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): NewQueue = NewQueue.build(songs, shuffleSongs, position).also { buildThreads += Thread.currentThread() }
+
+    /** The thread each [buildQueue] ran on. */
+    val buildThreads = mutableListOf<Thread>()
+
+    /** The thread each [setQueueIfContentVersion] ran on. */
+    val setQueueThreads = mutableListOf<Thread>()
+
+    override fun setQueueIfContentVersion(contentVersion: Long, queue: NewQueue): Long? {
+        setQueueThreads += Thread.currentThread()
         val previous = queueStateFlow.value
         if (previous.contentVersion != contentVersion) return null
-        setQueue(songs, shuffleSongs, position)
+        val songs = queue.songs
+        val position = queue.position
+        lastSetQueue = songs
+        lastSetShuffleQueue = queue.shuffleSongs
+        lastSetQueuePosition = position
         if (!publishesRestoredQueue) return contentVersion
         val items = songs.mapIndexed { index, song -> song.toQueueItem(isCurrent = index == position) }
         queueStateFlow.value = QueueState(items = items, currentItem = items[position], currentPosition = position, version = previous.version + 1, contentVersion = contentVersion + 1)

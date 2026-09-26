@@ -144,6 +144,15 @@ change), and a 10k queue changes when the user changes it. The smallest fix, if 
 frames, is to publish no legacy queue (take `COMMAND_GET_TIMELINE` from the platform session's controller), at the
 price of Android Auto's queue view; a windowed timeline would break the one-queue model this design rests on.
 
+**The cold-start restore (#444).** A device trace of a 2,005-song restore spent about 1.6 s, most of it waiting for a
+main thread busy with the app's start: the restore was launched on it, and hopped back to it to set the queue and
+again to load it. `PlaybackInitializer` now reads the saved queue and builds it (`QueueOperations.buildQueue`: the
+MediaItems and both starting orders) on a background thread, and takes the main thread once, for the content-version
+check, `setMediaItems`, the load and marking the queue restored (`setQueueIfContentVersion` is main-thread only, so
+that step can't be split). Setting a window around the current song first was rejected for the same reason as above:
+the player would no longer hold the queue. The stages are traced as `S2 restore prefs`, `DB`, `build`, `setQueue`
+and `load`, and the log line adds the `main wait` before the main-thread step.
+
 ## 4. Routes compared
 
 **A: refactor in place.** Replace LoadCoordinator with a full playlist inside ExoPlayerPlayback, then fold QueueManager into it, then the session, then Cast. Each step ships, but every intermediate state keeps a Playback interface shaped around one next item and two queue owners. That is exactly the seam where the 44 fixes landed.

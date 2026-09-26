@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
 import android.content.Context
-import android.os.Looper
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakeQueueManager
@@ -23,16 +22,21 @@ import com.simplecityapps.testing.MainDispatcherRule
 import com.squareup.moshi.Moshi
 import dagger.Lazy
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.mockk.every
 import io.mockk.mockk
 import java.util.Collections
+import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
@@ -392,13 +396,14 @@ class PlaybackInitializerTest {
 
         initializer.init(application)
         awaitUntil { queueManager.hasRestoredQueue }
-        shadowOf(Looper.getMainLooper()).idle()
+        // The restored queue has been handled once its song is saved.
+        awaitUntil { preferences.nowPlaying?.songId == 2L }
 
         queueManager.shuffleModeQueueReads shouldBe 0
         preferences.queuePosition shouldBe 1
 
         publishQueue(listOf(createSong(id = 3), createSong(id = 1)), currentPosition = 0, contentVersion = queueManager.queueStateFlow.value.contentVersion + 1)
-        preferences.queueIds shouldBe "3,1"
+        awaitUntil { preferences.queueIds == "3,1" }
     }
 
     @Test
@@ -413,8 +418,7 @@ class PlaybackInitializerTest {
         initializer.init(application)
         awaitUntil { queueManager.hasRestoredQueue }
         awaitUntil { preferences.queueIds == "1,3" }
-
-        preferences.queuePosition shouldBe 1
+        awaitUntil { preferences.queuePosition == 1 }
     }
 
     @Test
@@ -491,6 +495,65 @@ class PlaybackInitializerTest {
         awaitUntil { queueManager.hasRestoredQueue }
         queueManager.lastSetQueue shouldBe null
         playbackManager.loadedPositions shouldBe emptyList()
+    }
+
+    @Test
+    fun `a restore reads and builds the queue without the main thread, then sets and loads it in one main thread step`() {
+        val main = QueuedDispatcher()
+        Dispatchers.setMain(main)
+        val songsLoaded = CompletableDeferred<Unit>()
+        val slowRepository = mockk<SongRepository> {
+            every { getSongs(any()) } returns flow {
+                songsLoaded.await()
+                emit(songs)
+            }
+        }
+        preferences.queueIds = "1,2,3"
+        preferences.queuePosition = 1
+        preferences.playbackPosition = 30_000
+        createInitializer(slowRepository, appCoroutineScope).init(application)
+        // The collectors, and the shuffle and repeat modes.
+        main.runPending()
+
+        songsLoaded.complete(Unit)
+
+        awaitUntil { main.pending == 1 }
+        queueManager.buildThreads.single() shouldNotBe Thread.currentThread()
+        queueManager.lastSetQueue shouldBe null
+        playbackManager.loadedPositions shouldBe emptyList()
+        queueManager.hasRestoredQueue shouldBe false
+
+        main.runPending() shouldBe 1
+
+        queueManager.setQueueThreads shouldBe listOf(Thread.currentThread())
+        queueManager.lastSetQueue shouldBe songs
+        queueManager.lastSetQueuePosition shouldBe 1
+        playbackManager.loadedPositions shouldBe listOf(30_000)
+        queueManager.hasRestoredQueue shouldBe true
+    }
+
+    /** A main thread that runs what's dispatched to it only when the test says, on the test's thread. */
+    private class QueuedDispatcher : CoroutineDispatcher() {
+        private val tasks = ConcurrentLinkedQueue<Runnable>()
+
+        val pending: Int get() = tasks.size
+
+        override fun dispatch(
+            context: CoroutineContext,
+            block: Runnable
+        ) {
+            tasks += block
+        }
+
+        /** Runs what's been dispatched so far, and returns how many there were. */
+        fun runPending(): Int {
+            var count = 0
+            repeat(tasks.size) {
+                tasks.poll()?.run()
+                count++
+            }
+            return count
+        }
     }
 
     /** Waits for a write the initializer hands off to [kotlinx.coroutines.Dispatchers.IO]. */

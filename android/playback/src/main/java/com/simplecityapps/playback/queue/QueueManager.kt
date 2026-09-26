@@ -150,49 +150,48 @@ class QueueManager(
         songs: List<Song>,
         shuffleSongs: List<Song>?,
         position: Int
-    ): Boolean = withNewItems(songs) { items ->
-        applyQueue(songs, items, shuffleSongs, position)
-    }
+    ): Boolean = withNewItems({ NewQueue.build(songs, shuffleSongs, position) }) { queue -> applyQueue(queue) }
 
-    override suspend fun setQueueIfContentVersion(
+    override suspend fun buildQueue(
+        songs: List<Song>,
+        shuffleSongs: List<Song>?,
+        position: Int
+    ): NewQueue = withContext(buildContext) { NewQueue.build(songs, shuffleSongs, position) }
+
+    override fun setQueueIfContentVersion(
         contentVersion: Long,
-        songs: List<Song>,
-        shuffleSongs: List<Song>?,
-        position: Int
-    ): Long? = withNewItems(songs) { items ->
-        // The check and the change run together on the main thread, so no other change can come between them.
-        if (_queueState.value.contentVersion != contentVersion) {
-            return@withNewItems null
-        }
-        applyQueue(songs, items, shuffleSongs, position)
-        _queueState.value.contentVersion
+        queue: NewQueue
+    ): Long? {
+        check(playerThread.isCurrent) { "setQueueIfContentVersion is main thread only" }
+        if (_queueState.value.contentVersion != contentVersion) return null
+        applyQueue(queue)
+        return _queueState.value.contentVersion
     }
 
     /**
-     * Builds new queue entries for [songs] off the main thread, then runs [change] with them on it. Changes made this
-     * way take turns, so they apply in the order they're made, however long each takes to build: songs added while a
-     * new queue is being built join it rather than the queue it replaces.
+     * Builds what [change] takes off the main thread, then runs [change] with it on it. Changes made this way take
+     * turns, so they apply in the order they're made, however long each takes to build: songs added while a new queue
+     * is being built join it rather than the queue it replaces.
      */
-    private suspend fun <T> withNewItems(
-        songs: List<Song>,
-        change: (List<MediaItem>) -> T
+    private suspend fun <B, T> withNewItems(
+        build: () -> B,
+        change: (B) -> T
     ): T = newItemChanges.withLock {
-        val items = withContext(buildContext) { songs.map { song -> song.toQueueEntry().toMediaItem() } }
-        withContext(Dispatchers.Main.immediate) { change(items) }
+        val built = withContext(buildContext) { build() }
+        withContext(Dispatchers.Main.immediate) { change(built) }
     }
 
+    /** New entries for [songs], built as [withNewItems] builds them. */
+    private fun newItems(songs: List<Song>): () -> List<MediaItem> = { songs.map { song -> song.toQueueEntry().toMediaItem() } }
+
     /**
-     * Replaces the playlist with [items] (built for [songs]), unless it already holds those songs, and moves to
-     * [position]: an index into [shuffleSongs] when given and shuffle is on, else into [songs]. When it already holds
-     * them, it keeps its items and takes [songs]' data. Without [shuffleSongs], a new shuffled order starts at the
-     * current item.
+     * Replaces the playlist with [queue]'s items, unless it already holds those songs, and moves to its position. When
+     * it already holds them, it keeps its items and takes the queue's songs' data.
      */
-    private fun applyQueue(
-        songs: List<Song>,
-        items: List<MediaItem>,
-        shuffleSongs: List<Song>?,
-        position: Int
-    ): Boolean {
+    private fun applyQueue(queue: NewQueue): Boolean {
+        val songs = queue.songs
+        val shuffleSongs = queue.shuffleSongs
+        val position = queue.position
         val savedShuffle = shuffleSongs?.takeIf { player.shuffleModeEnabled }
         val size = savedShuffle?.size ?: songs.size
         if (position < 0 || position >= size || songs.isEmpty()) {
@@ -205,23 +204,9 @@ class QueueManager(
                 writer.shuffleModeEnabled = false
             }
 
-            val sameSongs = songs.map { it.id } == entries().map { it.song.id }
-            val shuffleOrder =
-                if (shuffleSongs != null) {
-                    S2ShuffleOrder.matching(songs.map { it.id }, shuffleSongs.map { it.id })
-                } else {
-                    S2ShuffleOrder.shuffled(songs.size, firstIndex = position)
-                }
-            // A saved shuffled song the queue no longer holds starts playback at the first copy of it, if any, else
-            // at the start of the shuffled order.
-            val index =
-                if (savedShuffle != null) {
-                    S2ShuffleOrder.matchedIndices(songs.map { it.id }, savedShuffle.map { it.id })[position]
-                        ?: songs.indexOfFirst { it.id == savedShuffle[position].id }.takeIf { it != -1 }
-                        ?: shuffleOrder.firstIndex
-                } else {
-                    position
-                }
+            val sameSongs = player.mediaItemCount == songs.size &&
+                songs.indices.all { index -> songs[index].id == player.getMediaItemAt(index).queueEntry.song.id }
+            val index = if (savedShuffle != null) checkNotNull(queue.shuffledIndex) else position
 
             if (sameSongs) {
                 replaceChanged(songs)
@@ -229,10 +214,10 @@ class QueueManager(
                     writer.seekTo(index, 0)
                 }
             } else {
-                songUriResolver.queued(items)
-                writer.setMediaItems(items, index, 0)
+                songUriResolver.queued(queue.items)
+                writer.setMediaItems(queue.items, index, 0)
             }
-            player.setShuffleOrder(shuffleOrder)
+            player.setShuffleOrder(queue.shuffleOrder)
         }
 
         return player.mediaItemCount != 0
@@ -307,8 +292,8 @@ class QueueManager(
      * Adds [songs] to the end of the queue: the end of the unshuffled order, and the end of the shuffled order. Added
      * to an empty queue, they're set as a new queue, as [setQueue] sets it, and this returns true.
      */
-    override suspend fun addToQueue(songs: List<Song>): Boolean = withNewItems(songs) { items ->
-        if (player.mediaItemCount == 0) return@withNewItems applyQueue(songs, items, null, 0)
+    override suspend fun addToQueue(songs: List<Song>): Boolean = withNewItems(newItems(songs)) { items ->
+        if (player.mediaItemCount == 0) return@withNewItems applyQueue(NewQueue.of(songs, items, null, 0))
         songUriResolver.queued(items)
         writer.addMediaItems(items)
         false
@@ -318,8 +303,8 @@ class QueueManager(
      * Adds [songs] after the current item, in both the unshuffled and the shuffled order. Added to an empty queue,
      * they're set as a new queue, as [setQueue] sets it, and this returns true.
      */
-    override suspend fun addToNext(songs: List<Song>): Boolean = withNewItems(songs) { items ->
-        if (player.mediaItemCount == 0) return@withNewItems applyQueue(songs, items, null, 0)
+    override suspend fun addToNext(songs: List<Song>): Boolean = withNewItems(newItems(songs)) { items ->
+        if (player.mediaItemCount == 0) return@withNewItems applyQueue(NewQueue.of(songs, items, null, 0))
         batch {
             songUriResolver.queued(items)
             val current = player.currentMediaItemIndex

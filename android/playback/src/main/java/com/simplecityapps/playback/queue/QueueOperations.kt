@@ -17,13 +17,18 @@ interface QueueOperations {
 
     suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>? = null, position: Int = 0): Boolean
 
+    /** Builds a queue for [setQueueIfContentVersion], off the main thread: a long queue takes a while to build. */
+    suspend fun buildQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): NewQueue
+
     /**
-     * [setQueue], only if the queue's [QueueState.contentVersion] is still [contentVersion]: the check and the set
-     * are one step, which no other [setQueue] can come between.
+     * Sets [queue] as [setQueue] does, only if the queue's [QueueState.contentVersion] is still [contentVersion]. Main
+     * thread only, so the check and the set are one step, which no other change can come between, and a caller can
+     * do more in that same step.
      *
      * @return the content version the queue is left at, or null if it had changed and was left alone.
      */
-    suspend fun setQueueIfContentVersion(contentVersion: Long, songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Long?
+    fun setQueueIfContentVersion(contentVersion: Long, queue: NewQueue): Long?
+
     fun getQueue(): List<QueueItem>
     fun getQueue(shuffleMode: QueueManager.ShuffleMode): List<QueueItem>
     fun getCurrentItem(): QueueItem?

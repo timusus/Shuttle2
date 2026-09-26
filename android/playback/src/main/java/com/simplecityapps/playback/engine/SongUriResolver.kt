@@ -36,10 +36,9 @@ class SongUriResolver(
     /** Records the songs [items] play, so the player can open them. Call it before they join the playlist. */
     fun queued(items: List<MediaItem>) {
         items.forEach { item ->
-            val song = item.queueEntry.song
-            val uri = song.uri()
+            val uri = item.localConfiguration?.uri ?: return@forEach
             if (!uri.isDirect()) {
-                songs[uri.toString()] = song
+                songs[uri.toString()] = item.queueEntry.song
                 // A newly queued item resolves afresh, as a stream URL can carry a token that expires.
                 resolvedUris.remove(uri.toString())
             }
@@ -48,6 +47,8 @@ class SongUriResolver(
 
     /** Forgets every song but those [playlist] holds, so what's recorded stays bounded by the playlist. */
     fun retainOnly(playlist: List<QueueEntry>) {
+        // A queue of local files records nothing, and this runs on every change to the queue.
+        if (songs.isEmpty() && resolvedUris.isEmpty()) return
         val keep = playlist.mapTo(HashSet()) { entry -> entry.song.uri().toString() }
         songs.keys.retainAll(keep)
         resolvedUris.keys.retainAll(keep)
