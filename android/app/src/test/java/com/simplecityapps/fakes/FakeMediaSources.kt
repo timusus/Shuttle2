@@ -54,5 +54,10 @@ class FakeScannerFolderStore : ScannerFolderStore {
         _folders.value = FolderLists(_folders.value.includes - folder, _folders.value.excludes - folder, _folders.value.extras - folder)
     }
 
-    override fun refresh() = Unit
+    var refreshes = 0
+        private set
+
+    override fun refresh() {
+        refreshes++
+    }
 }

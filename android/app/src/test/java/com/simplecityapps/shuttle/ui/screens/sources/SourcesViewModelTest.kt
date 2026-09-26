@@ -94,6 +94,15 @@ class SourcesViewModelTest {
     }
 
     @Test
+    fun `resuming re-reads the folders, for a grant revoked while away`() = runTest {
+        val viewModel = viewModel(FakeMediaSources(MediaProviderType.Shuttle))
+
+        viewModel.onResume()
+
+        folderStore.refreshes shouldBe 1
+    }
+
+    @Test
     fun `removing a folder rescans`() = runTest {
         val mediaSources = FakeMediaSources(MediaProviderType.Shuttle)
         val viewModel = viewModel(mediaSources)
