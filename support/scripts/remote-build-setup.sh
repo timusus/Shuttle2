@@ -59,7 +59,12 @@ android.builder.sdkDownload=false
 # memory the emulator lanes need.
 org.gradle.daemon.idletimeout=3600000
 org.gradle.java.installations.auto-download=false
-org.gradle.java.home=$jdk_link"
+org.gradle.java.home=$jdk_link
+# Remote-build heap and worker cap (#462): shared 23 GB box, up to REMOTE_BUILD_SLOTS concurrent
+# builds plus emulator lanes. Smaller than the Mac's -Xmx6g; remote-build.sh's own --max-workers
+# (default 6, or 4 with a lane up) is the usual ceiling, this is the floor for a bare ssh call.
+org.gradle.jvmargs=-Xmx3g -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -XX:+UseParallelGC -XX:MaxMetaspaceSize=1g
+org.gradle.workers.max=6"
 if [ -f "$props" ] && [ "$(cat "$props")" = "$wanted" ]; then
     echo "ok: $props"
 else

@@ -7,13 +7,19 @@
 #
 # 1. rsyncs the worktree to ~/s2-builds/<worktree name> on the box (no build/, .gradle/, .idea/,
 #    .git, .claude/ or local.properties; untracked files the build reads come along);
-# 2. writes the box's own local.properties and runs ./gradlew there with the box-side JDK and
-#    Gradle user home (~/s2-builds/.gradle-home, shared by every worktree so the build cache and
-#    daemons stay warm) and --max-workers=8 unless the args name their own (REMOTE_BUILD_MAX_WORKERS
-#    changes the default), leaving cores for the emulator lanes;
-# 3. streams a condensed log -- failed tasks and tests, compiler errors, the "What went wrong"
+# 2. takes a box-side build slot (#462: three concurrent remote builds once starved sshd) --
+#    at most REMOTE_BUILD_SLOTS (default 2) run at a time, admission via `flock` on
+#    ~/s2-builds/.slots/N so a dead holder's slot is never wedged; a caller that has to wait prints
+#    one line and blocks (no polling);
+# 3. writes the box's own local.properties and runs ./gradlew there, under `nice`, with the
+#    box-side JDK and Gradle user home (~/s2-builds/.gradle-home, shared by every worktree so the
+#    build cache and daemons stay warm; its gradle.properties caps the daemon heap and worker count
+#    for remote runs without touching this worktree's own gradle.properties) and
+#    --max-workers=6 unless the args name their own (REMOTE_BUILD_MAX_WORKERS changes the default;
+#    the default drops to 4 when remote-emu.sh shows a lane leased on the box);
+# 4. streams a condensed log -- failed tasks and tests, compiler errors, the "What went wrong"
 #    block, the BUILD line -- while the whole log goes to build/remote-build/gradle.log;
-# 4. syncs back APKs (build/outputs/apk), test results and reports (build/test-results,
+# 5. syncs back APKs (build/outputs/apk), test results and reports (build/test-results,
 #    build/reports) and Roborazzi outputs (build/outputs/roborazzi) into the same paths here, plus
 #    the full log, and exits with Gradle's exit code.
 #
@@ -21,12 +27,14 @@
 # -PversionName, since a worktree's .git is a pointer file that means nothing on the box.
 #
 # Concurrent calls from different worktrees build in separate directories (and separate daemons,
-# as a busy daemon is never shared); two calls from the same worktree queue on a local lock.
+# as a busy daemon is never shared); two calls from the same worktree queue on a local lock; the
+# box-side slot above additionally caps how many builds (from any worktree) run at once.
 # One-time box setup: support/scripts/remote-build-setup.sh. Exit 3: the box isn't reachable.
 set -euo pipefail
 
 BOX="${REMOTE_BUILD_BOX:-tim@192.168.50.131}"
-MAX_WORKERS="${REMOTE_BUILD_MAX_WORKERS:-8}"
+SLOTS="${REMOTE_BUILD_SLOTS:-2}"
+NICE="${REMOTE_BUILD_NICE:-10}"
 SSH=(ssh -o ConnectTimeout=5 -o BatchMode=yes -o ServerAliveInterval=30)
 
 [ "$#" -gt 0 ] || { echo "usage: remote-build.sh <gradle args...>" >&2; exit 2; }
@@ -36,7 +44,23 @@ NAME="${REMOTE_BUILD_NAME:-$(basename "$ROOT")}"
 REMOTE_DIR="s2-builds/$NAME" # relative to the box's home
 LOG_DIR="$ROOT/build/remote-build"
 
-"${SSH[@]}" "$BOX" true 2>/dev/null || { echo "remote-build: $BOX is not reachable within 5 s" >&2; exit 3; }
+# One ssh round trip for both the reachability check and remote-emu.sh's lane count (a lane on the
+# box competes for the same CPU/memory budget, so the default worker count drops while one is up).
+# shellcheck disable=SC2016 # $HOME expands on the box, not here
+LANES_UP="$("${SSH[@]}" "$BOX" 'ls -d "$HOME"/.emu-leases/lane-* 2>/dev/null | wc -l' 2>/dev/null)" \
+    || { echo "remote-build: $BOX is not reachable within 5 s" >&2; exit 3; }
+LANES_UP="${LANES_UP//[^0-9]/}"
+[ -n "$LANES_UP" ] || LANES_UP=0
+
+MAX_WORKERS="${REMOTE_BUILD_MAX_WORKERS:-}"
+if [ -z "$MAX_WORKERS" ]; then
+    if [ "$LANES_UP" -gt 0 ]; then
+        MAX_WORKERS=4
+        echo "remote-build: $LANES_UP emulator lane(s) leased on $BOX; defaulting --max-workers=$MAX_WORKERS" >&2
+    else
+        MAX_WORKERS=6
+    fi
+fi
 
 # ---- one build per worktree at a time -------------------------------------------------------
 LOCK="${TMPDIR:-/tmp}/remote-build/$NAME.lock"
@@ -79,10 +103,35 @@ echo "remote-build: synced $NAME to $BOX:~/$REMOTE_DIR in $((SECONDS - start))s;
 
 # ---- build ----------------------------------------------------------------------------------
 set +e
-"${SSH[@]}" "$BOX" bash -s -- "$REMOTE_DIR" "${args[@]}" <<'REMOTE'
+"${SSH[@]}" "$BOX" bash -s -- "$SLOTS" "$NICE" "$REMOTE_DIR" "${args[@]}" <<'REMOTE'
 set -uo pipefail
-cd "$HOME/$1" || exit 1
-shift
+slots="$1"; nice_level="$2"
+cd "$HOME/$3" || exit 1
+shift 3
+
+# ---- box-side admission control (#462): at most $slots builds run at once, so three concurrent
+# remote builds can no longer starve sshd the way they did on 2026-09-26. flock on an fd held by
+# this shell for the rest of the script: the lock releases itself the moment this process ends,
+# on a normal exit or an ssh disconnect, so a dead holder never wedges a later build.
+slot_dir="$HOME/s2-builds/.slots"
+mkdir -p "$slot_dir"
+slot=""
+for s in $(seq 1 "$slots"); do
+    exec {slot_fd}>"$slot_dir/$s"
+    if flock -n "$slot_fd"; then
+        slot="$s"
+        break
+    fi
+    eval "exec ${slot_fd}>&-"
+done
+if [ -z "$slot" ]; then
+    echo "remote-build: waiting for a box build slot (all $slots busy)" >&2
+    slot="$slots"
+    exec {slot_fd}>"$slot_dir/$slot"
+    flock "$slot_fd"
+fi
+echo "remote-build: using box build slot $slot" >&2
+
 export JAVA_HOME="$HOME/opt/jdk-21"
 export ANDROID_HOME=/opt/android-sdk ANDROID_SDK_ROOT=/opt/android-sdk
 export GRADLE_USER_HOME="$HOME/s2-builds/.gradle-home"
@@ -90,7 +139,7 @@ export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
 [ -x "$JAVA_HOME/bin/java" ] || { echo "remote-build: no JDK on the box; run support/scripts/remote-build-setup.sh" >&2; exit 1; }
 printf 'sdk.dir=%s\n' "$ANDROID_HOME" > local.properties
 mkdir -p build/remote-build
-./gradlew --console=plain "$@" </dev/null 2>&1 | tee build/remote-build/gradle.log | awk '
+nice -n "$nice_level" ./gradlew --console=plain "$@" </dev/null 2>&1 | tee build/remote-build/gradle.log | awk '
     /^\* What went wrong:/ { block = 1 }
     /^\* Try:/ { block = 0 }
     block || /^e: / || /: error:/ || / FAILED$/ || /^FAILURE:/ || /^BUILD (SUCCESSFUL|FAILED)/ \
