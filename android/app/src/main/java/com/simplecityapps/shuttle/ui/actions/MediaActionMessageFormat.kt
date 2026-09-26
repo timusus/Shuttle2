@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.actions
 
 import android.content.res.Resources
+import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.R
 
 /** The user-facing text of a [MediaActionMessage]. */
@@ -34,6 +35,20 @@ fun MediaActionMessage.format(resources: Resources): String = when (this) {
     )
 
     is MediaActionMessage.PlaylistCreated -> resources.getString(R.string.playlist_menu_create_playlist_success, playlistName)
+
+    is MediaActionMessage.AddedToFavourites -> resources.getQuantityString(
+        R.plurals.playlist_songs_added,
+        songCount,
+        songCount,
+        resources.getString(MediaProviderR.string.playlist_title_favorites)
+    )
+
+    is MediaActionMessage.RemovedFromFavourites -> resources.getQuantityString(
+        R.plurals.media_action_removed_from_playlist,
+        songCount,
+        songCount,
+        resources.getString(MediaProviderR.string.playlist_title_favorites)
+    )
 
     is MediaActionMessage.Excluded -> resources.getQuantityString(R.plurals.media_action_excluded, songCount, songCount)
 

@@ -91,6 +91,26 @@ class MediaActionHandlerTest {
     }
 
     @Test
+    fun `favourite reports the count, and an empty selection says there are no songs`() = runTest {
+        handler.handle(MediaAction.Favourite(songs)) shouldBe Message(MediaActionMessage.AddedToFavourites(2))
+        handler.handle(MediaAction.Favourite(MediaSelection.Songs(emptyList()))) shouldBe Message(MediaActionMessage.NoSongs)
+
+        songRepository.favouriteChanges shouldBe listOf(listOf(song.id, other.id) to true)
+    }
+
+    @Test
+    fun `removing favourites offers an undo that favourites the same songs again`() = runTest {
+        val result = handler.handle(MediaAction.Favourite(songs, favourite = false))
+
+        result shouldBe Message(
+            MediaActionMessage.RemovedFromFavourites(2),
+            SnackbarAction(SnackbarAction.Label.Undo, MediaAction.Favourite(MediaSelection.Songs(listOf(song, other)))),
+        )
+        handler.handle((result as Message).action!!.action) shouldBe Message(MediaActionMessage.AddedToFavourites(2))
+        songRepository.favouriteChanges shouldBe listOf(listOf(song.id, other.id) to false, listOf(song.id, other.id) to true)
+    }
+
+    @Test
     fun `exclude runs straight away and its undo includes the same songs`() = runTest {
         val result = handler.handle(MediaAction.Exclude(songs))
 

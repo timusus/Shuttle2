@@ -16,9 +16,6 @@ class FakePlaylistRepository : PlaylistRepository {
     private val playlists = MutableStateFlow<List<Playlist>>(emptyList())
     private val playlistSongs = MutableStateFlow<Map<Long, List<Song>>>(emptyMap())
 
-    /** What [getFavoritesPlaylist] returns; unset, it throws as the real one can. */
-    var favorites: Playlist? = null
-
     /** Every [addToPlaylist] call, in order. */
     val addedToPlaylist = mutableListOf<Pair<Playlist, List<Song>>>()
 
@@ -37,8 +34,6 @@ class FakePlaylistRepository : PlaylistRepository {
     }
 
     override fun getPlaylists(query: PlaylistQuery): Flow<List<Playlist>> = playlists
-
-    override suspend fun getFavoritesPlaylist(): Playlist = favorites ?: error("No favorites playlist")
 
     override suspend fun createPlaylist(name: String, mediaProviderType: MediaProviderType, songs: List<Song>?, externalId: String?): Playlist {
         failure?.let { throw it }

@@ -57,7 +57,11 @@ constructor(
             }
 
             is MediaIdWrapper.Directory.Playlists -> {
-                playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+                listOf(favourites) + playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+            }
+
+            is MediaIdWrapper.Directory.Songs.Favourites -> {
+                favouriteSongs().map { it.toMediaItem(mediaId) }
             }
 
             is MediaIdWrapper.Directory.Songs.Album -> {
@@ -83,6 +87,8 @@ constructor(
             is MediaIdWrapper.Directory.Artists, MediaIdWrapper.Directory.Albums.All, MediaIdWrapper.Directory.Playlists -> rootChildren.firstOrNull { it.mediaId == mediaId }
 
             is MediaIdWrapper.ShuffleAll -> rootChildren.firstOrNull { it.mediaId == SHUFFLE_ALL_ID }
+
+            is MediaIdWrapper.Directory.Songs.Favourites -> favourites
 
             is MediaIdWrapper.Directory -> browsableItem(mediaId, title = null)
 
@@ -120,6 +126,8 @@ constructor(
         playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song }
     }.orEmpty()
 
+    private suspend fun favouriteSongs(): List<Song> = songRepository.getSongs(SongQuery.Favourites).firstOrNull().orEmpty()
+
     private fun AlbumArtist.toMediaItem(parentMediaId: String): MediaItem = browsableItem("${parentMediaId}artist/${groupKey.key}/albums/", name ?: friendlyArtistName, MediaMetadata.MEDIA_TYPE_FOLDER_ALBUMS)
 
     private fun Playlist.toMediaItem(parentMediaId: String): MediaItem = browsableItem("${parentMediaId}playlist/$id/songs/", name, MediaMetadata.MEDIA_TYPE_PLAYLIST)
@@ -149,6 +157,9 @@ constructor(
                 class Album(val albumGroupKey: String, val albumArtistGroupKey: String) : Songs()
 
                 class Playlist(val playlistId: Long) : Songs()
+
+                /** The Favourites smart playlist: a flag on each song rather than a stored playlist (#497). */
+                object Favourites : Songs()
             }
         }
 
@@ -196,6 +207,8 @@ constructor(
                     )
                 }
 
+                pathSegments.contains(FAVOURITES_SEGMENT) -> MediaIdWrapper.Directory.Songs.Favourites
+
                 pathSegments.contains("playlist") -> MediaIdWrapper.Directory.Songs.Playlist(pathSegments.getNextSegment("playlist")!!.toLong())
 
                 else -> throw IllegalStateException()
@@ -237,6 +250,11 @@ constructor(
                         PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })
                     }
 
+                    is MediaIdWrapper.Directory.Songs.Favourites -> {
+                        val songs = favouriteSongs()
+                        PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })
+                    }
+
                     // A search result: the song on its own.
                     null -> songRepository.getSongs(SongQuery.SongIds(listOf(mediaIdWrapper.songId))).firstOrNull()?.takeIf { it.isNotEmpty() }?.let { songs -> PlayQueue(songs, 0) }
 
@@ -262,6 +280,8 @@ constructor(
     companion object {
         const val ROOT_ID = "media:/root/"
         const val SHUFFLE_ALL_ID = "media:/shuffle_all"
+        private const val FAVOURITES_SEGMENT = "favourites"
+        const val FAVOURITES_ID = "media:/playlist_root/$FAVOURITES_SEGMENT/songs/"
 
         val root: MediaItem = browsableItem(ROOT_ID, title = null, mediaType = MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
 
@@ -281,6 +301,9 @@ constructor(
                 )
                 .build()
         )
+
+        /** Listed first among the playlists, where the Favorites playlist used to be. */
+        private val favourites: MediaItem = browsableItem(FAVOURITES_ID, "Favorites", MediaMetadata.MEDIA_TYPE_PLAYLIST)
 
         private fun browsableItem(mediaId: String, title: String?, mediaType: Int = MediaMetadata.MEDIA_TYPE_FOLDER_MIXED): MediaItem = MediaItem.Builder()
             .setMediaId(mediaId)

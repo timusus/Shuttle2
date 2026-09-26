@@ -1,8 +1,6 @@
 package com.simplecityapps.shuttle.ui.actions
 
-import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.smartplaylist.Limit
 import com.simplecityapps.shuttle.smartplaylist.NumberCondition
@@ -11,6 +9,7 @@ import com.simplecityapps.shuttle.smartplaylist.Rule
 import com.simplecityapps.shuttle.smartplaylist.SmartRules
 import com.simplecityapps.shuttle.smartplaylist.SmartSort
 import io.kotest.matchers.shouldBe
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -18,8 +17,7 @@ import org.junit.Test
 
 class EvaluateSmartPlaylistTest {
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
-    private val playlistRepository = FakePlaylistRepository()
-    private val evaluate = EvaluateSmartPlaylist(songRepository, ObserveFavouriteSongIds(playlistRepository))
+    private val evaluate = EvaluateSmartPlaylist(songRepository)
 
     @Test
     fun `filters the library by the rules, then sorts and limits it`() = runTest {
@@ -40,15 +38,10 @@ class EvaluateSmartPlaylistTest {
     }
 
     @Test
-    fun `a favourite rule picks the songs in the Favorites playlist`() = runTest {
-        val favorites = createPlaylist(id = 1L)
-        playlistRepository.favorites = favorites
-        playlistRepository.setSongsForPlaylist(favorites, listOf(createSong(id = 2)))
-        songRepository.setSongs((1..3).map { id -> createSong(id = id.toLong()) })
+    fun `a favourite rule picks the favourite songs`() = runTest {
+        songRepository.setSongs((1..3).map { id -> createSong(id = id.toLong()).let { song -> if (id == 2) song.copy(favouritedAt = Clock.System.now()) else song } })
 
-        // The favourites start empty until the playlist has been read
-        evaluate(SmartRules(rules = listOf(Rule.Favourite()))).filterNotNull().first { songs -> songs.isNotEmpty() }.map { song -> song.id } shouldBe
-            listOf(2L)
+        evaluate(SmartRules(rules = listOf(Rule.Favourite()))).filterNotNull().first().map { song -> song.id } shouldBe listOf(2L)
     }
 
     @Test

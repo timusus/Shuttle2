@@ -123,7 +123,6 @@ class LibraryScreenshotTest {
                 playlists = readyPlaylistList(
                     playlists,
                     smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist },
-                    favoritesPlaylist = playlists.first().copy(id = 99, name = "Favorites"),
                     covers = SampleLibrary.playlists.mapIndexed { index, playlist ->
                         index + 1L to playlist.songs.map { it.toSong() }.distinctBy { it.albumGroupKey }.take(4)
                     }.toMap(),

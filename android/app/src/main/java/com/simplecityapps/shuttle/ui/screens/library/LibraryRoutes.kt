@@ -53,6 +53,8 @@ enum class SmartPlaylistId(
     @StringRes val nameResId: Int,
     songQuery: SongQuery,
 ) {
+    /** Every favourite, most recently made one first (#497). */
+    Favourites("favourites", MediaProviderR.string.playlist_title_favorites, SongQuery.Favourites),
     RecentlyAdded("recently-added", MediaProviderR.string.playlist_title_recently_added, SongQuery.RecentlyAdded()),
     MostPlayed("most-played", MediaProviderR.string.playlist_title_most_played, SongQuery.PlayCount(2, SongSortOrder.PlayCount)),
 

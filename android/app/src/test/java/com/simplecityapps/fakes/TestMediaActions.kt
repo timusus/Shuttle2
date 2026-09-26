@@ -16,8 +16,8 @@ import com.simplecityapps.shuttle.ui.actions.DeleteSongs
 import com.simplecityapps.shuttle.ui.actions.DownloadSongs
 import com.simplecityapps.shuttle.ui.actions.EnqueueSongs
 import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
+import com.simplecityapps.shuttle.ui.actions.FavouriteSongs
 import com.simplecityapps.shuttle.ui.actions.FindGoToTarget
-import com.simplecityapps.shuttle.ui.actions.GetFavoritesPlaylist
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbumArtists
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
@@ -77,7 +77,7 @@ class TestMediaActions(
     val renamePlaylist = RenamePlaylist(playlistRepository)
     val clearPlaylist = ClearPlaylist(playlistRepository)
     val deletePlaylist = DeletePlaylist(playlistRepository)
-    val getFavoritesPlaylist = GetFavoritesPlaylist(playlistRepository)
+    val favouriteSongs = FavouriteSongs(songRepository, resolveSongs)
     val observeSongs = ObserveSongs(songRepository)
     val observeAlbums = ObserveAlbums(albumRepository)
     val observeAlbumArtists = ObserveAlbumArtists(albumArtistRepository)
@@ -93,6 +93,7 @@ class TestMediaActions(
         shuffleSongs = shuffleSongs,
         enqueueSongs = enqueueSongs,
         addToPlaylist = addToPlaylist,
+        favouriteSongs = favouriteSongs,
         createPlaylist = createPlaylist,
         findGoToTarget = findGoToTarget,
         shareSongs = shareSongs,

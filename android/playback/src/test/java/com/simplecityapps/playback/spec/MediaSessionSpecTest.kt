@@ -26,6 +26,7 @@ import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
+import kotlin.time.Clock
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -100,6 +101,29 @@ class MediaSessionSpecTest {
 
         // An id that names nothing has no children.
         children(harness, browser, "media:/nothing/").shouldBeEmpty()
+    }
+
+    @Test
+    fun `RS-66 the browse tree lists Favorites first among the playlists, and plays them from the song picked`() {
+        val now = Clock.System.now()
+        val favourites = listOf(song(4).copy(favouritedAt = now), song(5).copy(favouritedAt = now))
+        val harness = sessionHarness(songs = album + favourites)
+        val queue = harness.playback.queueOperations
+        val browser = harness.connect()
+
+        val playlists = children(harness, browser, "media:/playlist_root/")
+        playlists.first().mediaMetadata.title.toString() shouldBe "Favorites"
+        val songs = children(harness, browser, playlists.first().mediaId)
+        songs.map { it.mediaMetadata.title.toString() } shouldBe favourites.map { it.name }
+        songs.forEach { it.mediaMetadata.isPlayable shouldBe true }
+
+        browser.setMediaItem(MediaItem.Builder().setMediaId(songs[1].mediaId).build())
+        browser.prepare()
+        browser.play()
+
+        harness.playback.runUntil { harness.playback.playbackOperations.playbackStateFlow.value == PlaybackState.Playing }
+        queue.getQueue().map { it.song } shouldBe favourites
+        queue.queueStateFlow.value.currentItem?.song shouldBe favourites[1]
     }
 
     @Test

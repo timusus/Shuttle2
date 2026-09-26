@@ -2,13 +2,13 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.SavedStateHandle
-import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.fakes.FakeSongDownloadRepository
+import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
@@ -44,6 +44,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.FakeSettingsEffects
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import io.kotest.matchers.shouldBe
+import kotlin.time.Clock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -66,6 +67,7 @@ class PlayerViewModelTest {
     private val queueOperations = FakeQueueOperations()
     private var savedNowPlaying: NowPlayingSnapshot? = null
     private val playlistRepository = FakePlaylistRepository()
+    private val songRepository = FakeSongRepository()
     private val preferences = FakeSharedPreferences()
     private val settingsStore = SettingsStore(preferences)
     private val preferenceManager = GeneralPreferenceManager(preferences)
@@ -89,7 +91,7 @@ class PlayerViewModelTest {
 
     private fun TestScope.viewModel(savedStateHandle: SavedStateHandle = SavedStateHandle()): PlayerViewModel {
         val sleepTimer = SleepTimer(playbackOperations, backgroundScope, UnconfinedTestDispatcher(testScheduler)) { testScheduler.currentTime }
-        val mediaActions = TestMediaActions(playlistRepository = playlistRepository, queueOperations = queueOperations, playbackOperations = playbackOperations)
+        val mediaActions = TestMediaActions(songRepository = songRepository, playlistRepository = playlistRepository, queueOperations = queueOperations, playbackOperations = playbackOperations)
         return PlayerViewModel(
             observeQueue = ObserveQueue(queueOperations),
             observePlayback = ObservePlayback(playbackOperations, queueOperations),
@@ -97,8 +99,8 @@ class PlayerViewModelTest {
             observeGatedServerSkip = ObserveGatedServerSkip { gatedSongs },
             controlPlayback = ControlPlayback(playbackOperations, queueOperations),
             editQueue = EditQueue(playbackOperations, queueOperations),
-            observeFavouriteSongIds = ObserveFavouriteSongIds(playlistRepository),
-            setFavourite = ToggleFavourite(playlistRepository),
+            observeFavouriteSongIds = ObserveFavouriteSongIds(songRepository),
+            setFavourite = ToggleFavourite(songRepository),
             observePlaylists = ObservePlaylists(playlistRepository),
             controlSleepTimer = ControlSleepTimer(sleepTimer, preferenceManager),
             readSleepTimeRemaining = ReadSleepTimeRemaining(sleepTimer),
@@ -271,27 +273,29 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `the favourite follows the favourites playlist, and toggling adds then removes the song`() = runTest {
-        val favourites = createPlaylist(id = 9, name = "Favorites")
-        playlistRepository.favorites = favourites
-        val viewModel = viewModel()
+    fun `the favourite follows the song's flag, and toggling sets then clears it`() = runTest {
         val song = songs("One").single()
+        songRepository.setSongs(listOf(song))
+        val viewModel = viewModel()
         queueOperations.queueStateFlow.value = queueOf(listOf(song))
         viewModel.uiState.value.player.favourite shouldBe false
 
         viewModel.toggleFavourite()
         viewModel.uiState.value.player.favourite shouldBe true
-        playlistRepository.getSongsForPlaylist(favourites).first().map { it.song } shouldBe listOf(song)
+        songRepository.favouriteChanges shouldBe listOf(listOf(song.id) to true)
 
         viewModel.toggleFavourite()
         viewModel.uiState.value.player.favourite shouldBe false
+        songRepository.favouriteChanges.last() shouldBe (listOf(song.id) to false)
     }
 
     @Test
-    fun `without a favourites playlist nothing is a favourite`() = runTest {
+    fun `a song already a favourite shows as one`() = runTest {
+        val song = songs("One").single().copy(favouritedAt = Clock.System.now())
+        songRepository.setSongs(listOf(song))
         val viewModel = viewModel()
-        queueOperations.queueStateFlow.value = queueOf(songs("One"))
-        viewModel.uiState.value.player.favourite shouldBe false
+        queueOperations.queueStateFlow.value = queueOf(listOf(song))
+        viewModel.uiState.value.player.favourite shouldBe true
     }
 
     @Test

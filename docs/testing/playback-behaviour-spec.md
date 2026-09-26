@@ -249,6 +249,10 @@ lists Artists, Albums, Playlists and Shuffle All, an album lists its songs as pl
 an id that names nothing has no children. (#345) — JVM (`spec/MediaSessionSpecTest`); Android Auto is device-only:
 *Media session through Media3*.
 
+**RS-66: the browse tree lists Favorites first among the playlists.** Given favourite songs, when a controller browses
+Playlists, then Favorites comes first and lists the favourites as playable, and playing one queues the favourites from
+that song. (#497) — JVM (`spec/MediaSessionSpecTest`).
+
 **RS-43: playing a browsed song plays its album from that song.** Given a song browsed within an album, when a
 controller plays it, then the album is queued and plays from that song, and the controller sees the queue as it is.
 (#345) — JVM (`spec/MediaSessionSpecTest`).

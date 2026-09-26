@@ -31,7 +31,7 @@ class PlaylistListViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val playlistRepository = FakePlaylistRepository().apply { favorites = createPlaylist(id = 99, name = "Favorites") }
+    private val playlistRepository = FakePlaylistRepository()
     private val importState = FakeSongImportStateProvider()
     private val fakeSortPreferences = FakeSortPreferences()
     private val preferences = fakeLibraryViewPreferences(sort = fakeSortPreferences)
@@ -43,7 +43,6 @@ class PlaylistListViewModelTest {
         renamePlaylist = actions.renamePlaylist,
         clearPlaylist = actions.clearPlaylist,
         deletePlaylist = actions.deletePlaylist,
-        getFavoritesPlaylist = actions.getFavoritesPlaylist,
         readSetting = ReadLibraryViewSetting(preferences),
         saveSetting = SaveLibraryViewSetting(preferences),
         mediaImportObserver = importState,
@@ -65,32 +64,16 @@ class PlaylistListViewModelTest {
     }
 
     @Test
-    fun `Favorites is pinned separately from the user's playlists`() = runTest {
-        val favorites = createPlaylist(id = 1, name = "Favorites")
+    fun `Favorites is the first smart playlist, and the user's playlists are all listed`() = runTest {
         val roadTrip = createPlaylist(id = 2, name = "Road trip")
-        playlistRepository.favorites = favorites
-        playlistRepository.setPlaylists(listOf(favorites, roadTrip))
+        playlistRepository.setPlaylists(listOf(roadTrip))
 
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
-        viewModel.uiState.value.favoritesPlaylist shouldBe favorites
+        viewModel.uiState.value.smartPlaylists.first() shouldBe SmartPlaylistId.Favourites.smartPlaylist
         viewModel.uiState.value.playlists shouldBe listOf(roadTrip)
-    }
-
-    @Test
-    fun `Favorites is pinned even before its first song, once created`() = runTest {
-        val favorites = createPlaylist(id = 1, name = "Favorites")
-        playlistRepository.favorites = favorites
-        playlistRepository.setPlaylists(listOf(favorites))
-
-        val viewModel = viewModel()
-        backgroundScope.launch { viewModel.uiState.collect {} }
-        advanceUntilIdle()
-
-        viewModel.uiState.value.favoritesPlaylist shouldBe favorites
-        viewModel.uiState.value.playlists shouldBe emptyList()
     }
 
     @Test

@@ -22,6 +22,7 @@ class MediaActionHandler @Inject constructor(
     private val enqueueSongs: EnqueueSongs,
     private val addToPlaylist: AddToPlaylist,
     private val createPlaylist: CreatePlaylist,
+    private val favouriteSongs: FavouriteSongs,
     private val findGoToTarget: FindGoToTarget,
     private val shareSongs: ShareSongs,
     private val excludeSongs: ExcludeSongs,
@@ -42,6 +43,8 @@ class MediaActionHandler @Inject constructor(
         is MediaAction.AddToPlaylist -> addToPlaylist(action)
 
         is MediaAction.CreatePlaylist -> createPlaylist(action)
+
+        is MediaAction.Favourite -> favourite(action)
 
         is MediaAction.GoToAlbum -> goTo(action.selection, FindGoToTarget.Destination.Album)
 
@@ -116,6 +119,20 @@ class MediaActionHandler @Inject constructor(
         is AddToPlaylist.Result.Failure -> Message(
             if (result.message == null) MediaActionMessage.NoSongs else MediaActionMessage.AddToPlaylistFailed(result.message),
         )
+    }
+
+    private suspend fun favourite(action: MediaAction.Favourite): MediaActionResult {
+        val songs = favouriteSongs(action.selection, action.favourite)
+        return when {
+            songs.isEmpty() -> Message(MediaActionMessage.NoSongs)
+
+            action.favourite -> Message(MediaActionMessage.AddedToFavourites(songs.size))
+
+            else -> Message(
+                MediaActionMessage.RemovedFromFavourites(songs.size),
+                SnackbarAction(SnackbarAction.Label.Undo, MediaAction.Favourite(MediaSelection.Songs(songs))),
+            )
+        }
     }
 
     private suspend fun createPlaylist(action: MediaAction.CreatePlaylist): MediaActionResult {

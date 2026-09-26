@@ -241,3 +241,10 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 - [ ] Crossfade off: local and server albums play gaplessly end to end, seeking works, and renaming a playing song's tag updates the title without a skip or glitch.
 - [ ] Crossfade on (e.g. 6 s): consecutive local songs overlap and fade smoothly; a transcoded server song (mobile-data quality 128 kbps) whose tail can't be decoded plays to its real end instead of cutting off early.
 - [ ] Equalizer: Bass boost with the preamp at 0 dB is quieter than EQ off, as expected; raising the preamp brings the level back, and at +12 dB with a loud track it clips cleanly (no crackle or wrap-around noise).
+
+## Favourites as a song flag (#528, #497)
+
+- [ ] Upgrade from the Play build with a few songs in Favorites (and a Favoriten playlist made under German, if you have one): after the upgrade, Library → Playlists shows one Favorites smart playlist first, holding all of them, newest favourite first, and no old Favorites playlist.
+- [ ] Change the app's language (e.g. to German and back): there is still exactly one Favorites list, and the heart in Now Playing still shows the same songs as favourites.
+- [ ] Heart a song in Now Playing, add an album to Favorites from its menu, and remove a song from Favorites in its menu inside the Favorites list; each shows up (or leaves) straight away, and the removal's Undo brings it back.
+- [ ] Android Auto: Playlists lists Favorites first, and playing a song from it plays the list from that song.

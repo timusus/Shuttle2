@@ -130,6 +130,10 @@
   ],
   "fixes": [
     {
+      "text": "Favorites is now a smart playlist of the songs you've hearted, so changing the app's language no longer creates a second Favorites list. Your existing favorites carry over",
+      "commits": []
+    },
+    {
       "text": "Gapless albums no longer click or thump between songs when the equaliser is on",
       "commits": []
     },

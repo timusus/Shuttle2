@@ -9,7 +9,6 @@ import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
 import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
-import com.simplecityapps.shuttle.ui.actions.GetFavoritesPlaylist
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistCovers
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
@@ -25,7 +24,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -39,7 +37,6 @@ class PlaylistListViewModel @Inject constructor(
     private val renamePlaylist: RenamePlaylist,
     private val clearPlaylist: ClearPlaylist,
     private val deletePlaylist: DeletePlaylist,
-    getFavoritesPlaylist: GetFavoritesPlaylist,
     readSetting: ReadLibraryViewSetting,
     private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider,
@@ -47,7 +44,6 @@ class PlaylistListViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.PlaylistSort))
-    private val favoritesPlaylist = flow { emit(getFavoritesPlaylist()) }
 
     /** The playlists with their covers; the list shows first and the covers follow as they load. */
     private val playlistsWithCovers = observePlaylists().flatMapLatest { playlists ->
@@ -58,8 +54,7 @@ class PlaylistListViewModel @Inject constructor(
         playlistsWithCovers,
         mediaImportObserver.songImportState,
         _sortOrder,
-        favoritesPlaylist,
-    ) { (playlists, covers), songImportState, sortOrder, favorites ->
+    ) { (playlists, covers), songImportState, sortOrder ->
         if (songImportState is SongImportState.ImportProgress) {
             PlaylistListUiState(
                 loadingState = PlaylistListUiState.LoadingState.Scanning,
@@ -68,9 +63,8 @@ class PlaylistListViewModel @Inject constructor(
             )
         } else {
             PlaylistListUiState(
-                playlists = playlists.filterNot { it.id == favorites.id }.sortedWith(sortOrder.comparator),
+                playlists = playlists.sortedWith(sortOrder.comparator),
                 smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist },
-                favoritesPlaylist = favorites,
                 covers = covers,
                 sortOrder = sortOrder,
                 loadingState = PlaylistListUiState.LoadingState.Ready,

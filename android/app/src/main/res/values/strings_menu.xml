@@ -62,6 +62,7 @@
     <string name="menu_title_add_to_queue">Add to Queue</string>
     <!-- Menu option to remove the selected item from the queue -->
     <string name="menu_title_remove_from_queue">Remove from Queue</string>
+    <string name="menu_title_remove_from_favorites">Remove from Favorites</string>
     <!-- Menu option to remove all items from the queue -->
     <string name="menu_title_sort_clear_queue">Clear Queue</string>
     <!-- Menu option to save the current queue as a new or existing playlist -->

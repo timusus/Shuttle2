@@ -126,8 +126,9 @@ private fun <T> LibraryFastScroller(
 }
 
 /** Each smart playlist's own placeholder, so the four don't share one icon (#491). */
-private val SmartPlaylist.placeholder: ArtworkPlaceholder
+internal val SmartPlaylist.placeholder: ArtworkPlaceholder
     get() = when (SmartPlaylistId.of(this)) {
+        SmartPlaylistId.Favourites -> ArtworkPlaceholder.Favorites
         SmartPlaylistId.RecentlyAdded -> ArtworkPlaceholder.RecentlyAdded
         SmartPlaylistId.MostPlayed -> ArtworkPlaceholder.MostPlayed
         SmartPlaylistId.History -> ArtworkPlaceholder.History
@@ -454,7 +455,7 @@ fun GenresPage(
     }
 }
 
-/** Playlists: Favorites, then the smart playlists, pinned first, then the user's, with "New playlist" in their header. */
+/** Playlists: the smart playlists, Favorites first, pinned above the user's, with "New playlist" in their header. */
 @Composable
 fun PlaylistsPage(
     state: PlaylistListUiState,
@@ -474,20 +475,10 @@ fun PlaylistsPage(
     }
     LibraryContent(content, stringResource(R.string.playlist_list_empty), modifier, state.scanProgress) {
         val listState = rememberLazyListState()
-        val headerCount = 1 + (if (state.favoritesPlaylist != null) 1 else 0) + state.smartPlaylists.size + 1
+        val headerCount = 1 + state.smartPlaylists.size + 1
         Box(modifier.fillMaxSize()) {
             LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-playlists")) {
                 item(key = "smart-header") { SectionHeader(title = stringResource(R.string.library_smart_playlists)) }
-                state.favoritesPlaylist?.let { favorites ->
-                    item(key = "favorites") {
-                        PlaylistRow(
-                            name = favorites.name,
-                            summary = pluralString(R.plurals.songsPlural, favorites.songCount),
-                            onClick = { onPlaylistClick(favorites) },
-                            artwork = { LibraryArtwork(null, ArtworkPlaceholder.Favorites) },
-                        )
-                    }
-                }
                 items(state.smartPlaylists, key = { "smart-${it.nameResId}" }) { smartPlaylist ->
                     PlaylistRow(
                         name = stringResource(smartPlaylist.nameResId),

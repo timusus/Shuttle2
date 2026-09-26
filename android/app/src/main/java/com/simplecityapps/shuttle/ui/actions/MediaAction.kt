@@ -66,6 +66,9 @@ sealed interface MediaAction {
     /** The picker's "New playlist": creates [name] holding the selection's songs. */
     data class CreatePlaylist(override val selection: MediaSelection, val name: String) : MediaAction
 
+    /** The picker's "Favorites" makes the selection's songs favourites; [favourite] false stops them being ones, with Undo. */
+    data class Favourite(override val selection: MediaSelection, val favourite: Boolean = true) : MediaAction
+
     data class GoToAlbum(override val selection: MediaSelection) : MediaAction
 
     data class GoToArtist(override val selection: MediaSelection) : MediaAction
@@ -150,6 +153,10 @@ sealed interface MediaActionMessage {
     data class AddToPlaylistFailed(val reason: String?) : MediaActionMessage
 
     data class PlaylistCreated(val playlistName: String) : MediaActionMessage
+
+    data class AddedToFavourites(val songCount: Int) : MediaActionMessage
+
+    data class RemovedFromFavourites(val songCount: Int) : MediaActionMessage
 
     data class Excluded(val songCount: Int) : MediaActionMessage
     data class RemovedFromPlaylist(val playlistName: String, val songCount: Int) : MediaActionMessage

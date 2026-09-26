@@ -6,9 +6,11 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import java.util.Collections
+import kotlin.time.Clock
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
 class FakeSongRepository : SongRepository {
@@ -51,6 +53,23 @@ class FakeSongRepository : SongRepository {
     override suspend fun setExcluded(songs: List<Song>, excluded: Boolean) {
         excludedChanges += songs.map { it.id } to excluded
         excludedCalls += songs to excluded
+    }
+
+    /** Every [setFavourite] call as (song ids, favourite), in order; each also sets or clears the songs' favouritedAt. */
+    val favouriteChanges: MutableList<Pair<List<Long>, Boolean>> = Collections.synchronizedList(mutableListOf())
+
+    override fun getFavouriteSongIds(): Flow<Set<Long>> = songs.filterNotNull().map { songs -> songs.filter { it.isFavourite }.map { it.id }.toSet() }
+
+    override suspend fun setFavourite(songs: List<Song>, favourite: Boolean) {
+        val ids = songs.map { it.id }.toSet()
+        favouriteChanges += ids.toList() to favourite
+        this.songs.value = this.songs.value?.map { song ->
+            when {
+                song.id !in ids -> song
+                favourite -> if (song.isFavourite) song else song.copy(favouritedAt = Clock.System.now())
+                else -> song.copy(favouritedAt = null)
+            }
+        }
     }
 
     override suspend fun remove(song: Song) {

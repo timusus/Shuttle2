@@ -10,6 +10,7 @@ import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FileDownloadOff
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Person
@@ -36,6 +37,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
@@ -166,6 +168,7 @@ fun MediaActionsHost(
         PlaylistPickerSheet(
             playlists = uiState.playlists,
             onPick = { playlist -> viewModel.dispatch(MediaAction.AddToPlaylist(selection, playlist)) },
+            onFavourite = { viewModel.dispatch(MediaAction.Favourite(selection)) },
             onCreate = { state.createPlaylist = selection },
             onDismissRequest = { state.playlistPicker = null },
         )
@@ -195,18 +198,22 @@ fun MediaActionsHost(
     }
 }
 
-/** The add-to-playlist picker: "New playlist" first, then every playlist. Duplicates come back as a snackbar. */
+/** The add-to-playlist picker: "New playlist" first, then Favorites, then every playlist. Duplicates come back as a snackbar. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PlaylistPickerSheet(
     playlists: List<Playlist>,
     onPick: (Playlist) -> Unit,
+    onFavourite: () -> Unit,
     onCreate: () -> Unit,
     onDismissRequest: () -> Unit,
 ) {
     S2ActionsSheet(
         title = stringResource(R.string.menu_title_add_to_playlist),
-        actions = listOf(S2Action(stringResource(R.string.playlist_menu_create_playlist), onCreate, Icons.AutoMirrored.Rounded.PlaylistAdd)) +
+        actions = listOf(
+            S2Action(stringResource(R.string.playlist_menu_create_playlist), onCreate, Icons.AutoMirrored.Rounded.PlaylistAdd),
+            S2Action(stringResource(MediaProviderR.string.playlist_title_favorites), onFavourite, Icons.Rounded.Favorite),
+        ) +
             playlists.map { playlist -> S2Action(playlist.name, { onPick(playlist) }, Icons.AutoMirrored.Rounded.QueueMusic) },
         onDismissRequest = onDismissRequest,
     )

@@ -8,6 +8,7 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.BasicAlertDialog
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2ActionsSheet
@@ -88,7 +90,10 @@ internal fun SongActionsHost(
         S2ActionsSheet(
             title = stringResource(R.string.menu_title_add_to_playlist),
             subtitle = subtitle,
-            actions = listOf(S2Action(stringResource(R.string.playlist_menu_create_playlist), { state.newPlaylistFor = selection }, Icons.Rounded.Add)) +
+            actions = listOf(
+                S2Action(stringResource(R.string.playlist_menu_create_playlist), { state.newPlaylistFor = selection }, Icons.Rounded.Add),
+                S2Action(stringResource(MediaProviderR.string.playlist_title_favorites), { actions.onMediaAction(MediaAction.Favourite(selection)) }, Icons.Rounded.Favorite),
+            ) +
                 playlists.map { playlist ->
                     S2Action(playlist.name, { actions.onMediaAction(MediaAction.AddToPlaylist(selection, playlist)) }, Icons.AutoMirrored.Rounded.QueueMusic)
                 },
