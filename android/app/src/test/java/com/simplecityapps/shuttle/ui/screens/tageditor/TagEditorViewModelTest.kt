@@ -4,6 +4,7 @@ import android.content.IntentSender
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -26,7 +27,7 @@ class TagEditorViewModelTest {
 
     private fun viewModel(vararg songIds: Long) = TagEditorViewModel(
         songIds.toList(),
-        songRepository,
+        ObserveSongs(songRepository),
         ReadSongTags(tagFileAccess),
         WriteSongTags(tagFileAccess, songRepository, playbackManager),
         tagFileAccess,

@@ -1,11 +1,9 @@
 package com.simplecityapps.shuttle.ui.screens.tageditor
 
-import android.content.IntentSender
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -15,44 +13,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-data class TagProgress(
-    val done: Int,
-    val total: Int,
-) {
-    val fraction: Float get() = if (total == 0) 0f else done.toFloat() / total
-}
-
-sealed interface TagEditorUiState {
-    data class Reading(val progress: TagProgress) : TagEditorUiState
-
-    /** None of the songs' files could be read, or none of them can be written. */
-    data object Unreadable : TagEditorUiState
-
-    data class Editing(
-        /** How many songs a save writes. */
-        val songCount: Int,
-        val fields: List<TagFieldState>,
-        /** Songs the save leaves alone, because their files couldn't be read or written. */
-        val skipped: List<Song> = emptyList(),
-        /** Set while the save writes the files. */
-        val writing: TagProgress? = null,
-    ) : TagEditorUiState {
-        val hasChanges: Boolean get() = fields.any { it.changed }
-    }
-}
-
-sealed interface TagEditorEvent {
-    data class Saved(val result: TagWriteResult) : TagEditorEvent
-
-    /** The system has to ask the user before the save can change some of the files; answer with [TagEditorViewModel.onWriteConsent]. */
-    data class RequestWriteConsent(val intentSender: IntentSender) : TagEditorEvent
-}
 
 /**
  * The tag editor for one song or several: reads the tags from the songs' files, lets the user change them, and
@@ -61,7 +25,7 @@ sealed interface TagEditorEvent {
 @HiltViewModel(assistedFactory = TagEditorViewModel.Factory::class)
 class TagEditorViewModel @AssistedInject constructor(
     @Assisted songIds: List<Long>,
-    songRepository: SongRepository,
+    observeSongs: ObserveSongs,
     private val readSongTags: ReadSongTags,
     private val writeSongTags: WriteSongTags,
     private val tagFileAccess: TagFileAccess,
@@ -84,7 +48,7 @@ class TagEditorViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            val songs = songRepository.getSongs(SongQuery.SongIds(songIds)).filterNotNull().first()
+            val songs = observeSongs(SongQuery.SongIds(songIds)).first()
                 .sortedBy { songIds.indexOf(it.id) }
             val tags = readSongTags(songs) { read, total -> _uiState.value = TagEditorUiState.Reading(TagProgress(read, total)) }
             editable = tags.editable
