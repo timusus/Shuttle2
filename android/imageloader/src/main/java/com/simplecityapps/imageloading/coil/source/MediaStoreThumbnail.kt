@@ -1,4 +1,4 @@
-package com.simplecityapps.imageloading.glide.loader.local
+package com.simplecityapps.imageloading.coil.source
 
 import android.content.ContentResolver
 import android.content.ContentUris
@@ -30,7 +30,7 @@ internal fun Song.mediaStoreId(): Long? = if (mediaProvider == MediaProviderType
  * MediaStore's thumbnail for an audio row: the song's embedded art, otherwise an image in its folder. MediaProvider builds it
  * with ThumbnailUtils.createAudioThumbnail, using its own storage access, so it finds folder art the app can't list.
  *
- * This is the call ContentResolver.loadThumbnail makes, left encoded so Glide decodes and caches it like other artwork.
+ * This is the call ContentResolver.loadThumbnail makes, left encoded so Coil decodes and caches it like other artwork.
  * MediaProvider sizes the thumbnail itself (half the display's shorter edge), whatever size is asked for.
  */
 @RequiresApi(Build.VERSION_CODES.Q)

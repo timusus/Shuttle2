@@ -2,6 +2,7 @@ package com.simplecityapps.imageloading.di
 
 import android.content.Context
 import android.net.ConnectivityManager
+import android.os.Build
 import androidx.core.content.getSystemService
 import coil3.ImageLoader
 import coil3.disk.DiskCache
@@ -16,6 +17,8 @@ import com.simplecityapps.imageloading.coil.SongArtworkKeyer
 import com.simplecityapps.imageloading.coil.artworkCacheKey
 import com.simplecityapps.imageloading.coil.source.EmbeddedAlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.EmbeddedSongArtworkSource
+import com.simplecityapps.imageloading.coil.source.MediaStoreAlbumArtworkSource
+import com.simplecityapps.imageloading.coil.source.MediaStoreSongArtworkSource
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Album
@@ -49,15 +52,21 @@ object CoilModule {
     ): ImageLoader {
         val artworkClient = artworkHttpClient(context, okHttpClient, artworkSettings)
 
+        // Where the app can't list folder images (Android 13+ grants a music player only READ_MEDIA_AUDIO), MediaProvider can:
+        // after embedded art, fall back to MediaStore's audio thumbnail, which is the folder image when the song has no embedded art
+        val mediaStoreThumbnails = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+
         // Each model's sources, in the order they're tried
         val songSources =
-            listOf<ArtworkSource<Song>>(
-                EmbeddedSongArtworkSource(context, kTagLib)
-            )
+            buildList<ArtworkSource<Song>> {
+                add(EmbeddedSongArtworkSource(context, kTagLib))
+                if (mediaStoreThumbnails) add(MediaStoreSongArtworkSource(context))
+            }
         val albumSources =
-            listOf<ArtworkSource<Album>>(
-                EmbeddedAlbumArtworkSource(context, kTagLib, songRepository)
-            )
+            buildList<ArtworkSource<Album>> {
+                add(EmbeddedAlbumArtworkSource(context, kTagLib, songRepository))
+                if (mediaStoreThumbnails) add(MediaStoreAlbumArtworkSource(context, songRepository))
+            }
         val albumArtistSources = listOf<ArtworkSource<AlbumArtist>>()
 
         return ImageLoader.Builder(context)

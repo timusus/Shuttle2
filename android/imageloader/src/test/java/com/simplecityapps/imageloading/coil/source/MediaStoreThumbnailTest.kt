@@ -1,4 +1,4 @@
-package com.simplecityapps.imageloading.glide.loader.local
+package com.simplecityapps.imageloading.coil.source
 
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song

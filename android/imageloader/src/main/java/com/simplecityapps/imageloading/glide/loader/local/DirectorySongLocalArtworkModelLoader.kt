@@ -8,6 +8,7 @@ import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
+import com.simplecityapps.imageloading.coil.source.canListFolderImages
 import com.simplecityapps.imageloading.glide.loader.common.SongArtworkProvider
 import com.simplecityapps.shuttle.model.Song
 import java.io.File
