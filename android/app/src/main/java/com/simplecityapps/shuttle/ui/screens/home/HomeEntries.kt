@@ -40,7 +40,7 @@ private fun HomeDestination(
     val emptyViewModel: LibraryEmptyViewModel = hiltViewModel()
     val emptyState by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
-    val showConsentCard by consentViewModel.showCard.collectAsStateWithLifecycle()
+    val consentState by consentViewModel.uiState.collectAsStateWithLifecycle()
     MediaActionsHost(onNavigate = onNavigate) { actions ->
         HomeScreen(
             uiState = uiState,
@@ -68,7 +68,7 @@ private fun HomeDestination(
                     )
                 }
             },
-            consentCard = if (showConsentCard) {
+            consentCard = if (consentState.showCard) {
                 @Composable {
                     AnalyticsConsentCard(
                         onShare = consentViewModel::onShare,

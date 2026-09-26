@@ -34,7 +34,7 @@ data class AppThemeState(
 class AppThemeViewModel @Inject constructor(
     appearanceSettings: AppearanceSettings
 ) : ViewModel() {
-    val state: StateFlow<AppThemeState> = combine(
+    val uiState: StateFlow<AppThemeState> = combine(
         appearanceSettings.theme.flow,
         appearanceSettings.accent.flow,
         appearanceSettings.dynamicColour.flow,
@@ -58,7 +58,7 @@ fun S2AppTheme(
     viewModel: AppThemeViewModel = hiltViewModel(),
     content: @Composable () -> Unit
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     S2AppTheme(state, content)
 }
 

@@ -16,6 +16,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
+data class AnalyticsConsentUiState(
+    val showCard: Boolean = false,
+)
+
 /**
  * The Home analytics consent card (#421): shown once a library is loaded and the app has been opened on
  * [DaysBeforeAsking] separate days. Either answer, or dismissing the card, marks it asked so it never shows again;
@@ -37,13 +41,13 @@ class AnalyticsConsentViewModel @Inject constructor(
         }
     }
 
-    val showCard: StateFlow<Boolean> =
+    val uiState: StateFlow<AnalyticsConsentUiState> =
         combine(
             observeSongs().map { songs -> songs.isNotEmpty() }.distinctUntilChanged(),
             settings.asked.flow,
             settings.daysOpened.flow,
-        ) { hasSongs, asked, daysOpened -> hasSongs && !asked && daysOpened >= DaysBeforeAsking }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+        ) { hasSongs, asked, daysOpened -> AnalyticsConsentUiState(showCard = hasSongs && !asked && daysOpened >= DaysBeforeAsking) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AnalyticsConsentUiState())
 
     /** The user chose Share: turns analytics on, starting PostHog, and marks the card answered. */
     fun onShare() {

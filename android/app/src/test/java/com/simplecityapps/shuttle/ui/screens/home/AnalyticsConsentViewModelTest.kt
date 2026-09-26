@@ -48,15 +48,15 @@ class AnalyticsConsentViewModelTest {
     private fun TestScope.viewModel(day: Int): AnalyticsConsentViewModel {
         val clock = Clock.fixed(Instant.EPOCH.plusSeconds(day * SecondsPerDay), ZoneOffset.UTC)
         return AnalyticsConsentViewModel(ObserveSongs(songs), settings, privacySettings, clock).also { viewModel ->
-            backgroundScope.launch { viewModel.showCard.collect {} }
+            backgroundScope.launch { viewModel.uiState.collect {} }
             runCurrent()
         }
     }
 
     @Test
     fun `the card stays hidden before the third day`() = runTest(mainDispatcherRule.testDispatcher) {
-        viewModel(day = 1).showCard.value shouldBe false
-        viewModel(day = 2).showCard.value shouldBe false
+        viewModel(day = 1).uiState.value.showCard shouldBe false
+        viewModel(day = 2).uiState.value.showCard shouldBe false
         settings.daysOpened.value shouldBe 2
     }
 
@@ -65,7 +65,7 @@ class AnalyticsConsentViewModelTest {
         viewModel(day = 1)
         viewModel(day = 2)
 
-        viewModel(day = 3).showCard.value shouldBe true
+        viewModel(day = 3).uiState.value.showCard shouldBe true
         settings.daysOpened.value shouldBe 3
     }
 
@@ -96,7 +96,7 @@ class AnalyticsConsentViewModelTest {
         third.onNoThanks()
         runCurrent()
 
-        viewModel(day = 4).showCard.value shouldBe false
+        viewModel(day = 4).uiState.value.showCard shouldBe false
     }
 
     @Test
@@ -121,7 +121,7 @@ class AnalyticsConsentViewModelTest {
         viewModel(day = 1)
         viewModel(day = 2)
 
-        viewModel(day = 3).showCard.value shouldBe false
+        viewModel(day = 3).uiState.value.showCard shouldBe false
     }
 
     companion object {
