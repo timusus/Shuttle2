@@ -186,12 +186,15 @@ then
     # ask the box which report dirs it actually has now, using the same restrictive path match as
     # before, and drop only the local ones it doesn't -- one confirmed-stale directory at a time.
     if [ -n "$ROOT" ] && [ -n "$REMOTE_DIR" ]; then
-        remote_dirs="$("${SSH[@]}" "$BOX" "cd \"\$HOME/$REMOTE_DIR\" && find . -type d \( -path '*/build/test-results' -o -path '*/build/reports' -o -path '*/build/outputs/roborazzi' \) 2>/dev/null")" || remote_dirs=""
-        while IFS= read -r d; do
-            [ -n "$d" ] || continue
-            rel="${d#"$ROOT"/}"
-            printf '%s\n' "$remote_dirs" | grep -qxF "./$rel" || rm -rf "$d"
-        done < <(find "$ROOT" -type d \( -path '*/build/test-results' -o -path '*/build/reports' -o -path '*/build/outputs/roborazzi' \) 2>/dev/null)
+        if remote_dirs="$("${SSH[@]}" "$BOX" "cd \"\$HOME/$REMOTE_DIR\" && find . -type d \( -path '*/build/test-results' -o -path '*/build/reports' -o -path '*/build/outputs/roborazzi' \) 2>/dev/null")"; then
+            while IFS= read -r d; do
+                [ -n "$d" ] || continue
+                rel="${d#"$ROOT"/}"
+                printf '%s\n' "$remote_dirs" | grep -qxF "./$rel" || rm -rf "$d"
+            done < <(find "$ROOT" -type d \( -path '*/build/test-results' -o -path '*/build/reports' -o -path '*/build/outputs/roborazzi' \) 2>/dev/null)
+        else
+            echo "remote-build: listing remote report dirs failed; leaving existing local reports as-is" >&2
+        fi
     else
         echo "remote-build: ROOT or REMOTE_DIR is empty, skipping stale-report cleanup" >&2
     fi
