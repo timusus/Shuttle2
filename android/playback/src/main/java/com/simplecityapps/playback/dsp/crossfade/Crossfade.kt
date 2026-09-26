@@ -92,12 +92,13 @@ private const val CLIP_CHANGE_MARGIN_MS = 3_000L
  * An entry's item is clipped (see [CrossfadeClippingMediaSourceFactory]) only once its tail is ready, so an entry whose
  * tail can't be decoded (a stream that can't seek, a decode error) plays whole; and it's unclipped again when the tail
  * is dropped (the entry leaves the current and next, or the crossfade length changes). A playing item's clip only
- * moves while its end is [CLIP_CHANGE_MARGIN_MS] ahead: past that, it keeps the clip and tail it has, or plays whole.
+ * moves while its end is [CLIP_CHANGE_MARGIN_MS] ahead and the player hasn't loaded past the item: past that, it keeps
+ * the clip and tail it has, or plays whole.
  */
 class Crossfade(
     private val player: ExoPlayer,
     private val mixer: CrossfadeMixer,
-    private val decoder: TailDecoder,
+    private val decoder: TailSource,
     private val crossfadeMs: () -> Long
 ) : Player.Listener {
     /** The tails decoded for the current and next entries, which may not be applied yet. */
@@ -203,7 +204,13 @@ class Crossfade(
 
     /**
      * Whether the item at [index] can go from clipped to [from]'s tail to clipped to [to]'s (null: unclipped): any but
-     * the playing item can, and that one only while both ends are [CLIP_CHANGE_MARGIN_MS] ahead of its position.
+     * the playing item can, and that one only while both ends are [CLIP_CHANGE_MARGIN_MS] ahead of its position and
+     * the player is still loading it.
+     *
+     * A clip changes the item's period duration, and Media3 drops every period queued after one whose duration changes
+     * (`MediaPeriodQueue.updateQueuedPeriods` calls `removeAfter`). The player queues the next item's period once the
+     * playing one is loaded to its end, so moving the clip after that would throw away the next item's preload, and
+     * a remote item would open, probe and buffer again just as the crossfade starts (#562).
      */
     private fun canMoveClip(
         index: Int,
@@ -212,7 +219,16 @@ class Crossfade(
     ): Boolean {
         if (index != player.currentMediaItemIndex) return true
         val ends = listOfNotNull(from, to).map { it.tail.clipEndUs / 1000 }
-        return ends.all { player.currentPosition < it - CLIP_CHANGE_MARGIN_MS }
+        return ends.all { player.currentPosition < it - CLIP_CHANGE_MARGIN_MS } && !isLoadedToEnd(from)
+    }
+
+    /**
+     * Whether the playing item, clipped to [clip]'s tail (or unclipped), is loaded to its end, so the player may have
+     * queued what follows it. Its buffered position is its end then (the item's duration once loading has moved on).
+     */
+    private fun isLoadedToEnd(clip: Decoded?): Boolean {
+        val endMs = clip?.let { it.tail.clipEndUs / 1000 } ?: player.duration
+        return endMs != C.TIME_UNSET && player.bufferedPosition >= endMs
     }
 
     /** A tail, and the entry it was decoded for: an entry replaced for a changed song needs its own. */

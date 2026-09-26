@@ -20,6 +20,25 @@ import com.simplecityapps.playback.queue.queueEntry
 import java.nio.ByteBuffer
 import timber.log.Timber
 
+/** Decodes queue entries' tails for [Crossfade], one at a time, on the main thread. */
+interface TailSource {
+    /**
+     * Decodes [item]'s audio from shortly before [clipEndMs] to its end, then calls [onDecoded] with the tail, or with
+     * null if it can't. A new decode cancels the one in progress.
+     */
+    fun decode(
+        item: MediaItem,
+        clipEndMs: Long,
+        onDecoded: (Tail?) -> Unit
+    )
+
+    /** Stops the decode in progress, if there is one, without reporting it. */
+    fun cancel()
+}
+
+/** How far before the clip end [TailDecoder] starts a tail: the mixer plays it from wherever the clipped item stopped. */
+private const val TAIL_MARGIN_MS = 500L
+
 /**
  * Decodes the [Tail] of a queue entry, faster than real time, on a helper player that never outputs audio: it's built
  * by [newPlayer] from the playback player's renderers (so the FLAC and Opus extensions decode) and media sources (so
@@ -33,18 +52,14 @@ class TailDecoder(
     private val newPlayer: (Array<AudioProcessor>) -> ExoPlayer,
     /** The playback player's ReplayGain: its mode and pre-amp apply to the tail. */
     private val replayGain: ReplayGainAudioProcessor
-) {
+) : TailSource {
     private var player: ExoPlayer? = null
 
-    /**
-     * Decodes [item] from [marginMs] before [clipEndMs] to its end, then calls [onDecoded] with the tail, or with null
-     * if it can't: an error, or a stream that can't seek.
-     */
-    fun decode(
+    /** Decodes [item] from [TAIL_MARGIN_MS] before [clipEndMs] to its end. It can't on an error, or a stream that can't seek. */
+    override fun decode(
         item: MediaItem,
         clipEndMs: Long,
-        onDecoded: (Tail?) -> Unit,
-        marginMs: Long = 500
+        onDecoded: (Tail?) -> Unit
     ) {
         cancel()
         val capture = TailCaptureProcessor()
@@ -86,13 +101,12 @@ class TailDecoder(
         )
         // The playback player's copy of the item may carry its crossfade clip; the tail is what that clip cuts off.
         val unclipped = item.buildUpon().setClippingConfiguration(MediaItem.ClippingConfiguration.UNSET).build()
-        player.setMediaItem(unclipped, (clipEndMs - marginMs).coerceAtLeast(0))
+        player.setMediaItem(unclipped, (clipEndMs - TAIL_MARGIN_MS).coerceAtLeast(0))
         player.prepare()
         player.play()
     }
 
-    /** Stops the decode in progress, if there is one, without reporting it. */
-    fun cancel() {
+    override fun cancel() {
         player?.release()
         player = null
     }

@@ -81,6 +81,16 @@ Details that make it hold:
   removed) while both the old and new ends are 3 s ahead of the position (`CLIP_CHANGE_MARGIN_MS`). A tail that
   lands later isn't used: the item plays whole. A clipped item keeps its clip and tail to its end, even if F
   changes or crossfade is turned off.
+- **Once the next item is preloaded, the playing item's clip stays put too (#562).** A clip changes the item's
+  period duration, and `MediaPeriodQueue.updateQueuedPeriods` answers a queued period whose duration changed by
+  releasing every period after it (`removeAfter`). So moving the playing item's clip after the player has loaded
+  to its end and created the next item's period throws that preload away, and the next item loads again from
+  scratch. The playing item's clip therefore moves only while the player hasn't buffered to its end
+  (`bufferedPosition` short of the clip end, or of the duration when it's unclipped). A tail that lands after
+  that isn't used, as above. The cost is a short song (under about 50 s, the default buffer) whose tail
+  arrives after it has fully loaded: it gets no crossfade out. The next item's clip still moves freely: its period is
+  normally the last one queued, so there's nothing after it to drop (only when the next item is short enough
+  to be fully loaded while the current one plays does its clip cost the preload of the one after).
 - **`Crossfade` records the clips it applies.** A plan exists only for a clipped entry, and the plans are set
   before the clips change. `Crossfade` keeps its own record of each clip, with its tail and the entry it was
   applied to. An entry that `PlaylistEditor` replaces for a changed song comes back unclipped, so its record and
