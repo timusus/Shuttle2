@@ -2,6 +2,7 @@ package com.simplecityapps.playback
 
 import com.simplecityapps.playback.fakes.FakeListenedPlayer
 import com.simplecityapps.playback.fakes.testSong
+import com.simplecityapps.playback.fakes.withFakeUriStatics
 import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.queue.toQueueEntry
 import io.kotest.matchers.shouldBe
@@ -10,13 +11,10 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class ProgressTickerTest {
-    private val player = FakeListenedPlayer(listOf(testSong(1, duration = 180_000).toQueueEntry().toMediaItem()))
+    private val player = withFakeUriStatics { FakeListenedPlayer(listOf(testSong(1, duration = 180_000).toQueueEntry().toMediaItem())) }
 
     private val scope = TestScope()
 

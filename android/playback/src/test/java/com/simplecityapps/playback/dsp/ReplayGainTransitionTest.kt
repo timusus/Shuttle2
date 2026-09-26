@@ -24,6 +24,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
+// Robolectric: drives a real DefaultAudioSink built from RuntimeEnvironment.getApplication().
+
 private const val SAMPLE: Short = 10000
 private const val SAMPLE_RATE = 44100
 private const val FRAMES_PER_BUFFER = 1024

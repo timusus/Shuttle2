@@ -15,6 +15,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 
 /** When Cast is set up: once the app comes to the foreground, or once the playback service's session starts. */
+// Robolectric: real Application via RuntimeEnvironment.getApplication().
 @RunWith(RobolectricTestRunner::class)
 class CastStarterTest {
     private val application: Application = RuntimeEnvironment.getApplication()

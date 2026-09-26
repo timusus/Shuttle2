@@ -30,6 +30,7 @@ private const val LSB = 1.0 / 32768
  * next song's head. Lengths are whole milliseconds (the songs' durations are), and the clip points fall inside the WAV
  * extractor's 100 ms access units, so the clip overshoots and the mixer has to line the tail up itself.
  */
+// Robolectric: PlaybackHarness spec test.
 @RunWith(RobolectricTestRunner::class)
 class CrossfadeTest {
     private val a = Wav.tones(440.0 to 0.5, frames = 441 * 525, sampleRate = SAMPLE_RATE)

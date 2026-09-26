@@ -24,6 +24,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 
 /** Loading the current item and skipping ones that fail, on a real player: the behaviour is RS-10, RS-23 and RS-56. */
+// Robolectric: drives a real TestExoPlayerBuilder-backed ExoPlayer.
 @RunWith(RobolectricTestRunner::class)
 class ItemLoaderTest {
     private val player: ExoPlayer = TestExoPlayerBuilder(RuntimeEnvironment.getApplication()).setClock(FakeClock(true)).build()

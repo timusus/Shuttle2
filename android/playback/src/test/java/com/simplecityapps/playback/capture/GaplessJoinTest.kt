@@ -20,6 +20,7 @@ private const val LSB = 1.0 / 32768
  * An album's songs play back to back with nothing inserted, dropped or disturbed at each join: one continuous tone,
  * cut into three files at frames that don't line up with any buffer, comes out as the same tone played as one file.
  */
+// Robolectric: PlaybackHarness spec test.
 @RunWith(RobolectricTestRunner::class)
 class GaplessJoinTest {
     /** A 440 Hz tone cut into three songs of uneven length; the phase runs on across each cut. */

@@ -1,15 +1,16 @@
 package com.simplecityapps.playback
 
+import android.os.SystemClock
 import androidx.media3.common.DeviceInfo
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import com.simplecityapps.playback.fakes.FakeListenedPlayer
 import io.kotest.matchers.shouldBe
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
 class CastHandoverTest {
     private val player = FakeListenedPlayer()
 
@@ -42,13 +43,21 @@ class CastHandoverTest {
 
     @Test
     fun `a move that fails is over`() {
-        player.device = FakeListenedPlayer.REMOTE
-        handover.onPlaybackStateChanged(Player.STATE_BUFFERING)
+        // PlaybackException's constructor reads SystemClock.elapsedRealtime() for its timestamp.
+        mockkStatic(SystemClock::class)
+        try {
+            every { SystemClock.elapsedRealtime() } returns 0L
 
-        handover.onPlayerError(PlaybackException("receiver gone", null, PlaybackException.ERROR_CODE_REMOTE_ERROR))
+            player.device = FakeListenedPlayer.REMOTE
+            handover.onPlaybackStateChanged(Player.STATE_BUFFERING)
 
-        handover.isSwitching shouldBe false
-        handover.isRemote shouldBe true
+            handover.onPlayerError(PlaybackException("receiver gone", null, PlaybackException.ERROR_CODE_REMOTE_ERROR))
+
+            handover.isSwitching shouldBe false
+            handover.isRemote shouldBe true
+        } finally {
+            unmockkStatic(SystemClock::class)
+        }
     }
 
     @Test

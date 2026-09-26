@@ -17,6 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+// Robolectric: the Google Cast SDK's MediaMetadata.putString() calls real android.text.TextUtils.
 @RunWith(RobolectricTestRunner::class)
 class CastMediaItemConverterTest {
     private val streams = CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext)

@@ -23,6 +23,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 
+// Robolectric: real DefaultBandwidthMeter/main-looper prep, exercising Media3's own source selection.
 @RunWith(RobolectricTestRunner::class)
 class StreamSniffingMediaSourceFactoryTest {
     private val server = FakeStreamServer()

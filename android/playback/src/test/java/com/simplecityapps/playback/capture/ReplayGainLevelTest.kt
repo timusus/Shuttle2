@@ -18,6 +18,7 @@ private const val SAMPLE_RATE = 44_100
  * A song tagged with ReplayGain comes out louder or quieter than its source by the tag's gain plus the pre-amp, in
  * each mode: measured as the output's RMS level against the source's, on a 1 kHz tone at -12 dBFS (peak).
  */
+// Robolectric: PlaybackHarness spec test.
 @RunWith(RobolectricTestRunner::class)
 class ReplayGainLevelTest {
     private val tone = Wav.tones(1_000.0 to 0.25, frames = SAMPLE_RATE / 2, sampleRate = SAMPLE_RATE)

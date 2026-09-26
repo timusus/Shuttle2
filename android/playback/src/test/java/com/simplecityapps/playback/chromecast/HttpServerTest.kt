@@ -18,6 +18,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 
 /** What the phone's server hands a client, with and without the session's key. */
+// Robolectric: runs a real HTTP server against RuntimeEnvironment.getApplication().
 @RunWith(RobolectricTestRunner::class)
 class HttpServerTest {
     @get:Rule

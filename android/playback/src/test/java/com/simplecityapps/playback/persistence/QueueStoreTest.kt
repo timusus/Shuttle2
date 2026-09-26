@@ -37,6 +37,7 @@ import org.robolectric.RobolectricTestRunner
  * the app starts again. Tests drive playback through the harness's operations and read the saved state back through
  * [PlaybackPreferenceManager], as the app does.
  */
+// Robolectric: PlaybackHarness spec test.
 @RunWith(RobolectricTestRunner::class)
 class QueueStoreTest {
     private val harnesses = mutableListOf<PlaybackHarness>()

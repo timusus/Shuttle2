@@ -7,10 +7,7 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.SettingsStore
 import io.kotest.matchers.shouldBe
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
 class PlaybackSpeedStoreTest {
     private val player = FakeListenedPlayer()
 

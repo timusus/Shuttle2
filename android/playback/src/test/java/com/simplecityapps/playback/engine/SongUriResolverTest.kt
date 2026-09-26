@@ -27,6 +27,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 
 /** The resolver knows the remote songs the playlist holds, and forgets each one the playlist no longer does. */
+// Robolectric: drives a real TestExoPlayerBuilder-backed ExoPlayer through QueueFacade.
 @RunWith(RobolectricTestRunner::class)
 class SongUriResolverTest {
     /** How many times a stream was resolved. */

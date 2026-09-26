@@ -19,6 +19,7 @@ import org.robolectric.RuntimeEnvironment
  * reports a single window; any other source is prepared as soon as it joins the playlist, so a long queue would
  * prepare every item.
  */
+// Robolectric: real Context via RuntimeEnvironment.getApplication().
 @RunWith(RobolectricTestRunner::class)
 class LazyPreparationTest {
     @Test

@@ -13,6 +13,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 
+// Robolectric: real AudioManager via RuntimeEnvironment.getApplication().
 @RunWith(RobolectricTestRunner::class)
 class CallHoldTest {
     private val audioManager = RuntimeEnvironment.getApplication().getSystemService(Context.AUDIO_SERVICE) as AudioManager

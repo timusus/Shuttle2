@@ -11,6 +11,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+// Robolectric: needs real Uri parsing (lastPathSegment, Media3's Util.inferContentType) and makes real HTTP requests.
 @RunWith(RobolectricTestRunner::class)
 class StreamTypeProbeTest {
     private val server = FakeStreamServer()

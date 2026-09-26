@@ -1,18 +1,25 @@
 package com.simplecityapps.playback.chromecast
 
+import com.simplecityapps.playback.fakes.setUpFakeUriStatics
+import com.simplecityapps.playback.fakes.tearDownFakeUriStatics
 import com.simplecityapps.playback.fakes.testSong
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.test.runTest
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 /** How a Cast receiver's streams are resolved and kept. */
-@RunWith(RobolectricTestRunner::class)
 class CastStreamsTest {
+    @Before
+    fun setUp() = setUpFakeUriStatics()
+
+    @After
+    fun tearDown() = tearDownFakeUriStatics()
+
     private val provider = FakeMediaInfoProvider()
 
     private val streams = CastStreams(provider, EmptyCoroutineContext)

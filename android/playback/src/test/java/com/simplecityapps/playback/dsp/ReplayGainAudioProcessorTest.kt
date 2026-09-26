@@ -8,6 +8,7 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.dsp.replaygain.replayGainDb
 import com.simplecityapps.playback.fakes.FakePlaylistTimeline
 import com.simplecityapps.playback.fakes.testSong
+import com.simplecityapps.playback.fakes.withFakeUriStatics
 import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.toMediaItem
 import io.kotest.matchers.shouldBe
@@ -15,24 +16,22 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.pow
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 private const val SAMPLE: Short = 10000
 
-// Robolectric for android.net.Uri, which MediaItem parses the item uri into.
-@RunWith(RobolectricTestRunner::class)
 class ReplayGainAudioProcessorTest {
     private val loud = ReplayGain(trackGain = -6.0, albumGain = -4.0)
     private val quiet = ReplayGain(trackGain = 6.0, albumGain = 3.0)
     private val timeline =
-        FakePlaylistTimeline(
-            listOf(
-                QueueEntry(uid = 1, song = testSong(id = 1, path = "/music/loud.flac"), replayGain = loud).toMediaItem(),
-                QueueEntry(uid = 2, song = testSong(id = 2, path = "/music/quiet.mp3"), replayGain = quiet).toMediaItem(),
-                QueueEntry(uid = 3, song = testSong(id = 3, path = "/music/untagged.mp3"), replayGain = ReplayGain(trackGain = null, albumGain = null)).toMediaItem()
+        withFakeUriStatics {
+            FakePlaylistTimeline(
+                listOf(
+                    QueueEntry(uid = 1, song = testSong(id = 1, path = "/music/loud.flac"), replayGain = loud).toMediaItem(),
+                    QueueEntry(uid = 2, song = testSong(id = 2, path = "/music/quiet.mp3"), replayGain = quiet).toMediaItem(),
+                    QueueEntry(uid = 3, song = testSong(id = 3, path = "/music/untagged.mp3"), replayGain = ReplayGain(trackGain = null, albumGain = null)).toMediaItem()
+                )
             )
-        )
+        }
 
     @Test
     fun `track mode prefers the track gain, falling back to the album gain`() {

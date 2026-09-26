@@ -24,6 +24,7 @@ private const val WINDOW = SAMPLE_RATE / 10
  * The equalizer changes the level of the frequencies its bands cover by their gain, measured on the captured output
  * with a single-bin DFT at the band's centre and at a frequency outside it.
  */
+// Robolectric: PlaybackHarness spec test.
 @RunWith(RobolectricTestRunner::class)
 class EqualizerResponseTest {
     private val custom = Equalizer.Presets.custom

@@ -28,6 +28,7 @@ import org.robolectric.RuntimeEnvironment
  * A queue built off the main thread with [QueueFacade.buildQueue] and set with [QueueFacade.setQueueIfContentVersion],
  * as the restore does: the same queue [QueueFacade.setQueue] sets.
  */
+// Robolectric: drives a real TestExoPlayerBuilder-backed ExoPlayer, asserting its main-thread affinity and index.
 @RunWith(RobolectricTestRunner::class)
 class NewQueueTest {
     private val builds = BuildDispatcher()

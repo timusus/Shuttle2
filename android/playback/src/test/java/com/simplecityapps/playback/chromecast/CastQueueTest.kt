@@ -27,6 +27,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 
 /** How playback is handed between the local player and a Cast receiver, the receiver played by a second player. */
+// Robolectric: real Context via RuntimeEnvironment.getApplication().
 @RunWith(RobolectricTestRunner::class)
 class CastQueueTest {
     private val context = RuntimeEnvironment.getApplication()
