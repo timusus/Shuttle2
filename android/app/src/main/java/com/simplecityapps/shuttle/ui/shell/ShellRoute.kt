@@ -45,6 +45,7 @@ fun ShellRoute(
     shellViewModel: ShellViewModel = hiltViewModel(),
 ) {
     val playerUi by viewModel.uiState.collectAsStateWithLifecycle()
+    val shellUi by shellViewModel.uiState.collectAsStateWithLifecycle()
     val progress = viewModel.progress.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val targets = remember { Channel<NavigationTarget>(Channel.UNLIMITED) }
@@ -55,7 +56,7 @@ fun ShellRoute(
         actions = viewModel,
         modifier = modifier,
         snackbarHostState = snackbarHostState,
-        startTab = shellViewModel.startTab,
+        startTab = shellUi.startTab,
         navigationRequests = remember(targets) { targets.receiveAsFlow() },
     )
 }

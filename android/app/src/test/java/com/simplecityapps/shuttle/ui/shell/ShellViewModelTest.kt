@@ -15,14 +15,14 @@ class ShellViewModelTest {
 
     @Test
     fun `opens on Library by default, as 1_0_10 did`() {
-        ShellViewModel(settings).startTab shouldBe ShellTab.Library
+        ShellViewModel(settings).uiState.value.startTab shouldBe ShellTab.Library
     }
 
     @Test
     fun `opens on Home when Show Home on launch is on`() {
         settings.showHomeOnLaunch.value = true
 
-        ShellViewModel(settings).startTab shouldBe ShellTab.Home
+        ShellViewModel(settings).uiState.value.startTab shouldBe ShellTab.Home
     }
 
     @Test
@@ -31,6 +31,6 @@ class ShellViewModelTest {
 
         settings.showHomeOnLaunch.value = true
 
-        viewModel.startTab shouldBe ShellTab.Library
+        viewModel.uiState.value.startTab shouldBe ShellTab.Library
     }
 }
