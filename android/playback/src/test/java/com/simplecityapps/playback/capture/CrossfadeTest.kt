@@ -6,6 +6,7 @@ import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -42,7 +43,7 @@ class CrossfadeTest {
     /** Where A's clipped item ends and the overlap starts. */
     private val join = a.frameCount - CROSSFADE_FRAMES
 
-    /** The tail decoder's reports, one per tail. */
+    /** The tail decoder's reports, one per tail: decoded, or why not. */
     private val decodeLog = mutableListOf<String>()
 
     private val tree =
@@ -53,7 +54,7 @@ class CrossfadeTest {
                 message: String,
                 t: Throwable?
             ) {
-                if (message.startsWith("Crossfade: decoded")) decodeLog += message
+                if (message.startsWith("Crossfade: ")) decodeLog += message
             }
         }
 
@@ -154,6 +155,19 @@ class CrossfadeTest {
         val expected = tone.int16Samples()
         val actual = output.channel()
         (output.fadeInFrames until tone.frameCount).filter { expected[it] != actual[it] }.take(5) shouldBe emptyList()
+    }
+
+    @Test
+    fun `a song whose tail can't be decoded plays whole`() {
+        // A stream the decoder can't seek in, so it has no tail, then a song that has one.
+        val output = PlaybackHarness(crossfadeDurationMs = CROSSFADE_MS).use { it.playWithTails(listOf(a.unseekableSong(id = 1), b.song(id = 2))) }
+
+        decodeLog.first() shouldContain "can't seek"
+        // A plays to its end, then B, with no crossfade between them (B's own tail still fades it out).
+        output.frameCount shouldBe a.frameCount + b.frameCount
+        val expected = a.int16Samples() + b.int16Samples().copyOfRange(0, b.frameCount - CROSSFADE_FRAMES)
+        val actual = output.channel()
+        (output.fadeInFrames until expected.size).filter { expected[it] != actual[it] }.take(5) shouldBe emptyList()
     }
 
     /**

@@ -43,7 +43,7 @@ class ExoPlayerFactory(
     private val replayGainAudioProcessor: ReplayGainAudioProcessor,
     private val audioTrackMonitor: AudioTrackMonitor,
     private val songUriResolver: SongUriResolver,
-    /** The crossfade length, 0 when it's off; read as each item is prepared and each tail decoded. */
+    /** The crossfade length, 0 when it's off; read whenever the queue or the current item changes. */
     private val crossfadeDurationMs: () -> Long = { 0 },
     /** Builds the ExoPlayer around these renderers and sources. A test builds it on a fake clock. */
     private val buildPlayer: (RenderersFactory, MediaSource.Factory) -> ExoPlayer = { renderersFactory, mediaSourceFactory ->
@@ -97,7 +97,7 @@ class ExoPlayerFactory(
     )
 
     fun create(): ExoPlayer {
-        val player = buildPlayer(renderersFactory, CrossfadeClippingMediaSourceFactory(mediaSourceFactory, crossfadeDurationMs))
+        val player = buildPlayer(renderersFactory, CrossfadeClippingMediaSourceFactory(mediaSourceFactory))
         val crossfade = Crossfade(player, crossfadeMixer, TailDecoder(::decoderPlayer, replayGainAudioProcessor), crossfadeDurationMs)
         player.setHandleAudioBecomingNoisy(true)
         player.setAudioAttributes(MUSIC, true)

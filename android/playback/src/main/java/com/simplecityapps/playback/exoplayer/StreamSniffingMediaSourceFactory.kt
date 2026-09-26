@@ -73,12 +73,16 @@ class StreamSniffingMediaSourceFactory(
 }
 
 /**
- * Probes [mediaItem]'s stream once prepared, off the playback thread, then prepares the matching
+ * Probes [createdItem]'s stream once prepared, off the playback thread, then prepares the matching
  * child source and forwards its timeline and periods. A failed probe falls back to the
  * progressive source, so the player reports the same error it would have without probing.
+ *
+ * It takes updates to its item in place when they keep the stream (see [canUpdateMediaItem]), so a wrapping
+ * [androidx.media3.exoplayer.source.ClippingMediaSource] can re-clip it; the child is always built from the item as
+ * this source was created with it.
  */
 class StreamSniffingMediaSource(
-    private val mediaItem: MediaItem,
+    private val createdItem: MediaItem,
     private val dataSourceFactory: DataSource.Factory,
     private val hlsFactory: MediaSource.Factory,
     private val progressiveFactory: MediaSource.Factory,
@@ -91,7 +95,17 @@ class StreamSniffingMediaSource(
     var childSource: MediaSource? = null
         private set
 
+    private var mediaItem = createdItem
+
     override fun getMediaItem(): MediaItem = mediaItem
+
+    /** An item for the same stream: before the probe answers, whatever child it picks takes it; after, the child must. */
+    override fun canUpdateMediaItem(mediaItem: MediaItem): Boolean = mediaItem.localConfiguration == createdItem.localConfiguration && childSource?.canUpdateMediaItem(mediaItem) != false
+
+    override fun updateMediaItem(mediaItem: MediaItem) {
+        this.mediaItem = mediaItem
+        childSource?.updateMediaItem(mediaItem)
+    }
 
     override fun prepareSourceInternal(mediaTransferListener: TransferListener?) {
         super.prepareSourceInternal(mediaTransferListener)
@@ -100,7 +114,7 @@ class StreamSniffingMediaSource(
     }
 
     private fun startProbe() {
-        val uri = checkNotNull(mediaItem.localConfiguration).uri
+        val uri = checkNotNull(createdItem.localConfiguration).uri
         val loader = newProbeLoader().also { loader = it }
         loader.startLoading(
             ProbeLoadable(dataSourceFactory.createDataSource(), uri),
@@ -148,8 +162,8 @@ class StreamSniffingMediaSource(
 
     private fun prepareChild(type: StreamType): MediaSource {
         val source = when (type) {
-            StreamType.Hls -> hlsFactory.createMediaSource(mediaItem)
-            StreamType.Progressive -> progressiveFactory.createMediaSource(mediaItem)
+            StreamType.Hls -> hlsFactory.createMediaSource(createdItem)
+            StreamType.Progressive -> progressiveFactory.createMediaSource(createdItem)
         }
         childSource = source
         prepareChildSource(Unit, source)

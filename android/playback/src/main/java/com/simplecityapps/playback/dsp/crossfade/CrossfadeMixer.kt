@@ -13,9 +13,9 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /**
- * Crossfades between queue entries on the one player: each entry's item is clipped to end the crossfade's length early
- * (see [CrossfadeClippingMediaSourceFactory]), and this plays the [Tail] it cut off, decoded ahead of time, over the
- * head of the next entry, on equal-power curves.
+ * Crossfades between queue entries on the one player: once an entry's [Tail] is decoded, its item is clipped to end the
+ * crossfade's length early (see [Crossfade]), and this plays the tail it cut off over the head of the next entry, on
+ * equal-power curves.
  *
  * It follows the audio sink's stream boundaries. At a gapless transition the sink queues the end of the ending stream,
  * configures the processors for the next, and flushes them with the next stream's [AudioProcessor.StreamMetadata]; a

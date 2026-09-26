@@ -84,7 +84,9 @@ class TailDecoder(
                 }
             }
         )
-        player.setMediaItem(item, (clipEndMs - marginMs).coerceAtLeast(0))
+        // The playback player's copy of the item may carry its crossfade clip; the tail is what that clip cuts off.
+        val unclipped = item.buildUpon().setClippingConfiguration(MediaItem.ClippingConfiguration.UNSET).build()
+        player.setMediaItem(unclipped, (clipEndMs - marginMs).coerceAtLeast(0))
         player.prepare()
         player.play()
     }

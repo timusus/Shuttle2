@@ -95,13 +95,32 @@ class Wav(
         replayGainTrack: Double? = null,
         replayGainAlbum: Double? = null,
         album: String? = null
+    ): Song = song(id, "wav", "audio/wav", wavBytes(), replayGainTrack, replayGainAlbum, album)
+
+    /**
+     * A song that plays this from a Matroska file with no cues, so the player can't seek in it: as a stream that
+     * doesn't take range requests, or a live transcode, plays.
+     */
+    fun unseekableSong(id: Long): Song {
+        check(bitsPerSample == 16) { "Unsupported bit depth $bitsPerSample" }
+        return song(id, "mka", "audio/x-matroska", MatroskaWriter.write(sampleRate, channelCount, frameCount, pcmBytes()))
+    }
+
+    private fun song(
+        id: Long,
+        extension: String,
+        mimeType: String,
+        bytes: ByteArray,
+        replayGainTrack: Double? = null,
+        replayGainAlbum: Double? = null,
+        album: String? = null
     ): Song {
-        val file = File.createTempFile("capture-$id", ".wav").apply { deleteOnExit() }
-        file.writeBytes(bytes())
+        val file = File.createTempFile("capture-$id", ".$extension").apply { deleteOnExit() }
+        file.writeBytes(bytes)
         return testSong(
             id = id,
             path = file.toURI().toString(),
-            mimeType = "audio/wav",
+            mimeType = mimeType,
             duration = (frameCount * 1000L / sampleRate).toInt(),
             replayGainTrack = replayGainTrack,
             replayGainAlbum = replayGainAlbum,
@@ -109,7 +128,7 @@ class Wav(
         )
     }
 
-    private fun bytes(): ByteArray {
+    private fun wavBytes(): ByteArray {
         val bytesPerSample = bitsPerSample / 8
         val dataSize = samples.size * bytesPerSample
         val buffer = ByteBuffer.allocate(44 + dataSize).order(ByteOrder.LITTLE_ENDIAN)
@@ -117,6 +136,13 @@ class Wav(
         buffer.put("fmt ".toByteArray()).putInt(16).putShort(1).putShort(channelCount.toShort()).putInt(sampleRate)
         buffer.putInt(sampleRate * channelCount * bytesPerSample).putShort((channelCount * bytesPerSample).toShort()).putShort(bitsPerSample.toShort())
         buffer.put("data".toByteArray()).putInt(dataSize)
+        buffer.put(pcmBytes())
+        return buffer.array()
+    }
+
+    /** [samples] as little-endian PCM. */
+    private fun pcmBytes(): ByteArray {
+        val buffer = ByteBuffer.allocate(samples.size * bitsPerSample / 8).order(ByteOrder.LITTLE_ENDIAN)
         val fullScale = 1L shl (bitsPerSample - 1)
         samples.forEach { sample ->
             val value = (sample * fullScale).roundToLong().coerceIn(-fullScale, fullScale - 1).toInt()
