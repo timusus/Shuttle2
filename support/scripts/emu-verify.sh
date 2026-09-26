@@ -13,7 +13,8 @@
 #     --check <name>   run support/scripts/checks/<name>.sh (repeatable)
 #     --flow <path>    run a Maestro flow directly via `maestro test` (repeatable)
 #     --apk <path>     install this APK instead of building/reusing the cached one
-#     --remote-build   build the APK on the WSL box via remote-build.sh (or S2_REMOTE_BUILD=1)
+#     --remote-build   build the APK via remote-build.sh, which picks the Mac or the WSL box
+#                      (or S2_REMOTE_BUILD=1)
 #     --no-seed        skip seed-test-media.sh (media/app state already set up)
 #     --no-reset       skip `remote-emu.sh reset` (#412: iterate against a lane that's already
 #                       seeded from a previous run -- install + seed-test-media.sh --if-needed

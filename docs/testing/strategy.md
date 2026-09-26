@@ -37,7 +37,8 @@ Rules of thumb:
 ## Baseline
 
 The landing verify is `remote-build.sh --max-workers=6 -q testDebugUnitTest :android:app:assembleDebug`
-on the WSL box, then `./gradlew :android:app:verifyRoborazziDebug` on the Mac. `verifyModuleLayers`
+(on the Mac unless the Mac is loaded, else on the WSL box when a slot is free -- the script picks,
+#546), then `./gradlew :android:app:verifyRoborazziDebug` on the Mac. `verifyModuleLayers`
 and the Konsist rules run automatically as dependencies of `:android:architecture-tests`'
 `testDebugUnitTest` (registered as a twin of `test` for exactly this reason), so a separate
 `:android:architecture-tests:test` invocation was redundant and is dropped; `lintDebug` moved to the
@@ -56,7 +57,8 @@ The measurements below were taken against the fuller command this baseline repla
 | `verifyRoborazziDebug` app + designsystem on the box | 0 | 1m51s | | 7 `HomeScreenshotTest` failures (#539) |
 
 The slot queue, not the build, dominated wall time: with up to ten workers landing and two slots,
-a 6 min build waited 29 min. Throughput is set by **CPU per landing**, so the levers below are
+a 6 min build waited 29 min. (#546 since stopped that queue: `remote-build.sh` builds on the Mac
+unless it is loaded, and uses the box only when a slot is free.) Throughput is set by **CPU per landing**, so the levers below are
 ranked by CPU saved, not only wall time.
 
 Where the uncached run's ~25 task-minutes went:
@@ -142,12 +144,14 @@ Considered and not worth it now:
 
 | When | Runs | Why |
 |---|---|---|
-| While iterating | `support/scripts/unit-test --changed` (box with `--remote-build`), plus `verifyRoborazziDebug --tests` for the screens touched | Only affected tests |
-| **Landing verify** (every push to main) | Box: `testDebugUnitTest :android:app:assembleDebug`. Mac: `:android:app:verifyRoborazziDebug` (consider adding designsystem's, which only CI verifies today) until #539 lets it join the box run | Catches behaviour, compile and golden breaks; `verifyModuleLayers` comes via architecture-tests |
+| While iterating | `support/scripts/unit-test --changed` (`--remote-build` lets `remote-build.sh` pick the host), plus `verifyRoborazziDebug --tests` for the screens touched | Only affected tests |
+| **Landing verify** (every push to main) | `remote-build.sh` (Mac unless loaded, else a free box slot): `testDebugUnitTest :android:app:assembleDebug`. Mac: `:android:app:verifyRoborazziDebug` (consider adding designsystem's, which only CI verifies today) until #539 lets it join the box run | Catches behaviour, compile and golden breaks; `verifyModuleLayers` comes via architecture-tests |
 | Nightly (GitHub Actions, scheduled) | `:android:app:lintDebug`, report uploaded as an artifact (`.github/workflows/lint-nightly.yml`) | Lint today is a report, not a gate (#537) |
 | Nightly or weekly (box, off-peak) | The uncached full verify for timing drift, the `@Ignore("measurement")` benchmarks, `SearchIndexBenchmarkTest` (`-Ps2.runBenchmarks=true`, #535) | Catches drift the landing verify no longer runs |
 | Batched device pass | `emu-verify.sh --suite` smoke set, `docs/testing/device-checks.md` | Platform-only behaviour (#452 pattern) |
 | External PRs (CI) | As today: lint, unit tests, Roborazzi verify, the managed-device smoke group | Owner landings bypass CI (trunk push), so CI is not on the landing path |
 
-`remote-build.sh` now prints the slot wait and the Gradle wall separately at the end, so the queue
-cost stays visible in every landing.
+`remote-build.sh` picks the host itself (#546): the Mac when its 1-min load is under 0.8x its cores
+(`REMOTE_BUILD_LOAD_RATIO`), else the box only if a slot is free, else the Mac anyway; `--box` and
+`--local` force one. It prints which host ran and why, and on the box the slot wait and the Gradle
+wall separately, so the queue cost stays visible in every landing.

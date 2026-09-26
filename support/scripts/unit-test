@@ -26,8 +26,9 @@ GRADLE_RUNNER=(./gradlew)
 if command -v build-brief >/dev/null 2>&1; then
   GRADLE_RUNNER=(build-brief ./gradlew)
 fi
-# A leading --remote-build (or S2_REMOTE_BUILD=1) runs Gradle on the WSL box
-# through remote-build.sh, which syncs the test results back here (#451).
+# A leading --remote-build (or S2_REMOTE_BUILD=1) runs Gradle through
+# remote-build.sh, which builds on the Mac unless it's loaded, else on the WSL
+# box, syncing the test results back here (#451, #546).
 if [ "${1:-}" = "--remote-build" ]; then S2_REMOTE_BUILD=1; shift; fi
 if [ "${S2_REMOTE_BUILD:-0}" = "1" ]; then
   GRADLE_RUNNER=("${SCRIPT_DIR}/remote-build.sh")
@@ -126,7 +127,7 @@ Examples:
   support/scripts/unit-test --changed --base main --dry-run
 
 Set VERBOSE=1 to print each command as it runs. A leading --remote-build (or
-S2_REMOTE_BUILD=1) runs Gradle on the WSL box via remote-build.sh.
+S2_REMOTE_BUILD=1) runs Gradle via remote-build.sh, which picks the Mac or the WSL box.
 EOF
 }
 

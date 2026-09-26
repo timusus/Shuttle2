@@ -55,6 +55,10 @@ back to plain `./gradlew` when it isn't installed.
 # Or via the "smoke" device group:
 ./gradlew :android:app:smokeGroupDebugAndroidTest
 
+# Build on whichever host has room: the Mac unless it's loaded, else a free WSL box slot
+# (never queues for the box; --box / --local force one — see .claude/rules/android.md)
+./support/scripts/remote-build.sh -q testDebugUnitTest :android:app:assembleDebug
+
 # Lint (KTLint)
 ./support/scripts/lint
 

@@ -217,31 +217,40 @@ by tap.
 
 ## Remote Gradle Builds (WSL Box, opt-in)
 
-`support/scripts/remote-build.sh <gradle args...>` runs a Gradle build on the same box (#451): it
-rsyncs the worktree to `~/s2-builds/<worktree name>`, takes a box-side build slot (`flock` on
-`~/s2-builds/.slots/N`, at most `REMOTE_BUILD_SLOTS` concurrent builds, default 2 -- a caller past
-the limit prints one line, then rescans all slots every few seconds and takes whichever frees first;
-the lock lives on an fd the remote shell holds, so it releases itself on exit or ssh disconnect and
-never wedges) then runs `./gradlew` there under `nice` with a box-side JDK (Temurin 21 in
-`~/opt/jdk-21`) and Gradle user home (`~/s2-builds/.gradle-home`, whose `gradle.properties` caps the
-daemon heap and worker count for remote runs without touching this worktree's own) at
-`--max-workers=6` (4 when `remote-emu.sh` shows a lane leased on the box) unless the args say
-otherwise (`REMOTE_BUILD_MAX_WORKERS` changes the default), streams a condensed log (full log:
-`build/remote-build/gradle.log`), then syncs back APKs, test results, test reports and Roborazzi
-outputs and drops any of those report dirs the box no longer has so a stale one can't linger, with
-Gradle's exit code. The version tag is read on the Mac and passed as
-`-PversionCode`/`-PversionName`. Different worktrees build side by side (bounded by the box-side
-slot above); two calls from one worktree queue on a separate local lock. One-time box setup:
-`support/scripts/remote-build-setup.sh` (idempotent; it only checks the CI-shared SDK at
-`/opt/android-sdk` and never installs into it).
+`support/scripts/remote-build.sh [--box|--local] <gradle args...>` picks the host itself (#546),
+so it never queues for a box slot while the Mac could build: it reads the Mac's 1-min load against
+its core count and, under `REMOTE_BUILD_LOAD_RATIO` x cores (default 0.8), runs `./gradlew` on the
+Mac with `--max-workers` capped at the idle cores. When the Mac is loaded it goes to the WSL box
+(#451) only if a probe sees a free build slot, and falls back to the Mac if the box is unreachable,
+every slot is busy, or the slots fill up during the sync (the box side exits 75 instead of
+waiting). One line says where it ran and why. `--box` forces the box and waits for a slot (exit 3
+if it's unreachable); `--local` forces the Mac.
+
+On the box it rsyncs the worktree to `~/s2-builds/<worktree name>`, takes a box-side build slot
+(`flock` on `~/s2-builds/.slots/N`, at most `REMOTE_BUILD_SLOTS` concurrent builds, default 2 --
+with `--box`, a caller past the limit prints one line, then rescans all slots every few seconds
+and takes whichever frees first; the lock lives on an fd the remote shell holds, so it releases
+itself on exit or ssh disconnect and never wedges) then runs `./gradlew` there under `nice` with a
+box-side JDK (Temurin 21 in `~/opt/jdk-21`) and Gradle user home (`~/s2-builds/.gradle-home`, whose
+`gradle.properties` caps the daemon heap and worker count for remote runs without touching this
+worktree's own) at `--max-workers=6` (4 when `remote-emu.sh` shows a lane leased on the box) unless
+the args say otherwise (`REMOTE_BUILD_MAX_WORKERS` changes the default), streams a condensed log
+(full log: `build/remote-build/gradle.log`), prints the slot wait and Gradle wall time, then syncs
+back APKs, test results, test reports and Roborazzi outputs and drops any of those report dirs the
+box no longer has so a stale one can't linger. Either host exits with Gradle's exit code. The
+version tag is read on the Mac and passed as `-PversionCode`/`-PversionName`. Different worktrees
+build side by side (bounded by the box-side slot above); two calls from one worktree queue on a
+separate local lock. One-time box setup: `support/scripts/remote-build-setup.sh` (idempotent; it
+only checks the CI-shared SDK at `/opt/android-sdk` and never installs into it).
 
 Opt in with `S2_REMOTE_BUILD=1`, or `--remote-build` as the first argument to
-`support/scripts/unit-test` / an argument to `emu-verify.sh` (which builds the APK remotely and
-installs the synced-back copy over the lane's tunnel). Not the default yet. Line for briefs:
+`support/scripts/unit-test` / an argument to `emu-verify.sh` (which installs the APK wherever it
+was built -- a box build is synced back first). Line for briefs:
 
-> Run Gradle on the WSL box to spare the Mac: `support/scripts/unit-test --remote-build [module]`,
-> `support/scripts/emu-verify.sh --remote-build ...`, or `support/scripts/remote-build.sh <tasks>`
-> for anything else (foreground, generous timeout). Keep `verifyRoborazziDebug` on the Mac.
+> Build with `support/scripts/unit-test --remote-build [module]`, `support/scripts/emu-verify.sh
+> --remote-build ...`, or `support/scripts/remote-build.sh <tasks>` for anything else (foreground,
+> generous timeout): it builds on the Mac unless the Mac is loaded, and uses the box only when a
+> slot is free. Keep `verifyRoborazziDebug` on the Mac.
 
 **Keep `verifyRoborazziDebug`/`recordRoborazziDebug` on the Mac.** The `docs/design/**` screenshot
 goldens are recorded on macOS; #458 added a Linux anti-aliasing tolerance
