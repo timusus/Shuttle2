@@ -35,7 +35,10 @@ data class Song(
     val channelCount: Int?,
     // Opaque token from the song's provider that changes whenever its artwork does; null when the
     // provider has none. Artwork cache keys include it, so art refreshes on the next sync after a change.
-    val artworkVersion: String? = null
+    val artworkVersion: String? = null,
+    // When the song first reached the library: stamped on first import and kept through later updates, unlike
+    // [lastModified], which moves with every tag edit. Null for a song that isn't in the library.
+    val dateAdded: Instant? = null
 ) {
     val type: Type
         get() {

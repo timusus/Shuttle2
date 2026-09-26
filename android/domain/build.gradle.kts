@@ -8,6 +8,8 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
     // Dagger (not Hilt) generates the use cases' `@Inject` factories here, where the classes live.
     id("com.google.devtools.ksp")
+    // Smart playlist rules are stored as JSON; the codec lives beside the rule model (#506).
+    alias(libs.plugins.kotlin.serialization)
 }
 
 java {
@@ -24,6 +26,7 @@ kotlin {
 
 dependencies {
     implementation(libs.kotlinx.datetime)
+    implementation(libs.kotlinx.serialization.json)
     api(libs.kotlinx.coroutinesCore)
     implementation(libs.dagger)
     ksp(libs.dagger.compiler)

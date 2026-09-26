@@ -4,6 +4,9 @@ import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.SongFolder
+import com.simplecityapps.shuttle.smartplaylist.SmartRules
+import com.simplecityapps.shuttle.smartplaylist.SmartRulesContext
+import com.simplecityapps.shuttle.smartplaylist.predicate
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
@@ -93,6 +96,17 @@ sealed class SongQuery(
     ) : SongQuery(
         predicate = { song -> song.playCount >= count },
         sortOrder = sortOrder
+    )
+
+    /**
+     * The songs matching a user smart playlist's [rules], in no particular order: `SongQuery` has neither a sort
+     * direction nor a limit, so `EvaluateSmartPlaylist` sorts and limits them after.
+     */
+    data class Rules(
+        val rules: SmartRules,
+        val context: SmartRulesContext = SmartRulesContext()
+    ) : SongQuery(
+        predicate = rules.predicate(context)
     )
 
     // Todo: This isn't really 'recently added', any songs which have had their contents modified will show up here.
