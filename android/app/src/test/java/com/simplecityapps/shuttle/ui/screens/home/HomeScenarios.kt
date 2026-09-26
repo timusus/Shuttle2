@@ -16,6 +16,10 @@ object HomeScenarios {
     val saltmarshChoir = SampleLibrary.artist("Saltmarsh Choir").toAlbumArtist()
     val paleMeridian = SampleLibrary.artist("Pale Meridian").toAlbumArtist()
     val songs = listOf(SampleLibrary.album("phase-garden").songs.first().toSong())
+    private val phaseGardenSongs = SampleLibrary.album("phase-garden").songs.map { it.toSong() }
+
+    /** Paused partway into Phase Garden, 2:14 from the end of its first song. */
+    val resume = ResumeQueue(song = phaseGardenSongs.first(), songs = phaseGardenSongs, timeLeftMs = 134_000, playing = false)
 
     val loading = HomeUiState.Loading
 
@@ -28,10 +32,13 @@ object HomeScenarios {
         mostPlayed = listOf(softFocus, signalRoom),
         somethingDifferent = listOf(saltmarshChoir, paleMeridian),
         songs = songs,
+        resume = resume,
     )
+
+    val playing = content.copy(resume = resume.copy(playing = true))
 
     val whatsNew = content.copy(showWhatsNew = true)
 
-    /** A library that's never been played: only Recently added and Something different have anything. */
-    val unplayed = content.copy(recentlyPlayed = emptyList(), mostPlayed = emptyList())
+    /** A library that's never been played: no queue to resume, and only Recently added and Something different have anything. */
+    val unplayed = content.copy(resume = null, recentlyPlayed = emptyList(), mostPlayed = emptyList())
 }

@@ -5,8 +5,15 @@ import com.simplecityapps.createAlbum
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
+import com.simplecityapps.fakes.FakePlaybackOperations
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.playback.PlaybackProgress
+import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.BuildConfig
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
@@ -45,8 +52,17 @@ class HomeViewModelTest {
     private lateinit var analyticsConsentSettings: AnalyticsConsentSettings
     private val songs = FakeSongRepository()
     private val albums = FakeAlbumRepository()
+    private val queue = FakeQueueOperations()
+    private val playback = FakePlaybackOperations()
 
     private val chlorophyllLoop = createSong(id = 1, name = "Chlorophyll Loop", albumArtist = "Juniper Static", album = "Phase Garden")
+    private val tidalMoss = createSong(id = 2, name = "Tidal Moss", albumArtist = "Juniper Static", album = "Phase Garden", duration = 200_000).copy(playbackPosition = 30_000)
+
+    /** Puts [songs] in the queue with the one at [current] playing. */
+    private fun queueOf(songs: List<Song>, current: Int) {
+        val items = songs.mapIndexed { index, song -> song.toQueueItem(isCurrent = index == current) }
+        queue.queueStateFlow.value = QueueState(items = items, currentItem = items[current], currentPosition = current, isRestored = true)
+    }
 
     @Before
     fun setUp() {
@@ -65,6 +81,8 @@ class HomeViewModelTest {
             MarkChangelogViewed(preferenceManager),
             ReadSetting(settingsStore),
             SaveSetting(settingsStore),
+            ObserveResumeQueue(queue, playback),
+            TogglePlayback(playback),
         ).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
             runCurrent()
@@ -152,5 +170,51 @@ class HomeViewModelTest {
 
         val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
         content.events.shouldBeEmpty()
+    }
+
+    @Test
+    fun `no queue, no resume hero`() = runTest(mainDispatcherRule.testDispatcher) {
+        songs.setSongs(listOf(chlorophyllLoop))
+
+        viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>().resume.shouldBeNull()
+    }
+
+    @Test
+    fun `the resume hero offers the queue from its current song, with the time left in it`() = runTest(mainDispatcherRule.testDispatcher) {
+        songs.setSongs(listOf(chlorophyllLoop, tidalMoss))
+        queueOf(listOf(chlorophyllLoop, tidalMoss), current = 1)
+        playback.progressFlow.value = PlaybackProgress(position = 65_400, duration = 200_000)
+
+        viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>().resume shouldBe
+            ResumeQueue(song = tidalMoss, songs = listOf(chlorophyllLoop, tidalMoss), timeLeftMs = 134_000, playing = false)
+    }
+
+    @Test
+    fun `before any progress, the time left counts from where the song was left`() = runTest(mainDispatcherRule.testDispatcher) {
+        songs.setSongs(listOf(tidalMoss))
+        queueOf(listOf(tidalMoss), current = 0)
+
+        viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>().resume?.timeLeftMs shouldBe 170_000
+    }
+
+    @Test
+    fun `the resume hero follows playback and toggles it`() = runTest(mainDispatcherRule.testDispatcher) {
+        songs.setSongs(listOf(tidalMoss))
+        queueOf(listOf(tidalMoss), current = 0)
+        playback.playbackStateFlow.value = PlaybackState.Playing
+        val viewModel = viewModel()
+
+        viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>().resume?.playing shouldBe true
+        viewModel.onTogglePlayback()
+
+        playback.calls shouldBe listOf("togglePlayback()")
+    }
+
+    @Test
+    fun `shuffling the resume hero shuffles the queue's songs`() = runTest(mainDispatcherRule.testDispatcher) {
+        songs.setSongs(listOf(chlorophyllLoop, tidalMoss))
+        queueOf(listOf(chlorophyllLoop, tidalMoss), current = 0)
+
+        viewModel().shuffleQueue() shouldBe MediaAction.Shuffle(MediaSelection.Songs(listOf(chlorophyllLoop, tidalMoss)))
     }
 }

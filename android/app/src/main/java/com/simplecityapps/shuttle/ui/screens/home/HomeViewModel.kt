@@ -33,6 +33,8 @@ sealed interface HomeUiState {
         val mostPlayed: List<Album>,
         val somethingDifferent: List<AlbumArtist>,
         val songs: List<Song>,
+        /** The queue to pick up from, or null with none (#490). */
+        val resume: ResumeQueue? = null,
         val events: List<PendingEvent<HomeEvent>> = emptyList(),
     ) : HomeUiState
 }
@@ -50,6 +52,8 @@ class HomeViewModel @Inject constructor(
     private val markChangelogViewed: MarkChangelogViewed,
     private val readSetting: ReadSetting,
     private val saveSetting: SaveSetting,
+    observeResumeQueue: ObserveResumeQueue,
+    private val togglePlayback: TogglePlayback,
 ) : ViewModel() {
     private val whatsNewPending = MutableStateFlow(isWhatsNewPending())
     private val events = PendingEvents<HomeEvent>()
@@ -61,7 +65,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    val uiState: StateFlow<HomeUiState> = combine(homeSections(), whatsNewPending, events.flow) { sections, whatsNew, pendingEvents ->
+    val uiState: StateFlow<HomeUiState> = combine(homeSections(), observeResumeQueue(), whatsNewPending, events.flow) { sections, resume, whatsNew, pendingEvents ->
         if (sections.songs.isEmpty()) {
             HomeUiState.Empty
         } else {
@@ -72,6 +76,7 @@ class HomeViewModel @Inject constructor(
                 mostPlayed = sections.mostPlayed,
                 somethingDifferent = sections.somethingDifferent,
                 songs = sections.songs,
+                resume = resume,
                 events = pendingEvents,
             )
         }
@@ -79,6 +84,11 @@ class HomeViewModel @Inject constructor(
 
     /** Shuffles the whole library, or null before it has loaded. */
     fun shuffleAll(): MediaAction? = (uiState.value as? HomeUiState.Content)?.let { MediaAction.Shuffle(MediaSelection.Songs(it.songs)) }
+
+    /** Shuffles the queue the resume hero offers, or null with none. */
+    fun shuffleQueue(): MediaAction? = (uiState.value as? HomeUiState.Content)?.resume?.let { MediaAction.Shuffle(MediaSelection.Songs(it.songs)) }
+
+    fun onTogglePlayback() = togglePlayback()
 
     /** Opening the changelog or dismissing the card marks this version's notes as seen. */
     fun onWhatsNewHandled() {

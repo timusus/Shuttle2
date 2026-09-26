@@ -63,6 +63,8 @@ private fun HomeDestination(
             callbacks = HomeCallbacks(
                 onOpenSettings = { onOpen(SettingsRoute) },
                 onShuffleAll = { viewModel.shuffleAll()?.let(actions::dispatch) },
+                onTogglePlayback = viewModel::onTogglePlayback,
+                onShuffleQueue = { viewModel.shuffleQueue()?.let(actions::dispatch) },
                 onOpenWhatsNew = {
                     viewModel.onWhatsNewHandled()
                     onOpen(WhatsNewRoute)

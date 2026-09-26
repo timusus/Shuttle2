@@ -68,6 +68,44 @@ class HomeScreenTest {
     }
 
     @Test
+    fun `a queue opens home on a hero to resume it`() {
+        robot.setContent(HomeScenarios.content)
+
+        robot.assertTextDisplayed("Continue listening")
+        robot.assertTextDisplayed("Phase Garden")
+        robot.assertTextDisplayed("Juniper Static · 2:14 left")
+    }
+
+    @Test
+    fun `the resume hero plays and shuffles the queue`() {
+        robot.setContent(HomeScenarios.content)
+
+        robot.tapText("Play")
+        robot.tapText("Shuffle")
+
+        robot.playbackToggles shouldBe 1
+        robot.queueShuffles shouldBe 1
+        robot.shuffles shouldBe 0
+    }
+
+    @Test
+    fun `the resume hero offers pause while the queue plays`() {
+        robot.setContent(HomeScenarios.playing)
+
+        robot.tapText("Pause")
+
+        robot.assertTextNotShown("Play")
+        robot.playbackToggles shouldBe 1
+    }
+
+    @Test
+    fun `no queue, no resume hero`() {
+        robot.setContent(HomeScenarios.unplayed)
+
+        robot.assertTextNotShown("Continue listening")
+    }
+
+    @Test
     fun `empty shelves are hidden`() {
         robot.setContent(HomeScenarios.unplayed)
 
@@ -89,10 +127,10 @@ class HomeScreenTest {
     fun `tapping an album or artist opens it`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.tapText("Phase Garden")
+        robot.tapText("Harbour Weather")
         robot.tapText("Saltmarsh Choir")
 
-        robot.openedAlbums shouldContainExactly listOf(HomeScenarios.phaseGarden)
+        robot.openedAlbums shouldContainExactly listOf(HomeScenarios.harbourWeather)
         robot.openedArtists shouldContainExactly listOf(HomeScenarios.saltmarshChoir)
     }
 

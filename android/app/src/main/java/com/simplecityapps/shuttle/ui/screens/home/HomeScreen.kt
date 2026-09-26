@@ -3,12 +3,14 @@ package com.simplecityapps.shuttle.ui.screens.home
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -17,8 +19,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.NewReleases
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -32,9 +37,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.designsystem.R as DesignR
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
@@ -42,10 +49,13 @@ import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.S2Button
+import com.simplecityapps.shuttle.designsystem.component.S2ButtonGroup
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
+import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
+import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
@@ -56,6 +66,8 @@ import com.simplecityapps.shuttle.ui.screens.library.pluralString
 class HomeCallbacks(
     val onOpenSettings: () -> Unit = {},
     val onShuffleAll: () -> Unit = {},
+    val onTogglePlayback: () -> Unit = {},
+    val onShuffleQueue: () -> Unit = {},
     val onOpenWhatsNew: () -> Unit = {},
     val onDismissWhatsNew: () -> Unit = {},
     val onAlbumClick: (Album) -> Unit = {},
@@ -64,8 +76,9 @@ class HomeCallbacks(
 )
 
 /**
- * Home: the library's shelves, or the empty state when there's no music yet. There's no page title (#490): the bar
- * holds only Shuffle all and the Settings gear, so the first screen is music. Search is its own tab.
+ * Home: a hero to resume the queue over the library's shelves, or the empty state when there's no music yet. There's
+ * no page title (#490): the bar holds only Shuffle all and the Settings gear, so the first screen is music. Search is
+ * its own tab.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,6 +133,9 @@ private fun HomeContent(
     modifier: Modifier,
 ) {
     LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = 16.dp)) {
+        content.resume?.let { resume ->
+            item(key = "resume") { ResumeHero(resume, callbacks) }
+        }
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks) }
         }
@@ -129,6 +145,45 @@ private fun HomeContent(
         shelf(R.string.home_something_different, "something-different", content.somethingDifferent) { artist -> ArtistTile(artist, callbacks) }
     }
 }
+
+/** The current queue, to pick up where it was left: its song's album art and title, the artist and time left, Play and Shuffle. */
+@Composable
+private fun ResumeHero(
+    resume: ResumeQueue,
+    callbacks: HomeCallbacks,
+) {
+    val song = resume.song
+    val unknown = stringResource(com.simplecityapps.core.R.string.unknown)
+    val timeLeft = stringResource(R.string.home_resume_time_left, formatDuration(resume.timeLeftMs))
+    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            LibraryArtwork(song, ArtworkPlaceholder.Album, Modifier.size(ResumeArtworkSize), size = ArtworkSize.Grid)
+            Column(modifier = Modifier.weight(1f).padding(start = 16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.home_resume_title), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                Text(song.album ?: unknown, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    text = listOf(song.albumArtist ?: song.friendlyArtistName ?: unknown, timeLeft).joinToString(" · "),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Box(Modifier.padding(top = 8.dp)) {
+                    S2ButtonGroup(
+                        primary = if (resume.playing) {
+                            S2GroupAction(stringResource(DesignR.string.ds_pause), callbacks.onTogglePlayback, Icons.Rounded.Pause)
+                        } else {
+                            S2GroupAction(stringResource(R.string.menu_title_play), callbacks.onTogglePlayback, Icons.Rounded.PlayArrow)
+                        },
+                        secondary = listOf(S2GroupAction(stringResource(R.string.menu_title_shuffle), callbacks.onShuffleQueue, Icons.Rounded.Shuffle)),
+                    )
+                }
+            }
+        }
+    }
+}
+
+private val ResumeArtworkSize = 112.dp
 
 @Composable
 private fun WhatsNewCard(callbacks: HomeCallbacks) {

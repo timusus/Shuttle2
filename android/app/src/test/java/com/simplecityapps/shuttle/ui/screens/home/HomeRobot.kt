@@ -28,6 +28,10 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
         private set
     var shuffles = 0
         private set
+    var playbackToggles = 0
+        private set
+    var queueShuffles = 0
+        private set
     var whatsNewOpened = 0
         private set
     var whatsNewDismissed = 0
@@ -56,6 +60,8 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     private fun callbacks() = HomeCallbacks(
         onOpenSettings = { settingsOpened++ },
         onShuffleAll = { shuffles++ },
+        onTogglePlayback = { playbackToggles++ },
+        onShuffleQueue = { queueShuffles++ },
         onOpenWhatsNew = { whatsNewOpened++ },
         onDismissWhatsNew = { whatsNewDismissed++ },
         onAlbumClick = { openedAlbums += it },

@@ -4,6 +4,10 @@
     <string name="btn_shuffle">Shuffle</string>
     <!-- Home: content description for the top bar button that shuffles every song in the library -->
     <string name="home_shuffle_all">Shuffle all</string>
+    <!-- Home: label over the hero card that offers to pick up the current queue where it was left -->
+    <string name="home_resume_title">Continue listening</string>
+    <!-- Home: how much of the current song is still to play, after its artist on the resume hero; %1$s is a duration -->
+    <string name="home_resume_time_left"><xliff:g example="2:14" id="time">%1$s</xliff:g> left</string>
     <!-- Home: shelf of albums the user played most recently -->
     <string name="home_recently_played">Recently played</string>
     <!-- Home: shelf of albums most recently added to the library -->
