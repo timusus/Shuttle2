@@ -2,9 +2,8 @@ package com.simplecityapps.shuttle.ui.screens.sources
 
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.di.AppCoroutineScope
-import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
 import javax.inject.Inject
@@ -30,7 +29,7 @@ import kotlinx.coroutines.flow.stateIn
  */
 @Singleton
 class MusicAccessCoordinator @Inject constructor(
-    songRepository: SongRepository,
+    observeSongs: ObserveSongs,
     importState: SongImportStateProvider,
     private val mediaSources: MediaSources,
     private val settings: SourcesSettings,
@@ -40,12 +39,11 @@ class MusicAccessCoordinator @Inject constructor(
 
     val availability: StateFlow<LibraryAvailability> =
         combine(
-            songRepository.getSongs(SongQuery.All()).map { songs -> songs?.isNotEmpty() }.distinctUntilChanged(),
+            observeSongs().map { songs -> songs.isNotEmpty() }.distinctUntilChanged(),
             access,
             importState.songImportState,
         ) { hasSongs, access, import ->
             when {
-                hasSongs == null -> LibraryAvailability.Loading
                 hasSongs -> LibraryAvailability.HasMusic
                 access == null -> LibraryAvailability.Loading
                 else -> LibraryAvailability.Empty(access, (import as? SongImportState.ImportProgress)?.let { ScanProgress(it.message, it.progress?.asFloat()) })

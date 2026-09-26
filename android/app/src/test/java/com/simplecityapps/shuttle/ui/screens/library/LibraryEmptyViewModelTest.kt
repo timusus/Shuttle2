@@ -5,6 +5,7 @@ import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccessCoordinator
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesSettings
@@ -38,7 +39,7 @@ class LibraryEmptyViewModelTest {
     private val mediaSources = FakeMediaSources()
     private val settings = SourcesSettings(SettingsStore(RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }))
 
-    private fun TestScope.musicAccess() = MusicAccessCoordinator(songRepository, importState, mediaSources, settings, CoroutineScope(UnconfinedTestDispatcher(testScheduler)))
+    private fun TestScope.musicAccess() = MusicAccessCoordinator(ObserveSongs(songRepository), importState, mediaSources, settings, CoroutineScope(UnconfinedTestDispatcher(testScheduler)))
 
     private fun TestScope.viewModel(musicAccess: MusicAccessCoordinator) = LibraryEmptyViewModel(musicAccess).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
