@@ -173,6 +173,10 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 - [ ] On a real 10k-track library, time a full import with the S2 provider (`Import complete in` in logcat) and compare it with the last Play build, which walks SAF folders.
 - [x] Put music in a folder containing `.nomedia` and grant that folder under Media > Directories. Those songs don't import (expected until the optional SAF "Add folder" lands); nothing else breaks. — automated: `emu-verify.sh --check nomedia-import`
 
+## Devices without Google Play (#167)
+
+- [ ] On a device or profile without Google Play services and the Play Store (GrapheneOS without sandboxed Play, or an AOSP emulator image), install S2 and play a local song. It launches without crashing, Now Playing shows no Cast button, and the S2 Pro screen says prices are unavailable.
+
 ## Analytics default-on and the one-time notice (#421, #481)
 
 - [ ] Fresh install: Analytics and Crash reporting in Settings > Privacy are already on, and Home never shows the analytics notice.
