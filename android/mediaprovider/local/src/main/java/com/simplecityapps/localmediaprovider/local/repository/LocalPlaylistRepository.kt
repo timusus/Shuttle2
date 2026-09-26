@@ -173,12 +173,14 @@ class LocalPlaylistRepository(
     }
 
     override fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>> = playlistSongJoinDao.getSongsForPlaylist(playlist.id)
-        .map { playlistSong ->
-            val comparator = playlist.sortOrder.comparator
-            playlistSong.sortedWith(if (playlist.sortDescending) comparator.reversed() else comparator)
-        }
+        .map { playlistSongs -> playlistSongs.sortedForPlaylist(playlist) }
 
-    override fun getPlaylistCoverSongs(playlist: Playlist, limit: Int): Flow<List<Song>> = playlistSongJoinDao.getCoverSongsForPlaylist(playlist.id, limit)
+    /**
+     * The DAO's grouping query returns one representative song per album, in no useful order - so the playlist's
+     * own sort is applied here, the same way [getSongsForPlaylist] applies it, before taking [limit].
+     */
+    override fun getPlaylistCoverSongs(playlist: Playlist, limit: Int): Flow<List<Song>> = playlistSongJoinDao.getCoverSongsForPlaylist(playlist.id)
+        .map { playlistSongs -> playlistSongs.sortedForPlaylist(playlist).take(limit).map { it.song } }
 
     override suspend fun deletePlaylist(playlist: Playlist) = playlistDataDao.delete(playlist.id)
 
@@ -318,3 +320,8 @@ class LocalPlaylistRepository(
  * the queue) has no song row for a playlist to refer to, so it's left out rather than failing the whole write.
  */
 private fun List<Song>.inLibrary(): List<Song> = filter { song -> song.isInLibrary }
+
+private fun List<PlaylistSong>.sortedForPlaylist(playlist: Playlist): List<PlaylistSong> {
+    val comparator = playlist.sortOrder.comparator
+    return sortedWith(if (playlist.sortDescending) comparator.reversed() else comparator)
+}

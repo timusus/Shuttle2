@@ -10,6 +10,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatab
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import java.util.Date
@@ -86,6 +87,26 @@ class LocalPlaylistRepositoryTest {
         val playlist = repository.createPlaylist("Same album", MediaProviderType.Shuttle, songs, null)
 
         repository.getPlaylistCoverSongs(playlist, limit = 4).first().map { it.name } shouldBe listOf("First")
+    }
+
+    @Test
+    fun `playlist cover songs follow the playlist's own sort order, not raw insertion order`() = runTest {
+        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+        val songs = insertSongsWithAlbums("Zebra" to "Album A", "Mango" to "Album B", "Apple" to "Album C")
+        val playlist = repository.createPlaylist("By name", MediaProviderType.Shuttle, songs, null)
+            .copy(sortOrder = PlaylistSongSortOrder.SongName)
+
+        repository.getPlaylistCoverSongs(playlist, limit = 3).first().map { it.name } shouldBe listOf("Apple", "Mango", "Zebra")
+    }
+
+    @Test
+    fun `playlist cover songs reverse when the playlist is sorted descending`() = runTest {
+        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+        val songs = insertSongsWithAlbums("First" to "Album A", "Second" to "Album A", "Third" to "Album B", "Fourth" to "Album C", "Fifth" to "Album D")
+        val playlist = repository.createPlaylist("Mixed descending", MediaProviderType.Shuttle, songs, null)
+            .copy(sortDescending = true)
+
+        repository.getPlaylistCoverSongs(playlist, limit = 3).first().map { it.name } shouldBe listOf("Fifth", "Fourth", "Third")
     }
 
     @Test
