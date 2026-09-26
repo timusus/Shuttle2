@@ -92,7 +92,6 @@ val CatalogEntries = listOf(
         SettingRowBoard(it)
     },
     CatalogEntry("eq-band", "Equalizer band", listOf("0 dB, boosted, cut", "disabled")) { EqBandBoard(it) },
-    CatalogEntry("eq-curve", "Equalizer curve", listOf("flat", "preset", "custom", "equalizer off")) { EqCurveBoard(it) },
     CatalogEntry("row-genre", "Genre row", listOf("default", "selected", "one song")) { GenreRowBoard(it) },
     CatalogEntry("row-folder", "Folder row", listOf("folder", "file", "file without artwork", "selected")) { FolderRowBoard(it) },
     CatalogEntry(

@@ -21,11 +21,11 @@ import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ChoiceSetting
 import com.simplecityapps.shuttle.designsystem.component.EqBand
-import com.simplecityapps.shuttle.designsystem.component.EqualizerCurve
 import com.simplecityapps.shuttle.designsystem.component.S2ChoiceList
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
+import com.simplecityapps.shuttle.ui.screens.equalizer.FrequencyResponseChart
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
 
 @Composable
@@ -67,9 +67,9 @@ fun EqualizerScreen(
         item(key = "bands") {
             Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(24.dp)) {
                 Column(Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
-                    EqualizerCurve(
-                        gains = uiState.bands.map { it.gainDb },
-                        modifier = Modifier.fillMaxWidth().height(96.dp),
+                    FrequencyResponseChart(
+                        points = uiState.frequencyResponse,
+                        modifier = Modifier.fillMaxWidth().height(140.dp).padding(horizontal = 8.dp),
                         enabled = uiState.enabled
                     )
                     Row(Modifier.fillMaxWidth()) {

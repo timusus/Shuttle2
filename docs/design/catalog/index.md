@@ -36,7 +36,6 @@ existing lines as they are.
 - [ ] `queue-row`: [boards](queue-row.md) · approved: — · boards hash: —
 - [ ] `setting-row`: [boards](setting-row.md) · approved: — · boards hash: —
 - [ ] `eq-band`: [boards](eq-band.md) · approved: — · boards hash: —
-- [ ] `eq-curve`: [boards](eq-curve.md) · approved: — · boards hash: —
 - [ ] `row-genre`: [boards](row-genre.md) · approved: — · boards hash: —
 - [ ] `row-folder`: [boards](row-folder.md) · approved: — · boards hash: —
 - [ ] `grid-tile`: [boards](grid-tile.md) · approved: — · boards hash: —

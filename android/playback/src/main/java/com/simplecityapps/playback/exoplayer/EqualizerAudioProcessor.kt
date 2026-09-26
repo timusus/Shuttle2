@@ -8,19 +8,12 @@ import androidx.media3.common.audio.BaseAudioProcessor
 import com.simplecityapps.playback.dsp.equalizer.BandProcessor
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
+import com.simplecityapps.playback.dsp.equalizer.cascadeAttenuation
 import com.simplecityapps.playback.dsp.equalizer.toNyquistBand
 import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
 import java.nio.ByteBuffer
-import kotlin.math.PI
-import kotlin.math.pow
 import timber.log.Timber
-
-/** Lowest frequency considered when measuring the cascade's peak gain. Below this is inaudible. */
-private const val ANALYSIS_MIN_FREQUENCY = 20.0
-
-/** Number of log-spaced points between [ANALYSIS_MIN_FREQUENCY] and Nyquist used to find the peak. */
-private const val ANALYSIS_POINT_COUNT = 512
 
 /**
  * Applies the selected [preset] to 16 and 24 bit PCM.
@@ -88,6 +81,10 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
     internal var attenuation: Float = 1f
         private set
 
+    /** The output sample rate the processor is currently configured for, or null before the first [onConfigure]/[onFlush]. */
+    val outputSampleRateHz: Int?
+        get() = outputAudioFormat.sampleRate.takeIf { it > 0 }
+
     private fun updateBandProcessors(bands: List<EqualizerBand>) {
         if (outputAudioFormat.channelCount <= 0) {
             return
@@ -107,33 +104,8 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
         attenuation = calculateAttenuation(outputAudioFormat.sampleRate)
     }
 
-    /**
-     * Sweeps a log-spaced frequency grid, multiplying every band's magnitude response together to
-     * find the cascade's peak gain, and returns its inverse when it exceeds unity. A flat or
-     * cut-only preset can never exceed unity, so it returns 1 and the signal stays untouched.
-     */
-    private fun calculateAttenuation(sampleRate: Int): Float {
-        val nyquist = sampleRate / 2.0
-        if (bandProcessors.isEmpty() || nyquist <= ANALYSIS_MIN_FREQUENCY) {
-            return 1f
-        }
-
-        var peak = 0.0
-        val span = nyquist / ANALYSIS_MIN_FREQUENCY
-        for (index in 0 until ANALYSIS_POINT_COUNT) {
-            val frequency = ANALYSIS_MIN_FREQUENCY * span.pow(index.toDouble() / (ANALYSIS_POINT_COUNT - 1))
-            val omega = 2.0 * PI * frequency / sampleRate
-            var magnitude = 1.0
-            for (bandProcessor in bandProcessors) {
-                magnitude *= bandProcessor.magnitudeAt(omega)
-            }
-            if (magnitude > peak) {
-                peak = magnitude
-            }
-        }
-
-        return if (peak.isFinite() && peak > 1.0) (1.0 / peak).toFloat() else 1f
-    }
+    /** Delegates to [cascadeAttenuation], shared with the frequency-response chart. */
+    private fun calculateAttenuation(sampleRate: Int): Float = cascadeAttenuation(bandProcessors, sampleRate)
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
         super.onConfigure(inputAudioFormat)

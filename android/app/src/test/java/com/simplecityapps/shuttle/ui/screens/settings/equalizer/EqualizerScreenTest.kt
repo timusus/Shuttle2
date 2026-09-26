@@ -31,6 +31,7 @@ class EqualizerScreenTest {
 
         robot.assertSwitchOn()
         robot.assertDisplayed("Bass boost")
+        robot.assertChartDisplayed()
         listOf("32", "63", "125", "250", "500", "1k", "2k", "4k", "8k", "16k").forEach(robot::assertDisplayed)
     }
 

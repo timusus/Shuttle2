@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.designsystem.catalog
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
@@ -15,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.simplecityapps.shuttle.designsystem.component.ChoiceSetting
 import com.simplecityapps.shuttle.designsystem.component.EqBand
-import com.simplecityapps.shuttle.designsystem.component.EqualizerCurve
 import com.simplecityapps.shuttle.designsystem.component.InfoSetting
 import com.simplecityapps.shuttle.designsystem.component.LinkSetting
 import com.simplecityapps.shuttle.designsystem.component.SettingIconStyle
@@ -122,27 +120,6 @@ fun EqBandBoard(width: BoardWidth) {
         listOf(
             BoardSection("0 dB, boosted, cut") { Bands(listOf(0f, 6f, -4.5f), labels = listOf("60 Hz", "910 Hz", "14 kHz")) },
             BoardSection("Disabled (equalizer off)") { Bands(listOf(0f, 6f, -4.5f), enabled = false, labels = listOf("60 Hz", "910 Hz", "14 kHz")) },
-        ),
-    )
-}
-
-@Composable
-private fun CurveOverBands(gains: List<Float>, enabled: Boolean = true) {
-    Column {
-        EqualizerCurve(gains, Modifier.fillMaxWidth(), enabled = enabled)
-        Bands(gains, enabled = enabled)
-    }
-}
-
-@Composable
-fun EqCurveBoard(width: BoardWidth) {
-    Board(
-        width,
-        listOf(
-            BoardSection("Flat") { CurveOverBands(listOf(0f, 0f, 0f, 0f, 0f)) },
-            BoardSection("Preset: bass boost") { CurveOverBands(listOf(8f, 5f, 0f, 0f, 0f)) },
-            BoardSection("Custom") { CurveOverBands(listOf(3f, -2f, -5f, 4f, 7f)) },
-            BoardSection("Equalizer off") { CurveOverBands(listOf(3f, -2f, -5f, 4f, 7f), enabled = false) },
         ),
     )
 }

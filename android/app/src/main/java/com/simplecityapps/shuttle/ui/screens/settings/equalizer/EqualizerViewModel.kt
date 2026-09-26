@@ -8,8 +8,11 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
+import com.simplecityapps.shuttle.ui.screens.equalizer.FrequencyResponsePoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +28,8 @@ data class EqualizerUiState(
     val enabled: Boolean = false,
     val presets: List<Equalizer.Presets.Preset> = Equalizer.Presets.all,
     val selectedPreset: Equalizer.Presets.Preset = Equalizer.Presets.flat,
-    val bands: List<EqualizerBandState> = emptyList()
+    val bands: List<EqualizerBandState> = emptyList(),
+    val frequencyResponse: ImmutableList<FrequencyResponsePoint> = persistentListOf()
 )
 
 /**
@@ -39,17 +43,28 @@ class EqualizerViewModel @Inject constructor(
     readSetting: ReadSetting,
     private val saveSetting: SaveSetting,
     private val saveEqualizerPreset: SaveEqualizerPreset,
-    private val equalizerAudioProcessor: EqualizerAudioProcessor
+    private val equalizerAudioProcessor: EqualizerAudioProcessor,
+    private val computeFrequencyResponse: ComputeFrequencyResponse
 ) : ViewModel() {
     private val preset = MutableStateFlow(equalizerAudioProcessor.preset)
     private val bands = MutableStateFlow(equalizerAudioProcessor.preset.bandStates())
 
     val uiState: StateFlow<EqualizerUiState> = combine(observeSetting(PlaybackSettings.EqualizerEnabled), preset, bands) { enabled, preset, bands ->
-        EqualizerUiState(enabled = enabled, selectedPreset = preset, bands = bands)
+        EqualizerUiState(
+            enabled = enabled,
+            selectedPreset = preset,
+            bands = bands,
+            frequencyResponse = computeFrequencyResponse(bands, equalizerAudioProcessor.outputSampleRateHz)
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = EqualizerUiState(enabled = readSetting(PlaybackSettings.EqualizerEnabled), selectedPreset = preset.value, bands = bands.value)
+        initialValue = EqualizerUiState(
+            enabled = readSetting(PlaybackSettings.EqualizerEnabled),
+            selectedPreset = preset.value,
+            bands = bands.value,
+            frequencyResponse = computeFrequencyResponse(bands.value, equalizerAudioProcessor.outputSampleRateHz)
+        )
     )
 
     fun onEnabledChange(enabled: Boolean) {

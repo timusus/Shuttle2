@@ -1,9 +1,12 @@
 package com.simplecityapps.playback.dsp.equalizer
 
 import io.kotest.matchers.comparables.shouldBeGreaterThan
+import io.kotest.matchers.comparables.shouldBeGreaterThanOrEqualTo
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.doubles.plusOrMinus
+import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
+import kotlin.math.log10
 import org.junit.After
 import org.junit.Test
 
@@ -65,6 +68,36 @@ class FrequencyResponseTest {
         listOf(20.0, 1_000.0, 20_000.0).forEach { frequency ->
             frequencyResponseDb(bandProcessors, preAmpGainDb = 6.0, frequency, SAMPLE_RATE) shouldBe (6.0 plusOrMinus 0.01)
         }
+    }
+
+    @Test
+    fun `cascadeAttenuation is unity for a flat or cut-only cascade`() {
+        cascadeAttenuation(bandProcessorsFor(Equalizer.Presets.flat), SAMPLE_RATE) shouldBe (1.0f plusOrMinus 0.001f)
+
+        Equalizer.Presets.custom.bands.first { band -> band.centerFrequency == 1000 }.gain = -6.0
+        cascadeAttenuation(bandProcessorsFor(Equalizer.Presets.custom), SAMPLE_RATE) shouldBe (1.0f plusOrMinus 0.001f)
+    }
+
+    @Test
+    fun `cascadeAttenuation pulls a boosted cascade back to unity gain at its peak`() {
+        Equalizer.Presets.custom.bands.first { band -> band.centerFrequency == 1000 }.gain = 12.0
+        val bandProcessors = bandProcessorsFor(Equalizer.Presets.custom)
+
+        val attenuation = cascadeAttenuation(bandProcessors, SAMPLE_RATE)
+        val attenuationDb = 20.0 * log10(attenuation.toDouble())
+
+        // 12 dB of boost needs roughly that much attenuation to bring the cascade back to unity gain.
+        attenuationDb shouldBeLessThan -10.0
+        attenuationDb shouldBeGreaterThanOrEqualTo -12.5
+
+        val peakAfterAttenuation = frequencyResponseDb(bandProcessors, preAmpGainDb = attenuationDb, frequencyHz = 1000.0, SAMPLE_RATE)
+        peakAfterAttenuation shouldBe (0.0 plusOrMinus 0.5)
+    }
+
+    @Test
+    fun `cascadeAttenuation is unity when there is no band above Nyquist's analysis floor`() {
+        cascadeAttenuation(emptyList(), SAMPLE_RATE) shouldBe 1.0f
+        cascadeAttenuation(bandProcessorsFor(Equalizer.Presets.flat), sampleRateHz = 8) shouldBe 1.0f
     }
 
     private fun bandProcessorsFor(preset: Equalizer.Presets.Preset): List<BandProcessor> = preset.bands.map { band ->

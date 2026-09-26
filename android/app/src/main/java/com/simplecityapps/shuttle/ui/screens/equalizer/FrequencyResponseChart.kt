@@ -24,8 +24,10 @@ data class FrequencyResponsePoint(val frequencyHz: Float, val gainDb: Float)
 
 private const val MIN_DB = -20f
 private const val MAX_DB = 20f
-private const val MIN_FREQUENCY_HZ = 20f
-private const val MAX_FREQUENCY_HZ = 20_500f
+
+/** The plotted frequency range, shared with [com.simplecityapps.shuttle.ui.screens.settings.equalizer.ComputeFrequencyResponse]. */
+internal const val MIN_FREQUENCY_HZ = 20f
+internal const val MAX_FREQUENCY_HZ = 20_500f
 
 private val DB_GRIDLINES = listOf(-20f, -10f, 0f, 10f, 20f)
 private val FREQUENCY_TICKS_HZ = listOf(20f, 50f, 100f, 200f, 500f, 1_000f, 2_000f, 5_000f, 10_000f, 20_000f)
@@ -53,9 +55,10 @@ private fun frequencyLabel(hz: Float): String = if (hz >= 1000f) "%.0f kHz".form
 fun FrequencyResponseChart(
     points: ImmutableList<FrequencyResponsePoint>,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val gridColor = MaterialTheme.colorScheme.outlineVariant
-    val lineColor = MaterialTheme.colorScheme.primary
+    val lineColor = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
     val visibleTicks = FREQUENCY_TICKS_HZ.filter { hz -> hz in MIN_FREQUENCY_HZ..MAX_FREQUENCY_HZ }
 

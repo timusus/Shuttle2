@@ -30,7 +30,7 @@ class EqualizerViewModelTest {
     private val preferenceManager = PlaybackPreferenceManager(prefs, Moshi.Builder().build())
     private val processor = EqualizerAudioProcessor(enabled = false).apply { preset = Equalizer.Presets.flat }
 
-    private fun viewModel() = EqualizerViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), SaveEqualizerPreset(preferenceManager), processor)
+    private fun viewModel() = EqualizerViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), SaveEqualizerPreset(preferenceManager), processor, ComputeFrequencyResponse())
 
     /** A view model whose state is being collected, as the screen would. */
     private fun TestScope.collectedViewModel() = viewModel().also { viewModel -> backgroundScope.launch { viewModel.uiState.collect {} } }

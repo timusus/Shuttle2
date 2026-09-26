@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
@@ -83,5 +84,9 @@ class EqualizerRobot(private val rule: ComposeContentTestRule) {
 
     fun assertBandNotEnabled(frequency: String) {
         rule.onNodeWithContentDescription(frequency).assertIsNotEnabled()
+    }
+
+    fun assertChartDisplayed() {
+        rule.onNodeWithTag("frequencyResponseChart").assertIsDisplayed()
     }
 }

@@ -106,6 +106,10 @@
     {
       "text": "Recently Added now has a clearer icon in the Playlists tab",
       "commits": []
+    },
+    {
+      "text": "The Equalizer screen now shows a chart of your equalizer's frequency response, live as you adjust it",
+      "commits": []
     }
   ],
   "fixes": [

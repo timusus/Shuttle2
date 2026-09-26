@@ -11,6 +11,7 @@ import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.preview.sampleSongs
+import com.simplecityapps.shuttle.ui.screens.settings.equalizer.ComputeFrequencyResponse
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerBandState
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerScreen
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerUiState
@@ -118,8 +119,14 @@ class SettingsScreenshotTest {
     @Test
     fun equalizer() = shot("equalizer") {
         val preset = Equalizer.Presets.bassBoost
+        val bands = preset.bands.map { EqualizerBandState(it.centerFrequency, it.gain.toFloat()) }
         EqualizerScreen(
-            uiState = EqualizerUiState(enabled = true, selectedPreset = preset, bands = preset.bands.map { EqualizerBandState(it.centerFrequency, it.gain.toFloat()) }),
+            uiState = EqualizerUiState(
+                enabled = true,
+                selectedPreset = preset,
+                bands = bands,
+                frequencyResponse = ComputeFrequencyResponse()(bands, outputSampleRateHz = null)
+            ),
             onNavigateUp = {},
             onEnabledChange = {},
             onPresetSelect = {},
