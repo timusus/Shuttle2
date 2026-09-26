@@ -102,6 +102,10 @@
     {
       "text": "S2 opens to your last queue faster on large libraries and long queues, showing the song you were listening to straight away",
       "commits": []
+    },
+    {
+      "text": "Recently Added now has a clearer icon in the Playlists tab",
+      "commits": []
     }
   ],
   "fixes": [
