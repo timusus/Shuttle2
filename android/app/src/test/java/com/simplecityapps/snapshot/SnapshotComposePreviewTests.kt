@@ -4,8 +4,11 @@ import com.github.takahirom.roborazzi.RoborazziOptions
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.github.takahirom.roborazzi.inspectionMode
 import com.github.takahirom.roborazzi.roborazziSystemPropertyOutputDirectory
+import com.github.takahirom.roborazzi.roborazziSystemPropertyTaskType
 import com.github.takahirom.roborazzi.toRoborazziComposeOptions
 import com.simplecityapps.shuttle.ui.snapshot.Snapshot
+import org.junit.Assume.assumeTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
@@ -26,6 +29,11 @@ import sergio.sastre.composable.preview.scanner.core.preview.getAnnotation
 class SnapshotComposePreviewTests(
     private val preview: ComposablePreview<AndroidPreviewInfo>
 ) {
+
+    // Skip the whole render (#538) unless Roborazzi is recording or verifying;
+    // verifyRoborazziDebug still renders every preview on every landing.
+    @Before
+    fun skipUnlessRoborazziActive() = assumeTrue(roborazziSystemPropertyTaskType().isEnabled())
 
     @Test
     fun previewTests() {
