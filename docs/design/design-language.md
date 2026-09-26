@@ -158,13 +158,15 @@ it is built.
 ## 3. The component list
 
 Every component lives in `:android:designsystem` and gets a board (§4). IDs are the catalogue keys.
-"States" are what the board must show; every board also shows light, dark, brand and three seeds.
+"States" are what the board must show; every board also shows light, dark, brand and the warm seed
+(the most contrasting of the three fixed artwork seeds, all still selectable in the on-device
+catalogue — #553).
 
 ### Foundations
 
 | ID | M3 basis | Variants | States |
 |---|---|---|---|
-| `theme-colour` | `ColorScheme` roles | root accents ×6, dynamic, 3 artwork seeds | Default and High contrast; every role swatch with its `on` pair |
+| `theme-colour` | `ColorScheme` roles | root accents ×6, dynamic, 1 artwork seed | Default and High contrast; every role swatch with its `on` pair |
 | `theme-type` | `Typography` + emphasized | — | all 30 styles with sample text, at font scale 1.0 and 2.0 |
 | `theme-shape` | `Shapes`, `MaterialShapes` | scale tokens; the shapes S2 uses | static, plus a morph strip (start, mid, end) |
 | `theme-motion` | `MotionScheme` | 6 specs | curve plots; live in the catalogue screen only |
@@ -266,10 +268,10 @@ Every component lives in `:android:designsystem` and gets a board (§4). IDs are
   snapshot test to Roborazzi's Compose Preview Scanner support and delete Paparazzi, so the repo has
   one snapshot tool.
 - **Matrix per component**: one PNG per {light, dark} × {compact, expanded}. Inside each PNG,
-  columns are the four schemes (brand accent, warm seed, cool seed, low-chroma seed) and rows are
-  the states. Compact is `w412dp-h915dp`, expanded `w1000dp-h720dp`; shell components (`nav-rail`,
-  `player-pane`) add a large `w1280dp-h800dp` board. Seeds are three fixed bitmaps in test resources
-  (warm orange-red, cool blue, grey-beige) so boards are reproducible.
+  columns are the two recorded schemes (brand accent, warm seed — the default plus the most
+  contrasting of the three fixed artwork seeds; cool and low-chroma stay selectable on-device but
+  aren't recorded, #553) and rows are the states. Compact is `w412dp-h915dp`, expanded
+  `w1000dp-h720dp`; shell components (`nav-rail`, `player-pane`) add a large `w1280dp-h800dp` board.
 - **Output**: `roborazzi { outputDir.set(rootProject.file("docs/design/catalog/images")) }`, files
   `<id>_<light|dark>_<compact|expanded|large>.png`, recorded at a reduced `resizeScale` so a board
   loads on a phone. `recordRoborazziDebug` writes them; CI runs `verifyRoborazziDebug`.

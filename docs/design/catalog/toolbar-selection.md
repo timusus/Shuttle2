@@ -6,15 +6,15 @@ States: floating, 1 selected; floating, many with overflow; overflow open; docke
 
 ## Compact, light
 
-| Brand | Warm seed | Cool seed | Low-chroma seed |
-| --- | --- | --- | --- |
-| <img src="toolbar-selection/toolbar-selection_light_compact_brand.png" width="200" alt="Brand"> | <img src="toolbar-selection/toolbar-selection_light_compact_warm.png" width="200" alt="Warm seed"> | <img src="toolbar-selection/toolbar-selection_light_compact_cool.png" width="200" alt="Cool seed"> | <img src="toolbar-selection/toolbar-selection_light_compact_lowchroma.png" width="200" alt="Low-chroma seed"> |
+| Brand | Warm seed |
+| --- | --- |
+| <img src="toolbar-selection/toolbar-selection_light_compact_brand.png" width="200" alt="Brand"> | <img src="toolbar-selection/toolbar-selection_light_compact_warm.png" width="200" alt="Warm seed"> |
 
 ## Compact, dark
 
-| Brand | Warm seed | Cool seed | Low-chroma seed |
-| --- | --- | --- | --- |
-| <img src="toolbar-selection/toolbar-selection_dark_compact_brand.png" width="200" alt="Brand"> | <img src="toolbar-selection/toolbar-selection_dark_compact_warm.png" width="200" alt="Warm seed"> | <img src="toolbar-selection/toolbar-selection_dark_compact_cool.png" width="200" alt="Cool seed"> | <img src="toolbar-selection/toolbar-selection_dark_compact_lowchroma.png" width="200" alt="Low-chroma seed"> |
+| Brand | Warm seed |
+| --- | --- |
+| <img src="toolbar-selection/toolbar-selection_dark_compact_brand.png" width="200" alt="Brand"> | <img src="toolbar-selection/toolbar-selection_dark_compact_warm.png" width="200" alt="Warm seed"> |
 
 ## Expanded, light
 

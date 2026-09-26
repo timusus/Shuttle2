@@ -21,15 +21,19 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Contrast
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 
 /**
- * The scheme columns every board is reviewed in: the brand accent and three fixed artwork seeds
- * (warm, cool, and one grey enough to test the fallback threshold). [Dynamic] is Material You,
- * on-device only: Robolectric has no wallpaper colours, so it isn't recorded.
+ * The scheme columns a board can be reviewed in: the brand accent and three fixed artwork seeds
+ * (warm, cool, and one grey enough to test the fallback threshold), all selectable in the
+ * on-device catalogue. [recorded] narrows the automated matrix ([catalogShots]) to Brand and Warm
+ * — the default plus the most contrasting seed (near-complementary hue to the brand's azure, both
+ * fully saturated; Cool sits close to the brand hue itself and LowChroma is desaturated, so
+ * neither adds much visual contrast) — #553. [Dynamic] is Material You, on-device only: Robolectric
+ * has no wallpaper colours, so it isn't recorded either.
  */
 enum class CatalogScheme(val seed: Color?, val recorded: Boolean = true) {
     Brand(null),
     Warm(Color(0xFFD9542B)),
-    Cool(Color(0xFF2F6FDE)),
-    LowChroma(Color(0xFFB5A898)),
+    Cool(Color(0xFF2F6FDE), recorded = false),
+    LowChroma(Color(0xFFB5A898), recorded = false),
     Dynamic(null, recorded = false),
 }
 
