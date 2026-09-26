@@ -35,7 +35,6 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -312,7 +311,6 @@ fun LibraryDestination(
         }
     }
     LaunchedEffect(uiState.currentTab) { selectionCoordinator.onTabChanged(uiState.currentTab) }
-    DisposableEffect(Unit) { onDispose { selectionCoordinator.onDestinationLeft() } }
 
     MediaActionsHost(onNavigate = onNavigate) { actions ->
         val chrome = tabChrome(uiState.currentTab)

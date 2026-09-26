@@ -37,38 +37,4 @@ class LibrarySelectionCoordinatorTest {
 
         cleared shouldBe emptyList()
     }
-
-    @Test
-    fun `leaving the destination clears whichever tab was showing`() {
-        val cleared = mutableListOf<LibraryTab>()
-        val coordinator = LibrarySelectionCoordinator(clearSelection = { cleared += it })
-
-        coordinator.onTabChanged(LibraryTab.Albums)
-        coordinator.onDestinationLeft()
-
-        cleared shouldBe listOf(LibraryTab.Albums)
-    }
-
-    @Test
-    fun `leaving with no current tab clears nothing`() {
-        val cleared = mutableListOf<LibraryTab>()
-        val coordinator = LibrarySelectionCoordinator(clearSelection = { cleared += it })
-
-        coordinator.onDestinationLeft()
-
-        cleared shouldBe emptyList()
-    }
-
-    @Test
-    fun `a tab switch after leaving starts tracking again`() {
-        val cleared = mutableListOf<LibraryTab>()
-        val coordinator = LibrarySelectionCoordinator(clearSelection = { cleared += it })
-
-        coordinator.onTabChanged(LibraryTab.Albums)
-        coordinator.onDestinationLeft()
-        coordinator.onTabChanged(LibraryTab.Songs)
-        coordinator.onTabChanged(LibraryTab.Artists)
-
-        cleared shouldBe listOf(LibraryTab.Albums, LibraryTab.Songs)
-    }
 }
