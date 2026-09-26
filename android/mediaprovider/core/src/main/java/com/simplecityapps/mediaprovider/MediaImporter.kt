@@ -16,11 +16,10 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flow
@@ -34,39 +33,7 @@ class MediaImporter(
     private val songRepository: SongRepository,
     private val playlistRepository: PlaylistRepository,
     private val preferenceManager: GeneralPreferenceManager
-) {
-    sealed class ImportEvent {
-        data class Started(val providerType: MediaProviderType) : ImportEvent()
-
-        data class SongImportProgress(
-            val providerType: MediaProviderType,
-            val message: String,
-            val progress: Progress?
-        ) : ImportEvent()
-
-        data class SongImportComplete(val providerType: MediaProviderType) : ImportEvent()
-
-        data class SongImportFailed(
-            val providerType: MediaProviderType,
-            val message: String?
-        ) : ImportEvent()
-
-        data class PlaylistImportProgress(
-            val providerType: MediaProviderType,
-            val message: String,
-            val progress: Progress?
-        ) : ImportEvent()
-
-        data class PlaylistImportComplete(val providerType: MediaProviderType) : ImportEvent()
-
-        data class PlaylistImportFailed(
-            val providerType: MediaProviderType,
-            val message: String?
-        ) : ImportEvent()
-
-        data object AllComplete : ImportEvent()
-    }
-
+) : SongImportStateProvider {
     /** Held for the length of an import, so a second [import] finds it taken and returns rather than scanning again. */
     private val importLock = Mutex()
 
@@ -79,8 +46,10 @@ class MediaImporter(
 
     val isImporting: Boolean get() = importLock.isLocked
 
-    private val _importEvents = MutableSharedFlow<ImportEvent>(extraBufferCapacity = 64, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    val importEvents: SharedFlow<ImportEvent> = _importEvents.asSharedFlow()
+    private val _songImportState = MutableStateFlow<SongImportState>(SongImportState.Idle)
+
+    /** The running import's progress, or how the last one ended, so a collector that arrives mid-import sees where it's at. */
+    override val songImportState: StateFlow<SongImportState> = _songImportState.asStateFlow()
 
     val mediaProviders: MutableSet<MediaProvider> = mutableSetOf()
 
@@ -129,7 +98,7 @@ class MediaImporter(
         val time = System.currentTimeMillis()
 
         mediaProviders.forEach { mediaProvider ->
-            _importEvents.tryEmit(ImportEvent.Started(mediaProvider.type))
+            _songImportState.value = SongImportState.ImportProgress(mediaProvider.type, message = null, progress = null)
         }
 
         withContext(Dispatchers.IO) {
@@ -138,21 +107,15 @@ class MediaImporter(
                     importSongs(mediaProvider).collect { event ->
                         when (event) {
                             is FlowEvent.Progress -> {
-                                _importEvents.tryEmit(
-                                    ImportEvent.SongImportProgress(
-                                        providerType = mediaProvider.type,
-                                        message = event.data.message,
-                                        progress = event.data.progress
-                                    )
-                                )
+                                _songImportState.value = SongImportState.ImportProgress(mediaProvider.type, event.data.message, event.data.progress)
                             }
 
                             is FlowEvent.Success -> {
-                                _importEvents.tryEmit(ImportEvent.SongImportComplete(providerType = mediaProvider.type))
+                                _songImportState.value = SongImportState.ImportComplete(mediaProvider.type, error = null)
                             }
 
                             is FlowEvent.Failure -> {
-                                _importEvents.tryEmit(ImportEvent.SongImportFailed(mediaProvider.type, event.message))
+                                _songImportState.value = SongImportState.ImportComplete(mediaProvider.type, event.message)
                             }
                         }
                     }
@@ -162,33 +125,13 @@ class MediaImporter(
             mediaProviders.map { mediaProvider ->
                 async {
                     importPlaylists(mediaProvider).collect { event ->
-                        when (event) {
-                            is FlowEvent.Progress -> {
-                                _importEvents.tryEmit(
-                                    ImportEvent.PlaylistImportProgress(
-                                        providerType = mediaProvider.type,
-                                        message = event.data.message,
-                                        progress = event.data.progress
-                                    )
-                                )
-                            }
-
-                            is FlowEvent.Success -> {
-                                _importEvents.tryEmit(ImportEvent.PlaylistImportComplete(providerType = mediaProvider.type))
-                            }
-
-                            is FlowEvent.Failure -> {
-                                _importEvents.tryEmit(ImportEvent.PlaylistImportFailed(mediaProvider.type, event.message))
-                            }
-                        }
+                        if (event is FlowEvent.Failure) Timber.w("${mediaProvider.type} playlist import failed: ${event.message}")
                     }
                 }
             }.awaitAll()
         }
 
         preferenceManager.lastMediaImportDate = Date()
-
-        _importEvents.tryEmit(ImportEvent.AllComplete)
 
         importCount++
 

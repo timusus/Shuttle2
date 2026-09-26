@@ -69,7 +69,7 @@ These are the system edges — interfaces or simple state holders where we subst
 | `AlbumArtistRepository` | `AlbumArtistRepository` | `FakeAlbumArtistRepository` | In-memory artist list |
 | `AlbumRepository` | `AlbumRepository` | `FakeAlbumRepository` | In-memory album list |
 | `PlaylistRepository` | `PlaylistRepository` | `FakePlaylistRepository` | In-memory playlist list |
-| `MediaImportObserver` | `SongImportStateProvider` | `FakeSongImportStateProvider` | Wraps `MutableStateFlow<SongImportState>` |
+| `MediaImporter` | `SongImportStateProvider` | `FakeSongImportStateProvider` | Wraps `MutableStateFlow<SongImportState>` |
 | `SortPreferenceManager` | `SortPreferences` | `FakeSortPreferences` | In-memory sort order properties |
 
 ViewModels depend on the interfaces, not the concrete classes. The interfaces were extracted specifically for testability — `SongImportStateProvider` and `SortPreferences` are in production code, with Hilt bindings in `AppModule`/`AppModuleBinds`.

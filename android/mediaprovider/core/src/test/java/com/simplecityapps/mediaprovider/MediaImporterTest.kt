@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -167,32 +166,23 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `an import emits importEvents starting with Started and ending with AllComplete`() = runBlocking<Unit> {
+    fun `a collector that arrives mid-import sees the import in progress, then how it ended`() = runBlocking<Unit> {
+        provider.scanFailure = "Server unreachable"
+        val import = launch(Dispatchers.Default) { importer.import() }
+        provider.started.receive()
+
+        (importer.songImportState.value as SongImportState.ImportProgress).providerType shouldBe MediaProviderType.Shuttle
+
         provider.gate.trySend(Unit)
+        import.join()
 
-        val events = mutableListOf<MediaImporter.ImportEvent>()
-        val subscribed = CompletableDeferred<Unit>()
-        val allComplete = CompletableDeferred<Unit>()
-        val collector =
-            launch(Dispatchers.Default) {
-                importer.importEvents
-                    .onSubscription { subscribed.complete(Unit) }
-                    .collect { event ->
-                        events.add(event)
-                        if (event == MediaImporter.ImportEvent.AllComplete) allComplete.complete(Unit)
-                    }
-            }
-        subscribed.await()
-
-        importer.import()
-        allComplete.await()
-
-        collector.cancel()
-        events.first() shouldBe MediaImporter.ImportEvent.Started(MediaProviderType.Shuttle)
-        events.last() shouldBe MediaImporter.ImportEvent.AllComplete
+        importer.songImportState.value shouldBe SongImportState.ImportComplete(MediaProviderType.Shuttle, "Server unreachable")
     }
 
-    /** Counts its scans, signals [started] as each one begins, holds it open until a [gate] send, then throws [failure] if [failNext] is set. */
+    /**
+     * Counts its scans, signals [started] as each one begins, holds it open until a [gate] send, then throws [failure] if [failNext]
+     * is set, or reports [scanFailure] if that's set.
+     */
     private class GatedProvider : MediaProvider {
         override val type = MediaProviderType.Shuttle
 
@@ -202,11 +192,14 @@ class MediaImporterTest {
         val failNext = AtomicBoolean()
         val failure = IllegalStateException("Scan failed")
 
+        @Volatile var scanFailure: String? = null
+
         override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
             scans.incrementAndGet()
             started.send(Unit)
             gate.receive()
             if (failNext.getAndSet(false)) throw failure
+            scanFailure?.let { message -> emit(FlowEvent.Failure(message)) }
         }
 
         override fun findPlaylists(

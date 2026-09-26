@@ -1,6 +1,6 @@
 package com.simplecityapps.shuttle.di
 
-import com.simplecityapps.mediaprovider.MediaImportObserver
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.ServerStreamPolicy
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializer
@@ -29,7 +29,7 @@ import dagger.multibindings.IntoSet
 @Module
 abstract class AppBindsModule {
     @Binds
-    abstract fun bindSongImportStateProvider(impl: MediaImportObserver): SongImportStateProvider
+    abstract fun bindSongImportStateProvider(impl: MediaImporter): SongImportStateProvider
 
     @Binds
     abstract fun bindServerStreamPolicy(impl: EntitledServerStreamPolicy): ServerStreamPolicy
