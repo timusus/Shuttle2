@@ -29,9 +29,11 @@ class FakeSharedPreferences : SharedPreferences {
     override fun unregisterOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {}
 
     private inner class Editor : SharedPreferences.Editor {
-        override fun putString(key: String, value: String?) = apply { values[key] = value }
+        override fun putString(key: String, value: String?) = apply { if (value == null) values.remove(key) else values[key] = value }
 
-        override fun putStringSet(key: String, values: Set<String>?) = apply { this@FakeSharedPreferences.values[key] = values }
+        override fun putStringSet(key: String, values: Set<String>?) = apply {
+            if (values == null) this@FakeSharedPreferences.values.remove(key) else this@FakeSharedPreferences.values[key] = values
+        }
 
         override fun putInt(key: String, value: Int) = apply { values[key] = value }
 

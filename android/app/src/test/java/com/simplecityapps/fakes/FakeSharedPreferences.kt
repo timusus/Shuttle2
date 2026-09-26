@@ -39,8 +39,10 @@ class FakeSharedPreferences : SharedPreferences {
     }
 
     private inner class Editor : SharedPreferences.Editor {
+        // One ordered map for both puts and removes, so a key's last call before apply()/commit()
+        // wins regardless of whether it was a put or a remove — a null value (an explicit remove(),
+        // or a put with a null value, which Android also treats as a removal) removes the key.
         private val pending = mutableMapOf<String, Any?>()
-        private val toRemove = mutableSetOf<String>()
         private var cleared = false
 
         override fun putString(key: String, value: String?) = apply { pending[key] = value }
@@ -55,7 +57,7 @@ class FakeSharedPreferences : SharedPreferences {
 
         override fun putBoolean(key: String, value: Boolean) = apply { pending[key] = value }
 
-        override fun remove(key: String) = apply { toRemove += key }
+        override fun remove(key: String) = apply { pending[key] = null }
 
         override fun clear() = apply { cleared = true }
 
@@ -65,11 +67,12 @@ class FakeSharedPreferences : SharedPreferences {
         }
 
         override fun apply() {
+            // clear() always applies first, regardless of when it was called relative to the
+            // puts/removes below, matching Android's EditorImpl.
             if (cleared) values.clear()
-            toRemove.forEach { values.remove(it) }
-            values.putAll(pending)
+            pending.forEach { (key, value) -> if (value == null) values.remove(key) else values[key] = value }
 
-            val changedKeys = if (cleared) setOf<String?>(null) else (toRemove + pending.keys)
+            val changedKeys = if (cleared) setOf<String?>(null) else pending.keys
             changedKeys.forEach { key -> listeners.forEach { it.onSharedPreferenceChanged(this@FakeSharedPreferences, key) } }
         }
     }
