@@ -89,11 +89,12 @@ class Wav(
         to: Int
     ) = Wav(sampleRate, channelCount, bitsPerSample, samples.copyOfRange(from * channelCount, to * channelCount))
 
-    /** A song that plays this, written to a temporary file, tagged with these ReplayGain values. */
+    /** A song that plays this, written to a temporary file, tagged with these ReplayGain values and [album]. */
     fun song(
         id: Long,
         replayGainTrack: Double? = null,
-        replayGainAlbum: Double? = null
+        replayGainAlbum: Double? = null,
+        album: String? = null
     ): Song {
         val file = File.createTempFile("capture-$id", ".wav").apply { deleteOnExit() }
         file.writeBytes(bytes())
@@ -103,7 +104,8 @@ class Wav(
             mimeType = "audio/wav",
             duration = (frameCount * 1000L / sampleRate).toInt(),
             replayGainTrack = replayGainTrack,
-            replayGainAlbum = replayGainAlbum
+            replayGainAlbum = replayGainAlbum,
+            album = album
         )
     }
 

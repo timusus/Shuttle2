@@ -91,9 +91,10 @@ class PlaybackEngineModule {
         equalizerAudioProcessor: EqualizerAudioProcessor,
         replayGainAudioProcessor: ReplayGainAudioProcessor,
         audioTrackMonitor: AudioTrackMonitor,
-        songUriResolver: SongUriResolver
+        songUriResolver: SongUriResolver,
+        playbackSettings: PlaybackSettings
     ): ExoPlayer = trace("S2 build ExoPlayer") {
-        ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver).create()
+        ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver, { playbackSettings.crossfadeDurationMs.value.toLong() }).create()
     }
 
     @Singleton

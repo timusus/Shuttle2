@@ -79,8 +79,8 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
      * The ten peaking filters overlap, so their gains compound: with every band at +12 dB the
      * cascade peaks near +17.5 dB around 8 kHz, not +12 dB. Without this the equalizer leaves the
      * signal well past full scale and the hard clamp below flattens the waveform tops. Dividing by
-     * the measured peak means no steady tone can come out louder than it went in, so the
-     * ReplayGain stage that follows keeps the headroom it started with.
+     * the measured peak means no steady tone can come out louder than it went in, so the equalizer,
+     * last in the chain after ReplayGain and the crossfade, keeps the headroom they left.
      *
      * Recomputed only when the preset or the audio format changes - never per buffer. Playback
      * thread only.

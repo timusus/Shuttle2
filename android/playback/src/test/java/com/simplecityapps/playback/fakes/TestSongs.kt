@@ -11,13 +11,14 @@ fun testSong(
     mimeType: String = "audio/mpeg",
     duration: Int = 180_000,
     replayGainTrack: Double? = null,
-    replayGainAlbum: Double? = null
+    replayGainAlbum: Double? = null,
+    album: String? = null
 ) = Song(
     id = id,
     name = name,
     albumArtist = null,
     artists = emptyList(),
-    album = null,
+    album = album,
     track = null,
     disc = null,
     duration = duration,

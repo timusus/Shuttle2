@@ -5,6 +5,7 @@ import android.os.Looper
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.Player
+import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
@@ -16,13 +17,18 @@ import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.MediaSource
 import com.simplecityapps.playback.OutputFormat
+import com.simplecityapps.playback.dsp.crossfade.CapturingAudioOutputProvider
+import com.simplecityapps.playback.dsp.crossfade.Crossfade
+import com.simplecityapps.playback.dsp.crossfade.CrossfadeClippingMediaSourceFactory
+import com.simplecityapps.playback.dsp.crossfade.CrossfadeMixer
+import com.simplecityapps.playback.dsp.crossfade.TailDecoder
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.engine.S2LoadErrorHandlingPolicy
 import com.simplecityapps.playback.engine.SongUriResolver
 
 /**
  * Builds the app's ExoPlayer, on the main looper: the extension renderers (FLAC, Opus) enabled, a [DefaultAudioSink]
- * running the equalizer and ReplayGain processors, and a [StreamSniffingMediaSourceFactory] so extensionless HLS
+ * running the ReplayGain, crossfade and equalizer processors (see [Crossfade]), and a [StreamSniffingMediaSourceFactory] so extensionless HLS
  * streams play, reading through [songUriResolver] so remote songs resolve their stream when they're opened. The
  * player reports the AudioTracks it opens to [audioTrackMonitor].
  *
@@ -37,6 +43,8 @@ class ExoPlayerFactory(
     private val replayGainAudioProcessor: ReplayGainAudioProcessor,
     private val audioTrackMonitor: AudioTrackMonitor,
     private val songUriResolver: SongUriResolver,
+    /** The crossfade length, 0 when it's off; read as each item is prepared and each tail decoded. */
+    private val crossfadeDurationMs: () -> Long = { 0 },
     /** Builds the ExoPlayer around these renderers and sources. A test builds it on a fake clock. */
     private val buildPlayer: (RenderersFactory, MediaSource.Factory) -> ExoPlayer = { renderersFactory, mediaSourceFactory ->
         ExoPlayer.Builder(context, renderersFactory)
@@ -45,29 +53,52 @@ class ExoPlayerFactory(
             .build()
     }
 ) {
+    /** Plays each item's clipped-off tail over the next item's head, between ReplayGain and the equalizer. */
+    private val crossfadeMixer = CrossfadeMixer()
+
     private val renderersFactory by lazy {
-        object : DefaultRenderersFactory(context) {
-            @Suppress("DEPRECATION")
-            override fun buildAudioSink(
-                context: Context,
-                enableFloatOutput: Boolean,
-                enableAudioOutputPlaybackParams: Boolean
-            ): AudioSink = DefaultAudioSink.Builder(context)
+        renderersFactory { context, enableFloatOutput, enableAudioOutputPlaybackParams ->
+            DefaultAudioSink.Builder(context)
                 // PCM output only, never passthrough, so every stream runs through the processors.
                 .setAudioCapabilities(AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES)
                 .setEnableFloatOutput(enableFloatOutput)
                 .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParams)
-                .setAudioProcessors(arrayOf(equalizerAudioProcessor, replayGainAudioProcessor))
+                .setAudioProcessors(arrayOf(replayGainAudioProcessor, crossfadeMixer, equalizerAudioProcessor))
                 .build()
-        }.apply {
-            setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
         }
     }
 
-    fun create(): ExoPlayer {
-        val mediaSourceFactory = StreamSniffingMediaSourceFactory(songUriResolver.dataSourceFactory(DefaultDataSource.Factory(context)))
+    private val mediaSourceFactory by lazy {
+        StreamSniffingMediaSourceFactory(songUriResolver.dataSourceFactory(DefaultDataSource.Factory(context)))
             .setLoadErrorHandlingPolicy(S2LoadErrorHandlingPolicy())
-        val player = buildPlayer(renderersFactory, mediaSourceFactory)
+    }
+
+    private fun renderersFactory(buildAudioSink: (Context, Boolean, Boolean) -> AudioSink): RenderersFactory = object : DefaultRenderersFactory(context) {
+        @Suppress("DEPRECATION")
+        override fun buildAudioSink(
+            context: Context,
+            enableFloatOutput: Boolean,
+            enableAudioOutputPlaybackParams: Boolean
+        ): AudioSink = buildAudioSink(context, enableFloatOutput, enableAudioOutputPlaybackParams)
+    }.apply {
+        setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
+    }
+
+    /** A player that decodes through the same renderers and sources as the playback player, into [processors], and outputs nothing. */
+    private fun decoderPlayer(processors: Array<AudioProcessor>): ExoPlayer = buildPlayer(
+        renderersFactory { context, enableFloatOutput, _ ->
+            DefaultAudioSink.Builder(context)
+                .setAudioOutputProvider(CapturingAudioOutputProvider())
+                .setEnableFloatOutput(enableFloatOutput)
+                .setAudioProcessors(processors)
+                .build()
+        },
+        mediaSourceFactory
+    )
+
+    fun create(): ExoPlayer {
+        val player = buildPlayer(renderersFactory, CrossfadeClippingMediaSourceFactory(mediaSourceFactory, crossfadeDurationMs))
+        val crossfade = Crossfade(player, crossfadeMixer, TailDecoder(::decoderPlayer, replayGainAudioProcessor), crossfadeDurationMs)
         player.setHandleAudioBecomingNoisy(true)
         player.setAudioAttributes(MUSIC, true)
         val owner = AudioTrackReopener(player)
@@ -82,9 +113,11 @@ class ExoPlayerFactory(
 
                 override fun onPlayerReleased(eventTime: AnalyticsListener.EventTime) {
                     audioTrackMonitor.onReleased(owner)
+                    crossfade.release()
                 }
             }
         )
+        crossfade.attach()
         return player
     }
 }

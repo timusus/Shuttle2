@@ -11,6 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
+import androidx.media3.common.util.ConditionVariable
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.test.utils.FakeClock
 import androidx.media3.test.utils.TestExoPlayerBuilder
@@ -47,6 +48,7 @@ import java.io.IOException
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -98,7 +100,9 @@ class PlaybackHarness(
     /** The library the saved queue is restored from ([restore]). */
     songRepository: SongRepository = FakeSongRepository(emptyList()),
     /** Handles what the harness's coroutines throw, where a test expects them to; by default they fail the test. */
-    exceptionHandler: CoroutineExceptionHandler? = null
+    exceptionHandler: CoroutineExceptionHandler? = null,
+    /** The crossfade length to set, in ms, or null to leave the setting as it is (off by default). */
+    crossfadeDurationMs: Int? = null
 ) {
     val context: Context = RuntimeEnvironment.getApplication()
 
@@ -184,12 +188,25 @@ class PlaybackHarness(
     var playlistChanges = 0
         private set
 
+    private val playbackSettings = PlaybackSettings(SettingsStore(sharedPreferences))
+
+    /** The one clock the player and the crossfade's tail decoders run on, so their work interleaves in order. */
+    private val clock = FakeClock(true)
+
     init {
         ShadowAudioTrack.addAudioDataListener(audioDataListener)
+        crossfadeDurationMs?.let { playbackSettings.crossfadeDurationMs.value = it }
         player =
-            ExoPlayerFactory(context, equalizer, replayGain, AudioTrackMonitor(), songUriResolver) { renderersFactory, mediaSourceFactory ->
+            ExoPlayerFactory(
+                context,
+                equalizer,
+                replayGain,
+                AudioTrackMonitor(),
+                songUriResolver,
+                { playbackSettings.crossfadeDurationMs.value.toLong() }
+            ) { renderersFactory, mediaSourceFactory ->
                 TestExoPlayerBuilder(context)
-                    .setClock(FakeClock(true))
+                    .setClock(clock)
                     // Production's ExoPlayer.Builder prepares lazily by default: only the items around the current one.
                     .setUseLazyPreparation(lazyPreparation)
                     .setRenderersFactory(renderersFactory)
@@ -223,7 +240,6 @@ class PlaybackHarness(
         appPlayer = active
         audioEffectSessionManager.attach(active, player)
         audioFocus = AudioFocusCounts(Shadow.extract(audioManager))
-        val playbackSettings = PlaybackSettings(SettingsStore(sharedPreferences))
         val queueFacade = QueueFacade(player, playbackSettings, songUriResolver, buildContext, active)
         queueOperations = queueFacade
         queueStore = QueueStore(active, player, queueFacade, playbackPreferenceManager, songRepository, scope)
@@ -264,6 +280,38 @@ class PlaybackHarness(
         shadowOf(Looper.getMainLooper()).idle()
         // Waiting on the playback thread turns the player's clock, which would play on what's playing.
         if (!appPlayer.isPlaying && !player.isPlaying) awaitFocusChange()
+    }
+
+    /**
+     * Plays on until the player reaches [positionMs] into the item at [mediaItemIndex], then runs [block] on the main
+     * thread while the playback thread waits there, so no playback time passes before what [block] asks of the player
+     * reaches it. Waiting on the position from the main thread ([runUntil]) can't stop at a point: the playback thread
+     * plays on while it's read, turning the clock, and further on a loaded machine.
+     */
+    fun runAt(
+        mediaItemIndex: Int,
+        positionMs: Long,
+        block: () -> Unit
+    ) {
+        val done = AtomicBoolean(false)
+        player
+            .createMessage { _, _ ->
+                val held = ConditionVariable()
+                // Posted through the clock, behind what the playback thread has already told the main thread, so the
+                // player there is up to date when [block] runs.
+                clock.createHandler(Looper.getMainLooper(), null).post {
+                    try {
+                        block()
+                    } finally {
+                        done.set(true)
+                        held.open()
+                    }
+                }
+                clock.onThreadBlocked()
+                held.block(10_000)
+            }.setPosition(mediaItemIndex, positionMs)
+            .send()
+        runUntil { done.get() }
     }
 
     /**

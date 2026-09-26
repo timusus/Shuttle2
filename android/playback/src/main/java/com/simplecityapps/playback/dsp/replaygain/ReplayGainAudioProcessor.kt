@@ -2,12 +2,11 @@ package com.simplecityapps.playback.dsp.replaygain
 
 import androidx.core.math.MathUtils.clamp
 import androidx.media3.common.C
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Timeline
 import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.audio.AudioProcessor.UnhandledAudioFormatException
 import androidx.media3.common.audio.BaseAudioProcessor
 import com.simplecityapps.playback.dsp.equalizer.fromDb
+import com.simplecityapps.playback.dsp.mediaItem
 import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MAX_VALUE
 import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MIN_VALUE
 import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
@@ -100,14 +99,6 @@ class ReplayGainAudioProcessor(
 
     override fun onReset() {
         streamReplayGain = null
-    }
-
-    private fun AudioProcessor.StreamMetadata.mediaItem(): MediaItem? {
-        val periodUid = periodUid ?: return null
-        val periodIndex = timeline.getIndexOfPeriod(periodUid)
-        if (periodIndex == C.INDEX_UNSET) return null
-        val windowIndex = timeline.getPeriod(periodIndex, Timeline.Period()).windowIndex
-        return timeline.getWindow(windowIndex, Timeline.Window()).mediaItem
     }
 
     companion object {
