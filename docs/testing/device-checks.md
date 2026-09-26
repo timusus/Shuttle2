@@ -176,9 +176,10 @@ The S2 (TagLib) provider now finds files with a MediaStore query and reads them 
 
 - [ ] With a library loaded, force-stop and reopen the app on 3 separate calendar days (change the device date between opens). The card appears on Home on the 3rd day, not before, and Analytics in Settings > Privacy stays off the whole time.
 
-## Sources parity (#474)
+## Sources parity (#474, #479)
 
 - [ ] Force a scan to fail (turn off Wi-Fi mid-scan, or point a server sign-in at an unreachable host) and confirm Sources shows "Scan failed" with the error, and tapping it retries (#474).
+- [ ] Revoke a folder's access in Settings > Apps > S2 > Permissions > Files and media (or via `adb shell content revoke_persistable_uri_permission`), confirm Sources flags it with "Access removed", and that re-picking the same folder or removing it clears the flag (#479).
 
 ## Redesign parity, device-only (#377, #382)
 

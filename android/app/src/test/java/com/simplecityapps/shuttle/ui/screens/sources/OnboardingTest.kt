@@ -108,4 +108,15 @@ class OnboardingTest {
 
         robot.rescanClicks shouldBe 1
     }
+
+    @Test
+    fun `a folder whose access was revoked is flagged and offers to fix it`() {
+        val folder = SourceFolder(uri = "content://tree/Music", path = "/storage/emulated/0/Music", name = "Music", hasAccess = false)
+        robot.setSources(SourcesUiState(thisDevice = true, folders = FolderLists(includes = listOf(folder))))
+
+        robot.assertTextDisplayed("Access removed. Tap to fix")
+        robot.clickText("Music")
+
+        robot.lastDialog shouldBe SourcesDialog.RevokedFolder(FolderKind.Include, folder)
+    }
 }

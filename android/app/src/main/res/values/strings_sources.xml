@@ -28,6 +28,10 @@
     <string name="sources_add_folder">Add folder</string>
     <string name="sources_remove_folder_title">Remove this folder?</string>
     <string name="sources_remove">Remove</string>
+    <string name="sources_folder_access_removed_summary">Access removed. Tap to fix</string>
+    <string name="sources_folder_access_removed_title">Access to this folder was removed</string>
+    <string name="sources_folder_access_removed_message">S2 no longer has access to %1$s. Its songs will leave your library on the next scan unless you grant access again.</string>
+    <string name="sources_grant_access">Grant access again</string>
     <string name="sources_folder_not_on_device">Pick a folder on this device\'s storage</string>
     <string name="sources_no_folder_picker">No app on this device can pick folders</string>
     <string name="sources_scan_now">Scan now</string>

@@ -41,6 +41,18 @@ fun sourcesRows(snackbarHostState: SnackbarHostState): LazyListScope.() -> Unit 
         pickingFolder?.let { kind -> viewModel.onFolderPicked(kind, uri?.toString()) }
         pickingFolder = null
     }
+    val launchFolderPicker: (FolderKind) -> Unit = remember(folderPicker) {
+        { kind: FolderKind ->
+            pickingFolder = kind
+            try {
+                folderPicker.launch(null)
+            } catch (e: ActivityNotFoundException) {
+                Timber.e(e, "No folder picker")
+                pickingFolder = null
+                scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.sources_no_folder_picker)) }
+            }
+        }
+    }
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
@@ -57,6 +69,7 @@ fun sourcesRows(snackbarHostState: SnackbarHostState): LazyListScope.() -> Unit 
         dialog = dialog,
         onTurnOffThisDevice = { viewModel.onThisDeviceChange(false) },
         onRemoveFolder = viewModel::onRemoveFolder,
+        onGrantAccess = launchFolderPicker,
         onSignIn = { signingIn = it },
         onRemoveServer = viewModel::onRemoveServer,
         onDismiss = { dialog = null },
@@ -65,19 +78,10 @@ fun sourcesRows(snackbarHostState: SnackbarHostState): LazyListScope.() -> Unit 
         ServerSignInRoute(type, onConnected = viewModel::onServerConnected, onDismiss = { signingIn = null })
     }
 
-    val actions = remember(viewModel, folderPicker) {
+    val actions = remember(viewModel, launchFolderPicker) {
         SourcesActions(
             onThisDeviceChange = viewModel::onThisDeviceChange,
-            onAddFolder = { kind ->
-                pickingFolder = kind
-                try {
-                    folderPicker.launch(null)
-                } catch (e: ActivityNotFoundException) {
-                    Timber.e(e, "No folder picker")
-                    pickingFolder = null
-                    scope.launch { snackbarHostState.showSnackbar(context.getString(R.string.sources_no_folder_picker)) }
-                }
-            },
+            onAddFolder = launchFolderPicker,
             onRescan = viewModel::onRescan,
             onServerClick = { server ->
                 if (server.connected) {

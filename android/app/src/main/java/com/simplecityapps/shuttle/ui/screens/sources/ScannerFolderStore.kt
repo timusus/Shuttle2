@@ -28,8 +28,12 @@ enum class FolderKind {
     Extra
 }
 
-/** A folder in Sources: [uri] is its SAF tree (null for an exclude, which keeps only the path), [path] its file path when known. */
-data class SourceFolder(val uri: String?, val path: String?, val name: String)
+/**
+ * A folder in Sources: [uri] is its SAF tree (null for an exclude, which keeps only the path), [path] its file path
+ * when known. [hasAccess] is false once its SAF grant was revoked outside the app (#479); excludes need no grant,
+ * so they're always true.
+ */
+data class SourceFolder(val uri: String?, val path: String?, val name: String, val hasAccess: Boolean = true)
 
 data class FolderLists(
     val includes: List<SourceFolder> = emptyList(),
@@ -51,9 +55,11 @@ interface ScannerFolderStore {
 }
 
 /**
- * Includes and extras are persisted SAF grants; the extras are also listed in [SourcesSettings.extraFolders], so every
- * other grant is an include. That keeps the folders picked before #379 (#207) as includes without a migration.
- * Excludes are plain paths, since nothing needs to read them.
+ * Includes and extras are persisted SAF grants: their tree URIs are listed in [SourcesSettings.includedFolders] and
+ * [SourcesSettings.extraFolders] respectively, independent of whether the system still holds the grant, so a folder
+ * whose access was revoked outside the app stays listed and flagged rather than disappearing (#479). [load] adopts
+ * any live grant not yet in either list into includes, which keeps folders picked before #479 (#207) as includes
+ * without a migration. Excludes are plain paths, since nothing needs to read them.
  */
 @Singleton
 class SafScannerFolderStore @Inject constructor(
@@ -82,7 +88,11 @@ class SafScannerFolderStore @Inject constructor(
                     Timber.e(e, "Couldn't keep access to $treeUri")
                     return false
                 }
-                if (kind == FolderKind.Extra) settings.extraFolders.value = (settings.extraFolders.value + treeUri).distinct()
+                if (kind == FolderKind.Extra) {
+                    settings.extraFolders.value = (settings.extraFolders.value + treeUri).distinct()
+                } else {
+                    settings.includedFolders.value = (settings.includedFolders.value + treeUri).distinct()
+                }
             }
 
             FolderKind.Exclude -> {
@@ -99,7 +109,11 @@ class SafScannerFolderStore @Inject constructor(
             FolderKind.Include, FolderKind.Extra -> folder.uri?.let { treeUri ->
                 runCatching { context.contentResolver.releasePersistableUriPermission(Uri.parse(treeUri), Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION) }
                     .onFailure { Timber.w(it, "Couldn't release $treeUri") }
-                settings.extraFolders.value = settings.extraFolders.value - treeUri
+                if (kind == FolderKind.Extra) {
+                    settings.extraFolders.value = settings.extraFolders.value - treeUri
+                } else {
+                    settings.includedFolders.value = settings.includedFolders.value - treeUri
+                }
             }
 
             FolderKind.Exclude -> settings.excludedFolders.value = settings.excludedFolders.value - folder.path.orEmpty()
@@ -112,24 +126,33 @@ class SafScannerFolderStore @Inject constructor(
     }
 
     private fun load(): FolderLists {
-        val grants = context.contentResolver.persistedUriPermissions
+        val liveGrants = context.contentResolver.persistedUriPermissions
             .filter { permission -> permission.isReadPermission || permission.isWritePermission }
             .map { permission -> permission.uri.toString() }
-        val extras = settings.extraFolders.value.toSet()
+            .toSet()
+        val extraUris = settings.extraFolders.value.toSet()
+
+        // A grant taken before #479, or by `add` just now, that isn't tracked in either list yet: adopt it as an
+        // include so it's not lost, and so a freshly added folder shows up without a separate persist call in `add`.
+        val untrackedIncludes = liveGrants.filter { it !in extraUris && it !in settings.includedFolders.value }
+        if (untrackedIncludes.isNotEmpty()) {
+            settings.includedFolders.value = (settings.includedFolders.value + untrackedIncludes).distinct()
+        }
+
         return FolderLists(
-            includes = grants.filter { it !in extras }.map { it.toSourceFolder() },
+            includes = settings.includedFolders.value.map { it.toSourceFolder(hasAccess = it in liveGrants) },
             excludes = settings.excludedFolders.value.map { path -> SourceFolder(uri = null, path = path, name = path.substringAfterLast('/')) },
-            extras = grants.filter { it in extras }.map { it.toSourceFolder() }
+            extras = extraUris.map { it.toSourceFolder(hasAccess = it in liveGrants) }
         )
     }
 
-    private fun String.toSourceFolder(): SourceFolder {
+    private fun String.toSourceFolder(hasAccess: Boolean): SourceFolder {
         val uri = Uri.parse(this)
         val path = uri.folderPath()
         val name = path?.substringAfterLast('/')
             ?: runCatching { DocumentsContract.getTreeDocumentId(uri) }.getOrNull()?.substringAfterLast(':')?.substringAfterLast('/')
             ?: this
-        return SourceFolder(uri = this, path = path, name = name)
+        return SourceFolder(uri = this, path = path, name = name, hasAccess = hasAccess)
     }
 
     private fun Uri.folderPath(): String? {

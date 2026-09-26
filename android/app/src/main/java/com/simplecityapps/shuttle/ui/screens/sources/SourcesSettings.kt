@@ -13,6 +13,7 @@ class SourcesSettings @Inject constructor(
     val musicPermissionRequested = store.preference(MusicPermissionRequested)
     val excludedFolders = store.preference(ExcludedFolders)
     val extraFolders = store.preference(ExtraFolders)
+    val includedFolders = store.preference(IncludedFolders)
 
     companion object {
         /** Whether the music permission has been asked for, so a later refusal without a rationale reads as permanent. */
@@ -23,6 +24,12 @@ class SourcesSettings @Inject constructor(
 
         /** SAF tree URIs the scanner walks directly, beside what MediaStore lists. Their grants are persisted. */
         val ExtraFolders = stringList("scanner_extra_folders")
+
+        /**
+         * SAF tree URIs picked as includes, listed even once their grant is revoked outside the app, so Sources can
+         * flag them instead of them silently vanishing (#479).
+         */
+        val IncludedFolders = stringList("scanner_included_folders")
 
         private fun stringList(key: String): Setting<List<String>> = Setting.string(
             key = key,

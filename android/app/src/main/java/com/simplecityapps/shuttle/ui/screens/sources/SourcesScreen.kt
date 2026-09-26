@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Dns
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.FolderOff
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -34,6 +35,9 @@ sealed interface SourcesDialog {
     data object TurnOffThisDevice : SourcesDialog
 
     data class RemoveFolder(val kind: FolderKind, val folder: SourceFolder) : SourcesDialog
+
+    /** A folder whose SAF grant was revoked outside the app (#479): grant access again, or remove it. */
+    data class RevokedFolder(val kind: FolderKind, val folder: SourceFolder) : SourcesDialog
 
     /** A connected server's options: sign in again, or remove it. */
     data class Server(val type: MediaProviderType) : SourcesDialog
@@ -132,9 +136,11 @@ private fun LazyListScope.folderGroup(
                 @Composable { shapes: ListItemShapes ->
                     LinkSetting(
                         title = folder.name,
-                        summary = folder.path,
-                        onClick = { actions.onShowDialog(SourcesDialog.RemoveFolder(kind, folder)) },
-                        icon = Icons.Rounded.Folder,
+                        summary = if (folder.hasAccess) folder.path else stringResource(R.string.sources_folder_access_removed_summary),
+                        onClick = {
+                            actions.onShowDialog(if (folder.hasAccess) SourcesDialog.RemoveFolder(kind, folder) else SourcesDialog.RevokedFolder(kind, folder))
+                        },
+                        icon = if (folder.hasAccess) Icons.Rounded.Folder else Icons.Rounded.FolderOff,
                         shapes = shapes,
                     )
                 }
@@ -158,6 +164,7 @@ fun SourcesDialogHost(
     dialog: SourcesDialog?,
     onTurnOffThisDevice: () -> Unit,
     onRemoveFolder: (FolderKind, SourceFolder) -> Unit,
+    onGrantAccess: (FolderKind) -> Unit,
     onSignIn: (MediaProviderType) -> Unit,
     onRemoveServer: (MediaProviderType) -> Unit,
     onDismiss: () -> Unit,
@@ -187,6 +194,31 @@ fun SourcesDialogHost(
             },
             dismissLabel = stringResource(android.R.string.cancel),
         ) { Text(dialog.folder.path ?: dialog.folder.name) }
+
+        is SourcesDialog.RevokedFolder -> S2Dialog(
+            title = stringResource(R.string.sources_folder_access_removed_title),
+            onDismissRequest = onDismiss,
+            confirmLabel = stringResource(R.string.sources_remove),
+            onConfirm = {
+                onDismiss()
+                onRemoveFolder(dialog.kind, dialog.folder)
+            },
+            dismissLabel = stringResource(android.R.string.cancel),
+            destructive = true,
+        ) {
+            Column {
+                Text(stringResource(R.string.sources_folder_access_removed_message, dialog.folder.path ?: dialog.folder.name))
+                S2Button(
+                    text = stringResource(R.string.sources_grant_access),
+                    onClick = {
+                        onDismiss()
+                        onGrantAccess(dialog.kind)
+                    },
+                    style = S2ButtonStyle.Text,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+        }
 
         is SourcesDialog.Server -> S2Dialog(
             title = stringResource(R.string.sources_remove_server_title, stringResource(dialog.type.titleRes)),

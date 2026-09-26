@@ -262,6 +262,10 @@
     {
       "text": "A failed library scan now shows its error in Sources, with a tap to retry",
       "commits": []
+    },
+    {
+      "text": "A folder whose access was revoked now stays listed in Sources, flagged, instead of disappearing, with a way to grant access again or remove it",
+      "commits": []
     }
   ]
 }
