@@ -126,8 +126,24 @@ run on KSP.
 | 3 | Skip docs/design boards unless Roborazzi records or verifies | 40-90 CPU-s whenever designsystem tests rerun, ~30 s in app | Small test change | #538 — landed (measured `:android:designsystem:testDebugUnitTest`: 22s → 15s) |
 | 4 | Run `verifyRoborazziDebug` in the same invocation as `testDebugUnitTest`, so app's and designsystem's suites run once, in verify mode | A second Gradle run and a rerun of both suites: landing 100-167 s → 58-65 s on the Mac after a one-line app change | Landing command only | #552 — landed (running it on the box still waits on #539) |
 | 5 | Move the 15 Robolectric ViewModel/use-case tests to plain JVM | ~20-25 CPU-s per app run; fewer looper races | Prefs fake in fixtures | #540 |
-| 6 | `maxParallelForks = 2` for app tests, property-gated (Mac, CI, quiet box) | App test wall 115 → 73 s; **no CPU saving** (each fork adds a sandbox start and a 2 GB heap) | One build line | #542 — landed (measured on the Mac: 48s → 36s at `-Ps2.testForks=2`) |
+| 6 | `maxParallelForks = 2` for app tests, the default on macOS (`-Ps2.testForks=N` overrides; Linux, so CI and the box, stays at 1) | App test wall on the Mac 57-87 s → 50-52 s; **no CPU saving** (each fork adds a sandbox start and a 2 GB heap) | One build line | #542, #552 — landed (fork table below) |
 | 7 | Take timing tests out of `testDebugUnitTest` | Fewer reruns after flakes (each costs a full slot) | Small | #541 |
+
+Forks measured on the Mac (#552), `testDebugUnitTest --rerun` of one module (app and designsystem
+with their `verifyRoborazziDebug`, as the landing runs them), two passes in opposite orders, 1-min
+load average on 10 cores in brackets:
+
+| Module | 1 fork | 2 forks | 3 forks |
+|---|---|---|---|
+| app | 87 s (11), 57 s (13) | 50 s (16), 52 s (8) | 56 s (11), 48 s (10) |
+| designsystem | 36 s (16), 32 s (13) | 29 s (14), 32 s (13) | 28 s (12), 31 s (17) |
+| playback | 15 s (10), 14 s (12) | 16 s (10), 17 s (12) | 23 s (10), 16 s (13) |
+
+App gains from a second fork and nothing from a third. designsystem's run is one class
+(`CatalogScreenshotTest`, 350 boards, ~28 s), which forks can't split, and playback is short
+enough that the extra sandbox start cancels the gain, so both stay at one JVM.
+The single-invocation landing after a one-line app change, with app at its new two-fork default:
+51 s and 50 s (load 6-7).
 
 `SearchIndexBenchmarkTest`'s wall-clock assertion (8000 ms/keystroke budget) flaked under host load
 (measured 8749 ms) independently of these levers. Every `*BenchmarkTest` (it and
