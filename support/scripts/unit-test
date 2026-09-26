@@ -121,7 +121,7 @@ Usage: support/scripts/unit-test [module ...] [--tests <filter>]
 Examples:
   support/scripts/unit-test
   support/scripts/unit-test playback
-  support/scripts/unit-test playback app --tests '*QueueManager*'
+  support/scripts/unit-test playback app --tests '*NewQueueTest*'
   support/scripts/unit-test --changed
   support/scripts/unit-test --changed --base main --dry-run
 

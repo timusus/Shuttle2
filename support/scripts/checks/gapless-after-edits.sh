@@ -3,7 +3,7 @@
 # `gapless` fixture (5 x 12 s tones -- MP3, two FLAC-in-Matroska, two native FLAC), reorder the
 # queue so a different song is next, turn shuffle on, and remove the next track, and each time let
 # the current track play out to a natural auto-advance (no NEXT) and check the right song plays.
-# DUMP_STATE's queueTitles (DebugPlaybackReceiver, from QueueManager.getQueue() -- the same
+# DUMP_STATE's queueTitles (DebugPlaybackReceiver, from QueueOperations.getQueue() -- the same
 # shuffle-aware order the "Up Next" list shows) lets each case assert the prepared next item
 # before the advance too, not just after.
 #
