@@ -54,8 +54,8 @@ class SettingsRepositoriesTest {
             "artwork_wifi_only" to true,
             "artwork_local_only" to false,
             "media_session_artwork" to true,
-            "pref_crash_reporting" to false,
-            "pref_firebase_analytics" to false,
+            "pref_crash_reporting" to true,
+            "pref_firebase_analytics" to true,
             "pref_file_logging" to false,
             "pref_retain_shuffle_on_new_queue" to false,
             "pref_bit_perfect_usb" to false,
@@ -147,11 +147,11 @@ class SettingsRepositoriesTest {
     @Test
     fun `reset forgets the stored value`() {
         val privacy = PrivacySettings(store)
-        privacy.analytics.value = true
+        privacy.analytics.value = false
 
         privacy.analytics.reset()
 
-        privacy.analytics.value shouldBe false
+        privacy.analytics.value shouldBe true
         prefs.contains("pref_firebase_analytics") shouldBe false
     }
 

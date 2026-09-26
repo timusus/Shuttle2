@@ -56,8 +56,9 @@ class PostHogAnalytics @Inject constructor(
             captureApplicationLifecycleEvents = true
             sessionReplay = false
             debug = BuildConfig.DEBUG
-            // Keeps the anonymous person profile, so retention queries see the install cohort
-            personProfiles = PersonProfiles.ALWAYS
+            // No identify() call is ever made, so this never actually creates a person profile (#481): PostHog
+            // stays anonymous, tracked only by its own generated device ID
+            personProfiles = PersonProfiles.IDENTIFIED_ONLY
         }
         PostHogAndroid.setup(application, config)
         PostHog.register("app_version", BuildConfig.VERSION_NAME)

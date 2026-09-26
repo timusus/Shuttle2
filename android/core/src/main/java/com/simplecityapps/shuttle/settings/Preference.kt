@@ -35,6 +35,9 @@ class Preference<T>(
         sharedPreferences.edit { remove(setting.key) }
     }
 
+    /** Whether a value has been explicitly stored — false means [value] is reading as [default]. */
+    fun isSet(): Boolean = sharedPreferences.contains(setting.key)
+
     /** The current value, then every change to it. */
     val flow: Flow<T> = callbackFlow {
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, changedKey ->

@@ -28,14 +28,27 @@ class TelemetryConsentGateTest {
     }
 
     @Test
-    fun `nothing is collected before the user opts in`() = runTest {
+    fun `both default on for a user who never chose`() = runTest {
         startGate()
         runCurrent()
 
-        crashReporting.calls shouldBe listOf(false, false)
-        analytics.calls shouldBe listOf(false, false)
-        crashReporting.enabled shouldBe false
-        analytics.enabled shouldBe false
+        crashReporting.calls shouldBe listOf(true, true)
+        analytics.calls shouldBe listOf(true, true)
+        crashReporting.enabled shouldBe true
+        analytics.enabled shouldBe true
+    }
+
+    @Test
+    fun `an explicit off stays off`() = runTest {
+        prefs.edit(commit = true) {
+            putBoolean(PrivacySettings.CrashReporting.key, false)
+            putBoolean(PrivacySettings.Analytics.key, false)
+        }
+
+        startGate()
+
+        crashReporting.calls shouldBe listOf(false)
+        analytics.calls shouldBe listOf(false)
     }
 
     @Test
@@ -52,33 +65,33 @@ class TelemetryConsentGateTest {
     }
 
     @Test
-    fun `opting in to analytics starts it and opting out stops it`() = runTest {
+    fun `opting out of analytics stops it, independently of crash reporting`() = runTest {
         startGate()
         runCurrent()
-
-        privacySettings.analytics.value = true
-        runCurrent()
-        analytics.enabled shouldBe true
-        crashReporting.enabled shouldBe false
 
         privacySettings.analytics.value = false
         runCurrent()
         analytics.enabled shouldBe false
+        crashReporting.enabled shouldBe true
+
+        privacySettings.analytics.value = true
+        runCurrent()
+        analytics.enabled shouldBe true
     }
 
     @Test
-    fun `opting in to crash reporting starts it and opting out stops it`() = runTest {
+    fun `opting out of crash reporting stops it, independently of analytics`() = runTest {
         startGate()
         runCurrent()
-
-        privacySettings.crashReporting.value = true
-        runCurrent()
-        crashReporting.enabled shouldBe true
-        analytics.enabled shouldBe false
 
         privacySettings.crashReporting.value = false
         runCurrent()
         crashReporting.enabled shouldBe false
+        analytics.enabled shouldBe true
+
+        privacySettings.crashReporting.value = true
+        runCurrent()
+        crashReporting.enabled shouldBe true
     }
 
     /** Records every [setEnabled] call the gate makes, standing in for Sentry or PostHog. */
