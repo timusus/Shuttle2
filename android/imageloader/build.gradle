@@ -36,6 +36,9 @@ dependencies {
     // Shuttle Networking
     implementation project(':android:networking')
 
+    // Shuttle Domain
+    implementation project(':android:domain')
+
     // Shuttle MediaProvider Core
     implementation project(':android:mediaprovider:core')
 
