@@ -92,6 +92,21 @@ class SearchLibraryTest {
     }
 
     @Test
+    fun `matches a phrase by its words, not by scattered letters`() = runTest {
+        songs.setSongs(
+            listOf(
+                createSong(id = 1, name = "The Sound", albumArtist = "Glasshouse Relay", album = "Signal Room"),
+                createSong(id = 2, name = "The Sun Will Rise", albumArtist = "Pale Meridian", album = "Undertow"),
+                createSong(id = 3, name = "Sunward", albumArtist = "Saltmarsh Choir", album = "Estuary"),
+            ),
+        )
+
+        searchLibrary("the sun", setOf(SearchCategory.Songs)).first().songs.map { it.item.name } shouldContainExactly listOf("The Sun Will Rise", "Sunward")
+        searchLibrary("sun", setOf(SearchCategory.Songs)).first().songs.map { it.item.name } shouldContainExactly listOf("The Sun Will Rise", "Sunward")
+        searchLibrary("the sun will", setOf(SearchCategory.Songs)).first().songs.map { it.item.name } shouldContainExactly listOf("The Sun Will Rise")
+    }
+
+    @Test
     fun `tolerates typos`() = runTest {
         searchLibrary("junpier", setOf(SearchCategory.Artists)).first().artists.map { it.item.name } shouldContainExactly listOf("Juniper Static")
         searchLibrary("oda kestral", setOf(SearchCategory.Artists)).first().artists.map { it.item.name } shouldContainExactly listOf("Oda Kestrel Quartet")
