@@ -20,9 +20,16 @@ import com.simplecityapps.imageloading.coil.source.EmbeddedSongArtworkSource
 import com.simplecityapps.imageloading.coil.source.FolderAlbumArtistArtworkSource
 import com.simplecityapps.imageloading.coil.source.FolderAlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.FolderSongArtworkSource
+import com.simplecityapps.imageloading.coil.source.MediaServerAlbumArtistArtworkSource
+import com.simplecityapps.imageloading.coil.source.MediaServerAlbumArtworkSource
+import com.simplecityapps.imageloading.coil.source.MediaServerSongArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaStoreAlbumArtworkSource
 import com.simplecityapps.imageloading.coil.source.MediaStoreSongArtworkSource
+import com.simplecityapps.imageloading.coil.source.S2AlbumArtistArtworkSource
+import com.simplecityapps.imageloading.coil.source.S2AlbumArtworkSource
+import com.simplecityapps.imageloading.coil.source.S2SongArtworkSource
 import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -51,7 +58,8 @@ object CoilModule {
         okHttpClient: OkHttpClient,
         artworkSettings: ArtworkSettings,
         songRepository: SongRepository,
-        kTagLib: KTagLib
+        kTagLib: KTagLib,
+        remoteArtworkProvider: AggregateRemoteArtworkProvider
     ): ImageLoader {
         val artworkClient = artworkHttpClient(context, okHttpClient, artworkSettings)
 
@@ -66,16 +74,22 @@ object CoilModule {
                 add(FolderSongArtworkSource(context, sharedStorageListsImages))
                 add(EmbeddedSongArtworkSource(context, kTagLib))
                 if (!sharedStorageListsImages) add(MediaStoreSongArtworkSource(context))
+                add(MediaServerSongArtworkSource(artworkSettings, remoteArtworkProvider))
+                add(S2SongArtworkSource(artworkSettings))
             }
         val albumSources =
             buildList<ArtworkSource<Album>> {
                 add(FolderAlbumArtworkSource(context, songRepository, sharedStorageListsImages))
                 add(EmbeddedAlbumArtworkSource(context, kTagLib, songRepository))
                 if (!sharedStorageListsImages) add(MediaStoreAlbumArtworkSource(context, songRepository))
+                add(MediaServerAlbumArtworkSource(artworkSettings, songRepository, remoteArtworkProvider))
+                add(S2AlbumArtworkSource(artworkSettings))
             }
         val albumArtistSources =
             buildList<ArtworkSource<AlbumArtist>> {
                 add(FolderAlbumArtistArtworkSource(context, songRepository, sharedStorageListsImages))
+                add(MediaServerAlbumArtistArtworkSource(artworkSettings, songRepository, remoteArtworkProvider))
+                add(S2AlbumArtistArtworkSource(artworkSettings))
             }
 
         return ImageLoader.Builder(context)
