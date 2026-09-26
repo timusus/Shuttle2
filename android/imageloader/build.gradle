@@ -58,7 +58,7 @@ dependencies {
     implementation libs.glide.okhttp3Integration
     implementation libs.glide.annotations
 
-    implementation project(':android:data')
+    implementation project(':android:domain')
 
     testImplementation libs.junit
     testImplementation libs.kotest

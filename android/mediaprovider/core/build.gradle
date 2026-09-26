@@ -49,7 +49,7 @@ dependencies {
     // Timber
     implementation libs.timber
 
-    implementation project(':android:data')
+    implementation project(':android:domain')
 
     // Shuttle Core
     implementation(project(":android:core"))

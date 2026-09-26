@@ -56,7 +56,7 @@ dependencies {
 
     // Shuttle Core
     implementation(project(":android:core"))
-    implementation(project(":android:data"))
+    implementation(project(":android:domain"))
 
     // Shuttle MediaProvider Core
     implementation project(path: ':android:mediaprovider:core')

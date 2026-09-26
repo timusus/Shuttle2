@@ -35,7 +35,7 @@ data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:p
 
 | Module | Today | Target |
 |---|---|---|
-| `:android:data` | Models, sorting, queries, parcelers; an Android library only for `@Parcelize` | Becomes `:android:domain` in place (step 3) |
+| `:android:domain` | Models, sorting, queries; a plain Kotlin/JVM module (was the Android library `:android:data`) | Domain (step 3 done) |
 | `:android:mediaprovider:core` | Repository interfaces, `MediaProvider`, `MediaInfoProvider`, `MediaImporter`, M3U, import worker | Interfaces move to domain (step 4); importer, worker and M3U stay as data |
 | `:android:mediaprovider:local` | Room DB, DAOs, entities, `Local*Repository`, MediaStore/TagLib | Data |
 | `:android:mediaprovider:{jellyfin,emby,plex}` | HTTP services, DTOs, auth, providers | Data |
@@ -73,7 +73,7 @@ forbidden edges that only shrinks (the same ratchet as the Konsist baselines).
 | Layer | Modules | May depend on |
 |---|---|---|
 | core | `core` | nothing of ours |
-| domain | `data` (becomes `domain`) | core |
+| domain | `domain` | core |
 | data | `mediaprovider:core`, `downloads`, `imageloader`, `networking`, `playback`, `remote-config`, `saf`, `trial` | core, domain, data |
 | provider | `mediaprovider:{local,jellyfin,emby,plex}` | core, domain, data (never another provider) |
 | presentation | `designsystem` | core, domain, presentation, fixtures |
@@ -139,9 +139,12 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
    `:android:playback -> :android:mediaprovider:{emby,jellyfin,plex}`. Move the provider
    `MediaInfoProvider` bindings to the provider modules as `@IntoMap` entries, drop the three
    edges, and delete the baseline lines. Baseline ends empty.
-3. **Domain models**: remove `Parcelable`/`@Parcelize` from the models (navigation keys are already
+3. ~~**Domain models**: remove `Parcelable`/`@Parcelize` from the models (navigation keys are already
    `@Serializable` ids, never models; any `rememberSaveable` of a model switches to an id), then
-   convert `:android:data` to a JVM module and rename it `:android:domain`.
+   convert `:android:data` to a JVM module and rename it `:android:domain`.~~ (done: the one
+   real use was a lazy-list key built from `AlbumGroupKey`, now its string form; the parcelers and
+   the `kotlin-parcelize` plugin went with no replacement, and `:android:domain` is a
+   `kotlin("jvm")` module.)
 4. **Repository interfaces**: move `mediaprovider/core/.../repository/**` (interfaces, queries,
    sort orders) into domain. `mediaprovider:core` keeps `MediaImporter`, workers and M3U.
 5. **Playback interfaces**: move `QueueOperations`, `PlaybackOperations` and the state types they
@@ -162,7 +165,7 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
 | Use-case naming | `*UseCase` suffix (as the #443 brief said) vs the verb phrase UDF 8c prescribes | **Keep 8c** (`PlaySongs`, no suffix): every existing use case follows it and the Konsist rule enforces it. |
 | Trivial repository reads in ViewModels | UDF 8a allows inline one-liners (`repository.setExcluded(...)`) vs "only through use cases" | **Only through use cases**, including thin `Observe*` ones; update 8a when batch A lands so the doc and the rule agree. |
 | Domain module name and place | `:android:domain` vs top-level `:domain`; one module vs `domain:model` + `domain` | **One `:android:domain`**, matching the `android/` layout; split only if build times demand it. |
-| Parcelable models | keep `:domain` an Android library for `@Parcelize` vs pure JVM | **Pure JVM**: routes already carry ids, and #381 removes the Fragment-argument users. |
+| Parcelable models | keep `:domain` an Android library for `@Parcelize` vs pure JVM | **Pure JVM** (done in step 3): routes already carry ids, and #381 removed the Fragment-argument users. |
 | Graph enforcement | `buildSrc` task vs `module-graph-assertion` plugin | **`buildSrc` task**, per the precedent above. |
 | `au.com.simplecityapps` package in `:android:imageloader` | rename to `com.simplecityapps` vs keep (baselined by `package-root`) | **Rename** in the imageloader batch: mechanical, 30 files, no behaviour change. |
 | When to split `:android:ui` out of `:android:app` | now vs after batches A–C | **After A–C**, when ViewModels no longer import data types, so the split is a pure move. |

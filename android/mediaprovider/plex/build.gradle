@@ -34,7 +34,7 @@ dependencies {
     implementation libs.androidx.appcompat
     implementation libs.google.material
 
-    implementation(project(":android:data"))
+    implementation(project(":android:domain"))
     implementation(project(":android:mediaprovider:core"))
     implementation(project(":android:core"))
     implementation(project(":android:networking"))

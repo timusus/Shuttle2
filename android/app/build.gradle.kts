@@ -160,7 +160,7 @@ android {
         implementation(libs.timusus.ktaglib)
 
         // Shuttle
-        implementation(project(":android:data"))
+        implementation(project(":android:domain"))
         implementation(project(":android:downloads"))
         implementation(project(":android:mediaprovider:core"))
         implementation(project(":android:mediaprovider:local"))

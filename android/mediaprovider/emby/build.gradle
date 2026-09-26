@@ -46,7 +46,7 @@ dependencies {
     implementation libs.hilt
     ksp libs.hilt.compiler
 
-    implementation project(':android:data')
+    implementation project(':android:domain')
 
     implementation libs.kotlinx.datetime
 

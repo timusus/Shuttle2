@@ -57,7 +57,7 @@ Determine which component each changed file belongs to:
 - **app** — files under `android/app/`
 - **playback** — files under `android/playback/`
 - **mediaprovider** — files under `android/mediaprovider/` (any provider)
-- **data** — files under `android/data/`
+- **domain** — files under `android/domain/`
 - **core**, **networking**, **imageloader**, **trial** — the corresponding `android/<module>/`
 - **root** — top-level files (CI, docs, scripts, Gradle config)
 

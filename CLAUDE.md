@@ -76,7 +76,7 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 - **`:android:mediaprovider:core`** — MediaProvider interface, MediaImporter, repository interfaces (Song, Album, Playlist, Genre)
 - **`:android:mediaprovider:local`** — Local MediaStore/TagLib provider implementation
 - **`:android:mediaprovider:jellyfin|emby|plex`** — Remote streaming provider implementations
-- **`:android:data`** — Room database, Parcelable data models
+- **`:android:domain`** — Plain Kotlin/JVM domain models, song queries and sort orders (no Android)
 - **`:android:downloads`** — Offline downloads of remote-provider songs
 - **`:android:saf`** — Storage Access Framework helpers
 - **`:android:core`** — Shared utilities, logging, Hilt setup

@@ -7,7 +7,7 @@ enum class ModuleLayer(val label: String) {
     /** Logging, dispatchers, settings storage, Hilt qualifiers. Usable by every layer; depends on nothing of ours. */
     CORE("core"),
 
-    /** Models, repository and service interfaces, use cases. `:android:data` until it becomes `:android:domain`. */
+    /** Models, repository and service interfaces, use cases. */
     DOMAIN("domain"),
 
     /** Data and platform services that implement domain interfaces. */
@@ -33,7 +33,7 @@ object ModuleLayers {
     /** Every module's layer. A module missing from this table fails [VerifyModuleLayers]. */
     val table: Map<String, ModuleLayer> = mapOf(
         ":android:core" to ModuleLayer.CORE,
-        ":android:data" to ModuleLayer.DOMAIN,
+        ":android:domain" to ModuleLayer.DOMAIN,
         ":android:mediaprovider:core" to ModuleLayer.DATA,
         ":android:downloads" to ModuleLayer.DATA,
         ":android:imageloader" to ModuleLayer.DATA,

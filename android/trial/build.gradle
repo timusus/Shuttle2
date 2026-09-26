@@ -68,7 +68,7 @@ dependencies {
 
     implementation project(':android:networking')
     implementation project(':android:core')
-    implementation project(':android:data')
+    implementation project(':android:domain')
 
     testImplementation libs.junit
     testImplementation libs.mockk
