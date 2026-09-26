@@ -2,8 +2,6 @@ package com.simplecityapps.shuttle.ui.common.mediaactions
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -11,6 +9,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -30,11 +29,10 @@ import kotlinx.coroutines.launch
 class MediaActionsViewModel @Inject constructor(
     private val handler: MediaActionHandler,
     private val availableMediaActions: AvailableMediaActions,
-    playlistRepository: PlaylistRepository,
+    observePlaylists: ObservePlaylists,
 ) : ViewModel() {
     /** The playlists offered by the add-to-playlist picker. */
-    val playlists: StateFlow<List<Playlist>> = playlistRepository
-        .getPlaylists(PlaylistQuery.All(mediaProviderType = null))
+    val playlists: StateFlow<List<Playlist>> = observePlaylists()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     private val _results = Channel<MediaActionResult>(Channel.BUFFERED)

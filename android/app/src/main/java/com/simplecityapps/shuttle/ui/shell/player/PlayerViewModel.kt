@@ -3,8 +3,6 @@ package com.simplecityapps.shuttle.ui.shell.player
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
@@ -23,6 +21,9 @@ import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
+import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -34,7 +35,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -85,7 +85,9 @@ interface ReplayGainPreference {
 class PlayerViewModel @Inject constructor(
     private val playbackOperations: PlaybackOperations,
     private val queueOperations: QueueOperations,
-    private val playlistRepository: PlaylistRepository,
+    observeFavouriteSongIds: ObserveFavouriteSongIds,
+    private val setFavourite: ToggleFavourite,
+    private val observePlaylists: ObservePlaylists,
     private val sleepTimer: SleepTimer,
     private val sleepTimerPreference: SleepTimerPreference,
     private val replayGainPreference: ReplayGainPreference,
@@ -120,12 +122,7 @@ class PlayerViewModel @Inject constructor(
 
     private val currentSong: Flow<Song?> = queueOperations.queueStateFlow.map { it.currentItem?.song }.distinctUntilChanged()
 
-    private val favouriteIds: Flow<Set<Long>> =
-        flow { emit(playlistRepository.getFavoritesPlaylist()) }
-            .flatMapLatest { playlistRepository.getSongsForPlaylist(it) }
-            .map { songs -> songs.map { it.song.id }.toSet() }
-            .onStart { emit(emptySet<Long>()) }
-            .catch { emit(emptySet<Long>()) }
+    private val favouriteIds: Flow<Set<Long>> = observeFavouriteSongIds()
 
     private val seed: Flow<ArtworkSeed> =
         currentSong
@@ -230,14 +227,7 @@ class PlayerViewModel @Inject constructor(
     override fun toggleFavourite() {
         val song = queueOperations.getCurrentItem()?.song ?: return
         val favourite = uiState.value.favourite
-        viewModelScope.launch {
-            val favourites = playlistRepository.getFavoritesPlaylist()
-            if (favourite) {
-                playlistRepository.removeSongsFromPlaylist(favourites, listOf(song))
-            } else {
-                playlistRepository.addToPlaylist(favourites, listOf(song))
-            }
-        }
+        viewModelScope.launch { setFavourite(song, favourite) }
     }
 
     override fun startSleepTimer(
@@ -325,7 +315,7 @@ class PlayerViewModel @Inject constructor(
 
     override fun songActions(song: Song): Flow<List<MediaActionType>> = availableMediaActions(MediaSelection.Songs(song)).map { types -> types.filter { it in PlayerSongActions } }
 
-    override fun playlists(): Flow<List<Playlist>> = playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null))
+    override fun playlists(): Flow<List<Playlist>> = observePlaylists()
 
     override fun onMediaAction(action: MediaAction) {
         viewModelScope.launch { _events.emit(PlayerUiEvent.MediaActionDone(mediaActionHandler.handle(action))) }

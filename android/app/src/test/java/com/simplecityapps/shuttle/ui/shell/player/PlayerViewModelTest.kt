@@ -28,6 +28,9 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
+import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -84,7 +87,9 @@ class PlayerViewModelTest {
         return PlayerViewModel(
             playbackOperations = playbackManager,
             queueOperations = queueManager,
-            playlistRepository = playlistRepository,
+            observeFavouriteSongIds = ObserveFavouriteSongIds(playlistRepository),
+            setFavourite = ToggleFavourite(playlistRepository),
+            observePlaylists = ObservePlaylists(playlistRepository),
             sleepTimer = sleepTimer,
             sleepTimerPreference = sleepTimerPreference,
             replayGainPreference = replayGainPreference,
