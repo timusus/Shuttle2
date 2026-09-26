@@ -41,6 +41,42 @@ class AlbumArtistDetailViewModelTest {
     private val testArtist = createAlbumArtist(name = "The Tin Orchards", albumCount = 2, songCount = 2)
 
     @Test
+    fun `shows loading when repository has not emitted`() = runTest {
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.loadingState shouldBe AlbumArtistDetailUiState.LoadingState.Loading
+    }
+
+    @Test
+    fun `shows empty when no albums and no songs`() = runTest {
+        fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
+        fakeSongRepository.setSongs(emptyList())
+        fakeAlbumRepository.setAlbums(emptyList())
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.loadingState shouldBe AlbumArtistDetailUiState.LoadingState.Empty
+    }
+
+    @Test
+    fun `albums sorted by year descending`() = runTest {
+        fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
+        val lanternHours = createAlbum(name = "Lantern Hours", albumArtist = "The Tin Orchards", year = 1963)
+        val looseChange = createAlbum(name = "Loose Change", albumArtist = "The Tin Orchards", year = 1970)
+        val cassetteSummer = createAlbum(name = "Cassette Summer", albumArtist = "The Tin Orchards", year = 1969)
+        fakeAlbumRepository.setAlbums(listOf(lanternHours, looseChange, cassetteSummer))
+        fakeSongRepository.setSongs(listOf(createSong(albumArtist = "The Tin Orchards")))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.albums shouldBe listOf(looseChange, cassetteSummer, lanternHours)
+    }
+
+    @Test
     fun `expanded album survives a re-emission of new instances with the same groupKey`() = runTest {
         val albumA = createAlbum(name = "Cassette Summer", albumArtist = "The Tin Orchards", year = 1969)
         val albumB = createAlbum(name = "Loose Change", albumArtist = "The Tin Orchards", year = 1970)
