@@ -39,7 +39,7 @@ data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:p
 | `:android:mediaprovider:core` | `MediaProvider`, `MediaInfoProvider`, `MediaImporter`, M3U, import worker | Data (step 4 done: repository interfaces moved to domain) |
 | `:android:mediaprovider:local` | Room DB, DAOs, entities, `Local*Repository`, MediaStore/TagLib | Data |
 | `:android:mediaprovider:{jellyfin,emby,plex}` | HTTP services, DTOs, auth, providers | Data |
-| `:android:playback` | Media3 engine, `PlaybackFacade`, `QueueFacade`, Cast, session; **depends on the three remote provider modules** (only `di/PlaybackEngineModule.kt` imports them) | Data; its operations interfaces are in domain (step 5 done); provider edges removed (step 2) |
+| `:android:playback` | Media3 engine, `PlaybackFacade`, `QueueFacade`, Cast, session; resolves remote songs through the `MediaInfoProvider` map the provider modules contribute, with no edge to them | Data; its operations interfaces are in domain (step 5 done); provider edges removed (step 2 done) |
 | `:android:imageloader` | Coil artwork fetchers, keys and the app `ImageLoader`; its unused `:emby`/`:jellyfin` edges are gone | Data (platform adapter) |
 | `:android:downloads`, `:android:networking`, `:android:saf`, `:android:trial`, `:android:remote-config` | Platform services | Data |
 | `:android:core` | Shared utilities, settings, DI qualifiers | Cross-cutting |
@@ -56,10 +56,11 @@ data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:p
 | presentation (`:ui`, `:designsystem`) | yes | **no** | yes | yes |
 | composition root (`:android:app`) | yes | yes (to aggregate Hilt modules) | yes | yes |
 
-Forbidden edges today: `playback → mediaprovider:{jellyfin,emby,plex}` (baselined, see below).
+Forbidden edges today: none (the baseline is empty).
 Data modules must not depend on sibling provider
 implementations; a data module that needs "the right provider" asks for a domain interface map
-bound by each provider (`@IntoMap` keyed by `MediaProviderType`).
+bound by each provider (`@IntoMap` keyed by `MediaProviderType`, e.g. `MediaProviderTypeKey` for
+`MediaInfoProvider`).
 
 ## How Gradle enforces it
 
@@ -118,8 +119,9 @@ Why this over the alternatives:
   on the JVM); domain applies KSP with `dagger-compiler` only, so factories are generated where the
   classes live instead of Dagger regenerating them in `:android:app` with a warning.
 - Each data module keeps (or gains) a `@Module @InstallIn(SingletonComponent::class)` that
-  `@Binds` its implementations to domain interfaces. The provider → `MediaInfoProvider` bindings move
-  out of `playback/di/PlaybackEngineModule.kt` into each provider module as `@IntoMap` entries.
+  `@Binds` its implementations to domain interfaces. Each provider module contributes its
+  `MediaInfoProvider` as an `@IntoMap` entry keyed by `@MediaProviderTypeKey`, and
+  `playback/di/PlaybackEngineModule.kt` builds `AggregateMediaInfoProvider` from the map.
 - `:android:app` stays the only `@HiltAndroidApp` module and keeps `implementation` edges to every
   data module so Hilt's aggregating task sees all `@InstallIn` modules. If presentation moves into
   `:android:ui`, that module applies Hilt for `@HiltViewModel` but depends only on domain.
@@ -134,11 +136,11 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
 1. **After #381 lands**: trim the Konsist baselines (`-PupdateArchitectureBaselines`), delete the
    now-orphaned legacy code found by the audit, and delete `:android:recyclerview-adapter` if #381
    has not.
-2. **Guard the graph**: ~~add `VerifyModuleLayers` with the layer map and an allowlist~~ (done;
-   `imageloader`'s unused provider dependencies are gone too). Remaining: the baselined edges
-   `:android:playback -> :android:mediaprovider:{emby,jellyfin,plex}`. Move the provider
-   `MediaInfoProvider` bindings to the provider modules as `@IntoMap` entries, drop the three
-   edges, and delete the baseline lines. Baseline ends empty.
+2. ~~**Guard the graph**: add `VerifyModuleLayers` with the layer map and an allowlist, then drop
+   the baselined edges `:android:playback -> :android:mediaprovider:{emby,jellyfin,plex}`.~~ (done;
+   `imageloader`'s unused provider dependencies went first. Each provider module now contributes
+   its `MediaInfoProvider` as an `@IntoMap` entry keyed by `@MediaProviderTypeKey`, playback
+   consumes the map, and the baseline is empty.)
 3. ~~**Domain models**: remove `Parcelable`/`@Parcelize` from the models (navigation keys are already
    `@Serializable` ids, never models; any `rememberSaveable` of a model switches to an id), then
    convert `:android:data` to a JVM module and rename it `:android:domain`.~~ (done: the one

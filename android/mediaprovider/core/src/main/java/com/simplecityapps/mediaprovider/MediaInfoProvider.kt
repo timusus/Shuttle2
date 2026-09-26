@@ -1,7 +1,9 @@
 package com.simplecityapps.mediaprovider
 
 import android.net.Uri
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import dagger.MapKey
 import java.io.File
 
 data class MediaInfo(val path: Uri, val mimeType: String, val isRemote: Boolean)
@@ -34,6 +36,14 @@ interface MediaInfoProvider {
     ): Uri?
 }
 
+/**
+ * Keys a remote provider's [MediaInfoProvider] binding by the provider it resolves songs for. Each provider module
+ * contributes its own entry (`@IntoMap`), so a module that needs every provider's resolver (playback) asks for the map
+ * rather than depending on the provider modules.
+ */
+@MapKey
+annotation class MediaProviderTypeKey(val value: MediaProviderType)
+
 /** Whether a song from a remote server may be streamed. Asked once per song, when its stream is resolved. */
 fun interface ServerStreamPolicy {
     suspend fun allows(song: Song): Boolean
@@ -53,17 +63,9 @@ class ServerStreamDeniedException(song: Song) : IllegalStateException("Streaming
  * goes through the same check. A refusal throws [ServerStreamDeniedException].
  */
 class AggregateMediaInfoProvider(
-    val providers: MutableSet<MediaInfoProvider> = mutableSetOf(),
+    private val providers: Collection<MediaInfoProvider> = emptyList(),
     private val streamPolicy: ServerStreamPolicy = ServerStreamPolicy.AllowAll
 ) : MediaInfoProvider {
-    fun addProvider(provider: MediaInfoProvider) {
-        providers.add(provider)
-    }
-
-    fun removeProvider(provider: MediaInfoProvider) {
-        providers.remove(provider)
-    }
-
     override fun handles(uri: Uri): Boolean = true
 
     override suspend fun getMediaInfo(

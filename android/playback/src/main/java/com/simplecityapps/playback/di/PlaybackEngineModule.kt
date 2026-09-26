@@ -8,6 +8,7 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.tracing.trace
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
+import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.ServerStreamPolicy
 import com.simplecityapps.playback.AppPlayer
 import com.simplecityapps.playback.AudioEffectSessionManager
@@ -28,10 +29,8 @@ import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
-import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
-import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
-import com.simplecityapps.provider.plex.PlexMediaInfoProvider
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.model.MediaProviderType
 import dagger.Lazy
 import dagger.Module
 import dagger.Provides
@@ -69,19 +68,11 @@ class PlaybackEngineModule {
 
     @Singleton
     @Provides
-    fun provideAggregateMediaPathProvider(
-        embyMediaPathProvider: EmbyMediaInfoProvider,
-        jellyfinMediaPathProvider: JellyfinMediaInfoProvider,
-        plexMediaPathProvider: PlexMediaInfoProvider,
+    fun provideAggregateMediaInfoProvider(
+        // Each remote provider module contributes its own entry (see MediaProviderTypeKey)
+        providers: Map<MediaProviderType, @JvmSuppressWildcards MediaInfoProvider>,
         serverStreamPolicy: ServerStreamPolicy
-    ): AggregateMediaInfoProvider = AggregateMediaInfoProvider(
-        mutableSetOf(
-            embyMediaPathProvider,
-            jellyfinMediaPathProvider,
-            plexMediaPathProvider
-        ),
-        serverStreamPolicy
-    )
+    ): AggregateMediaInfoProvider = AggregateMediaInfoProvider(providers.values, serverStreamPolicy)
 
     @Singleton
     @Provides

@@ -1,5 +1,2 @@
 # Project dependencies the module layer rules forbid (VerifyModuleLayers, ModuleLayers in buildSrc)
 # Baseline of existing violations (#443). Only remove lines; see docs/architecture/layering.md.
-:android:playback -> :android:mediaprovider:emby
-:android:playback -> :android:mediaprovider:jellyfin
-:android:playback -> :android:mediaprovider:plex
