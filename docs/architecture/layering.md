@@ -40,7 +40,7 @@ data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:p
 | `:android:mediaprovider:local` | Room DB, DAOs, entities, `Local*Repository`, MediaStore/TagLib | Data |
 | `:android:mediaprovider:{jellyfin,emby,plex}` | HTTP services, DTOs, auth, providers | Data |
 | `:android:playback` | Media3 engine, `PlaybackManager`, `QueueManager`, Cast, session; **depends on the three remote provider modules** (only `di/PlaybackEngineModule.kt` imports them) | Data; its operations interfaces move to domain (step 5); provider edges removed (step 2) |
-| `:android:imageloader` | Glide loaders; **depends on `:emby`, `:jellyfin`** (no imports of them found) | Data (platform adapter); edges removed (step 2) |
+| `:android:imageloader` | Glide loaders; its unused `:emby`/`:jellyfin` edges are gone | Data (platform adapter) |
 | `:android:downloads`, `:android:networking`, `:android:saf`, `:android:trial`, `:android:remote-config` | Platform services | Data |
 | `:android:core` | Shared utilities, settings, DI qualifiers | Cross-cutting |
 | `:android:designsystem` | Compose components, theme | Presentation (no domain or data deps) |
@@ -56,19 +56,45 @@ data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:p
 | presentation (`:ui`, `:designsystem`) | yes | **no** | yes | yes |
 | composition root (`:android:app`) | yes | yes (to aggregate Hilt modules) | yes | yes |
 
-Forbidden edges today: `playback → mediaprovider:{jellyfin,emby,plex}` and
-`imageloader → mediaprovider:{jellyfin,emby}`. Data modules must not depend on sibling provider
+Forbidden edges today: `playback → mediaprovider:{jellyfin,emby,plex}` (baselined, see below).
+Data modules must not depend on sibling provider
 implementations; a data module that needs "the right provider" asks for a domain interface map
 bound by each provider (`@IntoMap` keyed by `MediaProviderType`).
 
 ## How Gradle enforces it
 
-**Chosen: a `buildSrc` task, `VerifyModuleLayers`, wired into every module's `check`.** A single
-map in `buildSrc` assigns each project path to a layer; the task reads the project dependencies
-declared on the module's production configurations (`api`, `implementation`, `compileOnly`,
-`runtimeOnly` and their variant forms, not `test*`/`androidTest*`) and fails on any edge the table
-above forbids, with a short allowlist for today's forbidden edges that only shrinks (the same
-ratchet as the Konsist baselines).
+**Done: a `buildSrc` task, `VerifyModuleLayers`, wired into every module's `check`.** A single
+map in `buildSrc` (`ModuleLayers.table`) assigns each project path to a layer; the root
+`verifyModuleLayers` task reads the project dependencies declared on every module's production
+configurations (`api`, `implementation`, `compileOnly`, `runtimeOnly` and their variant forms, not
+`test*`/`androidTest*`) and fails on any edge the table above forbids, with a baseline for today's
+forbidden edges that only shrinks (the same ratchet as the Konsist baselines).
+
+| Layer | Modules | May depend on |
+|---|---|---|
+| core | `core` | nothing of ours |
+| domain | `data` (becomes `domain`) | core |
+| data | `mediaprovider:core`, `downloads`, `imageloader`, `networking`, `playback`, `remote-config`, `saf`, `trial` | core, domain, data |
+| provider | `mediaprovider:{local,jellyfin,emby,plex}` | core, domain, data (never another provider) |
+| presentation | `designsystem` | core, domain, presentation, fixtures |
+| composition root | `app` | everything but tooling |
+| fixtures | `fixtures` | core, domain |
+| tooling | `architecture-tests` | nothing of ours |
+
+Provider implementations are their own layer so "never to a sibling provider" is a layer rule:
+only the composition root may depend on one. Data → data stays open for the platform adapters and
+`mediaprovider:core`.
+
+- Run it: `./gradlew verifyModuleLayers`. It also runs from every module's `check` and before
+  `:android:architecture-tests:test`/`testDebugUnitTest`, so the project-wide unit test sweep (and
+  CI) gates on it.
+- It fails on a forbidden edge not in the baseline, on a baseline edge that no longer occurs, and on
+  a module missing from `ModuleLayers.table`. The message names each edge, its configurations and
+  the layers involved.
+- Baseline: `android/architecture-tests/src/test/baselines/module-layers.txt`, one `:from -> :to`
+  per line. `-PupdateArchitectureBaselines` rewrites it along with the Konsist baselines.
+- The rule engine (`ModuleLayerRules`) is pure and unit-tested in `buildSrc/src/test`; those tests
+  run whenever `buildSrc` changes, before the main build configures.
 
 Why this over the alternatives:
 
@@ -108,9 +134,11 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
 1. **After #381 lands**: trim the Konsist baselines (`-PupdateArchitectureBaselines`), delete the
    now-orphaned legacy code found by the audit, and delete `:android:recyclerview-adapter` if #381
    has not.
-2. **Guard the graph**: add `VerifyModuleLayers` with the layer map and an allowlist of the two
-   forbidden edge groups. Remove them: provider `MediaInfoProvider` bindings move to the provider
-   modules; drop `imageloader`'s unused provider dependencies. Allowlist ends empty.
+2. **Guard the graph**: ~~add `VerifyModuleLayers` with the layer map and an allowlist~~ (done;
+   `imageloader`'s unused provider dependencies are gone too). Remaining: the baselined edges
+   `:android:playback -> :android:mediaprovider:{emby,jellyfin,plex}`. Move the provider
+   `MediaInfoProvider` bindings to the provider modules as `@IntoMap` entries, drop the three
+   edges, and delete the baseline lines. Baseline ends empty.
 3. **Domain models**: remove `Parcelable`/`@Parcelize` from the models (navigation keys are already
    `@Serializable` ids, never models; any `rememberSaveable` of a model switches to an id), then
    convert `:android:data` to a JVM module and rename it `:android:domain`.

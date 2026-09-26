@@ -278,7 +278,8 @@ should be removals only.
   - Use cases: `ui/actions/AddToPlaylist.kt` and `RemoveFromPlaylist.kt`.
 - **H. Playback and graph guard** (layering step 2).
   - Files: `playback/di/PlaybackEngineModule.kt`, the provider `di/` modules gaining `@IntoMap`
-    bindings, `playback/build.gradle*`, a new `buildSrc` `VerifyModuleLayers`.
+    bindings, `playback/build.gradle*`. The `buildSrc` `VerifyModuleLayers` guard is done; its
+    baseline (`module-layers.txt`) holds the three playback → provider edges this batch removes.
   - Also `runBlocking` in `chromecast/HttpServer.kt` and `engine/SongUriResolver.kt`.
   - H can run in wave 1 if G has already dropped the imageloader edges.
 
