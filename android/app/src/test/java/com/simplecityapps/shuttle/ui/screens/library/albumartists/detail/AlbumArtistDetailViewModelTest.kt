@@ -11,10 +11,12 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.testing.MainDispatcherRule
+import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -40,6 +42,8 @@ class AlbumArtistDetailViewModelTest {
     private val fakeSongRepository = FakeSongRepository()
     private val fakePlaylistRepository = FakePlaylistRepository()
     private val fakeQueueManager = FakeQueueManager()
+    private val shuffleQueueManager = FakeQueueManager()
+    private val shufflePlaybackManager = FakePlaybackManager()
 
     private val testArtist = createAlbumArtist(name = "The Tin Orchards", albumCount = 2, songCount = 2)
 
@@ -79,6 +83,35 @@ class AlbumArtistDetailViewModelTest {
         viewModel.uiState.value.expandedAlbums shouldBe setOf(albumARescanned.groupKey)
     }
 
+    @Test
+    fun `shuffle albums plays every album in turn, each in track order`() = runTest {
+        val cassette = listOf(1, 2, 3).map { createSong(id = it.toLong(), name = "Cassette $it", albumArtist = "The Tin Orchards", album = "Cassette Summer", track = it) }
+        val change = listOf(1, 2).map { createSong(id = 10L + it, name = "Change $it", albumArtist = "The Tin Orchards", album = "Loose Change", track = it) }
+        fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
+        fakeAlbumRepository.setAlbums(
+            listOf(
+                createAlbum(name = "Cassette Summer", albumArtist = "The Tin Orchards", year = 1969),
+                createAlbum(name = "Loose Change", albumArtist = "The Tin Orchards", year = 1970),
+            )
+        )
+        fakeSongRepository.setSongs(cassette + change)
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.onShuffleAlbums()
+        advanceUntilIdle()
+
+        val queue = shuffleQueueManager.lastSetQueue.orEmpty()
+        queue.chunkedByAlbum() shouldBeIn listOf(listOf(cassette, change), listOf(change, cassette))
+        shufflePlaybackManager.calls shouldBe listOf("play()")
+    }
+
+    private fun List<Song>.chunkedByAlbum(): List<List<Song>> = fold(mutableListOf<MutableList<Song>>()) { runs, song ->
+        if (runs.lastOrNull()?.last()?.album == song.album) runs.last() += song else runs += mutableListOf(song)
+        runs
+    }
+
     private fun createViewModel(): AlbumArtistDetailViewModel {
         val testMediaActions = TestMediaActions(
             fakeSongRepository,
@@ -97,7 +130,7 @@ class AlbumArtistDetailViewModelTest {
             queueManager = fakeQueueManager,
             playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
             shuffleSongs = ShuffleSongs(FakePlaybackManager()),
-            shuffleAlbums = ShuffleAlbums(FakeQueueManager(), FakePlaybackManager()),
+            shuffleAlbums = ShuffleAlbums(shuffleQueueManager, shufflePlaybackManager),
             addToPlaylistUseCase = testMediaActions.addToPlaylist,
             resolveSongs = testMediaActions.resolveSongs,
             enqueueSongs = testMediaActions.enqueueSongs,

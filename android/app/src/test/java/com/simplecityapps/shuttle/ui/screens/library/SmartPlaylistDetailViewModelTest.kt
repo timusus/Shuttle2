@@ -7,6 +7,9 @@ import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -59,6 +62,24 @@ class SmartPlaylistDetailViewModelTest {
         val state = viewModel.uiState.value
         state.smartPlaylist?.nameResId shouldBe MediaProviderR.string.playlist_title_history
         state.songs.map { it.name } shouldBe listOf("Just now", "Yesterday", "Last week")
+    }
+
+    @Test
+    fun `recently added lists the songs from the last two weeks, newest first`() = runTest {
+        val now = Clock.System.now()
+        songRepository.setSongs(
+            listOf(
+                createSong(id = 1, name = "Last week").copy(lastModified = now - 7.days),
+                createSong(id = 2, name = "Last month").copy(lastModified = now - 30.days),
+                createSong(id = 3, name = "Today").copy(lastModified = now - 1.hours),
+            )
+        )
+
+        val viewModel = viewModel(SmartPlaylistId.RecentlyAdded.id)
+
+        val state = viewModel.uiState.value
+        state.smartPlaylist?.nameResId shouldBe MediaProviderR.string.playlist_title_recently_added
+        state.songs.map { it.name } shouldBe listOf("Today", "Last week")
     }
 
     @Test

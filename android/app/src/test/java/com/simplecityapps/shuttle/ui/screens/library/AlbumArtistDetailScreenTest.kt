@@ -71,6 +71,15 @@ class AlbumArtistDetailScreenTest {
     }
 
     @Test
+    fun `Shuffle shuffles every song by the artist`() {
+        robot.setAlbumArtist(readyAlbumArtistDetail())
+
+        robot.clickShuffle()
+
+        robot.shuffleClicked shouldBe true
+    }
+
+    @Test
     fun `while loading there is no Play button`() {
         robot.setAlbumArtist(loadingAlbumArtistDetail)
 
