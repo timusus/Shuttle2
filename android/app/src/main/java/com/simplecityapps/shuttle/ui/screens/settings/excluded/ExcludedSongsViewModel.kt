@@ -2,12 +2,12 @@ package com.simplecityapps.shuttle.ui.screens.settings.excluded
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,14 +24,14 @@ data class ExcludedSongsUiState(
 /** The songs hidden from the library, and the way back in for each. */
 @HiltViewModel
 class ExcludedSongsViewModel @Inject constructor(
-    private val songRepository: SongRepository,
+    observeSongs: ObserveSongs,
     private val mediaActionHandler: MediaActionHandler
 ) : ViewModel() {
-    val uiState: StateFlow<ExcludedSongsUiState> = songRepository.getSongs(SongQuery.All(includeExcluded = true))
+    val uiState: StateFlow<ExcludedSongsUiState> = observeSongs(SongQuery.All(includeExcluded = true))
         .map { songs ->
             ExcludedSongsUiState(
-                songs = songs.orEmpty().filter { it.blacklisted }.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name.orEmpty() }),
-                loading = songs == null
+                songs = songs.filter { it.blacklisted }.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name.orEmpty() }),
+                loading = false
             )
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExcludedSongsUiState())

@@ -2,6 +2,5 @@
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
 com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel -> com.simplecityapps.shuttle.ui.screens.settings.about.LicencesRepository
 com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewViewModel -> com.simplecityapps.shuttle.ui.screens.settings.about.ChangelogRepository
-com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsViewModel -> com.simplecityapps.mediaprovider.repository.songs.SongRepository
 com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel -> com.simplecityapps.mediaprovider.repository.songs.SongRepository
 com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorViewModel -> com.simplecityapps.mediaprovider.repository.songs.SongRepository
