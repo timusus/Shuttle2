@@ -3,11 +3,11 @@ package com.simplecityapps.shuttle.ui.screens.songinfo
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -28,15 +28,15 @@ data class SongInfoUiState(
 @HiltViewModel(assistedFactory = SongInfoViewModel.Factory::class)
 class SongInfoViewModel @AssistedInject constructor(
     @Assisted songId: Long,
-    songRepository: SongRepository,
+    observeSongs: ObserveSongs,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
         fun create(songId: Long): SongInfoViewModel
     }
 
-    val uiState: StateFlow<SongInfoUiState> = songRepository.getSongs(SongQuery.SongIds(listOf(songId)))
-        .map { songs -> SongInfoUiState(song = songs?.firstOrNull(), loading = songs == null) }
+    val uiState: StateFlow<SongInfoUiState> = observeSongs(SongQuery.SongIds(listOf(songId)))
+        .map { songs -> SongInfoUiState(song = songs.firstOrNull(), loading = false) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SongInfoUiState())
 }
 
