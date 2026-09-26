@@ -1,12 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
-import android.content.Context
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakeQueueOperations
+import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
@@ -19,7 +19,6 @@ import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
-import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.testing.MainDispatcherRule
@@ -36,17 +35,12 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class HomeViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
 
-    private val context: Context = RuntimeEnvironment.getApplication()
     private lateinit var preferenceManager: GeneralPreferenceManager
     private lateinit var settingsStore: SettingsStore
     private lateinit var analyticsConsentSettings: AnalyticsConsentSettings
@@ -66,10 +60,9 @@ class HomeViewModelTest {
 
     @Before
     fun setUp() {
-        preferenceManager = GeneralPreferenceManager(context.getSharedPreferences("home-test", Context.MODE_PRIVATE).apply { edit().clear().commit() })
+        preferenceManager = GeneralPreferenceManager(FakeSharedPreferences())
         preferenceManager.lastViewedChangelogVersion = BuildConfig.VERSION_NAME
-        val prefs = context.defaultSharedPreferences().apply { edit().clear().commit() }
-        settingsStore = SettingsStore(prefs)
+        settingsStore = SettingsStore(FakeSharedPreferences())
         analyticsConsentSettings = AnalyticsConsentSettings(settingsStore)
     }
 

@@ -7,6 +7,7 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
+import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.fakes.FakeSongDownloadRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.PlaybackProgress
@@ -30,7 +31,6 @@ import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
-import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
@@ -58,19 +58,15 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class PlayerViewModelTest {
 
     private val playbackOperations = FakePlaybackOperations()
     private val queueOperations = FakeQueueOperations()
     private var savedNowPlaying: NowPlayingSnapshot? = null
     private val playlistRepository = FakePlaylistRepository()
-    private val preferences = RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }
+    private val preferences = FakeSharedPreferences()
     private val settingsStore = SettingsStore(preferences)
     private val preferenceManager = GeneralPreferenceManager(preferences)
     private val settingsEffects = FakeSettingsEffects()

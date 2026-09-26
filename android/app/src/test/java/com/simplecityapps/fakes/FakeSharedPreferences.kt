@@ -2,8 +2,14 @@ package com.simplecityapps.fakes
 
 import android.content.SharedPreferences
 
+/**
+ * In-memory [SharedPreferences], notifying listeners on [Editor.apply]/[Editor.commit] the way the real
+ * (and Robolectric) implementations do — [com.simplecityapps.shuttle.settings.Preference.flow] depends on
+ * that to observe changes made after its first read.
+ */
 class FakeSharedPreferences : SharedPreferences {
     private val values = mutableMapOf<String, Any?>()
+    private val listeners = mutableSetOf<SharedPreferences.OnSharedPreferenceChangeListener>()
 
     override fun getAll(): Map<String, *> = values
 
@@ -24,29 +30,47 @@ class FakeSharedPreferences : SharedPreferences {
 
     override fun edit(): SharedPreferences.Editor = Editor()
 
-    override fun registerOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {}
+    override fun registerOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        listeners += listener
+    }
 
-    override fun unregisterOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {}
+    override fun unregisterOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        listeners -= listener
+    }
 
     private inner class Editor : SharedPreferences.Editor {
-        override fun putString(key: String, value: String?) = apply { values[key] = value }
+        private val pending = mutableMapOf<String, Any?>()
+        private val toRemove = mutableSetOf<String>()
+        private var cleared = false
 
-        override fun putStringSet(key: String, values: Set<String>?) = apply { this@FakeSharedPreferences.values[key] = values }
+        override fun putString(key: String, value: String?) = apply { pending[key] = value }
 
-        override fun putInt(key: String, value: Int) = apply { values[key] = value }
+        override fun putStringSet(key: String, values: Set<String>?) = apply { pending[key] = values }
 
-        override fun putLong(key: String, value: Long) = apply { values[key] = value }
+        override fun putInt(key: String, value: Int) = apply { pending[key] = value }
 
-        override fun putFloat(key: String, value: Float) = apply { values[key] = value }
+        override fun putLong(key: String, value: Long) = apply { pending[key] = value }
 
-        override fun putBoolean(key: String, value: Boolean) = apply { values[key] = value }
+        override fun putFloat(key: String, value: Float) = apply { pending[key] = value }
 
-        override fun remove(key: String) = apply { values.remove(key) }
+        override fun putBoolean(key: String, value: Boolean) = apply { pending[key] = value }
 
-        override fun clear() = apply { values.clear() }
+        override fun remove(key: String) = apply { toRemove += key }
 
-        override fun commit(): Boolean = true
+        override fun clear() = apply { cleared = true }
 
-        override fun apply() {}
+        override fun commit(): Boolean {
+            apply()
+            return true
+        }
+
+        override fun apply() {
+            if (cleared) values.clear()
+            toRemove.forEach { values.remove(it) }
+            values.putAll(pending)
+
+            val changedKeys = if (cleared) setOf<String?>(null) else (toRemove + pending.keys)
+            changedKeys.forEach { key -> listeners.forEach { it.onSharedPreferenceChanged(this@FakeSharedPreferences, key) } }
+        }
     }
 }

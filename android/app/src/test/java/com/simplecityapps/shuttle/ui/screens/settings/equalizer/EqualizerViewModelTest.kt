@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings.equalizer
 
 import android.content.SharedPreferences
+import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -9,7 +10,6 @@ import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
-import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.testing.MainDispatcherRule
 import com.squareup.moshi.Moshi
 import io.kotest.matchers.shouldBe
@@ -19,16 +19,12 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
-@RunWith(RobolectricTestRunner::class)
 class EqualizerViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val prefs: SharedPreferences = RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }
+    private val prefs: SharedPreferences = FakeSharedPreferences()
     private val store = SettingsStore(prefs)
     private val playbackSettings = PlaybackSettings(store)
     private val preferenceManager = PlaybackPreferenceManager(prefs, Moshi.Builder().build())

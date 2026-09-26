@@ -8,6 +8,7 @@ import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
+import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueState
@@ -17,7 +18,6 @@ import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
-import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
@@ -29,13 +29,9 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 /** Direct ViewModel state tests, replacing the deleted AlbumDetail integration tests (#478). */
 @ExperimentalCoroutinesApi
-@RunWith(RobolectricTestRunner::class)
 class AlbumDetailViewModelTest {
 
     @get:Rule
@@ -46,7 +42,7 @@ class AlbumDetailViewModelTest {
         seededAlbums += song.album
         ArtworkSeed.Available(Color.Red)
     }
-    private val settingsStore = SettingsStore(RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() })
+    private val settingsStore = SettingsStore(FakeSharedPreferences())
 
     private val fakeSongRepository = FakeSongRepository()
     private val fakeAlbumRepository = FakeAlbumRepository()

@@ -1,18 +1,14 @@
 package com.simplecityapps.shuttle.ui.shell
 
+import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
-import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import io.kotest.matchers.shouldBe
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
-@RunWith(RobolectricTestRunner::class)
 class ShellViewModelTest {
-    private val store = SettingsStore(RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() })
+    private val store = SettingsStore(FakeSharedPreferences())
     private val settings = AppearanceSettings(store)
 
     @Test

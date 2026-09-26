@@ -1,10 +1,10 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import com.simplecityapps.fakes.FakeMediaSources
+import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.settings.SettingsStore
-import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccessCoordinator
@@ -19,9 +19,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 /**
  * [LibraryEmptyViewModel] itself just forwards to [MusicAccessCoordinator] (#427); permission and scan-once
@@ -29,7 +26,6 @@ import org.robolectric.RuntimeEnvironment
  * for Home, one for Library — share that coordinator's state instead of tracking it separately.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class LibraryEmptyViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -37,7 +33,7 @@ class LibraryEmptyViewModelTest {
     private val songRepository = FakeSongRepository()
     private val importState = FakeSongImportStateProvider()
     private val mediaSources = FakeMediaSources()
-    private val settings = SourcesSettings(SettingsStore(RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }))
+    private val settings = SourcesSettings(SettingsStore(FakeSharedPreferences()))
 
     private fun TestScope.musicAccess() = MusicAccessCoordinator(ObserveSongs(songRepository), importState, mediaSources, settings, CoroutineScope(UnconfinedTestDispatcher(testScheduler)))
 

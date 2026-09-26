@@ -1,12 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.search
 
-import android.content.Context
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
+import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -24,17 +24,12 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class SearchViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
 
-    private val context: Context = RuntimeEnvironment.getApplication()
     private lateinit var preferenceManager: GeneralPreferenceManager
     private val songs = FakeSongRepository()
     private val albums = FakeAlbumRepository()
@@ -44,7 +39,7 @@ class SearchViewModelTest {
 
     @Before
     fun setUp() {
-        preferenceManager = GeneralPreferenceManager(context.getSharedPreferences("search-test", Context.MODE_PRIVATE).apply { edit().clear().commit() })
+        preferenceManager = GeneralPreferenceManager(FakeSharedPreferences())
         songs.setSongs(listOf(chlorophyllLoop, petalArithmetic))
         albums.setAlbums(listOf(createAlbum("Phase Garden", "Juniper Static")))
     }

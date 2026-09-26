@@ -1,20 +1,14 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
+import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import io.kotest.matchers.shouldBe
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
 class LibraryViewModelTest {
 
-    private val preferences = GeneralPreferenceManager(
-        ApplicationProvider.getApplicationContext<Context>().getSharedPreferences("library-test", Context.MODE_PRIVATE),
-    )
+    private val preferences = GeneralPreferenceManager(FakeSharedPreferences())
 
     private fun viewModel() = LibraryViewModel(ReadLibraryTabs(preferences), SaveLibraryTabs(preferences), SaveCurrentLibraryTab(preferences))
 
