@@ -43,6 +43,8 @@ data class SongData(
     @ColumnInfo(name = "bitDepth") var bitDepth: Int?,
     @ColumnInfo(name = "sampleRate") var sampleRate: Int?,
     @ColumnInfo(name = "channelCount") var channelCount: Int?,
+    // The source audio codec, when the provider's metadata carries one. See [Song.audioCodec].
+    @ColumnInfo(name = "audioCodec") var audioCodec: String? = null,
     @ColumnInfo(name = "artworkVersion") var artworkVersion: String? = null,
     // Written only on insert ([SongDataUpdate] leaves it out), so it survives rescans and tag edits. Nullable only so
     // the migration to version 45 could add it without a default: every row has one, backfilled from lastModified.
@@ -84,6 +86,7 @@ fun Song.toSongData(mediaProviderType: MediaProviderType): SongData = SongData(
     bitDepth = bitDepth,
     sampleRate = sampleRate,
     channelCount = channelCount,
+    audioCodec = audioCodec,
     artworkVersion = artworkVersion,
     dateAdded = dateAddedOnInsert(),
     favouritedAt = favouritedAt?.let { Date(it.toEpochMilliseconds()) }

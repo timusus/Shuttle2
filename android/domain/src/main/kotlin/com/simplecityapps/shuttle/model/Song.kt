@@ -33,6 +33,10 @@ data class Song(
     val bitDepth: Int?,
     val sampleRate: Int?,
     val channelCount: Int?,
+    // The source audio codec (e.g. "alac", "flac"), when the provider's metadata carries one; null when it
+    // doesn't (Jellyfin, Emby) or is unknown. Distinct from mimeType/container: a codec the player can't
+    // decode can still sit inside an otherwise-playable container, e.g. ALAC in an .m4a.
+    val audioCodec: String? = null,
     // Opaque token from the song's provider that changes whenever its artwork does; null when the
     // provider has none. Artwork cache keys include it, so art refreshes on the next sync after a change.
     val artworkVersion: String? = null,

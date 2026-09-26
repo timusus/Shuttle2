@@ -223,6 +223,7 @@ fun SongData.toSong(): Song = Song(
     bitDepth = bitDepth,
     sampleRate = sampleRate,
     channelCount = channelCount,
+    audioCodec = audioCodec,
     artworkVersion = artworkVersion,
     dateAdded = dateAdded?.let { Instant.fromEpochMilliseconds(it.time) },
     favouritedAt = favouritedAt?.let { Instant.fromEpochMilliseconds(it.time) }
