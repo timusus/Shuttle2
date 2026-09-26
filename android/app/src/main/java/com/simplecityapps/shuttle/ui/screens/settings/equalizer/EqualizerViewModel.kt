@@ -49,12 +49,17 @@ class EqualizerViewModel @Inject constructor(
     private val preset = MutableStateFlow(equalizerAudioProcessor.preset)
     private val bands = MutableStateFlow(equalizerAudioProcessor.preset.bandStates())
 
-    val uiState: StateFlow<EqualizerUiState> = combine(observeSetting(PlaybackSettings.EqualizerEnabled), preset, bands) { enabled, preset, bands ->
+    val uiState: StateFlow<EqualizerUiState> = combine(
+        observeSetting(PlaybackSettings.EqualizerEnabled),
+        preset,
+        bands,
+        equalizerAudioProcessor.outputSampleRateHz
+    ) { enabled, preset, bands, outputSampleRateHz ->
         EqualizerUiState(
             enabled = enabled,
             selectedPreset = preset,
             bands = bands,
-            frequencyResponse = computeFrequencyResponse(bands, equalizerAudioProcessor.outputSampleRateHz)
+            frequencyResponse = computeFrequencyResponse(bands, outputSampleRateHz)
         )
     }.stateIn(
         scope = viewModelScope,
@@ -63,7 +68,7 @@ class EqualizerViewModel @Inject constructor(
             enabled = readSetting(PlaybackSettings.EqualizerEnabled),
             selectedPreset = preset.value,
             bands = bands.value,
-            frequencyResponse = computeFrequencyResponse(bands.value, equalizerAudioProcessor.outputSampleRateHz)
+            frequencyResponse = computeFrequencyResponse(bands.value, equalizerAudioProcessor.outputSampleRateHz.value)
         )
     )
 

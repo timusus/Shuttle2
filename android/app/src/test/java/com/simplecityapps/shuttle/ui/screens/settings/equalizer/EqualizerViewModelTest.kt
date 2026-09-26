@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.settings.equalizer
 
 import android.content.SharedPreferences
+import androidx.media3.common.C
+import androidx.media3.common.audio.AudioProcessor
 import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
@@ -13,6 +15,7 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.testing.MainDispatcherRule
 import com.squareup.moshi.Moshi
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -104,6 +107,18 @@ class EqualizerViewModelTest {
 
         preferenceManager.preset shouldBe Equalizer.Presets.custom
         preferenceManager.customPresetBands!!.first { it.centerFrequency == 63 }.gain shouldBe -3.0
+    }
+
+    @Test
+    fun `frequency response updates when the processor's output sample rate changes`() = runTest(mainDispatcherRule.testDispatcher) {
+        val viewModel = collectedViewModel()
+        viewModel.onPresetSelect(Equalizer.Presets.bassBoost)
+        val beforeConfigure = viewModel.uiState.value.frequencyResponse
+
+        processor.configure(AudioProcessor.AudioFormat(44_100, 2, C.ENCODING_PCM_16BIT))
+        processor.flush(AudioProcessor.StreamMetadata.DEFAULT)
+
+        viewModel.uiState.value.frequencyResponse shouldNotBe beforeConfigure
     }
 
     @Test

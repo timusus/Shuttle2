@@ -13,6 +13,9 @@ import com.simplecityapps.playback.dsp.equalizer.toNyquistBand
 import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
 import java.nio.ByteBuffer
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import timber.log.Timber
 
 /**
@@ -21,7 +24,8 @@ import timber.log.Timber
  * [enabled] and [preset] are set on the main thread and read on the playback thread. Each change
  * publishes one immutable [Settings] snapshot through a volatile field, so the audio thread sees a
  * change whole, and picks it up from its next buffer. The band filters are built from the snapshot
- * on the playback thread and only ever touched there.
+ * on the playback thread and only ever touched there. [outputSampleRateHz] carries state the other
+ * way: the playback thread publishes it through a [StateFlow] for the main thread to read.
  */
 class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
     /** What the audio thread applies. [bands] are copies: the custom preset's bands are edited in place. */
@@ -87,9 +91,11 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
     internal var attenuation: Float = 1f
         private set
 
-    /** The output sample rate the processor is currently configured for, or null before the first [onConfigure]/[onFlush]. */
-    val outputSampleRateHz: Int?
-        get() = outputAudioFormat.sampleRate.takeIf { it > 0 }
+    /** Set on the playback thread wherever the output format is committed ([onFlush], [onReset]); read from the main thread. */
+    private val _outputSampleRateHz = MutableStateFlow<Int?>(null)
+
+    /** The output sample rate the processor is currently configured for, or null before the first [onFlush]. */
+    val outputSampleRateHz: StateFlow<Int?> = _outputSampleRateHz.asStateFlow()
 
     private fun updateBandProcessors(bands: List<EqualizerBand>) {
         if (outputAudioFormat.channelCount <= 0) {
@@ -138,6 +144,8 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
     override fun onFlush(streamMetadata: AudioProcessor.StreamMetadata) {
         super.onFlush(streamMetadata)
 
+        _outputSampleRateHz.value = outputAudioFormat.sampleRate.takeIf { it > 0 }
+
         if (!endedSinceFlush || outputAudioFormat != filteredFormat) {
             updateBandProcessors(settings.bands)
         }
@@ -151,6 +159,7 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
         endedSinceFlush = false
         bandProcessors = emptyList()
         attenuation = 1f
+        _outputSampleRateHz.value = null
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
