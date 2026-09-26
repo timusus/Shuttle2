@@ -88,6 +88,7 @@ class UiModuleRules {
             ":android:networking",
             ":android:playback",
             ":android:saf",
+            ":android:scrobbling",
             ":android:trial",
             ":android:mediaprovider:local",
             ":android:mediaprovider:jellyfin",

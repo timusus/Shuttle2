@@ -40,6 +40,7 @@ object ModuleLayers {
         ":android:networking" to ModuleLayer.DATA,
         ":android:playback" to ModuleLayer.DATA,
         ":android:saf" to ModuleLayer.DATA,
+        ":android:scrobbling" to ModuleLayer.DATA,
         ":android:trial" to ModuleLayer.DATA,
         ":android:mediaprovider:local" to ModuleLayer.PROVIDER,
         ":android:mediaprovider:jellyfin" to ModuleLayer.PROVIDER,
