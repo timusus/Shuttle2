@@ -113,7 +113,16 @@ class LibraryScreenshotTest {
         library.setContent(
             libraryState(currentTab = LibraryTab.Playlists),
             chromeWithMenu(subtitle = "${playlists.size} playlists"),
-            LibraryPageStates(playlists = readyPlaylistList(playlists, smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist })),
+            LibraryPageStates(
+                playlists = readyPlaylistList(
+                    playlists,
+                    smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist },
+                    favoritesPlaylist = playlists.first().copy(id = 99, name = "Favorites"),
+                    covers = SampleLibrary.playlists.mapIndexed { index, playlist ->
+                        index + 1L to playlist.songs.map { it.toSong() }.distinctBy { it.albumGroupKey }.take(4)
+                    }.toMap(),
+                ),
+            ),
         )
         shot("phone-playlists")
     }

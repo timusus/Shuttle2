@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.CreatePlaylist
 import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.GetFavoritesPlaylist
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylistCovers
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
@@ -18,14 +19,19 @@ import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistId
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class PlaylistListViewModel @Inject constructor(
     observePlaylists: ObservePlaylists,
@@ -37,17 +43,23 @@ class PlaylistListViewModel @Inject constructor(
     readSetting: ReadLibraryViewSetting,
     private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider,
+    observePlaylistCovers: ObservePlaylistCovers,
 ) : ViewModel() {
 
     private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.PlaylistSort))
     private val favoritesPlaylist = flow { emit(getFavoritesPlaylist()) }
 
+    /** The playlists with their covers; the list shows first and the covers follow as they load. */
+    private val playlistsWithCovers = observePlaylists().flatMapLatest { playlists ->
+        observePlaylistCovers(playlists).map { covers -> playlists to covers }.onStart { emit(playlists to emptyMap()) }
+    }
+
     val uiState: StateFlow<PlaylistListUiState> = combine(
-        observePlaylists(),
+        playlistsWithCovers,
         mediaImportObserver.songImportState,
         _sortOrder,
         favoritesPlaylist,
-    ) { playlists, songImportState, sortOrder, favorites ->
+    ) { (playlists, covers), songImportState, sortOrder, favorites ->
         if (songImportState is SongImportState.ImportProgress) {
             PlaylistListUiState(
                 loadingState = PlaylistListUiState.LoadingState.Scanning,
@@ -59,6 +71,7 @@ class PlaylistListViewModel @Inject constructor(
                 playlists = playlists.filterNot { it.id == favorites.id }.sortedWith(sortOrder.comparator),
                 smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist },
                 favoritesPlaylist = favorites,
+                covers = covers,
                 sortOrder = sortOrder,
                 loadingState = PlaylistListUiState.LoadingState.Ready,
             )

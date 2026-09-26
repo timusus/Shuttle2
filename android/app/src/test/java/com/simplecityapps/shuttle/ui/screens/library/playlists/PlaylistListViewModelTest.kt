@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists
 
 import com.simplecityapps.createPlaylist
+import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSortPreferences
@@ -11,6 +12,7 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylistCovers
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistId
@@ -48,7 +50,22 @@ class PlaylistListViewModelTest {
         readSetting = ReadLibraryViewSetting(preferences),
         saveSetting = SaveLibraryViewSetting(preferences),
         mediaImportObserver = importState,
+        observePlaylistCovers = ObservePlaylistCovers(actions.observePlaylistSongs),
     )
+
+    @Test
+    fun `each playlist's covers are its first four songs from different albums (#491)`() = runTest {
+        val roadTrip = createPlaylist(id = 2, name = "Road trip")
+        val songs = listOf("A", "A", "B", "C", "D", "E").mapIndexed { i, album -> createSong(id = i.toLong(), album = album) }
+        playlistRepository.setPlaylists(listOf(roadTrip))
+        playlistRepository.setSongsForPlaylist(roadTrip, songs)
+
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.covers[roadTrip.id]?.map { it.album } shouldBe listOf("A", "B", "C", "D")
+    }
 
     @Test
     fun `Favorites is pinned separately from the user's playlists`() = runTest {

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -121,6 +122,38 @@ private fun <T> LibraryFastScroller(
             modifier = FastScrollerModifier,
             popup = if (thumbLabel == null) ::NoPopup else null,
         )
+    }
+}
+
+/** Each smart playlist's own placeholder, so the four don't share one icon (#491). */
+private val SmartPlaylist.placeholder: ArtworkPlaceholder
+    get() = when (SmartPlaylistId.of(this)) {
+        SmartPlaylistId.RecentlyAdded -> ArtworkPlaceholder.RecentlyAdded
+        SmartPlaylistId.MostPlayed -> ArtworkPlaceholder.MostPlayed
+        SmartPlaylistId.History -> ArtworkPlaceholder.History
+        null -> ArtworkPlaceholder.SmartPlaylist
+    }
+
+/** The gap between a playlist mosaic's covers. */
+private val MosaicGap = 2.dp
+
+/**
+ * A playlist's artwork from its [covers] (#491): a 2x2 mosaic of four albums' covers, the one cover of a playlist
+ * with fewer albums, or the playlist placeholder when it has no songs.
+ */
+@Composable
+private fun PlaylistMosaic(covers: List<Song>) {
+    if (covers.size < 4) {
+        LibraryArtwork(covers.firstOrNull(), ArtworkPlaceholder.Playlist)
+        return
+    }
+    val cell = (ArtworkSize.Medium.dp - MosaicGap) / 2
+    Column(Modifier.size(ArtworkSize.Medium.dp), verticalArrangement = Arrangement.spacedBy(MosaicGap)) {
+        covers.take(4).chunked(2).forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(MosaicGap)) {
+                pair.forEach { song -> LibraryArtwork(song, ArtworkPlaceholder.Album, Modifier.size(cell), size = ArtworkSize.Small) }
+            }
+        }
     }
 }
 
@@ -451,7 +484,7 @@ fun PlaylistsPage(
                             name = favorites.name,
                             summary = pluralString(R.plurals.songsPlural, favorites.songCount),
                             onClick = { onPlaylistClick(favorites) },
-                            artwork = { LibraryArtwork(null, ArtworkPlaceholder.SmartPlaylist) },
+                            artwork = { LibraryArtwork(null, ArtworkPlaceholder.Favorites) },
                         )
                     }
                 }
@@ -459,7 +492,7 @@ fun PlaylistsPage(
                     PlaylistRow(
                         name = stringResource(smartPlaylist.nameResId),
                         onClick = { onSmartPlaylistClick(smartPlaylist) },
-                        artwork = { LibraryArtwork(null, ArtworkPlaceholder.SmartPlaylist) },
+                        artwork = { LibraryArtwork(null, smartPlaylist.placeholder) },
                     )
                 }
                 item(key = "playlists-header") {
@@ -475,7 +508,7 @@ fun PlaylistsPage(
                         summary = pluralString(R.plurals.songsPlural, playlist.songCount),
                         onClick = { onPlaylistClick(playlist) },
                         onMore = { onPlaylistMore(playlist) },
-                        artwork = { LibraryArtwork(null, ArtworkPlaceholder.Playlist) },
+                        artwork = { PlaylistMosaic(state.covers[playlist.id].orEmpty()) },
                     )
                 }
             }

@@ -8,11 +8,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.rounded.Album
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -51,7 +55,10 @@ enum class ArtworkSize(val dp: Dp) {
  */
 enum class ArtworkShape { Rounded, Circle, Scalloped }
 
-/** What an artwork stands for, which picks the placeholder shown when there's no image. */
+/**
+ * What an artwork stands for, which picks the placeholder shown when there's no image. The smart playlists each have
+ * their own ([Favorites], [RecentlyAdded], [MostPlayed], [History]); [SmartPlaylist] is the generic one.
+ */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 enum class ArtworkPlaceholder(internal val icon: ImageVector, internal val polygon: RoundedPolygon) {
     Song(Icons.Rounded.MusicNote, MaterialShapes.Cookie9Sided),
@@ -59,6 +66,10 @@ enum class ArtworkPlaceholder(internal val icon: ImageVector, internal val polyg
     Artist(Icons.Rounded.Person, MaterialShapes.Flower),
     Playlist(Icons.AutoMirrored.Rounded.QueueMusic, MaterialShapes.Clover4Leaf),
     SmartPlaylist(Icons.Rounded.AutoAwesome, MaterialShapes.Sunny),
+    Favorites(Icons.Rounded.Favorite, MaterialShapes.Heart),
+    RecentlyAdded(Icons.Rounded.NewReleases, MaterialShapes.Sunny),
+    MostPlayed(Icons.AutoMirrored.Rounded.TrendingUp, MaterialShapes.SoftBurst),
+    History(Icons.Rounded.History, MaterialShapes.Cookie6Sided),
     Genre(Icons.Rounded.LibraryMusic, MaterialShapes.Pentagon),
     Folder(Icons.Rounded.Folder, MaterialShapes.Square),
 }
