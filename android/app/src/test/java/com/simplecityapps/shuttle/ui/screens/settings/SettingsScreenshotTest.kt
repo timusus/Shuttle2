@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onRoot
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.github.takahirom.roborazzi.roborazziSystemPropertyTaskType
+import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyResponse
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
@@ -125,7 +126,7 @@ class SettingsScreenshotTest {
                 enabled = true,
                 selectedPreset = preset,
                 bands = bands,
-                frequencyResponse = ComputeFrequencyResponse()(bands, outputSampleRateHz = null)
+                frequencyResponse = ComputeFrequencyResponse(DefaultEqualizerFrequencyResponse())(bands, outputSampleRateHz = null)
             ),
             onNavigateUp = {},
             onEnabledChange = {},

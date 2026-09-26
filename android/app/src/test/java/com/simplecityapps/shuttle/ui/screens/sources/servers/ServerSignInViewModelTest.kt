@@ -1,12 +1,10 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import com.simplecityapps.fakes.FakeServerAuthentication
+import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.testing.MainDispatcherRule
-import com.simplecityapps.trial.Entitlement
-import com.simplecityapps.trial.ProSource
 import io.kotest.matchers.shouldBe
-import kotlin.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +24,7 @@ class ServerSignInViewModelTest {
 
     private val server = FakeServerAuthentication()
     private val connected = mutableListOf<MediaProviderType>()
-    private val entitlement = MutableStateFlow<Entitlement>(Entitlement.Free(trialUsed = false))
+    private val needsPro = MutableStateFlow(false)
 
     private fun TestScope.viewModel(type: MediaProviderType = MediaProviderType.Jellyfin): ServerSignInViewModel {
         val servers = mapOf(type to server)
@@ -35,7 +33,7 @@ class ServerSignInViewModelTest {
             ReadServerLogin(servers),
             SignInToServer(servers, ServerSignInAnalytics { connected += it }),
             ForgetServerLogin(servers),
-            entitlement,
+            ObserveServerStreamingNeedsPro { needsPro },
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
         }
@@ -182,16 +180,13 @@ class ServerSignInViewModelTest {
 
     @Test
     fun `a Free user is shown the streaming disclosure`() = runTest {
-        entitlement.value = Entitlement.Free(trialUsed = false)
+        needsPro.value = true
         viewModel().uiState.value.showProDisclosure shouldBe true
     }
 
     @Test
     fun `a Trial or Pro user isn't shown the disclosure`() = runTest {
-        entitlement.value = Entitlement.Trial(Instant.DISTANT_FUTURE)
-        viewModel().uiState.value.showProDisclosure shouldBe false
-
-        entitlement.value = Entitlement.Pro(ProSource.Subscription)
+        needsPro.value = false
         viewModel().uiState.value.showProDisclosure shouldBe false
     }
 }

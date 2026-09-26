@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import androidx.media3.common.C
 import androidx.media3.common.audio.AudioProcessor
 import com.simplecityapps.fakes.FakeSharedPreferences
+import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyResponse
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -33,7 +34,7 @@ class EqualizerViewModelTest {
     private val preferenceManager = PlaybackPreferenceManager(prefs, Moshi.Builder().build())
     private val processor = EqualizerAudioProcessor(enabled = false).apply { preset = Equalizer.Presets.flat }
 
-    private fun viewModel() = EqualizerViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), SaveEqualizerPreset(preferenceManager), processor, ComputeFrequencyResponse())
+    private fun viewModel() = EqualizerViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), SaveEqualizerPreset(preferenceManager), processor, ComputeFrequencyResponse(DefaultEqualizerFrequencyResponse()))
 
     /** A view model whose state is being collected, as the screen would. */
     private fun TestScope.collectedViewModel() = viewModel().also { viewModel -> backgroundScope.launch { viewModel.uiState.collect {} } }

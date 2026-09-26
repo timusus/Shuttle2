@@ -2,10 +2,10 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
-import com.simplecityapps.trial.Entitlement
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -75,7 +75,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     readServerLogin: ReadServerLogin,
     private val signInToServer: SignInToServer,
     private val forgetServerLogin: ForgetServerLogin,
-    entitlement: @JvmSuppressWildcards StateFlow<Entitlement>,
+    observeServerStreamingNeedsPro: ObserveServerStreamingNeedsPro,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
@@ -94,14 +94,15 @@ class ServerSignInViewModel @AssistedInject constructor(
     )
     private val step = MutableStateFlow<ServerSignInStep>(ServerSignInStep.Form)
     private val events = PendingEvents<ServerSignInEvent>()
+    private val needsPro = observeServerStreamingNeedsPro()
 
     val uiState: StateFlow<ServerSignInUiState> =
-        combine(form, step, events.flow, entitlement) { form, step, events, entitlement ->
-            ServerSignInUiState(type, form, step, events, showProDisclosure = entitlement is Entitlement.Free)
+        combine(form, step, events.flow, needsPro) { form, step, events, needsPro ->
+            ServerSignInUiState(type, form, step, events, showProDisclosure = needsPro)
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
-            ServerSignInUiState(type, form.value, step.value, showProDisclosure = entitlement.value is Entitlement.Free),
+            ServerSignInUiState(type, form.value, step.value, showProDisclosure = needsPro.value),
         )
 
     fun onAddressChange(address: String) = form.update { it.copy(address = address, missing = it.missing - ServerSignInField.Address) }

@@ -19,9 +19,11 @@ import com.simplecityapps.playback.chromecast.CastMediaItemConverter
 import com.simplecityapps.playback.chromecast.CastQueue
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.chromecast.CastStreams
+import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyResponse
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.engine.SongUriResolver
+import com.simplecityapps.playback.equalizer.EqualizerFrequencyResponse
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
@@ -66,6 +68,9 @@ class PlaybackEngineModule {
     @Singleton
     @Provides
     fun provideReplayGainAudioProcessor(playbackSettings: PlaybackSettings): ReplayGainAudioProcessor = ReplayGainAudioProcessor(playbackSettings.replayGainMode.value, playbackSettings.preAmpGain.value.toDouble())
+
+    @Provides
+    fun provideEqualizerFrequencyResponse(): EqualizerFrequencyResponse = DefaultEqualizerFrequencyResponse()
 
     @Singleton
     @Provides
