@@ -7,6 +7,18 @@ class M3uParserTest {
     private val m3uParser = M3uParser()
 
     @Test
+    fun nonAsciiEntriesDecodeAsUtf8() {
+        val m3u = "#EXTM3U\n#EXTINF:215,Ñengo Flow - Chanson d’un jour d’hiver\n音楽/東京 🎵.flac\n"
+
+        val m3uPlaylist = m3uParser.parse("", "Café.m3u8", m3u.byteInputStream(Charsets.UTF_8))
+
+        assertEquals("Café", m3uPlaylist.name)
+        assertEquals("音楽/東京 🎵.flac", m3uPlaylist.entries.single().location)
+        assertEquals("Ñengo Flow", m3uPlaylist.entries.single().artist)
+        assertEquals("Chanson d’un jour d’hiver", m3uPlaylist.entries.single().track)
+    }
+
+    @Test
     fun testExample1() {
         val m3uPlaylist = m3uParser.parse("", "", javaClass.classLoader!!.getResourceAsStream("example1.m3u")!!)
         assertEquals(2, m3uPlaylist.entries.size)

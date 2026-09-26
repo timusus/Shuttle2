@@ -296,7 +296,7 @@
       "commits": []
     },
     {
-      "text": "With the Android media store source, songs now take their title, artist, album and track number from the file itself, so .mka files show their album and artist, and titles with accents or other alphabets no longer appear garbled",
+      "text": "Song titles, artists and albums with accents or other alphabets no longer appear garbled, and with the Android media store source, .mka files now show their album, artist and track number",
       "commits": []
     }
   ]

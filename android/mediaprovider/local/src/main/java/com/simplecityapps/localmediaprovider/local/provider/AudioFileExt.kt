@@ -4,6 +4,9 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import java.nio.ByteBuffer
+import java.nio.charset.CharacterCodingException
+import java.nio.charset.CodingErrorAction
 import java.util.Locale
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
@@ -122,7 +125,9 @@ data class FileTags(
  * Maps a TagLib property map (keyed by [TagLibProperty] keys, whatever the container: ID3, Vorbis comments, MP4 atoms or
  * Matroska tags) to [FileTags].
  */
-fun Map<String, List<String>>.toFileTags(): FileTags {
+fun Map<String, List<String>>.toFileTags(): FileTags = mapValues { (_, values) -> values.map { it.decodeMisreadUtf8() } }.toFileTagsAsRead()
+
+private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
     fun first(property: TagLibProperty): String? = get(property.key)?.firstOrNull()
     val trackTag = first(TagLibProperty.Track)
     val discTag = first(TagLibProperty.Disc)
@@ -155,6 +160,25 @@ fun Map<String, List<String>>.toFileTags(): FileTags {
         lyrics = first(TagLibProperty.Lyrics),
         grouping = first(TagLibProperty.Grouping)
     )
+}
+
+/**
+ * Undoes a common tagging fault: UTF-8 bytes in a tag declared Latin-1 (ID3v1 has no other encoding, and many taggers write
+ * ID3v2 frames this way), which TagLib decodes a byte per character, so "Ñengo" reads as "Ã\u0091engo". Text made only of
+ * Latin-1 characters whose bytes also form valid multi-byte UTF-8 is decoded as UTF-8 instead. Real Latin-1 text almost
+ * never forms valid UTF-8: that takes an accented capital or lowercase letter followed by a symbol or control character.
+ */
+internal fun String.decodeMisreadUtf8(): String {
+    if (none { it.code >= 0x80 } || any { it.code > 0xFF }) return this
+    return try {
+        Charsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(toByteArray(Charsets.ISO_8859_1)))
+            .toString()
+    } catch (e: CharacterCodingException) {
+        this
+    }
 }
 
 private const val MATROSKA_ALBUM_ARTIST = "ALBUM_ARTIST"

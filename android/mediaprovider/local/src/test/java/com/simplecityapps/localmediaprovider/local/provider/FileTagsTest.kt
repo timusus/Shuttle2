@@ -54,6 +54,54 @@ class FileTagsTest {
     }
 
     @Test
+    fun `UTF-8 tags decode as written`() {
+        val tags =
+            mapOf(
+                "TITLE" to listOf("Chanson d’un jour d’hiver"),
+                "ARTIST" to listOf("Ñengo Flow;坂本龍一"),
+                "ALBUM" to listOf("東京 🎵")
+            ).toFileTags()
+
+        tags.title shouldBe "Chanson d’un jour d’hiver"
+        tags.artists shouldBe listOf("Ñengo Flow", "坂本龍一")
+        tags.album shouldBe "東京 🎵"
+    }
+
+    @Test
+    fun `UTF-8 written into a Latin-1 tag is decoded as UTF-8`() {
+        // ID3v1, and ID3v2 frames declared ISO-8859-1, are often written with UTF-8 bytes; TagLib decodes them a byte per
+        // character, so "Ñengo Flow" arrives as "Ã\u0091engo Flow"
+        val tags =
+            mapOf(
+                "TITLE" to listOf("Chanson d’un jour d’hiver".asLatin1()),
+                "ARTIST" to listOf("Ñengo Flow".asLatin1()),
+                "ALBUM" to listOf("東京 🎵".asLatin1()),
+                "GENRE" to listOf("Música Latina".asLatin1())
+            ).toFileTags()
+
+        tags.title shouldBe "Chanson d’un jour d’hiver"
+        tags.artists shouldBe listOf("Ñengo Flow")
+        tags.album shouldBe "東京 🎵"
+        tags.genres shouldBe listOf("Música Latina")
+    }
+
+    @Test
+    fun `Latin-1 text stays as it is`() {
+        val tags =
+            mapOf(
+                "TITLE" to listOf("Café Brûlé"),
+                "ARTIST" to listOf("Björk"),
+                "ALBUM" to listOf("Señor ¿Qué?")
+            ).toFileTags()
+
+        tags.title shouldBe "Café Brûlé"
+        tags.artists shouldBe listOf("Björk")
+        tags.album shouldBe "Señor ¿Qué?"
+    }
+
+    private fun String.asLatin1() = String(toByteArray(Charsets.UTF_8), Charsets.ISO_8859_1)
+
+    @Test
     fun parseDate() {
         "2004".parseDate() shouldBe "2004"
         "2010-00-00".parseDate() shouldBe "2010"
