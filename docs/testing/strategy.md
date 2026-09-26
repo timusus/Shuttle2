@@ -176,7 +176,7 @@ Considered and not worth it now:
 
 | When | Runs | Why |
 |---|---|---|
-| While iterating | `support/scripts/unit-test --changed` (`--remote-build` lets `remote-build.sh` pick the host), plus `verifyRoborazziDebug --tests` for the screens touched | Only affected tests |
+| While iterating | `support/scripts/unit-test --changed-tests` (falls back to `--changed`'s module-level mapping, or the full suite, per `.claude/rules/testing.md`), plus `verifyRoborazziDebug --tests` for the screens touched | Only the test classes exercising the changed files, not a whole module (#552) |
 | **Landing verify** (every push to main) | One Mac invocation (`remote-build.sh --local`): `testDebugUnitTest :android:app:assembleDebug :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug` | Catches behaviour, compile and golden breaks with each suite run once; `verifyModuleLayers` comes via architecture-tests |
 | Nightly (GitHub Actions, scheduled) | `:android:app:lintDebug`, report uploaded as an artifact (`.github/workflows/lint-nightly.yml`) | Lint today is a report, not a gate (#537) |
 | Nightly or weekly (box, off-peak) | The uncached full verify for timing drift, the `@Ignore("measurement")` benchmarks, the `*BenchmarkTest` classes (`-Ps2.runBenchmarks=true`, #535) | Catches drift the landing verify no longer runs |

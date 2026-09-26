@@ -37,6 +37,32 @@ Rules, in order:
   invocation as the tests so each suite runs once, in verify mode (#552). Other paths outside
   `android/` (docs, scripts) run nothing.
 
+## `unit-test --changed-tests`
+
+`support/scripts/unit-test --changed-tests [--base <ref>]` is the fastest iteration step: it maps the
+same diff `--changed` uses down to individual test classes, one Gradle invocation per module with a
+`--tests` filter per class, instead of running a module whole. Run the full suite once at the end via
+`unit-test --changed` or a plain `unit-test` (or the landing verify).
+
+Rules:
+- A changed `src/test/*.kt` file selects its own class, unless it's a screenshot test (any
+  `*ScreenshotTest.kt`) — those run under `verifyRoborazziDebug` in the final verify, not here.
+- A changed `src/main/*.kt` file's class `Foo` selects `FooTest` (if it exists anywhere under the
+  module's `src/test`), plus any `*Test.kt` that references `Foo` by name — a plain, case-sensitive
+  substring grep over the module's test sources, kept simple and predictable. A `FooViewModel` also
+  matches on `Foo` (the name with the `ViewModel` suffix stripped), to catch a screen's Robot-based test
+  that exercises it without naming the ViewModel class directly (e.g. `LibraryScreenTest` for
+  `SongListViewModel`, since `SongList` is part of the Library screen rather than its own). Screenshot
+  test matches are excluded the same way.
+- A module falls back to a whole `testDebugUnitTest` run — same as `--changed` — when a changed file is
+  a build script, a resource, or any other non-Kotlin change, an `androidTest` source, or a `src/main`
+  file that maps to no test class.
+- A build-system-wide change (`buildSrc/`, `gradle/`, root `build.gradle*`/`settings.gradle*`/
+  `gradle.properties`) falls back to the whole `--changed` run instead of mapping by class.
+- Unlike `--changed`, a `src/main` change outside `:android:app` does **not** also pull in `:android:app`
+  whole — that cross-module safety net belongs to the full/final verify, not the fast iteration loop.
+- Prints the class count and first few names per module before running.
+
 ### Compose UI Characterisation Tests
 
 Robolectric-based Compose tests that verify observable UI behaviour. These allow safe rearchitecting of Compose screens and ViewModels — if the UI still looks right, the tests pass.

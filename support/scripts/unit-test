@@ -90,6 +90,7 @@ usage() {
   cat <<'EOF'
 Usage: support/scripts/unit-test [module ...] [--tests <filter>]
        support/scripts/unit-test --changed [--base <ref>] [--dry-run]
+       support/scripts/unit-test --changed-tests [--base <ref>] [--dry-run]
 
   (no args)              Run testDebugUnitTest across the whole project.
   <module> [module ...]  Run testDebugUnitTest for one or more modules only.
@@ -108,12 +109,23 @@ Usage: support/scripts/unit-test [module ...] [--tests <filter>]
     --base <ref>           Diff base. Defaults to origin/main.
     --dry-run               Print the Gradle commands without running them.
 
+  --changed-tests          Like --changed, but maps each changed file to the
+                           individual test class(es) that exercise it, for
+                           the fastest iteration loop; falls back to a whole
+                           module run (or the full suite) the same way
+                           --changed does. See "unit-test --changed-tests" in
+                           .claude/rules/testing.md. Run the full suite once
+                           at the end via --changed or a plain run.
+    --base <ref>           Diff base. Defaults to origin/main.
+    --dry-run               Print the Gradle commands without running them.
+
 Examples:
   support/scripts/unit-test
   support/scripts/unit-test playback
   support/scripts/unit-test playback app --tests '*NewQueueTest*'
   support/scripts/unit-test --changed
   support/scripts/unit-test --changed --base main --dry-run
+  support/scripts/unit-test --changed-tests
 
 Set VERBOSE=1 to print each command as it runs. A leading --remote-build (or
 S2_REMOTE_BUILD=1) runs Gradle via remote-build.sh, which picks the Mac or the WSL box.
@@ -472,6 +484,168 @@ run_changed_mode() {
   return "${overall_rc}"
 }
 
+##############################################################################
+# --changed-tests mode
+##############################################################################
+
+# Maps one changed src/main/*.kt file to the test class names in its module
+# that exercise it, one per line (nothing if none map): itself, if a
+# "<class>Test.kt" file exists anywhere under the module's src/test, plus any
+# "*Test.kt" that references the class by name (plain substring grep over the
+# test sources, kept simple and predictable per #552). A ViewModel also
+# matches on its name with the "ViewModel" suffix stripped, to catch a
+# screen's Robot-based test that exercises it without naming the ViewModel
+# class directly (e.g. LibraryScreenTest for SongListViewModel, since SongList
+# is part of the Library screen rather than its own).
+classes_for_main_file() {
+  local abs_file="$1" test_dir="$2" cls stem hit
+  cls="$(basename "${abs_file}" .kt)"
+  [ -d "${test_dir}" ] || return 0
+
+  if find "${test_dir}" -type f -name "${cls}Test.kt" 2>/dev/null | grep -q .; then
+    echo "${cls}Test"
+  fi
+
+  while IFS= read -r hit; do
+    [ -z "${hit}" ] && continue
+    basename "${hit}" .kt
+  done < <(grep -rl --include='*Test.kt' -F -- "${cls}" "${test_dir}" 2>/dev/null || true)
+
+  stem="${cls%ViewModel}"
+  if [ "${stem}" != "${cls}" ] && [ -n "${stem}" ]; then
+    while IFS= read -r hit; do
+      [ -z "${hit}" ] && continue
+      basename "${hit}" .kt
+    done < <(grep -rl --include='*Test.kt' -F -- "${stem}" "${test_dir}" 2>/dev/null || true)
+  fi
+}
+
+run_changed_tests_mode() {
+  local base="$1"
+  local changed_files
+  if ! changed_files="$(changed_files_since "${base}")"; then
+    echo "error: cannot find a merge base with '${base}' (fetch it first?)" >&2
+    exit 2
+  fi
+
+  if [ -z "${changed_files}" ]; then
+    echo "No changes against ${base}; nothing to run."
+    return 0
+  fi
+
+  # Build-system-wide changes affect any module's classpath or task graph;
+  # class-level mapping doesn't apply, so fall back to the whole --changed run.
+  local full_suite_trigger
+  full_suite_trigger="$(printf '%s\n' "${changed_files}" | grep -E \
+    '^buildSrc/|^gradle/|^build\.gradle(\.kts)?$|^settings\.gradle(\.kts)?$|^gradle\.properties$' \
+    | head -1 || true)"
+  if [ -n "${full_suite_trigger}" ]; then
+    echo "Build-system file changed ('${full_suite_trigger}'); falling back to 'unit-test --changed'."
+    run_changed_mode "${base}"
+    return $?
+  fi
+
+  WORK_DIR="$(mktemp -d -t unit-test-changed-tests)"
+
+  local mdir mpath id rel test_dir f cls
+  while IFS= read -r f; do
+    [ -z "${f}" ] && continue
+    case "${f}" in
+      android/*) ;;
+      *) continue ;;
+    esac
+
+    IFS=$'\t' read -r mdir mpath <<< "$(module_dir_and_path_for_file "${f}")"
+    if [ -z "${mpath}" ]; then
+      echo "note: '${f}' is under android/ but isn't part of a registered module; skipping"
+      continue
+    fi
+    id="$(module_id "${mpath}")"
+    echo "${mpath}" >> "${WORK_DIR}/modules_seen"
+    rel="${f#"${mdir}"/}"
+    test_dir="${REPO_ROOT}/${mdir}/src/test"
+
+    case "${rel}" in
+      src/test/*.kt)
+        # A screenshot test belongs to the final verify (Roborazzi runs in
+        # verify mode there), not a --tests run here; treat it like any
+        # other change that maps to no runnable class.
+        cls="$(basename "${rel}" .kt)"
+        if [ -f "${REPO_ROOT}/${f}" ] && [ "${cls%ScreenshotTest}" = "${cls}" ]; then
+          echo "${cls}" >> "${WORK_DIR}/${id}.classes"
+        elif [ -f "${REPO_ROOT}/${f}" ]; then
+          echo "note: '${f}' is a screenshot test; falling back to a whole run of ${mpath}"
+          touch "${WORK_DIR}/${id}.unmappable"
+        fi
+        ;;
+      src/androidTest/*.kt)
+        echo "note: '${f}' is an androidTest source; falling back to a whole run of ${mpath}"
+        touch "${WORK_DIR}/${id}.unmappable"
+        ;;
+      src/main/*.kt)
+        local found=0 name
+        while IFS= read -r name; do
+          [ -z "${name}" ] && continue
+          [ "${name%ScreenshotTest}" != "${name}" ] && continue
+          echo "${name}" >> "${WORK_DIR}/${id}.classes"
+          found=1
+        done < <(classes_for_main_file "${REPO_ROOT}/${f}" "${test_dir}")
+        if [ "${found}" -eq 0 ]; then
+          echo "note: '${f}' maps to no test class; falling back to a whole run of ${mpath}"
+          touch "${WORK_DIR}/${id}.unmappable"
+        fi
+        ;;
+      *)
+        echo "note: '${f}' is a non-Kotlin change; falling back to a whole run of ${mpath}"
+        touch "${WORK_DIR}/${id}.unmappable"
+        ;;
+    esac
+  done <<< "${changed_files}"
+
+  if [ ! -f "${WORK_DIR}/modules_seen" ]; then
+    echo "No modules affected; nothing to run."
+    return 0
+  fi
+
+  echo "Base: ${base}"
+  echo "Changed files: $(printf '%s\n' "${changed_files}" | grep -c .)"
+  echo
+
+  local overall_rc=0 whole_batch=() m mid unmappable_file classes_file classes_sorted count preview
+  while IFS= read -r m; do
+    mid="$(module_id "${m}")"
+    unmappable_file="${WORK_DIR}/${mid}.unmappable"
+    classes_file="${WORK_DIR}/${mid}.classes"
+
+    if [ -f "${unmappable_file}" ] || [ ! -s "${classes_file}" ]; then
+      echo "${m}: running whole (no class-level mapping)"
+      whole_batch+=("${m}:testDebugUnitTest")
+      continue
+    fi
+
+    classes_sorted="$(sort -u "${classes_file}")"
+    count="$(printf '%s\n' "${classes_sorted}" | grep -c .)"
+    preview="$(printf '%s\n' "${classes_sorted}" | head -5 | paste -sd, -)"
+    if [ "${count}" -gt 5 ]; then
+      preview="${preview}, ..."
+    fi
+    echo "${m}: ${count} class(es): ${preview}"
+
+    local filter_args=() cls_line
+    while IFS= read -r cls_line; do
+      [ -z "${cls_line}" ] && continue
+      filter_args+=(--tests "${cls_line}")
+    done <<< "${classes_sorted}"
+    print_and_run "${m}:testDebugUnitTest" "${filter_args[@]}" || overall_rc=$?
+  done < <(sort -u "${WORK_DIR}/modules_seen")
+
+  if [ "${#whole_batch[@]}" -gt 0 ]; then
+    print_and_run "${whole_batch[@]}" || overall_rc=$?
+  fi
+
+  return "${overall_rc}"
+}
+
 if [ "$#" -gt 0 ] && [ "$1" = "--changed" ]; then
   shift
   DRY_RUN=0
@@ -499,6 +673,36 @@ if [ "$#" -gt 0 ] && [ "$1" = "--changed" ]; then
     esac
   done
   run_changed_mode "${BASE_REF}"
+  exit $?
+fi
+
+if [ "$#" -gt 0 ] && [ "$1" = "--changed-tests" ]; then
+  shift
+  DRY_RUN=0
+  BASE_REF="origin/main"
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --base)
+        shift
+        [ "$#" -gt 0 ] || { echo "error: --base requires an argument" >&2; exit 2; }
+        BASE_REF="$1"
+        shift
+        ;;
+      --dry-run)
+        DRY_RUN=1
+        shift
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        echo "error: unexpected argument '$1' after --changed-tests" >&2
+        exit 2
+        ;;
+    esac
+  done
+  run_changed_tests_mode "${BASE_REF}"
   exit $?
 fi
 

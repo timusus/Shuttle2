@@ -50,6 +50,9 @@ back to plain `./gradlew` when it isn't installed.
 # One module / filter (short name or Gradle path; see the `check` skill)
 ./support/scripts/unit-test playback --tests '*SleepTimerTest*'
 
+# Fastest iteration loop: maps the current diff to test classes, not whole modules
+./support/scripts/unit-test --changed-tests
+
 # Run instrumented tests (Gradle Managed Device — auto-provisions emulator)
 ./gradlew :android:app:pixel6Api34AtdDebugAndroidTest
 # Or via the "smoke" device group:

@@ -30,10 +30,12 @@ Run lint and unit tests to verify changes. Investigate and fix any failures.
    support/scripts/unit-test 2>&1 | tail -50
    ```
 
-   Prefer `support/scripts/unit-test --changed` for a faster loop: it maps the current diff
-   (against `origin/main` by default) to affected modules and test classes and runs only those,
-   compiling first so a compile error surfaces before any test runs. See `.claude/rules/testing.md`
-   for the mapping rules. Otherwise use the module-scoped form, e.g.
+   Prefer `support/scripts/unit-test --changed-tests` for the fastest loop: it maps the current diff
+   (against `origin/main` by default) down to the individual test classes that exercise the changed
+   files, one Gradle invocation per module. It falls back to `--changed`'s module-level mapping (or
+   the full suite) when a file doesn't map cleanly to a class — see `.claude/rules/testing.md` for the
+   mapping rules. Run the full suite once at the end via `support/scripts/unit-test --changed` or a
+   plain `support/scripts/unit-test`. Otherwise use the module-scoped form, e.g.
    `support/scripts/unit-test playback` or `support/scripts/unit-test playback app --tests
    '*QueueOperations*'`. It accepts a short module name or a full Gradle path.
 
