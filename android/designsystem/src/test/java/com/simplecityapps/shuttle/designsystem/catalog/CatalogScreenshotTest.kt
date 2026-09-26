@@ -50,14 +50,18 @@ class CatalogScreenshotTest(private val shot: CatalogShot) {
             }
         }
         composeTestRule.mainClock.advanceTimeBy(SETTLE_MILLIS)
-        // Linux AA tolerance: see the root build.gradle.kts (#458).
+        // Linux AA tolerance: see the root build.gradle.kts (#458). Combined with, never below,
+        // the board's own tolerance (exact match by default).
         composeTestRule.onNodeWithTag(BOARD_TAG).captureRoboImage(
             filePath = "${roborazziSystemPropertyOutputDirectory()}/${shot.path}",
             roborazziOptions = RoborazziOptions(
                 captureType = RoborazziOptions.CaptureType.Screenshot(),
-                compareOptions = System.getProperty("s2.roborazzi.changeThreshold")?.toFloat()
-                    ?.let { RoborazziOptions.CompareOptions(changeThreshold = it) }
-                    ?: RoborazziOptions.CompareOptions(),
+                compareOptions = RoborazziOptions.CompareOptions(
+                    changeThreshold = maxOf(
+                        0f,
+                        System.getProperty("s2.roborazzi.changeThreshold")?.toFloat() ?: 0f
+                    )
+                ),
             ),
         )
     }
