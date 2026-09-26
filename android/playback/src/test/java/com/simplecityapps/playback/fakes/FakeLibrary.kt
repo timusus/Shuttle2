@@ -79,14 +79,4 @@ class FakePlaylistRepository(private val playlists: Map<Playlist, List<Song>> = 
         playlist: Playlist,
         playlistSongs: List<PlaylistSong>
     ) = error("not called")
-
-    override suspend fun updatePlaylistMediaProviderType(
-        playlist: Playlist,
-        mediaProviderType: MediaProviderType
-    ) = error("not called")
-
-    override suspend fun updatePlaylistExternalId(
-        playlist: Playlist,
-        externalId: String?
-    ) = error("not called")
 }

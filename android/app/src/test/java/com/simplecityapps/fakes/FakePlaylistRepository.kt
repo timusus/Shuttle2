@@ -100,8 +100,4 @@ class FakePlaylistRepository : PlaylistRepository {
     override suspend fun updatePlaylistSongsSortOder(playlist: Playlist, playlistSongs: List<PlaylistSong>) {
         reorderedSongs = playlistSongs
     }
-
-    override suspend fun updatePlaylistMediaProviderType(playlist: Playlist, mediaProviderType: MediaProviderType) {}
-
-    override suspend fun updatePlaylistExternalId(playlist: Playlist, externalId: String?) {}
 }

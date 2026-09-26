@@ -59,16 +59,6 @@ interface PlaylistRepository {
         playlist: Playlist,
         playlistSongs: List<PlaylistSong>
     )
-
-    suspend fun updatePlaylistMediaProviderType(
-        playlist: Playlist,
-        mediaProviderType: MediaProviderType
-    )
-
-    suspend fun updatePlaylistExternalId(
-        playlist: Playlist,
-        externalId: String?
-    )
 }
 
 enum class PlaylistSortOrder : Serializable {

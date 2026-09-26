@@ -236,38 +236,6 @@ class LocalPlaylistRepository(
         syncM3uFile(playlist)
     }
 
-    override suspend fun updatePlaylistMediaProviderType(
-        playlist: Playlist,
-        mediaProviderType: MediaProviderType
-    ) {
-        playlistDataDao.update(
-            PlaylistData(
-                id = playlist.id,
-                name = playlist.name,
-                sortOrder = playlist.sortOrder,
-                sortDescending = playlist.sortDescending,
-                mediaProviderType = mediaProviderType,
-                externalId = playlist.externalId
-            )
-        )
-    }
-
-    override suspend fun updatePlaylistExternalId(
-        playlist: Playlist,
-        externalId: String?
-    ) {
-        playlistDataDao.update(
-            PlaylistData(
-                id = playlist.id,
-                name = playlist.name,
-                sortOrder = playlist.sortOrder,
-                sortDescending = playlist.sortDescending,
-                mediaProviderType = playlist.mediaProvider,
-                externalId = externalId
-            )
-        )
-    }
-
     /**
      * Rewrites the source .m3u file for an m3u-imported [playlist] after its songs change, so an
      * external player sees the same edit. Best-effort: the file may have moved or lost its SAF
