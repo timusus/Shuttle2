@@ -49,8 +49,9 @@ queue, then they join the end of both the shuffled and the unshuffled queue in t
 song twice, when it is restored, then the shuffled order is exactly as saved, each entry is its own queue item, the
 current item is the saved position, and the unshuffled order is kept. (fca45f5b) — JVM.
 
-**RS-08: a tag edit doesn't disturb playback.** Given a queued song loaded at 1:12, when its tags are edited, then the
-queue shows the new tags on the same queue item, and playback neither reloads nor moves. (ba044736) — JVM.
+**RS-08: a library update doesn't disturb playback.** Given a queued song loaded at 1:12, when the library updates its
+tags (a tag edit, a rescan, a remote sync), then the queue shows the new tags on the same queue item, and playback
+neither reloads nor moves. (ba044736, #325) — JVM.
 
 **RS-09: an opened file that can't be read is reported.** Given a queued song whose file can no longer be read (an
 opened file whose URI grant lapsed), when it is played, then a playback failure is reported for that song (the app
@@ -87,8 +88,8 @@ that can load plays; up to 15 songs in a row are tried before playback stops, pa
 loaded (after a failure, or a restore), when another song is made current (from the queue screen or a media
 controller) and played, then it plays from its start, not from the other song's position. (#345) — JVM.
 
-**RS-25: a tag edit keeps the shuffled order.** Given shuffle on, when a tag edit changes queued songs (their tags,
-or the file a song plays from), then each song keeps its place in the shuffled and unshuffled queue. (#345) — JVM.
+**RS-25: a library update keeps the shuffled order.** Given shuffle on, when the library updates queued songs (their
+tags, or the file a song plays from), then each song keeps its place in the shuffled and unshuffled queue. (#345) — JVM.
 
 **RS-26: setting the same queue again refreshes its songs.** Given a queue loaded, when the same songs are set as the
 queue again with changed data (a library refresh), then the queue shows the new data, and the current song keeps
@@ -358,6 +359,11 @@ being restored, when the system asks what S2 would resume (its resumption contro
 saved song and its position without waiting for the restore. Asked to resume playback, S2 waits for the restore as
 RS-44 does; once restored, the player's own queue answers either way. — JVM (`spec/MediaSessionSpecTest`);
 resumption after a reboot is device-only: *Media session through Media3*.
+
+**RS-65: a library update to the playing song doesn't restart it.** Given a song playing, when the library updates its
+tags along with songs that aren't queued, then the queue shows its new tags on the same queue item, it plays on from
+where it was to its end, once, and the other queued songs are left as they were. A song removed from the library stays
+queued. (#325) — JVM.
 
 ## Commits with no rule
 

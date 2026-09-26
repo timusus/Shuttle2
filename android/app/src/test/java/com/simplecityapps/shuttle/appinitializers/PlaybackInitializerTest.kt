@@ -55,6 +55,10 @@ class PlaybackInitializerTest {
             startedComponents += "bit-perfect"
             mockk(relaxed = true)
         },
+        queueSongRefresher = Lazy {
+            startedComponents += "queue song refresher"
+            mockk(relaxed = true)
+        },
         appCoroutineScope = appCoroutineScope,
         ioDispatcher = mainDispatcherRule.testDispatcher
     )
@@ -79,7 +83,7 @@ class PlaybackInitializerTest {
 
         initializer.init(application)
 
-        startedComponents shouldBe listOf("cast", "play requests", "bit-perfect")
+        startedComponents shouldBe listOf("cast", "play requests", "bit-perfect", "queue song refresher")
     }
 
     @Test

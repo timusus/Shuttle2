@@ -445,10 +445,6 @@ class PlaybackFacade(
         }
     }
 
-    override fun updateQueueSongs(songs: List<Song>) = playerThread.run {
-        queueOperations.updateSongs(songs)
-    }
-
     companion object {
         private const val NEAR_END_MS = 200
         private const val RESTART_THRESHOLD_MS = 2_000

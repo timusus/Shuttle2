@@ -1,14 +1,18 @@
 package com.simplecityapps.playback.spec
 
 import android.media.AudioManager
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.chromecast.FakeSongRepository
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.BYTES_PER_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.LONG_SONG_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_1S_MS
+import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_2S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_2S_MS
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.TONE_3S
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.deleteFile
@@ -17,11 +21,13 @@ import com.simplecityapps.playback.spec.PlaybackHarness.Companion.resourceUri
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unreadableSong
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unresolvableSong
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeBetween
+import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
@@ -40,7 +46,9 @@ import org.robolectric.Shadows.shadowOf
  */
 @RunWith(RobolectricTestRunner::class)
 class PlaybackSpecTest {
-    private val harness = PlaybackHarness()
+    /** The library the queued songs come from: songs 1 to 5, each [TONE_2S]. */
+    private val library = FakeSongRepository((1L..5L).map { id -> song(id) })
+    private val harness = PlaybackHarness(songRepository = library)
     private val playback = harness.playbackOperations
     private val queue = harness.queueOperations
 
@@ -181,14 +189,13 @@ class PlaybackSpecTest {
     }
 
     @Test
-    fun `RS-08 a tag edit renames queued songs without reloading or moving playback`() {
+    fun `RS-08 a library update (a tag edit, a rescan) renames queued songs without reloading or moving playback`() {
         val first = song(1)
         loadPaused(listOf(first, song(2)), positionMs = 1_200)
         val states = harness.record(playback.playbackStateFlow)
         val uid = queue.queueStateFlow.value.currentItem!!.uid
 
-        playback.updateQueueSongs(listOf(first.copy(name = "Renamed")))
-        harness.idle()
+        harness.run { library.update(listOf(first.copy(name = "Renamed"))) }
 
         queue.queueStateFlow.value.currentItem?.song?.name shouldBe "Renamed"
         queue.queueStateFlow.value.currentItem?.uid shouldBe uid
@@ -428,7 +435,7 @@ class PlaybackSpecTest {
     }
 
     @Test
-    fun `RS-25 a tag edit with shuffle on keeps each song at its shuffled position`() {
+    fun `RS-25 a library update with shuffle on keeps each song at its shuffled position`() {
         val songs = (1L..5L).map { song(it) }
         val shuffled = listOf(songs[0], songs[3], songs[1], songs[4], songs[2])
         harness.run {
@@ -437,8 +444,7 @@ class PlaybackSpecTest {
         }
         val before = queue.queueStateFlow.value.items.map { it.uid }
 
-        playback.updateQueueSongs(listOf(songs[1].copy(name = "Renamed"), songs[3].copy(path = resourceUri(TONE_1S))))
-        harness.idle()
+        harness.run { library.update(listOf(songs[1].copy(name = "Renamed"), songs[3].copy(path = resourceUri(TONE_1S)))) }
 
         val items = queue.queueStateFlow.value.items
         items.map { it.uid } shouldBe before
@@ -446,6 +452,44 @@ class PlaybackSpecTest {
         items[2].song.name shouldBe "Renamed"
         items[1].song.path shouldBe resourceUri(TONE_1S)
         queue.getQueue(ShuffleMode.Off).map { it.song.id } shouldBe songs.map { it.id }
+    }
+
+    @Test
+    fun `RS-65 a library update to the playing song renames it without restarting it, and leaves the rest alone`() {
+        // Long enough that the player has written only part of it when the update comes.
+        val playing = longSong(6, durationMs = 20_000)
+        // Queued as the library no longer has it, so an update that reached it would show.
+        val other = song(2, file = TONE_1S)
+        harness.run { library.insert(listOf(playing), MediaProviderType.Shuttle) }
+        startPlaying(listOf(other, playing))
+        playback.skipToNext()
+        harness.runUntil { queue.queueStateFlow.value.currentItem?.song == playing && (playback.getProgress() ?: 0) >= 1_000 }
+        val uids = queue.queueStateFlow.value.items.map { it.uid }
+        val states = harness.record(playback.playbackStateFlow)
+        val position = playback.getProgress()!!
+        // Replaced by removing it and adding a new one, the current item would become another, and be prepared afresh.
+        val transitions = mutableListOf<MediaItem?>()
+        harness.appPlayer.addListener(
+            object : Player.Listener {
+                override fun onMediaItemTransition(
+                    mediaItem: MediaItem?,
+                    reason: Int
+                ) {
+                    transitions += mediaItem
+                }
+            }
+        )
+
+        harness.run { library.update(listOf(playing.copy(name = "Renamed"), song(3).copy(name = "Not queued"))) }
+
+        queue.queueStateFlow.value.items.map { it.song } shouldBe listOf(other, playing.copy(name = "Renamed"))
+        queue.queueStateFlow.value.items.map { it.uid } shouldBe uids
+        queue.queueStateFlow.value.currentItem?.song?.name shouldBe "Renamed"
+        playback.getProgress()!! shouldBeGreaterThanOrEqual position
+        harness.runUntil { playback.getProgress()!! >= position + 1_000 }
+        transitions.shouldBeEmpty()
+        states shouldNotContain PlaybackState.Loading
+        playback.playbackStateFlow.value shouldBe PlaybackState.Playing
     }
 
     @Test

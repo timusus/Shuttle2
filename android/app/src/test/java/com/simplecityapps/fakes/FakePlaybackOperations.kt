@@ -94,11 +94,4 @@ class FakePlaybackOperations : PlaybackOperations {
     override fun clearQueue() {
         calls += "clearQueue()"
     }
-
-    /** Every list passed to [updateQueueSongs], in order. */
-    val queueSongUpdates = mutableListOf<List<Song>>()
-
-    override fun updateQueueSongs(songs: List<Song>) {
-        queueSongUpdates += songs
-    }
 }

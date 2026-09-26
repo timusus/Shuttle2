@@ -23,6 +23,9 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Test
@@ -123,6 +126,23 @@ class LocalSongRepositoryTest {
         val updated = database.songDataDao().get().single().toSong()
         updated.playbackPosition shouldBe 180_000
         updated.playCount shouldBe 1
+    }
+
+    @Test
+    fun `a metadata write reports the songs it updated, and a play count or position write doesn't`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao())
+        val (first, second, third) = insertSongs(listOf("First", "Second", "Third"))
+        val updates = mutableListOf<Set<Long>>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repository.updatedSongIds.toList(updates) }
+
+        repository.update(first.copy(name = "Retagged"))
+        repository.update(listOf(second.copy(name = "Retagged")))
+        repository.insertUpdateAndDelete(inserts = emptyList(), updates = listOf(third.copy(name = "Rescanned")), deletes = emptyList(), mediaProviderType = MediaProviderType.Shuttle)
+        repository.insertUpdateAndDelete(inserts = emptyList(), updates = emptyList(), deletes = listOf(first), mediaProviderType = MediaProviderType.Shuttle)
+        repository.recordPlayedThrough(second)
+        repository.setPlaybackPosition(second, 1_000)
+
+        updates shouldBe listOf(setOf(first.id), setOf(second.id), setOf(third.id))
     }
 
     @Test

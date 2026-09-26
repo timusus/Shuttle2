@@ -18,6 +18,13 @@ interface SongRepository {
      */
     suspend fun loadSongs(query: SongQuery): List<Song> = getSongs(query).filterNotNull().first()
 
+    /**
+     * The ids of the songs whose stored metadata a write has just replaced ([update], and the updates of
+     * [insertUpdateAndDelete]: a tag edit, a rescan, a remote sync), once per write, after it's stored. Play counts,
+     * positions, exclusion and removals aren't reported here.
+     */
+    val updatedSongIds: Flow<Set<Long>>
+
     suspend fun insert(
         songs: List<Song>,
         mediaProviderType: MediaProviderType

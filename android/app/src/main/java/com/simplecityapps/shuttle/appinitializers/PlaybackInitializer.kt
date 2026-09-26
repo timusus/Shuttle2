@@ -15,6 +15,7 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.playback.persistence.QueueStore
+import com.simplecityapps.playback.queue.QueueSongRefresher
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.IoDispatcher
@@ -31,7 +32,7 @@ import timber.log.Timber
 
 /**
  * Starts playback when the app is launched: the playback components that run for the life of the app (Cast, once the
- * app first comes to the foreground, the media session and bit-perfect USB output), and the restore of the saved queue
+ * app first comes to the foreground, the media session, bit-perfect USB output and the queue's library updates), and the restore of the saved queue
  * ([QueueStore], which saves it too). Starts [PlaybackService] when playback starts.
  *
  * Track ends and pauses are events, collected from [PlaybackOperations.trackEndedFlow] and
@@ -47,6 +48,7 @@ constructor(
     private val castStarter: Lazy<CastStarter>,
     private val playRequests: Lazy<PlayRequests>,
     private val bitPerfectOutput: Lazy<BitPerfectOutput>,
+    private val queueSongRefresher: Lazy<QueueSongRefresher>,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : AppInitializer {
@@ -66,6 +68,7 @@ constructor(
         castStarter.get().startInForeground(application)
         playRequests.get().launchPlaybackFailureMessages()
         bitPerfectOutput.get()
+        queueSongRefresher.get()
     }
 
     /** Compared against a snapshot taken here, so the initial state isn't handled as a change, and none made in between is missed. */

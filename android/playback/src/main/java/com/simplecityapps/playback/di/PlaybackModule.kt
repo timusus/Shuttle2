@@ -23,6 +23,7 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueFacade
 import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.playback.queue.QueueSongRefresher
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.di.AppCoroutineScope
@@ -60,6 +61,14 @@ class PlaybackModule {
         songRepository: SongRepository,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
     ): QueueStore = QueueStore(activePlayer, localPlayer, queueFacade, playbackPreferenceManager, songRepository, appCoroutineScope)
+
+    @Singleton
+    @Provides
+    fun provideQueueSongRefresher(
+        songRepository: SongRepository,
+        queueOperations: QueueOperations,
+        @AppCoroutineScope appCoroutineScope: CoroutineScope
+    ): QueueSongRefresher = QueueSongRefresher(songRepository, queueOperations, appCoroutineScope)
 
     @Singleton
     @Provides

@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.query.SongQuery
 import java.util.Collections
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 
 class FakeSongRepository : SongRepository {
@@ -25,6 +26,8 @@ class FakeSongRepository : SongRepository {
 
     /** When true, [getSongs] applies the query's predicate, like the real repository. Off by default: most tests ignore queries. */
     var applyQueryPredicates: Boolean = false
+
+    override val updatedSongIds: Flow<Set<Long>> = emptyFlow()
 
     override fun getSongs(query: SongQuery): Flow<List<Song>?> = if (applyQueryPredicates) {
         songs.map { songs -> songs?.filter(query.predicate) }

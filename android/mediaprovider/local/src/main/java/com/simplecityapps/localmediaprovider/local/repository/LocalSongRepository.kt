@@ -13,8 +13,11 @@ import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -31,6 +34,11 @@ class LocalSongRepository(
             .flowOn(Dispatchers.IO)
             .stateIn(scope, SharingStarted.Lazily, null)
     }
+
+    /** Buffered, so a write waits for a slow collector only once several writes are pending. */
+    private val _updatedSongIds = MutableSharedFlow<Set<Long>>(extraBufferCapacity = UPDATE_BUFFER)
+
+    override val updatedSongIds: SharedFlow<Set<Long>> = _updatedSongIds.asSharedFlow()
 
     /**
      * Songs by id (a restored queue, a song a controller names) are read by id, so the cost is bounded by how many are
@@ -69,9 +77,14 @@ class LocalSongRepository(
 
     override suspend fun update(songs: List<Song>) {
         songDataDao.update(songs.toSongDataUpdate())
+        publishUpdated(songs)
     }
 
-    override suspend fun update(song: Song): Int = songDataDao.update(song.toSongDataUpdate())
+    override suspend fun update(song: Song): Int = songDataDao.update(song.toSongDataUpdate()).also { publishUpdated(listOf(song)) }
+
+    private suspend fun publishUpdated(songs: List<Song>) {
+        if (songs.isNotEmpty()) _updatedSongIds.emit(songs.mapTo(mutableSetOf()) { song -> song.id })
+    }
 
     override suspend fun remove(song: Song) {
         Timber.v("Deleting song")
@@ -87,7 +100,9 @@ class LocalSongRepository(
         updates: List<Song>,
         deletes: List<Song>,
         mediaProviderType: MediaProviderType
-    ): Triple<Int, Int, Int> = songDataDao.insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongDataUpdate(), deletes.toSongData(mediaProviderType))
+    ): Triple<Int, Int, Int> = songDataDao
+        .insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongDataUpdate(), deletes.toSongData(mediaProviderType))
+        .also { publishUpdated(updates) }
 
     override suspend fun remapPaths(
         remaps: List<SongPathRemap>,
@@ -123,5 +138,9 @@ class LocalSongRepository(
     override suspend fun clearExcludeList() {
         Timber.v("Clearing excluded")
         songDataDao.clearExcludeList()
+    }
+
+    private companion object {
+        const val UPDATE_BUFFER = 16
     }
 }

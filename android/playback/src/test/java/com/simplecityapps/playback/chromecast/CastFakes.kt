@@ -13,20 +13,34 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.flow
 
-/** A library of [songs], read only. */
-class FakeSongRepository(private val songs: List<Song>) : SongRepository {
-    override fun getSongs(query: SongQuery): Flow<List<Song>?> = flowOf(songs.filter(query.predicate))
+/** A library of [songs], changed only by [insert] and [update], which reports the songs it updated as the real repository does. */
+class FakeSongRepository(private var songs: List<Song>) : SongRepository {
+    /** Buffered, so an update made on the main thread doesn't wait there for a collector that runs on it too. */
+    private val _updatedSongIds = MutableSharedFlow<Set<Long>>(extraBufferCapacity = 16)
+
+    override val updatedSongIds: SharedFlow<Set<Long>> = _updatedSongIds.asSharedFlow()
+
+    override fun getSongs(query: SongQuery): Flow<List<Song>?> = flow { emit(songs.filter(query.predicate)) }
 
     override suspend fun insert(
         songs: List<Song>,
         mediaProviderType: MediaProviderType
-    ) = error("not called")
+    ) {
+        this.songs += songs
+    }
 
     override suspend fun update(song: Song): Int = error("not called")
 
-    override suspend fun update(songs: List<Song>) = error("not called")
+    override suspend fun update(songs: List<Song>) {
+        val updates = songs.associateBy { song -> song.id }
+        this.songs = this.songs.map { song -> updates[song.id] ?: song }
+        _updatedSongIds.emit(updates.keys)
+    }
 
     override suspend fun remove(song: Song) = error("not called")
 

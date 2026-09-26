@@ -330,6 +330,10 @@
     {
       "text": "Jellyfin and Emby playlists with more than 500 songs now sync the right songs after the first 500, instead of songs from elsewhere in your library",
       "commits": []
+    },
+    {
+      "text": "Editing a song's tags or rescanning your library now updates its title, artist and album in the queue, the notification and Now Playing straight away, without interrupting playback",
+      "commits": []
     }
   ]
 }

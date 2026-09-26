@@ -67,5 +67,4 @@ class FakePlaybackOperations : PlaybackOperations {
     override fun moveQueueItem(from: Int, to: Int) {}
     override fun removeQueueItem(queueItem: QueueItem) {}
     override fun clearQueue() {}
-    override fun updateQueueSongs(songs: List<Song>) {}
 }

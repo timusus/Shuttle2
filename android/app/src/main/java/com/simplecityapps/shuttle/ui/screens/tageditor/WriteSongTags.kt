@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.tageditor
 import com.simplecityapps.localmediaprovider.local.provider.TagLibProperty
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
 import kotlinx.datetime.LocalDate
@@ -16,13 +15,13 @@ data class TagWriteResult(
 )
 
 /**
- * Writes the changed fields to each song's file, then brings the library and the queue up to date for the songs
- * whose write succeeded. Fields the user didn't change are left as they are in every file.
+ * Writes the changed fields to each song's file, then brings the library up to date for the songs whose write
+ * succeeded (which brings the queue up to date too, as it follows the library's updates). Fields the user didn't change
+ * are left as they are in every file.
  */
 class WriteSongTags @Inject constructor(
     private val tagFileAccess: TagFileAccess,
     private val songRepository: SongRepository,
-    private val playbackOperations: PlaybackOperations,
 ) {
     suspend operator fun invoke(
         songs: List<EditableSong>,
@@ -37,10 +36,7 @@ class WriteSongTags @Inject constructor(
             if (tagFileAccess.write(song, metadata(file, edits))) updated += song.edited(edits) else failed += song
         }
         onProgress(songs.size, songs.size)
-        if (updated.isNotEmpty()) {
-            songRepository.update(updated)
-            playbackOperations.updateQueueSongs(updated)
-        }
+        if (updated.isNotEmpty()) songRepository.update(updated)
         return TagWriteResult(updated, failed)
     }
 }

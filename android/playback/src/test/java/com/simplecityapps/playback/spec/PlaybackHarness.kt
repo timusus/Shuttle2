@@ -37,6 +37,7 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueFacade
 import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.playback.queue.QueueSongRefresher
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.SettingsStore
@@ -102,7 +103,7 @@ class PlaybackHarness(
     castQueue: (ExoPlayer) -> CastQueue? = { null },
     /** Where settings, and the saved queue and position, are kept. Pass one harness's to the next to model the app starting again. */
     val sharedPreferences: SharedPreferences = FakeSharedPreferences(),
-    /** The library the saved queue is restored from ([restore]). */
+    /** The library the saved queue is restored from ([restore]), and whose updates the queue follows. */
     songRepository: SongRepository = FakeSongRepository(emptyList()),
     /** Handles what the harness's coroutines throw, where a test expects them to; by default they fail the test. */
     exceptionHandler: CoroutineExceptionHandler? = null,
@@ -236,6 +237,7 @@ class PlaybackHarness(
         val queueFacade = QueueFacade(player, playbackSettings, songUriResolver, buildContext, active)
         queueOperations = queueFacade
         queueStore = QueueStore(active, player, queueFacade, playbackPreferenceManager, songRepository, scope)
+        QueueSongRefresher(songRepository, queueFacade, scope)
         playbackOperations =
             PlaybackFacade(
                 queueOperations = queueFacade,
