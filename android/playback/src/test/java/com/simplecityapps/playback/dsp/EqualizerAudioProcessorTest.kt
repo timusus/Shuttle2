@@ -180,6 +180,45 @@ class EqualizerAudioProcessorTest {
     }
 
     @Test
+    fun `the filters carry on across a gapless join in the same format`() {
+        val input = whiteNoise(44100)
+        val oneStream = equalizerWithAllBandsAt(12.0, sampleRate = 44100).process(input)
+
+        val equalizer = equalizerWithAllBandsAt(12.0, sampleRate = 44100)
+        val first = equalizer.process(input.copyOfRange(0, 20_000))
+        equalizer.joinNextStream(44100)
+        val second = equalizer.process(input.copyOfRange(20_000, input.size))
+
+        (first + second).toList() shouldBe oneStream.toList()
+    }
+
+    @Test
+    fun `a seek restarts the filters`() {
+        val input = whiteNoise(44100)
+        val afterSeek = input.copyOfRange(20_000, input.size)
+        val fresh = equalizerWithAllBandsAt(12.0, sampleRate = 44100).process(afterSeek)
+
+        val equalizer = equalizerWithAllBandsAt(12.0, sampleRate = 44100)
+        equalizer.process(input.copyOfRange(0, 20_000))
+        // A seek flushes without an end of stream first.
+        equalizer.flush(AudioProcessor.StreamMetadata.DEFAULT)
+
+        equalizer.process(afterSeek).toList() shouldBe fresh.toList()
+    }
+
+    @Test
+    fun `a gapless join into a new format restarts the filters for it`() {
+        val input = whiteNoise(48000)
+        val fresh = equalizerWithAllBandsAt(12.0, sampleRate = 48000).process(input)
+
+        val equalizer = equalizerWithAllBandsAt(12.0, sampleRate = 44100)
+        equalizer.process(whiteNoise(44100))
+        equalizer.joinNextStream(48000)
+
+        equalizer.process(input).toList() shouldBe fresh.toList()
+    }
+
+    @Test
     fun `24 bit is accepted and 32 bit is rejected`() {
         // The only encodings onConfigure accepts are 16 and 24 bit PCM; float and 8/32 bit throw.
         EqualizerAudioProcessor(enabled = true).configure(AudioProcessor.AudioFormat(44100, CHANNEL_COUNT, C.ENCODING_PCM_24BIT))
@@ -235,6 +274,14 @@ class EqualizerAudioProcessorTest {
 private fun <T : AudioProcessor> T.configured(sampleRate: Int): T = apply {
     configure(AudioProcessor.AudioFormat(sampleRate, CHANNEL_COUNT, C.ENCODING_PCM_16BIT))
     flush()
+}
+
+/** What the sink does at a gapless transition: ends the stream, configures the next, and flushes into it. */
+private fun AudioProcessor.joinNextStream(sampleRate: Int) {
+    queueEndOfStream()
+    getOutput()
+    configure(AudioProcessor.AudioFormat(sampleRate, CHANNEL_COUNT, C.ENCODING_PCM_16BIT))
+    flush(AudioProcessor.StreamMetadata.DEFAULT)
 }
 
 /** Runs [input] through the processor in a single pass and returns the interleaved output. */

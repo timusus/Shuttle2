@@ -64,6 +64,12 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
     /** The bands [bandProcessors] were built from, or null when they need building. Playback thread only. */
     private var filteredBands: List<EqualizerBand>? = null
 
+    /** The format [bandProcessors] were built for. Playback thread only. */
+    private var filteredFormat = AudioProcessor.AudioFormat.NOT_SET
+
+    /** Whether the sink queued an end of stream since the last flush. Playback thread only. */
+    private var endedSinceFlush = false
+
     /**
      * Linear pre-attenuation applied to the filtered signal, equal to the inverse of the peak
      * magnitude of the whole band cascade's frequency response (or 1 when that peak doesn't exceed
@@ -91,6 +97,7 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
         }
 
         filteredBands = bands
+        filteredFormat = outputAudioFormat
         bandProcessors =
             bands.map { band ->
                 BandProcessor(
@@ -117,17 +124,31 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
         return inputAudioFormat
     }
 
-    /** The output format takes effect here, so the filters are rebuilt for it (which also clears their history). */
+    override fun onQueueEndOfStream() {
+        endedSinceFlush = true
+    }
+
+    /**
+     * The output format takes effect here. The sink queues an end of stream before the flush when the audio carries
+     * straight on: a gapless join to the next song, or a drain to apply a new speed. A seek or skip flushes without
+     * one (and again on its first buffer), so the audio after it is unrelated to what the filters last saw. So the
+     * filters keep their history across a flush only when the audio carries on in the format they were built for;
+     * otherwise they're rebuilt, which clears it. Restarting them at a join rings audibly (#365).
+     */
     override fun onFlush(streamMetadata: AudioProcessor.StreamMetadata) {
         super.onFlush(streamMetadata)
 
-        Timber.v("onFlush() called")
-        updateBandProcessors(settings.bands)
+        if (!endedSinceFlush || outputAudioFormat != filteredFormat) {
+            updateBandProcessors(settings.bands)
+        }
+        endedSinceFlush = false
     }
 
     override fun onReset() {
         super.onReset()
         filteredBands = null
+        filteredFormat = AudioProcessor.AudioFormat.NOT_SET
+        endedSinceFlush = false
         bandProcessors = emptyList()
         attenuation = 1f
     }

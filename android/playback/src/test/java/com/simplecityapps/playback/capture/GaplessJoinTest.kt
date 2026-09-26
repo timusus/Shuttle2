@@ -6,7 +6,6 @@ import com.simplecityapps.playback.spec.PlaybackHarness
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import kotlin.math.abs
-import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -46,7 +45,6 @@ class GaplessJoinTest {
         shouldPlayAsOneFile(replayGainAlbum = -4.5) { PlaybackHarness(replayGainMode = ReplayGainMode.Album) }
     }
 
-    @Ignore("#365")
     @Test
     fun `with the equalizer on, the joins come out as if the tone were one file`() {
         shouldPlayAsOneFile {

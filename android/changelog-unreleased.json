@@ -114,6 +114,10 @@
   ],
   "fixes": [
     {
+      "text": "Gapless albums no longer click or thump between songs when the equaliser is on",
+      "commits": []
+    },
+    {
       "text": "The app's name is now S2 in every language",
       "commits": []
     },
