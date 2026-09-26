@@ -3,16 +3,16 @@
     <!-- The number of songs being edited with the tag (metadata) editor-->
     <plurals name="edit_tags_editing_count_songs">
         <item quantity="one">Edytujesz 
-      <xliff:g example="1" id="count">{count}</xliff:g>
+      <xliff:g example="1" id="count">%1$d</xliff:g>
        utwór</item>
         <item quantity="other">Edycja 
-      <xliff:g example="5" id="count">{count}</xliff:g>
+      <xliff:g example="5" id="count">%1$d</xliff:g>
        utworów</item>
         <item quantity="few">Edycja 
-      <xliff:g example="5" id="count">{count}</xliff:g>
+      <xliff:g example="5" id="count">%1$d</xliff:g>
        utworów</item>
         <item quantity="many">Edycja 
-      <xliff:g example="5" id="count">{count}</xliff:g>
+      <xliff:g example="5" id="count">%1$d</xliff:g>
        utworów</item>
     </plurals>
     <!-- The title of the 'edit tags' dialog. If 'tags' doesn't apply in your language, you could use 'metadata' or 'info' instead. -->
@@ -22,48 +22,48 @@
     <string name="edit_tags_multiple_values">Wiele wartości</string>
     <!-- Shown when the tag editor is in progress, reading tags (metadata) from the selected songs -->
     <string name="edit_tags_reading_tags">Odczytywanie tagów 
-    <xliff:g example="1" id="progress">{progress}</xliff:g>
+    <xliff:g example="1" id="progress">%1$d</xliff:g>
      / 
-    <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <xliff:g example="1" id="count">%2$d</xliff:g></string>
     <!-- Shown when the tag editor is in progress, writing tags (metadata) to the selected songs -->
     <string name="edit_tags_writing_tags">Odczytywanie tagów 
-    <xliff:g example="1" id="progress">{progress}</xliff:g>
+    <xliff:g example="1" id="progress">%1$d</xliff:g>
      / 
-    <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <xliff:g example="1" id="count">%2$d</xliff:g></string>
     <!-- Shown when the tag editor fails to read the tags (metadata) of a song -->
     <string name="edit_tags_read_failed">Nie można odczytać wybranych tagów utworów</string>
     <!-- Shown when the tag editor successfully writes the tags (metadata) of the songs -->
     <plurals name="edit_tags_success">
         <item quantity="one">Zaktualizowano 
-      <xliff:g example="5" id="count">{count}</xliff:g>
+      <xliff:g example="5" id="count">%1$d</xliff:g>
        utwór</item>
         <item quantity="other">Zaktualizowano 
-      <xliff:g example="5" id="count">{count}</xliff:g>
+      <xliff:g example="5" id="count">%1$d</xliff:g>
        utwory</item>
         <item quantity="few">Zaktualizowano 
-      <xliff:g example="5" id="count">{count}</xliff:g>
+      <xliff:g example="5" id="count">%1$d</xliff:g>
        utwory</item>
         <item quantity="many">Zaktualizowano 
-      <xliff:g example="5" id="count">{count}</xliff:g>
+      <xliff:g example="5" id="count">%1$d</xliff:g>
        utwory</item>
     </plurals>
     <!-- Shown when the tag editor fails to write the tags (metadata) to the songs-->
     <plurals name="edit_tags_failure">
         <item quantity="one">Nie udało się zaktualizować utworu</item>
         <item quantity="other">Nie udało się zaktualizować 
-      <xliff:g example="5" id="count">{count}</xliff:g>
+      <xliff:g example="5" id="count">%1$d</xliff:g>
        z 
-      <xliff:g example="5" id="total">{total}</xliff:g>
+      <xliff:g example="5" id="total">%2$d</xliff:g>
        utworów</item>
         <item quantity="few">Nie udało się zaktualizować 
-      <xliff:g example="5" id="count">{count}</xliff:g>
+      <xliff:g example="5" id="count">%1$d</xliff:g>
        z 
-      <xliff:g example="5" id="total">{total}</xliff:g>
+      <xliff:g example="5" id="total">%2$d</xliff:g>
        utworów</item>
         <item quantity="many">Nie udało się zaktualizować 
-      <xliff:g example="5" id="count">{count}</xliff:g>
+      <xliff:g example="5" id="count">%1$d</xliff:g>
        z 
-      <xliff:g example="5" id="total">{total}</xliff:g>
+      <xliff:g example="5" id="total">%2$d</xliff:g>
        utworów</item>
     </plurals>
     <!-- The hint (placeholder) text shown in the 'title' text field, when editing the tags (metadata) -->

@@ -8,35 +8,35 @@
     <string name="error_unknown">不明なエラーが発生しました</string>
     <!-- Shown when songs are added to the queue -->
     <plurals name="queue_songs_added">
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> 曲がキューに追加されました</item>
+        <item quantity="other"><xliff:g example="30" id="count">%1$d</xliff:g> 曲がキューに追加されました</item>
     </plurals>
     <!-- Shown when current playback queue is added to a playlist -->
-    <string name="playlist_queue_added">キューが <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> に追加されました</string>
+    <string name="playlist_queue_added">キューが <xliff:g example="Favourites" id="playlist_name">%1$s</xliff:g> に追加されました</string>
     <!-- Shown when songs are added to a playlist -->
     <plurals name="playlist_songs_added">
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> 曲が <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> に追加されました</item>
+        <item quantity="other"><xliff:g example="30" id="count">%1$d</xliff:g> 曲が <xliff:g example="Favourites" id="playlist_name">%2$s</xliff:g> に追加されました</item>
     </plurals>
     <!-- Shown when albums are added to a playlist -->
     <plurals name="playlist_albums_added">
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> アルバムが <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> に追加されました</item>
+        <item quantity="other"><xliff:g example="30" id="count">%1$d</xliff:g> アルバムが <xliff:g example="Favourites" id="playlist_name">%2$s</xliff:g> に追加されました</item>
     </plurals>
     <!-- Shown when artists are added to a playlist -->
     <plurals name="playlist_artists_added">
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+        <item quantity="other"><xliff:g example="30" id="count">%1$d</xliff:g>
       アーティストが
-      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+      <xliff:g example="Favourites" id="playlist_name">%2$s</xliff:g>
       に追加されました</item>
     </plurals>
     <!-- Shown when genres are added to a playlist -->
     <plurals name="playlist_genres_added">
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+        <item quantity="other"><xliff:g example="30" id="count">%1$d</xliff:g>
       ジャンルが
-      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+      <xliff:g example="Favourites" id="playlist_name">%2$s</xliff:g>
       に追加されました</item>
     </plurals>
     <!-- The disc number for this album-->
     <string name="disc_number">ディスク
-    <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
+    <xliff:g example="1" id="disc_number">%1$d</xliff:g></string>
     <!-- Shown when the songs list finishes loading, and there are no songs-->
     <string name="song_list_empty">曲はありません</string>
     <!-- Shown when the albums list finishes loading, and there are no songs-->

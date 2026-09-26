@@ -3,21 +3,21 @@
     <!-- Menu option to create a new playlist -->
     <string name="playlist_menu_create_playlist">Nuova playlist</string>
     <!-- Shown when a playlist is successfully created -->
-    <string name="playlist_menu_create_playlist_success">\"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\" creato correttamente</string>
+    <string name="playlist_menu_create_playlist_success">\"<xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g>\" creato correttamente</string>
     <!-- Shown when songs can't be added to a playlist, due to an error -->
-    <string name="playlist_menu_create_playlist_failure">Impossibile aggiungere brani alla playlist: <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <string name="playlist_menu_create_playlist_failure">Impossibile aggiungere brani alla playlist: <xliff:g example="Playlist already exists" id="error_message">%1$s</xliff:g></string>
     <!-- The 'hint' text shown when creating a playlist. This indicates the text field is for 'Playlist Name'-->
     <string name="playlist_create_dialog_playlist_name_hint">Nome playlist</string>
     <!-- Button to show the 'delete playlist' dialog, which will ask the user to confirm this action -->
     <string name="playlist_dialog_title_delete">Elimina playlist</string>
     <!-- Shown when the user attempts to delete a playlist. Asking the user to confirm that this playlist will be permanently deleted -->
-    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> verrà eliminato definitivamente</string>
+    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g> verrà eliminato definitivamente</string>
     <!-- Button to confirm deletion of the selected playlist -->
     <string name="playlist_dialog_button_delete">Elimina</string>
     <!-- Button to show the 'clear playlist' dialog, which will ask the user to confirm this action. Clearing the playlist will render it empty, but not delete it. -->
     <string name="playlist_dialog_title_clear">Svuota playlist</string>
     <!-- Shown whent he user attempts to clear a playlist. Asking the user to confirm that this playlist will become empty -->
-    <string name="playlist_dialog_subtitle_clear">Tutti i brani verranno rimossi da <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="playlist_dialog_subtitle_clear">Tutti i brani verranno rimossi da <xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g></string>
     <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">Svuota</string>
     <!-- Title of the list of Playlists -->

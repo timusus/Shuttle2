@@ -5,15 +5,15 @@
     <!-- Title for the list of albums -->
     <string name="albums">Albümler</string>
     <plurals name="albumsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> albüm</item>
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> albümler</item>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> albüm</item>
+        <item quantity="other"><xliff:g example="5" id="count">%1$d</xliff:g> albümler</item>
     </plurals>
     <!-- Title for the list of songs -->
     <string name="songs">Şarkılar</string>
     <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> şarkı</item>
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> şarkılar</item>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> şarkı</item>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g> şarkılar</item>
     </plurals>
     <!-- Title for the list of genres -->
     <string name="genres">Türler</string>

@@ -5,14 +5,14 @@
     <!-- Title for the list of albums -->
     <string name="albums">アルバム</string>
     <plurals name="albumsPlural">
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+        <item quantity="other"><xliff:g example="5" id="count">%1$d</xliff:g>
       アルバム</item>
     </plurals>
     <!-- Title for the list of songs -->
     <string name="songs">曲</string>
     <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g>
       曲</item>
     </plurals>
     <!-- Title for the list of genres -->

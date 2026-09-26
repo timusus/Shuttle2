@@ -5,13 +5,13 @@
     <!-- Title for the list of albums -->
     <string name="albums">专辑</string>
     <plurals name="albumsPlural">
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> 张专辑</item>
+        <item quantity="other"><xliff:g example="5" id="count">%1$d</xliff:g> 张专辑</item>
     </plurals>
     <!-- Title for the list of songs -->
     <string name="songs">歌曲</string>
     <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> 首歌曲</item>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g> 首歌曲</item>
     </plurals>
     <!-- Title for the list of genres -->
     <string name="genres">流派</string>

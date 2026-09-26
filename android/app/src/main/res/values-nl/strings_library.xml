@@ -5,18 +5,18 @@
     <!-- Title for the list of albums -->
     <string name="albums">Albums</string>
     <plurals name="albumsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>
        album</item>
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+        <item quantity="other"><xliff:g example="5" id="count">%1$d</xliff:g>
        albums</item>
     </plurals>
     <!-- Title for the list of songs -->
     <string name="songs">Nummers</string>
     <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>
        nummer</item>
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g>
        nummers</item>
     </plurals>
     <!-- Title for the list of genres -->

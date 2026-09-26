@@ -21,16 +21,16 @@
     <!-- The description of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_description_plex">Persönlicher Medienserver</string>
     <!-- Shown when a media provider is being scanned. Indicates the current progress of that scan -->
-    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g>
+    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">%1$d</xliff:g>
     /
-    <xliff:g example="25" id="total">{total}</xliff:g>
+    <xliff:g example="25" id="total">%2$d</xliff:g>
      gescannte Songs</string>
     <!-- Shown when a media provider scan has completed -->
-    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g>
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">%1$d</xliff:g>
      Einfügungen,
-    <xliff:g example="15" id="updates">{updates}</xliff:g>
+    <xliff:g example="15" id="updates">%2$d</xliff:g>
      Aktualisierungen,
-    <xliff:g example="25" id="deletes">{deletes}</xliff:g>
+    <xliff:g example="25" id="deletes">%3$d</xliff:g>
      Löschungen</string>
     <!-- Shown when a media provider scan has failed -->
     <string name="media_provider_scan_failure_title">Scan ist fehlgeschlagen</string>
@@ -59,9 +59,9 @@
     <!-- Title of the screen where users can select their media providers. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_toolbar_title">Medienanbieter</string>
     <!-- Option to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> entfernen</string>
+    <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">%1$s</xliff:g> entfernen</string>
     <!-- Warning when user attempts to remove a media provider, that their media associated with that provider will be deleted. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc.-->
-    <string name="media_provider_dialog_remove_subtitle">Dadurch werden alle mit dem Medienanbieter <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> verknüpften Titel, Wiedergabelisten und Anzahl der Wiedergaben entfernt</string>
+    <string name="media_provider_dialog_remove_subtitle">Dadurch werden alle mit dem Medienanbieter <xliff:g example="Jellyfin" id="provider_type">%1$s</xliff:g> verknüpften Titel, Wiedergabelisten und Anzahl der Wiedergaben entfernt</string>
     <!-- Button to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_dialog_button_remove">Entfernen</string>
     <!-- The address (url) of the user's Emby/Jellyfin/Plex media provider. -->
@@ -97,5 +97,5 @@
     <!-- Shown when the S2 Media Provider fails to find any folders to scan -->
     <string name="media_import_directories_empty">Keine Verzeichnisse/Dateien zum scannen</string>
     <!-- Shown when the S2 Media Provider is searching an m3u playlist for songs -->
-    <string name="media_import_m3u_scan">Finden von Songs für <xliff:g example="playlist1.m3u" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="media_import_m3u_scan">Finden von Songs für <xliff:g example="playlist1.m3u" id="playlist_name">%1$s</xliff:g></string>
 </resources>

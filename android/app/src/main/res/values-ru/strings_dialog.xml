@@ -14,7 +14,7 @@
     <string name="dialog_delete_title">Удалить</string>
     <!-- Dialog warning message to indicate the song will be permanently deleted -->
     <string name="dialog_delete_message">Элемент \'
-    <xliff:g example="Lateralus" id="item">{item}</xliff:g>
+    <xliff:g example="Lateralus" id="item">%1$s</xliff:g>
     \' будет удален без возможности восстановления.</string>
     <!-- Dialog button to confirm deletion of the selected song(s)-->
     <string name="dialog_delete_button">Удалить</string>

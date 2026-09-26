@@ -13,7 +13,7 @@
     <!-- Dialog title shown when attempting to delete a song -->
     <string name="dialog_delete_title">Löschen</string>
     <!-- Dialog warning message to indicate the song will be permanently deleted -->
-    <string name="dialog_delete_message">„<xliff:g example="Lateralus" id="item">{item}</xliff:g>\“ wird dauerhaft gelöscht</string>
+    <string name="dialog_delete_message">„<xliff:g example="Lateralus" id="item">%1$s</xliff:g>\“ wird dauerhaft gelöscht</string>
     <!-- Dialog button to confirm deletion of the selected song(s)-->
     <string name="dialog_delete_button">Löschen</string>
 </resources>

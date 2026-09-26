@@ -16,13 +16,13 @@
     <string name="home_something_different">Something different</string>
     <!-- Home: badge on a most played album, read out by screen readers -->
     <plurals name="home_play_count">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> play</item>
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> plays</item>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> play</item>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g> plays</item>
     </plurals>
     <!-- Home: card title telling the user this version has release notes they haven't seen -->
     <string name="home_whats_new_title">What\'s new in S2</string>
-    <!-- Home: card message under the What's new title; {version} is the app version -->
-    <string name="home_whats_new_message">See what changed in version <xliff:g example="2026.09.25" id="version">{version}</xliff:g></string>
+    <!-- Home: card message under the What's new title; %1$s is the app version -->
+    <string name="home_whats_new_message">See what changed in version <xliff:g example="2026.09.25" id="version">%1$s</xliff:g></string>
     <!-- Home: button on the What's new card that opens the release notes -->
     <string name="home_whats_new_open">See what\'s new</string>
     <!-- Home: content description for the button that dismisses the What's new card -->

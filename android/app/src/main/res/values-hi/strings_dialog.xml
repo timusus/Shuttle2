@@ -14,7 +14,7 @@
     <string name="dialog_delete_title">हटाएं</string>
     <!-- Dialog warning message to indicate the song will be permanently deleted -->
     <string name="dialog_delete_message">\'
-    <xliff:g example="Lateralus" id="item">{item}</xliff:g>
+    <xliff:g example="Lateralus" id="item">%1$s</xliff:g>
     \' स्थायी रूप से हटा दिया जाएगा</string>
     <!-- Dialog button to confirm deletion of the selected song(s)-->
     <string name="dialog_delete_button">हटाएं</string>

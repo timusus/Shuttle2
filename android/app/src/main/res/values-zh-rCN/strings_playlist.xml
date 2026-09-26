@@ -3,21 +3,21 @@
     <!-- Menu option to create a new playlist -->
     <string name="playlist_menu_create_playlist">新建播放列表</string>
     <!-- Shown when a playlist is successfully created -->
-    <string name="playlist_menu_create_playlist_success">播放列表 <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> 创建成功</string>
+    <string name="playlist_menu_create_playlist_success">播放列表 <xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g> 创建成功</string>
     <!-- Shown when songs can't be added to a playlist, due to an error -->
-    <string name="playlist_menu_create_playlist_failure">无法将歌曲添加到播放列表：<xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <string name="playlist_menu_create_playlist_failure">无法将歌曲添加到播放列表：<xliff:g example="Playlist already exists" id="error_message">%1$s</xliff:g></string>
     <!-- The 'hint' text shown when creating a playlist. This indicates the text field is for 'Playlist Name'-->
     <string name="playlist_create_dialog_playlist_name_hint">播放列表名称</string>
     <!-- Button to show the 'delete playlist' dialog, which will ask the user to confirm this action -->
     <string name="playlist_dialog_title_delete">删除播放列表</string>
     <!-- Shown when the user attempts to delete a playlist. Asking the user to confirm that this playlist will be permanently deleted -->
-    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> 将被永久删除</string>
+    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g> 将被永久删除</string>
     <!-- Button to confirm deletion of the selected playlist -->
     <string name="playlist_dialog_button_delete">删除</string>
     <!-- Button to show the 'clear playlist' dialog, which will ask the user to confirm this action. Clearing the playlist will render it empty, but not delete it. -->
     <string name="playlist_dialog_title_clear">清除播放列表</string>
     <!-- Shown whent he user attempts to clear a playlist. Asking the user to confirm that this playlist will become empty -->
-    <string name="playlist_dialog_subtitle_clear">所有歌曲将从播放列表 <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> 中移除</string>
+    <string name="playlist_dialog_subtitle_clear">所有歌曲将从播放列表 <xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g> 中移除</string>
     <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">清除</string>
     <!-- Title of the list of Playlists -->

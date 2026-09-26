@@ -5,15 +5,15 @@
     <!-- Title for the list of albums -->
     <string name="albums">Albums</string>
     <plurals name="albumsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> album</item>
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> albums</item>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> album</item>
+        <item quantity="other"><xliff:g example="5" id="count">%1$d</xliff:g> albums</item>
     </plurals>
     <!-- Title for the list of songs -->
     <string name="songs">Songs</string>
     <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song</item>
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> songs</item>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> song</item>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g> songs</item>
     </plurals>
     <!-- Title for the list of genres -->
     <string name="genres">Genres</string>
@@ -41,18 +41,18 @@
     <string name="selection_mark">Selection mark</string>
     <!-- Library top bar subtitle on the Artists tab -->
     <plurals name="library_count_artists">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> artist</item>
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> artists</item>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> artist</item>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g> artists</item>
     </plurals>
     <!-- Library top bar subtitle on the Genres tab -->
     <plurals name="library_count_genres">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> genre</item>
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> genres</item>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> genre</item>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g> genres</item>
     </plurals>
     <!-- Library top bar subtitle on the Playlists tab -->
     <plurals name="library_count_playlists">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> playlist</item>
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> playlists</item>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> playlist</item>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g> playlists</item>
     </plurals>
     <!-- Library overflow item: opens the sheet that shows, hides and reorders the library tabs -->
     <string name="library_edit_tabs">Edit tabs</string>
@@ -69,7 +69,7 @@
     <!-- Playlists tab: section over the built-in smart playlists -->
     <string name="library_smart_playlists">Smart playlists</string>
     <!-- Playlist detail: hint shown instead of drag handles when the playlist isn't in custom order -->
-    <string name="playlist_detail_reorder_hint">Sorted by <xliff:g example="Song name" id="sort">{sort}</xliff:g>. Choose Custom to reorder.</string>
+    <string name="playlist_detail_reorder_hint">Sorted by <xliff:g example="Song name" id="sort">%1$s</xliff:g>. Choose Custom to reorder.</string>
     <!-- Selection toolbar / playlist actions: remove the selected songs from this playlist (the files are kept) -->
     <string name="playlist_detail_remove">Remove from playlist</string>
     <!-- Artist detail section over the artist's albums -->
@@ -81,7 +81,7 @@
     <!-- Library empty state when every tab is hidden -->
     <string name="library_all_tabs_hidden">Every tab is hidden</string>
     <!-- Disc header on album detail -->
-    <string name="album_detail_disc">Disc <xliff:g example="1" id="disc">{disc}</xliff:g></string>
+    <string name="album_detail_disc">Disc <xliff:g example="1" id="disc">%1$d</xliff:g></string>
     <!-- Detail screen shown for a key that no longer exists in the library -->
     <string name="library_item_not_found">Not in your library</string>
     <string name="library_detail_placeholder">Pick something to see it here</string>

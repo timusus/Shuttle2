@@ -5,15 +5,15 @@
     <!-- Title for the list of albums -->
     <string name="albums">Álbumes</string>
     <plurals name="albumsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> álbum</item>
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> álbumes</item>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> álbum</item>
+        <item quantity="other"><xliff:g example="5" id="count">%1$d</xliff:g> álbumes</item>
     </plurals>
     <!-- Title for the list of songs -->
     <string name="songs">Canciones</string>
     <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> canción</item>
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> canciones</item>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> canción</item>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g> canciones</item>
     </plurals>
     <!-- Title for the list of genres -->
     <string name="genres">Géneros</string>

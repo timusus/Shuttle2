@@ -3,22 +3,22 @@
     <!-- Menu option to create a new playlist -->
     <string name="playlist_menu_create_playlist">Neue Wiedergabeliste</string>
     <!-- Shown when a playlist is successfully created -->
-    <string name="playlist_menu_create_playlist_success">„<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\“ wurde erfolgreich erstellt</string>
+    <string name="playlist_menu_create_playlist_success">„<xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g>\“ wurde erfolgreich erstellt</string>
     <!-- Shown when songs can't be added to a playlist, due to an error -->
     <string name="playlist_menu_create_playlist_failure">Fehler beim Hinzufügen von Songs zur Wiedergabeliste: 
-    <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <xliff:g example="Playlist already exists" id="error_message">%1$s</xliff:g></string>
     <!-- The 'hint' text shown when creating a playlist. This indicates the text field is for 'Playlist Name'-->
     <string name="playlist_create_dialog_playlist_name_hint">Name der Wiedergabeliste</string>
     <!-- Button to show the 'delete playlist' dialog, which will ask the user to confirm this action -->
     <string name="playlist_dialog_title_delete">Wiedergabeliste löschen</string>
     <!-- Shown when the user attempts to delete a playlist. Asking the user to confirm that this playlist will be permanently deleted -->
-    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> wird dauerhaft gelöscht</string>
+    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g> wird dauerhaft gelöscht</string>
     <!-- Button to confirm deletion of the selected playlist -->
     <string name="playlist_dialog_button_delete">Löschen</string>
     <!-- Button to show the 'clear playlist' dialog, which will ask the user to confirm this action. Clearing the playlist will render it empty, but not delete it. -->
     <string name="playlist_dialog_title_clear">Wiedergabeliste leeren</string>
     <!-- Shown whent he user attempts to clear a playlist. Asking the user to confirm that this playlist will become empty -->
-    <string name="playlist_dialog_subtitle_clear">Alle Songs werden aus <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> entfernt</string>
+    <string name="playlist_dialog_subtitle_clear">Alle Songs werden aus <xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g> entfernt</string>
     <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">Leeren</string>
     <!-- Title of the list of Playlists -->

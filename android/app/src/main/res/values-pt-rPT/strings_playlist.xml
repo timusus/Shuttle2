@@ -4,18 +4,18 @@
     <string name="playlist_menu_create_playlist">Nova playlist</string>
     <!-- Shown when a playlist is successfully created -->
     <string name="playlist_menu_create_playlist_success">\'
-    <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>
+    <xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g>
     \' criada com sucesso</string>
     <!-- Shown when songs can't be added to a playlist, due to an error -->
     <string name="playlist_menu_create_playlist_failure">Falha ao adicionar músicas à playlist: 
-    <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <xliff:g example="Playlist already exists" id="error_message">%1$s</xliff:g></string>
     <!-- The 'hint' text shown when creating a playlist. This indicates the text field is for 'Playlist Name'-->
     <string name="playlist_create_dialog_playlist_name_hint">Nome da playlist</string>
     <!-- Button to show the 'delete playlist' dialog, which will ask the user to confirm this action -->
     <string name="playlist_dialog_title_delete">Eliminar playlist</string>
     <!-- Shown when the user attempts to delete a playlist. Asking the user to confirm that this playlist will be permanently deleted -->
     <string name="playlist_dialog_subtitle_delete">\'
-    <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>
+    <xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g>
     \' será eliminada permanentemente</string>
     <!-- Button to confirm deletion of the selected playlist -->
     <string name="playlist_dialog_button_delete">Eliminar</string>
@@ -23,7 +23,7 @@
     <string name="playlist_dialog_title_clear">Limpar playlist</string>
     <!-- Shown whent he user attempts to clear a playlist. Asking the user to confirm that this playlist will become empty -->
     <string name="playlist_dialog_subtitle_clear">Todas as músicas serão removidas de 
-    <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <xliff:g example="Favorites" id="playlist_name">%1$s</xliff:g></string>
     <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">Limpar</string>
     <!-- Title of the list of Playlists -->

@@ -5,26 +5,26 @@
     <!-- Title for the list of albums -->
     <string name="albums">Альбомы</string>
     <plurals name="albumsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>
        альбом</item>
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+        <item quantity="other"><xliff:g example="5" id="count">%1$d</xliff:g>
        альбомы</item>
-        <item quantity="few"><xliff:g example="5" id="count">{count}</xliff:g>
+        <item quantity="few"><xliff:g example="5" id="count">%1$d</xliff:g>
        альбома</item>
-        <item quantity="many"><xliff:g example="5" id="count">{count}</xliff:g>
+        <item quantity="many"><xliff:g example="5" id="count">%1$d</xliff:g>
        альбомов</item>
     </plurals>
     <!-- Title for the list of songs -->
     <string name="songs">Песни</string>
     <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>
        песня</item>
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g>
+        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g>
        песни</item>
-        <item quantity="few"><xliff:g example="12" id="count">{count}</xliff:g>
+        <item quantity="few"><xliff:g example="12" id="count">%1$d</xliff:g>
        песни</item>
-        <item quantity="many"><xliff:g example="12" id="count">{count}</xliff:g>
+        <item quantity="many"><xliff:g example="12" id="count">%1$d</xliff:g>
        песен</item>
     </plurals>
     <!-- Title for the list of genres -->

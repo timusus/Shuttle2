@@ -2,9 +2,9 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- The number of songs being edited with the tag (metadata) editor-->
     <plurals name="edit_tags_editing_count_songs">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g>
        nummer bewerken</item>
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+        <item quantity="other"><xliff:g example="5" id="count">%1$d</xliff:g>
        nummers bewerken</item>
     </plurals>
     <!-- The title of the 'edit tags' dialog. If 'tags' doesn't apply in your language, you could use 'metadata' or 'info' instead. -->
@@ -14,32 +14,32 @@
     <string name="edit_tags_multiple_values">Meerdere waarden</string>
     <!-- Shown when the tag editor is in progress, reading tags (metadata) from the selected songs -->
     <string name="edit_tags_reading_tags">Tags 
-    <xliff:g example="1" id="progress">{progress}</xliff:g>
+    <xliff:g example="1" id="progress">%1$d</xliff:g>
      / 
-    <xliff:g example="1" id="count">{total}</xliff:g>
+    <xliff:g example="1" id="count">%2$d</xliff:g>
      lezen</string>
     <!-- Shown when the tag editor is in progress, writing tags (metadata) to the selected songs -->
     <string name="edit_tags_writing_tags">Tags 
-    <xliff:g example="1" id="progress">{progress}</xliff:g>
+    <xliff:g example="1" id="progress">%1$d</xliff:g>
      / 
-    <xliff:g example="1" id="count">{total}</xliff:g>
+    <xliff:g example="1" id="count">%2$d</xliff:g>
      lezen</string>
     <!-- Shown when the tag editor fails to read the tags (metadata) of a song -->
     <string name="edit_tags_read_failed">De geselecteerde songtags konden niet worden gelezen</string>
     <!-- Shown when the tag editor successfully writes the tags (metadata) of the songs -->
     <plurals name="edit_tags_success">
-        <item quantity="one"><xliff:g example="5" id="count">{count}</xliff:g>
+        <item quantity="one"><xliff:g example="5" id="count">%1$d</xliff:g>
        nummer geüpdatet</item>
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+        <item quantity="other"><xliff:g example="5" id="count">%1$d</xliff:g>
        nummers geüpdatet</item>
     </plurals>
     <!-- Shown when the tag editor fails to write the tags (metadata) to the songs-->
     <plurals name="edit_tags_failure">
         <item quantity="one">Kan nummer niet updaten</item>
         <item quantity="other">Kan 
-      <xliff:g example="5" id="count">{count}</xliff:g>
+      <xliff:g example="5" id="count">%1$d</xliff:g>
        van 
-      <xliff:g example="5" id="total">{total}</xliff:g>
+      <xliff:g example="5" id="total">%2$d</xliff:g>
        nummers niet updaten</item>
     </plurals>
     <!-- The hint (placeholder) text shown in the 'title' text field, when editing the tags (metadata) -->

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Price of an annual subscription, e.g. '$5.99 / year' -->
-    <string name="purchase_price_annual"><xliff:g example="$5.99" id="price">{price}</xliff:g> / year</string>
+    <string name="purchase_price_annual"><xliff:g example="$5.99" id="price">%1$s</xliff:g> / year</string>
 </resources>
