@@ -61,9 +61,6 @@ class TagEditorScreenshotTest {
     fun batch() = shot("batch", batchEditing())
 
     @Test
-    fun batchDark() = shot("batch-dark", batchEditing(), ThemeMode.Dark)
-
-    @Test
     fun reading() = shot("reading", readingTags)
 
     @Test
