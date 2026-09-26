@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Shuttle Music Player (Dev)</string>
+    <!-- Live log screen: shown when nothing has been logged yet -->
+    <string name="live_log_empty">Nothing logged yet</string>
+    <!-- Live log screen: content description for the action that copies every line to the clipboard -->
+    <string name="live_log_copy">Copy log</string>
+    <!-- Live log screen: content description for the action that clears the buffer -->
+    <string name="live_log_clear">Clear log</string>
 </resources>

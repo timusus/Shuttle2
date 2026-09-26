@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
@@ -31,6 +32,12 @@ import com.simplecityapps.shuttle.ui.screens.sources.sourcesRows
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import com.simplecityapps.trial.PaywallSource
+import dagger.hilt.android.lifecycle.HiltViewModel
+import java.util.Optional
+import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 import timber.log.Timber
 
@@ -53,6 +60,9 @@ data object WhatsNewRoute : NavKey
 @Serializable
 data object LicencesRoute : NavKey
 
+@Serializable
+data object LiveLogRoute : NavKey
+
 /** The Settings screens' entries, for the shell's entry provider. */
 fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     val navigateUp = { navigator.back() }
@@ -62,6 +72,7 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
             SettingsLink.ExcludedSongs -> navigator.open(ExcludedSongsRoute)
             SettingsLink.WhatsNew -> navigator.open(WhatsNewRoute)
             SettingsLink.Licences -> navigator.open(LicencesRoute)
+            SettingsLink.LiveLog -> navigator.open(LiveLogRoute)
         }
     }
     entry<SettingsRoute> {
@@ -74,6 +85,7 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     entry<SettingsDestinationRoute> { route -> SettingsDestinationEntry(route.destination, onNavigateUp = { navigateUp() }, onOpenLink = openLink) }
     entry<EqualizerRoute> { EqualizerEntry(onNavigateUp = { navigateUp() }) }
     entry<ExcludedSongsRoute> { ExcludedSongsEntry(onNavigateUp = { navigateUp() }) }
+    entry<LiveLogRoute> { LiveLogEntry(onNavigateUp = { navigateUp() }) }
     entry<WhatsNewRoute> {
         val viewModel: WhatsNewViewModel = hiltViewModel()
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -164,4 +176,33 @@ private fun ExcludedSongsEntry(onNavigateUp: () -> Unit) {
         onInclude = viewModel::onInclude,
         onIncludeAll = viewModel::onIncludeAll
     )
+}
+
+data class LiveLogGateUiState(val entryPoint: LiveLogEntryPoint? = null)
+
+/**
+ * Resolves the debug-only [LiveLogEntryPoint] via Hilt's optional binding, so this file never imports a
+ * class that only exists in the debug build. Absent in release, where the row that opens this route is also
+ * hidden (see [com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog]).
+ */
+@HiltViewModel
+class LiveLogGateViewModel @Inject constructor(
+    entryPoint: Optional<LiveLogEntryPoint>
+) : ViewModel() {
+    val uiState: StateFlow<LiveLogGateUiState> = MutableStateFlow(LiveLogGateUiState(entryPoint.orElse(null))).asStateFlow()
+}
+
+@Composable
+private fun LiveLogEntry(onNavigateUp: () -> Unit) {
+    val gate: LiveLogGateViewModel = hiltViewModel()
+    val uiState by gate.uiState.collectAsStateWithLifecycle()
+    val entryPoint = uiState.entryPoint
+    if (entryPoint != null) {
+        entryPoint.Content(onNavigateUp = onNavigateUp)
+    } else {
+        LifecycleResumeEffect(Unit) {
+            onNavigateUp()
+            onPauseOrDispose {}
+        }
+    }
 }

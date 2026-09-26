@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.worker.ImportFrequency
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.settings.Accent
@@ -300,7 +301,7 @@ object SettingsCatalog {
             ),
             SettingsGroup(
                 title = R.string.settings_group_advanced,
-                items = listOf(
+                items = listOfNotNull(
                     SettingItem.Switch(
                         setting = DebugSettings.FileLogging,
                         title = R.string.pref_file_logging_title,
@@ -311,7 +312,14 @@ object SettingsCatalog {
                         title = R.string.pref_copy_debug_logs_subtitle,
                         key = "pref_copy_debug_logs",
                         dependsOn = DebugSettings.FileLogging
-                    )
+                    ),
+                    // Debug builds only: the live view of DebugLoggingTree's output (#433). The row itself
+                    // costs release nothing but this check; the screen and its buffer live in src/debug.
+                    SettingItem.Navigate(
+                        target = SettingsLink.LiveLog,
+                        title = R.string.pref_view_live_log_title,
+                        key = "pref_view_live_log"
+                    ).takeIf { BuildConfig.DEBUG }
                 )
             )
         )

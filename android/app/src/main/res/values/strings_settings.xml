@@ -80,6 +80,8 @@
     <string name="pref_file_logging_subtitle">Writes debug logs to a file on disk</string>
     <!-- Settings: Title for the option to copy the debug logs to the clipboard -->
     <string name="pref_copy_debug_logs_subtitle">Copy debug logs</string>
+    <!-- Settings: Title for the option to open the live log screen (debug builds only) -->
+    <string name="pref_view_live_log_title">Live log</string>
     <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_title">Media session artwork</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->

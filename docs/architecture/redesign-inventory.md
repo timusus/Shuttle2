@@ -353,8 +353,8 @@ Expressive grouped sections and search, five destinations instead of nine.
   action on Home and Library. This departs from app-shell decision 5 (keep the sheet for parity);
   see owner decision 1.
 - **Debug drawer** (debug builds only; `DebugDrawerFragment` + live `LoggingFragment` in the debug
-  `activity_main.xml`) — Change: `activity_main.xml` is deleted in shell slice 1, so give it a
-  debug-only Settings entry "Live log" or a debug notification. Maestro: none.
+  `activity_main.xml`) — Done: a debug-only Settings entry "Live log" (`LiveLogScreen`, #433).
+  Maestro: none.
 
 ## 8. Changelog, trial and purchase
 

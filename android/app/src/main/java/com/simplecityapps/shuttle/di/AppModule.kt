@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.util.LruCache
 import com.simplecityapps.mediaprovider.PlaylistExporter
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
+import com.simplecityapps.shuttle.debug.livelog.LiveLogSink
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
@@ -34,8 +35,9 @@ class AppModule {
     @Provides
     fun provideDebugLoggingTree(
         @ApplicationContext context: Context,
-        debugSettings: DebugSettings
-    ): DebugLoggingTree = DebugLoggingTree(context, debugSettings)
+        debugSettings: DebugSettings,
+        liveLogSink: Optional<LiveLogSink>
+    ): DebugLoggingTree = DebugLoggingTree(context, debugSettings, liveLogSink)
 
     @Singleton
     @Provides

@@ -2,13 +2,15 @@ package com.simplecityapps.shuttle.debug
 
 import android.content.Context
 import com.simplecityapps.shuttle.BuildConfig
+import com.simplecityapps.shuttle.debug.livelog.LiveLogSink
 import com.simplecityapps.shuttle.settings.DebugSettings
 import java.util.*
 import timber.log.Timber
 
 class DebugLoggingTree(
     private val context: Context,
-    private val debugSettings: DebugSettings
+    private val debugSettings: DebugSettings,
+    private val liveLogSink: Optional<LiveLogSink> = Optional.empty()
 ) : Timber.DebugTree() {
     override fun log(
         priority: Int,
@@ -19,6 +21,7 @@ class DebugLoggingTree(
         if (BuildConfig.DEBUG) {
             super.log(priority, tag, message, t)
         }
+        liveLogSink.ifPresent { it.log(priority, tag, message, t) }
         if (debugSettings.fileLogging.value) {
             synchronized(this) {
                 writeToFile(context, LogMessage(priority, tag, message, t))

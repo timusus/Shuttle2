@@ -70,7 +70,7 @@ The rows are the parity checklist in
 | Artwork: Wi-Fi only, local only, clear cache, download all, media session artwork | `SettingsCatalog` | `SettingsCatalogTest`; `notification-art.sh` | |
 | Widget opacity; both widget sizes update | `SettingsCatalog`, `widgets/NowPlayingWidget` | `NowPlayingWidgetRenderTest`, `NowPlayingWidgetStateTest`, `WidgetLayoutTest`, `WidgetUpdateRequestsTest`; `widget-controls.sh` | |
 | Crash reporting and analytics toggles; Remote Config refreshes | `SettingsCatalog`, Home analytics consent card | `SettingsCatalogTest`, `AnalyticsConsentViewModelTest` | |
-| File logging, copy logs; debug live log in debug builds | `SettingsCatalog` | `SettingsCatalogTest` | Live log: #433 |
+| File logging, copy logs; debug live log in debug builds | `SettingsCatalog`, `debug/livelog/LiveLogScreen` | `SettingsCatalogTest`, `LiveLogBufferTest`, `LiveLogScreenTest` | |
 | Changelog reachable; licences | `screens/settings/about/WhatsNewScreen`, `LicencesScreen` | `VersionTest`, `SettingsScreenTest` | |
 
 ## Purchase, system surfaces
