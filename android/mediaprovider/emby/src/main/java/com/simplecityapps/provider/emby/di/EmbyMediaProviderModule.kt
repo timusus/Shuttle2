@@ -8,9 +8,10 @@ import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.server.LoginCredentials
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.emby.BuildConfig
-import com.simplecityapps.provider.emby.CredentialStore
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
 import com.simplecityapps.provider.emby.EmbyMediaProvider
@@ -18,7 +19,6 @@ import com.simplecityapps.provider.emby.EmbyPlaybackReporter
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.provider.emby.http.ItemsService
-import com.simplecityapps.provider.emby.http.LoginCredentials
 import com.simplecityapps.provider.emby.http.PlaybackReportingService
 import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -81,7 +81,8 @@ open class EmbyMediaProviderModule {
 
     @Provides
     @Singleton
-    fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore = CredentialStore(securePreferenceManager).apply {
+    @Named("EmbyCredentialStore")
+    fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): ServerCredentialStore = ServerCredentialStore(securePreferenceManager, prefix = "emby").apply {
         if (BuildConfig.DEBUG) {
             if (loginCredentials == null) {
                 loginCredentials = LoginCredentials("tim", "")
@@ -94,7 +95,7 @@ open class EmbyMediaProviderModule {
     @Singleton
     fun provideEmbyAuthenticationManager(
         userService: UserService,
-        credentialStore: CredentialStore,
+        @Named("EmbyCredentialStore") credentialStore: ServerCredentialStore,
         clientIdentity: ClientIdentity
     ): EmbyAuthenticationManager = EmbyAuthenticationManager(userService, credentialStore, clientIdentity)
 

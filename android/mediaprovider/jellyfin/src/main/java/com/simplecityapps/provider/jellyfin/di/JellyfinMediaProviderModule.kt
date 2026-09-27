@@ -8,9 +8,10 @@ import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.server.LoginCredentials
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.jellyfin.BuildConfig
-import com.simplecityapps.provider.jellyfin.CredentialStore
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
@@ -18,7 +19,6 @@ import com.simplecityapps.provider.jellyfin.JellyfinPlaybackReporter
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
-import com.simplecityapps.provider.jellyfin.http.LoginCredentials
 import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -81,7 +81,8 @@ open class JellyfinMediaProviderModule {
 
     @Provides
     @Singleton
-    fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore = CredentialStore(securePreferenceManager).apply {
+    @Named("JellyfinCredentialStore")
+    fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): ServerCredentialStore = ServerCredentialStore(securePreferenceManager, prefix = "jellyfin").apply {
         if (BuildConfig.DEBUG) {
             if (loginCredentials == null) {
                 loginCredentials = LoginCredentials("tim", "")
@@ -94,7 +95,7 @@ open class JellyfinMediaProviderModule {
     @Singleton
     fun provideJellyfinAuthenticationManager(
         userService: UserService,
-        credentialStore: CredentialStore,
+        @Named("JellyfinCredentialStore") credentialStore: ServerCredentialStore,
         clientIdentity: ClientIdentity
     ): JellyfinAuthenticationManager = JellyfinAuthenticationManager(userService, credentialStore, clientIdentity)
 

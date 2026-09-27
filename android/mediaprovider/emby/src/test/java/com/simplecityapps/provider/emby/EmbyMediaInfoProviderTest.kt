@@ -2,8 +2,10 @@ package com.simplecityapps.provider.emby
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
-import com.simplecityapps.provider.emby.http.AuthenticatedCredentials
 import com.simplecityapps.provider.emby.http.AuthenticationResult
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.provider.emby.http.User
@@ -33,7 +35,7 @@ import org.junit.Test
 class EmbyMediaInfoProviderTest {
     private val downloadableCredentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456", canDownload = true)
 
-    private val credentialStore = CredentialStore(SecurePreferenceManager(FakeSharedPreferences())).apply {
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "emby").apply {
         address = "http://emby.local:8096"
     }
 

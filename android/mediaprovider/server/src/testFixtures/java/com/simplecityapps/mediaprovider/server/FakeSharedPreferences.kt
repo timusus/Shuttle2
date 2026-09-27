@@ -1,4 +1,4 @@
-package com.simplecityapps.provider.plex
+package com.simplecityapps.mediaprovider.server
 
 import android.content.SharedPreferences
 

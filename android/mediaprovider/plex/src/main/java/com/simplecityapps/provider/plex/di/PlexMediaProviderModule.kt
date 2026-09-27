@@ -9,8 +9,8 @@ import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkInterceptor
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
-import com.simplecityapps.provider.plex.CredentialStore
 import com.simplecityapps.provider.plex.PlexArtworkTokenInterceptor
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
@@ -78,13 +78,14 @@ open class PlexMediaProviderModule {
 
     @Provides
     @Singleton
-    fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore = CredentialStore(securePreferenceManager)
+    @Named("PlexCredentialStore")
+    fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): ServerCredentialStore = ServerCredentialStore(securePreferenceManager, prefix = "plex", addressKey = "plex_host")
 
     @Provides
     @Singleton
     fun providePlexAuthenticationManager(
         userService: UserService,
-        credentialStore: CredentialStore,
+        @Named("PlexCredentialStore") credentialStore: ServerCredentialStore,
         clientIdentity: ClientIdentity
     ): PlexAuthenticationManager = PlexAuthenticationManager(userService, credentialStore, clientIdentity)
 
@@ -121,5 +122,5 @@ open class PlexMediaProviderModule {
     @Provides
     @IntoSet
     @RemoteArtworkInterceptor
-    fun provideArtworkTokenInterceptor(credentialStore: CredentialStore): Interceptor = PlexArtworkTokenInterceptor(credentialStore)
+    fun provideArtworkTokenInterceptor(@Named("PlexCredentialStore") credentialStore: ServerCredentialStore): Interceptor = PlexArtworkTokenInterceptor(credentialStore)
 }

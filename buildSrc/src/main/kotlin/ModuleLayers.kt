@@ -35,6 +35,7 @@ object ModuleLayers {
         ":android:core" to ModuleLayer.CORE,
         ":android:domain" to ModuleLayer.DOMAIN,
         ":android:mediaprovider:core" to ModuleLayer.DATA,
+        ":android:mediaprovider:server" to ModuleLayer.DATA,
         ":android:downloads" to ModuleLayer.DATA,
         ":android:imageloader" to ModuleLayer.DATA,
         ":android:networking" to ModuleLayer.DATA,

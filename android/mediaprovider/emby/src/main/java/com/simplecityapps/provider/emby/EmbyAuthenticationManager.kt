@@ -1,12 +1,13 @@
 package com.simplecityapps.provider.emby
 
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.LoginCredentials
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.HttpStatusCode
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
-import com.simplecityapps.provider.emby.http.AuthenticatedCredentials
 import com.simplecityapps.provider.emby.http.AuthenticationResult
-import com.simplecityapps.provider.emby.http.LoginCredentials
 import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.provider.emby.http.authenticate
 import com.simplecityapps.provider.emby.http.me
@@ -16,7 +17,7 @@ import timber.log.Timber
 
 class EmbyAuthenticationManager(
     private val userService: UserService,
-    private val credentialStore: CredentialStore,
+    private val credentialStore: ServerCredentialStore,
     private val clientIdentity: ClientIdentity
 ) {
     fun getLoginCredentials(): LoginCredentials? = credentialStore.loginCredentials

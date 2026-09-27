@@ -2,8 +2,10 @@ package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.PlaybackSession
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
-import com.simplecityapps.provider.plex.http.AuthenticatedCredentials
 import com.simplecityapps.provider.plex.http.AuthenticationResult
 import com.simplecityapps.provider.plex.http.PlaybackReportingService
 import com.simplecityapps.provider.plex.http.UserService
@@ -17,7 +19,7 @@ import org.junit.Test
 import retrofit2.Response
 
 class PlexPlaybackReporterTest {
-    private val credentialStore = CredentialStore(SecurePreferenceManager(FakeSharedPreferences())).apply {
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "plex").apply {
         address = "http://plex.local:32400"
         authenticatedCredentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456")
     }

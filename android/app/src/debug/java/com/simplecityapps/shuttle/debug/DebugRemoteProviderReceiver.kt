@@ -4,19 +4,16 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.provider.emby.CredentialStore as EmbyCredentialStore
 import com.simplecityapps.provider.emby.EmbyMediaProvider
-import com.simplecityapps.provider.emby.http.AuthenticatedCredentials as EmbyAuthenticatedCredentials
-import com.simplecityapps.provider.jellyfin.CredentialStore as JellyfinCredentialStore
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
-import com.simplecityapps.provider.jellyfin.http.AuthenticatedCredentials as JellyfinAuthenticatedCredentials
-import com.simplecityapps.provider.plex.CredentialStore as PlexCredentialStore
 import com.simplecityapps.provider.plex.PlexMediaProvider
-import com.simplecityapps.provider.plex.http.AuthenticatedCredentials as PlexAuthenticatedCredentials
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import javax.inject.Named
 import timber.log.Timber
 
 /**
@@ -29,19 +26,22 @@ import timber.log.Timber
  * Extras: `provider` (`jellyfin`, `emby` or `plex`), `address`, `user_id`, `access_token`. `user_id`
  * is required for all three providers even though Plex's [PlexMediaProvider] never reads it back
  * (unlike Jellyfin/Emby, Plex API calls only need the token) -- it's just stored alongside the
- * token for parity with [com.simplecityapps.provider.plex.CredentialStore.authenticatedCredentials],
+ * token for parity with Plex's [ServerCredentialStore.authenticatedCredentials],
  * so the seed script can pass a placeholder instead of looking one up.
  */
 @AndroidEntryPoint
 class DebugRemoteProviderReceiver : BroadcastReceiver() {
     @Inject
-    lateinit var jellyfinCredentialStore: JellyfinCredentialStore
+    @field:Named("JellyfinCredentialStore")
+    lateinit var jellyfinCredentialStore: ServerCredentialStore
 
     @Inject
-    lateinit var embyCredentialStore: EmbyCredentialStore
+    @field:Named("EmbyCredentialStore")
+    lateinit var embyCredentialStore: ServerCredentialStore
 
     @Inject
-    lateinit var plexCredentialStore: PlexCredentialStore
+    @field:Named("PlexCredentialStore")
+    lateinit var plexCredentialStore: ServerCredentialStore
 
     @Inject
     lateinit var jellyfinMediaProvider: JellyfinMediaProvider
@@ -73,21 +73,21 @@ class DebugRemoteProviderReceiver : BroadcastReceiver() {
         val type = when (intent.getStringExtra(EXTRA_PROVIDER)) {
             "jellyfin" -> {
                 jellyfinCredentialStore.address = address
-                jellyfinCredentialStore.authenticatedCredentials = JellyfinAuthenticatedCredentials(accessToken, userId)
+                jellyfinCredentialStore.authenticatedCredentials = AuthenticatedCredentials(accessToken, userId)
                 mediaImporter.mediaProviders += jellyfinMediaProvider
                 MediaProviderType.Jellyfin
             }
 
             "emby" -> {
                 embyCredentialStore.address = address
-                embyCredentialStore.authenticatedCredentials = EmbyAuthenticatedCredentials(accessToken, userId)
+                embyCredentialStore.authenticatedCredentials = AuthenticatedCredentials(accessToken, userId)
                 mediaImporter.mediaProviders += embyMediaProvider
                 MediaProviderType.Emby
             }
 
             "plex" -> {
                 plexCredentialStore.address = address
-                plexCredentialStore.authenticatedCredentials = PlexAuthenticatedCredentials(accessToken, userId)
+                plexCredentialStore.authenticatedCredentials = AuthenticatedCredentials(accessToken, userId)
                 mediaImporter.mediaProviders += plexMediaProvider
                 MediaProviderType.Plex
             }

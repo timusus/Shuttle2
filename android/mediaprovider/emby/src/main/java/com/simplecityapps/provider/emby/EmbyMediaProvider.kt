@@ -7,9 +7,9 @@ import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.R
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.userDescription
-import com.simplecityapps.provider.emby.http.AuthenticatedCredentials
 import com.simplecityapps.provider.emby.http.Item
 import com.simplecityapps.provider.emby.http.ItemsService
 import com.simplecityapps.provider.emby.http.QueryResult

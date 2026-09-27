@@ -44,6 +44,7 @@ dependencies {
     implementation libs.google.material
 
     implementation(project(":android:mediaprovider:core"))
+    implementation(project(":android:mediaprovider:server"))
     implementation(project(":android:core"))
     implementation(project(":android:networking"))
 
@@ -56,6 +57,7 @@ dependencies {
 
     implementation libs.kotlinx.datetime
 
+    testImplementation(testFixtures(project(":android:mediaprovider:server")))
     testImplementation libs.junit
     testImplementation libs.kotest
     testImplementation libs.robolectric

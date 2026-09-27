@@ -94,6 +94,7 @@ class UiModuleRules {
             ":android:mediaprovider:jellyfin",
             ":android:mediaprovider:emby",
             ":android:mediaprovider:plex",
+            ":android:mediaprovider:server",
         )
     }
 }

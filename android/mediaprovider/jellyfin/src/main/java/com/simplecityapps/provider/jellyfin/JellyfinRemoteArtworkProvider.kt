@@ -2,12 +2,14 @@ package com.simplecityapps.provider.jellyfin
 
 import android.net.Uri
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.jellyfin.http.Item
 import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.item
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
+import javax.inject.Named
 
 /** Artwork urls on the signed-in Jellyfin server; null when the server doesn't know the song's album or artist. */
 class JellyfinRemoteArtworkProvider
@@ -15,7 +17,7 @@ class JellyfinRemoteArtworkProvider
 constructor(
     private val jellyfinAuthenticationManager: JellyfinAuthenticationManager,
     private val itemsService: ItemsService,
-    private val credentialStore: CredentialStore
+    @Named("JellyfinCredentialStore") private val credentialStore: ServerCredentialStore
 ) : RemoteArtworkProvider {
     override fun handles(uri: Uri): Boolean = uri.scheme == "jellyfin"
 

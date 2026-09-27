@@ -2,19 +2,21 @@ package com.simplecityapps.provider.emby
 
 import android.net.Uri
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.emby.http.Item
 import com.simplecityapps.provider.emby.http.ItemsService
 import com.simplecityapps.provider.emby.http.item
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
+import javax.inject.Named
 
 /** Artwork urls on the signed-in Emby server; null when the server doesn't know the song's album or artist. */
 class EmbyRemoteArtworkProvider
 @Inject
 constructor(
     private val embyAuthenticationManager: EmbyAuthenticationManager,
-    private val credentialStore: CredentialStore,
+    @Named("EmbyCredentialStore") private val credentialStore: ServerCredentialStore,
     private val itemsService: ItemsService
 ) : RemoteArtworkProvider {
     override fun handles(uri: Uri): Boolean = uri.scheme == "emby"

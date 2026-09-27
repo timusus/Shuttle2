@@ -6,9 +6,11 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.R
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
+import com.simplecityapps.mediaprovider.server.LoginCredentials
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
-import com.simplecityapps.provider.jellyfin.http.AuthenticatedCredentials
-import com.simplecityapps.provider.jellyfin.http.LoginCredentials
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
@@ -47,7 +49,7 @@ class JellyfinMediaProviderTest {
             .addConverterFactory(MoshiConverterFactory.create(Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()))
             .build()
 
-    private val credentialStore = CredentialStore(SecurePreferenceManager(FakeSharedPreferences()))
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "jellyfin")
 
     private val authenticationManager =
         JellyfinAuthenticationManager(

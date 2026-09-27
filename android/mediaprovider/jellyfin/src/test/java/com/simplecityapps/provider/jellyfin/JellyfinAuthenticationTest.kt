@@ -1,8 +1,10 @@
 package com.simplecityapps.provider.jellyfin
 
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
-import com.simplecityapps.provider.jellyfin.http.AuthenticatedCredentials
 import com.simplecityapps.provider.jellyfin.http.AuthenticationResult
 import com.simplecityapps.provider.jellyfin.http.Policy
 import com.simplecityapps.provider.jellyfin.http.User
@@ -22,7 +24,7 @@ class JellyfinAuthenticationTest {
 
     private lateinit var meResult: NetworkResult<User>
 
-    private val credentialStore = CredentialStore(SecurePreferenceManager(FakeSharedPreferences())).apply {
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "jellyfin").apply {
         address = "http://jellyfin.local:8096"
     }
 

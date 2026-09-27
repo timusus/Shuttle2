@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers.plex
 
+import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
-import com.simplecityapps.provider.plex.http.LoginCredentials
 import com.simplecityapps.shuttle.ui.screens.sources.servers.SavedServerLogin
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerAuthentication
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerLogin

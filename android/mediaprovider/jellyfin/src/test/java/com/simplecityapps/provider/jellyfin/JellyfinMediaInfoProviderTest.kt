@@ -2,8 +2,10 @@ package com.simplecityapps.provider.jellyfin
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
-import com.simplecityapps.provider.jellyfin.http.AuthenticatedCredentials
 import com.simplecityapps.provider.jellyfin.http.AuthenticationResult
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.User
@@ -33,7 +35,7 @@ import org.junit.Test
 class JellyfinMediaInfoProviderTest {
     private val downloadableCredentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456", canDownload = true)
 
-    private val credentialStore = CredentialStore(SecurePreferenceManager(FakeSharedPreferences())).apply {
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "jellyfin").apply {
         address = "http://jellyfin.local:8096"
     }
 

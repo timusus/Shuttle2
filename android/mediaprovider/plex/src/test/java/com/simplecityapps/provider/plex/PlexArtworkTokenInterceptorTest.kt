@@ -1,6 +1,8 @@
 package com.simplecityapps.provider.plex
 
-import com.simplecityapps.provider.plex.http.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
 import okhttp3.OkHttpClient
@@ -11,7 +13,7 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Test
 
 class PlexArtworkTokenInterceptorTest {
-    private val credentialStore = CredentialStore(SecurePreferenceManager(FakeSharedPreferences())).apply {
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "plex").apply {
         address = "http://plex.local:32400"
         authenticatedCredentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456")
     }

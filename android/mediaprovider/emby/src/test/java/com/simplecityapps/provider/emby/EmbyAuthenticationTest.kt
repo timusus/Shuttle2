@@ -1,8 +1,10 @@
 package com.simplecityapps.provider.emby
 
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
-import com.simplecityapps.provider.emby.http.AuthenticatedCredentials
 import com.simplecityapps.provider.emby.http.AuthenticationResult
 import com.simplecityapps.provider.emby.http.Policy
 import com.simplecityapps.provider.emby.http.User
@@ -20,7 +22,7 @@ class EmbyAuthenticationTest {
 
     private lateinit var meResult: NetworkResult<User>
 
-    private val credentialStore = CredentialStore(SecurePreferenceManager(FakeSharedPreferences())).apply {
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "emby").apply {
         address = "http://emby.local:8096"
     }
 

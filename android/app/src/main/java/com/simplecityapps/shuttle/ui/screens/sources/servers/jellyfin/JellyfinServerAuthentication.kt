@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers.jellyfin
 
+import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
-import com.simplecityapps.provider.jellyfin.http.LoginCredentials
 import com.simplecityapps.shuttle.ui.screens.sources.servers.SavedServerLogin
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerAuthentication
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerLogin

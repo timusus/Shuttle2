@@ -1,12 +1,13 @@
 package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.LoginCredentials
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.HttpStatusCode
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
-import com.simplecityapps.provider.plex.http.AuthenticatedCredentials
 import com.simplecityapps.provider.plex.http.AuthenticationResult
-import com.simplecityapps.provider.plex.http.LoginCredentials
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.provider.plex.http.authenticate
 import com.simplecityapps.provider.plex.http.plexClientHeaders
@@ -17,7 +18,7 @@ import timber.log.Timber
 
 class PlexAuthenticationManager(
     private val userService: UserService,
-    private val credentialStore: CredentialStore,
+    private val credentialStore: ServerCredentialStore,
     private val clientIdentity: ClientIdentity
 ) {
     fun getLoginCredentials(): LoginCredentials? = credentialStore.loginCredentials

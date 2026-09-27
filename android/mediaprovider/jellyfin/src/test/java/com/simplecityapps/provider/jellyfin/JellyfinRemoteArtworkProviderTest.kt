@@ -1,8 +1,10 @@
 package com.simplecityapps.provider.jellyfin
 
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
-import com.simplecityapps.provider.jellyfin.http.AuthenticatedCredentials
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
@@ -33,7 +35,7 @@ class JellyfinRemoteArtworkProviderTest {
             .build()
 
     private val credentialStore =
-        CredentialStore(SecurePreferenceManager(FakeSharedPreferences())).apply {
+        ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "jellyfin").apply {
             address = server.address
             authenticatedCredentials = AuthenticatedCredentials(accessToken = "token-1", userId = "user-1")
         }
