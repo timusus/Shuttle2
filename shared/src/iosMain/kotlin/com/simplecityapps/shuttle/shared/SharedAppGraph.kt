@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel
@@ -38,7 +39,8 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
  * Wave 3's are excluded for the same reason: Home needs the Song/Album/AlbumArtist repositories and
  * `QueueOperations`/`PlaybackOperations`; Sources and the server-type picker need `MediaSources`,
  * `ScannerFolderStore`, `SongImportStateProvider` and `TryAddServer` (the trial's server gate). Each drops out once
- * phase 5 binds them.
+ * phase 5 binds them. Settings needs a `SettingsCatalog` (Android's catalog reads LibrarySettings, PlaybackSettings and
+ * DownloadSettings, which still live in Android-only modules) and a `SettingsEffects`, neither of which iOS has yet.
  */
 @DependencyGraph(
     AppScope::class,
@@ -54,6 +56,7 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
         HomeViewModel::class,
         ServerTypePickerViewModel::class,
         SourcesViewModel::class,
+        SettingsViewModel::class,
     ],
 )
 interface SharedAppGraph : ViewModelGraph {

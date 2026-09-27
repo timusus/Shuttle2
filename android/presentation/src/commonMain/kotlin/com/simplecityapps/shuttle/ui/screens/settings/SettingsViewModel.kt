@@ -15,7 +15,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
-import java.util.Date
+import kotlin.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
 /** The stored value of every setting the catalog shows, keyed by preference key, and the confirmations still to show. */
 data class SettingsUiState(
     val values: Map<String, Any?> = emptyMap(),
-    val lastScanDate: Date? = null,
+    val lastScanDate: Instant? = null,
     val events: List<PendingEvent<SettingsUiEvent>> = emptyList()
 ) {
     @Suppress("UNCHECKED_CAST")
@@ -53,9 +53,13 @@ class SettingsViewModel @Inject constructor(
     observeSetting: ObserveSetting,
     private val readSetting: ReadSetting,
     private val saveSetting: SaveSetting,
-    private val effects: SettingsEffects
+    private val readLastScanDate: ReadLastScanDate,
+    private val effects: SettingsEffects,
+    catalog: SettingsCatalog
 ) : ViewModel() {
-    private val lastScanDate = MutableStateFlow(effects.lastScanDate())
+    private val catalogSettings = catalog.settings
+
+    private val lastScanDate = MutableStateFlow(readLastScanDate())
 
     private val events = PendingEvents<SettingsUiEvent>()
 
@@ -134,7 +138,7 @@ class SettingsViewModel @Inject constructor(
 
     /** Re-reads what isn't observable, such as the last scan date, when the screen comes back into view. */
     fun onResume() {
-        lastScanDate.value = effects.lastScanDate()
+        lastScanDate.value = readLastScanDate()
     }
 
     private fun <T> select(
@@ -155,18 +159,5 @@ class SettingsViewModel @Inject constructor(
 
     companion object {
         const val SLIDER_SETTLE_MILLIS = 300L
-
-        /** Every setting a catalog row stores or depends on. */
-        val catalogSettings: List<Setting<*>> = SettingsCatalog.items
-            .flatMap { item ->
-                val stored = when (item) {
-                    is SettingItem.Switch -> item.setting
-                    is SettingItem.Choice<*> -> item.setting
-                    is SettingItem.Slider<*> -> item.setting
-                    is SettingItem.Navigate, is SettingItem.Action -> null
-                }
-                listOfNotNull(stored, item.dependsOn, (item as? SettingItem.Choice<*>)?.overriddenBy?.setting)
-            }
-            .distinctBy { it.key }
     }
 }

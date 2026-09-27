@@ -7,7 +7,7 @@ import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
-import java.util.Date
+import kotlin.time.Instant
 
 /** Settings UI states the characterisation tests render. */
 object SettingsScenarios {
@@ -28,7 +28,7 @@ object SettingsScenarios {
 
     val scannedWeekly = SettingsUiState(
         values = mapOf(LibrarySettings.RescanFrequency.key to ImportFrequency.Weekly),
-        lastScanDate = Date(0)
+        lastScanDate = Instant.fromEpochMilliseconds(0)
     )
 
     val streamingCappedOnMobileData = SettingsUiState(

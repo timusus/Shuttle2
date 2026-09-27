@@ -39,8 +39,7 @@ class AndroidSettingsEffectsTest {
         widgetManager = widgetManager,
         themeManager = themeManager,
         mediaImporter = mockk(relaxed = true),
-        imageLoader = mockk(relaxed = true),
-        generalPreferenceManager = mockk(relaxed = true)
+        imageLoader = mockk(relaxed = true)
     )
 
     @Before

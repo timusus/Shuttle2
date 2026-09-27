@@ -56,7 +56,9 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsScreen
+import com.simplecityapps.shuttle.ui.text.stringResource
 import java.text.DateFormat
+import java.util.Date
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -326,7 +328,7 @@ private fun choiceValueLabel(
     val lastScan = uiState.lastScanDate
     if (item.setting != LibrarySettings.RescanFrequency || lastScan == null) return label
     val resources = LocalContext.current.resources
-    val date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(lastScan)
+    val date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(lastScan.toEpochMilliseconds()))
     return "$label ${resources.getString(R.string.pref_last_scan_date, date)}"
 }
 

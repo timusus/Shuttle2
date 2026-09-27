@@ -18,7 +18,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerScreen
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerUiState
 import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsScreen
 import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsUiState
-import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
+import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesScenarios
 import com.simplecityapps.shuttle.ui.screens.sources.sourcesContent
@@ -70,7 +70,7 @@ class SettingsScreenshotTest {
         leadingContent: LazyListScope.() -> Unit = {}
     ): @Composable () -> Unit = {
         SettingsDestinationScreen(
-            screen = SettingsCatalog.screen(destination),
+            screen = AndroidSettingsCatalog.screen(destination),
             uiState = uiState,
             onNavigateUp = {},
             onSwitchChange = { _, _ -> },

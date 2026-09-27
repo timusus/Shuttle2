@@ -15,8 +15,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
-import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
@@ -51,7 +51,7 @@ class SettingsRobot(private val rule: ComposeContentTestRule) {
         rule.setContent {
             S2AppTheme(AppThemeState()) {
                 SettingsDestinationScreen(
-                    screen = SettingsCatalog.screen(destination),
+                    screen = AndroidSettingsCatalog.screen(destination),
                     uiState = uiState,
                     onNavigateUp = { navigatedUp = true },
                     onSwitchChange = { item, checked -> switchChanges += item.key to checked },
@@ -75,7 +75,7 @@ class SettingsRobot(private val rule: ComposeContentTestRule) {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             S2AppTheme(AppThemeState()) {
                 SettingsDestinationScreen(
-                    screen = SettingsCatalog.screen(destination),
+                    screen = AndroidSettingsCatalog.screen(destination),
                     uiState = uiState,
                     onNavigateUp = { navigatedUp = true },
                     onSwitchChange = viewModel::onSwitchChange,

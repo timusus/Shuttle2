@@ -7,7 +7,6 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.BuildConfig
-import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
@@ -17,21 +16,26 @@ import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
+import com.simplecityapps.shuttle.ui.text.StringKey
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
 import kotlin.math.roundToInt
 
 /**
- * The settings screens, grouped as the settings redesign inventory lays them out: six destinations in place
+ * Android's settings screens, grouped as the settings redesign inventory lays them out: six destinations in place
  * of the nine legacy preference screens. Plain data; the Compose screens render it.
  *
  * Not modelled: the MediaStore/TagLib scanner choice (TagLib is the only scanner; the choice lives in the
  * media provider list, not a preference), and About's version, rate and contact rows, which aren't settings.
  */
-object SettingsCatalog {
+object AndroidSettingsCatalog : SettingsCatalog {
     private val streamingQualityOptions = listOf(
-        ChoiceOption(StreamingQuality.Original, R.string.pref_streaming_quality_original),
-        ChoiceOption(StreamingQuality.Kbps320, R.string.pref_streaming_quality_320),
-        ChoiceOption(StreamingQuality.Kbps192, R.string.pref_streaming_quality_192),
-        ChoiceOption(StreamingQuality.Kbps128, R.string.pref_streaming_quality_128)
+        ChoiceOption(StreamingQuality.Original, StringKey.PREF_STREAMING_QUALITY_ORIGINAL),
+        ChoiceOption(StreamingQuality.Kbps320, StringKey.PREF_STREAMING_QUALITY_320),
+        ChoiceOption(StreamingQuality.Kbps192, StringKey.PREF_STREAMING_QUALITY_192),
+        ChoiceOption(StreamingQuality.Kbps128, StringKey.PREF_STREAMING_QUALITY_128)
     )
 
     val appearance = SettingsScreen(
@@ -42,50 +46,50 @@ object SettingsCatalog {
                 items = listOf(
                     SettingItem.Choice(
                         setting = AppearanceSettings.Theme,
-                        title = R.string.pref_theme_title,
+                        title = StringKey.PREF_THEME_TITLE,
                         options = listOf(
-                            ChoiceOption(ThemeMode.DayNight, R.string.theme_entry_day_night),
-                            ChoiceOption(ThemeMode.Light, R.string.theme_entry_light),
-                            ChoiceOption(ThemeMode.Dark, R.string.theme_entry_dark)
+                            ChoiceOption(ThemeMode.DayNight, StringKey.THEME_ENTRY_DAY_NIGHT),
+                            ChoiceOption(ThemeMode.Light, StringKey.THEME_ENTRY_LIGHT),
+                            ChoiceOption(ThemeMode.Dark, StringKey.THEME_ENTRY_DARK)
                         )
                     ),
                     SettingItem.Switch(
                         setting = AppearanceSettings.DynamicColour,
-                        title = R.string.pref_dynamic_colour_title,
-                        summary = R.string.pref_dynamic_colour_summary,
+                        title = StringKey.PREF_DYNAMIC_COLOUR_TITLE,
+                        summary = StringKey.PREF_DYNAMIC_COLOUR_SUMMARY,
                         minSdk = Build.VERSION_CODES.S
                     ),
                     SettingItem.Choice(
                         setting = AppearanceSettings.AccentColour,
-                        title = R.string.pref_theme_accent_title,
+                        title = StringKey.PREF_THEME_ACCENT_TITLE,
                         options = listOf(
-                            ChoiceOption(Accent.Default, R.string.theme_accent_entry_blue),
-                            ChoiceOption(Accent.Orange, R.string.theme_accent_entry_orange),
-                            ChoiceOption(Accent.Cyan, R.string.theme_accent_entry_cyan),
-                            ChoiceOption(Accent.Purple, R.string.theme_accent_entry_purple),
-                            ChoiceOption(Accent.Green, R.string.theme_accent_entry_green),
-                            ChoiceOption(Accent.Amber, R.string.theme_accent_entry_amber)
+                            ChoiceOption(Accent.Default, StringKey.THEME_ACCENT_ENTRY_BLUE),
+                            ChoiceOption(Accent.Orange, StringKey.THEME_ACCENT_ENTRY_ORANGE),
+                            ChoiceOption(Accent.Cyan, StringKey.THEME_ACCENT_ENTRY_CYAN),
+                            ChoiceOption(Accent.Purple, StringKey.THEME_ACCENT_ENTRY_PURPLE),
+                            ChoiceOption(Accent.Green, StringKey.THEME_ACCENT_ENTRY_GREEN),
+                            ChoiceOption(Accent.Amber, StringKey.THEME_ACCENT_ENTRY_AMBER)
                         ),
-                        overriddenBy = SettingOverride(AppearanceSettings.DynamicColour, R.string.pref_theme_accent_dynamic_colour_hint)
+                        overriddenBy = SettingOverride(AppearanceSettings.DynamicColour, StringKey.PREF_THEME_ACCENT_DYNAMIC_COLOUR_HINT)
                     ),
                     SettingItem.Switch(
                         setting = AppearanceSettings.ColourFromArtwork,
-                        title = R.string.pref_colour_from_artwork_title,
-                        summary = R.string.pref_colour_from_artwork_summary
+                        title = StringKey.PREF_COLOUR_FROM_ARTWORK_TITLE,
+                        summary = StringKey.PREF_COLOUR_FROM_ARTWORK_SUMMARY
                     ),
                     SettingItem.Switch(
                         setting = AppearanceSettings.PureBlack,
-                        title = R.string.pref_pure_black_title,
-                        summary = R.string.pref_pure_black_summary
+                        title = StringKey.PREF_PURE_BLACK_TITLE,
+                        summary = StringKey.PREF_PURE_BLACK_SUMMARY
                     )
                 )
             ),
             SettingsGroup(
-                title = R.string.pref_category_title_widgets,
+                title = StringKey.PREF_CATEGORY_TITLE_WIDGETS,
                 items = listOf(
                     SettingItem.Slider(
                         setting = AppearanceSettings.WidgetBackgroundOpacity,
-                        title = R.string.pref_widget_opacity_title,
+                        title = StringKey.PREF_WIDGET_OPACITY_TITLE,
                         range = 0f..100f,
                         steps = 0,
                         fromFloat = { it.roundToInt() }
@@ -93,11 +97,11 @@ object SettingsCatalog {
                 )
             ),
             SettingsGroup(
-                title = R.string.pref_navigation_title,
+                title = StringKey.PREF_NAVIGATION_TITLE,
                 items = listOf(
                     SettingItem.Switch(
                         setting = AppearanceSettings.ShowHomeOnLaunch,
-                        title = R.string.pref_show_home_on_launch_title
+                        title = StringKey.PREF_SHOW_HOME_ON_LAUNCH_TITLE
                     )
                 )
             )
@@ -112,13 +116,13 @@ object SettingsCatalog {
                 items = listOf(
                     SettingItem.Switch(
                         setting = PlaybackSettings.RetainShuffleOnNewQueue,
-                        title = R.string.pref_disable_shuffle_on_queue_title,
-                        summary = R.string.pref_disable_shuffle_on_queue_subtitle
+                        title = StringKey.PREF_DISABLE_SHUFFLE_ON_QUEUE_TITLE,
+                        summary = StringKey.PREF_DISABLE_SHUFFLE_ON_QUEUE_SUBTITLE
                     ),
                     SettingItem.Switch(
                         setting = PlaybackSettings.UsbDacDirectOutput,
-                        title = R.string.pref_bit_perfect_usb_title,
-                        summary = R.string.pref_bit_perfect_usb_subtitle,
+                        title = StringKey.PREF_BIT_PERFECT_USB_TITLE,
+                        summary = StringKey.PREF_BIT_PERFECT_USB_SUBTITLE,
                         minSdk = Build.VERSION_CODES.UPSIDE_DOWN_CAKE
                     )
                 )
@@ -128,20 +132,20 @@ object SettingsCatalog {
                 items = listOf(
                     SettingItem.Navigate(
                         target = SettingsLink.Equalizer,
-                        title = R.string.dsp_equalizer_title
+                        title = StringKey.DSP_EQUALIZER_TITLE
                     ),
                     SettingItem.Choice(
                         setting = PlaybackSettings.ReplayGain,
-                        title = R.string.dsp_replay_gain_title,
+                        title = StringKey.DSP_REPLAY_GAIN_TITLE,
                         options = listOf(
-                            ChoiceOption(ReplayGainMode.Track, R.string.dsp_replay_gain_track),
-                            ChoiceOption(ReplayGainMode.Album, R.string.dsp_replay_gain_album),
-                            ChoiceOption(ReplayGainMode.Off, R.string.dsp_replay_gain_off)
+                            ChoiceOption(ReplayGainMode.Track, StringKey.DSP_REPLAY_GAIN_TRACK),
+                            ChoiceOption(ReplayGainMode.Album, StringKey.DSP_REPLAY_GAIN_ALBUM),
+                            ChoiceOption(ReplayGainMode.Off, StringKey.DSP_REPLAY_GAIN_OFF)
                         )
                     ),
                     SettingItem.Slider(
                         setting = PlaybackSettings.PreAmpGain,
-                        title = R.string.dsp_preamp,
+                        title = StringKey.DSP_PREAMP,
                         range = -ReplayGainAudioProcessor.maxPreAmpGain.toFloat()..ReplayGainAudioProcessor.maxPreAmpGain.toFloat(),
                         steps = 0,
                         fromFloat = { it }
@@ -159,27 +163,27 @@ object SettingsCatalog {
                 items = listOf(
                     SettingItem.Switch(
                         setting = LibrarySettings.ReportPlaybackToServer,
-                        title = R.string.pref_report_playback_title,
-                        summary = R.string.pref_report_playback_summary
+                        title = StringKey.PREF_REPORT_PLAYBACK_TITLE,
+                        summary = StringKey.PREF_REPORT_PLAYBACK_SUMMARY
                     ),
                     SettingItem.Switch(
                         setting = DownloadSettings.WifiOnly,
-                        title = R.string.pref_download_wifi_only_title,
-                        summary = R.string.pref_download_wifi_only_summary
+                        title = StringKey.PREF_DOWNLOAD_WIFI_ONLY_TITLE,
+                        summary = StringKey.PREF_DOWNLOAD_WIFI_ONLY_SUMMARY
                     )
                 )
             ),
             SettingsGroup(
-                title = R.string.pref_category_title_streaming_quality,
+                title = StringKey.PREF_CATEGORY_TITLE_STREAMING_QUALITY,
                 items = listOf(
                     SettingItem.Choice(
                         setting = StreamingSettings.UnmeteredQuality,
-                        title = R.string.pref_streaming_quality_unmetered_title,
+                        title = StringKey.PREF_STREAMING_QUALITY_UNMETERED_TITLE,
                         options = streamingQualityOptions
                     ),
                     SettingItem.Choice(
                         setting = StreamingSettings.MeteredQuality,
-                        title = R.string.pref_streaming_quality_metered_title,
+                        title = StringKey.PREF_STREAMING_QUALITY_METERED_TITLE,
                         options = streamingQualityOptions
                     )
                 )
@@ -195,63 +199,63 @@ object SettingsCatalog {
                 items = listOf(
                     SettingItem.Action(
                         action = SettingsAction.Rescan,
-                        title = R.string.pref_media_rescan_title,
-                        summary = R.string.pref_media_rescan_summary,
+                        title = StringKey.PREF_MEDIA_RESCAN_TITLE,
+                        summary = StringKey.PREF_MEDIA_RESCAN_SUMMARY,
                         key = "pref_media_rescan"
                     ),
                     SettingItem.Choice(
                         setting = LibrarySettings.RescanFrequency,
-                        title = R.string.pref_rescan_frequency_title,
+                        title = StringKey.PREF_RESCAN_FREQUENCY_TITLE,
                         options = listOf(
-                            ChoiceOption(ImportFrequency.Never, R.string.pref_rescan_frequency_never),
-                            ChoiceOption(ImportFrequency.Daily, R.string.pref_rescan_frequency_daily),
-                            ChoiceOption(ImportFrequency.Weekly, R.string.pref_rescan_frequency_weekly)
+                            ChoiceOption(ImportFrequency.Never, StringKey.PREF_RESCAN_FREQUENCY_NEVER),
+                            ChoiceOption(ImportFrequency.Daily, StringKey.PREF_RESCAN_FREQUENCY_DAILY),
+                            ChoiceOption(ImportFrequency.Weekly, StringKey.PREF_RESCAN_FREQUENCY_WEEKLY)
                         )
                     ),
                     SettingItem.Navigate(
                         target = SettingsLink.ExcludedSongs,
-                        title = R.string.pref_exclude_title,
-                        summary = R.string.pref_exclude_summary,
+                        title = StringKey.PREF_EXCLUDE_TITLE,
+                        summary = StringKey.PREF_EXCLUDE_SUMMARY,
                         key = "pref_excluded"
                     )
                 )
             ),
             SettingsGroup(
-                title = R.string.pref_category_title_artwork,
+                title = StringKey.PREF_CATEGORY_TITLE_ARTWORK,
                 items = listOf(
                     SettingItem.Switch(
                         setting = ArtworkSettings.WifiOnly,
-                        title = R.string.pref_artwork_wifi_title,
-                        summary = R.string.pref_artwork_wifi_subtitle
+                        title = StringKey.PREF_ARTWORK_WIFI_TITLE,
+                        summary = StringKey.PREF_ARTWORK_WIFI_SUBTITLE
                     ),
                     SettingItem.Switch(
                         setting = ArtworkSettings.LocalOnly,
-                        title = R.string.pref_artwork_local_only_title,
-                        summary = R.string.pref_artwork_local_only_subtitle
+                        title = StringKey.PREF_ARTWORK_LOCAL_ONLY_TITLE,
+                        summary = StringKey.PREF_ARTWORK_LOCAL_ONLY_SUBTITLE
                     ),
                     SettingItem.Switch(
                         setting = ArtworkSettings.MediaSessionArtwork,
-                        title = R.string.pref_media_session_artwork_title,
-                        summary = R.string.pref_media_session_artwork_subtitle
+                        title = StringKey.PREF_MEDIA_SESSION_ARTWORK_TITLE,
+                        summary = StringKey.PREF_MEDIA_SESSION_ARTWORK_SUBTITLE
                     ),
                     SettingItem.Action(
                         action = SettingsAction.ClearArtworkCache,
-                        title = R.string.pref_clear_artwork_title,
-                        summary = R.string.pref_clear_artwork_subtitle,
+                        title = StringKey.PREF_CLEAR_ARTWORK_TITLE,
+                        summary = StringKey.PREF_CLEAR_ARTWORK_SUBTITLE,
                         confirmation = Confirmation(
-                            title = R.string.settings_dialog_title_clear_artwork,
-                            message = R.string.settings_dialog_message_clear_artwork,
-                            confirm = R.string.settings_dialog_button_clear_artwork
+                            title = StringKey.SETTINGS_DIALOG_TITLE_CLEAR_ARTWORK,
+                            message = StringKey.SETTINGS_DIALOG_MESSAGE_CLEAR_ARTWORK,
+                            confirm = StringKey.SETTINGS_DIALOG_BUTTON_CLEAR_ARTWORK
                         ),
                         key = "pref_clear_artwork"
                     ),
                     SettingItem.Action(
                         action = SettingsAction.DownloadAllArtwork,
-                        title = R.string.pref_download_artwork_title,
+                        title = StringKey.PREF_DOWNLOAD_ARTWORK_TITLE,
                         confirmation = Confirmation(
-                            title = R.string.settings_dialog_title_download_artwork,
-                            message = R.string.settings_dialog_message_download_artwork,
-                            confirm = R.string.settings_dialog_button_download_artwork
+                            title = StringKey.SETTINGS_DIALOG_TITLE_DOWNLOAD_ARTWORK,
+                            message = StringKey.SETTINGS_DIALOG_MESSAGE_DOWNLOAD_ARTWORK,
+                            confirm = StringKey.SETTINGS_DIALOG_BUTTON_DOWNLOAD_ARTWORK
                         ),
                         key = "pref_download_artwork"
                     )
@@ -268,13 +272,13 @@ object SettingsCatalog {
                 items = listOf(
                     SettingItem.Switch(
                         setting = PrivacySettings.CrashReporting,
-                        title = R.string.pref_crash_reporting_title,
-                        summary = R.string.pref_crash_reporting_subtitle
+                        title = StringKey.PREF_CRASH_REPORTING_TITLE,
+                        summary = StringKey.PREF_CRASH_REPORTING_SUBTITLE
                     ),
                     SettingItem.Switch(
                         setting = PrivacySettings.Analytics,
-                        title = R.string.pref_analytics_title,
-                        summary = R.string.pref_analytics_subtitle
+                        title = StringKey.PREF_ANALYTICS_TITLE,
+                        summary = StringKey.PREF_ANALYTICS_SUBTITLE
                     )
                 )
             )
@@ -289,27 +293,27 @@ object SettingsCatalog {
                 items = listOf(
                     SettingItem.Navigate(
                         target = SettingsLink.WhatsNew,
-                        title = R.string.pref_view_changelog_title,
+                        title = StringKey.PREF_VIEW_CHANGELOG_TITLE,
                         key = "changelog_show"
                     ),
                     SettingItem.Navigate(
                         target = SettingsLink.Licences,
-                        title = R.string.pref_view_licenses_title,
+                        title = StringKey.PREF_VIEW_LICENSES_TITLE,
                         key = "licenses_show"
                     )
                 )
             ),
             SettingsGroup(
-                title = R.string.settings_group_advanced,
+                title = StringKey.SETTINGS_GROUP_ADVANCED,
                 items = listOfNotNull(
                     SettingItem.Switch(
                         setting = DebugSettings.FileLogging,
-                        title = R.string.pref_file_logging_title,
-                        summary = R.string.pref_file_logging_subtitle
+                        title = StringKey.PREF_FILE_LOGGING_TITLE,
+                        summary = StringKey.PREF_FILE_LOGGING_SUBTITLE
                     ),
                     SettingItem.Action(
                         action = SettingsAction.CopyDebugLogs,
-                        title = R.string.pref_copy_debug_logs_subtitle,
+                        title = StringKey.PREF_COPY_DEBUG_LOGS_SUBTITLE,
                         key = "pref_copy_debug_logs",
                         dependsOn = DebugSettings.FileLogging
                     ),
@@ -317,7 +321,7 @@ object SettingsCatalog {
                     // costs release nothing but this check; the screen and its buffer live in src/debug.
                     SettingItem.Navigate(
                         target = SettingsLink.LiveLog,
-                        title = R.string.pref_view_live_log_title,
+                        title = StringKey.PREF_VIEW_LIVE_LOG_TITLE,
                         key = "pref_view_live_log"
                     ).takeIf { BuildConfig.DEBUG }
                 )
@@ -325,11 +329,7 @@ object SettingsCatalog {
         )
     )
 
-    val screens: List<SettingsScreen> = listOf(appearance, playbackAndSound, sources, library, privacy, about)
-
-    fun screen(destination: SettingsDestination): SettingsScreen = screens.first { it.destination == destination }
-
-    val items: List<SettingItem> get() = screens.flatMap { it.items }
+    override val screens: List<SettingsScreen> = listOf(appearance, playbackAndSound, sources, library, privacy, about)
 
     /**
      * Keys the redesign leaves out, with why. Their stored values stay put.
@@ -340,4 +340,11 @@ object SettingsCatalog {
         "pref_library_tabs_all" to "Tab order moves to the Library screen's Edit tabs sheet",
         "pref_library_tabs_enabled" to "Tab visibility moves to the Library screen's Edit tabs sheet"
     )
+}
+
+@BindingContainer
+@ContributesTo(AppScope::class)
+object SettingsCatalogModule {
+    @Provides
+    fun provideSettingsCatalog(): SettingsCatalog = AndroidSettingsCatalog
 }

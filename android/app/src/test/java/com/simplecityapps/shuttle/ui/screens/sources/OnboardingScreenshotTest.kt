@@ -18,7 +18,7 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationScreen
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsUiState
-import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
+import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
@@ -82,7 +82,7 @@ class OnboardingScreenshotTest {
     @Test
     fun sources() = shot("sources") {
         SettingsDestinationScreen(
-            screen = SettingsCatalog.screen(SettingsDestination.Sources),
+            screen = AndroidSettingsCatalog.screen(SettingsDestination.Sources),
             uiState = SettingsUiState(),
             onNavigateUp = {},
             onSwitchChange = { _, _ -> },

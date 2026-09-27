@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.settings
 
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
@@ -11,12 +12,12 @@ import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
+import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
-import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
-import java.util.Date
+import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -34,6 +35,7 @@ class SettingsViewModelTest {
 
     private val prefs = InMemoryKeyValueStore()
     private val effects = FakeSettingsEffects()
+    private val preferenceManager = GeneralPreferenceManager(prefs)
     private lateinit var store: SettingsStore
 
     @Before
@@ -41,9 +43,9 @@ class SettingsViewModelTest {
         store = SettingsStore(prefs)
     }
 
-    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects)
+    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), effects, AndroidSettingsCatalog)
 
-    private inline fun <reified T : SettingItem> item(key: String): T = SettingsCatalog.items.filterIsInstance<T>().first { it.key == key }
+    private inline fun <reified T : SettingItem> item(key: String): T = AndroidSettingsCatalog.items.filterIsInstance<T>().first { it.key == key }
 
     @Test
     fun `the state starts from the stored values`() {
@@ -181,8 +183,8 @@ class SettingsViewModelTest {
     fun `resuming re-reads the last scan date`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
-        val scanned = Date(1_000)
-        effects.lastScan = scanned
+        val scanned = Instant.fromEpochMilliseconds(1_000)
+        preferenceManager.lastMediaImportDate = scanned
 
         viewModel.onResume()
         runCurrent()
@@ -194,6 +196,6 @@ class SettingsViewModelTest {
     fun `every catalog setting is in the state`() {
         val keys = viewModel().uiState.value.values.keys
 
-        keys shouldBe SettingsViewModel.catalogSettings.map { it.key }.toSet()
+        keys shouldBe AndroidSettingsCatalog.settings.map { it.key }.toSet()
     }
 }

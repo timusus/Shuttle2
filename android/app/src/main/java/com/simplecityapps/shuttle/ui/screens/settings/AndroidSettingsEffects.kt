@@ -18,7 +18,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.ui.ThemeManager
@@ -28,39 +27,12 @@ import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.Binds
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Inject
-import java.util.Date
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/**
- * What a settings change or action does beyond storing a value: the live processors, workers, widgets and
- * system services the legacy preference screens poked. Kept behind an interface so the ViewModels stay free of
- * Context and are tested against a fake.
- */
-interface SettingsEffects {
-    /** Called after [setting] has been written with [value]. */
-    fun <T> onSettingChanged(
-        setting: Setting<T>,
-        value: T
-    )
-
-    /** When the library was last scanned, if it has been. */
-    fun lastScanDate(): Date?
-
-    /** Starts a library scan that outlives the screen. */
-    fun rescan()
-
-    suspend fun clearArtworkCache()
-
-    fun downloadAllArtwork()
-
-    suspend fun copyDebugLogs(): CopyDebugLogsResult
-}
-
-enum class CopyDebugLogsResult { Copied, TooLarge, Empty }
-
+/** The Android [SettingsEffects]: live audio processors, WorkManager, widgets, the clipboard and services. */
 class AndroidSettingsEffects @Inject constructor(
     @ApplicationContext private val context: Context,
     @AppCoroutineScope private val appScope: CoroutineScope,
@@ -68,8 +40,7 @@ class AndroidSettingsEffects @Inject constructor(
     private val widgetManager: WidgetManager,
     private val themeManager: ThemeManager,
     private val mediaImporter: MediaImporter,
-    private val imageLoader: ArtworkImageLoader,
-    private val generalPreferenceManager: GeneralPreferenceManager
+    private val imageLoader: ArtworkImageLoader
 ) : SettingsEffects {
     override fun <T> onSettingChanged(
         setting: Setting<T>,
@@ -83,8 +54,6 @@ class AndroidSettingsEffects @Inject constructor(
             LibrarySettings.RescanFrequency -> MediaImportWorker.updateWork(context, value as ImportFrequency)
         }
     }
-
-    override fun lastScanDate(): Date? = generalPreferenceManager.lastMediaImportDate?.let { scanned -> Date(scanned.toEpochMilliseconds()) }
 
     override fun rescan() {
         appScope.launch { mediaImporter.import() }

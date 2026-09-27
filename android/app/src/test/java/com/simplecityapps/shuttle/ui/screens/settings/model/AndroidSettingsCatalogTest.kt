@@ -8,38 +8,38 @@ import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import org.junit.Test
 
-class SettingsCatalogTest {
+class AndroidSettingsCatalogTest {
     /** Everything the catalog accounts for: rows' keys and the legacy screens each destination replaces. */
     private val mappedKeys: Set<String> =
-        SettingsCatalog.items.mapNotNull { it.key }.toSet() + SettingsDestination.entries.flatMap { it.legacyKeys }
+        AndroidSettingsCatalog.items.mapNotNull { it.key }.toSet() + SettingsDestination.entries.flatMap { it.legacyKeys }
 
     @Test
     fun `every key in the legacy preference XMLs is mapped or dropped on purpose`() {
-        val unaccounted = legacyXmlKeys - mappedKeys - SettingsCatalog.droppedKeys.keys
+        val unaccounted = legacyXmlKeys - mappedKeys - AndroidSettingsCatalog.droppedKeys.keys
 
         unaccounted.shouldBeEmpty()
     }
 
     @Test
     fun `nothing is both mapped and dropped`() {
-        (mappedKeys intersect SettingsCatalog.droppedKeys.keys).shouldBeEmpty()
+        (mappedKeys intersect AndroidSettingsCatalog.droppedKeys.keys).shouldBeEmpty()
     }
 
     @Test
     fun `no key appears on two rows`() {
-        val keys = SettingsCatalog.items.mapNotNull { it.key }
+        val keys = AndroidSettingsCatalog.items.mapNotNull { it.key }
 
         keys.groupingBy { it }.eachCount().filterValues { it > 1 }.keys.shouldBeEmpty()
     }
 
     @Test
     fun `every destination has one screen`() {
-        SettingsCatalog.screens.map { it.destination } shouldBe SettingsDestination.entries
+        AndroidSettingsCatalog.screens.map { it.destination } shouldBe SettingsDestination.entries
     }
 
     @Test
     fun `choices offer every value and include the default`() {
-        SettingsCatalog.items.filterIsInstance<SettingItem.Choice<*>>().forEach { choice ->
+        AndroidSettingsCatalog.items.filterIsInstance<SettingItem.Choice<*>>().forEach { choice ->
             val values = choice.options.map { it.value }
             values.distinct().size shouldBe values.size
             values.contains(choice.setting.default) shouldBe true
@@ -50,20 +50,20 @@ class SettingsCatalogTest {
 
     @Test
     fun `sliders' ranges hold their defaults`() {
-        SettingsCatalog.items.filterIsInstance<SettingItem.Slider<*>>().forEach { slider ->
+        AndroidSettingsCatalog.items.filterIsInstance<SettingItem.Slider<*>>().forEach { slider ->
             (slider.setting.default.toFloat() in slider.range) shouldBe true
         }
     }
 
     @Test
     fun `dependencies point at switches in the catalog`() {
-        val switches = SettingsCatalog.items.filterIsInstance<SettingItem.Switch>().map { it.setting }
-        SettingsCatalog.items.mapNotNull { it.dependsOn }.forEach { dependency ->
+        val switches = AndroidSettingsCatalog.items.filterIsInstance<SettingItem.Switch>().map { it.setting }
+        AndroidSettingsCatalog.items.mapNotNull { it.dependsOn }.forEach { dependency ->
             switches.contains(dependency) shouldBe true
         }
     }
 
-    private fun choiceValues(key: String): List<Any?> = SettingsCatalog.items
+    private fun choiceValues(key: String): List<Any?> = AndroidSettingsCatalog.items
         .filterIsInstance<SettingItem.Choice<*>>()
         .single { it.key == key }
         .options

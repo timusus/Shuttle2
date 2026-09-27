@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
@@ -10,6 +12,7 @@ import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
+import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
@@ -38,9 +41,18 @@ class SettingsIntegrationTest {
     private val effects = FakeSettingsEffects()
     private val robot = SettingsRobot(composeTestRule)
 
+    private fun viewModel() = SettingsViewModel(
+        ObserveSetting(store),
+        ReadSetting(store),
+        SaveSetting(store),
+        ReadLastScanDate(GeneralPreferenceManager(InMemoryKeyValueStore())),
+        effects,
+        AndroidSettingsCatalog
+    )
+
     @Test
     fun `toggling a switch stores it and redraws it`() {
-        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects))
+        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, viewModel())
         robot.assertSwitchOff("Pure black")
 
         robot.tapText("Pure black")
@@ -51,7 +63,7 @@ class SettingsIntegrationTest {
 
     @Test
     fun `picking a theme stores it and shows it`() {
-        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects))
+        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, viewModel())
 
         robot.tapText("Theme")
         robot.tapDialogText("Dark")
@@ -64,7 +76,7 @@ class SettingsIntegrationTest {
     @Test
     fun `turning dynamic colour off frees the accent to be picked`() {
         store.preference(AppearanceSettings.DynamicColour).value = true
-        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects))
+        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, viewModel())
         robot.assertNotEnabled("Accent")
 
         robot.tapText("Dynamic colour")
@@ -77,7 +89,7 @@ class SettingsIntegrationTest {
 
     @Test
     fun `a change made elsewhere shows up`() {
-        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects))
+        robot.setDestinationContentWithViewModel(SettingsDestination.Appearance, viewModel())
 
         store.preference(AppearanceSettings.PureBlack).value = true
 
