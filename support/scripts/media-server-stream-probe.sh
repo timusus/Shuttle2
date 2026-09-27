@@ -3,6 +3,8 @@
 # Jellyfin/Emby: /Audio/{id}/universal. Reports status, redirect, Content-Type and whether the
 # body is an HLS playlist (#EXTM3U), which is what decides whether ExoPlayer/Cast can play an
 # extensionless stream URL (#305).
+# Also the iOS StreamProfile's URL (#603): a progressive MP3 transcode capped at 128 kbps, from the start and
+# from 10 s in (StartTimeTicks, #606), reporting the Content-Type and, with ffprobe on PATH, what the body decodes as.
 # Plex: the direct/original file URL the app builds in PlexAuthenticationManager.buildPlexPath
 # (library part key + X-Plex-Token). Reports status, Content-Type, length and range support.
 #
@@ -32,6 +34,22 @@ probe() { # url auth-header
   printf '    %s  type=%s  starts=%q%s\n' "${status:-ERR}" "${ctype:--}" "$first" "${location:+  -> $location}"
   rm -f "$headers" "$body"
   [ -n "$location" ] && [ "${status:-}" != "200" ] && echo "$location" > /tmp/s2-probe-location || rm -f /tmp/s2-probe-location
+}
+
+transcode_probe() { # url
+  local url=$1 headers body
+  headers=$(mktemp) body=$(mktemp)
+  curl -s -m 60 -D "$headers" -o "$body" "$url" || true
+  local status ctype decoded=""
+  status=$(head -1 "$headers" | tr -d '\r' | cut -d' ' -f2)
+  ctype=$( (grep -i '^content-type:' "$headers" || true) | tail -1 | cut -d' ' -f2- | tr -d '\r')
+  if command -v ffprobe >/dev/null; then
+    decoded=$(ffprobe -v error -show_entries format=format_name,duration:stream=codec_name,bit_rate \
+      -of compact=p=0:nk=1 "$body" 2>&1 | tr '\n' ' ')
+  fi
+  printf '    %s  type=%s  bytes=%s%s\n' "${status:-ERR}" "${ctype:--}" "$(wc -c <"$body" | tr -d ' ')" \
+    "${decoded:+  decodes=$decoded}"
+  rm -f "$headers" "$body"
 }
 
 plex_probe() { # url
@@ -114,5 +132,17 @@ for i in json.load(sys.stdin)['Items']:
       echo "   HEAD universal (as CastPlayback's MediaInfoProvider does):"
       curl -s -m 20 -I -o /dev/null -w '    %{http_code}  type=%{content_type}\n' \
         "$URL/Audio/$id/universal?UserId=$user_id&DeviceId=s2-probe&PlaySessionId=$(uuidgen)&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg&TranscodingContainer=ts&TranscodingProtocol=hls${extra}&EnableRedirection=true&EnableRemoteMedia=true&AudioCodec=aac&${token_params[0]}=$API_KEY" || true
+      # StreamProfile.Ios. Each request takes a fresh PlaySessionId, as the app's do: Emby serves a session's
+      # running transcode again and ignores StartTimeTicks.
+      ios_url() { # [StartTimeTicks]
+        local u="$URL/Audio/$id/universal?UserId=$user_id&DeviceId=s2-probe&PlaySessionId=$(uuidgen)"
+        u+="&Container=mp3|mp3,aac|aac,m4a|aac,m4a|alac,m4b|aac,m4b|alac,mp4|aac,mp4|alac,flac,ogg,oga,opus,mka,matroska,webm,webma,wav,aiff,aif"
+        u+="&TranscodingContainer=mp3&TranscodingProtocol=http${extra}&EnableRedirection=true&EnableRemoteMedia=true"
+        echo "$u&AudioCodec=mp3&MaxStreamingBitrate=128000${1:+&StartTimeTicks=$1}&${token_params[0]}=$API_KEY"
+      }
+      echo "   GET universal, iOS profile at 128 kbps:"
+      transcode_probe "$(ios_url)"
+      echo "   same, from 10 s (StartTimeTicks):"
+      transcode_probe "$(ios_url 100000000)"
     done
 done
