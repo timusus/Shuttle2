@@ -1,7 +1,5 @@
 package com.simplecityapps.shuttle.ui.actions
 
-import com.simplecityapps.shuttle.downloads.SongDownload
-import com.simplecityapps.shuttle.downloads.SongDownloadRepository
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.platform.PlatformFeatures
 import dev.zacsweers.metro.Inject
@@ -27,7 +25,7 @@ import kotlinx.coroutines.flow.map
  */
 class AvailableMediaActions @Inject constructor(
     private val resolveSongs: ResolveSongs,
-    private val songDownloadRepository: SongDownloadRepository,
+    private val songDownloader: SongDownloader,
     private val platformFeatures: PlatformFeatures,
 ) {
     operator fun invoke(selection: MediaSelection): Flow<List<MediaActionType>> {
@@ -35,7 +33,7 @@ class AvailableMediaActions @Inject constructor(
         if (!platformFeatures.offlineDownloads || selection.mediaProviders?.any { it.remote } != true) return flowOf(base)
         return flow {
             val songs = resolveSongs(selection)
-            emitAll(songDownloadRepository.observeDownloads().map { downloads -> base + downloadActions(songs, downloads) })
+            emitAll(songDownloader.observeHeldPaths().map { heldPaths -> base + downloadActions(songs, heldPaths) })
         }
     }
 
@@ -68,26 +66,15 @@ class AvailableMediaActions @Inject constructor(
         }
     }
 
-    private fun downloadActions(songs: List<Song>, downloads: List<SongDownload>): List<MediaActionType> {
+    private fun downloadActions(songs: List<Song>, heldPaths: Set<String>): List<MediaActionType> {
         val remotePaths = songs.filter { it.mediaProvider.remote }.map { it.path }
         if (remotePaths.isEmpty()) return emptyList()
-        val downloaded = downloads.filter { it.state in HELD_STATES }.mapTo(mutableSetOf()) { it.path }
         return buildList {
-            if (remotePaths.any { it !in downloaded }) add(MediaActionType.Download)
-            if (remotePaths.any { it in downloaded }) add(MediaActionType.RemoveDownload)
+            if (remotePaths.any { it !in heldPaths }) add(MediaActionType.Download)
+            if (remotePaths.any { it in heldPaths }) add(MediaActionType.RemoveDownload)
         }
     }
 
     private val Song.isDeletable: Boolean
         get() = canBeDeleted() && !mediaProvider.remote
-
-    private companion object {
-        /** A download in any of these states is on the device or on its way; Failed and Removing aren't. */
-        val HELD_STATES = setOf(
-            SongDownload.State.Queued,
-            SongDownload.State.Downloading,
-            SongDownload.State.Completed,
-            SongDownload.State.Stopped,
-        )
-    }
 }

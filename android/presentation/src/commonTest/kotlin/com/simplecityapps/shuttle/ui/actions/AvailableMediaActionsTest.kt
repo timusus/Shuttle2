@@ -4,9 +4,8 @@ import com.simplecityapps.createAlbum
 import com.simplecityapps.createGenre
 import com.simplecityapps.createPlatformFeatures
 import com.simplecityapps.createSong
-import com.simplecityapps.fakes.FakeSongDownloadRepository
+import com.simplecityapps.fakes.FakeSongDownloader
 import com.simplecityapps.fakes.TestMediaActions
-import com.simplecityapps.shuttle.downloads.SongDownload
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.AddToPlaylist
 import com.simplecityapps.shuttle.ui.actions.MediaActionType.AddToQueue
@@ -25,20 +24,18 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionType.SongInfo
 import io.kotest.matchers.collections.shouldContainAll
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
 
 class AvailableMediaActionsTest {
 
-    private val downloads = FakeSongDownloadRepository()
+    private val downloads = FakeSongDownloader()
     private val availableActions = AvailableMediaActions(TestMediaActions().resolveSongs, downloads, createPlatformFeatures())
 
     private val remote = createSong(id = 1, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://1")
 
     private suspend fun actionsFor(selection: MediaSelection) = availableActions(selection).first()
-
-    private fun download(path: String, state: SongDownload.State) = SongDownload(path, state, progress = 0f, bytesDownloaded = 0, contentLength = -1)
 
     @Test
     fun `a single local song offers everything but downloads`() = runTest {
@@ -68,7 +65,7 @@ class AvailableMediaActionsTest {
 
     @Test
     fun `a platform without offline downloads offers neither download action`() = runTest {
-        downloads.downloads.value = listOf(download(remote.path, SongDownload.State.Completed))
+        downloads.heldPaths.value = setOf(remote.path)
         val withoutDownloads = AvailableMediaActions(TestMediaActions().resolveSongs, downloads, createPlatformFeatures(offlineDownloads = false))
 
         val actions = withoutDownloads(MediaSelection.Songs(listOf(remote, createSong(id = 2, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://2")))).first()
@@ -79,7 +76,7 @@ class AvailableMediaActionsTest {
     }
 
     @Test
-    fun `a remote song offers download until it is downloaded, then removal`() = runTest {
+    fun `a remote song offers download until it is downloaded then removal`() = runTest {
         val selection = MediaSelection.Songs(remote)
 
         val before = actionsFor(selection)
@@ -88,7 +85,7 @@ class AvailableMediaActionsTest {
         before shouldNotContain EditTags
         before shouldNotContain Delete
 
-        downloads.downloads.value = listOf(download(remote.path, SongDownload.State.Completed))
+        downloads.heldPaths.value = setOf(remote.path)
         val after = actionsFor(selection)
         after shouldContainAll listOf(RemoveDownload)
         after shouldNotContain Download
@@ -96,7 +93,7 @@ class AvailableMediaActionsTest {
 
     @Test
     fun `a failed download can be retried`() = runTest {
-        downloads.downloads.value = listOf(download(remote.path, SongDownload.State.Failed))
+        downloads.heldPaths.value = emptySet()
 
         actionsFor(MediaSelection.Songs(remote)) shouldContainAll listOf(Download)
     }

@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.shuttle.model.Song
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Keeps a remote song on the device for offline playback (S4 in docs/architecture/ios-port/phase-4-platform-seams.md):
@@ -12,4 +13,7 @@ interface SongDownloader {
     suspend fun download(song: Song): Boolean
 
     fun remove(song: Song)
+
+    /** The paths on the device or on their way there: queued, downloading, completed or stopped, but not failed. */
+    fun observeHeldPaths(): Flow<Set<String>>
 }

@@ -6,7 +6,6 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
-import com.simplecityapps.fakes.FakeSongDownloadRepository
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.PlaybackProgress
@@ -113,7 +112,7 @@ class PlayerViewModelTest {
             savedNowPlaying = { savedNowPlaying },
             clearQueue = ClearQueue(queueOperations, playbackOperations),
             restoreQueue = RestoreQueue(queueOperations, playbackOperations),
-            availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, FakeSongDownloadRepository(), createPlatformFeatures()),
+            availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, mediaActions.songDownloader, createPlatformFeatures()),
             mediaActionHandler = mediaActions.handler,
             savedStateHandle = savedStateHandle,
         ).also { viewModel ->

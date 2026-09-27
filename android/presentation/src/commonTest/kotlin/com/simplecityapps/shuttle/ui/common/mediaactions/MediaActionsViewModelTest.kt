@@ -4,32 +4,46 @@ import com.simplecityapps.createPlatformFeatures
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeSongDownloadRepository
+import com.simplecityapps.fakes.FakeSongDownloader
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
-import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.setMain
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class MediaActionsViewModelTest {
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     private val playlistRepository = FakePlaylistRepository()
     private val actions = TestMediaActions(playlistRepository = playlistRepository)
 
     private fun TestScope.viewModel() = MediaActionsViewModel(
         actions.handler,
-        AvailableMediaActions(actions.resolveSongs, FakeSongDownloadRepository(), createPlatformFeatures()),
+        AvailableMediaActions(actions.resolveSongs, FakeSongDownloader(), createPlatformFeatures()),
         actions.observePlaylists,
     ).also { viewModel -> backgroundScope.launch { viewModel.uiState.collect {} } }
 

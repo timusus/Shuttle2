@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.downloads
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeMediaInfoProvider
 import com.simplecityapps.fakes.FakeSongDownloadManager
+import com.simplecityapps.fakes.FakeSongDownloadRepository
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -14,7 +15,7 @@ class ServerSongDownloaderTest {
 
     private val songDownloadManager = FakeSongDownloadManager()
     private val mediaInfoProvider = FakeMediaInfoProvider()
-    private val downloader = ServerSongDownloader(songDownloadManager, AggregateMediaInfoProvider(mutableSetOf(mediaInfoProvider)))
+    private val downloader = ServerSongDownloader(songDownloadManager, AggregateMediaInfoProvider(mutableSetOf(mediaInfoProvider)), FakeSongDownloadRepository())
     private val song = createSong(id = 1, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://1")
 
     @Test
