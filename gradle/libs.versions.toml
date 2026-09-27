@@ -32,12 +32,15 @@ kotlinx-coroutines-core = "1.11.0"
 kotlinx-coroutines-test = "1.11.0"
 kotlinx-datetime = "0.8.0"
 kotlinx-serialization = "1.11.0"
+ktor = "3.6.0"
 ktaglib = "2.0.0"
 leakcanary-android = "2.14"
 lifecycle-common-java8 = "2.11.0"
 lifecycle-runtime-ktx = "2.11.0"
 lifecycle-viewmodel-compose = "2.11.0"
 lifecycle-viewmodel-navigation3 = "2.11.0"
+# The JetBrains KMP publication of androidx lifecycle-viewmodel (ViewModel + viewModelScope on iOS).
+lifecycle-viewmodel-kmp = "2.11.0"
 logging-interceptor = "5.5.0"
 material = "1.14.0"
 # Pinned over the compose BOM (1.4.0) for the Material 3 Expressive components; see
@@ -46,6 +49,7 @@ material3 = "1.5.0-alpha29"
 materialkolor = "5.0.1"
 material3-adaptive = "1.3.0"
 media3 = "1.11.1"
+metro = "1.4.4"
 mockk = "1.14.11"
 moshi = "1.15.2"
 moshi-adapters = "1.15.2"
@@ -64,6 +68,9 @@ robolectric = "4.17"
 roborazzi = "1.75.0"
 runner = "1.7.0"
 security-crypto = "1.1.0"
+# SKIE 0.10.15 is the first release supporting Kotlin 2.4.20 (0.10.14 rejects it); bump the two together.
+skie = "0.10.15"
+sqlite-bundled = "2.6.2"
 semver4j = "3.1.0"
 sentry = "8.57.0"
 sentry-gradle-plugin = "6.22.0"
@@ -98,6 +105,7 @@ androidx-navigation3-ui = { module = "androidx.navigation3:navigation3-ui", vers
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "junit-version" }
 androidx-lifecycle-common-java8 = { module = "androidx.lifecycle:lifecycle-common-java8", version.ref = "lifecycle-common-java8" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
+androidx-lifecycle-viewmodel-kmp = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycle-viewmodel-kmp" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle-viewmodel-compose" }
 androidx-material = { module = "androidx.compose.material:material" }
 androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
@@ -106,6 +114,8 @@ androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref =
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room-compiler" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room-compiler" }
 androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room-compiler" }
+# Room KMP: room-runtime is multiplatform; iOS pairs it with the bundled SQLite driver.
+androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "sqlite-bundled" }
 androidx-rules = { module = "androidx.test:rules", version.ref = "core-ktx-version" }
 androidx-runner = { module = "androidx.test:runner", version.ref = "runner" }
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "security-crypto" }
@@ -133,6 +143,7 @@ hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hil
 hilt = { module = "com.google.dagger:hilt-android", version.ref = "hilt-android" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kotest = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
@@ -142,6 +153,12 @@ kotlinx-coroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-te
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary-android" }
 media3-cast = { module = "androidx.media3:media3-cast", version.ref = "media3" }
 media3-database = { module = "androidx.media3:media3-database", version.ref = "media3" }
@@ -150,6 +167,7 @@ media3-exoplayerHls = { module = "androidx.media3:media3-exoplayer-hls", version
 media3-session = { module = "androidx.media3:media3-session", version.ref = "media3" }
 media3-testUtils = { module = "androidx.media3:media3-test-utils", version.ref = "media3" }
 media3-testUtilsRobolectric = { module = "androidx.media3:media3-test-utils-robolectric", version.ref = "media3" }
+metro-runtime = { module = "dev.zacsweers.metro:runtime", version.ref = "metro" }
 materialkolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
 mikepenz-aboutlibrariesCore = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
 moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
@@ -175,6 +193,10 @@ timusus-ktaglib = { module = "com.simplecityapps:ktaglib", version.ref = "ktagli
 tools-desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
 vdurmont-semver4j = { module = "com.vdurmont:semver4j", version.ref = "semver4j" }
 
+# Gradle plugins buildSrc's convention plugins apply, so they're on every build script's classpath (apply them by id, without a version).
+android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
+kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+
 [plugins]
 
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
@@ -183,6 +205,8 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt-android" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
+skie = { id = "co.touchlab.skie", version.ref = "skie" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
 sentry = { id = "io.sentry.android.gradle", version.ref = "sentry-gradle-plugin" }

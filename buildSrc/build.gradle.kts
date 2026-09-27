@@ -1,5 +1,6 @@
 repositories {
-   mavenCentral()
+    google()
+    mavenCentral()
 }
 
 plugins {
@@ -7,6 +8,11 @@ plugins {
 }
 
 dependencies {
+    // The convention plugins (src/main/kotlin/*.gradle.kts) apply AGP and the Kotlin Gradle plugin, so both
+    // come onto buildSrc's classpath, which every build script inherits: apply them by id, without a version.
+    implementation(libs.android.gradlePlugin)
+    implementation(libs.kotlin.gradlePlugin)
+
     testImplementation(libs.junit)
 }
 
