@@ -23,8 +23,7 @@ data class QueuedScrobbleEntity(
     val album: String?,
     val albumArtist: String?,
     val durationMs: Int,
-    val startedAtEpochSec: Long,
-    val attempts: Int = 0
+    val startedAtEpochSec: Long
 ) {
     companion object {
         const val SERVICE_LASTFM = "lastfm"

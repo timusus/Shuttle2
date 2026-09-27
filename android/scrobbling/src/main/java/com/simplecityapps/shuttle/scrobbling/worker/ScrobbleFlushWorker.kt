@@ -47,10 +47,7 @@ constructor(
 
             val outcome = sendBatch(batch, sessionKey)
             when (outcome) {
-                Outcome.Retry -> {
-                    scrobbleDao.incrementAttempts(batch.map { it.id })
-                    return Result.retry()
-                }
+                Outcome.Retry -> return Result.retry()
 
                 Outcome.SignedOut -> {
                     lastFmSessionStore.signOut()

@@ -21,7 +21,7 @@ class ScrobblesJsonAdapterFactoryTest {
         )
 
         response?.scrobbles?.scrobble?.size shouldBe 1
-        response?.scrobbles?.scrobble?.single()?.isIgnored shouldBe false
+        response?.scrobbles?.scrobble?.single()?.ignoredMessage?.code shouldBe "0"
     }
 
     @Test
@@ -32,8 +32,8 @@ class ScrobblesJsonAdapterFactoryTest {
 
         val results = response?.scrobbles?.scrobble.orEmpty()
         results.size shouldBe 2
-        results[0].isIgnored shouldBe false
-        results[1].isIgnored shouldBe true
+        results[0].ignoredMessage?.code shouldBe "0"
+        results[1].ignoredMessage?.code shouldBe "1"
     }
 
     @Test

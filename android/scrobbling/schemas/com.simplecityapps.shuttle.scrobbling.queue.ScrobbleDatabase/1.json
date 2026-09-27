@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "08fed15362553c96f433bb2e660d0690",
+    "identityHash": "9ff199edf4a8a269601b5efcf0c82407",
     "entities": [
       {
         "tableName": "queued_scrobbles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `service` TEXT NOT NULL, `artist` TEXT NOT NULL, `track` TEXT NOT NULL, `album` TEXT, `albumArtist` TEXT, `durationMs` INTEGER NOT NULL, `startedAtEpochSec` INTEGER NOT NULL, `attempts` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `service` TEXT NOT NULL, `artist` TEXT NOT NULL, `track` TEXT NOT NULL, `album` TEXT, `albumArtist` TEXT, `durationMs` INTEGER NOT NULL, `startedAtEpochSec` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -53,12 +53,6 @@
             "columnName": "startedAtEpochSec",
             "affinity": "INTEGER",
             "notNull": true
-          },
-          {
-            "fieldPath": "attempts",
-            "columnName": "attempts",
-            "affinity": "INTEGER",
-            "notNull": true
           }
         ],
         "primaryKey": {
@@ -84,7 +78,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '08fed15362553c96f433bb2e660d0690')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9ff199edf4a8a269601b5efcf0c82407')"
     ]
   }
 }

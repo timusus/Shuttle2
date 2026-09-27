@@ -12,7 +12,7 @@ import java.lang.reflect.Type
 /**
  * `track.scrobble`'s response ([show/track.scrobble](https://www.last.fm/api/show/track.scrobble)). A batch
  * request either succeeds, with one [Scrobbles.scrobble] entry per submitted scrobble (accepted or
- * [ScrobbleResult.isIgnored]), or fails with a top-level [error] code and no `scrobbles` at all.
+ * ignored), or fails with a top-level [error] code and no `scrobbles` at all.
  */
 @JsonClass(generateAdapter = true)
 data class LastFmScrobbleResponse(
@@ -28,11 +28,7 @@ data class LastFmScrobbleResponse(
     @JsonClass(generateAdapter = true)
     data class ScrobbleResult(
         @Json(name = "ignoredMessage") val ignoredMessage: IgnoredMessage? = null
-    ) {
-        /** A non-zero ignored code is a permanent rejection (bad artist/track/timestamp), never retried. */
-        val isIgnored: Boolean
-            get() = ignoredMessage != null && ignoredMessage.code != "0"
-    }
+    )
 
     @JsonClass(generateAdapter = true)
     data class IgnoredMessage(

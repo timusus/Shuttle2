@@ -139,7 +139,6 @@ class ScrobbleFlushWorkerTest {
 
         result shouldBe ListenableWorker.Result.retry()
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
-        dao.oldestBatch(QueuedScrobbleEntity.SERVICE_LASTFM, 10).single().attempts shouldBe 1
     }
 
     @Test

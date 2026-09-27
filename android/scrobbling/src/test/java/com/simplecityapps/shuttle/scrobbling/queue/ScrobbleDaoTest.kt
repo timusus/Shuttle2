@@ -77,17 +77,6 @@ class ScrobbleDaoTest {
     }
 
     @Test
-    fun `incrementAttempts bumps the attempt count for the named rows`() = runTest {
-        dao.enqueue(entity(startedAtEpochSec = 1_000, track = "a"))
-        val row = dao.oldestBatch(QueuedScrobbleEntity.SERVICE_LASTFM, limit = 10).single()
-
-        dao.incrementAttempts(listOf(row.id))
-        dao.incrementAttempts(listOf(row.id))
-
-        dao.oldestBatch(QueuedScrobbleEntity.SERVICE_LASTFM, limit = 10).single().attempts shouldBe 2
-    }
-
-    @Test
     fun `deleteOlderThan drops rows before the cutoff and keeps the rest`() = runTest {
         dao.enqueue(entity(startedAtEpochSec = 1_000, track = "old"))
         dao.enqueue(entity(startedAtEpochSec = 5_000, track = "new"))
