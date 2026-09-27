@@ -46,7 +46,10 @@ struct EqualizerViewTests {
     @Test func showsEachBandWithItsGain() throws {
         let sut = EqualizerContent(state: state())
         #expect((try? sut.inspect().find(text: "1 kHz")) != nil)
-        #expect((try? sut.inspect().find(text: "+6.0 dB")) != nil)
+        // A band column shows its gain short, over its slider; the slider reads the full "+6.0 dB" to VoiceOver.
+        #expect((try? sut.inspect().find(text: "+6.0")) != nil)
+        #expect((try? sut.inspect().find(text: "1k")) != nil)
+        #expect(try sut.inspect().find(viewWithAccessibilityIdentifier: "equalizer.band.1000").accessibilityValue().string() == "+6.0 dB")
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "equalizer.band.16000").slider()) != nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "equalizer.response")) != nil)
     }
