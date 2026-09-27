@@ -135,6 +135,56 @@ All six ViewModels live in `presentation`'s `commonMain`: `AlbumArtistListViewMo
   `ui-module-imports.txt` (`:android:architecture-tests`) — two fewer baseline violations, not two new
   ones.
 
+## Wave 3: what landed
+
+Five of the six ViewModels live in `presentation`'s `commonMain`: `HomeViewModel` (`ui/screens/home`, with
+`HomeSections` and the resume use cases), `SourcesViewModel` and `ServerTypePickerViewModel`
+(`ui/screens/sources`, with `ConnectServer` and the scanner-folder use cases), `SettingsViewModel`
+(`ui/screens/settings`, with the settings model in `settings/model`) and `EqualizerViewModel`
+(`ui/screens/settings/equalizer`, with `SaveEqualizerPreset`, `ComputeFrequencyResponse` and
+`FrequencyResponsePoint`). Their tests moved to `commonTest` where they need no Android types; the Settings
+and Equalizer ViewModel tests stay in `:android:app`'s JVM suite because they drive the real Android catalog
+and the real `EqualizerAudioProcessor`. The Compose screens and their characterisation tests stay in app,
+unchanged.
+
+- **`SearchViewModel` stays in app.** Its state carries `SearchHit`, and `SearchLibrary`/`LibrarySearchIndex`
+  build on `SearchIndex`, `SearchQuery` and `SearchDocument`, all in `:android:mediaprovider:core`. Moving it
+  means moving those types to `:android:domain` first, an edit to the mediaprovider modules this wave could
+  not make. That move unblocks it; nothing else does.
+- **S1 `SettingsEffects`.** The interface and `CopyDebugLogsResult` moved as they were, minus
+  `lastScanDate()`: a preference read, not an effect, so it became the `ReadLastScanDate` use case over
+  `GeneralPreferenceManager`, and `SettingsUiState.lastScanDate` is an `Instant` (the screen converts it for
+  `DateFormat`). `AndroidSettingsEffects` (Context, clipboard, `Intent`, WorkManager) and its binding stay in
+  app.
+- **`SettingsCatalog`.** The catalog reads `LibrarySettings`, `PlaybackSettings`, `DownloadSettings`,
+  `BuildConfig` and `Build.VERSION`, so it can't move. It became a common `SettingsCatalog` interface
+  (`screens`, `screen()`, `items`, and `settings`, the list the ViewModel observes), which the ViewModel
+  injects. App's `AndroidSettingsCatalog` object implements it and `SettingsCatalogModule` binds it. The
+  catalog rows' strings went through the `StringKey` sweep.
+- **S6 `EqualizerControl`.** It sits in `:android:domain` beside `EqualizerFrequencyResponse`, with the members
+  the seams doc lists. `EqualizerAudioProcessor` implements it and `PlaybackEngineModule` binds it. Two
+  more pieces had to move with it:
+  - Preset storage goes behind `EqualizerPresetStore`, which `PlaybackPreferenceManager` implements.
+  - The switch and preamp settings moved from `PlaybackSettings` to a core `EqualizerSettings`, with the same
+    keys and defaults.
+
+  `Equalizer.kt` and `EqualizerBand.kt` moved to domain `commonMain` under their old package. The
+  `nameResId`s became `Preset.nameKey` (`StringKey`), and `eq_preset_vocal_Reduce` became
+  `eq_preset_vocal_reduce` so the key matches its resource.
+- **`SharedAppGraph` exclusions.** All five are excluded:
+  - `HomeViewModel` needs the Song/Album/AlbumArtist repositories and `QueueOperations`/`PlaybackOperations`.
+  - `SourcesViewModel` and `ServerTypePickerViewModel` need `MediaSources`, `ScannerFolderStore`,
+    `SongImportStateProvider` and `TryAddServer`.
+  - `SettingsViewModel` needs a `SettingsCatalog` and `SettingsEffects`. An iOS catalog waits on
+    `LibrarySettings`/`PlaybackSettings`/`DownloadSettings` reaching core.
+  - `EqualizerViewModel` needs `EqualizerControl` and `EqualizerPresetStore`. iOS's `AVAudioUnitEQ` arrives
+    in phase 6 and the screen in phase 7.
+
+  Phase 5's `IosAppGraph` drops each exclusion as it binds these.
+- **Architecture baseline.** The Equalizer move removed six `ui-module-imports.txt` violations. The
+  Settings entries were renamed to `AndroidSettingsEffects`/`AndroidSettingsCatalog`, their new file names;
+  they are the same imports.
+
 ## Per-ViewModel table
 
 Legend: **domain-kmp** = dependency's interface already lives in `:android:domain` (KMP since phase 0/#582);
