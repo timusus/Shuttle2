@@ -54,7 +54,7 @@ ios/
     Features/               # Home, Library, Search, Playback (mini player, Now Playing presentation)
     KMP/AppGraph.swift      # the Swift handle on IosAppGraph
     KMP/ViewModelCache.swift     # keyed, LRU-capped screen view models, cleared when their screen leaves
-    KMP/CombineFlowBridge.swift  # Publisher.feed(_:_:): Combine -> a Swift-fed Kotlin flow, deduplicated
+    KMP/CombineFlowBridge.swift  # Publisher.toKotlinFlow: Combine -> a Swift-fed WritableFlow, deduplicated
     Platform/Audio/         # AudioSessionController, NowPlayingController (+ SystemRemoteCommandCenter)
   Playback/                 # the S2Playback package: the gapless engine (see its README); no AVAudioSession
   S2Tests/                  # ViewInspector + swift-testing
@@ -81,10 +81,13 @@ screen. Now Playing is a `fullScreenCover` on compact and a form sheet otherwise
 - **Screen view models come from `ViewModelCache.shared`**, keyed by screen and argument (`"album:42"`),
   never stored straight off the graph: a SwiftUI view struct is re-initialised on every parent body, so
   a fresh view model per init restarts every flow `Observing` is keyed on (Podcasts learned this).
-  Clear entries when their route leaves the path (`remove`/`retainOnly`). No shared VM is exported yet
-  (TODO #587: an iosMain clear helper, conformed to `ClearableViewModel`).
-- **Swift-fed flows** (prefs, scene phase) need Podcasts' `WritableFlow.kt` in :shared's iosMain, which
-  S2 doesn't have yet; `CombineFlowBridge.swift` has the `toKotlinFlow` to add on top of `feed`.
+  Clear entries when their route leaves the path (`remove`/`retainOnly`). Every shared ViewModel
+  (`Lifecycle_viewmodelViewModel`) is a `ClearableViewModel` through :shared's `clearFromSwift()`
+  (`shared/.../di/ViewModelClearing.kt`), which runs `onCleared` and cancels `viewModelScope`.
+- **Swift-fed flows** (prefs, scene phase): `publisher.toKotlinFlow { ... }` (`CombineFlowBridge.swift`)
+  returns :shared's `WritableFlow<T>` (`shared/.../di/WritableFlow.kt`, replay 1, as Podcasts'), which
+  holds the Combine subscription. `T` must be an object type (`NSString`, `KotlinBoolean`, a Kotlin
+  class). The flow is released by the Kotlin GC, not when Swift drops it.
 
 ## Audio session and Now Playing (phase 6, #588)
 

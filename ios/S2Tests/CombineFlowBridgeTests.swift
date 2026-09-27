@@ -1,10 +1,13 @@
 import Combine
+import Foundation
+import Shared
 import Testing
 @testable import S2
 
 /// The Combine -> Kotlin flow bridge must not forward an assignment that did not change the value, and
 /// the subscription must not keep its target alive. `RecordingFlow` stands in for :shared's
-/// `WritableFlow` (TODO(#587)): it holds the subscription and records what `emit` would push.
+/// `WritableFlow`, whose values Swift can't read back: it holds the subscription and records what
+/// `emit` would push.
 struct CombineFlowBridgeTests {
     private final class RecordingFlow {
         var subscription: AnyCancellable?
@@ -58,5 +61,14 @@ struct CombineFlowBridgeTests {
         }
         #expect(weakFlow == nil)
         subject.send("after release") // must not crash or resurrect anything
+    }
+
+    /// Release of the Kotlin flow is up to the Kotlin GC, so only the ownership is checked here; the
+    /// weak capture that makes release possible is the `feed` test above.
+    @Test func toKotlinFlowKeepsItsSubscriptionOnTheFlow() {
+        let subject = CurrentValueSubject<String, Never>("a")
+        let flow = subject.toKotlinFlow { $0 as NSString }
+        #expect(flow.subscription is AnyCancellable)
+        subject.send("b") // reaches WritableFlow.emit without crashing
     }
 }

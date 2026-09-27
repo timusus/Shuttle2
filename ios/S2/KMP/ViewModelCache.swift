@@ -1,4 +1,5 @@
 import Foundation
+import Shared
 
 /// A Kotlin ViewModel as the cache sees it: something that can be told its scope has ended.
 ///
@@ -6,12 +7,16 @@ import Foundation
 /// graph access, and a SwiftUI view struct is re-initialised whenever its parent's body runs, so a view
 /// that stored `AppGraph.shared.xViewModel` replaced its view model (and every flow `Observing` was keyed
 /// on) on each re-init. Screen view models therefore come from this cache, keyed by screen and argument.
-///
-/// TODO(#587): no shared ViewModel is exported yet. When the first one is, give :shared an iosMain
-/// helper that clears it (a `ViewModelStore` per entry, as Android's `ViewModelStoreOwner` does) and
-/// conform that type here, so eviction runs `onCleared` and cancels its `viewModelScope`.
 protocol ClearableViewModel: AnyObject {
     func clear()
+}
+
+/// Every shared ViewModel: clearing runs `onCleared` and cancels its `viewModelScope`, through
+/// :shared's `clearFromSwift` (a one-off `ViewModelStore`, as a popped back stack entry clears on Android).
+extension Lifecycle_viewmodelViewModel: ClearableViewModel {
+    func clear() {
+        clearFromSwift()
+    }
 }
 
 /// Keyed, lifecycle-cleared view models, standing in for Android's `ViewModelStore`.
