@@ -264,6 +264,16 @@ Parallel lanes: P5-3 and P5-4 once P5-2 lands (disjoint files: `Navigation/` vs 
 step rebuilds the framework (`ios/scripts/build-framework.sh`) and regenerates the project before
 `xcodebuild`, in the foreground.
 
+**P5-3 landed.** `Route`/`LibraryCategory` (`Navigation/Route.swift`), `Navigator` (`RootSelection`,
+per-tab paths, per-library-category paths, the reselect-pops-to-root rule, `retainOnly` on every path
+change, `@SceneStorage` round-tripping via `StoredPath`/`StoredCategoryPaths`), placeholder
+`navigationDestination` views (`RouteDestination.swift`) and the Settings gear
+(`SettingsPresentation.swift`), all covered by `RouteTests`/`NavigatorTests`. `ContentView`'s
+`AppShell` wires the compact `TabView`, the iOS 18 sidebar-adaptable `TabView`, and the iOS 17
+`NavigationSplitView` fallback to `Navigator.selection`, with library categories as sidebar rows/tabs
+rather than a "Library" tab. Settings is a gear + sheet on the Home/Library roots, not a fourth tab, per
+§2 above. The wide inspector slot is an empty `.inspector` toggle, content deferred to phase 6.
+
 Phase 6 then adds the mini player (#593), Now Playing, queue and the inspector's content on the same
 graph; phase 7 adds Home, Search, Settings, Sources and Song info.
 

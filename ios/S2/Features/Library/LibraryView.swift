@@ -1,37 +1,19 @@
-import Shared
 import SwiftUI
 
-/// The Library tab. For now it lists `IosAppGraph.librarySongs`, an in-memory Kotlin `StateFlow`,
-/// observed through SKIE's `Observing`: the end-to-end proof that Kotlin state reaches SwiftUI.
+/// The Library tab's root on compact: a list of categories that pushes each one's list
+/// (`Route.libraryCategory`), Music-style rather than Android's pager of tabs. Regular and wide show the
+/// same categories directly in the sidebar instead (`AppShell`),
+/// `docs/architecture/ios-port/phase-5-ios-app.md` section 2.
 struct LibraryView: View {
-    let songs: SkieSwiftStateFlow<[Song]>
-
-    init(songs: SkieSwiftStateFlow<[Song]> = AppGraph.shared.librarySongs) {
-        self.songs = songs
-    }
+    let navigator: Navigator
 
     var body: some View {
-        Observing(songs) { songs in
-            SongList(songs: songs)
-        }
-        .navigationTitle(AppTab.library.title)
-    }
-}
-
-/// A plain list of songs: title over artist and album.
-struct SongList: View {
-    let songs: [Song]
-
-    var body: some View {
-        List(songs, id: \.id) { song in
-            VStack(alignment: .leading, spacing: 2) {
-                Text(song.name ?? "Unknown")
-                    .font(.body)
-                Text([song.friendlyArtistName, song.album].compactMap { $0 }.joined(separator: " · "))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+        List(LibraryCategory.allCases, id: \.self) { category in
+            NavigationLink(value: Route.libraryCategory(category)) {
+                Label(category.title, systemImage: category.systemImage)
             }
         }
-        .listStyle(.plain)
+        .navigationTitle(AppTab.library.title)
+        .settingsGear(navigator)
     }
 }

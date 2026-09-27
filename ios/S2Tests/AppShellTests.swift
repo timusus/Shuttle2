@@ -34,11 +34,13 @@ struct AppShellTests {
         }
     }
 
-    @Test func splitViewFallbackIsANavigationSplitViewListingTheTabs() throws {
+    @Test func splitViewFallbackIsANavigationSplitViewListingHomeSearchAndTheLibraryCategories() throws {
         let sut = makeShell(tier: .regular, container: .splitView)
         let split = try sut.inspect().find(ViewType.NavigationSplitView.self)
-        for tab in AppTab.allCases {
-            #expect((try? split.find(text: tab.title)) != nil, "missing the \(tab.title) sidebar row")
+        #expect((try? split.find(text: AppTab.home.title)) != nil, "missing the Home sidebar row")
+        #expect((try? split.find(text: AppTab.search.title)) != nil, "missing the Search sidebar row")
+        for category in LibraryCategory.allCases {
+            #expect((try? split.find(text: category.title)) != nil, "missing the \(category.title) sidebar row")
         }
     }
 
