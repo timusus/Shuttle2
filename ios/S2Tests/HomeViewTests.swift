@@ -79,9 +79,9 @@ struct HomeViewTests {
         #expect(tapped?.name == "Massive Attack")
     }
 
-    @Test func noShelvesOrResumeStillRendersTheList() throws {
+    @Test func noShelvesOrResumeStillRendersTheScrollView() throws {
         let sut = HomeContent(state: content())
-        #expect((try? sut.inspect().find(ViewType.List.self)) != nil)
+        #expect((try? sut.inspect().find(ViewType.ScrollView.self)) != nil)
         #expect((try? sut.inspect().find(text: "Recently Played")) == nil)
     }
 
