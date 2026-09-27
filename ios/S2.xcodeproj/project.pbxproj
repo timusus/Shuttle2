@@ -18,6 +18,7 @@
 		35711F16198C1340CC43E55A /* MiniPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528C6644D4642CD20178A704 /* MiniPlayerView.swift */; };
 		3C9A3CFCD175F341D2569B15 /* LibraryViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 644FCDF9D90ECEA9AEB75600 /* LibraryViewTests.swift */; };
 		3E021E78C43854C64163C4FF /* NowPlayingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D4EC07E38D0A5C76D2B59F0 /* NowPlayingController.swift */; };
+		52C29020D1D42E749E7EAC01 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = FCBFC3688D06BC30635B00FA /* Settings.bundle */; };
 		553A58C265C6AFA440D89FCF /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC548555BCD74CA0702CE7B3 /* ContentView.swift */; };
 		672C44354CAADEA1C9F901B7 /* PlaybackSystemCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91C9049F0CB5EDB935D8D6B8 /* PlaybackSystemCoordinator.swift */; };
 		6A67D7A370D304760B517B8D /* ShellContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67AA5EABDB43DCBE61D34029 /* ShellContainer.swift */; };
@@ -86,6 +87,7 @@
 		EFFBC031880E93536DB77D51 /* EngineAudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineAudioPlayer.swift; sourceTree = "<group>"; };
 		F95725D349E6F5EBD720DD23 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
 		FC548555BCD74CA0702CE7B3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		FCBFC3688D06BC30635B00FA /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = wrapper.cfbundle; path = Settings.bundle; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -251,6 +253,7 @@
 				FC548555BCD74CA0702CE7B3 /* ContentView.swift */,
 				E5B4C7411078C92EE8985A4B /* Info.plist */,
 				20E688A48CB9963C2F8837D2 /* S2App.swift */,
+				FCBFC3688D06BC30635B00FA /* Settings.bundle */,
 				7ACDCA6E40286B75EDF1EF45 /* Features */,
 				F4C836F843D4287688E030BA /* KMP */,
 				A9A010A2A01CBDCBE609800E /* Navigation */,
@@ -288,6 +291,7 @@
 			buildConfigurationList = 7217CD64FABF208520D63F8F /* Build configuration list for PBXNativeTarget "S2" */;
 			buildPhases = (
 				24B571BCF52FA9F85EC6B6D3 /* Sources */,
+				39BF38B38B2652D8211A778A /* Resources */,
 				6B81A9F88E5D79C538D7B26B /* Frameworks */,
 			);
 			buildRules = (
@@ -342,6 +346,17 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		39BF38B38B2652D8211A778A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				52C29020D1D42E749E7EAC01 /* Settings.bundle in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		24B571BCF52FA9F85EC6B6D3 /* Sources */ = {
