@@ -8,11 +8,15 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
 /**
- * The Json every server response is decoded with. Unknown keys are ignored: Jellyfin, Emby and Plex add response
- * fields between versions, which a strict decoder would reject.
+ * The Json every server response is decoded with, and every request body encoded with. Unknown keys are ignored:
+ * Jellyfin, Emby and Plex add response fields between versions, which a strict decoder would reject. A `null` for a
+ * field with a default (a list, say) decodes as the default rather than failing the whole response. Defaults are
+ * encoded, as Moshi encoded them: a request body's defaulted fields are part of what the server is sent.
  */
 val S2Json: Json = Json {
     ignoreUnknownKeys = true
+    coerceInputValues = true
+    encodeDefaults = true
 }
 
 /**

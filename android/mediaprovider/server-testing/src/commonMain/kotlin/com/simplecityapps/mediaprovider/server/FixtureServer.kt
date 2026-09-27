@@ -7,6 +7,8 @@ import io.ktor.client.request.HttpRequestData
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.OutgoingContent
+import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
@@ -78,3 +80,12 @@ class FixtureServer(private val loadFixture: (name: String) -> String) : AutoClo
         client.close()
     }
 }
+
+/** The request's body as text (the JSON a client sent, say); empty when it sent none. */
+val HttpRequestData.bodyText: String
+    get() =
+        when (val content = body) {
+            is TextContent -> content.text
+            is OutgoingContent.ByteArrayContent -> content.bytes().decodeToString()
+            else -> ""
+        }

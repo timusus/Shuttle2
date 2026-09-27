@@ -21,6 +21,9 @@ class NetworkResultTest {
     @Serializable
     data class User(val name: String)
 
+    @Serializable
+    data class Library(val songs: List<String> = emptyList(), val kind: String = "music")
+
     private val json = headersOf(HttpHeaders.ContentType, "application/json")
 
     private fun client(
@@ -43,6 +46,19 @@ class NetworkResultTest {
             .networkResult<User> { get("https://server/user") }
 
         result shouldBe NetworkResult.Success(User("tim"))
+    }
+
+    @Test
+    fun `a null for a field with a default decodes as the default`() = runTest {
+        val result = client(respond = responding(HttpStatusCode.OK, """{"songs":null}"""))
+            .networkResult<Library> { get("https://server/library") }
+
+        result shouldBe NetworkResult.Success(Library())
+    }
+
+    @Test
+    fun `defaults are encoded into request bodies`() {
+        S2Json.encodeToString(Library()) shouldBe """{"songs":[],"kind":"music"}"""
     }
 
     @Test
