@@ -1,30 +1,35 @@
 import Shared
 import SwiftUI
 
-/// Library > Albums (P5-6a): `AlbumListViewModel`'s albums as a list; a row pushes the album's route, and its context
-/// menu plays or queues the album through the shared `MediaAction`s. Shuffle is the ViewModel's own (a random
-/// album's songs). Pull to refresh imports.
+/// Library > Albums (P5-6a): `AlbumListViewModel`'s albums as a grid of covers (the default) or a list, switched
+/// from the toolbar and kept by the ViewModel (`setViewMode`, Android's saved library view setting). A tile or row
+/// pushes the album's route, and its context menu plays or queues the album through the shared `MediaAction`s.
+/// Shuffle is the ViewModel's own (a random album's songs). The playing album is marked. Pull to refresh imports.
 struct AlbumListView: View {
     var body: some View {
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.albums).cacheKey) {
             AlbumListModels(graph: AppGraph.shared)
         }
-        Observing(models.albums.uiState, models.actions.uiState) { state, actions in
-            AlbumListContent(
-                state: state,
-                onPlay: { album in
-                    models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionAlbums(album: album), position: 0))
-                },
-                onPlayNext: { album in
-                    models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionAlbums(album: album)))
-                },
-                onAddToQueue: { album in
-                    models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbums(album: album)))
-                },
-                onShuffle: { models.albums.onShuffle() }
-            )
-            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
-            .albumListEvents(state.events, handled: { models.albums.onEventHandled(id: $0) })
+        LibraryNowPlayingReader { nowPlaying in
+            Observing(models.albums.uiState, models.actions.uiState) { state, actions in
+                AlbumListContent(
+                    state: state,
+                    nowPlaying: nowPlaying,
+                    onPlay: { album in
+                        models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionAlbums(album: album), position: 0))
+                    },
+                    onPlayNext: { album in
+                        models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionAlbums(album: album)))
+                    },
+                    onAddToQueue: { album in
+                        models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbums(album: album)))
+                    },
+                    onShuffle: { models.albums.onShuffle() },
+                    onViewMode: { models.albums.setViewMode(mode: $0) }
+                )
+                .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
+                .albumListEvents(state.events, handled: { models.albums.onEventHandled(id: $0) })
+            }
         }
         .refreshable { LibraryImport.refresh() }
         .navigationTitle(LibraryCategory.albums.title)
@@ -51,46 +56,80 @@ extension Route {
     }
 }
 
-/// The Albums screen from an `AlbumListUiState`. The grid view mode is phase 5's P5-6b; this is always a list.
+/// The Albums screen from an `AlbumListUiState`: its view mode picks the grid or the list.
 struct AlbumListContent: View {
     let state: AlbumListUiState
+    var nowPlaying: LibraryNowPlaying = .none
     var onPlay: (Album) -> Void = { _ in }
     var onPlayNext: (Album) -> Void = { _ in }
     var onAddToQueue: (Album) -> Void = { _ in }
     var onShuffle: () -> Void = {}
+    var onViewMode: (ViewMode) -> Void = { _ in }
 
     var body: some View {
+        content
+            .toolbar {
+                if state.loadingState != .empty {
+                    ViewModeToggle(mode: state.viewMode, onChange: onViewMode)
+                    Button("Shuffle", systemImage: "shuffle", action: onShuffle)
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch state.loadingState {
         case .loading:
-            ProgressView()
+            if state.viewMode == .grid { LibraryGridSkeleton() } else { LibraryListSkeleton(artworkSize: ArtworkSize.albumRow) }
         case .scanning where state.albums.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
             EmptyState("No Albums", systemImage: "square.stack", message: "Pull to refresh to import.")
         case .ready, .scanning:
-            List {
-                ForEach(state.albums, id: \.stableId) { album in
-                    NavigationLink(value: Route.album(album)) { AlbumRow(album: album) }
-                        .contextMenu {
-                            Button("Play", systemImage: "play") { onPlay(album) }
-                            Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(album) }
-                            Button("Add to Queue", systemImage: "text.append") { onAddToQueue(album) }
+            if state.viewMode == .grid {
+                LibraryGrid {
+                    ForEach(state.albums, id: \.stableId) { album in
+                        NavigationLink(value: Route.album(album)) {
+                            LibraryTile(
+                                title: album.name ?? "Unknown",
+                                subtitle: album.albumArtist,
+                                artwork: .album(album),
+                                playback: nowPlaying.playback(album: album)
+                            )
+                            .zoomSource(id: Route.album(album))
                         }
+                        .buttonStyle(.pressScale)
+                        .contextMenu { menu(album) }
+                    }
                 }
-            }
-            .listStyle(.plain)
-            .toolbar {
-                Button("Shuffle", systemImage: "shuffle", action: onShuffle)
+            } else {
+                List {
+                    ForEach(state.albums, id: \.stableId) { album in
+                        let playback = nowPlaying.playback(album: album)
+                        NavigationLink(value: Route.album(album)) { AlbumRow(album: album, playback: playback) }
+                            .contextMenu { menu(album) }
+                            .nowPlayingRowBackground(playback)
+                    }
+                }
+                .listStyle(.plain)
             }
         }
+    }
+
+    @ViewBuilder
+    private func menu(_ album: Album) -> some View {
+        Button("Play", systemImage: "play") { onPlay(album) }
+        Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(album) }
+        Button("Add to Queue", systemImage: "text.append") { onAddToQueue(album) }
     }
 }
 
 struct AlbumRow: View {
     let album: Album
+    var playback: MediaRowPlayback = .none
 
     var body: some View {
-        MediaRow(album.name ?? "Unknown", subtitle: subtitle, artwork: .album(album), artworkSize: ArtworkSize.albumRow)
+        MediaRow(album.name ?? "Unknown", subtitle: subtitle, artwork: .album(album), artworkSize: ArtworkSize.albumRow, playback: playback)
     }
 
     private var subtitle: String {

@@ -12,9 +12,14 @@ struct LibraryListTests {
         SongListUiState(songs: songs, selectedSongs: [], sortOrder: .songName, loadingState: loading, scanProgress: nil)
     }
 
-    private func albumState(_ albums: [Album], _ loading: AlbumListUiState.LoadingState, events: [PendingEvent<any AlbumListEvent>] = []) -> AlbumListUiState {
+    private func albumState(
+        _ albums: [Album],
+        _ loading: AlbumListUiState.LoadingState,
+        viewMode: ViewMode = .list,
+        events: [PendingEvent<any AlbumListEvent>] = []
+    ) -> AlbumListUiState {
         AlbumListUiState(
-            albums: albums, selectedAlbums: [], viewMode: .list, sortOrder: .albumName, loadingState: loading,
+            albums: albums, selectedAlbums: [], viewMode: viewMode, sortOrder: .albumName, loadingState: loading,
             scanProgress: nil, events: events
         )
     }
@@ -47,7 +52,7 @@ struct LibraryListTests {
     @Test func songsPlaceholders() throws {
         #expect((try? SongListContent(state: songState([], .empty)).inspect().find(text: "No Songs")) != nil)
         #expect((try? SongListContent(state: songState([], .scanning)).inspect().find(text: "Importing your library…")) != nil)
-        #expect((try? SongListContent(state: songState([], .loading)).inspect().find(ViewType.ProgressView.self)) != nil)
+        #expect((try? SongListContent(state: songState([], .loading)).inspect().find(LibraryListSkeleton.self)) != nil)
         #expect((try? SongListContent(state: songState([], .loading)).inspect().find(ViewType.List.self)) == nil)
     }
 
@@ -78,6 +83,42 @@ struct LibraryListTests {
         #expect((try? sut.inspect().find(text: "Björk · 1 song")) != nil)
         #expect(try sut.inspect().findAll(ViewType.NavigationLink.self).count == 2)
         #expect(Route.album(albums[0]) == .album(albumKey: "ok computer", albumArtistKey: "radiohead"))
+    }
+
+    @Test func albumsGridShowsEachAlbumAsATileLinkingToItsRoute() throws {
+        let albums = [album("OK Computer", artist: "Radiohead", songs: 12, year: 1997), album("Post", artist: "Björk", songs: 1, year: nil)]
+        let sut = AlbumListContent(state: albumState(albums, .ready, viewMode: .grid))
+        #expect((try? sut.inspect().find(text: "OK Computer")) != nil)
+        #expect(try sut.inspect().findAll(ViewType.NavigationLink.self).count == 2)
+        #expect((try? sut.inspect().find(text: "Radiohead")) != nil)
+        #expect((try? sut.inspect().find(ViewType.List.self)) == nil)
+    }
+
+    @Test func theToolbarTogglesTheViewModeThroughTheViewModel() throws {
+        var chosen: ViewMode?
+        let toggle = ViewModeToggle(mode: .grid) { chosen = $0 }
+        try toggle.inspect().find(button: "Show as List").tap()
+        #expect(chosen == .list)
+        try ViewModeToggle(mode: .list) { chosen = $0 }.inspect().find(button: "Show as Grid").tap()
+        #expect(chosen == .grid)
+    }
+
+    @Test func theLoadingSkeletonFollowsTheViewMode() throws {
+        #expect((try? AlbumListContent(state: albumState([], .loading, viewMode: .grid)).inspect().find(LibraryGridSkeleton.self)) != nil)
+        #expect((try? AlbumListContent(state: albumState([], .loading)).inspect().find(LibraryListSkeleton.self)) != nil)
+    }
+
+    @Test func thePlayingSongAndAlbumAreMarked() {
+        let song = TestSongs.demo[0]
+        let playing = LibraryNowPlaying(songId: song.id, albumKey: "ok computer", albumArtistKey: "radiohead", isPlaying: true)
+        #expect(playing.playback(song: song) == .playing)
+        #expect(playing.playback(song: TestSongs.demo[1]) == .none)
+        #expect(playing.playback(album: album("OK Computer", artist: "Radiohead", songs: 12, year: 1997)) == .playing)
+        #expect(playing.playback(album: album("Post", artist: "Björk", songs: 1, year: nil)) == .none)
+        var paused = playing
+        paused.isPlaying = false
+        #expect(paused.playback(song: song) == .paused)
+        #expect(LibraryNowPlaying.none.playback(song: song) == .none)
     }
 
     @Test func albumsPlaceholders() throws {

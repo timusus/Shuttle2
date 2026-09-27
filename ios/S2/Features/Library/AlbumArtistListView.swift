@@ -1,32 +1,37 @@
 import Shared
 import SwiftUI
 
-/// Library > Album Artists (P5-6b): `AlbumArtistListViewModel`'s artists as a list; a row pushes the artist's
-/// detail route (a placeholder for now) and shows its artwork via `ArtworkUrls.url(albumArtist:)`. Context menu
-/// plays or queues through the shared `MediaAction`s; there's no per-artist shuffle on the ViewModel, so the
-/// toolbar shuffle dispatches `MediaActionShuffle` over every artist, same as it would over a multi-selection.
+/// Library > Album Artists (P5-6b): `AlbumArtistListViewModel`'s artists as a list (the default) or a grid of round
+/// pictures, switched from the toolbar and kept by the ViewModel (`setViewMode`). A row or tile pushes the artist's
+/// detail route and shows its artwork via `ArtworkUrls.url(albumArtist:)`. Context menu plays or queues through the
+/// shared `MediaAction`s; there's no per-artist shuffle on the ViewModel, so the toolbar shuffle dispatches
+/// `MediaActionShuffle` over every artist, same as it would over a multi-selection. The playing artist is marked.
 struct AlbumArtistListView: View {
     var body: some View {
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.albumArtists).cacheKey) {
             AlbumArtistListModels(graph: AppGraph.shared)
         }
-        Observing(models.albumArtists.uiState, models.actions.uiState) { state, actions in
-            AlbumArtistListContent(
-                state: state,
-                onPlay: { artist in
-                    models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionAlbumArtists(albumArtist: artist), position: 0))
-                },
-                onPlayNext: { artist in
-                    models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionAlbumArtists(albumArtist: artist)))
-                },
-                onAddToQueue: { artist in
-                    models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbumArtists(albumArtist: artist)))
-                },
-                onShuffle: {
-                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionAlbumArtists(albumArtists: state.albumArtists)))
-                }
-            )
-            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
+        LibraryNowPlayingReader { nowPlaying in
+            Observing(models.albumArtists.uiState, models.actions.uiState) { state, actions in
+                AlbumArtistListContent(
+                    state: state,
+                    nowPlaying: nowPlaying,
+                    onPlay: { artist in
+                        models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionAlbumArtists(albumArtist: artist), position: 0))
+                    },
+                    onPlayNext: { artist in
+                        models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionAlbumArtists(albumArtist: artist)))
+                    },
+                    onAddToQueue: { artist in
+                        models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbumArtists(albumArtist: artist)))
+                    },
+                    onShuffle: {
+                        models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionAlbumArtists(albumArtists: state.albumArtists)))
+                    },
+                    onViewMode: { models.albumArtists.setViewMode(mode: $0) }
+                )
+                .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
+            }
         }
         .refreshable { LibraryImport.refresh() }
         .navigationTitle(LibraryCategory.albumArtists.title)
@@ -53,55 +58,95 @@ extension Route {
     }
 }
 
-/// The Album Artists screen from an `AlbumArtistListUiState`.
+/// The Album Artists screen from an `AlbumArtistListUiState`: its view mode picks the list or the grid.
 struct AlbumArtistListContent: View {
     let state: AlbumArtistListUiState
+    var nowPlaying: LibraryNowPlaying = .none
     var onPlay: (AlbumArtist) -> Void = { _ in }
     var onPlayNext: (AlbumArtist) -> Void = { _ in }
     var onAddToQueue: (AlbumArtist) -> Void = { _ in }
     var onShuffle: () -> Void = {}
+    var onViewMode: (ViewMode) -> Void = { _ in }
 
     var body: some View {
+        content
+            .toolbar {
+                if state.loadingState != .empty {
+                    ViewModeToggle(mode: state.viewMode, onChange: onViewMode)
+                    Button("Shuffle", systemImage: "shuffle", action: onShuffle)
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch state.loadingState {
         case .loading:
-            ProgressView()
+            if state.viewMode == .grid { LibraryGridSkeleton(artworkShape: .circle) } else { LibraryListSkeleton() }
         case .scanning where state.albumArtists.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
             EmptyState("No Artists", systemImage: "person.2", message: "Pull to refresh to import.")
         case .ready, .scanning:
-            List {
-                ForEach(state.albumArtists, id: \.stableId) { artist in
-                    NavigationLink(value: Route.albumArtist(artist)) { AlbumArtistRow(albumArtist: artist) }
-                        .contextMenu {
-                            Button("Play", systemImage: "play") { onPlay(artist) }
-                            Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(artist) }
-                            Button("Add to Queue", systemImage: "text.append") { onAddToQueue(artist) }
+            if state.viewMode == .grid {
+                LibraryGrid {
+                    ForEach(state.albumArtists, id: \.stableId) { artist in
+                        NavigationLink(value: Route.albumArtist(artist)) {
+                            LibraryTile(
+                                title: AlbumArtistRow.title(artist),
+                                subtitle: AlbumArtistRow.subtitle(artist),
+                                artwork: .albumArtist(artist),
+                                artworkShape: .circle,
+                                placeholderSymbol: "music.mic",
+                                playback: nowPlaying.playback(albumArtist: artist)
+                            )
                         }
+                        .buttonStyle(.pressScale)
+                        .contextMenu { menu(artist) }
+                    }
                 }
-            }
-            .listStyle(.plain)
-            .toolbar {
-                Button("Shuffle", systemImage: "shuffle", action: onShuffle)
+            } else {
+                List {
+                    ForEach(state.albumArtists, id: \.stableId) { artist in
+                        let playback = nowPlaying.playback(albumArtist: artist)
+                        NavigationLink(value: Route.albumArtist(artist)) { AlbumArtistRow(albumArtist: artist, playback: playback) }
+                            .contextMenu { menu(artist) }
+                            .nowPlayingRowBackground(playback)
+                    }
+                }
+                .listStyle(.plain)
             }
         }
+    }
+
+    @ViewBuilder
+    private func menu(_ artist: AlbumArtist) -> some View {
+        Button("Play", systemImage: "play") { onPlay(artist) }
+        Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(artist) }
+        Button("Add to Queue", systemImage: "text.append") { onAddToQueue(artist) }
     }
 }
 
 struct AlbumArtistRow: View {
     let albumArtist: AlbumArtist
+    var playback: MediaRowPlayback = .none
 
     var body: some View {
         MediaRow(
-            albumArtist.name ?? albumArtist.friendlyArtistName ?? "Unknown Artist",
-            subtitle: subtitle,
+            Self.title(albumArtist),
+            subtitle: Self.subtitle(albumArtist),
             artwork: .albumArtist(albumArtist),
             artworkShape: .circle,
-            placeholderSymbol: "music.mic"
+            placeholderSymbol: "music.mic",
+            playback: playback
         )
     }
 
-    private var subtitle: String {
+    static func title(_ albumArtist: AlbumArtist) -> String {
+        albumArtist.name ?? albumArtist.friendlyArtistName ?? "Unknown Artist"
+    }
+
+    static func subtitle(_ albumArtist: AlbumArtist) -> String {
         let albums = albumArtist.albumCount == 1 ? "1 album" : "\(albumArtist.albumCount) albums"
         let songs = albumArtist.songCount == 1 ? "1 song" : "\(albumArtist.songCount) songs"
         return "\(albums) · \(songs)"

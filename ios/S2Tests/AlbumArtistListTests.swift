@@ -38,6 +38,6 @@ struct AlbumArtistListTests {
     @Test func placeholders() throws {
         #expect((try? AlbumArtistListContent(state: state([], .empty)).inspect().find(text: "No Artists")) != nil)
         #expect((try? AlbumArtistListContent(state: state([], .scanning)).inspect().find(text: "Importing your library…")) != nil)
-        #expect((try? AlbumArtistListContent(state: state([], .loading)).inspect().find(ViewType.ProgressView.self)) != nil)
+        #expect((try? AlbumArtistListContent(state: state([], .loading)).inspect().find(LibraryListSkeleton.self)) != nil)
     }
 }
