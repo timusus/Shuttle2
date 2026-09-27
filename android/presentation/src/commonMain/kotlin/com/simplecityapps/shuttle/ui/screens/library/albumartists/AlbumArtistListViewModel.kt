@@ -29,6 +29,7 @@ data class AlbumArtistListUiState(
     val loadingState: LoadingState = LoadingState.Loading,
     val scanProgress: Progress? = null,
 ) {
+    /** [Scanning] while an import runs; the list still carries what's already imported, for a screen that keeps showing it. */
     enum class LoadingState { Loading, Scanning, Ready, Empty }
 
     val isSelecting: Boolean get() = selectedArtists.isNotEmpty()
@@ -53,25 +54,17 @@ class AlbumArtistListViewModel @Inject constructor(
         selectionState.selectedItems,
         _viewMode,
     ) { albumArtists, songImportState, selectedArtists, viewMode ->
-        if (songImportState is SongImportState.ImportProgress) {
-            AlbumArtistListUiState(
-                loadingState = AlbumArtistListUiState.LoadingState.Scanning,
-                scanProgress = songImportState.progress,
-                viewMode = viewMode,
-                selectedArtists = selectedArtists,
-            )
-        } else {
-            AlbumArtistListUiState(
-                albumArtists = albumArtists,
-                selectedArtists = selectedArtists,
-                viewMode = viewMode,
-                loadingState = if (albumArtists.isEmpty()) {
-                    AlbumArtistListUiState.LoadingState.Empty
-                } else {
-                    AlbumArtistListUiState.LoadingState.Ready
-                },
-            )
-        }
+        AlbumArtistListUiState(
+            albumArtists = albumArtists,
+            selectedArtists = selectedArtists,
+            viewMode = viewMode,
+            loadingState = when {
+                songImportState is SongImportState.ImportProgress -> AlbumArtistListUiState.LoadingState.Scanning
+                albumArtists.isEmpty() -> AlbumArtistListUiState.LoadingState.Empty
+                else -> AlbumArtistListUiState.LoadingState.Ready
+            },
+            scanProgress = (songImportState as? SongImportState.ImportProgress)?.progress,
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

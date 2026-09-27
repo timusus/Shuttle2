@@ -51,6 +51,25 @@ struct LibraryListTests {
         #expect((try? SongListContent(state: songState([], .loading)).inspect().find(ViewType.List.self)) == nil)
     }
 
+    /// A later import (pull to refresh) keeps showing what's already imported; only the first shows the placeholder (#623).
+    @Test func anImportKeepsShowingTheSongsAndAlbumsAlreadyImported() throws {
+        let songs = SongListContent(state: songState(TestSongs.demo, .scanning))
+        #expect((try? songs.inspect().find(text: "Teardrop")) != nil)
+        #expect((try? songs.inspect().find(text: "Importing your library…")) == nil)
+        let albums = AlbumListContent(state: albumState([album("OK Computer", artist: "Radiohead", songs: 12, year: 1997)], .scanning))
+        #expect((try? albums.inspect().find(text: "OK Computer")) != nil)
+        #expect((try? albums.inspect().find(text: "Importing your library…")) == nil)
+    }
+
+    /// Launch imports only until an import has finished once; the saved library shows straight away after that (#623).
+    @Test func launchImportsOnlyWhenNothingHasBeenImported() {
+        var scans = 0
+        LibraryImport.atLaunch(hasScanned: true) { scans += 1 }
+        #expect(scans == 0)
+        LibraryImport.atLaunch(hasScanned: false) { scans += 1 }
+        #expect(scans == 1)
+    }
+
     @Test func albumsReadyListsEachAlbumAsALinkToItsRoute() throws {
         let albums = [album("OK Computer", artist: "Radiohead", songs: 12, year: 1997), album("Post", artist: "Björk", songs: 1, year: nil)]
         let sut = AlbumListContent(state: albumState(albums, .ready))

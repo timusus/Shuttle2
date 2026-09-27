@@ -59,30 +59,20 @@ class AlbumListViewModel @Inject constructor(
         _sortOrder,
         combine(_viewMode, _randomSeed, events.flow, ::Triple),
     ) { albums, songImportState, selectedAlbums, sortOrder, (viewMode, randomSeed, events) ->
-        if (songImportState is SongImportState.ImportProgress) {
-            AlbumListUiState(
-                loadingState = AlbumListUiState.LoadingState.Scanning,
-                scanProgress = songImportState.progress,
-                sortOrder = sortOrder,
-                viewMode = viewMode,
-                selectedAlbums = selectedAlbums,
-                events = events,
-            )
-        } else {
-            val sortedAlbums = albums.sortedWith(sortOrder.comparator(randomSeed))
-            AlbumListUiState(
-                albums = sortedAlbums,
-                selectedAlbums = selectedAlbums,
-                viewMode = viewMode,
-                sortOrder = sortOrder,
-                loadingState = if (sortedAlbums.isEmpty()) {
-                    AlbumListUiState.LoadingState.Empty
-                } else {
-                    AlbumListUiState.LoadingState.Ready
-                },
-                events = events,
-            )
-        }
+        val sortedAlbums = albums.sortedWith(sortOrder.comparator(randomSeed))
+        AlbumListUiState(
+            albums = sortedAlbums,
+            selectedAlbums = selectedAlbums,
+            viewMode = viewMode,
+            sortOrder = sortOrder,
+            loadingState = when {
+                songImportState is SongImportState.ImportProgress -> AlbumListUiState.LoadingState.Scanning
+                sortedAlbums.isEmpty() -> AlbumListUiState.LoadingState.Empty
+                else -> AlbumListUiState.LoadingState.Ready
+            },
+            scanProgress = (songImportState as? SongImportState.ImportProgress)?.progress,
+            events = events,
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

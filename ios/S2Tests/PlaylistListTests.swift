@@ -23,6 +23,12 @@ struct PlaylistListTests {
         Playlist(id: id, name: name, songCount: songs, duration: 0, sortOrder: .position, sortDescending: false, mediaProvider: .shuttle, externalId: nil)
     }
 
+    @Test func anImportKeepsShowingThePlaylistsAlreadyImported() throws {
+        let sut = PlaylistListContent(state: state([playlist(1, "Road Trip", songs: 12)], .scanning))
+        #expect((try? sut.inspect().find(text: "Road Trip")) != nil)
+        #expect((try? sut.inspect().find(text: "Importing your library…")) == nil)
+    }
+
     @Test func readyListsSmartAndUserPlaylistsAsLinksToTheirRoutes() throws {
         let playlists = [playlist(1, "Road Trip", songs: 12), playlist(2, "Chill", songs: 1)]
         let sut = PlaylistListContent(state: state(playlists, .ready))

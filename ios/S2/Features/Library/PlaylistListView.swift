@@ -91,9 +91,9 @@ struct PlaylistListContent: View {
         switch state.loadingState {
         case .loading:
             ProgressView()
-        case .scanning:
+        case .scanning where state.playlists.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
-        case .ready:
+        case .ready, .scanning:
             PlaylistListReadyView(
                 state: state, onPlay: onPlay, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue,
                 onShuffle: onShuffle, onCreate: onCreate, onRename: onRename, onDelete: onDelete

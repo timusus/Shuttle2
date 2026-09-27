@@ -29,6 +29,12 @@ struct AlbumArtistListTests {
         #expect(Route.albumArtist(artists[0]) == .albumArtist(albumArtistKey: "radiohead"))
     }
 
+    @Test func anImportKeepsShowingTheArtistsAlreadyImported() throws {
+        let sut = AlbumArtistListContent(state: state([artist("Radiohead", albums: 3, songs: 42)], .scanning))
+        #expect((try? sut.inspect().find(text: "Radiohead")) != nil)
+        #expect((try? sut.inspect().find(text: "Importing your library…")) == nil)
+    }
+
     @Test func placeholders() throws {
         #expect((try? AlbumArtistListContent(state: state([], .empty)).inspect().find(text: "No Artists")) != nil)
         #expect((try? AlbumArtistListContent(state: state([], .scanning)).inspect().find(text: "Importing your library…")) != nil)

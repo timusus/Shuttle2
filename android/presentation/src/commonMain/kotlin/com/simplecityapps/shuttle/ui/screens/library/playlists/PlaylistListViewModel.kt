@@ -58,21 +58,18 @@ class PlaylistListViewModel @Inject constructor(
         mediaImportObserver.songImportState,
         _sortOrder,
     ) { (playlists, covers), songImportState, sortOrder ->
-        if (songImportState is SongImportState.ImportProgress) {
-            PlaylistListUiState(
-                loadingState = PlaylistListUiState.LoadingState.Scanning,
-                scanProgress = songImportState.progress,
-                sortOrder = sortOrder,
-            )
-        } else {
-            PlaylistListUiState(
-                playlists = playlists.sortedWith(sortOrder.comparator),
-                smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist },
-                covers = covers,
-                sortOrder = sortOrder,
-                loadingState = PlaylistListUiState.LoadingState.Ready,
-            )
-        }
+        PlaylistListUiState(
+            playlists = playlists.sortedWith(sortOrder.comparator),
+            smartPlaylists = SmartPlaylistId.entries.map { it.smartPlaylist },
+            covers = covers,
+            sortOrder = sortOrder,
+            loadingState = if (songImportState is SongImportState.ImportProgress) {
+                PlaylistListUiState.LoadingState.Scanning
+            } else {
+                PlaylistListUiState.LoadingState.Ready
+            },
+            scanProgress = (songImportState as? SongImportState.ImportProgress)?.progress,
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

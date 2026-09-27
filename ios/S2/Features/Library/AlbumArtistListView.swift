@@ -65,11 +65,11 @@ struct AlbumArtistListContent: View {
         switch state.loadingState {
         case .loading:
             ProgressView()
-        case .scanning:
+        case .scanning where state.albumArtists.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
             EmptyState("No Artists", systemImage: "person.2", message: "Pull to refresh to import.")
-        case .ready:
+        case .ready, .scanning:
             List {
                 ForEach(state.albumArtists, id: \.stableId) { artist in
                     NavigationLink(value: Route.albumArtist(artist)) { AlbumArtistRow(albumArtist: artist) }

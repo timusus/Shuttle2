@@ -35,6 +35,7 @@ data class SongListUiState(
     val loadingState: LoadingState = LoadingState.Loading,
     val scanProgress: Progress? = null,
 ) {
+    /** [Scanning] while an import runs; the list still carries what's already imported, for a screen that keeps showing it. */
     enum class LoadingState { Loading, Scanning, Ready, Empty }
 
     val isSelecting: Boolean get() = selectedSongs.isNotEmpty()
@@ -64,27 +65,18 @@ class SongListViewModel @Inject constructor(
         _sortOrder,
     ) { songs, songImportState, selectedSongIds, sortOrder ->
         val selectedSongs = songs.filter { it.id in selectedSongIds }.toSet()
-
-        if (songImportState is SongImportState.ImportProgress) {
-            SongListUiState(
-                loadingState = SongListUiState.LoadingState.Scanning,
-                scanProgress = songImportState.progress,
-                sortOrder = sortOrder,
-                selectedSongs = selectedSongs,
-            )
-        } else {
-            val sortedSongs = songs.sortedWith(sortOrder.comparator)
-            SongListUiState(
-                songs = sortedSongs,
-                selectedSongs = selectedSongs,
-                sortOrder = sortOrder,
-                loadingState = if (sortedSongs.isEmpty()) {
-                    SongListUiState.LoadingState.Empty
-                } else {
-                    SongListUiState.LoadingState.Ready
-                },
-            )
-        }
+        val sortedSongs = songs.sortedWith(sortOrder.comparator)
+        SongListUiState(
+            songs = sortedSongs,
+            selectedSongs = selectedSongs,
+            sortOrder = sortOrder,
+            loadingState = when {
+                songImportState is SongImportState.ImportProgress -> SongListUiState.LoadingState.Scanning
+                sortedSongs.isEmpty() -> SongListUiState.LoadingState.Empty
+                else -> SongListUiState.LoadingState.Ready
+            },
+            scanProgress = (songImportState as? SongImportState.ImportProgress)?.progress,
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

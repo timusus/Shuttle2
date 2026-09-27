@@ -15,6 +15,7 @@ data class AlbumListUiState(
     val scanProgress: Progress? = null,
     val events: List<PendingEvent<AlbumListEvent>> = emptyList(),
 ) {
+    /** [Scanning] while an import runs; the list still carries what's already imported, for a screen that keeps showing it. */
     enum class LoadingState { Loading, Scanning, Ready, Empty }
 
     val isSelecting: Boolean get() = selectedAlbums.isNotEmpty()

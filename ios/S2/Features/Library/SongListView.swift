@@ -57,11 +57,11 @@ struct SongListContent: View {
         switch state.loadingState {
         case .loading:
             ProgressView()
-        case .scanning:
+        case .scanning where state.songs.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
             EmptyState("No Songs", systemImage: "music.note", message: "Pull to refresh to import.")
-        case .ready:
+        case .ready, .scanning:
             List {
                 ForEach(Array(state.songs.enumerated()), id: \.element.id) { index, song in
                     Button { onPlay(index) } label: { SongRow(song: song) }
@@ -104,7 +104,9 @@ struct SongRow: View {
     }
 }
 
-/// A list's placeholder while the library's first import runs, with how far through it is when known.
+/// A list's placeholder while the library's first import runs, with how far through it is when known. A later
+/// import (pull to refresh, Sources' rescan) keeps showing what's already imported, which the shared list states
+/// still carry while `.scanning` (#623); the Library root shows its progress.
 struct LibraryScanningView: View {
     let progress: Shared.Progress?
 

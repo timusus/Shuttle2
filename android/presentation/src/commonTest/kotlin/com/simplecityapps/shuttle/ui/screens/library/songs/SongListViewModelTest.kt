@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
+import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
@@ -10,6 +11,9 @@ import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.fakes.fakeLibraryViewPreferences
 import com.simplecityapps.fakes.importComplete
+import com.simplecityapps.mediaprovider.Progress
+import com.simplecityapps.mediaprovider.SongImportState
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
@@ -61,6 +65,21 @@ class SongListViewModelTest {
         advanceUntilIdle()
 
         fakeSortPreferences.sortOrderSongList shouldBe SongSortOrder.ArtistGroupKey
+    }
+
+    // Android's Songs page still shows its scanning placeholder while an import runs; iOS keeps showing the list (#623)
+    @Test
+    fun `an import in progress keeps the songs already imported`() = runTest {
+        val song = createSong(id = 1)
+        fakeSongRepository.setSongs(listOf(song))
+        fakeImportState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, Progress(1, 4)))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.loadingState shouldBe SongListUiState.LoadingState.Scanning
+        viewModel.uiState.value.scanProgress shouldBe Progress(1, 4)
+        viewModel.uiState.value.songs shouldBe listOf(song)
     }
 
     private fun createViewModel(): SongListViewModel {

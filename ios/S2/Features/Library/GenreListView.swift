@@ -64,11 +64,11 @@ struct GenreListContent: View {
         switch state.loadingState {
         case .loading:
             ProgressView()
-        case .scanning:
+        case .scanning where state.genres.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
             EmptyState("No Genres", systemImage: "guitars", message: "Pull to refresh to import.")
-        case .ready:
+        case .ready, .scanning:
             List {
                 ForEach(state.genres, id: \.name) { genre in
                     NavigationLink(value: Route.genre(genre)) { GenreRow(genre: genre) }

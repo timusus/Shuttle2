@@ -26,6 +26,12 @@ struct GenreListTests {
         #expect(Route.genre(genres[0]) == .genre(name: "Trip Hop"))
     }
 
+    @Test func anImportKeepsShowingTheGenresAlreadyImported() throws {
+        let sut = GenreListContent(state: state([genre("Trip Hop", songs: 12)], .scanning))
+        #expect((try? sut.inspect().find(text: "Trip Hop")) != nil)
+        #expect((try? sut.inspect().find(text: "Importing your library…")) == nil)
+    }
+
     @Test func placeholders() throws {
         #expect((try? GenreListContent(state: state([], .empty)).inspect().find(text: "No Genres")) != nil)
         #expect((try? GenreListContent(state: state([], .scanning)).inspect().find(text: "Importing your library…")) != nil)

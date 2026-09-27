@@ -15,5 +15,6 @@ data class PlaylistListUiState(
     val loadingState: LoadingState = LoadingState.Loading,
     val scanProgress: Progress? = null,
 ) {
+    /** [Scanning] while an import runs; the list still carries what's already imported, for a screen that keeps showing it. */
     enum class LoadingState { Loading, Scanning, Ready }
 }

@@ -28,6 +28,7 @@ data class GenreListUiState(
     val scanProgress: Progress? = null,
     val sortOrder: GenreSortOrder = GenreSortOrder.Default,
 ) {
+    /** [Scanning] while an import runs; the list still carries what's already imported, for a screen that keeps showing it. */
     enum class LoadingState { Loading, Scanning, Ready, Empty }
 }
 
@@ -47,24 +48,17 @@ class GenreListViewModel @Inject constructor(
         mediaImportObserver.songImportState,
         _sortOrder,
     ) { genres, songImportState, sortOrder ->
-        if (songImportState is SongImportState.ImportProgress) {
-            GenreListUiState(
-                loadingState = GenreListUiState.LoadingState.Scanning,
-                scanProgress = songImportState.progress,
-                sortOrder = sortOrder,
-            )
-        } else {
-            val sortedGenres = genres.sortedWith(sortOrder.comparator)
-            GenreListUiState(
-                genres = sortedGenres,
-                sortOrder = sortOrder,
-                loadingState = if (sortedGenres.isEmpty()) {
-                    GenreListUiState.LoadingState.Empty
-                } else {
-                    GenreListUiState.LoadingState.Ready
-                },
-            )
-        }
+        val sortedGenres = genres.sortedWith(sortOrder.comparator)
+        GenreListUiState(
+            genres = sortedGenres,
+            sortOrder = sortOrder,
+            loadingState = when {
+                songImportState is SongImportState.ImportProgress -> GenreListUiState.LoadingState.Scanning
+                sortedGenres.isEmpty() -> GenreListUiState.LoadingState.Empty
+                else -> GenreListUiState.LoadingState.Ready
+            },
+            scanProgress = (songImportState as? SongImportState.ImportProgress)?.progress,
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

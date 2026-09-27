@@ -101,6 +101,21 @@ class PlaylistListViewModelTest {
     }
 
     @Test
+    fun `an import in progress keeps the playlists already imported`() = runTest {
+        val roadTrip = createPlaylist(id = 2, name = "Road trip")
+        playlistRepository.setPlaylists(listOf(roadTrip))
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, null))
+
+        val viewModel = viewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.loadingState shouldBe PlaylistListUiState.LoadingState.Scanning
+        viewModel.uiState.value.playlists shouldBe listOf(roadTrip)
+        viewModel.uiState.value.smartPlaylists.first() shouldBe SmartPlaylistId.Favourites.smartPlaylist
+    }
+
+    @Test
     fun `smart playlists are always present even with no user playlists`() = runTest {
         playlistRepository.setPlaylists(emptyList())
         importState.setState(importComplete())
