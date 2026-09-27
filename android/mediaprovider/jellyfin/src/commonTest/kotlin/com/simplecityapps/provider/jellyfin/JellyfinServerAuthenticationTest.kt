@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.SavedServerLogin
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerLogin
+import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -25,6 +26,7 @@ class JellyfinServerAuthenticationTest {
             userService = UserService(createHttpClient(server.engine)),
             credentialStore = credentialStore,
             clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.27", deviceName = "Pixel"),
+            streamProfile = StreamProfile.Android,
         ),
     )
 
