@@ -2,8 +2,8 @@ package com.simplecityapps.shuttle.ui.screens.songinfo
 
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeSongRepository
-import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.text.StringKey
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
@@ -50,23 +50,23 @@ class SongInfoViewModelTest {
 
         val rows = song.infoSections().flatMap { it.rows }.associate { it.label to it.value }
 
-        rows[R.string.song_info_size] shouldBe "5.00 MB"
-        rows[R.string.song_info_bit_rate] shouldBe "320 kb/s"
-        rows[R.string.song_info_bit_depth] shouldBe "24-bit"
-        rows[R.string.song_info_sample_rate] shouldBe "44.1 kHz"
-        rows[R.string.song_info_replay_gain_track] shouldBe "-6.50 dB"
-        rows[R.string.song_info_replay_gain_album] shouldBe null
-        rows[R.string.song_info_artists] shouldBe "A, B"
+        rows[StringKey.SONG_INFO_SIZE] shouldBe "5.00 MB"
+        rows[StringKey.SONG_INFO_BIT_RATE] shouldBe "320 kb/s"
+        rows[StringKey.SONG_INFO_BIT_DEPTH] shouldBe "24-bit"
+        rows[StringKey.SONG_INFO_SAMPLE_RATE] shouldBe "44.1 kHz"
+        rows[StringKey.SONG_INFO_REPLAY_GAIN_TRACK] shouldBe "-6.50 dB"
+        rows[StringKey.SONG_INFO_REPLAY_GAIN_ALBUM] shouldBe null
+        rows[StringKey.SONG_INFO_ARTISTS] shouldBe "A, B"
     }
 
     @Test
     fun `rows are grouped into tags, file and playback cards`() {
         val sections = createSong().infoSections().associate { it.title to it.rows.map(SongInfoRow::label) }
 
-        sections.keys.toList() shouldBe listOf(R.string.song_info_section_tags, R.string.song_info_section_file, R.string.song_info_section_playback)
-        sections.getValue(R.string.song_info_section_tags) shouldContain R.string.song_info_album
-        sections.getValue(R.string.song_info_section_file) shouldContain R.string.song_info_path
-        sections.getValue(R.string.song_info_section_playback) shouldContain R.string.song_info_play_count
+        sections.keys.toList() shouldBe listOf(StringKey.SONG_INFO_SECTION_TAGS, StringKey.SONG_INFO_SECTION_FILE, StringKey.SONG_INFO_SECTION_PLAYBACK)
+        sections.getValue(StringKey.SONG_INFO_SECTION_TAGS) shouldContain StringKey.SONG_INFO_ALBUM
+        sections.getValue(StringKey.SONG_INFO_SECTION_FILE) shouldContain StringKey.SONG_INFO_PATH
+        sections.getValue(StringKey.SONG_INFO_SECTION_PLAYBACK) shouldContain StringKey.SONG_INFO_PLAY_COUNT
     }
 
     @Test

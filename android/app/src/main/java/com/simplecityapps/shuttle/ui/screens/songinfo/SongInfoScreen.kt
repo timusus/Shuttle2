@@ -51,6 +51,7 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoRoute
 import com.simplecityapps.shuttle.ui.shell.LocalInShellSheet
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import com.simplecityapps.shuttle.ui.text.stringResource
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 import kotlinx.coroutines.launch
 
@@ -128,7 +129,7 @@ private fun SongInfoContent(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item(key = "header") { SongInfoHero(song, unknown) }
-            items(sections, key = { it.title }) { section ->
+            items(sections, key = { it.title.key }) { section ->
                 SettingsGroup(
                     title = stringResource(section.title),
                     rows = section.rows.map { row ->

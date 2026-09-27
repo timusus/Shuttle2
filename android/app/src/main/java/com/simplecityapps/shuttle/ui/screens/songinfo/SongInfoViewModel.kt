@@ -1,13 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.songinfo
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.text.StringKey
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -46,51 +45,51 @@ class SongInfoViewModel @AssistedInject constructor(
 
 /** One row of song info: a label and the value, or null when the song doesn't have one. */
 data class SongInfoRow(
-    @StringRes val label: Int,
+    val label: StringKey,
     val value: String?,
 )
 
 /** A titled group of song info rows, shown as one card. */
 data class SongInfoSection(
-    @StringRes val title: Int,
+    val title: StringKey,
     val rows: List<SongInfoRow>,
 )
 
 /** Everything song info shows about [this] song, grouped into its cards, in order. */
 fun Song.infoSections(): List<SongInfoSection> = listOf(
     SongInfoSection(
-        R.string.song_info_section_tags,
+        StringKey.SONG_INFO_SECTION_TAGS,
         listOf(
-            SongInfoRow(R.string.song_info_track_title, name),
-            SongInfoRow(R.string.song_info_artists, artists.takeIf { it.isNotEmpty() }?.joinToString(", ")),
-            SongInfoRow(R.string.song_info_album, album),
-            SongInfoRow(R.string.song_info_album_artist, albumArtist),
-            SongInfoRow(R.string.song_info_year, date?.year?.toString()),
-            SongInfoRow(R.string.song_info_track_number, track?.toString()),
-            SongInfoRow(R.string.song_info_disc, disc?.toString()),
-            SongInfoRow(R.string.song_info_genres, genres.takeIf { it.isNotEmpty() }?.joinToString(", ")),
-            SongInfoRow(R.string.song_info_lyrics, lyrics),
+            SongInfoRow(StringKey.SONG_INFO_TRACK_TITLE, name),
+            SongInfoRow(StringKey.SONG_INFO_ARTISTS, artists.takeIf { it.isNotEmpty() }?.joinToString(", ")),
+            SongInfoRow(StringKey.SONG_INFO_ALBUM, album),
+            SongInfoRow(StringKey.SONG_INFO_ALBUM_ARTIST, albumArtist),
+            SongInfoRow(StringKey.SONG_INFO_YEAR, date?.year?.toString()),
+            SongInfoRow(StringKey.SONG_INFO_TRACK_NUMBER, track?.toString()),
+            SongInfoRow(StringKey.SONG_INFO_DISC, disc?.toString()),
+            SongInfoRow(StringKey.SONG_INFO_GENRES, genres.takeIf { it.isNotEmpty() }?.joinToString(", ")),
+            SongInfoRow(StringKey.SONG_INFO_LYRICS, lyrics),
         ),
     ),
     SongInfoSection(
-        R.string.song_info_section_file,
+        StringKey.SONG_INFO_SECTION_FILE,
         listOf(
-            SongInfoRow(R.string.song_info_path, displayPath),
-            SongInfoRow(R.string.song_info_mime_type, mimeType),
-            SongInfoRow(R.string.song_info_size, String.format(Locale.getDefault(), "%.2f MB", size / 1024f / 1024f)),
-            SongInfoRow(R.string.song_info_duration, formatDuration(duration.toLong())),
-            SongInfoRow(R.string.song_info_bit_rate, bitRate?.let(::formatBitRate)),
-            SongInfoRow(R.string.song_info_bit_depth, bitDepth?.let { "$it-bit" }),
-            SongInfoRow(R.string.song_info_sample_rate, sampleRate?.let(::formatSampleRate)),
-            SongInfoRow(R.string.song_info_channel_count, channelCount?.toString()),
+            SongInfoRow(StringKey.SONG_INFO_PATH, displayPath),
+            SongInfoRow(StringKey.SONG_INFO_MIME_TYPE, mimeType),
+            SongInfoRow(StringKey.SONG_INFO_SIZE, String.format(Locale.getDefault(), "%.2f MB", size / 1024f / 1024f)),
+            SongInfoRow(StringKey.SONG_INFO_DURATION, formatDuration(duration.toLong())),
+            SongInfoRow(StringKey.SONG_INFO_BIT_RATE, bitRate?.let(::formatBitRate)),
+            SongInfoRow(StringKey.SONG_INFO_BIT_DEPTH, bitDepth?.let { "$it-bit" }),
+            SongInfoRow(StringKey.SONG_INFO_SAMPLE_RATE, sampleRate?.let(::formatSampleRate)),
+            SongInfoRow(StringKey.SONG_INFO_CHANNEL_COUNT, channelCount?.toString()),
         ),
     ),
     SongInfoSection(
-        R.string.song_info_section_playback,
+        StringKey.SONG_INFO_SECTION_PLAYBACK,
         listOf(
-            SongInfoRow(R.string.song_info_play_count, playCount.toString()),
-            SongInfoRow(R.string.song_info_replay_gain_track, replayGainTrack?.let(::formatGain)),
-            SongInfoRow(R.string.song_info_replay_gain_album, replayGainAlbum?.let(::formatGain)),
+            SongInfoRow(StringKey.SONG_INFO_PLAY_COUNT, playCount.toString()),
+            SongInfoRow(StringKey.SONG_INFO_REPLAY_GAIN_TRACK, replayGainTrack?.let(::formatGain)),
+            SongInfoRow(StringKey.SONG_INFO_REPLAY_GAIN_ALBUM, replayGainAlbum?.let(::formatGain)),
         ),
     ),
 )

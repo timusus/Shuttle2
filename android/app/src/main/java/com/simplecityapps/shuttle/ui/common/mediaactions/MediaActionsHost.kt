@@ -50,10 +50,11 @@ import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
-import com.simplecityapps.shuttle.ui.actions.format
+import com.simplecityapps.shuttle.ui.actions.text
 import com.simplecityapps.shuttle.ui.actions.toIntent
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import com.simplecityapps.shuttle.ui.text.getString
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 
@@ -123,8 +124,8 @@ fun MediaActionsHost(
             // Shown without holding back the results after it
             is MediaActionResult.Message -> scope.launch {
                 val snackbarResult = snackbarHostState.showSnackbar(
-                    message = result.message.format(resources),
-                    actionLabel = result.action?.label?.format(resources),
+                    message = resources.getString(result.message.text()),
+                    actionLabel = result.action?.label?.let { resources.getString(it.text()) },
                     withDismissAction = result.action != null,
                 )
                 if (snackbarResult == SnackbarResult.ActionPerformed) result.action?.let { viewModel.dispatch(it.action) }
@@ -193,7 +194,7 @@ fun MediaActionsHost(
             },
             onDismissRequest = { state.confirmation = null },
         ) {
-            Text(confirmation.message.format(resources))
+            Text(resources.getString(confirmation.message.text()))
         }
     }
 }

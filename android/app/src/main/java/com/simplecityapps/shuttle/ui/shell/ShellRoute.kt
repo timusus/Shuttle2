@@ -18,13 +18,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
-import com.simplecityapps.shuttle.ui.actions.format
+import com.simplecityapps.shuttle.ui.actions.text
 import com.simplecityapps.shuttle.ui.actions.toIntent
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel
+import com.simplecityapps.shuttle.ui.text.getString
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -111,8 +112,8 @@ private suspend fun onMediaActionResult(
         is MediaActionResult.Message -> {
             val action = result.action
             val shown = snackbarHostState.showSnackbar(
-                result.message.format(resources),
-                actionLabel = action?.label?.format(resources),
+                resources.getString(result.message.text()),
+                actionLabel = action?.label?.let { resources.getString(it.text()) },
                 duration = if (action != null) SnackbarDuration.Long else SnackbarDuration.Short,
             )
             if (shown == SnackbarResult.ActionPerformed && action != null) actions.onMediaAction(action.action)
