@@ -130,6 +130,9 @@ class TaglibMediaProvider(
     /**
      * The audio documents in the extra folders that MediaStore didn't already list (by [knownPaths], lowercased), and
      * that no excluded folder covers.
+     *
+     * DocumentsProvider offers no ContentObserver: nothing notifies the app when these folders change, so they are
+     * only picked up by a manual or scheduled scan, never by the MediaStore observer.
      */
     private suspend fun findExtraDocuments(
         folders: ScannerFolders,
