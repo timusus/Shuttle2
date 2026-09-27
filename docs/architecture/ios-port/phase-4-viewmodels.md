@@ -15,6 +15,69 @@ outside `androidx.lifecycle`/`androidx.annotation`. No `Bitmap`, `ImageVector`, 
 live one layer down, in the **use cases** the ViewModels call — see the table's "not yet KMP" column and
 §5.
 
+## Wave 0: what landed first, and where it differs from the plan below
+
+Wave 0 laid the ground without moving a ViewModel. Where this section and the sections below disagree,
+this section is what was built.
+
+**The module.** `:android:presentation` is an `s2.kmp-library` module with Metro, `api` on `:android:domain`,
+the KMP lifecycle ViewModel (`org.jetbrains.androidx.lifecycle:lifecycle-viewmodel`) and `metrox-viewmodel`.
+`:shared` exports it to the iOS framework. It sits in its own layer, `viewmodel` (see `layering.md`): it
+sees `domain` only, not `core` (Android-only) or `designsystem` (Compose), and `designsystem` and `app` see
+it. So a ViewModel can't move while its state still holds a designsystem type; see the list under §1.
+
+**How a shared ViewModel is contributed and reached.** A ViewModel in `commonMain` carries the same
+annotations as today's app ViewModels: `@ViewModelKey(X::class) @ContributesIntoMap(AppScope::class)` with
+`@Inject`, or a nested `@AssistedFactory @ManualViewModelAssistedFactoryKey(Factory::class)
+@ContributesIntoMap(AppScope::class) interface Factory : ManualViewModelAssistedFactory`.
+`AppViewModelFactory` moved into `presentation`'s `commonMain`, so Android's `AppGraph` (a `ViewModelGraph`)
+keeps handing it to `metroViewModel()` / `assistedMetroViewModel()` unchanged.
+
+On iOS, the phase 5 graph is a `@DependencyGraph(AppScope::class)` in `:shared`'s `iosMain` that declares
+one property per ViewModel, or per assisted `Factory` (`val playerViewModel: PlayerViewModel`,
+`val albumDetailViewModelFactory: AlbumDetailViewModel.Factory`), which is the Podcasts app's
+`IosAppGraph` pattern. Metro creates a new instance on every read, so Swift keeps each screen's ViewModel
+in a small cache, keyed by screen and argument, and clears it when the screen goes (Podcasts'
+`ViewModelCache`). `ViewModelContributionTest` (`presentation/commonTest`) runs both paths, the
+multibound factory and the typed graph properties, on the JVM and on iOS.
+
+Open for phase 5: that test's graph lives in the same module as the contributions. Whether a graph in
+`:shared` sees contributions from `presentation` on Kotlin/Native (Metro's cross-module contribution hints)
+is not yet proven. If it doesn't, set Metro's `supportedHintContributionPlatforms` or
+`generateContributionHintsInFir`, or declare the bindings in the iOS graph directly.
+
+**`ArtworkSeed`** (§1) became one platform-neutral type rather than two:
+`com.simplecityapps.shuttle.ui.theme.ArtworkSeed` in `presentation`'s `commonMain`, whose `Available` holds
+the sRGB colour as an ARGB `Int`. It uses the package `ObserveArtworkSeed` and `ArtworkSeedSource` already
+live in, so their later move keeps it. `designsystem`'s `ArtworkTheme` converts it with `Color(argb)`, and
+`SeedColorCache` stores it with `toArgb()`. The round trip is lossless, so the Roborazzi goldens are
+unchanged. `designsystem` has no Color-based twin left. Seed extraction (Coil/Palette) stays Android-side.
+
+**Strings (§2).** Three types in `presentation`'s `ui/text`:
+- `enum class StringKey` and `enum class PluralKey`. An entry's key is its name in lower case, which is both
+  the Android resource name (`R.string.<key>` / `R.plurals.<key>`) and the iOS Localizable key, so no
+  platform keeps a mapping table.
+- `sealed interface UiText { Resource(key, args); Plural(key, count, args) }`. An argument can itself be a
+  `UiText` (for example "Favorites" or "An unknown error occurred" inside a snackbar message), and it is
+  resolved first. A plural's count is always its first format argument (`%1$d`), and `args` follow from
+  `%2$`.
+
+Each platform resolves them where it draws:
+- **Android** (`app/ui/text/UiTextResources.kt`): an exhaustive `when` onto the existing resources,
+  `Resources.getString(UiText)`, and `stringResource(UiText)` / `stringResource(StringKey)`.
+  `StringKeyResourcesTest` holds every key to an existing resource of its name and type.
+- **iOS** (`presentation/iosMain`): `UiText.resolve(bundle)` looks the key up in `Localizable` (and a plural's
+  in `.stringsdict`), then formats through `NSString.localizedStringWithFormat`. Kotlin/Native passes a
+  variadic argument by its static type, so the count goes as a C int and every other argument as an
+  `NSString`. The phase 5 catalogue therefore writes `%N$@` where Android has `%N$s` or a non-count
+  `%N$d`.
+
+Converted so far: song info's section and row labels (23 keys), and `MediaActionMessage`, whose
+`format(Resources)` became `text(): UiText` (10 keys plus 11 plurals; the route composables still resolve it).
+That makes 33 `StringKey`s and 11 `PluralKey`s. `SettingsCatalog`, `SettingItem`, `TagField`,
+`LibraryRoutes`, `ErrorHelper` and `PlaylistData` follow in their ViewModel's wave: add entries and switch
+the `@StringRes Int` fields to `StringKey`.
+
 ## Per-ViewModel table
 
 Legend: **domain-kmp** = dependency's interface already lives in `:android:domain` (KMP since phase 0/#582);
@@ -67,6 +130,14 @@ Only two real offenders, both traced above:
   Android-side mapping used by `ArtworkTheme`, and add an equivalent SwiftUI `Color` mapping on iOS. This
   needs a shared seed-extraction algorithm too (currently Coil/Palette-based in `SeedColorExtractor`) —
   track as a phase 2/3 follow-up, not blocking the VM move itself if the seed type becomes a plain value.
+  *Done in wave 0, as a single type in `presentation`; see "Wave 0".*
+- **Designsystem types in `PlayerUiState`, found in wave 0:** `QueuePosition` and `S2RepeatMode` are enums
+  in `designsystem` (`component/QueueRow.kt`, `component/PlayerControls.kt`). They are plain Kotlin, but the
+  `viewmodel` layer can't see `designsystem`, so they move to `presentation`, where `designsystem` imports
+  them, before wave 5. `SongInfoViewModel` likewise calls `designsystem`'s `formatDuration`, which moves
+  (or gets a shared twin) before wave 4. The JVM-only calls in ViewModel files (`String.format(Locale, ...)`,
+  `URLDecoder` in `SongInfoViewModel`, `java.util.Date` in `SettingsViewModel`) need common replacements in
+  their waves.
 - **`EqualizerUiState.frequencyResponse: ImmutableList<FrequencyResponsePoint>`** — no fix needed;
   `kotlinx.collections.immutable` is already multiplatform and the task brief says Compose-flavoured
   collection types are fine.
@@ -200,7 +271,7 @@ Total: 6+6+6+9+2 = 29, matching the phase table's "easy 18 → assisted 9 → Pl
 
 **Cross-cutting risks, not tied to one wave:**
 1. **`ArtworkSeed`'s `Color` payload** (§1) touches 3 ViewModels across waves 4–5; fixing it once, early
-   (wave 1 or 2, even though its consumers land later), avoids rework.
+   (wave 1 or 2, even though its consumers land later), avoids rework. *Done in wave 0.*
 2. **The settings/prefs interface shape** (`ReadSetting`/`SaveSetting`/`ObserveSetting`, currently
    `:android:core`, Android-only) blocks more ViewModels (14 of 29) than any other single dependency —
    sequence phase 2's "prefs behind shared interfaces" checkpoint to land before wave 2, not after.

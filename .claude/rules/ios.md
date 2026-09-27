@@ -41,7 +41,7 @@ Xcode 27.2 beta.
 ## Layout
 
 ```
-shared/                     # :shared: s2.kmp-library + SKIE, exports :android:domain
+shared/                     # :shared: s2.kmp-library + SKIE, exports :android:domain and :android:presentation
   src/iosMain/.../IosAppGraph.kt   # the iOS graph (placeholder: in-memory songs until Metro, #583)
 ios/
   project.yml               # source of truth; S2.xcodeproj is generated but committed (as in Podcasts)
