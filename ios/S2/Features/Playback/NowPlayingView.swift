@@ -205,6 +205,12 @@ struct NowPlayingScrubber: View {
             )
             .accessibilityLabel("Playback position")
             .accessibilityValue("\(Self.formatted(ms: current)) of \(Self.formatted(ms: durationMs))")
+            // VoiceOver's swipe up/down adjusts the slider without `onEditingChanged`, so seek here.
+            .accessibilityAdjustableAction { direction in
+                if let target = Self.adjusted(positionMs: positionMs, durationMs: durationMs, direction) {
+                    onSeek(target)
+                }
+            }
 
             HStack {
                 Text(Self.formatted(ms: current))
@@ -214,6 +220,18 @@ struct NowPlayingScrubber: View {
             .font(.s2Time)
             .foregroundStyle(.s2SecondaryText)
             .accessibilityHidden(true)
+        }
+    }
+
+    /// How far one VoiceOver adjustment seeks.
+    static let accessibilityStepMs = 15_000
+
+    /// Where one VoiceOver adjustment seeks to, clamped to the song.
+    static func adjusted(positionMs: Int, durationMs: Int, _ direction: AccessibilityAdjustmentDirection) -> Int? {
+        switch direction {
+        case .increment: min(durationMs, positionMs + accessibilityStepMs)
+        case .decrement: max(0, positionMs - accessibilityStepMs)
+        @unknown default: nil
         }
     }
 

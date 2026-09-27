@@ -94,6 +94,21 @@ struct NowPlayingViewTests {
         #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "Paranoid Android, now playing")) != nil)
     }
 
+    @Test func scrubberReadsElapsedOfTotalToVoiceOver() throws {
+        let sut = NowPlayingScrubber(positionMs: 90_000, durationMs: 386_000) { _ in }
+        let slider = try sut.inspect().find(viewWithAccessibilityLabel: "Playback position")
+        #expect(try slider.accessibilityValue().string() == "1:30 of 6:26")
+    }
+
+    // ViewInspector can't invoke accessibility actions on iOS 16+, so the adjustable action's arithmetic is
+    // tested directly.
+    @Test func voiceOverAdjustSeeksByAStepClampedToTheSong() {
+        #expect(NowPlayingScrubber.adjusted(positionMs: 90_000, durationMs: 386_000, .increment) == 105_000)
+        #expect(NowPlayingScrubber.adjusted(positionMs: 90_000, durationMs: 386_000, .decrement) == 75_000)
+        #expect(NowPlayingScrubber.adjusted(positionMs: 380_000, durationMs: 386_000, .increment) == 386_000)
+        #expect(NowPlayingScrubber.adjusted(positionMs: 5_000, durationMs: 386_000, .decrement) == 0)
+    }
+
     @Test func compactPresentsFullScreenAndOtherTiersAFormSheet() {
         #expect(NowPlayingPresentationStyle.resolve(for: .compact) == .fullScreenCover)
         #expect(NowPlayingPresentationStyle.resolve(for: .regular) == .formSheet)
