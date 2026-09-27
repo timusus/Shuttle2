@@ -284,7 +284,7 @@ final class PlayerBinding {
             next.playbackSpeed = player.playbackSpeed
             next.sleepTimerActive = player.sleepTimerActive
             next.isFavourite = player.favourite
-            if current == nil { next.songActions = [] }
+            if current?.song.id != songActionsFor { next.songActions = [] }
             observeSongActions(for: current?.song)
         }
         reportedPositionMs = Int(state.progress.positionMs)
