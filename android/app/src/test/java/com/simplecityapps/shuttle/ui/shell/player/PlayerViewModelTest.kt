@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.lifecycle.SavedStateHandle
+import com.simplecityapps.createPlatformFeatures
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
@@ -114,7 +115,7 @@ class PlayerViewModelTest {
             savedNowPlaying = { savedNowPlaying },
             clearQueue = ClearQueue(queueOperations, playbackOperations),
             restoreQueue = RestoreQueue(queueOperations, playbackOperations),
-            availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, FakeSongDownloadRepository()),
+            availableMediaActions = AvailableMediaActions(mediaActions.resolveSongs, FakeSongDownloadRepository(), createPlatformFeatures()),
             mediaActionHandler = mediaActions.handler,
             savedStateHandle = savedStateHandle,
         ).also { viewModel ->

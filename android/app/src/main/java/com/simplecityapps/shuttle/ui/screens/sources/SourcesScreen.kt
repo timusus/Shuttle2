@@ -100,7 +100,8 @@ fun LazyListScope.sourcesContent(uiState: SourcesUiState, actions: SourcesAction
             )
             uiState.scan?.let { scan ->
                 val modifier = Modifier.fillMaxWidth().padding(top = 8.dp).testTag("sources-scan-progress")
-                if (scan.fraction != null) LinearWavyProgressIndicator(progress = { scan.fraction }, modifier = modifier) else LinearWavyProgressIndicator(modifier = modifier)
+                val fraction = scan.fraction
+                if (fraction != null) LinearWavyProgressIndicator(progress = { fraction }, modifier = modifier) else LinearWavyProgressIndicator(modifier = modifier)
             }
         }
     }

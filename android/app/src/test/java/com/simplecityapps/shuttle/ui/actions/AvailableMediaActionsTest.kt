@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createGenre
+import com.simplecityapps.createPlatformFeatures
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeSongDownloadRepository
 import com.simplecityapps.fakes.TestMediaActions
@@ -31,7 +32,7 @@ import org.junit.Test
 class AvailableMediaActionsTest {
 
     private val downloads = FakeSongDownloadRepository()
-    private val availableActions = AvailableMediaActions(TestMediaActions().resolveSongs, downloads)
+    private val availableActions = AvailableMediaActions(TestMediaActions().resolveSongs, downloads, createPlatformFeatures())
 
     private val remote = createSong(id = 1, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://1")
 
@@ -63,6 +64,18 @@ class AvailableMediaActionsTest {
         actions shouldNotContain Share
         actions shouldNotContain Delete
         actions shouldContainAll listOf(Exclude, EditTags)
+    }
+
+    @Test
+    fun `a platform without offline downloads offers neither download action`() = runTest {
+        downloads.downloads.value = listOf(download(remote.path, SongDownload.State.Completed))
+        val withoutDownloads = AvailableMediaActions(TestMediaActions().resolveSongs, downloads, createPlatformFeatures(offlineDownloads = false))
+
+        val actions = withoutDownloads(MediaSelection.Songs(listOf(remote, createSong(id = 2, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://2")))).first()
+
+        actions shouldNotContain Download
+        actions shouldNotContain RemoveDownload
+        actions shouldContainAll listOf(Play, Exclude)
     }
 
     @Test

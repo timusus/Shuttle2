@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.common.mediaactions
 
+import com.simplecityapps.createPlatformFeatures
 import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaylistRepository
@@ -28,7 +29,7 @@ class MediaActionsViewModelTest {
 
     private fun TestScope.viewModel() = MediaActionsViewModel(
         actions.handler,
-        AvailableMediaActions(actions.resolveSongs, FakeSongDownloadRepository()),
+        AvailableMediaActions(actions.resolveSongs, FakeSongDownloadRepository(), createPlatformFeatures()),
         actions.observePlaylists,
     ).also { viewModel -> backgroundScope.launch { viewModel.uiState.collect {} } }
 

@@ -1,6 +1,5 @@
 package com.simplecityapps.fakes
 
-import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
@@ -38,10 +37,6 @@ import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
 import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
-import com.simplecityapps.trial.Entitlement
-import com.simplecityapps.trial.ProSource
-import com.simplecityapps.trial.ServerAccessGate
-import kotlinx.coroutines.flow.MutableStateFlow
 
 /** The shared media action and library use cases, wired to a test's fakes. */
 class TestMediaActions(
@@ -64,13 +59,11 @@ class TestMediaActions(
     val createPlaylist = CreatePlaylist(playlistRepository, resolveSongs)
     val excludeSongs = ExcludeSongs(songRepository, queueOperations, resolveSongs)
     val deleteSongs = DeleteSongs(songRepository, queueOperations, resolveSongs, { fileDeleter.delete(it) })
-    val songDownloadManager = FakeSongDownloadManager()
-    val mediaInfoProvider = FakeMediaInfoProvider()
+    val songDownloader = FakeSongDownloader()
 
-    /** The user's entitlement, which gates server downloads; Pro by default. */
-    val entitlement = MutableStateFlow<Entitlement>(Entitlement.Pro(ProSource.Lifetime))
-    val serverAccessGate = ServerAccessGate(entitlement, startTrial = { false })
-    val downloadSongs = DownloadSongs(songDownloadManager, AggregateMediaInfoProvider(mutableSetOf(mediaInfoProvider)), resolveSongs, TryDownloadFromServer(serverAccessGate::tryDownloadFromServer))
+    /** Whether the user may download from a server (the entitlement gate); allowed by default. */
+    var downloadAllowed = true
+    val downloadSongs = DownloadSongs(songDownloader, resolveSongs, TryDownloadFromServer { downloadAllowed })
     val findGoToTarget = FindGoToTarget(albumRepository, albumArtistRepository)
     val shareSongs = ShareSongs(resolveSongs)
     val removeFromPlaylist = RemoveFromPlaylist(playlistRepository)

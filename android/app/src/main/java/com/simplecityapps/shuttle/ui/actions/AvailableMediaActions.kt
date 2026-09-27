@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.actions
 import com.simplecityapps.shuttle.downloads.SongDownload
 import com.simplecityapps.shuttle.downloads.SongDownloadRepository
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.platform.PlatformFeatures
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
@@ -22,15 +23,16 @@ import kotlinx.coroutines.flow.map
  * - Exclude: songs, albums, artists and genres; it runs straight away with an Undo (redesign owner decision 11).
  * - Delete: songs, when every one can be deleted (a local file, not a remote provider's).
  * - Download: when any of the selection's remote songs isn't downloaded or downloading. Remove download: when any is.
- *   Local songs never offer either.
+ *   Local songs never offer either, nor does a platform without offline downloads ([PlatformFeatures]).
  */
 class AvailableMediaActions @Inject constructor(
     private val resolveSongs: ResolveSongs,
     private val songDownloadRepository: SongDownloadRepository,
+    private val platformFeatures: PlatformFeatures,
 ) {
     operator fun invoke(selection: MediaSelection): Flow<List<MediaActionType>> {
         val base = baseActions(selection)
-        if (selection.mediaProviders?.any { it.remote } != true) return flowOf(base)
+        if (!platformFeatures.offlineDownloads || selection.mediaProviders?.any { it.remote } != true) return flowOf(base)
         return flow {
             val songs = resolveSongs(selection)
             emitAll(songDownloadRepository.observeDownloads().map { downloads -> base + downloadActions(songs, downloads) })

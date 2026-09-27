@@ -7,35 +7,43 @@ import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.SettingsStore
-import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
-import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@RunWith(RobolectricTestRunner::class)
 class MusicAccessCoordinatorTest {
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    private val mainDispatcher = UnconfinedTestDispatcher()
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(mainDispatcher)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     private val songRepository = FakeSongRepository()
     private val importState = FakeSongImportStateProvider()
     private val mediaSources = FakeMediaSources()
-    private val settings = SourcesSettings(SettingsStore(RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }))
+    private val settings = SourcesSettings(SettingsStore(InMemoryKeyValueStore()))
 
     private fun TestScope.coordinator() = MusicAccessCoordinator(ObserveSongs(songRepository), importState, mediaSources, settings, CoroutineScope(UnconfinedTestDispatcher(testScheduler))).also { coordinator ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { coordinator.availability.collect {} }
@@ -73,7 +81,7 @@ class MusicAccessCoordinatorTest {
     }
 
     @Test
-    fun `a refusal with a rationale is denied, and without one is permanent`() = runTest {
+    fun `a refusal with a rationale is denied and without one is permanent`() = runTest {
         songRepository.setSongs(emptyList())
         val coordinator = coordinator()
 
@@ -97,7 +105,7 @@ class MusicAccessCoordinatorTest {
     }
 
     @Test
-    fun `a grant held when the app first opens scans, since nothing has been scanned yet`() = runTest {
+    fun `a grant held when the app first opens scans since nothing has been scanned yet`() = runTest {
         songRepository.setSongs(emptyList())
         val coordinator = coordinator()
 

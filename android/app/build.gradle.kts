@@ -260,6 +260,8 @@ android {
         // packages it, and R8 does not catch live code that reaches it: keep fixture use inside
         // @Preview functions.
         testImplementation(project(":android:fixtures"))
+        // The shared fakes and model builders (createSong, TestMediaActions, ...)
+        testImplementation(project(":android:presentation-testing"))
         debugImplementation(project(":android:fixtures"))
         releaseCompileOnly(project(":android:fixtures"))
         testImplementation(libs.androidx.glance.appwidget.testing)

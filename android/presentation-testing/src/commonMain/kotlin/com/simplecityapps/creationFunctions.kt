@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.platform.PlatformFeatures
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
@@ -133,10 +134,16 @@ fun createPlaylist(
     externalId = externalId,
 )
 
-fun createSmartPlaylist(
-    nameResId: Int = com.simplecityapps.mediaprovider.R.string.playlist_title_recently_added,
-    songQuery: com.simplecityapps.shuttle.query.SongQuery = com.simplecityapps.shuttle.query.SongQuery.RecentlyAdded(),
-) = com.simplecityapps.shuttle.model.SmartPlaylist(
-    nameResId = nameResId,
-    songQuery = songQuery,
+fun createPlatformFeatures(
+    homeScreenWidgets: Boolean = true,
+    artworkPrefetch: Boolean = true,
+    scheduledRescan: Boolean = true,
+    cast: Boolean = true,
+    offlineDownloads: Boolean = true,
+) = PlatformFeatures(
+    homeScreenWidgets = homeScreenWidgets,
+    artworkPrefetch = artworkPrefetch,
+    scheduledRescan = scheduledRescan,
+    cast = cast,
+    offlineDownloads = offlineDownloads,
 )

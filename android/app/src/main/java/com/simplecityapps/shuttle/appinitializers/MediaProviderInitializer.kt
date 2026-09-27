@@ -5,7 +5,7 @@ import android.content.Context
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.mediaprovider.worker.MediaImportWorker
 import com.simplecityapps.shuttle.di.ApplicationContext
-import com.simplecityapps.shuttle.ui.screens.sources.DefaultMediaSources
+import com.simplecityapps.shuttle.sources.DefaultMediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
 import dev.zacsweers.metro.Inject
 

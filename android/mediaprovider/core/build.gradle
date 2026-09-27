@@ -48,7 +48,8 @@ dependencies {
     // Timber
     implementation libs.timber
 
-    implementation project(':android:domain')
+    // api: its MediaProvider API speaks the domain's types (Song, Progress, SongImportState)
+    api project(':android:domain')
 
     // Shuttle Core
     implementation(project(":android:core"))

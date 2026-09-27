@@ -2,15 +2,11 @@ package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.TestMediaActions
-import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.trial.Entitlement
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
 
 class DownloadSongsTest {
 
@@ -23,25 +19,17 @@ class DownloadSongsTest {
         val result = actions.downloadSongs(MediaSelection.Songs(listOf(remote, local)))
 
         result shouldBe DownloadSongs.Result(changed = listOf(remote), failed = emptyList())
-        actions.songDownloadManager.downloaded.map { it.first } shouldBe listOf(remote)
-        actions.songDownloadManager.downloaded.single().second.toString() shouldBe "https://example.com/download/1"
-    }
-
-    @Test
-    fun `downloads with the provider's mime type, not the song's own (#567)`() = runTest {
-        actions.downloadSongs(MediaSelection.Songs(remote))
-
-        actions.songDownloadManager.downloadedMimeTypes shouldBe listOf("audio/download-transcode")
+        actions.songDownloader.downloaded shouldBe listOf(remote)
     }
 
     @Test
     fun `a song without a download URL fails`() = runTest {
-        actions.mediaInfoProvider.unavailable += remote.path
+        actions.songDownloader.unavailable += remote.path
 
         val result = actions.downloadSongs(MediaSelection.Songs(remote))
 
         result shouldBe DownloadSongs.Result(changed = emptyList(), failed = listOf(remote))
-        actions.songDownloadManager.downloaded.shouldBeEmpty()
+        actions.songDownloader.downloaded.shouldBeEmpty()
     }
 
     @Test
@@ -49,25 +37,22 @@ class DownloadSongsTest {
         val result = actions.downloadSongs(MediaSelection.Songs(listOf(remote, local)), download = false)
 
         result shouldBe DownloadSongs.Result(changed = listOf(remote), failed = emptyList())
-        actions.songDownloadManager.removed shouldBe listOf(remote)
+        actions.songDownloader.removed shouldBe listOf(remote)
     }
 
     @Test
-    fun `a free user downloads nothing and is sent to the paywall`() = runTest(UnconfinedTestDispatcher()) {
-        actions.entitlement.value = Entitlement.Free(trialUsed = true)
-        val requests = mutableListOf<PaywallSource>()
-        backgroundScope.launch { actions.serverAccessGate.paywallRequests.collect { requests += it } }
+    fun `a user whose entitlement refuses server downloads downloads nothing and needs Pro`() = runTest {
+        actions.downloadAllowed = false
 
         val result = actions.downloadSongs(MediaSelection.Songs(listOf(remote, local)))
 
         result shouldBe DownloadSongs.Result(changed = emptyList(), failed = emptyList(), needsPro = true)
-        actions.songDownloadManager.downloaded.shouldBeEmpty()
-        requests shouldBe listOf(PaywallSource.ServerDownload)
+        actions.songDownloader.downloaded.shouldBeEmpty()
     }
 
     @Test
-    fun `a free user can still remove downloads, and local-only selections never ask`() = runTest {
-        actions.entitlement.value = Entitlement.Free(trialUsed = true)
+    fun `a refused user can still remove downloads and local-only selections never ask`() = runTest {
+        actions.downloadAllowed = false
 
         actions.downloadSongs(MediaSelection.Songs(remote), download = false).changed shouldBe listOf(remote)
         actions.downloadSongs(MediaSelection.Songs(local)).needsPro shouldBe false

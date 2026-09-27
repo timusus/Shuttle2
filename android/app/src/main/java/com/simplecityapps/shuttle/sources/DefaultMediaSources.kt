@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.sources
+package com.simplecityapps.shuttle.sources
 
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreMediaProvider
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
@@ -15,6 +15,7 @@ import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
@@ -23,42 +24,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-
-/**
- * The media providers the library imports from, and the scan that imports them. The enabled set persists in
- * [PlaybackPreferenceManager.mediaProviderTypes] and is mirrored into [MediaImporter.mediaProviders].
- */
-interface MediaSources {
-    val enabledTypes: StateFlow<List<MediaProviderType>>
-
-    fun enable(type: MediaProviderType)
-
-    /** Stops importing from [type] and removes its songs and playlists from the library and the queue. */
-    fun disable(type: MediaProviderType)
-
-    /** Whether an import has ever finished on this install. */
-    val hasScanned: Boolean
-
-    /** Imports from every enabled provider, outliving the screen that asked; a no-op while an import runs. */
-    fun scan()
-
-    /** Scans, turning the S2 scanner on first if no source on this device is: what a music permission grant starts. */
-    fun scanThisDevice() {
-        if (enabledTypes.value.none { it.isLocal }) enable(MediaProviderType.Shuttle)
-        scan()
-    }
-
-    /**
-     * Scans this device if the music permission is held but nothing has been scanned yet: granted over adb, or
-     * restored with a backup. Asked once, at startup; the prompts that grant the permission scan for themselves.
-     */
-    fun scanIfNeverScanned(musicPermissionGranted: Boolean) {
-        if (musicPermissionGranted && !hasScanned) scanThisDevice()
-    }
-}
-
-/** Songs on this device come from the S2 scanner, or the Android (MediaStore) provider for users who chose it before. */
-val MediaProviderType.isLocal: Boolean get() = this == MediaProviderType.Shuttle || this == MediaProviderType.MediaStore
 
 @SingleIn(AppScope::class)
 class DefaultMediaSources @Inject constructor(

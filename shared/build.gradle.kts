@@ -17,6 +17,8 @@ skie {
 kotlin {
     android {
         namespace = "com.simplecityapps.shuttle.shared"
+        // As :android:presentation, whose androidx dependencies require it
+        compileSdk = 37
     }
 
     compilerOptions {

@@ -15,9 +15,9 @@ import com.simplecityapps.shuttle.appinitializers.TelemetryInitializer
 import com.simplecityapps.shuttle.appinitializers.TimberInitializer
 import com.simplecityapps.shuttle.appinitializers.WidgetInitializer
 import com.simplecityapps.shuttle.entitlement.EntitledServerStreamPolicy
-import com.simplecityapps.shuttle.ui.screens.sources.DefaultMediaSources
+import com.simplecityapps.shuttle.sources.DefaultMediaSources
+import com.simplecityapps.shuttle.sources.SafScannerFolderStore
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
-import com.simplecityapps.shuttle.ui.screens.sources.SafScannerFolderStore
 import com.simplecityapps.shuttle.ui.screens.sources.ScannerFolderStore
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer

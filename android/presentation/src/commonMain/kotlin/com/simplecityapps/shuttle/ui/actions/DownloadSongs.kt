@@ -1,7 +1,5 @@
 package com.simplecityapps.shuttle.ui.actions
 
-import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
-import com.simplecityapps.shuttle.downloads.SongDownloadManager
 import com.simplecityapps.shuttle.entitlement.TryDownloadFromServer
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
@@ -12,8 +10,7 @@ import dev.zacsweers.metro.Inject
  * which opens the paywall when it refuses; removing a download never asks.
  */
 class DownloadSongs @Inject constructor(
-    private val songDownloadManager: SongDownloadManager,
-    private val mediaInfoProvider: AggregateMediaInfoProvider,
+    private val songDownloader: SongDownloader,
     private val resolveSongs: ResolveSongs,
     private val tryDownloadFromServer: TryDownloadFromServer,
 ) {
@@ -26,20 +23,14 @@ class DownloadSongs @Inject constructor(
     suspend operator fun invoke(selection: MediaSelection, download: Boolean = true): Result {
         val songs = resolveSongs(selection).filter { it.mediaProvider.remote }
         if (!download) {
-            songs.forEach { songDownloadManager.remove(it) }
+            songs.forEach { songDownloader.remove(it) }
             return Result(songs, emptyList())
         }
         if (songs.isNotEmpty() && !tryDownloadFromServer()) return Result(emptyList(), emptyList(), needsPro = true)
         val changed = mutableListOf<Song>()
         val failed = mutableListOf<Song>()
         songs.forEach { song ->
-            val downloadInfo = mediaInfoProvider.downloadInfo(song)
-            if (downloadInfo == null) {
-                failed += song
-            } else {
-                songDownloadManager.download(song, downloadInfo.uri, downloadInfo.mimeType)
-                changed += song
-            }
+            if (songDownloader.download(song)) changed += song else failed += song
         }
         return Result(changed, failed)
     }

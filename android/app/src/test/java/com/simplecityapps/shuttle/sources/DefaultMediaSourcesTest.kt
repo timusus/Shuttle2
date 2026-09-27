@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.sources
+package com.simplecityapps.shuttle.sources
 
 import com.simplecityapps.createSong
 import com.simplecityapps.mediaprovider.MediaImporter

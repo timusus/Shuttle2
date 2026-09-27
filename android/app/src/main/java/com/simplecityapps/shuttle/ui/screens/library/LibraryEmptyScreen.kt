@@ -59,8 +59,9 @@ fun LibraryEmptyScreen(
         ) {
             EmptyState(title = stringResource(R.string.sources_scanning_title), icon = Icons.Rounded.Search)
             val progressModifier = Modifier.widthIn(max = 320.dp).fillMaxWidth().padding(horizontal = 24.dp)
-            if (scan.fraction != null) {
-                LinearWavyProgressIndicator(progress = { scan.fraction }, modifier = progressModifier)
+            val fraction = scan.fraction
+            if (fraction != null) {
+                LinearWavyProgressIndicator(progress = { fraction }, modifier = progressModifier)
             } else {
                 LinearWavyProgressIndicator(modifier = progressModifier)
             }

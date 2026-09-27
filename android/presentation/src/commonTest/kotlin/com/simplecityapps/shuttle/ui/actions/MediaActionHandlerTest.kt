@@ -14,8 +14,8 @@ import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult.Message
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
 
 class MediaActionHandlerTest {
 
@@ -71,7 +71,7 @@ class MediaActionHandlerTest {
     }
 
     @Test
-    fun `duplicates offer add anyway, which adds them`() = runTest {
+    fun `duplicates offer add anyway which adds them`() = runTest {
         val playlist = createPlaylist(id = 1, name = "Favourites")
         playlistRepository.setSongsForPlaylist(playlist, listOf(song))
 
@@ -91,7 +91,7 @@ class MediaActionHandlerTest {
     }
 
     @Test
-    fun `favourite reports the count, and an empty selection says there are no songs`() = runTest {
+    fun `favourite reports the count and an empty selection says there are no songs`() = runTest {
         handler.handle(MediaAction.Favourite(songs)) shouldBe Message(MediaActionMessage.AddedToFavourites(2))
         handler.handle(MediaAction.Favourite(MediaSelection.Songs(emptyList()))) shouldBe Message(MediaActionMessage.NoSongs)
 
@@ -146,7 +146,7 @@ class MediaActionHandlerTest {
     }
 
     @Test
-    fun `delete asks first, then deletes what was confirmed`() = runTest {
+    fun `delete asks first then deletes what was confirmed`() = runTest {
         val result = handler.handle(MediaAction.Delete(MediaSelection.Songs(song)))
 
         result shouldBe MediaActionResult.ConfirmationRequired(
@@ -167,7 +167,7 @@ class MediaActionHandlerTest {
     }
 
     @Test
-    fun `go to album navigates, or says it isn't there`() = runTest {
+    fun `go to album navigates or says it isn't there`() = runTest {
         handler.handle(MediaAction.GoToAlbum(MediaSelection.Songs(song))) shouldBe Message(MediaActionMessage.NotFound)
 
         val album = createAlbum()
@@ -204,7 +204,7 @@ class MediaActionHandlerTest {
 
     @Test
     fun `a download without a URL fails`() = runTest {
-        actions.mediaInfoProvider.unavailable += "jellyfin://3"
+        actions.songDownloader.unavailable += "jellyfin://3"
         val remote = MediaSelection.Songs(createSong(id = 3, mediaProvider = MediaProviderType.Jellyfin, path = "jellyfin://3"))
 
         handler.handle(MediaAction.Download(remote)) shouldBe Message(MediaActionMessage.DownloadFailed(1))

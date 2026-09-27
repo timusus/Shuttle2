@@ -8,8 +8,8 @@ import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.TestMediaActions
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
 
 class FindGoToTargetTest {
 

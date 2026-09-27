@@ -1,10 +1,12 @@
-package com.simplecityapps.shuttle.ui.screens.sources
+package com.simplecityapps.shuttle.sources
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
+import com.simplecityapps.shuttle.ui.screens.sources.FolderKind
+import com.simplecityapps.shuttle.ui.screens.sources.SourcesSettings
 import io.kotest.matchers.shouldBe
 import org.junit.Test
 import org.junit.runner.RunWith

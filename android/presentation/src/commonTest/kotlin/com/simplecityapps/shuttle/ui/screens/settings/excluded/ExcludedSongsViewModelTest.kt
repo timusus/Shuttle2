@@ -4,16 +4,29 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
-import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.setMain
 
 class ExcludedSongsViewModelTest {
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    private val mainDispatcher = UnconfinedTestDispatcher()
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(mainDispatcher)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     private val songRepository = FakeSongRepository()
     private val mediaActionHandler = TestMediaActions(songRepository = songRepository).handler
@@ -26,7 +39,7 @@ class ExcludedSongsViewModelTest {
     }
 
     @Test
-    fun `lists only excluded songs, by name`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `lists only excluded songs by name`() = runTest(mainDispatcher) {
         songRepository.setSongs(
             listOf(
                 createSong(id = 1, name = "beta").copy(blacklisted = true),
@@ -43,7 +56,7 @@ class ExcludedSongsViewModelTest {
     }
 
     @Test
-    fun `including a song clears its exclusion through the Include action`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `including a song clears its exclusion through the Include action`() = runTest(mainDispatcher) {
         val song = createSong(id = 7).copy(blacklisted = true)
 
         viewModel().onInclude(song)
@@ -52,7 +65,7 @@ class ExcludedSongsViewModelTest {
     }
 
     @Test
-    fun `including all clears every excluded song through the Include action`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `including all clears every excluded song through the Include action`() = runTest(mainDispatcher) {
         songRepository.setSongs(
             listOf(
                 createSong(id = 1, name = "beta").copy(blacklisted = true),
