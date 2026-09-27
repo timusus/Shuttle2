@@ -302,6 +302,65 @@ class CrossfadeClipTest {
         skips.shouldBeEmpty()
     }
 
+    @Test
+    fun `casting brings back the item's real duration and period, not just the clip end`() {
+        queueWithAClipped()
+        val cast = FakeRemote(listOf(a, b).map { it.toMediaItem() })
+        crossfade.followCast(cast)
+
+        cast.connect()
+        driver.idle()
+
+        player.duration shouldBe SONG_MS.toLong()
+        player.currentTimeline.getPeriod(0, Timeline.Period()).durationMs shouldBe SONG_MS.toLong()
+    }
+
+    @Test
+    fun `a seek near the real end, past the clip, is clamped by the clipped period and cuts to the next song`() {
+        // Clipped from the start (no Crossfade tail dance needed): the window still shows the whole duration, same as
+        // Crossfade leaves it once a tail lands, so a seek near the real end targets a period position past the clip.
+        val clippedA = a.toMediaItem().buildUpon().setClippingConfiguration(MediaItem.ClippingConfiguration.Builder().setEndPositionMs(SONG_MS - CROSSFADE_MS).build()).build()
+        player.setMediaItems(listOf(clippedA, b.toMediaItem()))
+        player.prepare()
+        driver.runUntil { player.duration != C.TIME_UNSET }
+        player.duration shouldBe SONG_MS.toLong()
+
+        player.seekTo(0, SONG_MS - 100L)
+        player.play()
+        driver.runUntil(limitMs = 2L * SONG_MS) { player.currentMediaItemIndex == 1 }
+    }
+
+    @Test
+    fun `the last item in the queue is clipped for its fade-out, still shows its whole duration, and ends at the clip`() {
+        unprepared += a.uid
+        queue(a)
+        driver.runUntil { player.duration != C.TIME_UNSET }
+        player.duration shouldBe SONG_MS.toLong()
+
+        tails.land(a)
+        driver.idle()
+
+        player.getMediaItemAt(0).clipEndMs() shouldBe SONG_MS - CROSSFADE_MS
+        player.duration shouldBe SONG_MS.toLong()
+        player.currentTimeline.getPeriod(0, Timeline.Period()).durationMs shouldBe SONG_MS - CROSSFADE_MS
+        mixer.plans.getValue(a.uid).next shouldBe CrossfadePlan.Next.FadeOut
+        skips.shouldBeEmpty()
+    }
+
+    @Test
+    fun `repeat-one plans a plain unfaded join at the loop point, and reports no skip when it loops`() {
+        player.repeatMode = Player.REPEAT_MODE_ONE
+        queueWithAClipped()
+
+        mixer.plans.getValue(a.uid).next shouldBe CrossfadePlan.Next.Join
+
+        player.play()
+        driver.runUntil(limitMs = 2L * SONG_MS) { clock.elapsedRealtime() > SONG_MS - CROSSFADE_MS }
+
+        player.currentMediaItemIndex shouldBe 0
+        skips.shouldBeEmpty()
+    }
+
     /**
      * Builds each item's source from its song's duration, its period starting with its window (as a progressive
      * stream's does), with samples 100 ms apart across it (so the renderers read through an item as it plays, not
