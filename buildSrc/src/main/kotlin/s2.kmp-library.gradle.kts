@@ -44,3 +44,10 @@ tasks.register<Test>("testDebugUnitTest") {
         systemProperties(androidHostTest.systemProperties)
     }
 }
+
+// Kotlin/Native bundles no test resources, so iOS simulator tests read commonTest's from the source tree, which the
+// simulator shares with the host (FixtureServer does). simctl hands a SIMCTL_CHILD_ variable to the test process
+// without the prefix.
+tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest>().configureEach {
+    environment("SIMCTL_CHILD_S2_TEST_RESOURCES", layout.projectDirectory.dir("src/commonTest/resources").asFile.absolutePath)
+}
