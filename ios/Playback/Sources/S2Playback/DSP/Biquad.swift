@@ -1,4 +1,6 @@
-// Copied from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Playback/Sources/Playback/DSP/Biquad.swift — see ios/Playback/README.md.
+// Adapted from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Playback/Sources/Playback/DSP/Biquad.swift — see ios/Playback/README.md.
+// S2 changes: the high-pass factory (Podcasts' voice chain) is gone; `coefficients` and
+// `adoptState(of:)` let the EQ swap a band's coefficients without a click.
 import Foundation
 
 /// **Second-order IIR section, Direct Form II Transposed.**
@@ -9,8 +11,8 @@ import Foundation
 /// the same `Double` arithmetic on `Float` samples — a `Float` accumulator in a feedback path
 /// audibly drifts at low cutoffs, which is why Android widened it and why this does too.
 ///
-/// Kept as its own type for the same reason ``SilenceGate`` is: it is pure, so it can be pinned by
-/// a test on a machine with no audio output at all.
+/// Kept as its own type because it is pure, so it can be pinned by a test on a machine with no
+/// audio output at all.
 struct Biquad {
 
     private let b0: Double
@@ -51,23 +53,17 @@ struct Biquad {
         z2 = 0
     }
 
-    // MARK: - Cookbook factories
+    /// b0, b1, b2, a1, a2: the order ``EqualizerSettings/coefficients`` takes them in.
+    var coefficients: [Double] { [b0, b1, b2, a1, a2] }
 
-    /// High-pass. `q` of 0.707 is Butterworth / maximally flat, which is what the chain uses.
-    static func highPass(frequency: Double, sampleRate: Double, q: Double) -> Biquad {
-        let w0 = 2.0 * Double.pi * frequency / sampleRate
-        let alpha = sin(w0) / (2.0 * q)
-        let cosW0 = cos(w0)
-
-        let b0 = (1.0 + cosW0) / 2.0
-        let b1 = -(1.0 + cosW0)
-        let b2 = (1.0 + cosW0) / 2.0
-        let a0 = 1.0 + alpha
-        let a1 = -2.0 * cosW0
-        let a2 = 1.0 - alpha
-
-        return Biquad(b0: b0 / a0, b1: b1 / a0, b2: b2 / a0, a1: a1 / a0, a2: a2 / a0)
+    /// Carry `other`'s delay line over, so new coefficients continue the signal instead of
+    /// restarting it from silence.
+    mutating func adoptState(of other: Biquad) {
+        z1 = other.z1
+        z2 = other.z2
     }
+
+    // MARK: - Cookbook factories
 
     /// Peaking EQ. Positive `gainDb` boosts a band centred on `frequency`.
     static func peaking(frequency: Double, sampleRate: Double, gainDb: Double, q: Double) -> Biquad {
