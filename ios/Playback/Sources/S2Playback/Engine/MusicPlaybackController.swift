@@ -114,6 +114,8 @@ public final class MusicPlaybackController {
         let track: PlaybackTrack
         let source: TrackPCMSource
         var opened = false
+        /// Opened and neither read nor sought since: the source is at its first frame.
+        var atStart = true
         /// It could not be opened, or a read failed.
         var failed = false
         var durationFrames: Int64?
@@ -501,7 +503,11 @@ public final class MusicPlaybackController {
         timelineLock.withLock { timeline = Timeline() }
         setReading(current)
         var startFrame = frame
-        if current.opened {
+        // S2: a source still at its first frame is not sought to frame 0. The decoder's start trims
+        // the encoder delay (an MP4's edit list, Opus pre-skip); FFmpeg's seek to the start of an
+        // AAC-in-MP4 track does not, and ~2,100 frames of priming would open every load.
+        if current.opened, !(frame == 0 && current.atStart) {
+            current.atStart = false
             do {
                 try current.source.seek(toFrame: frame)
             } catch {
@@ -597,6 +603,7 @@ public final class MusicPlaybackController {
             while filled < Self.chunkFrames, let slot = reading {
                 var got = 0
                 if slot.opened {
+                    slot.atStart = false
                     do {
                         got = try slot.source.read(into: base + filled * channels, maxFrames: Self.chunkFrames - filled)
                     } catch TrackSourceError.interrupted {
