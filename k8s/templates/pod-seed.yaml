@@ -1,0 +1,21 @@
+# Helper pod: a kubectl-cp target for syncing sources into the cache PVC.
+# build-remote.sh creates it, copies the repo in, then deletes it before
+# applying the build Job (RWO volume, sequential use).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: __POD_NAME__
+  namespace: __NAMESPACE__
+spec:
+  restartPolicy: Never
+  containers:
+    - name: seed
+      image: __SEED_IMAGE__
+      command: ["sh", "-c", "mkdir -p /mnt/workspace && sleep 3600"]
+      volumeMounts:
+        - name: cache
+          mountPath: /mnt
+  volumes:
+    - name: cache
+      persistentVolumeClaim:
+        claimName: __PVC_NAME__

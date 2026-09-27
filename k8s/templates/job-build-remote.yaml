@@ -1,0 +1,58 @@
+# One-shot Shuttle2 build. Sources + SDK + Gradle home all live on the cache
+# PVC (seeded by build-remote.sh via the seed pod). The SDK bootstraps on
+# first run (~500MB download, then cached); Gradle dist + deps cache in
+# /mnt/gradle across builds.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: __JOB_NAME__
+  namespace: __NAMESPACE__
+spec:
+  activeDeadlineSeconds: __DEADLINE__
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: build
+          image: __BASE_IMAGE__
+          command:
+            - bash
+            - -c
+            - |
+              set -e
+              export ANDROID_HOME=/mnt/sdk ANDROID_SDK_ROOT=/mnt/sdk GRADLE_USER_HOME=/mnt/gradle
+              export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+              if [ ! -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
+                echo "==> bootstrapping Android SDK into PVC cache"
+                apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip curl ca-certificates > /dev/null
+                mkdir -p "$ANDROID_HOME/cmdline-tools"
+                curl -fsSL -o /tmp/cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip"
+                unzip -q /tmp/cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
+                mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+                rm /tmp/cmdline-tools.zip
+                yes | sdkmanager --licenses > /dev/null
+                sdkmanager --install "platform-tools" "platforms;android-37.0" "platforms;android-37.1" "build-tools;37.0.0" > /dev/null
+                yes | sdkmanager --licenses > /dev/null
+              fi
+              cd /mnt/workspace
+              echo "local.properties:"; echo "sdk.dir=/mnt/sdk" > local.properties
+              echo "==> ./gradlew __GRADLE_ARGS__"
+              ./gradlew __GRADLE_ARGS__ --console=plain
+          env:
+            - name: GRADLE_OPTS
+              value: "__GRADLE_OPTS_VALUE__"
+          resources:
+            limits:
+              cpu: "__CPU_LIMIT__"
+              memory: "__MEM_LIMIT__"
+            requests:
+              cpu: "__CPU_LIMIT__"
+              memory: "__MEM_LIMIT__"
+          volumeMounts:
+            - name: cache
+              mountPath: /mnt
+      volumes:
+        - name: cache
+          persistentVolumeClaim:
+            claimName: __PVC_NAME__

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: __PVC_NAME__
+  namespace: __NAMESPACE__
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: __CACHE_SIZE__
