@@ -175,6 +175,7 @@ class ServerSignInViewModel @AssistedInject constructor(
 
     fun onUseQuickConnect() {
         if (step.value != ServerSignInStep.Form) return
+        if (quickConnectJob?.isActive == true) return
         val address = form.value.address
         quickConnectJob = viewModelScope.launch {
             signInWithQuickConnect(type, address).collect { state ->

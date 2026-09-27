@@ -243,6 +243,20 @@ class ServerSignInViewModelTest {
     }
 
     @Test
+    fun `a second tap while Quick Connect is initiating doesn't start a second attempt`() = runTest {
+        quickConnect.initiatePending = CompletableDeferred()
+        val viewModel = viewModel()
+
+        viewModel.onUseQuickConnect()
+        viewModel.onUseQuickConnect()
+        quickConnect.initiatePending?.complete(Unit)
+        runCurrent()
+
+        quickConnect.initiateCallCount shouldBe 1
+        viewModel.uiState.value.step shouldBe ServerSignInStep.AwaitingCode("123456")
+    }
+
+    @Test
     fun `denial fails, and cancelling mid-poll returns to the form without authenticating`() = runTest {
         quickConnect.pending = CompletableDeferred()
         val viewModel = viewModel()

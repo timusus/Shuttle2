@@ -7,7 +7,8 @@ import kotlinx.coroutines.CompletableDeferred
 
 /**
  * A Quick Connect flow that reports [pollState] to every poll unless [pending] is set, which holds the poll until
- * the test resolves it — letting a test change [pollState] between two polls.
+ * the test resolves it — letting a test change [pollState] between two polls. [initiatePending], if set, holds
+ * [initiate] the same way, to let a test drive two calls that overlap before either resolves.
  */
 class FakeQuickConnectAuthentication : QuickConnectAuthentication {
     var enabled = true
@@ -17,11 +18,17 @@ class FakeQuickConnectAuthentication : QuickConnectAuthentication {
     var authenticateFailure: Throwable? = null
     var pollState = QuickConnectPollState.Pending
     var pending: CompletableDeferred<Unit>? = null
+    var initiatePending: CompletableDeferred<Unit>? = null
+    var initiateCallCount = 0
     val authenticated = mutableListOf<Pair<String, String>>()
 
     override suspend fun isEnabled(address: String): Boolean = enabledCheckThrows?.let { throw it } ?: enabled
 
-    override suspend fun initiate(address: String): Result<QuickConnectCode> = initiateFailure?.let { Result.failure(it) } ?: Result.success(QuickConnectCode("123456", "secret-1"))
+    override suspend fun initiate(address: String): Result<QuickConnectCode> {
+        initiateCallCount++
+        initiatePending?.await()
+        return initiateFailure?.let { Result.failure(it) } ?: Result.success(QuickConnectCode("123456", "secret-1"))
+    }
 
     override suspend fun poll(address: String, secret: String): Result<QuickConnectPollState> {
         pending?.await()
