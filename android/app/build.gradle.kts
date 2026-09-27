@@ -42,6 +42,10 @@ android {
         buildConfigField("String", "SENTRY_DSN", "\"${secret("sentry.dsn", "SENTRY_DSN").orEmpty()}\"")
         buildConfigField("String", "POSTHOG_API_KEY", "\"${secret("posthog.api.key", "POSTHOG_API_KEY").orEmpty()}\"")
         buildConfigField("String", "POSTHOG_HOST", "\"${secret("posthog.host", "POSTHOG_HOST") ?: "https://eu.i.posthog.com"}\"")
+
+        // Last.fm scrobbling (#503): the key and secret ship in the APK (owner decision, 2026-09-27).
+        buildConfigField("String", "LASTFM_API_KEY", "\"${secret("LASTFM_API_KEY", "LASTFM_API_KEY").orEmpty()}\"")
+        buildConfigField("String", "LASTFM_SHARED_SECRET", "\"${secret("LASTFM_SHARED_SECRET", "LASTFM_SHARED_SECRET").orEmpty()}\"")
     }
 
     signingConfigs {
@@ -180,6 +184,7 @@ android {
         implementation(project(":android:mediaprovider:jellyfin"))
         implementation(project(":android:mediaprovider:plex"))
         implementation(project(":android:mediaprovider:server"))
+        implementation(project(":android:scrobbling"))
 
         // Shuttle Image Loader
         implementation(project(":android:imageloader"))
