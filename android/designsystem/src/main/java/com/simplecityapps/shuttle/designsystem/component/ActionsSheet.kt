@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -51,6 +52,32 @@ fun S2ActionsSheet(
 ) {
     ModalBottomSheet(onDismissRequest = onDismissRequest, modifier = modifier, sheetState = sheetState) {
         ActionsSheetContent(title, actions, onDismissRequest, subtitle = subtitle, artwork = artwork)
+    }
+}
+
+/**
+ * A sheet with a [title] header and custom [content], for sheets whose rows aren't [S2Action]s
+ * (the Library's tab editor). The content scrolls under the header; a long list keeps the title
+ * visible the way [ActionsSheetContent] does.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun S2Sheet(
+    title: String,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    sheetState: SheetState = rememberModalBottomSheetState(),
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismissRequest, modifier = modifier, sheetState = sheetState) {
+        Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+        HorizontalDivider(Modifier.padding(top = 8.dp))
+        Column(
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(vertical = 8.dp),
+            content = content,
+        )
     }
 }
 

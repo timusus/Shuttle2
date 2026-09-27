@@ -4,10 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.ArrowDownward
+import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -120,6 +123,42 @@ fun SwitchSetting(
         leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled) } },
         trailingContent = { Switch(checked = checked, onCheckedChange = null, enabled = enabled) },
         supportingContent = summary?.let { { Text(it) } },
+    ) { Text(title) }
+}
+
+/**
+ * An on/off setting with trailing move-up/move-down actions, for an ordered list the user enables
+ * and reorders in place (the Library's tabs). Tapping the row toggles [checked]; the switch itself
+ * stays directly operable, and [switchModifier] carries e.g. a test tag for it.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ReorderSwitchSetting(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    moveUpEnabled: Boolean,
+    moveDownEnabled: Boolean,
+    moveUpContentDescription: String,
+    moveDownContentDescription: String,
+    modifier: Modifier = Modifier,
+    switchModifier: Modifier = Modifier,
+    shapes: ListItemShapes = ListItemDefaults.shapes(),
+) {
+    SegmentedListItem(
+        onClick = { onCheckedChange(!checked) },
+        shapes = shapes,
+        modifier = modifier,
+        colors = settingColors(),
+        leadingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange, modifier = switchModifier) },
+        trailingContent = {
+            Row {
+                S2IconButton(icon = Icons.Rounded.ArrowUpward, contentDescription = moveUpContentDescription, onClick = onMoveUp, enabled = moveUpEnabled)
+                S2IconButton(icon = Icons.Rounded.ArrowDownward, contentDescription = moveDownContentDescription, onClick = onMoveDown, enabled = moveDownEnabled)
+            }
+        },
     ) { Text(title) }
 }
 
@@ -252,6 +291,45 @@ private fun SettingsGroupPreview() {
                 { ChoiceSetting("Theme", "Follow system", {}, icon = Icons.Rounded.Palette, shapes = it) },
                 { SwitchSetting("Dynamic colour", checked = true, onCheckedChange = {}, shapes = it) },
                 { LinkSetting("Music", onClick = {}, summary = "/storage/emulated/0/Music", icon = Icons.Rounded.Folder, iconStyle = SettingIconStyle.Plain, shapes = it) },
+            ),
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ReorderSwitchSettingPreview() {
+    S2Preview {
+        SettingsGroup(
+            rows = listOf(
+                {
+                    ReorderSwitchSetting(
+                        title = "Songs",
+                        checked = true,
+                        onCheckedChange = {},
+                        onMoveUp = {},
+                        onMoveDown = {},
+                        moveUpEnabled = false,
+                        moveDownEnabled = true,
+                        moveUpContentDescription = "Move up",
+                        moveDownContentDescription = "Move down",
+                        shapes = it,
+                    )
+                },
+                {
+                    ReorderSwitchSetting(
+                        title = "Folders",
+                        checked = false,
+                        onCheckedChange = {},
+                        onMoveUp = {},
+                        onMoveDown = {},
+                        moveUpEnabled = true,
+                        moveDownEnabled = false,
+                        moveUpContentDescription = "Move up",
+                        moveDownContentDescription = "Move down",
+                        shapes = it,
+                    )
+                },
             ),
         )
     }

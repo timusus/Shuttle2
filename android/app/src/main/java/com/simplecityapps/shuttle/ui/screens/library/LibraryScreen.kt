@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,8 +14,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
-import androidx.compose.material.icons.rounded.ArrowDownward
-import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.MoreVert
@@ -27,11 +24,9 @@ import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LargeFlexibleTopAppBar
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -57,10 +52,13 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
+import com.simplecityapps.shuttle.designsystem.component.ReorderSwitchSetting
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
+import com.simplecityapps.shuttle.designsystem.component.S2Sheet
+import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
@@ -240,48 +238,34 @@ fun LibraryTab.label(): String = stringResource(
 )
 
 /** Shows, hides and reorders the tabs; every change saves straight away. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EditTabsSheet(
     uiState: LibraryUiState,
     onTabsChanged: (order: List<LibraryTab>, enabled: Set<LibraryTab>) -> Unit,
     onDismissRequest: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismissRequest) {
-        Text(stringResource(R.string.library_edit_tabs), modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
-        val order = uiState.allTabs
-        order.forEachIndexed { index, tab ->
-            val enabled = tab in uiState.enabledTabs
-            val setEnabled = { checked: Boolean -> onTabsChanged(order, if (checked) uiState.enabledTabs + tab else uiState.enabledTabs - tab) }
-            ListItem(
-                onClick = { setEnabled(!enabled) },
-                leadingContent = {
-                    Switch(
+    val order = uiState.allTabs
+    S2Sheet(title = stringResource(R.string.library_edit_tabs), onDismissRequest = onDismissRequest) {
+        SettingsGroup(
+            rows = order.mapIndexed { index, tab ->
+                @Composable { shapes: ListItemShapes ->
+                    val enabled = tab in uiState.enabledTabs
+                    ReorderSwitchSetting(
+                        title = tab.label(),
                         checked = enabled,
-                        onCheckedChange = setEnabled,
-                        modifier = Modifier.testTag("library-tab-switch-${tab.name}"),
+                        onCheckedChange = { checked -> onTabsChanged(order, if (checked) uiState.enabledTabs + tab else uiState.enabledTabs - tab) },
+                        onMoveUp = { onTabsChanged(order.move(index, index - 1), uiState.enabledTabs) },
+                        onMoveDown = { onTabsChanged(order.move(index, index + 1), uiState.enabledTabs) },
+                        moveUpEnabled = index > 0,
+                        moveDownEnabled = index < order.lastIndex,
+                        moveUpContentDescription = stringResource(R.string.library_tab_move_up),
+                        moveDownContentDescription = stringResource(R.string.library_tab_move_down),
+                        switchModifier = Modifier.testTag("library-tab-switch-${tab.name}"),
+                        shapes = shapes,
                     )
-                },
-                trailingContent = {
-                    Row {
-                        S2IconButton(
-                            icon = Icons.Rounded.ArrowUpward,
-                            contentDescription = stringResource(R.string.library_tab_move_up),
-                            enabled = index > 0,
-                            onClick = { onTabsChanged(order.move(index, index - 1), uiState.enabledTabs) },
-                        )
-                        S2IconButton(
-                            icon = Icons.Rounded.ArrowDownward,
-                            contentDescription = stringResource(R.string.library_tab_move_down),
-                            enabled = index < order.lastIndex,
-                            onClick = { onTabsChanged(order.move(index, index + 1), uiState.enabledTabs) },
-                        )
-                    }
-                },
-            ) {
-                Text(tab.label())
-            }
-        }
+                }
+            },
+        )
     }
 }
 
