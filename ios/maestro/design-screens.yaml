@@ -1,0 +1,58 @@
+# Screenshots of the design pass's screens against a real library (#587): sign in (sign-in-jellyfin.yaml), then
+# Library, Songs, Albums, the mini player, Now Playing and its queue. Run with ios/scripts/maestro-sim.sh, on an
+# iPhone for the full-screen player or an iPad for the form sheet and queue popover:
+#
+#   OUT=/tmp/s2-ios-design/iphone ios/scripts/maestro-sim.sh design-screens.yaml
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow: sign-in-jellyfin.yaml
+# By text alone: the iPhone's tab bar item carries the symbol's id, the iPad sidebar's row doesn't.
+- tapOn: "Library"
+- extendedWaitUntil:
+    visible: "Songs"
+    timeout: 60000
+- takeScreenshot: 4-library
+- tapOn: "Songs"
+- extendedWaitUntil:
+    visible:
+      id: "songRow.title"
+    timeout: 120000
+# Covers load after the rows.
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 5-songs
+- tapOn:
+    id: "songRow.title"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "miniPlayer.playPause"
+      text: "Pause"
+    timeout: 15000
+- takeScreenshot: 6-mini-player
+# Maestro's `back` is Android-only: the navigation bar's back button, the first "Library" on screen.
+- tapOn:
+    text: "Library"
+    index: 0
+# Optional: an iPad's Library shows its category list in the collapsed sidebar, so this shot stays on Songs.
+- tapOn:
+    text: "Albums"
+    optional: true
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 7-albums
+- tapOn:
+    id: "miniPlayer.open"
+- extendedWaitUntil:
+    visible:
+      id: "nowPlaying.queue"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 8-now-playing
+- tapOn:
+    id: "nowPlaying.queue"
+# Not a wait on "Up Next": Maestro doesn't see the queue's inline navigation title.
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 9-queue

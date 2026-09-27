@@ -1,4 +1,4 @@
-# Signs in to a Jellyfin test server through the real sign-in screen (#587): from a signed-out launch, Library's
+# Signs in to a Jellyfin test server through the real sign-in screen (#587): from a signed-out launch, Home's
 # empty state > Add a Source > Connect a Server > Jellyfin, type the address and username, then Quick Connect. The
 # test env files hold an API key, not a password, so the flow approves its own Quick Connect code with the key
 # (approve-quick-connect.js), as a second Jellyfin app would. Ends back on Sources with the server connected.
@@ -10,11 +10,11 @@ appId: com.simplecityapps.shuttle.dev
 - launchApp:
     clearState: true
     clearKeychain: true
+# Home's empty state, where the app opens: reachable in every tier, where Library's isn't on an iPad (the
+# regular tier opens Library on its Songs detail). Home first: the app restores the last selected tab.
+- tapOn: "Home"
 - tapOn:
-    text: "Library"
-    id: "music.note.list"
-- tapOn:
-    id: "libraryEmpty.addSource"
+    id: "homeEmpty.addSource"
 - tapOn:
     id: "sources.addServer"
 - tapOn:

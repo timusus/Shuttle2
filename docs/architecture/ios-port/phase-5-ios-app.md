@@ -173,9 +173,9 @@ paths are under `android/app/.../ui/`.
 | Genre detail | `GenreDetailScreen.kt` | `GenreDetailViewModel` (4, `String`) | `GenreDetailView` | 5 | |
 | Playlist detail | `PlaylistDetailScreen.kt` | `PlaylistDetailViewModel` (4, `Long`) | `PlaylistDetailView` | 5 | reorder in `EditMode` with `.onMove`; export deferred with `ExportPlaylist` (phase 8, via `ShareLink`) |
 | Smart playlist detail | `SmartPlaylistDetailScreen.kt` | `SmartPlaylistDetailViewModel` (4, `String`) | `SmartPlaylistDetailView` | 5 | |
-| Mini player | `shell/player/MiniPlayer.kt` | `PlayerViewModel` (5) | `MiniPlayerView` (exists) | 6 | #593: bottom accessory, accessibility label/value/hint |
-| Now Playing | `shell/player/NowPlaying.kt`, `PlayerContent.kt` | `PlayerViewModel` (5) | `NowPlayingView` (exists) | 6 | `AVRoutePickerView` beside the controls in place of Cast |
-| Queue | `shell/player/QueueList.kt` | `PlayerViewModel` (5) | `QueueView` | 6 | `.onMove`/`.onDelete` in place of Android's swipe-to-dismiss |
+| Mini player | `shell/player/MiniPlayer.kt` | `PlayerViewModel` (5) | `MiniPlayerView` (restyled, #587) | 6 | #593: bottom accessory, accessibility label/value/hint. Draws the current song's cover |
+| Now Playing | `shell/player/NowPlaying.kt`, `PlayerContent.kt` | `PlayerViewModel` (5) | `NowPlayingView` (rebuilt, #587) | 6 | cover, title and artist, scrubber (monospaced elapsed/remaining), transport, shuffle, repeat, queue button; full-screen cover in compact, form sheet otherwise (`NowPlayingPresentationStyle`). `AVRoutePickerView` beside the controls in place of Cast still to come |
+| Queue | `shell/player/QueueList.kt` | `PlayerViewModel` (5) | `NowPlayingQueueList` (tap to skip, #587) | 6 | from Now Playing's queue button through `playerSheet`: a sheet in compact, a popover otherwise (`PlayerSubSheetStyle`), after Podcasts. `.onMove`/`.onDelete` in place of Android's swipe-to-dismiss still to come |
 | Home | `screens/home/HomeScreen.kt` | `HomeViewModel` (3) | `HomeView` (done, #587) | 7 | resume hero, and recently played/added/most played albums plus "something different" artists as horizontal shelves (`Components/RemoteArtwork.swift` for the artwork); no What's New card or analytics-consent banner yet (no changelog/settings screen to open from one); tile actions are `.contextMenu`, not a ported actions sheet |
 | Search | `screens/search/SearchScreen.kt` | `SearchViewModel` (3) | `SearchView` (exists, placeholder) | 7 | `.searchable` on the Search tab's stack; recent searches as suggestions |
 | Settings entry | `screens/settings/SettingsScreens.kt` | `SettingsViewModel` (3) | `SettingsView` | 7 (entry point in 5) | `Form`; `SettingsEffects`' clipboard and share become `UIPasteboard` and `ShareLink` |
@@ -195,12 +195,29 @@ ViewInspector test on the plain view (`.claude/rules/ios.md`). Rows (`SongRow`, 
 **Mini player / Now Playing POC (#588).** `ios/S2/Features/Playback/PlayerModel.swift` is a small
 `@Observable` class that reads `AppGraph.shared.playerController`'s flows (current song, transport
 state, progress, queue) and forwards commands back to it; it stands in for the shared `PlayerViewModel`
-until that's ported (phase 4 wave 5). `MiniPlayerView` and `NowPlayingView` already default their
-`model:` parameter to the app's single cached instance (`PlayerModel.shared`, backed by
-`ViewModelCache`), so no wiring is needed at their existing call sites
-(`AppShell`'s `MiniPlayerView(showNowPlaying:)`, `ContentView`'s `NowPlayingView()`
-`.nowPlayingPresentation`) — swapping in the real `PlayerViewModel` later is a matter of replacing
-`PlayerModel`'s internals, not the views' call sites.
+until that's ported (phase 4 wave 5). It also follows the queue's shuffle and repeat modes. The views
+never read `PlayerModel` directly: `PlayerBinding.swift` maps it to `NowPlayingState` (plain values,
+including the cover as an `ArtworkSource`) and `PlayerActions` (closures), and `MiniPlayerBar`,
+`NowPlayingContent` and `NowPlayingQueueList` take only those. Porting the shared `PlayerViewModel` is a
+change to that one extension, not to the views or their call sites (`AppShell`'s
+`MiniPlayerView(showNowPlaying:)`, `ContentView`'s `NowPlayingView()` `.nowPlayingPresentation`).
+
+### Design tokens (#587)
+
+The look follows Shuttle Podcasts' iOS app (modern HIG), ported rather than shared:
+
+- `ios/S2/Theme/Spacing.swift`: `Spacing` (4pt grid), `Radius`, `ArtworkSize` (row 44, album row 56, shelf
+  120, hero 160).
+- `ios/S2/Theme/Typography.swift`: SF Rounded titles (`.s2Title`, `.s2Title2`, `.s2SectionTitle`),
+  monospaced digits for times (`.s2Time`, `.s2RowTime`), `Font.s2Glyph` for Dynamic Type-scaled symbols, and
+  `.s2SecondaryText`. The accent is S2's Android default `#0088FF` split for contrast in
+  `Assets.xcassets/AccentColor` (light `#006AD1`, dark `#3D9DFF`), set as the app's global tint.
+- `ios/S2/Components/EmptyState.swift`: every empty and not-found state (Library and its categories, Home,
+  details, Search, Now Playing), keeping each one's action (Library's and Home's "Add a Source").
+- Controls are 44pt targets with VoiceOver labels; lists use stable ids.
+
+Left out on purpose, as podcast-specific: episode rows and their buttons, chapters, sleep timer, skip
+segments, CarPlay and widgets, artwork tint retinting, marquee titles.
 
 ### Artwork
 
@@ -224,17 +241,12 @@ Decision: **URLs from shared Kotlin, pixels in Swift.**
 **Done (P5-4, #587):** `ArtworkUrls` (`shared/.../artwork/ArtworkUrls.kt`) and `IosAppGraph.artworkUrls`
 on the Kotlin side; `ArtworkLoader` and `ArtworkImage` (`ios/S2/Artwork/`, tests in
 `ios/S2Tests/ArtworkLoaderTests.swift`) on the Swift side, simplified from Podcasts' loader since a song,
-album or album artist has exactly one fixed-size artwork URL — no CDN rewriting, no candidate list. Not
-yet wired into any row; each call site is a one-line change once P5-6a/b/7 land:
+album or album artist has exactly one fixed-size artwork URL — no CDN rewriting, no candidate list.
 
-- `SongRow` (`ios/S2/Features/Library/SongListView.swift`): `ArtworkImage(url: ..., points: 40)` beside
-  the title, from `graph.artworkUrls.url(song: song)`.
-- `AlbumTile`/album rows (`ios/S2/Features/Library/AlbumListView.swift`): `ArtworkImage(url: ..., points:
-  ...)` from `graph.artworkUrls.url(album: album)`.
-- Album artist rows: **done (P5-6b, #587)** — `AlbumArtistRow` (`AlbumArtistListView.swift`) via
-  `ArtworkAsyncImage`, from `graph.artworkUrls.url(albumArtist:)`.
-- `MiniPlayerView`/`NowPlayingView` (`ios/S2/Features/Playback/`): the current song's artwork, from
-  `graph.artworkUrls.url(song: song)` off `PlayerModel`'s current song.
+**Wired (#587):** `RemoteArtwork` (`ios/S2/Components/RemoteArtwork.swift`) looks the url up and draws
+`ArtworkImage`; `ArtworkSource` (`.song`, `.album`, `.albumArtist`) is the item's identity plus that lookup, so
+views taking plain values can be handed artwork. Drawn in `SongRow`, `AlbumRow`, the album artist rows, the
+Home shelves and resume hero, the detail heroes, the mini player, Now Playing and its queue.
 
 ## 4. Local library on iOS
 
