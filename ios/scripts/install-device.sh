@@ -13,18 +13,36 @@
 # identity, so iOS refuses to upgrade an install across teams (MismatchedApplicationIdentifierEntitlement)
 # — delete the app from the phone before the first install with a new team.
 #
-# usage: ios/scripts/install-device.sh [DEVICE_ID] [TEAM_ID]
+# usage: ios/scripts/install-device.sh [jellyfin|emby] [DEVICE_ID] [TEAM_ID]
+#   jellyfin|emby  Debug only: launch signed in to that test server with its API key, read from
+#                  ~/.config/s2-test/<server>.env (URL=, API_KEY=), as ios/scripts/run-sim-server.sh does
+#                  on the simulator. The key is never printed.
 #   DEVICE_ID  from `xcrun devicectl list devices` (default: the owner's iPhone 16)
 #   TEAM_ID    a team the signed-in Apple ID holds (default: 9HYNX943MQ)
 #
 # env:
 #   CONFIGURATION  Debug (default) or Release.
 #   LAUNCH         1 (default) or 0 to install without launching.
-#   S2_SERVER_TYPE, S2_SERVER_URL, S2_SERVER_USER, S2_SERVER_PASSWORD
+#   S2_SERVER_TYPE, S2_SERVER_URL, S2_SERVER_USER, S2_SERVER_PASSWORD, S2_SERVER_API_KEY
 #                  Debug only: handed to the launched app, which signs in to that Jellyfin/Emby server
 #                  and imports (DebugServerSeed; .claude/rules/ios.md "Running the POC"). The
-#                  password is never printed.
+#                  password and key are never printed. A server argument sets them from its env file.
 set -euo pipefail
+
+case "${1:-}" in
+  jellyfin | emby)
+    env_file="$HOME/.config/s2-test/$1.env"
+    [ -f "$env_file" ] || { echo "install-device: missing $env_file (URL=, API_KEY=)" >&2; exit 1; }
+    URL="" API_KEY=""
+    # shellcheck disable=SC1090
+    . "$env_file"
+    [ -n "$URL" ] && [ -n "$API_KEY" ] || { echo "install-device: $env_file must set URL and API_KEY" >&2; exit 1; }
+    export S2_SERVER_TYPE="$1" S2_SERVER_URL="${URL%/}" S2_SERVER_API_KEY="$API_KEY"
+    export S2_SERVER_USER="${S2_SERVER_USER:-shuttle-test}"
+    unset URL API_KEY
+    shift
+    ;;
+esac
 
 DEVICE="${1:-00008140-000539602E90401C}"
 TEAM="${2:-9HYNX943MQ}"
@@ -90,7 +108,8 @@ if [ "$LAUNCH" = "1" ]; then
   env_args=()
   if [ -n "${S2_SERVER_TYPE:-}" ]; then
     echo "==> Passing the ${S2_SERVER_TYPE} server login for ${S2_SERVER_USER:-?} at ${S2_SERVER_URL:-?}"
-    env_args=(--environment-variables "$(python3 -c 'import json, os; print(json.dumps({k: os.environ.get(k, "") for k in ["S2_SERVER_TYPE", "S2_SERVER_URL", "S2_SERVER_USER", "S2_SERVER_PASSWORD"]}))')")
+    # devicectl only takes the environment as an argument, so the secret is on its command line briefly.
+    env_args=(--environment-variables "$(python3 -c 'import json, os; print(json.dumps({k: os.environ[k] for k in ["S2_SERVER_TYPE", "S2_SERVER_URL", "S2_SERVER_USER", "S2_SERVER_PASSWORD", "S2_SERVER_API_KEY"] if k in os.environ}))')")
   fi
   xcrun devicectl device process launch --device "$DEVICE" ${env_args[@]+"${env_args[@]}"} com.simplecityapps.shuttle.dev \
     || echo "Launch refused: unlock the phone and trust the developer profile, then open the app manually."

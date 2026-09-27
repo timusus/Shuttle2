@@ -1,12 +1,15 @@
 package com.simplecityapps.shuttle.shared.sources
 
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.LoginCredentials
+import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.screens.sources.ConnectServer
 import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.Named
 
 /**
  * Signs in to a Jellyfin or Emby server from Swift, the iOS stand-in for Android's `SignInToServer` until
@@ -18,6 +21,8 @@ import dev.zacsweers.metro.Inject
 class ServerSignIn(
     private val jellyfin: JellyfinAuthenticationManager,
     private val emby: EmbyAuthenticationManager,
+    @Named("JellyfinCredentialStore") private val jellyfinStore: ServerCredentialStore,
+    @Named("EmbyCredentialStore") private val embyStore: ServerCredentialStore,
     private val connectServer: ConnectServer,
 ) {
     /** Null once signed in, else what went wrong, for the user. */
@@ -43,6 +48,22 @@ class ServerSignIn(
             },
             onFailure = { it.userDescription() },
         )
+    }
+
+    /**
+     * Debug seeding: saves an existing [accessToken] (a server API key) for [userId] as the session, the way
+     * Android's `DebugRemoteProviderReceiver` does, then connects. Null once connected, else what went wrong.
+     */
+    fun signInWithToken(type: MediaProviderType, address: String, userId: String, accessToken: String): String? {
+        val store = when (type) {
+            MediaProviderType.Jellyfin -> jellyfinStore
+            MediaProviderType.Emby -> embyStore
+            else -> return "$type sign-in isn't available on iOS"
+        }
+        store.address = address
+        store.authenticatedCredentials = AuthenticatedCredentials(accessToken, userId)
+        connectServer(type)
+        return null
     }
 
     /** Whether a session for [type] at [address] is already saved, so launching again needn't sign in. */
