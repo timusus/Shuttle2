@@ -1,0 +1,273 @@
+package com.simplecityapps.localmediaprovider.local.data.room.dao
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy.Companion.IGNORE
+import androidx.room.OnConflictStrategy.Companion.REPLACE
+import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
+import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
+import com.simplecityapps.mediaprovider.SongPathRemap
+import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Song
+import kotlin.time.Clock
+import kotlin.time.Instant
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.datetime.LocalDate
+
+@Dao
+abstract class SongDataDao {
+    @Transaction
+    @Query("SELECT * FROM songs")
+    abstract suspend fun get(): List<SongData>
+
+    @Transaction
+    @Query("SELECT * FROM songs ORDER BY albumArtist, album, track")
+    abstract fun getAllSongData(): Flow<List<SongData>>
+
+    fun getAll(): Flow<List<Song>> = getAllSongData().map { list ->
+        list.map { songData ->
+            songData.toSong()
+        }
+    }
+
+    @Transaction
+    @Query("SELECT * FROM songs WHERE id IN (:ids)")
+    abstract fun getSongDataByIds(ids: List<Long>): Flow<List<SongData>>
+
+    /**
+     * The songs with [ids] (each once, however often it's listed, in no particular order), read by id rather than from
+     * the whole library.
+     * Queried in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a statement.
+     */
+    fun getByIds(ids: List<Long>): Flow<List<Song>> {
+        val chunks = ids.distinct().chunked(MAX_BOUND_VARIABLES)
+        if (chunks.isEmpty()) return flowOf(emptyList())
+        return combine(chunks.map(::getSongDataByIds)) { lists -> lists.flatMap { list -> list.map { songData -> songData.toSong() } } }
+    }
+
+    @Insert(onConflict = IGNORE)
+    abstract suspend fun insert(songData: List<SongData>): List<Long>
+
+    @Update(onConflict = IGNORE, entity = SongData::class)
+    abstract suspend fun update(songData: List<SongDataUpdate>): Int
+
+    @Update(onConflict = IGNORE, entity = SongData::class)
+    abstract suspend fun update(songData: SongDataUpdate): Int
+
+    @Delete
+    abstract suspend fun delete(songData: List<SongData>): Int
+
+    @Transaction
+    open suspend fun insertUpdateAndDelete(
+        inserts: List<SongData>,
+        updates: List<SongDataUpdate>,
+        deletes: List<SongData>
+    ): Triple<Int, Int, Int> {
+        val insertCount = insert(inserts)
+        val updateCount = update(updates)
+        val deleteCount = delete(deletes)
+        return Triple(insertCount.size, updateCount, deleteCount)
+    }
+
+    @Query("SELECT id FROM songs WHERE path = :path AND mediaProvider = :mediaProvider")
+    abstract suspend fun idForPath(
+        path: String,
+        mediaProvider: MediaProviderType
+    ): Long?
+
+    @Query("UPDATE songs SET path = :path WHERE id = :id")
+    abstract suspend fun updatePath(
+        id: Long,
+        path: String
+    ): Int
+
+    @Query("UPDATE playlist_song_join SET songId = :songId WHERE songId IN (:fromSongIds)")
+    abstract suspend fun movePlaylistEntries(
+        fromSongIds: List<Long>,
+        songId: Long
+    )
+
+    /**
+     * Moves each song to its remapped path, keeping its row id and so everything keyed by it. A remap whose path is
+     * already another song's for the same provider (reported to [onPathTaken] with that song's id), or whose song is
+     * gone, is skipped: paths are unique per provider.
+     *
+     * @return the remaps applied
+     */
+    @Transaction
+    open suspend fun remapPaths(
+        remaps: List<SongPathRemap>,
+        mediaProviderType: MediaProviderType,
+        onPathTaken: (remap: SongPathRemap, pathOwner: Long) -> Unit
+    ): List<SongPathRemap> = remaps.filter { remap ->
+        val pathOwner = idForPath(remap.path, mediaProviderType)
+        when {
+            pathOwner != null && pathOwner != remap.songId -> {
+                onPathTaken(remap, pathOwner)
+                false
+            }
+
+            updatePath(remap.songId, remap.path) == 0 -> false
+
+            else -> {
+                if (remap.duplicateIds.isNotEmpty()) {
+                    movePlaylistEntries(remap.duplicateIds, remap.songId)
+                    keepFavourite(remap.duplicateIds, remap.songId)
+                }
+                true
+            }
+        }
+    }
+
+    @Query("UPDATE songs SET playbackPosition = :playbackPosition, lastPlayed = :lastPlayed WHERE id =:id")
+    abstract suspend fun updatePlaybackPosition(
+        id: Long,
+        playbackPosition: Int,
+        lastPlayed: Instant = Clock.System.now()
+    )
+
+    /** [updatePlaybackPosition] and incrementing the play count as one write, for a track playing through to its end. */
+    @Query("UPDATE songs SET playbackPosition = :playbackPosition, lastPlayed = :now, playCount = (SELECT songs.playCount + 1), lastCompleted = :now WHERE id =:id")
+    abstract suspend fun recordPlayedThrough(
+        id: Long,
+        playbackPosition: Int,
+        now: Instant = Clock.System.now()
+    )
+
+    /** Makes [songId] a favourite if any of [fromSongIds] (duplicates of it about to go) is one, from the earliest of them. */
+    @Query("UPDATE songs SET favouritedAt = (SELECT MIN(favouritedAt) FROM songs WHERE id IN (:fromSongIds)) WHERE id = :songId AND favouritedAt IS NULL")
+    abstract suspend fun keepFavourite(
+        fromSongIds: List<Long>,
+        songId: Long
+    )
+
+    /** Makes the songs with [ids] favourites as of [now]; one that already is keeps its time, and so its place in the list. */
+    @Query("UPDATE songs SET favouritedAt = :now WHERE id IN (:ids) AND favouritedAt IS NULL")
+    abstract suspend fun favourite(
+        ids: List<Long>,
+        now: Instant = Clock.System.now()
+    ): Int
+
+    /** Makes the song with [id] a favourite as of [favouritedAt], if it isn't one already: an Undo restoring [Song.favouritedAt] gets its original place back rather than moving to the top (#564). */
+    @Query("UPDATE songs SET favouritedAt = :favouritedAt WHERE id = :id AND favouritedAt IS NULL")
+    abstract suspend fun favourite(
+        id: Long,
+        favouritedAt: Instant
+    ): Int
+
+    @Query("UPDATE songs SET favouritedAt = NULL WHERE id IN (:ids)")
+    abstract suspend fun unfavourite(ids: List<Long>): Int
+
+    /**
+     * [favourite] or [unfavourite] [songs], in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a
+     * statement. A song that already carries a [Song.favouritedAt] (an Undo restoring one just removed) is set to that
+     * exact time rather than now, so it keeps its original place in the list (#564). Every remote-provider song among
+     * [songs] also gets a `pending_favourites` row recording the desired state, in the same transaction, for a later
+     * slice to push to its server (#497); local songs never enqueue.
+     */
+    @Transaction
+    open suspend fun setFavourite(
+        songs: List<Song>,
+        favourite: Boolean
+    ): Int {
+        val count = if (!favourite) {
+            songs.map { it.id }.distinct().chunked(MAX_BOUND_VARIABLES - 1).sumOf { chunk -> unfavourite(chunk) }
+        } else {
+            val (toRestore, toStamp) = songs.distinctBy { it.id }.partition { it.favouritedAt != null }
+            val restored = toRestore.sumOf { song -> favourite(song.id, song.favouritedAt!!) }
+            val now = Clock.System.now()
+            val stamped = toStamp.map { it.id }.chunked(MAX_BOUND_VARIABLES - 1).sumOf { chunk -> favourite(chunk, now) }
+            restored + stamped
+        }
+        enqueuePendingFavourites(songs, favourite)
+        return count
+    }
+
+    /**
+     * One `pending_favourites` row per remote-provider song among [songs], overwriting any row already pending for it
+     * so only the latest desired state survives to be sent (#497): a favourite then an unfavourite before a flush
+     * leaves a single row with the final state, not two queued operations.
+     */
+    private suspend fun enqueuePendingFavourites(
+        songs: List<Song>,
+        favourite: Boolean
+    ) {
+        val changedAt = Clock.System.now()
+        songs.distinctBy { it.id }.filter { it.mediaProvider.remote }.forEach { song ->
+            enqueuePendingFavourite(PendingFavouriteData(song.id, song.mediaProvider, song.externalId, favourite, changedAt))
+        }
+    }
+
+    @Insert(onConflict = REPLACE)
+    abstract suspend fun enqueuePendingFavourite(pendingFavourite: PendingFavouriteData)
+
+    @Query("SELECT * FROM pending_favourites")
+    abstract suspend fun getPendingFavourites(): List<PendingFavouriteData>
+
+    @Query("SELECT id FROM songs WHERE favouritedAt IS NOT NULL")
+    abstract fun getFavouriteIds(): Flow<List<Long>>
+
+    @Query("UPDATE songs SET blacklisted = :blacklisted WHERE id IN (:ids)")
+    abstract suspend fun setExcluded(
+        ids: List<Long>,
+        blacklisted: Boolean
+    ): Int
+
+    @Query("UPDATE songs SET blacklisted = 0")
+    abstract suspend fun clearExcludeList()
+
+    @Query("DELETE FROM songs where mediaProvider = :mediaProviderType")
+    abstract suspend fun deleteAll(mediaProviderType: MediaProviderType)
+
+    @Delete
+    abstract suspend fun deleteAll(songData: List<SongData>): Int
+
+    @Query("DELETE FROM songs WHERE id = :id")
+    abstract suspend fun delete(id: Long)
+}
+
+private const val MAX_BOUND_VARIABLES = 999
+
+fun SongData.toSong(): Song = Song(
+    id = id,
+    name = name,
+    albumArtist = albumArtist,
+    artists = artists,
+    album = album,
+    track = track,
+    disc = disc,
+    duration = duration,
+    date = year?.let { LocalDate(it, 1, 1) },
+    genres = genres,
+    path = path,
+    size = size,
+    mimeType = mimeType,
+    lastModified = lastModified,
+    lastPlayed = lastPlayed,
+    lastCompleted = lastCompleted,
+    playCount = playCount,
+    playbackPosition = playbackPosition,
+    blacklisted = excluded,
+    externalId = externalId,
+    mediaProvider = mediaProvider,
+    replayGainTrack = replayGainTrack,
+    replayGainAlbum = replayGainAlbum,
+    lyrics = lyrics,
+    grouping = grouping,
+    bitRate = bitRate,
+    bitDepth = bitDepth,
+    sampleRate = sampleRate,
+    channelCount = channelCount,
+    audioCodec = audioCodec,
+    artworkVersion = artworkVersion,
+    dateAdded = dateAdded,
+    favouritedAt = favouritedAt
+)
