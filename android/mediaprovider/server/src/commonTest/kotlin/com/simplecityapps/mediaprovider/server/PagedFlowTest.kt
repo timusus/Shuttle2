@@ -4,7 +4,6 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.networking.retrofit.NetworkResult
 import io.kotest.matchers.shouldBe
-import java.io.IOException
 import kotlin.test.Test
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
@@ -36,7 +35,7 @@ class PagedFlowTest {
     }
 
     @Test
-    fun `pages through the total, asking for no more than is left`() = runTest {
+    fun `pages through the total - asking for no more than is left`() = runTest {
         val events = pagedFlow("Querying", pageSize = 4, fetchPage = server(total = 10)).toList().described()
 
         requests shouldBe listOf(0 to 4, 4 to 4, 8 to 2)
@@ -61,7 +60,7 @@ class PagedFlowTest {
     }
 
     @Test
-    fun `without a total, pages until an empty page`() = runTest {
+    fun `without a total - pages until an empty page`() = runTest {
         val events = pagedFlow("Querying", pageSize = 4, fetchPage = server(total = 6, reportsTotal = false)).toList().described()
 
         requests shouldBe listOf(0 to 4, 4 to 4, 6 to 4)
@@ -73,7 +72,7 @@ class PagedFlowTest {
     fun `a failed page fails the listing`() = runTest {
         val events = pagedFlow<Int>("Querying", pageSize = 4) { offset, limit ->
             requests += offset to limit
-            if (offset == 0) NetworkResult.Success(Page(listOf(0, 1, 2, 3), totalCount = 10)) else NetworkResult.Failure(IOException("offline"))
+            if (offset == 0) NetworkResult.Success(Page(listOf(0, 1, 2, 3), totalCount = 10)) else NetworkResult.Failure(IllegalStateException("offline"))
         }.toList().described()
 
         requests shouldBe listOf(0 to 4, 4 to 4)

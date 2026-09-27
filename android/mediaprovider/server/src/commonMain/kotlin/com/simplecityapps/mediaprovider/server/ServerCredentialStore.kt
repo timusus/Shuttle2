@@ -26,7 +26,7 @@ class ServerCredentialStore(
     private val canDownloadKey = "${prefix}_can_download"
 
     // Guards the session keys, which are written together
-    private val lock = Any()
+    private val lock = Lock()
 
     /** The saved sign-in, for re-authenticating once the session expires. Never holds an [LoginCredentials.authCode]. */
     var loginCredentials: LoginCredentials?
@@ -46,8 +46,8 @@ class ServerCredentialStore(
      * read and write holds the same lock as [expireSession], so none of them sees or leaves a half-written session (#596).
      */
     var authenticatedCredentials: AuthenticatedCredentials?
-        get() = synchronized(lock) { readAuthenticatedCredentials() }
-        set(value) = synchronized(lock) { writeAuthenticatedCredentials(value) }
+        get() = lock.withLock { readAuthenticatedCredentials() }
+        set(value) = lock.withLock { writeAuthenticatedCredentials(value) }
 
     /**
      * Replaces the stored session with [new] only while it is still [expected] (the same access token), returning
@@ -57,10 +57,10 @@ class ServerCredentialStore(
     fun compareAndSetAuthenticatedCredentials(
         expected: AuthenticatedCredentials,
         new: AuthenticatedCredentials?
-    ): Boolean = synchronized(lock) {
-        if (readAuthenticatedCredentials()?.accessToken != expected.accessToken) return false
-        writeAuthenticatedCredentials(new)
-        true
+    ): Boolean = lock.withLock {
+        val current = readAuthenticatedCredentials()?.accessToken == expected.accessToken
+        if (current) writeAuthenticatedCredentials(new)
+        current
     }
 
     private fun readAuthenticatedCredentials(): AuthenticatedCredentials? {

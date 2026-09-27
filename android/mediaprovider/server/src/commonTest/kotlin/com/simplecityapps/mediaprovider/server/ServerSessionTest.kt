@@ -37,7 +37,7 @@ class ServerSessionTest {
     }
 
     @Test
-    fun `reports progress, signs in and runs the body with the session`() = runTest {
+    fun `reports progress - signs in and runs the body with the session`() = runTest {
         session(address = "https://server", credentials = "token").toList().described() shouldBe listOf(
             querying,
             Event.Success("https://server as token")

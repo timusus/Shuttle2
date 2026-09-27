@@ -5,16 +5,18 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.userDescription
+import com.simplecityapps.shuttle.logging.Logger
 import kotlin.math.min
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import timber.log.Timber
 
 /** One page of a server listing. [totalCount] is the size of the whole listing, or null for a server that doesn't say. */
 data class Page<T>(
     val items: List<T>,
     val totalCount: Int?
 )
+
+private val logger = Logger.tagged("PagedFlow")
 
 /** The page size servers are asked for. */
 const val DEFAULT_PAGE_SIZE = 500
@@ -58,7 +60,7 @@ fun <T> pagedFlow(
             }
 
             is NetworkResult.Failure -> {
-                Timber.e(result.error, result.error.userDescription())
+                logger.error(result.error) { result.error.userDescription() }
                 emit(FlowEvent.Failure(result.error.userDescription()))
                 return@flow
             }

@@ -7,14 +7,15 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpStatusCode
-import kotlin.concurrent.thread
 import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ServerCredentialStoreTest {
@@ -132,7 +133,7 @@ class ServerCredentialStoreTest {
     }
 
     @Test
-    fun `a 401 clears the session and signals it, keeping the saved login`() = runTest {
+    fun `a 401 clears the session and signals it - keeping the saved login`() = runTest {
         val (store, signals) = signedIn()
 
         store.checkSession(session, NetworkResult.Failure(RemoteServiceHttpError(HttpStatusCode.Unauthorized)))
@@ -219,22 +220,25 @@ class ServerCredentialStoreTest {
     }
 
     @Test
-    fun `sign-ins racing expiry never leave a half-written session`() {
+    fun `sign-ins racing expiry never leave a half-written session`() = runTest {
         val store = store("jellyfin")
         val sessions = (1..2).map { AuthenticatedCredentials("token-$it", "user-$it") }
         store.authenticatedCredentials = sessions[0]
 
-        val writers = sessions.map { credentials ->
-            thread {
-                repeat(2_000) {
-                    store.authenticatedCredentials = credentials
-                    store.expireSession(credentials)
+        // On real threads, so the lock is what keeps the session whole
+        withContext(Dispatchers.Default) {
+            val writers = sessions.map { credentials ->
+                launch {
+                    repeat(2_000) {
+                        store.authenticatedCredentials = credentials
+                        store.expireSession(credentials)
+                    }
                 }
             }
+            repeat(2_000) {
+                store.authenticatedCredentials?.let { read -> read.userId shouldBe "user-${read.accessToken.removePrefix("token-")}" }
+            }
+            writers.forEach { it.join() }
         }
-        repeat(2_000) {
-            store.authenticatedCredentials?.let { read -> read.userId shouldBe "user-${read.accessToken.removePrefix("token-")}" }
-        }
-        writers.forEach { it.join() }
     }
 }
