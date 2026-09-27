@@ -102,7 +102,9 @@ class PresentationRules {
                 functions
                     .filter { it.hasPublicOrDefaultModifier && !it.hasOverrideModifier && it.name != "invoke" }
                     .forEach { add(": public fun ${it.name}") }
-                if (useCase.primaryConstructor?.annotations.orEmpty().none { it.name == "Inject" || it.name == "AssistedInject" }) {
+                // Dagger's `@Inject constructor`, or Metro's class-level `@Inject` (the multiplatform domain, #582)
+                val injectAnnotations = useCase.annotations + useCase.primaryConstructor?.annotations.orEmpty()
+                if (injectAnnotations.none { it.name == "Inject" || it.name == "AssistedInject" }) {
                     add(": no @Inject constructor")
                 }
                 if (useCase.name.endsWith("UseCase")) add(": named *UseCase (8c: a verb phrase, no suffix)")

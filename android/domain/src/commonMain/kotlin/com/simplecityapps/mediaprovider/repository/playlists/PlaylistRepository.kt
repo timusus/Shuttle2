@@ -1,0 +1,89 @@
+package com.simplecityapps.mediaprovider.repository.playlists
+
+import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.model.PlaylistSong
+import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.sorting.CollationStrength
+import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
+import com.simplecityapps.shuttle.sorting.localeCollator
+import kotlinx.coroutines.flow.Flow
+
+interface PlaylistRepository {
+    fun getPlaylists(query: PlaylistQuery): Flow<List<Playlist>>
+
+    suspend fun createPlaylist(
+        name: String,
+        mediaProviderType: MediaProviderType,
+        songs: List<Song>?,
+        externalId: String?
+    ): Playlist
+
+    suspend fun addToPlaylist(
+        playlist: Playlist,
+        songs: List<Song>
+    )
+
+    suspend fun removeFromPlaylist(
+        playlist: Playlist,
+        playlistSongs: List<PlaylistSong>
+    )
+
+    suspend fun removeSongsFromPlaylist(
+        playlist: Playlist,
+        songs: List<Song>
+    )
+
+    fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>>
+
+    /** Up to [limit] songs from [playlist], one per distinct album, in the playlist's order — for a cover mosaic (#534). */
+    fun getPlaylistCoverSongs(
+        playlist: Playlist,
+        limit: Int
+    ): Flow<List<Song>>
+
+    suspend fun deletePlaylist(playlist: Playlist)
+
+    suspend fun deleteAll(mediaProviderType: MediaProviderType)
+
+    suspend fun clearPlaylist(playlist: Playlist)
+
+    suspend fun renamePlaylist(
+        playlist: Playlist,
+        name: String
+    )
+
+    suspend fun updatePlaylistSortOder(
+        playlist: Playlist,
+        sortOrder: PlaylistSongSortOrder,
+        sortDescending: Boolean
+    )
+
+    suspend fun updatePlaylistSongsSortOder(
+        playlist: Playlist,
+        playlistSongs: List<PlaylistSong>
+    )
+}
+
+enum class PlaylistSortOrder {
+    Default,
+    Name
+    ;
+
+    val comparator: Comparator<Playlist>
+        get() {
+            return when (this) {
+                Default -> defaultComparator
+                Name -> nameComparator
+            }
+        }
+
+    companion object {
+        private val collator by lazy { localeCollator(CollationStrength.Tertiary) }
+        val defaultComparator: Comparator<Playlist> by lazy { compareBy { playlist -> playlist.id } }
+        val nameComparator: Comparator<Playlist> by lazy {
+            Comparator<Playlist> { a, b -> collator.compare(a.name, b.name) }
+                .then(defaultComparator)
+        }
+    }
+}
