@@ -258,3 +258,9 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 - [ ] Change the app's language (e.g. to German and back): there is still exactly one Favorites list, and the heart in Now Playing still shows the same songs as favourites.
 - [ ] Heart a song in Now Playing, add an album to Favorites from its menu, and remove a song from Favorites in its menu inside the Favorites list; each shows up (or leaves) straight away, and the removal's Undo brings it back.
 - [ ] Android Auto: Playlists lists Favorites first, and playing a song from it plays the list from that song.
+
+## Settings and Equalizer ViewModels in shared code (#586 wave 3)
+
+- [ ] Equalizer: turn it on, pick a preset (including Vocal reduce) and move the preamp; kill and relaunch the app; all three are kept and still audibly apply.
+- [ ] Settings: the ReplayGain toggle still changes playback loudness between tracks.
+- [ ] Settings: copying and sharing the logs still works, and the last-scan date shows the same as before.
