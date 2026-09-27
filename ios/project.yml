@@ -46,9 +46,17 @@ targets:
         # Keep playing with the screen locked or the app in the background (#588).
         UIBackgroundModes: [audio]
         # Jellyfin and Emby servers are often plain http on the LAN, or https with a self-signed
-        # certificate; the servers' own iOS apps allow both the same way (#587).
+        # certificate; the servers' own iOS apps allow both the same way (#587). Do NOT add
+        # NSAllowsLocalNetworking: on iOS 10+ it makes the system ignore NSAllowsArbitraryLoads, which
+        # would break a plain-http server reached by a public hostname (#608).
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
+        # Local network access prompt (#608): the app discovers and connects to Jellyfin/Emby/Plex
+        # servers on the user's LAN, not for any tracking or discovery purpose.
+        NSLocalNetworkUsageDescription: "S2 uses your local network to find and connect to Jellyfin, Emby and Plex media servers on your Wi-Fi network."
+        # The app only uses standard HTTPS/TLS to reach user-configured media servers; no proprietary
+        # or non-exempt encryption (#608).
+        ITSAppUsesNonExemptEncryption: false
     settings:
       base:
         # Placeholder until the App Store Connect app exists.
