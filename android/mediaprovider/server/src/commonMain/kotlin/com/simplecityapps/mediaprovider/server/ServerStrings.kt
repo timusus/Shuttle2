@@ -10,4 +10,7 @@ interface ServerStrings {
 
     /** Signing in to the server failed. */
     val authenticationError: String
+
+    /** Stands in for a name the server didn't send, such as a playlist's. */
+    val unknownName: String
 }

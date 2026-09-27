@@ -3,7 +3,6 @@ package com.simplecityapps.mediaprovider
 import android.net.Uri
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import dev.zacsweers.metro.MapKey
 import java.io.File
 
 data class MediaInfo(val path: Uri, val mimeType: String, val isRemote: Boolean)
@@ -42,14 +41,6 @@ interface MediaInfoProvider {
         responseCode: Int
     ): Uri?
 }
-
-/**
- * Keys a remote provider's [MediaInfoProvider] binding by the provider it resolves songs for. Each provider module
- * contributes its own entry (`@IntoMap`), so a module that needs every provider's resolver (playback) asks for the map
- * rather than depending on the provider modules.
- */
-@MapKey
-annotation class MediaProviderTypeKey(val value: MediaProviderType)
 
 /** Whether a song from a remote server may be streamed. Asked once per song, when its stream is resolved. */
 fun interface ServerStreamPolicy {

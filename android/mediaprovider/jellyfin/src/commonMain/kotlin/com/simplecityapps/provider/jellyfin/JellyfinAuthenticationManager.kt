@@ -13,15 +13,17 @@ import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.provider.jellyfin.http.AuthenticationResult
 import com.simplecityapps.provider.jellyfin.http.UserService
+import com.simplecityapps.shuttle.logging.Logger
 import io.ktor.http.HttpStatusCode
-import java.util.UUID
-import timber.log.Timber
+import kotlin.uuid.Uuid
 
 class JellyfinAuthenticationManager(
     private val userService: UserService,
     private val credentialStore: ServerCredentialStore,
     private val clientIdentity: ClientIdentity
 ) {
+    private val logger = Logger.tagged("JellyfinAuthenticationManager")
+
     fun getLoginCredentials(): LoginCredentials? = credentialStore.loginCredentials
 
     fun setLoginCredentials(loginCredentials: LoginCredentials?) {
@@ -54,7 +56,7 @@ class JellyfinAuthenticationManager(
         address: String,
         loginCredentials: LoginCredentials
     ): Result<AuthenticatedCredentials> {
-        Timber.d("authenticate(address: $address)")
+        logger.debug { "authenticate(address: $address)" }
         val authenticationResult =
             userService.authenticate(
                 url = address,
@@ -149,7 +151,7 @@ class JellyfinAuthenticationManager(
                 credentialStore.expireSession(authenticatedCredentials)
                 null
             } else {
-                Timber.w(result.error, "Failed to refresh the download permission")
+                logger.warn(result.error) { "Failed to refresh the download permission" }
                 authenticatedCredentials
             }
         }
@@ -172,7 +174,7 @@ class JellyfinAuthenticationManager(
         maxBitrateKbps: Int?
     ): String? {
         if (credentialStore.address == null) {
-            Timber.w("Invalid jellyfin address (${credentialStore.address})")
+            logger.warn { "Invalid jellyfin address (${credentialStore.address})" }
             return null
         }
 
@@ -181,7 +183,7 @@ class JellyfinAuthenticationManager(
             "/universal" +
             "?UserId=${authenticatedCredentials.userId}" +
             "&DeviceId=${clientIdentity.id}" +
-            "&PlaySessionId=${UUID.randomUUID()}" +
+            "&PlaySessionId=${Uuid.random()}" +
             "&Container=${DirectPlayFormats.UNIVERSAL_CONTAINERS}" +
             "&TranscodingContainer=ts" +
             "&TranscodingProtocol=hls" +
@@ -203,7 +205,7 @@ class JellyfinAuthenticationManager(
         authenticatedCredentials: AuthenticatedCredentials
     ): String? {
         if (credentialStore.address == null) {
-            Timber.w("Invalid jellyfin address (${credentialStore.address})")
+            logger.warn { "Invalid jellyfin address (${credentialStore.address})" }
             return null
         }
 
@@ -224,7 +226,7 @@ class JellyfinAuthenticationManager(
         authenticatedCredentials: AuthenticatedCredentials
     ): String? {
         if (credentialStore.address == null) {
-            Timber.w("Invalid jellyfin address (${credentialStore.address})")
+            logger.warn { "Invalid jellyfin address (${credentialStore.address})" }
             return null
         }
 

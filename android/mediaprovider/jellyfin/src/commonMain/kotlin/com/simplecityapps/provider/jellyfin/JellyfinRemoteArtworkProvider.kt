@@ -1,6 +1,5 @@
 package com.simplecityapps.provider.jellyfin
 
-import android.net.Uri
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
@@ -9,6 +8,7 @@ import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Named
+import io.ktor.http.parseUrl
 
 /** Artwork urls on the signed-in Jellyfin server; null when the server doesn't know the song's album or artist. */
 class JellyfinRemoteArtworkProvider
@@ -28,7 +28,7 @@ constructor(
         song: Song,
         imageItemId: (Item) -> String?
     ): String? {
-        val itemId = Uri.parse(song.path).pathSegments.lastOrNull() ?: return null
+        val itemId = parseUrl(song.path)?.segments?.lastOrNull() ?: return null
         val address = credentialStore.address ?: return null
         val authenticatedCredentials = jellyfinAuthenticationManager.getAuthenticatedCredentials() ?: return null
 

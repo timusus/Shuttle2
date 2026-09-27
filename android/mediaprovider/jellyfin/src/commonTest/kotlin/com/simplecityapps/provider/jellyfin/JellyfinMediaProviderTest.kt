@@ -1,11 +1,9 @@
 package com.simplecityapps.provider.jellyfin
 
-import android.content.Context
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MessageProgress
-import com.simplecityapps.mediaprovider.R
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.LoginCredentials
@@ -23,22 +21,16 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 /** The Jellyfin sync engine against a fixture server serving JSON fixtures in the server's response shape (#347). */
-@RunWith(RobolectricTestRunner::class)
 class JellyfinMediaProviderTest {
-    private val context: Context = RuntimeEnvironment.getApplication()
-
     private val server = FixtureServer("jellyfin")
 
     private val client = createHttpClient(server.engine)
@@ -52,9 +44,9 @@ class JellyfinMediaProviderTest {
             clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.26", deviceName = "Pixel")
         )
 
-    private val provider = JellyfinMediaProvider(context, authenticationManager, ItemsService(client))
+    private val provider = JellyfinMediaProvider(TestServerStrings, authenticationManager, ItemsService(client))
 
-    @After
+    @AfterTest
     fun tearDown() {
         server.close()
     }
@@ -98,7 +90,7 @@ class JellyfinMediaProviderTest {
     }
 
     @Test
-    fun `songs carry the album, disc, track and artwork their albums are built from`() {
+    fun `songs carry the album - disc - track and artwork their albums are built from`() {
         signedIn()
         server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
 
@@ -158,7 +150,7 @@ class JellyfinMediaProviderTest {
     // Playlists
 
     @Test
-    fun `playlists hold the library songs their items refer to, in playlist order`() {
+    fun `playlists hold the library songs their items refer to - in playlist order`() {
         signedIn()
         server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
         server.respond(ITEMS, "playlists.json", query = mapOf("includeItemTypes" to "Playlist"))
@@ -174,7 +166,7 @@ class JellyfinMediaProviderTest {
             mediaProviderType shouldBe MediaProviderType.Jellyfin
             songs.map { it.externalId } shouldContainExactly listOf("song-3", "song-1")
         }
-        playlists.last().name shouldBe context.getString(com.simplecityapps.core.R.string.unknown)
+        playlists.last().name shouldBe TestServerStrings.unknownName
         playlists.last().songs.shouldBeEmpty()
     }
 
@@ -201,7 +193,7 @@ class JellyfinMediaProviderTest {
     }
 
     @Test
-    fun `a playlist longer than a page keeps paging through the playlist's items (#524)`() {
+    fun `a playlist longer than a page keeps paging through the playlist's items - issue 524`() {
         signedIn()
         server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
         server.respond(ITEMS, "long_playlist.json", query = mapOf("includeItemTypes" to "Playlist"))
@@ -249,7 +241,7 @@ class JellyfinMediaProviderTest {
 
         val events = provider.findSongs(emptyList()).events()
 
-        events.last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe context.getString(R.string.media_provider_authentication_error)
+        events.last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe TestServerStrings.authenticationError
         server.requestsTo(ITEMS).shouldBeEmpty()
     }
 
@@ -260,7 +252,7 @@ class JellyfinMediaProviderTest {
 
         val events = provider.findSongs(emptyList()).events()
 
-        events.last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe context.getString(R.string.media_provider_authentication_error)
+        events.last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe TestServerStrings.authenticationError
         authenticationManager.getAuthenticatedCredentials().shouldBeNull()
         server.requestsTo(ITEMS).shouldBeEmpty()
     }
@@ -295,16 +287,16 @@ class JellyfinMediaProviderTest {
         credentialStore.address = server.address
 
         provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe
-            context.getString(R.string.media_provider_authentication_error)
+            TestServerStrings.authenticationError
         server.requests.shouldBeEmpty()
     }
 
     @Test
     fun `no server address fails the sync`() {
         provider.findSongs(emptyList()).events().single().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe
-            context.getString(R.string.media_provider_address_missing)
+            TestServerStrings.addressMissing
         provider.findPlaylists(emptyList()).events().single().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe
-            context.getString(R.string.media_provider_address_missing)
+            TestServerStrings.addressMissing
     }
 
     private fun signedIn() {

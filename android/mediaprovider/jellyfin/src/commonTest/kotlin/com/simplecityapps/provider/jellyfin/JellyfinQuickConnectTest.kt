@@ -10,9 +10,9 @@ import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Test
 
 /** Jellyfin Quick Connect sign-in (#505) against a fixture server serving JSON fixtures in the server's response shape. */
 class JellyfinQuickConnectTest {
@@ -28,7 +28,7 @@ class JellyfinQuickConnectTest {
         clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.27", deviceName = "Pixel")
     )
 
-    @After
+    @AfterTest
     fun tearDown() {
         server.close()
     }
@@ -81,14 +81,14 @@ class JellyfinQuickConnectTest {
     }
 
     @Test
-    fun `poll reports Denied on a 401, Jellyfin's only signal for an expired or rejected code`() {
+    fun `poll reports Denied on a 401 - Jellyfin's only signal for an expired or rejected code`() {
         server.respond("/QuickConnect/Connect", code = 401, query = mapOf("secret" to "secret-1"))
 
         runBlocking { authenticationManager.pollQuickConnect(server.address, "secret-1") }.getOrThrow() shouldBe QuickConnectPollState.Denied
     }
 
     @Test
-    fun `authenticate redeems the secret for a token, stored the same way a password sign-in's is`() {
+    fun `authenticate redeems the secret for a token - stored the same way a password sign-in's is`() {
         server.respond("/Users/AuthenticateWithQuickConnect", "quickconnect_authenticate.json", method = "POST")
 
         val result = runBlocking { authenticationManager.authenticateWithQuickConnect(server.address, "secret-1") }

@@ -15,8 +15,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.ktor.http.HttpHeaders
+import kotlin.test.Test
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
 
 /** Jellyfin 12 only accepts the `MediaBrowser ... Token=` header and the `ApiKey=` query param (#308). */
 class JellyfinAuthenticationTest {
@@ -59,7 +59,7 @@ class JellyfinAuthenticationTest {
     }
 
     @Test
-    fun `stream url authenticates with ApiKey, not api_key`() {
+    fun `stream url authenticates with ApiKey - not api_key`() {
         val path = authenticationManager.buildJellyfinPath("item789", credentials, maxBitrateKbps = null)!!
 
         path shouldContain "&ApiKey=token123"

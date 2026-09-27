@@ -14,14 +14,11 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 /** Artwork urls for Jellyfin songs, which have no image when the server doesn't know the song's album or artist. */
-@RunWith(RobolectricTestRunner::class)
 class JellyfinRemoteArtworkProviderTest {
     private val server = FixtureServer("jellyfin")
 
@@ -45,7 +42,7 @@ class JellyfinRemoteArtworkProviderTest {
             itemsService = ItemsService(client)
         )
 
-    @After
+    @AfterTest
     fun tearDown() {
         server.close()
     }
@@ -86,7 +83,7 @@ class JellyfinRemoteArtworkProviderTest {
     }
 
     @Test
-    fun `no artwork for a path without an item id, without asking the server`() = runTest {
+    fun `no artwork for a path without an item id - without asking the server`() = runTest {
         provider.getAlbumArtworkUrl(song("jellyfin://item")) shouldBe null
         provider.getArtistArtworkUrl(song("jellyfin://item")) shouldBe null
         server.requests.shouldBeEmpty()

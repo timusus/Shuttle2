@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.jellyfin
 
+import com.simplecityapps.mediaprovider.server.readFixture
 import com.simplecityapps.networking.S2Json
 import com.simplecityapps.provider.jellyfin.http.AuthenticationResult
 import com.simplecityapps.provider.jellyfin.http.Item
@@ -9,11 +10,11 @@ import com.simplecityapps.provider.jellyfin.http.User
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 /** The DTOs decode what a real Jellyfin server sends: the fixtures, extra fields, and fields left out or null. */
 class JellyfinDtoTest {
-    private fun fixture(name: String): String = checkNotNull(javaClass.classLoader.getResource("jellyfin/$name")) { "No fixture $name" }.readText()
+    private fun fixture(name: String): String = readFixture("jellyfin/$name")
 
     @Test
     fun `every query result fixture decodes`() {
@@ -29,7 +30,7 @@ class JellyfinDtoTest {
     }
 
     @Test
-    fun `sign-in results decode, ignoring the session and server ids`() {
+    fun `sign-in results decode - ignoring the session and server ids`() {
         S2Json.decodeFromString<AuthenticationResult>(fixture("authenticate.json")).accessToken shouldBe "token-2"
         S2Json.decodeFromString<AuthenticationResult>(fixture("quickconnect_authenticate.json")).user.policy?.enableContentDownloading shouldBe true
         S2Json.decodeFromString<User>(fixture("me.json")).id shouldBe "user-1"
@@ -44,7 +45,7 @@ class JellyfinDtoTest {
     }
 
     @Test
-    fun `an item with only an id decodes, its lists empty`() {
+    fun `an item with only an id decodes - its lists empty`() {
         val item = S2Json.decodeFromString<Item>("""{"Id":"item-1"}""")
 
         item.name.shouldBeNull()
@@ -61,7 +62,7 @@ class JellyfinDtoTest {
     }
 
     @Test
-    fun `a user without a policy, and a query result without items, decode`() {
+    fun `a user without a policy - and a query result without items - decode`() {
         S2Json.decodeFromString<User>("""{"Id":"user-1"}""").policy.shouldBeNull()
         S2Json.decodeFromString<QueryResult>("""{}""") shouldBe QueryResult(items = emptyList(), totalRecordCount = 0)
     }

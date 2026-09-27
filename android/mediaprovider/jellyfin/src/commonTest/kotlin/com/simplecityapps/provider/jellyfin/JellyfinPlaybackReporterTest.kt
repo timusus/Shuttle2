@@ -17,9 +17,9 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpHeaders
+import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
 
 class JellyfinPlaybackReporterTest {
     private val server = FixtureServer("jellyfin")

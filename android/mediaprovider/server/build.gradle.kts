@@ -4,6 +4,7 @@
 // ServerStrings (ResourceServerStrings) and the debuggable-build check, which read a Context.
 plugins {
     id("s2.kmp-library")
+    alias(libs.plugins.metro)
 }
 
 kotlin {

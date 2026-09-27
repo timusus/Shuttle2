@@ -13,6 +13,7 @@ class ServerSessionTest {
             override val addressMissing = "No address"
             override val queryingApi = "Querying"
             override val authenticationError = "Sign-in failed"
+            override val unknownName = "Unknown"
         }
     private val authenticatedAt = mutableListOf<String>()
 
