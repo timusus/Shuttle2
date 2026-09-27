@@ -1,14 +1,12 @@
 package com.simplecityapps.provider.emby
 
-import android.content.Context
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
-import com.simplecityapps.mediaprovider.R
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
-import com.simplecityapps.mediaprovider.server.ResourceServerStrings
+import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.withServerSession
 import com.simplecityapps.networking.retrofit.NetworkResult
@@ -17,6 +15,7 @@ import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.emby.http.Item
 import com.simplecityapps.provider.emby.http.ItemsService
 import com.simplecityapps.provider.emby.http.QueryResult
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import kotlin.time.Instant
@@ -29,16 +28,17 @@ import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.LocalDate
-import timber.log.Timber
 
 class EmbyMediaProvider(
-    private val context: Context,
+    private val strings: ServerStrings,
     private val authenticationManager: EmbyAuthenticationManager,
     private val itemsService: ItemsService
 ) : MediaProvider {
     override val type = MediaProviderType.Emby
 
-    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(ResourceServerStrings(context), authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    private val logger = Logger.tagged("EmbyMediaProvider")
+
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
         emitAll(
             queryItems(
                 address = address,
@@ -61,7 +61,7 @@ class EmbyMediaProvider(
         )
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(ResourceServerStrings(context), authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
         when (
             val queryResult =
                 authenticationManager.checkSession(
@@ -79,7 +79,7 @@ class EmbyMediaProvider(
             }
 
             is NetworkResult.Failure -> {
-                Timber.e(queryResult.error, queryResult.error.userDescription())
+                logger.error(queryResult.error) { queryResult.error.userDescription() }
                 emit(FlowEvent.Failure(queryResult.error.userDescription()))
             }
         }
@@ -98,7 +98,7 @@ class EmbyMediaProvider(
     private fun queryItems(
         address: String,
         credentials: AuthenticatedCredentials
-    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(context.getString(R.string.media_provider_querying_api)) { offset, limit ->
+    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(strings.queryingApi) { offset, limit ->
         authenticationManager.checkSession(
             credentials,
             itemsService.audioItems(
@@ -127,7 +127,7 @@ class EmbyMediaProvider(
                             val matchingSongs = event.result.mapNotNull { item -> existingSongs.firstOrNull { item.id == it.externalId } }
                             MediaImporter.PlaylistUpdateData(
                                 mediaProviderType = type,
-                                name = playlistItem.name ?: context.getString(com.simplecityapps.core.R.string.unknown),
+                                name = playlistItem.name ?: strings.unknownName,
                                 songs = matchingSongs,
                                 externalId = playlistItem.id
                             )
@@ -145,7 +145,7 @@ class EmbyMediaProvider(
         address: String,
         credentials: AuthenticatedCredentials,
         playlistId: String
-    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(context.getString(R.string.media_provider_querying_api)) { offset, limit ->
+    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(strings.queryingApi) { offset, limit ->
         authenticationManager.checkSession(
             credentials,
             itemsService.playlistItems(

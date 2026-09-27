@@ -1,6 +1,6 @@
-// The Emby media provider. Multiplatform for the iOS port (#585): the HTTP services and their DTOs are common;
-// sign-in, sync, playback reporting and DI stay in androidMain until :android:core and :android:mediaprovider:core
-// are multiplatform too.
+// The Emby media provider. Multiplatform for the iOS port (#585): the HTTP services, sign-in, sync, playback
+// reporting, artwork urls and their DI are common. The OkHttp-backed client, the credential store's debug-build
+// sign-in and the MediaInfoProvider (whose MediaInfo carries an android.net.Uri) stay in androidMain.
 plugins {
     id("s2.kmp-library")
     alias(libs.plugins.metro)
@@ -16,28 +16,27 @@ kotlin {
 
     compilerOptions {
         optIn.add("kotlin.time.ExperimentalTime")
+        optIn.add("kotlin.uuid.ExperimentalUuidApi")
     }
 
     sourceSets {
         commonMain.dependencies {
             implementation(project(":android:networking"))
             implementation(project(":android:mediaprovider:server"))
-        }
-
-        androidMain.dependencies {
             implementation(project(":android:mediaprovider:core"))
             implementation(project(":android:core"))
             implementation(project(":android:domain"))
-            implementation(libs.androidx.core)
             implementation(libs.kotlinx.datetime)
-            implementation(libs.timber)
         }
 
-        getByName("androidHostTest").dependencies {
+        androidMain.dependencies {
+            implementation(libs.androidx.core)
+        }
+
+        commonTest.dependencies {
             implementation(project(":android:mediaprovider:server-testing"))
-            implementation(libs.junit)
+            implementation(libs.kotlin.test)
             implementation(libs.kotest)
-            implementation(libs.robolectric)
             implementation(libs.kotlinx.coroutinesTest)
         }
     }

@@ -4,8 +4,8 @@ import com.simplecityapps.networking.S2Json
 import com.simplecityapps.provider.emby.http.Item
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlin.test.Test
 import kotlin.time.Instant
-import org.junit.Test
 
 class ItemToSongTest {
     @Test

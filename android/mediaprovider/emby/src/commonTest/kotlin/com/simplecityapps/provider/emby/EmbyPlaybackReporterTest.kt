@@ -16,9 +16,9 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
 
 class EmbyPlaybackReporterTest {
     private val server = FixtureServer("emby")

@@ -19,8 +19,8 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.string.shouldNotContain
+import kotlin.test.Test
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
 
 /**
  * Exercises [EmbyMediaInfoProvider.downloadFallbackUri]'s 401-vs-403 handling (#322): a 403 means
@@ -83,7 +83,7 @@ class EmbyMediaInfoProviderTest {
     }
 
     @Test
-    fun `stream url sends no bitrate cap for original quality, so the server direct-plays`() {
+    fun `stream url sends no bitrate cap for original quality - so the server direct-plays`() {
         credentialStore.authenticatedCredentials = downloadableCredentials
 
         val path = provider.buildPlaybackPathString(song())

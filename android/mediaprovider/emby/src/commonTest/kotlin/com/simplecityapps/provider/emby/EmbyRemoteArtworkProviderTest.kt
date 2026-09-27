@@ -13,14 +13,11 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 /** Artwork urls for Emby songs, which have no image when the server doesn't know the song's album or artist (#525). */
-@RunWith(RobolectricTestRunner::class)
 class EmbyRemoteArtworkProviderTest {
     private val server = FixtureServer("emby")
 
@@ -44,7 +41,7 @@ class EmbyRemoteArtworkProviderTest {
             itemsService = ItemsService(client)
         )
 
-    @After
+    @AfterTest
     fun tearDown() {
         server.close()
     }
@@ -85,7 +82,7 @@ class EmbyRemoteArtworkProviderTest {
     }
 
     @Test
-    fun `no artwork for a path without an item id, without asking the server`() = runTest {
+    fun `no artwork for a path without an item id - without asking the server`() = runTest {
         provider.getAlbumArtworkUrl(song("emby://item")) shouldBe null
         provider.getArtistArtworkUrl(song("emby://item")) shouldBe null
         server.requests.shouldBeEmpty()

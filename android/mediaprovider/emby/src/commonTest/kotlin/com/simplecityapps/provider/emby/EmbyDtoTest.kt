@@ -1,5 +1,6 @@
 package com.simplecityapps.provider.emby
 
+import com.simplecityapps.mediaprovider.server.readFixture
 import com.simplecityapps.networking.S2Json
 import com.simplecityapps.provider.emby.http.AuthenticationResult
 import com.simplecityapps.provider.emby.http.Item
@@ -8,11 +9,11 @@ import com.simplecityapps.provider.emby.http.User
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 /** The DTOs decode what a real Emby server sends: the fixtures, extra fields, and fields left out or null. */
 class EmbyDtoTest {
-    private fun fixture(name: String): String = checkNotNull(javaClass.classLoader.getResource("emby/$name")) { "No fixture $name" }.readText()
+    private fun fixture(name: String): String = readFixture("emby/$name")
 
     @Test
     fun `every query result fixture decodes`() {
@@ -22,7 +23,7 @@ class EmbyDtoTest {
     }
 
     @Test
-    fun `every item fixture decodes, with Emby's numeric ids as strings`() {
+    fun `every item fixture decodes - with Emby's numeric ids as strings`() {
         val item = S2Json.decodeFromString<Item>(fixture("item.json"))
 
         item.albumId shouldBe "201"
@@ -31,13 +32,13 @@ class EmbyDtoTest {
     }
 
     @Test
-    fun `sign-in results decode, ignoring the session and server ids`() {
+    fun `sign-in results decode - ignoring the session and server ids`() {
         S2Json.decodeFromString<AuthenticationResult>(fixture("authenticate.json")).accessToken shouldBe "token-2"
         S2Json.decodeFromString<User>(fixture("me.json")).policy?.enableContentDownloading shouldBe true
     }
 
     @Test
-    fun `an item with only an id decodes, its lists empty`() {
+    fun `an item with only an id decodes - its lists empty`() {
         val item = S2Json.decodeFromString<Item>("""{"Id":"1"}""")
 
         item.name.shouldBeNull()
@@ -54,7 +55,7 @@ class EmbyDtoTest {
     }
 
     @Test
-    fun `a user without a policy, and a query result without items, decode`() {
+    fun `a user without a policy - and a query result without items - decode`() {
         S2Json.decodeFromString<User>("""{"Id":"user-1"}""").policy.shouldBeNull()
         S2Json.decodeFromString<QueryResult>("""{}""") shouldBe QueryResult(items = emptyList(), totalRecordCount = 0)
     }

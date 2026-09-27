@@ -13,8 +13,8 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import kotlin.test.Test
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
 
 class EmbyAuthenticationTest {
     private val credentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456")

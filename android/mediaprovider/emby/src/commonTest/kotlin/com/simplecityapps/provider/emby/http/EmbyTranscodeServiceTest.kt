@@ -4,8 +4,8 @@ import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.networking.createHttpClient
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
 
 /**
  * Retrofit's `@HEAD` probe never asked for JSON; ContentNegotiation must not add
