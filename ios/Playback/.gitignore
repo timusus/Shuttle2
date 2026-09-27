@@ -1,0 +1,4 @@
+.build/
+.swiftpm/
+# The FFmpeg xcframework is a build artefact (scripts/build-ffmpeg.sh); see README.md.
+Frameworks/
