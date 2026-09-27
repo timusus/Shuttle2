@@ -320,8 +320,8 @@ rememberViewModelStoreNavEntryDecorator()), sceneStrategies = sheet, then listDe
 entryProvider = entryProvider { entry<AlbumRoute> { key -> AlbumDetailRoute(key, navigator) } … })`.
 Each entry gets its own `ViewModelStore`, cleared when the entry leaves the stack.
 
-ViewModels receive their key by Hilt assisted injection:
-`hiltViewModel<AlbumDetailViewModel, AlbumDetailViewModel.Factory> { it.create(key) }`, then load
+ViewModels receive their key by Metro assisted injection (metrox-viewmodel):
+`assistedMetroViewModel<AlbumDetailViewModel, AlbumDetailViewModel.Factory> { create(key) }`, then load
 from the repository. No `SavedStateHandle.toRoute()`, no Safe Args. `AlbumGroupKey` is two nullable
 strings and the route mirrors it; an album with no group key cannot open detail today either.
 

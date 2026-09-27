@@ -72,7 +72,7 @@ These are the system edges — interfaces or simple state holders where we subst
 | `MediaImporter` | `SongImportStateProvider` | `FakeSongImportStateProvider` | Wraps `MutableStateFlow<SongImportState>` |
 | `SortPreferenceManager` | `SortPreferences` | `FakeSortPreferences` | In-memory sort order properties |
 
-ViewModels depend on the interfaces, not the concrete classes. The interfaces were extracted specifically for testability — `SongImportStateProvider` and `SortPreferences` are in production code, with Hilt bindings in `AppModule`/`AppModuleBinds`.
+ViewModels depend on the interfaces, not the concrete classes. The interfaces were extracted specifically for testability — `SongImportStateProvider` and `SortPreferences` are in production code, with Metro bindings in `AppModule`/`AppBindsModule`.
 
 ### The Playback Boundary
 

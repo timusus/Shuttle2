@@ -28,7 +28,7 @@ fully-qualified entry per line:
 | Rule | What it forbids | Baseline | After #381 | Modules (after #381) |
 |---|---|---:|---:|---|
 | `viewmodel-data-access` | ViewModel imports or injects a `*Repository`, `*Dao`, `*MediaProvider`, `MediaImporter`, Room, Retrofit or OkHttp | 32 | 32 | app 32 |
-| `viewmodel-conventions` | not `*ViewModel`, not `@HiltViewModel`, `AndroidViewModel`, Context/Application/Resources params, `android.*` imports (8b) | 4 | 4 | app 4 |
+| `viewmodel-conventions` | not `*ViewModel`, not contributed to the Metro ViewModel maps, `AndroidViewModel`, Context/Application/Resources params, `android.*` imports (8b) | 4 | 4 | app 4 |
 | `usecase-shape` | more than one `invoke`, other public functions, no `@Inject` constructor, `*UseCase` name, UI imports (8a/8c) | 2 | 2 | app 2 |
 | `presentation-data-imports` | `@Composable` or ViewModel files importing Room, Retrofit, OkHttp, DAOs/entities, provider `http` DTOs | 0 | 0 | none |
 | `rxjava` | `io.reactivex*`, `com.jakewharton.rx*` | 0 | 0 | none |
@@ -39,7 +39,7 @@ fully-qualified entry per line:
 | `fragments` | `Fragment`/`DialogFragment`/`PreferenceFragmentCompat` subclasses; the allowed-hosts list is empty | 46 | 4 | app 4 |
 | `android-views` | View/ViewGroup/layout subclasses, RecyclerView adapters, view holders, ViewBinders, item decorations, Preferences | 81 | 2 | app 2 |
 | `package-root` | production code outside `com.simplecityapps` | 30 | 30 | imageloader 30 |
-| `naming-conventions` | a Worker, Service, Activity, Receiver, RoomDatabase, `@Module`, `@Dao`, `@Database` or `@HiltWorker` without its suffix; a `*Repository` implementation not named `*Repository` | 2 | 2 | app 2 |
+| `naming-conventions` | a Worker, Service, Activity, Receiver, RoomDatabase, `@BindingContainer`, `@Dao`, `@Database` or `@ViewModelKey` without its suffix; a `*Repository` implementation not named `*Repository` | 2 | 2 | app 2 |
 | **Total** | | **281** | **79** | app 46, imageloader 30, mediaprovider:core 1 |
 
 Three rules have nothing baselined and simply keep RxJava, LiveData and AsyncTask out. Compose

@@ -284,7 +284,7 @@ foreground straight away (with Media3's notification, or a placeholder under the
 saved queue is restored, even while Media3 has no notification to show; once the queue plays, Media3's notification
 takes the foreground over, and a command that doesn't play leaves the foreground once it has run. (#345) — JVM
 (`spec/ForegroundStartSpecTest`, over a test service with PlaybackService's start handling, as PlaybackService itself
-needs Hilt); API 31+ with the app dead is device-only: *Media session through Media3*.
+needs the Metro app graph); API 31+ with the app dead is device-only: *Media session through Media3*.
 
 **RS-49: play-pause while a song is loading follows where the load is headed.** Given a song still loading paused (the
 saved queue's restore, as the widget's play-pause cold-starts the app), when play-pause is pressed, then it plays;

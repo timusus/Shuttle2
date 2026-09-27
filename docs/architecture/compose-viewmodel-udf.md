@@ -183,7 +183,7 @@ fun onPlay(album: Album) {
 
 **ViewModels never inject `*Operations`, `*Preference(s)`, `*PreferenceManager`, `*Settings` or `*Store` types** (the playback and queue operations, preference holders and managers, settings groups, the settings store), even for a one-liner: put the call behind a use case such as `ObserveCurrentSong` or `ReadLibraryViewSetting`. The `viewmodel-direct-deps` Konsist rule enforces it alongside `viewmodel-data-access` (repositories, DAOs, providers). **Why:** the use case is the seam that can move to domain and be faked in a test with one lambda; a ViewModel holding the operations interface can reach every playback call, not just the one it needs.
 
-Use cases are stateless — `@Inject constructor`, no scope annotation, Hilt creates a new instance each time. They can be `suspend` (one-shot operations) or return `Flow` (observable operations). They get their own unit tests when they contain real logic.
+Use cases are stateless — `@Inject constructor`, no scope annotation, Metro creates a new instance each time. They can be `suspend` (one-shot operations) or return `Flow` (observable operations). They get their own unit tests when they contain real logic.
 
 If a use case is shared across ViewModels, great. If it has only one consumer, that's fine too — the value is keeping the ViewModel readable and the logic independently testable.
 

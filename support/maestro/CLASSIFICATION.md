@@ -33,7 +33,7 @@ emulator suite only spends time on what a JVM test cannot see. A new UI check be
 
 Note 1: `library-multiselect-back` also asserted that switching tabs clears the selection. The Compose library
 keeps each tab's selection in that tab's ViewModel and nothing clears it on a tab switch, and `LibraryDestination`
-needs Hilt, so no JVM test reaches it. That part is not ported; see the #450 report.
+needs the Metro app graph, so no JVM test reaches it. That part is not ported; see the #450 report.
 
 ## Device-only (kept)
 

@@ -94,14 +94,14 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 - **`:android:domain`** — Plain Kotlin/JVM domain models, song queries and sort orders, the repository interfaces (Song, Album, Playlist, Genre), the playback and queue operations interfaces, and the shared `ui/actions` use cases (no Android)
 - **`:android:downloads`** — Offline downloads of remote-provider songs
 - **`:android:saf`** — Storage Access Framework helpers
-- **`:android:core`** — Shared utilities, logging, Hilt setup
+- **`:android:core`** — Shared utilities, logging, DI qualifiers and the Metro worker factory
 - **`:android:networking`** — Retrofit + OkHttp + Moshi network layer
 - **`:android:imageloader`** — Coil artwork loading: per-model fetchers, keys and the app ImageLoader
 - **`:android:trial`** — Trial/subscription management via Play Billing
 
 ### UI Patterns
 
-Screens use **Compose + ViewModel** with unidirectional data flow — see [`docs/architecture/compose-viewmodel-udf.md`](docs/architecture/compose-viewmodel-udf.md) for the canonical patterns and principles. Non-trivial ViewModel action logic is extracted into **use cases** — classes with a single `operator fun invoke`, injected via Hilt (see principle #8a in the UDF doc). `MainActivity` hosts the Compose shell (`ui/shell`: Navigation 3 back stack, Home/Library/Search tabs, the player sheet or pane); see [`docs/architecture/app-shell.md`](docs/architecture/app-shell.md). There is no View-based UI left; the Jellyfin/Emby/Plex server sign-in dialogs are Compose too (`ServerSignInDialog`).
+Screens use **Compose + ViewModel** with unidirectional data flow — see [`docs/architecture/compose-viewmodel-udf.md`](docs/architecture/compose-viewmodel-udf.md) for the canonical patterns and principles. Non-trivial ViewModel action logic is extracted into **use cases** — classes with a single `operator fun invoke`, injected via Metro (see principle #8a in the UDF doc). `MainActivity` hosts the Compose shell (`ui/shell`: Navigation 3 back stack, Home/Library/Search tabs, the player sheet or pane); see [`docs/architecture/app-shell.md`](docs/architecture/app-shell.md). There is no View-based UI left; the Jellyfin/Emby/Plex server sign-in dialogs are Compose too (`ServerSignInDialog`).
 
 ### Playback Flow
 
@@ -113,7 +113,7 @@ Repository pattern backed by Room database. MediaProvider implementations (local
 
 ### DI
 
-Hilt with `@HiltAndroidApp`, `@AndroidEntryPoint`. DI modules in `app/di/`: AppModule, DatabaseModule, RepositoryModule, MediaProviderModule, ImageLoaderModule.
+[Metro](https://zacsweers.github.io/metro/), one scope: Metro's built-in `AppScope`. `ShuttleApplication` creates the `@DependencyGraph(AppScope::class)` `AppGraph` (`app/di/`); every module contributes `@ContributesTo(AppScope::class) @BindingContainer`s and `@ContributesBinding`s to it, and app-level containers live in `app/di/` (AppModule, AppBindsModule, DatabaseModule, RepositoryModule, MediaProviderModule, ImageLoaderModule, ...). Android entry points (activities, services, receivers) declare a nested `@ContributesTo(AppScope::class) interface Injector { fun inject(x) }` and call `context.appGraph<Injector>().inject(this)` (`:android:core`). Workers contribute a nested `@AssistedFactory` `WorkerInstanceFactory` keyed with `@WorkerKey`, built by `MetroWorkerFactory`. ViewModels use metrox-viewmodel: `@ViewModelKey` + `@ContributesIntoMap(AppScope::class)`, or a nested factory keyed with `@ManualViewModelAssistedFactoryKey` (assisted arguments) or `@ViewModelAssistedFactoryKey` (`SavedStateHandle`); composables get them with `metroViewModel()` / `assistedMetroViewModel()` from the `LocalMetroViewModelFactory` that `MainActivity` provides.
 
 ## Build Configuration
 

@@ -18,16 +18,16 @@ data          :android:mediaprovider:{core,server,local,jellyfin,emby,plex}, :an
               :android:scrobbling, :android:trial
 ```
 
-- **Domain** is a `org.jetbrains.kotlin.jvm` module: no Android SDK, no Room, no Retrofit, no Hilt
-  Android. It holds the models (`Song`, `Album`, `Playlist`, ...), sort orders and queries, the
+- **Domain** is a `org.jetbrains.kotlin.jvm` module: no Android SDK, no Room, no Retrofit, no
+  Android DI. It holds the models (`Song`, `Album`, `Playlist`, ...), sort orders and queries, the
   repository interfaces, the playback-facing interfaces use cases already consume
   (`QueueOperations`, `PlaybackOperations`), and the shared use cases now in `ui/actions`.
 - **Data** implements domain interfaces: Room DAOs and entities, MediaStore/TagLib, the
   Jellyfin/Emby/Plex HTTP clients and DTOs, Media3 playback, downloads, billing, remote config.
-  Each data module binds its implementations in its own Hilt module.
+  Each data module binds its implementations in its own Metro binding container.
 - **Presentation** holds composables, ViewModels and screen-specific use cases. It sees domain
-  types only; data modules reach it through Hilt, never through an import.
-- **Cross-cutting**: `:android:core` (logging, coroutine dispatchers, settings storage, Hilt
+  types only; data modules reach it through the Metro graph, never through an import.
+- **Cross-cutting**: `:android:core` (logging, coroutine dispatchers, settings storage, DI
   qualifiers) may be used by every layer but depends on nothing of ours. `:android:fixtures` stays
   test/debug-only (already guarded by `verifyFixturesNotInReleaseClasspath`).
 
@@ -56,7 +56,7 @@ data          :android:mediaprovider:{core,server,local,jellyfin,emby,plex}, :an
 | domain | — | no | no | yes |
 | data | yes | within its own feature (`mediaprovider:local` → `mediaprovider:core`), and to platform adapters (`networking`, `imageloader`, `saf`); never to a sibling provider | no | yes |
 | presentation (`:ui`, `:designsystem`) | yes | **no** | yes | yes |
-| composition root (`:android:app`) | yes | yes (to aggregate Hilt modules) | yes | yes |
+| composition root (`:android:app`) | yes | yes (to create the Metro graph) | yes | yes |
 
 Forbidden edges today: none (the baseline is empty).
 Data modules must not depend on sibling provider
@@ -115,18 +115,19 @@ Why this over the alternatives:
   out of `:android:app`, the Konsist rules (`presentation-data-imports`, `viewmodel-data-access`)
   are the enforcement inside it.
 
-## Hilt wiring impact
+## DI wiring impact
 
-- Domain declares no Hilt modules. Use cases keep `@Inject constructor` (`javax.inject`, available
-  on the JVM); domain applies KSP with `dagger-compiler` only, so factories are generated where the
-  classes live instead of Dagger regenerating them in `:android:app` with a warning.
-- Each data module keeps (or gains) a `@Module @InstallIn(SingletonComponent::class)` that
-  `@Binds` its implementations to domain interfaces. Each provider module contributes its
-  `MediaInfoProvider` as an `@IntoMap` entry keyed by `@MediaProviderTypeKey`, and
-  `playback/di/PlaybackEngineModule.kt` builds `AggregateMediaInfoProvider` from the map.
-- `:android:app` stays the only `@HiltAndroidApp` module and keeps `implementation` edges to every
-  data module so Hilt's aggregating task sees all `@InstallIn` modules. If presentation moves into
-  `:android:ui`, that module applies Hilt for `@HiltViewModel` but depends only on domain.
+- Domain declares no binding containers. Use cases carry Metro's `@Inject` (multiplatform); domain
+  applies the Metro plugin, so their factories are generated where the classes live.
+- Each data module has a `@ContributesTo(AppScope::class) @BindingContainer` that `@Binds` its
+  implementations to domain interfaces (or the implementations use `@ContributesBinding`). Each
+  provider module contributes its `MediaInfoProvider` as an `@IntoMap` entry keyed by
+  `@MediaProviderTypeKey`, and `playback/di/PlaybackEngineModule.kt` builds
+  `AggregateMediaInfoProvider` from the map.
+- `:android:app` holds the only `@DependencyGraph` (`AppGraph`) and keeps `implementation` edges to
+  every data module so the graph sees all their contributions. If presentation moves into
+  `:android:ui`, that module applies the Metro plugin for its `@ViewModelKey` contributions but
+  depends only on domain.
 - Test fakes bind domain interfaces, so screen tests stop depending on data modules.
 
 ## Migration, in shippable steps
@@ -168,8 +169,8 @@ diff is a `git mv` plus build files; rename packages later only if it is ever wo
 6. ~~**Shared use cases**: move `ui/actions` use cases whose dependencies are now all in domain into
    `:android:domain`. The ones that need Android (`ShareSongs`, `DeleteSongs`' SAF deleter) stay in
    the app behind a domain interface.~~ (done: 27 files moved with their package names unchanged,
-   plus `ResolveFolderSongs`, which `ResolveSongs` needs. Domain applies KSP with `dagger-compiler`
-   and depends on the `dagger` runtime for `javax.inject`. The use-case unit tests stay in
+   plus `ResolveFolderSongs`, which `ResolveSongs` needs. Domain applied KSP with `dagger-compiler`
+   then; since #582/#583 it applies Metro. The use-case unit tests stay in
    `:android:app`'s tests: they build the use cases through `TestMediaActions` and the app's fakes,
    which the screen tests share; moving them needs the domain-interface fakes in a domain
    `testFixtures` source set first.)
