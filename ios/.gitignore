@@ -1,0 +1,16 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserdata
+*.xcworkspace/xcuserdata/
+
+# User-specific Xcode settings
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# xcodebuild -resultBundlePath output
+*.xcresult
+TestResults/
+
+# Xcode-generated SwiftPM state
+**/.swiftpm/

@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Links Shared.framework (the :shared KMP module) for the Xcode project in ios/. Run it before every
+# Xcode build that follows a Kotlin change: Xcode links whatever framework is on disk and never rebuilds it.
+#
+#   ios/scripts/build-framework.sh              # Debug, simulator (the default dev loop)
+#   ios/scripts/build-framework.sh --device     # Debug, device (iosArm64)
+#   ios/scripts/build-framework.sh --all        # Debug, simulator and device
+#   ios/scripts/build-framework.sh --release    # Release instead of Debug (combines with the above)
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
+config=Debug
+targets=(IosSimulatorArm64)
+
+for arg in "$@"; do
+  case "$arg" in
+    --device) targets=(IosArm64) ;;
+    --all) targets=(IosSimulatorArm64 IosArm64) ;;
+    --release) config=Release ;;
+    -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) echo "unknown option: $arg" >&2; exit 2 ;;
+  esac
+done
+
+tasks=()
+for target in "${targets[@]}"; do
+  tasks+=(":shared:link${config}Framework${target}")
+done
+
+cd "$repo_root"
+echo "==> ./gradlew ${tasks[*]}"
+./gradlew "${tasks[@]}"

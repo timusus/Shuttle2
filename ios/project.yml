@@ -1,0 +1,107 @@
+# XcodeGen definition of the S2 iOS app (#587, docs/architecture/ios-port.md). The source of truth for the
+# project: edit this, then `xcodegen generate`. Layout and settings follow Shuttle Podcasts' mobile/ios.
+name: S2
+options:
+  bundleIdPrefix: com.simplecityapps.shuttle
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16.0"
+packages:
+  ViewInspector:
+    url: https://github.com/nalexn/ViewInspector
+    # Pinned: later releases declare `.visionOS(.v2)` under a 5.9 tools version, which Xcode 27's
+    # SwiftPM rejects ("'v2' is unavailable"), so `from:` resolves to a manifest that won't load.
+    exactVersion: "0.10.3"
+settings:
+  # Empty by default so the project builds for the simulator without a team; device builds pass
+  # APP_TEAM on the xcodebuild command line.
+  DEVELOPMENT_TEAM: "$(APP_TEAM)"
+  TARGETED_DEVICE_FAMILY: "1,2"
+  # Shared.framework ships an arm64 simulator slice only (iosSimulatorArm64), so a Release simulator
+  # build (ONLY_ACTIVE_ARCH=NO) would typecheck x86_64 against a module that has no slice for it.
+  "EXCLUDED_ARCHS[sdk=iphonesimulator*]": x86_64
+targets:
+  S2:
+    type: application
+    platform: iOS
+    sources:
+      - path: S2
+    settings:
+      base:
+        # Placeholder until the App Store Connect app exists.
+        PRODUCT_BUNDLE_IDENTIFIER: com.simplecityapps.shuttle.dev
+        PRODUCT_NAME: S2
+        MARKETING_VERSION: "2026.09.27"
+        CURRENT_PROJECT_VERSION: "1"
+        GENERATE_INFOPLIST_FILE: true
+        INFOPLIST_KEY_CFBundleDisplayName: S2
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        SWIFT_VERSION: "5.9"
+        SWIFT_STRICT_CONCURRENCY: targeted
+        # xcodegen's iOS application preset sets this per target, overriding the project default above.
+        TARGETED_DEVICE_FAMILY: "1,2"
+      configs:
+        # The shared-framework slice is chosen by SDK, not configuration: `-framework Shared` takes the
+        # first Shared.framework on the search path, and the simulator slice does not link for a device.
+        # Build the one you need first with scripts/build-framework.sh.
+        Debug:
+          "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]":
+            - "$(inherited)"
+            - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework"
+          "FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]":
+            - "$(inherited)"
+            - "$(SRCROOT)/../shared/build/bin/iosArm64/debugFramework"
+          OTHER_LDFLAGS:
+            - "$(inherited)"
+            - "-framework"
+            - "Shared"
+        Release:
+          "FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]":
+            - "$(inherited)"
+            - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/releaseFramework"
+          "FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]":
+            - "$(inherited)"
+            - "$(SRCROOT)/../shared/build/bin/iosArm64/releaseFramework"
+          OTHER_LDFLAGS:
+            - "$(inherited)"
+            - "-framework"
+            - "Shared"
+  S2Tests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: S2Tests
+    dependencies:
+      - target: S2
+      - package: ViewInspector
+    settings:
+      base:
+        BUNDLE_LOADER: $(TEST_HOST)
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/S2.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/S2
+        GENERATE_INFOPLIST_FILE: true
+        SWIFT_VERSION: "5.9"
+        SWIFT_STRICT_CONCURRENCY: targeted
+        TARGETED_DEVICE_FAMILY: "1,2"
+      configs:
+        # Search path only, for `import Shared`: the Kotlin code is linked into the host app, and the
+        # test bundle resolves it through BUNDLE_LOADER. Linking the static framework here as well
+        # would put a second Kotlin runtime in the process.
+        Debug:
+          FRAMEWORK_SEARCH_PATHS:
+            - "$(inherited)"
+            - "$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework"
+schemes:
+  S2:
+    build:
+      targets:
+        S2: all
+        S2Tests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - S2Tests
