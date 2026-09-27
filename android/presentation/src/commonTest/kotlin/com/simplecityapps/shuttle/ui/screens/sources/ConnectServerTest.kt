@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.sources
 import com.simplecityapps.fakes.FakeMediaSources
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 class ConnectServerTest {
     @Test

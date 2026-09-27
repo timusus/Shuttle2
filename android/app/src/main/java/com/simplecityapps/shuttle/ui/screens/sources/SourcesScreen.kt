@@ -85,11 +85,9 @@ fun LazyListScope.sourcesContent(uiState: SourcesUiState, actions: SourcesAction
                 rows = listOf { shapes ->
                     LinkSetting(
                         title = stringResource(R.string.sources_scan_now),
-                        summary = when {
-                            uiState.scan != null -> uiState.scan.message ?: stringResource(R.string.sources_scanning_title)
-                            uiState.scanError != null -> stringResource(R.string.sources_scan_failed, uiState.scanError)
-                            else -> stringResource(R.string.sources_scan_summary)
-                        },
+                        summary = uiState.scan?.let { scan -> scan.message ?: stringResource(R.string.sources_scanning_title) }
+                            ?: uiState.scanError?.let { error -> stringResource(R.string.sources_scan_failed, error) }
+                            ?: stringResource(R.string.sources_scan_summary),
                         onClick = actions.onRescan,
                         enabled = uiState.scan == null,
                         icon = Icons.Rounded.Refresh,

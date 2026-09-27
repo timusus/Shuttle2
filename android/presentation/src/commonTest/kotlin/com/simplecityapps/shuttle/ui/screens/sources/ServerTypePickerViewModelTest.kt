@@ -3,22 +3,17 @@ package com.simplecityapps.shuttle.ui.screens.sources
 import com.simplecityapps.fakes.FakeMediaSources
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.trial.Entitlement
-import com.simplecityapps.trial.ServerAccessGate
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.flow.MutableStateFlow
-import org.junit.Test
+import kotlin.test.Test
 
 class ServerTypePickerViewModelTest {
-    private val entitlement = MutableStateFlow<Entitlement>(Entitlement.Free(trialUsed = false))
+    /** The paywall gate's answer: whether another server may be added before Pro. */
+    private var serverAllowed = true
 
-    private fun viewModel(mediaSources: FakeMediaSources): ServerTypePickerViewModel {
-        val serverAccessGate = ServerAccessGate(entitlement, startTrial = { false })
-        return ServerTypePickerViewModel(
-            TryAddServer(serverAccessGate::tryAddServer),
-            ConnectServer(mediaSources),
-        )
-    }
+    private fun viewModel(mediaSources: FakeMediaSources): ServerTypePickerViewModel = ServerTypePickerViewModel(
+        TryAddServer { serverAllowed },
+        ConnectServer(mediaSources),
+    )
 
     @Test
     fun `a new server needs Pro once the trial is used up`() {
@@ -26,7 +21,7 @@ class ServerTypePickerViewModelTest {
 
         viewModel.onAddServer() shouldBe true
 
-        entitlement.value = Entitlement.Free(trialUsed = true)
+        serverAllowed = false
         viewModel.onAddServer() shouldBe false
     }
 

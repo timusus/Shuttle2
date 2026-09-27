@@ -10,12 +10,12 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
 
 class HomeSectionsTest {
     private val songs = FakeSongRepository()
@@ -27,7 +27,7 @@ class HomeSectionsTest {
     private val now = Instant.fromEpochSeconds(1_700_000_000)
 
     @Test
-    fun `recently played keeps played albums, most recent first`() = runTest {
+    fun `recently played keeps played albums - most recent first`() = runTest {
         val older = createAlbum("Older").copy(lastSongPlayed = now - 2.days)
         val newer = createAlbum("Newer").copy(lastSongPlayed = now - 1.days)
         albums.setAlbums(listOf(older, createAlbum("Never played"), newer))
@@ -49,7 +49,7 @@ class HomeSectionsTest {
     }
 
     @Test
-    fun `most played keeps albums played at least twice, most first`() = runTest {
+    fun `most played keeps albums played at least twice - most first`() = runTest {
         val once = createAlbum("Once", playCount = 1)
         val twice = createAlbum("Twice", playCount = 2)
         val often = createAlbum("Often", playCount = 9)
@@ -59,7 +59,7 @@ class HomeSectionsTest {
     }
 
     @Test
-    fun `something different is the unplayed artists, in the same order for the same seed`() = runTest {
+    fun `something different is the unplayed artists - in the same order for the same seed`() = runTest {
         val unplayed = (1..6).map { createAlbumArtist("Artist $it") }
         albumArtists.setAlbumArtists(unplayed + createAlbumArtist("Played", playCount = 3))
 

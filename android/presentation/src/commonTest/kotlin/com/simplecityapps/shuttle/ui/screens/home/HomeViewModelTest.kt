@@ -11,7 +11,6 @@ import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
-import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -24,25 +23,26 @@ import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.screens.settings.about.IsWhatsNewPending
 import com.simplecityapps.shuttle.ui.screens.settings.about.MarkChangelogViewed
-import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
+    private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var preferenceManager: GeneralPreferenceManager
     private lateinit var settingsStore: SettingsStore
@@ -51,7 +51,7 @@ class HomeViewModelTest {
     private val albums = FakeAlbumRepository()
     private val queue = FakeQueueOperations()
     private val playback = FakePlaybackOperations()
-    private val appVersion = AppVersion { BuildConfig.VERSION_NAME }
+    private val appVersion = AppVersion { VERSION_NAME }
 
     private val chlorophyllLoop = createSong(id = 1, name = "Chlorophyll Loop", albumArtist = "Juniper Static", album = "Phase Garden")
     private val tidalMoss = createSong(id = 2, name = "Tidal Moss", albumArtist = "Juniper Static", album = "Phase Garden", duration = 200_000).copy(playbackPosition = 30_000)
@@ -62,16 +62,22 @@ class HomeViewModelTest {
         queue.queueStateFlow.value = QueueState(items = items, currentItem = items[current], currentPosition = current, isRestored = true)
     }
 
-    @Before
+    @BeforeTest
     fun setUp() {
+        Dispatchers.setMain(testDispatcher)
         preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
-        preferenceManager.lastViewedChangelogVersion = BuildConfig.VERSION_NAME
+        preferenceManager.lastViewedChangelogVersion = VERSION_NAME
         settingsStore = SettingsStore(InMemoryKeyValueStore())
         analyticsConsentSettings = AnalyticsConsentSettings(settingsStore)
     }
 
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
     private fun TestScope.viewModel(): HomeViewModel {
-        val sections = HomeSections(albums, FakeAlbumArtistRepository(), songs, seed = 1, dispatcher = mainDispatcherRule.testDispatcher)
+        val sections = HomeSections(albums, FakeAlbumArtistRepository(), songs, seed = 1, dispatcher = testDispatcher)
         return HomeViewModel(
             sections,
             IsWhatsNewPending(preferenceManager, appVersion),
@@ -87,12 +93,12 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `an empty library is the empty state`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `an empty library is the empty state`() = runTest(testDispatcher) {
         viewModel().uiState.value shouldBe HomeUiState.Empty
     }
 
     @Test
-    fun `a library shows its shelves`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `a library shows its shelves`() = runTest(testDispatcher) {
         val often = createAlbum("Phase Garden", "Juniper Static", playCount = 5)
         songs.setSongs(listOf(chlorophyllLoop))
         albums.setAlbums(listOf(often))
@@ -103,19 +109,19 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `shuffle all shuffles every song`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `shuffle all shuffles every song`() = runTest(testDispatcher) {
         songs.setSongs(listOf(chlorophyllLoop))
 
         viewModel().shuffleAll() shouldBe MediaAction.Shuffle(MediaSelection.Songs(listOf(chlorophyllLoop)))
     }
 
     @Test
-    fun `shuffle all does nothing on an empty library`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `shuffle all does nothing on an empty library`() = runTest(testDispatcher) {
         viewModel().shuffleAll().shouldBeNull()
     }
 
     @Test
-    fun `unseen release notes show the whats new card until handled`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `unseen release notes show the whats new card until handled`() = runTest(testDispatcher) {
         preferenceManager.lastViewedChangelogVersion = "2020.01.01"
         songs.setSongs(listOf(chlorophyllLoop))
         val viewModel = viewModel()
@@ -125,11 +131,11 @@ class HomeViewModelTest {
         runCurrent()
 
         (viewModel.uiState.value as HomeUiState.Content).showWhatsNew shouldBe false
-        preferenceManager.lastViewedChangelogVersion shouldBe BuildConfig.VERSION_NAME
+        preferenceManager.lastViewedChangelogVersion shouldBe VERSION_NAME
     }
 
     @Test
-    fun `the whats new card stays hidden when changelogs are turned off`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `the whats new card stays hidden when changelogs are turned off`() = runTest(testDispatcher) {
         preferenceManager.lastViewedChangelogVersion = "2020.01.01"
         preferenceManager.showChangelogOnLaunch = false
         songs.setSongs(listOf(chlorophyllLoop))
@@ -138,7 +144,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `the analytics notice shows once when the notice hasn't been shown yet`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `the analytics notice shows once when the notice hasn't been shown yet`() = runTest(testDispatcher) {
         songs.setSongs(listOf(chlorophyllLoop))
 
         val viewModel = viewModel()
@@ -149,7 +155,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `consuming the analytics notice event removes it`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `consuming the analytics notice event removes it`() = runTest(testDispatcher) {
         songs.setSongs(listOf(chlorophyllLoop))
         val viewModel = viewModel()
         val pending = (viewModel.uiState.value as HomeUiState.Content).events.single()
@@ -161,7 +167,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `the analytics notice does not show once already marked shown`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `the analytics notice does not show once already marked shown`() = runTest(testDispatcher) {
         analyticsConsentSettings.noticeShown.value = true
         songs.setSongs(listOf(chlorophyllLoop))
 
@@ -170,14 +176,14 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `no queue, no resume hero`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `no queue - no resume hero`() = runTest(testDispatcher) {
         songs.setSongs(listOf(chlorophyllLoop))
 
         viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>().resume.shouldBeNull()
     }
 
     @Test
-    fun `the resume hero offers the queue from its current song, with the time left in it`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `the resume hero offers the queue from its current song - with the time left in it`() = runTest(testDispatcher) {
         songs.setSongs(listOf(chlorophyllLoop, tidalMoss))
         queueOf(listOf(chlorophyllLoop, tidalMoss), current = 1)
         playback.progressFlow.value = PlaybackProgress(position = 65_400, duration = 200_000)
@@ -187,7 +193,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `before any progress, the time left counts from where the song was left`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `before any progress - the time left counts from where the song was left`() = runTest(testDispatcher) {
         songs.setSongs(listOf(tidalMoss))
         queueOf(listOf(tidalMoss), current = 0)
 
@@ -195,7 +201,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `the resume hero follows playback and toggles it`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `the resume hero follows playback and toggles it`() = runTest(testDispatcher) {
         songs.setSongs(listOf(tidalMoss))
         queueOf(listOf(tidalMoss), current = 0)
         playback.playbackStateFlow.value = PlaybackState.Playing
@@ -208,10 +214,14 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `shuffling the resume hero shuffles the queue's songs`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `shuffling the resume hero shuffles the queue's songs`() = runTest(testDispatcher) {
         songs.setSongs(listOf(chlorophyllLoop, tidalMoss))
         queueOf(listOf(chlorophyllLoop, tidalMoss), current = 0)
 
         viewModel().shuffleQueue() shouldBe MediaAction.Shuffle(MediaSelection.Songs(listOf(chlorophyllLoop, tidalMoss)))
+    }
+
+    private companion object {
+        const val VERSION_NAME = "2026.09.27"
     }
 }

@@ -6,27 +6,36 @@ import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.testing.MainDispatcherRule
-import com.simplecityapps.trial.Entitlement
-import com.simplecityapps.trial.ServerAccessGate
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SourcesViewModelTest {
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     private val folderStore = FakeScannerFolderStore()
     private val importState = FakeSongImportStateProvider()
-    private val entitlement = MutableStateFlow<Entitlement>(Entitlement.Free(trialUsed = false))
+
+    /** The paywall gate's answer: whether another server may be added before Pro. */
+    private var serverAllowed = true
 
     private fun TestScope.viewModel(mediaSources: FakeMediaSources) = SourcesViewModel(
         mediaSources,
@@ -35,7 +44,7 @@ class SourcesViewModelTest {
         RemoveScannerFolder(folderStore),
         RefreshScannerFolders(folderStore),
         importState,
-        TryAddServer(ServerAccessGate(entitlement, startTrial = { false })::tryAddServer),
+        TryAddServer { serverAllowed },
         ConnectServer(mediaSources),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
@@ -51,7 +60,7 @@ class SourcesViewModelTest {
     }
 
     @Test
-    fun `the Android provider is flagged, since folder choices don't apply to it`() = runTest {
+    fun `the Android provider is flagged - since folder choices don't apply to it`() = runTest {
         viewModel(FakeMediaSources(MediaProviderType.MediaStore)).uiState.value.usesAndroidProvider shouldBe true
     }
 
@@ -78,7 +87,7 @@ class SourcesViewModelTest {
     }
 
     @Test
-    fun `a picked folder is added and scanned, a cancelled pick does nothing`() = runTest {
+    fun `a picked folder is added and scanned - a cancelled pick does nothing`() = runTest {
         val mediaSources = FakeMediaSources(MediaProviderType.Shuttle)
         val viewModel = viewModel(mediaSources)
 
@@ -107,7 +116,7 @@ class SourcesViewModelTest {
     }
 
     @Test
-    fun `resuming re-reads the folders, for a grant revoked while away`() = runTest {
+    fun `resuming re-reads the folders - for a grant revoked while away`() = runTest {
         val viewModel = viewModel(FakeMediaSources(MediaProviderType.Shuttle))
 
         viewModel.onResume()
@@ -128,7 +137,7 @@ class SourcesViewModelTest {
     }
 
     @Test
-    fun `a server sign-in enables it and scans, signing out disables it`() = runTest {
+    fun `a server sign-in enables it and scans - signing out disables it`() = runTest {
         val mediaSources = FakeMediaSources()
         val viewModel = viewModel(mediaSources)
 
@@ -141,7 +150,7 @@ class SourcesViewModelTest {
     }
 
     @Test
-    fun `a failed scan surfaces its error, cleared by the next scan`() = runTest {
+    fun `a failed scan surfaces its error - cleared by the next scan`() = runTest {
         val viewModel = viewModel(FakeMediaSources(MediaProviderType.Shuttle))
 
         importState.setState(SongImportState.ImportComplete(MediaProviderType.Shuttle, "Couldn't reach the server"))
@@ -157,7 +166,7 @@ class SourcesViewModelTest {
 
         viewModel.onAddServer() shouldBe true
 
-        entitlement.value = Entitlement.Free(trialUsed = true)
+        serverAllowed = false
         viewModel.onAddServer() shouldBe false
     }
 }
