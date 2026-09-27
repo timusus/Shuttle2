@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.theme
 
-import com.simplecityapps.imageloading.coil.artworkCacheKey
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
@@ -28,5 +27,12 @@ class ObserveArtworkSeed @Inject constructor(
         .mapLatest { song -> song?.let { seedSource.seedFor(it) } ?: ArtworkSeed.None }
         .onStart { emit(ArtworkSeed.Loading) }
 
-    private fun sameArtwork(old: Song?, new: Song?): Boolean = if (old == null || new == null) old == new else old.artworkCacheKey() == new.artworkCacheKey()
+    private fun sameArtwork(old: Song?, new: Song?): Boolean = if (old == null || new == null) {
+        old == new
+    } else {
+        (old.albumArtist ?: old.friendlyArtistName) == (new.albumArtist ?: new.friendlyArtistName) &&
+            old.album == new.album &&
+            old.name == new.name &&
+            old.artworkVersion == new.artworkVersion
+    }
 }

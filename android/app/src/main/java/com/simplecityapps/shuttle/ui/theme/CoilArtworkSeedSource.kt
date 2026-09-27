@@ -19,11 +19,6 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import timber.log.Timber
 
-/** Loads the seed colour of a song's artwork, for a scheme tinted by it. */
-fun interface ArtworkSeedSource {
-    suspend fun seedFor(song: Song): ArtworkSeed
-}
-
 /**
  * Extracts seeds from a small Coil bitmap of the song's artwork, cached under the song's artwork cache key: the
  * identity of the image the player shows, so a track with its own artwork gets its own seed.
