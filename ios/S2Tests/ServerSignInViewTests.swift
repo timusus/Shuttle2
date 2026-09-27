@@ -72,6 +72,7 @@ struct ServerSignInViewTests {
             #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: id)) != nil, "\(id)")
         }
         #expect((try? sut.inspect().find(text: "Sign In")) != nil)
+        #expect((try? sut.inspect().find(IconSquare.self)) != nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.error")) == nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.quickConnect")) == nil)
         try signInButton(sut).tap()

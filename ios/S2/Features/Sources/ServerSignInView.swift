@@ -172,6 +172,7 @@ struct ServerSignInContent: View {
 
     var body: some View {
         Form {
+            SignInHeader(type: state.type)
             if case .awaitingCode(let code) = state.step {
                 QuickConnectSection(code: code, onCancel: actions.onCancelQuickConnect)
             } else {
@@ -257,7 +258,7 @@ struct ServerSignInContent: View {
     @ViewBuilder private var submission: some View {
         Section {
             Button(action: signIn) {
-                HStack(spacing: 8) {
+                HStack(spacing: Spacing.small) {
                     switch state.step {
                     case .authenticating:
                         ProgressView()
@@ -302,6 +303,28 @@ struct ServerSignInContent: View {
     }
 }
 
+/// The form's header: the server type's glyph, centred, over what the form is for.
+private struct SignInHeader: View {
+    let type: MediaProviderType
+
+    var body: some View {
+        Section {
+            VStack(spacing: Spacing.smallMedium) {
+                IconSquare(systemImage: type.symbol, style: .filled(type.color), size: .large)
+                    .scaleEffect(1.25)
+                    .padding(Spacing.small)
+                Text("Connect to \(type.title)")
+                    .font(.s2Title3)
+                    .multilineTextAlignment(.center)
+                    .accessibilityAddTraits(.isHeader)
+            }
+            .frame(maxWidth: .infinity)
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
+        }
+    }
+}
+
 private struct RequiredNote: View {
     let field: String
 
@@ -318,7 +341,7 @@ private struct QuickConnectSection: View {
 
     var body: some View {
         Section {
-            VStack(spacing: 12) {
+            VStack(spacing: Spacing.smallMedium) {
                 Text("Enter this code in another Jellyfin app to sign in.")
                     .multilineTextAlignment(.center)
                 Text(code)
@@ -328,7 +351,7 @@ private struct QuickConnectSection: View {
                 ProgressView()
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.small)
             Button("Cancel", role: .cancel, action: onCancel)
                 .frame(maxWidth: .infinity)
                 .accessibilityIdentifier("serverSignIn.cancelQuickConnect")

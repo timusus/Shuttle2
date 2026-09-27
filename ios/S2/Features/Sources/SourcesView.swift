@@ -111,6 +111,24 @@ extension MediaProviderType {
         case .plex: "Plex"
         }
     }
+
+    /// The glyph Sources, the picker and sign-in draw for it.
+    var symbol: String {
+        switch self {
+        case .shuttle, .mediaStore: "iphone"
+        case .emby, .jellyfin, .plex: "server.rack"
+        }
+    }
+
+    /// Its glyph's colour, near the brand's own.
+    var color: Color {
+        switch self {
+        case .shuttle, .mediaStore: .gray
+        case .jellyfin: .purple
+        case .emby: .green
+        case .plex: .orange
+        }
+    }
 }
 
 /// Sources from plain values.
@@ -129,11 +147,7 @@ struct SourcesContent: View {
             Section {
                 ForEach(state.servers, id: \.self) { type in
                     Button { confirming = type } label: {
-                        LabeledContent {
-                            Text("Connected")
-                        } label: {
-                            Label(type.title, systemImage: "server.rack")
-                        }
+                        ServerRow(type: type)
                     }
                     .tint(.primary)
                     .accessibilityIdentifier("sources.server.\(type.name)")
@@ -171,6 +185,48 @@ struct SourcesContent: View {
     }
 }
 
+/// A connected server: its glyph large, its name, and a "Connected" status capsule.
+private struct ServerRow: View {
+    let type: MediaProviderType
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.small))
+            : AnyLayout(HStackLayout(spacing: Spacing.smallMedium))
+        layout {
+            IconSquare(systemImage: type.symbol, style: .filled(type.color), size: .large)
+            VStack(alignment: .leading, spacing: Spacing.tiny) {
+                Text(type.title).font(.s2Headline)
+                Text("Media server").font(.subheadline).foregroundStyle(.s2SecondaryText)
+            }
+            if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: Spacing.small) }
+            StatusCapsule(text: "Connected", color: .green)
+        }
+        .padding(.vertical, Spacing.xsmall)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// A short status in a tinted capsule, with a dot of its colour.
+struct StatusCapsule: View {
+    let text: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: Spacing.xsmall) {
+            Circle().fill(color).frame(width: Spacing.small, height: Spacing.small)
+            Text(text)
+        }
+        .font(.caption.weight(.semibold))
+        .foregroundStyle(color)
+        .padding(.horizontal, Spacing.small)
+        .padding(.vertical, Spacing.xsmall)
+        .background(Capsule().fill(color.opacity(0.15)))
+    }
+}
+
 /// "Scan Now", with the running scan's progress or the last one's failure (Android's rescan row).
 private struct ScanRow: View {
     let scan: SourcesState.Scan
@@ -178,8 +234,8 @@ private struct ScanRow: View {
 
     var body: some View {
         Button(action: onRescan) {
-            VStack(alignment: .leading, spacing: 6) {
-                Label("Scan Now", systemImage: "arrow.clockwise")
+            VStack(alignment: .leading, spacing: Spacing.small) {
+                Label { Text("Scan Now") } icon: { IconSquare(systemImage: "arrow.clockwise", style: .filled(.teal)) }
                 switch scan {
                 case .idle:
                     Text("Look for new and changed music").font(.caption).foregroundStyle(.secondary)
@@ -212,7 +268,7 @@ struct ServerTypePicker: View {
         NavigationStack {
             List(types, id: \.self) { type in
                 Button { onSelect(type) } label: {
-                    Label(type.title, systemImage: "server.rack")
+                    Label { Text(type.title) } icon: { IconSquare(systemImage: type.symbol, style: .filled(type.color)) }
                 }
                 .tint(.primary)
                 .accessibilityIdentifier("serverTypePicker.\(type.name)")
