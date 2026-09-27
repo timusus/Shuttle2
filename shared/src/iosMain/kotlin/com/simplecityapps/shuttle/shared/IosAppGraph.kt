@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.shared
 
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
 import com.simplecityapps.shuttle.shared.sources.ServerSignIn
@@ -57,6 +58,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** Signs in to a server; the DEBUG launch seed's path until the phase 7 sign-in screen. */
     val serverSignIn: ServerSignIn
+
+    /** Authenticated artwork urls for songs, albums and album artists; Swift's `ArtworkLoader` fetches and decodes. */
+    val artworkUrls: ArtworkUrls
 
     val shellViewModel: ShellViewModel
     val homeViewModel: HomeViewModel

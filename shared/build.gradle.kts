@@ -65,6 +65,7 @@ kotlin {
             implementation(libs.kotlin.test)
             implementation(libs.kotest)
             implementation(libs.kotlinx.coroutinesTest)
+            implementation(project(":android:presentation-testing"))
         }
     }
 }
