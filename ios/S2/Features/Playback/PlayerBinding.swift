@@ -18,6 +18,12 @@ struct NowPlayingState: Equatable {
     /// 1 being normal speed.
     var playbackSpeed: Float = 1
     var sleepTimerActive = false
+    /// Whether the current song is a favourite.
+    var isFavourite = false
+    /// The song actions the current song's menu offers, in the shared ViewModel's order.
+    var songActions: [NowPlayingSongAction] = []
+    /// The playlists Add to Playlist offers.
+    var playlists: [PlaylistOption] = []
 
     /// Nothing queued.
     static let idle = NowPlayingState()
@@ -37,6 +43,62 @@ struct NowPlayingQueueRow: Identifiable, Equatable {
         self.artist = artist
         self.artwork = artwork
         self.isCurrent = isCurrent
+    }
+}
+
+/// The shared song actions Now Playing's menu offers, of those the shared ViewModel allows the playing song
+/// (`PlayerViewModel.songActions`). Edit Tags and Song Info have no iOS screen yet, so they're left out.
+enum NowPlayingSongAction: Equatable, CaseIterable {
+    case addToPlaylist
+    case goToAlbum
+    case goToArtist
+    case exclude
+
+    init?(_ type: MediaActionType) {
+        switch type {
+        case .addToPlaylist: self = .addToPlaylist
+        case .goToAlbum: self = .goToAlbum
+        case .goToArtist: self = .goToArtist
+        case .exclude: self = .exclude
+        default: return nil
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .addToPlaylist: "Add to Playlist"
+        case .goToAlbum: "Go to Album"
+        case .goToArtist: "Go to Artist"
+        case .exclude: "Exclude"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .addToPlaylist: "text.badge.plus"
+        case .goToAlbum: "square.stack"
+        case .goToArtist: "music.microphone"
+        case .exclude: "nosign"
+        }
+    }
+}
+
+/// A playlist Add to Playlist can add to.
+struct PlaylistOption: Identifiable, Equatable {
+    let id: Int64
+    let name: String
+}
+
+/// Where Add to Playlist puts the song: a new playlist by that name, Favorites, or an existing playlist.
+enum PlaylistChoice: Equatable {
+    case new(name: String)
+    case favourites
+    case playlist(id: Int64)
+
+    /// A new playlist's name without surrounding whitespace, or nil when that leaves nothing.
+    static func trimmedName(_ name: String) -> String? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }
 
@@ -100,8 +162,20 @@ struct PlayerActions {
     var previous: () -> Void = {}
     /// Seeks the current song to a position in milliseconds.
     var seek: (Int) -> Void = { _ in }
-    /// Skips to the queue row at this index.
-    var selectQueueItem: (Int) -> Void = { _ in }
+    /// Skips to the queue row with this id.
+    var selectQueueItem: (Int64) -> Void = { _ in }
+    /// Moves the queue row with the first id to just after the one with the second, or to the top when nil.
+    var moveQueueItem: (Int64, Int64?) -> Void = { _, _ in }
+    /// Removes the queue row with this id.
+    var removeQueueItem: (Int64) -> Void = { _ in }
+    /// Moves the queue row with this id to play after the current one.
+    var playNext: (Int64) -> Void = { _ in }
+    var clearQueue: () -> Void = {}
+    var toggleFavourite: () -> Void = {}
+    /// Runs a song action on the current song; Add to Playlist goes through `addToPlaylist`.
+    var songAction: (NowPlayingSongAction) -> Void = { _ in }
+    /// Adds the current song to a playlist.
+    var addToPlaylist: (PlaylistChoice) -> Void = { _ in }
     var toggleShuffle: () -> Void = {}
     /// Steps repeat through off, all, one.
     var toggleRepeat: () -> Void = {}
@@ -117,8 +191,9 @@ struct PlayerActions {
 
 // MARK: - The binding
 
-/// The mini player's and Now Playing's state and commands, off the shared `PlayerViewModel` (#586, #587): its
-/// `uiState` mapped onto `MiniPlayerState` and `NowPlayingState`, its actions onto `PlayerActions`.
+/// The mini player's and Now Playing's state and commands, off the shared `PlayerViewModel` (#586, #587, #621): its
+/// `uiState` mapped onto `MiniPlayerState` and `NowPlayingState`, its actions onto `PlayerActions`, and its one-shot
+/// events handed to Now Playing as `events`, which `outcome(for:)` turns into a notice or a route to open.
 ///
 /// Each state is replaced only when it changes, so the mini player, which reads `miniPlayer` alone, isn't
 /// redrawn on every progress tick. The displayed position holds a seek's target until the player catches up
@@ -127,18 +202,25 @@ struct PlayerActions {
 @Observable
 final class PlayerBinding {
     private let viewModel: PlayerViewModel
-    /// `nonisolated(unsafe)`: only `deinit` touches it off the main actor, and by then no other access
+    /// `nonisolated(unsafe)`: only `deinit` touches them off the main actor, and by then no other access
     /// can be concurrent (deinit runs once the last reference is gone).
     @ObservationIgnored private nonisolated(unsafe) var observer: Task<Void, Never>?
+    @ObservationIgnored private nonisolated(unsafe) var playlistObserver: Task<Void, Never>?
+    @ObservationIgnored private nonisolated(unsafe) var songActionsObserver: Task<Void, Never>?
 
     private(set) var miniPlayer = MiniPlayerState()
     private(set) var nowPlaying = NowPlayingState.idle
+    /// The ViewModel's pending one-shot events; hand each id back through `eventHandled` once consumed.
+    private(set) var events: [PendingEvent<any PlayerUiEvent>] = []
 
     /// The player state the rest of `nowPlaying` was last built from: a progress tick keeps the same instance,
     /// so the queue rows are only rebuilt when the player state itself changes.
     @ObservationIgnored private var lastPlayer: PlayerUiState?
     @ObservationIgnored private var reportedPositionMs = 0
     @ObservationIgnored private var seekHold = SeekHold()
+    /// The song whose actions `songActionsObserver` follows, by id.
+    @ObservationIgnored private var songActionsFor: Int64?
+    @ObservationIgnored private var playlistsById: [Int64: Playlist] = [:]
 
     init(viewModel: PlayerViewModel) {
         self.viewModel = viewModel
@@ -148,6 +230,8 @@ final class PlayerBinding {
 
     deinit {
         observer?.cancel()
+        playlistObserver?.cancel()
+        songActionsObserver?.cancel()
     }
 
     private func observe() {
@@ -155,6 +239,12 @@ final class PlayerBinding {
         observer = Task { [weak self] in
             for await state in uiState {
                 self?.update(state)
+            }
+        }
+        let playlists = viewModel.playlists()
+        playlistObserver = Task { [weak self] in
+            for await list in playlists {
+                self?.updatePlaylists(list)
             }
         }
     }
@@ -193,11 +283,38 @@ final class PlayerBinding {
             next.repeatMode = NowPlayingRepeat(player.repeatMode)
             next.playbackSpeed = player.playbackSpeed
             next.sleepTimerActive = player.sleepTimerActive
+            next.isFavourite = player.favourite
+            if current == nil { next.songActions = [] }
+            observeSongActions(for: current?.song)
         }
         reportedPositionMs = Int(state.progress.positionMs)
         next.positionMs = seekHold.displayed(reportedMs: reportedPositionMs)
         next.durationMs = Int(state.progress.durationMs)
         if next != nowPlaying { nowPlaying = next }
+
+        if state.events.map(\.id) != events.map(\.id) { events = state.events }
+    }
+
+    /// Follows the actions the shared ViewModel allows `song`, restarting when the current song changes.
+    private func observeSongActions(for song: Song?) {
+        guard song?.id != songActionsFor else { return }
+        songActionsFor = song?.id
+        songActionsObserver?.cancel()
+        guard let song else { return }
+        let actions = viewModel.songActions(song: song)
+        songActionsObserver = Task { [weak self] in
+            for await types in actions {
+                guard let self, !Task.isCancelled else { return }
+                let mapped = types.compactMap(NowPlayingSongAction.init)
+                if mapped != nowPlaying.songActions { nowPlaying.songActions = mapped }
+            }
+        }
+    }
+
+    private func updatePlaylists(_ list: [Playlist]) {
+        playlistsById = Dictionary(list.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let options = list.map { PlaylistOption(id: $0.id, name: $0.name) }
+        if options != nowPlaying.playlists { nowPlaying.playlists = options }
     }
 
     var actions: PlayerActions {
@@ -207,7 +324,16 @@ final class PlayerBinding {
             next: { viewModel.skipToNext() },
             previous: { viewModel.skipToPrevious() },
             seek: { [weak self] ms in self?.seek(toMs: ms) },
-            selectQueueItem: { [weak self] index in self?.selectQueueItem(at: index) },
+            selectQueueItem: { uid in viewModel.skipToQueueItem(uid: uid) },
+            moveQueueItem: { uid, afterUid in
+                viewModel.moveQueueItem(uid: uid, afterUid: afterUid.map { KotlinLong(value: $0) })
+            },
+            removeQueueItem: { uid in viewModel.removeQueueItem(uid: uid) },
+            playNext: { uid in viewModel.playNext(uid: uid) },
+            clearQueue: { viewModel.clearQueue() },
+            toggleFavourite: { viewModel.toggleFavourite() },
+            songAction: { [weak self] action in self?.perform(action) },
+            addToPlaylist: { [weak self] choice in self?.addToPlaylist(choice) },
             toggleShuffle: { viewModel.toggleShuffle() },
             toggleRepeat: { viewModel.cycleRepeatMode() },
             setSpeed: { speed in viewModel.setPlaybackSpeed(speed: speed) },
@@ -215,6 +341,52 @@ final class PlayerBinding {
                 viewModel.startSleepTimer(durationMs: Int64(minutes) * 60_000, playToEnd: false)
             },
             stopSleepTimer: { viewModel.stopSleepTimer() }
+        )
+    }
+
+    /// The current song, as a one-song selection for the shared actions.
+    private var currentSelection: (any MediaSelection)? {
+        lastPlayer?.current.map { MediaSelectionSongs(song: $0.song) }
+    }
+
+    private func perform(_ action: NowPlayingSongAction) {
+        guard let selection = currentSelection else { return }
+        let mediaAction: (any MediaAction)? = switch action {
+        case .addToPlaylist: nil
+        case .goToAlbum: MediaActionGoToAlbum(selection: selection)
+        case .goToArtist: MediaActionGoToArtist(selection: selection)
+        case .exclude: MediaActionExclude(selection: selection)
+        }
+        if let mediaAction { viewModel.onMediaAction(action: mediaAction) }
+    }
+
+    private func addToPlaylist(_ choice: PlaylistChoice) {
+        guard let selection = currentSelection else { return }
+        let action: (any MediaAction)? = switch choice {
+        case .new(let name):
+            PlaylistChoice.trimmedName(name).map { MediaActionCreatePlaylist(selection: selection, name: $0) }
+        case .favourites:
+            MediaActionFavourite(selection: selection, favourite: true)
+        case .playlist(let id):
+            playlistsById[id].map { MediaActionAddToPlaylist(selection: selection, playlist: $0, ignoreDuplicates: false) }
+        }
+        if let action { viewModel.onMediaAction(action: action) }
+    }
+
+    /// Tells the ViewModel the event with this id has been consumed.
+    func eventHandled(_ id: Int64) {
+        viewModel.onEventHandled(id: id)
+    }
+
+    /// What Now Playing does with one of the ViewModel's events; its Undo and Add Anyway buttons go back to the
+    /// ViewModel.
+    func outcome(for event: any PlayerUiEvent) -> PlayerEventOutcome? {
+        let viewModel = viewModel
+        return PlayerEventOutcome.resolve(
+            event,
+            undoClearQueue: { viewModel.undoClearQueue() },
+            undoRemoveQueueItem: { viewModel.undoRemoveQueueItem() },
+            send: { viewModel.onMediaAction(action: $0) }
         )
     }
 
@@ -231,10 +403,5 @@ final class PlayerBinding {
             if shown != nowPlaying.positionMs { nowPlaying.positionMs = shown }
         }
     }
-
-    /// Skips to the queue row at `index`, as tapping it does.
-    func selectQueueItem(at index: Int) {
-        guard nowPlaying.queue.indices.contains(index) else { return }
-        viewModel.skipToQueueItem(uid: nowPlaying.queue[index].id)
-    }
 }
+

@@ -25,7 +25,8 @@ struct ContentView: View {
             // For screens that push without a `NavigationLink`, such as Sources after its type picker closes.
             .environment(navigator)
             .nowPlayingPresentation(isPresented: $showNowPlaying, tier: tier) {
-                NowPlayingView()
+                // Go to Album/Artist closes Now Playing and pushes onto the selected root.
+                NowPlayingView(onOpen: { route in navigator.open(route) })
             }
             .sheet(isPresented: $navigator.showsSettings) {
                 SettingsSheet(navigator: navigator, showNowPlaying: $showNowPlaying)

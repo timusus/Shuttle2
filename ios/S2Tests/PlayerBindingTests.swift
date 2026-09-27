@@ -76,9 +76,92 @@ struct PlayerBindingTests {
         _ = try await loadQueue()
         #expect(await waitUntil { binding.nowPlaying.queue.count == 5 })
 
-        binding.actions.selectQueueItem(2)
+        binding.actions.selectQueueItem(binding.nowPlaying.queue[2].id)
         #expect(await waitUntil { binding.nowPlaying.title == "Teardrop" })
         #expect(binding.nowPlaying.queue[2].isCurrent)
+    }
+
+    @Test func movingARowPutsItAfterTheGivenOne() async throws {
+        _ = try await loadQueue()
+        #expect(await waitUntil { binding.nowPlaying.queue.count == 5 })
+        let ids = binding.nowPlaying.queue.map(\.id)
+
+        binding.actions.moveQueueItem(ids[4], ids[0])
+        #expect(await waitUntil { binding.nowPlaying.queue.map(\.id) == [ids[0], ids[4], ids[1], ids[2], ids[3]] })
+
+        binding.actions.moveQueueItem(ids[2], nil)
+        #expect(await waitUntil { binding.nowPlaying.queue.first?.id == ids[2] })
+    }
+
+    @Test func playNextMovesARowAfterTheCurrentSong() async throws {
+        _ = try await loadQueue()
+        #expect(await waitUntil { binding.nowPlaying.queue.count == 5 })
+        let ids = binding.nowPlaying.queue.map(\.id)
+
+        binding.actions.playNext(ids[3])
+        #expect(await waitUntil { binding.nowPlaying.queue.map(\.id) == [ids[0], ids[3], ids[1], ids[2], ids[4]] })
+    }
+
+    @Test func removingARowOffersUndo() async throws {
+        _ = try await loadQueue()
+        #expect(await waitUntil { binding.nowPlaying.queue.count == 5 })
+        let removed = binding.nowPlaying.queue[3].id
+
+        binding.actions.removeQueueItem(removed)
+        #expect(await waitUntil { binding.nowPlaying.queue.count == 4 })
+        #expect(!binding.nowPlaying.queue.contains { $0.id == removed })
+        #expect(await waitUntil { binding.events.contains { $0.value is PlayerUiEventQueueItemRemoved } })
+
+        let event = try #require(binding.events.last)
+        guard case .notice(let notice) = binding.outcome(for: try #require(event.value)) else {
+            Issue.record("Expected a notice")
+            return
+        }
+        binding.eventHandled(event.id)
+        #expect(await waitUntil { binding.events.isEmpty })
+        notice.action?()
+        #expect(await waitUntil { binding.nowPlaying.queue.count == 5 })
+    }
+
+    @Test func clearingTheQueueOffersUndo() async throws {
+        _ = try await loadQueue()
+        #expect(await waitUntil { binding.nowPlaying.queue.count == 5 })
+
+        binding.actions.clearQueue()
+        #expect(await waitUntil { binding.nowPlaying.queue.isEmpty })
+        #expect(await waitUntil { binding.events.contains { $0.value is PlayerUiEventQueueCleared } })
+
+        let event = try #require(binding.events.last)
+        guard case .notice(let notice) = binding.outcome(for: try #require(event.value)) else {
+            Issue.record("Expected a notice")
+            return
+        }
+        #expect(notice.message == "Queue cleared")
+        notice.action?()
+        #expect(await waitUntil { binding.nowPlaying.queue.count == 5 })
+    }
+
+    @Test func theCurrentSongOffersTheActionsIOSCanRun() async throws {
+        _ = try await loadQueue()
+        #expect(await waitUntil { binding.nowPlaying.songActions.contains(.goToAlbum) })
+        #expect(binding.nowPlaying.songActions.contains(.addToPlaylist))
+        #expect(binding.nowPlaying.songActions.contains(.goToArtist))
+    }
+
+    @Test func goToAlbumAsksNowPlayingToOpenIt() async throws {
+        _ = try await loadQueue()
+        #expect(await waitUntil { binding.nowPlaying.title != nil })
+
+        binding.actions.songAction(.goToAlbum)
+        #expect(await waitUntil { !binding.events.isEmpty })
+        let event = try #require(binding.events.last?.value)
+        // A demo song isn't in the library, so the ViewModel either opens the album or says it's missing.
+        switch binding.outcome(for: event) {
+        case .open(let route):
+            if case .album = route {} else { Issue.record("Expected the album, got \(route)") }
+        case .notice(let notice): #expect(notice.message == "Not in your library")
+        case nil: Issue.record("Expected an outcome")
+        }
     }
 
     @Test func shuffleAndRepeatFollowTheQueueModes() async throws {

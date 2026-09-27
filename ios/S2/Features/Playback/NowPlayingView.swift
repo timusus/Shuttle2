@@ -5,18 +5,36 @@ import SwiftUI
 /// Presented by `nowPlayingPresentation` (a full-screen cover in `compact`, a form sheet otherwise); the queue
 /// opens through `playerSheet` (a sheet in `compact`, a popover otherwise). Bound to the shared `PlayerViewModel`
 /// through `PlayerBinding` only.
+///
+/// The title row has the favourite toggle and the song's actions menu (Add to Playlist, Go to Album/Artist, Exclude);
+/// the bottom bar has the AirPlay route picker. The ViewModel's one-shot events are consumed here while Now Playing is
+/// up: a notice (`PlayerNotice`, with Undo where the ViewModel offers it) or a screen to open, which closes Now
+/// Playing and pushes the route through `onOpen`.
 struct NowPlayingView: View {
     let binding: PlayerBinding
+    let onOpen: (Route) -> Void
     @Environment(\.dismiss) private var dismiss
+    @State private var notice: PlayerNotice?
 
     /// `binding` defaults to the same `PlayerBinding` `MiniPlayerView` uses (`AppGraph.dependencies.playerBinding`),
-    /// so the two always show the same state.
-    init(binding: PlayerBinding = AppGraph.dependencies.playerBinding) {
+    /// so the two always show the same state. `onOpen` gets the route a song action opens, once Now Playing has
+    /// been asked to close.
+    init(binding: PlayerBinding = AppGraph.dependencies.playerBinding, onOpen: @escaping (Route) -> Void = { _ in }) {
         self.binding = binding
+        self.onOpen = onOpen
     }
 
     var body: some View {
-        NowPlayingContent(state: binding.nowPlaying, actions: binding.actions, onClose: { dismiss() })
+        NowPlayingContent(state: binding.nowPlaying, actions: binding.actions, notice: $notice, onClose: { dismiss() })
+            .consumeEvents(binding.events, handled: { binding.eventHandled($0) }) { event in
+                switch binding.outcome(for: event) {
+                case .notice(let next): notice = next
+                case .open(let route):
+                    dismiss()
+                    onOpen(route)
+                case nil: break
+                }
+            }
     }
 }
 
@@ -24,10 +42,14 @@ struct NowPlayingView: View {
 struct NowPlayingContent: View {
     let state: NowPlayingState
     var actions: PlayerActions = .none
+    /// The notice showing, if any; the queue shows it instead while it's open.
+    var notice: Binding<PlayerNotice?> = .constant(nil)
     var onClose: () -> Void = {}
 
     @Environment(\.layoutTier) private var tier
     @State private var showQueue = false
+    @State private var showNewPlaylist = false
+    @State private var newPlaylistName = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -40,6 +62,16 @@ struct NowPlayingContent: View {
             }
         }
         .background(Color(.systemBackground))
+        .playerNotice(showQueue ? .constant(nil) : notice)
+        .alert("New Playlist", isPresented: $showNewPlaylist) {
+            TextField("Playlist Name", text: $newPlaylistName)
+            Button("Cancel", role: .cancel) { newPlaylistName = "" }
+            Button("Create") {
+                actions.addToPlaylist(.new(name: newPlaylistName))
+                newPlaylistName = ""
+            }
+            .disabled(PlaylistChoice.trimmedName(newPlaylistName) == nil)
+        }
     }
 
     private var closeRow: some View {
@@ -64,19 +96,24 @@ struct NowPlayingContent: View {
             artwork
                 .frame(maxHeight: .infinity)
 
-            VStack(spacing: Spacing.tiny) {
-                Text(state.title ?? "")
-                    .font(.s2Title2)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .accessibilityAddTraits(.isHeader)
-                if let subtitle {
-                    Text(subtitle)
-                        .font(.body)
-                        .foregroundStyle(.s2SecondaryText)
+            HStack(spacing: Spacing.small) {
+                favouriteButton
+                VStack(spacing: Spacing.tiny) {
+                    Text(state.title ?? "")
+                        .font(.s2Title2)
                         .multilineTextAlignment(.center)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .accessibilityAddTraits(.isHeader)
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(.body)
+                            .foregroundStyle(.s2SecondaryText)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(1)
+                    }
                 }
+                .frame(maxWidth: .infinity)
+                songMenu
             }
 
             NowPlayingScrubber(positionMs: state.positionMs, durationMs: state.durationMs, onSeek: actions.seek)
@@ -147,6 +184,12 @@ struct NowPlayingContent: View {
 
             Spacer()
 
+            AirPlayButton(activeTint: .accentColor, inactiveTint: .s2SecondaryText)
+                .frame(width: 44, height: 44)
+                .accessibilityIdentifier("nowPlaying.airPlay")
+
+            Spacer()
+
             Button { showQueue = true } label: {
                 Image(systemName: "list.bullet")
                     .modeGlyph(isOn: false)
@@ -156,11 +199,51 @@ struct NowPlayingContent: View {
             .accessibilityLabel("Queue")
             .accessibilityIdentifier("nowPlaying.queue")
             .playerSheet(isPresented: $showQueue, tier: tier) {
-                NowPlayingQueueList(queue: state.queue) { index in
-                    actions.selectQueueItem(index)
-                }
+                NowPlayingQueueList(queue: state.queue, actions: actions, notice: notice)
             }
         }
+    }
+
+    private var favouriteButton: some View {
+        Button(action: actions.toggleFavourite) {
+            Image(systemName: state.isFavourite ? "heart.fill" : "heart")
+                .modeGlyph(isOn: state.isFavourite)
+        }
+        .buttonStyle(.plain)
+        .disabled(state.title == nil)
+        .accessibilityLabel("Favorite")
+        .accessibilityValue(state.isFavourite ? "On" : "Off")
+        .accessibilityIdentifier("nowPlaying.favourite")
+    }
+
+    /// The current song's actions, those the ViewModel offers that iOS has a screen for.
+    private var songMenu: some View {
+        Menu {
+            ForEach(state.songActions, id: \.self) { action in
+                switch action {
+                case .addToPlaylist:
+                    Menu {
+                        Button("New Playlist…", systemImage: "plus") { showNewPlaylist = true }
+                        Button("Favorites", systemImage: "heart") { actions.addToPlaylist(.favourites) }
+                        ForEach(state.playlists) { playlist in
+                            Button(playlist.name) { actions.addToPlaylist(.playlist(id: playlist.id)) }
+                        }
+                    } label: {
+                        Label(action.title, systemImage: action.systemImage)
+                    }
+                case .exclude:
+                    Button(action.title, systemImage: action.systemImage, role: .destructive) { actions.songAction(action) }
+                default:
+                    Button(action.title, systemImage: action.systemImage) { actions.songAction(action) }
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .modeGlyph(isOn: false)
+        }
+        .disabled(state.songActions.isEmpty)
+        .accessibilityLabel("More")
+        .accessibilityIdentifier("nowPlaying.more")
     }
 
     /// The playback speeds offered, 1 being normal.
@@ -330,26 +413,95 @@ struct NowPlayingTransport: View {
     }
 }
 
-/// The queue, from Now Playing's queue button: every item with the current one marked, tap to skip to it.
+/// The queue, from Now Playing's queue button: every item with the current one marked, tap to skip to it. Edit
+/// mode (the Edit/Done button) reorders by dragging; a swipe, or Remove from Queue in a row's context menu, takes an
+/// item out (with Undo); Play Next moves it after the current song; Clear empties the queue (with Undo). Moves and
+/// removals show at once and the player's queue replaces them when it catches up. Rows are keyed by the queue item's
+/// uid, never its position.
 struct NowPlayingQueueList: View {
     let queue: [NowPlayingQueueRow]
-    let onSelect: (Int) -> Void
+    var actions: PlayerActions = .none
+    var notice: Binding<PlayerNotice?> = .constant(nil)
+
+    @State private var rows: [NowPlayingQueueRow]
+    @State private var editMode: EditMode = .inactive
+
+    init(queue: [NowPlayingQueueRow], actions: PlayerActions = .none, notice: Binding<PlayerNotice?> = .constant(nil)) {
+        self.queue = queue
+        self.actions = actions
+        self.notice = notice
+        _rows = State(initialValue: queue)
+    }
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(Array(queue.enumerated()), id: \.element.id) { index, item in
-                    Button { onSelect(index) } label: {
-                        row(item)
+            Group {
+                if rows.isEmpty {
+                    ContentUnavailableView("Queue Empty", systemImage: "list.bullet", description: Text("Songs you play show up here."))
+                } else {
+                    List {
+                        ForEach(rows) { item in
+                            Button { actions.selectQueueItem(item.id) } label: {
+                                row(item)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(item.isCurrent ? "\(item.title), now playing" : item.title)
+                            .contextMenu {
+                                NowPlayingQueueRowMenu(item: item, playNext: actions.playNext, remove: remove)
+                            }
+                        }
+                        .onMove(perform: move)
+                        .onDelete { offsets in
+                            offsets.map { rows[$0].id }.forEach(remove)
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(item.isCurrent ? "\(item.title), now playing" : item.title)
+                    .listStyle(.plain)
                 }
             }
-            .listStyle(.plain)
             .navigationTitle("Up Next")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if !rows.isEmpty {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Clear", role: .destructive, action: actions.clearQueue)
+                            .accessibilityIdentifier("queue.clear")
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(editMode.isEditing ? "Done" : "Edit") {
+                            withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+                        }
+                        .fontWeight(editMode.isEditing ? .semibold : .regular)
+                        .accessibilityIdentifier("queue.edit")
+                    }
+                }
+            }
+            .environment(\.editMode, $editMode)
+            .onChange(of: queue) { _, newQueue in rows = newQueue }
+            .playerNotice(notice)
         }
+    }
+
+    private func move(from source: IndexSet, to destination: Int) {
+        guard let result = Self.move(rows, from: source, to: destination) else { return }
+        rows = result.rows
+        actions.moveQueueItem(result.uid, result.afterUid)
+    }
+
+    private func remove(_ uid: Int64) {
+        rows.removeAll { $0.id == uid }
+        actions.removeQueueItem(uid)
+    }
+
+    /// `rows` after moving the row at `source` to `destination` (`List.onMove`'s offsets), with the moved row's uid
+    /// and the uid of the row it now follows (nil at the top): the ViewModel moves by uid. Nil when nothing moves.
+    static func move(
+        _ rows: [NowPlayingQueueRow], from source: IndexSet, to destination: Int
+    ) -> (rows: [NowPlayingQueueRow], uid: Int64, afterUid: Int64?)? {
+        guard source.count == 1, let from = source.first, rows.indices.contains(from) else { return nil }
+        var moved = rows
+        moved.move(fromOffsets: source, toOffset: destination)
+        guard moved != rows, let to = moved.firstIndex(where: { $0.id == rows[from].id }) else { return nil }
+        return (moved, rows[from].id, to == 0 ? nil : moved[to - 1].id)
     }
 
     private func row(_ item: NowPlayingQueueRow) -> some View {
@@ -383,6 +535,20 @@ struct NowPlayingQueueList: View {
     }
 }
 
+/// A queue row's context menu: Play Next (not for the playing song) and Remove from Queue.
+struct NowPlayingQueueRowMenu: View {
+    let item: NowPlayingQueueRow
+    let playNext: (Int64) -> Void
+    let remove: (Int64) -> Void
+
+    var body: some View {
+        if !item.isCurrent {
+            Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { playNext(item.id) }
+        }
+        Button("Remove from Queue", systemImage: "minus.circle", role: .destructive) { remove(item.id) }
+    }
+}
+
 #Preview("Playing") {
     NowPlayingContent(
         state: NowPlayingState(
@@ -392,8 +558,12 @@ struct NowPlayingQueueList: View {
                 .init(id: 1, title: "Paranoid Android", artist: "Radiohead", isCurrent: true),
                 .init(id: 2, title: "Hyperballad", artist: "Björk", isCurrent: false),
             ],
-            shuffleOn: true, repeatMode: .one
-        )
+            shuffleOn: true, repeatMode: .one,
+            isFavourite: true,
+            songActions: NowPlayingSongAction.allCases,
+            playlists: [.init(id: 1, name: "Road Trip")]
+        ),
+        notice: .constant(PlayerNotice(message: "1 song added to Road Trip"))
     )
 }
 
@@ -406,7 +576,10 @@ struct NowPlayingQueueList: View {
         queue: [
             .init(id: 1, title: "Paranoid Android", artist: "Radiohead", isCurrent: true),
             .init(id: 2, title: "Hyperballad", artist: "Björk", isCurrent: false),
-        ],
-        onSelect: { _ in }
+        ]
     )
+}
+
+#Preview("Empty queue") {
+    NowPlayingQueueList(queue: [])
 }
