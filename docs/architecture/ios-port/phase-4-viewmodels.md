@@ -106,6 +106,35 @@ All six ViewModels live in `presentation`'s `commonMain` with their UI state and
   tests share.
 - **Domain.** `SongImportStateProvider` and `Progress` moved to `:android:domain`.
 
+## Wave 2: what landed
+
+All six ViewModels live in `presentation`'s `commonMain`: `AlbumArtistListViewModel`, `AlbumListViewModel`,
+`GenreListViewModel`, `SongListViewModel` (`ui/screens/library/{albumartists,albums,genres,songs}`),
+`PlaylistListViewModel` (`ui/screens/library/playlists`) and `MediaActionsViewModel`
+(`ui/common/mediaactions`), with the library view-setting/sort/list-mode prefs trio
+(`ReadLibraryViewSetting`/`SaveLibraryViewSetting`, `LibraryViewSetting`, `SortPreferenceManager`) and
+`SmartPlaylistId` (now a portable domain enum in `:android:domain`, no longer app-only) ahead of them.
+
+- **Seam extension.** `AvailableMediaActions` depended directly on the Android-only
+  `SongDownloadRepository`; `SongDownloader` (the S4 seam) grew `observeHeldPaths()` so
+  `AvailableMediaActions` reads held-download paths through the existing portable interface instead,
+  with `ServerSongDownloader` as the Android implementation. This is what let `AvailableMediaActions`
+  and `MediaActionsViewModel` move without a new platform seam.
+- **`SharedAppGraph` exclusions.** None of the six ViewModels' dependencies are bound on iOS yet —
+  the Song/Album/AlbumArtist/Genre/Playlist repositories, `QueueOperations`, `PlaybackOperations`,
+  `PlatformFeatures`, `SongDownloader`, `SongFileDeleter`, `TryDownloadFromServer` and
+  `SongImportStateProvider` all come from `:android:mediaprovider:*`/`:android:playback` bindings that
+  only Android's `AppGraph` provides today. `SharedAppGraph` (`shared/src/iosMain/.../SharedAppGraph.kt`)
+  excludes all six alongside wave 1's `ExcludedSongsViewModel`/`LibraryEmptyViewModel`, and
+  `SharedAppGraphTest` proves the graph still builds and creates the ViewModels that remain.
+  Phase 5's `IosAppGraph` drops each exclusion once it binds the commonMain repositories (`:shared`
+  over `:android:mediaprovider:local`'s Room-backed implementations, already in commonMain) and
+  `IosPlayerController` for `QueueOperations`/`PlaybackOperations`.
+- **Architecture baseline.** `AvailableMediaActions`' now-removed direct imports of
+  `com.simplecityapps.shuttle.downloads.SongDownload`/`SongDownloadRepository` came out of
+  `ui-module-imports.txt` (`:android:architecture-tests`) — two fewer baseline violations, not two new
+  ones.
+
 ## Per-ViewModel table
 
 Legend: **domain-kmp** = dependency's interface already lives in `:android:domain` (KMP since phase 0/#582);
