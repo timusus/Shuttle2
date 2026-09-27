@@ -82,8 +82,25 @@ if [ "$install_rc" != "0" ]; then
 fi
 if [ "$LAUNCH" = "1" ]; then
   echo "==> Launching"
-  xcrun devicectl device process launch --device "$DEVICE" com.simplecityapps.shuttle.dev \
-    || echo "Launch refused: unlock the phone and trust the developer profile, then open the app manually."
+  # A locked device refuses the launch request; devicectl's error mentions the lock state. Retry a
+  # few times rather than failing outright, since the phone is often locked right after install.
+  launch_attempts=5
+  launch_ok=0
+  for ((i = 1; i <= launch_attempts; i++)); do
+    launch_out="$(xcrun devicectl device process launch --device "$DEVICE" com.simplecityapps.shuttle.dev 2>&1)" && { launch_ok=1; break; }
+    if echo "$launch_out" | grep -qi "lock"; then
+      if [ "$i" -lt "$launch_attempts" ]; then
+        echo "Unlock the iPhone to launch (attempt $i/$launch_attempts); retrying in 3s..." >&2
+        sleep 3
+      fi
+    else
+      echo "$launch_out" >&2
+      break
+    fi
+  done
+  if [ "$launch_ok" != "1" ]; then
+    echo "Launch refused: unlock the phone and trust the developer profile, then open the app manually."
+  fi
 else
   echo "==> Installed; not launching (LAUNCH=0)"
 fi
