@@ -24,7 +24,7 @@
     <string name="sources_includes_empty">Every folder is scanned</string>
     <string name="sources_excludes_title">Skip these folders</string>
     <string name="sources_extras_title">Read these folders directly</string>
-    <string name="sources_extras_summary">For folders Android hides from music apps, or file types it doesn\'t recognise</string>
+    <string name="sources_extras_summary">For folders Android hides from music apps, or file types it doesn\'t recognise. Android can\'t tell S2 when these change, so new music here needs a manual or scheduled scan</string>
     <string name="sources_add_folder">Add folder</string>
     <string name="sources_remove_folder_title">Remove this folder?</string>
     <string name="sources_remove">Remove</string>

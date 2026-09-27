@@ -6,6 +6,9 @@ import android.net.Uri
 import android.provider.MediaStore
 import androidx.core.database.getLongOrNull
 import androidx.core.database.getStringOrNull
+import com.simplecityapps.shuttle.model.Song
+import kotlin.math.abs
+import kotlin.time.Instant
 
 /**
  * An audio file MediaStore has indexed. The TagLib scanner finds files this way and reads their tags through [contentUri],
@@ -69,3 +72,26 @@ internal fun Cursor.readMediaStoreAudioFiles(folderFilter: FolderFilter): List<M
     }
     return files
 }
+
+/**
+ * This file's stored song when the file hasn't changed since the last import, so the caller can emit it directly
+ * instead of opening the file and parsing its tags again. Null when the file is new, changed, or can't be matched
+ * to a stored row, and the caller must parse it.
+ *
+ * A match needs the stored modified date and size to equal the file's. A song with no stored modified date never
+ * matches: without a baseline there's nothing proving the file is unchanged. `DATE_MODIFIED` only has 1-second
+ * granularity, so a file swapped within the same second keeps its date (and a transcode can keep its size): the
+ * duration MediaStore read catches those. It gets a ±1s tolerance because MediaStore rounds durations differently
+ * than TagLib, mirroring the MediaStore playlist matcher; a file MediaStore couldn't read a duration for matches
+ * on date and size alone.
+ */
+internal fun MediaStoreAudioFile.unchangedSong(existingByPath: Map<String, Song>): Song? {
+    val existing = existingByPath[path] ?: return null
+    if (existing.lastModified != Instant.fromEpochMilliseconds(lastModified)) return null
+    if (existing.size != size) return null
+    val fileDuration = duration ?: return existing
+    if (abs(existing.duration.toLong() - fileDuration) > DURATION_TOLERANCE_MS) return null
+    return existing
+}
+
+private const val DURATION_TOLERANCE_MS = 1_000L

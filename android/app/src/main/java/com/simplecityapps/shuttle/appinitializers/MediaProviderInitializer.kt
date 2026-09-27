@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.mediaprovider.worker.MediaImportWorker
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.sources.DefaultMediaSources
+import com.simplecityapps.shuttle.sources.MediaLibraryObserver
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
 import dev.zacsweers.metro.Inject
 
@@ -14,11 +15,13 @@ class MediaProviderInitializer
 constructor(
     @ApplicationContext private val context: Context,
     private val librarySettings: LibrarySettings,
-    private val mediaSources: DefaultMediaSources
+    private val mediaSources: DefaultMediaSources,
+    private val libraryObserver: MediaLibraryObserver
 ) : AppInitializer {
     override fun init(application: Application) {
         mediaSources.attachEnabled()
         mediaSources.scanIfNeverScanned(MusicPermission.isGranted(context))
+        libraryObserver.startIfReady()
 
         MediaImportWorker.updateWork(
             context = context,

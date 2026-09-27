@@ -92,6 +92,18 @@
 
         <!-- Widget -->
 
+        <!-- Automation apps and file-sync tools trigger a rescan with
+             `adb shell am broadcast -a com.simplecityapps.shuttle.action.RESCAN_LIBRARY`.
+             Deliberately unguarded (unlike the debug import receiver): third-party apps fire it too.
+             Repeat triggers within a minute are ignored. -->
+        <receiver
+            android:name=".scan.LibraryScanReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.simplecityapps.shuttle.action.RESCAN_LIBRARY" />
+            </intent-filter>
+        </receiver>
+
         <receiver
             android:name=".ui.widgets.WidgetProvider41"
             android:exported="true"

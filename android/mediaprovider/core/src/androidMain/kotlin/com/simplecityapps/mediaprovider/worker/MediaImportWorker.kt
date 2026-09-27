@@ -17,6 +17,7 @@ import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.binding
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 class MediaImportWorker
 @AssistedInject
@@ -39,6 +40,9 @@ constructor(
     companion object {
         private const val TAG_MEDIA_IMPORT = "MEDIA_IMPORT"
 
+        private const val INITIAL_DELAY_MINUTES = 15L
+        private const val INITIAL_DELAY_JITTER_MINUTES = 16L
+
         /**
          * Enqueues or removes work, depending on the [ImportFrequency]
          */
@@ -54,11 +58,14 @@ constructor(
                         .setConstraints(
                             Constraints.Builder()
                                 .setRequiresBatteryNotLow(true)
-                                .setRequiresDeviceIdle(true)
+                                .setRequiresStorageNotLow(true)
                                 .build()
                         )
                         .addTag(TAG_MEDIA_IMPORT)
-                        .setInitialDelay(importFrequency.intervalInDays(), TimeUnit.DAYS)
+                        // A short staggered delay instead of a full interval: the idle constraint is gone (it
+                        // never fires under Doze), so the first run lands soon after the setting changes without
+                        // every install that flips it at once scanning at the same wall-clock time.
+                        .setInitialDelay(INITIAL_DELAY_MINUTES + Random.nextLong(INITIAL_DELAY_JITTER_MINUTES), TimeUnit.MINUTES)
                         .build()
 
                 WorkManager.getInstance(context).enqueueUniquePeriodicWork(
