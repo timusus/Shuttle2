@@ -257,4 +257,39 @@ struct NavigatorTests {
         navigator.open(.genre(name: "Rock"))
         #expect(navigator.libraryPath == [.genre(name: "Rock")], "with the sheet closed, open pushes onto the selected tab again")
     }
+
+    // MARK: - #615: Sources reached outside the Settings sheet (Home's own "Add a Source")
+
+    /// Regression for #615: on iPad, choosing a server type from Sources reached through Home's empty
+    /// state (a plain `NavigationLink` onto `homePath`, not through Settings) must push the sign-in onto
+    /// that same `homePath` — not onto whatever `libraryPath`/library category the shell happens to be
+    /// showing underneath, which the fix's suspects called "a path the regular-tier shell isn't showing".
+    @Test func openAfterSourcesIsReachedFromHomeStaysOnHomesPath() {
+        let navigator = Navigator()
+        // Home's "Add a Source" pushes with a plain SwiftUI NavigationLink, straight onto homePath,
+        // never through Navigator.open — mirrored here by setting the path directly.
+        navigator.selectTab(.home)
+        navigator.homePath = [.sources]
+
+        navigator.open(.serverSignIn(type: "jellyfin"))
+
+        #expect(navigator.homePath == [.sources, .serverSignIn(type: "jellyfin")])
+        #expect(navigator.libraryPath.isEmpty)
+        #expect(navigator.settingsPath.isEmpty)
+    }
+
+    /// Same as above, but with a library category promoted into the sidebar (regular/wide): Sources is
+    /// never pushed onto a category's own path directly, so `open` while a category is selected must not
+    /// strand the sign-in there instead of wherever Sources actually is (Settings, in practice).
+    @Test func openWhileALibraryCategoryIsSelectedNeverStrandsASettingsSheetPushOnTheCategory() {
+        let navigator = Navigator()
+        navigator.selectLibraryCategory(.songs)
+        navigator.showsSettings = true
+
+        navigator.open(.sources)
+        navigator.open(.serverSignIn(type: "jellyfin"))
+
+        #expect(navigator.settingsPath == [.sources, .serverSignIn(type: "jellyfin")])
+        #expect(navigator.path(for: .songs).isEmpty, "the visible category root must be untouched by the sheet's own push")
+    }
 }

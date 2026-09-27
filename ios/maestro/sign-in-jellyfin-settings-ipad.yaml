@@ -1,0 +1,56 @@
+# iPad regression for #615: signs in to a Jellyfin test server on iPad through the Settings sheet
+# (Settings gear > Sources > Connect a Server > Jellyfin), rather than Home's empty state
+# (sign-in-jellyfin.yaml), since #589 moved Sources under Settings' own nav stack on every tier.
+#
+# Env (pass with -e, from ios/scripts/maestro-sim.sh; never commit or print them): SERVER_URL, API_KEY, and
+# SERVER_USER, the user the code is approved for.
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- tapOn:
+    id: "settings.open"
+- tapOn:
+    id: "settings.sources"
+- tapOn:
+    id: "sources.addServer"
+- tapOn:
+    id: "serverTypePicker.Jellyfin"
+- extendedWaitUntil:
+    visible:
+      id: "serverSignIn.address"
+    timeout: 10000
+- takeScreenshot: 1-sign-in-form-via-settings
+- tapOn:
+    id: "serverSignIn.address"
+- eraseText: 40
+- inputText: ${SERVER_URL}
+- tapOn:
+    id: "serverSignIn.username"
+- inputText: ${SERVER_USER}
+# Not hideKeyboard: on iOS it can press Return, which moves to the password field and then signs in with an empty
+# password. Dragging the form dismisses the keyboard instead.
+- swipe:
+    start: 50%, 35%
+    end: 50%, 60%
+- extendedWaitUntil:
+    visible:
+      id: "serverSignIn.quickConnect"
+    timeout: 15000
+- tapOn:
+    id: "serverSignIn.quickConnect"
+- extendedWaitUntil:
+    visible:
+      id: "serverSignIn.quickConnectCode"
+    timeout: 15000
+- takeScreenshot: 2-quick-connect-code
+- copyTextFrom:
+    id: "serverSignIn.quickConnectCode"
+- runScript:
+    file: approve-quick-connect.js
+- extendedWaitUntil:
+    visible:
+      id: "sources.server.Jellyfin"
+    timeout: 30000
+- takeScreenshot: 3-sources-connected-via-settings
