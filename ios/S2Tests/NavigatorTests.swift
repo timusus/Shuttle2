@@ -1,3 +1,4 @@
+import Shared
 import Testing
 @testable import S2
 
@@ -6,17 +7,35 @@ import Testing
 /// models still reachable from some path.
 @MainActor
 struct NavigatorTests {
-    @Test func startsOnTheLibraryTabWithEmptyPaths() {
+    @Test func startsOnHomeWithEmptyPaths() {
         let navigator = Navigator()
-        #expect(navigator.selection == .tab(.library))
-        #expect(navigator.selectedTab == .library)
+        #expect(navigator.selection == .tab(.home))
+        #expect(navigator.selectedTab == .home)
         #expect(navigator.homePath.isEmpty)
         #expect(navigator.libraryPath.isEmpty)
         #expect(navigator.searchPath.isEmpty)
     }
 
-    @Test func selectingADifferentTabSwitchesWithoutClearingItsPath() {
+    /// Show Home on launch off: `ShellViewModel`'s start tab is Library (#617).
+    @Test func startsOnTheTabItIsGiven() {
+        let navigator = Navigator(startTab: .library)
+        #expect(navigator.selection == .tab(.library))
+        #expect(AppTab(ShellTab.library) == .library)
+        #expect(AppTab(ShellTab.home) == .home)
+        #expect(AppTab(ShellTab.search) == .search)
+    }
+
+    @Test func restoringThePathsKeepsTheStartTab() {
         let navigator = Navigator()
+        navigator.restore(
+            home: .init(), library: .init([.libraryCategory(.albumArtists)]), search: .init(), categories: .init()
+        )
+        #expect(navigator.selection == .tab(.home), "a relaunch opens on the start tab, not the tab a restored path is on")
+        #expect(navigator.libraryPath == [.libraryCategory(.albumArtists)])
+    }
+
+    @Test func selectingADifferentTabSwitchesWithoutClearingItsPath() {
+        let navigator = Navigator(startTab: .library)
         navigator.open(.genre(name: "Rock")) // pushed onto the starting tab, .library
         navigator.selectTab(.home)
         #expect(navigator.selection == .tab(.home))
@@ -85,7 +104,7 @@ struct NavigatorTests {
 
     @Test func poppingAPathClearsTheViewModelsOfTheRoutesThatLeftIt() {
         let cache = ViewModelCache()
-        let navigator = Navigator(viewModelCache: cache)
+        let navigator = Navigator(viewModelCache: cache, startTab: .library)
         navigator.selectTab(.library)
         navigator.open(.genre(name: "Rock"))
         let vm = cache.viewModel(Route.genre(name: "Rock").cacheKey) { FakeViewModel() }
@@ -97,7 +116,7 @@ struct NavigatorTests {
 
     @Test func switchingTabsNeverClearsAnotherTabsViewModels() {
         let cache = ViewModelCache()
-        let navigator = Navigator(viewModelCache: cache)
+        let navigator = Navigator(viewModelCache: cache, startTab: .library)
         navigator.open(.genre(name: "Rock")) // starting tab is .library
         let vm = cache.viewModel(Route.genre(name: "Rock").cacheKey) { FakeViewModel() }
 
@@ -110,7 +129,7 @@ struct NavigatorTests {
 
     @Test func changingALibraryCategorysPathRetainsTheOthers() {
         let cache = ViewModelCache()
-        let navigator = Navigator(viewModelCache: cache)
+        let navigator = Navigator(viewModelCache: cache, startTab: .library)
         navigator.selectLibraryCategory(.songs)
         navigator.open(.libraryCategory(.songs))
         let songsVM = cache.viewModel(Route.libraryCategory(.songs).cacheKey) { FakeViewModel() }
@@ -124,7 +143,7 @@ struct NavigatorTests {
 
     @Test func rootKeysSurviveAPathChangeOnAnotherTab() {
         let cache = ViewModelCache()
-        let navigator = Navigator(viewModelCache: cache)
+        let navigator = Navigator(viewModelCache: cache, startTab: .library)
         let homeVM = cache.viewModel(AppTab.home.cacheKey) { FakeViewModel() }
         let categoryVM = cache.viewModel(Route.libraryCategory(.albums).cacheKey) { FakeViewModel() }
 
@@ -242,7 +261,7 @@ struct NavigatorTests {
 
     @Test func closingSettingsDropsItsPathAndItsViewModels() {
         let cache = ViewModelCache()
-        let navigator = Navigator(viewModelCache: cache)
+        let navigator = Navigator(viewModelCache: cache, startTab: .library)
         navigator.showsSettings = true
         let settingsVM = cache.viewModel(Navigator.settingsCacheKey) { FakeViewModel() }
         navigator.open(.sources)

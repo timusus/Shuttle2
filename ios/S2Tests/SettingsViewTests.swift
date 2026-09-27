@@ -19,7 +19,7 @@ struct SettingsViewTests {
 
     @Test func mapsEachScreenToItsTitledSectionsInCatalogOrder() {
         let sections = SettingsSection.sections(catalog: catalog, state: SettingsUiState(values: [:], lastScanDate: nil, events: []))
-        #expect(sections.map(\.title) == ["Playback & sound", nil, "Sources", "Streaming quality", "Library", "Artwork"])
+        #expect(sections.map(\.title) == ["Playback & sound", nil, "Sources", "Streaming quality", "Library", "Artwork", "Appearance"])
     }
 
     @Test func thePlaybackSectionLinksTheEqualizerAndHoldsReplayGainAndThePreamp() throws {

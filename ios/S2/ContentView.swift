@@ -3,10 +3,10 @@ import SwiftUI
 /// The root: measures the window, resolves the `LayoutTier` and hands it to `AppShell`. Owns the Now
 /// Playing presentation, which has to hang off the root: a cover attached inside a `safeAreaInset` (where
 /// the mini player lives) does not present. Restores every path from `@SceneStorage` once at launch and
-/// keeps it in sync as the paths change, so a relaunch lands where the user left off (Android's back
-/// stacks survive process death the same way).
+/// keeps it in sync as the paths change, so each tab keeps its pushed screens across a relaunch (Android's back
+/// stacks survive process death the same way). The selected root isn't restored: the app opens on `startTab`.
 struct ContentView: View {
-    @State private var navigator = Navigator()
+    @State private var navigator: Navigator
     @State private var showNowPlaying = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     /// Measured here, never read from `UIScreen`: Split View and Stage Manager resize the window
@@ -17,6 +17,10 @@ struct ContentView: View {
     @SceneStorage("nav.library") private var libraryStorage = Navigator.StoredPath()
     @SceneStorage("nav.search") private var searchStorage = Navigator.StoredPath()
     @SceneStorage("nav.libraryCategories") private var categoryStorage = Navigator.StoredCategoryPaths()
+
+    init(startTab: AppTab) {
+        _navigator = State(initialValue: Navigator(startTab: startTab))
+    }
 
     var body: some View {
         let tier = LayoutTier.resolve(horizontalSizeClass: horizontalSizeClass, containerWidth: containerWidth)

@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.persistence.KeychainSecureStore
 import com.simplecityapps.shuttle.persistence.SecureStore
 import com.simplecityapps.shuttle.persistence.UserDefaultsKeyValueStore
 import com.simplecityapps.shuttle.shared.IosPreferencesSuite
+import com.simplecityapps.shuttle.shared.settings.IosSettingDefaults
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -24,7 +25,10 @@ import kotlin.native.Platform
 class IosPersistenceModule {
     @Provides
     @SingleIn(AppScope::class)
-    fun provideKeyValueStore(preferencesSuite: IosPreferencesSuite): KeyValueStore = UserDefaultsKeyValueStore(preferencesSuite.name)
+    fun provideKeyValueStore(preferencesSuite: IosPreferencesSuite): KeyValueStore {
+        IosSettingDefaults.register()
+        return UserDefaultsKeyValueStore(preferencesSuite.name)
+    }
 
     @Provides
     @SingleIn(AppScope::class)

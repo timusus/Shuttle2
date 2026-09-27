@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 
 /// The shell's top-level destinations, as on Android (Home, Library, Search).
@@ -11,6 +12,15 @@ enum AppTab: Hashable, CaseIterable {
         case .home: "Home"
         case .library: "Library"
         case .search: "Search"
+        }
+    }
+
+    /// The shared shell's tab (`ShellViewModel.startTab`).
+    init(_ tab: ShellTab) {
+        switch tab {
+        case .home: self = .home
+        case .library: self = .library
+        case .search: self = .search
         }
     }
 
@@ -57,7 +67,7 @@ enum RootSelection: Hashable {
 final class Navigator {
     private let viewModelCache: ViewModelCache
 
-    private var _selection: RootSelection = .tab(.library)
+    private var _selection: RootSelection
     var homePath: [Route] = [] { didSet { retainViewModels() } }
     var libraryPath: [Route] = [] { didSet { retainViewModels() } }
     var searchPath: [Route] = [] { didSet { retainViewModels() } }
@@ -81,8 +91,10 @@ final class Navigator {
     /// The `ViewModelCache` key for the Settings screen, retained while its sheet is up.
     static let settingsCacheKey = "settings"
 
-    init(viewModelCache: ViewModelCache = .shared) {
+    /// `startTab` is where the app opens: `ShellViewModel`'s start tab, from Show Home on launch (#617).
+    init(viewModelCache: ViewModelCache = .shared, startTab: AppTab = .home) {
         self.viewModelCache = viewModelCache
+        self._selection = .tab(startTab)
     }
 
     /// Reading returns the current root. Writing re-selects: the same value pops that root's path to its

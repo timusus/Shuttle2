@@ -27,7 +27,8 @@ class IosSettingsCatalogTest {
         catalog.screens.map { it.destination } shouldContainExactly listOf(
             SettingsDestination.PlaybackAndSound,
             SettingsDestination.Sources,
-            SettingsDestination.Library
+            SettingsDestination.Library,
+            SettingsDestination.Appearance
         )
     }
 
@@ -39,7 +40,8 @@ class IosSettingsCatalogTest {
             PlaybackSettings.PreAmpGain.key,
             StreamingSettings.UnmeteredQuality.key,
             StreamingSettings.MeteredQuality.key,
-            ArtworkSettings.LocalOnly.key
+            ArtworkSettings.LocalOnly.key,
+            AppearanceSettings.ShowHomeOnLaunch.key
         )
     }
 

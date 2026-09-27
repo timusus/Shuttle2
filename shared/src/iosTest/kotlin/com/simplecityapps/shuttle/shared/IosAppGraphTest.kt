@@ -85,8 +85,13 @@ class IosAppGraphTest {
 
     @Test
     fun theViewModelsSettingsAreTheAppsUserDefaults() {
-        SaveSetting(SettingsStore(UserDefaultsKeyValueStore()))(AppearanceSettings.ShowHomeOnLaunch, true)
+        SaveSetting(SettingsStore(UserDefaultsKeyValueStore()))(AppearanceSettings.ShowHomeOnLaunch, false)
 
+        graph.shellViewModel.uiState.value.startTab shouldBe ShellTab.Library
+    }
+
+    @Test
+    fun iosOpensOnHomeUntilTheUserSaysOtherwise() {
         graph.shellViewModel.uiState.value.startTab shouldBe ShellTab.Home
     }
 

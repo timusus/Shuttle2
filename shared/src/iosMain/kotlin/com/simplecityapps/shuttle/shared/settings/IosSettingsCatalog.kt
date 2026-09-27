@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.shared.settings
 import com.simplecityapps.playback.dsp.replaygain.MAX_REPLAY_GAIN_PREAMP_DB
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.ui.screens.settings.model.ChoiceOption
@@ -26,8 +27,8 @@ import dev.zacsweers.metro.Provides
  *
  * Left out, with why (`docs/architecture/ios-port/phase-5-ios-app.md`, "Settings"):
  * - Appearance: theme, dynamic colour, accent, colour from artwork and pure black restyle Android's Material
- *   theme, which iOS doesn't draw; widget opacity has no widget; show Home on launch, until the iOS shell reads
- *   `ShellViewModel`'s start tab.
+ *   theme, which iOS doesn't draw; widget opacity has no widget. Show Home on launch stays: the shell starts on
+ *   `ShellViewModel`'s start tab (on by default on iOS, [IosSettingDefaults]).
  * - Playback & sound: USB DAC direct output is Android's mixer. The equalizer, ReplayGain and its preamp are Android's
  *   rows, run by the S2Playback engine (phase 6, #604).
  * - Sources: reporting playback to the server has no iOS reporter yet; download on Wi-Fi only, until downloads.
@@ -128,7 +129,22 @@ object IosSettingsCatalog : SettingsCatalog {
         )
     )
 
-    override val screens: List<SettingsScreen> = listOf(playbackAndSound, sources, library)
+    val appearance = SettingsScreen(
+        destination = SettingsDestination.Appearance,
+        groups = listOf(
+            SettingsGroup(
+                title = null,
+                items = listOf(
+                    SettingItem.Switch(
+                        setting = AppearanceSettings.ShowHomeOnLaunch,
+                        title = StringKey.PREF_SHOW_HOME_ON_LAUNCH_TITLE
+                    )
+                )
+            )
+        )
+    )
+
+    override val screens: List<SettingsScreen> = listOf(playbackAndSound, sources, library, appearance)
 }
 
 @BindingContainer
