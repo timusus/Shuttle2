@@ -59,14 +59,6 @@ kotlin {
             // OKHttp
             implementation(libs.okhttp3.okhttp)
 
-            // Retrofit
-            implementation(libs.retrofit2.converterMoshi)
-
-            // Moshi
-            implementation(libs.moshi)
-            implementation(libs.moshi.kotlin)
-            implementation(libs.moshi.adapters)
-
             // Encrypted Shared Preferences
             api(libs.androidx.security.crypto)
 

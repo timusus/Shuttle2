@@ -1,8 +1,5 @@
 package com.simplecityapps.shuttle.di
 
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -10,7 +7,6 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import java.net.InetSocketAddress
 import java.net.Proxy
-import java.util.*
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import timber.log.Timber
@@ -35,13 +31,6 @@ class NetworkingModule {
             }
         }
         .addInterceptor(loggingInterceptor)
-        .build()
-
-    @SingleIn(AppScope::class)
-    @Provides
-    fun provideMoshi(): Moshi = Moshi.Builder()
-        .addLast(KotlinJsonAdapterFactory())
-        .add(Date::class.java, Rfc3339DateJsonAdapter())
         .build()
 
     companion object {
