@@ -1,6 +1,6 @@
 # Scrobbling
 
-Status: slice 1 built 2026-09-27 ([#503](https://github.com/timusus/Shuttle2/issues/503)). The design is the two spike comments on #503; the owner's
+Status: slices 1 and 2 built 2026-09-27 ([#503](https://github.com/timusus/Shuttle2/issues/503)). The design is the two spike comments on #503; the owner's
 decisions of 2026-09-27 there are binding: the Last.fm shared secret ships in the APK through
 `BuildConfig`, Last.fm sign-in is browser approval (auth URL and a callback deep link, never
 `auth.getMobileSession`), "Scrobble server streams too" defaults to off, and scrobbling is free for
@@ -72,14 +72,28 @@ carries no position. Neither can move a play across a threshold that matters.
 Each lands with JVM tests, verified by `unit-test --changed` and `assembleDebug`.
 
 1. **Module and `ScrobblePlanner`** (this document). Done.
-2. **Queue and flush worker.** A Room table in the module's own `scrobbles.db` (one row per
-   service; unique on service, startedAt, track; capped, oldest dropped), flushed by a unique
-   WorkManager job on `NetworkType.CONNECTED`, oldest first, 50 per call for Last.fm and up to 1000
-   for ListenBrainz, retrying or dropping per error code.
+2. **Queue and flush worker.** Done. A Room table in the module's own `scrobbles.db` (version 1,
+   `QueuedScrobbleEntity`; one row per service, unique on service, startedAt, track), capped at
+   `ScrobbleQueue.MAX_QUEUE_SIZE` (5,000 rows, oldest dropped on enqueue via
+   `ScrobbleDao.trimToNewest`). `ScrobbleFlushWorker` (a unique WorkManager job,
+   `NetworkType.CONNECTED`, exponential backoff) drains it oldest first, 50 per `track.scrobble`
+   call for Last.fm. It deletes accepted rows and rows Last.fm permanently rejects
+   (`ignoredMessage.code != "0"`), leaves rows alone and asks WorkManager to retry on a transient
+   error code or HTTP failure, drops rows on an unrecoverable error code, and drops rows older than
+   14 days before sending anything. An invalid session (error code 9) signs the user out via
+   `LastFmSessionStore` rather than retrying forever. Building the worker pulled the Last.fm signer
+   and API client (`LastFmSigner`, `LastFmApi`, `LastFmScrobbleResponse`) forward from slice 5,
+   since the worker needs something concrete to call; slice 5's remaining scope is the browser
+   sign-in flow and "powered by AudioScrobbler" attribution UI. ListenBrainz's up-to-1000 batch size
+   and the up-to-1000/other-service branching in the worker are deferred to slice 3, since there is
+   no ListenBrainz client yet to exercise them. There was no direct-send path to remove: slice 1's
+   `ScrobblePlanner` has no production caller yet (that wiring is slice 4), so nothing short-circuits
+   the queue.
 3. **ListenBrainz client and settings screen.** Token entry validated with `/1/validate-token`,
    `submit-listens` payloads, 401 signs out, 429 honours `X-RateLimit-Reset-In`.
 4. **`ScrobblingInitializer`** in `:android:app/appinitializers`, beside
    `PlaybackReportingInitializer`: feeds the flows above to the planner and the decisions to the
    clients and queue, and supplies `isServerSong`.
-5. **Last.fm**: the key and secret from `BuildConfig` (hidden without them), browser sign-in, signed
-   calls, "powered by AudioScrobbler" attribution.
+5. **Last.fm**: browser sign-in (auth URL and callback deep link) and "powered by AudioScrobbler"
+   attribution. The key/secret `BuildConfig` wiring and signed `track.scrobble` calls landed in
+   slice 2 above.
