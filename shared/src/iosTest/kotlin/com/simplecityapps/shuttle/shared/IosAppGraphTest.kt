@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.shared.playback.FakeIosAudioPlayer
+import com.simplecityapps.shuttle.shared.settings.IosSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.library.GenreDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewModel
 import com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailViewModel
@@ -50,6 +51,7 @@ class IosAppGraphTest {
         graph.whatsNewViewModel
         graph.sourcesViewModel
         graph.serverTypePickerViewModel
+        graph.settingsViewModel
         graph.albumDetailViewModelFactory
         graph.albumArtistDetailViewModelFactory
         graph.genreDetailViewModelFactory
@@ -76,6 +78,11 @@ class IosAppGraphTest {
         SaveSetting(SettingsStore(UserDefaultsKeyValueStore()))(AppearanceSettings.ShowHomeOnLaunch, true)
 
         graph.shellViewModel.uiState.value.startTab shouldBe ShellTab.Home
+    }
+
+    @Test
+    fun settingsReadTheIosCatalog() {
+        graph.settingsCatalog shouldBeSameInstanceAs IosSettingsCatalog
     }
 
     @Test

@@ -23,6 +23,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsViewModel
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerViewModel
@@ -45,16 +46,17 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
  * factory's property instead (`albumDetailViewModelFactory.create(groupKey:)`), a new instance per `create`.
  * [metroViewModelFactory] is there too, but Swift can't build its `KClass` keys.
  *
- * Three shared ViewModels are excluded until iOS binds what they need (phase-4-viewmodels.md, "Wave 3" and "Wave 4"):
- * `SettingsViewModel` needs a `SettingsCatalog`, which waits on `LibrarySettings`/`PlaybackSettings`/
- * `DownloadSettings` reaching core, and a `SettingsEffects`; `EqualizerViewModel` needs an `EqualizerControl`,
+ * `SettingsViewModel` reads `IosSettingsCatalog` (only the rows iOS acts on) through `IosSettingsEffects`.
+ *
+ * Two shared ViewModels are excluded until iOS binds what they need (phase-4-viewmodels.md, "Wave 3" and "Wave 4"):
+ * `EqualizerViewModel` needs an `EqualizerControl`,
  * `EqualizerFrequencyResponse` and `EqualizerPresetStore`, which come with iOS's `AVAudioUnitEQ` in phase 6;
  * `TagEditorViewModel` needs a `TagFileAccess`, which iOS gets with local files (security-scoped folders and a TagLib
  * wrapper) in phase 8. Until then nothing offers tag editing on iOS: only the local provider supports it.
  */
 @DependencyGraph(
     AppScope::class,
-    excludes = [SettingsViewModel::class, EqualizerViewModel::class, TagEditorViewModel.Factory::class],
+    excludes = [EqualizerViewModel::class, TagEditorViewModel.Factory::class],
 )
 interface IosAppGraph : ViewModelGraph {
     /** Playback: `PlaybackOperations`, and the queue through its `queueOperations`. One for the graph, on main. */
@@ -84,6 +86,10 @@ interface IosAppGraph : ViewModelGraph {
     val whatsNewViewModel: WhatsNewViewModel
     val sourcesViewModel: SourcesViewModel
     val serverTypePickerViewModel: ServerTypePickerViewModel
+    val settingsViewModel: SettingsViewModel
+
+    /** The rows `settingsViewModel` stores, for Swift's `SettingsView` to lay out. */
+    val settingsCatalog: SettingsCatalog
 
     val albumDetailViewModelFactory: AlbumDetailViewModel.Factory
     val albumArtistDetailViewModelFactory: AlbumArtistDetailViewModel.Factory
