@@ -131,7 +131,7 @@ final class CallbackLog {
 
     func attach(to controller: MusicPlaybackController) {
         controller.onTransition = { [weak self] in self?.transitions.append($0) }
-        controller.onStateChanged = { [weak self] in self?.states.append($0) }
+        controller.onStateChanged = { [weak self] state, _ in self?.states.append(state) }
         controller.onFailed = { [weak self] uid, _ in self?.failures.append(uid) }
     }
 }

@@ -7,7 +7,7 @@ import ViewInspector
 /// The Library tab lists the songs of the Kotlin `IosAppGraph.librarySongs` StateFlow.
 @MainActor
 struct LibraryViewTests {
-    private let graph = IosAppGraph()
+    private let graph = IosAppGraph(audioPlayer: EngineAudioPlayer(engine: FakeAudioEngine()))
 
     @Test func theKotlinStateFlowReachesSwiftAsSongs() {
         let songs = graph.librarySongs.value

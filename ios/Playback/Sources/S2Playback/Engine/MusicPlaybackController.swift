@@ -63,8 +63,9 @@ public final class MusicPlaybackController {
 
     // MARK: Callbacks (set before use; read under `callbackLock`)
 
-    /// The playing state changed.
-    public var onStateChanged: ((State) -> Void)? {
+    /// The playing state changed, with the uid of the current track then (nil when there is none), so
+    /// a listener can tell a late report for a track it has since replaced.
+    public var onStateChanged: ((State, String?) -> Void)? {
         get { callbackLock.withLock { callbacks.state } }
         set { callbackLock.withLock { callbacks.state = newValue } }
     }
@@ -181,7 +182,7 @@ public final class MusicPlaybackController {
     private var activeSource: TrackPCMSource?
 
     private struct Callbacks {
-        var state: ((State) -> Void)?
+        var state: ((State, String?) -> Void)?
         var transition: ((String) -> Void)?
         var failed: ((String, Error) -> Void)?
         var position: ((String, Int64) -> Void)?
@@ -423,8 +424,9 @@ public final class MusicPlaybackController {
     private func setState(_ newState: State) {
         guard newState != state else { return }
         state = newState
+        let uid = current?.track.uid
         let callback = callbackLock.withLock { callbacks.state }
-        if let callback { callbackQueue.async { callback(newState) } }
+        if let callback { callbackQueue.async { callback(newState, uid) } }
     }
 
     private func reportFailure(_ slot: Slot, _ error: Error) {

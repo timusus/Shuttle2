@@ -63,10 +63,10 @@ extension MPNowPlayingInfoCenter: NowPlayingInfoCenter {}
 /// progress tick: the system extrapolates between writes from the rate, and a write per tick makes the
 /// lock screen scrubber stutter.
 ///
-/// TODO(#588): the Swift `IosAudioPlayer` bridge owns one of these, implements `NowPlayingCommandHandler`
-/// by calling the Kotlin `IosPlayerController` (play/pause/skipToNext/skipToPrevious/seekTo), and feeds
-/// `setItem` from its current queue item and `updatePlayback` from its state, position and speed.
-/// `loadArtwork` goes through the shared image loader once one exists.
+/// `PlaybackSystemCoordinator` owns one, handles its commands with the Kotlin `IosPlayerController` and
+/// feeds it from the player's flows.
+///
+/// TODO(#588): `loadArtwork` goes through the shared image loader once one exists.
 @MainActor
 final class NowPlayingController {
     /// Whether the skip buttons move between songs or jump within one.

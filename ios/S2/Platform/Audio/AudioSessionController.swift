@@ -27,15 +27,14 @@ extension AVAudioSession: AudioSession {}
 ///   paused, as a permanent focus loss does. Ducking is the system's job on iOS.
 /// - **Route change, `.oldDeviceUnavailable`** (headphones unplugged, Bluetooth gone): pause, and don't
 ///   resume when the device returns. That is Android's `ACTION_AUDIO_BECOMING_NOISY`.
-/// - **Output sample rate change** on any route change: reported, so Kotlin can recompute the EQ
-///   coefficients (`IosAudioPlayerListener.onOutputRouteChanged`).
+/// - **Output sample rate change** on any route change: reported, for the EQ coefficients (nothing
+///   consumes it until the equalizer is shared, #588).
 /// - **Media services reset**: the session is configured again and the player's owner is told to
 ///   rebuild its engine and reload the current item at its position.
 ///
-/// TODO(#588): the Swift `IosAudioPlayer` bridge owns one of these: it calls `configure()` at launch,
-/// `activate()` before every play, `playbackPaused()` on every pause, `deactivate()` on stop, and
-/// forwards `onPause`/`onResume` to the Kotlin `IosPlayerController` (so the queue's state follows)
-/// and `onOutputSampleRateChanged` to its listener.
+/// `PlaybackSystemCoordinator` owns one: it calls `configure()` at launch, `activate()` before every
+/// play and `playbackPaused()` on every pause (through `EngineAudioPlayer`), `deactivate()` when the queue
+/// empties, and sends `onPause`/`onResume` to the Kotlin `IosPlayerController` so the queue's state follows.
 @MainActor
 final class AudioSessionController {
     enum PauseReason: Equatable {

@@ -12,6 +12,9 @@ packages:
     # Pinned: later releases declare `.visionOS(.v2)` under a 5.9 tools version, which Xcode 27's
     # SwiftPM rejects ("'v2' is unavailable"), so `from:` resolves to a manifest that won't load.
     exactVersion: "0.10.3"
+  # The gapless engine (#588): a local package, see Playback/README.md.
+  S2Playback:
+    path: Playback
 settings:
   # Empty by default so the project builds for the simulator without a team; device builds pass
   # APP_TEAM on the xcodebuild command line.
@@ -26,6 +29,9 @@ targets:
     platform: iOS
     sources:
       - path: S2
+    dependencies:
+      - package: S2Playback
+        product: S2Playback
     # Keys the generated Info.plist has no INFOPLIST_KEY_ setting for. Xcode merges this file with the
     # generated keys below (GENERATE_INFOPLIST_FILE stays on).
     info:
