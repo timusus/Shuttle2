@@ -1,36 +1,99 @@
 import Shared
 import SwiftUI
 
-/// The bar every tab's screens inset at the bottom (`tabViewBottomAccessory` / safe-area inset
-/// candidate, #593): the song's cover, title and artist, play/pause and next; tapping opens Now Playing.
-/// Bound to the shared `PlayerViewModel` through `PlayerBinding`, reading only its `miniPlayer` state.
+/// The mini player: the song's cover, title and artist, play/pause and next, over a 2 pt progress line in the
+/// player's artwork tint; tapping opens Now Playing. Bound to the shared `PlayerViewModel` through `PlayerBinding`,
+/// reading only its `miniPlayer` state (the progress line reads the position in a view of its own).
+///
+/// Where it lives (#624, after Shuttle Podcasts' `MiniPlayerView`):
+/// - iOS 26 on the phone's tab bar: the tab view's bottom accessory (`AppShell`), one bar in the Liquid Glass capsule
+///   the system draws, laid out for its placement (`.expanded` above the tab bar, `.inline` beside the minimised one).
+///   The per-screen insets then draw nothing (`\.miniPlayerInAccessory`).
+/// - Otherwise (iOS 17-18, and the iPad sidebar): a floating rounded card inset at the bottom of every screen
+///   (`miniPlayerInset`), `ArtworkCorner.tile` on `.regularMaterial` (glass on iOS 26), inset `Spacing.small`.
 struct MiniPlayerView: View {
     let binding: PlayerBinding
+    let placement: MiniPlayerPlacement
     @Binding var showNowPlaying: Bool
+
+    @Environment(\.miniPlayerInAccessory) private var inAccessory
 
     /// `binding` defaults to the app's single `PlayerBinding`, built once in `IosAppDependencies`: a view
     /// struct like this one is re-initialised on every parent body, so a fresh binding per init
     /// would restart its flows every time (`.claude/rules/ios.md`).
     init(
         showNowPlaying: Binding<Bool>,
+        placement: MiniPlayerPlacement = .inset,
         binding: PlayerBinding = AppGraph.dependencies.playerBinding
     ) {
         self.binding = binding
+        self.placement = placement
         self._showNowPlaying = showNowPlaying
     }
 
     var body: some View {
-        let state = binding.miniPlayer
-        let actions = binding.actions
-        MiniPlayerBar(
-            title: state.title,
-            artist: state.artist,
-            artwork: state.artwork,
-            isPlaying: state.isPlaying,
-            onTap: { showNowPlaying = true },
-            onPlayPause: actions.playPause,
-            onNext: actions.next
-        )
+        if placement == .inset, inAccessory {
+            // The tab view's accessory draws the one mini player; this screen's inset stays empty.
+            EmptyView()
+        } else {
+            let state = binding.miniPlayer
+            let actions = binding.actions
+            let binding = binding
+            MiniPlayerBar(
+                title: state.title,
+                artist: state.artist,
+                artwork: state.artwork,
+                isPlaying: state.isPlaying,
+                style: placement == .accessory ? .accessory : .floating,
+                isCoverHidden: showNowPlaying,
+                progress: { binding.progressFraction },
+                onTap: { showNowPlaying = true },
+                onPlayPause: actions.playPause,
+                onNext: actions.next
+            )
+            .playerArtworkTint(binding)
+        }
+    }
+}
+
+/// Where a `MiniPlayerView` is hosted.
+enum MiniPlayerPlacement {
+    /// A screen's bottom inset (`miniPlayerInset`).
+    case inset
+    /// The iOS 26 tab view bottom accessory.
+    case accessory
+}
+
+extension EnvironmentValues {
+    /// Set by `AppShell` when the tab view's bottom accessory hosts the mini player (iOS 26, tab bar), so the
+    /// per-screen insets draw nothing.
+    @Entry var miniPlayerInAccessory = false
+}
+
+extension PlayerBinding {
+    /// How far through the current song the player is, 0...1: the mini player's progress line.
+    var progressFraction: Double {
+        let duration = nowPlaying.durationMs
+        guard duration > 0 else { return 0 }
+        return min(1, max(0, Double(nowPlaying.positionMs) / Double(duration)))
+    }
+}
+
+extension View {
+    /// Provides the playing song's artwork tint (`\.artworkTint`) to the player surfaces: the mini player and Now
+    /// Playing. Scoped to them rather than set above the whole shell, so a library placeholder isn't recoloured by
+    /// whatever happens to be playing.
+    func playerArtworkTint(_ binding: PlayerBinding = AppGraph.dependencies.playerBinding) -> some View {
+        modifier(PlayerArtworkTintModifier(binding: binding))
+    }
+}
+
+/// Reads only the current artwork, so a play/pause or progress tick doesn't re-run the extraction.
+private struct PlayerArtworkTintModifier: ViewModifier {
+    let binding: PlayerBinding
+
+    func body(content: Content) -> some View {
+        content.artworkTint(from: binding.miniPlayer.artwork)
     }
 }
 
@@ -40,26 +103,112 @@ struct MiniPlayerBar: View {
     let artist: String?
     let artwork: ArtworkSource?
     let isPlaying: Bool
+    var style: Style = .floating
+    /// True while Now Playing is up: the cover hands its place to Now Playing's (matched geometry).
+    var isCoverHidden = false
+    /// The progress, 0...1, read inside the progress line's own body so a tick redraws only the line.
+    var progress: () -> Double = { 0 }
     let onTap: () -> Void
     let onPlayPause: () -> Void
     let onNext: () -> Void
 
+    enum Style {
+        /// The floating rounded card (iOS 17-18, and the iPad sidebar).
+        case floating
+        /// Inside the iOS 26 tab view bottom accessory, whose capsule the system draws.
+        case accessory
+    }
+
+    /// The accessory's capsule is about 48 pt tall; its cover sits inside it with room to spare.
+    static let accessoryCover: CGFloat = 32
+    /// The floating card's soft lift off the content.
+    static let floatingShadow = ArtworkShadow(opacity: 0.14, radius: 14, y: 4)
+    /// The progress line's thickness.
+    static let progressHeight: CGFloat = 2
+
+    @Environment(\.artworkTint) private var tint
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    init(
+        title: String?,
+        artist: String?,
+        artwork: ArtworkSource?,
+        isPlaying: Bool,
+        style: Style = .floating,
+        isCoverHidden: Bool = false,
+        progress: @escaping () -> Double = { 0 },
+        onTap: @escaping () -> Void,
+        onPlayPause: @escaping () -> Void,
+        onNext: @escaping () -> Void
+    ) {
+        self.title = title
+        self.artist = artist
+        self.artwork = artwork
+        self.isPlaying = isPlaying
+        self.style = style
+        self.isCoverHidden = isCoverHidden
+        self.progress = progress
+        self.onTap = onTap
+        self.onPlayPause = onPlayPause
+        self.onNext = onNext
+    }
+
     var body: some View {
+        Group {
+            switch style {
+            case .floating:
+                floatingCard
+            case .accessory:
+                if #available(iOS 26, *) {
+                    MiniPlayerAccessoryContent(bar: self)
+                } else {
+                    floatingCard
+                }
+            }
+        }
+        .tint(tint)
+    }
+
+    // MARK: - Floating card
+
+    private var floatingCard: some View {
+        let shape = RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous)
+        return row(coverSize: ArtworkSize.row, showsArtist: true, showsNext: true)
+            .padding(.leading, Spacing.small)
+            .padding(.trailing, Spacing.xsmall)
+            .padding(.vertical, Spacing.small)
+            .overlay(alignment: .bottom) {
+                MiniPlayerProgressLine(progress: progress)
+                    .padding(.horizontal, ArtworkCorner.tile)
+            }
+            .modifier(FloatingCardBackground(shape: shape))
+            .clipShape(shape)
+            .artworkShadow(Self.floatingShadow)
+            .padding(.horizontal, Spacing.small)
+            .padding(.bottom, Spacing.small)
+    }
+
+    // MARK: - Shared row
+
+    /// The cover, title (and artist), play/pause (and next).
+    func row(coverSize: CGFloat, showsArtist: Bool, showsNext: Bool) -> some View {
         HStack(spacing: Spacing.small) {
             Button(action: onTap) {
                 HStack(spacing: Spacing.smallMedium) {
                     cover
-                        .artworkTile(ArtworkSize.row)
+                        .artworkTile(coverSize)
+                        .nowPlayingMatchedGeometry(id: NowPlayingCover.matchedGeometryID, isSource: !isCoverHidden)
+                        .opacity(isCoverHidden ? 0 : 1)
                     VStack(alignment: .leading, spacing: 0) {
                         Text(title ?? "Not Playing")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(title == nil ? .secondary : .primary)
                             .lineLimit(1)
                             .accessibilityIdentifier("miniPlayer.title")
-                        if let artist {
+                        if showsArtist, let artist {
                             Text(artist)
                                 .font(.footnote)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.s2SecondaryText)
                                 .lineLimit(1)
                         }
                     }
@@ -69,36 +218,34 @@ struct MiniPlayerBar: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(accessibilityLabel)
+            .accessibilityValue(title == nil ? "" : (isPlaying ? "Playing" : "Paused"))
             .accessibilityHint("Opens Now Playing")
             .accessibilityIdentifier("miniPlayer.open")
 
             Button(action: onPlayPause) {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                     .font(.title2)
+                    .foregroundStyle(.primary)
                     .contentTransition(.symbolEffect(.replace))
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.pressScale)
             .accessibilityLabel(isPlaying ? "Pause" : "Play")
             .accessibilityIdentifier("miniPlayer.playPause")
 
-            Button(action: onNext) {
-                Image(systemName: "forward.fill")
-                    .font(.title3)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
+            if showsNext {
+                Button(action: onNext) {
+                    Image(systemName: "forward.fill")
+                        .font(.title3)
+                        .foregroundStyle(.primary)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.pressScale)
+                .accessibilityLabel("Next")
+                .accessibilityIdentifier("miniPlayer.next")
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Next")
-            .accessibilityIdentifier("miniPlayer.next")
-        }
-        .padding(.leading, Spacing.small)
-        .padding(.trailing, Spacing.xsmall)
-        .padding(.vertical, Spacing.xsmall)
-        .background(.bar)
-        .overlay(alignment: .top) {
-            Divider()
         }
     }
 
@@ -117,10 +264,64 @@ struct MiniPlayerBar: View {
     }
 }
 
+/// The iOS 26 accessory's content, laid out for where the system put it: the full row (cover, title, artist,
+/// play/pause, next) above the tab bar, and cover, title and play/pause beside the minimised tab bar.
+@available(iOS 26, *)
+private struct MiniPlayerAccessoryContent: View {
+    let bar: MiniPlayerBar
+    @Environment(\.tabViewBottomAccessoryPlacement) private var placement
+
+    var body: some View {
+        let isInline = placement == .inline
+        bar.row(coverSize: MiniPlayerBar.accessoryCover, showsArtist: !isInline, showsNext: !isInline)
+            .padding(.leading, Spacing.small)
+            .padding(.trailing, Spacing.xsmall)
+            .overlay(alignment: .bottom) {
+                MiniPlayerProgressLine(progress: bar.progress)
+                    .padding(.horizontal, Spacing.large)
+            }
+    }
+}
+
+/// The floating card's ground: Liquid Glass on iOS 26, `.regularMaterial` below.
+private struct FloatingCardBackground: ViewModifier {
+    let shape: RoundedRectangle
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.glassEffect(.regular, in: shape)
+        } else {
+            content.background(.regularMaterial, in: shape)
+        }
+    }
+}
+
+/// The 2 pt progress line along the bottom of the mini player, in the player's tint over a faint track. It reads
+/// the position itself (`progress`), so the bar around it isn't redrawn on every tick.
+struct MiniPlayerProgressLine: View {
+    let progress: () -> Double
+
+    var body: some View {
+        let fraction = progress()
+        Capsule()
+            .fill(.tint.opacity(0.18))
+            .overlay(alignment: .leading) {
+                GeometryReader { proxy in
+                    Capsule()
+                        .fill(.tint)
+                        .frame(width: proxy.size.width * fraction)
+                }
+            }
+            .frame(height: MiniPlayerBar.progressHeight)
+            .accessibilityHidden(true)
+    }
+}
+
 extension View {
     /// Insets the mini player at the bottom of this screen. Apply it INSIDE the `NavigationStack`, to the root screen
     /// and to every pushed one (`routeDestinations`): attached to the stack itself (Shuttle Podcasts found) the bar
-    /// draws but reserves no safe area and receives no touches.
+    /// draws but reserves no safe area and receives no touches. Where the iOS 26 tab view accessory hosts the mini
+    /// player (`\.miniPlayerInAccessory`), the inset is empty.
     func miniPlayerInset(showNowPlaying: Binding<Bool>) -> some View {
         dockedAtBottom {
             MiniPlayerView(showNowPlaying: showNowPlaying)
@@ -138,10 +339,13 @@ extension View {
 }
 
 #Preview("Playing") {
-    MiniPlayerBar(
-        title: "Paranoid Android", artist: "Radiohead", artwork: nil, isPlaying: true,
-        onTap: {}, onPlayPause: {}, onNext: {}
-    )
+    VStack {
+        Spacer()
+        MiniPlayerBar(
+            title: "Paranoid Android", artist: "Radiohead", artwork: nil, isPlaying: true, progress: { 0.3 },
+            onTap: {}, onPlayPause: {}, onNext: {}
+        )
+    }
 }
 
 #Preview("Not playing") {

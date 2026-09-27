@@ -8,6 +8,8 @@ import SwiftUI
 struct ContentView: View {
     @State private var navigator: Navigator
     @State private var showNowPlaying = false
+    /// Shared by the mini player's cover and Now Playing's, so opening the player grows one into the other.
+    @Namespace private var nowPlayingNamespace
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     /// Measured here, never read from `UIScreen`: Split View and Stage Manager resize the window
     /// without touching the screen.
@@ -26,11 +28,14 @@ struct ContentView: View {
         let tier = LayoutTier.resolve(horizontalSizeClass: horizontalSizeClass, containerWidth: containerWidth)
         AppShell(tier: tier, navigator: navigator, showNowPlaying: $showNowPlaying)
             .environment(\.layoutTier, tier)
+            .environment(\.nowPlayingNamespace, nowPlayingNamespace)
             // For screens that push without a `NavigationLink`, such as Sources after its type picker closes.
             .environment(navigator)
             .nowPlayingPresentation(isPresented: $showNowPlaying, tier: tier) {
                 // Go to Album/Artist closes Now Playing and pushes onto the selected root.
                 NowPlayingView(onOpen: { route in navigator.open(route) })
+                    .playerArtworkTint()
+                    .environment(\.nowPlayingNamespace, nowPlayingNamespace)
             }
             .sheet(isPresented: $navigator.showsSettings) {
                 SettingsSheet(navigator: navigator, showNowPlaying: $showNowPlaying)
@@ -98,11 +103,25 @@ struct AppShell: View {
 
     private var tabBarLayout: some View {
         @Bindable var navigator = navigator
-        return TabView(selection: $navigator.selection) {
+        let tabs = TabView(selection: $navigator.selection) {
             ForEach(AppTab.allCases, id: \.self) { tab in
                 stack(for: tab)
                     .tag(RootSelection.tab(tab))
                     .tabItem { Label(tab.title, systemImage: tab.systemImage) }
+            }
+        }
+        return Group {
+            if #available(iOS 26, *) {
+                // iOS 26: the mini player rides above the tab bar as its bottom accessory (inline beside the
+                // minimised bar on scroll), in place of each screen's floating inset.
+                tabs
+                    .tabViewBottomAccessory {
+                        MiniPlayerView(showNowPlaying: $showNowPlaying, placement: .accessory)
+                    }
+                    .tabBarMinimizeBehavior(.onScrollDown)
+                    .environment(\.miniPlayerInAccessory, true)
+            } else {
+                tabs
             }
         }
     }
