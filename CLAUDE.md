@@ -88,6 +88,7 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 - **`:android:app`** — Main application: UI screens, DI setup, presenters, navigation
 - **`:android:playback`** — ExoPlayer wrapper, PlaybackFacade, PlaybackService, queue management, audio focus
 - **`:android:mediaprovider:core`** — MediaProvider interface, MediaImporter, M3U, import worker
+- **`:android:mediaprovider:server`** — What the Jellyfin/Emby/Plex providers share: paging, the sync session skeleton, credential storage, direct-play formats
 - **`:android:mediaprovider:local`** — Local MediaStore/TagLib provider implementation
 - **`:android:mediaprovider:jellyfin|emby|plex`** — Remote streaming provider implementations
 - **`:android:domain`** — Plain Kotlin/JVM domain models, song queries and sort orders, the repository interfaces (Song, Album, Playlist, Genre), the playback and queue operations interfaces, and the shared `ui/actions` use cases (no Android)

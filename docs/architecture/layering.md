@@ -13,7 +13,7 @@ presentation  :android:app (composition root + shell), later :android:ui, :andro
 domain        :android:domain  (pure Kotlin/JVM: models, repository and service interfaces, use cases)
       ^
       |
-data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:playback,
+data          :android:mediaprovider:{core,server,local,jellyfin,emby,plex}, :android:playback,
               :android:downloads, :android:networking, :android:imageloader, :android:saf,
               :android:scrobbling, :android:trial
 ```
@@ -37,6 +37,7 @@ data          :android:mediaprovider:{core,local,jellyfin,emby,plex}, :android:p
 |---|---|---|
 | `:android:domain` | Models, sorting, queries, repository interfaces, the playback and queue operations interfaces, the shared use cases; a plain Kotlin/JVM module (was the Android library `:android:data`) | Domain (steps 3-6 done) |
 | `:android:mediaprovider:core` | `MediaProvider`, `MediaInfoProvider`, `MediaImporter`, M3U, import worker | Data (step 4 done: repository interfaces moved to domain) |
+| `:android:mediaprovider:server` | What the Jellyfin, Emby and Plex providers share: `pagedFlow`, `withServerSession`, `ServerCredentialStore`, `DirectPlayFormats`; test fixtures `FixtureServer` and `FakeSharedPreferences` (#347) | Data |
 | `:android:mediaprovider:local` | Room DB, DAOs, entities, `Local*Repository`, MediaStore/TagLib | Data |
 | `:android:mediaprovider:{jellyfin,emby,plex}` | HTTP services, DTOs, auth, providers | Data |
 | `:android:playback` | Media3 engine, `PlaybackFacade`, `QueueFacade`, Cast, session; resolves remote songs through the `MediaInfoProvider` map the provider modules contribute, with no edge to them | Data; its operations interfaces are in domain (step 5 done); provider edges removed (step 2 done) |
@@ -76,7 +77,7 @@ forbidden edges that only shrinks (the same ratchet as the Konsist baselines).
 |---|---|---|
 | core | `core` | nothing of ours |
 | domain | `domain` | core |
-| data | `mediaprovider:core`, `downloads`, `imageloader`, `networking`, `playback`, `saf`, `scrobbling`, `trial` | core, domain, data |
+| data | `mediaprovider:core`, `mediaprovider:server`, `downloads`, `imageloader`, `networking`, `playback`, `saf`, `scrobbling`, `trial` | core, domain, data |
 | provider | `mediaprovider:{local,jellyfin,emby,plex}` | core, domain, data (never another provider) |
 | presentation | `designsystem` | core, domain, presentation, fixtures |
 | composition root | `app` | everything but tooling |
@@ -84,8 +85,8 @@ forbidden edges that only shrinks (the same ratchet as the Konsist baselines).
 | tooling | `architecture-tests` | nothing of ours |
 
 Provider implementations are their own layer so "never to a sibling provider" is a layer rule:
-only the composition root may depend on one. Data → data stays open for the platform adapters and
-`mediaprovider:core`.
+only the composition root may depend on one. Data → data stays open for the platform adapters,
+`mediaprovider:core` and `mediaprovider:server`.
 
 - Run it: `./gradlew verifyModuleLayers`. It also runs from every module's `check` and before
   `:android:architecture-tests:test`/`testDebugUnitTest`, so the project-wide unit test sweep (and
