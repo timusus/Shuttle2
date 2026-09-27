@@ -6,13 +6,13 @@ import com.simplecityapps.mediaprovider.server.DirectPlayFormats
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
-import com.simplecityapps.networking.retrofit.error.HttpStatusCode
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.provider.emby.http.AuthenticationResult
 import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.provider.emby.http.authenticate
 import com.simplecityapps.provider.emby.http.me
 import com.simplecityapps.provider.emby.http.mediaBrowserAuthorization
+import io.ktor.http.HttpStatusCode
 import java.util.UUID
 import timber.log.Timber
 

@@ -5,13 +5,13 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
-import com.simplecityapps.networking.retrofit.error.HttpStatusCode
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.provider.plex.http.AuthenticationResult
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.provider.plex.http.authenticate
 import com.simplecityapps.provider.plex.http.plexClientHeaders
 import com.simplecityapps.shuttle.model.Song
+import io.ktor.http.HttpStatusCode
 import java.net.URLEncoder
 import java.util.UUID
 import timber.log.Timber

@@ -11,8 +11,8 @@ fun Throwable.userDescription(): String = (this as? Error)?.userDescription() ?:
 fun Error.userDescription(): String = when (this) {
     is RemoteServiceHttpError -> {
         when {
-            isServerError -> "A server error occurred. (${httpStatusCode.code})"
-            else -> "An error occurred. (${httpStatusCode.code})"
+            isServerError -> "A server error occurred. (${httpStatusCode.value})"
+            else -> "An error occurred. (${httpStatusCode.value})"
         }
     }
 

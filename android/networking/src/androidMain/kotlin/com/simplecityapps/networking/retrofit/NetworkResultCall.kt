@@ -1,10 +1,11 @@
 package com.simplecityapps.networking.retrofit
 
-import android.annotation.SuppressLint
 import android.net.ConnectivityManager
+import com.simplecityapps.networking.ConnectivityManagerConnectivity
 import com.simplecityapps.networking.retrofit.error.NetworkError
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.networking.retrofit.error.UnexpectedError
+import io.ktor.http.HttpStatusCode
 import java.io.IOException
 import okhttp3.Request
 import okhttp3.ResponseBody
@@ -13,19 +14,16 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Converter
 import retrofit2.Response
-import timber.log.Timber
 
 /**
- * Maps a [Call] to [NetworkResultCall].
+ * Maps a [Call] to [NetworkResultCall]. For the providers' Retrofit services until they move to Ktor's
+ * [com.simplecityapps.networking.networkResult] (#585 step 3), when this and the other Retrofit adapters go.
  * */
-@SuppressLint("BinaryOperationInTimber")
 class NetworkResultCall<S : Any>(
     private val call: Call<S>,
     private val errorBodyConverter: Converter<ResponseBody, Throwable>?,
     private val connectivityManager: ConnectivityManager?
 ) : Call<NetworkResult<S>> {
-    val logErrors = false
-
     override fun enqueue(callback: Callback<NetworkResult<S>>) {
         call.enqueue(
             object : Callback<S> {
@@ -49,16 +47,7 @@ class NetworkResultCall<S : Any>(
                                 } catch (e: IOException) {
                                     null
                                 }
-                            } ?: RemoteServiceHttpError(response)
-
-                        if (logErrors) {
-                            Timber.e(
-                                "Request failed." +
-                                    "\nmethod: ${call.request().method}" +
-                                    "\nurl: ${call.request().url}" +
-                                    "\nerror: $error"
-                            )
-                        }
+                            } ?: RemoteServiceHttpError(HttpStatusCode.fromValue(response.code()))
                         callback.onResponse(this@NetworkResultCall, Response.success(NetworkResult.Failure(error)))
                     }
                 }
@@ -69,19 +58,10 @@ class NetworkResultCall<S : Any>(
                 ) {
                     val error: Error =
                         if (t is IOException) {
-                            NetworkError(connectivityManager?.activeNetworkInfo?.isConnected ?: false, t)
+                            NetworkError(ConnectivityManagerConnectivity(connectivityManager).isConnected(), t)
                         } else {
                             UnexpectedError(t)
                         }
-
-                    if (logErrors) {
-                        Timber.e(
-                            "Request failed." +
-                                "\nmethod: ${call.request().method}" +
-                                "\nurl: ${call.request().url}" +
-                                "\nerror: $error"
-                        )
-                    }
                     callback.onResponse(this@NetworkResultCall, Response.success(NetworkResult.Failure(error)))
                 }
             }

@@ -1,8 +1,8 @@
 package com.simplecityapps.provider.jellyfin.http
 
 import com.simplecityapps.networking.retrofit.NetworkResult
-import com.simplecityapps.networking.retrofit.error.HttpStatusCode
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
+import io.ktor.http.HttpStatusCode
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
