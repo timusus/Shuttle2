@@ -64,6 +64,7 @@
 		C49D068C77F250C823A5A2A9 /* ViewInspector in Frameworks */ = {isa = PBXBuildFile; productRef = B8D3D385DF619051CF4D4D12 /* ViewInspector */; };
 		C8BE242010D2B03768E1EFE8 /* AlbumArtistDetailTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 626D669847C07508951E6DCF /* AlbumArtistDetailTests.swift */; };
 		D15E8CB1C210263CFE0A4956 /* ViewModelCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E32BC8DC4703CBE2DCD79C /* ViewModelCacheTests.swift */; };
+		D3F60B96084F2A27FEDB1EB9 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 94CF6782E9CB3B9D69914E8C /* PrivacyInfo.xcprivacy */; };
 		D81817D1E15FF9445D39A71D /* ViewModelCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F59DA1BBF939E0071AED4F2 /* ViewModelCache.swift */; };
 		D974D54BCFF1770DE0DF8A55 /* ArtworkLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31E55AD106EEAAB1C05E1B8A /* ArtworkLoader.swift */; };
 		DA730FACA000899524710C84 /* S2App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20E688A48CB9963C2F8837D2 /* S2App.swift */; };
@@ -147,6 +148,7 @@
 		89689E4CDFC9350CB0EFB888 /* Navigator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigator.swift; sourceTree = "<group>"; };
 		91C9049F0CB5EDB935D8D6B8 /* PlaybackSystemCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackSystemCoordinator.swift; sourceTree = "<group>"; };
 		9439F2E0407BF9275E4CEC04 /* RouteDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteDestination.swift; sourceTree = "<group>"; };
+		94CF6782E9CB3B9D69914E8C /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		9617DD31BA89B09F9D5E6DDE /* SourcesViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourcesViewTests.swift; sourceTree = "<group>"; };
 		969D7BE4B5B0AC1094B37103 /* AlbumArtistListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumArtistListView.swift; sourceTree = "<group>"; };
 		9B1181F7DF24601B148DB16A /* Playback */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Playback; path = Playback; sourceTree = SOURCE_ROOT; };
@@ -405,6 +407,7 @@
 			children = (
 				FC548555BCD74CA0702CE7B3 /* ContentView.swift */,
 				E5B4C7411078C92EE8985A4B /* Info.plist */,
+				94CF6782E9CB3B9D69914E8C /* PrivacyInfo.xcprivacy */,
 				20E688A48CB9963C2F8837D2 /* S2App.swift */,
 				FCBFC3688D06BC30635B00FA /* Settings.bundle */,
 				B802D8A89AD0B7B3EF631EF3 /* Artwork */,
@@ -507,6 +510,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D3F60B96084F2A27FEDB1EB9 /* PrivacyInfo.xcprivacy in Resources */,
 				52C29020D1D42E749E7EAC01 /* Settings.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

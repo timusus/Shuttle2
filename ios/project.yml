@@ -29,6 +29,9 @@ targets:
     platform: iOS
     sources:
       - path: S2
+    # PrivacyInfo.xcprivacy (#607) must be a resource in the app bundle, not compiled as source.
+    resources:
+      - path: S2/PrivacyInfo.xcprivacy
     dependencies:
       # Brings the four FFmpeg frameworks (the package's binary targets, from
       # ios/scripts/build-ffmpeg.sh). Xcode embeds and signs a package's dynamic binary targets in

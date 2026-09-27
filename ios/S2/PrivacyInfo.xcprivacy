@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- S2 sends nothing to Simplecity Apps: no analytics, no crash reporting, no tracking. Server
+	     addresses and credentials are stored on the device (Keychain) and only ever talk to the
+	     Jellyfin/Emby/Plex server the user configured (#607). -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<!-- UserDefaultsKeyValueStore (shared/.../di/IosPersistenceModule.kt) and Swift's own
+			     preferences read/write NSUserDefaults; CombineFlowBridge.swift bridges them to Kotlin. -->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+		<dict>
+			<!-- CachedRunStore.swift (ios/Playback) reads attributesOfItem(atPath:) to check the age
+			     of a cached decode run, shown nowhere to the user; app-internal cache management only. -->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+		<dict>
+			<!-- StartupTiming.swift (ios/Playback) reads ProcessInfo.systemUptime, a monotonic clock
+			     for measuring startup latency; never persisted or transmitted. -->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategorySystemBootTime</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>35F9.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

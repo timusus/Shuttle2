@@ -233,6 +233,32 @@ package_slice() {
 </plist>
 PLIST
 
+        # Privacy manifest (#607): App Store Connect requires one in every third-party binary that
+        # ships to iOS, including a framework nested in a Swift package. Only libavutil calls a
+        # required-reason API (fstat, via its own file I/O helpers) — checked with
+        # `nm -m libavutil.framework/libavutil | grep fstat`; the other three libraries call none, so
+        # they get an otherwise-empty manifest declaring no tracking and no collected data. Not
+        # written for the macOS slice: it never ships, it only backs `swift test`.
+        if [[ "$NAME" != macos ]]; then
+            if [[ "$LIB" == libavutil ]]; then
+                REASONS='<dict><key>NSPrivacyAccessedAPIType</key><string>NSPrivacyAccessedAPICategoryFileTimestamp</string><key>NSPrivacyAccessedAPITypeReasons</key><array><string>C617.1</string></array></dict>'
+            else
+                REASONS=''
+            fi
+            cat > "$PLIST_DIR/PrivacyInfo.xcprivacy" <<PRIVACY
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSPrivacyTracking</key><false/>
+    <key>NSPrivacyTrackingDomains</key><array/>
+    <key>NSPrivacyCollectedDataTypes</key><array/>
+    <key>NSPrivacyAccessedAPITypes</key><array>$REASONS</array>
+</dict>
+</plist>
+PRIVACY
+        fi
+
         if [[ "$NAME" == macos ]]; then
             ln -s A "$FW/Versions/Current"
             ln -s "Versions/Current/$LIB" "$FW/$LIB"
