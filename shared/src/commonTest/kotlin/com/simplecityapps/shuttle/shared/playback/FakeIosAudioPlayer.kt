@@ -15,6 +15,11 @@ class FakeIosAudioPlayer : IosAudioPlayer {
     /** Urls that fail to open. */
     val failing = mutableSetOf<String>()
 
+    /** Urls (before any `?`) of streams with no length, which can't be sought: a progressive transcode. */
+    val unseekable = mutableSetOf<String>()
+
+    private fun IosAudioTrack.isUnseekable() = url.substringBefore('?') in unseekable
+
     var current: IosAudioTrack? = null
         private set
 
@@ -46,6 +51,11 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         this.playWhenReady = playWhenReady
         position = startMs
         setState(IosAudioPlayerState.Loading)
+        if (startMs > 0 && current.isUnseekable()) {
+            // The engine starts it at its beginning instead, and says so before its state.
+            position = 0
+            post { listener?.onSeekUnsupported(current.id, startMs) }
+        }
         if (current.url in failing) {
             val id = current.id
             post { listener?.onFailed(id, "Can't open ${current.url}") }
@@ -75,7 +85,12 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     override fun seek(positionMs: Long) {
         calls += "seek $positionMs"
-        position = positionMs
+        val track = current ?: return
+        if (track.isUnseekable()) {
+            post { listener?.onSeekUnsupported(track.id, positionMs) }
+        } else {
+            position = positionMs
+        }
     }
 
     override fun stop() {

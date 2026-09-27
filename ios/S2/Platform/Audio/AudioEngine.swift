@@ -24,6 +24,9 @@ enum EngineEvent: Equatable {
     case failed(trackId: String, message: String)
     /// A position tick while playing, and once on pausing.
     case position(trackId: String, ms: Int64)
+    /// The track's stream can't be sought to `ms` (a progressive transcode): it plays on, and Kotlin
+    /// re-opens the stream at the position.
+    case seekUnsupported(trackId: String, ms: Int64)
 }
 
 /// The S2Playback engine as `EngineAudioPlayer` drives it, in app types, so the adapter's tests can

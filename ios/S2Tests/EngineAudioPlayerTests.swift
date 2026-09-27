@@ -27,6 +27,10 @@ struct EngineAudioPlayerTests {
             calls.append("position \(trackId) \(positionMs)")
         }
 
+        func onSeekUnsupported(trackId: String, positionMs: Int64) {
+            calls.append("seekUnsupported \(trackId) \(positionMs)")
+        }
+
         private static func name(_ state: IosAudioPlayerState) -> String {
             switch state {
             case .idle: "idle"
@@ -61,6 +65,7 @@ struct EngineAudioPlayerTests {
         engine.emit(.state(.loading, trackId: "a"))
         engine.emit(.state(.playing, trackId: "a"))
         engine.emit(.position(trackId: "a", ms: 1_200))
+        engine.emit(.seekUnsupported(trackId: "a", ms: 30_000))
         engine.emit(.transition(trackId: "b"))
         engine.emit(.failed(trackId: "b", message: "bad data"))
         engine.emit(.state(.ended, trackId: "b"))
@@ -70,6 +75,7 @@ struct EngineAudioPlayerTests {
             "state a loading",
             "state a playing",
             "position a 1200",
+            "seekUnsupported a 30000",
             "transition b",
             "failed b bad data",
             "state b ended",

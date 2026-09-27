@@ -57,6 +57,8 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
             listener?.onFailed(trackId: trackId, message: message)
         case let .position(trackId, ms):
             listener?.onPosition(trackId: trackId, positionMs: ms)
+        case let .seekUnsupported(trackId, ms):
+            listener?.onSeekUnsupported(trackId: trackId, positionMs: ms)
         }
     }
 

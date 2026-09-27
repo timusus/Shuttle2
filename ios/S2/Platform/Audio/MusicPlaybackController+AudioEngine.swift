@@ -10,12 +10,14 @@ extension MusicPlaybackController: AudioEngine {
             onTransition = nil
             onFailed = nil
             onPosition = nil
+            onSeekUnsupported = nil
             return
         }
         onStateChanged = { state, uid in handler(.state(EngineState(state), trackId: uid)) }
         onTransition = { uid in handler(.transition(trackId: uid)) }
         onFailed = { uid, error in handler(.failed(trackId: uid, message: String(describing: error))) }
         onPosition = { uid, ms in handler(.position(trackId: uid, ms: ms)) }
+        onSeekUnsupported = { uid, ms in handler(.seekUnsupported(trackId: uid, ms: ms)) }
     }
 
     func load(current: EngineTrack, next: EngineTrack?, startMs: Int64, playWhenReady: Bool) {

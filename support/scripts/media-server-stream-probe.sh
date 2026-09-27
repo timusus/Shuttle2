@@ -40,15 +40,18 @@ transcode_probe() { # url
   local url=$1 headers body
   headers=$(mktemp) body=$(mktemp)
   curl -s -m 60 -D "$headers" -o "$body" "$url" || true
-  local status ctype decoded=""
+  local status ctype clen ranges decoded=""
   status=$(head -1 "$headers" | tr -d '\r' | cut -d' ' -f2)
   ctype=$( (grep -i '^content-type:' "$headers" || true) | tail -1 | cut -d' ' -f2- | tr -d '\r')
+  # No length is what makes the iOS engine treat the stream as unseekable and re-open it (#606).
+  clen=$( (grep -i '^content-length:' "$headers" || true) | tail -1 | cut -d' ' -f2- | tr -d '\r')
+  ranges=$( (grep -i '^accept-ranges:' "$headers" || true) | tail -1 | cut -d' ' -f2- | tr -d '\r')
   if command -v ffprobe >/dev/null; then
     decoded=$(ffprobe -v error -show_entries format=format_name,duration:stream=codec_name,bit_rate \
       -of compact=p=0:nk=1 "$body" 2>&1 | tr '\n' ' ')
   fi
-  printf '    %s  type=%s  bytes=%s%s\n' "${status:-ERR}" "${ctype:--}" "$(wc -c <"$body" | tr -d ' ')" \
-    "${decoded:+  decodes=$decoded}"
+  printf '    %s  type=%s  length=%s  ranges=%s  bytes=%s%s\n' "${status:-ERR}" "${ctype:--}" "${clen:--}" \
+    "${ranges:--}" "$(wc -c <"$body" | tr -d ' ')" "${decoded:+  decodes=$decoded}"
   rm -f "$headers" "$body"
 }
 

@@ -29,7 +29,10 @@ interface IosAudioPlayer {
 
     fun pause()
 
-    /** Seeks within the current track. `seek(toMs:)`. */
+    /**
+     * Seeks within the current track. `seek(toMs:)`. A track the engine can't seek (a stream of unknown length, like a
+     * progressive transcode) plays on untouched and is reported through [IosAudioPlayerListener.onSeekUnsupported].
+     */
     fun seek(positionMs: Long)
 
     /** Drops the current and next tracks and stops. */
@@ -70,6 +73,16 @@ interface IosAudioPlayerListener {
         trackId: String,
         positionMs: Long
     )
+
+    /**
+     * [trackId] can't be sought to [positionMs] (ms into the track as the engine has it): its stream has no length, so
+     * no byte maps to a time. A seek leaves it playing where it was; a load that asked to start there starts it at its
+     * beginning. [IosPlayerController] re-opens the stream at the position instead.
+     */
+    fun onSeekUnsupported(
+        trackId: String,
+        positionMs: Long
+    )
 }
 
 /** `MusicPlaybackController.State`. */
@@ -102,7 +115,12 @@ class IosAudioTrack(
 data class IosStream(
     val url: String,
     val headers: Map<String, String> = emptyMap(),
-    val gainDb: Float = 0f
+    val gainDb: Float = 0f,
+    /**
+     * Whether resolving the song again with a start position gives a stream that starts there: a server stream, whose
+     * transcode takes `StartTimeTicks`. That is how a seek the engine can't make (a progressive transcode) is made.
+     */
+    val opensAtPosition: Boolean = false
 )
 
 /**
@@ -112,5 +130,12 @@ data class IosStream(
  * reported (as Android's `ItemLoader` treats a resolution failure).
  */
 fun interface IosStreamResolver {
-    suspend fun resolve(song: Song): IosStream
+    /**
+     * [startPositionMs] asks a stream that [IosStream.opensAtPosition] to start that far into the song (a transcode
+     * started there); 0 is the whole song. Any other stream ignores it.
+     */
+    suspend fun resolve(
+        song: Song,
+        startPositionMs: Long
+    ): IosStream
 }

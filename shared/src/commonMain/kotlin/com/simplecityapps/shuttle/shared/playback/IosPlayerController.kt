@@ -41,6 +41,10 @@ import kotlinx.coroutines.withContext
  * never past the end of the queue, each reported on [playbackFailureFlow] (bar one [resolver] couldn't resolve). A
  * load that doesn't skip (a restore) leaves a failed song current, paused, until it's played.
  *
+ * A progressive transcode has no length, so the engine can't seek it ([IosAudioPlayerListener.onSeekUnsupported]).
+ * Such a stream is resolved again to start at the position (`StartTimeTicks`) and loaded from its beginning; positions
+ * are then the stream's start plus what the engine has played of it. A direct-play stream seeks in the engine.
+ *
  * Main thread only inside; callable from any thread by the domain interfaces' rule. [scope] runs on the main thread
  * (`Dispatchers.Main.immediate` on iOS): a call that changes playback made on it runs straight away, else it's posted
  * to it. The Swift engine adapter calls back on the main thread.
@@ -72,6 +76,18 @@ class IosPlayerController(
 
         /** Whether a failure is reported on [playbackFailureFlow]: not when the stream couldn't be resolved. */
         var reportFailure = true
+
+        /**
+         * How far into the song the engine's track starts: 0, or where a stream re-opened for a seek starts. The engine
+         * counts positions from its track's start, so this is added to every position it reports.
+         */
+        var offsetMs = 0
+
+        /** Its stream can be resolved again to start at a position ([IosStream.opensAtPosition]). */
+        var opensAtPosition = false
+
+        /** The engine can't seek its stream (it said so once), so a seek re-opens the stream at the position. */
+        var seeksByReopening = false
     }
 
     private class PendingLoad(
@@ -150,8 +166,14 @@ class IosPlayerController(
             trackId: String,
             positionMs: Long
         ) {
-            if (trackId == current?.id) publishProgress(positionMs.toInt())
+            val currentFeed = current ?: return
+            if (trackId == currentFeed.id) publishProgress(currentFeed.offsetMs + positionMs.toInt())
         }
+
+        override fun onSeekUnsupported(
+            trackId: String,
+            positionMs: Long
+        ) = this@IosPlayerController.onSeekUnsupported(trackId, positionMs)
     }
 
     init {
@@ -171,8 +193,11 @@ class IosPlayerController(
 
     private fun newFeed(item: QueueItem) = Feed("${item.uid}-${++feedSerial}", item)
 
-    private suspend fun resolve(song: Song): IosStream? = try {
-        resolver.resolve(song)
+    private suspend fun resolve(
+        song: Song,
+        startPositionMs: Int = 0
+    ): IosStream? = try {
+        resolver.resolve(song, startPositionMs.toLong())
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
@@ -181,14 +206,23 @@ class IosPlayerController(
 
     private fun Feed.track(stream: IosStream) = IosAudioTrack(id, stream.url, stream.headers, stream.gainDb)
 
-    /** Replaces the engine's current track with [item] at [startMs], then feeds the next. */
+    /**
+     * Replaces the engine's current track with [item] at [startMs], then feeds the next. [reopen] is for a stream the
+     * engine can't seek (a progressive transcode): it's resolved again to start at [startMs], and played from its start.
+     */
     private fun startLoad(
         item: QueueItem,
-        startMs: Int
+        startMs: Int,
+        reopen: Boolean = false
     ) {
         loadJob?.cancel()
         nextJob?.cancel()
         val feed = newFeed(item)
+        if (reopen) {
+            feed.offsetMs = startMs
+            feed.opensAtPosition = true
+            feed.seeksByReopening = true
+        }
         current = feed
         next = null
         engineNext = null
@@ -196,7 +230,7 @@ class IosPlayerController(
         publishProgress(startMs)
         publishState()
         val job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            val stream = resolve(item.song)
+            val stream = resolve(item.song, feed.offsetMs)
             if (current !== feed) return@launch
             if (stream == null) {
                 // Nothing of it can play, and whatever the engine had is no longer current.
@@ -206,7 +240,8 @@ class IosPlayerController(
                 return@launch
             }
             feed.sent = true
-            player.load(feed.track(stream), null, startMs.toLong(), playWhenReady)
+            feed.opensAtPosition = stream.opensAtPosition
+            player.load(feed.track(stream), null, (startMs - feed.offsetMs).toLong(), playWhenReady)
             feedNext()
         }
         if (current === feed && job.isActive) loadJob = job
@@ -245,6 +280,7 @@ class IosPlayerController(
                 return@launch
             }
             feed.sent = true
+            feed.opensAtPosition = stream.opensAtPosition
             engineNext = feed
             player.setNext(feed.track(stream))
         }
@@ -337,6 +373,25 @@ class IosPlayerController(
                 stopEngine()
                 publishState()
             }
+        }
+    }
+
+    /**
+     * The engine couldn't seek the current track to [positionMs] (into its stream) because the stream has no length: a
+     * progressive transcode. One that [Feed.opensAtPosition] is re-opened there, and every later seek of it does the
+     * same; any other plays on where it was.
+     */
+    private fun onSeekUnsupported(
+        trackId: String,
+        positionMs: Long
+    ) {
+        val currentFeed = current ?: return
+        if (trackId != currentFeed.id || currentFeed.failed) return
+        currentFeed.seeksByReopening = true
+        if (currentFeed.opensAtPosition) {
+            startLoad(currentFeed.item, currentFeed.offsetMs + positionMs.toInt(), reopen = true)
+        } else {
+            getProgress()?.let(::publishProgress)
         }
     }
 
@@ -450,7 +505,9 @@ class IosPlayerController(
         _progressFlow.value = PlaybackProgress(positionMs, duration)
     }
 
-    private fun currentDuration(): Int? = current?.takeIf { it.sent }?.let { player.durationMs().takeIf { it > 0 }?.toInt() }
+    private fun currentDuration(): Int? = current?.takeIf { it.sent }?.let { feed ->
+        player.durationMs().takeIf { it > 0 }?.let { feed.offsetMs + it.toInt() }
+    }
 
     // PlaybackOperations
 
@@ -593,17 +650,25 @@ class IosPlayerController(
 
     override fun seekTo(position: Int) = onMain { seekNow(position) }
 
+    /** Seeks the engine, or, for a stream it can't seek that opens at a position, re-opens the stream there. */
     private fun seekNow(positionMs: Int) {
-        if (current?.sent != true) return
-        player.seek(positionMs.toLong())
-        publishProgress(positionMs)
+        val feed = current ?: return
+        if (feed.seeksByReopening && feed.opensAtPosition) {
+            // Also while the last re-open is still resolving: a scrub supersedes it.
+            startLoad(feed.item, positionMs, reopen = true)
+        } else if (feed.sent) {
+            player.seek((positionMs - feed.offsetMs).toLong())
+            publishProgress(positionMs)
+        }
     }
 
     override fun playbackState(): PlaybackState = _playbackStateFlow.value
 
     override fun getProgress(): Int? {
         if (queue.size == 0) return null
-        val live = current?.takeIf { it.sent }?.let { player.positionMs().takeIf { it >= 0 }?.toInt() }
+        val live = current?.takeIf { it.sent }?.let { feed ->
+            player.positionMs().takeIf { it >= 0 }?.let { feed.offsetMs + it.toInt() }
+        }
         return live ?: _progressFlow.value?.position ?: 0
     }
 

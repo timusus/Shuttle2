@@ -39,12 +39,21 @@ class IosPlayerControllerTest {
     private val d = song(4)
     private val e = song(5)
 
+    /** Songs on a server, whose streams open at a position (`StartTimeTicks`). */
+    private val server = mutableSetOf<Long>()
+
     private fun url(song: Song) = "song:${song.id}"
 
     private fun test(block: suspend TestScope.(IosPlayerController) -> Unit): TestResult = runTest {
         val controller = IosPlayerController(
             player = engine,
-            resolver = { song -> if (song.id in unresolvable) error("No stream for ${song.name}") else IosStream(url(song)) },
+            resolver = { song, startPositionMs ->
+                when {
+                    song.id in unresolvable -> error("No stream for ${song.name}")
+                    song.id in server && startPositionMs > 0 -> IosStream("${url(song)}?from=$startPositionMs", opensAtPosition = true)
+                    else -> IosStream(url(song), opensAtPosition = song.id in server)
+                }
+            },
             scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
             random = Random(1)
         )
@@ -512,6 +521,89 @@ class IosPlayerControllerTest {
         controller.play()
 
         engine.calls shouldBe listOf("seek 0", "play")
+    }
+
+    // Seeking a stream the engine can't seek (a progressive transcode)
+
+    @Test
+    fun `seeking a transcode re-opens its stream at the position - and positions count from there`() = test { controller ->
+        server += a.id
+        engine.unseekable += url(a)
+        controller.start(listOf(a, b))
+
+        controller.seekTo(30_000)
+        engine.settle()
+
+        engine.calls shouldBe listOf("seek 30000", "load song:1?from=30000@0 playing", "next song:2")
+        controller.progressFlow.value?.position shouldBe 30_000
+        controller.playbackState() shouldBe PlaybackState.Playing
+
+        engine.tick(5_000)
+        controller.progressFlow.value?.position shouldBe 35_000
+        controller.getProgress() shouldBe 35_000
+        engine.duration = 20_000
+        controller.getDuration() shouldBe 50_000
+    }
+
+    @Test
+    fun `a re-opened transcode seeks by re-opening again - back or forward`() = test { controller ->
+        server += a.id
+        engine.unseekable += url(a)
+        controller.start(listOf(a, b))
+        controller.seekTo(30_000)
+        engine.settle()
+        engine.clearCalls()
+
+        controller.seekTo(10_000)
+        engine.settle()
+        controller.seekTo(0)
+        engine.settle()
+
+        engine.calls shouldBe listOf("load song:1?from=10000@0 playing", "next song:2", "load song:1@0 playing", "next song:2")
+        controller.progressFlow.value?.position shouldBe 0
+        controller.currentSong shouldBe a
+    }
+
+    @Test
+    fun `a direct-play server stream seeks in the engine`() = test { controller ->
+        server += a.id
+        controller.start(listOf(a, b))
+
+        controller.seekTo(30_000)
+        engine.settle()
+
+        engine.calls shouldBe listOf("seek 30000")
+        controller.getProgress() shouldBe 30_000
+    }
+
+    @Test
+    fun `loading a transcode at a position opens it there`() = test { controller ->
+        val podcast = song(9, path = "jellyfin://podcasts/9", playbackPosition = 60_000)
+        server += podcast.id
+        engine.unseekable += url(podcast)
+        controller.queueOperations.setQueue(listOf(podcast), null, 0)
+        var result: Result<Boolean>? = null
+
+        controller.load { result = it }
+        engine.settle()
+
+        engine.calls shouldBe listOf("load song:9@55000", "load song:9?from=55000@0")
+        result shouldBe Result.success(true)
+        controller.getProgress() shouldBe 55_000
+        controller.playbackState() shouldBe PlaybackState.Paused
+    }
+
+    @Test
+    fun `a stream that can't be sought or re-opened plays on where it was`() = test { controller ->
+        engine.unseekable += url(a)
+        controller.start(listOf(a, b))
+        engine.tick(4_000)
+
+        controller.seekTo(30_000)
+        engine.settle()
+
+        engine.calls shouldBe listOf("seek 30000")
+        controller.progressFlow.value?.position shouldBe 4_000
     }
 
     @Test

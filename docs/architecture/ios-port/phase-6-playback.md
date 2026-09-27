@@ -254,6 +254,23 @@ Checked on the real test servers (2026-09-27, `support/scripts/media-server-stre
 
 ADTS AAC (`TranscodingContainer=aac`) works on both too if MP3's quality at the low caps matters later.
 
+Seeking a transcode is done (#606). The engine reports what it can't do, and Kotlin decides:
+
+- A transcode arrives with no `Content-Length` and `Accept-Ranges: none` on both servers (the probe
+  prints both). The engine treats a stream of unknown length as unseekable. A seek leaves it
+  playing, a load at a position starts it at 0, and either is reported as
+  `IosAudioPlayerListener.onSeekUnsupported`.
+- `IosPlayerController` then re-resolves the song with `startPositionMs` and loads the new URL at 0.
+  It adds the offset to every position and duration the engine reports. After that, it re-opens on
+  every seek of that track without asking the engine first. Only a server stream re-opens
+  (`IosStream.opensAtPosition`); any other unseekable stream plays on.
+- Direct play (206) seeks in the engine as before.
+
+Still open: a transcode that loses the network mid-stream is not re-opened at its position (the byte
+source's retries are all there is), and Plex's transcode is not covered. A speed or output-device
+change on a transcode re-opens it about a schedule-ahead (1 s) late, and so does replacing a next
+that has started to be read.
+
 ### Status of step 7 (app wiring)
 
 Done, in `ios/S2/Platform/Audio/` and `ios/S2/KMP/AppGraph.swift`:
@@ -292,6 +309,8 @@ the EQ is shared; queue persistence is not wired.
    device.
 2. **Transcode fallback without HLS**: progressive transcodes differ per server (Plex especially), are
    not range-seekable, and report no duration up front; seek restarts must reconcile positions.
+   Handled for Jellyfin and Emby by re-opening at the offset (#606); Plex and network-loss recovery
+   remain.
 3. **Queue parity drift**: iOS `QueueModel` vs Android's Media3 playlist semantics; the shared
    contract suite (step 3) is the guard.
 4. **FFmpeg LGPL in an App Store build and binary size.** Resolved by linking dynamically: the four
