@@ -1,6 +1,8 @@
-// Playback policy shared by Android and iOS (#597, docs/architecture/ios-port/phase-6-playback.md): the shuffle order,
-// the queue's publish and navigation rules, the playerless queue model iOS plays from, and where a song starts.
-// Android's Media3 queue (:android:playback) and the iOS player controller (:shared) both delegate to it.
+// Playback policy shared by Android and iOS (#597, #602, docs/architecture/ios-port/phase-6-playback.md): the
+// shuffle order, the queue's publish and navigation rules, the playerless queue model iOS plays from, where a
+// song starts, the ReplayGain dB rule and the EQ presets/biquad coefficient maths (sample rate passed in, no
+// platform rate lookups). Android's Media3 queue and EQ/ReplayGain audio processors (:android:playback) and the
+// iOS player controller (:shared) both delegate to it.
 plugins {
     id("s2.kmp-library")
 }

@@ -7,17 +7,20 @@ import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
 import kotlin.math.log10
-import org.junit.After
-import org.junit.Test
+import kotlin.test.AfterTest
+import kotlin.test.Test
 
 private const val SAMPLE_RATE = 44100
+
+/** The sample rates iOS actually renders at - #602 pins the coefficient maths against both. */
+private val COMMON_SAMPLE_RATES = listOf(44_100, 48_000)
 
 /**
  * Pins the analytical magnitude-response math that backs the EQ frequency-response chart, replacing
  * an FFT-of-an-impulse approach with the exact biquad magnitude response ([BandProcessor.magnitudeAt]).
  */
 class FrequencyResponseTest {
-    @After
+    @AfterTest
     fun resetCustomPreset() {
         Equalizer.Presets.custom.bands.forEach { band -> band.gain = 0.0 }
     }
@@ -100,10 +103,42 @@ class FrequencyResponseTest {
         cascadeAttenuation(bandProcessorsFor(Equalizer.Presets.flat), sampleRateHz = 8) shouldBe 1.0f
     }
 
-    private fun bandProcessorsFor(preset: Equalizer.Presets.Preset): List<BandProcessor> = preset.bands.map { band ->
+    /** #602: the coefficient maths is shared with iOS, which renders at 44.1 kHz or 48 kHz depending on the device output. */
+    @Test
+    fun `a boosted band peaks at its centre frequency at both 44_1kHz and 48kHz`() {
+        Equalizer.Presets.custom.bands.first { band -> band.centerFrequency == 1000 }.gain = 12.0
+
+        COMMON_SAMPLE_RATES.forEach { sampleRate ->
+            val bandProcessors = bandProcessorsFor(Equalizer.Presets.custom, sampleRate)
+
+            val atCentre = frequencyResponseDb(bandProcessors, preAmpGainDb = 0.0, frequencyHz = 1000.0, sampleRate)
+            val farBelow = frequencyResponseDb(bandProcessors, preAmpGainDb = 0.0, frequencyHz = 32.0, sampleRate)
+
+            atCentre shouldBe (12.0 plusOrMinus 0.1)
+            farBelow shouldBe (0.0 plusOrMinus 0.5)
+        }
+    }
+
+    /** #602: the headroom attenuation the coefficients need to stay at unity gain doesn't depend on the sample rate. */
+    @Test
+    fun `cascadeAttenuation pulls a boosted cascade back to unity gain at both 44_1kHz and 48kHz`() {
+        Equalizer.Presets.custom.bands.first { band -> band.centerFrequency == 1000 }.gain = 12.0
+
+        COMMON_SAMPLE_RATES.forEach { sampleRate ->
+            val bandProcessors = bandProcessorsFor(Equalizer.Presets.custom, sampleRate)
+
+            val attenuation = cascadeAttenuation(bandProcessors, sampleRate)
+            val attenuationDb = 20.0 * log10(attenuation.toDouble())
+
+            attenuationDb shouldBeLessThan -10.0
+            attenuationDb shouldBeGreaterThanOrEqualTo -12.5
+        }
+    }
+
+    private fun bandProcessorsFor(preset: Equalizer.Presets.Preset, sampleRate: Int = SAMPLE_RATE): List<BandProcessor> = preset.bands.map { band ->
         // toNyquistBand() re-derives bandwidthGain from the current gain, matching
         // EqualizerAudioProcessor.updateBandProcessors() - a NyquistBand's own bandwidthGain field
         // is only valid at the gain it was constructed with.
-        BandProcessor(band.toNyquistBand(), sampleRate = SAMPLE_RATE, channelCount = 1, referenceGain = 0.0)
+        BandProcessor(band.toNyquistBand(), sampleRate = sampleRate, channelCount = 1, referenceGain = 0.0)
     }
 }

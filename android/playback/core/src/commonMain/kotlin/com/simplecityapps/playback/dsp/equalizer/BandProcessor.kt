@@ -7,7 +7,6 @@ import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.tan
-import timber.log.Timber
 
 class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount: Int, val referenceGain: Double) {
     private val G0 = referenceGain.fromDb()
@@ -82,7 +81,6 @@ class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount
         }
 
         if (channelIndex >= channelCount) {
-            Timber.v("Invalid channel index")
             return sample
         }
 

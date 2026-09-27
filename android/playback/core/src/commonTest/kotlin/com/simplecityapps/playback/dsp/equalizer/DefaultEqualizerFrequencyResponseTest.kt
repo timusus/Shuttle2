@@ -4,7 +4,7 @@ import com.simplecityapps.playback.equalizer.EqualizerBandGain
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 private const val MIN_FREQUENCY_HZ = 20f
 private const val MAX_FREQUENCY_HZ = 20_500f

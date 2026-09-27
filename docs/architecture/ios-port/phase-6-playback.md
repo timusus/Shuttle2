@@ -209,6 +209,22 @@ interface IosAudioPlayerListener {                        // Swift calls these o
     next, shuffle, seek, remove, relaunch restores queue and position); audible gapless, lock screen,
     interruption and AirPlay go to `docs/testing/device-checks.md`.
 
+### Status of step 1 (`:android:playback:core`)
+
+Done. The module (commonMain + commonTest, targets android/iosArm64/iosSimulatorArm64) carries:
+
+- The shuffle order, queue publish/navigation rules, the playerless queue model, `QueueStore.startOf`
+  and the playback history recorder (#597).
+- The ReplayGain dB rule (track/album mode with tag fallback, pre-amp) and the EQ presets' biquad
+  coefficient maths (`BandProcessor`, frequency response, cascade attenuation), moved from
+  `:android:playback`'s `dsp/` package with the sample rate passed in rather than looked up from a
+  platform API (#602). `:android:playback`'s Media3 `AudioProcessor`s (`ReplayGainAudioProcessor`,
+  `EqualizerAudioProcessor`) still own the real-time `ByteBuffer` path and depend on this module for
+  the maths; `:android:app` moved to an `api` dependency on `:android:playback:core` through
+  `:android:playback` since it imports `ReplayGainMode` and `DefaultEqualizerFrequencyResponse`
+  directly. commonTest adds coefficient/response tests parameterised over 44.1 kHz and 48 kHz, the
+  rates iOS actually renders at.
+
 ### Status of step 7 (app wiring)
 
 Done, in `ios/S2/Platform/Audio/` and `ios/S2/KMP/AppGraph.swift`:

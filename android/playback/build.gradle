@@ -44,8 +44,10 @@ dependencies {
     // Shuttle Core
     implementation project(path: ':android:core')
 
-    // The playback policy Android shares with iOS: shuffle order, queue publishing and navigation, start positions
-    implementation project(path: ':android:playback:core')
+    // The playback policy Android shares with iOS: shuffle order, queue publishing and navigation, start positions,
+    // ReplayGain and EQ maths (#602). api: :android:app imports ReplayGainMode and DefaultEqualizerFrequencyResponse
+    // directly through this module.
+    api project(path: ':android:playback:core')
 
     // Shuttle Media Provider
     implementation project(path: ':android:mediaprovider:core')
