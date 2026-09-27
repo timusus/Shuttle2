@@ -45,6 +45,11 @@ targets:
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         # Keep playing with the screen locked or the app in the background (#588).
         UIBackgroundModes: [audio]
+        # Jellyfin and Emby servers are often plain http on the LAN, or https with a self-signed
+        # certificate; the servers' own iOS apps allow both the same way (#587).
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+          NSAllowsLocalNetworking: true
     settings:
       base:
         # Placeholder until the App Store Connect app exists.
