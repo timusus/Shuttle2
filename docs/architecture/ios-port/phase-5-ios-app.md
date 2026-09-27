@@ -222,6 +222,21 @@ Decision: **URLs from shared Kotlin, pixels in Swift.**
   tested, and one fewer dependency.
 - Local artwork (embedded pictures, `folder.jpg`) and the seed colour come later (phase 8 and 6).
 
+**Done (P5-4, #587):** `ArtworkUrls` (`shared/.../artwork/ArtworkUrls.kt`) and `IosAppGraph.artworkUrls`
+on the Kotlin side; `ArtworkLoader` and `ArtworkImage` (`ios/S2/Artwork/`, tests in
+`ios/S2Tests/ArtworkLoaderTests.swift`) on the Swift side, simplified from Podcasts' loader since a song,
+album or album artist has exactly one fixed-size artwork URL — no CDN rewriting, no candidate list. Not
+yet wired into any row; each call site is a one-line change once P5-6a/b/7 land:
+
+- `SongRow` (`ios/S2/Features/Library/SongListView.swift`): `ArtworkImage(url: ..., points: 40)` beside
+  the title, from `graph.artworkUrls.url(song: song)`.
+- `AlbumTile`/album rows (`ios/S2/Features/Library/AlbumListView.swift`): `ArtworkImage(url: ..., points:
+  ...)` from `graph.artworkUrls.url(album: album)`.
+- Album artist rows (P5-6b, `ArtistRow`, not yet added): from `graph.artworkUrls.url(albumArtist:
+  albumArtist)`.
+- `MiniPlayerView`/`NowPlayingView` (`ios/S2/Features/Playback/`): the current song's artwork, from
+  `graph.artworkUrls.url(song: song)` off `PlayerModel`'s current song.
+
 ## 4. Local library on iOS
 
 Decision: **Files-app folders the user picks, plus the app's own Documents, read with FFmpeg; a separate
