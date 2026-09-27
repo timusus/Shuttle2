@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 
 /// What the player surfaces (mini player, Now Playing, its queue) draw, as plain values. The views take this
@@ -13,6 +14,8 @@ struct NowPlayingState: Equatable {
     var positionMs = 0
     var durationMs = 0
     var queue: [NowPlayingQueueRow] = []
+    var shuffleOn = false
+    var repeatMode: NowPlayingRepeat = .off
 
     /// Nothing queued.
     static let idle = NowPlayingState()
@@ -35,6 +38,21 @@ struct NowPlayingQueueRow: Identifiable, Equatable {
     }
 }
 
+/// The queue's repeat mode, as the repeat button cycles it.
+enum NowPlayingRepeat: Equatable {
+    case off
+    case all
+    case one
+
+    init(_ mode: RepeatMode) {
+        switch mode {
+        case .one: self = .one
+        case .all: self = .all
+        default: self = .off
+        }
+    }
+}
+
 /// The commands the player surfaces send.
 struct PlayerActions {
     var playPause: () -> Void = {}
@@ -44,6 +62,9 @@ struct PlayerActions {
     var seek: (Int) -> Void = { _ in }
     /// Skips to the queue row at this index.
     var selectQueueItem: (Int) -> Void = { _ in }
+    var toggleShuffle: () -> Void = {}
+    /// Steps repeat through off, all, one.
+    var toggleRepeat: () -> Void = {}
 
     /// Does nothing: previews and tests.
     static let none = PlayerActions()
@@ -61,7 +82,9 @@ extension PlayerModel {
             isPlaying: isPlaying,
             positionMs: positionMs,
             durationMs: durationMs,
-            queue: queue
+            queue: queue,
+            shuffleOn: shuffleOn,
+            repeatMode: repeatMode
         )
     }
 
@@ -71,7 +94,9 @@ extension PlayerModel {
             next: next,
             previous: previous,
             seek: seek(toMs:),
-            selectQueueItem: play(at:)
+            selectQueueItem: play(at:),
+            toggleShuffle: toggleShuffle,
+            toggleRepeat: toggleRepeat
         )
     }
 }

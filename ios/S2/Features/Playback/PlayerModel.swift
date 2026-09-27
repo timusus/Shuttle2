@@ -26,6 +26,8 @@ final class PlayerModel {
     private(set) var queue: [NowPlayingQueueRow] = []
     /// The current item's index into `queue`, for the queue list's tap-to-skip.
     private(set) var queuePosition: Int?
+    private(set) var shuffleOn = false
+    private(set) var repeatMode: NowPlayingRepeat = .off
 
     init(playback: IosPlayerController) {
         self.playback = playback
@@ -52,6 +54,16 @@ final class PlayerModel {
             Task { [weak self] in
                 for await queue in playback.queueOperations.queueStateFlow {
                     self?.queueChanged(queue)
+                }
+            },
+            Task { [weak self] in
+                for await mode in playback.queueOperations.shuffleModeFlow {
+                    self?.shuffleOn = mode == .on
+                }
+            },
+            Task { [weak self] in
+                for await mode in playback.queueOperations.repeatModeFlow {
+                    self?.repeatMode = NowPlayingRepeat(mode)
                 }
             },
         ]
@@ -103,7 +115,18 @@ final class PlayerModel {
         playback.seekTo(position: Int32(ms))
     }
 
-    /// Skips to the queue item at `position` (`QueueRow` index), as tapping a queue row does.
+    /// Turns shuffle on or off; the queue reshuffles around the current song.
+    func toggleShuffle() {
+        let queueOperations = playback.queueOperations
+        Task { try? await queueOperations.toggleShuffleMode() }
+    }
+
+    /// Steps repeat through off, all, one.
+    func toggleRepeat() {
+        playback.queueOperations.toggleRepeatMode()
+    }
+
+    /// Skips to the queue item at `position` (`queue` index), as tapping a queue row does.
     func play(at position: Int) {
         playback.skipTo(position: Int32(position))
     }

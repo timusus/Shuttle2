@@ -3,7 +3,8 @@ import Testing
 import ViewInspector
 @testable import S2
 
-/// `NowPlayingContent`'s content and commands, as plain values in (no Kotlin) per `.claude/rules/ios.md`.
+/// Now Playing's content and commands, as plain values in (no Kotlin) per `.claude/rules/ios.md`, and how each
+/// tier presents it.
 @MainActor
 struct NowPlayingViewTests {
     private let queue: [NowPlayingQueueRow] = [
@@ -11,67 +12,97 @@ struct NowPlayingViewTests {
         .init(id: 2, title: "Hyperballad", artist: "Björk", isCurrent: false),
     ]
 
-    private func makeSut(
+    private func state(
         title: String? = "Paranoid Android",
-        queue: [NowPlayingQueueRow]? = nil,
-        onPlayPause: @escaping () -> Void = {},
-        onNext: @escaping () -> Void = {},
-        onPrevious: @escaping () -> Void = {},
-        onSelectQueueItem: @escaping (Int) -> Void = { _ in }
-    ) -> NowPlayingContent {
-        NowPlayingContent(
-            title: title,
-            artist: title == nil ? nil : "Radiohead",
-            album: title == nil ? nil : "OK Computer",
-            isPlaying: true,
-            positionMs: 90_000,
-            durationMs: 386_000,
-            queue: queue ?? (title == nil ? [] : self.queue),
-            onSeek: { _ in },
-            onPlayPause: onPlayPause,
-            onNext: onNext,
-            onPrevious: onPrevious,
-            onSelectQueueItem: onSelectQueueItem
+        artwork: ArtworkSource? = nil,
+        shuffleOn: Bool = false,
+        repeatMode: NowPlayingRepeat = .off
+    ) -> NowPlayingState {
+        guard title != nil else { return .idle }
+        return NowPlayingState(
+            title: title, artist: "Radiohead", album: "OK Computer", artwork: artwork, isPlaying: true,
+            positionMs: 90_000, durationMs: 386_000, queue: queue, shuffleOn: shuffleOn, repeatMode: repeatMode
         )
     }
 
+    private func tap(_ label: String, in sut: NowPlayingContent) throws {
+        try sut.inspect().find(viewWithAccessibilityLabel: label).button().tap()
+    }
+
     @Test func showsTitleArtistAndAlbum() throws {
-        let sut = makeSut()
+        let sut = NowPlayingContent(state: state())
         #expect((try? sut.inspect().find(text: "Paranoid Android")) != nil)
         #expect((try? sut.inspect().find(text: "Radiohead · OK Computer")) != nil)
     }
 
-    @Test func showsAFallbackWhenNothingIsPlaying() throws {
-        let sut = makeSut(title: nil)
-        #expect((try? sut.inspect().find(text: "Nothing is playing")) != nil)
+    @Test func showsElapsedAndRemainingTimes() throws {
+        let sut = NowPlayingContent(state: state())
+        #expect((try? sut.inspect().find(text: "1:30")) != nil)
+        #expect((try? sut.inspect().find(text: "-4:56")) != nil)
     }
 
-    @Test func showsTheQueueWithEachSong() throws {
-        let sut = makeSut()
-        #expect((try? sut.inspect().find(text: "Hyperballad")) != nil)
+    @Test func showsTheSharedEmptyStateWhenNothingIsPlaying() throws {
+        let sut = NowPlayingContent(state: .idle)
+        #expect((try? sut.inspect().find(EmptyState<EmptyView>.self)) != nil)
+        #expect((try? sut.inspect().find(text: "Nothing Playing")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "Play")) == nil)
     }
 
-    @Test func tappingPlayPauseTogglesPlayback() throws {
-        var toggled = false
-        let sut = makeSut(onPlayPause: { toggled = true })
-        try sut.inspect().findAll(ViewType.Button.self)[1].tap()
-        #expect(toggled)
+    @Test func drawsTheCoverWhenTheSongHasOne() throws {
+        let sut = NowPlayingContent(state: state(artwork: ArtworkSource(id: 1) { nil }))
+        #expect((try? sut.inspect().find(RemoteArtwork<ArtworkPlaceholder>.self)) != nil)
     }
 
-    @Test func tappingPreviousAndNextForwardToTheModel() throws {
-        var wentBack = false
-        var wentForward = false
-        let sut = makeSut(onNext: { wentForward = true }, onPrevious: { wentBack = true })
-        try sut.inspect().findAll(ViewType.Button.self)[0].tap()
-        try sut.inspect().findAll(ViewType.Button.self)[2].tap()
-        #expect(wentBack)
-        #expect(wentForward)
+    @Test func drawsThePlaceholderWithoutArtwork() throws {
+        let sut = NowPlayingContent(state: state(artwork: nil))
+        #expect((try? sut.inspect().find(RemoteArtwork<ArtworkPlaceholder>.self)) == nil)
+        #expect((try? sut.inspect().find(ArtworkPlaceholder.self)) != nil)
     }
 
-    @Test func tappingAQueueRowSkipsToIt() throws {
+    @Test func transportButtonsForwardToTheActions() throws {
+        var calls: [String] = []
+        var actions = PlayerActions()
+        actions.playPause = { calls.append("playPause") }
+        actions.previous = { calls.append("previous") }
+        actions.next = { calls.append("next") }
+        actions.toggleShuffle = { calls.append("shuffle") }
+        actions.toggleRepeat = { calls.append("repeat") }
+        var closed = false
+        let sut = NowPlayingContent(state: state(), actions: actions, onClose: { closed = true })
+
+        for label in ["Previous", "Pause", "Next", "Shuffle", "Repeat", "Close"] {
+            try tap(label, in: sut)
+        }
+        #expect(calls == ["previous", "playPause", "next", "shuffle", "repeat"])
+        #expect(closed)
+    }
+
+    @Test func shuffleAndRepeatReportTheirModes() throws {
+        let sut = NowPlayingContent(state: state(shuffleOn: true, repeatMode: .one))
+        let shuffle = try sut.inspect().find(viewWithAccessibilityLabel: "Shuffle")
+        #expect(try shuffle.accessibilityValue().string() == "On")
+        let repeatButton = try sut.inspect().find(viewWithAccessibilityLabel: "Repeat")
+        #expect(try repeatButton.accessibilityValue().string() == "One")
+    }
+
+    @Test func theQueueListsEachSongAndSkipsToATappedOne() throws {
         var selected: Int?
-        let sut = makeSut(onSelectQueueItem: { selected = $0 })
-        try sut.inspect().findAll(ViewType.Button.self)[4].tap()
+        let sut = NowPlayingQueueList(queue: queue, onSelect: { selected = $0 })
+        #expect((try? sut.inspect().find(text: "Hyperballad")) != nil)
+        try sut.inspect().find(viewWithAccessibilityLabel: "Hyperballad").button().tap()
         #expect(selected == 1)
+        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "Paranoid Android, now playing")) != nil)
+    }
+
+    @Test func compactPresentsFullScreenAndOtherTiersAFormSheet() {
+        #expect(NowPlayingPresentationStyle.resolve(for: .compact) == .fullScreenCover)
+        #expect(NowPlayingPresentationStyle.resolve(for: .regular) == .formSheet)
+        #expect(NowPlayingPresentationStyle.resolve(for: .wide) == .formSheet)
+    }
+
+    @Test func subSheetsAreSheetsInCompactAndPopoversOtherwise() {
+        #expect(PlayerSubSheetStyle.resolve(for: .compact) == .sheet)
+        #expect(PlayerSubSheetStyle.resolve(for: .regular) == .popover)
+        #expect(PlayerSubSheetStyle.resolve(for: .wide) == .popover)
     }
 }

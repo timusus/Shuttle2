@@ -69,4 +69,20 @@ struct PlayerModelTests {
         model.play(at: 2)
         #expect(await waitUntil { model.title == "Teardrop" })
     }
+
+    @Test func shuffleAndRepeatFollowTheQueueModes() async throws {
+        _ = try await loadQueue()
+        #expect(!model.shuffleOn)
+        #expect(model.repeatMode == .off)
+
+        model.toggleShuffle()
+        #expect(await waitUntil { model.shuffleOn })
+
+        model.toggleRepeat()
+        #expect(await waitUntil { model.repeatMode == .all })
+        model.toggleRepeat()
+        #expect(await waitUntil { model.repeatMode == .one })
+        #expect(model.nowPlayingState.repeatMode == .one)
+        #expect(model.nowPlayingState.artwork != nil)
+    }
 }
