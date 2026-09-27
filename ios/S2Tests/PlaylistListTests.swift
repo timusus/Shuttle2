@@ -50,7 +50,7 @@ struct PlaylistListTests {
 
     @Test func placeholders() throws {
         #expect((try? PlaylistListContent(state: state([], .scanning)).inspect().find(text: "Importing your library…")) != nil)
-        #expect((try? PlaylistListContent(state: state([], .loading)).inspect().find(ViewType.ProgressView.self)) != nil)
+        #expect((try? PlaylistListContent(state: state([], .loading)).inspect().find(LibraryListSkeleton.self)) != nil)
     }
 
     /// Create/Rename/Delete are each wired from a closure opened by a toolbar button, a row's contextMenu

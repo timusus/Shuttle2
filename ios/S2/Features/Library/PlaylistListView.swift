@@ -74,6 +74,17 @@ extension SmartPlaylistId {
         default: "Playlist"
         }
     }
+
+    /// The symbol its placeholder artwork shows.
+    var symbol: String {
+        switch id {
+        case "favourites": "heart.fill"
+        case "recently-added": "calendar.badge.plus"
+        case "most-played": "flame.fill"
+        case "history": "clock.arrow.circlepath"
+        default: "music.note.list"
+        }
+    }
 }
 
 /// The Playlists screen from a `PlaylistListUiState`.
@@ -90,7 +101,7 @@ struct PlaylistListContent: View {
     var body: some View {
         switch state.loadingState {
         case .loading:
-            ProgressView()
+            LibraryListSkeleton()
         case .scanning where state.playlists.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
         case .ready, .scanning:
@@ -197,7 +208,7 @@ private struct SmartPlaylistRow: View {
 
     var body: some View {
         NavigationLink(value: Route.smartPlaylist(smartPlaylist)) {
-            Label(smartPlaylist.id.title, systemImage: "star")
+            MediaRow(smartPlaylist.id.title, placeholderSymbol: smartPlaylist.id.symbol)
         }
     }
 }

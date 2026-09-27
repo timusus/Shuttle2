@@ -9,23 +9,26 @@ struct SongListView: View {
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.songs).cacheKey) {
             SongListModels(graph: AppGraph.shared)
         }
-        Observing(models.songs.uiState, models.actions.uiState) { state, actions in
-            SongListContent(
-                state: state,
-                onPlay: { index in
-                    models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index)))
-                },
-                onPlayNext: { song in
-                    models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionSongs(song: song)))
-                },
-                onAddToQueue: { song in
-                    models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
-                },
-                onShuffle: {
-                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs)))
-                }
-            )
-            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
+        LibraryNowPlayingReader { nowPlaying in
+            Observing(models.songs.uiState, models.actions.uiState) { state, actions in
+                SongListContent(
+                    state: state,
+                    nowPlaying: nowPlaying,
+                    onPlay: { index in
+                        models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index)))
+                    },
+                    onPlayNext: { song in
+                        models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionSongs(song: song)))
+                    },
+                    onAddToQueue: { song in
+                        models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
+                    },
+                    onShuffle: {
+                        models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs)))
+                    }
+                )
+                .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
+            }
         }
         .refreshable { LibraryImport.refresh() }
         .navigationTitle(LibraryCategory.songs.title)
@@ -48,6 +51,7 @@ final class SongListModels: ViewModelGroup {
 /// The Songs screen from a `SongListUiState`.
 struct SongListContent: View {
     let state: SongListUiState
+    var nowPlaying: LibraryNowPlaying = .none
     var onPlay: (Int) -> Void = { _ in }
     var onPlayNext: (Song) -> Void = { _ in }
     var onAddToQueue: (Song) -> Void = { _ in }
@@ -56,7 +60,7 @@ struct SongListContent: View {
     var body: some View {
         switch state.loadingState {
         case .loading:
-            ProgressView()
+            LibraryListSkeleton()
         case .scanning where state.songs.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
@@ -64,12 +68,15 @@ struct SongListContent: View {
         case .ready, .scanning:
             List {
                 ForEach(Array(state.songs.enumerated()), id: \.element.id) { index, song in
-                    Button { onPlay(index) } label: { SongRow(song: song) }
+                    let playback = nowPlaying.playback(song: song)
+                    Button { onPlay(index) } label: { SongRow(song: song, playback: playback) }
                         .buttonStyle(.plain)
+                        .tapFeedback()
                         .contextMenu {
                             Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
                             Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
                         }
+                        .nowPlayingRowBackground(playback)
                 }
             }
             .listStyle(.plain)
@@ -82,12 +89,14 @@ struct SongListContent: View {
 
 struct SongRow: View {
     let song: Song
+    var playback: MediaRowPlayback = .none
 
     var body: some View {
         MediaRow(
             song.name ?? "Unknown",
             subtitle: [song.friendlyArtistName, song.album].compactMap { $0 }.joined(separator: " · "),
             artwork: .song(song),
+            playback: playback,
             titleIdentifier: "songRow.title"
         ) {
             Text(Duration.milliseconds(Int64(song.duration)).formatted(.time(pattern: .minuteSecond)))

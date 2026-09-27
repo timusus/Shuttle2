@@ -63,7 +63,7 @@ struct GenreListContent: View {
     var body: some View {
         switch state.loadingState {
         case .loading:
-            ProgressView()
+            LibraryListSkeleton()
         case .scanning where state.genres.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:

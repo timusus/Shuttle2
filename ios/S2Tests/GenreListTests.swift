@@ -35,6 +35,6 @@ struct GenreListTests {
     @Test func placeholders() throws {
         #expect((try? GenreListContent(state: state([], .empty)).inspect().find(text: "No Genres")) != nil)
         #expect((try? GenreListContent(state: state([], .scanning)).inspect().find(text: "Importing your library…")) != nil)
-        #expect((try? GenreListContent(state: state([], .loading)).inspect().find(ViewType.ProgressView.self)) != nil)
+        #expect((try? GenreListContent(state: state([], .loading)).inspect().find(LibraryListSkeleton.self)) != nil)
     }
 }
