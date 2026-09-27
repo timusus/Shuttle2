@@ -20,6 +20,12 @@ android {
 
     namespace = "com.simplecityapps.mediaprovider.server"
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
+    }
+
     // FakeSharedPreferences and FixtureServer, shared by the provider modules' tests
     testFixtures {
         enable = true

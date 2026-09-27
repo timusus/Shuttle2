@@ -5,10 +5,13 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
-import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.R
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.Page
+import com.simplecityapps.mediaprovider.server.pagedFlow
+import com.simplecityapps.mediaprovider.server.withServerSession
 import com.simplecityapps.networking.retrofit.NetworkResult
+import com.simplecityapps.networking.retrofit.map
 import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.emby.http.Item
 import com.simplecityapps.provider.emby.http.ItemsService
@@ -18,18 +21,15 @@ import com.simplecityapps.provider.emby.http.playlistItems
 import com.simplecityapps.provider.emby.http.playlists
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import kotlin.math.min
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.LocalDate
 import timber.log.Timber
 
@@ -40,70 +40,47 @@ class EmbyMediaProvider(
 ) : MediaProvider {
     override val type = MediaProviderType.Emby
 
-    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> {
-        val address =
-            authenticationManager.getAddress() ?: run {
-                return flowOf(FlowEvent.Failure(context.getString(R.string.media_provider_address_missing)))
-            }
-
-        return flow {
-            emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), null)))
-            authenticate(address)?.let { credentials ->
-                emitAll(
-                    queryItems(
-                        address = address,
-                        credentials = credentials
-                    ).map { event ->
-                        when (event) {
-                            is FlowEvent.Success -> {
-                                FlowEvent.Success(event.result.map { it.toSong() })
-                            }
-
-                            is FlowEvent.Progress -> {
-                                FlowEvent.Progress(event.data)
-                            }
-
-                            is FlowEvent.Failure -> {
-                                FlowEvent.Failure(event.message)
-                            }
-                        }
-                    }
-                )
-            } ?: emit(FlowEvent.Failure(context.getString(R.string.media_provider_authentication_error)))
-        }
-    }
-
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> {
-        val address =
-            authenticationManager.getAddress() ?: run {
-                return flowOf(FlowEvent.Failure(context.getString(R.string.media_provider_address_missing)))
-            }
-
-        return flow {
-            emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), null)))
-            authenticate(address)?.let { credentials ->
-                when (
-                    val queryResult =
-                        itemsService.playlists(
-                            url = address,
-                            token = credentials.accessToken,
-                            userId = credentials.userId
-                        )
-                ) {
-                    is NetworkResult.Success<QueryResult> -> {
-                        val updateData = mutableListOf<MediaImporter.PlaylistUpdateData>()
-                        findSongsForPlaylists(address, credentials, queryResult.body.items, existingSongs).collectIndexed { index, playlistUpdateData ->
-                            updateData.add(playlistUpdateData)
-                        }
-                        emit(FlowEvent.Success(updateData))
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(context, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+        emitAll(
+            queryItems(
+                address = address,
+                credentials = credentials
+            ).map { event ->
+                when (event) {
+                    is FlowEvent.Success -> {
+                        FlowEvent.Success(event.result.map { it.toSong() })
                     }
 
-                    is NetworkResult.Failure -> {
-                        Timber.e(queryResult.error, queryResult.error.userDescription())
-                        emit(FlowEvent.Failure(queryResult.error.userDescription()))
+                    is FlowEvent.Progress -> {
+                        FlowEvent.Progress(event.data)
+                    }
+
+                    is FlowEvent.Failure -> {
+                        FlowEvent.Failure(event.message)
                     }
                 }
-            } ?: emit(FlowEvent.Failure(context.getString(R.string.media_provider_authentication_error)))
+            }
+        )
+    }
+
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(context, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+        when (
+            val queryResult =
+                itemsService.playlists(
+                    url = address,
+                    token = credentials.accessToken,
+                    userId = credentials.userId
+                )
+        ) {
+            is NetworkResult.Success<QueryResult> -> {
+                val updateData = findSongsForPlaylists(address, credentials, queryResult.body.items, existingSongs).toList()
+                emit(FlowEvent.Success(updateData))
+            }
+
+            is NetworkResult.Failure -> {
+                Timber.e(queryResult.error, queryResult.error.userDescription())
+                emit(FlowEvent.Failure(queryResult.error.userDescription()))
+            }
         }
     }
 
@@ -119,49 +96,15 @@ class EmbyMediaProvider(
 
     private fun queryItems(
         address: String,
-        credentials: AuthenticatedCredentials,
-        startIndex: Int = 0,
-        pageSize: Int = 500,
-        items: MutableList<Item> = mutableListOf()
-    ): Flow<FlowEvent<List<Item>, MessageProgress>> = flow {
-        when (
-            val queryResult =
-                itemsService.audioItems(
-                    url = address,
-                    token = credentials.accessToken,
-                    userId = credentials.userId,
-                    limit = pageSize,
-                    startIndex = startIndex
-                )
-        ) {
-            is NetworkResult.Success<QueryResult> -> {
-                val totalRecordCount = queryResult.body.totalRecordCount
-                val lastIndex = startIndex + pageSize
-
-                emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), Progress(lastIndex, totalRecordCount))))
-
-                items.addAll(queryResult.body.items)
-
-                if (lastIndex < totalRecordCount) {
-                    emitAll(
-                        queryItems(
-                            address = address,
-                            credentials = credentials,
-                            startIndex = lastIndex,
-                            pageSize = min(pageSize, totalRecordCount - lastIndex),
-                            items = items
-                        )
-                    )
-                } else {
-                    emit(FlowEvent.Success(items))
-                }
-            }
-
-            is NetworkResult.Failure -> {
-                Timber.e(queryResult.error, queryResult.error.userDescription())
-                emit(FlowEvent.Failure(queryResult.error.userDescription()))
-            }
-        }
+        credentials: AuthenticatedCredentials
+    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(context.getString(R.string.media_provider_querying_api)) { offset, limit ->
+        itemsService.audioItems(
+            url = address,
+            token = credentials.accessToken,
+            userId = credentials.userId,
+            limit = limit,
+            startIndex = offset
+        ).map { it.toPage() }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -197,53 +140,20 @@ class EmbyMediaProvider(
     private fun queryPlaylistItems(
         address: String,
         credentials: AuthenticatedCredentials,
-        playlistId: String,
-        startIndex: Int = 0,
-        pageSize: Int = 500,
-        items: MutableList<Item> = mutableListOf()
-    ): Flow<FlowEvent<List<Item>, MessageProgress>> = flow {
-        when (
-            val queryResult =
-                itemsService.playlistItems(
-                    url = address,
-                    token = credentials.accessToken,
-                    playlistId = playlistId,
-                    limit = pageSize,
-                    startIndex = startIndex,
-                    userId = credentials.userId
-                )
-        ) {
-            is NetworkResult.Success<QueryResult> -> {
-                val totalRecordCount = queryResult.body.totalRecordCount
-                val lastIndex = startIndex + pageSize
-
-                emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), Progress(lastIndex, totalRecordCount))))
-
-                items.addAll(queryResult.body.items)
-
-                if (lastIndex < totalRecordCount) {
-                    emitAll(
-                        queryPlaylistItems(
-                            address = address,
-                            credentials = credentials,
-                            playlistId = playlistId,
-                            startIndex = lastIndex,
-                            pageSize = min(pageSize, totalRecordCount - lastIndex),
-                            items = items
-                        )
-                    )
-                } else {
-                    emit(FlowEvent.Success(items))
-                }
-            }
-
-            is NetworkResult.Failure -> {
-                Timber.e(queryResult.error, queryResult.error.userDescription())
-                emit(FlowEvent.Failure(queryResult.error.userDescription()))
-            }
-        }
+        playlistId: String
+    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(context.getString(R.string.media_provider_querying_api)) { offset, limit ->
+        itemsService.playlistItems(
+            url = address,
+            token = credentials.accessToken,
+            playlistId = playlistId,
+            limit = limit,
+            startIndex = offset,
+            userId = credentials.userId
+        ).map { it.toPage() }
     }
 }
+
+private fun QueryResult.toPage() = Page(items, totalRecordCount)
 
 internal fun Item.toSong(): Song = Song(
     id = 0,
