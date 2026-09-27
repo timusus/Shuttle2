@@ -1,6 +1,11 @@
 package com.simplecityapps.shuttle.persistence
 
-class SecurePreferenceManager(private val store: SecureStore) {
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
+
+@SingleIn(AppScope::class)
+class SecurePreferenceManager @Inject constructor(private val store: SecureStore) {
     // Media server credentials, keyed by ServerCredentialStore (`<server>_*`)
 
     fun getString(key: String): String? = store.getString(key)

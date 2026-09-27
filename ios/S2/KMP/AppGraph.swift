@@ -2,8 +2,8 @@ import Foundation
 import S2Playback
 import Shared
 
-/// Central access point for the Kotlin dependency graph (`IosAppGraph` in :shared's iosMain) and the
-/// platform objects it runs on, built once by `initialize()` at launch (as in Shuttle Podcasts).
+/// Central access point for the Kotlin dependency graph (the Metro `IosAppGraph` in :shared's iosMain) and
+/// the platform objects it runs on, built once by `initialize()` at launch (as in Shuttle Podcasts).
 enum AppGraph {
     private static var _dependencies: IosAppDependencies?
 
@@ -42,7 +42,7 @@ final class IosAppDependencies {
 
     init() {
         audioPlayer = EngineAudioPlayer(engine: Self.makeEngine())
-        graph = IosAppGraph(audioPlayer: audioPlayer)
+        graph = IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer)
         audioSession = AudioSessionController()
         nowPlaying = NowPlayingController()
         playbackSystem = PlaybackSystemCoordinator(

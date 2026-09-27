@@ -4,7 +4,7 @@
 plugins {
     id("s2.kmp-library")
     alias(libs.plugins.skie)
-    // SharedAppGraph: the iOS graph over the shared modules' AppScope contributions
+    // IosAppGraph: the iOS graph over the shared modules' AppScope contributions
     alias(libs.plugins.metro)
 }
 
@@ -49,6 +49,15 @@ kotlin {
             api(project(":android:presentation"))
             // The playback policy the iOS player controller shares with Android's Media3 queue (#597).
             implementation(project(":android:playback:core"))
+            // What IosAppGraph binds on iOS: the core bindings, the Room library, the Jellyfin and Emby providers
+            // and the Darwin HTTP client they share (#587)
+            implementation(project(":android:core"))
+            implementation(project(":android:networking"))
+            implementation(project(":android:mediaprovider:core"))
+            implementation(project(":android:mediaprovider:local"))
+            implementation(project(":android:mediaprovider:server"))
+            implementation(project(":android:mediaprovider:jellyfin"))
+            implementation(project(":android:mediaprovider:emby"))
             api(libs.kotlinx.coroutinesCore)
             implementation(libs.kotlinx.datetime)
         }

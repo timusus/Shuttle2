@@ -223,7 +223,7 @@ Done, in `ios/S2/Platform/Audio/` and `ios/S2/KMP/AppGraph.swift`:
   session is activated before any play. `NowPlayingController` follows the queue, state, progress and
   speed flows, and its remote commands call `PlaybackOperations` (next ignores repeat, previous
   unforced, ±30/10 s skips for non-music songs, as on Android).
-- `AppGraph.initialize()` (from `S2App.init`) builds the engine, the adapter, `IosAppGraph(audioPlayer:)`
+- `AppGraph.initialize()` (from `S2App.init`) builds the engine, the adapter, `IosAppGraphKt.createIosAppGraph(audioPlayer:)`
   and the coordinator once.
 
 FFmpeg ships (#588). `ios/scripts/build-ffmpeg.sh` builds n7.1.5 as four dynamic LGPL frameworks,

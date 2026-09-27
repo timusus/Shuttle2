@@ -42,14 +42,16 @@ in a small cache, keyed by screen and argument, and clears it when the screen go
 multibound factory and the typed graph properties, on the JVM and on iOS.
 
 That test's graph uses its own scope, so it doesn't pull in every real ViewModel. The cross-module case is
-proven by wave 1: `SharedAppGraph` (`:shared` `iosMain`, `@DependencyGraph(AppScope::class)`) merges
+proven by wave 1: `SharedAppGraph` (`:shared` `iosMain`, `@DependencyGraph(AppScope::class)`, since merged
+into phase 5's `IosAppGraph`) merges
 `presentation`'s ViewModel map contributions, its `AppViewModelFactory` binding and `core`'s binding
-containers from their klibs with Metro's default settings, and `SharedAppGraphTest` (`iosTest`) builds the
+containers from their klibs with Metro's default settings, and `SharedAppGraphTest` (now `IosAppGraphTest`) builds the
 ViewModels through both the typed property and `metroViewModelFactory`. No hint options were needed. The
 graph takes the platform objects (`KeyValueStore`, `BundledText`, `AppVersion`) through its `Factory`, and
 `excludes` the ViewModels whose dependencies iOS can't provide yet; each later wave drops its exclusion once
-iOS binds what the ViewModel needs. `IosAppGraph`, the placeholder Swift creates today, gives way to it
-once the Swift side creates the Metro graph.
+iOS binds what the ViewModel needs. Phase 5's P5-1 (#587) merged it with the placeholder `IosAppGraph`:
+one Metro graph that Swift builds through its `Factory`, excluding only wave 3's Settings and Equalizer
+ViewModels.
 
 **`ArtworkSeed`** (§1) became one platform-neutral type rather than two:
 `com.simplecityapps.shuttle.ui.theme.ArtworkSeed` in `presentation`'s `commonMain`, whose `Available` holds
@@ -127,7 +129,7 @@ All six ViewModels live in `presentation`'s `commonMain`: `AlbumArtistListViewMo
   only Android's `AppGraph` provides today. `SharedAppGraph` (`shared/src/iosMain/.../SharedAppGraph.kt`)
   excludes all six alongside wave 1's `ExcludedSongsViewModel`/`LibraryEmptyViewModel`, and
   `SharedAppGraphTest` proves the graph still builds and creates the ViewModels that remain.
-  Phase 5's `IosAppGraph` drops each exclusion once it binds the commonMain repositories (`:shared`
+  Phase 5's `IosAppGraph` (P5-1, #587) dropped every exclusion once it bound the commonMain repositories (`:shared`
   over `:android:mediaprovider:local`'s Room-backed implementations, already in commonMain) and
   `IosPlayerController` for `QueueOperations`/`PlaybackOperations`.
 - **Architecture baseline.** `AvailableMediaActions`' now-removed direct imports of
@@ -180,7 +182,10 @@ unchanged.
   - `EqualizerViewModel` needs `EqualizerControl` and `EqualizerPresetStore`. iOS's `AVAudioUnitEQ` arrives
     in phase 6 and the screen in phase 7.
 
-  Phase 5's `IosAppGraph` drops each exclusion as it binds these.
+  Phase 5's `IosAppGraph` (P5-1, #587) dropped the Home, Sources and server-type picker exclusions: iOS binds
+  the repositories and `IosPlayerController`, a per-process `@Named("randomSeed")`, a `TryAddServer` that always
+  opens (no entitlements until phase 9) and an empty `ScannerFolderStore` (no local-file scanner). Settings
+  and the equalizer stay excluded for the reasons above.
 - **Architecture baseline.** The Equalizer move removed six `ui-module-imports.txt` violations. The
   Settings entries were renamed to `AndroidSettingsEffects`/`AndroidSettingsCatalog`, their new file names;
   they are the same imports.

@@ -7,7 +7,6 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.persistence.KeyValueStore
-import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.persistence.SecureStore
 import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.persistence.SharedPreferencesSecureStore
@@ -26,10 +25,6 @@ class PersistenceModule {
     fun provideKeyValueStore(
         @ApplicationContext context: Context
     ): KeyValueStore = SharedPreferencesKeyValueStore(context.defaultSharedPreferences())
-
-    @SingleIn(AppScope::class)
-    @Provides
-    fun provideSecurePreferenceManager(store: SecureStore): SecurePreferenceManager = SecurePreferenceManager(store)
 
     @SuppressLint("ApplySharedPref")
     @SingleIn(AppScope::class)

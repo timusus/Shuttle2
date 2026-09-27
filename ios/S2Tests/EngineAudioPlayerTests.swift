@@ -164,15 +164,15 @@ struct EngineAudioPlayerTests {
 
     // MARK: - With the Kotlin controller
 
-    private func queueDemoLibrary(on graph: IosAppGraph, skipUnloadable: Bool) async throws {
+    private func queueDemoSongs(on graph: IosAppGraph, skipUnloadable: Bool) async throws {
         let controller = graph.playerController
-        _ = try await controller.queueOperations.setQueue(songs: graph.librarySongs.value, shuffleSongs: nil, position: 0)
+        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0)
         controller.load(seekPosition: nil, skipUnloadable: skipUnloadable) { _ in }
     }
 
     @Test func theKotlinControllerFeedsTheNextSongAtEachTransition() async throws {
-        let graph = IosAppGraph(audioPlayer: player)
-        try await queueDemoLibrary(on: graph, skipUnloadable: false)
+        let graph = IosAppGraphKt.createIosAppGraph(audioPlayer: player)
+        try await queueDemoSongs(on: graph, skipUnloadable: false)
 
         // The current song is loaded alone, then the next is handed over for a gapless join.
         #expect(await waitUntil { engine.nexts.last??.url.absoluteString == "demo://2" })
@@ -190,8 +190,8 @@ struct EngineAudioPlayerTests {
     }
 
     @Test func aTrackThatFailsToLoadIsSkippedForTheNext() async throws {
-        let graph = IosAppGraph(audioPlayer: player)
-        try await queueDemoLibrary(on: graph, skipUnloadable: true)
+        let graph = IosAppGraphKt.createIosAppGraph(audioPlayer: player)
+        try await queueDemoSongs(on: graph, skipUnloadable: true)
         #expect(await waitUntil { !engine.loads.isEmpty })
         let first = try #require(engine.loads.first?.current.id)
 

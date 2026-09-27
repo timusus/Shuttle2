@@ -4,6 +4,8 @@ import android.content.Context
 import com.simplecityapps.localmediaprovider.local.data.room.DatabaseProvider
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.databaseBuilder
+import com.simplecityapps.localmediaprovider.local.repository.PlaylistFileSync
+import com.simplecityapps.localmediaprovider.local.repository.SafPlaylistFileSync
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.di.ApplicationContext
 import dev.zacsweers.metro.AppScope
@@ -20,4 +22,11 @@ class DatabaseModule {
     fun provideMediaDatabase(
         @ApplicationContext context: Context
     ): MediaDatabase = DatabaseProvider(databaseBuilder(context), isDebug = BuildConfig.DEBUG).database
+
+    /** Keeps an m3u-imported playlist's source file in step with its edits, through the SAF grant it was imported with. */
+    @Provides
+    fun providePlaylistFileSync(
+        @ApplicationContext context: Context,
+        database: MediaDatabase
+    ): PlaylistFileSync = SafPlaylistFileSync(context, database.songDataDao())
 }

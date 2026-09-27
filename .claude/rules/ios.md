@@ -75,8 +75,9 @@ changes the app's signing identity, and iOS refuses to upgrade an install across
 
 ```
 shared/                     # :shared: s2.kmp-library + SKIE, exports :android:domain and :android:presentation
-  src/iosMain/.../IosAppGraph.kt   # the iOS graph, built by AppGraph.initialize() with the Swift audio player
-                                   # (placeholder: in-memory songs until Metro, #583)
+  src/iosMain/.../IosAppGraph.kt   # the Metro graph; Swift builds it with IosAppGraphKt.createIosAppGraph(audioPlayer:)
+  src/iosMain/.../di/              # IosPersistenceModule, IosNetworkingModule, IosPlaybackModule, IosPlatformModule
+  src/iosMain/.../platform/        # Apple-backed bindings: NWPathMonitor, NSBundle text/strings, MediaSources
 ios/
   project.yml               # source of truth; S2.xcodeproj is generated but committed (as in Podcasts)
   scripts/build-framework.sh   # links Shared.framework (runs build-ffmpeg.sh first)
@@ -147,7 +148,7 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
 - `PlaybackSystemCoordinator` owns both and wires them to the Kotlin `IosPlayerController`
   (`AppGraph.shared.playerController`): session events and remote commands call `PlaybackOperations`; Now
   Playing follows the controller's flows. `AppGraph.initialize()` (from `S2App.init`) builds the
-  engine, `EngineAudioPlayer`, `IosAppGraph(audioPlayer:)` and the coordinator once.
+  engine, `EngineAudioPlayer`, `IosAppGraphKt.createIosAppGraph(audioPlayer:)` and the coordinator once.
 - `EngineAudioPlayer` is the Kotlin `IosAudioPlayer`: one engine call per method and no policy (the
   queue, next track and failure handling are Kotlin's). **Threading:** Kotlin calls it on main; the
   engine reports on the main queue and each report reaches the Kotlin listener synchronously there;
@@ -185,7 +186,7 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
   notification into a Sendable event before hopping to main; keep it that way.
 - SourceKit in the editor shows "No such module 'Testing'" and "AVAudioSession is unavailable in macOS"
   for these files; xcodebuild is the truth.
-- **S2Tests never builds a real engine.** Tests make their own `IosAppGraph(audioPlayer:
-  EngineAudioPlayer(engine: FakeAudioEngine()))`; `AppGraph.shared` is the host app's, with a real
+- **S2Tests never builds a real engine.** Tests make their own `IosAppGraphKt.createIosAppGraph(audioPlayer:
+  EngineAudioPlayer(engine: FakeAudioEngine()))` and queue `TestSongs.demo`; `AppGraph.shared` is the host app's, with a real
   `MusicPlaybackController`. Kotlin work arrives on the main queue after the call returns, so await it
   with `waitUntil { ... }` (`FakeAudioEngine.swift`).

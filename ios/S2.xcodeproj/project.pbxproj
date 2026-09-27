@@ -20,6 +20,7 @@
 		35711F16198C1340CC43E55A /* MiniPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528C6644D4642CD20178A704 /* MiniPlayerView.swift */; };
 		3C9A3CFCD175F341D2569B15 /* LibraryViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 644FCDF9D90ECEA9AEB75600 /* LibraryViewTests.swift */; };
 		3E021E78C43854C64163C4FF /* NowPlayingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D4EC07E38D0A5C76D2B59F0 /* NowPlayingController.swift */; };
+		4BB77D4A9957ED117DDCF31A /* TestSongs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14BB2620441276D4E9C54BA6 /* TestSongs.swift */; };
 		52C29020D1D42E749E7EAC01 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = FCBFC3688D06BC30635B00FA /* Settings.bundle */; };
 		553A58C265C6AFA440D89FCF /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC548555BCD74CA0702CE7B3 /* ContentView.swift */; };
 		672C44354CAADEA1C9F901B7 /* PlaybackSystemCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91C9049F0CB5EDB935D8D6B8 /* PlaybackSystemCoordinator.swift */; };
@@ -62,6 +63,7 @@
 		102211043771B638F9DEBB28 /* Route.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Route.swift; sourceTree = "<group>"; };
 		10A6ADEACA55D27E692A2C22 /* NavigatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigatorTests.swift; sourceTree = "<group>"; };
 		12C790AE3052665B98697F90 /* AudioSessionControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionControllerTests.swift; sourceTree = "<group>"; };
+		14BB2620441276D4E9C54BA6 /* TestSongs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSongs.swift; sourceTree = "<group>"; };
 		158B1F52DF06F29C91362AA1 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		1C4156A63D9F30E876660749 /* LayoutTierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTierTests.swift; sourceTree = "<group>"; };
 		20E688A48CB9963C2F8837D2 /* S2App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = S2App.swift; sourceTree = "<group>"; };
@@ -247,6 +249,7 @@
 				B9B0D7D971C30D4A0B6D6D8E /* NowPlayingControllerTests.swift */,
 				4F97906E25504493A67DA322 /* PlaybackSystemCoordinatorTests.swift */,
 				F8D3127BEC11A3D89D92CAA2 /* RouteTests.swift */,
+				14BB2620441276D4E9C54BA6 /* TestSongs.swift */,
 				81E32BC8DC4703CBE2DCD79C /* ViewModelCacheTests.swift */,
 			);
 			path = S2Tests;
@@ -419,6 +422,7 @@
 				E92BFDB4D95C7E2F0D897342 /* NowPlayingControllerTests.swift in Sources */,
 				A12FAD75FAC331471138D9B0 /* PlaybackSystemCoordinatorTests.swift in Sources */,
 				952FFA6805354B6A7B73D0E7 /* RouteTests.swift in Sources */,
+				4BB77D4A9957ED117DDCF31A /* TestSongs.swift in Sources */,
 				D15E8CB1C210263CFE0A4956 /* ViewModelCacheTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

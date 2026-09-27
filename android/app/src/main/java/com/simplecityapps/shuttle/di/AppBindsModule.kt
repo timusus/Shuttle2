@@ -1,8 +1,6 @@
 package com.simplecityapps.shuttle.di
 
-import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.ServerStreamPolicy
-import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializer
 import com.simplecityapps.shuttle.appinitializers.AppearanceInitializer
 import com.simplecityapps.shuttle.appinitializers.DownloadsInitializer
@@ -28,9 +26,6 @@ import dev.zacsweers.metro.IntoSet
 @ContributesTo(AppScope::class)
 @BindingContainer
 abstract class AppBindsModule {
-    @Binds
-    abstract fun bindSongImportStateProvider(impl: MediaImporter): SongImportStateProvider
-
     @Binds
     abstract fun bindServerStreamPolicy(impl: EntitledServerStreamPolicy): ServerStreamPolicy
 
