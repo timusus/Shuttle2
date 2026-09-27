@@ -71,7 +71,7 @@ struct AlbumArtistListContent: View {
             ContentUnavailableView("No Artists", systemImage: "person.2", description: Text("Pull to refresh to import."))
         case .ready:
             List {
-                ForEach(Array(state.albumArtists.enumerated()), id: \.offset) { _, artist in
+                ForEach(state.albumArtists, id: \.stableId) { artist in
                     NavigationLink(value: Route.albumArtist(artist)) { AlbumArtistRow(albumArtist: artist) }
                         .contextMenu {
                             Button("Play", systemImage: "play") { onPlay(artist) }
@@ -93,7 +93,9 @@ struct AlbumArtistRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            ArtworkAsyncImage(load: { try await AppGraph.shared.artworkUrls.url(albumArtist: albumArtist) }, points: 44)
+            RemoteArtwork(id: albumArtist.stableId, points: 44) {
+                try await AppGraph.shared.artworkUrls.url(albumArtist: albumArtist)
+            }
                 .frame(width: 44, height: 44)
                 .clipShape(Circle())
             VStack(alignment: .leading, spacing: 2) {

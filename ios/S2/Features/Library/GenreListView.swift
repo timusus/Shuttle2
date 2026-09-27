@@ -70,7 +70,7 @@ struct GenreListContent: View {
             ContentUnavailableView("No Genres", systemImage: "guitars", description: Text("Pull to refresh to import."))
         case .ready:
             List {
-                ForEach(Array(state.genres.enumerated()), id: \.offset) { _, genre in
+                ForEach(state.genres, id: \.name) { genre in
                     NavigationLink(value: Route.genre(genre)) { GenreRow(genre: genre) }
                         .contextMenu {
                             Button("Play", systemImage: "play") { onPlay(genre) }

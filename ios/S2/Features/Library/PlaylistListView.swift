@@ -54,6 +54,13 @@ extension Route {
     static func smartPlaylist(_ smartPlaylist: SmartPlaylist) -> Route { .smartPlaylist(id: smartPlaylist.id.id) }
 }
 
+/// A playlist name with leading/trailing whitespace removed — the create/rename alerts' primary button is
+/// disabled when this is empty, and this is what's actually passed to the ViewModel. A free function so
+/// `PlaylistListTests` can exercise it without a view.
+func trimmedPlaylistName(_ name: String) -> String {
+    name.trimmingCharacters(in: .whitespacesAndNewlines)
+}
+
 private extension SmartPlaylistId {
     /// A display title for the POC; phase 5's string catalogue replaces this (matches `MediaActionText`'s
     /// existing hardcoded-copy precedent).
@@ -115,7 +122,7 @@ private struct PlaylistListReadyView: View {
     var body: some View {
         List {
             Section("Smart Playlists") {
-                ForEach(Array(state.smartPlaylists.enumerated()), id: \.offset) { _, smartPlaylist in
+                ForEach(state.smartPlaylists, id: \.id.id) { smartPlaylist in
                     SmartPlaylistRow(smartPlaylist: smartPlaylist)
                 }
             }
@@ -123,7 +130,7 @@ private struct PlaylistListReadyView: View {
                 if state.playlists.isEmpty {
                     Text("No playlists yet. Tap + to create one.").foregroundStyle(.secondary)
                 }
-                ForEach(Array(state.playlists.enumerated()), id: \.offset) { _, playlist in
+                ForEach(state.playlists, id: \.id) { playlist in
                     playlistRow(playlist)
                 }
             }
@@ -139,14 +146,16 @@ private struct PlaylistListReadyView: View {
         .alert("New Playlist", isPresented: $isCreating) {
             TextField("Name", text: $newPlaylistName)
             Button("Cancel", role: .cancel) {}
-            Button("Create") { onCreate(newPlaylistName) }
+            Button("Create") { onCreate(trimmedNewPlaylistName) }
+                .disabled(trimmedNewPlaylistName.isEmpty)
         }
         .alert("Rename Playlist", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
             TextField("Name", text: $renameText)
             Button("Cancel", role: .cancel) {}
             Button("Rename") {
-                if let renaming { onRename(renaming, renameText) }
+                if let renaming { onRename(renaming, trimmedRenameText) }
             }
+            .disabled(trimmedRenameText.isEmpty)
         }
         .confirmationDialog(
             "Delete \(deleting?.name ?? "this playlist")?",
@@ -159,6 +168,9 @@ private struct PlaylistListReadyView: View {
             Button("Cancel", role: .cancel) {}
         }
     }
+
+    private var trimmedNewPlaylistName: String { trimmedPlaylistName(newPlaylistName) }
+    private var trimmedRenameText: String { trimmedPlaylistName(renameText) }
 
     private func requestRename(_ playlist: Playlist) {
         renameText = playlist.name
@@ -225,10 +237,10 @@ struct PlaylistRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            ArtworkAsyncImage(load: {
+            RemoteArtwork(id: coverSong?.id ?? playlist.id, points: 44) {
                 guard let coverSong else { return nil }
                 return try await AppGraph.shared.artworkUrls.url(song: coverSong)
-            }, points: 44)
+            }
             .frame(width: 44, height: 44)
             .clipShape(RoundedRectangle(cornerRadius: 6))
             VStack(alignment: .leading, spacing: 2) {

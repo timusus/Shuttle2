@@ -178,7 +178,7 @@ private struct AlbumShelf: View {
                 Text(title).font(.headline).listRowSeparator(.hidden)
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(alignment: .top, spacing: 12) {
-                        ForEach(Array(albums.enumerated()), id: \.offset) { _, album in
+                        ForEach(albums, id: \.stableId) { album in
                             AlbumTile(album: album, showPlayCount: showPlayCount, onTap: { onTap(album) })
                                 .contextMenu {
                                     Button("Play", systemImage: "play") { onPlay(MediaSelectionAlbums(album: album)) }
@@ -210,7 +210,7 @@ private struct ArtistShelf: View {
                 Text(title).font(.headline).listRowSeparator(.hidden)
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(alignment: .top, spacing: 12) {
-                        ForEach(Array(artists.enumerated()), id: \.offset) { _, artist in
+                        ForEach(artists, id: \.stableId) { artist in
                             ArtistTile(artist: artist, onTap: { onTap(artist) })
                                 .contextMenu {
                                     Button("Play", systemImage: "play") { onPlay(MediaSelectionAlbumArtists(albumArtist: artist)) }
@@ -237,7 +237,7 @@ private struct AlbumTile: View {
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 4) {
-                RemoteArtwork(id: album.groupKey?.key ?? album.name ?? "", points: shelfTileSize) {
+                RemoteArtwork(id: album.stableId, points: shelfTileSize) {
                     try await AppGraph.shared.artworkUrls.url(album: album)
                 }
                 .frame(width: shelfTileSize, height: shelfTileSize)
@@ -263,7 +263,7 @@ private struct ArtistTile: View {
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 4) {
-                RemoteArtwork(id: artist.groupKey.key ?? artist.name ?? "", points: shelfTileSize) {
+                RemoteArtwork(id: artist.stableId, points: shelfTileSize) {
                     try await AppGraph.shared.artworkUrls.url(albumArtist: artist)
                 }
                 .frame(width: shelfTileSize, height: shelfTileSize)
