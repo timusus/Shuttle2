@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
+import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
@@ -129,6 +130,10 @@ class LocalAlbumRepositoryTest {
         ): Int = throw NotImplementedError()
 
         override suspend fun unfavourite(ids: List<Long>): Int = throw NotImplementedError()
+
+        override suspend fun enqueuePendingFavourite(pendingFavourite: PendingFavouriteData) = throw NotImplementedError()
+
+        override suspend fun getPendingFavourites(): List<PendingFavouriteData> = throw NotImplementedError()
 
         override fun getFavouriteIds(): Flow<List<Long>> = throw NotImplementedError()
 

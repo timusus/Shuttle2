@@ -4,9 +4,11 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.IGNORE
+import androidx.room.OnConflictStrategy.Companion.REPLACE
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
 import com.simplecityapps.mediaprovider.SongPathRemap
@@ -169,20 +171,48 @@ abstract class SongDataDao {
     /**
      * [favourite] or [unfavourite] [songs], in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a
      * statement. A song that already carries a [Song.favouritedAt] (an Undo restoring one just removed) is set to that
-     * exact time rather than now, so it keeps its original place in the list (#564).
+     * exact time rather than now, so it keeps its original place in the list (#564). Every remote-provider song among
+     * [songs] also gets a `pending_favourites` row recording the desired state, in the same transaction, for a later
+     * slice to push to its server (#497); local songs never enqueue.
      */
     @Transaction
     open suspend fun setFavourite(
         songs: List<Song>,
         favourite: Boolean
     ): Int {
-        if (!favourite) return songs.map { it.id }.distinct().chunked(MAX_BOUND_VARIABLES - 1).sumOf { chunk -> unfavourite(chunk) }
-        val (toRestore, toStamp) = songs.distinctBy { it.id }.partition { it.favouritedAt != null }
-        val restored = toRestore.sumOf { song -> favourite(song.id, Date(song.favouritedAt!!.toEpochMilliseconds())) }
-        val now = Date()
-        val stamped = toStamp.map { it.id }.chunked(MAX_BOUND_VARIABLES - 1).sumOf { chunk -> favourite(chunk, now) }
-        return restored + stamped
+        val count = if (!favourite) {
+            songs.map { it.id }.distinct().chunked(MAX_BOUND_VARIABLES - 1).sumOf { chunk -> unfavourite(chunk) }
+        } else {
+            val (toRestore, toStamp) = songs.distinctBy { it.id }.partition { it.favouritedAt != null }
+            val restored = toRestore.sumOf { song -> favourite(song.id, Date(song.favouritedAt!!.toEpochMilliseconds())) }
+            val now = Date()
+            val stamped = toStamp.map { it.id }.chunked(MAX_BOUND_VARIABLES - 1).sumOf { chunk -> favourite(chunk, now) }
+            restored + stamped
+        }
+        enqueuePendingFavourites(songs, favourite)
+        return count
     }
+
+    /**
+     * One `pending_favourites` row per remote-provider song among [songs], overwriting any row already pending for it
+     * so only the latest desired state survives to be sent (#497): a favourite then an unfavourite before a flush
+     * leaves a single row with the final state, not two queued operations.
+     */
+    private suspend fun enqueuePendingFavourites(
+        songs: List<Song>,
+        favourite: Boolean
+    ) {
+        val changedAt = Date()
+        songs.distinctBy { it.id }.filter { it.mediaProvider.remote }.forEach { song ->
+            enqueuePendingFavourite(PendingFavouriteData(song.id, song.mediaProvider, song.externalId, favourite, changedAt))
+        }
+    }
+
+    @Insert(onConflict = REPLACE)
+    abstract suspend fun enqueuePendingFavourite(pendingFavourite: PendingFavouriteData)
+
+    @Query("SELECT * FROM pending_favourites")
+    abstract suspend fun getPendingFavourites(): List<PendingFavouriteData>
 
     @Query("SELECT id FROM songs WHERE favouritedAt IS NOT NULL")
     abstract fun getFavouriteIds(): Flow<List<Long>>

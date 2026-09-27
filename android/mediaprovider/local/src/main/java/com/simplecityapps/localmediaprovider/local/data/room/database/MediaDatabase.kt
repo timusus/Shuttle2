@@ -9,6 +9,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistSongJoinDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SmartPlaylistDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
+import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PinnedCollectionData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
@@ -21,9 +22,10 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
         PlaylistData::class,
         PlaylistSongJoin::class,
         PinnedCollectionData::class,
-        SmartPlaylistData::class
+        SmartPlaylistData::class,
+        PendingFavouriteData::class
     ],
-    version = 47,
+    version = 48,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
