@@ -9,6 +9,9 @@ import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.testing.WorkManagerTestInitHelper
+import com.simplecityapps.networking.S2Json
+import com.simplecityapps.networking.createHttpClient
+import com.simplecityapps.shuttle.scrobbling.lastfm.LASTFM_BASE_URL
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmCredentials
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmScrobbleResponse
@@ -18,15 +21,22 @@ import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDao
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDatabase
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleQueue
 import io.kotest.matchers.shouldBe
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.request.HttpRequestData
+import io.ktor.client.request.forms.FormDataContent
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.Parameters
+import io.ktor.http.headersOf
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.test.runTest
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import retrofit2.Response
 
 @RunWith(AndroidJUnit4::class)
 class ScrobbleFlushWorkerTest {
@@ -35,7 +45,8 @@ class ScrobbleFlushWorkerTest {
         .allowMainThreadQueries()
         .build()
     private val dao = database.scrobbleDao()
-    private val api = FakeLastFmApi()
+    private val fakeEngine = FakeLastFmEngine()
+    private val api = LastFmApi(createHttpClient(fakeEngine.engine))
     private val sessionStore = FakeLastFmSessionStore(sessionKey = "session-key")
     private val credentials = LastFmCredentials(apiKey = "api-key", sharedSecret = "shared-secret")
 
@@ -83,28 +94,28 @@ class ScrobbleFlushWorkerTest {
 
         result shouldBe ListenableWorker.Result.success()
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
-        api.requests shouldBe emptyList()
+        fakeEngine.requests shouldBe emptyList()
     }
 
     @Test
     fun `drains more than one batch, 50 scrobbles per call`() = runTest {
         repeat(60) { dao.enqueue(entity(it)) }
-        api.enqueue(successResponse())
-        api.enqueue(successResponse())
+        fakeEngine.enqueueSuccess()
+        fakeEngine.enqueueSuccess()
 
         val result = buildWorker().doWork()
 
         result shouldBe ListenableWorker.Result.success()
-        api.requests.size shouldBe 2
-        scrobbleCount(api.requests[0]) shouldBe 50
-        scrobbleCount(api.requests[1]) shouldBe 10
+        fakeEngine.requests.size shouldBe 2
+        scrobbleCount(fakeEngine.requests[0]) shouldBe 50
+        scrobbleCount(fakeEngine.requests[1]) shouldBe 10
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
     }
 
     @Test
     fun `an accepted batch is deleted`() = runTest {
         dao.enqueue(entity(1))
-        api.enqueue(successResponse())
+        fakeEngine.enqueueSuccess()
 
         buildWorker().doWork()
 
@@ -112,14 +123,32 @@ class ScrobbleFlushWorkerTest {
     }
 
     @Test
+    fun `the request has the shape Last-fm's authspec requires`() = runTest {
+        dao.enqueue(entity(1))
+        fakeEngine.enqueueSuccess()
+
+        buildWorker().doWork()
+
+        val request = fakeEngine.requests.single()
+        request.method shouldBe HttpMethod.Post
+        request.url.toString() shouldBe LASTFM_BASE_URL
+        val form = formData(request)
+        form["method"] shouldBe "track.scrobble"
+        form["api_key"] shouldBe "api-key"
+        form["sk"] shouldBe "session-key"
+        form["artist[0]"] shouldBe "artist"
+        form["track[0]"] shouldBe "track-1"
+        form["format"] shouldBe "json"
+        form["api_sig"]?.length shouldBe 32
+    }
+
+    @Test
     fun `a batch that Last-fm ignores is still deleted, not retried`() = runTest {
         dao.enqueue(entity(1))
-        api.enqueue(
-            Response.success(
-                LastFmScrobbleResponse(
-                    scrobbles = LastFmScrobbleResponse.Scrobbles(
-                        scrobble = listOf(LastFmScrobbleResponse.ScrobbleResult(LastFmScrobbleResponse.IgnoredMessage(code = "1")))
-                    )
+        fakeEngine.enqueueSuccess(
+            LastFmScrobbleResponse(
+                scrobbles = LastFmScrobbleResponse.Scrobbles(
+                    scrobble = listOf(LastFmScrobbleResponse.ScrobbleResult(LastFmScrobbleResponse.IgnoredMessage(code = "1")))
                 )
             )
         )
@@ -133,7 +162,7 @@ class ScrobbleFlushWorkerTest {
     @Test
     fun `a retryable error code keeps the queue and asks WorkManager to retry`() = runTest {
         dao.enqueue(entity(1))
-        api.enqueue(Response.success(LastFmScrobbleResponse(error = 11)))
+        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = 11))
 
         val result = buildWorker().doWork()
 
@@ -144,7 +173,7 @@ class ScrobbleFlushWorkerTest {
     @Test
     fun `a rate-limited error code keeps the queue and asks WorkManager to retry`() = runTest {
         dao.enqueue(entity(1))
-        api.enqueue(Response.success(LastFmScrobbleResponse(error = 29)))
+        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = 29))
 
         val result = buildWorker().doWork()
 
@@ -155,7 +184,7 @@ class ScrobbleFlushWorkerTest {
     @Test
     fun `an HTTP failure keeps the queue and asks WorkManager to retry`() = runTest {
         dao.enqueue(entity(1))
-        api.enqueue(Response.error(500, "".toResponseBody("text/plain".toMediaType())))
+        fakeEngine.enqueueHttpError(HttpStatusCode.InternalServerError)
 
         val result = buildWorker().doWork()
 
@@ -166,7 +195,7 @@ class ScrobbleFlushWorkerTest {
     @Test
     fun `an invalid session signs the user out and stops without retrying`() = runTest {
         dao.enqueue(entity(1))
-        api.enqueue(Response.success(LastFmScrobbleResponse(error = LastFmScrobbleResponse.ERROR_INVALID_SESSION)))
+        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = LastFmScrobbleResponse.ERROR_INVALID_SESSION))
 
         val result = buildWorker().doWork()
 
@@ -178,7 +207,7 @@ class ScrobbleFlushWorkerTest {
     @Test
     fun `an unrecoverable error code drops the batch rather than retrying forever`() = runTest {
         dao.enqueue(entity(1))
-        api.enqueue(Response.success(LastFmScrobbleResponse(error = 99)))
+        fakeEngine.enqueueSuccess(LastFmScrobbleResponse(error = 99))
 
         val result = buildWorker().doWork()
 
@@ -195,25 +224,34 @@ class ScrobbleFlushWorkerTest {
 
         result shouldBe ListenableWorker.Result.success()
         dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 0
-        api.requests shouldBe emptyList()
+        fakeEngine.requests shouldBe emptyList()
     }
 
-    private fun successResponse() = Response.success(LastFmScrobbleResponse())
+    private fun formData(request: HttpRequestData): Parameters = (request.body as FormDataContent).formData
 
-    private fun scrobbleCount(params: Map<String, String>) = params.keys.count { it.startsWith("artist[") }
+    private fun scrobbleCount(request: HttpRequestData): Int = formData(request).names().count { it.startsWith("artist[") }
 }
 
-private class FakeLastFmApi : LastFmApi {
-    val requests = mutableListOf<Map<String, String>>()
-    private val responses = ArrayDeque<Response<LastFmScrobbleResponse>>()
+private class FakeLastFmEngine {
+    val requests = mutableListOf<HttpRequestData>()
+    private val responses = ArrayDeque<Pair<HttpStatusCode, LastFmScrobbleResponse>>()
 
-    fun enqueue(response: Response<LastFmScrobbleResponse>) {
-        responses.addLast(response)
+    fun enqueueSuccess(response: LastFmScrobbleResponse = LastFmScrobbleResponse()) {
+        responses.addLast(HttpStatusCode.OK to response)
     }
 
-    override suspend fun scrobble(params: Map<String, String>): Response<LastFmScrobbleResponse> {
-        requests += params
-        return responses.removeFirstOrNull() ?: Response.success(LastFmScrobbleResponse())
+    fun enqueueHttpError(status: HttpStatusCode) {
+        responses.addLast(status to LastFmScrobbleResponse())
+    }
+
+    val engine = MockEngine { request ->
+        requests += request
+        val (status, body) = responses.removeFirstOrNull() ?: (HttpStatusCode.OK to LastFmScrobbleResponse())
+        respond(
+            content = S2Json.encodeToString(LastFmScrobbleResponse.serializer(), body),
+            status = status,
+            headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+        )
     }
 }
 

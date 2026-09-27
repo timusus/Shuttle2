@@ -6,6 +6,7 @@ plugins {
     id("com.android.library")
     id("dev.zacsweers.metro")
     id("com.google.devtools.ksp")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 ksp {
@@ -42,6 +43,7 @@ kotlin {
 dependencies {
     implementation(project(":android:core"))
     implementation(project(":android:domain"))
+    implementation(project(":android:networking"))
 
     // Room: the module's own scrobbles.db queue
     ksp(libs.androidx.room.compiler)
@@ -50,13 +52,6 @@ dependencies {
 
     // WorkManager: the flush worker
     implementation(libs.androidx.work.runtime.ktx)
-
-    // Last.fm client
-    implementation(libs.retrofit2.retrofit)
-    implementation(libs.retrofit2.converterMoshi)
-    implementation(libs.moshi)
-    implementation(libs.moshi.kotlin)
-    ksp(libs.moshi.kotlinCodegen)
 
     // Testing
     testImplementation(libs.junit)
@@ -68,5 +63,5 @@ dependencies {
     testImplementation(libs.androidx.core.ktx)
     testImplementation(libs.androidx.room.testing)
     testImplementation(libs.androidx.work.testing)
-    testImplementation(libs.okhttp3.mockwebserver)
+    testImplementation(libs.ktor.client.mock)
 }

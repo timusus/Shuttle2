@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.scrobbling.worker
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.shuttle.di.WorkerInstanceFactory
 import com.simplecityapps.shuttle.di.WorkerKey
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi
@@ -78,9 +79,8 @@ constructor(
         batch: List<QueuedScrobbleEntity>,
         sessionKey: String
     ): Outcome {
-        val response = lastFmApi.scrobble(buildParams(batch, sessionKey))
-        val body = response.body()
-        if (!response.isSuccessful || body == null) return Outcome.Retry
+        val result = lastFmApi.scrobble(buildParams(batch, sessionKey))
+        val body = (result as? NetworkResult.Success)?.body ?: return Outcome.Retry
 
         return when (body.error) {
             null -> Outcome.Cleared
