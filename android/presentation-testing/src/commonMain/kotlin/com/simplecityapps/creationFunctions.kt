@@ -1,5 +1,6 @@
 package com.simplecityapps
 
+import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
@@ -132,6 +133,44 @@ fun createPlaylist(
     sortDescending = sortDescending,
     mediaProvider = mediaProvider,
     externalId = externalId,
+)
+
+fun createAudioFile(
+    title: String? = "Title",
+    artists: List<String> = listOf("Artist"),
+    album: String? = "Album",
+    albumArtist: String? = "Album Artist",
+    year: String? = "2024",
+    track: Int? = 1,
+    trackTotal: Int? = 10,
+    disc: Int? = 1,
+    discTotal: Int? = 1,
+    genres: List<String> = listOf("Jazz"),
+    lyrics: String? = null,
+) = AudioFile(
+    path = "content://com.android.externalstorage.documents/tree/primary%3AMusic/document/primary%3AMusic%2Fsong.mp3",
+    size = 1,
+    lastModified = 0,
+    mimeType = "audio/mpeg",
+    title = title,
+    albumArtist = albumArtist,
+    artists = artists,
+    album = album,
+    track = track,
+    trackTotal = trackTotal,
+    disc = disc,
+    discTotal = discTotal,
+    duration = 1000,
+    year = year,
+    genres = genres,
+    replayGainTrack = null,
+    replayGainAlbum = null,
+    lyrics = lyrics,
+    grouping = null,
+    bitRate = null,
+    bitDepth = null,
+    sampleRate = null,
+    channelCount = null,
 )
 
 fun createPlatformFeatures(

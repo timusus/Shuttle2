@@ -190,6 +190,67 @@ unchanged.
   Settings entries were renamed to `AndroidSettingsEffects`/`AndroidSettingsCatalog`, their new file names;
   they are the same imports.
 
+## Wave 4: what landed
+
+Seven of the nine assisted ViewModels moved to `presentation`'s `commonMain`, each with its own seam:
+
+- **`GenreDetailViewModel`, `SmartPlaylistDetailViewModel`** — already KMP-safe, moved as-is.
+  `SmartPlaylistDetailViewModelTest`'s route/`nameKey` assertions (Android-only navigation, not part of
+  the ViewModel) split off into a new `LibraryRoutesTest` in `:android:app`.
+- **`SongInfoViewModel`** — `String.format`/`Locale`/`URLDecoder` replaced with KMP-safe decimal
+  formatting and a manual percent-decoder; its 23 `@StringRes` references (`SongInfoRow`/`SongInfoSection`)
+  went through the `StringKey` sweep (see S2 below — the same conversion `TagField` needed).
+- **S9 `ArtworkSeedSource`** (`AlbumArtistDetailViewModel`, `AlbumDetailViewModel`) — split into a portable
+  `fun interface ArtworkSeedSource` (presentation) and `CoilArtworkSeedSource` (app, renamed from the old
+  combined `ArtworkSeedSource.kt`); `ObserveArtworkSeed` moved alongside it, with its artwork-identity
+  comparison inlined instead of importing imageloader's data-layer helper.
+- **S3 `PlaylistFileWriter`** (`PlaylistDetailViewModel`) — deviates from `phase-4-platform-seams.md`:
+  `M3uWriter` moved to `:android:domain`, not `presentation`, because `mediaprovider:local`'s
+  `SafPlaylistFileSync` (data layer) also needs it and can't depend on presentation. `ExportSucceeded`
+  stayed a `data object` rather than the doc's suggested alternative.
+- **S2 `TagFileAccess`/`WriteConsent`** (`TagEditorViewModel`) — commonMain `TagFileAccess` interface
+  (`read`/`writeConsent`/`write`) and an opaque `WriteConsent` marker, per the seams doc. `DeviceTagFileAccess`
+  (renamed from the old combined `TagFileAccess.kt`) implements it in app; `IntentSenderWriteConsent`
+  wraps the `IntentSender` Android hands back, and `TagEditorScreen`'s launcher casts back to it.
+  Three deviations the seams doc didn't anticipate:
+  - `AudioFile` (`:android:mediaprovider:core`) moved to `:android:domain`, same package — presentation
+    depends on domain, not mediaprovider:core, and mediaprovider:core already `api`-depends on domain, so
+    every existing consumer resolves it unchanged.
+  - `TagLibProperty`, a pure-Kotlin enum that happened to live in `mediaprovider:local`'s `androidMain`
+    (colocated with genuinely Android-only tag-reading code in `AudioFileExt.kt`), was extracted into its
+    own file in `:android:domain`, same package, leaving the rest of `AudioFileExt.kt` untouched.
+  - `TagField`'s `hint`/`TagSection`'s `title` used `@StringRes Int` into the app's `R` class, which
+    presentation's build (no Compose, no Android resources) can't reference. Converted to `StringKey`
+    (15 new entries, mapped in `UiTextResources.kt` to the existing `edit_tags_*` resources) — the same
+    `UiText`/`StringKey` pattern `SongInfoViewModel` needed. **Any ViewModel or shared model still using
+    `@StringRes Int` needs this conversion before it can move; check for it up front.**
+  - `createAudioFile()`, previously a `TagEditorFactories.kt`-local test factory, moved to
+    `presentation-testing`'s `creationFunctions.kt` (alongside `createSong` etc.) because `:android:app`'s
+    `TagEditorScenarios.kt` needs it too and can't see another module's `commonTest`.
+
+**`ServerSignInViewModel` stays in app.** Every constructor dependency is app-only and wraps
+Jellyfin/Emby/Plex sign-in: `SignInWithQuickConnect` needs `QuickConnectAuthentication`/
+`QuickConnectPollState` (`:android:mediaprovider:server`), `SignInToServer` needs `userDescription`
+(`:android:networking`) — both data-layer modules presentation can't depend on. Unblocking it means moving
+those types down to domain first, which this wave didn't do; nothing else does either.
+
+**`PaywallViewModel`** — see the S5 section below for its outcome this wave.
+
+**Architecture baseline.** `ui-module-imports.txt`'s stale entries for the pre-rename `TagFileAccess`,
+`ReadSongTags`/`TagField`/`WriteSongTags` (moved out of app entirely) and `ArtworkSeedSource`/
+`ObserveArtworkSeed` (renamed to `CoilArtworkSeedSource`) were regenerated via
+`-PupdateArchitectureBaselines`: 11 stale lines removed, replaced by 4 renamed equivalents
+(`DeviceTagFileAccess` x3, `CoilArtworkSeedSource` x1) — same violations, new names, net shrinkage.
+
+**Known iOS gap (not fixed this wave, out of `shared/src/iosMain` scope).** `:shared:compileKotlinIosSimulatorArm64`
+fails with `Metro/MissingBinding` for `ArtworkSeedSource`, `PlaylistFileWriter` and (as of S2) `TagFileAccess`:
+`IosAppGraph` (`shared/src/iosMain`) hasn't added these wave-4 ViewModels to its `excludes` list (last
+touched at #587's P5-1, before any wave-4 ViewModel moved) or bound iOS implementations for their seams.
+`:android:presentation:compileKotlinIosSimulatorArm64` itself succeeds — the presentation module's own code
+is iOS-clean; the failure is entirely in `:shared`'s graph wiring, which phase 5 owns. Needs `IosAppGraph`
+updated (either exclude `AlbumArtistDetailViewModel`/`AlbumDetailViewModel`/`PlaylistDetailViewModel`/
+`TagEditorViewModel`, or bind iOS-side seam implementations) before `:shared:iosSimulatorArm64Test` can run.
+
 ## Per-ViewModel table
 
 Legend: **domain-kmp** = dependency's interface already lives in `:android:domain` (KMP since phase 0/#582);

@@ -152,6 +152,21 @@ val StringKey.resId: Int
         StringKey.PREF_FILE_LOGGING_SUBTITLE -> R.string.pref_file_logging_subtitle
         StringKey.PREF_COPY_DEBUG_LOGS_SUBTITLE -> R.string.pref_copy_debug_logs_subtitle
         StringKey.PREF_VIEW_LIVE_LOG_TITLE -> R.string.pref_view_live_log_title
+        StringKey.EDIT_TAGS_HINT_TITLE -> R.string.edit_tags_hint_title
+        StringKey.EDIT_TAGS_HINT_ARTIST -> R.string.edit_tags_hint_artist
+        StringKey.EDIT_TAGS_HINT_ALBUM -> R.string.edit_tags_hint_album
+        StringKey.EDIT_TAGS_HINT_ALBUM_ARTIST -> R.string.edit_tags_hint_album_artist
+        StringKey.EDIT_TAGS_HINT_YEAR -> R.string.edit_tags_hint_year
+        StringKey.EDIT_TAGS_HINT_TRACK -> R.string.edit_tags_hint_track
+        StringKey.EDIT_TAGS_HINT_TRACK_TOTAL -> R.string.edit_tags_hint_track_total
+        StringKey.EDIT_TAGS_HINT_DISC -> R.string.edit_tags_hint_disc
+        StringKey.EDIT_TAGS_HINT_DISC_TOTAL -> R.string.edit_tags_hint_disc_total
+        StringKey.EDIT_TAGS_HINT_GENRES -> R.string.edit_tags_hint_genres
+        StringKey.EDIT_TAGS_HINT_LYRICS -> R.string.edit_tags_hint_lyrics
+        StringKey.EDIT_TAGS_SECTION_SONG -> R.string.edit_tags_section_song
+        StringKey.EDIT_TAGS_SECTION_ALBUM -> R.string.edit_tags_section_album
+        StringKey.EDIT_TAGS_SECTION_NUMBERING -> R.string.edit_tags_section_numbering
+        StringKey.EDIT_TAGS_SECTION_LYRICS -> R.string.edit_tags_section_lyrics
         StringKey.EQ_PRESET_FLAT -> CoreR.string.eq_preset_flat
         StringKey.EQ_PRESET_CUSTOM -> CoreR.string.eq_preset_custom
         StringKey.EQ_PRESET_BASS_BOOST -> CoreR.string.eq_preset_bass_boost

@@ -57,6 +57,7 @@ import com.simplecityapps.shuttle.designsystem.component.SettingsHeader
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import com.simplecityapps.shuttle.ui.text.stringResource
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 import kotlinx.coroutines.launch
 
@@ -78,7 +79,10 @@ fun TagEditorDestination(
 
     ConsumeEvents((uiState as? TagEditorUiState.Editing)?.events.orEmpty(), viewModel::onEventHandled) { event ->
         when (event) {
-            is TagEditorEvent.RequestWriteConsent -> writeConsent.launch(IntentSenderRequest.Builder(event.intentSender).build())
+            is TagEditorEvent.RequestWriteConsent -> {
+                val intentSender = (event.consent as IntentSenderWriteConsent).intentSender
+                writeConsent.launch(IntentSenderRequest.Builder(intentSender).build())
+            }
 
             is TagEditorEvent.Saved -> {
                 val message = event.result.message(resources)

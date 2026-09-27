@@ -1,25 +1,35 @@
 package com.simplecityapps.shuttle.ui.screens.tageditor
 
-import android.content.IntentSender
+import com.simplecityapps.createAudioFile
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
-import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import io.mockk.mockk
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TagEditorViewModelTest {
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
     private val tagFileAccess = FakeTagFileAccess()
@@ -142,7 +152,7 @@ class TagEditorViewModelTest {
     fun `save asks for consent first and writes once it's given`() = runTest {
         songRepository.setSongs(listOf(createSong(id = 1)))
         tagFileAccess.files = mapOf(1L to createAudioFile())
-        val consent = mockk<IntentSender>()
+        val consent = FakeWriteConsent
         tagFileAccess.consent = consent
         val viewModel = viewModel(1)
         advanceUntilIdle()
@@ -166,7 +176,7 @@ class TagEditorViewModelTest {
     fun `declined consent goes back to editing without writing`() = runTest {
         songRepository.setSongs(listOf(createSong(id = 1)))
         tagFileAccess.files = mapOf(1L to createAudioFile())
-        tagFileAccess.consent = mockk<IntentSender>()
+        tagFileAccess.consent = FakeWriteConsent
         val viewModel = viewModel(1)
         advanceUntilIdle()
 

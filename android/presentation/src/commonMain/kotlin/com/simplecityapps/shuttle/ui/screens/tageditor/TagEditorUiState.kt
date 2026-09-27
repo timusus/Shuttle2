@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.tageditor
 
-import android.content.IntentSender
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 
@@ -36,5 +35,5 @@ sealed interface TagEditorEvent {
     data class Saved(val result: TagWriteResult) : TagEditorEvent
 
     /** The system has to ask the user before the save can change some of the files; answer with [TagEditorViewModel.onWriteConsent]. */
-    data class RequestWriteConsent(val intentSender: IntentSender) : TagEditorEvent
+    data class RequestWriteConsent(val consent: WriteConsent) : TagEditorEvent
 }

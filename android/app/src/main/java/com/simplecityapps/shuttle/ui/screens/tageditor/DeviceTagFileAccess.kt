@@ -27,27 +27,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-/** Reads and writes a song file's tags: the tag editor's only way to the file system. */
-interface TagFileAccess {
-    /** The tags in [song]'s file, or null if the file can't be read or isn't one the editor can write. */
-    suspend fun read(song: Song): AudioFile?
-
-    /**
-     * The system's request for the user's consent to change [songs]' files, or null when S2 can already write them all.
-     * Launch it before [write]; declined, the writes fail.
-     */
-    suspend fun writeConsent(songs: List<Song>): IntentSender?
-
-    /**
-     * Writes [metadata] (TagLib property keys to values) to [song]'s file.
-     *
-     * @return whether the write succeeded.
-     */
-    suspend fun write(
-        song: Song,
-        metadata: Map<String, List<String>>,
-    ): Boolean
-}
+/** The Android write-consent request: [TagEditorScreen]'s launcher casts back to this to get the [intentSender] it launches. */
+class IntentSenderWriteConsent(val intentSender: IntentSender) : WriteConsent
 
 /**
  * Tag access through KTagLib, by the first route that can write the file (#406):
@@ -68,11 +49,11 @@ class DeviceTagFileAccess @Inject constructor(
         null -> null
     }
 
-    override suspend fun writeConsent(songs: List<Song>): IntentSender? {
+    override suspend fun writeConsent(songs: List<Song>): WriteConsent? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
         val uris = songs.mapNotNull { song -> (target(song) as? TagTarget.Media)?.uri }
         if (uris.isEmpty()) return null
-        return MediaStore.createWriteRequest(context.contentResolver, uris).intentSender
+        return IntentSenderWriteConsent(MediaStore.createWriteRequest(context.contentResolver, uris).intentSender)
     }
 
     override suspend fun write(
