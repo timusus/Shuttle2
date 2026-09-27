@@ -15,7 +15,9 @@ import timber.log.Timber
  * session is up, with a new key for its URLs each session (a resumed one keeps its key). Moving playback to and from the receiver is the Cast player's (see [CastQueue]).
  *
  * Follows sessions once [start]ed, which the Cast player's setup does (see [com.simplecityapps.playback.AppPlayer]).
- * Media3's [Cast] loads Cast's context off the main thread, and holds the listener until it's loaded.
+ * Media3's [Cast] loads Cast's context off the main thread, and holds the listener until it's loaded; a session
+ * already up by then is reported as started, with no starting or resuming before it, and one already up when this
+ * starts isn't reported at all. So the server is started at each of those points too.
  */
 class CastSessionManager
 @Inject
@@ -45,7 +47,9 @@ constructor(
         }
         if (!started) {
             started = true
-            Cast.getSingletonInstance(applicationContext).addSessionManagerListener(this)
+            val cast = Cast.getSingletonInstance(applicationContext)
+            cast.addSessionManagerListener(this)
+            if (cast.currentCastSession?.isConnected == true) startHttpServer()
         }
         return true
     }
@@ -61,6 +65,7 @@ constructor(
         s: String
     ) {
         Timber.d("onSessionStarted")
+        startHttpServer()
     }
 
     override fun onSessionStartFailed(
@@ -84,6 +89,7 @@ constructor(
         b: Boolean
     ) {
         Timber.d("onSessionResumed")
+        startHttpServer()
     }
 
     override fun onSessionResumeFailed(
@@ -131,5 +137,6 @@ constructor(
         } catch (e: Exception) {
             false
         }
+
     }
 }
