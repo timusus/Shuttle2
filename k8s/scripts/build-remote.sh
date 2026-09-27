@@ -110,17 +110,18 @@ render "$K8S_DIR/templates/job-build-remote.yaml" "$CACHE_DIR/$JOB.yaml" \
 echo "==> job $JOB (task: $GRADLE_ARGS)"
 kc apply -f "$CACHE_DIR/$JOB.yaml" >/dev/null
 
-echo "==> streaming logs (deadline ${JOB_DEADLINE_SECONDS}s)"
-set +e
-kc wait --for=jsonpath='{.status.succeeded}'=1 "job/$JOB" -n "$NS" --timeout="${JOB_DEADLINE_SECONDS}s" &
-WAITER=$!
-while kill -0 $WAITER 2>/dev/null; do
-    kc logs -n "$NS" -l job-name="$JOB" --tail=5 2>/dev/null | tail -3
+echo "==> waiting for job completion (deadline ${JOB_DEADLINE_SECONDS}s)"
+RC=""
+START="$(date +%s)"
+while true; do
+    SUCCEEDED="$(kc get job "$JOB" -n "$NS" -o jsonpath='{.status.succeeded}' 2>/dev/null || true)"
+    FAILED="$(kc get job "$JOB" -n "$NS" -o jsonpath='{.status.failed}' 2>/dev/null || true)"
+    if [ "$SUCCEEDED" = "1" ]; then RC=0; break; fi
+    if [ -n "$FAILED" ] && [ "$FAILED" != "0" ]; then RC=1; break; fi
+    NOW="$(date +%s)"
+    if [ $((NOW - START)) -ge "$JOB_DEADLINE_SECONDS" ]; then RC=124; break; fi
     sleep 30
 done
-wait $WAITER
-RC=$?
-set -e
 
 if [ $RC -eq 0 ]; then
     echo "==> build succeeded; fetching APKs"
@@ -135,7 +136,10 @@ if [ $RC -eq 0 ]; then
     rm -f "$CACHE_DIR/$JOB.yaml"
     echo "==> done"
 else
-    echo "error: build failed/timed out; job kept: $JOB" >&2
-    echo "  logs: $KUBECTL -n $NS logs -l job-name=$JOB" >&2
+    if [ "$RC" = "124" ]; then echo "error: timed out after ${JOB_DEADLINE_SECONDS}s; job kept: $JOB" >&2
+    else echo "error: build FAILED; job kept: $JOB" >&2; fi
+    echo "--- last 40 log lines ---" >&2
+    kc logs -n "$NS" -l job-name="$JOB" --tail=40 2>/dev/null >&2 || true
+    echo "  full logs: $KUBECTL -n $NS logs -l job-name=$JOB" >&2
     exit 1
 fi
