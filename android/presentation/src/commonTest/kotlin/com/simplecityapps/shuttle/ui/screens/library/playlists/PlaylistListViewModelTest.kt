@@ -16,20 +16,31 @@ import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistCovers
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
-import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaylistListViewModelTest {
 
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     private val playlistRepository = FakePlaylistRepository()
     private val importState = FakeSongImportStateProvider()
@@ -49,8 +60,9 @@ class PlaylistListViewModelTest {
         observePlaylistCovers = ObservePlaylistCovers(playlistRepository),
     )
 
+    // #491
     @Test
-    fun `each playlist's covers are its first four songs from different albums (#491)`() = runTest {
+    fun `each playlist's covers are its first four songs from different albums`() = runTest {
         val roadTrip = createPlaylist(id = 2, name = "Road trip")
         val songs = listOf("A", "A", "B", "C", "D", "E").mapIndexed { i, album -> createSong(id = i.toLong(), album = album) }
         playlistRepository.setPlaylists(listOf(roadTrip))
@@ -64,7 +76,7 @@ class PlaylistListViewModelTest {
     }
 
     @Test
-    fun `Favorites is the first smart playlist, and the user's playlists are all listed`() = runTest {
+    fun `Favorites is the first smart playlist and the user's playlists are all listed`() = runTest {
         val roadTrip = createPlaylist(id = 2, name = "Road trip")
         playlistRepository.setPlaylists(listOf(roadTrip))
 
@@ -89,7 +101,7 @@ class PlaylistListViewModelTest {
     }
 
     @Test
-    fun `smart playlists are always present, even with no user playlists`() = runTest {
+    fun `smart playlists are always present even with no user playlists`() = runTest {
         playlistRepository.setPlaylists(emptyList())
         importState.setState(importComplete())
 
