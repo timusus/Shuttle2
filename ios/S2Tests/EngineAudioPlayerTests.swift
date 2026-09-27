@@ -168,7 +168,47 @@ struct EngineAudioPlayerTests {
         #expect(listener.calls == ["state a playing"])
     }
 
+    private func coefficients(_ values: [Double]) -> KotlinDoubleArray {
+        let array = KotlinDoubleArray(size: Int32(values.count))
+        values.enumerated().forEach { array.set(index: Int32($0.offset), value: $0.element) }
+        return array
+    }
+
+    @Test func theEqualizerReachesTheEngineAsItsCoefficients() {
+        player.setEqualizer(enabled: true, preampDb: -3.5, coefficients: coefficients([1.02, -1.93, 0.92, -1.93, 0.95]))
+
+        #expect(engine.equalizers == [.init(enabled: true, preampDb: -3.5, coefficients: [1.02, -1.93, 0.92, -1.93, 0.95])])
+    }
+
+    @Test func theEngineRateIsTheRateTheEqualizerIsDesignedAt() {
+        engine.outputSampleRate = 44_100
+        #expect(player.engineSampleRate() == 44_100)
+    }
+
+    @Test func aReplacedEngineGetsTheEqualizer() {
+        player.setEqualizer(enabled: true, preampDb: -1, coefficients: coefficients([1, 0, 0, 0, 0]))
+        let rebuilt = FakeAudioEngine()
+
+        player.replaceEngine(rebuilt)
+
+        #expect(rebuilt.equalizers == [.init(enabled: true, preampDb: -1, coefficients: [1, 0, 0, 0, 0])])
+    }
+
+    @Test func aReplacedEngineWithNoEqualizerSetGetsNone() {
+        let rebuilt = FakeAudioEngine()
+        player.replaceEngine(rebuilt)
+        #expect(rebuilt.equalizers.isEmpty)
+    }
+
     // MARK: - With the Kotlin controller
+
+    @Test func theSavedEqualizerReachesTheEngineWithTheController() {
+        let graph = IosAppGraphKt.createIosAppGraph(audioPlayer: player)
+        _ = graph.playerController
+
+        #expect(engine.equalizers.count == 1)
+        #expect(engine.equalizers.first?.coefficients.count == 50) // ten bands, five each
+    }
 
     private func queueDemoSongs(on graph: IosAppGraph, skipUnloadable: Bool) async throws {
         let controller = graph.playerController

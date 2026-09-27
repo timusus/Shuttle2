@@ -8,7 +8,6 @@ import Testing
 @MainActor
 struct AudioSessionControllerTests {
     private final class FakeSession: AudioSession {
-        var sampleRate: Double = 48_000
         private(set) var categories: [(AVAudioSession.Category, AVAudioSession.Mode, AVAudioSession.RouteSharingPolicy)] = []
         private(set) var activations: [Bool] = []
         var failActivation = false
@@ -35,7 +34,6 @@ struct AudioSessionControllerTests {
         var playing = false
         var pauses: [AudioSessionController.PauseReason] = []
         var resumes = 0
-        var sampleRates: [Double] = []
         var resets = 0
 
         @MainActor init() {
@@ -47,7 +45,6 @@ struct AudioSessionControllerTests {
                 controller.playbackPaused() // the bridge reports every pause, ours included
             }
             controller.onResume = { [unowned self] in resumes += 1; playing = true }
-            controller.onOutputSampleRateChanged = { [unowned self] in sampleRates.append($0) }
             controller.onMediaServicesReset = { [unowned self] in resets += 1 }
         }
 
@@ -74,14 +71,13 @@ struct AudioSessionControllerTests {
         }
     }
 
-    @Test func configureSetsTheLongFormPlaybackCategoryAndReportsTheRate() throws {
+    @Test func configureSetsTheLongFormPlaybackCategory() throws {
         let h = Harness()
         try h.controller.configure()
         #expect(h.session.categories.count == 1)
         #expect(h.session.categories.first?.0 == .playback)
         #expect(h.session.categories.first?.1 == .default)
         #expect(h.session.categories.first?.2 == .longFormAudio)
-        #expect(h.sampleRates == [48_000])
     }
 
     @Test func activateAndDeactivateToggleTheSession() throws {
@@ -168,23 +164,12 @@ struct AudioSessionControllerTests {
         #expect(h.resumes == 0)
     }
 
-    @Test func routeChangesReportEachNewSampleRateOnce() throws {
-        let h = Harness()
-        try h.controller.configure()
-        h.routeChanged(.newDeviceAvailable)
-        h.session.sampleRate = 44_100
-        h.routeChanged(.newDeviceAvailable)
-        h.routeChanged(.routeConfigurationChange)
-        #expect(h.sampleRates == [48_000, 44_100])
-    }
-
     @Test func mediaServicesResetReconfiguresAndAsksForARebuild() throws {
         let h = Harness()
         try h.controller.configure()
         h.post(AVAudioSession.mediaServicesWereResetNotification)
         #expect(h.session.categories.count == 2)
         #expect(h.resets == 1)
-        #expect(h.sampleRates == [48_000, 48_000]) // re-reported: the rebuilt engine needs it
     }
 
     @Test func notificationsFromAnotherSessionAreIgnored() {

@@ -48,4 +48,9 @@ protocol AudioEngine: AnyObject {
     var position: (uid: String, ms: Int64)? { get }
     /// The duration (ms) of the track being heard, nil until known.
     var durationMs: Int64? { get }
+    /// The rate (Hz) the engine renders and filters at, fixed for its life: every track is resampled to it.
+    var outputSampleRate: Double { get }
+    /// The equalizer, from the next chunk rendered: a preamp (dB) and five biquad coefficients per band
+    /// (b0, b1, b2, a1, a2), designed at `outputSampleRate`.
+    func setEqualizer(enabled: Bool, preampDb: Float, coefficients: [Double])
 }

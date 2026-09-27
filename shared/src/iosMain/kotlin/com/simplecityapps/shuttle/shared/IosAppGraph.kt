@@ -50,15 +50,15 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
  *
  * `SettingsViewModel` reads `IosSettingsCatalog` (only the rows iOS acts on) through `IosSettingsEffects`.
  *
- * Two shared ViewModels are excluded until iOS binds what they need (phase-4-viewmodels.md, "Wave 3" and "Wave 4"):
- * `EqualizerViewModel` needs an `EqualizerControl`,
- * `EqualizerFrequencyResponse` and `EqualizerPresetStore`, which come with iOS's `AVAudioUnitEQ` in phase 6;
+ * `EqualizerViewModel` drives `IosEqualizer`, which designs the S2Playback engine's filters (phase-6-playback.md).
+ *
+ * One shared ViewModel is excluded until iOS binds what it needs (phase-4-viewmodels.md, "Wave 4"):
  * `TagEditorViewModel` needs a `TagFileAccess`, which iOS gets with local files (security-scoped folders and a TagLib
  * wrapper) in phase 8. Until then nothing offers tag editing on iOS: only the local provider supports it.
  */
 @DependencyGraph(
     AppScope::class,
-    excludes = [EqualizerViewModel::class, TagEditorViewModel.Factory::class],
+    excludes = [TagEditorViewModel.Factory::class],
 )
 interface IosAppGraph : ViewModelGraph {
     /** Playback: `PlaybackOperations`, and the queue through its `queueOperations`. One for the graph, on main. */
@@ -89,6 +89,7 @@ interface IosAppGraph : ViewModelGraph {
     val sourcesViewModel: SourcesViewModel
     val serverTypePickerViewModel: ServerTypePickerViewModel
     val settingsViewModel: SettingsViewModel
+    val equalizerViewModel: EqualizerViewModel
 
     /** The rows `settingsViewModel` stores, for Swift's `SettingsView` to lay out. */
     val settingsCatalog: SettingsCatalog

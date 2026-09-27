@@ -9,8 +9,6 @@ protocol AudioSession: AnyObject {
         options: AVAudioSession.CategoryOptions
     ) throws
     func setActive(_ active: Bool, options: AVAudioSession.SetActiveOptions) throws
-    /// The output's current hardware sample rate, in Hz.
-    var sampleRate: Double { get }
 }
 
 extension AVAudioSession: AudioSession {}
@@ -27,8 +25,8 @@ extension AVAudioSession: AudioSession {}
 ///   paused, as a permanent focus loss does. Ducking is the system's job on iOS.
 /// - **Route change, `.oldDeviceUnavailable`** (headphones unplugged, Bluetooth gone): pause, and don't
 ///   resume when the device returns. That is Android's `ACTION_AUDIO_BECOMING_NOISY`.
-/// - **Output sample rate change** on any route change: reported, for the EQ coefficients (nothing
-///   consumes it until the equalizer is shared, #588).
+/// - **Output sample rate**: none of its business. The engine renders at a fixed 48 kHz and the EQ is
+///   designed for that; the main mixer converts to whatever the route runs at (phase-6-playback.md).
 /// - **Media services reset**: the session is configured again and the player's owner is told to
 ///   rebuild its engine and reload the current item at its position.
 ///
@@ -48,8 +46,6 @@ final class AudioSessionController {
     var onPause: (PauseReason) -> Void = { _ in }
     /// Resume playback after an interruption ended with `.shouldResume`.
     var onResume: () -> Void = {}
-    /// The output's sample rate changed, in Hz. Called once per distinct rate, starting after `configure()`.
-    var onOutputSampleRateChanged: (Double) -> Void = { _ in }
     /// Media services were reset: every audio object is invalid. Rebuild the engine and reload.
     var onMediaServicesReset: () -> Void = {}
 
@@ -57,7 +53,6 @@ final class AudioSessionController {
     private let notificationCenter: NotificationCenter
     private var observers: [NSObjectProtocol] = []
     private var resumeAfterInterruption = false
-    private var reportedSampleRate: Double?
 
     init(session: AudioSession = AVAudioSession.sharedInstance(), notificationCenter: NotificationCenter = .default) {
         self.session = session
@@ -73,7 +68,6 @@ final class AudioSessionController {
     /// switch on, `.longFormAudio` so AirPlay 2 and the route picker treat S2 as a music app.
     func configure() throws {
         try session.setCategory(.playback, mode: .default, policy: .longFormAudio, options: [])
-        reportSampleRateIfChanged()
     }
 
     /// Activates the session. Call before starting playback: it is what makes S2 the Now Playing app.
@@ -81,7 +75,6 @@ final class AudioSessionController {
     func activate() throws {
         resumeAfterInterruption = false
         try session.setActive(true, options: [])
-        reportSampleRateIfChanged()
     }
 
     /// Deactivates the session on stop, so another app's paused audio can resume.
@@ -172,7 +165,6 @@ final class AudioSessionController {
                 resumeAfterInterruption = false
                 if isPlaying() { onPause(.outputDeviceUnavailable) }
             }
-            reportSampleRateIfChanged()
         case .mediaServicesReset:
             handleMediaServicesReset()
         }
@@ -180,15 +172,7 @@ final class AudioSessionController {
 
     private func handleMediaServicesReset() {
         resumeAfterInterruption = false
-        reportedSampleRate = nil
         try? configure()
         onMediaServicesReset()
-    }
-
-    private func reportSampleRateIfChanged() {
-        let rate = session.sampleRate
-        guard rate > 0, rate != reportedSampleRate else { return }
-        reportedSampleRate = rate
-        onOutputSampleRateChanged(rate)
     }
 }

@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.shared.playback
 
 import com.simplecityapps.mediaprovider.StreamUrlProvider
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
@@ -24,7 +25,14 @@ class SongStreamResolverTest {
         }
     }
 
-    private val resolver = SongStreamResolver(listOf(FakeStreamUrls("jellyfin"), FakeStreamUrls("emby")))
+    private var replayGainMode = ReplayGainMode.Off
+    private var preAmpGainDb = 0f
+
+    private val resolver = SongStreamResolver(
+        listOf(FakeStreamUrls("jellyfin"), FakeStreamUrls("emby")),
+        replayGainMode = { replayGainMode },
+        preAmpGainDb = { preAmpGainDb }
+    )
 
     @Test
     fun serverSongsStreamFromTheProviderThatHandlesTheirPath() = runTest {
@@ -55,6 +63,26 @@ class SongStreamResolverTest {
     @Test
     fun aProviderThatCantBuildTheUrlFailsTheSong() = runTest {
         shouldThrow<IllegalStateException> { resolver.resolve(songAt(path = "jellyfin://item/abc", name = "signed out"), 0) }
+    }
+
+    @Test
+    fun theStreamCarriesTheReplayGainTheModeChooses() = runTest {
+        val tagged = songAt(path = "/Music/a.flac").copy(replayGainTrack = -6.5, replayGainAlbum = -3.0)
+        preAmpGainDb = 2f
+
+        replayGainMode = ReplayGainMode.Track
+        resolver.resolve(tagged, 0).gainDb shouldBe -4.5f
+        replayGainMode = ReplayGainMode.Album
+        resolver.resolve(tagged, 0).gainDb shouldBe -1f
+        replayGainMode = ReplayGainMode.Off
+        resolver.resolve(tagged, 0).gainDb shouldBe 2f
+    }
+
+    @Test
+    fun aMissingTagFallsBackToTheOtherOne() = runTest {
+        replayGainMode = ReplayGainMode.Album
+        resolver.resolve(songAt(path = "jellyfin://item/abc").copy(replayGainTrack = -7.0), 0).gainDb shouldBe -7f
+        resolver.resolve(songAt(path = "jellyfin://item/abc"), 0).gainDb shouldBe 0f
     }
 
     private fun songAt(

@@ -1,9 +1,11 @@
 package com.simplecityapps.shuttle.shared
 
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.UserDefaultsKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
+import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.shared.playback.FakeIosAudioPlayer
@@ -28,11 +30,16 @@ import kotlin.test.Test
  * merges the shared modules' `AppScope` contributions from their klibs, and :shared's iOS containers bind the rest.
  */
 class IosAppGraphTest {
-    private val graph = createIosAppGraph(FakeIosAudioPlayer())
+    private val player = FakeIosAudioPlayer()
+
+    private val graph = createIosAppGraph(player)
 
     @AfterTest
-    fun removeTheSettingWritten() {
-        UserDefaultsKeyValueStore().edit { remove(AppearanceSettings.ShowHomeOnLaunch.key) }
+    fun removeTheSettingsWritten() {
+        UserDefaultsKeyValueStore().edit {
+            remove(AppearanceSettings.ShowHomeOnLaunch.key)
+            remove(EqualizerSettings.Enabled.key)
+        }
     }
 
     @Test
@@ -53,6 +60,7 @@ class IosAppGraphTest {
         graph.sourcesViewModel
         graph.serverTypePickerViewModel
         graph.settingsViewModel
+        graph.equalizerViewModel
         graph.albumDetailViewModelFactory
         graph.albumArtistDetailViewModelFactory
         graph.genreDetailViewModelFactory
@@ -100,6 +108,22 @@ class IosAppGraphTest {
     @Test
     fun onePlayerControllerIsTheGraphsPlayback() {
         graph.playerController shouldBeSameInstanceAs graph.playerController
+    }
+
+    @Test
+    fun theSavedEqualizerReachesTheEngineWithThePlayer() {
+        graph.playerController
+
+        player.equalizers.size shouldBe 1
+        player.equalizers.last().coefficients.size shouldBe 5 * Equalizer.Presets.flat.bands.size
+    }
+
+    @Test
+    fun theEqualizerScreenDrivesTheEngine() {
+        graph.playerController
+        graph.equalizerViewModel.onEnabledChange(true)
+
+        player.equalizers.last().enabled shouldBe true
     }
 
     @Test

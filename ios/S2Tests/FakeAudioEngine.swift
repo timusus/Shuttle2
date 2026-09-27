@@ -10,6 +10,12 @@ final class FakeAudioEngine: AudioEngine {
         let playWhenReady: Bool
     }
 
+    struct Equalizer: Equatable {
+        let enabled: Bool
+        let preampDb: Float
+        let coefficients: [Double]
+    }
+
     private(set) var loads: [Load] = []
     /// Every `setNext`, nil included.
     private(set) var nexts: [EngineTrack?] = []
@@ -17,6 +23,9 @@ final class FakeAudioEngine: AudioEngine {
     private(set) var commands: [String] = []
     var position: (uid: String, ms: Int64)?
     var durationMs: Int64?
+    var outputSampleRate: Double = 48_000
+    /// Every `setEqualizer`, in order.
+    private(set) var equalizers: [Equalizer] = []
     private var handler: ((EngineEvent) -> Void)?
 
     var hasEventHandler: Bool { handler != nil }
@@ -43,6 +52,10 @@ final class FakeAudioEngine: AudioEngine {
     func seek(toMs ms: Int64) { commands.append("seek \(ms)") }
     func stop() { commands.append("stop") }
     func setSpeed(_ speed: Float) { commands.append("speed \(speed)") }
+
+    func setEqualizer(enabled: Bool, preampDb: Float, coefficients: [Double]) {
+        equalizers.append(Equalizer(enabled: enabled, preampDb: preampDb, coefficients: coefficients))
+    }
 }
 
 /// Waits, letting the main queue run (Kotlin's coroutines and the adapter's posted failures), until

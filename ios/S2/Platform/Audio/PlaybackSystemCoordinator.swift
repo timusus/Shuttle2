@@ -51,8 +51,6 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         session.onPause = { [weak self] _ in self?.playback.pause() }
         session.onResume = { [weak self] in self?.playback.play() }
         session.onMediaServicesReset = { [weak self] in self?.rebuildEngine() }
-        // TODO(#588): the output sample rate reaches the EQ once the equalizer is shared
-        // (`onOutputSampleRateChanged` recomputes its coefficients); nothing consumes it yet.
         player.onWillPlay = { [weak session] in
             MainActor.assumeIsolated {
                 do {

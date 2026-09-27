@@ -33,6 +33,10 @@ extension MusicPlaybackController: AudioEngine {
         let playbackTrack: PlaybackTrack? = track.map(PlaybackTrack.init)
         setNext(playbackTrack)
     }
+
+    func setEqualizer(enabled: Bool, preampDb: Float, coefficients: [Double]) {
+        setEqualizer(EqualizerSettings(enabled: enabled, preampDb: preampDb, coefficients: coefficients))
+    }
 }
 
 private extension PlaybackTrack {

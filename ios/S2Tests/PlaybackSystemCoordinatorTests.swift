@@ -10,7 +10,6 @@ import Testing
 @MainActor
 struct PlaybackSystemCoordinatorTests {
     private final class FakeSession: AudioSession {
-        var sampleRate: Double = 48_000
         private(set) var configured = 0
         private(set) var activations: [Bool] = []
 

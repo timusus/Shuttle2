@@ -63,7 +63,8 @@ rides out the network.
 per channel, then a stereo-linked lookahead limiter (ceiling −0.1 dBFS, attack 5 ms, release 100 ms).
 
 - **Coefficients.** They come from Kotlin, 5 per band (b0, b1, b2, a1, a2), computed for
-  `outputSampleRate`. Swift never designs a filter.
+  `outputSampleRate`, a fixed 48 kHz that Kotlin reads through `IosAudioPlayer.engineSampleRate()`.
+  Swift never designs a filter.
 - **Limiter delay.** The limiter's lookahead delay is compensated: the first `latency` outputs are
   dropped, and the tail is flushed at the queue's end. Output frame n is therefore input frame n, and
   below the ceiling the chain is bit-exact.
@@ -109,7 +110,7 @@ change. They are kept diffable so a later shared AudioCore can take them back.
     - a resampler rebuilt on a mid-stream format change;
     - frame timestamps after a byte-estimate seek for FLAC and PCM.
   - `FFmpegStreamDecoder` adds `setOutputFormat` and `read(into:maxFrames:)`.
-  - `Biquad` adds `coefficients` and `adoptState`; the high-pass factory was dropped.
+  - `Biquad` adds `adoptState`; its factories were dropped, as the shared Kotlin EQ designs the bands.
   - `LookaheadLimiter` is now stereo-linked and frame-interleaved, and its window includes the
     emitted frame.
 - **New**:

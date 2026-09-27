@@ -335,15 +335,53 @@ final class MusicPlaybackControllerTests: XCTestCase {
         assertEqual(out.left[...], out.right[...], a)
     }
 
-    func testPeakingBandChangesTheSignal() throws {
+    /// A +6 dB band at 1 kHz as the shared Kotlin `EqualizerCascade` designs it for 48 kHz, pinned by
+    /// `EqualizerCascadeTest` on the Kotlin side.
+    private let kotlinBoostAt1kHz: [Double] = [
+        1.024858815651008, -1.9333627896640524, 0.92518688531219, -1.9333627896640524, 0.9500457009631977,
+    ]
+
+    /// The level of `samples` from `start` on, in dB relative to full scale RMS.
+    private func levelDb(_ samples: [Float], from start: Int) -> Double {
+        let tail = samples[start...]
+        let meanSquare = tail.reduce(0.0) { $0 + Double($1) * Double($1) } / Double(tail.count)
+        return 10 * log10(meanSquare)
+    }
+
+    private func sine(frames: Int, frequency: Double, amplitude: Float) -> [Float] {
+        (0..<frames).flatMap { frame -> [Float] in
+            let value = amplitude * Float(sin(2 * Double.pi * frequency * Double(frame) / rate))
+            return [value, value]
+        }
+    }
+
+    func testAKotlinDesignedBandBoostsItsFrequencyBySixDecibelsAtTheEngineRate() throws {
         let (controller, _) = try makeController()
-        let peak = Biquad.peaking(frequency: 1_000, sampleRate: rate, gainDb: 6, q: 1).coefficients
-        controller.setEqualizer(EqualizerSettings(enabled: true, preampDb: -6, coefficients: peak))
-        let a = TestSignal.noise(frames: 8_000, seed: 10, amplitude: 0.2)
+        XCTAssertEqual(controller.outputSampleRate, rate, "the coefficients are designed at the engine rate")
+        let flatBand: [Double] = [1, 0, 0, 0, 0]
+        let bands = Array(repeating: flatBand, count: 5).flatMap { $0 } + kotlinBoostAt1kHz
+            + Array(repeating: flatBand, count: 4).flatMap { $0 }
+        controller.setEqualizer(EqualizerSettings(enabled: true, preampDb: 0, coefficients: bands))
+        let a = sine(frames: 24_000, frequency: 1_000, amplitude: 0.25)
         controller.load(current: track("A", a), next: nil, playWhenReady: true)
         controller.syncForTesting()
-        let out = try OfflineRenderer(controller: controller, slice: 1024).render(frames: 8_000)
-        XCTAssertNotEqual(out.left, a.channel(0))
+        let out = try OfflineRenderer(controller: controller, slice: 1024).render(frames: 24_000)
+
+        // Past the filter's settling, well under the limiter's ceiling (0.25 boosted to 0.5).
+        let gain = levelDb(out.left, from: 4_800) - levelDb(a.channel(0), from: 4_800)
+        XCTAssertEqual(gain, 6, accuracy: 0.05)
+    }
+
+    func testTheEqualizersPreampScalesTheSignal() throws {
+        let (controller, _) = try makeController()
+        controller.setEqualizer(EqualizerSettings(enabled: true, preampDb: -6, coefficients: [1, 0, 0, 0, 0]))
+        let a = sine(frames: 12_000, frequency: 1_000, amplitude: 0.25)
+        controller.load(current: track("A", a), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        let out = try OfflineRenderer(controller: controller, slice: 1024).render(frames: 12_000)
+
+        let gain = levelDb(out.left, from: 2_400) - levelDb(a.channel(0), from: 2_400)
+        XCTAssertEqual(gain, -6, accuracy: 0.05)
     }
 
     func testReplayGainScalesSamples() throws {

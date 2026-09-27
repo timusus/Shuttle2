@@ -25,6 +25,8 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     /// The track the engine is playing as far as Kotlin knows: the last loaded, or transitioned to. The engine's
     /// position only counts for it, as a load or a transition reaches the engine queue after the call returns.
     private var currentId: String?
+    /// The equalizer Kotlin last set, handed to a replacement engine too.
+    private var equalizer: EngineEqualizer?
 
     init(engine: AudioEngine) {
         self.engine = engine
@@ -32,14 +34,15 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
         attach(engine)
     }
 
-    /// Swaps in a rebuilt engine after a media-services reset. The old one is silenced and stopped; the caller
-    /// reloads the current item into the new one.
+    /// Swaps in a rebuilt engine after a media-services reset. The old one is silenced and stopped, and the new one
+    /// gets the equalizer; the caller reloads the current item into it.
     func replaceEngine(_ newEngine: AudioEngine) {
         engine.setEventHandler(nil)
         engine.stop()
         currentId = nil
         engine = newEngine
         attach(newEngine)
+        equalizer?.apply(to: newEngine)
     }
 
     private func attach(_ engine: AudioEngine) {
@@ -115,6 +118,20 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
         return engine.durationMs ?? -1
     }
 
+    func setEqualizer(enabled: Bool, preampDb: Float, coefficients: KotlinDoubleArray) {
+        let settings = EngineEqualizer(
+            enabled: enabled,
+            preampDb: preampDb,
+            coefficients: (0..<coefficients.size).map { coefficients.get(index: $0) }
+        )
+        equalizer = settings
+        settings.apply(to: engine)
+    }
+
+    func engineSampleRate() -> Int32 {
+        Int32(engine.outputSampleRate)
+    }
+
     // MARK: -
 
     /// The engine's form of `track`, or nil (its failure posted) if its URL doesn't parse.
@@ -132,6 +149,17 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
             gainDb: track.gainDb,
             expectedDurationMs: track.expectedDurationMs > 0 ? track.expectedDurationMs : nil
         )
+    }
+}
+
+/// What Kotlin's `IosEqualizer` designed, as the engine takes it.
+private struct EngineEqualizer {
+    let enabled: Bool
+    let preampDb: Float
+    let coefficients: [Double]
+
+    func apply(to engine: AudioEngine) {
+        engine.setEqualizer(enabled: enabled, preampDb: preampDb, coefficients: coefficients)
     }
 }
 
