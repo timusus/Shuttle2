@@ -72,14 +72,9 @@ class JellyfinAuthenticationManager(
                 Result.success(authenticatedCredentials)
             }
 
-            is NetworkResult.Failure -> {
-                (authenticationResult.error as? RemoteServiceHttpError)?.let { error ->
-                    if (error.httpStatusCode == HttpStatusCode.Unauthorized) {
-                        credentialStore.authenticatedCredentials = null
-                    }
-                }
-                Result.failure(authenticationResult.error)
-            }
+            // Leaves the stored session alone: a mistyped password in the sign-in dialog mustn't sign out a working
+            // session (#596). A session the server rejects is cleared by checkSession, when it's used.
+            is NetworkResult.Failure -> Result.failure(authenticationResult.error)
         }
     }
 
@@ -143,7 +138,9 @@ class JellyfinAuthenticationManager(
     ): AuthenticatedCredentials? = when (val result = userService.me(address, authorizationHeader(authenticatedCredentials))) {
         is NetworkResult.Success -> {
             val refreshed = authenticatedCredentials.copy(canDownload = result.body.policy?.enableContentDownloading ?: false)
-            credentialStore.authenticatedCredentials = refreshed
+            // Saved only while it's still the stored session, so this never brings back a session that was cleared,
+            // or overwrites a newer sign-in, while the request was in flight (#596)
+            credentialStore.compareAndSetAuthenticatedCredentials(expected = authenticatedCredentials, new = refreshed)
             refreshed
         }
 
@@ -160,7 +157,8 @@ class JellyfinAuthenticationManager(
 
     /** Persists that the current user can't use the Download endpoint, so later downloads go straight to the static stream. */
     fun disableDownloadPermission() {
-        credentialStore.authenticatedCredentials = credentialStore.authenticatedCredentials?.copy(canDownload = false)
+        val current = credentialStore.authenticatedCredentials ?: return
+        credentialStore.compareAndSetAuthenticatedCredentials(expected = current, new = current.copy(canDownload = false))
     }
 
     /**

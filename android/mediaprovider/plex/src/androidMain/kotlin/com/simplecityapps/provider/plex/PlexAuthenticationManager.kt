@@ -6,13 +6,11 @@ import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.checkSession
 import com.simplecityapps.networking.retrofit.NetworkResult
-import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.provider.plex.http.AuthenticationResult
 import com.simplecityapps.provider.plex.http.PLEX_TOKEN
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.provider.plex.http.plexClientHeaders
 import com.simplecityapps.shuttle.model.Song
-import io.ktor.http.HttpStatusCode
 import java.net.URLEncoder
 import java.util.UUID
 import timber.log.Timber
@@ -61,14 +59,9 @@ class PlexAuthenticationManager(
                 Result.success(authenticatedCredentials)
             }
 
-            is NetworkResult.Failure -> {
-                (authenticationResult.error as? RemoteServiceHttpError)?.let { error ->
-                    if (error.httpStatusCode == HttpStatusCode.Unauthorized) {
-                        credentialStore.authenticatedCredentials = null
-                    }
-                }
-                Result.failure(authenticationResult.error)
-            }
+            // Leaves the stored session alone: a mistyped password in the sign-in dialog mustn't sign out a working
+            // session (#596). A session the server rejects is cleared by checkSession, when it's used.
+            is NetworkResult.Failure -> Result.failure(authenticationResult.error)
         }
     }
 

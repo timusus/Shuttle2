@@ -69,6 +69,17 @@ class PlexSignInTest {
     }
 
     @Test
+    fun `a failed sign-in keeps the working session`() = runTest {
+        val working = AuthenticatedCredentials("working-token", "7")
+        credentialStore.authenticatedCredentials = working
+        server.respond(SIGN_IN, code = 401, method = "POST")
+
+        authenticationManager.authenticate(server.address, LoginCredentials("listener", "mistyped")).isFailure shouldBe true
+
+        credentialStore.authenticatedCredentials shouldBe working
+    }
+
+    @Test
     fun `every request carries the client identity and asks for JSON`() = runTest {
         server.respond(SIGN_IN, "sign_in.json", method = "POST")
         server.respond("/library/sections", "sections.json")

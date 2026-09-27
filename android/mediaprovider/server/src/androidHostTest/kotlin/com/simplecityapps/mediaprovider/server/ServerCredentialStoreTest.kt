@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.http.HttpStatusCode
+import kotlin.concurrent.thread
 import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.toList
@@ -183,5 +184,56 @@ class ServerCredentialStoreTest {
 
         store.authenticatedCredentials.shouldBeNull()
         signals.size shouldBe 1
+    }
+
+    @Test
+    fun `compare-and-set replaces the session it expects`() = runTest {
+        val (store, _) = signedIn()
+        val refreshed = session.copy(canDownload = false)
+
+        store.compareAndSetAuthenticatedCredentials(expected = session, new = refreshed) shouldBe true
+
+        store.authenticatedCredentials shouldBe refreshed
+    }
+
+    @Test
+    fun `compare-and-set never brings back an expired session`() = runTest {
+        val (store, _) = signedIn()
+        store.expireSession(session)
+
+        store.compareAndSetAuthenticatedCredentials(expected = session, new = session.copy(canDownload = false)) shouldBe false
+
+        store.authenticatedCredentials.shouldBeNull()
+    }
+
+    @Test
+    fun `compare-and-set never overwrites a newer sign-in`() = runTest {
+        val (store, _) = signedIn()
+        val fresh = AuthenticatedCredentials("token-2", "user")
+        store.authenticatedCredentials = fresh
+
+        store.compareAndSetAuthenticatedCredentials(expected = session, new = session.copy(canDownload = false)) shouldBe false
+
+        store.authenticatedCredentials shouldBe fresh
+    }
+
+    @Test
+    fun `sign-ins racing expiry never leave a half-written session`() {
+        val store = store("jellyfin")
+        val sessions = (1..2).map { AuthenticatedCredentials("token-$it", "user-$it") }
+        store.authenticatedCredentials = sessions[0]
+
+        val writers = sessions.map { credentials ->
+            thread {
+                repeat(2_000) {
+                    store.authenticatedCredentials = credentials
+                    store.expireSession(credentials)
+                }
+            }
+        }
+        repeat(2_000) {
+            store.authenticatedCredentials?.let { read -> read.userId shouldBe "user-${read.accessToken.removePrefix("token-")}" }
+        }
+        writers.forEach { it.join() }
     }
 }

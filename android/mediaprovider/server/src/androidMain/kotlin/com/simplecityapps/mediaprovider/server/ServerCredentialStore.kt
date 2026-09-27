@@ -25,6 +25,9 @@ class ServerCredentialStore(
     private val userIdKey = "${prefix}_user_id"
     private val canDownloadKey = "${prefix}_can_download"
 
+    // Guards the session keys, which are written together
+    private val lock = Any()
+
     /** The saved sign-in, for re-authenticating once the session expires. Never holds an [LoginCredentials.authCode]. */
     var loginCredentials: LoginCredentials?
         get() {
@@ -37,17 +40,40 @@ class ServerCredentialStore(
             securePreferenceManager.putString(passwordKey, value?.password)
         }
 
+    /**
+     * The signed-in session. Setting it replaces the stored session outright, as a sign-in does; a write that must not
+     * clobber a newer session, or bring back a cleared one, goes through [compareAndSetAuthenticatedCredentials]. Every
+     * read and write holds the same lock as [expireSession], so none of them sees or leaves a half-written session (#596).
+     */
     var authenticatedCredentials: AuthenticatedCredentials?
-        get() {
-            val accessToken = securePreferenceManager.getString(accessTokenKey) ?: return null
-            val userId = securePreferenceManager.getString(userIdKey) ?: return null
-            return AuthenticatedCredentials(accessToken, userId, securePreferenceManager.getBoolean(canDownloadKey))
-        }
-        set(value) {
-            securePreferenceManager.putString(accessTokenKey, value?.accessToken)
-            securePreferenceManager.putString(userIdKey, value?.userId)
-            securePreferenceManager.putBoolean(canDownloadKey, value?.canDownload ?: false)
-        }
+        get() = synchronized(lock) { readAuthenticatedCredentials() }
+        set(value) = synchronized(lock) { writeAuthenticatedCredentials(value) }
+
+    /**
+     * Replaces the stored session with [new] only while it is still [expected] (the same access token), returning
+     * whether it did. So saving something learned about [expected], such as a refreshed download permission, never
+     * overwrites a newer sign-in or brings back a session [expireSession] has cleared (#596).
+     */
+    fun compareAndSetAuthenticatedCredentials(
+        expected: AuthenticatedCredentials,
+        new: AuthenticatedCredentials?
+    ): Boolean = synchronized(lock) {
+        if (readAuthenticatedCredentials()?.accessToken != expected.accessToken) return false
+        writeAuthenticatedCredentials(new)
+        true
+    }
+
+    private fun readAuthenticatedCredentials(): AuthenticatedCredentials? {
+        val accessToken = securePreferenceManager.getString(accessTokenKey) ?: return null
+        val userId = securePreferenceManager.getString(userIdKey) ?: return null
+        return AuthenticatedCredentials(accessToken, userId, securePreferenceManager.getBoolean(canDownloadKey))
+    }
+
+    private fun writeAuthenticatedCredentials(value: AuthenticatedCredentials?) {
+        securePreferenceManager.putString(accessTokenKey, value?.accessToken)
+        securePreferenceManager.putString(userIdKey, value?.userId)
+        securePreferenceManager.putBoolean(canDownloadKey, value?.canDownload ?: false)
+    }
 
     var address: String?
         get() = securePreferenceManager.getString(addressKey)
@@ -71,10 +97,7 @@ class ServerCredentialStore(
      * never signs out a fresh session, and requests rejected together signal once.
      */
     fun expireSession(rejected: AuthenticatedCredentials): Boolean {
-        synchronized(this) {
-            if (authenticatedCredentials?.accessToken != rejected.accessToken) return false
-            authenticatedCredentials = null
-        }
+        if (!compareAndSetAuthenticatedCredentials(expected = rejected, new = null)) return false
         _sessionExpired.tryEmit(Unit)
         return true
     }

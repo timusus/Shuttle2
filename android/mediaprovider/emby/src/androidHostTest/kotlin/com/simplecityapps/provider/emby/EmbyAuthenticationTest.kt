@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.FixtureServer
+import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.emby.http.UserService
@@ -113,5 +114,38 @@ class EmbyAuthenticationTest {
         authenticationManager.disableDownloadPermission()
 
         authenticationManager.getAuthenticatedCredentials()!!.canDownload shouldBe false
+    }
+
+    @Test
+    fun `a failed sign-in keeps the working session`() {
+        credentialStore.authenticatedCredentials = credentials
+        server.respond("/Users/AuthenticateByName", code = 401, method = "POST")
+
+        val result = runBlocking { authenticationManager.authenticate(server.address, LoginCredentials("listener", "mistyped")) }
+
+        result.isFailure shouldBe true
+        authenticationManager.getAuthenticatedCredentials() shouldBe credentials
+    }
+
+    @Test
+    fun `refreshDownloadPermission never brings back a session cleared while it ran`() {
+        credentialStore.authenticatedCredentials = null
+        server.respond("/emby/Users/Me", "me.json")
+
+        val refreshed = runBlocking { authenticationManager.refreshDownloadPermission(server.address, credentials) }
+
+        refreshed!!.canDownload shouldBe true
+        authenticationManager.getAuthenticatedCredentials().shouldBeNull()
+    }
+
+    @Test
+    fun `refreshDownloadPermission never overwrites a newer sign-in`() {
+        val newer = AuthenticatedCredentials(accessToken = "token-2", userId = "user456")
+        credentialStore.authenticatedCredentials = newer
+        server.respond("/emby/Users/Me", "me.json")
+
+        runBlocking { authenticationManager.refreshDownloadPermission(server.address, credentials) }
+
+        authenticationManager.getAuthenticatedCredentials() shouldBe newer
     }
 }
