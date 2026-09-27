@@ -13,7 +13,10 @@ class SongStreamResolverTest {
     ) : StreamUrlProvider {
         override fun handles(scheme: String?): Boolean = scheme == this.scheme
 
-        override fun streamUrl(song: Song): String = if (song.name == "signed out") {
+        override fun streamUrl(
+            song: Song,
+            startPositionMs: Long
+        ): String = if (song.name == "signed out") {
             throw IllegalStateException("Failed to authenticate")
         } else {
             "https://$scheme.example/Audio/${song.path.substringAfterLast('/')}/universal"

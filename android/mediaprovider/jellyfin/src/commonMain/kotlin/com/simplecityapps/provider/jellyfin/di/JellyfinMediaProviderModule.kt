@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
+import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinPlaybackReporter
@@ -50,8 +51,9 @@ class JellyfinMediaProviderModule {
     fun provideJellyfinAuthenticationManager(
         userService: UserService,
         @Named("JellyfinCredentialStore") credentialStore: ServerCredentialStore,
-        clientIdentity: ClientIdentity
-    ): JellyfinAuthenticationManager = JellyfinAuthenticationManager(userService, credentialStore, clientIdentity)
+        clientIdentity: ClientIdentity,
+        streamProfile: StreamProfile
+    ): JellyfinAuthenticationManager = JellyfinAuthenticationManager(userService, credentialStore, clientIdentity, streamProfile)
 
     @Provides
     @SingleIn(AppScope::class)

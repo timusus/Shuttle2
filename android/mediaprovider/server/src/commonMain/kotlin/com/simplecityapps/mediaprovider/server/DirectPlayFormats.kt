@@ -10,12 +10,6 @@ object DirectPlayFormats {
     val undecodableCodecs = setOf("alac")
 
     /**
-     * The `Container=` value for Jellyfin and Emby's universal audio endpoint: `container|codec` entries, a bare
-     * container accepting any codec. A subset of [containers] (webma being Jellyfin's name for weba).
-     */
-    const val UNIVERSAL_CONTAINERS = "opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg"
-
-    /**
      * Whether the player decodes a file in [container] (an extension) encoded with [audioCodec] as it is. An unknown
      * container or codec plays as it is. The container names the wrapper, not what's inside, so an undecodable codec
      * such as ALAC is rejected even inside a playable container like `.m4a` (#567).

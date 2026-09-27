@@ -2,11 +2,11 @@ package com.simplecityapps.provider.jellyfin
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
-import com.simplecityapps.mediaprovider.server.DirectPlayFormats
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.QuickConnectCode
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.checkSession
 import com.simplecityapps.mediaprovider.server.mediaBrowserAuthorization
 import com.simplecityapps.networking.retrofit.NetworkResult
@@ -20,7 +20,8 @@ import kotlin.uuid.Uuid
 class JellyfinAuthenticationManager(
     private val userService: UserService,
     private val credentialStore: ServerCredentialStore,
-    private val clientIdentity: ClientIdentity
+    private val clientIdentity: ClientIdentity,
+    private val streamProfile: StreamProfile
 ) {
     private val logger = Logger.tagged("JellyfinAuthenticationManager")
 
@@ -164,14 +165,17 @@ class JellyfinAuthenticationManager(
     }
 
     /**
-     * The universal stream URL. The server direct-plays the original when it's a format the player decodes and, with a
-     * [maxBitrateKbps] cap, when its bitrate is under the cap; otherwise it transcodes to AAC over HLS, which stays
-     * seekable. A null cap streams the original, whatever its bitrate.
+     * The universal stream URL. The server direct-plays the original when it's a format the [StreamProfile] lists and,
+     * with a [maxBitrateKbps] cap, when its bitrate is under the cap; otherwise it transcodes to the profile's target
+     * (AAC over HLS on Android, which stays seekable). A null cap streams the original, whatever its bitrate.
+     * [startPositionMs] starts a transcode that far in (`StartTimeTicks`): a progressive transcode can't be
+     * range-seeked, so a seek restarts it there. The server ignores it for direct play, which seeks by range.
      */
     fun buildJellyfinPath(
         itemId: String,
         authenticatedCredentials: AuthenticatedCredentials,
-        maxBitrateKbps: Int?
+        maxBitrateKbps: Int?,
+        startPositionMs: Long = 0
     ): String? {
         if (credentialStore.address == null) {
             logger.warn { "Invalid jellyfin address (${credentialStore.address})" }
@@ -184,13 +188,14 @@ class JellyfinAuthenticationManager(
             "?UserId=${authenticatedCredentials.userId}" +
             "&DeviceId=${clientIdentity.id}" +
             "&PlaySessionId=${Uuid.random()}" +
-            "&Container=${DirectPlayFormats.UNIVERSAL_CONTAINERS}" +
-            "&TranscodingContainer=ts" +
-            "&TranscodingProtocol=hls" +
+            "&Container=${streamProfile.directPlayContainers}" +
+            "&TranscodingContainer=${streamProfile.transcodingContainer}" +
+            "&TranscodingProtocol=${streamProfile.transcodingProtocol}" +
             "&EnableRedirection=true" +
             "&EnableRemoteMedia=true" +
-            "&AudioCodec=aac" +
+            "&AudioCodec=${streamProfile.transcodingAudioCodec}" +
             maxBitrateKbps?.let { kbps -> "&MaxStreamingBitrate=${kbps * 1000}" }.orEmpty() +
+            startPositionMs.takeIf { it > 0 }?.let { ms -> "&StartTimeTicks=${StreamProfile.startTimeTicks(ms)}" }.orEmpty() +
             "&ApiKey=${authenticatedCredentials.accessToken}"
     }
 

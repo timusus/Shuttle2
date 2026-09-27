@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.shared.di
 
+import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.provider.emby.EmbyStreamUrlProvider
@@ -24,11 +25,15 @@ import kotlinx.coroutines.Job
 
 /**
  * iOS playback: the [IosPlayerController] over the Swift engine the graph's factory is given, as the app's
- * [PlaybackOperations] and [QueueOperations], so the shared use cases resolve unchanged.
+ * [PlaybackOperations] and [QueueOperations], so the shared use cases resolve unchanged, and the [StreamProfile] its
+ * FFmpeg build plays, for the Jellyfin and Emby stream URLs.
  */
 @ContributesTo(AppScope::class)
 @BindingContainer
 class IosPlaybackModule {
+    @Provides
+    fun provideStreamProfile(): StreamProfile = StreamProfile.Ios
+
     @Provides
     @SingleIn(AppScope::class)
     fun provideStreamResolver(

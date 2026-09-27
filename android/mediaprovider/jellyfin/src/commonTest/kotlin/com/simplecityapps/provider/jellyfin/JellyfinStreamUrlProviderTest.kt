@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -32,7 +33,8 @@ class JellyfinStreamUrlProviderTest {
     private val authenticationManager = JellyfinAuthenticationManager(
         userService = UserService(createHttpClient(FixtureServer("jellyfin").engine)),
         credentialStore = credentialStore,
-        clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice")
+        clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice"),
+        streamProfile = StreamProfile.Android
     )
 
     private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))

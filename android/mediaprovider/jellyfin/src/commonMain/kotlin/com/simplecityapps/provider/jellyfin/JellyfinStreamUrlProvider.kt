@@ -13,13 +13,17 @@ class JellyfinStreamUrlProvider(
 ) : StreamUrlProvider {
     override fun handles(scheme: String?): Boolean = scheme == "jellyfin"
 
-    override fun streamUrl(song: Song): String {
+    override fun streamUrl(
+        song: Song,
+        startPositionMs: Long
+    ): String {
         val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials()
             ?: throw IllegalStateException("Failed to authenticate")
         return authenticationManager.buildJellyfinPath(
             itemId = song.path.substringAfterLast('/'),
             authenticatedCredentials = authenticatedCredentials,
-            maxBitrateKbps = streamingBitrateCap.maxBitrateKbps()
+            maxBitrateKbps = streamingBitrateCap.maxBitrateKbps(),
+            startPositionMs = startPositionMs
         ) ?: throw IllegalStateException("Failed to build jellyfin path")
     }
 }

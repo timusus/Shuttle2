@@ -28,8 +28,8 @@ class DirectPlayFormatsTest {
     }
 
     @Test
-    fun `every universal endpoint container is one the player plays directly`() {
-        val universal = DirectPlayFormats.UNIVERSAL_CONTAINERS.split(',')
+    fun `every container Android asks the universal endpoint to direct-play is one the player plays directly`() {
+        val universal = StreamProfile.Android.directPlayContainers.split(',')
             .map { entry -> entry.substringBefore('|') }
             .map { container -> if (container == "webma") "weba" else container }
 

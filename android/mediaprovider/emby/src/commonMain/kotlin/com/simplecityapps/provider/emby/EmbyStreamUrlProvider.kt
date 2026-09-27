@@ -13,13 +13,17 @@ class EmbyStreamUrlProvider(
 ) : StreamUrlProvider {
     override fun handles(scheme: String?): Boolean = scheme == "emby"
 
-    override fun streamUrl(song: Song): String {
+    override fun streamUrl(
+        song: Song,
+        startPositionMs: Long
+    ): String {
         val authenticatedCredentials = authenticationManager.getAuthenticatedCredentials()
             ?: throw IllegalStateException("Failed to authenticate")
         return authenticationManager.buildEmbyPath(
             itemId = song.path.substringAfterLast('/'),
             authenticatedCredentials = authenticatedCredentials,
-            maxBitrateKbps = streamingBitrateCap.maxBitrateKbps()
+            maxBitrateKbps = streamingBitrateCap.maxBitrateKbps(),
+            startPositionMs = startPositionMs
         ) ?: throw IllegalStateException("Failed to build emby path")
     }
 }

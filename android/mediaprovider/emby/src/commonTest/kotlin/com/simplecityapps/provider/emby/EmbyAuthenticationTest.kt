@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -31,7 +32,8 @@ class EmbyAuthenticationTest {
     private val authenticationManager = EmbyAuthenticationManager(
         userService = UserService(createHttpClient(server.engine)),
         credentialStore = credentialStore,
-        clientIdentity = clientIdentity
+        clientIdentity = clientIdentity,
+        streamProfile = StreamProfile.Android
     )
 
     @Test

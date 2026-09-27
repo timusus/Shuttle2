@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
+import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.emby.EmbyPlaybackReporter
@@ -50,8 +51,9 @@ class EmbyMediaProviderModule {
     fun provideEmbyAuthenticationManager(
         userService: UserService,
         @Named("EmbyCredentialStore") credentialStore: ServerCredentialStore,
-        clientIdentity: ClientIdentity
-    ): EmbyAuthenticationManager = EmbyAuthenticationManager(userService, credentialStore, clientIdentity)
+        clientIdentity: ClientIdentity,
+        streamProfile: StreamProfile
+    ): EmbyAuthenticationManager = EmbyAuthenticationManager(userService, credentialStore, clientIdentity, streamProfile)
 
     @Provides
     @SingleIn(AppScope::class)

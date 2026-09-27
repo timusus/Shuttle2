@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.UserService
@@ -36,7 +37,8 @@ class JellyfinRemoteArtworkProviderTest {
                 JellyfinAuthenticationManager(
                     userService = UserService(client),
                     credentialStore = credentialStore,
-                    clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.26", deviceName = "Pixel")
+                    clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.26", deviceName = "Pixel"),
+                    streamProfile = StreamProfile.Android
                 ),
             credentialStore = credentialStore,
             itemsService = ItemsService(client)

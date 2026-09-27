@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.mediaprovider.server.mediaBrowserAuthorization
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.jellyfin.http.UserService
@@ -34,7 +35,8 @@ class JellyfinAuthenticationTest {
     private val authenticationManager = JellyfinAuthenticationManager(
         userService = UserService(createHttpClient(server.engine)),
         credentialStore = credentialStore,
-        clientIdentity = clientIdentity
+        clientIdentity = clientIdentity,
+        streamProfile = StreamProfile.Android
     )
 
     @Test

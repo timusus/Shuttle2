@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.QuickConnectCode
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -25,7 +26,8 @@ class JellyfinQuickConnectTest {
     private val authenticationManager = JellyfinAuthenticationManager(
         userService = UserService(client),
         credentialStore = credentialStore,
-        clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.27", deviceName = "Pixel")
+        clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.27", deviceName = "Pixel"),
+        streamProfile = StreamProfile.Android
     )
 
     @AfterTest
