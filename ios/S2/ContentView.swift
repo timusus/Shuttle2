@@ -30,6 +30,9 @@ struct ContentView: View {
             } action: { width in
                 containerWidth = width
             }
+            .onChange(of: tier) { _, newTier in
+                navigator.normalizeSelection(for: newTier)
+            }
             .onAppear {
                 navigator.restore(home: homeStorage, library: libraryStorage, search: searchStorage, categories: categoryStorage)
             }

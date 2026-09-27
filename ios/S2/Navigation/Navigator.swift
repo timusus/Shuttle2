@@ -21,6 +21,16 @@ enum AppTab: Hashable, CaseIterable {
         case .search: "magnifyingglass"
         }
     }
+
+    /// The `ViewModelCache` key for this tab's root screen, retained alongside its path
+    /// (`Navigator.retainViewModels`).
+    var cacheKey: String {
+        switch self {
+        case .home: "tab:home"
+        case .library: "tab:library"
+        case .search: "tab:search"
+        }
+    }
 }
 
 /// What's selected at the root of the shell: a plain tab (compact, and Home/Search everywhere), or
@@ -136,6 +146,8 @@ final class Navigator {
 
     private func retainViewModels() {
         var liveKeys = Set<String>()
+        liveKeys.formUnion(AppTab.allCases.map(\.cacheKey))
+        liveKeys.formUnion(LibraryCategory.allCases.map { Route.libraryCategory($0).cacheKey })
         liveKeys.formUnion(homePath.map(\.cacheKey))
         liveKeys.formUnion(libraryPath.map(\.cacheKey))
         liveKeys.formUnion(searchPath.map(\.cacheKey))
@@ -143,6 +155,30 @@ final class Navigator {
             liveKeys.formUnion(path.map(\.cacheKey))
         }
         viewModelCache.retainOnly(liveKeys)
+    }
+}
+
+// MARK: - Tier normalization
+
+extension Navigator {
+    /// Folds a selected library category's own path into compact's `libraryPath` when the layout
+    /// collapses to compact, and unfolds it back when the layout expands again, so a tier change
+    /// (rotation, Split View drag) keeps every pushed screen instead of stranding it on the side the
+    /// selection can no longer reach (`ContentView`'s compact `TabView` only tags `.tab(_)`).
+    func normalizeSelection(for tier: LayoutTier) {
+        if tier == .compact {
+            guard case .libraryCategory(let category) = _selection else { return }
+            libraryPath = [.libraryCategory(category)] + path(for: category)
+            libraryCategoryPaths[category] = []
+            _selection = .tab(.library)
+        } else {
+            guard case .tab(.library) = _selection,
+                  case .libraryCategory(let category)? = libraryPath.first
+            else { return }
+            libraryCategoryPaths[category] = Array(libraryPath.dropFirst())
+            libraryPath = []
+            _selection = .libraryCategory(category)
+        }
     }
 }
 
@@ -158,11 +194,12 @@ extension Navigator {
             self.routes = routes
         }
 
+        /// Malformed JSON or an unrecognised route (an older path, from before a route was added or
+        /// renamed) decodes to empty rather than failing: a stale `@SceneStorage` value must never crash
+        /// launch or block restoring the rest of the shell.
         init?(rawValue: String) {
-            guard let data = rawValue.data(using: .utf8),
-                  let routes = try? JSONDecoder().decode([Route].self, from: data)
-            else { return nil }
-            self.routes = routes
+            guard let data = rawValue.data(using: .utf8) else { return nil }
+            self.routes = (try? JSONDecoder().decode([Route].self, from: data)) ?? []
         }
 
         var rawValue: String {
@@ -181,11 +218,10 @@ extension Navigator {
             self.paths = paths
         }
 
+        /// As `StoredPath.init?(rawValue:)`: malformed JSON or an unrecognised route decodes to empty.
         init?(rawValue: String) {
-            guard let data = rawValue.data(using: .utf8),
-                  let paths = try? JSONDecoder().decode([LibraryCategory: [Route]].self, from: data)
-            else { return nil }
-            self.paths = paths
+            guard let data = rawValue.data(using: .utf8) else { return nil }
+            self.paths = (try? JSONDecoder().decode([LibraryCategory: [Route]].self, from: data)) ?? [:]
         }
 
         var rawValue: String {

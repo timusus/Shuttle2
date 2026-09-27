@@ -122,6 +122,57 @@ struct NavigatorTests {
         #expect(songsVM.clearCount == 0, "the songs category's own path is untouched by selecting albums")
     }
 
+    @Test func rootKeysSurviveAPathChangeOnAnotherTab() {
+        let cache = ViewModelCache()
+        let navigator = Navigator(viewModelCache: cache)
+        let homeVM = cache.viewModel(AppTab.home.cacheKey) { FakeViewModel() }
+        let categoryVM = cache.viewModel(Route.libraryCategory(.albums).cacheKey) { FakeViewModel() }
+
+        navigator.selectTab(.search)
+        navigator.open(.playlist(id: 1))
+
+        #expect(homeVM.clearCount == 0, "a tab root's view model must survive a path change on another tab")
+        #expect(categoryVM.clearCount == 0, "a library category root's view model must survive a path change elsewhere")
+    }
+
+    // MARK: - Tier normalization
+
+    @Test func collapsingToCompactFoldsTheCategoryPathIntoLibrary() {
+        let navigator = Navigator()
+        navigator.selectLibraryCategory(.albums)
+        navigator.open(.album(albumKey: "a1", albumArtistKey: nil))
+
+        navigator.normalizeSelection(for: .compact)
+
+        #expect(navigator.selection == .tab(.library))
+        #expect(navigator.libraryPath == [.libraryCategory(.albums), .album(albumKey: "a1", albumArtistKey: nil)])
+        #expect(navigator.path(for: .albums).isEmpty)
+    }
+
+    @Test func expandingToRegularUnfoldsTheLibraryPathBackIntoItsCategory() {
+        let navigator = Navigator()
+        navigator.selectTab(.library)
+        navigator.open(.libraryCategory(.albums))
+        navigator.open(.album(albumKey: "a1", albumArtistKey: nil))
+
+        navigator.normalizeSelection(for: .regular)
+
+        #expect(navigator.selection == .libraryCategory(.albums))
+        #expect(navigator.path(for: .albums) == [.album(albumKey: "a1", albumArtistKey: nil)])
+        #expect(navigator.libraryPath.isEmpty)
+    }
+
+    @Test func normalizingDoesNothingWhenNotOnALibraryCategory() {
+        let navigator = Navigator()
+        navigator.selectTab(.home)
+        navigator.open(.genre(name: "Rock"))
+
+        navigator.normalizeSelection(for: .compact)
+
+        #expect(navigator.selection == .tab(.home))
+        #expect(navigator.homePath == [.genre(name: "Rock")])
+    }
+
     // MARK: - @SceneStorage restoration
 
     @Test func storedPathRoundTripsThroughItsRawValue() {
@@ -134,6 +185,26 @@ struct NavigatorTests {
         let stored = Navigator.StoredCategoryPaths([.songs: [.libraryCategory(.songs)], .albums: []])
         let decoded = Navigator.StoredCategoryPaths(rawValue: stored.rawValue)
         #expect(decoded?.paths == stored.paths)
+    }
+
+    @Test func storedPathDecodesMalformedJSONToEmpty() {
+        let decoded = Navigator.StoredPath(rawValue: "{not valid json")
+        #expect(decoded?.routes == [])
+    }
+
+    @Test func storedPathDecodesAnUnknownRouteToEmpty() {
+        let decoded = Navigator.StoredPath(rawValue: #"[{"notARealRoute":{}}]"#)
+        #expect(decoded?.routes == [])
+    }
+
+    @Test func storedCategoryPathsDecodesMalformedJSONToEmpty() {
+        let decoded = Navigator.StoredCategoryPaths(rawValue: "not json at all")
+        #expect(decoded?.paths == [:])
+    }
+
+    @Test func storedCategoryPathsDecodesAnUnknownRouteToEmpty() {
+        let decoded = Navigator.StoredCategoryPaths(rawValue: #"{"albums":[{"notARealRoute":{}}]}"#)
+        #expect(decoded?.paths == [:])
     }
 
     @Test func restoreSetsEveryPathFromStorage() {
