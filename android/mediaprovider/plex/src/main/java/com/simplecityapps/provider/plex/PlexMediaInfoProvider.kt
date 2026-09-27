@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.DownloadInfo
 import com.simplecityapps.mediaprovider.MediaInfo
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
+import com.simplecityapps.mediaprovider.server.DirectPlayFormats
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
 
@@ -64,21 +65,15 @@ constructor(
 
     /**
      * Whether the player decodes the part at [partKey] as it is. The container comes from the part's file extension
-     * (Plex names a part's file after it: `/library/parts/{id}/{updatedAt}/file.{container}`) and must be one of the
-     * containers Jellyfin and Emby's universal endpoint is told the player direct-plays (see
-     * JellyfinAuthenticationManager.buildJellyfinPath); a part without one plays as it is, as before. The container
-     * alone isn't enough though: it names the wrapper, not what's inside, so an undecodable codec such as ALAC still
-     * needs rejecting even inside a playable container like `.m4a` (#567).
+     * (Plex names a part's file after it: `/library/parts/{id}/{updatedAt}/file.{container}`).
      */
     private fun isDecodable(
         partKey: String?,
         audioCodec: String?
-    ): Boolean {
-        val container = partKey?.substringAfterLast('/')?.substringAfterLast('.', missingDelimiterValue = "")?.lowercase()
-        val containerDecodable = container.isNullOrEmpty() || container in DECODABLE_CONTAINERS
-        val codecDecodable = audioCodec.isNullOrEmpty() || audioCodec.lowercase() !in UNDECODABLE_CODECS
-        return containerDecodable && codecDecodable
-    }
+    ): Boolean = DirectPlayFormats.isDecodable(
+        container = partKey?.substringAfterLast('/')?.substringAfterLast('.', missingDelimiterValue = ""),
+        audioCodec = audioCodec
+    )
 
     // Plex's part-file path (song.externalId) is the original, untranscoded file, used for download when the player
     // can decode it; otherwise a progressive (single-file) transcode, so Media3's downloader saves real, playable
@@ -115,11 +110,5 @@ constructor(
 
         /** The bitrate a format the player can't decode is transcoded to when streaming isn't capped. */
         const val UNCAPPED_TRANSCODE_KBPS = 320
-
-        val DECODABLE_CONTAINERS = setOf("mp3", "aac", "m4a", "m4b", "mp4", "flac", "ogg", "oga", "opus", "wav", "webm", "weba")
-
-        // ALAC has no MediaCodec decoder on Android, so it needs transcoding even inside a container the player
-        // otherwise plays directly (m4a/mp4), same as Jellyfin transcodes it server-side.
-        val UNDECODABLE_CODECS = setOf("alac")
     }
 }

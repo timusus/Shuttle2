@@ -2,6 +2,7 @@ package com.simplecityapps.provider.emby
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.DirectPlayFormats
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
@@ -126,7 +127,7 @@ class EmbyAuthenticationManager(
             "?UserId=${authenticatedCredentials.userId}" +
             "&DeviceId=${clientIdentity.id}" +
             "&PlaySessionId=${UUID.randomUUID()}" +
-            "&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg" +
+            "&Container=${DirectPlayFormats.UNIVERSAL_CONTAINERS}" +
             "&TranscodingContainer=ts" +
             "&TranscodingProtocol=hls" +
             "&MaxSampleRate=48000" +
