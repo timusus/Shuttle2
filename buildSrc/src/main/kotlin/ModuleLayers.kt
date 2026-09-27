@@ -18,7 +18,7 @@ enum class ModuleLayer(val label: String) {
 
     /**
      * The shared ViewModels, their UI state and screen use cases (`:android:presentation`, KMP commonMain, #586):
-     * what Compose and SwiftUI both render. Sees domain types only; never data, and never the Compose layer.
+     * what Compose and SwiftUI both render. Sees core and domain only; never data, and never the Compose layer.
      */
     VIEWMODEL("viewmodel"),
 
@@ -61,6 +61,7 @@ object ModuleLayers {
         ":shared" to ModuleLayer.COMPOSITION_ROOT,
         ":android:fixtures" to ModuleLayer.FIXTURES,
         ":android:mediaprovider:server-testing" to ModuleLayer.FIXTURES,
+        ":android:presentation-testing" to ModuleLayer.FIXTURES,
         ":android:architecture-tests" to ModuleLayer.TOOLING,
     )
 
@@ -74,11 +75,12 @@ object ModuleLayers {
         ModuleLayer.DOMAIN to setOf(ModuleLayer.CORE),
         ModuleLayer.DATA to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN, ModuleLayer.DATA),
         ModuleLayer.PROVIDER to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN, ModuleLayer.DATA),
-        // Not core: :android:core is Android-only, and this layer compiles for iOS too.
-        ModuleLayer.VIEWMODEL to setOf(ModuleLayer.DOMAIN),
+        // Core is multiplatform since #584, so the shared ViewModels reach settings and the app scope through it.
+        ModuleLayer.VIEWMODEL to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN),
         ModuleLayer.PRESENTATION to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN, ModuleLayer.VIEWMODEL, ModuleLayer.PRESENTATION, ModuleLayer.FIXTURES),
         ModuleLayer.COMPOSITION_ROOT to ModuleLayer.entries.toSet() - ModuleLayer.TOOLING,
-        ModuleLayer.FIXTURES to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN),
+        // Viewmodel for :android:presentation-testing, whose fakes implement the shared ViewModels' ports.
+        ModuleLayer.FIXTURES to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN, ModuleLayer.VIEWMODEL),
         ModuleLayer.TOOLING to emptySet(),
     )
 

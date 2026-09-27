@@ -17,6 +17,7 @@ import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.ui.screens.changelog.Changeset
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
 import java.text.DateFormat
+import java.util.GregorianCalendar
 
 @Composable
 fun WhatsNewScreen(
@@ -39,7 +40,7 @@ private fun ChangesetCard(changeset: Changeset) {
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
             Text(changeset.versionName, style = MaterialTheme.typography.titleLarge)
             Text(
-                DateFormat.getDateInstance(DateFormat.MEDIUM).format(changeset.date),
+                DateFormat.getDateInstance(DateFormat.MEDIUM).format(changeset.date.let { GregorianCalendar(it.year, it.month.ordinal, it.day).time }),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

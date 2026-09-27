@@ -5,14 +5,14 @@ import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 class ShellViewModelTest {
     private val store = SettingsStore(InMemoryKeyValueStore())
     private val settings = AppearanceSettings(store)
 
     @Test
-    fun `opens on Library by default, as 1_0_10 did`() {
+    fun `opens on Library by default as 1_0_10 did`() {
         ShellViewModel(ReadSetting(store)).uiState.value.startTab shouldBe ShellTab.Library
     }
 

@@ -4,7 +4,7 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 class LibraryViewModelTest {
 
@@ -13,7 +13,7 @@ class LibraryViewModelTest {
     private fun viewModel() = LibraryViewModel(ReadLibraryTabs(preferences), SaveLibraryTabs(preferences), SaveCurrentLibraryTab(preferences))
 
     @Test
-    fun `defaults to every tab but Folders, opening on Artists`() {
+    fun `defaults to every tab but Folders opening on Artists`() {
         val state = viewModel().uiState.value
 
         state.tabs shouldBe LibraryTab.entries - LibraryTab.Folders
@@ -28,7 +28,7 @@ class LibraryViewModelTest {
     }
 
     @Test
-    fun `editing tabs reorders, hides and shows them, and persists the result`() {
+    fun `editing tabs reorders hides and shows them and persists the result`() {
         val viewModel = viewModel()
         val order = listOf(LibraryTab.Folders, LibraryTab.Songs, LibraryTab.Albums, LibraryTab.Artists, LibraryTab.Genres, LibraryTab.Playlists)
 
@@ -40,7 +40,7 @@ class LibraryViewModelTest {
     }
 
     @Test
-    fun `hiding the current tab falls back to Artists, then to the first shown tab`() {
+    fun `hiding the current tab falls back to Artists then to the first shown tab`() {
         val viewModel = viewModel()
         viewModel.onTabSelected(LibraryTab.Songs)
 

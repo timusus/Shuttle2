@@ -25,11 +25,10 @@ data class AlbumRoute(
 @Serializable
 data object SettingsRoute : NavKey
 
-/** A top-level destination with its own back stack, rooted at [root]. */
-enum class ShellTab(
-    val root: NavKey,
-) {
-    Home(HomeRoute),
-    Library(LibraryRoute),
-    Search(SearchRoute),
-}
+/** The screen each tab's back stack starts at. */
+val ShellTab.root: NavKey
+    get() = when (this) {
+        ShellTab.Home -> HomeRoute
+        ShellTab.Library -> LibraryRoute
+        ShellTab.Search -> SearchRoute
+    }

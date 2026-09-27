@@ -15,12 +15,15 @@ import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.platform.AppVersion
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.screens.settings.about.IsWhatsNewPending
+import com.simplecityapps.shuttle.ui.screens.settings.about.MarkChangelogViewed
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
@@ -48,6 +51,7 @@ class HomeViewModelTest {
     private val albums = FakeAlbumRepository()
     private val queue = FakeQueueOperations()
     private val playback = FakePlaybackOperations()
+    private val appVersion = AppVersion { BuildConfig.VERSION_NAME }
 
     private val chlorophyllLoop = createSong(id = 1, name = "Chlorophyll Loop", albumArtist = "Juniper Static", album = "Phase Garden")
     private val tidalMoss = createSong(id = 2, name = "Tidal Moss", albumArtist = "Juniper Static", album = "Phase Garden", duration = 200_000).copy(playbackPosition = 30_000)
@@ -70,8 +74,8 @@ class HomeViewModelTest {
         val sections = HomeSections(albums, FakeAlbumArtistRepository(), songs, seed = 1, dispatcher = mainDispatcherRule.testDispatcher)
         return HomeViewModel(
             sections,
-            IsWhatsNewPending(preferenceManager),
-            MarkChangelogViewed(preferenceManager),
+            IsWhatsNewPending(preferenceManager, appVersion),
+            MarkChangelogViewed(preferenceManager, appVersion),
             ReadSetting(settingsStore),
             SaveSetting(settingsStore),
             ObserveResumeQueue(queue, playback),

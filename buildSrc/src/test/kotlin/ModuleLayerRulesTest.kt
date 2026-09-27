@@ -58,9 +58,9 @@ class ModuleLayerRulesTest {
     }
 
     @Test
-    fun sharedViewModelsSeeDomainOnly() {
+    fun sharedViewModelsSeeCoreAndDomainOnly() {
         val violations = check(listOf(dep(":presentation", ":designsystem"), dep(":presentation", ":playback"), dep(":presentation", ":core"))).newViolations
-        assertEquals(setOf(":presentation -> :designsystem", ":presentation -> :playback", ":presentation -> :core"), violations.keys)
+        assertEquals(setOf(":presentation -> :designsystem", ":presentation -> :playback"), violations.keys)
     }
 
     @Test

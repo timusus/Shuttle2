@@ -6,7 +6,6 @@ plugins {
     id("com.mikepenz.aboutlibraries.plugin.android")
     id("dev.zacsweers.metro")
     alias(libs.plugins.sentry)
-    id("com.google.devtools.ksp")
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.roborazzi)
     alias(libs.plugins.kotlin.serialization)
@@ -215,10 +214,6 @@ android {
         // ChromeCast
         implementation(libs.google.play.services.cast.framework)
 
-        // Moshi: the changelog and the Moshi the core module provides
-        implementation(libs.moshi)
-        ksp(libs.moshi.kotlinCodegen)
-
         // AndroidX Lifecycle
         implementation(libs.androidx.lifecycle.common.java8)
 
@@ -242,15 +237,9 @@ android {
         // Drag to reorder in lazy lists (playlist detail)
         implementation(libs.reorderable)
 
-        // About Libraries
-        implementation(libs.mikepenz.aboutlibrariesCore)
-
         // Play Core (review api)
         implementation(libs.google.review)
         implementation(libs.google.review.ktx)
-
-        // Semantic versioning
-        implementation(libs.vdurmont.semver4j)
 
         // KotlinX DateTime
         implementation(libs.kotlinx.datetime)

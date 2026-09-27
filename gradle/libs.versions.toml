@@ -68,7 +68,6 @@ security-crypto = "1.1.0"
 # SKIE 0.10.15 is the first release supporting Kotlin 2.4.20 (0.10.14 rejects it); bump the two together.
 skie = "0.10.15"
 sqlite-bundled = "2.6.2"
-semver4j = "3.1.0"
 sentry = "8.57.0"
 sentry-gradle-plugin = "6.22.0"
 timber = "5.0.1"
@@ -161,7 +160,6 @@ metro-runtime = { module = "dev.zacsweers.metro:runtime", version.ref = "metro" 
 metrox-viewmodel = { module = "dev.zacsweers.metro:metrox-viewmodel", version.ref = "metro" }
 metrox-viewmodel-compose = { module = "dev.zacsweers.metro:metrox-viewmodel-compose", version.ref = "metro" }
 materialkolor = { module = "com.materialkolor:material-kolor", version.ref = "materialkolor" }
-mikepenz-aboutlibrariesCore = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
 moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-adapters = { module = "com.squareup.moshi:moshi-adapters", version.ref = "moshi-adapters" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi-kotlin" }
@@ -183,7 +181,6 @@ timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 androidx-tracing = { module = "androidx.tracing:tracing-ktx", version.ref = "tracing" }
 timusus-ktaglib = { module = "com.simplecityapps:ktaglib", version.ref = "ktaglib" }
 tools-desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
-vdurmont-semver4j = { module = "com.vdurmont:semver4j", version.ref = "semver4j" }
 
 # Gradle plugins buildSrc's convention plugins apply, so they're on every build script's classpath (apply them by id, without a version).
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }

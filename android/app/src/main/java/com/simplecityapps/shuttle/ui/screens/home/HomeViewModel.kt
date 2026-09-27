@@ -12,6 +12,8 @@ import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
+import com.simplecityapps.shuttle.ui.screens.settings.about.IsWhatsNewPending
+import com.simplecityapps.shuttle.ui.screens.settings.about.MarkChangelogViewed
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject

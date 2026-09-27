@@ -80,14 +80,15 @@ forbidden edges that only shrinks (the same ratchet as the Konsist baselines).
 | domain | `domain` | core |
 | data | `mediaprovider:core`, `mediaprovider:server`, `downloads`, `imageloader`, `networking`, `playback`, `saf`, `scrobbling`, `trial` | core, domain, data |
 | provider | `mediaprovider:{local,jellyfin,emby,plex}` | core, domain, data (never another provider) |
-| viewmodel | `presentation` (KMP: the shared ViewModels, #586) | domain |
+| viewmodel | `presentation` (KMP: the shared ViewModels, #586) | core, domain |
 | presentation | `designsystem` | core, domain, viewmodel, presentation, fixtures |
 | composition root | `app` | everything but tooling |
-| fixtures | `fixtures`, `mediaprovider:server-testing` | core, domain |
+| fixtures | `fixtures`, `mediaprovider:server-testing`, `presentation-testing` | core, domain, viewmodel |
 | tooling | `architecture-tests` | nothing of ours |
 
 The shared ViewModel module is its own layer so Gradle, not review, keeps Compose and data out of
-it: it compiles for iOS too, so it sees domain only (not `:android:core`, which is Android-only).
+it: it compiles for iOS too, so it sees core and domain only (both multiplatform: core's settings,
+preference managers and logger are commonMain since #584).
 Compose code may depend on it, since the route composables render its state.
 
 Provider implementations are their own layer so "never to a sibling provider" is a layer rule:
