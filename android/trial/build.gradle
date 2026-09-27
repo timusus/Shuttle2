@@ -2,9 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id 'com.android.library'
-    id 'com.google.devtools.ksp'
     id 'dev.zacsweers.metro'
-    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -40,9 +38,6 @@ dependencies {
     implementation libs.androidx.appcompat
     implementation libs.google.material
 
-    // OKHttp
-    implementation libs.okhttp3.okhttp
-
     // Billing
     implementation libs.billingclient.billingKtx
 
@@ -53,12 +48,10 @@ dependencies {
     // Coroutines
     api(libs.kotlinx.coroutinesCore)
 
-    implementation project(':android:networking')
     implementation project(':android:core')
     implementation project(':android:domain')
 
     testImplementation libs.junit
     testImplementation libs.mockk
     testImplementation(libs.kotlinx.coroutinesTest)
-    testImplementation(libs.ktor.client.mock)
 }
