@@ -11,7 +11,9 @@ data class QueryResult(
 @JsonClass(generateAdapter = true)
 data class MediaContainer(
     @Json(name = "Metadata") val metadata: List<Metadata>?,
-    @Json(name = "Directory") val directories: List<Directory>?
+    @Json(name = "Directory") val directories: List<Directory>?,
+    // The size of the whole listing, present on a paged request (`X-Plex-Container-Start`/`X-Plex-Container-Size`)
+    @Json(name = "totalSize") val totalSize: Int? = null
 )
 
 @JsonClass(generateAdapter = true)

@@ -92,9 +92,10 @@ open class PlexMediaProviderModule {
     @Provides
     @Singleton
     fun providePlexMediaProvider(
+        @ApplicationContext context: Context,
         authenticationManager: PlexAuthenticationManager,
         itemsService: ItemsService
-    ): PlexMediaProvider = PlexMediaProvider(authenticationManager, itemsService)
+    ): PlexMediaProvider = PlexMediaProvider(context, authenticationManager, itemsService)
 
     @Provides
     @Singleton

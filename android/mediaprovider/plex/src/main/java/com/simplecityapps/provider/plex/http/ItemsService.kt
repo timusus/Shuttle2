@@ -21,14 +21,18 @@ interface ItemsService {
 suspend fun ItemsService.items(
     url: String,
     token: String,
-    section: String
+    section: String,
+    offset: Int,
+    limit: Int
 ): NetworkResult<QueryResult> = itemsImpl(
     url =
         "$url/library/sections/$section/all" +
             "?type=10" +
             "&includeCollections=1" +
             "&includeAdvanced=1" +
-            "&includeMeta=1",
+            "&includeMeta=1" +
+            "&X-Plex-Container-Start=$offset" +
+            "&X-Plex-Container-Size=$limit",
     token = token
 )
 

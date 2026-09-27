@@ -70,6 +70,8 @@
     <string name="media_provider_authentication_error">Failed to authenticate</string>
     <!-- Error message shown when the server address is missing for a remote media provider (jellyfin/emby/plex) -->
     <string name="media_provider_address_missing">Server address missing</string>
+    <!-- Error message shown when a Plex server has no 'Music' library section -->
+    <string name="media_provider_plex_music_library_missing">No Plex music library found</string>
     <!-- Shown when the media importer is searching for existing songs -->
     <string name="media_import_retrieving_songs">Retrieving existing songs</string>
     <!-- Shown when the media importer is searching for existing playlists -->

@@ -1,10 +1,17 @@
 package com.simplecityapps.provider.plex
 
+import android.content.Context
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.R
+import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
+import com.simplecityapps.mediaprovider.server.Page
+import com.simplecityapps.mediaprovider.server.pagedFlow
+import com.simplecityapps.mediaprovider.server.withServerSession
 import com.simplecityapps.networking.retrofit.NetworkResult
+import com.simplecityapps.networking.retrofit.map
 import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.Metadata
@@ -15,66 +22,69 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
 import timber.log.Timber
 
 class PlexMediaProvider(
+    private val context: Context,
     private val authenticationManager: PlexAuthenticationManager,
     private val itemsService: ItemsService
 ) : MediaProvider {
     override val type: MediaProviderType
         get() = MediaProviderType.Plex
 
-    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> {
-        val address =
-            authenticationManager.getAddress() ?: run {
-                return flowOf(FlowEvent.Failure("Plex address unknown"))
-            }
-
-        return flow {
-            (
-                authenticationManager.getAuthenticatedCredentials() ?: authenticationManager.getLoginCredentials()
-                    ?.let { loginCredentials -> authenticationManager.authenticate(address, loginCredentials).getOrNull() }
-                )
-                ?.let { credentials ->
-                    when (val result = itemsService.sections(url = address, token = credentials.accessToken)) {
-                        is NetworkResult.Success<QueryResult> -> {
-                            result.body.mediaContainer.directories?.firstOrNull { it.title.equals("music", true) }?.key?.let { section ->
-                                when (val queryResult = itemsService.items(url = address, token = credentials.accessToken, section = section)) {
-                                    is NetworkResult.Success<QueryResult> -> {
-                                        emit(
-                                            FlowEvent.Success(
-                                                queryResult.body.mediaContainer.metadata.orEmpty().map { metadata -> metadata.toSong(type) }
-                                            )
-                                        )
-                                    }
-
-                                    is NetworkResult.Failure -> {
-                                        Timber.e(queryResult.error, queryResult.error.userDescription())
-                                        emit(FlowEvent.Failure(queryResult.error.userDescription()))
-                                    }
-                                }
-                            } ?: run {
-                                Timber.e("Failed to find 'music' section")
-                                emit(FlowEvent.Failure("Failed to find Plex 'music' library"))
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(context, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+        when (val sectionsResult = itemsService.sections(url = address, token = credentials.accessToken)) {
+            is NetworkResult.Success<QueryResult> -> {
+                val section = sectionsResult.body.mediaContainer.directories?.firstOrNull { it.title.equals("music", true) }?.key
+                if (section == null) {
+                    Timber.e("Failed to find 'music' section")
+                    emit(FlowEvent.Failure(context.getString(R.string.media_provider_plex_music_library_missing)))
+                } else {
+                    emitAll(
+                        queryItems(address, credentials, section).map { event ->
+                            when (event) {
+                                is FlowEvent.Success -> FlowEvent.Success(event.result.map { metadata -> metadata.toSong(type) })
+                                is FlowEvent.Progress -> FlowEvent.Progress(event.data)
+                                is FlowEvent.Failure -> FlowEvent.Failure(event.message)
                             }
                         }
+                    )
+                }
+            }
 
-                        is NetworkResult.Failure -> {
-                            Timber.e(result.error, result.error.userDescription())
-                            emit(FlowEvent.Failure(result.error.userDescription()))
-                        }
-                    }
-                } ?: run {
-                emit(FlowEvent.Failure("Failed to authenticate"))
+            is NetworkResult.Failure -> {
+                Timber.e(sectionsResult.error, sectionsResult.error.userDescription())
+                emit(FlowEvent.Failure(sectionsResult.error.userDescription()))
             }
         }
     }
 
     override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flowOf(FlowEvent.Success(emptyList()))
+
+    private suspend fun authenticate(address: String): AuthenticatedCredentials? = authenticationManager.getAuthenticatedCredentials()
+        ?: authenticationManager.getLoginCredentials()
+            ?.let { loginCredentials -> authenticationManager.authenticate(address, loginCredentials).getOrNull() }
+
+    private fun queryItems(
+        address: String,
+        credentials: AuthenticatedCredentials,
+        section: String
+    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow(context.getString(R.string.media_provider_querying_api)) { offset, limit ->
+        itemsService.items(
+            url = address,
+            token = credentials.accessToken,
+            section = section,
+            offset = offset,
+            limit = limit
+        ).map { it.toPage() }
+    }
 }
+
+private fun QueryResult.toPage() = Page(mediaContainer.metadata.orEmpty(), mediaContainer.totalSize)
 
 internal fun Metadata.toSong(type: MediaProviderType): Song = Song(
     id = guid.hashCode().toLong(),

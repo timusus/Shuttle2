@@ -20,6 +20,12 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     namespace = 'com.simplecityapps.provider.plex'
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
 }
 
 kotlin {
@@ -50,5 +56,6 @@ dependencies {
     testImplementation(testFixtures(project(":android:mediaprovider:server")))
     testImplementation libs.junit
     testImplementation libs.kotest
+    testImplementation libs.robolectric
     testImplementation libs.kotlinx.coroutinesTest
 }
