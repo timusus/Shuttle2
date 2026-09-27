@@ -43,5 +43,10 @@ kotlin {
             api(libs.kotlinx.coroutinesCore)
             implementation(libs.kotlinx.datetime)
         }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotest)
+            implementation(libs.kotlinx.coroutinesTest)
+        }
     }
 }
