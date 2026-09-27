@@ -1,6 +1,5 @@
 package com.simplecityapps.provider.plex
 
-import android.net.Uri
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.plex.http.ItemsService
@@ -15,7 +14,7 @@ constructor(
     private val authenticationManager: PlexAuthenticationManager,
     private val itemsService: ItemsService
 ) : RemoteArtworkProvider {
-    override fun handles(uri: Uri): Boolean = uri.scheme == "plex"
+    override fun handles(scheme: String?): Boolean = scheme == "plex"
 
     override suspend fun getAlbumArtworkUrl(song: Song): String? = artworkUrl(song) { metadata -> metadata.parentThumb ?: metadata.thumb }
 

@@ -9,6 +9,7 @@ import com.simplecityapps.localmediaprovider.local.repository.LocalPlaylistRepos
 import com.simplecityapps.localmediaprovider.local.repository.LocalSmartPlaylistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepository
 import com.simplecityapps.mediaprovider.ImportedPlaylistStore
+import com.simplecityapps.mediaprovider.MediaImportStrings
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
@@ -38,11 +39,11 @@ class RepositoryModule {
     @Provides
     @SingleIn(AppScope::class)
     fun provideMediaImporter(
-        @ApplicationContext context: Context,
+        strings: MediaImportStrings,
         songRepository: SongRepository,
         playlistStore: ImportedPlaylistStore,
         preferenceManager: GeneralPreferenceManager
-    ): MediaImporter = MediaImporter(context, songRepository, playlistStore, preferenceManager)
+    ): MediaImporter = MediaImporter(strings, songRepository, playlistStore, preferenceManager)
 
     @Provides
     @SingleIn(AppScope::class)

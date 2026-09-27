@@ -18,7 +18,7 @@ constructor(
     @Named("EmbyCredentialStore") private val credentialStore: ServerCredentialStore,
     private val itemsService: ItemsService
 ) : RemoteArtworkProvider {
-    override fun handles(uri: Uri): Boolean = uri.scheme == "emby"
+    override fun handles(scheme: String?): Boolean = scheme == "emby"
 
     override suspend fun getAlbumArtworkUrl(song: Song): String? = artworkUrl(song) { item -> item.albumId }
 

@@ -266,7 +266,7 @@ class LocalPlaylistRepository(
         val entries =
             try {
                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                    m3uParser.parse(path = uri.toString(), fileName = uri.lastPathSegment.orEmpty(), inputStream = inputStream).entries
+                    m3uParser.parse(path = uri.toString(), fileName = uri.lastPathSegment.orEmpty(), text = inputStream.readBytes().decodeToString()).entries
                 }
             } catch (e: IOException) {
                 Timber.w(e, "Could not read existing m3u file to preserve unresolved entries at $uri")

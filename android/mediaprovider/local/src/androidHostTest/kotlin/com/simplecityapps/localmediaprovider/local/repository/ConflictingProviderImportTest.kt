@@ -9,6 +9,7 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.ResourceMediaImportStrings
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -61,7 +62,7 @@ class ConflictingProviderImportTest {
     fun `importing the same path from two providers keeps one row per provider`() = runBlocking<Unit> {
         val importer =
             MediaImporter(
-                context = context,
+                strings = ResourceMediaImportStrings(context),
                 songRepository = LocalSongRepository(scope, database.songDataDao()),
                 playlistStore = LocalPlaylistRepository(context, scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao()),
                 preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())

@@ -101,7 +101,7 @@ class LocalPlaylistRepositoryM3uSyncTest {
 
         val content = file.readText()
         content.startsWith("#EXTM3U") shouldBe true
-        val parsed = M3uParser().parse(path = file.path, fileName = file.name, inputStream = file.inputStream())
+        val parsed = M3uParser().parse(path = file.path, fileName = file.name, text = file.readText())
         parsed.entries.map { it.location } shouldBe listOf(song.path)
     }
 
@@ -116,7 +116,7 @@ class LocalPlaylistRepositoryM3uSyncTest {
 
         repository.removeFromPlaylist(playlist, playlistSong)
 
-        val parsed = M3uParser().parse(path = file.path, fileName = file.name, inputStream = file.inputStream())
+        val parsed = M3uParser().parse(path = file.path, fileName = file.name, text = file.readText())
         parsed.entries.isEmpty() shouldBe true
     }
 
@@ -163,7 +163,7 @@ class LocalPlaylistRepositoryM3uSyncTest {
 
         repository.removeFromPlaylist(playlist, listOf(song1PlaylistSong))
 
-        val parsed = M3uParser().parse(path = file.path, fileName = file.name, inputStream = file.inputStream())
+        val parsed = M3uParser().parse(path = file.path, fileName = file.name, text = file.readText())
         parsed.entries.map { it.location } shouldBe listOf("/music/unresolved.mp3", "/music/song2.mp3")
     }
 

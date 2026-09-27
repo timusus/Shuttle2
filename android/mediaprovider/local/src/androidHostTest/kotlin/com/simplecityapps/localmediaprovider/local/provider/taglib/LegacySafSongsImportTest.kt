@@ -16,6 +16,7 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.ResourceMediaImportStrings
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -183,7 +184,7 @@ class LegacySafSongsImportTest {
     private suspend fun import(provider: FakeTaglibMediaProvider = FakeTaglibMediaProvider(mediaStore)): FakeTaglibMediaProvider {
         val importer =
             MediaImporter(
-                context = context,
+                strings = ResourceMediaImportStrings(context),
                 songRepository = LocalSongRepository(scope, database.songDataDao()),
                 playlistStore = LocalPlaylistRepository(context, scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao()),
                 preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())

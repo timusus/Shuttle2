@@ -18,7 +18,7 @@ constructor(
     private val itemsService: ItemsService,
     @Named("JellyfinCredentialStore") private val credentialStore: ServerCredentialStore
 ) : RemoteArtworkProvider {
-    override fun handles(uri: Uri): Boolean = uri.scheme == "jellyfin"
+    override fun handles(scheme: String?): Boolean = scheme == "jellyfin"
 
     override suspend fun getAlbumArtworkUrl(song: Song): String? = artworkUrl(song) { item -> item.albumId }
 

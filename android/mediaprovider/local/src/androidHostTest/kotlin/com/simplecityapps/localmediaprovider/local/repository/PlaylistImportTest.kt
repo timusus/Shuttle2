@@ -11,6 +11,7 @@ import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.ResourceMediaImportStrings
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -50,7 +51,7 @@ class PlaylistImportTest {
     private val provider = FakeProvider()
     private val importer =
         MediaImporter(
-            context = context,
+            strings = ResourceMediaImportStrings(context),
             songRepository = songRepository,
             playlistStore = playlistRepository,
             preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())

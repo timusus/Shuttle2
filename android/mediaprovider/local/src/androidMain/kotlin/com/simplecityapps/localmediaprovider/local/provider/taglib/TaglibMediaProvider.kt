@@ -207,14 +207,12 @@ class TaglibMediaProvider(
                     .filter { it.ext == "m3u" || it.ext == "m3u8" }
                     .mapNotNull { documentNode ->
                         context.contentResolver.openInputStream(documentNode.uri)
-                            .use { inputStream ->
-                                inputStream?.let {
-                                    M3uParser().parse(
-                                        path = documentNode.uri.toString(),
-                                        fileName = documentNode.displayName,
-                                        inputStream = inputStream
-                                    )
-                                }
+                            ?.use { inputStream ->
+                                M3uParser().parse(
+                                    path = documentNode.uri.toString(),
+                                    fileName = documentNode.displayName,
+                                    text = inputStream.readBytes().decodeToString()
+                                )
                             }
                     }
 
