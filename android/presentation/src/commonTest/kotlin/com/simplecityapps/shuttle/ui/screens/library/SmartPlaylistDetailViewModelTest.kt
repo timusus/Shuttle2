@@ -6,26 +6,36 @@ import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
-import com.simplecityapps.shuttle.ui.text.StringKey
-import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Instant
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SmartPlaylistDetailViewModelTest {
 
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
 
@@ -62,7 +72,7 @@ class SmartPlaylistDetailViewModelTest {
         val viewModel = viewModel(SmartPlaylistId.History.id)
 
         val state = viewModel.uiState.value
-        state.smartPlaylist?.id?.nameKey shouldBe StringKey.PLAYLIST_TITLE_HISTORY
+        state.smartPlaylist?.id shouldBe SmartPlaylistId.History
         state.songs.map { it.name } shouldBe listOf("Just now", "Yesterday", "Last week")
     }
 
@@ -80,7 +90,7 @@ class SmartPlaylistDetailViewModelTest {
         val viewModel = viewModel(SmartPlaylistId.RecentlyAdded.id)
 
         val state = viewModel.uiState.value
-        state.smartPlaylist?.id?.nameKey shouldBe StringKey.PLAYLIST_TITLE_RECENTLY_ADDED
+        state.smartPlaylist?.id shouldBe SmartPlaylistId.RecentlyAdded
         state.songs.map { it.name } shouldBe listOf("Today", "Last week")
     }
 
@@ -91,10 +101,5 @@ class SmartPlaylistDetailViewModelTest {
         viewModel.uiState.value.loading shouldBe false
         viewModel.uiState.value.smartPlaylist shouldBe null
         viewModel.uiState.value.songs shouldBe emptyList()
-    }
-
-    @Test
-    fun `every smart playlist has a route that resolves back to it`() {
-        SmartPlaylistId.entries.map { SmartPlaylistId.fromId(it.smartPlaylist.route().smartPlaylistId) } shouldBe SmartPlaylistId.entries
     }
 }

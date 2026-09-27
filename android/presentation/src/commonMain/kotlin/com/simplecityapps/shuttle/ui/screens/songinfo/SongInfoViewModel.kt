@@ -14,8 +14,9 @@ import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
-import java.net.URLDecoder
-import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.pow
+import kotlin.math.round
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -76,7 +77,7 @@ fun Song.infoSections(): List<SongInfoSection> = listOf(
         listOf(
             SongInfoRow(StringKey.SONG_INFO_PATH, displayPath),
             SongInfoRow(StringKey.SONG_INFO_MIME_TYPE, mimeType),
-            SongInfoRow(StringKey.SONG_INFO_SIZE, String.format(Locale.getDefault(), "%.2f MB", size / 1024f / 1024f)),
+            SongInfoRow(StringKey.SONG_INFO_SIZE, "${formatDecimal(size / 1024.0 / 1024.0, 2)} MB"),
             SongInfoRow(StringKey.SONG_INFO_DURATION, formatDuration(duration.toLong())),
             SongInfoRow(StringKey.SONG_INFO_BIT_RATE, bitRate?.let(::formatBitRate)),
             SongInfoRow(StringKey.SONG_INFO_BIT_DEPTH, bitDepth?.let { "$it-bit" }),
@@ -108,11 +109,11 @@ fun Song.infoChips(): List<String> = listOfNotNull(
 val Song.displayPath: String
     get() {
         if (!path.startsWith("content://") || "/document/" !in path) return path
-        return runCatching { URLDecoder.decode(path, Charsets.UTF_8.name()).substringAfterLast(':') }.getOrDefault(path)
+        return runCatching { path.decodePercentEncoding().substringAfterLast(':') }.getOrDefault(path)
     }
 
 /** A sample rate in Hz as kHz: 44100 as "44.1 kHz", 48000 as "48 kHz". */
-internal fun formatSampleRate(hz: Int): String = if (hz % 1000 == 0) "${hz / 1000} kHz" else String.format(Locale.getDefault(), "%.1f kHz", hz / 1000f)
+internal fun formatSampleRate(hz: Int): String = if (hz % 1000 == 0) "${hz / 1000} kHz" else "${formatDecimal(hz / 1000.0, 1)} kHz"
 
 internal fun formatBitRate(kbps: Int): String = "$kbps kb/s"
 
@@ -128,4 +129,45 @@ internal fun formatName(mimeType: String): String? {
     }
 }
 
-internal fun formatGain(db: Double): String = String.format(Locale.getDefault(), "%+.2f dB", db)
+internal fun formatGain(db: Double): String = "${formatDecimal(db, 2, forceSign = true)} dB"
+
+/** Percent-decodes [this] (RFC 3986 / `application/x-www-form-urlencoded`-style `+`) as UTF-8. */
+private fun String.decodePercentEncoding(): String {
+    val bytes = ArrayList<Byte>(length)
+    var i = 0
+    while (i < length) {
+        when (val c = this[i]) {
+            '%' -> {
+                if (i + 2 >= length) return this
+                bytes.add(substring(i + 1, i + 3).toInt(16).toByte())
+                i += 3
+            }
+
+            '+' -> {
+                bytes.add(' '.code.toByte())
+                i += 1
+            }
+
+            else -> {
+                bytes.add(c.code.toByte())
+                i += 1
+            }
+        }
+    }
+    return bytes.toByteArray().decodeToString()
+}
+
+/** Formats [value] with a fixed number of [decimals], without locale-dependent formatting. */
+private fun formatDecimal(value: Double, decimals: Int, forceSign: Boolean = false): String {
+    val negative = value < 0
+    val factor = 10.0.pow(decimals)
+    val rounded = round(abs(value) * factor) / factor
+    val whole = rounded.toLong()
+    val fraction = round((rounded - whole) * factor).toLong().toString().padStart(decimals, '0')
+    val sign = when {
+        negative -> "-"
+        forceSign -> "+"
+        else -> ""
+    }
+    return "$sign$whole.$fraction"
+}
