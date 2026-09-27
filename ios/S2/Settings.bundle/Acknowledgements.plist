@@ -10,7 +10,7 @@
 
 Source: FFmpeg's n7.1.5 tag (commit 3a0867c2bfda4a4d4309ca1a8cbdc6175e67f587) at https://git.ffmpeg.org/ffmpeg.git, unmodified, built by ios/scripts/build-ffmpeg.sh in https://github.com/timusus/Shuttle2, which lists the configure options.
 
-Relinking: FFmpeg is not linked into the app binary. It ships as four dynamic frameworks in S2.app/Frameworks: libavutil (59), libswresample (5), libavcodec (61) and libavformat (61). To run S2 with a modified FFmpeg, build the same major versions (that script builds them from any FFmpeg source tree), replace those frameworks in S2.app/Frameworks and re-sign the app.</string>
+Relinking: FFmpeg is not linked into the app binary. It ships as four dynamic frameworks in S2.app/Frameworks: libavutil (59), libswresample (5), libavcodec (61) and libavformat (61). To run S2 with a modified FFmpeg, build the same major versions with the configure options that script lists (it builds any FFmpeg commit you set as FFMPEG_COMMIT in it), replace those frameworks in S2.app/Frameworks and re-sign the app.</string>
 			<key>Title</key>
 			<string>FFmpeg</string>
 			<key>Type</key>

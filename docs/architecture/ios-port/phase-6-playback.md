@@ -74,7 +74,7 @@ Paths under `~/projects/simplecity-apps/podcasts/main/mobile/`.
   `CachedRunStore`, `ResolvedURLCache`, `ClockStallDetector`, `PlayerStallRecovery`, `DSP/{Biquad,
   LookaheadLimiter,LufsMeter}`, `PlaybackTestSupport/LoopbackMediaServer`; interruption and route
   change handling live in the controller.
-- FFmpeg (`ios/scripts/build-ffmpeg.sh`, static LGPL xcframework) is built with only
+- FFmpeg (Podcasts' `ios/scripts/build-ffmpeg.sh`, static LGPL xcframework; S2's is dynamic) is built with only
   `mp3,aac` decoders and `mp3,aac,mov` demuxers, no network protocols; HLS is a load error.
 - `RemoteCommandHandler.swift` / `NowPlayingInfoManager.swift`: play/pause/toggle, skip ±interval,
   change position, change rate; rate/elapsed written on state change, not per tick.
@@ -226,7 +226,15 @@ Done, in `ios/S2/Platform/Audio/` and `ios/S2/KMP/AppGraph.swift`:
 - `AppGraph.initialize()` (from `S2App.init`) builds the engine, the adapter, `IosAppGraph(audioPlayer:)`
   and the coordinator once.
 
-Still open (#588): the FFmpeg xcframework isn't built or shipped yet, so nothing decodes; stream
+FFmpeg ships (#588). `ios/scripts/build-ffmpeg.sh` builds n7.1.5 as four dynamic LGPL frameworks,
+cached in `~/Library/Caches/s2-ffmpeg-ios` and installed into `ios/Playback/Frameworks`. Xcode
+embeds them in `S2.app/Frameworks`, and the app's Settings bundle carries the LGPL notice and relink
+note (`ios/Playback/README.md`, "FFmpeg build" and "LGPL notes"). The package requires FFmpeg; there
+is no longer a build without it. Its tests run with nothing skipped, and `MusicPlaybackFormatsTests`
+plays each format through the controller: MP3, AAC and ALAC in MP4, FLAC, Opus, Vorbis, WAV and AIFF.
+`ios/scripts/test.sh` runs the S2 scheme on an available simulator; `--package` runs `swift test`.
+
+Still open (#588): stream
 resolution is a placeholder (a song's path as its URL, so the demo library's `demo://` songs fail and
 are skipped); artwork waits for a shared image loader; the output sample rate has no consumer until
 the EQ is shared; queue persistence is not wired.
@@ -241,8 +249,11 @@ the EQ is shared; queue persistence is not wired.
    not range-seekable, and report no duration up front; seek restarts must reconcile positions.
 3. **Queue parity drift**: iOS `QueueModel` vs Android's Media3 playlist semantics; the shared
    contract suite (step 3) is the guard.
-4. **FFmpeg static LGPL in an App Store build and binary size** with more codecs; Podcasts took the
-   same position, but confirm the relink obligation is met.
+4. **FFmpeg LGPL in an App Store build and binary size.** Resolved by linking dynamically: the four
+   frameworks are 1.7 MB on device and can be swapped, which meets the LGPL's relink right without
+   Podcasts' static-build object-file offer. Still to confirm at submission:
+   - whether FFmpeg needs a privacy manifest entry (it isn't on Apple's list of commonly used SDKs);
+   - that App Store processing accepts the four frameworks' ad-hoc-then-re-signed bundles.
 5. **Kotlin/Native threading**: main-actor hops can deadlock if misused; Kotlin must never run on the
    render thread (GC pauses).
 

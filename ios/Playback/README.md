@@ -8,7 +8,7 @@ without a simulator.
 It holds three things:
 
 - the byte sources and FFmpeg pull decoder copied from Shuttle Podcasts;
-- a static, LGPL-only FFmpeg build;
+- the package's link to a dynamic, LGPL-only FFmpeg build (`ios/scripts/build-ffmpeg.sh`);
 - `MusicPlaybackController`, the gapless two-track AVAudioEngine player that the Kotlin
   `EnginePlayerController` drives.
 
@@ -97,8 +97,11 @@ change. They are kept diffable so a later shared AudioCore can take them back.
   - `Engine/TrackPCMSource.swift`: the protocol and `FFmpegTrackSource`, with frame-exact seek.
   - `Engine/MusicPlaybackController.swift`.
   - `DSP/PCMProcessor.swift`.
-  - `scripts/build-ffmpeg.sh`, widened from the Podcasts script.
-  - The music tests and the FLAC and Opus fixtures.
+  - `ios/scripts/build-ffmpeg.sh`, widened from the Podcasts script and built dynamic.
+  - The music tests and the FLAC, Opus, Vorbis, ALAC, AIFF and 24-bit WAV fixtures.
+- **Dropped**: Podcasts' `#if canImport(CStreamDecode)` fallback and `FFmpegStreamDecoder.isAvailable`.
+  FFmpeg is required, so a package without it fails to resolve rather than building an engine that
+  can't decode.
 - **Left behind**:
   - SilenceGate, VoiceEnhance, SkipCueMixer, the compressor, K-weighting and LUFS meter;
   - the Podcasts `AVAudioEnginePlaybackController`;
@@ -108,57 +111,79 @@ change. They are kept diffable so a later shared AudioCore can take them back.
 ## FFmpeg build
 
 ```sh
-ios/Playback/scripts/build-ffmpeg.sh                 # clones n7.1 into $TMPDIR/s2-ffmpeg-ios/ffmpeg-src
-FFMPEG_SRC=/path/to/ffmpeg ios/Playback/scripts/build-ffmpeg.sh
+ios/scripts/build-ffmpeg.sh            # build if the cache has no match, then install; 0.2 s once installed
+ios/scripts/build-ffmpeg.sh --force    # rebuild the cache entry
+FFMPEG_SRC=/path/to/ffmpeg ios/scripts/build-ffmpeg.sh   # an existing checkout of the pinned commit
 ```
 
-The script writes `ios/Playback/Frameworks/FFmpeg.xcframework`, which is gitignored. It has one
-merged `libffmpeg.a` per slice (iOS arm64, iOS Simulator arm64, and macOS arm64 for `swift test`)
-and a `CFFmpeg` module map. `COPYING.LGPLv2.1` and `VERSION.txt` (the tag and the flags) sit inside
-it.
+`ios/scripts/build-framework.sh` and `ios/scripts/test.sh` run it first, so a new worktree needs no
+separate step.
 
-`Package.swift` includes the binary target and the C decoder only when the xcframework exists.
-Without it, the package still builds, and the FFmpeg-backed tests skip.
+It builds FFmpeg **n7.1.5** (commit `3a0867c2bf`) as four **dynamic** frameworks, one xcframework per
+library: `libavutil`, `libswresample`, `libavcodec`, `libavformat`. Each has iOS arm64, iOS Simulator
+arm64 and macOS arm64 slices; the macOS one is for `swift test`. A framework is named after its
+library, so `#include <libavcodec/avcodec.h>` resolves through the framework search path. The install
+names are `@rpath/libavcodec.framework/libavcodec`, and each framework is stripped (`-x`) and ad-hoc
+signed; Xcode re-signs it when it embeds it.
 
-The build is FFmpeg **n7.1**. The first run took about 2 min 20 s, including the clone. Sizes:
+- **Cache.** The build goes to `${S2_FFMPEG_CACHE:-~/Library/Caches/s2-ffmpeg-ios}/n7.1.5-<key>/`,
+  outside git. The key is the first 12 hex digits of the script's SHA-256, so any change to the pin,
+  flags or packaging builds a new entry. The entry holds `VERSION.txt` (tag, commit, flags, library
+  versions), `SHA256SUMS` and `COPYING.LGPLv2.1`. The FFmpeg clone is kept in `.../src/`. Old entries
+  are never deleted by the script.
+- **Install.** The entry is checked against `SHA256SUMS` and copied to `ios/Playback/Frameworks/`
+  (gitignored). An install whose `VERSION.txt` matches and whose checksums pass is left alone.
+- **Package.** `Package.swift` always declares the four binary targets, and `CS2StreamDecode` depends
+  on them. No system library is linked by the package: the dylibs carry their own `libz` link.
+- **App.** Xcode embeds and signs a package's dynamic binary targets in `S2.app/Frameworks` itself,
+  so `project.yml` has no `embed:` entry for them.
 
-| Slice | `libffmpeg.a` |
-|---|---|
-| iOS device (arm64) | 2,636,920 B |
-| iOS Simulator (arm64) | 2,635,888 B |
-| macOS (arm64) | 2,636,200 B |
-| whole xcframework on disk | 12 MB |
+A cold build takes 1.5 to 3 minutes, including the clone. Binary sizes (bytes):
 
-Configure flags:
+| Library | iOS device | iOS Simulator |
+|---|---|---|
+| libavutil | 533,168 | 516,672 |
+| libswresample | 103,072 | 86,656 |
+| libavcodec | 622,608 | 606,144 |
+| libavformat | 434,960 | 418,528 |
+| total | 1,693,808 | 1,628,000 |
+
+The library versions are avutil 59.39.100, swresample 5.3.100, avcodec 61.19.101 and avformat
+61.7.103. Configure flags:
 
 ```
 --disable-everything --disable-programs --disable-doc --disable-htmlpages --disable-manpages
 --disable-podpages --disable-txtpages --disable-avdevice --disable-swscale --disable-postproc
 --disable-avfilter --disable-network --disable-protocols --disable-devices --disable-filters
---disable-bsfs --disable-encoders --disable-muxers --disable-debug --disable-symver
---disable-audiotoolbox --disable-autodetect --enable-zlib --enable-iconv
+--disable-bsfs --disable-encoders --disable-muxers --disable-debug
+--disable-audiotoolbox --disable-autodetect --enable-zlib
 --enable-decoder=flac,alac,opus,vorbis,mp3,mp3float,aac,aac_latm,pcm_s16le,pcm_s24le,pcm_s32le,
                  pcm_f32le,pcm_f64le,pcm_u8,pcm_s16be,pcm_s24be,pcm_s32be,pcm_f32be,pcm_f64be
 --enable-demuxer=ogg,matroska,wav,flac,mov,mp3,aac,aiff
 --enable-parser=flac,opus,vorbis,mpegaudio,aac,aac_latm
 --enable-swresample --enable-avformat --enable-avcodec --enable-avutil
---enable-static --disable-shared --enable-pic --enable-small
+--enable-shared --disable-static --enable-pic --enable-small
 --enable-cross-compile --target-os=darwin --arch=arm64
 ```
 
+The link adds `-Wl,-dead_strip_dylibs`.
+
 - **Autodetect.** `--disable-autodetect` matters. Without it, configure finds VideoToolbox and, on
   the macOS slice, Homebrew's X11 and SDL2, and libavutil's hwcontext drags them into the link.
-- **System libraries.** zlib and iconv are the two kept; the package links both (`-lz -liconv`).
+- **No iconv.** With autodetect off, configure doesn't link `-liconv`. Its only user is subtitle
+  charset conversion, and no subtitle decoder is built.
+- **Dead-stripped dylibs.** Without `-dead_strip_dylibs`, the dylibs load CoreFoundation, CoreVideo
+  and CoreMedia for nothing. Their only dependencies are each other, `libz` and `libSystem`.
 - **Byte input.** No network protocols are built. Bytes arrive through the AVIO callbacks.
 
 ## Tests
 
 ```sh
-cd ios/Playback && swift test                       # macOS, ~20 s, 95 tests
-# optional, on a simulator (the xcframework has no x86_64 slice):
-xcodebuild -scheme S2Playback-Package -destination 'platform=iOS Simulator,name=<iPhone>' \
-  ARCHS=arm64 ONLY_ACTIVE_ARCH=YES test
+ios/scripts/test.sh --package    # swift test in ios/Playback, on the Mac: 107 XCTest + 10 swift-testing
+ios/scripts/test.sh              # the app's S2 scheme on an available iPhone simulator
 ```
+
+Nothing skips: every test decodes through the real FFmpeg.
 
 The engine tests run the real `AVAudioEngine` in offline manual rendering. Nothing plays: the test
 pulls the mixer's output in 512-frame slices and compares it, sample for sample, with the PCM the
@@ -182,34 +207,54 @@ sources handed over. `MusicPlaybackControllerTests` covers:
 - A FLAC seek is frame-exact.
 - Mono is spread to both sides at full level.
 
-`PCMProcessorTests` pins the limiter's latency compensation. The fixtures `tone-44k.flac` (14 KB)
-and `tone-48k.opus` (9 KB) were made with:
+`MusicPlaybackFormatsTests` plays each fixture format end to end, as the app does:
+`PlaybackTrack(uid:url:)` into the controller. The formats are MP3, AAC and ALAC in MP4, FLAC, Opus and
+Vorbis in Ogg, 24-bit WAV, and AIFF. Each checks:
+
+- the codec FFmpeg picks;
+- that the render equals a separate FFmpeg decode of the same file, times the −6 dB ReplayGain, from
+  the first frame (encoder delay trimmed) to the last;
+- silence after, no failure, and the `ended` state.
+
+`PCMProcessorTests` pins the limiter's latency compensation. The music fixtures were made with:
 
 ```sh
-ffmpeg -f lavfi -i "sine=frequency=440:sample_rate=44100:duration=0.5" -af "volume=4,pan=stereo|c0=c0|c1=c0" -sample_fmt s16 -c:a flac tone-44k.flac
-ffmpeg -f lavfi -i "sine=frequency=440:sample_rate=48000:duration=1"   -af "volume=4,pan=stereo|c0=c0|c1=c0" -c:a libopus -b:a 48k tone-48k.opus
+S="sine=frequency=440:sample_rate=44100"; A="volume=4,pan=stereo|c0=c0|c1=c0"
+ffmpeg -f lavfi -i "$S:duration=0.5"  -af "$A" -sample_fmt s16 -c:a flac tone-44k.flac          # 14 KB
+ffmpeg -f lavfi -i "sine=frequency=440:sample_rate=48000:duration=1" -af "$A" -c:a libopus -b:a 48k tone-48k.opus  # 9 KB
+ffmpeg -f lavfi -i "$S:duration=0.5"  -af "$A" -c:a vorbis -strict -2 -q:a 3 tone-44k.ogg         # 5 KB
+ffmpeg -f lavfi -i "$S:duration=0.5"  -af "$A" -sample_fmt s16p -c:a alac tone-44k-alac.m4a      # 15 KB
+ffmpeg -f lavfi -i "$S:duration=0.25" -af "$A" -c:a pcm_s16be tone-44k.aiff                      # 43 KB
+ffmpeg -f lavfi -i "sine=frequency=440:sample_rate=48000:duration=0.25" -af "$A" -c:a pcm_s24le tone-48k-s24.wav  # 70 KB
 ```
 
 ## LGPL notes
 
-The xcframework is plain **LGPL v2.1+**:
+The frameworks are plain **LGPL v2.1+**:
 
 - no `--enable-gpl`, `--enable-version3` or `--enable-nonfree`;
 - no external codec libraries. Opus and Vorbis use FFmpeg's native decoders, not libopus or
   libvorbis.
 
-Linking it statically into an App Store binary carries the LGPL's relinking obligation. The app
-must:
+FFmpeg is linked **dynamically**: four frameworks in `S2.app/Frameworks`, not code in the app
+binary. That meets LGPL v2.1 §6(b), a shared library mechanism a user can swap. It also avoids the
+static build's obligation to offer the app's object files for relinking. The app carries:
 
-1. Ship the licence text (`COPYING.LGPLv2.1`, copied into the xcframework) and an attribution in
-   its acknowledgements screen.
-2. Offer the FFmpeg source it used: the tag and flags in `VERSION.txt`, plus this script.
-3. Offer the object files, or equivalent, that let a user relink the app against a modified FFmpeg.
-   The usual form is a written offer to provide the app's object files on request.
+1. **The notice**, in the app's Settings pane (`ios/S2/Settings.bundle`: Settings › S2 ›
+   Acknowledgements). It gives FFmpeg's name, version and licence, the source (the n7.1.5 tag and
+   commit, unmodified), and this build script. The pane links to the full LGPL v2.1 text. The iOS app
+   has no in-app licences screen yet. Android's is generated from Gradle dependencies
+   (AboutLibraries), which can't see FFmpeg, so the Settings bundle is the one place. An in-app
+   acknowledgements screen should show the same text.
+2. **How to relink.** Build the same major versions (libavutil 59, libswresample 5, libavcodec 61,
+   libavformat 61) with the flags above. `build-ffmpeg.sh` builds any commit set as `FFMPEG_COMMIT`
+   in it. Replace the four frameworks in `S2.app/Frameworks` with the result, and re-sign the app
+   (`codesign --force --sign <identity>` on each framework, then on the app with its entitlements).
+   The app looks the libraries up by install name (`@rpath/libavcodec.framework/libavcodec`) and
+   checks only the compatibility version, so a same-major build loads.
 
 Do not add a GPL-only component (for example `--enable-gpl` or libx264-style externals) or a
-`nonfree` one. If a relink offer is unacceptable, the alternative is to ship FFmpeg as a dynamic
-framework.
+`nonfree` one.
 
 ## Known limits (spike)
 
@@ -222,5 +267,9 @@ framework.
   is scheduled, so it is approximate by the scheduling latency.
 - **Time-pitch position.** Off 1×, the time-pitch unit's own buffering makes position lead what is
   heard by up to one block.
+- **Seek to 0 in AAC-in-MP4 (suspected, not yet tested).** A load trims the encoder priming: the
+  controller doesn't seek a source it has just opened (`Slot.atStart`). FFmpeg's seek to the start of
+  an MP4 loses the edit list's skip, though, so a later seek back to 0:00 probably plays the priming
+  (typically 2,112 frames). The fix would go in `stream_decoder_seek`.
 - **No audio session.** No `AVAudioSession` work, interruptions or route callbacks toward Kotlin;
   the app owns the session (phase 6 step 7).
