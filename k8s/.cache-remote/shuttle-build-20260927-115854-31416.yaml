@@ -5,17 +5,17 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: __JOB_NAME__
-  namespace: __NAMESPACE__
+  name: shuttle-build-20260927-115854-31416
+  namespace: shuttle-build
 spec:
-  activeDeadlineSeconds: __DEADLINE__
+  activeDeadlineSeconds: 3000
   backoffLimit: 0
   template:
     spec:
       restartPolicy: Never
       containers:
         - name: build
-          image: __BASE_IMAGE__
+          image: eclipse-temurin:21-jdk-noble
           command:
             - bash
             - -c
@@ -25,7 +25,7 @@ spec:
               export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
               if [ ! -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
                 echo "==> bootstrapping Android SDK into PVC cache"
-                apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip curl ca-certificates git > /dev/null
+                apt-get update -qq && apt-get install -y -qq --no-install-recommends unzip curl ca-certificates > /dev/null
                 mkdir -p "$ANDROID_HOME/cmdline-tools"
                 curl -fsSL -o /tmp/cmdline-tools.zip "https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip"
                 unzip -q /tmp/cmdline-tools.zip -d "$ANDROID_HOME/cmdline-tools"
@@ -34,42 +34,25 @@ spec:
                 yes | sdkmanager --licenses > /dev/null
                 sdkmanager --install "platform-tools" "platforms;android-37.0" "platforms;android-37.1" "build-tools;37.0.0" > /dev/null
                 yes | sdkmanager --licenses > /dev/null
-              else
-                # git must exist even for cached SDK runs: app/build.gradle.kts
-                # shells out to `git describe` for versionCode/Name (falls back
-                # to 1/1.0.0 when there is no .git, but the binary must exist
-                # for the configuration cache to store the value).
-                command -v git >/dev/null || (apt-get update -qq && apt-get install -y -qq --no-install-recommends git > /dev/null)
               fi
-              if [ ! -d /mnt/jdks/17 ]; then
-                echo "==> provisioning JDK 17 toolchain (Gradle requests languageVersion=17; image ships 21)"
-                mkdir -p /mnt/jdks
-                curl -fsSL -o /tmp/jdk17.tar.gz "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse"
-                tar -xzf /tmp/jdk17.tar.gz -C /mnt/jdks
-                mv /mnt/jdks/jdk-17* /mnt/jdks/17
-                rm /tmp/jdk17.tar.gz
-              fi
-              mkdir -p /mnt/gradle
-              grep -q "org.gradle.java.installations.paths" /mnt/gradle/gradle.properties 2>/dev/null || \
-                echo "org.gradle.java.installations.paths=/mnt/jdks/17" >> /mnt/gradle/gradle.properties
               cd /mnt/workspace
               echo "local.properties:"; echo "sdk.dir=/mnt/sdk" > local.properties
-              echo "==> ./gradlew __GRADLE_ARGS__"
-              ./gradlew __GRADLE_ARGS__ --console=plain
+              echo "==> ./gradlew :android:app:assembleDebug"
+              ./gradlew :android:app:assembleDebug --console=plain
           env:
             - name: GRADLE_OPTS
-              value: "__GRADLE_OPTS_VALUE__"
+              value: "-Dorg.gradle.jvmargs=-Xmx4g -Dkotlin.compiler.execution.strategy=in-process -Dorg.gradle.workers.max=2"
           resources:
             limits:
-              cpu: "__CPU_LIMIT__"
-              memory: "__MEM_LIMIT__"
+              cpu: "3"
+              memory: "6000Mi"
             requests:
-              cpu: "__CPU_LIMIT__"
-              memory: "__MEM_LIMIT__"
+              cpu: "3"
+              memory: "6000Mi"
           volumeMounts:
             - name: cache
               mountPath: /mnt
       volumes:
         - name: cache
           persistentVolumeClaim:
-            claimName: __PVC_NAME__
+            claimName: shuttle-build-cache

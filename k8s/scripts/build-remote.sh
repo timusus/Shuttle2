@@ -40,6 +40,16 @@ done
 
 GRADLE_ARGS="$TASK ${EXTRA_ARGS[*]:-}"
 GRADLE_ARGS="${GRADLE_ARGS% }"
+# Forward the local git tag as version props: the PVC workspace ships without
+# .git (714M), so getVersionFromGitTag() would fall back to 1/1.0.0.
+if [[ "$GRADLE_ARGS" != *versionCode* ]]; then
+  VTAG="$(git -C "$REPO_ROOT" describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null || true)"
+  if [[ "$VTAG" =~ ^v([0-9]+)$ ]]; then
+    VCODE="${BASH_REMATCH[1]}"
+    VNAME="20${VCODE:0:2}.${VCODE:2:2}.${VCODE:4:2}"
+    GRADLE_ARGS="$GRADLE_ARGS -PversionCode=$VCODE -PversionName=$VNAME"
+  fi
+fi
 
 if [ -n "$KUBE_CONTEXT" ]; then CTX=(--context "$KUBE_CONTEXT"); else CTX=(); fi
 kc() { "$KUBECTL" "${CTX[@]}" "$@"; }
