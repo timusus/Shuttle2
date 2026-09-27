@@ -13,7 +13,6 @@ import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
-import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.text.StringKey
@@ -31,13 +30,6 @@ import kotlin.math.roundToInt
  * media provider list, not a preference), and About's version, rate and contact rows, which aren't settings.
  */
 object AndroidSettingsCatalog : SettingsCatalog {
-    private val streamingQualityOptions = listOf(
-        ChoiceOption(StreamingQuality.Original, StringKey.PREF_STREAMING_QUALITY_ORIGINAL),
-        ChoiceOption(StreamingQuality.Kbps320, StringKey.PREF_STREAMING_QUALITY_320),
-        ChoiceOption(StreamingQuality.Kbps192, StringKey.PREF_STREAMING_QUALITY_192),
-        ChoiceOption(StreamingQuality.Kbps128, StringKey.PREF_STREAMING_QUALITY_128)
-    )
-
     val appearance = SettingsScreen(
         destination = SettingsDestination.Appearance,
         groups = listOf(
@@ -179,12 +171,12 @@ object AndroidSettingsCatalog : SettingsCatalog {
                     SettingItem.Choice(
                         setting = StreamingSettings.UnmeteredQuality,
                         title = StringKey.PREF_STREAMING_QUALITY_UNMETERED_TITLE,
-                        options = streamingQualityOptions
+                        options = StreamingQualityOptions
                     ),
                     SettingItem.Choice(
                         setting = StreamingSettings.MeteredQuality,
                         title = StringKey.PREF_STREAMING_QUALITY_METERED_TITLE,
-                        options = streamingQualityOptions
+                        options = StreamingQualityOptions
                     )
                 )
             )

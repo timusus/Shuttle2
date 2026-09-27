@@ -3,11 +3,10 @@ package com.simplecityapps.shuttle.shared.di
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.provider.emby.EmbyStreamUrlProvider
 import com.simplecityapps.provider.jellyfin.JellyfinStreamUrlProvider
 import com.simplecityapps.shuttle.di.AppSupervisorJob
-import com.simplecityapps.shuttle.settings.Setting
-import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
 import com.simplecityapps.shuttle.shared.playback.IosStreamResolver
@@ -52,10 +51,10 @@ class IosPlaybackModule {
         resolver: IosStreamResolver,
         @AppSupervisorJob job: Job,
         exceptionHandler: CoroutineExceptionHandler,
-        settingsStore: SettingsStore,
+        playbackSettings: PlaybackSettings,
         random: Random
     ): IosPlayerController {
-        val retainShuffle = settingsStore.preference(RetainShuffleOnNewQueue)
+        val retainShuffle = playbackSettings.retainShuffleOnNewQueue
         return IosPlayerController(
             player = player,
             resolver = resolver,
@@ -70,9 +69,4 @@ class IosPlaybackModule {
 
     @Provides
     fun provideQueueOperations(controller: IosPlayerController): QueueOperations = controller.queueOperations
-
-    private companion object {
-        /** Android's `PlaybackSettings.RetainShuffleOnNewQueue`, which lives in the Android-only playback module. */
-        val RetainShuffleOnNewQueue = Setting.boolean("pref_retain_shuffle_on_new_queue", false)
-    }
 }

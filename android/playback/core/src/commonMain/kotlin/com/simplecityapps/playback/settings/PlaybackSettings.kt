@@ -7,7 +7,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 
-/** Settings > Playback & sound. The equalizer's own settings are [com.simplecityapps.shuttle.settings.EqualizerSettings]. */
+/** Settings > Playback & sound, read by Android and iOS alike. The equalizer's own settings are [com.simplecityapps.shuttle.settings.EqualizerSettings]. */
 @SingleIn(AppScope::class)
 class PlaybackSettings @Inject constructor(
     store: SettingsStore
@@ -28,7 +28,7 @@ class PlaybackSettings @Inject constructor(
 
         val ReplayGain = Setting.enumOrdinalInt("replaygain_mode", ReplayGainMode.Off, ReplayGainMode.entries)
 
-        /** In dB, within ±[com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor.maxPreAmpGain]. */
+        /** In dB, within ±Android's `ReplayGainAudioProcessor.maxPreAmpGain`. */
         val PreAmpGain = Setting.float("preamp_gain", 0f)
 
         /** The speed chosen in Now Playing, a multiplier; the player owns it, this keeps it across restarts. */
