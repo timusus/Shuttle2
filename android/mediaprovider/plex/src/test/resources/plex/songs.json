@@ -1,0 +1,61 @@
+{
+  "MediaContainer": {
+    "Metadata": [
+      {
+        "key": "/library/metadata/1",
+        "type": "track",
+        "guid": "plex://track/1",
+        "index": 1,
+        "parentIndex": 1,
+        "title": "Opening",
+        "duration": 180000,
+        "parentTitle": "First Album",
+        "grandparentTitle": "Artist One",
+        "parentYear": 2020,
+        "Media": [
+          { "id": 1, "duration": 180000, "bitrate": 320, "audioChannels": 2, "audioCodec": "mp3", "container": "mp3", "Part": [
+            { "id": 1, "key": "/library/parts/1/file.mp3", "duration": 180000, "file": "/music/opening.mp3", "size": 4200000, "container": "mp3" }
+          ] }
+        ],
+        "addedAt": 1709299200
+      },
+      {
+        "key": "/library/metadata/2",
+        "type": "track",
+        "guid": "plex://track/2",
+        "index": 2,
+        "parentIndex": 1,
+        "title": "Duet",
+        "duration": 210000,
+        "parentTitle": "First Album",
+        "grandparentTitle": "Artist One",
+        "parentYear": 2020,
+        "Media": [
+          { "id": 2, "duration": 210000, "bitrate": 320, "audioChannels": 2, "audioCodec": "mp3", "container": "mp3", "Part": [
+            { "id": 2, "key": "/library/parts/2/file.mp3", "duration": 210000, "file": "/music/duet.mp3", "size": 5000000, "container": "mp3" }
+          ] }
+        ],
+        "addedAt": 1709299300
+      },
+      {
+        "key": "/library/metadata/3",
+        "type": "track",
+        "guid": "plex://track/3",
+        "index": 1,
+        "parentIndex": 2,
+        "title": "B-Side",
+        "duration": 150000,
+        "parentTitle": "Second Album",
+        "grandparentTitle": "Artist Two",
+        "parentYear": 2021,
+        "Media": [
+          { "id": 3, "duration": 150000, "bitrate": 256, "audioChannels": 2, "audioCodec": "aac", "container": "m4a", "Part": [
+            { "id": 3, "key": "/library/parts/3/file.m4a", "duration": 150000, "file": "/music/bside.m4a", "size": 3000000, "container": "m4a" }
+          ] }
+        ],
+        "addedAt": 1709299400
+      }
+    ],
+    "totalSize": 3
+  }
+}

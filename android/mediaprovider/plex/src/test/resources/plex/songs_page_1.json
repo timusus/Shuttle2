@@ -1,0 +1,43 @@
+{
+  "MediaContainer": {
+    "Metadata": [
+      {
+        "key": "/library/metadata/page-1-a",
+        "type": "track",
+        "guid": "plex://track/page-1-a",
+        "index": 1,
+        "parentIndex": 1,
+        "title": "Page One A",
+        "duration": 180000,
+        "parentTitle": "Big Album",
+        "grandparentTitle": "Artist One",
+        "parentYear": 2020,
+        "Media": [
+          { "id": 1, "duration": 180000, "bitrate": 320, "audioChannels": 2, "audioCodec": "mp3", "container": "mp3", "Part": [
+            { "id": 1, "key": "/library/parts/1/file.mp3", "duration": 180000, "file": "/music/1.mp3", "size": 4200000, "container": "mp3" }
+          ] }
+        ],
+        "addedAt": 1709299200
+      },
+      {
+        "key": "/library/metadata/page-1-b",
+        "type": "track",
+        "guid": "plex://track/page-1-b",
+        "index": 2,
+        "parentIndex": 1,
+        "title": "Page One B",
+        "duration": 180000,
+        "parentTitle": "Big Album",
+        "grandparentTitle": "Artist One",
+        "parentYear": 2020,
+        "Media": [
+          { "id": 2, "duration": 180000, "bitrate": 320, "audioChannels": 2, "audioCodec": "mp3", "container": "mp3", "Part": [
+            { "id": 2, "key": "/library/parts/2/file.mp3", "duration": 180000, "file": "/music/2.mp3", "size": 4200000, "container": "mp3" }
+          ] }
+        ],
+        "addedAt": 1709299200
+      }
+    ],
+    "totalSize": 502
+  }
+}

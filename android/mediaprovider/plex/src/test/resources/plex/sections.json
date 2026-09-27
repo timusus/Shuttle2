@@ -1,0 +1,8 @@
+{
+  "MediaContainer": {
+    "Directory": [
+      { "key": "1", "title": "Movies", "type": "movie" },
+      { "key": "2", "title": "Music", "type": "artist" }
+    ]
+  }
+}
