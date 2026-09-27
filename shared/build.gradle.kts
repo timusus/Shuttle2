@@ -4,6 +4,8 @@
 plugins {
     id("s2.kmp-library")
     alias(libs.plugins.skie)
+    // SharedAppGraph: the iOS graph over the shared modules' AppScope contributions
+    alias(libs.plugins.metro)
 }
 
 skie {

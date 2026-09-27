@@ -49,7 +49,7 @@ class ViewModelContributionTest {
 /**
  * Stands in for the app graphs: Android's `AppGraph` is a [ViewModelGraph]; the iOS graph adds the properties. Scoped
  * to [ContributionTestScope] rather than `AppScope`, which would pull in every real ViewModel and its dependencies;
- * :shared's `IosAppGraphTest` covers the real `AppScope` graph on iOS.
+ * :shared's `SharedAppGraphTest` covers the real `AppScope` graph on iOS.
  */
 @DependencyGraph(ContributionTestScope::class)
 interface TestAppGraph : ViewModelGraph {

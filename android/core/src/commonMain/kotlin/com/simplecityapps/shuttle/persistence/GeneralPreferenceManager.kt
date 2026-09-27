@@ -1,8 +1,12 @@
 package com.simplecityapps.shuttle.persistence
 
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlin.time.Instant
 
-class GeneralPreferenceManager(
+@SingleIn(AppScope::class)
+class GeneralPreferenceManager @Inject constructor(
     private val store: KeyValueStore
 ) {
     var previousVersionCode: Int

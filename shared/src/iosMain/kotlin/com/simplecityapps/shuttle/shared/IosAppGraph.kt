@@ -9,10 +9,9 @@ import kotlinx.coroutines.flow.asStateFlow
 /**
  * The iOS app's dependency graph, built once by Swift at launch (`AppGraph` in ios/S2/KMP).
  *
- * A placeholder until the Metro migration (#583) gives the shared modules an `AppScope`; then this becomes a
- * Metro `@DependencyGraph` with a `Factory.create(...)` that Swift calls with its platform objects. For now it
- * only exposes an in-memory library, so the iOS shell can prove that a Kotlin `StateFlow` reaches SwiftUI
- * through SKIE's `Observing`.
+ * A placeholder that exposes an in-memory library, so the iOS shell can prove that a Kotlin `StateFlow` reaches
+ * SwiftUI through SKIE's `Observing`. The Metro graph is [SharedAppGraph]; this gives way to it once Swift creates
+ * that graph with its platform objects.
  */
 class IosAppGraph {
     private val songs = MutableStateFlow(DemoLibrary.songs)

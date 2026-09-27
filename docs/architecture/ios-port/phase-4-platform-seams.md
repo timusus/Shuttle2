@@ -191,6 +191,12 @@ asynchronously. Nothing needs a stub: the use case is shared and the writer is t
   and a no-op binding — **owner decision** (downloads are not in the phase table).
 - **`AvailableMediaActions`** → `SongDownloadRepository` (Room, phase 2) plus S0.
 
+*As built (wave 1):* rather than `Uri` → `String` in `DownloadInfo`/`SongDownloadManager`, `DownloadSongs`
+depends on a commonMain port, `interface SongDownloader { suspend fun download(song): Boolean; fun
+remove(song) }`. Android's `ServerSongDownloader` (app `downloads` package) asks the providers for the download
+info and hands it to `SongDownloadManager`, so neither Android type changes; iOS binds its own (or a no-op with
+`offlineDownloads = false`). `AvailableMediaActions` offers no download actions when `offlineDownloads` is off.
+
 ### S5 `Billing`
 
 **Today** (`:android:trial`): Android-free except `launchPurchaseFlow(activity: Activity, offer)`, which
@@ -240,6 +246,12 @@ kotlinx.serialization in phase 3). **Android**: `AssetBundledText` (`context.ass
 `AppVersion { BuildConfig.VERSION_NAME }`. **iOS** (iosMain): `NSBundle.mainBundle.pathForResource` with the
 same `changelog.json`/licences files copied into the app bundle by XcodeGen; `CFBundleShortVersionString`.
 
+*As built (wave 1):* both repositories parse with kotlinx.serialization in `presentation`. The licences file
+is read without `aboutlibraries-core` (its 15.x artifacts are Java 21 bytecode, which the JDK 17 host tests
+can't load); the Gradle plugin still generates `aboutlibraries.json`. `AssetBundledText` falls back to the raw
+resource of the same base name (where the aboutlibraries plugin puts it) when the asset is missing.
+`Changeset`'s unused `Semver` field went, and semver4j with it.
+
 ### S11 `CastAvailability`, `SavedNowPlaying`, `SleepTimer`
 
 The two `fun interface`s in `PlayerViewModel.kt` move as-is; `PlayerModule` keeps the Android bindings. iOS:
@@ -251,8 +263,8 @@ a `TimeSource.Monotonic` read and Timber the shared logger, so it moves to commo
 
 | Step | Seams | Before | Size | Tier |
 |---|---|---|---|---|
-| 1 | S0 `PlatformFeatures`; S10 `BundledText`/`AppVersion`; S8 + S7 interfaces out of their impl files | wave 1 | S | mechanical |
-| 2 | S4 `Uri` → `String` in `DownloadInfo`/`SongDownloadManager` (or folded into phase 3's provider work) | wave 1 (`ExcludedSongsViewModel` holds `MediaActionHandler`) | S | standard |
+| 1 | S0 `PlatformFeatures`; S10 `BundledText`/`AppVersion`; S8 + S7 interfaces out of their impl files | wave 1 | S | mechanical — *done in wave 1* |
+| 2 | S4 `SongDownloader` port (built instead of `Uri` → `String`, see S4) | wave 1 (`ExcludedSongsViewModel` holds `MediaActionHandler`) | S | standard — *done in wave 1* |
 | 3 | S1 `SettingsEffects` → `Instant`, S0 filtering in `SettingsCatalog`; S6 `EqualizerControl` | wave 3 | M | standard |
 | 4 | S2 `WriteConsent`; S3 `PlaylistFileWriter` + delete `PlaylistExporter`; S5 `PurchaseLauncher` split; S9 after the §1 `ArtworkSeed` fix | wave 4 | M | standard |
 | 5 | S11 `SleepTimer` clock | wave 5 | XS | mechanical |

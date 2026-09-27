@@ -23,8 +23,8 @@ this section is what was built.
 **The module.** `:android:presentation` is an `s2.kmp-library` module with Metro, `api` on `:android:domain`,
 the KMP lifecycle ViewModel (`org.jetbrains.androidx.lifecycle:lifecycle-viewmodel`) and `metrox-viewmodel`.
 `:shared` exports it to the iOS framework. It sits in its own layer, `viewmodel` (see `layering.md`): it
-sees `domain` only, not `core` (Android-only) or `designsystem` (Compose), and `designsystem` and `app` see
-it. So a ViewModel can't move while its state still holds a designsystem type; see the list under §1.
+sees `domain` and, since wave 1, `core` (multiplatform since phase 2), but not `designsystem` (Compose), and
+`designsystem` and `app` see it. So a ViewModel can't move while its state still holds a designsystem type; see the list under §1.
 
 **How a shared ViewModel is contributed and reached.** A ViewModel in `commonMain` carries the same
 annotations as today's app ViewModels: `@ViewModelKey(X::class) @ContributesIntoMap(AppScope::class)` with
@@ -41,10 +41,15 @@ in a small cache, keyed by screen and argument, and clears it when the screen go
 `ViewModelCache`). `ViewModelContributionTest` (`presentation/commonTest`) runs both paths, the
 multibound factory and the typed graph properties, on the JVM and on iOS.
 
-Open for phase 5: that test's graph lives in the same module as the contributions. Whether a graph in
-`:shared` sees contributions from `presentation` on Kotlin/Native (Metro's cross-module contribution hints)
-is not yet proven. If it doesn't, set Metro's `supportedHintContributionPlatforms` or
-`generateContributionHintsInFir`, or declare the bindings in the iOS graph directly.
+That test's graph uses its own scope, so it doesn't pull in every real ViewModel. The cross-module case is
+proven by wave 1: `SharedAppGraph` (`:shared` `iosMain`, `@DependencyGraph(AppScope::class)`) merges
+`presentation`'s ViewModel map contributions, its `AppViewModelFactory` binding and `core`'s binding
+containers from their klibs with Metro's default settings, and `SharedAppGraphTest` (`iosTest`) builds the
+ViewModels through both the typed property and `metroViewModelFactory`. No hint options were needed. The
+graph takes the platform objects (`KeyValueStore`, `BundledText`, `AppVersion`) through its `Factory`, and
+`excludes` the ViewModels whose dependencies iOS can't provide yet; each later wave drops its exclusion once
+iOS binds what the ViewModel needs. `IosAppGraph`, the placeholder Swift creates today, gives way to it
+once the Swift side creates the Metro graph.
 
 **`ArtworkSeed`** (§1) became one platform-neutral type rather than two:
 `com.simplecityapps.shuttle.ui.theme.ArtworkSeed` in `presentation`'s `commonMain`, whose `Available` holds
@@ -77,6 +82,29 @@ Converted so far: song info's section and row labels (23 keys), and `MediaAction
 That makes 33 `StringKey`s and 11 `PluralKey`s. `SettingsCatalog`, `SettingItem`, `TagField`,
 `LibraryRoutes`, `ErrorHelper` and `PlaylistData` follow in their ViewModel's wave: add entries and switch
 the `@StringRes Int` fields to `StringKey`.
+
+## Wave 1: what landed
+
+All six ViewModels live in `presentation`'s `commonMain` with their UI state and use cases:
+`LicencesViewModel`, `WhatsNewViewModel` (`ui/screens/settings/about`), `ShellViewModel` (`ui/shell`),
+`LibraryViewModel`, `LibraryEmptyViewModel` (`ui/screens/library`) and `ExcludedSongsViewModel`
+(`ui/screens/settings/excluded`). Their tests run on the JVM and iOS (`:android:presentation:allTests`).
+
+- **Settings use cases.** `ReadSetting`/`SaveSetting`/`ObserveSetting`, `SettingsStore`, `Setting`,
+  `AppearanceSettings` and `GeneralPreferenceManager` stay in `:android:core`'s `commonMain`, where phase 2
+  put them; `presentation` has an `api` dependency on `core`. That is their shared home for waves 2 to 5.
+  `GeneralPreferenceManager` is `@Inject` there, so both graphs bind it.
+- **Seams applied** (see [phase-4-platform-seams.md](phase-4-platform-seams.md)): S0 `PlatformFeatures`
+  (Android turns everything on; `AvailableMediaActions` hides the download actions without
+  `offlineDownloads`), S10 `BundledText` and `AppVersion` (the changelog and licences are parsed in common
+  code; Android reads its assets), S4 `SongDownloader`, S7 `ScannerFolderStore` and S8 `MediaSources`.
+  The media action use cases (`MediaActionHandler`, `DownloadSongs`, `FindGoToTarget`) and
+  `MusicAccessCoordinator`/`SourcesSettings` moved with them. Android's adapters (`DefaultMediaSources`,
+  `SafScannerFolderStore`, `ServerSongDownloader`) live in the app's `sources` and `downloads` packages.
+- **Test doubles.** The fakes, `TestMediaActions` and the model builders (`createSong`, ...) moved to
+  `:android:presentation-testing` (`fixtures` layer), which `presentation`'s `commonTest` and the app's JVM
+  tests share.
+- **Domain.** `SongImportStateProvider` and `Progress` moved to `:android:domain`.
 
 ## Per-ViewModel table
 
@@ -275,6 +303,7 @@ Total: 6+6+6+9+2 = 29, matching the phase table's "easy 18 → assisted 9 → Pl
 2. **The settings/prefs interface shape** (`ReadSetting`/`SaveSetting`/`ObserveSetting`, currently
    `:android:core`, Android-only) blocks more ViewModels (14 of 29) than any other single dependency —
    sequence phase 2's "prefs behind shared interfaces" checkpoint to land before wave 2, not after.
+   *Done: they live in `core`'s `commonMain` (wave 1).*
 3. **`SettingsEffects` and `TagFileAccess`** are the only two files with heavy direct Android framework
    imports (`Context`, `ClipboardManager`, `Intent`, `Uri`, `DocumentsContract`, `MediaStore`) reachable
    from a ViewModel constructor — both need a real interface-extraction design pass (`hard` tier), not a
