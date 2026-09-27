@@ -9,6 +9,7 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.okHttpClient
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -41,6 +42,7 @@ class PlexMediaProviderTest {
     private val retrofit =
         Retrofit.Builder()
             .baseUrl("${server.address}/")
+            .client(server.okHttpClient())
             .addCallAdapterFactory(NetworkResultAdapterFactory(null))
             .addConverterFactory(MoshiConverterFactory.create(Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()))
             .build()
@@ -91,8 +93,8 @@ class PlexMediaProviderTest {
 
         server.requestsTo(SECTIONS).single().headers["X-Plex-Token"] shouldBe "token-1"
         val request = server.requestsTo(ITEMS).single()
-        request.url.queryParameter("X-Plex-Container-Start") shouldBe "0"
-        request.url.queryParameter("X-Plex-Container-Size") shouldBe "500"
+        request.url.parameters["X-Plex-Container-Start"] shouldBe "0"
+        request.url.parameters["X-Plex-Container-Size"] shouldBe "500"
         request.headers["X-Plex-Token"] shouldBe "token-1"
     }
 
@@ -151,7 +153,7 @@ class PlexMediaProviderTest {
 
         songs.map { it.externalId } shouldContainExactly
             listOf("/library/parts/1/file.mp3", "/library/parts/2/file.mp3", "/library/parts/3/file.mp3", "/library/parts/4/file.mp3")
-        server.requestsTo(ITEMS).map { it.url.queryParameter("X-Plex-Container-Start") to it.url.queryParameter("X-Plex-Container-Size") } shouldContainExactly
+        server.requestsTo(ITEMS).map { it.url.parameters["X-Plex-Container-Start"] to it.url.parameters["X-Plex-Container-Size"] } shouldContainExactly
             listOf("0" to "500", "500" to "2")
     }
 

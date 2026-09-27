@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.R
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
+import com.simplecityapps.mediaprovider.server.ResourceServerStrings
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.withServerSession
 import com.simplecityapps.networking.retrofit.NetworkResult
@@ -36,7 +37,7 @@ class PlexMediaProvider(
     override val type: MediaProviderType
         get() = MediaProviderType.Plex
 
-    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(context, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(ResourceServerStrings(context), authenticationManager.getAddress(), ::authenticate) { address, credentials ->
         when (val sectionsResult = itemsService.sections(url = address, token = credentials.accessToken)) {
             is NetworkResult.Success<QueryResult> -> {
                 val section = sectionsResult.body.mediaContainer.directories?.firstOrNull { it.title.equals("music", true) }?.key

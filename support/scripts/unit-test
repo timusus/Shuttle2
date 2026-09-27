@@ -357,7 +357,7 @@ run_changed_mode() {
     rel="${f#"${mdir}"/}"
 
     case "${rel}" in
-      src/test/*.kt | src/commonTest/*.kt)
+      src/test/*.kt | src/commonTest/*.kt | src/androidHostTest/*.kt)
         # Only filter on classes that still exist; a deleted test file must
         # not add a --tests filter for a class Gradle can no longer find.
         # A helper (a Robot, Scenarios, a fake) has no @Test methods, and
@@ -378,7 +378,7 @@ run_changed_mode() {
         ;;
       src/main/*.kt | src/commonMain/*.kt | src/androidMain/*.kt | src/iosMain/*.kt)
         cls="$(basename "${rel}" .kt)"
-        matches="$(find "${REPO_ROOT}/${mdir}/src/test" "${REPO_ROOT}/${mdir}/src/commonTest" "${REPO_ROOT}/${mdir}/src/androidTest" \
+        matches="$(find "${REPO_ROOT}/${mdir}/src/test" "${REPO_ROOT}/${mdir}/src/commonTest" "${REPO_ROOT}/${mdir}/src/androidHostTest" "${REPO_ROOT}/${mdir}/src/androidTest" \
           -type f -name "${cls}Test.kt" 2>/dev/null || true)"
         match_count="$(printf '%s\n' "${matches}" | grep -c . || true)"
         if [ "${match_count}" -eq 1 ]; then
@@ -389,7 +389,7 @@ run_changed_mode() {
         touch "${WORK_DIR}/${id}.main"
         [ "${mpath}" != ":android:app" ] && touch "${WORK_DIR}/app_downstream_triggered"
         ;;
-      src/test/*|src/commonTest/*|src/androidTest/*)
+      src/test/*|src/commonTest/*|src/androidHostTest/*|src/androidTest/*)
         # Non-.kt test-source change (e.g. resources): run the module whole.
         touch "${WORK_DIR}/${id}.unmappable"
         ;;
@@ -537,7 +537,7 @@ run_changed_mode() {
 
 # Maps one changed src/main/*.kt file to the test class names in its module
 # that exercise it, one per line (nothing if none map): itself, if a
-# "<class>Test.kt" file exists anywhere under the module's src/test, plus any
+# "<class>Test.kt" file exists anywhere under the given test source dirs, plus any
 # "*Test.kt" that references the class by name (plain substring grep over the
 # test sources, kept simple and predictable per #552). A ViewModel also
 # matches on its name with the "ViewModel" suffix stripped, to catch a
@@ -545,25 +545,29 @@ run_changed_mode() {
 # class directly (e.g. LibraryScreenTest for SongListViewModel, since SongList
 # is part of the Library screen rather than its own).
 classes_for_main_file() {
-  local abs_file="$1" test_dir="$2" cls stem hit
+  local abs_file="$1" cls stem hit d test_dirs=()
+  shift
+  for d in "$@"; do
+    [ -d "${d}" ] && test_dirs+=("${d}")
+  done
   cls="$(basename "${abs_file}" .kt)"
-  [ -d "${test_dir}" ] || return 0
+  [ "${#test_dirs[@]}" -gt 0 ] || return 0
 
-  if find "${test_dir}" -type f -name "${cls}Test.kt" 2>/dev/null | grep -q .; then
+  if find "${test_dirs[@]}" -type f -name "${cls}Test.kt" 2>/dev/null | grep -q .; then
     echo "${cls}Test"
   fi
 
   while IFS= read -r hit; do
     [ -z "${hit}" ] && continue
     basename "${hit}" .kt
-  done < <(grep -rl --include='*Test.kt' -F -- "${cls}" "${test_dir}" 2>/dev/null || true)
+  done < <(grep -rl --include='*Test.kt' -F -- "${cls}" "${test_dirs[@]}" 2>/dev/null || true)
 
   stem="${cls%ViewModel}"
   if [ "${stem}" != "${cls}" ] && [ -n "${stem}" ]; then
     while IFS= read -r hit; do
       [ -z "${hit}" ] && continue
       basename "${hit}" .kt
-    done < <(grep -rl --include='*Test.kt' -F -- "${stem}" "${test_dir}" 2>/dev/null || true)
+    done < <(grep -rl --include='*Test.kt' -F -- "${stem}" "${test_dirs[@]}" 2>/dev/null || true)
   fi
 }
 
@@ -594,7 +598,7 @@ run_changed_tests_mode() {
 
   WORK_DIR="$(mktemp -d -t unit-test-changed-tests)"
 
-  local mdir mpath id rel test_dir f cls
+  local mdir mpath id rel f cls
   while IFS= read -r f; do
     [ -z "${f}" ] && continue
     case "${f}" in
@@ -610,11 +614,9 @@ run_changed_tests_mode() {
     id="$(module_id "${mpath}")"
     echo "${mpath}" >> "${WORK_DIR}/modules_seen"
     rel="${f#"${mdir}"/}"
-    test_dir="${REPO_ROOT}/${mdir}/src/test"
-    [ -d "${REPO_ROOT}/${mdir}/src/commonTest" ] && test_dir="${REPO_ROOT}/${mdir}/src/commonTest"
 
     case "${rel}" in
-      src/test/*Test.kt | src/commonTest/*Test.kt)
+      src/test/*Test.kt | src/commonTest/*Test.kt | src/androidHostTest/*Test.kt)
         # A screenshot test belongs to the final verify (Roborazzi runs in
         # verify mode there), not a --tests run here; treat it like any
         # other change that maps to no runnable class.
@@ -630,7 +632,7 @@ run_changed_tests_mode() {
         echo "note: '${f}' is an androidTest source; falling back to a whole run of ${mpath}"
         touch "${WORK_DIR}/${id}.unmappable"
         ;;
-      src/main/*.kt | src/test/*.kt | src/commonMain/*.kt | src/androidMain/*.kt | src/iosMain/*.kt | src/commonTest/*.kt)
+      src/main/*.kt | src/test/*.kt | src/commonMain/*.kt | src/androidMain/*.kt | src/iosMain/*.kt | src/commonTest/*.kt | src/androidHostTest/*.kt)
         # A main file, or a test helper (a Robot, Scenarios, a fake), selects
         # the test classes that use it; a helper has no @Test methods itself.
         local found=0 name
@@ -639,7 +641,7 @@ run_changed_tests_mode() {
           [ "${name%ScreenshotTest}" != "${name}" ] && continue
           echo "${name}" >> "${WORK_DIR}/${id}.classes"
           found=1
-        done < <(classes_for_main_file "${REPO_ROOT}/${f}" "${test_dir}")
+        done < <(classes_for_main_file "${REPO_ROOT}/${f}" "${REPO_ROOT}/${mdir}/src/test" "${REPO_ROOT}/${mdir}/src/commonTest" "${REPO_ROOT}/${mdir}/src/androidHostTest")
         if [ "${found}" -eq 0 ]; then
           echo "note: '${f}' maps to no test class; falling back to a whole run of ${mpath}"
           touch "${WORK_DIR}/${id}.unmappable"

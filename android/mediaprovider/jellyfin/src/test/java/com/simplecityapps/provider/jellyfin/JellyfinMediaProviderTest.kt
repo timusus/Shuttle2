@@ -11,6 +11,7 @@ import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.okHttpClient
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -46,6 +47,7 @@ class JellyfinMediaProviderTest {
     private val retrofit =
         Retrofit.Builder()
             .baseUrl("${server.address}/")
+            .client(server.okHttpClient())
             .addCallAdapterFactory(NetworkResultAdapterFactory(null))
             .addConverterFactory(MoshiConverterFactory.create(Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()))
             .build()
@@ -97,10 +99,10 @@ class JellyfinMediaProviderTest {
         sync()
 
         val request = server.requestsTo(ITEMS).single()
-        request.url.queryParameter("recursive") shouldBe "true"
-        request.url.queryParameter("fields") shouldBe "Genres,DateCreated"
-        request.url.queryParameter("startIndex") shouldBe "0"
-        request.url.queryParameter("limit") shouldBe "500"
+        request.url.parameters["recursive"] shouldBe "true"
+        request.url.parameters["fields"] shouldBe "Genres,DateCreated"
+        request.url.parameters["startIndex"] shouldBe "0"
+        request.url.parameters["limit"] shouldBe "500"
         request.headers["Authorization"]!! shouldContain "Token=\"token-1\""
     }
 
@@ -147,7 +149,7 @@ class JellyfinMediaProviderTest {
         val songs = sync()
 
         songs.map { it.externalId } shouldContainExactly listOf("page-1-a", "page-1-b", "page-2-a", "page-2-b")
-        server.requestsTo(ITEMS).map { it.url.queryParameter("startIndex") to it.url.queryParameter("limit") } shouldContainExactly
+        server.requestsTo(ITEMS).map { it.url.parameters["startIndex"] to it.url.parameters["limit"] } shouldContainExactly
             listOf("0" to "500", "500" to "2")
     }
 
@@ -194,7 +196,7 @@ class JellyfinMediaProviderTest {
 
         syncPlaylists(emptyList())
 
-        server.requestsTo("/Playlists/playlist-1/Items").single().url.queryParameter("userId") shouldBe "user-1"
+        server.requestsTo("/Playlists/playlist-1/Items").single().url.parameters["userId"] shouldBe "user-1"
     }
 
     @Test
@@ -215,14 +217,14 @@ class JellyfinMediaProviderTest {
         server.respond("/Playlists/playlist-long/Items", "long_playlist_items_page_1.json", query = mapOf("startIndex" to "0"))
         server.respond("/Playlists/playlist-long/Items", "long_playlist_items_page_2.json", query = mapOf("startIndex" to "500"))
         val library = sync()
-        server.requests.clear()
+        server.clearRequests()
 
         val playlist = syncPlaylists(library).single()
 
         playlist.songs.map { it.externalId } shouldContainExactly listOf("song-1", "song-2")
-        server.requestsTo("/Playlists/playlist-long/Items").map { it.url.queryParameter("startIndex") to it.url.queryParameter("limit") } shouldContainExactly
+        server.requestsTo("/Playlists/playlist-long/Items").map { it.url.parameters["startIndex"] to it.url.parameters["limit"] } shouldContainExactly
             listOf("0" to "500", "500" to "1")
-        server.requestsTo(ITEMS).map { it.url.queryParameter("includeItemTypes") } shouldContainExactly listOf("Playlist")
+        server.requestsTo(ITEMS).map { it.url.parameters["includeItemTypes"] } shouldContainExactly listOf("Playlist")
     }
 
     @Test

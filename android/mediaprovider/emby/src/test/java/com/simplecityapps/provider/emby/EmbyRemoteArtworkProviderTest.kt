@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.okHttpClient
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -30,6 +31,7 @@ class EmbyRemoteArtworkProviderTest {
     private val retrofit =
         Retrofit.Builder()
             .baseUrl("${server.address}/")
+            .client(server.okHttpClient())
             .addCallAdapterFactory(NetworkResultAdapterFactory(null))
             .addConverterFactory(MoshiConverterFactory.create(Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()))
             .build()

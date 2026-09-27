@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.R
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
+import com.simplecityapps.mediaprovider.server.ResourceServerStrings
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.withServerSession
 import com.simplecityapps.networking.retrofit.NetworkResult
@@ -40,7 +41,7 @@ class JellyfinMediaProvider(
 ) : MediaProvider {
     override val type = MediaProviderType.Jellyfin
 
-    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(context, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(ResourceServerStrings(context), authenticationManager.getAddress(), ::authenticate) { address, credentials ->
         emitAll(
             queryItems(
                 address = address,
@@ -63,7 +64,7 @@ class JellyfinMediaProvider(
         )
     }
 
-    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(context, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(ResourceServerStrings(context), authenticationManager.getAddress(), ::authenticate) { address, credentials ->
         when (
             val queryResult =
                 itemsService.playlists(

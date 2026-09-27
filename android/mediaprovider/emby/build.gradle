@@ -55,7 +55,7 @@ dependencies {
 
     implementation libs.kotlinx.datetime
 
-    testImplementation(testFixtures(project(":android:mediaprovider:server")))
+    testImplementation(project(":android:mediaprovider:server-testing"))
     testImplementation libs.junit
     testImplementation libs.kotest
     testImplementation libs.robolectric

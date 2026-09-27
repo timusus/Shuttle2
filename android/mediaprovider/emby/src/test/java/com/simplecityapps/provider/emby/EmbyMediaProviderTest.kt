@@ -11,6 +11,7 @@ import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.okHttpClient
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -45,6 +46,7 @@ class EmbyMediaProviderTest {
     private val retrofit =
         Retrofit.Builder()
             .baseUrl("${server.address}/")
+            .client(server.okHttpClient())
             .addCallAdapterFactory(NetworkResultAdapterFactory(null))
             .addConverterFactory(MoshiConverterFactory.create(Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()))
             .build()
@@ -96,10 +98,10 @@ class EmbyMediaProviderTest {
         sync()
 
         val request = server.requestsTo(ITEMS).single()
-        request.url.queryParameter("Recursive") shouldBe "true"
-        request.url.queryParameter("Fields") shouldBe "Genres,ProductionYear,DateCreated"
-        request.url.queryParameter("StartIndex") shouldBe "0"
-        request.url.queryParameter("Limit") shouldBe "500"
+        request.url.parameters["Recursive"] shouldBe "true"
+        request.url.parameters["Fields"] shouldBe "Genres,ProductionYear,DateCreated"
+        request.url.parameters["StartIndex"] shouldBe "0"
+        request.url.parameters["Limit"] shouldBe "500"
         request.headers["X-Emby-Token"] shouldBe "token-1"
     }
 
@@ -146,7 +148,7 @@ class EmbyMediaProviderTest {
         val songs = sync()
 
         songs.map { it.externalId } shouldContainExactly listOf("501", "502", "503", "504")
-        server.requestsTo(ITEMS).map { it.url.queryParameter("StartIndex") to it.url.queryParameter("Limit") } shouldContainExactly
+        server.requestsTo(ITEMS).map { it.url.parameters["StartIndex"] to it.url.parameters["Limit"] } shouldContainExactly
             listOf("0" to "500", "500" to "2")
     }
 
@@ -193,7 +195,7 @@ class EmbyMediaProviderTest {
 
         syncPlaylists(emptyList())
 
-        server.requestsTo("/Playlists/401/Items").single().url.queryParameter("UserId") shouldBe "user-1"
+        server.requestsTo("/Playlists/401/Items").single().url.parameters["UserId"] shouldBe "user-1"
     }
 
     @Test
@@ -214,14 +216,14 @@ class EmbyMediaProviderTest {
         server.respond("/Playlists/403/Items", "long_playlist_items_page_1.json", query = mapOf("StartIndex" to "0"))
         server.respond("/Playlists/403/Items", "long_playlist_items_page_2.json", query = mapOf("StartIndex" to "500"))
         val library = sync()
-        server.requests.clear()
+        server.clearRequests()
 
         val playlist = syncPlaylists(library).single()
 
         playlist.songs.map { it.externalId } shouldContainExactly listOf("101", "102")
-        server.requestsTo("/Playlists/403/Items").map { it.url.queryParameter("StartIndex") to it.url.queryParameter("Limit") } shouldContainExactly
+        server.requestsTo("/Playlists/403/Items").map { it.url.parameters["StartIndex"] to it.url.parameters["Limit"] } shouldContainExactly
             listOf("0" to "500", "500" to "1")
-        server.requestsTo(ITEMS).map { it.url.queryParameter("IncludeItemTypes") } shouldContainExactly listOf("Playlist")
+        server.requestsTo(ITEMS).map { it.url.parameters["IncludeItemTypes"] } shouldContainExactly listOf("Playlist")
     }
 
     @Test

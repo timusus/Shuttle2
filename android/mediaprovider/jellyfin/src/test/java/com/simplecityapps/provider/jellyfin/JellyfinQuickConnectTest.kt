@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.okHttpClient
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
@@ -22,6 +23,7 @@ class JellyfinQuickConnectTest {
 
     private val retrofit = Retrofit.Builder()
         .baseUrl("${server.address}/")
+        .client(server.okHttpClient())
         .addCallAdapterFactory(NetworkResultAdapterFactory(null))
         .addConverterFactory(MoshiConverterFactory.create(Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()))
         .build()
@@ -69,7 +71,7 @@ class JellyfinQuickConnectTest {
         val result = runBlocking { authenticationManager.initiateQuickConnect(server.address) }
 
         result.getOrThrow() shouldBe QuickConnectCode(code = "123456", secret = "secret-1")
-        server.requestsTo("/QuickConnect/Initiate").map { it.method } shouldBe listOf("POST", "GET")
+        server.requestsTo("/QuickConnect/Initiate").map { it.method.value } shouldBe listOf("POST", "GET")
     }
 
     @Test
