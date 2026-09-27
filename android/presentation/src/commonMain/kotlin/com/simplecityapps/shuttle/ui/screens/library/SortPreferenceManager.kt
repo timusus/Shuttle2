@@ -7,8 +7,12 @@ import com.simplecityapps.shuttle.persistence.putString
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.SongSortOrder
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
 
-class SortPreferenceManager(private val store: KeyValueStore) : SortPreferences {
+@ContributesBinding(AppScope::class)
+class SortPreferenceManager @Inject constructor(private val store: KeyValueStore) : SortPreferences {
     override var sortOrderSongList: SongSortOrder
         set(value) {
             store.putString("sort_order_song_list", value.name)

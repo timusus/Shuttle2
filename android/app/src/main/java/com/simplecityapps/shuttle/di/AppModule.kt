@@ -7,17 +7,9 @@ import com.simplecityapps.mediaprovider.PlaylistExporter
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.debug.livelog.LiveLogSink
 import com.simplecityapps.shuttle.di.ApplicationContext
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.ui.ThemeManager
-import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
-import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
-import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferenceManager
-import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferences
-import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferenceManager
-import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferences
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -54,17 +46,6 @@ object AppModule {
         @ApplicationContext context: Context,
         @IoDispatcher ioDispatcher: CoroutineDispatcher,
     ): PlaylistExporter = PlaylistExporter(context, ioDispatcher)
-
-    @Provides
-    fun provideSortPreferences(store: KeyValueStore): SortPreferences = SortPreferenceManager(store)
-
-    @SingleIn(AppScope::class)
-    @Provides
-    fun provideArtistListPreferences(preferenceManager: GeneralPreferenceManager): ArtistListPreferences = ArtistListPreferenceManager(preferenceManager)
-
-    @SingleIn(AppScope::class)
-    @Provides
-    fun provideAlbumListPreferences(preferenceManager: GeneralPreferenceManager): AlbumListPreferences = AlbumListPreferenceManager(preferenceManager)
 
     @SingleIn(AppScope::class)
     @Provides

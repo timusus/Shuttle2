@@ -6,7 +6,7 @@ import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 /** The keys and defaults [SortPreferenceManager] saves under, pinned so a saved sort order survives (#584). */
 class SortPreferenceManagerTest {

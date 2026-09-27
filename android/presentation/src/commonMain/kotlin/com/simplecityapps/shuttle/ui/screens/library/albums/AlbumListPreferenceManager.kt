@@ -2,8 +2,14 @@ package com.simplecityapps.shuttle.ui.screens.library.albums
 
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesBinding
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
-class AlbumListPreferenceManager(
+@ContributesBinding(AppScope::class)
+@SingleIn(AppScope::class)
+class AlbumListPreferenceManager @Inject constructor(
     private val preferenceManager: GeneralPreferenceManager,
 ) : AlbumListPreferences {
 
