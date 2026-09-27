@@ -13,7 +13,6 @@ import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.Preference
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.abs
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -102,21 +101,17 @@ class IosPlaybackStore(
         controller.load(restoredSeekPosition, skipUnloadable = false) {}
     }
 
-    /** The saved queue, read from the library off the main thread; null if there's none or none of its songs are left. */
+    /**
+     * The saved queue, read from the library off the main thread; null if there's none or none of its songs are left. A
+     * failed read goes to the scope's exception handler, and [start] still marks the queue restored.
+     */
     private suspend fun readSavedQueue(
         shuffleMode: ShuffleMode,
         queuePosition: Int
-    ): SavedQueueSongs? = try {
-        withContext(readContext) {
-            playbackPreferenceManager.readSavedQueue(shuffleMode, queuePosition) { songIds ->
-                songRepository.loadSongs(SongQuery.SongIds(songIds)).associateBy { song -> song.id }
-            }
+    ): SavedQueueSongs? = withContext(readContext) {
+        playbackPreferenceManager.readSavedQueue(shuffleMode, queuePosition) { songIds ->
+            songRepository.loadSongs(SongQuery.SongIds(songIds)).associateBy { song -> song.id }
         }
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        // A saved queue that can't be read is dropped, as Android's is.
-        null
     }
 
     // Saving

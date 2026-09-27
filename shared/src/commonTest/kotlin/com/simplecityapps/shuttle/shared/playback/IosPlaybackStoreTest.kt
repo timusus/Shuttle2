@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.shared.playback
 
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.persistence.resumePosition
@@ -9,13 +10,20 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.Preference
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.random.Random
 import kotlin.test.Test
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
@@ -42,11 +50,19 @@ class IosPlaybackStoreTest {
         val speed: Preference<Float>
     )
 
-    /** Starts the app's playback over [prefs]: the controller, and the store that restores into it. */
-    private fun TestScope.launch(): Launch {
+    /**
+     * Starts the app's playback over [prefs]: the controller, and the store that restores into it, reading the saved
+     * queue from [songs].
+     */
+    private fun TestScope.launch(
+        songs: SongRepository = songRepository,
+        exceptionHandler: CoroutineContext = EmptyCoroutineContext
+    ): Launch {
         val engine = FakeIosAudioPlayer()
         val manager = PlaybackPreferenceManager(prefs)
-        val scope = CoroutineScope(backgroundScope.coroutineContext + UnconfinedTestDispatcher(testScheduler))
+        // A supervisor, as the app's scope is, so a failure reaches the handler rather than failing the test.
+        val job = SupervisorJob(backgroundScope.coroutineContext[Job])
+        val scope = CoroutineScope(backgroundScope.coroutineContext + job + UnconfinedTestDispatcher(testScheduler) + exceptionHandler)
         val controller = IosPlayerController(
             player = engine,
             resolver = { song, _ -> IosStream("song:${song.id}") },
@@ -55,7 +71,7 @@ class IosPlaybackStoreTest {
             resumePosition = manager::resumePosition
         )
         val speed = Preference(prefs, PlaybackSettings.PlaybackSpeed)
-        IosPlaybackStore(controller, manager, speed, songRepository, scope, readContext = UnconfinedTestDispatcher(testScheduler)).start()
+        IosPlaybackStore(controller, manager, speed, songs, scope, readContext = UnconfinedTestDispatcher(testScheduler)).start()
         engine.settle()
         return Launch(engine, controller, manager, speed)
     }
@@ -180,5 +196,47 @@ class IosPlaybackStoreTest {
         second.controller.queueOperations.queueStateFlow.value.items shouldBe emptyList()
         second.controller.queueOperations.hasRestoredQueue shouldBe true
         second.manager.nowPlaying.shouldBeNull()
+    }
+
+    @Test
+    fun `a queue set while the saved one is read is kept and the restore is abandoned`() = runTest {
+        val first = launch()
+        first.play(listOf(a, b, c), position = 1)
+
+        // The library read waits on the gate, so it's still in flight when the queue is set.
+        val gate = CompletableDeferred<Unit>()
+        val gated = object : SongRepository by songRepository {
+            override suspend fun loadSongs(query: SongQuery): List<Song> {
+                gate.await()
+                return songRepository.loadSongs(query)
+            }
+        }
+        val second = launch(songs = gated)
+        second.controller.queueOperations.hasRestoredQueue shouldBe false
+        second.play(listOf(d))
+        gate.complete(Unit)
+        second.engine.settle()
+
+        val queue = second.controller.queueOperations
+        queue.queueStateFlow.value.items.map { it.song } shouldBe listOf(d)
+        queue.getCurrentItem()?.song shouldBe d
+        queue.hasRestoredQueue shouldBe true
+        second.manager.queueIds shouldBe "4"
+    }
+
+    @Test
+    fun `a saved queue that fails to read still counts as restored`() = runTest {
+        val first = launch()
+        first.play(listOf(a, b))
+        val failing = object : SongRepository by songRepository {
+            override suspend fun loadSongs(query: SongQuery): List<Song> = throw IllegalStateException("database unavailable")
+        }
+        val failures = mutableListOf<Throwable>()
+
+        val second = launch(songs = failing, exceptionHandler = CoroutineExceptionHandler { _, e -> failures += e })
+
+        second.controller.queueOperations.queueStateFlow.value.items shouldBe emptyList()
+        second.controller.queueOperations.hasRestoredQueue shouldBe true
+        failures.map { it.message } shouldBe listOf("database unavailable")
     }
 }
