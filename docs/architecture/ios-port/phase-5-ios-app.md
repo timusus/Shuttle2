@@ -194,15 +194,23 @@ session just imports. Import on iOS runs at launch and on pull-to-refresh; a `BG
 ViewInspector test on the plain view (`.claude/rules/ios.md`). Rows (`SongRow`, `AlbumTile`,
 `ArtistRow` *(new)*) are shared components under `ios/S2/Components/` *(new)*.
 
-**Mini player / Now Playing POC (#588).** `ios/S2/Features/Playback/PlayerModel.swift` is a small
-`@Observable` class that reads `AppGraph.shared.playerController`'s flows (current song, transport
-state, progress, queue) and forwards commands back to it; it stands in for the shared `PlayerViewModel`
-until that's ported (phase 4 wave 5). It also follows the queue's shuffle and repeat modes. The views
-never read `PlayerModel` directly: `PlayerBinding.swift` maps it to `NowPlayingState` (plain values,
-including the cover as an `ArtworkSource`) and `PlayerActions` (closures), and `MiniPlayerBar`,
-`NowPlayingContent` and `NowPlayingQueueList` take only those. Porting the shared `PlayerViewModel` is a
-change to that one extension, not to the views or their call sites (`AppShell`'s
-`MiniPlayerView(showNowPlaying:)`, `ContentView`'s `NowPlayingView()` `.nowPlayingPresentation`).
+**Mini player / Now Playing (#588, #587).** Both run on the shared `PlayerViewModel` (phase 4 wave 5). There
+is one instance for the app, built in `IosAppDependencies` through `IosAppGraphKt.createPlayerViewModel(graph)`.
+
+`PlayerBinding` (`ios/S2/Features/Playback/PlayerBinding.swift`), an `@Observable` class, collects the VM's
+`uiState` and maps it to plain values:
+- `MiniPlayerState` for the bar.
+- `NowPlayingState` for Now Playing and its queue: the cover as an `ArtworkSource`, shuffle, repeat, speed and
+  whether the sleep timer is on.
+
+It maps the VM's actions to `PlayerActions` closures. Each state is replaced only when it changes, and the queue
+rows are rebuilt only when the VM's player state does. Because of this, the mini player, which reads
+`miniPlayer` alone, isn't redrawn on a progress tick. `SeekHold` keeps a seek's target on screen until the
+player catches up.
+
+`MiniPlayerBar`, `NowPlayingContent` and `NowPlayingQueueList` take only those values. Now Playing's bottom bar
+has a speed menu and a sleep timer menu (15 to 60 minutes, or off); both work on iOS through the VM. Speed isn't
+saved across launches, and ReplayGain isn't offered until the engine applies it (#604).
 
 ### Design tokens (#587)
 

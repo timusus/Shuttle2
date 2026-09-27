@@ -28,8 +28,8 @@ platform subsystem: playback engine, billing, background services). Status:
 | Playlists — list | `android/app/.../ui/screens/library/playlists/PlaylistListViewModel.kt` (shared) | M | 7 | shared-ready | |
 | Playlists — smart/auto (recently added, most played, history) | `android/app/.../ui/screens/library/SmartPlaylistDetailViewModel.kt` | M | 7 | none | Not yet in `android/presentation` commonMain. |
 | Search (artists/albums/songs, fuzzy ranking, filter chips) | `android/app/.../ui/screens/search/SearchViewModel.kt` | M | 7 | partial | `ios/S2/Features/Search/SearchView.swift` exists; `SearchViewModel` still android-only, not yet in presentation module. |
-| Mini player (progress, play/pause, skip) | `android/app/.../ui/shell/player/MiniPlayer.kt` | M | 6 | done | `ios/S2/Features/Playback/MiniPlayerView.swift`, `PlayerModel.swift`, `PlayerPresentation.swift`. |
-| Now Playing (shuffle, repeat x3, seek, favourite, clear queue) | `android/app/.../ui/shell/player/NowPlaying.kt` | M | 6 | partial | `ios/S2/Features/Playback/NowPlayingView.swift` exists; `PlayerViewModel.kt` (android-only) not yet shared. |
+| Mini player (progress, play/pause, skip) | `android/app/.../ui/shell/player/MiniPlayer.kt` | M | 6 | done | `ios/S2/Features/Playback/MiniPlayerView.swift`, `PlayerBinding.swift` (on the shared `PlayerViewModel`), `PlayerPresentation.swift`. |
+| Now Playing (shuffle, repeat x3, seek, favourite, clear queue) | `android/app/.../ui/shell/player/NowPlaying.kt` | M | 6 | partial | `ios/S2/Features/Playback/NowPlayingView.swift` on the shared `PlayerViewModel` (phase 4 wave 5) through `PlayerBinding`: shuffle, repeat, seek, speed, sleep timer. No favourite or clear-queue UI yet. |
 | Now Playing — lyrics panel | `android/app/.../ui/shell/player/NowPlayingPanels.kt` | S | 7 | none | Android gap #429 too. |
 | Now Playing — artwork swipe skip | `android/app/.../ui/shell/player/NowPlaying.kt` | S | 6 | none | Android gap #473 too. |
 | Queue (tap, reorder, remove, play next, save as playlist) | `android/app/.../ui/shell/player/QueueList.kt` | M | 6 | none | No shared QueueViewModel; `IosPlayerController` implements `QueueOperations` directly (`shared/.../playback/IosPlayerController.kt`, 791 lines) so queue *logic* is shared even without a Swift screen. |
@@ -39,13 +39,13 @@ platform subsystem: playback engine, billing, background services). Status:
 | ReplayGain | `:android:playback` (`docs/architecture/media3-playback-design.md`) | M | 6 | partial | `PCMProcessor.swift`, `LookaheadLimiter.swift` in DSP; no ReplayGain-tag parsing/UI confirmed. |
 | Crossfade | `:android:playback` (`docs/architecture/crossfade.md`) | M | 6 | none | No crossfade references found under `ios/Playback`. |
 | Equalizer (on/off, presets, custom bands) | `android/app/.../ui/screens/settings/equalizer/EqualizerViewModel.kt` (shared) | M | 6/9 | partial | `Biquad.swift` DSP filter exists; `EqualizerViewModel` and `ComputeFrequencyResponse.kt` already shared-ready; no SwiftUI EQ screen. |
-| Playback speed | `android/playback` (`PlaybackSpeedStore`) | S | 6 | none | |
-| Sleep timer | `android/playback/.../sleeptimer/SleepTimer.kt`, `ui/shell/player/ControlSleepTimer.kt` | M | 7 | none | |
+| Playback speed | `android/playback` (`PlaybackSpeedStore`) | S | 6 | partial | Now Playing's speed menu, through the shared `PlayerViewModel`; not saved across launches (no `PlaybackSpeedStore` on iOS). |
+| Sleep timer | `android/domain/.../sleeptimer/SleepTimer.kt`, `ui/shell/player/ControlSleepTimer.kt` | M | 7 | partial | Shared `SleepTimer` bound in `IosPlayerModule`; Now Playing's sleep timer menu (15-60 minutes, off). No play-to-end option or time-remaining display yet. |
 | Chromecast | `android/playback/.../chromecast/` (`CastService`, `CastQueue`, `CastSessionManager`) | L | 9 | none | Cast has no iOS equivalent; AirPlay is the iOS analogue and is separately scoped in phase 9. |
 | AirPlay | n/a (Android has no AirPlay) | L | 9 | none | New surface for iOS, not a port. |
 | Android Auto | `android/playback/.../mediasession/` (MediaLibraryService browse tree) | L | 9 | none | CarPlay is the iOS analogue, phase 9. |
 | CarPlay | n/a (Android has no CarPlay) | L | 9 | none | New surface for iOS, not a port. |
-| Notification / media session controls | `android/playback/.../mediasession/` | M | 6 | partial | iOS equivalent is `MPNowPlayingInfoCenter`/remote commands per `ios-port.md` decisions; `PlayerModel.swift` present but session/lock-screen wiring not confirmed. |
+| Notification / media session controls | `android/playback/.../mediasession/` | M | 6 | partial | iOS equivalent is `MPNowPlayingInfoCenter`/remote commands per `ios-port.md` decisions; `PlaybackSystemCoordinator` drives `NowPlayingController` off `IosPlayerController`. |
 | Home screen widget | `android/app/.../ui/widgets/` (`NowPlayingWidget.kt`) | L | 9 | none | WidgetKit port, phase 9. |
 | Downloads (offline songs for remote providers) | `android/downloads/src/main/.../shuttle/downloads/` (`SongDownloadManager`, `SongDownloadService`) | L | 8/9 | none | |
 | Tag editing (batch) | `android/app/.../ui/screens/tageditor/TagEditorViewModel.kt` | M | 8 | none | Needs local-library phase (TagLib on iOS). |

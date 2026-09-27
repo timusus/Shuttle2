@@ -264,6 +264,62 @@ The other assisted ViewModels are exposed as factory properties (`albumDetailVie
 `-PupdateArchitectureBaselines`: 11 stale lines removed, replaced by 4 renamed equivalents
 (`DeviceTagFileAccess` x3, `CoilArtworkSeedSource` x1) — same violations, new names, net shrinkage.
 
+## Wave 5: what landed (PlayerViewModel)
+
+`PlayerViewModel` moved to `presentation`'s `commonMain`. Its package is still `ui.shell.player`, so the Compose
+player files in `:android:app` import it unchanged. `PlayerUiState` and the player use cases moved with it:
+`ObserveQueue`/`ObservePlayback`/`ObserveProgress`, `ControlPlayback`, `EditQueue`, `ControlSleepTimer` and its
+readers, `SetReplayGainMode`, and `ClearQueue`/`RestoreQueue`. `FolderListViewModel` stays in app until iOS has
+local files (phase 8).
+
+**What moved down to `:android:domain`, and why.** Presentation sees only core and domain, and domain has no
+project dependencies. The same packages are kept, so no import changed:
+- **`ReplayGainMode`**, a plain enum, moved from `playback:core`.
+- **`NowPlayingSnapshot`**, the saved song shown before the queue is restored, moved from `:android:playback`.
+- **`SleepTimer`** moved from `:android:playback`, with its Timber lines dropped.
+  - Its clock defaults to `TimeSource.Monotonic`.
+  - Android's `PlaybackModule` still passes `SystemClock.elapsedRealtime`, which keeps counting through deep
+    sleep, so Android's behaviour is unchanged.
+
+**Seams.** Android binds them exactly as before:
+- `CastAvailability`, `SavedNowPlaying` and `ObserveGatedServerSkip` are the `fun interface`s they already were.
+  They are bound in app's `PlayerModule` and `EntitlementBindsModule`.
+- **`ReplayGainModeSetting`** is new. The setting (`PlaybackSettings.ReplayGain`) lives in `playback:core`, a
+  data module presentation can't see. Both graphs hand it over, and `SetReplayGainMode` saves it and applies
+  it through `SettingsEffects` as before.
+
+**Other build changes.**
+- `SavedStateHandle` comes from `org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-savedstate`.
+- The UI state keeps its `@Immutable` through `androidx.compose.runtime:runtime-annotation`. It is annotations
+  only, not the Compose runtime, so Compose on Android sees the same stable types.
+
+**Tests.**
+- `PlayerViewModelTest` moved to `commonTest` (kotlin.test).
+  - Test names lost their commas, which Kotlin/Native rejects in names.
+  - It binds the real `PlaybackSettings.ReplayGain` through a test-only `playback:core` dependency. Test
+    classpaths are exempt from the layer check.
+- `FakeSettingsEffects` moved to `presentation-testing`.
+- Two stale `ui-module-imports.txt` entries were deleted (`ControlSleepTimer -> SleepTimer`,
+  `PlayerViewModel -> NowPlayingSnapshot`).
+
+**iOS bindings.** `IosPlayerModule` binds what iOS has today:
+- no Cast (`CastAvailability { false }`);
+- no saved now-playing, since the iOS controller doesn't persist its queue yet;
+- no gated server skips until entitlements (phase 9);
+- the ReplayGain setting;
+- the shared `SleepTimer` on the app scope.
+
+`IosPlaybackModule` marks the iOS queue restored, because there is nothing to restore; an empty queue then
+reads as no queue rather than one still loading. Swift gets the VM from `IosAppGraphKt.createPlayerViewModel(graph)`,
+which uses a fresh `SavedStateHandle`. `IosAppGraphTest` covers `playerViewModelFactory` and creating the VM.
+
+**Still open on iOS.**
+- ReplayGain is stored but not applied: the engine plays at unity gain until #604.
+- Speed works within a session but isn't saved: there is no `PlaybackSpeedStore` on iOS.
+- There is no queue persistence and no AirPlay in place of Cast.
+- Favourites, playlists, song actions, queue editing (move, remove, clear, undo) and the one-shot events are in
+  the VM, but no iOS UI uses them yet.
+
 ## Per-ViewModel table
 
 Legend: **domain-kmp** = dependency's interface already lives in `:android:domain` (KMP since phase 0/#582);
