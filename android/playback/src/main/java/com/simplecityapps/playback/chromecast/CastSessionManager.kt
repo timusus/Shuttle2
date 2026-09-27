@@ -138,5 +138,14 @@ constructor(
             false
         }
 
+        /**
+         * Whether the Cast session joined a receiver that was already running rather than launching it, as one resumed
+         * after S2 was stopped while casting does: it may be playing what S2 sent it then.
+         */
+        fun receiverWasRunning(context: Context): Boolean = try {
+            Cast.getSingletonInstance(context).currentCastSession?.applicationConnectionResult?.wasLaunched == false
+        } catch (e: Exception) {
+            false
+        }
     }
 }

@@ -12,18 +12,19 @@ import androidx.media3.common.SimpleBasePlayer
 import com.google.android.gms.cast.MediaQueueItem
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import com.simplecityapps.playback.queue.queueEntry
 
 /**
  * Stands in for Media3's Cast player: plays through the local player until [connect], then through [receiver] until
  * [disconnect], handing over as `CastPlayerImpl.updateActivePlayer` does: the transfer callback, then the new player
- * prepared (if the old one wasn't idle), then the old one stopped, and only then the new one active.
+ * prepared (if the old one wasn't idle), then the old one stopped, and only then the new one active. Built
+ * [connected], as when a Cast session is already up, it plays through [receiver] from the start, with no transfer.
  */
 class FakeCastPlayer(
     localPlayer: Player,
     private val receiver: Player,
-    private val transferCallback: CastPlayer.TransferCallback
-) : ForwardingSimpleBasePlayer(localPlayer) {
+    private val transferCallback: CastPlayer.TransferCallback,
+    connected: Boolean = false
+) : ForwardingSimpleBasePlayer(if (connected) receiver else localPlayer) {
     private val local = localPlayer
 
     fun connect() = switchTo(receiver)
@@ -55,6 +56,10 @@ class FakeReceiver(private val converter: CastMediaItemConverter) : SimpleBasePl
     var finished = false
         private set
 
+    /** Whether the Cast session joined the receiver already running, rather than launching it. */
+    var wasRunning = false
+        private set
+
     private class Item(val mediaItem: MediaItem) {
         val uid = Any()
     }
@@ -72,7 +77,27 @@ class FakeReceiver(private val converter: CastMediaItemConverter) : SimpleBasePl
     private val undelivered = mutableListOf<() -> Unit>()
 
     /** The ids of the songs the receiver's playlist holds, in its order. */
-    val songIds: List<Long> get() = List(mediaItemCount) { getMediaItemAt(it).queueEntry.song.id }
+    val songIds: List<Long> get() = List(mediaItemCount) { checkNotNull(getMediaItemAt(it).castSongId) }
+
+    /**
+     * The receiver is already running as the session joins it, playing [queueItems] (sent by an earlier run of S2) at
+     * the one at [index], at [positionMs]. It reports them only once [deliver]ed, as the real one's status arrives
+     * after the session is resumed.
+     */
+    fun playingFromEarlierRun(
+        queueItems: List<MediaQueueItem>,
+        index: Int,
+        positionMs: Long
+    ) {
+        wasRunning = true
+        playWhenReady = true
+        undelivered += {
+            items = queueItems.map { Item(converter.toMediaItem(it)) }
+            this.index = index
+            this.positionMs = positionMs
+            playbackState = Player.STATE_READY
+        }
+    }
 
     /** Whether changes were sent that the receiver hasn't reported. */
     val hasUndelivered: Boolean get() = undelivered.isNotEmpty()

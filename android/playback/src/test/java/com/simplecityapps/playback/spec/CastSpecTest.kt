@@ -10,7 +10,10 @@ import com.simplecityapps.playback.chromecast.CastWindow.SIZE
 import com.simplecityapps.playback.chromecast.FakeCastPlayer
 import com.simplecityapps.playback.chromecast.FakeMediaInfoProvider
 import com.simplecityapps.playback.chromecast.FakeReceiver
+import com.simplecityapps.playback.chromecast.FakeSongRepository
+import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.RepeatMode
+import com.simplecityapps.playback.queue.toMediaItem
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -42,15 +45,21 @@ class CastSpecTest {
 
     private var castPlayersBuilt = 0
 
+    /** Whether a Cast session is already up as Cast is attached. */
+    private var connectedAtAttach = false
+
     private val harness =
         PlaybackHarness(
-            castQueue = { local -> CastQueue(local, converter, streams) { receiver.finished }.also { castQueue = it } },
+            castQueue = { local ->
+                CastQueue(local, converter, streams, receiverWasRunning = { receiver.wasRunning }) { receiver.finished }.also { castQueue = it }
+            },
             activePlayer = { local ->
                 AppPlayer(local) {
                     castPlayersBuilt++
-                    FakeCastPlayer(local, receiver, castQueue).also { castPlayer = it }.also(castQueue::attach)
+                    FakeCastPlayer(local, receiver, castQueue, connectedAtAttach).also { castPlayer = it }.also(castQueue::attach)
                 }.also { appPlayer = it }
-            }
+            },
+            songRepository = FakeSongRepository(songs(5))
         )
 
     private val playback = harness.playbackOperations
@@ -100,6 +109,35 @@ class CastSpecTest {
     }
 
     private val currentSongId get() = queue.getCurrentItem()?.song?.id
+
+    /** Songs 1 to 5 saved as the queue, on the second song at 1s, as S2 left them when it was stopped while casting. */
+    private fun savedQueue() {
+        harness.playbackPreferenceManager.queueIds = "1,2,3,4,5"
+        harness.playbackPreferenceManager.queuePosition = 1
+        harness.playbackPreferenceManager.playbackPosition = 1_000
+    }
+
+    /**
+     * The receiver playing on from an earlier run of S2: [songIds] sent with that run's key, on the one at [index] at
+     * [positionMs].
+     */
+    private fun receiverPlayingFromEarlierRun(
+        songIds: List<Long>,
+        index: Int,
+        positionMs: Long
+    ) {
+        val earlierRun = CastMediaItemConverter({ "10.0.0.2" }, CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext), "Unknown")
+        val queueItems = songIds.mapIndexed { uid, id -> earlierRun.toMediaQueueItem(QueueEntry(uid.toLong(), song(id)).toMediaItem()) }
+        receiver.playingFromEarlierRun(queueItems, index, positionMs)
+    }
+
+    /** Whether every URL the receiver was sent carries this run's key. */
+    private fun sentWithThisRunsKey(): Boolean = receiver.sentItems.all { item ->
+        val media = item.media!!
+        (listOf(media.contentUrl!!) + media.metadata!!.images.map { it.url.toString() }).all { url ->
+            streams.isValid(url.substringAfter(":5000/").substringBefore('/'))
+        }
+    }
 
     @Test
     fun `attaching Cast while playing leaves playback as it was, and casting works after`() {
@@ -356,6 +394,84 @@ class CastSpecTest {
         harness.idle()
 
         harness.playbackPreferenceManager.playbackPosition shouldBe left
+    }
+
+    @Test
+    fun `a receiver resumed after S2 was stopped plays on where it was, at URLs with this run's key`() {
+        savedQueue()
+        receiverPlayingFromEarlierRun(songIds = (1L..5L).toList(), index = 3, positionMs = 1_500)
+        harness.restore()
+        appPlayer.attachCast()
+
+        castPlayer.connect()
+        harness.idle()
+
+        // Nothing is sent, and the receiver plays on, until it has reported what it holds.
+        receiver.sentItems.shouldBeEmpty()
+        receiver.playWhenReady shouldBe true
+
+        settle()
+
+        receiver.sentItems.size shouldBe 5
+        sentWithThisRunsKey() shouldBe true
+        receiver.songIds shouldBe (1L..5L).toList()
+        receiver.currentMediaItemIndex shouldBe 3
+        receiver.currentPosition shouldBe 1_500L
+        receiver.playWhenReady shouldBe true
+        currentSongId shouldBe 4L
+    }
+
+    @Test
+    fun `a resumed receiver on a song not in the restored queue is sent the queue where S2 left it`() {
+        savedQueue()
+        receiverPlayingFromEarlierRun(songIds = listOf(6L, 7L), index = 1, positionMs = 1_500)
+        harness.restore()
+        appPlayer.attachCast()
+
+        castPlayer.connect()
+        settle()
+
+        sentWithThisRunsKey() shouldBe true
+        receiver.songIds shouldBe (1L..5L).toList()
+        receiver.currentMediaItemIndex shouldBe 1
+        receiver.currentPosition shouldBe 1_000L
+        currentSongId shouldBe 2L
+    }
+
+    @Test
+    fun `a receiver resumed before the queue is restored is taken over once it is`() {
+        savedQueue()
+        receiverPlayingFromEarlierRun(songIds = (1L..5L).toList(), index = 3, positionMs = 1_500)
+        appPlayer.attachCast()
+        castPlayer.connect()
+        settle()
+
+        receiver.sentItems.shouldBeEmpty()
+
+        harness.restore()
+        settle()
+
+        sentWithThisRunsKey() shouldBe true
+        receiver.songIds shouldBe (1L..5L).toList()
+        receiver.currentMediaItemIndex shouldBe 3
+        currentSongId shouldBe 4L
+    }
+
+    @Test
+    fun `a session already up as Cast is attached, to a receiver from an earlier run, is taken over on its song`() {
+        savedQueue()
+        receiverPlayingFromEarlierRun(songIds = (1L..5L).toList(), index = 3, positionMs = 1_500)
+        connectedAtAttach = true
+        appPlayer.attachCast()
+        settle()
+
+        harness.restore()
+        settle()
+
+        sentWithThisRunsKey() shouldBe true
+        receiver.songIds shouldBe (1L..5L).toList()
+        receiver.currentMediaItemIndex shouldBe 3
+        currentSongId shouldBe 4L
     }
 
     @Test

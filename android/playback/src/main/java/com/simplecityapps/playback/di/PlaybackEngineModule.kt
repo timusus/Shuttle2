@@ -129,7 +129,13 @@ class PlaybackEngineModule {
         exoPlayer: ExoPlayer,
         converter: CastMediaItemConverter,
         streams: CastStreams
-    ): CastQueue = CastQueue(exoPlayer, converter, streams) { CastSessionManager.receiverPlayedOut(context) }
+    ): CastQueue = CastQueue(
+        exoPlayer,
+        converter,
+        streams,
+        receiverWasRunning = { CastSessionManager.receiverWasRunning(context) },
+        receiverPlayedOut = { CastSessionManager.receiverPlayedOut(context) }
+    )
 
     // The player the app plays through: the ExoPlayer, then, once Cast is attached (see CastStarter), a Cast player
     // around it that plays on a Cast receiver while a Cast session is up. The Cast player is built on the main thread,

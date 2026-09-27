@@ -134,6 +134,10 @@
   ],
   "fixes": [
     {
+      "text": "When Android closes S2 while you're casting, reopening it carries on from where the Cast device was, instead of skipping songs that no longer play",
+      "commits": ["c578aac5b"]
+    },
+    {
       "text": "Favorites is now a smart playlist of the songs you've hearted, so changing the app's language no longer creates a second Favorites list. Your existing favorites carry over",
       "commits": []
     },

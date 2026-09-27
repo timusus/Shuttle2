@@ -28,6 +28,10 @@ import timber.log.Timber
  * player's current item with it. A remote-provider song is only sent once its stream is resolved (see [CastStreams]),
  * so a window goes out as far as its streams are, and the rest follows as they resolve.
  *
+ * A session that joins a receiver already playing, as one resumed after S2 was stopped while casting does, hands over
+ * the other way: the local player moves to the receiver's song and position, and the receiver is sent the window
+ * afresh from there, as the URLs it holds carry a key this run of S2 doesn't serve (see [takeOver]).
+ *
  * Main thread only, like the players.
  */
 class CastQueue(
@@ -35,6 +39,8 @@ class CastQueue(
     private val localPlayer: Player,
     private val converter: CastMediaItemConverter,
     private val streams: CastStreams,
+    /** Whether the Cast session joined a receiver that was already running, rather than launching it. */
+    private val receiverWasRunning: () -> Boolean,
     /** Whether the receiver went idle because its item played to the end (not stopped, interrupted or failing). */
     private val receiverPlayedOut: () -> Boolean
 ) : CastPlayer.TransferCallback {
@@ -70,9 +76,25 @@ class CastQueue(
     /** The uid of the entry the receiver was last playing or buffering, to tell what it went idle on. */
     private var playingUid: Long? = null
 
-    /** Follows the queue while [player], built around this and [localPlayer], is casting. */
+    /** Whether the receiver is to be taken over where it is, once it and the local queue are known (see [takeOver]). */
+    private var takingOver = false
+
+    /** Stops waiting to take over a receiver that has reported nothing: it's idle, and is sent the queue as any is. */
+    private val giveUpTakeOver = Runnable {
+        val remote = castPlayer?.takeIf { it.isRemote } ?: return@Runnable
+        if (takingOver && remote.mediaItemCount == 0) {
+            takingOver = false
+            requestSync()
+        }
+    }
+
+    /**
+     * Follows the queue while [player], built around this and [localPlayer], is casting. One already casting, to a
+     * receiver that was running, is taken over where it is.
+     */
     fun attach(player: Player) {
         castPlayer = player
+        if (player.isRemote && receiverWasRunning()) awaitTakeOver()
         player.addListener(
             object : Player.Listener {
                 override fun onTimelineChanged(
@@ -157,20 +179,52 @@ class CastQueue(
 
     /**
      * Sends the window around the current item, at the local position, playing if the local player was: at once, or
-     * once the current song's stream is resolved.
+     * once the current song's stream is resolved. A receiver that was already running is left playing as it is, to be
+     * taken over once it reports (see [takeOver]).
      */
     private fun toRemote(
         source: Player,
         target: Player
     ) {
         reset()
+        if (receiverWasRunning()) awaitTakeOver()
         val uid = source.currentMediaItem?.queueEntryOrNull?.uid ?: return
         target.repeatMode = source.repeatMode
         target.playbackParameters = source.playbackParameters
+        transfer = uid to source.currentPosition
+        if (takingOver) return
         // The receiver starts playing as it loads if the target plays when ready, so it's set first.
         target.playWhenReady = source.playWhenReady
-        transfer = uid to source.currentPosition
         sync(target)
+    }
+
+    /** Waits for the receiver to report what it holds before sending it anything, for so long (see [takeOver]). */
+    private fun awaitTakeOver() {
+        takingOver = true
+        handler.removeCallbacks(giveUpTakeOver)
+        handler.postDelayed(giveUpTakeOver, RECEIVER_WAIT_MS)
+    }
+
+    /**
+     * Moves the local player to the song the receiver is on, at its position, when the receiver was already playing as
+     * the session joined it. S2 stopped while casting leaves the receiver playing on at URLs whose key only that run of
+     * S2 served, and holding entries the restored queue has new uids for, so the receiver is known by song (see
+     * [castSongId]); the window then goes out afresh from there. A receiver on no song in the queue is sent the window
+     * around the local current item, as any other is. False while the receiver or the local queue is still to be
+     * known.
+     */
+    private fun takeOver(remote: Player): Boolean {
+        if (remote.mediaItemCount == 0 || localPlayer.currentMediaItem == null) return false
+        takingOver = false
+        handler.removeCallbacks(giveUpTakeOver)
+        val songId = remote.currentMediaItem?.castSongId ?: return true
+        val index = localPlayer.indexOfSong(songId)
+        if (index == -1) return true
+        val position = remote.currentPosition
+        Timber.v("Taking over the Cast receiver at song $songId, ${position}ms")
+        localPlayer.seekTo(index, position)
+        transfer = localPlayer.getMediaItemAt(index).queueEntry.uid to position
+        return true
     }
 
     /**
@@ -247,6 +301,8 @@ class CastQueue(
         resolving = null
         resolvingIds = emptySet()
         playingUid = null
+        takingOver = false
+        handler.removeCallbacks(giveUpTakeOver)
     }
 
     /** Syncs once the current batch of player events has been handled, however many there are. */
@@ -259,6 +315,7 @@ class CastQueue(
     /** Takes the next [CastWindow] step towards the local queue, unless the last one is still on its way. */
     private fun sync(remote: Player) {
         if (pending) return
+        if (takingOver && !takeOver(remote)) return
         followRemote(remote)
         // A receiver holding other than what it was sent (another sender changed it, or a send failed) is sent afresh.
         val known = sent.takeIf { remote.holdsSent() }.orEmpty()
@@ -383,6 +440,9 @@ class CastQueue(
         /** How many streams are resolved before the receiver is sent more. */
         private const val RESOLVE_BATCH = 10
 
+        /** How long a receiver that was running has to report what it holds before it's sent the queue regardless. */
+        private const val RECEIVER_WAIT_MS = 2_000L
+
         /** The states a receiver is in while it plays an item, or is about to. */
         private val PLAYING_STATES = setOf(Player.STATE_BUFFERING, Player.STATE_READY)
 
@@ -397,6 +457,12 @@ class CastQueue(
         }
 
         private fun Player.indexOfUid(uid: Long): Int = (0 until mediaItemCount).firstOrNull { getMediaItemAt(it).queueEntryOrNull?.uid == uid } ?: -1
+
+        /** The index of this player's current item if it's [songId]'s, else of its first entry for it, else -1. */
+        private fun Player.indexOfSong(songId: Long): Int {
+            if (currentMediaItem?.queueEntryOrNull?.song?.id == songId) return currentMediaItemIndex
+            return (0 until mediaItemCount).firstOrNull { getMediaItemAt(it).queueEntryOrNull?.song?.id == songId } ?: -1
+        }
 
         /** Ascending [indices] as runs of consecutive indices. */
         private fun runs(indices: List<Int>): List<IntRange> {
