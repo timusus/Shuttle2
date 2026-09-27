@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.shared.di
 
 import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.di.AppCoroutineScope
@@ -18,7 +19,7 @@ import kotlinx.coroutines.flow.emptyFlow
 
 /**
  * What the shared `PlayerViewModel` needs beyond playback, bound for what iOS has today: no Cast (the iOS app has no
- * Cast sender), no saved queue to show before a restore (the iOS controller doesn't persist its queue yet), and no
+ * Cast sender), the saved song to show until the saved queue is restored (as on Android), and no
  * S2 Pro gating of server songs (entitlements arrive in phase 9). The sleep timer is the shared one, on the player
  * controller. ReplayGain is stored as on Android, but the iOS engine plays at unity gain until it applies it.
  */
@@ -29,7 +30,7 @@ object IosPlayerModule {
     fun provideCastAvailability(): CastAvailability = CastAvailability { false }
 
     @Provides
-    fun provideSavedNowPlaying(): SavedNowPlaying = SavedNowPlaying { null }
+    fun provideSavedNowPlaying(playbackPreferenceManager: PlaybackPreferenceManager): SavedNowPlaying = SavedNowPlaying { playbackPreferenceManager.nowPlaying }
 
     @Provides
     fun provideObserveGatedServerSkip(): ObserveGatedServerSkip = ObserveGatedServerSkip { emptyFlow() }

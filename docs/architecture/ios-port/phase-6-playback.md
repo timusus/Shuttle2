@@ -167,8 +167,9 @@ interface IosAudioPlayerListener {                        // Swift calls these o
 - **Swift observing Kotlin**: SKIE flows (`queueStateFlow`, `playbackStateFlow`, `progressFlow`)
   drive SwiftUI and `NowPlayingInfoManager`.
 - **Persistence**: shared queue store writes through the phase 2 prefs interface on each change,
-  on pause, every ~10 s while playing, and when Swift reports `scenePhase == .background`.
-  Restore at graph creation, staged paused (Podcasts' "don't invent a position" rule).
+  on pause, and every second of playback while playing (as Android does; no separate background
+  hook, see "Status of queue persistence" below). Restore at graph creation, staged paused
+  (Podcasts' "don't invent a position" rule).
 - **Session (Swift)**: `UIBackgroundModes: audio`; `.playback`, mode `.default`, route sharing policy
   `.longFormAudio` (AirPlay 2). Interruption began: pause; ended with `.shouldResume`: resume.
   Route change `oldDeviceUnavailable`: pause. `mediaServicesWereReset` and
@@ -298,7 +299,33 @@ plays each format through the controller: MP3, AAC and ALAC in MP4, FLAC, Opus, 
 
 Still open (#588): stream
 resolution is a placeholder (a song's path as its URL, so the demo library's `demo://` songs fail and
-are skipped); artwork waits for a shared image loader; queue persistence is not wired.
+are skipped); artwork waits for a shared image loader. Queue persistence is done (#621, below).
+
+### Status of queue persistence (#621)
+
+Done. The queue, the position in it, the shuffle and repeat modes, the position in the current song and
+the speed are saved and restored across launches, in Android's keys and format:
+
+- **Shared (`:android:playback:core` commonMain).** `PlaybackPreferenceManager` moved here from
+  :android:playback, with the saved queue's rules `QueueStore` kept privately (`persistence/SavedQueue.kt`):
+  `SavedQueueWriter` (both orders as comma separated ids of library songs, the position in the order the
+  shuffle mode presents and the song it names), `readSavedQueue` (drops songs gone from the library and
+  finds the position again), `resumePosition` and the position mapping. Android's `QueueStore` delegates to
+  them, unchanged in behaviour.
+- **iOS (`:shared` commonMain).** `IosPlaybackStore`, started with the controller in `IosPlaybackModule`,
+  restores at graph creation: the speed and modes straight away, then the queue, read off the main thread
+  and set through `IosPlayerController.restoreQueue` unless something set the queue meanwhile (the content
+  version check `QueueStore` uses), then loaded paused at the saved position (`skipUnloadable = false`, as
+  Android's restore). `hasRestoredQueue` turns true once that's done or failed, so `hasQueue` is the real
+  restored state; until then `SavedNowPlaying` shows the saved song, as on Android. From then on it saves
+  from the controller's flows: the queue and position on each queue change, the modes and speed on each
+  change, the position on every jump and pause and every second of playback while playing. Another song
+  becoming current clears the saved position, and a play of a song that isn't loaded starts it at
+  `resumePosition` (the controller's new `resumePosition` parameter), as `PlaybackFacade` does.
+- **No background hook.** iOS keeps playing in the background, the position is at most a second stale,
+  and `NSUserDefaults` writes through on suspension, so nothing is added for `scenePhase == .background`.
+- Tests: `SavedQueueTest` and `PlaybackPreferenceManagerTest` (now commonTest, run on JVM and iOS) and
+  `IosPlaybackStoreTest` (two "launches" over one prefs store). No Swift changed.
 
 ### Status of step 8 (ReplayGain and EQ, #604)
 

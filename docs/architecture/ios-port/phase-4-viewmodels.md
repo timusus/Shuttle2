@@ -304,7 +304,7 @@ project dependencies. The same packages are kept, so no import changed:
 
 **iOS bindings.** `IosPlayerModule` binds what iOS has today:
 - no Cast (`CastAvailability { false }`);
-- no saved now-playing, since the iOS controller doesn't persist its queue yet;
+- the saved now-playing song from `PlaybackPreferenceManager`, shown until the saved queue is restored (#621);
 - no gated server skips until entitlements (phase 9);
 - the ReplayGain setting;
 - the shared `SleepTimer` on the app scope.

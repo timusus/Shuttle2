@@ -49,7 +49,9 @@ import kotlinx.coroutines.withContext
  * (`Dispatchers.Main.immediate` on iOS): a call that changes playback made on it runs straight away, else it's posted
  * to it. The Swift engine adapter calls back on the main thread.
  *
- * Not yet here: saving and restoring the queue, speed and position (phase 6 step 4); EQ; the sleep timer.
+ * The queue, the modes, the position and the speed are saved and restored by [IosPlaybackStore], which watches this
+ * controller's flows and restores through [restoreQueue]; a play of an item that isn't loaded starts it at
+ * [resumePosition], as `PlaybackFacade` does with `QueueStore.resumePosition`.
  */
 class IosPlayerController(
     private val player: IosAudioPlayer,
@@ -57,7 +59,9 @@ class IosPlayerController(
     private val scope: CoroutineScope,
     /** Whether a new queue keeps shuffle on (the "retain shuffle" playback setting). */
     private val retainShuffleOnNewQueue: () -> Boolean = { false },
-    private val random: Random = Random.Default
+    private val random: Random = Random.Default,
+    /** Where a play of an item that isn't loaded starts it: the saved position, else the song's own start. */
+    private val resumePosition: (Song) -> Int = PlaybackPolicy::startOf
 ) : PlaybackOperations {
     private val queue = QueueModel(random)
 
@@ -545,8 +549,8 @@ class IosPlayerController(
     override fun play() = onMain { playNow() }
 
     /**
-     * Plays the current item. Nothing loaded (or a failed item) loads it at the song's own start position; a
-     * played-out queue restarts its current item; a position within the song's last moments restarts it (RS-11).
+     * Plays the current item. Nothing loaded (or a failed item) loads it at [resumePosition]; a played-out queue
+     * restarts its current item; a position within the song's last moments restarts it (RS-11).
      */
     private fun playNow() {
         val item = queue.currentItem ?: return
@@ -555,7 +559,7 @@ class IosPlayerController(
         when {
             currentFeed == null || currentFeed.item.uid != item.uid || currentFeed.failed ||
                 (currentFeed.sent && engineState == IosAudioPlayerState.Idle) -> {
-                val start = PlaybackPolicy.startOf(item.song).takeUnless { isNearEnd(it, item.song) } ?: 0
+                val start = resumePosition(item.song).takeUnless { isNearEnd(it, item.song) } ?: 0
                 startLoad(item, start)
             }
 
@@ -725,6 +729,23 @@ class IosPlayerController(
         } else {
             queueOperations.clear()
         }
+    }
+
+    /**
+     * Sets a saved queue, with the [shuffleMode] its [position] is in, unless the queue's content has changed since it
+     * was at [contentVersion] (something was played meanwhile, which wins over the restore). Main thread only.
+     *
+     * @return false, leaving the queue alone, if it changed or the saved queue can't be set.
+     */
+    fun restoreQueue(
+        contentVersion: Long,
+        songs: List<Song>,
+        shuffleSongs: List<Song>?,
+        position: Int,
+        shuffleMode: ShuffleMode
+    ): Boolean {
+        if (queue.queueStateFlow.value.contentVersion != contentVersion) return false
+        return queue.setQueue(songs, shuffleSongs, position, shuffleMode = shuffleMode).also { sync() }
     }
 
     /** [QueueOperations] over the same queue: changes made through it are handed on to the engine. */

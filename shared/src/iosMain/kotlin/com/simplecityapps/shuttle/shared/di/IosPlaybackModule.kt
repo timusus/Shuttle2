@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.shared.di
 
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.server.StreamProfile
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyResponse
@@ -8,6 +9,8 @@ import com.simplecityapps.playback.equalizer.EqualizerFrequencyResponse
 import com.simplecityapps.playback.equalizer.EqualizerPresetStore
 import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.playback.equalizer.restorePreset
+import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.persistence.resumePosition
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.provider.emby.EmbyStreamUrlProvider
@@ -17,6 +20,7 @@ import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosEqualizer
+import com.simplecityapps.shuttle.shared.playback.IosPlaybackStore
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
 import com.simplecityapps.shuttle.shared.playback.IosStreamResolver
 import com.simplecityapps.shuttle.shared.playback.SongStreamResolver
@@ -35,7 +39,9 @@ import kotlinx.coroutines.Job
  * iOS playback: the [IosPlayerController] over the Swift engine the graph's factory is given, as the app's
  * [PlaybackOperations] and [QueueOperations], so the shared use cases resolve unchanged, and the [StreamProfile] its
  * FFmpeg build plays, for the Jellyfin and Emby stream URLs. The equalizer ([IosEqualizer]) designs the engine's
- * filters with the shared maths, and each resolved stream carries its ReplayGain.
+ * filters with the shared maths, and each resolved stream carries its ReplayGain. The queue, position, modes and speed
+ * are kept across launches in Android's prefs ([PlaybackPreferenceManager]) by an [IosPlaybackStore] started with the
+ * controller.
  */
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -54,6 +60,10 @@ class IosPlaybackModule {
         val preAmpGain = playbackSettings.preAmpGain
         return SongStreamResolver(listOf(jellyfin, emby), { replayGainMode.value }, { preAmpGain.value })
     }
+
+    @Provides
+    @SingleIn(AppScope::class)
+    fun providePlaybackPreferenceManager(store: KeyValueStore): PlaybackPreferenceManager = PlaybackPreferenceManager(store)
 
     @Provides
     fun provideEqualizerPresetStore(store: KeyValueStore): EqualizerPresetStore = KeyValueEqualizerPresetStore(store)
@@ -80,7 +90,8 @@ class IosPlaybackModule {
 
     /**
      * On the main thread, as the controller needs (`immediate`, so a call made there runs straight away), under the
-     * app's supervisor job and exception handler.
+     * app's supervisor job and exception handler. Built with its [IosPlaybackStore], which restores the saved queue,
+     * modes, position and speed and saves them from then on; the queue counts as restored once that's done.
      */
     @Provides
     @SingleIn(AppScope::class)
@@ -92,20 +103,22 @@ class IosPlaybackModule {
         @AppSupervisorJob job: Job,
         exceptionHandler: CoroutineExceptionHandler,
         playbackSettings: PlaybackSettings,
+        playbackPreferenceManager: PlaybackPreferenceManager,
+        songRepository: SongRepository,
         random: Random
     ): IosPlayerController {
         val retainShuffle = playbackSettings.retainShuffleOnNewQueue
-        return IosPlayerController(
+        val scope = CoroutineScope(job + Dispatchers.Main.immediate + exceptionHandler)
+        val controller = IosPlayerController(
             player = player,
             resolver = resolver,
-            scope = CoroutineScope(job + Dispatchers.Main.immediate + exceptionHandler),
+            scope = scope,
             retainShuffleOnNewQueue = { retainShuffle.value },
-            random = random
-        ).apply {
-            // iOS doesn't save its queue yet, so there is nothing to restore: the queue is as restored as it gets, and
-            // an empty one means no queue rather than one still loading.
-            queueOperations.hasRestoredQueue = true
-        }
+            random = random,
+            resumePosition = playbackPreferenceManager::resumePosition
+        )
+        IosPlaybackStore(controller, playbackPreferenceManager, playbackSettings.playbackSpeed, songRepository, scope).start()
+        return controller
     }
 
     @Provides
