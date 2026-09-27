@@ -174,7 +174,8 @@ struct NowPlayingViewTests {
         var actions = PlayerActions()
         actions.removeQueueItem = { removed.append($0) }
         let sut = NowPlayingQueueList(queue: queue, actions: actions)
-        try sut.inspect().find(ViewType.ForEach.self).callOnDelete(IndexSet(integer: 1))
+        // Up Next starts after the playing song: its first row is the queue's second.
+        try sut.inspect().find(ViewType.ForEach.self).callOnDelete(IndexSet(integer: 0))
         #expect(removed == [2])
     }
 
@@ -182,11 +183,13 @@ struct NowPlayingViewTests {
         var moves: [(Int64, Int64?)] = []
         var actions = PlayerActions()
         actions.moveQueueItem = { moves.append(($0, $1)) }
-        let sut = NowPlayingQueueList(queue: queue, actions: actions)
+        let longer = queue + [.init(id: 3, title: "Airbag", artist: "Radiohead", isCurrent: false)]
+        let sut = NowPlayingQueueList(queue: longer, actions: actions)
+        // Up Next's offsets: dragging its second row to its top puts it straight after the playing song.
         try sut.inspect().find(ViewType.ForEach.self).callOnMove(IndexSet(integer: 1), 0)
         #expect(moves.count == 1)
-        #expect(moves.first?.0 == 2)
-        #expect(moves.first?.1 == nil)
+        #expect(moves.first?.0 == 3)
+        #expect(moves.first?.1 == 1)
     }
 
     @Test func theQueuesContextMenuPlaysNextAndRemoves() throws {
