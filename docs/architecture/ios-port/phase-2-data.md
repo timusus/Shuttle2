@@ -173,8 +173,8 @@ covers all 86 files without pulling in Kermit's platform-writer config surface f
 
 ## 4. Other JVM-only APIs in repositories
 
-- `LocalPlaylistRepository.kt`: `android.net.Uri`, `java.io.IOException` — stays androidMain (SAF-bound, see
-  §1).
+- `LocalPlaylistRepository.kt`: `android.net.Uri`, `java.io.IOException`. Landed as a split (§6): the repository
+  is commonMain, the SAF file I/O is `SafPlaylistFileSync` in androidMain.
 - No other repository file under `mediaprovider/local/repository/` imports `java.io.File`, `java.time.*`,
   `java.util.Locale`, or `java.text.Collator` (checked directly — only `java.util.Date` in entities, handled
   in §1, and the Uri/IOException pair above). `Dispatchers.IO` usage elsewhere is fine per the ios-port
@@ -230,3 +230,54 @@ a non-`SupportSQLiteDatabase` code path — Worker 1 must keep `MediaDatabaseMig
 whole rewrite, not just at the end; (3) preference key-string drift during the mechanical rewrite is a
 silent-data-loss bug class with no compiler check — Worker 2's report must show a diff review of every
 renamed key literal, and the emulator upgrade check above is not optional.
+
+## 6. What landed
+
+The Room conversion (§1), preferences (§2) and logging (§3) landed first. The leftovers:
+
+**`:android:mediaprovider:core` is `s2.kmp-library`.** In commonMain: `MediaProvider`, `MediaImporter`,
+`FlowEvent`/`MessageProgress`, `M3uParser` (it now takes the file's text), `M3uWriter`, `SongDiff`,
+`ImportedPlaylistStore`, `RemoteArtworkProvider`, `PlaybackReporter`, `ClientIdentity`, `StreamingBitrateCap`,
+`LibrarySettings`, `ImportFrequency` and library search. The JVM-only APIs they used have KMP replacements:
+- `kotlin.concurrent.atomics` replaces `java.util.concurrent.atomic`.
+- `kotlin.uuid.Uuid` replaces `java.util.UUID`.
+- `TimeSource.Monotonic` replaces `System.currentTimeMillis` timing.
+- `CharCategory` replaces `Character.getType`.
+- An `AtomicReference` list replaces `SearchIndex`'s synchronized `LinkedHashMap` LRU.
+- `Logger` replaces Timber.
+- The expect `decomposeCanonical` (`java.text.Normalizer` on Android, `NSString.decomposedStringWithCanonicalMapping`
+  on iOS) replaces `Normalizer`.
+
+Two new interfaces:
+- `MediaImportStrings` holds the import's progress messages. On Android it is `ResourceMediaImportStrings`.
+- `RemoteArtworkProvider.handles` takes a path's scheme rather than a `Uri`.
+
+What stays androidMain, and why:
+- `MediaImportWorker` (WorkManager).
+- `PlaylistExporter` (SAF).
+- `MediaInfoProvider`/`MediaInfo`/`DownloadInfo`, whose `Uri` types are shared with playback, downloads and Cast;
+  they move with the playback port.
+- `M3uEntryMatcher` (`Uri.decode` semantics; its only callers are the SAF import and sync).
+- The providers' titles and icons (`MediaProviderTypeResources.kt`, Android resources).
+- `ConnectivityMeteredNetwork` (`ConnectivityManager`).
+- `ClientIdentityModule` (`PackageManager`/`Build`).
+- `StreamingModule`.
+
+Most tests are in commonTest and run on iosSimulatorArm64. `AggregateMediaInfoProviderTest` (`Uri`) and the
+JVM-timed `SearchIndexBenchmarkTest` stay in androidHostTest.
+
+**`:android:mediaprovider:local`: every repository is commonMain.** `LocalSongRepository` and
+`LocalPlaylistRepository` joined the others. Writing an m3u-imported playlist back to its file goes behind
+`PlaylistFileSync`. On Android, `SafPlaylistFileSync` does the SAF read, match and write it did before.
+`PlaylistFileSync.None` is for a platform with no playlist files. The MediaStore and TagLib providers stay
+androidMain. `:android:mediaprovider:core` is now a commonMain dependency. The DAO and repository tests stay in
+androidHostTest: they need an in-memory Room database, which Android builds from a Robolectric `Context`.
+
+**What iOS still has to provide** to bind these in its graph:
+- a `MediaDatabase` from `DatabaseProvider` with the iOS builder;
+- a `PlaylistFileSync` (`None`);
+- a `MediaImportStrings`;
+- the `KeyValueStore` behind `GeneralPreferenceManager`;
+- an `@AppCoroutineScope` `CoroutineScope`.
+
+Android's bindings for the repositories and `MediaImporter` are still `RepositoryModule` in `:android:app`.
