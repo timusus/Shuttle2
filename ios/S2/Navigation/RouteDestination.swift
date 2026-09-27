@@ -1,8 +1,7 @@
 import SwiftUI
 
 /// The screen for every `Route`, keyed by case. `navigationDestination(for: Route.self)` and each library
-/// category's own root (regular/wide) resolve to this. Songs and Albums are real (P5-6a); the rest are placeholders
-/// until P5-6/7 replace them screen by screen (`docs/architecture/ios-port/phase-5-ios-app.md` section 3).
+/// category's own root (regular/wide) resolve to this (`docs/architecture/ios-port/phase-5-ios-app.md` section 3).
 struct RouteDestinationView: View {
     let route: Route
 
@@ -36,21 +35,6 @@ struct RouteDestinationView: View {
             PlaylistDetailView(id: id)
         case .smartPlaylist(let id):
             SmartPlaylistDetailView(id: id)
-        default:
-            Text(title)
-                .navigationTitle(title)
-        }
-    }
-
-    private var title: String {
-        switch route {
-        case .libraryCategory(let category): category.title
-        case .album(let albumKey, let albumArtistKey): "Album \(albumKey ?? "?") / \(albumArtistKey ?? "?")"
-        case .albumArtist(let albumArtistKey): "Album artist \(albumArtistKey ?? "?")"
-        case .genre(let name): "Genre \(name)"
-        case .playlist(let id): "Playlist \(id)"
-        case .smartPlaylist(let id): "Smart playlist \(id)"
-        case .sources, .serverSignIn: ""
         }
     }
 }
