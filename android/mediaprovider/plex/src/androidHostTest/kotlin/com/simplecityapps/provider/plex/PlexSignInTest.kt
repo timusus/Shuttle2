@@ -80,6 +80,15 @@ class PlexSignInTest {
     }
 
     @Test
+    fun `signing in sends a JSON Content-Type, as Retrofit did even with no body`() = runTest {
+        server.respond(SIGN_IN, "sign_in.json", method = "POST")
+
+        authenticationManager.authenticate(server.address, LoginCredentials("listener", "secret"))
+
+        server.requestsTo(SIGN_IN).single().headers["Content-Type"] shouldContain "application/json"
+    }
+
+    @Test
     fun `every request carries the client identity and asks for JSON`() = runTest {
         server.respond(SIGN_IN, "sign_in.json", method = "POST")
         server.respond("/library/sections", "sections.json")
