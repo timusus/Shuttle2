@@ -69,7 +69,7 @@ struct AlbumListContent: View {
             ContentUnavailableView("No Albums", systemImage: "square.stack", description: Text("Pull to refresh to import."))
         case .ready:
             List {
-                ForEach(Array(state.albums.enumerated()), id: \.offset) { _, album in
+                ForEach(state.albums, id: \.stableId) { album in
                     NavigationLink(value: Route.album(album)) { AlbumRow(album: album) }
                         .contextMenu {
                             Button("Play", systemImage: "play") { onPlay(album) }
