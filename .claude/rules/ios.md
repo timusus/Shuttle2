@@ -29,6 +29,10 @@ ios/scripts/build-framework.sh --device        # Debug, device (--all for both, 
 # 2. Regenerate the Xcode project (after editing project.yml or adding/removing Swift files)
 cd ios && xcodegen generate
 
+# Shared code's strings (StringKey) on iOS: after adding a StringKey or changing its Android text,
+# regenerate ios/S2/en.lproj/Localizable.strings (--check exits 1 if it's stale)
+ios/scripts/generate-strings.py
+
 # 3. Build for the simulator
 cd ios && xcodebuild build -project S2.xcodeproj -scheme S2 \
   -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData -quiet
@@ -73,7 +77,7 @@ changes the app's signing identity, and iOS refuses to upgrade an install across
 
 ## Running the POC
 
-The app signs in only through its own screen: Library's empty state (or its toolbar) > Sources > Connect a
+The app signs in only through its own screen: Library's empty state (or the Settings gear) > Sources > Connect a
 Server > Jellyfin or Emby (`ServerSignInView` on the shared `ServerSignInViewModel`). The address needs its
 scheme; plain `http://` LAN servers work, ATS allows them. The session is saved in the Keychain, so later
 launches import without signing in again.
