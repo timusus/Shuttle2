@@ -179,18 +179,18 @@ struct AppShell: View {
         case .home:
             NavigationStack(path: $navigator.homePath) {
                 withMiniPlayer(HomeView(navigator: navigator))
+                    .routeDestinations()
             }
-            .routeDestinations()
         case .library:
             NavigationStack(path: $navigator.libraryPath) {
                 withMiniPlayer(LibraryView(navigator: navigator))
+                    .routeDestinations()
             }
-            .routeDestinations()
         case .search:
             NavigationStack(path: $navigator.searchPath) {
                 withMiniPlayer(SearchView())
+                    .routeDestinations()
             }
-            .routeDestinations()
         }
     }
 
@@ -199,8 +199,8 @@ struct AppShell: View {
     private func categoryStack(for category: LibraryCategory) -> some View {
         NavigationStack(path: navigator.binding(for: category)) {
             withMiniPlayer(RouteDestinationView(route: .libraryCategory(category)))
+                .routeDestinations()
         }
-        .routeDestinations()
     }
 
     /// Attaches the mini player to a screen INSIDE its `NavigationStack`. Attached to the stack itself
