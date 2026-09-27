@@ -37,6 +37,8 @@ lifecycle-viewmodel-compose = "2.11.0"
 lifecycle-viewmodel-navigation3 = "2.11.0"
 # The JetBrains KMP publication of androidx lifecycle-viewmodel (ViewModel + viewModelScope on iOS).
 lifecycle-viewmodel-kmp = "2.11.0"
+# Compose's stability annotations alone (@Immutable), for the shared player state; matches the Compose BOM's runtime.
+compose-runtime-annotation = "1.12.1"
 logging-interceptor = "5.5.0"
 material = "1.14.0"
 # Pinned over the compose BOM (1.4.0) for the Material 3 Expressive components; see
@@ -95,6 +97,8 @@ androidx-junit = { module = "androidx.test.ext:junit", version.ref = "junit-vers
 androidx-lifecycle-common-java8 = { module = "androidx.lifecycle:lifecycle-common-java8", version.ref = "lifecycle-common-java8" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
 androidx-lifecycle-viewmodel-kmp = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycle-viewmodel-kmp" }
+androidx-lifecycle-viewmodel-savedstate-kmp = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-savedstate", version.ref = "lifecycle-viewmodel-kmp" }
+androidx-compose-runtime-annotation = { module = "androidx.compose.runtime:runtime-annotation", version.ref = "compose-runtime-annotation" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle-viewmodel-compose" }
 androidx-material = { module = "androidx.compose.material:material" }
 androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }

@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.settings
 
 import com.simplecityapps.shuttle.settings.Setting
 
-/** Records what [SettingsViewModel] asks the app to do. */
+/** Records what a view model asks the app to do through [SettingsEffects]. */
 class FakeSettingsEffects : SettingsEffects {
     /** Every [onSettingChanged] call as (key, value), in order. */
     val changes = mutableListOf<Pair<String, Any?>>()

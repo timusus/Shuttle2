@@ -41,6 +41,9 @@ import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlin.time.Clock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -53,9 +56,6 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
 
 /** The seed the fake artwork source extracts, as sRGB ARGB. */
 private const val RED = 0xFFFF0000.toInt()
@@ -78,13 +78,14 @@ class PlayerViewModelTest {
         ArtworkSeed.Available(RED)
     }
     private val gatedSongs = MutableSharedFlow<Song>()
+    private val replayGainModeSetting = ReplayGainModeSetting { PlaybackSettings.ReplayGain }
 
-    @Before
+    @BeforeTest
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         Dispatchers.resetMain()
     }
@@ -106,7 +107,8 @@ class PlayerViewModelTest {
             readSleepTimeRemaining = ReadSleepTimeRemaining(sleepTimer),
             readSleepTimerPlayToEnd = ReadSleepTimerPlayToEnd(preferenceManager),
             observeSetting = ObserveSetting(settingsStore),
-            setReplayGainMode = SetReplayGainMode(SaveSetting(settingsStore), settingsEffects),
+            replayGainModeSetting = replayGainModeSetting,
+            setReplayGainMode = SetReplayGainMode(SaveSetting(settingsStore), settingsEffects, replayGainModeSetting),
             observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
             castAvailability = { false },
             savedNowPlaying = { savedNowPlaying },
@@ -131,7 +133,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `RS-63 a cold start shows the saved song, where it was left, until the queue is restored`() = runTest {
+    fun `RS-63 a cold start shows the saved song - where it was left - until the queue is restored`() = runTest {
         savedNowPlaying = NowPlayingSnapshot.of(createSong(id = 7, name = "Saved", album = "Album", duration = 180_000)).copy(positionMs = 42_000)
         val viewModel = viewModel()
 
@@ -185,7 +187,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `an unrestored empty queue is unknown, so the saved level stands`() {
+    fun `an unrestored empty queue is unknown - so the saved level stands`() {
         QueueState.Empty.toPlayerUiState().hasQueue shouldBe null
     }
 
@@ -195,7 +197,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `items map to songs marked played, current or upcoming`() {
+    fun `items map to songs marked played - current or upcoming`() {
         val state = queueOf(songs("One", "Two", "Three"), current = 1).toPlayerUiState()
         state.hasQueue shouldBe true
         state.items.map { it.title } shouldBe listOf("One", "Two", "Three")
@@ -204,7 +206,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `the state follows the queue, playback and modes`() = runTest {
+    fun `the state follows the queue - playback and modes`() = runTest {
         val viewModel = viewModel()
         queueOperations.queueStateFlow.value = queueOf(songs("One"))
         playbackOperations.playbackStateFlow.value = PlaybackState.Playing
@@ -257,7 +259,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `the total is the song's duration, as the queue rows show it, not the player's`() = runTest {
+    fun `the total is the song's duration - as the queue rows show it - not the player's`() = runTest {
         val viewModel = viewModel()
         queueOperations.queueStateFlow.value = queueOf(listOf(createSong(name = "One", duration = 60_000)))
         playbackOperations.progressFlow.value = PlaybackProgress(position = 10_000, duration = 59_950)
@@ -273,7 +275,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `the favourite follows the song's flag, and toggling sets then clears it`() = runTest {
+    fun `the favourite follows the song's flag - and toggling sets then clears it`() = runTest {
         val song = songs("One").single()
         songRepository.setSongs(listOf(song))
         val viewModel = viewModel()
@@ -299,7 +301,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `the seed follows the playing song's own artwork, and a queue change around it doesn't extract again`() = runTest {
+    fun `the seed follows the playing song's own artwork - and a queue change around it doesn't extract again`() = runTest {
         val viewModel = viewModel()
         val album = songs("One", "Two", album = "First")
         queueOperations.queueStateFlow.value = queueOf(album)
@@ -314,7 +316,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `turning off Colour from artwork drops the seed, and no extraction runs`() = runTest {
+    fun `turning off Colour from artwork drops the seed - and no extraction runs`() = runTest {
         SaveSetting(settingsStore)(AppearanceSettings.ColourFromArtwork, false)
         val viewModel = viewModel()
 
@@ -348,7 +350,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `a move resolves against the live queue, so rows added or removed mid-drag don't shift it`() = runTest {
+    fun `a move resolves against the live queue - so rows added or removed mid-drag don't shift it`() = runTest {
         val viewModel = viewModel()
         val songs = songs("One", "Two", "Three", "Four")
         // The drag began on One, Two, Three, Four (uids 100-103): One was dragged to follow Three.
@@ -386,7 +388,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `removing a row reports it, and undo puts its song back where it was`() = runTest {
+    fun `removing a row reports it - and undo puts its song back where it was`() = runTest {
         val viewModel = viewModel()
         val (one, two, three, four) = songs("One", "Two", "Three", "Four")
         queueOperations.queueStateFlow.value = queueOf(listOf(one, two, three, four))
@@ -443,7 +445,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `clearing the queue reports it, and undo puts it back where it was`() = runTest {
+    fun `clearing the queue reports it - and undo puts it back where it was`() = runTest {
         val viewModel = viewModel()
         val songs = songs("One", "Two", "Three")
         queueOperations.queueStateFlow.value = queueOf(songs, current = 1)
@@ -501,7 +503,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `the sleep timer shows as running until it goes off, and remembers play to end`() = runTest {
+    fun `the sleep timer shows as running until it goes off - and remembers play to end`() = runTest {
         val viewModel = viewModel()
         queueOperations.queueStateFlow.value = queueOf(songs("One"))
 
@@ -527,7 +529,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `a panel toggles open and shut, and showing another replaces it`() = runTest {
+    fun `a panel toggles open and shut - and showing another replaces it`() = runTest {
         val viewModel = viewModel()
         queueOperations.queueStateFlow.value = queueOf(songs("One"))
         viewModel.uiState.value.player.panel shouldBe null
@@ -545,7 +547,7 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `the open panel is saved, so it survives process death`() = runTest {
+    fun `the open panel is saved - so it survives process death`() = runTest {
         val handle = SavedStateHandle()
         viewModel(handle).showPanel(NowPlayingPanel.Queue)
 

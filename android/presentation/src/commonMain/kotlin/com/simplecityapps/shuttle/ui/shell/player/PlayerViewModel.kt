@@ -11,10 +11,10 @@ import com.simplecityapps.playback.persistence.NowPlayingSnapshot
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
-import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.ObserveSetting
+import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.ui.actions.AvailableMediaActions
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
@@ -64,6 +64,14 @@ fun interface ObserveGatedServerSkip {
 }
 
 /**
+ * The stored ReplayGain mode setting. The setting lives with the playback settings in `:android:playback:core`, a data
+ * module this layer can't see, so each platform's graph hands it over.
+ */
+fun interface ReplayGainModeSetting {
+    fun setting(): Setting<ReplayGainMode>
+}
+
+/**
  * The player surfaces' state and actions (docs/architecture/app-shell.md, sections 1 and 5): the
  * queue, playback state and modes, favourite, sleep timer, speed and ReplayGain, the now-playing
  * artwork seed, and the panel Now Playing's bar has open, which survives process death. Its
@@ -84,6 +92,7 @@ class PlayerViewModel @AssistedInject constructor(
     private val readSleepTimeRemaining: ReadSleepTimeRemaining,
     readSleepTimerPlayToEnd: ReadSleepTimerPlayToEnd,
     observeSetting: ObserveSetting,
+    replayGainModeSetting: ReplayGainModeSetting,
     private val setReplayGainMode: SetReplayGainMode,
     observeArtworkSeed: ObserveArtworkSeed,
     castAvailability: CastAvailability,
@@ -161,7 +170,7 @@ class PlayerViewModel @AssistedInject constructor(
             seed,
             sleepTimerActive,
             sleepTimerPlayToEnd,
-            observeSetting(PlaybackSettings.ReplayGain),
+            observeSetting(replayGainModeSetting.setting()),
         ) { favourites, seed, sleeping, playToEnd, replayGainMode ->
             Extras(favourites, seed, sleeping, playToEnd, replayGainMode)
         }

@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.settings.PlaybackSettings
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -15,4 +16,7 @@ object PlayerModule {
 
     @Provides
     fun provideSavedNowPlaying(playbackPreferenceManager: PlaybackPreferenceManager): SavedNowPlaying = SavedNowPlaying { playbackPreferenceManager.nowPlaying }
+
+    @Provides
+    fun provideReplayGainModeSetting(): ReplayGainModeSetting = ReplayGainModeSetting { PlaybackSettings.ReplayGain }
 }

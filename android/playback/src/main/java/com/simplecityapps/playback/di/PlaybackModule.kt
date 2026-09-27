@@ -2,6 +2,7 @@ package com.simplecityapps.playback.di
 
 import android.content.Context
 import android.media.AudioManager
+import android.os.SystemClock
 import androidx.core.content.getSystemService
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -115,5 +116,5 @@ class PlaybackModule {
     fun provideSleepTimer(
         playbackOperations: PlaybackOperations,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): SleepTimer = SleepTimer(playbackOperations, appCoroutineScope)
+    ): SleepTimer = SleepTimer(playbackOperations, appCoroutineScope, elapsedRealtime = SystemClock::elapsedRealtime)
 }

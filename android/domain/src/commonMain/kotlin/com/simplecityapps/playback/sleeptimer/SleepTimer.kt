@@ -1,16 +1,15 @@
 package com.simplecityapps.playback.sleeptimer
 
-import android.os.SystemClock
 import com.simplecityapps.playback.PlaybackOperations
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
+import kotlin.time.TimeSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 /**
  * Pauses playback once a delay has elapsed, or, when playing to the end, at the first track end after it.
@@ -21,8 +20,11 @@ class SleepTimer(
     private val playbackOperations: PlaybackOperations,
     private val appCoroutineScope: CoroutineScope,
     private val context: CoroutineContext = Dispatchers.Main.immediate,
-    /** The clock [timeRemaining] is measured on, in milliseconds. */
-    private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime
+    /**
+     * The clock [timeRemaining] is measured on, in milliseconds. A monotonic clock by default; Android passes
+     * `SystemClock.elapsedRealtime`, which keeps counting through deep sleep.
+     */
+    private val elapsedRealtime: () -> Long = monotonicMillis()
 ) {
     private var timerJob: Job? = null
 
@@ -40,8 +42,6 @@ class SleepTimer(
         delay: Long,
         playToEnd: Boolean
     ) {
-        Timber.v("startTimer() called.. Delay: ${delay}ms")
-
         timerJob?.cancel()
 
         startTime = elapsedRealtime()
@@ -51,8 +51,7 @@ class SleepTimer(
             appCoroutineScope.launch(context) {
                 delay(delay)
                 if (playToEnd) {
-                    val song = playbackOperations.trackEndedFlow.first()
-                    Timber.v("Track ended after the deadline: ${song.name}")
+                    playbackOperations.trackEndedFlow.first()
                 }
                 sleep()
             }
@@ -62,7 +61,6 @@ class SleepTimer(
      * Cancels the sleep timer
      */
     fun stopTimer() {
-        Timber.v("stopTimer() called")
         timerJob?.cancel()
         timerJob = null
         delay = 0L
@@ -81,8 +79,12 @@ class SleepTimer(
     }
 
     private fun sleep() {
-        Timber.v("sleep() called")
         playbackOperations.pause()
         stopTimer()
     }
+}
+
+private fun monotonicMillis(): () -> Long {
+    val origin = TimeSource.Monotonic.markNow()
+    return { origin.elapsedNow().inWholeMilliseconds }
 }

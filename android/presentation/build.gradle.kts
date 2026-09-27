@@ -29,6 +29,10 @@ kotlin {
             // ViewModels, their keys and the factory are this module's API to both platforms' graphs.
             api(libs.androidx.lifecycle.viewmodel.kmp)
             api(libs.metrox.viewmodel)
+            // SavedStateHandle: the player keeps its open Now Playing panel across process death.
+            api(libs.androidx.lifecycle.viewmodel.savedstate.kmp)
+            // @Immutable on the player's UI state, so Compose on Android treats it as stable. Annotations only.
+            api(libs.androidx.compose.runtime.annotation)
             api(libs.kotlinx.coroutinesCore)
             // Changeset's release date
             api(libs.kotlinx.datetime)
@@ -43,6 +47,8 @@ kotlin {
             implementation(libs.kotlin.test)
             implementation(libs.kotest)
             implementation(libs.kotlinx.coroutinesTest)
+            // PlaybackSettings.ReplayGain, the setting the player tests bind (test classpaths skip the layer check)
+            implementation(project(":android:playback:core"))
         }
     }
 }
