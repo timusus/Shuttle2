@@ -123,6 +123,15 @@ int stream_decoder_seek(StreamDecoder *decoder, double seconds, double *landed_s
  */
 int stream_decoder_read(StreamDecoder *decoder, float *out, int max_frames, int *frames);
 
+/**
+ * S2: convert everything this decoder hands out to `sample_rate` Hz and `channels` channels
+ * (swresample; mono is spread to both sides at full level, more than two channels are downmixed).
+ * Call after `stream_decoder_open` and before the first read; refused with
+ * `STREAM_DECODE_ERR_ARGS` while decoded audio is pending. `info` keeps describing the SOURCE.
+ * A seek's landed time stays in media seconds, whatever the output rate.
+ */
+int stream_decoder_set_output(StreamDecoder *decoder, int sample_rate, int channels);
+
 /** Bytes the reader has been asked for since the decoder opened. Diagnostics and tests only. */
 int64_t stream_decoder_position_bytes(const StreamDecoder *decoder);
 

@@ -6,7 +6,8 @@ import Foundation
 
 /// What the container says about the audio behind a ``StreamByteReader``.
 public struct StreamAudioFormat: Equatable {
-    /// The SOURCE's rate. The player runs at it; nothing here resamples.
+    /// The SOURCE's rate. Podcasts' player ran at it; S2 converts it with
+    /// ``FFmpegStreamDecoder/setOutputFormat(sampleRate:channelCount:)``.
     public let sampleRate: Double
     public let channelCount: Int
     /// From the container (`AVFormatContext.duration`: MP4's sample table, MP3's Xing TOC, or
@@ -94,6 +95,9 @@ public final class FFmpegStreamDecoder {
     private var reason: EndReason = .running
     private var framesRead: Int64 = 0
     private var chunk: [Float] = []
+    /// What ``nextChunk()`` hands out: the source's rate and channels until ``setOutputFormat``.
+    private var outputRate: Double = 0
+    private var outputChannels: Int = 0
     #if canImport(CS2StreamDecode)
         private var handle: OpaquePointer?
     #endif
@@ -164,6 +168,8 @@ public final class FFmpegStreamDecoder {
                 container: Self.string(from: &info.container_name, capacity: 64)
             )
             self.format = format
+            outputRate = format.sampleRate
+            outputChannels = format.channelCount
             chunk = [Float](repeating: 0, count: Self.framesPerChunk * max(format.channelCount, 1))
             return format
         #else
@@ -191,7 +197,7 @@ public final class FFmpegStreamDecoder {
             switch status {
             case Int32(STREAM_DECODE_OK.rawValue):
                 reason = .running
-                framesRead = Int64((landed * (format?.sampleRate ?? 0)).rounded())
+                framesRead = Int64((landed * outputRate).rounded())
                 return landed
             case Int32(STREAM_DECODE_EOF.rawValue):
                 reason = .eof
@@ -208,6 +214,52 @@ public final class FFmpegStreamDecoder {
             }
         #else
             throw StreamDecoderError.unavailable
+        #endif
+    }
+
+    /// S2: convert everything read from here on to `sampleRate` Hz and `channelCount` channels.
+    ///
+    /// Podcasts played each episode at its own rate; S2's engine runs one fixed output format so
+    /// two tracks of different rates can sit back to back on one player node, and this is where a
+    /// track is converted into it. Call once, after ``open()`` and before the first read.
+    /// ``mediaFramesRead`` and seek positions then count OUTPUT frames; the format ``open()``
+    /// returned keeps describing the source.
+    public func setOutputFormat(sampleRate: Double, channelCount: Int) throws {
+        #if canImport(CS2StreamDecode)
+            guard let handle else { throw StreamDecoderError.invalidState("not open") }
+            let status = stream_decoder_set_output(handle, Int32(sampleRate.rounded()), Int32(channelCount))
+            guard status == Int32(STREAM_DECODE_OK.rawValue) else {
+                throw StreamDecoderError.failed(status: status)
+            }
+            outputRate = sampleRate
+            outputChannels = channelCount
+            chunk = [Float](repeating: 0, count: Self.framesPerChunk * channelCount)
+        #else
+            throw StreamDecoderError.unavailable
+        #endif
+    }
+
+    /// S2: read up to `maxFrames` interleaved frames straight into `buffer` (which holds
+    /// `maxFrames` × the output channel count floats). Returns the frames written; 0 means the
+    /// stream ended and ``endReason`` says why, exactly as nil does for ``nextChunk()``.
+    public func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) -> Int {
+        #if canImport(CS2StreamDecode)
+            guard let handle, format != nil, reason == .running, maxFrames > 0 else { return 0 }
+            var frames: Int32 = 0
+            let status = stream_decoder_read(handle, buffer, Int32(maxFrames), &frames)
+            guard status == Int32(STREAM_DECODE_OK.rawValue), frames > 0 else {
+                switch status {
+                case Int32(STREAM_DECODE_EOF.rawValue): reason = .eof
+                case Int32(STREAM_DECODE_ERR_CANCELLED.rawValue): reason = .cancelled
+                case Int32(STREAM_DECODE_ERR_INTERRUPTED.rawValue): reason = .interrupted
+                default: reason = .failure
+                }
+                return 0
+            }
+            framesRead += Int64(frames)
+            return Int(frames)
+        #else
+            return 0
         #endif
     }
 
@@ -242,7 +294,7 @@ public final class FFmpegStreamDecoder {
                 return nil
             }
             framesRead += Int64(frames)
-            let count = Int(frames) * format.channelCount
+            let count = Int(frames) * outputChannels
             return count == chunk.count ? chunk : Array(chunk[0..<count])
         #else
             return nil

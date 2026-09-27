@@ -34,6 +34,15 @@ struct StreamDecoder {
     int         audio_idx;
     int         sample_rate;
     int         channels;
+    /* S2: what `pending` holds — the source's rate and channel count unless
+     * `stream_decoder_set_output` asked for a fixed player format. */
+    int         out_rate;
+    int         out_channels;
+    /* The input side the resampler was configured with, so a codec that changes format mid-stream
+     * gets a fresh resampler instead of reinterpreted samples. */
+    int         swr_in_rate;
+    int         swr_in_channels;
+    int         swr_in_fmt;
     AVRational  time_base;
     int64_t     start_time;   /* stream start_time, or 0 when AV_NOPTS_VALUE */
 
@@ -200,38 +209,59 @@ static int64_t probe_id3_offset(StreamDecoder *d) {
 
 /* ── resampler ───────────────────────────────────────────────────────────── */
 
-/* Same rate, same layout, float32 out: the resampler is here ONLY to interleave and to convert
- * whatever sample format the codec produces (mp3float is planar float, aac is planar float, and a
- * fixed-point build would be planar s16) into the one buffer format the player schedules. */
-static int init_swr(StreamDecoder *d) {
+/* Float32 interleaved out, at `out_rate` / `out_channels`. In Podcasts the resampler only
+ * interleaved and converted the sample format (the player ran at the source's rate); S2's player
+ * runs one fixed format so tracks of different rates are scheduled back to back on one node, and
+ * this is where every track is converted into it (phase-6-playback.md §3, "Graph"). */
+static int init_swr_from(StreamDecoder *d, const AVChannelLayout *src_layout, int src_rate, int src_fmt) {
     swr_free(&d->swr);
 
     AVChannelLayout out_layout = { 0 };
     /* Zero-initialised for the reason spine_decode.c records: av_channel_layout_copy uninitialises
      * its destination first, so a free() of stack garbage is an intermittent SIGABRT. */
     AVChannelLayout in_layout = { 0 };
-    if (d->dec->ch_layout.nb_channels > 0) {
-        av_channel_layout_copy(&in_layout, &d->dec->ch_layout);
+    if (src_layout && src_layout->nb_channels > 0) {
+        av_channel_layout_copy(&in_layout, src_layout);
     } else {
         av_channel_layout_default(&in_layout, d->channels > 0 ? d->channels : 1);
     }
-    av_channel_layout_copy(&out_layout, &in_layout);
+    if (d->out_channels == in_layout.nb_channels) {
+        av_channel_layout_copy(&out_layout, &in_layout);
+    } else {
+        av_channel_layout_default(&out_layout, d->out_channels);
+    }
+    int in_channels = in_layout.nb_channels;
 
     int rc = swr_alloc_set_opts2(&d->swr,
-                                 &out_layout, AV_SAMPLE_FMT_FLT, d->sample_rate,
-                                 &in_layout, d->dec->sample_fmt, d->dec->sample_rate,
+                                 &out_layout, AV_SAMPLE_FMT_FLT, d->out_rate,
+                                 &in_layout, (enum AVSampleFormat)src_fmt, src_rate,
                                  0, NULL);
     av_channel_layout_uninit(&in_layout);
     av_channel_layout_uninit(&out_layout);
     if (rc < 0 || !d->swr) return STREAM_DECODE_ERR_RESAMPLE;
+    /* Mono is FC, which swresample spreads to FL/FR at -3 dB (hard-coded for a mono source, so
+     * `center_mix_level` does not reach it). A mono record on stereo output should be as loud on
+     * each side as it was on its one channel, so the matrix is given explicitly. */
+    if (in_channels == 1 && d->out_channels > 1 && d->out_channels <= 8) {
+        double matrix[8];
+        for (int i = 0; i < d->out_channels; i++) matrix[i] = 1.0;
+        if (swr_set_matrix(d->swr, matrix, 1) < 0) return STREAM_DECODE_ERR_RESAMPLE;
+    }
     if (swr_init(d->swr) < 0) return STREAM_DECODE_ERR_RESAMPLE;
+    d->swr_in_rate = src_rate;
+    d->swr_in_channels = in_channels;
+    d->swr_in_fmt = src_fmt;
     return STREAM_DECODE_OK;
 }
 
+static int init_swr(StreamDecoder *d) {
+    return init_swr_from(d, &d->dec->ch_layout, d->dec->sample_rate, d->dec->sample_fmt);
+}
+
 static int pending_reserve(StreamDecoder *d, int frames) {
-    int need = (d->pending_frames + frames) * d->channels;
+    int need = (d->pending_frames + frames) * d->out_channels;
     if (need <= d->pending_cap_floats) return 1;
-    int cap = d->pending_cap_floats ? d->pending_cap_floats : 8192 * d->channels;
+    int cap = d->pending_cap_floats ? d->pending_cap_floats : 8192 * d->out_channels;
     while (cap < need) cap *= 2;
     float *nb = (float *)realloc(d->pending, (size_t)cap * sizeof(float));
     if (!nb) return 0;
@@ -244,13 +274,13 @@ static int pending_reserve(StreamDecoder *d, int frames) {
  * failure, 1 otherwise; `pending_frames` says how much arrived. */
 static int push_through_swr(StreamDecoder *d, AVFrame *frame) {
     int in_samples = frame ? frame->nb_samples : 0;
-    int64_t delay = swr_get_delay(d->swr, d->sample_rate);
-    int out_samples = (int)av_rescale_rnd(delay + in_samples, d->sample_rate, d->sample_rate,
+    int64_t delay = swr_get_delay(d->swr, d->swr_in_rate);
+    int out_samples = (int)av_rescale_rnd(delay + in_samples, d->out_rate, d->swr_in_rate,
                                           AV_ROUND_UP);
     if (out_samples <= 0) return 1;
     if (!pending_reserve(d, out_samples)) return 0;
 
-    uint8_t *out = (uint8_t *)(d->pending + (size_t)d->pending_frames * d->channels);
+    uint8_t *out = (uint8_t *)(d->pending + (size_t)d->pending_frames * d->out_channels);
     int converted = swr_convert(d->swr, &out, out_samples,
                                 frame ? (const uint8_t **)frame->extended_data : NULL, in_samples);
     if (converted > 0) d->pending_frames += converted;
@@ -283,6 +313,15 @@ static int pump(StreamDecoder *d) {
         int rc = avcodec_receive_frame(d->dec, d->frame);
         if (rc == 0) {
             d->last_frame_pts = d->frame->best_effort_timestamp;
+            if (d->frame->sample_rate != d->swr_in_rate
+                || d->frame->ch_layout.nb_channels != d->swr_in_channels
+                || d->frame->format != d->swr_in_fmt) {
+                /* The codec changed format mid-stream (a chained Ogg, an ADTS rate switch). The old
+                 * resampler's tail is a few samples of the old format; dropping it beats feeding
+                 * this frame to a resampler that would reinterpret it. */
+                int swr_rc = init_swr_from(d, &d->frame->ch_layout, d->frame->sample_rate, d->frame->format);
+                if (swr_rc != STREAM_DECODE_OK) { av_frame_unref(d->frame); return swr_rc; }
+            }
             int ok = push_through_swr(d, d->frame);
             av_frame_unref(d->frame);
             if (!ok) return STREAM_DECODE_ERR_ALLOC;
@@ -417,6 +456,8 @@ StreamDecoder *stream_decoder_open(const StreamDecodeCallbacks *callbacks,
     if (d->sample_rate <= 0 || d->channels <= 0) { local_status = STREAM_DECODE_ERR_DECODER; goto fail; }
     d->time_base = stream->time_base;
     d->start_time = stream->start_time == AV_NOPTS_VALUE ? 0 : stream->start_time;
+    d->out_rate = d->sample_rate;
+    d->out_channels = d->channels;
 
     local_status = init_swr(d);
     if (local_status != STREAM_DECODE_OK) goto fail;
@@ -581,6 +622,16 @@ int stream_decoder_seek(StreamDecoder *decoder, double seconds, double *landed_s
          * says what second this frame is — so the estimate IS the landed time. */
         int status = pump(decoder);
         *landed_seconds = ratio * decoder->media_duration;
+        /* S2: some codecs DO say. A FLAC frame header carries its sample number and PCM's position
+         * is its byte offset, so their timestamp after a byte seek is exact; and on a small FLAC
+         * whose binary search gives up ("read_timestamp() failed in the middle") the byte seek can
+         * land far from the estimate. MP3 keeps the estimate: its timestamps after a byte seek are
+         * the demuxer's own bitrate guess, the thing Podcasts measured and chose not to trust. */
+        if (status == STREAM_DECODE_OK && decoder->last_frame_pts != AV_NOPTS_VALUE
+            && decoder->dec->codec_id != AV_CODEC_ID_MP3) {
+            *landed_seconds = (double)(decoder->last_frame_pts - decoder->start_time) * tb;
+            if (*landed_seconds < 0) *landed_seconds = 0;
+        }
         return status;
     }
 
@@ -601,7 +652,7 @@ int stream_decoder_seek(StreamDecoder *decoder, double seconds, double *landed_s
 int stream_decoder_read(StreamDecoder *decoder, float *out, int max_frames, int *frames) {
     if (!decoder || !out || !frames || max_frames <= 0) return STREAM_DECODE_ERR_ARGS;
     *frames = 0;
-    int channels = decoder->channels;
+    int channels = decoder->out_channels;
     int written = 0;
     int status = STREAM_DECODE_OK;
 
@@ -625,6 +676,20 @@ int stream_decoder_read(StreamDecoder *decoder, float *out, int max_frames, int 
     /* Frames in hand beat the reason the loop stopped: the caller plays these and asks again, and
      * the next call reports the same end for the same reason. */
     return written > 0 ? STREAM_DECODE_OK : status;
+}
+
+int stream_decoder_set_output(StreamDecoder *decoder, int sample_rate, int channels) {
+    if (!decoder || sample_rate <= 0 || channels <= 0) return STREAM_DECODE_ERR_ARGS;
+    if (decoder->pending_frames - decoder->pending_offset > 0) return STREAM_DECODE_ERR_ARGS;
+    decoder->out_rate = sample_rate;
+    decoder->out_channels = channels;
+    /* Anything already sized for the old channel count is empty (checked above), so only the
+     * capacity bookkeeping has to follow. */
+    free(decoder->pending);
+    decoder->pending = NULL;
+    decoder->pending_cap_floats = 0;
+    pending_reset(decoder);
+    return init_swr(decoder);
 }
 
 int64_t stream_decoder_position_bytes(const StreamDecoder *decoder) {
