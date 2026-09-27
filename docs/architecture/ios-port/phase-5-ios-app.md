@@ -251,8 +251,8 @@ The VM's one-shot events come through `binding.events` and `.consumeEvents` in `
 
 The look follows Shuttle Podcasts' iOS app (modern HIG), ported rather than shared:
 
-- `ios/S2/Theme/Spacing.swift`: `Spacing` (4pt grid), `Radius`, `ArtworkSize` (row 44, album row 56, shelf
-  120, hero 160).
+- `ios/S2/Theme/Spacing.swift`: `Spacing` (4pt grid), `ArtworkCorner`, `ArtworkSize`, `ArtworkShadow`,
+  `AdaptiveLayout` (see the visual polish tokens below).
 - `ios/S2/Theme/Typography.swift`: SF Rounded titles (`.s2Title`, `.s2Title2`, `.s2SectionTitle`),
   monospaced digits for times (`.s2Time`, `.s2RowTime`), `Font.s2Glyph` for Dynamic Type-scaled symbols, and
   `.s2SecondaryText`. The accent is S2's Android default `#0088FF` split for contrast in
@@ -262,7 +262,44 @@ The look follows Shuttle Podcasts' iOS app (modern HIG), ported rather than shar
 - Controls are 44pt targets with VoiceOver labels; lists use stable ids.
 
 Left out on purpose, as podcast-specific: episode rows and their buttons, chapters, sleep timer, skip
-segments, CarPlay and widgets, artwork tint retinting, marquee titles.
+segments, CarPlay and widgets.
+
+### Visual polish tokens and components (#624)
+
+The foundation the screen packages (player, Home and details, Library and Settings) build on. Screens use
+these and carry no literals of their own.
+
+- **Corners** (`ArtworkCorner`): `row` 8, `tile` 16, `hero` 20, `player` 20; controls are capsules.
+  `artworkTile(size)` / `artworkCircle(size)` frame, clip and draw the hairline; `artworkStyle(cornerRadius:)`
+  clips and draws the hairline on anything already sized.
+- **Sizes** (`ArtworkSize`): `row` 48, `albumRow` 56, `shelf` 150 / `shelfRegular` 180 (`shelf(tier)`),
+  `artistShelf` 120, `gridMinimum` 160, `hero` 240 / `heroRegular` 300 (`hero(tier)`), `playerMaximum` 420.
+  `AdaptiveLayout`: `contentMaxWidth` 1000, `twoColumnMinWidth` 700, `contentInset(tier)`, `gridSpacing`.
+- **Shadows**: rows and tiles get the hairline only; `.artworkShadow(.hero)` (0.22, r18, y8) and
+  `.artworkShadow(.player)` (0.3, r24, y12), applied after clipping.
+- **Type**: `.s2PlayerTitle`, `.s2Headline`, `.s2GroupHeader`, `.s2Eyebrow` join the scale.
+- **Artwork tint** (`Theme/ArtworkTint.swift`, `Theme/ArtworkColorExtractor.swift`):
+  `.artworkTint(from: ArtworkSource?)` extracts the cover's dominant colour (64 px through `ArtworkLoader`,
+  cached), makes it scheme-safe with `ContrastSafeTint` (4.5:1 on the chrome ground, hue kept) and provides
+  `\.artworkTint`, `\.artworkTintInk` (label ink on a tint fill) and `\.isArtworkTinted`; the accent without a
+  cover. It sets the environment only: the player scopes it to the playing song above Now Playing and the
+  mini player, a detail hero to its own item, and each applies `.tint(tint)` where controls should follow.
+  `TintedChromeInk.foreground(...)` picks ink for tinted chrome, honouring Increase Contrast.
+- **Motion** (`Theme/Motion.swift`): named animations (`Motion.press`, `.coverScale`, `.tintChange`,
+  `.backdropChange`, `pausedCoverScale` 0.88); every animation goes through `.reduced(reduceMotion)`.
+  `.tapFeedback()` for tiles and cards, `.buttonStyle(.pressScale)` for buttons. `\.zoomNamespace` with
+  `.zoomSource(id:)` / `.zoomDestination(id:)` (iOS 18 zoom, a plain push on 17), `\.nowPlayingNamespace`
+  with `.nowPlayingMatchedGeometry(id:isSource:)` for the mini player to Now Playing cover.
+- **Components**: `MediaRow` (artwork, title, subtitle, trailing accessory, `playback: .playing/.paused` tints
+  the title and overlays `NowPlayingIndicator`), used by the Library rows; `SectionHeader(title, seeAll: Route)`
+  or with a See All action; `ArtworkPlaceholder(symbol:)` (a gradient of the tint in scope);
+  `ArtworkBackground(source:)` (blurred cover under a 96% scrim, Now Playing's backdrop); `MarqueeText`
+  (one pass, still under Reduce Motion); `.shimmer()` and `MediaRowSkeleton` for loading lists.
+
+iOS 26 styling (`glassEffect`, `.glassProminent`, the tab bar bottom accessory) is used behind
+`#available(iOS 26, *)` with the `ultraThinMaterial` / `borderedProminent` fallback; the target stays iOS 17.
+Tests: `ios/S2Tests/ArtworkTintTests.swift` (extraction, contrast guarantees in both schemes, ink, cache) and
+`ios/S2Tests/DesignSystemTests.swift`.
 
 ### Artwork
 
