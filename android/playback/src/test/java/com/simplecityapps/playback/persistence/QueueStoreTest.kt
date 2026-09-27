@@ -1,11 +1,9 @@
 package com.simplecityapps.playback.persistence
 
-import android.content.SharedPreferences
 import androidx.media3.common.Player
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.chromecast.FakeSongRepository
-import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
@@ -17,8 +15,9 @@ import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unreadableSong
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unresolvableSong
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.query.SongQuery
-import com.squareup.moshi.Moshi
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
@@ -43,7 +42,7 @@ import org.robolectric.RobolectricTestRunner
 class QueueStoreTest {
     private val harnesses = mutableListOf<PlaybackHarness>()
 
-    private val preferences = WriteRecordingPreferences()
+    private val preferences = WriteRecordingStore()
 
     /** The library the saved queue is restored from: long songs, so a saved position is well inside each. */
     private val library = (1L..4L).map { longSong(it) }
@@ -55,12 +54,12 @@ class QueueStoreTest {
 
     private fun harness(
         songRepository: SongRepository = FakeSongRepository(library),
-        sharedPreferences: SharedPreferences = preferences,
+        store: KeyValueStore = preferences,
         exceptionHandler: CoroutineExceptionHandler? = null
-    ) = PlaybackHarness(sharedPreferences = sharedPreferences, songRepository = songRepository, exceptionHandler = exceptionHandler).also { harnesses += it }
+    ) = PlaybackHarness(store = store, songRepository = songRepository, exceptionHandler = exceptionHandler).also { harnesses += it }
 
     /** What's saved, read as the app reads it. */
-    private val saved = PlaybackPreferenceManager(preferences, Moshi.Builder().build())
+    private val saved = PlaybackPreferenceManager(preferences)
 
     private fun PlaybackHarness.setQueue(
         songs: List<Song>,
@@ -567,15 +566,15 @@ class QueueStoreTest {
     @Test
     fun `saved preferences in the current format restore identically`() {
         // As the app before QueueStore wrote them, key for key.
-        preferences.edit()
-            .putString("queue_ids", "1,2,3,4")
-            .putString("shuffle_queue_ids", "4,2,1,3")
-            .putInt("queue_position", 2)
-            .putBoolean("restore_queue_position_from_start", false)
-            .putInt("playback_position", 45_000)
-            .putInt("shuffle_mode", ShuffleMode.On.ordinal)
-            .putInt("repeat_mode", RepeatMode.All.ordinal)
-            .apply()
+        preferences.edit {
+            putString("queue_ids", "1,2,3,4")
+            putString("shuffle_queue_ids", "4,2,1,3")
+            putInt("queue_position", 2)
+            putBoolean("restore_queue_position_from_start", false)
+            putInt("playback_position", 45_000)
+            putInt("shuffle_mode", ShuffleMode.On.ordinal)
+            putInt("repeat_mode", RepeatMode.All.ordinal)
+        }
         val queueKeys = listOf("queue_ids", "shuffle_queue_ids", "queue_position", "restore_queue_position_from_start", "playback_position", "shuffle_mode", "repeat_mode")
         val before = preferences.snapshot().filterKeys { it in queueKeys }
         val harness = harness()
@@ -664,10 +663,10 @@ class QueueStoreTest {
 
     private infix fun Collection<String>.shouldNotContainAny(keys: List<String>) = filter { it in keys } shouldBe emptyList()
 
-    /** Preferences that count the writes to each key. */
-    private class WriteRecordingPreferences(
-        private val delegate: SharedPreferences = FakeSharedPreferences()
-    ) : SharedPreferences by delegate {
+    /** A store that counts the writes to each key. */
+    private class WriteRecordingStore(
+        private val delegate: InMemoryKeyValueStore = InMemoryKeyValueStore()
+    ) : KeyValueStore by delegate {
         val writes = mutableMapOf<String, Int>()
 
         /** Each playback position written, -1 for none. */
@@ -676,17 +675,17 @@ class QueueStoreTest {
         /** Each value written to each key, in order. */
         val values = mutableMapOf<String, MutableList<Any?>>()
 
-        fun snapshot(): Map<String, Any?> = delegate.all.toMap()
+        fun snapshot(): Map<String, Any?> = delegate.values.toMap()
 
-        override fun edit(): SharedPreferences.Editor = RecordingEditor(delegate.edit())
+        override fun edit(block: KeyValueStore.Editor.() -> Unit) = delegate.edit { RecordingEditor(this).block() }
 
         private inner class RecordingEditor(
-            private val editor: SharedPreferences.Editor
-        ) : SharedPreferences.Editor by editor {
+            private val editor: KeyValueStore.Editor
+        ) : KeyValueStore.Editor by editor {
             private fun record(
                 key: String,
                 value: Any?
-            ) = apply {
+            ) {
                 writes[key] = (writes[key] ?: 0) + 1
                 values.getOrPut(key) { mutableListOf() } += value
             }
@@ -694,12 +693,16 @@ class QueueStoreTest {
             override fun putString(
                 key: String,
                 value: String?
-            ) = record(key, value).also { editor.putString(key, value) }
+            ) {
+                record(key, value)
+                editor.putString(key, value)
+            }
 
             override fun putInt(
                 key: String,
                 value: Int
-            ) = record(key, value).also {
+            ) {
+                record(key, value)
                 if (key == "playback_position") positions += value
                 editor.putInt(key, value)
             }
@@ -707,12 +710,18 @@ class QueueStoreTest {
             override fun putBoolean(
                 key: String,
                 value: Boolean
-            ) = record(key, value).also { editor.putBoolean(key, value) }
+            ) {
+                record(key, value)
+                editor.putBoolean(key, value)
+            }
 
             override fun putLong(
                 key: String,
                 value: Long
-            ) = record(key, value).also { editor.putLong(key, value) }
+            ) {
+                record(key, value)
+                editor.putLong(key, value)
+            }
         }
     }
 

@@ -7,9 +7,9 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
-import java.util.Date
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Clock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -126,7 +126,7 @@ class MediaImporter(
             }.awaitAll()
         }
 
-        preferenceManager.lastMediaImportDate = Date()
+        preferenceManager.lastMediaImportDate = Clock.System.now()
 
         importCount++
 

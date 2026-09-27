@@ -7,11 +7,11 @@ import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
-import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
@@ -44,7 +44,7 @@ class AlbumDetailViewModelTest {
         seededAlbums += song.album
         ArtworkSeed.Available(RED)
     }
-    private val settingsStore = SettingsStore(FakeSharedPreferences())
+    private val settingsStore = SettingsStore(InMemoryKeyValueStore())
 
     private val fakeSongRepository = FakeSongRepository()
     private val fakeAlbumRepository = FakeAlbumRepository()

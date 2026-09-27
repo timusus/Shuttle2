@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.smoke
 
 import android.Manifest
-import android.content.SharedPreferences
 import android.os.Build
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsMatcher
@@ -18,6 +17,7 @@ import androidx.test.core.app.launchActivity
 import androidx.test.rule.GrantPermissionRule
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.shuttle.TestApplication
+import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.ui.MainActivity
 import dev.zacsweers.metro.Inject
 import org.junit.After
@@ -46,7 +46,7 @@ class SmokeTestSuite {
     lateinit var database: MediaDatabase
 
     @Inject
-    lateinit var sharedPreferences: SharedPreferences
+    lateinit var store: KeyValueStore
 
     lateinit var scenario: ActivityScenario<MainActivity>
 
@@ -54,7 +54,7 @@ class SmokeTestSuite {
     fun setup() {
         ApplicationProvider.getApplicationContext<TestApplication>().newGraph().inject(this)
         SmokeTestData.seedDatabase(database)
-        SmokeTestData.setOnboarded(sharedPreferences)
+        SmokeTestData.setOnboarded(store)
         scenario = launchActivity()
     }
 

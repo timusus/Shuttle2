@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.search
 
 import android.content.Context
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import io.kotest.matchers.shouldBe
 import org.junit.Before
 import org.junit.Test
@@ -16,7 +17,7 @@ class RecentSearchesTest {
     @Before
     fun setUp() {
         val context: Context = RuntimeEnvironment.getApplication()
-        preferenceManager = GeneralPreferenceManager(context.getSharedPreferences("recent-searches-test", Context.MODE_PRIVATE).apply { edit().clear().commit() })
+        preferenceManager = GeneralPreferenceManager(SharedPreferencesKeyValueStore(context.getSharedPreferences("recent-searches-test", Context.MODE_PRIVATE).apply { edit().clear().commit() }))
     }
 
     @Test

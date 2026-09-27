@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albums
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import io.kotest.matchers.shouldBe
 import org.junit.Test
@@ -14,7 +15,7 @@ class AlbumListPreferenceManagerTest {
 
     private val preferences = AlbumListPreferenceManager(
         GeneralPreferenceManager(
-            ApplicationProvider.getApplicationContext<Context>().getSharedPreferences("album-list-test", Context.MODE_PRIVATE),
+            SharedPreferencesKeyValueStore(ApplicationProvider.getApplicationContext<Context>().getSharedPreferences("album-list-test", Context.MODE_PRIVATE)),
         ),
     )
 

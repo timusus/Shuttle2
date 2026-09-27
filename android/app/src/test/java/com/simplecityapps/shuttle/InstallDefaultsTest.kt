@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.SettingsStore
@@ -16,7 +17,7 @@ import org.robolectric.RuntimeEnvironment
 @RunWith(RobolectricTestRunner::class)
 class InstallDefaultsTest {
     private val prefs: SharedPreferences = RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }
-    private val preferenceManager = GeneralPreferenceManager(prefs)
+    private val preferenceManager = GeneralPreferenceManager(SharedPreferencesKeyValueStore(prefs))
     private val privacySettings = PrivacySettings(SettingsStore(prefs))
     private val analyticsConsentSettings = AnalyticsConsentSettings(SettingsStore(prefs))
     private val installDefaults = InstallDefaults(preferenceManager, privacySettings, analyticsConsentSettings)

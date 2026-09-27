@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.shouldBe
 import java.lang.reflect.Proxy
 import java.util.concurrent.atomic.AtomicBoolean
@@ -37,7 +38,7 @@ class MediaImporterTest {
             context = RuntimeEnvironment.getApplication(),
             songRepository = emptyRepository<SongRepository>(),
             playlistStore = emptyRepository<ImportedPlaylistStore>(),
-            preferenceManager = GeneralPreferenceManager(FakeSharedPreferences())
+            preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
         ).apply { mediaProviders += provider }
 
     @Before

@@ -1,23 +1,17 @@
 package com.simplecityapps.shuttle.ui
 
-import android.content.Context
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.trial.Entitlement
 import com.simplecityapps.trial.ProSource
 import io.kotest.matchers.shouldBe
-import java.util.Date
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
-@RunWith(RobolectricTestRunner::class)
 class ReviewPromptTest {
-    private val preferenceManager = GeneralPreferenceManager(
-        RuntimeEnvironment.getApplication().getSharedPreferences("review-prompt-test", Context.MODE_PRIVATE).apply { edit().clear().commit() }
-    )
-    private var now = Date(TimeUnit.DAYS.toMillis(1000))
+    private val preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private var now = Instant.fromEpochMilliseconds(1000.days.inWholeMilliseconds)
     private val reviewPrompt = ReviewPrompt(preferenceManager) { now }
 
     @Test
@@ -57,5 +51,5 @@ class ReviewPromptTest {
         reviewPrompt.takeIfDue() shouldBe true
     }
 
-    private fun daysLater(days: Long) = Date(now.time + TimeUnit.DAYS.toMillis(days))
+    private fun daysLater(days: Int) = now + days.days
 }

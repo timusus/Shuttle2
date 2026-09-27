@@ -15,6 +15,7 @@ import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.playbackreporting.PendingPlays
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportSender
 import com.simplecityapps.shuttle.settings.SettingsStore
@@ -59,7 +60,7 @@ class PlaybackReportingInitializerTest {
             playbackReporter = playbackReporter,
             sender = PlaybackReportSender(
                 reporter = playbackReporter,
-                pendingPlays = PendingPlays(application.getSharedPreferences("playback_reporting_initializer_test_plays", Context.MODE_PRIVATE)),
+                pendingPlays = PendingPlays(SharedPreferencesKeyValueStore(application.getSharedPreferences("playback_reporting_initializer_test_plays", Context.MODE_PRIVATE))),
                 findSongs = { emptyList() },
                 isEnabled = { librarySettings.reportPlaybackToServer.value },
                 now = { Instant.fromEpochMilliseconds(0) },

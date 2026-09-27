@@ -84,7 +84,7 @@ class AndroidSettingsEffects @Inject constructor(
         }
     }
 
-    override fun lastScanDate(): Date? = generalPreferenceManager.lastMediaImportDate
+    override fun lastScanDate(): Date? = generalPreferenceManager.lastMediaImportDate?.let { scanned -> Date(scanned.toEpochMilliseconds()) }
 
     override fun rescan() {
         appScope.launch { mediaImporter.import() }

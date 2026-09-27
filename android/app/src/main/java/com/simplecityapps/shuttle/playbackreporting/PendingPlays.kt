@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.playbackreporting
 
-import android.content.SharedPreferences
-import androidx.core.content.edit
+import com.simplecityapps.shuttle.persistence.KeyValueStore
 import kotlin.time.Instant
 
 /**
@@ -10,7 +9,7 @@ import kotlin.time.Instant
  * [capacity] plays, dropping the oldest.
  */
 class PendingPlays(
-    private val sharedPreferences: SharedPreferences,
+    private val store: KeyValueStore,
     private val capacity: Int = CAPACITY
 ) {
     data class Play(
@@ -18,7 +17,7 @@ class PendingPlays(
         val playedAt: Instant
     )
 
-    fun all(): List<Play> = sharedPreferences.getString(KEY, null)
+    fun all(): List<Play> = store.getString(KEY, null)
         ?.split(PLAY_SEPARATOR)
         ?.mapNotNull { encoded -> decode(encoded) }
         .orEmpty()
@@ -33,7 +32,7 @@ class PendingPlays(
     }
 
     private fun save(plays: List<Play>) {
-        sharedPreferences.edit {
+        store.edit {
             if (plays.isEmpty()) {
                 remove(KEY)
             } else {

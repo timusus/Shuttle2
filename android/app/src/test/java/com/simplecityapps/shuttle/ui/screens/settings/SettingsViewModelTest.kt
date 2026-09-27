@@ -1,9 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
-import android.content.SharedPreferences
-import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
@@ -33,7 +32,7 @@ class SettingsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
 
-    private val prefs: SharedPreferences = FakeSharedPreferences()
+    private val prefs = InMemoryKeyValueStore()
     private val effects = FakeSettingsEffects()
     private lateinit var store: SettingsStore
 

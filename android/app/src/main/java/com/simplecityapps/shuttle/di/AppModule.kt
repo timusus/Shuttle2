@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.di
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.util.LruCache
 import com.simplecityapps.mediaprovider.PlaylistExporter
@@ -9,6 +8,7 @@ import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.debug.livelog.LiveLogSink
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.ui.ThemeManager
@@ -56,7 +56,7 @@ object AppModule {
     ): PlaylistExporter = PlaylistExporter(context, ioDispatcher)
 
     @Provides
-    fun provideSortPreferences(preference: SharedPreferences): SortPreferences = SortPreferenceManager(preference)
+    fun provideSortPreferences(store: KeyValueStore): SortPreferences = SortPreferenceManager(store)
 
     @SingleIn(AppScope::class)
     @Provides

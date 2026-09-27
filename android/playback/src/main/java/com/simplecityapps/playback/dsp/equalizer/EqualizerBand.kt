@@ -1,11 +1,11 @@
 package com.simplecityapps.playback.dsp.equalizer
 
-import com.squareup.moshi.JsonClass
 import java.io.Serializable
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-@JsonClass(generateAdapter = true)
+// Saved as JSON by PlaybackPreferenceManager.customPresetBands: a band of either class is written as its two fields
+@kotlinx.serialization.Serializable
 open class EqualizerBand(val centerFrequency: Int, var gain: Double) : Serializable {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

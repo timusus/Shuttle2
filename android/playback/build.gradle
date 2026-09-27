@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 apply plugin: 'com.android.library'
 apply plugin: 'dev.zacsweers.metro'
-apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'org.jetbrains.kotlin.plugin.serialization'
 
 android {
     compileSdk = 37
@@ -66,9 +66,8 @@ dependencies {
     implementation(libs.media3.exoplayerHls)
     implementation(libs.media3.session)
 
-    // Moshi
-    implementation libs.moshi.kotlin
-    ksp libs.moshi.kotlinCodegen
+    // kotlinx.serialization: the saved EQ bands and now-playing snapshot
+    implementation libs.kotlinx.serialization.json
 
     implementation(project(':android:domain'))
     // Song.date is a kotlinx.datetime.LocalDate; building a Song for an opened file needs it

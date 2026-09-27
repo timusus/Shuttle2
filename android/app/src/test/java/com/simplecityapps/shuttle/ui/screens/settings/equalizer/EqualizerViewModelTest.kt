@@ -1,20 +1,18 @@
 package com.simplecityapps.shuttle.ui.screens.settings.equalizer
 
-import android.content.SharedPreferences
 import androidx.media3.common.C
 import androidx.media3.common.audio.AudioProcessor
-import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyResponse
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.testing.MainDispatcherRule
-import com.squareup.moshi.Moshi
 import io.kotest.matchers.comparables.shouldBeLessThan
 import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
@@ -30,10 +28,10 @@ class EqualizerViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val prefs: SharedPreferences = FakeSharedPreferences()
+    private val prefs = InMemoryKeyValueStore()
     private val store = SettingsStore(prefs)
     private val playbackSettings = PlaybackSettings(store)
-    private val preferenceManager = PlaybackPreferenceManager(prefs, Moshi.Builder().build())
+    private val preferenceManager = PlaybackPreferenceManager(prefs)
     private val processor = EqualizerAudioProcessor(enabled = false).apply { preset = Equalizer.Presets.flat }
 
     private fun viewModel() = EqualizerViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), SaveEqualizerPreset(preferenceManager), processor, ComputeFrequencyResponse(DefaultEqualizerFrequencyResponse()))

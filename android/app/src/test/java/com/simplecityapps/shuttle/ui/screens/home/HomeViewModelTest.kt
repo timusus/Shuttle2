@@ -6,7 +6,6 @@ import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakeQueueOperations
-import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
@@ -15,6 +14,7 @@ import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
@@ -60,9 +60,9 @@ class HomeViewModelTest {
 
     @Before
     fun setUp() {
-        preferenceManager = GeneralPreferenceManager(FakeSharedPreferences())
+        preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
         preferenceManager.lastViewedChangelogVersion = BuildConfig.VERSION_NAME
-        settingsStore = SettingsStore(FakeSharedPreferences())
+        settingsStore = SettingsStore(InMemoryKeyValueStore())
         analyticsConsentSettings = AnalyticsConsentSettings(settingsStore)
     }
 

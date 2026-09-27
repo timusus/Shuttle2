@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.PlaybackSession
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportPlanner.Call
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
@@ -27,7 +28,7 @@ class PlaybackReportSenderTest {
     private val playedAt = Instant.fromEpochMilliseconds(1_700_000_000_000)
 
     private val pendingPlays = PendingPlays(
-        RuntimeEnvironment.getApplication().getSharedPreferences("sender_test", Context.MODE_PRIVATE).apply { edit().clear().commit() }
+        SharedPreferencesKeyValueStore(RuntimeEnvironment.getApplication().getSharedPreferences("sender_test", Context.MODE_PRIVATE).apply { edit().clear().commit() })
     )
     private val reporter = FakeReporter()
     private var enabled = true

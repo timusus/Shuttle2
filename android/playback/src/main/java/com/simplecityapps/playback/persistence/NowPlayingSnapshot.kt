@@ -2,14 +2,15 @@ package com.simplecityapps.playback.persistence
 
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * The song the saved queue position names, saved with the queue: enough to show it, and to offer it to the system's
  * resumption controls, before the saved queue has been read back. [positionMs] is where it resumes from, which is saved
  * on its own (see [PlaybackPreferenceManager.nowPlaying]).
  */
-@JsonClass(generateAdapter = true)
+@Serializable
 data class NowPlayingSnapshot(
     val songId: Long,
     val title: String?,

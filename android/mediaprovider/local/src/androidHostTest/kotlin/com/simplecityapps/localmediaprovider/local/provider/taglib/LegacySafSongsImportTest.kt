@@ -20,6 +20,7 @@ import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -185,7 +186,7 @@ class LegacySafSongsImportTest {
                 context = context,
                 songRepository = LocalSongRepository(scope, database.songDataDao()),
                 playlistStore = LocalPlaylistRepository(context, scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao()),
-                preferenceManager = GeneralPreferenceManager(context.getSharedPreferences("import-test", Context.MODE_PRIVATE))
+                preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
             )
         importer.mediaProviders += provider
         importer.import()

@@ -2,7 +2,6 @@ package com.simplecityapps.playback.spec
 
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
@@ -29,7 +28,6 @@ import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.playback.exoplayer.MediaResolver
 import com.simplecityapps.playback.exoplayer.ResolvedMedia
-import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.persistence.QueueStore
@@ -38,8 +36,9 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueSongRefresher
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.settings.SettingsStore
-import com.squareup.moshi.Moshi
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
@@ -100,7 +99,7 @@ class PlaybackHarness(
     /** What keeps a Cast receiver in line, around the local player: none, as when there's no Cast. Built before [activePlayer]. */
     castQueue: (ExoPlayer) -> CastQueue? = { null },
     /** Where settings, and the saved queue and position, are kept. Pass one harness's to the next to model the app starting again. */
-    val sharedPreferences: SharedPreferences = FakeSharedPreferences(),
+    val store: KeyValueStore = InMemoryKeyValueStore(),
     /** The library the saved queue is restored from ([restore]), and whose updates the queue follows. */
     songRepository: SongRepository = FakeSongRepository(emptyList()),
     /** Handles what the harness's coroutines throw, where a test expects them to; by default they fail the test. */
@@ -157,7 +156,7 @@ class PlaybackHarness(
 
     val replayGain = ReplayGainAudioProcessor(replayGainMode)
 
-    val playbackPreferenceManager = PlaybackPreferenceManager(sharedPreferences, Moshi.Builder().build())
+    val playbackPreferenceManager = PlaybackPreferenceManager(store)
 
     val audioEffectSessionManager = AudioEffectSessionManager(context)
 
@@ -192,7 +191,7 @@ class PlaybackHarness(
     var playlistChanges = 0
         private set
 
-    private val playbackSettings = PlaybackSettings(SettingsStore(sharedPreferences))
+    private val playbackSettings = PlaybackSettings(SettingsStore(store))
 
     /**
      * The one clock the player and the crossfade's tail decoders run on, so their work interleaves in order. It moves on

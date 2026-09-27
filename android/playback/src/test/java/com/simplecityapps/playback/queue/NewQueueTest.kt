@@ -5,10 +5,10 @@ import androidx.media3.test.utils.TestExoPlayerBuilder
 import com.simplecityapps.playback.engine.SongUriResolver
 import com.simplecityapps.playback.exoplayer.MediaResolver
 import com.simplecityapps.playback.exoplayer.ResolvedMedia
-import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.SettingsStore
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.nulls.shouldBeNull
@@ -38,7 +38,7 @@ class NewQueueTest {
     private val queue =
         QueueFacade(
             player,
-            PlaybackSettings(SettingsStore(FakeSharedPreferences())),
+            PlaybackSettings(SettingsStore(InMemoryKeyValueStore())),
             SongUriResolver(MediaResolver { song -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false) }),
             buildContext = builds
         )

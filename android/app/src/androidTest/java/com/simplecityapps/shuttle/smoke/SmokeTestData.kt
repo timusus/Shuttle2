@@ -1,10 +1,12 @@
 package com.simplecityapps.shuttle.smoke
 
-import android.content.SharedPreferences
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.shuttle.model.MediaProviderType
-import java.util.Date
+import com.simplecityapps.shuttle.persistence.KeyValueStore
+import com.simplecityapps.shuttle.persistence.putBoolean
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -27,14 +29,12 @@ object SmokeTestData {
         }
     }
 
-    fun setOnboarded(sharedPreferences: SharedPreferences) {
-        sharedPreferences.edit()
-            .putBoolean("changelog_show_on_launch", false)
-            .commit()
+    fun setOnboarded(store: KeyValueStore) {
+        store.putBoolean("changelog_show_on_launch", false)
     }
 
     private fun buildSongList(): List<SongData> {
-        val now = Date()
+        val now = Clock.System.now()
         return listOf(
             songData(FIRST_SONG, "The Tin Orchards", "Cassette Summer", 1, 184_000, 2014, "Indie Rock", "/music/01.mp3", now),
             songData("Heatwave Radio", "The Tin Orchards", "Cassette Summer", 2, 203_000, 2014, "Indie Rock", "/music/02.mp3", now),
@@ -58,7 +58,7 @@ object SmokeTestData {
         year: Int,
         genre: String,
         path: String,
-        lastModified: Date
+        lastModified: Instant
     ): SongData = SongData(
         name = name,
         track = track,

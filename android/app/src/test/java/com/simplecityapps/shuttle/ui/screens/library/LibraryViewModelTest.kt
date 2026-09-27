@@ -1,14 +1,14 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
-import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import io.kotest.matchers.shouldBe
 import org.junit.Test
 
 class LibraryViewModelTest {
 
-    private val preferences = GeneralPreferenceManager(FakeSharedPreferences())
+    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
 
     private fun viewModel() = LibraryViewModel(ReadLibraryTabs(preferences), SaveLibraryTabs(preferences), SaveCurrentLibraryTab(preferences))
 

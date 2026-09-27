@@ -3,8 +3,9 @@ package com.simplecityapps.shuttle.ui
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.trial.Entitlement
 import dev.zacsweers.metro.Inject
-import java.util.Date
-import java.util.concurrent.TimeUnit
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 
 /**
  * When to ask for a Play review: a week after S2 Pro was first seen, then at most every 30 days
@@ -12,10 +13,10 @@ import java.util.concurrent.TimeUnit
  */
 class ReviewPrompt(
     private val preferenceManager: GeneralPreferenceManager,
-    private val now: () -> Date
+    private val now: () -> Instant
 ) {
     @Inject
-    constructor(preferenceManager: GeneralPreferenceManager) : this(preferenceManager, ::Date)
+    constructor(preferenceManager: GeneralPreferenceManager) : this(preferenceManager, { Clock.System.now() })
 
     /** Records the first time the user is seen with Pro as the purchase date. */
     fun onEntitlement(entitlement: Entitlement) {
@@ -28,12 +29,10 @@ class ReviewPrompt(
     fun takeIfDue(): Boolean {
         val now = now()
         val purchased = preferenceManager.appPurchasedDate ?: return false
-        if (!purchased.before(now.minusDays(7))) return false
+        if (purchased >= now - 7.days) return false
         val lastAsked = preferenceManager.lastViewedRatingFlow
-        if (lastAsked != null && !lastAsked.before(now.minusDays(30))) return false
+        if (lastAsked != null && lastAsked >= now - 30.days) return false
         preferenceManager.lastViewedRatingFlow = now
         return true
     }
-
-    private fun Date.minusDays(days: Long) = Date(time - TimeUnit.DAYS.toMillis(days))
 }

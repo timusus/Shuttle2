@@ -1,5 +1,7 @@
 package com.simplecityapps.mediaprovider
 
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.persistence.putString
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
@@ -7,8 +9,8 @@ import io.kotest.matchers.shouldBe
 import org.junit.Test
 
 class StreamingBitrateCapTest {
-    private val sharedPreferences = FakeSharedPreferences()
-    private val streamingSettings = StreamingSettings(SettingsStore(sharedPreferences))
+    private val store = InMemoryKeyValueStore()
+    private val streamingSettings = StreamingSettings(SettingsStore(store))
     private var metered = false
     private val cap = StreamingBitrateCap(streamingSettings) { metered }
 
@@ -47,7 +49,7 @@ class StreamingBitrateCapTest {
 
     @Test
     fun `a stored value no quality has reads as original`() {
-        sharedPreferences.edit().putString(StreamingSettings.MeteredQuality.key, "Kbps999").apply()
+        store.putString(StreamingSettings.MeteredQuality.key, "Kbps999")
         metered = true
 
         cap.maxBitrateKbps() shouldBe null

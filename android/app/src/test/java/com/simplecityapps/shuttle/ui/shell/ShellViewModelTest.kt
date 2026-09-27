@@ -1,6 +1,6 @@
 package com.simplecityapps.shuttle.ui.shell
 
-import com.simplecityapps.fakes.FakeSharedPreferences
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
@@ -8,7 +8,7 @@ import io.kotest.matchers.shouldBe
 import org.junit.Test
 
 class ShellViewModelTest {
-    private val store = SettingsStore(FakeSharedPreferences())
+    private val store = SettingsStore(InMemoryKeyValueStore())
     private val settings = AppearanceSettings(store)
 
     @Test

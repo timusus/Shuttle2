@@ -318,7 +318,7 @@ class PlaybackSpecTest {
         playback.setPlaybackSpeed(1.25f)
         harness.release()
 
-        val restarted = PlaybackHarness(sharedPreferences = harness.sharedPreferences)
+        val restarted = PlaybackHarness(store = harness.store)
         try {
             restarted.playbackOperations.getPlaybackSpeed() shouldBe 1.25f
             restarted.playbackOperations.playbackSpeedFlow.value shouldBe 1.25f

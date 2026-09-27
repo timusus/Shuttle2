@@ -1,31 +1,30 @@
 package com.simplecityapps.playback.persistence
 
-import android.content.SharedPreferences
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.get
-import com.simplecityapps.shuttle.persistence.put
-import com.squareup.moshi.JsonAdapter
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
-import java.lang.reflect.Type
+import com.simplecityapps.shuttle.persistence.KeyValueStore
+import com.simplecityapps.shuttle.persistence.putBoolean
+import com.simplecityapps.shuttle.persistence.putInt
+import com.simplecityapps.shuttle.persistence.putString
+import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.nullable
+import kotlinx.serialization.json.Json
 
 class PlaybackPreferenceManager(
-    private val sharedPreferences: SharedPreferences,
-    private val moshi: Moshi
+    private val store: KeyValueStore
 ) {
     /**
      * A comma separated list of song ids
      */
     var queueIds: String?
         set(value) {
-            sharedPreferences.put("queue_ids", value ?: "")
+            store.putString("queue_ids", value ?: "")
         }
         get() {
-            val queueIds = sharedPreferences.get("queue_ids", "")
+            val queueIds = store.getString("queue_ids", "")!!
             return if (queueIds.isEmpty()) null else queueIds
         }
 
@@ -34,19 +33,19 @@ class PlaybackPreferenceManager(
      */
     var shuffleQueueIds: String?
         set(value) {
-            sharedPreferences.put("shuffle_queue_ids", value ?: "")
+            store.putString("shuffle_queue_ids", value ?: "")
         }
         get() {
-            val queueIds = sharedPreferences.get("shuffle_queue_ids", "")
+            val queueIds = store.getString("shuffle_queue_ids", "")!!
             return if (queueIds.isEmpty()) null else queueIds
         }
 
     var queuePosition: Int?
         set(value) {
-            sharedPreferences.put("queue_position", value ?: -1)
+            store.putInt("queue_position", value ?: -1)
         }
         get() {
-            val queuePosition = sharedPreferences.get("queue_position", -1)
+            val queuePosition = store.getInt("queue_position", -1)
             return if (queuePosition == -1) null else queuePosition
         }
 
@@ -57,44 +56,44 @@ class PlaybackPreferenceManager(
      */
     var restoreQueuePositionFromStart: Boolean
         set(value) {
-            sharedPreferences.put("restore_queue_position_from_start", value)
+            store.putBoolean("restore_queue_position_from_start", value)
         }
         get() {
-            return sharedPreferences.get("restore_queue_position_from_start", false)
+            return store.getBoolean("restore_queue_position_from_start", false)
         }
 
     var playbackPosition: Int?
         set(value) {
-            sharedPreferences.put("playback_position", value ?: -1)
+            store.putInt("playback_position", value ?: -1)
         }
         get() {
-            val playbackPosition = sharedPreferences.get("playback_position", -1)
+            val playbackPosition = store.getInt("playback_position", -1)
             return if (playbackPosition == -1) null else playbackPosition
         }
 
     var shuffleMode: ShuffleMode
         set(value) {
-            sharedPreferences.put("shuffle_mode", value.ordinal)
+            store.putInt("shuffle_mode", value.ordinal)
         }
         get() {
-            return ShuffleMode.init(sharedPreferences.get("shuffle_mode", -1))
+            return ShuffleMode.init(store.getInt("shuffle_mode", -1))
         }
 
     var repeatMode: RepeatMode
         set(value) {
-            sharedPreferences.put("repeat_mode", value.ordinal)
+            store.putInt("repeat_mode", value.ordinal)
         }
         get() {
-            return RepeatMode.init(sharedPreferences.get("repeat_mode", -1))
+            return RepeatMode.init(store.getInt("repeat_mode", -1))
         }
 
     var mediaProviderTypes: List<MediaProviderType>
         set(value) {
-            sharedPreferences.put("media_providers", value.map { it.ordinal }.joinToString(","))
+            store.putString("media_providers", value.map { it.ordinal }.joinToString(","))
         }
         get() {
             // A fresh install scans this device with the S2 scanner; an empty saved value means every source was turned off.
-            return sharedPreferences.get("media_providers", MediaProviderType.Shuttle.ordinal.toString())
+            return store.getString("media_providers", MediaProviderType.Shuttle.ordinal.toString())!!
                 .split(",")
                 .filter { it.isNotEmpty() }
                 .map {
@@ -104,26 +103,22 @@ class PlaybackPreferenceManager(
 
     var preset: Equalizer.Presets.Preset
         set(value) {
-            sharedPreferences.put("preset_name", value.name)
+            store.putString("preset_name", value.name)
         }
         get() {
-            val name = sharedPreferences.get("preset_name", Equalizer.Presets.custom.name)
+            val name = store.getString("preset_name", Equalizer.Presets.custom.name)!!
             return Equalizer.Presets.all.firstOrNull { preset -> preset.name == name } ?: Equalizer.Presets.custom
         }
 
-    private val listEqualizerBandType: Type = Types.newParameterizedType(MutableList::class.java, EqualizerBand::class.java)
-    private val adapter: JsonAdapter<List<EqualizerBand>> by lazy { moshi.adapter(listEqualizerBandType) }
     var customPresetBands: List<EqualizerBand>?
         set(value) {
-            sharedPreferences.put("custom_preset_bands", adapter.toJson(value))
+            store.putString("custom_preset_bands", json.encodeToString(equalizerBandsSerializer, value))
         }
         get() {
-            return sharedPreferences.getString("custom_preset_bands", null)?.let { json ->
-                adapter.fromJson(json)
+            return store.getString("custom_preset_bands", null)?.let { bands ->
+                json.decodeFromString(equalizerBandsSerializer, bands)
             }
         }
-
-    private val nowPlayingAdapter: JsonAdapter<NowPlayingSnapshot> by lazy { moshi.adapter(NowPlayingSnapshot::class.java) }
 
     /**
      * The song the saved queue position names, saved as the position is; null with no saved queue. Read back with the
@@ -132,11 +127,25 @@ class PlaybackPreferenceManager(
      */
     var nowPlaying: NowPlayingSnapshot?
         set(value) {
-            sharedPreferences.put("now_playing", value?.let(nowPlayingAdapter::toJson) ?: "")
+            store.putString("now_playing", value?.let { json.encodeToString(NowPlayingSnapshot.serializer(), it) } ?: "")
         }
         get() {
-            val json = sharedPreferences.get("now_playing", "").ifEmpty { return null }
-            val snapshot = runCatching { nowPlayingAdapter.fromJson(json) }.getOrNull() ?: return null
+            val saved = store.getString("now_playing", "")!!.ifEmpty { return null }
+            val snapshot = runCatching { json.decodeFromString(NowPlayingSnapshot.serializer(), saved) }.getOrNull() ?: return null
             return snapshot.copy(positionMs = if (restoreQueuePositionFromStart) 0 else playbackPosition ?: 0)
         }
+
+    companion object {
+        /**
+         * Reads and writes the JSON Moshi wrote before (#584): fields in declaration order, nulls left out, unknown
+         * fields ignored, enums by name.
+         */
+        internal val json = Json {
+            ignoreUnknownKeys = true
+            explicitNulls = false
+            encodeDefaults = true
+        }
+
+        private val equalizerBandsSerializer = ListSerializer(EqualizerBand.serializer()).nullable
+    }
 }

@@ -1,7 +1,6 @@
 package com.simplecityapps.playback.di
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.media.AudioManager
 import androidx.core.content.getSystemService
 import androidx.media3.common.Player
@@ -28,7 +27,7 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
-import com.squareup.moshi.Moshi
+import com.simplecityapps.shuttle.persistence.KeyValueStore
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -73,9 +72,8 @@ class PlaybackModule {
     @SingleIn(AppScope::class)
     @Provides
     fun providePlaybackPreferenceManager(
-        sharedPreferences: SharedPreferences,
-        moshi: Moshi
-    ): PlaybackPreferenceManager = PlaybackPreferenceManager(sharedPreferences, moshi)
+        store: KeyValueStore
+    ): PlaybackPreferenceManager = PlaybackPreferenceManager(store)
 
     @Provides
     fun provideMediaIdHelper(

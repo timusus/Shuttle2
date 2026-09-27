@@ -15,6 +15,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.query.SongQuery
 import io.kotest.matchers.shouldBe
 import java.io.File
@@ -52,7 +53,7 @@ class PlaylistImportTest {
             context = context,
             songRepository = songRepository,
             playlistStore = playlistRepository,
-            preferenceManager = GeneralPreferenceManager(context.getSharedPreferences("playlist-import-test", Context.MODE_PRIVATE))
+            preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
         ).apply { mediaProviders += provider }
 
     @Before

@@ -5,16 +5,17 @@ import androidx.core.content.getSystemService
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.BuildConfig
 import com.simplecityapps.trial.Entitlement
 import com.simplecityapps.trial.EntitlementRepository
 import com.simplecityapps.trial.EntitlementStore
+import com.simplecityapps.trial.KeyValueEntitlementStore
 import com.simplecityapps.trial.MonetisationAnalytics
 import com.simplecityapps.trial.PlayBilling
 import com.simplecityapps.trial.PromoCodeService
 import com.simplecityapps.trial.ServerAccessGate
-import com.simplecityapps.trial.SharedPreferencesEntitlementStore
 import com.squareup.moshi.Moshi
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -76,8 +77,8 @@ class TrialModule {
     @SingleIn(AppScope::class)
     fun provideEntitlementStore(
         @ApplicationContext context: Context
-    ): EntitlementStore = SharedPreferencesEntitlementStore(
-        context.getSharedPreferences(SharedPreferencesEntitlementStore.PREFERENCES_NAME, Context.MODE_PRIVATE)
+    ): EntitlementStore = KeyValueEntitlementStore(
+        SharedPreferencesKeyValueStore(context.getSharedPreferences(KeyValueEntitlementStore.PREFERENCES_NAME, Context.MODE_PRIVATE))
     )
 
     @Provides

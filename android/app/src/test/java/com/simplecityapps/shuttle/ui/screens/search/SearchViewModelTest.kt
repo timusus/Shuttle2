@@ -6,9 +6,9 @@ import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.testing.MainDispatcherRule
@@ -39,7 +39,7 @@ class SearchViewModelTest {
 
     @Before
     fun setUp() {
-        preferenceManager = GeneralPreferenceManager(FakeSharedPreferences())
+        preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
         songs.setSongs(listOf(chlorophyllLoop, petalArithmetic))
         albums.setAlbums(listOf(createAlbum("Phase Garden", "Juniper Static")))
     }

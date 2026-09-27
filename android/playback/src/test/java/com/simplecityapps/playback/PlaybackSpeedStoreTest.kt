@@ -2,8 +2,8 @@ package com.simplecityapps.playback
 
 import androidx.media3.common.PlaybackParameters
 import com.simplecityapps.playback.fakes.FakeListenedPlayer
-import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.SettingsStore
 import io.kotest.matchers.shouldBe
 import org.junit.Test
@@ -11,7 +11,7 @@ import org.junit.Test
 class PlaybackSpeedStoreTest {
     private val player = FakeListenedPlayer()
 
-    private val playbackSpeed = PlaybackSettings(SettingsStore(FakeSharedPreferences())).playbackSpeed
+    private val playbackSpeed = PlaybackSettings(SettingsStore(InMemoryKeyValueStore())).playbackSpeed
 
     private val store = PlaybackSpeedStore(player, playbackSpeed)
 

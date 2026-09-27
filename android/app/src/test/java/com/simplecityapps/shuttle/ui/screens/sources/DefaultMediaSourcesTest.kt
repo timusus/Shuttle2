@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.sources
 
-import android.content.Context
 import com.simplecityapps.createSong
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
@@ -13,7 +12,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.squareup.moshi.Moshi
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.shouldBe
 import io.mockk.coVerify
 import io.mockk.every
@@ -24,16 +23,11 @@ import kotlinx.coroutines.test.TestScope
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 /** Removing a source (turning This device off, or signing out of a server) takes its songs with it. */
 @RunWith(RobolectricTestRunner::class)
 class DefaultMediaSourcesTest {
-    private val context: Context = RuntimeEnvironment.getApplication()
-    private val preferences = PlaybackPreferenceManager(
-        context.getSharedPreferences("media-sources-test", Context.MODE_PRIVATE).apply { edit().clear().commit() },
-        Moshi.Builder().build()
-    )
+    private val preferences = PlaybackPreferenceManager(InMemoryKeyValueStore())
     private val jellyfin = mockk<JellyfinMediaProvider>(relaxed = true)
     private val importerProviders = mutableSetOf<MediaProvider>()
     private val mediaImporter = mockk<MediaImporter>(relaxed = true) { every { mediaProviders } returns importerProviders }
@@ -45,7 +39,7 @@ class DefaultMediaSourcesTest {
 
     private val mediaSources = DefaultMediaSources(
         preferences = preferences,
-        generalPreferences = GeneralPreferenceManager(context.getSharedPreferences("media-sources-general", Context.MODE_PRIVATE)),
+        generalPreferences = GeneralPreferenceManager(InMemoryKeyValueStore()),
         mediaImporter = mediaImporter,
         taglibMediaProvider = mockk(relaxed = true),
         mediaStoreMediaProvider = mockk(relaxed = true),

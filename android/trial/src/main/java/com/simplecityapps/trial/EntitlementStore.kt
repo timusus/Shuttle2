@@ -1,7 +1,6 @@
 package com.simplecityapps.trial
 
-import android.content.SharedPreferences
-import androidx.core.content.edit
+import com.simplecityapps.shuttle.persistence.KeyValueStore
 import kotlin.time.Instant
 
 /** Persists what [EntitlementRepository] needs across launches. */
@@ -13,30 +12,30 @@ interface EntitlementStore {
 }
 
 /**
- * Backed by its own preferences file, which Android auto-backup restores on reinstall, so reinstalling
- * doesn't reset the trial for users with backup on.
+ * Backed by its own store ([PREFERENCES_NAME] on Android), which Android auto-backup restores on reinstall, so
+ * reinstalling doesn't reset the trial for users with backup on.
  */
-class SharedPreferencesEntitlementStore(
-    private val preferences: SharedPreferences
+class KeyValueEntitlementStore(
+    private val store: KeyValueStore
 ) : EntitlementStore {
     override var serverTrialStartedAt: Instant?
-        get() = preferences.getInstant(KEY_SERVER_TRIAL_STARTED_AT)
-        set(value) = preferences.edit { putInstant(KEY_SERVER_TRIAL_STARTED_AT, value) }
+        get() = store.getInstant(KEY_SERVER_TRIAL_STARTED_AT)
+        set(value) = store.edit { putInstant(KEY_SERVER_TRIAL_STARTED_AT, value) }
 
     override var cachedPro: CachedPro?
         get() {
-            val source = preferences.getString(KEY_CACHED_PRO_SOURCE, null)?.let { name -> ProSource.entries.firstOrNull { it.name == name } }
-            val seenAt = preferences.getInstant(KEY_CACHED_PRO_SEEN_AT)
+            val source = store.getString(KEY_CACHED_PRO_SOURCE, null)?.let { name -> ProSource.entries.firstOrNull { it.name == name } }
+            val seenAt = store.getInstant(KEY_CACHED_PRO_SEEN_AT)
             return if (source != null && seenAt != null) CachedPro(source, seenAt) else null
         }
-        set(value) = preferences.edit {
+        set(value) = store.edit {
             putString(KEY_CACHED_PRO_SOURCE, value?.source?.name)
             putInstant(KEY_CACHED_PRO_SEEN_AT, value?.seenAt)
         }
 
-    private fun SharedPreferences.getInstant(key: String): Instant? = if (contains(key)) Instant.fromEpochMilliseconds(getLong(key, 0)) else null
+    private fun KeyValueStore.getInstant(key: String): Instant? = if (contains(key)) Instant.fromEpochMilliseconds(getLong(key, 0)) else null
 
-    private fun SharedPreferences.Editor.putInstant(
+    private fun KeyValueStore.Editor.putInstant(
         key: String,
         value: Instant?
     ) {

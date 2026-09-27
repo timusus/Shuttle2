@@ -12,6 +12,7 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
@@ -63,7 +64,7 @@ class ConflictingProviderImportTest {
                 context = context,
                 songRepository = LocalSongRepository(scope, database.songDataDao()),
                 playlistStore = LocalPlaylistRepository(context, scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao()),
-                preferenceManager = GeneralPreferenceManager(context.getSharedPreferences("conflicting-import-test", Context.MODE_PRIVATE))
+                preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
             )
         importer.mediaProviders += FakeProvider(MediaProviderType.MediaStore)
         importer.mediaProviders += FakeProvider(MediaProviderType.Shuttle)

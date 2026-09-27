@@ -5,7 +5,6 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
-import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.fakes.FakeSongDownloadRepository
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
@@ -24,6 +23,7 @@ import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
@@ -70,7 +70,7 @@ class PlayerViewModelTest {
     private var savedNowPlaying: NowPlayingSnapshot? = null
     private val playlistRepository = FakePlaylistRepository()
     private val songRepository = FakeSongRepository()
-    private val preferences = FakeSharedPreferences()
+    private val preferences = InMemoryKeyValueStore()
     private val settingsStore = SettingsStore(preferences)
     private val preferenceManager = GeneralPreferenceManager(preferences)
     private val settingsEffects = FakeSettingsEffects()
