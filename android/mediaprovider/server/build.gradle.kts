@@ -9,10 +9,8 @@ plugins {
 kotlin {
     android {
         namespace = "com.simplecityapps.mediaprovider.server"
-        // The providers still build for JVM 11 and inline this module's API
-        compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
-        }
+        // :android:core, :android:mediaprovider:core and :android:networking compile against 37, which their consumers must match
+        compileSdk = 37
     }
 
     sourceSets {

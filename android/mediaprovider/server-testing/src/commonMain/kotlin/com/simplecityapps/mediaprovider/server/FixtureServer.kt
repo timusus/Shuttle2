@@ -1,6 +1,5 @@
 package com.simplecityapps.mediaprovider.server
 
-import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
@@ -48,9 +47,6 @@ class FixtureServer(private val loadFixture: (name: String) -> String) : AutoClo
             )
         }
 
-    /** A client on [engine] that leaves redirects and error statuses to the caller, as a plain HTTP client would. */
-    internal val client = HttpClient(engine) { followRedirects = false }
-
     /** The server's address, as the user would enter it (no trailing slash). */
     val address: String = "http://fixture.server"
 
@@ -77,7 +73,7 @@ class FixtureServer(private val loadFixture: (name: String) -> String) : AutoClo
     }
 
     override fun close() {
-        client.close()
+        engine.close()
     }
 }
 

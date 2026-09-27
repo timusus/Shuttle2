@@ -86,16 +86,8 @@ fun <T : Any> ServerCredentialStore.checkSession(
     result: NetworkResult<T>
 ): NetworkResult<T> {
     val error = (result as? NetworkResult.Failure)?.error as? RemoteServiceHttpError
-    checkSession(credentials, error?.httpStatusCode?.value)
-    return result
-}
-
-/** Expires the session [credentials] when the server answered a request made with them with [statusCode] 401 (#577). */
-fun ServerCredentialStore.checkSession(
-    credentials: AuthenticatedCredentials,
-    statusCode: Int?
-) {
-    if (statusCode == HttpStatusCode.Unauthorized.value) {
+    if (error?.httpStatusCode == HttpStatusCode.Unauthorized) {
         expireSession(credentials)
     }
+    return result
 }

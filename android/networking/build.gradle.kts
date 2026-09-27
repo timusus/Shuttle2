@@ -12,7 +12,7 @@ kotlin {
         namespace = "com.simplecityapps.networking"
         // OkHttp's Android artifact compiles against 37, which its consumers must match
         compileSdk = 37
-        // Its consumers still build for JVM 11 and inline NetworkResult.map, which can't inline JVM 17 bytecode
+        // :android:trial still builds for JVM 11 and inlines NetworkResult.map, which can't inline JVM 17 bytecode
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
@@ -29,11 +29,8 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
 
-            // The Retrofit stack the providers still build their services on until they move to Ktor (#585 step 3);
-            // exposed as `api` because they get it from here.
-            api(libs.retrofit2.retrofit)
-            api(libs.retrofit2.converterMoshi)
-            api(libs.moshi.kotlin)
+            // NetworkResultAdapterFactory, the Retrofit call adapter :android:trial still builds its service on
+            implementation(libs.retrofit2.retrofit)
         }
 
         iosMain.dependencies {

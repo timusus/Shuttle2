@@ -215,7 +215,8 @@ android {
         // ChromeCast
         implementation(libs.google.play.services.cast.framework)
 
-        // Moshi
+        // Moshi: the changelog and the Moshi the core module provides
+        implementation(libs.moshi)
         ksp(libs.moshi.kotlinCodegen)
 
         // AndroidX Lifecycle

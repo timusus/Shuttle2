@@ -146,8 +146,7 @@ class ServerCredentialStoreTest {
 
         store.checkSession(session, NetworkResult.Failure(RemoteServiceHttpError(HttpStatusCode.Forbidden)))
         store.checkSession(session, NetworkResult.Failure(RemoteServiceHttpError(HttpStatusCode.InternalServerError)))
-        store.checkSession(session, statusCode = 404)
-        store.checkSession(session, statusCode = null)
+        store.checkSession(session, NetworkResult.Failure(RemoteServiceHttpError(HttpStatusCode.NotFound)))
 
         store.authenticatedCredentials shouldBe session
         signals.size shouldBe 0
@@ -157,8 +156,8 @@ class ServerCredentialStoreTest {
     fun `requests rejected together sign out once`() = runTest {
         val (store, signals) = signedIn()
 
-        store.checkSession(session, statusCode = 401)
-        store.checkSession(session, statusCode = 401)
+        store.checkSession(session, NetworkResult.Failure(RemoteServiceHttpError(HttpStatusCode.Unauthorized)))
+        store.checkSession(session, NetworkResult.Failure(RemoteServiceHttpError(HttpStatusCode.Unauthorized)))
 
         signals.size shouldBe 1
     }
