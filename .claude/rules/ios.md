@@ -64,10 +64,10 @@ using this script instead.
 
 The device needs its developer profile trusted once (Settings > General > VPN & Device Management)
 and, on iOS 16+, Developer Mode turned on (Settings > Privacy & Security). Automatic signing
-(`-allowProvisioningUpdates`) needs an Xcode account (Xcode > Settings > Accounts) that actually holds
-Apple Development membership in the requested team — with only a personal-team account signed in,
-`-allowProvisioningUpdates` silently signs with that team instead of failing, so check the "Signing
-Identity" line in the build log if a device install lands under the wrong team. Switching teams
+(`-allowProvisioningUpdates`) needs an Xcode account (Xcode > Settings > Accounts) in the requested
+team. The build log's "Apple Development: <name> (<id>)" shows the certificate's own id, not the team;
+check the team with `security find-certificate -c "Apple Development" -p | openssl x509 -noout -subject`
+(the OU field; this Mac's development certificate is in 9HYNX943MQ). Switching teams
 changes the app's signing identity, and iOS refuses to upgrade an install across teams
 (`MismatchedApplicationIdentifierEntitlement`) — delete the app from the device first.
 
