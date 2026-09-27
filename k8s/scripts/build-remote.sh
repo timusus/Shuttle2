@@ -124,12 +124,21 @@ while true; do
 done
 
 if [ $RC -eq 0 ]; then
-    echo "==> build succeeded; fetching APKs"
+    echo "==> build succeeded; fetching APKs via seed pod"
     OUT="$REPO_ROOT/android/app/build/outputs"
+    # The temurin build container has no tar, so kubectl cp from it fails:
+    # copy out through an alpine seed pod mounting the same PVC.
+    SEED="fetch-$(date +%Y%m%d-%H%M%S)-$RANDOM"
+    render "$K8S_DIR/templates/pod-seed.yaml" "$CACHE_DIR/$SEED.yaml" \
+        "POD_NAME=$SEED" "NAMESPACE=$NS" "SEED_IMAGE=$SEED_IMAGE" "PVC_NAME=$CACHE_PVC"
+    kc apply -f "$CACHE_DIR/$SEED.yaml" >/dev/null
+    kc wait --for=condition=Ready "pod/$SEED" -n "$NS" --timeout=180s >/dev/null
+    kc exec "$SEED" -n "$NS" -- sh -c "apk add --no-cache tar >/dev/null 2>&1 || true" >/dev/null
     mkdir -p "$OUT"
-    POD="$(kc get pods -n "$NS" -l job-name="$JOB" -o jsonpath='{.items[0].metadata.name}')"
-    kc cp "$NS/$POD:/mnt/workspace/android/app/build/outputs" "$OUT-tmp" >/dev/null 2>&1 || true
+    kc cp "$NS/$SEED:/mnt/workspace/android/app/build/outputs" "$OUT-tmp" >/dev/null
     if [ -d "$OUT-tmp" ]; then rm -rf "$OUT"; mv "$OUT-tmp" "$OUT"; fi
+    kc delete pod "$SEED" -n "$NS" --wait=false >/dev/null
+    rm -f "$CACHE_DIR/$SEED.yaml"
     find "$OUT" -type f \( -name '*.apk' -o -name '*.aab' \) 2>/dev/null | head -10
     kc logs -n "$NS" -l job-name="$JOB" > "$CACHE_DIR/last-build.log" 2>/dev/null || true
     [ "$KEEP_JOB" -eq 0 ] && kc delete job "$JOB" -n "$NS" >/dev/null
