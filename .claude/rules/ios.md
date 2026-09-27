@@ -50,7 +50,7 @@ runtime, so `test.sh`'s default when none is booted) `AppShellTests`' two TabVie
 ## Running on a device
 
 ```bash
-ios/scripts/install-device.sh [DEVICE_ID] [TEAM_ID]   # default team 9HYNX943MQ (Shuttle Podcasts' team)
+ios/scripts/install-device.sh [jellyfin|emby] [DEVICE_ID] [TEAM_ID]   # default team 9HYNX943MQ (Podcasts'); server: "Running the POC"
 ```
 
 Builds FFmpeg and the device (`iosArm64`) `Shared.framework`, then builds, installs and launches
@@ -73,28 +73,46 @@ changes the app's signing identity, and iOS refuses to upgrade an install across
 
 ## Running the POC
 
-DEBUG builds sign in to a Jellyfin or Emby server from four launch-environment variables
-(`DebugServerSeed`, until `ServerSignInView` lands in phase 7): `S2_SERVER_TYPE` (`jellyfin`/`emby`),
-`S2_SERVER_URL` (with scheme, e.g. `https://music.example.com`), `S2_SERVER_USER`, `S2_SERVER_PASSWORD`.
-The session is saved in the Keychain, so later launches import without them. The password and
-token are never logged; the outcome is (`log stream --predicate 'category == "DebugServerSeed"'`), and a
-failed sign-in shows in the Library's empty state.
+DEBUG builds sign in to a Jellyfin or Emby server from launch-environment variables (`DebugServerSeed`,
+until `ServerSignInView` lands in phase 7): `S2_SERVER_TYPE` (`jellyfin`/`emby`), `S2_SERVER_URL` (with
+scheme; plain `http://` LAN servers work, ATS allows them), and either `S2_SERVER_API_KEY` (an admin API
+key; `S2_SERVER_USER` names the user to sign in as, default `shuttle-test`) or `S2_SERVER_USER` +
+`S2_SERVER_PASSWORD`. A key wins over a password: the seed looks the user up with it (`GET /Users`) and
+saves the key as that user's token. The session is saved in the Keychain, so later launches import
+without them. The key, password and token are never logged; the outcome is
+(`log stream --predicate 'category == "DebugServerSeed"'`), and a failed sign-in shows in the Library's
+empty state. With a key, `/Users/Me` fails (HTTP 500 refreshing the download permission), as on Android.
 
 ```bash
-# Simulator: build (commands 1-3 above, or test.sh), then install and launch with SIMCTL_CHILD_ env
-xcrun simctl install <udid> ios/build/DerivedData/Build/Products/Debug-iphonesimulator/S2.app
+# Simulator, the usual path: reads ~/.config/s2-test/<server>.env (URL=, API_KEY=, as
+# support/scripts/seed-remote-provider.sh does), builds, installs and launches signed in. The key only
+# travels as a SIMCTL_CHILD_ env variable. BUILD=0 skips the build; RESET=1 wipes the simulator keychain
+# (the saved session) first; S2_SIMULATOR_UDID picks the simulator (default the iPhone 16 Pro, iOS 18.5)
+ios/scripts/run-sim-server.sh emby
+
+# Device: the same env file; devicectl only takes the environment on its command line, so the key is
+# visible in the process list while it runs
+ios/scripts/install-device.sh jellyfin [DEVICE_ID] [TEAM_ID]
+
+# Or by hand, with a password
 SIMCTL_CHILD_S2_SERVER_TYPE=jellyfin SIMCTL_CHILD_S2_SERVER_URL=https://music.example.com \
   SIMCTL_CHILD_S2_SERVER_USER=me SIMCTL_CHILD_S2_SERVER_PASSWORD='...' \
   xcrun simctl launch <udid> com.simplecityapps.shuttle.dev
-
-# Device: export them, and install-device.sh hands them to devicectl --environment-variables
-S2_SERVER_TYPE=emby S2_SERVER_URL=https://music.example.com S2_SERVER_USER=me S2_SERVER_PASSWORD='...' \
-  ios/scripts/install-device.sh
 ```
 
-Launching from Xcode works too: put the four in the scheme's Run > Environment Variables (don't commit
-the scheme change). The app imports at launch; Library shows the progress, then its categories. Songs
-plays the list from the tapped song; Albums opens a placeholder album page; pull to refresh re-imports.
+Launching from Xcode works too: put the variables in the scheme's Run > Environment Variables (don't
+commit the scheme change). The app imports at launch; Library shows the progress, then its categories.
+Songs plays the list from the tapped song; Albums opens a placeholder album page; pull to refresh re-imports.
+
+The end-to-end check, after `run-sim-server.sh` has signed in: Library > Songs, tap the first song, and
+the mini player shows it playing (screenshots under the output dir's `<timestamp>/poc-play/`):
+
+```bash
+maestro --udid <simulator> test --test-output-dir /tmp/s2-ios-e2e/maestro ios/maestro/poc-play.yaml
+```
+
+The flow finds views by `accessibilityIdentifier` (`songRow.title`, `miniPlayer.title`,
+`miniPlayer.playPause`); an id on a container overrides its children's, so give each control its own.
 
 ## Layout
 
@@ -109,6 +127,8 @@ ios/
   scripts/build-ffmpeg.sh      # FFmpeg n7.1.5, dynamic LGPL xcframeworks -> Playback/Frameworks (gitignored)
   scripts/test.sh              # S2 scheme on a simulator, or --package for swift test
   scripts/install-device.sh    # builds + installs + launches on a physical device (see below)
+  scripts/run-sim-server.sh    # builds + installs + launches on the simulator signed in to a test server
+  maestro/                  # Maestro flows against the simulator (poc-play.yaml)
   S2/
     Settings.bundle/        # Settings > S2 > Acknowledgements: FFmpeg's LGPL notice, relink note, LGPL text
     Info.plist              # generated by XcodeGen from project.yml `info:` (UIBackgroundModes); don't edit
@@ -133,8 +153,10 @@ ios/
 Mirrors `docs/architecture/app-shell.md` with HIG choices: `compact` is a bottom `TabView`; `regular` and
 `wide` use `TabView` with `.sidebarAdaptable` (iOS 18+) or a `NavigationSplitView` (iOS 17). Each tab
 has its own `NavigationStack`, bound to a path on `Navigator`, which lives above the layout so a tier
-change keeps the tab and the pushed screens. The mini player is a `safeAreaInset` on each stack's root
-screen. Now Playing is a `fullScreenCover` on compact and a form sheet otherwise, presented from
+change keeps the tab and the pushed screens. The mini player is a `safeAreaInset` (`.miniPlayerInset`)
+on each stack's root screen and on every pushed one (`routeDestinations`, which must be applied inside
+the stack: outside it SwiftUI ignores it and links never push), so it slides with a push until the
+persistent accessory (#593). Now Playing is a `fullScreenCover` on compact and a form sheet otherwise, presented from
 `ContentView`.
 
 ## Swift ↔ Kotlin
