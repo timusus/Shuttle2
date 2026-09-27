@@ -45,6 +45,9 @@ class IosAppGraphTest {
         graph.whatsNewViewModel
         graph.sourcesViewModel
         graph.serverTypePickerViewModel
+        graph.mediaSources
+        graph.songImportStateProvider
+        graph.serverSignIn
     }
 
     @Test

@@ -1,7 +1,9 @@
 package com.simplecityapps.shuttle.shared
 
+import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
+import com.simplecityapps.shuttle.shared.sources.ServerSignIn
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
 import com.simplecityapps.shuttle.ui.screens.home.HomeViewModel
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyViewModel
@@ -16,6 +18,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsViewModel
+import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel
 import com.simplecityapps.shuttle.ui.shell.ShellViewModel
@@ -45,6 +48,15 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 interface IosAppGraph : ViewModelGraph {
     /** Playback: `PlaybackOperations`, and the queue through its `queueOperations`. One for the graph, on main. */
     val playerController: IosPlayerController
+
+    /** The library's providers and the import that fills it: the Library's pull-to-refresh and launch import. */
+    val mediaSources: MediaSources
+
+    /** The running import's progress, for the Library root. */
+    val songImportStateProvider: SongImportStateProvider
+
+    /** Signs in to a server; the DEBUG launch seed's path until the phase 7 sign-in screen. */
+    val serverSignIn: ServerSignIn
 
     val shellViewModel: ShellViewModel
     val homeViewModel: HomeViewModel
