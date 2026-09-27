@@ -21,7 +21,11 @@ final class PlayerModel {
     private(set) var artwork: ArtworkSource?
     private(set) var isPlaying = false
     private(set) var isLoading = false
+    /// The position to show: the player's reported position, or a seek's target until the player catches up
+    /// with it (`SeekHold`).
     private(set) var positionMs: Int = 0
+    private var reportedPositionMs = 0
+    private var seekHold = SeekHold()
     private(set) var durationMs: Int = 0
     private(set) var queue: [NowPlayingQueueRow] = []
     /// The current item's index into `queue`, for the queue list's tap-to-skip.
@@ -75,7 +79,8 @@ final class PlayerModel {
     }
 
     private func progressChanged(_ progress: PlaybackProgress?) {
-        positionMs = Int(progress?.position ?? 0)
+        reportedPositionMs = Int(progress?.position ?? 0)
+        positionMs = seekHold.displayed(reportedMs: reportedPositionMs)
         durationMs = Int(progress?.duration ?? 0)
     }
 
@@ -112,7 +117,15 @@ final class PlayerModel {
     }
 
     func seek(toMs ms: Int) {
+        seekHold.begin(ms)
+        positionMs = ms
         playback.seekTo(position: Int32(ms))
+        // Releases the hold if no progress tick arrives to (paused, or the seek failed).
+        Task { [weak self] in
+            try? await Task.sleep(for: .seconds(SeekHold.timeout))
+            guard let self else { return }
+            positionMs = seekHold.displayed(reportedMs: reportedPositionMs)
+        }
     }
 
     /// Turns shuffle on or off; the queue reshuffles around the current song.
