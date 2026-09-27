@@ -225,6 +225,35 @@ Done. The module (commonMain + commonTest, targets android/iosArm64/iosSimulator
   directly. commonTest adds coefficient/response tests parameterised over 44.1 kHz and 48 kHz, the
   rates iOS actually renders at.
 
+### Status of step 2 (`StreamProfile`)
+
+Done for Jellyfin and Emby (#603); Plex's `start.m3u8` transcode is still to do. `StreamProfile`
+(`:android:mediaprovider:server`) carries the universal endpoint's `Container=`,
+`TranscodingContainer=`, `TranscodingProtocol=` and `AudioCodec=` values and is injected into
+`JellyfinAuthenticationManager`/`EmbyAuthenticationManager`. Android binds `StreamProfile.Android`
+(`AndroidStreamProfileModule`), byte-for-byte the URL it built before; iOS binds `StreamProfile.Ios`
+in `IosPlaybackModule`:
+
+- Direct play: what the FFmpeg build demuxes and decodes: `mp3`, `aac`, `m4a`/`m4b`/`mp4` holding
+  AAC or ALAC, `flac`, `ogg`/`oga`/`opus`, `mka`/`matroska`/`webm`/`webma` (FFmpeg's matroska
+  demuxer reads WebM too), `wav`, `aiff`/`aif`.
+- Transcode: MP3 over progressive `http`. Both servers label it `audio/mpeg` (Emby labels its ADTS
+  AAC `audio/mp4`), and constant bitrate keeps bytes proportional to time on a stream that has no
+  length and `Accept-Ranges: none`.
+- `StreamUrlProvider.streamUrl(song, startPositionMs)` adds `StartTimeTicks` (100 ns ticks) for
+  restarting a transcode at a seek (#606). Each URL takes a fresh `PlaySessionId`, which matters:
+  Emby serves a session's running or finished transcode again and ignores `StartTimeTicks`.
+
+Checked on the real test servers (2026-09-27, `support/scripts/media-server-stream-probe.sh`, the
+"S2 Transcode Test" album's 30 s tracks: AIFF, ALAC m4a, 192 kbps MP3, WMA), capped at 128 kbps:
+
+| Server | Transcode | From 10 s (`StartTimeTicks`) | Uncapped |
+|---|---|---|---|
+| Jellyfin | 200 `audio/mpeg`, ffprobe: MP3 128 kbps, 30 s, every track | 20 s, honoured | AIFF, ALAC, MP3 direct-play (206); WMA transcodes |
+| Emby | same | 20 s, honoured with a fresh `PlaySessionId`; the full 30 s again when reusing one | same |
+
+ADTS AAC (`TranscodingContainer=aac`) works on both too if MP3's quality at the low caps matters later.
+
 ### Status of step 7 (app wiring)
 
 Done, in `ios/S2/Platform/Audio/` and `ios/S2/KMP/AppGraph.swift`:
