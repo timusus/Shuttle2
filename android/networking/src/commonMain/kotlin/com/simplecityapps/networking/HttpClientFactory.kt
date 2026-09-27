@@ -4,7 +4,10 @@ import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.client.plugins.contentnegotiation.ContentTypeMergeStrategy
+import io.ktor.http.ContentType
+import io.ktor.http.ContentTypeMatcher
+import io.ktor.serialization.kotlinx.KotlinxSerializationConverter
 import kotlinx.serialization.json.Json
 
 /**
@@ -47,12 +50,25 @@ fun createHttpClient(
     configure()
 }
 
+/** Matches every content type, so a JSON body is parsed regardless of what the server declared, as Moshi did. */
+private val anyContentTypeMatcher = object : ContentTypeMatcher {
+    override fun contains(contentType: ContentType) = true
+}
+
 private fun HttpClientConfig<*>.installDefaults(
     json: Json,
     connectivity: NetworkConnectivity?
 ) {
     install(ContentNegotiation) {
-        json(json)
+        // A request that sets its own Accept header (the transcode HEAD probes send "*/*") keeps
+        // it; every other request still gets the default "Accept: application/json", as before.
+        acceptHeaderMergeStrategy = ContentTypeMergeStrategy.SkipIfPresent
+        register(
+            contentTypeToSend = ContentType.Application.Json,
+            converter = KotlinxSerializationConverter(json),
+            contentTypeMatcher = anyContentTypeMatcher,
+            configuration = {}
+        )
     }
     if (connectivity != null) {
         install(NetworkConnectivityPlugin) {

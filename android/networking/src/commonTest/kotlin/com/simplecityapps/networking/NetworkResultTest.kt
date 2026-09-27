@@ -118,6 +118,15 @@ class NetworkResultTest {
     }
 
     @Test
+    fun `a JSON body decodes regardless of the response's declared Content-Type, as Moshi did`() = runTest {
+        val plainText = headersOf(HttpHeaders.ContentType, "text/plain")
+        val result = client(respond = MockEngine { respond("""{"name":"tim"}""", HttpStatusCode.OK, plainText) })
+            .networkResult<User> { get("https://server/user") }
+
+        result shouldBe NetworkResult.Success(User("tim"))
+    }
+
+    @Test
     fun `a client that expects success still maps a 404 to its status`() = runTest {
         val error = createHttpClient(responding(HttpStatusCode.NotFound)) { expectSuccess = true }
             .networkResult<User> { get("https://server/user") }
