@@ -51,6 +51,7 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.SmartPlaylist
+import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.components.AlphabetFastScroller
@@ -72,6 +73,7 @@ import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListUiSta
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.songLetterKey
 import com.simplecityapps.shuttle.ui.screens.library.songs.songThumbLabel
+import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceKey
 
 // The library tabs' pages: state in, events out, restyled with catalogue rows. The ViewModels are the existing
 // tab ViewModels; LibraryScreen wires them.
@@ -127,12 +129,11 @@ private fun <T> LibraryFastScroller(
 
 /** Each smart playlist's own placeholder, so the four don't share one icon (#491). */
 internal val SmartPlaylist.placeholder: ArtworkPlaceholder
-    get() = when (SmartPlaylistId.of(this)) {
+    get() = when (id) {
         SmartPlaylistId.Favourites -> ArtworkPlaceholder.Favorites
         SmartPlaylistId.RecentlyAdded -> ArtworkPlaceholder.RecentlyAdded
         SmartPlaylistId.MostPlayed -> ArtworkPlaceholder.MostPlayed
         SmartPlaylistId.History -> ArtworkPlaceholder.History
-        null -> ArtworkPlaceholder.SmartPlaylist
     }
 
 /** The gap between a playlist mosaic's covers. */
@@ -479,9 +480,9 @@ fun PlaylistsPage(
         Box(modifier.fillMaxSize()) {
             LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-playlists")) {
                 item(key = "smart-header") { SectionHeader(title = stringResource(R.string.library_smart_playlists)) }
-                items(state.smartPlaylists, key = { "smart-${it.nameResId}" }) { smartPlaylist ->
+                items(state.smartPlaylists, key = { "smart-${it.id}" }) { smartPlaylist ->
                     PlaylistRow(
-                        name = stringResource(smartPlaylist.nameResId),
+                        name = stringResourceKey(smartPlaylist.id.nameKey),
                         onClick = { onSmartPlaylistClick(smartPlaylist) },
                         artwork = { LibraryArtwork(null, smartPlaylist.placeholder) },
                     )

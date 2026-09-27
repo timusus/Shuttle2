@@ -62,6 +62,9 @@ val StringKey.resId: Int
         StringKey.PLAYLIST_MENU_CREATE_PLAYLIST_SUCCESS -> R.string.playlist_menu_create_playlist_success
         StringKey.PLAYLIST_MENU_CREATE_PLAYLIST_FAILURE -> R.string.playlist_menu_create_playlist_failure
         StringKey.PLAYLIST_TITLE_FAVORITES -> MediaProviderR.string.playlist_title_favorites
+        StringKey.PLAYLIST_TITLE_RECENTLY_ADDED -> MediaProviderR.string.playlist_title_recently_added
+        StringKey.PLAYLIST_TITLE_MOST_PLAYED -> MediaProviderR.string.playlist_title_most_played
+        StringKey.PLAYLIST_TITLE_HISTORY -> MediaProviderR.string.playlist_title_history
         StringKey.DIALOG_DELETE_MESSAGE -> R.string.dialog_delete_message
         StringKey.ERROR_UNKNOWN -> R.string.error_unknown
     }

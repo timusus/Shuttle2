@@ -3,9 +3,10 @@ package com.simplecityapps.shuttle.ui.screens.library
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
-import com.simplecityapps.mediaprovider.R as MediaProviderR
+import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.text.StringKey
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlin.time.Clock
@@ -61,7 +62,7 @@ class SmartPlaylistDetailViewModelTest {
         val viewModel = viewModel(SmartPlaylistId.History.id)
 
         val state = viewModel.uiState.value
-        state.smartPlaylist?.nameResId shouldBe MediaProviderR.string.playlist_title_history
+        state.smartPlaylist?.id?.nameKey shouldBe StringKey.PLAYLIST_TITLE_HISTORY
         state.songs.map { it.name } shouldBe listOf("Just now", "Yesterday", "Last week")
     }
 
@@ -79,7 +80,7 @@ class SmartPlaylistDetailViewModelTest {
         val viewModel = viewModel(SmartPlaylistId.RecentlyAdded.id)
 
         val state = viewModel.uiState.value
-        state.smartPlaylist?.nameResId shouldBe MediaProviderR.string.playlist_title_recently_added
+        state.smartPlaylist?.id?.nameKey shouldBe StringKey.PLAYLIST_TITLE_RECENTLY_ADDED
         state.songs.map { it.name } shouldBe listOf("Today", "Last week")
     }
 
@@ -94,6 +95,6 @@ class SmartPlaylistDetailViewModelTest {
 
     @Test
     fun `every smart playlist has a route that resolves back to it`() {
-        SmartPlaylistId.entries.map { it.smartPlaylist.route()?.smartPlaylistId?.let(SmartPlaylistId::fromId) } shouldBe SmartPlaylistId.entries
+        SmartPlaylistId.entries.map { SmartPlaylistId.fromId(it.smartPlaylist.route().smartPlaylistId) } shouldBe SmartPlaylistId.entries
     }
 }

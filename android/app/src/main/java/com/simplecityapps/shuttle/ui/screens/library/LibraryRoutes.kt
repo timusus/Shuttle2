@@ -1,17 +1,14 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
-import androidx.annotation.StringRes
 import androidx.navigation3.runtime.NavKey
-import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.SmartPlaylist
-import com.simplecityapps.shuttle.query.SongQuery
-import com.simplecityapps.shuttle.sorting.SongSortOrder
+import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
-import kotlin.time.Instant
+import com.simplecityapps.shuttle.ui.text.StringKey
 import kotlinx.serialization.Serializable
 
 // Route keys for the library detail screens, shared by every screen that links to them (library,
@@ -44,32 +41,14 @@ data class SmartPlaylistRoute(
     val smartPlaylistId: String,
 ) : NavKey
 
-/**
- * The built-in smart playlists: each one's stable id, name and [SongQuery]. The app's source of truth for which
- * smart playlists exist; [of] matches a [SmartPlaylist] back to its entry by name.
- */
-enum class SmartPlaylistId(
-    val id: String,
-    @StringRes val nameResId: Int,
-    songQuery: SongQuery,
-) {
-    /** Every favourite, most recently made one first (#497). */
-    Favourites("favourites", MediaProviderR.string.playlist_title_favorites, SongQuery.Favourites),
-    RecentlyAdded("recently-added", MediaProviderR.string.playlist_title_recently_added, SongQuery.RecentlyAdded()),
-    MostPlayed("most-played", MediaProviderR.string.playlist_title_most_played, SongQuery.PlayCount(2, SongSortOrder.PlayCount)),
-
-    /** Every song that has played to the end, most recent first. */
-    History("history", MediaProviderR.string.playlist_title_history, SongQuery.LastCompleted(Instant.fromEpochMilliseconds(0))),
-    ;
-
-    val smartPlaylist = SmartPlaylist(nameResId, songQuery)
-
-    companion object {
-        fun of(smartPlaylist: SmartPlaylist): SmartPlaylistId? = entries.firstOrNull { it.nameResId == smartPlaylist.nameResId }
-
-        fun fromId(id: String): SmartPlaylistId? = entries.firstOrNull { it.id == id }
+/** [SmartPlaylistId]'s display name. Display resolution is app-side; [SmartPlaylistId] itself is portable. */
+val SmartPlaylistId.nameKey: StringKey
+    get() = when (this) {
+        SmartPlaylistId.Favourites -> StringKey.PLAYLIST_TITLE_FAVORITES
+        SmartPlaylistId.RecentlyAdded -> StringKey.PLAYLIST_TITLE_RECENTLY_ADDED
+        SmartPlaylistId.MostPlayed -> StringKey.PLAYLIST_TITLE_MOST_PLAYED
+        SmartPlaylistId.History -> StringKey.PLAYLIST_TITLE_HISTORY
     }
-}
 
 val Album.route: AlbumRoute get() = AlbumRoute(albumKey = groupKey?.key, albumArtistKey = groupKey?.albumArtistGroupKey?.key)
 
@@ -79,4 +58,4 @@ val AlbumArtist.route: AlbumArtistRoute get() = AlbumArtistRoute(groupKey.key)
 
 val AlbumArtistRoute.groupKey: AlbumArtistGroupKey get() = AlbumArtistGroupKey(albumArtistKey)
 
-fun SmartPlaylist.route(): SmartPlaylistRoute? = SmartPlaylistId.of(this)?.let { SmartPlaylistRoute(it.id) }
+fun SmartPlaylist.route(): SmartPlaylistRoute = SmartPlaylistRoute(id.id)

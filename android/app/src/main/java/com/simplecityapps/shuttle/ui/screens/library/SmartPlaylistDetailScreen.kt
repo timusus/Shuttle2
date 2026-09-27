@@ -13,12 +13,14 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.format.formatDuration
+import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
+import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceKey
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 /** A built-in smart playlist (inventory §1): its songs in the playlist's own order, Play / Shuffle, and their actions. */
@@ -40,7 +42,7 @@ fun SmartPlaylistDetailScreen(
     }
     LibraryDetailScaffold(
         state = state,
-        title = playlist?.let { stringResource(it.nameResId) } ?: stringResource(com.simplecityapps.core.R.string.unknown),
+        title = playlist?.let { stringResourceKey(it.id.nameKey) } ?: stringResource(com.simplecityapps.core.R.string.unknown),
         subtitle = playlist?.let { listOf(pluralString(R.plurals.songsPlural, uiState.songs.size), formatDuration(uiState.songs.sumOf { it.duration }.toLong())).joinToString(" · ") },
         artwork = null,
         placeholder = playlist?.placeholder ?: ArtworkPlaceholder.SmartPlaylist,
@@ -69,7 +71,7 @@ fun SmartPlaylistDetailDestination(
 ) {
     val viewModel = assistedMetroViewModel<SmartPlaylistDetailViewModel, SmartPlaylistDetailViewModel.Factory> { create(route.smartPlaylistId) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val title = uiState.smartPlaylist?.let { stringResource(it.nameResId) }.orEmpty()
+    val title = uiState.smartPlaylist?.let { stringResourceKey(it.id.nameKey) }.orEmpty()
     val placeholder = uiState.smartPlaylist?.placeholder ?: ArtworkPlaceholder.SmartPlaylist
     val isFavourites = route.smartPlaylistId == SmartPlaylistId.Favourites.id
     val removeFromFavourites = stringResource(R.string.menu_title_remove_from_favorites)

@@ -438,7 +438,7 @@ private fun LibraryPage(
                         ),
                     )
                 },
-                onSmartPlaylistClick = { smartPlaylist -> smartPlaylist.route()?.let(onOpen) },
+                onSmartPlaylistClick = { smartPlaylist -> onOpen(smartPlaylist.route()) },
                 onNewPlaylist = { creating = true },
             )
             PlaylistDialogHost(
