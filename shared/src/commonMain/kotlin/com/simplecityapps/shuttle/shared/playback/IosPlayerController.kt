@@ -95,6 +95,9 @@ class IosPlayerController(
 
         /** What the engine was last handed for it. */
         var handedOver: IosAudioTrack? = null
+
+        /** The stream [handedOver] plays. */
+        var stream: IosStream? = null
     }
 
     private class PendingLoad(
@@ -217,13 +220,19 @@ class IosPlayerController(
         stream.headers,
         stream.gainDb,
         (item.song.duration - offsetMs).takeIf { it > 0 }?.toLong() ?: -1
-    ).also { handedOver = it }
+    ).also {
+        handedOver = it
+        this.stream = stream
+    }
 
     /**
      * Replaces the engine's current track with [item] at [startMs], then feeds the next. [reopen] is for a stream the
      * engine can't seek (a progressive transcode): it's resolved again to start at [startMs], and played from its start.
      * A reopen leaves the next item as it was, so it's kept and handed back to the engine as its next, which keeps the
      * stream it already opened for it.
+     *
+     * An [item] the engine already has as its next (a skip onto it) isn't resolved again: its stream is handed back as
+     * the current track, and the engine starts on what it pre-opened for it rather than opening the song afresh (#620).
      */
     private fun startLoad(
         item: QueueItem,
@@ -231,6 +240,7 @@ class IosPlayerController(
         reopen: Boolean = false
     ) {
         loadJob?.cancel()
+        val preopened = engineNext?.takeIf { !reopen && !it.failed && it.item.uid == item.uid && it.item.song == item.song }?.stream
         val keepNext = reopen && next?.failed == false
         if (!keepNext) nextJob?.cancel()
         val feed = newFeed(item)
@@ -247,6 +257,10 @@ class IosPlayerController(
         engineState = IosAudioPlayerState.Loading
         publishProgress(startMs)
         publishState()
+        if (preopened != null) {
+            handOver(feed, preopened, startMs)
+            return
+        }
         val job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
             val stream = resolve(item.song, feed.offsetMs)
             if (current !== feed) return@launch
@@ -257,13 +271,22 @@ class IosPlayerController(
                 onCurrentFailed(feed)
                 return@launch
             }
-            feed.sent = true
-            feed.opensAtPosition = stream.opensAtPosition
-            val handedBack = engineNext?.takeIf { !it.failed }?.handedOver
-            player.load(feed.track(stream), handedBack, (startMs - feed.offsetMs).toLong(), playWhenReady)
-            feedNext()
+            handOver(feed, stream, startMs)
         }
         if (current === feed && job.isActive) loadJob = job
+    }
+
+    /** Loads [feed], the current item, into the engine as [stream] at [startMs], then feeds the next. */
+    private fun handOver(
+        feed: Feed,
+        stream: IosStream,
+        startMs: Int
+    ) {
+        feed.sent = true
+        feed.opensAtPosition = stream.opensAtPosition
+        val handedBack = engineNext?.takeIf { !it.failed }?.handedOver
+        player.load(feed.track(stream), handedBack, (startMs - feed.offsetMs).toLong(), playWhenReady)
+        feedNext()
     }
 
     /** Hands the engine the queue's next item, if it isn't the one it has. */

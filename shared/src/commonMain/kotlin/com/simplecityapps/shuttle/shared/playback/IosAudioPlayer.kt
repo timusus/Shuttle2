@@ -116,7 +116,9 @@ enum class IosAudioPlayerState {
 /**
  * A track as the engine sees it: `PlaybackTrack(uid:url:headers:gainDb:expectedDurationMs:)`. [id] is unique to this
  * handing of the track to the engine (a queue item played twice in a row, on repeat one, gets two), so a report for a
- * track the engine has since dropped can be told apart.
+ * track the engine has since dropped can be told apart. The engine tells two hand-overs of the same stream by [url] and
+ * [headers] instead: a next it pre-opened is kept when a load hands the same stream back, as the next or the current
+ * track. A server URL names its play session, so only the stream handed over before matches.
  */
 class IosAudioTrack(
     val id: String,

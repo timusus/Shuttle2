@@ -39,6 +39,9 @@ class IosPlayerControllerTest {
     private val d = song(4)
     private val e = song(5)
 
+    /** The ids of the songs resolved, in order. */
+    private val resolved = mutableListOf<Long>()
+
     /** Songs on a server, whose streams open at a position (`StartTimeTicks`). */
     private val server = mutableSetOf<Long>()
 
@@ -48,6 +51,7 @@ class IosPlayerControllerTest {
         val controller = IosPlayerController(
             player = engine,
             resolver = { song, startPositionMs ->
+                resolved += song.id
                 when {
                     song.id in unresolvable -> error("No stream for ${song.name}")
                     song.id in server && startPositionMs > 0 -> IosStream("${url(song)}?from=$startPositionMs", opensAtPosition = true)
@@ -135,6 +139,36 @@ class IosPlayerControllerTest {
         controller.skipToPrev()
         engine.settle()
         controller.currentSong shouldBe a
+    }
+
+    @Test
+    fun `skipping onto the next hands the engine its stream back as current - without resolving it again`() = test { controller ->
+        controller.start(listOf(a, b, c))
+        val next = checkNotNull(engine.next)
+        resolved.clear()
+
+        controller.skipToNext()
+        engine.settle()
+
+        controller.currentSong shouldBe b
+        engine.calls shouldBe listOf("load song:2@0 playing", "next song:3")
+        // The engine keeps what it pre-opened for the same stream, under the new hand-over's id.
+        engine.current?.url shouldBe next.url
+        engine.current?.id shouldNotBe next.id
+        resolved shouldBe listOf(c.id)
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `skipping past the next resolves the song skipped to`() = test { controller ->
+        controller.start(listOf(a, b, c, d))
+        resolved.clear()
+
+        controller.skipTo(2)
+        engine.settle()
+
+        controller.currentSong shouldBe c
+        resolved shouldBe listOf(c.id, d.id)
     }
 
     @Test
