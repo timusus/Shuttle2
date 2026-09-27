@@ -61,7 +61,7 @@ constructor(
             state = state.value,
             timeMs = positionMs,
             durationMs = song.duration
-        ).isSuccessful
+        ).also { response -> authenticationManager.checkSession(credentials, response.code()) }.isSuccessful
     }
 
     private suspend fun scrobble(song: Song): Boolean {
@@ -73,7 +73,7 @@ constructor(
             token = credentials.accessToken,
             ratingKey = ratingKey,
             identifier = LIBRARY_IDENTIFIER
-        ).isSuccessful
+        ).also { response -> authenticationManager.checkSession(credentials, response.code()) }.isSuccessful
     }
 
     private enum class State(val value: String) {

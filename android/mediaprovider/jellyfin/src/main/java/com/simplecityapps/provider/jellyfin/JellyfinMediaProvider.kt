@@ -67,10 +67,13 @@ class JellyfinMediaProvider(
     override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = withServerSession(ResourceServerStrings(context), authenticationManager.getAddress(), ::authenticate) { address, credentials ->
         when (
             val queryResult =
-                itemsService.playlists(
-                    url = address,
-                    authorization = authenticationManager.authorizationHeader(credentials),
-                    userId = credentials.userId
+                authenticationManager.checkSession(
+                    credentials,
+                    itemsService.playlists(
+                        url = address,
+                        authorization = authenticationManager.authorizationHeader(credentials),
+                        userId = credentials.userId
+                    )
                 )
         ) {
             is NetworkResult.Success<QueryResult> -> {
@@ -99,12 +102,15 @@ class JellyfinMediaProvider(
         address: String,
         credentials: AuthenticatedCredentials
     ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(context.getString(R.string.media_provider_querying_api)) { offset, limit ->
-        itemsService.audioItems(
-            url = address,
-            authorization = authenticationManager.authorizationHeader(credentials),
-            userId = credentials.userId,
-            limit = limit,
-            startIndex = offset
+        authenticationManager.checkSession(
+            credentials,
+            itemsService.audioItems(
+                url = address,
+                authorization = authenticationManager.authorizationHeader(credentials),
+                userId = credentials.userId,
+                limit = limit,
+                startIndex = offset
+            )
         ).map { it.toPage() }
     }
 
@@ -142,13 +148,16 @@ class JellyfinMediaProvider(
         credentials: AuthenticatedCredentials,
         playlistId: String
     ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(context.getString(R.string.media_provider_querying_api)) { offset, limit ->
-        itemsService.playlistItems(
-            url = address,
-            authorization = authenticationManager.authorizationHeader(credentials),
-            playlistId = playlistId,
-            limit = limit,
-            startIndex = offset,
-            userId = credentials.userId
+        authenticationManager.checkSession(
+            credentials,
+            itemsService.playlistItems(
+                url = address,
+                authorization = authenticationManager.authorizationHeader(credentials),
+                playlistId = playlistId,
+                limit = limit,
+                startIndex = offset,
+                userId = credentials.userId
+            )
         ).map { it.toPage() }
     }
 }

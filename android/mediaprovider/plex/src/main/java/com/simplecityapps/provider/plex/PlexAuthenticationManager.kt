@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.checkSession
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.provider.plex.http.AuthenticationResult
@@ -34,6 +35,18 @@ class PlexAuthenticationManager(
     }
 
     fun getAddress(): String? = credentialStore.address
+
+    /** [result], after signing out when the server rejected [credentials] with a 401 (#577). */
+    fun <T : Any> checkSession(
+        credentials: AuthenticatedCredentials,
+        result: NetworkResult<T>
+    ): NetworkResult<T> = credentialStore.checkSession(credentials, result)
+
+    /** Signs out when the server answered a request made with [credentials] with [statusCode] 401 (#577). */
+    fun checkSession(
+        credentials: AuthenticatedCredentials,
+        statusCode: Int
+    ) = credentialStore.checkSession(credentials, statusCode)
 
     suspend fun authenticate(
         address: String,

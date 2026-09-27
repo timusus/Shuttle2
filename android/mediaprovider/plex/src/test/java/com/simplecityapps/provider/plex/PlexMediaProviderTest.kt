@@ -18,6 +18,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.coroutines.flow.Flow
@@ -138,6 +139,29 @@ class PlexMediaProviderTest {
         val events = provider.findSongs(emptyList()).events()
 
         events.last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe "A server error occurred. (500)"
+    }
+
+    @Test
+    fun `a session the server rejects signs out and fails the sync with the server's error`() {
+        signedIn()
+        server.respond(SECTIONS, code = 401)
+
+        val events = provider.findSongs(emptyList()).events()
+
+        events.last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe "An error occurred. (401)"
+        authenticationManager.getAuthenticatedCredentials().shouldBeNull()
+        server.requestsTo(ITEMS).shouldBeEmpty()
+    }
+
+    @Test
+    fun `a session the server rejects mid-sync signs out`() {
+        signedIn()
+        server.respond(SECTIONS, "sections.json")
+        server.respond(ITEMS, code = 401)
+
+        provider.findSongs(emptyList()).events().last().shouldBeInstanceOf<FlowEvent.Failure>()
+
+        authenticationManager.getAuthenticatedCredentials().shouldBeNull()
     }
 
     // Paging

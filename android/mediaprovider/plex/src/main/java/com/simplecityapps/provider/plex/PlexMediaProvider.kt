@@ -38,7 +38,7 @@ class PlexMediaProvider(
         get() = MediaProviderType.Plex
 
     override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(ResourceServerStrings(context), authenticationManager.getAddress(), ::authenticate) { address, credentials ->
-        when (val sectionsResult = itemsService.sections(url = address, token = credentials.accessToken)) {
+        when (val sectionsResult = authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken))) {
             is NetworkResult.Success<QueryResult> -> {
                 val section = sectionsResult.body.mediaContainer.directories?.firstOrNull { it.title.equals("music", true) }?.key
                 if (section == null) {
@@ -75,12 +75,15 @@ class PlexMediaProvider(
         credentials: AuthenticatedCredentials,
         section: String
     ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow(context.getString(R.string.media_provider_querying_api)) { offset, limit ->
-        itemsService.items(
-            url = address,
-            token = credentials.accessToken,
-            section = section,
-            offset = offset,
-            limit = limit
+        authenticationManager.checkSession(
+            credentials,
+            itemsService.items(
+                url = address,
+                token = credentials.accessToken,
+                section = section,
+                offset = offset,
+                limit = limit
+            )
         ).map { it.toPage() }
     }
 }

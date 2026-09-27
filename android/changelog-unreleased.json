@@ -142,6 +142,10 @@
   ],
   "fixes": [
     {
+      "text": "When a Jellyfin, Emby or Plex sign-in expires or is revoked, S2 now signs in again with your saved details instead of failing to sync",
+      "commits": []
+    },
+    {
       "text": "When Android closes S2 while you're casting, reopening it carries on from where the Cast device was, instead of skipping songs that no longer play",
       "commits": ["c578aac5b"]
     },

@@ -1,6 +1,13 @@
 package com.simplecityapps.mediaprovider.server
 
+import com.simplecityapps.networking.retrofit.NetworkResult
+import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
+import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 /**
  * A media server's address and credentials, kept in [SecurePreferenceManager] under `<prefix>_*` keys: `jellyfin`,
@@ -47,4 +54,48 @@ class ServerCredentialStore(
         set(value) {
             securePreferenceManager.putString(addressKey, value)
         }
+
+    private val _sessionExpired = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    /**
+     * Emits each time the server rejects the stored session mid-session and [expireSession] clears it (#577). The
+     * next sync signs in again with the saved [loginCredentials]; without them (a Quick Connect session, say) the
+     * user has to sign in again.
+     */
+    val sessionExpired: SharedFlow<Unit> = _sessionExpired.asSharedFlow()
+
+    /**
+     * Clears the stored session and signals [sessionExpired], because the server answered a request made with
+     * [rejected] with a 401. Does nothing, and returns false, when the stored session is no longer [rejected]: a
+     * newer sign-in has replaced it, or another rejected request already cleared it. So a 401 that arrives late
+     * never signs out a fresh session, and requests rejected together signal once.
+     */
+    fun expireSession(rejected: AuthenticatedCredentials): Boolean {
+        synchronized(this) {
+            if (authenticatedCredentials?.accessToken != rejected.accessToken) return false
+            authenticatedCredentials = null
+        }
+        _sessionExpired.tryEmit(Unit)
+        return true
+    }
+}
+
+/** [result], after [ServerCredentialStore.expireSession] when the server rejected [credentials] with a 401 (#577). */
+fun <T : Any> ServerCredentialStore.checkSession(
+    credentials: AuthenticatedCredentials,
+    result: NetworkResult<T>
+): NetworkResult<T> {
+    val error = (result as? NetworkResult.Failure)?.error as? RemoteServiceHttpError
+    checkSession(credentials, error?.httpStatusCode?.value)
+    return result
+}
+
+/** Expires the session [credentials] when the server answered a request made with them with [statusCode] 401 (#577). */
+fun ServerCredentialStore.checkSession(
+    credentials: AuthenticatedCredentials,
+    statusCode: Int?
+) {
+    if (statusCode == HttpStatusCode.Unauthorized.value) {
+        expireSession(credentials)
+    }
 }

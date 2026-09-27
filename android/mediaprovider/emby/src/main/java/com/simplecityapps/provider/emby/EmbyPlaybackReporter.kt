@@ -48,7 +48,7 @@ constructor(
             token = credentials.accessToken,
             authorization = authenticationManager.clientAuthorizationHeader(),
             datePlayed = embyDatePlayed(playedAt)
-        ).isSuccessful
+        ).also { response -> authenticationManager.checkSession(credentials, response.code()) }.isSuccessful
     }
 
     private suspend fun report(
@@ -70,7 +70,7 @@ constructor(
                 positionTicks = positionMs * TICKS_PER_MS,
                 isPaused = paused
             )
-        ).isSuccessful
+        ).also { response -> authenticationManager.checkSession(credentials, response.code()) }.isSuccessful
     }
 
     private companion object {

@@ -33,7 +33,7 @@ constructor(
         val address = credentialStore.address ?: return null
         val authenticatedCredentials = embyAuthenticationManager.getAuthenticatedCredentials() ?: return null
 
-        val result = itemsService.item(address, authenticatedCredentials.accessToken, authenticatedCredentials.userId, itemId)
+        val result = embyAuthenticationManager.checkSession(authenticatedCredentials, itemsService.item(address, authenticatedCredentials.accessToken, authenticatedCredentials.userId, itemId))
         if (result is NetworkResult.Success) {
             val id = imageItemId(result.body) ?: return null
             return "$address/Items/$id/Images/Primary?maxWidth=1000&maxHeight=1000"

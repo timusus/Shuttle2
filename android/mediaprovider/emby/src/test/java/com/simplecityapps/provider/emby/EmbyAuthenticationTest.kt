@@ -5,14 +5,17 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
+import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.provider.emby.http.AuthenticationResult
 import com.simplecityapps.provider.emby.http.Policy
 import com.simplecityapps.provider.emby.http.User
 import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -81,7 +84,7 @@ class EmbyAuthenticationTest {
 
         val refreshed = runBlocking { authenticationManager.refreshDownloadPermission("http://emby.local:8096", credentials) }
 
-        refreshed.canDownload shouldBe true
+        refreshed!!.canDownload shouldBe true
         authenticationManager.getAuthenticatedCredentials()!!.canDownload shouldBe true
     }
 
@@ -92,8 +95,19 @@ class EmbyAuthenticationTest {
 
         val refreshed = runBlocking { authenticationManager.refreshDownloadPermission("http://emby.local:8096", downloadableCredentials) }
 
-        refreshed.canDownload shouldBe true
+        refreshed!!.canDownload shouldBe true
         authenticationManager.getAuthenticatedCredentials()!!.canDownload shouldBe true
+    }
+
+    @Test
+    fun `refreshDownloadPermission signs out when the server rejects the session`() {
+        credentialStore.authenticatedCredentials = downloadableCredentials
+        meResult = NetworkResult.Failure(RemoteServiceHttpError(HttpStatusCode.Unauthorized))
+
+        val refreshed = runBlocking { authenticationManager.refreshDownloadPermission("http://emby.local:8096", downloadableCredentials) }
+
+        refreshed.shouldBeNull()
+        authenticationManager.getAuthenticatedCredentials().shouldBeNull()
     }
 
     @Test

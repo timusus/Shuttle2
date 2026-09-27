@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.DirectPlayFormats
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
+import com.simplecityapps.mediaprovider.server.checkSession
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.provider.jellyfin.http.AuthenticationResult
@@ -38,6 +39,18 @@ class JellyfinAuthenticationManager(
     }
 
     fun getAddress(): String? = credentialStore.address
+
+    /** [result], after signing out when the server rejected [credentials] with a 401 (#577). */
+    fun <T : Any> checkSession(
+        credentials: AuthenticatedCredentials,
+        result: NetworkResult<T>
+    ): NetworkResult<T> = credentialStore.checkSession(credentials, result)
+
+    /** Signs out when the server answered a request made with [credentials] with [statusCode] 401 (#577). */
+    fun checkSession(
+        credentials: AuthenticatedCredentials,
+        statusCode: Int
+    ) = credentialStore.checkSession(credentials, statusCode)
 
     /** The `Authorization` header value for requests made with [authenticatedCredentials]. */
     fun authorizationHeader(authenticatedCredentials: AuthenticatedCredentials): String = mediaBrowserAuthorization(
@@ -131,12 +144,13 @@ class JellyfinAuthenticationManager(
      * Re-fetches `Policy.EnableContentDownloading` for [authenticatedCredentials] and updates the
      * stored credentials, so a permission change on the server (#322) takes effect without a fresh
      * sign-in. Called wherever the session is already being validated with the server, rather than
-     * on a dedicated poll. Keeps the cached value on failure.
+     * on a dedicated poll. Keeps the cached value on failure, but returns null when the server rejects the session
+     * (a 401, #577): that signs out, so the sync signs in again with the saved login.
      */
     suspend fun refreshDownloadPermission(
         address: String,
         authenticatedCredentials: AuthenticatedCredentials
-    ): AuthenticatedCredentials = when (val result = userService.me(address, authorizationHeader(authenticatedCredentials))) {
+    ): AuthenticatedCredentials? = when (val result = userService.me(address, authorizationHeader(authenticatedCredentials))) {
         is NetworkResult.Success -> {
             val refreshed = authenticatedCredentials.copy(canDownload = result.body.policy?.enableContentDownloading ?: false)
             credentialStore.authenticatedCredentials = refreshed
@@ -144,8 +158,13 @@ class JellyfinAuthenticationManager(
         }
 
         is NetworkResult.Failure -> {
-            Timber.w(result.error, "Failed to refresh the download permission")
-            authenticatedCredentials
+            if ((result.error as? RemoteServiceHttpError)?.httpStatusCode == HttpStatusCode.Unauthorized) {
+                credentialStore.expireSession(authenticatedCredentials)
+                null
+            } else {
+                Timber.w(result.error, "Failed to refresh the download permission")
+                authenticatedCredentials
+            }
         }
     }
 

@@ -18,6 +18,7 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(project(":android:networking"))
+            implementation(libs.kotlinx.coroutinesCore)
             implementation(project(":android:core"))
             implementation(project(":android:mediaprovider:core"))
             implementation(libs.timber)

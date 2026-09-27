@@ -50,7 +50,7 @@ constructor(
             // Implied by a user's token, but required with an API key.
             userId = credentials.userId,
             datePlayed = playedAt.toString()
-        ).isSuccessful
+        ).also { response -> authenticationManager.checkSession(credentials, response.code()) }.isSuccessful
     }
 
     private suspend fun report(
@@ -71,7 +71,7 @@ constructor(
                 positionTicks = positionMs * TICKS_PER_MS,
                 isPaused = paused
             )
-        ).isSuccessful
+        ).also { response -> authenticationManager.checkSession(credentials, response.code()) }.isSuccessful
     }
 
     private companion object {

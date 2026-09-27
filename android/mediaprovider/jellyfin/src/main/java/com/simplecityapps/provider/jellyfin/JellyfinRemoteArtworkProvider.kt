@@ -34,11 +34,14 @@ constructor(
         val authenticatedCredentials = jellyfinAuthenticationManager.getAuthenticatedCredentials() ?: return null
 
         val result =
-            itemsService.item(
-                address,
-                jellyfinAuthenticationManager.authorizationHeader(authenticatedCredentials),
-                authenticatedCredentials.userId,
-                itemId
+            jellyfinAuthenticationManager.checkSession(
+                authenticatedCredentials,
+                itemsService.item(
+                    address,
+                    jellyfinAuthenticationManager.authorizationHeader(authenticatedCredentials),
+                    authenticatedCredentials.userId,
+                    itemId
+                )
             )
         if (result is NetworkResult.Success) {
             val id = imageItemId(result.body) ?: return null

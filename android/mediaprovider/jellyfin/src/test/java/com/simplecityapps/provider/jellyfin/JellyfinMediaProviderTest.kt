@@ -20,6 +20,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -263,14 +264,40 @@ class JellyfinMediaProviderTest {
     }
 
     @Test
-    fun `a session the server rejects fails the sync with the server's error`() {
+    fun `a session the server rejects signs out and fails the sync when there's no saved login`() {
         signedIn()
         server.respond("/Users/Me", code = 401)
+
+        val events = provider.findSongs(emptyList()).events()
+
+        events.last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe context.getString(R.string.media_provider_authentication_error)
+        authenticationManager.getAuthenticatedCredentials().shouldBeNull()
+        server.requestsTo(ITEMS).shouldBeEmpty()
+    }
+
+    @Test
+    fun `a session the server rejects signs in again with the saved login and syncs`() {
+        signedIn()
+        credentialStore.loginCredentials = LoginCredentials("shuttle-test", "secret")
+        server.respond("/Users/Me", code = 401)
+        server.respond("/Users/AuthenticateByName", "authenticate.json", method = "POST")
+        server.respond(ITEMS, "songs.json", query = mapOf("includeItemTypes" to "Audio"))
+
+        sync().size shouldBe 3
+
+        server.requestsTo(ITEMS).single().headers["Authorization"]!! shouldContain "Token=\"token-2\""
+        authenticationManager.getAuthenticatedCredentials() shouldBe AuthenticatedCredentials("token-2", "user-1", canDownload = true)
+    }
+
+    @Test
+    fun `a session the server rejects mid-sync signs out and fails the sync with the server's error`() {
+        signedIn()
         server.respond(ITEMS, code = 401, query = mapOf("includeItemTypes" to "Audio"))
 
         val events = provider.findSongs(emptyList()).events()
 
         events.last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe "An error occurred. (401)"
+        authenticationManager.getAuthenticatedCredentials().shouldBeNull()
     }
 
     @Test

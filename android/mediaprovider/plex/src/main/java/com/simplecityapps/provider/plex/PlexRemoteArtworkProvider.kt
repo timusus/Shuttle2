@@ -30,7 +30,7 @@ constructor(
         val credentials = authenticationManager.getAuthenticatedCredentials() ?: return null
         val ratingKey = plexRatingKey(song.path) ?: return null
 
-        val result = itemsService.item(url = address, token = credentials.accessToken, key = "$METADATA_PATH$ratingKey")
+        val result = authenticationManager.checkSession(credentials, itemsService.item(url = address, token = credentials.accessToken, key = "$METADATA_PATH$ratingKey"))
         if (result is NetworkResult.Success) {
             val path = result.body.mediaContainer.metadata?.firstOrNull()?.let(thumb) ?: return null
             return "$address$path"

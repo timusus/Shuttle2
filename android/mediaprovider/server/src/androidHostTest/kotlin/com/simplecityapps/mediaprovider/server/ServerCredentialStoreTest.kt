@@ -1,10 +1,20 @@
 package com.simplecityapps.mediaprovider.server
 
+import com.simplecityapps.networking.retrofit.NetworkResult
+import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import io.ktor.http.HttpStatusCode
 import kotlin.test.Test
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ServerCredentialStoreTest {
     private val sharedPreferences = FakeSharedPreferences()
 
@@ -103,5 +113,76 @@ class ServerCredentialStoreTest {
         sharedPreferences.edit().putString("jellyfin_access_token", "token").apply()
 
         store("jellyfin").authenticatedCredentials.shouldBeNull()
+    }
+
+    // A session the server rejects (#577)
+
+    private val session = AuthenticatedCredentials("token", "user", canDownload = true)
+
+    /** A signed-in store, and the [ServerCredentialStore.sessionExpired] signals it sends while the test runs. */
+    private fun TestScope.signedIn(): Pair<ServerCredentialStore, List<Unit>> {
+        val store = store("jellyfin")
+        store.loginCredentials = LoginCredentials("tim", "secret")
+        store.authenticatedCredentials = session
+        val signals = mutableListOf<Unit>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { store.sessionExpired.toList(signals) }
+        return store to signals
+    }
+
+    @Test
+    fun `a 401 clears the session and signals it, keeping the saved login`() = runTest {
+        val (store, signals) = signedIn()
+
+        store.checkSession(session, NetworkResult.Failure(RemoteServiceHttpError(HttpStatusCode.Unauthorized)))
+
+        store.authenticatedCredentials.shouldBeNull()
+        store.loginCredentials shouldBe LoginCredentials("tim", "secret")
+        signals.size shouldBe 1
+    }
+
+    @Test
+    fun `other failures leave the session alone`() = runTest {
+        val (store, signals) = signedIn()
+
+        store.checkSession(session, NetworkResult.Failure(RemoteServiceHttpError(HttpStatusCode.Forbidden)))
+        store.checkSession(session, NetworkResult.Failure(RemoteServiceHttpError(HttpStatusCode.InternalServerError)))
+        store.checkSession(session, statusCode = 404)
+        store.checkSession(session, statusCode = null)
+
+        store.authenticatedCredentials shouldBe session
+        signals.size shouldBe 0
+    }
+
+    @Test
+    fun `requests rejected together sign out once`() = runTest {
+        val (store, signals) = signedIn()
+
+        store.checkSession(session, statusCode = 401)
+        store.checkSession(session, statusCode = 401)
+
+        signals.size shouldBe 1
+    }
+
+    @Test
+    fun `a late 401 for a session since replaced leaves the new one`() = runTest {
+        val (store, signals) = signedIn()
+        val fresh = AuthenticatedCredentials("token-2", "user")
+        store.authenticatedCredentials = fresh
+
+        store.expireSession(session) shouldBe false
+
+        store.authenticatedCredentials shouldBe fresh
+        signals.size shouldBe 0
+    }
+
+    @Test
+    fun `a refreshed download permission is still the same session`() = runTest {
+        val (store, signals) = signedIn()
+        store.authenticatedCredentials = session.copy(canDownload = false)
+
+        store.expireSession(session) shouldBe true
+
+        store.authenticatedCredentials.shouldBeNull()
+        signals.size shouldBe 1
     }
 }
