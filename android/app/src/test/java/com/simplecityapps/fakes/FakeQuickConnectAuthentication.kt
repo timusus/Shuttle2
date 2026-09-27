@@ -1,8 +1,8 @@
 package com.simplecityapps.fakes
 
-import com.simplecityapps.shuttle.ui.screens.sources.servers.QuickConnectAuthentication
-import com.simplecityapps.shuttle.ui.screens.sources.servers.QuickConnectCode
-import com.simplecityapps.shuttle.ui.screens.sources.servers.QuickConnectPollState
+import com.simplecityapps.mediaprovider.server.QuickConnectAuthentication
+import com.simplecityapps.mediaprovider.server.QuickConnectCode
+import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import kotlinx.coroutines.CompletableDeferred
 
 /**

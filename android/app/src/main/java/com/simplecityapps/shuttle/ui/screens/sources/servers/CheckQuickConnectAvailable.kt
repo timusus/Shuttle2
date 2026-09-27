@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
+import com.simplecityapps.mediaprovider.server.QuickConnectAuthentication
 import com.simplecityapps.shuttle.model.MediaProviderType
 import javax.inject.Inject
 

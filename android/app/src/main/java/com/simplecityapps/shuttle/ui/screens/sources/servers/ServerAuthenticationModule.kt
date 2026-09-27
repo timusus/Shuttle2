@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.screens.sources.servers.emby.EmbyServerAuthentication
-import com.simplecityapps.shuttle.ui.screens.sources.servers.jellyfin.JellyfinQuickConnectAuthentication
 import com.simplecityapps.shuttle.ui.screens.sources.servers.jellyfin.JellyfinServerAuthentication
 import com.simplecityapps.shuttle.ui.screens.sources.servers.plex.PlexServerAuthentication
 import com.simplecityapps.trial.MonetisationAnalytics
@@ -30,11 +29,6 @@ abstract class ServerAuthenticationModule {
     @IntoMap
     @ServerTypeKey(MediaProviderType.Emby)
     abstract fun bindEmby(authentication: EmbyServerAuthentication): ServerAuthentication
-
-    @Binds
-    @IntoMap
-    @ServerTypeKey(MediaProviderType.Jellyfin)
-    abstract fun bindJellyfinQuickConnect(authentication: JellyfinQuickConnectAuthentication): QuickConnectAuthentication
 
     companion object {
         @Provides

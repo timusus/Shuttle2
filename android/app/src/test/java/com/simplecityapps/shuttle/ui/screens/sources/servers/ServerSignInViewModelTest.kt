@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import com.simplecityapps.fakes.FakeQuickConnectAuthentication
 import com.simplecityapps.fakes.FakeServerAuthentication
+import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.testing.MainDispatcherRule

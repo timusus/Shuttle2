@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.sources.servers
+package com.simplecityapps.mediaprovider.server
 
 /** A Quick Connect code shown to the user, and the secret used to poll and redeem it. */
 data class QuickConnectCode(val code: String, val secret: String)
@@ -6,7 +6,10 @@ data class QuickConnectCode(val code: String, val secret: String)
 /** Quick Connect's poll state: whether the code has been approved, denied, or is still pending. */
 enum class QuickConnectPollState { Pending, Authenticated, Denied }
 
-/** Signs in to a server with Quick Connect, over its provider's authentication manager. Jellyfin only. */
+/**
+ * Signs in to a server with Quick Connect, over its provider's authentication manager. Jellyfin only.
+ * A [Result] failure's message is already fit to show the user.
+ */
 interface QuickConnectAuthentication {
     suspend fun isEnabled(address: String): Boolean
 

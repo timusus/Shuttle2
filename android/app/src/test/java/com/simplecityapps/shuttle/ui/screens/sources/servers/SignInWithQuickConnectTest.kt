@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import com.simplecityapps.fakes.FakeQuickConnectAuthentication
+import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CompletableDeferred
@@ -58,7 +59,7 @@ class SignInWithQuickConnectTest {
 
         val states = signIn(MediaProviderType.Jellyfin, "http://server").toList()
 
-        states shouldBe listOf(SignInWithQuickConnect.State.Failed("An unknown error occurred."))
+        states shouldBe listOf(SignInWithQuickConnect.State.Failed("boom"))
     }
 
     @Test

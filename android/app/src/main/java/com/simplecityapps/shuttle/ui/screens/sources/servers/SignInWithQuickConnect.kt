@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
-import com.simplecityapps.networking.userDescription
+import com.simplecityapps.mediaprovider.server.QuickConnectAuthentication
+import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import javax.inject.Inject
 import kotlinx.coroutines.delay
@@ -38,7 +39,7 @@ class SignInWithQuickConnect @Inject constructor(
         val authentication = authentications.getValue(type)
 
         val code = authentication.initiate(address).getOrElse { error ->
-            emit(State.Failed(error.userDescription()))
+            emit(State.Failed(error.message.orEmpty()))
             return@flow
         }
         emit(State.AwaitingApproval(code.code))
@@ -54,7 +55,7 @@ class SignInWithQuickConnect @Inject constructor(
                         analytics.onServerConnected(type)
                         emit(State.Success)
                     },
-                    onFailure = { error -> emit(State.Failed(error.userDescription())) },
+                    onFailure = { error -> emit(State.Failed(error.message.orEmpty())) },
                 )
             }
         }
@@ -63,7 +64,7 @@ class SignInWithQuickConnect @Inject constructor(
     private suspend fun pollUntilResolved(authentication: QuickConnectAuthentication, address: String, secret: String): PollResult {
         while (true) {
             delay(POLL_INTERVAL_MILLIS)
-            when (val poll = authentication.poll(address, secret).getOrElse { error -> return PollResult.Failed(error.userDescription()) }) {
+            when (val poll = authentication.poll(address, secret).getOrElse { error -> return PollResult.Failed(error.message.orEmpty()) }) {
                 QuickConnectPollState.Authenticated -> return PollResult.Approved
                 QuickConnectPollState.Denied -> return PollResult.Failed(DENIED_MESSAGE)
                 QuickConnectPollState.Pending -> Unit
