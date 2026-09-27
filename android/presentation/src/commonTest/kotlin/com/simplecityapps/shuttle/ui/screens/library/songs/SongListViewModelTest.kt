@@ -14,25 +14,23 @@ import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
 
 /**
  * Focused ViewModel unit tests for behaviour that can't be observed through the UI.
  *
- * State derivation and selection are tested via [SongListIntegrationTest] (real ViewModel +
- * real Composable + fakes). This file only covers side effects invisible to the UI.
+ * State derivation and selection are tested via the app's Compose characterisation tests (real
+ * ViewModel + real Composable + fakes). This file only covers side effects invisible to the UI.
  */
-@ExperimentalCoroutinesApi
 class SongListViewModelTest {
     private val fakeSongRepository = FakeSongRepository()
     private val fakePlaylistRepository = FakePlaylistRepository()
@@ -41,12 +39,12 @@ class SongListViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    @Before
+    @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         Dispatchers.resetMain()
     }

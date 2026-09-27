@@ -17,26 +17,37 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
-import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlin.random.Random
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.setMain
 
 /**
  * Focused ViewModel unit tests for behaviour that can't be observed through the UI, notably
  * [AlbumListViewModel.onShuffle]'s side effects. State derivation and selection are tested via
- * [AlbumListIntegrationTest] (real ViewModel + real Composable + fakes).
+ * the app's Compose characterisation tests (real ViewModel + real Composable + fakes).
  */
-@ExperimentalCoroutinesApi
 class AlbumListViewModelTest {
 
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    private val mainDispatcher = UnconfinedTestDispatcher()
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(mainDispatcher)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     private val fakeAlbumRepository = FakeAlbumRepository()
     private val fakeSongRepository = FakeSongRepository()
@@ -48,7 +59,7 @@ class AlbumListViewModelTest {
     private val fakePlaybackOperations = FakePlaybackOperations()
 
     @Test
-    fun `onShuffle queues each album's songs together, in track order`() = runTest {
+    fun `onShuffle queues each album's songs together in track order`() = runTest {
         fakeSongRepository.setSongs(
             listOf(
                 createSong(id = 1, name = "Side A Track 2", album = "Side A", track = 2),

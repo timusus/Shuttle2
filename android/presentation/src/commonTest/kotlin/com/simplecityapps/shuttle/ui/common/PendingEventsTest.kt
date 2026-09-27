@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.common
 
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 class PendingEventsTest {
     private val events = PendingEvents<String>()
