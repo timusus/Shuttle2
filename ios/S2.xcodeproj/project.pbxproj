@@ -7,11 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		076ADE2573B4CCD76E1C2473 /* AudioSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B12E0CB3FCC7571A44BAD037 /* AudioSessionController.swift */; };
 		231078D87B2D4E48A18485EC /* CombineFlowBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 071E70571E51743974A5AC4F /* CombineFlowBridge.swift */; };
 		31622DC97DF270EF81190A43 /* PlayerPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6F13B4E6E24F493A2104D75 /* PlayerPresentation.swift */; };
 		34C47AF9BC740718A6B15B47 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D38E5CC8D77C5BA07D5821 /* NowPlayingView.swift */; };
 		35711F16198C1340CC43E55A /* MiniPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528C6644D4642CD20178A704 /* MiniPlayerView.swift */; };
 		3C9A3CFCD175F341D2569B15 /* LibraryViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 644FCDF9D90ECEA9AEB75600 /* LibraryViewTests.swift */; };
+		3E021E78C43854C64163C4FF /* NowPlayingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D4EC07E38D0A5C76D2B59F0 /* NowPlayingController.swift */; };
 		553A58C265C6AFA440D89FCF /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC548555BCD74CA0702CE7B3 /* ContentView.swift */; };
 		6A67D7A370D304760B517B8D /* ShellContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67AA5EABDB43DCBE61D34029 /* ShellContainer.swift */; };
 		85CD36E6527CD8C02C94C68E /* AppGraph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E5961F296B2738309AF66BC /* AppGraph.swift */; };
@@ -25,6 +27,8 @@
 		D15E8CB1C210263CFE0A4956 /* ViewModelCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81E32BC8DC4703CBE2DCD79C /* ViewModelCacheTests.swift */; };
 		D81817D1E15FF9445D39A71D /* ViewModelCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F59DA1BBF939E0071AED4F2 /* ViewModelCache.swift */; };
 		DA730FACA000899524710C84 /* S2App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20E688A48CB9963C2F8837D2 /* S2App.swift */; };
+		E1955E56226D498BCA1865D2 /* AudioSessionControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12C790AE3052665B98697F90 /* AudioSessionControllerTests.swift */; };
+		E92BFDB4D95C7E2F0D897342 /* NowPlayingControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9B0D7D971C30D4A0B6D6D8E /* NowPlayingControllerTests.swift */; };
 		F3ABB063A6171C619BAB09B8 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52BE27ECE8E19F5960E66097 /* HomeView.swift */; };
 		F96A02B9E3B2536F18277736 /* LayoutTierTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C4156A63D9F30E876660749 /* LayoutTierTests.swift */; };
 /* End PBXBuildFile section */
@@ -41,6 +45,7 @@
 
 /* Begin PBXFileReference section */
 		071E70571E51743974A5AC4F /* CombineFlowBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombineFlowBridge.swift; sourceTree = "<group>"; };
+		12C790AE3052665B98697F90 /* AudioSessionControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionControllerTests.swift; sourceTree = "<group>"; };
 		158B1F52DF06F29C91362AA1 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		1C4156A63D9F30E876660749 /* LayoutTierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTierTests.swift; sourceTree = "<group>"; };
 		20E688A48CB9963C2F8837D2 /* S2App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = S2App.swift; sourceTree = "<group>"; };
@@ -52,14 +57,18 @@
 		644FCDF9D90ECEA9AEB75600 /* LibraryViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryViewTests.swift; sourceTree = "<group>"; };
 		67AA5EABDB43DCBE61D34029 /* ShellContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellContainer.swift; sourceTree = "<group>"; };
 		6C03B6D3CCE903CAEB601182 /* S2Tests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = S2Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6D4EC07E38D0A5C76D2B59F0 /* NowPlayingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingController.swift; sourceTree = "<group>"; };
 		76ADBE2382A54513A42CEACC /* S2.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = S2.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7E5961F296B2738309AF66BC /* AppGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGraph.swift; sourceTree = "<group>"; };
 		81E32BC8DC4703CBE2DCD79C /* ViewModelCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModelCacheTests.swift; sourceTree = "<group>"; };
 		8283086D7B89F655CDC63931 /* AppShellTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellTests.swift; sourceTree = "<group>"; };
 		89689E4CDFC9350CB0EFB888 /* Navigator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Navigator.swift; sourceTree = "<group>"; };
 		9F59DA1BBF939E0071AED4F2 /* ViewModelCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModelCache.swift; sourceTree = "<group>"; };
+		B12E0CB3FCC7571A44BAD037 /* AudioSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionController.swift; sourceTree = "<group>"; };
+		B9B0D7D971C30D4A0B6D6D8E /* NowPlayingControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingControllerTests.swift; sourceTree = "<group>"; };
 		D0D38E5CC8D77C5BA07D5821 /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
 		D6F13B4E6E24F493A2104D75 /* PlayerPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPresentation.swift; sourceTree = "<group>"; };
+		E5B4C7411078C92EE8985A4B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		FC548555BCD74CA0702CE7B3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -130,6 +139,14 @@
 			);
 			sourceTree = "<group>";
 		};
+		9C2E136AEF3D714A2556FB6F /* Platform */ = {
+			isa = PBXGroup;
+			children = (
+				DDC4417FE0C297CDE63A9BEC /* Audio */,
+			);
+			path = Platform;
+			sourceTree = "<group>";
+		};
 		A9A010A2A01CBDCBE609800E /* Navigation */ = {
 			isa = PBXGroup;
 			children = (
@@ -155,13 +172,24 @@
 			path = Library;
 			sourceTree = "<group>";
 		};
+		DDC4417FE0C297CDE63A9BEC /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				B12E0CB3FCC7571A44BAD037 /* AudioSessionController.swift */,
+				6D4EC07E38D0A5C76D2B59F0 /* NowPlayingController.swift */,
+			);
+			path = Audio;
+			sourceTree = "<group>";
+		};
 		F168FECA40247360109283BC /* S2Tests */ = {
 			isa = PBXGroup;
 			children = (
 				8283086D7B89F655CDC63931 /* AppShellTests.swift */,
+				12C790AE3052665B98697F90 /* AudioSessionControllerTests.swift */,
 				5E1633C34A912D4852F34CC2 /* CombineFlowBridgeTests.swift */,
 				1C4156A63D9F30E876660749 /* LayoutTierTests.swift */,
 				644FCDF9D90ECEA9AEB75600 /* LibraryViewTests.swift */,
+				B9B0D7D971C30D4A0B6D6D8E /* NowPlayingControllerTests.swift */,
 				81E32BC8DC4703CBE2DCD79C /* ViewModelCacheTests.swift */,
 			);
 			path = S2Tests;
@@ -181,10 +209,12 @@
 			isa = PBXGroup;
 			children = (
 				FC548555BCD74CA0702CE7B3 /* ContentView.swift */,
+				E5B4C7411078C92EE8985A4B /* Info.plist */,
 				20E688A48CB9963C2F8837D2 /* S2App.swift */,
 				7ACDCA6E40286B75EDF1EF45 /* Features */,
 				F4C836F843D4287688E030BA /* KMP */,
 				A9A010A2A01CBDCBE609800E /* Navigation */,
+				9C2E136AEF3D714A2556FB6F /* Platform */,
 				230BD3E2FF59C99A7A798571 /* Theme */,
 			);
 			path = S2;
@@ -276,6 +306,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				85CD36E6527CD8C02C94C68E /* AppGraph.swift in Sources */,
+				076ADE2573B4CCD76E1C2473 /* AudioSessionController.swift in Sources */,
 				231078D87B2D4E48A18485EC /* CombineFlowBridge.swift in Sources */,
 				553A58C265C6AFA440D89FCF /* ContentView.swift in Sources */,
 				F3ABB063A6171C619BAB09B8 /* HomeView.swift in Sources */,
@@ -283,6 +314,7 @@
 				9B1E89BAD9F71286BF2437AA /* LibraryView.swift in Sources */,
 				35711F16198C1340CC43E55A /* MiniPlayerView.swift in Sources */,
 				A4DB8F671CB561F475D9337B /* Navigator.swift in Sources */,
+				3E021E78C43854C64163C4FF /* NowPlayingController.swift in Sources */,
 				34C47AF9BC740718A6B15B47 /* NowPlayingView.swift in Sources */,
 				31622DC97DF270EF81190A43 /* PlayerPresentation.swift in Sources */,
 				DA730FACA000899524710C84 /* S2App.swift in Sources */,
@@ -297,9 +329,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				B9BD09F696DCDF0CCAA8045D /* AppShellTests.swift in Sources */,
+				E1955E56226D498BCA1865D2 /* AudioSessionControllerTests.swift in Sources */,
 				AD30CBCBD32BA3F24F6B355E /* CombineFlowBridgeTests.swift in Sources */,
 				F96A02B9E3B2536F18277736 /* LayoutTierTests.swift in Sources */,
 				3C9A3CFCD175F341D2569B15 /* LibraryViewTests.swift in Sources */,
+				E92BFDB4D95C7E2F0D897342 /* NowPlayingControllerTests.swift in Sources */,
 				D15E8CB1C210263CFE0A4956 /* ViewModelCacheTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -438,6 +472,7 @@
 					"$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/debugFramework",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = S2/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = S2;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -477,6 +512,7 @@
 					"$(SRCROOT)/../shared/build/bin/iosSimulatorArm64/releaseFramework",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = S2/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = S2;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

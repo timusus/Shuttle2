@@ -26,6 +26,16 @@ targets:
     platform: iOS
     sources:
       - path: S2
+    # Keys the generated Info.plist has no INFOPLIST_KEY_ setting for. Xcode merges this file with the
+    # generated keys below (GENERATE_INFOPLIST_FILE stays on).
+    info:
+      path: S2/Info.plist
+      properties:
+        # XcodeGen writes 1.0 / 1 otherwise, and the file wins over the build settings.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # Keep playing with the screen locked or the app in the background (#588).
+        UIBackgroundModes: [audio]
     settings:
       base:
         # Placeholder until the App Store Connect app exists.
