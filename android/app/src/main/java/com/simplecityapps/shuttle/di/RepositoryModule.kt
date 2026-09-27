@@ -8,6 +8,7 @@ import com.simplecityapps.localmediaprovider.local.repository.LocalGenreReposito
 import com.simplecityapps.localmediaprovider.local.repository.LocalPlaylistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSmartPlaylistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepository
+import com.simplecityapps.localmediaprovider.local.repository.SafPlaylistFileSync
 import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImportStrings
 import com.simplecityapps.mediaprovider.MediaImporter
@@ -65,7 +66,7 @@ class RepositoryModule {
         @ApplicationContext context: Context,
         database: MediaDatabase,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): LocalPlaylistRepository = LocalPlaylistRepository(context, appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+    ): LocalPlaylistRepository = LocalPlaylistRepository(appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()))
 
     @Provides
     fun providePlaylistRepository(playlistRepository: LocalPlaylistRepository): PlaylistRepository = playlistRepository

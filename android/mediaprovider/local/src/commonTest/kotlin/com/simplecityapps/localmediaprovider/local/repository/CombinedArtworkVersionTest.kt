@@ -4,7 +4,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import org.junit.Test
+import kotlin.test.Test
 
 class CombinedArtworkVersionTest {
     @Test

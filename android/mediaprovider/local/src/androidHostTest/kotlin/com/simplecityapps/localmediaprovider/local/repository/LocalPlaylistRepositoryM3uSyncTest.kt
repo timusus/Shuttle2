@@ -31,11 +31,10 @@ class LocalPlaylistRepositoryM3uSyncTest {
         .allowMainThreadQueries()
         .build()
     private val repository = LocalPlaylistRepository(
-        context = context,
         scope = CoroutineScope(Dispatchers.Unconfined),
         playlistDataDao = database.playlistDataDao(),
         playlistSongJoinDao = database.playlistSongJoinDataDao(),
-        songDataDao = database.songDataDao()
+        fileSync = SafPlaylistFileSync(context, database.songDataDao())
     )
 
     @After

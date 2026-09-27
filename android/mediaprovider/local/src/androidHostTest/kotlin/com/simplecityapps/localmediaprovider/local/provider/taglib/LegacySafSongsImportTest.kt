@@ -12,6 +12,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.migrations.ALL_MIGRATIONS
 import com.simplecityapps.localmediaprovider.local.repository.LocalPlaylistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepository
+import com.simplecityapps.localmediaprovider.local.repository.SafPlaylistFileSync
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
@@ -186,7 +187,7 @@ class LegacySafSongsImportTest {
             MediaImporter(
                 strings = ResourceMediaImportStrings(context),
                 songRepository = LocalSongRepository(scope, database.songDataDao()),
-                playlistStore = LocalPlaylistRepository(context, scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao()),
+                playlistStore = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao())),
                 preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
             )
         importer.mediaProviders += provider

@@ -33,7 +33,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `songs not in the library are left out of playlist writes`() = runTest {
-        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()))
         val (first, second) = insertSongs("First", "Second")
         val openedFile = first.copy(id = -5, path = "content://downloads/1")
 
@@ -48,7 +48,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `a playlist whose songs can't be added isn't created`() = runTest {
-        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()))
         val (song) = insertSongs("Song")
 
         shouldThrow<SQLiteConstraintException> {
@@ -60,7 +60,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `playlist cover songs are one per distinct album, in playlist order`() = runTest {
-        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()))
         val songs = insertSongsWithAlbums("First" to "Album A", "Second" to "Album A", "Third" to "Album B", "Fourth" to "Album C", "Fifth" to "Album D")
         val playlist = repository.createPlaylist("Mixed", MediaProviderType.Shuttle, songs, null)
 
@@ -69,7 +69,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `playlist cover songs match on album regardless of case`() = runTest {
-        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()))
         val songs = insertSongsWithAlbums("First" to "album", "Second" to "ALBUM")
         val playlist = repository.createPlaylist("Same album", MediaProviderType.Shuttle, songs, null)
 
@@ -78,7 +78,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `playlist cover songs follow the playlist's own sort order, not raw insertion order`() = runTest {
-        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()))
         val songs = insertSongsWithAlbums("Zebra" to "Album A", "Mango" to "Album B", "Apple" to "Album C")
         val playlist = repository.createPlaylist("By name", MediaProviderType.Shuttle, songs, null)
             .copy(sortOrder = PlaylistSongSortOrder.SongName)
@@ -88,7 +88,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `playlist cover songs reverse when the playlist is sorted descending`() = runTest {
-        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()))
         val songs = insertSongsWithAlbums("First" to "Album A", "Second" to "Album A", "Third" to "Album B", "Fourth" to "Album C", "Fifth" to "Album D")
         val playlist = repository.createPlaylist("Mixed descending", MediaProviderType.Shuttle, songs, null)
             .copy(sortDescending = true)
@@ -98,7 +98,7 @@ class LocalPlaylistRepositoryTest {
 
     @Test
     fun `playlist cover songs return fewer than the limit when the playlist has fewer distinct albums`() = runTest {
-        val repository = LocalPlaylistRepository(context, backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+        val repository = LocalPlaylistRepository(backgroundScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()))
         val (song) = insertSongs("Only")
         val playlist = repository.createPlaylist("Small", MediaProviderType.Shuttle, listOf(song), null)
 

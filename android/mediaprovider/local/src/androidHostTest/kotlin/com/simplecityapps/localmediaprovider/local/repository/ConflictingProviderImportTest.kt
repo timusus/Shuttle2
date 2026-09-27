@@ -64,7 +64,7 @@ class ConflictingProviderImportTest {
             MediaImporter(
                 strings = ResourceMediaImportStrings(context),
                 songRepository = LocalSongRepository(scope, database.songDataDao()),
-                playlistStore = LocalPlaylistRepository(context, scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao()),
+                playlistStore = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao())),
                 preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
             )
         importer.mediaProviders += FakeProvider(MediaProviderType.MediaStore)

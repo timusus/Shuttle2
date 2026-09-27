@@ -7,11 +7,13 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUp
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -23,7 +25,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
-import timber.log.Timber
 
 class LocalSongRepository(
     val scope: CoroutineScope,
@@ -88,7 +89,7 @@ class LocalSongRepository(
     }
 
     override suspend fun remove(song: Song) {
-        Timber.v("Deleting song")
+        logger.debug { "Deleting song" }
         songDataDao.delete(song.id)
     }
 
@@ -103,26 +104,26 @@ class LocalSongRepository(
         mediaProviderType: MediaProviderType
     ): Triple<Int, Int, Int> = songDataDao
         .insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongDataUpdate(), deletes.toSongData(mediaProviderType))
-        .also { (inserted, updated) -> Timber.i("insertUpdateAndDelete(inserts: $inserted inserted, $updated updated)") }
+        .also { (inserted, updated) -> logger.info { "insertUpdateAndDelete(inserts: $inserted inserted, $updated updated)" } }
         .also { publishUpdated(updates) }
 
     override suspend fun remapPaths(
         remaps: List<SongPathRemap>,
         mediaProviderType: MediaProviderType
     ): List<SongPathRemap> = songDataDao.remapPaths(remaps, mediaProviderType) { remap, pathOwner ->
-        Timber.w("Not remapping song ${remap.songId}: song $pathOwner already has its path")
+        logger.warn { "Not remapping song ${remap.songId}: song $pathOwner already has its path" }
     }
 
     override suspend fun setPlaybackPosition(
         song: Song,
         playbackPosition: Int
     ) {
-        Timber.v("Setting playback position to $playbackPosition for song: ${song.name}")
+        logger.debug { "Setting playback position to $playbackPosition for song: ${song.name}" }
         songDataDao.updatePlaybackPosition(song.id, playbackPosition)
     }
 
     override suspend fun recordPlayedThrough(song: Song) {
-        Timber.v("Recording song played through: ${song.name}")
+        logger.debug { "Recording song played through: ${song.name}" }
         songDataDao.recordPlayedThrough(song.id, song.duration)
     }
 
@@ -131,7 +132,7 @@ class LocalSongRepository(
         excluded: Boolean
     ) {
         val count = songDataDao.setExcluded(songs.map { it.id }, excluded)
-        Timber.v("$count song(s) excluded")
+        logger.debug { "$count song(s) excluded" }
     }
 
     override suspend fun setFavourite(
@@ -139,7 +140,7 @@ class LocalSongRepository(
         favourite: Boolean
     ) {
         val count = songDataDao.setFavourite(songs, favourite)
-        Timber.v("$count song(s) ${if (favourite) "favourited" else "unfavourited"}")
+        logger.debug { "$count song(s) ${if (favourite) "favourited" else "unfavourited"}" }
     }
 
     /** Read on its own rather than from the shared song list, so the heart follows a toggle without a whole-library requery. */
@@ -149,7 +150,7 @@ class LocalSongRepository(
         .flowOn(Dispatchers.IO)
 
     override suspend fun clearExcludeList() {
-        Timber.v("Clearing excluded")
+        logger.debug { "Clearing excluded" }
         songDataDao.clearExcludeList()
     }
 
@@ -157,3 +158,5 @@ class LocalSongRepository(
         const val UPDATE_BUFFER = 16
     }
 }
+
+private val logger = Logger.tagged("LocalSongRepository")

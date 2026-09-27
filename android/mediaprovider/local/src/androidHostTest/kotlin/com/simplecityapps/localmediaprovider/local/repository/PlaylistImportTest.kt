@@ -47,7 +47,7 @@ class PlaylistImportTest {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java).allowMainThreadQueries().build()
     private val songRepository = LaggingSongRepository(LocalSongRepository(scope, database.songDataDao()))
-    private val playlistRepository = LocalPlaylistRepository(context, scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), database.songDataDao())
+    private val playlistRepository = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()))
     private val provider = FakeProvider()
     private val importer =
         MediaImporter(
