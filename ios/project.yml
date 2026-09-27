@@ -49,7 +49,6 @@ targets:
         # certificate; the servers' own iOS apps allow both the same way (#587).
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
-          NSAllowsLocalNetworking: true
     settings:
       base:
         # Placeholder until the App Store Connect app exists.
