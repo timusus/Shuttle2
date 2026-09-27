@@ -59,7 +59,6 @@ class IosAppGraphTest {
         graph.serverSignInViewModelFactory
         graph.mediaSources
         graph.songImportStateProvider
-        graph.serverSignIn
         graph.artworkUrls
     }
 

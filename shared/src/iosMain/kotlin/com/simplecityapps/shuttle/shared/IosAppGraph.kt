@@ -4,7 +4,6 @@ import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
-import com.simplecityapps.shuttle.shared.sources.ServerSignIn
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
 import com.simplecityapps.shuttle.ui.screens.home.HomeViewModel
 import com.simplecityapps.shuttle.ui.screens.library.GenreDetailViewModel
@@ -66,9 +65,6 @@ interface IosAppGraph : ViewModelGraph {
 
     /** The running import's progress, for the Library root. */
     val songImportStateProvider: SongImportStateProvider
-
-    /** Signs in to a server; the DEBUG launch seed's path until the phase 7 sign-in screen. */
-    val serverSignIn: ServerSignIn
 
     /** Authenticated artwork urls for songs, albums and album artists; Swift's `ArtworkLoader` fetches and decodes. */
     val artworkUrls: ArtworkUrls

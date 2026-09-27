@@ -16,13 +16,10 @@ struct LibraryViewTests {
         #expect((try? sut.inspect().find(text: "No Music")) == nil)
     }
 
-    @Test func emptyShowsTheEmptyStateWithItsNote() throws {
-        let sut = LibraryRootContent(
-            categories: LibraryCategory.allCases, availability: .empty, importStatus: .idle,
-            emptyNote: "Jellyfin sign-in failed: nope"
-        )
+    @Test func emptyShowsTheEmptyState() throws {
+        let sut = LibraryRootContent(categories: LibraryCategory.allCases, availability: .empty, importStatus: .idle)
         #expect((try? sut.inspect().find(text: "No Music")) != nil)
-        #expect((try? sut.inspect().find(text: "Jellyfin sign-in failed: nope")) != nil)
+        #expect((try? sut.inspect().find(text: "Connect a Jellyfin or Emby server to stream your music.")) != nil)
         #expect((try? sut.inspect().find(text: LibraryCategory.songs.title)) == nil)
     }
 

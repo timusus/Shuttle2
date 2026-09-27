@@ -7,14 +7,7 @@ import Shared
 /// signed in.
 @MainActor
 enum LibraryImport {
-    /// DEBUG builds sign in from the launch environment first (`DebugServerSeed`), which imports as it connects.
-    static func atLaunch(graph: IosAppGraph = AppGraph.shared) async {
-        #if DEBUG
-            if let config = DebugServerConfig(environment: ProcessInfo.processInfo.environment) {
-                await DebugServerSeed.seed(config, graph: graph)
-                return
-            }
-        #endif
+    static func atLaunch(graph: IosAppGraph = AppGraph.shared) {
         graph.mediaSources.scan()
     }
 

@@ -18,8 +18,7 @@ struct LibraryView: View {
             LibraryRootContent(
                 categories: library.tabs.compactMap(LibraryCategory.init),
                 availability: LibraryRootAvailability(availability),
-                importStatus: ImportStatus(importState),
-                emptyNote: Self.emptyNote
+                importStatus: ImportStatus(importState)
             )
         }
         .task {
@@ -29,14 +28,6 @@ struct LibraryView: View {
         }
         .refreshable { LibraryImport.refresh() }
         .navigationTitle(AppTab.library.title)
-    }
-
-    private static var emptyNote: String? {
-        #if DEBUG
-            DebugServerStatus.shared.message
-        #else
-            nil
-        #endif
     }
 }
 
@@ -120,7 +111,6 @@ struct LibraryRootContent: View {
     let categories: [LibraryCategory]
     let availability: LibraryRootAvailability
     let importStatus: ImportStatus
-    var emptyNote: String?
 
     var body: some View {
         List {
@@ -147,7 +137,7 @@ struct LibraryRootContent: View {
                 ContentUnavailableView {
                     Label("No Music", systemImage: "music.note.house")
                 } description: {
-                    Text(emptyNote ?? "Connect a Jellyfin, Emby or Plex server to stream your music.")
+                    Text("Connect a Jellyfin or Emby server to stream your music.")
                 } actions: {
                     NavigationLink("Add a Source", value: Route.sources)
                         .buttonStyle(.borderedProminent)
