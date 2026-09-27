@@ -177,8 +177,10 @@ unchanged.
   - `HomeViewModel` needs the Song/Album/AlbumArtist repositories and `QueueOperations`/`PlaybackOperations`.
   - `SourcesViewModel` and `ServerTypePickerViewModel` need `MediaSources`, `ScannerFolderStore`,
     `SongImportStateProvider` and `TryAddServer`.
-  - `SettingsViewModel` needs a `SettingsCatalog` and `SettingsEffects`. An iOS catalog waits on
-    `LibrarySettings`/`PlaybackSettings`/`DownloadSettings` reaching core.
+  - `SettingsViewModel` needs a `SettingsCatalog` and `SettingsEffects`. **Done (phase 7, #589):**
+    `PlaybackSettings` moved to `:android:playback:core` commonMain (`LibrarySettings` was already common;
+    `DownloadSettings` stays Android's, as iOS has no downloads), and `:shared` binds `IosSettingsCatalog` and
+    `IosSettingsEffects`.
   - `EqualizerViewModel` needs `EqualizerControl` and `EqualizerPresetStore`. iOS's `AVAudioUnitEQ` arrives
     in phase 6 and the screen in phase 7.
 

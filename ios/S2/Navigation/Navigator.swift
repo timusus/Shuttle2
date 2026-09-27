@@ -48,7 +48,8 @@ enum RootSelection: Hashable {
 /// Rules (unit tested in `NavigatorTests`, ported from Android's `AppNavigator`):
 /// - Re-selecting the current root pops its path to root; there is no "back to the start tab" on iOS,
 ///   since the system back gesture is per stack.
-/// - `open(_:)` pushes onto whichever path is currently selected.
+/// - `open(_:)` pushes onto whichever path is currently selected, or onto Settings' own path while the
+///   Settings sheet is up (so Sources, pushed from Settings, opens its sign-in inside the sheet).
 /// - Every path change retains only the view models for routes still on some path
 ///   (`ViewModelCache.retainOnly`), clearing the rest.
 @MainActor
@@ -64,6 +65,21 @@ final class Navigator {
 
     /// The wide inspector slot; empty until phase 6 wires Now Playing into it.
     var showsPlayerInspector = false
+
+    /// Whether the Settings sheet is up (the gear on the Home and Library roots). Dismissing it drops
+    /// whatever was pushed inside it.
+    var showsSettings = false {
+        didSet {
+            if !showsSettings { settingsPath = [] }
+            retainViewModels()
+        }
+    }
+
+    /// The Settings sheet's own `NavigationStack` path (Sources, then a server sign-in).
+    var settingsPath: [Route] = [] { didSet { retainViewModels() } }
+
+    /// The `ViewModelCache` key for the Settings screen, retained while its sheet is up.
+    static let settingsCacheKey = "settings"
 
     init(viewModelCache: ViewModelCache = .shared) {
         self.viewModelCache = viewModelCache
@@ -106,6 +122,10 @@ final class Navigator {
     /// Pushes `route` onto whichever path is currently selected: a tab's on compact, or (regular/wide) a
     /// library category's own stack.
     func open(_ route: Route) {
+        if showsSettings {
+            settingsPath.append(route)
+            return
+        }
         switch _selection {
         case .tab(let tab):
             setPath(path(for: tab) + [route], for: tab)
@@ -117,6 +137,9 @@ final class Navigator {
     /// Pops `route` off whichever path it tops, selected or not: a screen that closes itself (a finished sign-in)
     /// may finish after the user has switched tabs. A path it doesn't top is left alone.
     func pop(_ route: Route) {
+        if settingsPath.last == route {
+            settingsPath.removeLast()
+        }
         for tab in AppTab.allCases where path(for: tab).last == route {
             setPath(Array(path(for: tab).dropLast()), for: tab)
         }
@@ -162,6 +185,10 @@ final class Navigator {
         liveKeys.formUnion(searchPath.map(\.cacheKey))
         for path in libraryCategoryPaths.values {
             liveKeys.formUnion(path.map(\.cacheKey))
+        }
+        if showsSettings {
+            liveKeys.insert(Self.settingsCacheKey)
+            liveKeys.formUnion(settingsPath.map(\.cacheKey))
         }
         viewModelCache.retainOnly(liveKeys)
     }

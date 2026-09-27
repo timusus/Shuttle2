@@ -219,4 +219,42 @@ struct NavigatorTests {
         #expect(navigator.searchPath == [.playlist(id: 9)])
         #expect(navigator.path(for: .albums) == [.album(albumKey: "a1", albumArtistKey: nil)])
     }
+
+    // MARK: - Settings sheet
+
+    @Test func openPushesInsideTheSettingsSheetWhileItIsUp() {
+        let navigator = Navigator()
+        navigator.showsSettings = true
+        navigator.open(.sources)
+        navigator.open(.serverSignIn(type: "jellyfin"))
+        #expect(navigator.settingsPath == [.sources, .serverSignIn(type: "jellyfin")])
+        #expect(navigator.libraryPath.isEmpty, "the tab under the sheet keeps its path")
+    }
+
+    @Test func popClosesASignInPushedInsideTheSettingsSheet() {
+        let navigator = Navigator()
+        navigator.showsSettings = true
+        navigator.open(.sources)
+        navigator.open(.serverSignIn(type: "jellyfin"))
+        navigator.pop(.serverSignIn(type: "jellyfin"))
+        #expect(navigator.settingsPath == [.sources])
+    }
+
+    @Test func closingSettingsDropsItsPathAndItsViewModels() {
+        let cache = ViewModelCache()
+        let navigator = Navigator(viewModelCache: cache)
+        navigator.showsSettings = true
+        let settingsVM = cache.viewModel(Navigator.settingsCacheKey) { FakeViewModel() }
+        navigator.open(.sources)
+        let sourcesVM = cache.viewModel(Route.sources.cacheKey) { FakeViewModel() }
+        #expect(settingsVM.clearCount == 0)
+
+        navigator.showsSettings = false
+        #expect(navigator.settingsPath.isEmpty)
+        #expect(settingsVM.clearCount == 1)
+        #expect(sourcesVM.clearCount == 1)
+
+        navigator.open(.genre(name: "Rock"))
+        #expect(navigator.libraryPath == [.genre(name: "Rock")], "with the sheet closed, open pushes onto the selected tab again")
+    }
 }

@@ -27,6 +27,9 @@ struct ContentView: View {
             .nowPlayingPresentation(isPresented: $showNowPlaying, tier: tier) {
                 NowPlayingView()
             }
+            .sheet(isPresented: $navigator.showsSettings) {
+                SettingsSheet(navigator: navigator, showNowPlaying: $showNowPlaying)
+            }
             .onGeometryChange(for: CGFloat.self) { proxy in
                 proxy.size.width
             } action: { width in
@@ -172,12 +175,14 @@ struct AppShell: View {
         case .home:
             NavigationStack(path: $navigator.homePath) {
                 HomeView(navigator: navigator)
+                    .settingsButton(navigator)
                     .miniPlayerInset(showNowPlaying: $showNowPlaying)
                     .routeDestinations(showNowPlaying: $showNowPlaying)
             }
         case .library:
             NavigationStack(path: $navigator.libraryPath) {
                 LibraryView(navigator: navigator)
+                    .settingsButton(navigator)
                     .miniPlayerInset(showNowPlaying: $showNowPlaying)
                     .routeDestinations(showNowPlaying: $showNowPlaying)
             }
@@ -195,8 +200,48 @@ struct AppShell: View {
     private func categoryStack(for category: LibraryCategory) -> some View {
         NavigationStack(path: navigator.binding(for: category)) {
             RouteDestinationView(route: .libraryCategory(category))
+                .settingsButton(navigator)
                 .miniPlayerInset(showNowPlaying: $showNowPlaying)
                 .routeDestinations(showNowPlaying: $showNowPlaying)
+        }
+    }
+}
+
+/// Settings' sheet: its own `NavigationStack` on `Navigator.settingsPath`, so Sources and a server sign-in push
+/// inside it, closed with Done (`docs/architecture/ios-port/phase-5-ios-app.md`, "Settings entry").
+struct SettingsSheet: View {
+    let navigator: Navigator
+    @Binding var showNowPlaying: Bool
+
+    var body: some View {
+        @Bindable var navigator = navigator
+        NavigationStack(path: $navigator.settingsPath) {
+            SettingsView()
+                .routeDestinations(showNowPlaying: $showNowPlaying)
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { navigator.showsSettings = false }
+                            .accessibilityIdentifier("settings.done")
+                    }
+                }
+        }
+        .environment(navigator)
+    }
+}
+
+extension View {
+    /// The gear that opens Settings, on the Home and Library roots (every library category's root on regular and
+    /// wide), so Settings is reachable at every width (#612).
+    func settingsButton(_ navigator: Navigator) -> some View {
+        toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    navigator.showsSettings = true
+                } label: {
+                    Label("Settings", systemImage: "gearshape")
+                }
+                .accessibilityIdentifier("settings.open")
+            }
         }
     }
 }

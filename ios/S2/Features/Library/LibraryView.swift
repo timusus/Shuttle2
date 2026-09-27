@@ -142,15 +142,6 @@ struct LibraryRootContent: View {
                 EmptyView()
             }
         }
-        .toolbar {
-            // Sources lives here until Settings exists (phase 7), where it moves as on Android.
-            ToolbarItem(placement: .primaryAction) {
-                NavigationLink(value: Route.sources) {
-                    Label("Sources", systemImage: "server.rack")
-                }
-                .accessibilityIdentifier("library.sources")
-            }
-        }
     }
 }
 

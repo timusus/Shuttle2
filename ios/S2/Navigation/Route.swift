@@ -44,8 +44,8 @@ enum Route: Hashable, Codable {
     case genre(name: String)
     case playlist(id: Int64)
     case smartPlaylist(id: String)
-    /// Sources (Android's `SourcesRoute`, under Settings there): the media servers, from the Library toolbar or its
-    /// empty state until Settings exists (phase 7).
+    /// Sources (Android's `SourcesRoute`): the media servers, pushed from Settings' Sources row and the Library's
+    /// empty state.
     case sources
     /// A server's sign-in, keyed by the `MediaProviderType`'s name (`Route.serverSignIn(_:)`).
     case serverSignIn(type: String)

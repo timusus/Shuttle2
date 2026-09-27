@@ -126,8 +126,10 @@ Decisions:
 - **The player is not a route**, as on Android. Presentation state (`showNowPlaying`, and
   `showsPlayerInspector` *(new)*) lives on `ContentView`/`Navigator`, never in a path.
 - **Settings** is a gear toolbar item on the Home and Library roots (Android #485) presenting a sheet
-  with its own `NavigationStack`; the gear is added with the first real settings screen (phase 7, #589),
-  not before (no placeholder sheet).
+  with its own `NavigationStack` (on regular and wide, every library category's root carries it too, so it's
+  reachable at every width, #612). **Done (#589):** `Navigator.showsSettings` presents `SettingsSheet`, whose stack
+  binds `Navigator.settingsPath`; while it's up `open(_:)` pushes there, so Sources' sign-in lands inside the
+  sheet, and closing it drops the path and its view models.
 
 ### Paths and routes
 
@@ -178,8 +180,8 @@ paths are under `android/app/.../ui/`.
 | Queue | `shell/player/QueueList.kt` | `PlayerViewModel` (5) | `NowPlayingQueueList` (tap to skip, #587) | 6 | from Now Playing's queue button through `playerSheet`: a sheet in compact, a popover otherwise (`PlayerSubSheetStyle`), after Podcasts. `.onMove`/`.onDelete` in place of Android's swipe-to-dismiss still to come |
 | Home | `screens/home/HomeScreen.kt` | `HomeViewModel` (3) | `HomeView` (done, #587) | 7 | resume hero, and recently played/added/most played albums plus "something different" artists as horizontal shelves (`Components/RemoteArtwork.swift` for the artwork); no What's New card or analytics-consent banner yet (no changelog/settings screen to open from one); tile actions are `.contextMenu`, not a ported actions sheet |
 | Search | `screens/search/SearchScreen.kt` | `SearchViewModel` (3) | `SearchView` (exists, placeholder) | 7 | `.searchable` on the Search tab's stack; recent searches as suggestions |
-| Settings entry | `screens/settings/SettingsScreens.kt` | `SettingsViewModel` (3) | `SettingsView` | 7 (entry point in 5) | `Form`; `SettingsEffects`' clipboard and share become `UIPasteboard` and `ShareLink` |
-| Sources, sign-in | `screens/sources/` | `SourcesViewModel`, `ServerTypePickerViewModel` (3), `ServerSignInViewModel` (4) | `SourcesView`, `ServerSignInView` (both done, #587) | 7 | `Route.sources`, pushed from a Library toolbar item and the empty states until Settings exists; lists the connected servers (tap: sign in again or remove, as Android's server dialog; swipe to remove) and Scan Now. "Connect a Server" presents `ServerTypePicker` as a sheet; a type passes `TryAddServer` and pushes `Route.serverSignIn(type:)`: `ServerSignInView`, a `Form` on the shared `ServerSignInViewModel` (address, username and password with Keychain autofill, remember password, Sign In with its progress, an inline error whose Try Again retries, Jellyfin Quick Connect's code in place of the form while it waits). On success it calls `ServerTypePickerViewModel.onServerConnected`, which enables the provider and imports, and pops back to Sources on the `Finished` event. Plex isn't offered (`MediaProviderType.signInTypes`) until its provider is in `:shared`. No "This device" or folder rows until local files (phase 8) |
+| Settings entry | `screens/settings/SettingsScreens.kt` | `SettingsViewModel` (3) | `SettingsView` (done, #589) | 7 (entry point in 5) | One grouped `Form` over `IosSettingsCatalog` (`:shared`), not Android's screen per destination: Playback & sound (keep shuffle), Sources (a row pushing `Route.sources`, then streaming quality on Wi-Fi and mobile data), Library (Rescan; artwork local only), and a Swift About section (version; Acknowledgements opens the app's page in the Settings app, where `Settings.bundle` holds the licences). Left out, because nothing on iOS acts on them yet: appearance (Material theme), show Home on launch, USB DAC, EQ/ReplayGain/preamp (#604), report playback, download on Wi-Fi only, rescan frequency, excluded songs and folders (phase 8), the artwork service and cache actions, privacy, What's New, Licences and debug logs. `IosSettingsEffects` rescans through `MediaSources`. Titles come from `ios/S2/en.lproj/Localizable.strings`, generated from Android's strings by `ios/scripts/generate-strings.py` |
+| Sources, sign-in | `screens/sources/` | `SourcesViewModel`, `ServerTypePickerViewModel` (3), `ServerSignInViewModel` (4) | `SourcesView`, `ServerSignInView` (both done, #587) | 7 | `Route.sources`, pushed from Settings' Sources row and the Library's empty state; lists the connected servers (tap: sign in again or remove, as Android's server dialog; swipe to remove) and Scan Now. "Connect a Server" presents `ServerTypePicker` as a sheet; a type passes `TryAddServer` and pushes `Route.serverSignIn(type:)`: `ServerSignInView`, a `Form` on the shared `ServerSignInViewModel` (address, username and password with Keychain autofill, remember password, Sign In with its progress, an inline error whose Try Again retries, Jellyfin Quick Connect's code in place of the form while it waits). On success it calls `ServerTypePickerViewModel.onServerConnected`, which enables the provider and imports, and pops back to Sources on the `Finished` event. Plex isn't offered (`MediaProviderType.signInTypes`) until its provider is in `:shared`. No "This device" or folder rows until local files (phase 8) |
 | Song info | `screens/songinfo/` | `SongInfoViewModel` (4) | `SongInfoView` | 7 | sheet |
 
 **Sign-in.** The phase 5 checkpoint first signed in through a DEBUG-only launch-environment seed
@@ -308,8 +310,8 @@ change, `@SceneStorage` round-tripping via `StoredPath`/`StoredCategoryPaths`), 
 `navigationDestination` views (`RouteDestination.swift`), all covered by `RouteTests`/`NavigatorTests`. `ContentView`'s
 `AppShell` wires the compact `TabView`, the iOS 18 sidebar-adaptable `TabView`, and the iOS 17
 `NavigationSplitView` fallback to `Navigator.selection`, with library categories as sidebar rows/tabs
-rather than a "Library" tab. Settings will be a gear + sheet on the Home/Library roots, not a fourth tab,
-per §2 above; the placeholder gear was removed until phase 7 has a real screen. The wide inspector slot is an empty `.inspector` toggle, content deferred to phase 6.
+rather than a "Library" tab. Settings is a gear + sheet on the Home/Library roots, not a fourth tab,
+per §2 above (phase 7, #589). The wide inspector slot is an empty `.inspector` toggle, content deferred to phase 6.
 
 **The #587 proof of concept landed** (P5-5 and the core of P5-6a, with the P5-2 pieces they need):
 the Library root (`LibraryView`), Songs (`SongListView`) and Albums (`AlbumListView`) on their shared
