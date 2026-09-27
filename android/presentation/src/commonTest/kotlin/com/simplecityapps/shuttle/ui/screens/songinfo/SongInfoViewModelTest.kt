@@ -71,7 +71,7 @@ class SongInfoViewModelTest {
     }
 
     @Test
-    fun `rows are grouped into tags, file and playback cards`() {
+    fun `rows are grouped into tags - file and playback cards`() {
         val sections = createSong().infoSections().associate { it.title to it.rows.map(SongInfoRow::label) }
 
         sections.keys.toList() shouldBe listOf(StringKey.SONG_INFO_SECTION_TAGS, StringKey.SONG_INFO_SECTION_FILE, StringKey.SONG_INFO_SECTION_PLAYBACK)
@@ -81,7 +81,7 @@ class SongInfoViewModelTest {
     }
 
     @Test
-    fun `chips show the format, bit rate and sample rate the song has`() {
+    fun `chips show the format - bit rate and sample rate the song has`() {
         createSong().copy(mimeType = "audio/flac", bitRate = 1024, sampleRate = 96000).infoChips() shouldBe listOf("FLAC", "1024 kb/s", "96 kHz")
         createSong().copy(mimeType = "audio/mpeg", bitRate = null, sampleRate = 44100).infoChips() shouldBe listOf("MP3", "44.1 kHz")
     }

@@ -73,7 +73,7 @@ class WriteSongTagsTest {
     }
 
     @Test
-    fun `an emptied field is written as an empty list, which removes it from the tag`() {
+    fun `an emptied field is written as an empty list - which removes it from the tag`() {
         metadata(createAudioFile(), mapOf(TagField.Title to "", TagField.Album to "  ", TagField.Genres to "Rock")) shouldBe
             mapOf("TITLE" to emptyList(), "ALBUM" to emptyList(), "GENRE" to listOf("Rock"))
     }

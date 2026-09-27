@@ -171,7 +171,7 @@ class PlaylistDetailViewModelTest {
     }
 
     @Test
-    fun `export suggests a file name, then posts the exporter's result`() = runTest {
+    fun `export suggests a file name and then posts the exporter's result`() = runTest {
         fileWriteResult = ExportPlaylist.Result.Success
         val viewModel = viewModel(createPlaylist(id = 7, name = "Road Trip"))
         collect(viewModel)

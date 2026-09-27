@@ -188,7 +188,7 @@ class AlbumArtistDetailViewModelTest {
     }
 
     @Test
-    fun `shuffle albums plays every album in turn, each in track order`() = runTest {
+    fun `shuffle albums plays every album in turn - each in track order`() = runTest {
         val cassette = listOf(1, 2, 3).map { createSong(id = it.toLong(), name = "Cassette $it", albumArtist = "The Tin Orchards", album = "Cassette Summer", track = it) }
         val change = listOf(1, 2).map { createSong(id = 10L + it, name = "Change $it", albumArtist = "The Tin Orchards", album = "Loose Change", track = it) }
         fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))

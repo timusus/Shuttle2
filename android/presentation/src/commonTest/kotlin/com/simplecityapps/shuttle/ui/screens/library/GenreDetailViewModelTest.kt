@@ -43,7 +43,7 @@ class GenreDetailViewModelTest {
     private val queueOperations = FakeQueueOperations()
 
     @Test
-    fun `loads the genre, its songs and their albums sorted by name`() = runTest {
+    fun `loads the genre - its songs and their albums sorted by name`() = runTest {
         val songs = listOf(createSong(id = 1, name = "One", album = "Zebra"), createSong(id = 2, name = "Two", album = "apple"))
         genreRepository.setGenres(listOf(createGenre(name = "Jazz")))
         genreRepository.setSongsForGenre("Jazz", songs)

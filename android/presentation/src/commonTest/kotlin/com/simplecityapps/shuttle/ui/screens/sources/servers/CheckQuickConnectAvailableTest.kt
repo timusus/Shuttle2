@@ -20,7 +20,7 @@ class CheckQuickConnectAvailableTest {
     }
 
     @Test
-    fun `a type with no Quick Connect binding is false, without asking the server`() = runTest {
+    fun `a type with no Quick Connect binding is false - without asking the server`() = runTest {
         check(MediaProviderType.Plex, "http://server") shouldBe false
     }
 

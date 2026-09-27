@@ -36,7 +36,7 @@ class SignInToServerTest {
     }
 
     @Test
-    fun `a failed sign-in reports why, and neither remembers the login nor is recorded`() = runTest {
+    fun `a failed sign-in reports why - and neither remembers the login nor is recorded`() = runTest {
         plex.failure = Exception("The server could not be reached.")
 
         signIn(MediaProviderType.Plex, login, rememberLogin = true) shouldBe SignInToServer.Result.Failure("The server could not be reached.")

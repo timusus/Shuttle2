@@ -59,7 +59,7 @@ class SmartPlaylistDetailViewModelTest {
     }
 
     @Test
-    fun `history lists the songs played to the end, most recent first`() = runTest {
+    fun `history lists the songs played to the end - most recent first`() = runTest {
         songRepository.setSongs(
             listOf(
                 createSong(id = 1, name = "Last week", lastCompleted = Instant.fromEpochSeconds(1_000)),
@@ -77,7 +77,7 @@ class SmartPlaylistDetailViewModelTest {
     }
 
     @Test
-    fun `recently added lists the songs from the last two weeks, newest first`() = runTest {
+    fun `recently added lists the songs from the last two weeks - newest first`() = runTest {
         val now = Clock.System.now()
         songRepository.setSongs(
             listOf(

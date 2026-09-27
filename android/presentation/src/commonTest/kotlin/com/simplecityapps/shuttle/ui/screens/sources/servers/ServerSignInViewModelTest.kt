@@ -63,7 +63,7 @@ class ServerSignInViewModelTest {
     private val ServerSignInViewModel.events get() = uiState.value.events.map { it.value }
 
     @Test
-    fun `the form starts from the saved login, and a saved password can't be revealed`() = runTest {
+    fun `the form starts from the saved login and a saved password can't be revealed`() = runTest {
         server.saved = SavedServerLogin("http://server:8096", "sam", "secret")
 
         val form = viewModel().form
@@ -72,7 +72,7 @@ class ServerSignInViewModelTest {
     }
 
     @Test
-    fun `with nothing saved, the address starts as http and the password can be revealed`() = runTest {
+    fun `with nothing saved - the address starts as http and the password can be revealed`() = runTest {
         viewModel().form shouldBe ServerSignInForm(address = "http://")
     }
 
@@ -89,7 +89,7 @@ class ServerSignInViewModelTest {
     }
 
     @Test
-    fun `Jellyfin and Emby need an address and a username, not a password`() = runTest {
+    fun `Jellyfin and Emby need an address and a username - not a password`() = runTest {
         val viewModel = viewModel(MediaProviderType.Emby)
         viewModel.onAddressChange("")
 
@@ -132,7 +132,7 @@ class ServerSignInViewModelTest {
     }
 
     @Test
-    fun `a sign-in shows its progress, reports the connection, then finishes a second later`() = runTest {
+    fun `a sign-in shows its progress - reports the connection - then finishes a second later`() = runTest {
         server.pending = CompletableDeferred()
         val viewModel = viewModel(MediaProviderType.Plex)
         viewModel.onAddressChange("http://plex:32400")
@@ -170,7 +170,7 @@ class ServerSignInViewModelTest {
     }
 
     @Test
-    fun `a failed sign-in shows why, and Retry returns to the form as it was`() = runTest {
+    fun `a failed sign-in shows why - and Retry returns to the form as it was`() = runTest {
         server.failure = Exception("The server could not be reached.")
         val viewModel = viewModel()
         viewModel.onUsernameChange("sam")
@@ -228,7 +228,7 @@ class ServerSignInViewModelTest {
     }
 
     @Test
-    fun `Quick Connect shows the code, then connects and finishes as a sign-in does`() = runTest {
+    fun `Quick Connect shows the code - then connects and finishes as a sign-in does`() = runTest {
         quickConnect.pollState = QuickConnectPollState.Authenticated
         val viewModel = viewModel()
 
@@ -270,7 +270,7 @@ class ServerSignInViewModelTest {
     }
 
     @Test
-    fun `denial fails, and cancelling mid-poll returns to the form without authenticating`() = runTest {
+    fun `denial fails - and cancelling mid-poll returns to the form without authenticating`() = runTest {
         quickConnect.pending = CompletableDeferred()
         val viewModel = viewModel()
 
