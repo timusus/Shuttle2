@@ -6,19 +6,22 @@
 #   ios/scripts/build-framework.sh --device     # Debug, device (iosArm64)
 #   ios/scripts/build-framework.sh --all        # Debug, simulator and device
 #   ios/scripts/build-framework.sh --release    # Release instead of Debug (combines with the above)
+#
+# Any other argument goes to Gradle (-q, --offline, ...).
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
 config=Debug
 targets=(IosSimulatorArm64)
+gradle_args=()
 
 for arg in "$@"; do
   case "$arg" in
     --device) targets=(IosArm64) ;;
     --all) targets=(IosSimulatorArm64 IosArm64) ;;
     --release) config=Release ;;
-    -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    *) echo "unknown option: $arg" >&2; exit 2 ;;
+    -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    *) gradle_args+=("$arg") ;;
   esac
 done
 
@@ -29,4 +32,4 @@ done
 
 cd "$repo_root"
 echo "==> ./gradlew ${tasks[*]}"
-./gradlew "${tasks[@]}"
+./gradlew "${tasks[@]}" ${gradle_args[@]+"${gradle_args[@]}"}
