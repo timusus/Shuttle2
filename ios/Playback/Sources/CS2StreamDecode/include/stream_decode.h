@@ -106,6 +106,10 @@ StreamDecoder *stream_decoder_open(const StreamDecodeCallbacks *callbacks,
  * position must follow the audio, not the request, or the scrubber lies and every ad-skip seek is
  * computed against a time nobody played.
  *
+ * S2: a lossy codec lands up to its seek preroll early (two packets, or Opus' 80 ms), so the frames
+ * the caller drops up to the target decode correctly. The landing can be below 0: frames before
+ * the stream's zero are a codec's priming (Opus pre-skip) that FFmpeg trims only at the open.
+ *
  * The frame decoded to find that timestamp is held and returned by the next `read`, so no audio is
  * lost to the probe. Returns a `StreamDecodeStatus`.
  *

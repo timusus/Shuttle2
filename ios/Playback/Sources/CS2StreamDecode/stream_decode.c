@@ -45,6 +45,16 @@ struct StreamDecoder {
     int         swr_in_fmt;
     AVRational  time_base;
     int64_t     start_time;   /* stream start_time, or 0 when AV_NOPTS_VALUE */
+    /* S2: the stream's last timestamp (exclusive) when the container states it exactly — an MP4's
+     * edit list or sample table — else AV_NOPTS_VALUE. Frames past it are the encoder's end padding
+     * (an AAC track's last packet is whole, up to 1,023 frames of it padding), which FFmpeg's mov
+     * demuxer does not trim, and a gapless join would play. */
+    int64_t     end_pts;
+    /* S2: how far before a seek target to land, in `time_base`: a lossy codec's decoder needs the
+     * packets before a frame to decode it (MDCT overlap, MP3's bit reservoir, Opus' 80 ms seek
+     * preroll). The caller reads and drops from the landing to the target, so the first frame heard
+     * is exact. 0 for the lossless codecs, whose every packet decodes alone. */
+    int64_t     seek_preroll;
 
     /* Decoded-but-not-yet-returned PCM, interleaved float32. `stream_decoder_read` copies out of
      * here and only pumps the decoder again once it is empty, so a caller asking for 4096 frames
@@ -313,6 +323,23 @@ static int pump(StreamDecoder *d) {
         int rc = avcodec_receive_frame(d->dec, d->frame);
         if (rc == 0) {
             d->last_frame_pts = d->frame->best_effort_timestamp;
+            /* S2: a frame the decoder trimmed at its head (an MP3's encoder delay, Opus pre-skip)
+             * keeps its packet's timestamp and duration; its first sample is later by what was
+             * trimmed. Without this a seek to the start of an MP3 lands 1,105 frames early by its
+             * own account, and the caller drops real audio. A tail trim reads the same, so a seek
+             * that lands in a track's last frame is early by the tail; nothing else uses it. */
+            if (d->last_frame_pts != AV_NOPTS_VALUE && d->frame->duration > 0) {
+                int64_t kept = av_rescale_q(d->frame->nb_samples, (AVRational){ 1, d->frame->sample_rate },
+                                            d->time_base);
+                if (d->frame->duration > kept) d->last_frame_pts += d->frame->duration - kept;
+            }
+            if (d->end_pts != AV_NOPTS_VALUE && d->last_frame_pts != AV_NOPTS_VALUE) {
+                /* S2: cut the end padding at the container's stated end. */
+                int64_t keep = av_rescale_q(d->end_pts - d->last_frame_pts, d->time_base,
+                                            (AVRational){ 1, d->frame->sample_rate });
+                if (keep <= 0) { av_frame_unref(d->frame); continue; }
+                if (keep < d->frame->nb_samples) d->frame->nb_samples = (int)keep;
+            }
             if (d->frame->sample_rate != d->swr_in_rate
                 || d->frame->ch_layout.nb_channels != d->swr_in_channels
                 || d->frame->format != d->swr_in_fmt) {
@@ -456,6 +483,23 @@ StreamDecoder *stream_decoder_open(const StreamDecodeCallbacks *callbacks,
     if (d->sample_rate <= 0 || d->channels <= 0) { local_status = STREAM_DECODE_ERR_DECODER; goto fail; }
     d->time_base = stream->time_base;
     d->start_time = stream->start_time == AV_NOPTS_VALUE ? 0 : stream->start_time;
+    /* S2: only the mov demuxer's duration is the media's exact length (the edit list's, else the
+     * sample table's); an MP3's is a bitrate estimate, and trimming at it would cut music. */
+    d->end_pts = AV_NOPTS_VALUE;
+    if (d->fmt->iformat && strstr(d->fmt->iformat->name, "mp4") && stream->duration != AV_NOPTS_VALUE
+        && stream->duration > 0) {
+        d->end_pts = d->start_time + stream->duration;
+    }
+    switch (par->codec_id) {
+    case AV_CODEC_ID_AAC: case AV_CODEC_ID_MP3: case AV_CODEC_ID_OPUS: case AV_CODEC_ID_VORBIS: {
+        int frame = par->frame_size > 0 ? par->frame_size : 2048;
+        int64_t samples = par->seek_preroll > 2 * frame ? par->seek_preroll : 2 * frame;
+        d->seek_preroll = av_rescale_q(samples, (AVRational){ 1, d->sample_rate }, d->time_base);
+        break;
+    }
+    default:
+        d->seek_preroll = 0;
+    }
     d->out_rate = d->sample_rate;
     d->out_channels = d->channels;
 
@@ -551,7 +595,11 @@ int stream_decoder_seek(StreamDecoder *decoder, double seconds, double *landed_s
     if (seconds < 0) seconds = 0;
 
     double tb = av_q2d(decoder->time_base);
-    int64_t target = decoder->start_time + (int64_t)llround(seconds / (tb > 0 ? tb : 1.0));
+    int64_t target = decoder->start_time + (int64_t)llround(seconds / (tb > 0 ? tb : 1.0))
+        - decoder->seek_preroll;   /* S2 */
+    /* S2: never before the start. A demuxer restores its start trimming (an MP3's encoder delay)
+     * only for a seek to the start itself. */
+    if (target < decoder->start_time) target = decoder->start_time;
 
     /* Backward-leaning: land at or before the request so nothing between the request and the
      * landing is skipped unheard. Where it actually lands is what the caller's position becomes.
@@ -594,8 +642,8 @@ int stream_decoder_seek(StreamDecoder *decoder, double seconds, double *landed_s
             if (unbudgeted_swr != STREAM_DECODE_OK) return unbudgeted_swr;
             int unbudgeted = pump(decoder);
             if (unbudgeted == STREAM_DECODE_OK && decoder->last_frame_pts != AV_NOPTS_VALUE) {
+                /* S2: not clamped at 0; see the timestamped return below. */
                 *landed_seconds = (double)(decoder->last_frame_pts - decoder->start_time) * tb;
-                if (*landed_seconds < 0) *landed_seconds = 0;
             }
             return unbudgeted;
         }
@@ -643,8 +691,10 @@ int stream_decoder_seek(StreamDecoder *decoder, double seconds, double *landed_s
      * PCM is kept in `pending`, so the next read starts exactly where the timestamp says. */
     int status = pump(decoder);
     if (status == STREAM_DECODE_OK && decoder->last_frame_pts != AV_NOPTS_VALUE) {
+        /* S2: not clamped at 0. Frames before the stream's zero are a codec's priming (Opus
+         * pre-skip, which FFmpeg drops only at the open), and a landing before it is what tells the
+         * caller to read them and drop them. */
         *landed_seconds = (double)(decoder->last_frame_pts - decoder->start_time) * tb;
-        if (*landed_seconds < 0) *landed_seconds = 0;
     }
     return status;
 }
