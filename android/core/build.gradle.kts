@@ -20,9 +20,9 @@ kotlin {
             enable = true
         }
 
-        // As before the conversion: the Android modules that inline core's functions (appGraph<T>()) target 11
+        // All Android modules target JVM 17 (unified Sept 2026; was 11 pre-KMP conversion)
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 

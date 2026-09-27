@@ -12,9 +12,9 @@ kotlin {
         namespace = "com.simplecityapps.networking"
         // OkHttp's Android artifact compiles against 37, which its consumers must match
         compileSdk = 37
-        // :android:trial still builds for JVM 11 and inlines NetworkResult.map, which can't inline JVM 17 bytecode
+        // All Android modules target JVM 17 (unified Sept 2026)
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 
