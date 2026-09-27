@@ -28,7 +28,7 @@ class PlaybackSettings @Inject constructor(
 
         val ReplayGain = Setting.enumOrdinalInt("replaygain_mode", ReplayGainMode.Off, ReplayGainMode.entries)
 
-        /** In dB, within ±Android's `ReplayGainAudioProcessor.maxPreAmpGain`. */
+        /** In dB, within ±[com.simplecityapps.playback.dsp.replaygain.MAX_REPLAY_GAIN_PREAMP_DB]. */
         val PreAmpGain = Setting.float("preamp_gain", 0f)
 
         /** The speed chosen in Now Playing, a multiplier; the player owns it, this keeps it across restarts. */

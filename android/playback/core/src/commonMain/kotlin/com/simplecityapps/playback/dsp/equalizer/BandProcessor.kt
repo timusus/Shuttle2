@@ -28,6 +28,14 @@ class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount
     /** True when [processSample] passes the signal through untouched - the filter coefficients are undefined in this case. */
     private val isBypassed = band.bandwidthGain == 0.0 && band.gain == 0.0
 
+    /**
+     * The biquad [processSample] runs, normalised (a0 = 1) in the order b0, b1, b2, a1, a2: what another engine (iOS's
+     * `PCMProcessor`) needs to run this band identically. A bypassed band's coefficients are undefined, so it's the
+     * identity filter.
+     */
+    val coefficients: DoubleArray
+        get() = if (isBypassed) doubleArrayOf(1.0, 0.0, 0.0, 0.0, 0.0) else doubleArrayOf(b0, b1, b2, a1, a2)
+
     init {
         if (band.gain > 0) {
             // Boost

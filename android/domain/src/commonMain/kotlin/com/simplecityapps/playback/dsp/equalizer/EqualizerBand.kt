@@ -3,7 +3,7 @@ package com.simplecityapps.playback.dsp.equalizer
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-// Saved as JSON by PlaybackPreferenceManager.customPresetBands: a band of either class is written as its two fields
+// Saved as JSON by KeyValueEqualizerPresetStore.customPresetBands: a band of either class is written as its two fields
 @kotlinx.serialization.Serializable
 open class EqualizerBand(val centerFrequency: Int, var gain: Double) {
     override fun equals(other: Any?): Boolean {

@@ -33,7 +33,6 @@ com.simplecityapps.shuttle.ui.screens.settings.AndroidSettingsEffects -> com.sim
 com.simplecityapps.shuttle.ui.screens.settings.SettingsScreens -> com.simplecityapps.mediaprovider.settings.LibrarySettings (:android:mediaprovider:core)
 com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.mediaprovider.settings.LibrarySettings (:android:mediaprovider:core)
 com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.mediaprovider.worker.ImportFrequency (:android:mediaprovider:core)
-com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor (:android:playback)
 com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog -> com.simplecityapps.shuttle.downloads.DownloadSettings (:android:downloads)
 com.simplecityapps.shuttle.ui.screens.tageditor.DeviceTagFileAccess -> com.simplecityapps.localmediaprovider.local.provider.getAudioFile (:android:mediaprovider:local)
 com.simplecityapps.shuttle.ui.screens.tageditor.DeviceTagFileAccess -> com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner (:android:mediaprovider:local)

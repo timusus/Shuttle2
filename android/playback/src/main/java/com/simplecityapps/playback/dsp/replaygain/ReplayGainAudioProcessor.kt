@@ -100,8 +100,4 @@ class ReplayGainAudioProcessor(
     override fun onReset() {
         streamReplayGain = null
     }
-
-    companion object {
-        const val maxPreAmpGain = 12
-    }
 }

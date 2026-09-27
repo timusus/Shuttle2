@@ -21,12 +21,12 @@ import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.chromecast.CastStreams
 import com.simplecityapps.playback.dsp.crossfade.crossfadeSkipped
 import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyResponse
-import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.engine.SongUriResolver
 import com.simplecityapps.playback.equalizer.EqualizerControl
 import com.simplecityapps.playback.equalizer.EqualizerFrequencyResponse
 import com.simplecityapps.playback.equalizer.EqualizerPresetStore
+import com.simplecityapps.playback.equalizer.restorePreset
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
@@ -56,17 +56,7 @@ class PlaybackEngineModule {
         playbackPreferenceManager: PlaybackPreferenceManager,
         equalizerSettings: EqualizerSettings
     ): EqualizerAudioProcessor = EqualizerAudioProcessor(equalizerSettings.enabled.value, equalizerSettings.preampGain.value).apply {
-        // Restore custom eq bands first: setting the preset captures its band gains
-        playbackPreferenceManager.customPresetBands?.forEach { restoredBand ->
-            Equalizer.Presets.custom.bands.forEach { customBand ->
-                if (customBand.centerFrequency == restoredBand.centerFrequency) {
-                    customBand.gain = restoredBand.gain
-                }
-            }
-        }
-
-        // Restore current eq
-        preset = playbackPreferenceManager.preset
+        preset = playbackPreferenceManager.restorePreset()
     }
 
     @Provides

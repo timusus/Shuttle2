@@ -10,6 +10,9 @@ data class ReplayGain(
     val albumGain: Double?
 )
 
+/** The ReplayGain pre-amp's range, ±dB (`PlaybackSettings.PreAmpGain`). */
+const val MAX_REPLAY_GAIN_PREAMP_DB = 12
+
 val Song.replayGain: ReplayGain
     get() = ReplayGain(trackGain = replayGainTrack, albumGain = replayGainAlbum)
 

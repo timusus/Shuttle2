@@ -64,7 +64,7 @@ class DefaultEqualizerFrequencyResponseTest {
     }
 
     @Test
-    fun `reports the headroom attenuation a boost needs, and none for a flat preset`() {
+    fun `reports the headroom attenuation a boost needs and none for a flat preset`() {
         val flat = computeFrequencyResponse(listOf(EqualizerBandGain(1000, 0f)), preampGainDb = 0f, outputSampleRateHz = 44_100, MIN_FREQUENCY_HZ, MAX_FREQUENCY_HZ, pointCount = 240)
         val boosted = computeFrequencyResponse(listOf(EqualizerBandGain(1000, 12f)), preampGainDb = 0f, outputSampleRateHz = 44_100, MIN_FREQUENCY_HZ, MAX_FREQUENCY_HZ, pointCount = 240)
 

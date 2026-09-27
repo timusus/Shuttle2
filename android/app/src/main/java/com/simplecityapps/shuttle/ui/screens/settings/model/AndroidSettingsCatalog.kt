@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.settings.model
 import android.os.Build
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.mediaprovider.worker.ImportFrequency
-import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
+import com.simplecityapps.playback.dsp.replaygain.MAX_REPLAY_GAIN_PREAMP_DB
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.BuildConfig
@@ -138,7 +138,7 @@ object AndroidSettingsCatalog : SettingsCatalog {
                     SettingItem.Slider(
                         setting = PlaybackSettings.PreAmpGain,
                         title = StringKey.DSP_PREAMP,
-                        range = -ReplayGainAudioProcessor.maxPreAmpGain.toFloat()..ReplayGainAudioProcessor.maxPreAmpGain.toFloat(),
+                        range = -MAX_REPLAY_GAIN_PREAMP_DB.toFloat()..MAX_REPLAY_GAIN_PREAMP_DB.toFloat(),
                         steps = 0,
                         fromFloat = { it }
                     )

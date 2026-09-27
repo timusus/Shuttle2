@@ -22,6 +22,8 @@ kotlin {
             // PlaybackSettings: Setting and SettingsStore
             implementation(project(":android:core"))
             api(libs.kotlinx.coroutinesCore)
+            // KeyValueEqualizerPresetStore: the Custom preset's bands as JSON
+            implementation(libs.kotlinx.serialization.json)
         }
 
         commonTest.dependencies {

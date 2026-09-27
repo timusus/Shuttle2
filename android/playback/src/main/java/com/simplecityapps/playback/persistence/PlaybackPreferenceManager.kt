@@ -1,8 +1,7 @@
 package com.simplecityapps.playback.persistence
 
-import com.simplecityapps.playback.dsp.equalizer.Equalizer
-import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
 import com.simplecityapps.playback.equalizer.EqualizerPresetStore
+import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -10,13 +9,11 @@ import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.persistence.putBoolean
 import com.simplecityapps.shuttle.persistence.putInt
 import com.simplecityapps.shuttle.persistence.putString
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.Json
 
 class PlaybackPreferenceManager(
     private val store: KeyValueStore
-) : EqualizerPresetStore {
+) : EqualizerPresetStore by KeyValueEqualizerPresetStore(store) {
     /**
      * A comma separated list of song ids
      */
@@ -102,25 +99,6 @@ class PlaybackPreferenceManager(
                 }
         }
 
-    override var preset: Equalizer.Presets.Preset
-        set(value) {
-            store.putString("preset_name", value.name)
-        }
-        get() {
-            val name = store.getString("preset_name", Equalizer.Presets.custom.name)!!
-            return Equalizer.Presets.all.firstOrNull { preset -> preset.name == name } ?: Equalizer.Presets.custom
-        }
-
-    override var customPresetBands: List<EqualizerBand>?
-        set(value) {
-            store.putString("custom_preset_bands", json.encodeToString(equalizerBandsSerializer, value))
-        }
-        get() {
-            return store.getString("custom_preset_bands", null)?.let { bands ->
-                json.decodeFromString(equalizerBandsSerializer, bands)
-            }
-        }
-
     /**
      * The song the saved queue position names, saved as the position is; null with no saved queue. Read back with the
      * position it resumes from: the saved playback position, or the start when the saved song isn't the one that
@@ -146,7 +124,5 @@ class PlaybackPreferenceManager(
             explicitNulls = false
             encodeDefaults = true
         }
-
-        private val equalizerBandsSerializer = ListSerializer(EqualizerBand.serializer()).nullable
     }
 }
