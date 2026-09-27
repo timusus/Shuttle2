@@ -1,4 +1,5 @@
 import Foundation
+import Shared
 @testable import S2
 
 /// An `AudioEngine` that records every call and reports only what a test `emit`s.
@@ -76,4 +77,10 @@ func drainMainQueue() async {
     await withCheckedContinuation { continuation in
         DispatchQueue.main.async { continuation.resume() }
     }
+}
+
+/// The app's graph over `audioPlayer`, keeping its preferences in a suite of its own: a graph restores the queue and
+/// modes the last one saved, so graphs sharing the standard defaults would restore each other's (tests run in parallel).
+func makeTestGraph(audioPlayer: IosAudioPlayer) -> IosAppGraph {
+    IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, preferencesSuite: "S2Tests.\(UUID().uuidString)")
 }

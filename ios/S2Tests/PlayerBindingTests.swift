@@ -12,7 +12,7 @@ struct PlayerBindingTests {
     private let binding: PlayerBinding
 
     init() {
-        graph = IosAppGraphKt.createIosAppGraph(audioPlayer: EngineAudioPlayer(engine: engine))
+        graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: engine))
         binding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph))
     }
 
@@ -28,6 +28,7 @@ struct PlayerBindingTests {
     }
 
     @Test func startsIdleWithNothingQueued() {
+        #expect(graph.playerController.queueOperations.hasRestoredQueue)
         #expect(binding.nowPlaying == .idle)
         #expect(binding.miniPlayer == MiniPlayerState())
     }

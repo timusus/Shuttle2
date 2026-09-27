@@ -325,7 +325,10 @@ the speed are saved and restored across launches, in Android's keys and format:
 - **No background hook.** iOS keeps playing in the background, the position is at most a second stale,
   and `NSUserDefaults` writes through on suspension, so nothing is added for `scenePhase == .background`.
 - Tests: `SavedQueueTest` and `PlaybackPreferenceManagerTest` (now commonTest, run on JVM and iOS) and
-  `IosPlaybackStoreTest` (two "launches" over one prefs store). No Swift changed.
+  `IosPlaybackStoreTest` (two "launches" over one prefs store). The app's Swift is unchanged; the Swift tests build
+  their graphs with `makeTestGraph`, which keeps each graph's preferences in its own NSUserDefaults suite
+  (`createIosAppGraph(audioPlayer:preferencesSuite:)`), since parallel graphs would otherwise restore each other's
+  saved queue and modes.
 
 ### Status of step 8 (ReplayGain and EQ, #604)
 

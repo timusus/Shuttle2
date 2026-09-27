@@ -57,7 +57,7 @@ struct PlaybackSystemCoordinatorTests {
 
     init() {
         let player = EngineAudioPlayer(engine: engine)
-        graph = IosAppGraphKt.createIosAppGraph(audioPlayer: player)
+        graph = makeTestGraph(audioPlayer: player)
         let rebuilt = FakeAudioEngine()
         rebuiltEngines = [rebuilt]
         coordinator = PlaybackSystemCoordinator(

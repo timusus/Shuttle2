@@ -112,15 +112,30 @@ interface IosAppGraph : ViewModelGraph {
 
     @DependencyGraph.Factory
     fun interface Factory {
-        /** [audioPlayer]: the Swift adapter over the S2Playback engine. */
+        /** [audioPlayer]: the Swift adapter over the S2Playback engine; [preferencesSuite]: where preferences live. */
         fun create(
-            @Provides audioPlayer: IosAudioPlayer
+            @Provides audioPlayer: IosAudioPlayer,
+            @Provides preferencesSuite: IosPreferencesSuite
         ): IosAppGraph
     }
 }
 
 /** Builds the graph: `IosAppGraphKt.createIosAppGraph(audioPlayer:)` from Swift, once per process. */
-fun createIosAppGraph(audioPlayer: IosAudioPlayer): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer)
+fun createIosAppGraph(audioPlayer: IosAudioPlayer): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosPreferencesSuite(null))
+
+/**
+ * A graph keeping its preferences in the NSUserDefaults suite [preferencesSuite] rather than the standard defaults, so
+ * tests that build several graphs at once don't restore each other's saved queue and modes.
+ */
+fun createIosAppGraph(
+    audioPlayer: IosAudioPlayer,
+    preferencesSuite: String
+): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosPreferencesSuite(preferencesSuite))
+
+/** The NSUserDefaults suite the graph keeps preferences in: [name], or the standard defaults when null. */
+class IosPreferencesSuite(
+    val name: String?
+)
 
 /**
  * The player's ViewModel, with a fresh `SavedStateHandle`: iOS has no saved state to restore it from, so its open Now

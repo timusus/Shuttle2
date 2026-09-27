@@ -23,7 +23,7 @@ struct EqualizerViewTests {
     // MARK: State
 
     @Test func theViewModelsStateMapsToPlainValues() {
-        let graph = IosAppGraphKt.createIosAppGraph(audioPlayer: EngineAudioPlayer(engine: FakeAudioEngine()))
+        let graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: FakeAudioEngine()))
         let mapped = EqualizerState(graph.equalizerViewModel.uiState.value as! EqualizerUiState)
 
         #expect(mapped.presets.contains("Flat"))

@@ -203,7 +203,7 @@ struct EngineAudioPlayerTests {
     // MARK: - With the Kotlin controller
 
     @Test func theSavedEqualizerReachesTheEngineWithTheController() {
-        let graph = IosAppGraphKt.createIosAppGraph(audioPlayer: player)
+        let graph = makeTestGraph(audioPlayer: player)
         _ = graph.playerController
 
         #expect(engine.equalizers.count == 1)
@@ -217,7 +217,7 @@ struct EngineAudioPlayerTests {
     }
 
     @Test func theKotlinControllerFeedsTheNextSongAtEachTransition() async throws {
-        let graph = IosAppGraphKt.createIosAppGraph(audioPlayer: player)
+        let graph = makeTestGraph(audioPlayer: player)
         try await queueDemoSongs(on: graph, skipUnloadable: false)
 
         // The current song is loaded alone, then the next is handed over for a gapless join.
@@ -236,7 +236,7 @@ struct EngineAudioPlayerTests {
     }
 
     @Test func aTrackThatFailsToLoadIsSkippedForTheNext() async throws {
-        let graph = IosAppGraphKt.createIosAppGraph(audioPlayer: player)
+        let graph = makeTestGraph(audioPlayer: player)
         try await queueDemoSongs(on: graph, skipUnloadable: true)
         #expect(await waitUntil { !engine.loads.isEmpty })
         let first = try #require(engine.loads.first?.current.id)
