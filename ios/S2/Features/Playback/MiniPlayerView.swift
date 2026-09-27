@@ -9,12 +9,12 @@ struct MiniPlayerView: View {
     let model: PlayerModel
     @Binding var showNowPlaying: Bool
 
-    /// `model` defaults to the app's single, cached `PlayerModel` (see `PlayerModel.shared`): a view
+    /// `model` defaults to the app's single `PlayerModel`, built once in `IosAppDependencies`: a view
     /// struct like this one is re-initialised on every parent body, so a fresh `PlayerModel` per init
     /// would restart its flows every time (`.claude/rules/ios.md`).
     init(
         showNowPlaying: Binding<Bool>,
-        model: PlayerModel = .shared
+        model: PlayerModel = AppGraph.dependencies.playerModel
     ) {
         self.model = model
         self._showNowPlaying = showNowPlaying

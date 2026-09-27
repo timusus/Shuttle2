@@ -9,10 +9,10 @@ struct NowPlayingView: View {
     let model: PlayerModel
     @Environment(\.dismiss) private var dismiss
 
-    /// `model` defaults to the same cached `PlayerModel` `MiniPlayerView` uses (`PlayerModel.shared`),
+    /// `model` defaults to the same `PlayerModel` `MiniPlayerView` uses (`AppGraph.dependencies.playerModel`),
     /// so the two always show the same state.
     init(
-        model: PlayerModel = .shared
+        model: PlayerModel = AppGraph.dependencies.playerModel
     ) {
         self.model = model
     }

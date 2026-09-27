@@ -11,14 +11,14 @@ struct PlayerModelTests {
     private let model: PlayerModel
 
     init() {
-        graph = IosAppGraph(audioPlayer: EngineAudioPlayer(engine: engine))
+        graph = IosAppGraphKt.createIosAppGraph(audioPlayer: EngineAudioPlayer(engine: engine))
         model = PlayerModel(playback: graph.playerController)
     }
 
-    /// Queues the demo library and loads its first song, as far as the engine reporting it ready.
+    /// Queues the demo songs and loads the first, as far as the engine reporting it ready.
     private func loadQueue() async throws -> String {
         let controller = graph.playerController
-        _ = try await controller.queueOperations.setQueue(songs: graph.librarySongs.value, shuffleSongs: nil, position: 0)
+        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0)
         controller.load(seekPosition: nil, skipUnloadable: false) { _ in }
         #expect(await waitUntil { !engine.loads.isEmpty })
         let id = try #require(engine.loads.first?.current.id)

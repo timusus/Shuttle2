@@ -18,7 +18,9 @@ final class PlayerModel {
     }
 
     private let playback: IosPlayerController
-    private var observers: [Task<Void, Never>] = []
+    /// `nonisolated(unsafe)`: only `deinit` touches it off the main actor, and by then no other access
+    /// can be concurrent (deinit runs once the last reference is gone).
+    private nonisolated(unsafe) var observers: [Task<Void, Never>] = []
 
     private(set) var title: String?
     private(set) var artist: String?
@@ -36,7 +38,7 @@ final class PlayerModel {
         observe()
     }
 
-    isolated deinit {
+    deinit {
         observers.forEach { $0.cancel() }
     }
 
@@ -108,21 +110,5 @@ final class PlayerModel {
     /// Skips to the queue item at `position` (`QueueRow` index), as tapping a queue row does.
     func play(at position: Int) {
         playback.skipTo(position: Int32(position))
-    }
-}
-
-extension PlayerModel {
-    /// The app's single `PlayerModel` (`ViewModelCache`, keyed as a screen view model would be), so
-    /// `MiniPlayerView` and `NowPlayingView` observe the same state instead of each restarting its own
-    /// flows (`.claude/rules/ios.md`). Nonisolated so it can sit in a default parameter expression, which
-    /// evaluates outside the initializer's own isolation; SwiftUI only builds view structs on the main
-    /// thread, so the actor assumption holds, the same bridge `PlaybackSystemCoordinator` uses for its
-    /// engine callbacks.
-    nonisolated static var shared: PlayerModel {
-        MainActor.assumeIsolated {
-            ViewModelCache.shared.viewModel("player") {
-                PlayerModel(playback: AppGraph.shared.playerController)
-            }
-        }
     }
 }

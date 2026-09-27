@@ -39,6 +39,9 @@ final class IosAppDependencies {
     let audioSession: AudioSessionController
     let nowPlaying: NowPlayingController
     let playbackSystem: PlaybackSystemCoordinator
+    /// The mini player and Now Playing screens' shared state (#588). Built here, not lazily behind a
+    /// cache key, so there is exactly one subscription to the controller's flows for the app's lifetime.
+    let playerModel: PlayerModel
 
     init() {
         audioPlayer = EngineAudioPlayer(engine: Self.makeEngine())
@@ -52,6 +55,7 @@ final class IosAppDependencies {
             nowPlaying: nowPlaying,
             makeEngine: { try? MusicPlaybackController() }
         )
+        playerModel = PlayerModel(playback: graph.playerController)
     }
 
     /// The engine only fails to build without a stereo float format, which every device has.
