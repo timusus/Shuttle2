@@ -61,9 +61,10 @@ func trimmedPlaylistName(_ name: String) -> String {
     name.trimmingCharacters(in: .whitespacesAndNewlines)
 }
 
-private extension SmartPlaylistId {
+extension SmartPlaylistId {
     /// A display title for the POC; phase 5's string catalogue replaces this (matches `MediaActionText`'s
-    /// existing hardcoded-copy precedent).
+    /// existing hardcoded-copy precedent). Internal (not file-private) so `SmartPlaylistDetailView` can use it
+    /// as the detail screen's title too.
     var title: String {
         switch id {
         case "favourites": "Favourites"

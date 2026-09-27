@@ -26,6 +26,16 @@ struct RouteDestinationView: View {
             GenreListView()
         case .libraryCategory(.playlists):
             PlaylistListView()
+        case .album(let albumKey, let albumArtistKey):
+            AlbumDetailView(albumKey: albumKey, albumArtistKey: albumArtistKey)
+        case .albumArtist(let albumArtistKey):
+            AlbumArtistDetailView(albumArtistKey: albumArtistKey)
+        case .genre(let name):
+            GenreDetailView(name: name)
+        case .playlist(let id):
+            PlaylistDetailView(id: id)
+        case .smartPlaylist(let id):
+            SmartPlaylistDetailView(id: id)
         default:
             Text(title)
                 .navigationTitle(title)
