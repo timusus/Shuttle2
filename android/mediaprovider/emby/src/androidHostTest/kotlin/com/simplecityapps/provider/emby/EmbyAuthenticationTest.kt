@@ -2,12 +2,12 @@ package com.simplecityapps.provider.emby
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
-import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.emby.http.UserService
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -22,7 +22,7 @@ class EmbyAuthenticationTest {
 
     private val server = FixtureServer("emby")
 
-    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "emby").apply {
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(InMemoryKeyValueStore()), "emby").apply {
         address = "http://emby.local:8096"
     }
 

@@ -3,7 +3,6 @@ package com.simplecityapps.provider.jellyfin
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
-import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.createHttpClient
@@ -11,6 +10,7 @@ import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
@@ -34,7 +34,7 @@ import org.junit.Test
 class JellyfinMediaInfoProviderTest {
     private val downloadableCredentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456", canDownload = true)
 
-    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "jellyfin").apply {
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(InMemoryKeyValueStore()), "jellyfin").apply {
         address = "http://jellyfin.local:8096"
     }
 
@@ -46,7 +46,7 @@ class JellyfinMediaInfoProviderTest {
         clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice")
     )
 
-    private val streamingSettings = StreamingSettings(SettingsStore(FakeSharedPreferences()))
+    private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))
     private var metered = false
 
     private val provider = JellyfinMediaInfoProvider(

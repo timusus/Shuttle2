@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.sources
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.shuttle.ui.screens.sources.FolderKind
@@ -20,7 +21,7 @@ import org.robolectric.RuntimeEnvironment
 @RunWith(RobolectricTestRunner::class)
 class SafScannerFolderStoreTest {
     private val context: Context = RuntimeEnvironment.getApplication()
-    private val settings = SourcesSettings(SettingsStore(context.defaultSharedPreferences().apply { edit().clear().commit() }))
+    private val settings = SourcesSettings(SettingsStore(SharedPreferencesKeyValueStore(context.defaultSharedPreferences().apply { edit().clear().commit() })))
 
     // Lazy, so a test can hold a grant before the first store (the one that migrates) is created
     private val store by lazy { SafScannerFolderStore(context, settings) }

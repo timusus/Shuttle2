@@ -1,13 +1,13 @@
 package com.simplecityapps.provider.jellyfin
 
 import com.simplecityapps.mediaprovider.ClientIdentity
-import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.QuickConnectCode
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.jellyfin.http.UserService
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
@@ -20,7 +20,7 @@ class JellyfinQuickConnectTest {
 
     private val client = createHttpClient(server.engine)
 
-    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "jellyfin")
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(InMemoryKeyValueStore()), "jellyfin")
 
     private val authenticationManager = JellyfinAuthenticationManager(
         userService = UserService(client),

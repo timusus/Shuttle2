@@ -2,7 +2,6 @@ package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
-import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.S2Json
@@ -14,6 +13,7 @@ import com.simplecityapps.provider.plex.http.QueryResult
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
@@ -29,7 +29,7 @@ class PlexRemoteArtworkProviderTest {
 
     private val client = createHttpClient(server.engine)
 
-    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "plex").apply {
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(InMemoryKeyValueStore()), "plex").apply {
         address = server.address
         authenticatedCredentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456")
     }

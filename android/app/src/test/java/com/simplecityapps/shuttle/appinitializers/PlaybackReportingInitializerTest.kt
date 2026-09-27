@@ -47,7 +47,9 @@ class PlaybackReportingInitializerTest {
     private val playbackReporter = AggregatePlaybackReporter(setOf(reporter))
     private val librarySettings = LibrarySettings(
         SettingsStore(
-            application.getSharedPreferences("playback_reporting_initializer_test", Context.MODE_PRIVATE).apply { edit().clear().commit() }
+            SharedPreferencesKeyValueStore(
+                application.getSharedPreferences("playback_reporting_initializer_test", Context.MODE_PRIVATE).apply { edit().clear().commit() }
+            )
         )
     )
     private val appCoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

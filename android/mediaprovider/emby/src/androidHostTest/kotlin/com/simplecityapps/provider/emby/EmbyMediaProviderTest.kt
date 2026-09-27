@@ -7,7 +7,6 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.R
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
-import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
@@ -16,6 +15,7 @@ import com.simplecityapps.provider.emby.http.ItemsService
 import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
@@ -42,7 +42,7 @@ class EmbyMediaProviderTest {
 
     private val client = createHttpClient(server.engine)
 
-    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "emby")
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(InMemoryKeyValueStore()), "emby")
 
     private val authenticationManager =
         EmbyAuthenticationManager(

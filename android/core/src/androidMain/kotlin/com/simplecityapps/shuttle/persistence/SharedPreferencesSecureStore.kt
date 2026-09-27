@@ -24,9 +24,3 @@ class SharedPreferencesSecureStore(
         sharedPreferences.edit().putBoolean(key, value).apply()
     }
 }
-
-/**
- * A [SecurePreferenceManager] over [sharedPreferences]. Kept for the server modules' tests, which build one over
- * their FakeSharedPreferences; new code passes a SecureStore.
- */
-fun SecurePreferenceManager(sharedPreferences: SharedPreferences): SecurePreferenceManager = SecurePreferenceManager(SharedPreferencesSecureStore(sharedPreferences))

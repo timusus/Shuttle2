@@ -17,9 +17,10 @@ import org.robolectric.RuntimeEnvironment
 @RunWith(RobolectricTestRunner::class)
 class InstallDefaultsTest {
     private val prefs: SharedPreferences = RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }
-    private val preferenceManager = GeneralPreferenceManager(SharedPreferencesKeyValueStore(prefs))
-    private val privacySettings = PrivacySettings(SettingsStore(prefs))
-    private val analyticsConsentSettings = AnalyticsConsentSettings(SettingsStore(prefs))
+    private val store = SharedPreferencesKeyValueStore(prefs)
+    private val preferenceManager = GeneralPreferenceManager(store)
+    private val privacySettings = PrivacySettings(SettingsStore(store))
+    private val analyticsConsentSettings = AnalyticsConsentSettings(SettingsStore(store))
     private val installDefaults = InstallDefaults(preferenceManager, privacySettings, analyticsConsentSettings)
 
     @Test

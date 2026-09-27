@@ -2,6 +2,7 @@ package com.simplecityapps.mediaprovider.server
 
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -17,26 +18,26 @@ import kotlinx.coroutines.test.runTest
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ServerCredentialStoreTest {
-    private val sharedPreferences = FakeSharedPreferences()
+    private val keyValueStore = InMemoryKeyValueStore()
 
     private fun store(
         prefix: String,
         addressKey: String = "${prefix}_address"
-    ) = ServerCredentialStore(SecurePreferenceManager(sharedPreferences), prefix, addressKey)
+    ) = ServerCredentialStore(SecurePreferenceManager(keyValueStore), prefix, addressKey)
 
     /** The keys Jellyfin, Emby and Plex each wrote before the store was shared, so existing sign-ins carry over. */
     private fun writeLegacyKeys(
         prefix: String,
         addressKey: String
     ) {
-        sharedPreferences.edit()
-            .putString("${prefix}_username", "tim")
-            .putString("${prefix}_pass", "secret")
-            .putString("${prefix}_access_token", "token")
-            .putString("${prefix}_user_id", "user")
-            .putBoolean("${prefix}_can_download", true)
-            .putString(addressKey, "https://server.example")
-            .apply()
+        keyValueStore.edit {
+            putString("${prefix}_username", "tim")
+            putString("${prefix}_pass", "secret")
+            putString("${prefix}_access_token", "token")
+            putString("${prefix}_user_id", "user")
+            putBoolean("${prefix}_can_download", true)
+            putString(addressKey, "https://server.example")
+        }
     }
 
     @Test
@@ -69,7 +70,7 @@ class ServerCredentialStoreTest {
         store.authenticatedCredentials = AuthenticatedCredentials("token", "user", canDownload = true)
         store.address = "https://server.example"
 
-        sharedPreferences.all shouldBe mapOf(
+        keyValueStore.values shouldBe mapOf(
             "jellyfin_username" to "tim",
             "jellyfin_pass" to "secret",
             "jellyfin_access_token" to "token",
@@ -106,12 +107,12 @@ class ServerCredentialStoreTest {
 
         store.loginCredentials.shouldBeNull()
         store.authenticatedCredentials.shouldBeNull()
-        sharedPreferences.getBoolean("emby_can_download", true) shouldBe false
+        keyValueStore.getBoolean("emby_can_download", true) shouldBe false
     }
 
     @Test
     fun `a session missing its user id reads as signed out`() {
-        sharedPreferences.edit().putString("jellyfin_access_token", "token").apply()
+        keyValueStore.edit { putString("jellyfin_access_token", "token") }
 
         store("jellyfin").authenticatedCredentials.shouldBeNull()
     }

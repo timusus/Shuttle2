@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.telemetry
 
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
@@ -19,7 +20,7 @@ import org.robolectric.RuntimeEnvironment
 @RunWith(RobolectricTestRunner::class)
 class TelemetryConsentGateTest {
     private val prefs: SharedPreferences = RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }
-    private val privacySettings = PrivacySettings(SettingsStore(prefs))
+    private val privacySettings = PrivacySettings(SettingsStore(SharedPreferencesKeyValueStore(prefs)))
     private val crashReporting = FakeSdk()
     private val analytics = FakeSdk()
 

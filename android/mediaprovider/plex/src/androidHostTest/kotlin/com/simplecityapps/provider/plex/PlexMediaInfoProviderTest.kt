@@ -3,13 +3,13 @@ package com.simplecityapps.provider.plex
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
-import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.StreamingQuality
@@ -29,7 +29,7 @@ import org.junit.Test
 class PlexMediaInfoProviderTest {
     private val credentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456")
 
-    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(FakeSharedPreferences()), "plex").apply {
+    private val credentialStore = ServerCredentialStore(SecurePreferenceManager(InMemoryKeyValueStore()), "plex").apply {
         address = "http://plex.local:32400"
     }
 
@@ -41,7 +41,7 @@ class PlexMediaInfoProviderTest {
         clientIdentity = clientIdentity
     )
 
-    private val streamingSettings = StreamingSettings(SettingsStore(FakeSharedPreferences()))
+    private val streamingSettings = StreamingSettings(SettingsStore(InMemoryKeyValueStore()))
     private var metered = false
 
     private val provider = PlexMediaInfoProvider(authenticationManager, StreamingBitrateCap(streamingSettings) { metered })

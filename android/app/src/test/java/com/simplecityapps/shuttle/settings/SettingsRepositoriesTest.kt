@@ -9,6 +9,7 @@ import com.simplecityapps.mediaprovider.worker.ImportFrequency
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.downloads.DownloadSettings
+import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
@@ -31,7 +32,7 @@ class SettingsRepositoriesTest {
     @Before
     fun setUp() {
         prefs = context.defaultSharedPreferences().apply { edit().clear().commit() }
-        store = SettingsStore(prefs)
+        store = SettingsStore(SharedPreferencesKeyValueStore(prefs))
     }
 
     @Test
@@ -88,7 +89,7 @@ class SettingsRepositoriesTest {
         library.reportPlaybackToServer.value = false
 
         // Fresh repositories over the same file see the writes
-        val reread = SettingsStore(context.defaultSharedPreferences())
+        val reread = SettingsStore(SharedPreferencesKeyValueStore(context.defaultSharedPreferences()))
         AppearanceSettings(reread).theme.value shouldBe ThemeMode.Dark
         AppearanceSettings(reread).accent.value shouldBe Accent.Amber
         AppearanceSettings(reread).widgetBackgroundOpacity.value shouldBe 40

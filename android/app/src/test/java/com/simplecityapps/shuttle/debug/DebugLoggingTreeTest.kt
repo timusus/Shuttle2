@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.debug
 
 import android.content.Context
+import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.settings.DebugSettings
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
@@ -16,7 +17,7 @@ import org.robolectric.RuntimeEnvironment
 @RunWith(RobolectricTestRunner::class)
 class DebugLoggingTreeTest {
     private val context: Context = RuntimeEnvironment.getApplication()
-    private val debugSettings = DebugSettings(SettingsStore(context.defaultSharedPreferences().apply { edit().clear().commit() }))
+    private val debugSettings = DebugSettings(SettingsStore(SharedPreferencesKeyValueStore(context.defaultSharedPreferences().apply { edit().clear().commit() })))
     private val tree = DebugLoggingTree(context, debugSettings)
 
     private val logFile get() = context.getFileStreamPath(DebugLoggingTree.FILE_NAME)

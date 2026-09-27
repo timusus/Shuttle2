@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
 import com.simplecityapps.shuttle.settings.Accent
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
@@ -33,7 +34,7 @@ class SettingsIntegrationTest {
     @get:Rule(order = 1)
     val composeTestRule = createComposeRule()
 
-    private val store = SettingsStore(RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() })
+    private val store = SettingsStore(SharedPreferencesKeyValueStore(RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }))
     private val effects = FakeSettingsEffects()
     private val robot = SettingsRobot(composeTestRule)
 
