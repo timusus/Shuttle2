@@ -1,14 +1,13 @@
-package com.simplecityapps.shuttle.shared.playback
+package com.simplecityapps.playback.queue
 
 import kotlin.random.Random
 
 /**
  * The queue's shuffle order: [order] lists queue indices in the order shuffle plays them.
  *
- * The same rules as Android's `S2ShuffleOrder` (android/playback `engine/S2ShuffleOrder.kt`), without Media3: an edit
- * never reshuffles what's already there. Items the queue gains join the end of the order in the order they were added,
- * a move keeps every item's place in the order, and a removal just drops the removed items. Phase 6 step 1
- * (docs/architecture/ios-port/phase-6-playback.md) moves this into the shared playback module for Android to wrap.
+ * An edit never reshuffles what's already there: items the queue gains join the end of the order in the order they
+ * were added (or, played next, right after the current item), a move keeps every item's place in the order, and a
+ * removal just drops the removed items. Android's Media3 `S2ShuffleOrder` wraps it; iOS's [QueueModel] holds it.
  */
 class ShuffleOrder(order: List<Int>) {
     private val order: IntArray = order.toIntArray()
@@ -20,9 +19,6 @@ class ShuffleOrder(order: List<Int>) {
 
     /** The shuffled order, as queue indices. */
     fun toList(): List<Int> = order.toList()
-
-    /** Where queue index [index] comes in the shuffled order. */
-    fun positionOf(index: Int): Int = positionOf[index]
 
     /** The queue index played after [index] in shuffled order, or null at the end. */
     fun nextIndex(index: Int): Int? = order.getOrNull(positionOf[index] + 1)
@@ -43,6 +39,34 @@ class ShuffleOrder(order: List<Int>) {
     ): ShuffleOrder {
         val shifted = order.map { index -> if (index >= insertionIndex) index + count else index }
         return ShuffleOrder(shifted + (insertionIndex until insertionIndex + count))
+    }
+
+    /**
+     * [count] items inserted at queue index [current] + 1 that also come right after [current] in the order: the
+     * order after playing them next.
+     */
+    fun insertedNext(
+        current: Int,
+        count: Int
+    ): ShuffleOrder {
+        val insertAt = current + 1
+        val shifted = order.map { index -> if (index >= insertAt) index + count else index }
+        val currentPosition = shifted.indexOf(current)
+        return ShuffleOrder(shifted.subList(0, currentPosition + 1) + (insertAt until insertAt + count) + shifted.subList(currentPosition + 1, shifted.size))
+    }
+
+    /**
+     * The item at position [from] in the order moved to position [to], queue indices unchanged: a move in the queue as
+     * shuffle presents it. Null if either position is outside the order.
+     */
+    fun movedInOrder(
+        from: Int,
+        to: Int
+    ): ShuffleOrder? {
+        if (from !in order.indices || to !in order.indices) return null
+        val moved = order.toMutableList()
+        moved.add(to, moved.removeAt(from))
+        return ShuffleOrder(moved)
     }
 
     /** The queue items at [indexFrom] until [indexToExclusive] removed, the rest keeping their place. */

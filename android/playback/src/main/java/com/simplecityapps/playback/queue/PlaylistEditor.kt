@@ -1,6 +1,5 @@
 package com.simplecityapps.playback.queue
 
-import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -42,26 +41,26 @@ internal class PlaylistEditor(
         shuffleMode: ShuffleMode? = null
     ): Boolean {
         val songs = queue.songs
-        val shuffleSongs = queue.shuffleSongs
-        val position = queue.position
-        val shuffleEnabled = shuffleMode?.let { it == ShuffleMode.On } ?: player.shuffleModeEnabled
-        val savedShuffle = shuffleSongs?.takeIf { shuffleEnabled }
-        val size = savedShuffle?.size ?: songs.size
-        if (position < 0 || position >= size || songs.isEmpty()) {
-            Timber.e("Invalid queue position: $position (size: $size, songs.size: ${songs.size})")
+        val currentMode = player.shuffleModeEnabled.toShuffleMode()
+        val index = queue.order.startIndex(shuffleEnabled = (shuffleMode ?: currentMode) == ShuffleMode.On)
+        if (index == null) {
+            Timber.e("Invalid queue position: ${queue.order.position} (songs.size: ${songs.size}, shuffleSongs.size: ${queue.shuffleSongs?.size})")
             return false
         }
 
         publisher.batch {
-            if (shuffleMode != null) {
-                writer.shuffleModeEnabled = shuffleEnabled
-            } else if (shuffleSongs == null && !playbackSettings.retainShuffleOnNewQueue.value) {
-                writer.shuffleModeEnabled = false
+            val newMode = NewQueueOrder.shuffleModeAfter(
+                requested = shuffleMode,
+                current = currentMode,
+                hasSavedShuffle = queue.shuffleSongs != null,
+                retainShuffle = playbackSettings.retainShuffleOnNewQueue.value
+            )
+            if (newMode != currentMode) {
+                writer.shuffleModeEnabled = newMode == ShuffleMode.On
             }
 
             val sameSongs = player.mediaItemCount == songs.size &&
                 songs.indices.all { index -> songs[index].id == player.getMediaItemAt(index).queueEntry.song.id }
-            val index = if (savedShuffle != null) checkNotNull(queue.shuffledIndex) else position
 
             if (sameSongs) {
                 replaceChanged(songs)
@@ -72,7 +71,7 @@ internal class PlaylistEditor(
                 songUriResolver.queued(queue.items)
                 writer.setMediaItems(queue.items, index, 0)
             }
-            player.setShuffleOrder(queue.shuffleOrder)
+            player.setShuffleOrder(S2ShuffleOrder(queue.order.shuffleOrder))
         }
 
         return player.mediaItemCount != 0
@@ -117,15 +116,10 @@ internal class PlaylistEditor(
         publisher.batch {
             songUriResolver.queued(items)
             val current = player.currentMediaItemIndex
-            val insertAt = current + 1
-            val shuffled = player.shuffledIndices()
-            writer.addMediaItems(insertAt, items)
+            val shuffled = ShuffleOrder(player.shuffledIndices())
+            writer.addMediaItems(current + 1, items)
             // The shuffled order places the new items right after the current one too.
-            val shifted = shuffled.map { index -> if (index >= insertAt) index + items.size else index }
-            val added = (insertAt until insertAt + items.size).toList()
-            val currentPosition = shifted.indexOf(current)
-            val order = shifted.subList(0, currentPosition + 1) + added + shifted.subList(currentPosition + 1, shifted.size)
-            player.setShuffleOrder(S2ShuffleOrder(order.toIntArray()))
+            player.setShuffleOrder(S2ShuffleOrder(shuffled.insertedNext(current, items.size)))
         }
         return false
     }
@@ -153,7 +147,7 @@ internal class PlaylistEditor(
         // An item whose file changed is replaced by removing and re-adding it, which moves it to the end of the
         // shuffled order, so the order is put back.
         if (player.shuffledIndices() != shuffled) {
-            player.setShuffleOrder(S2ShuffleOrder(shuffled.toIntArray()))
+            player.setShuffleOrder(S2ShuffleOrder(ShuffleOrder(shuffled)))
         }
     }
 
@@ -163,10 +157,8 @@ internal class PlaylistEditor(
         to: Int
     ) {
         if (player.shuffleModeEnabled) {
-            val order = player.shuffledIndices().toMutableList()
-            if (from !in order.indices || to !in order.indices) return
-            order.add(to, order.removeAt(from))
-            player.setShuffleOrder(S2ShuffleOrder(order.toIntArray()))
+            val order = ShuffleOrder(player.shuffledIndices()).movedInOrder(from, to) ?: return
+            player.setShuffleOrder(S2ShuffleOrder(order))
         } else {
             writer.moveMediaItem(from, to)
         }
@@ -201,8 +193,8 @@ internal class PlaylistEditor(
         if (player.shuffleModeEnabled.toShuffleMode() == shuffleMode) return
         publisher.batch {
             if (shuffleMode == ShuffleMode.On && reshuffle) {
-                val current = player.currentMediaItemIndex.takeIf { player.mediaItemCount > 0 } ?: C.INDEX_UNSET
-                player.setShuffleOrder(S2ShuffleOrder.shuffled(player.mediaItemCount, firstIndex = current))
+                val current = player.currentMediaItemIndex.takeIf { player.mediaItemCount > 0 }
+                player.setShuffleOrder(S2ShuffleOrder(ShuffleOrder.shuffled(player.mediaItemCount, firstIndex = current)))
             }
             writer.shuffleModeEnabled = shuffleMode == ShuffleMode.On
         }

@@ -1,9 +1,9 @@
-package com.simplecityapps.shuttle.shared.playback
+package com.simplecityapps.playback.queue
 
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 
-/** Mirrors Android's `S2ShuffleOrderTest`. */
+/** The shuffled order keeps every item's place through queue edits, including a song queued more than once. */
 class ShuffleOrderTest {
     // Queue [a, b, a, c], shuffled as a(2), c(3), a(0), b(1).
     private val order = ShuffleOrder(listOf(2, 3, 0, 1))
@@ -32,6 +32,19 @@ class ShuffleOrderTest {
     fun `a moved item keeps its place in the order`() {
         // The first a moves to the end: [b, a, c, a].
         order.moved(0, 1, 3).toList() shouldBe listOf(1, 2, 3, 0)
+    }
+
+    @Test
+    fun `items played next come right after the current one in the order`() {
+        // Two items played next after the first a (queue index 0): [a, x, y, b, a, c], shuffled a(4), c(5), a(0), x, y, b(3).
+        order.insertedNext(current = 0, count = 2).toList() shouldBe listOf(4, 5, 0, 1, 2, 3)
+    }
+
+    @Test
+    fun `a move in the shuffled order keeps queue indices`() {
+        order.movedInOrder(from = 0, to = 3)?.toList() shouldBe listOf(3, 0, 1, 2)
+        order.movedInOrder(from = 0, to = 4) shouldBe null
+        order.movedInOrder(from = -1, to = 0) shouldBe null
     }
 
     @Test

@@ -1,28 +1,20 @@
 package com.simplecityapps.playback.queue
 
 import androidx.media3.common.MediaItem
-import com.simplecityapps.playback.engine.S2ShuffleOrder
 import com.simplecityapps.shuttle.model.Song
 
 /**
- * A queue built ready to set: the playlist items for [songs] and both the orders it could start in, so setting it on
- * the main thread only hands them to the player.
+ * A queue built ready to set: the playlist items for [songs] and both the orders it could start in ([order]), so
+ * setting it on the main thread only hands them to the player.
  *
- * [position] is an index into [shuffleSongs] when they're given and shuffle is on when it's set, else into [songs].
- * Without [shuffleSongs], a new shuffled order starts at the item at [position].
+ * [NewQueueOrder.position] is an index into [shuffleSongs] when they're given and shuffle is on when it's set, else
+ * into [songs]. Without [shuffleSongs], a new shuffled order starts at the item at that position.
  */
 internal class PreparedQueue private constructor(
     val songs: List<Song>,
     val shuffleSongs: List<Song>?,
-    val position: Int,
     val items: List<MediaItem>,
-    val shuffleOrder: S2ShuffleOrder,
-    /**
-     * The playlist index [position] names in [shuffleSongs]: the first copy of a saved shuffled song the queue no
-     * longer holds, if any, else the start of the shuffled order. Null without [shuffleSongs], or when [position] is
-     * out of their range.
-     */
-    val shuffledIndex: Int?
+    val order: NewQueueOrder
 ) {
     companion object {
         /** Builds new entries for [songs]. It takes a while for a long queue, so it's best done off the main thread. */
@@ -38,21 +30,6 @@ internal class PreparedQueue private constructor(
             items: List<MediaItem>,
             shuffleSongs: List<Song>?,
             position: Int
-        ): PreparedQueue {
-            val songIds = songs.map { it.id }
-            val shuffleIds = shuffleSongs?.map { it.id }
-            val shuffleOrder =
-                if (shuffleIds != null) {
-                    S2ShuffleOrder.matching(songIds, shuffleIds)
-                } else {
-                    S2ShuffleOrder.shuffled(songs.size, firstIndex = position)
-                }
-            val shuffledIndex = shuffleIds?.takeIf { position in it.indices }?.let {
-                S2ShuffleOrder.matchedIndices(songIds, shuffleIds)[position]
-                    ?: songIds.indexOf(shuffleIds[position]).takeIf { it != -1 }
-                    ?: shuffleOrder.firstIndex
-            }
-            return PreparedQueue(songs, shuffleSongs, position, items, shuffleOrder, shuffledIndex)
-        }
+        ): PreparedQueue = PreparedQueue(songs, shuffleSongs, items, NewQueueOrder.of(songs.map { it.id }, shuffleSongs?.map { it.id }, position))
     }
 }

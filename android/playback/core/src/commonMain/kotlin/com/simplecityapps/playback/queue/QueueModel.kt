@@ -1,9 +1,5 @@
-package com.simplecityapps.shuttle.shared.playback
+package com.simplecityapps.playback.queue
 
-import com.simplecityapps.playback.queue.QueueItem
-import com.simplecityapps.playback.queue.QueueState
-import com.simplecityapps.playback.queue.RepeatMode
-import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.Song
 import kotlin.random.Random
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,10 +10,11 @@ import kotlinx.coroutines.flow.asStateFlow
  * The queue without a player: its items in queue order, their [ShuffleOrder], the current item and the shuffle and
  * repeat modes. On Android the Media3 playlist is the queue (`QueueFacade`, `PlaylistEditor`, `QueueStatePublisher` in
  * android/playback); iOS has no player that holds a playlist, so this holds it instead, with the same rules: each
- * method here is the Media3 playlist operation `PlaylistEditor` makes, and publishing is `QueueStatePublisher.publish`.
+ * method here is the Media3 playlist operation `PlaylistEditor` makes, through the same [ShuffleOrder] and
+ * [NewQueueOrder], and publishing is [republished], as `QueueStatePublisher.publish` does it.
  *
- * Plain state, no threading of its own: its owner ([IosPlayerController]) calls it on the main thread. The flows can be
- * read from any thread.
+ * Plain state, no threading of its own: its owner (the iOS player controller) calls it on the main thread. The flows
+ * can be read from any thread.
  */
 class QueueModel(
     private val random: Random = Random.Default
@@ -51,7 +48,7 @@ class QueueModel(
     val queueStateFlow: StateFlow<QueueState> = _queueState.asStateFlow()
 
     /** The queue in both orders, as last published. */
-    var lists = Lists(emptyList(), emptyList())
+    var lists = QueueLists.Empty
         private set
 
     /** Whether the saved queue has been restored; published as [QueueState.isRestored]. */
@@ -92,31 +89,13 @@ class QueueModel(
         shuffleMode: ShuffleMode? = null,
         retainShuffle: Boolean = false
     ): Boolean {
-        val shuffleEnabled = (shuffleMode ?: this.shuffleMode) == ShuffleMode.On
-        val savedShuffle = shuffleSongs?.takeIf { shuffleEnabled }
-        val size = savedShuffle?.size ?: songs.size
-        if (songs.isEmpty() || position < 0 || position >= size) return false
-
-        if (shuffleMode != null) {
-            _shuffleModeFlow.value = shuffleMode
-        } else if (shuffleSongs == null && !retainShuffle) {
-            _shuffleModeFlow.value = ShuffleMode.Off
-        }
-
-        val songIds = songs.map { it.id }
-        val shuffleIds = shuffleSongs?.map { it.id }
-        val order = if (shuffleIds != null) ShuffleOrder.matching(songIds, shuffleIds) else ShuffleOrder.shuffled(songs.size, firstIndex = position, random = random)
-        val index = if (savedShuffle != null && shuffleIds != null) {
-            ShuffleOrder.matchedIndices(songIds, shuffleIds)[position]
-                ?: songIds.indexOf(shuffleIds[position]).takeIf { it != -1 }
-                ?: checkNotNull(order.firstIndex)
-        } else {
-            position
-        }
+        val order = NewQueueOrder.of(songs.map { it.id }, shuffleSongs?.map { it.id }, position, random)
+        val index = order.startIndex(shuffleEnabled = (shuffleMode ?: this.shuffleMode) == ShuffleMode.On) ?: return false
+        _shuffleModeFlow.value = NewQueueOrder.shuffleModeAfter(shuffleMode, this.shuffleMode, hasSavedShuffle = shuffleSongs != null, retainShuffle = retainShuffle)
 
         val sameSongs = entries.size == songs.size && songs.indices.all { i -> songs[i].id == entries[i].song.id }
         entries = if (sameSongs) entries.zip(songs) { entry, song -> if (song == entry.song) entry else Entry(entry.uid, song) } else songs.map(::newEntry)
-        shuffleOrder = order
+        shuffleOrder = order.shuffleOrder
         currentIndex = index
         publish()
         return true
@@ -132,32 +111,16 @@ class QueueModel(
     }
 
     /** The item after the current one under [repeatMode], as the queue plays. */
-    fun next(repeatMode: RepeatMode = this.repeatMode): QueueItem? = nextIndex(repeatMode)?.let { lists.base[it] }
+    fun next(repeatMode: RepeatMode = this.repeatMode): QueueItem? = _queueState.value.next(repeatMode)
 
     /** The item before the current one in the presented order; none before the first. */
-    fun previous(): QueueItem? {
-        val state = _queueState.value
-        val position = state.currentPosition ?: return null
-        return state.items.getOrNull(position - 1)
-    }
+    fun previous(): QueueItem? = _queueState.value.previous()
 
     /** The item after the one with [uid] in the presented order, not wrapping: where a failed item skips to. */
     fun following(uid: Long): QueueItem? {
         val items = _queueState.value.items
         val position = items.indexOfFirst { it.uid == uid }.takeIf { it != -1 } ?: return null
         return items.getOrNull(position + 1)
-    }
-
-    /** The queue index of the item after the current one under [repeatMode], or null if there's none. */
-    private fun nextIndex(repeatMode: RepeatMode): Int? {
-        val current = currentIndex ?: return null
-        val order = playOrder()
-        val position = order.indexOf(current)
-        return when (repeatMode) {
-            RepeatMode.Off -> order.getOrNull(position + 1)
-            RepeatMode.All -> order.getOrNull(position + 1) ?: order.firstOrNull()
-            RepeatMode.One -> current
-        }
     }
 
     /** Adds [songs] to the end of both orders. Added to an empty queue, they're set as a new queue, and this returns true. */
@@ -182,9 +145,7 @@ class QueueModel(
         val current = currentIndex
         if (entries.isEmpty() || current == null) return setQueue(songs, null, 0, retainShuffle = retainShuffle)
         val insertAt = current + 1
-        val shifted = shuffleOrder.toList().map { index -> if (index >= insertAt) index + songs.size else index }
-        val currentPosition = shifted.indexOf(current)
-        shuffleOrder = ShuffleOrder(shifted.subList(0, currentPosition + 1) + (insertAt until insertAt + songs.size) + shifted.subList(currentPosition + 1, shifted.size))
+        shuffleOrder = shuffleOrder.insertedNext(current, songs.size)
         entries = entries.subList(0, insertAt) + songs.map(::newEntry) + entries.subList(insertAt, entries.size)
         publish()
         return false
@@ -206,10 +167,7 @@ class QueueModel(
         to: Int
     ) {
         if (shuffleMode == ShuffleMode.On) {
-            val order = shuffleOrder.toList().toMutableList()
-            if (from !in order.indices || to !in order.indices) return
-            order.add(to, order.removeAt(from))
-            shuffleOrder = ShuffleOrder(order)
+            shuffleOrder = shuffleOrder.movedInOrder(from, to) ?: return
         } else {
             if (from !in entries.indices || to < 0) return
             val target = minOf(to, entries.lastIndex)
@@ -299,55 +257,18 @@ class QueueModel(
         _repeatModeFlow.value = repeatMode
     }
 
-    private fun newEntry(song: Song) = Entry(Random.nextLong() and Long.MAX_VALUE, song)
+    private fun newEntry(song: Song) = Entry(song.toQueueItem(isCurrent = false).uid, song)
 
-    /**
-     * Publishes the queue, if it differs from the last published, with the version counters `QueueStatePublisher`
-     * keeps: the order or membership of the presented items ([QueueState.contentVersion]), anything but a
-     * reordering of the same items in the same shuffle mode ([QueueState.nonMoveContentVersion]), or only their song
-     * data ([QueueState.songDataVersion]).
-     */
+    /** Publishes the queue, if it differs from the last published, as `QueueStatePublisher` does (see [republished]). */
     private fun publish() {
-        val current = currentIndex?.takeIf { entries.isNotEmpty() }
-        val base = entries.mapIndexed { index, entry -> QueueItem(entry.uid, entry.song, isCurrent = index == current) }
-        val shuffled = shuffleOrder.toList().map { base[it] }
-        val shuffleMode = shuffleMode
-        val items = if (shuffleMode == ShuffleMode.On) shuffled else base
-        val currentItem = current?.let { base[it] }
-
-        val previous = _queueState.value
-        val uids = items.map { it.uid }
-        val previousUids = previous.items.map { it.uid }
-        val songsChanged = items.map { it.song } != previous.items.map { it.song }
-        val currentPosition = currentItem?.let { items.indexOf(it) }?.takeIf { it != -1 }
-        val unchanged = uids == previousUids && !songsChanged && currentItem?.uid == previous.currentItem?.uid &&
-            currentPosition == previous.currentPosition && shuffleMode == previous.shuffleMode && isRestored == previous.isRestored
-        if (unchanged) return
-
-        val contentChanged = uids != previousUids
-        val moveOnly = contentChanged && shuffleMode == previous.shuffleMode && uids.sorted() == previousUids.sorted()
-        lists = Lists(base, shuffled)
-        _queueState.value = QueueState(
-            items = items,
-            currentItem = currentItem,
-            currentPosition = currentPosition,
-            version = previous.version + 1,
-            contentVersion = previous.contentVersion + if (contentChanged) 1 else 0,
-            nonMoveContentVersion = previous.nonMoveContentVersion + if (contentChanged && !moveOnly) 1 else 0,
-            songDataVersion = previous.songDataVersion + if (!contentChanged && songsChanged) 1 else 0,
-            isRestored = isRestored,
-            shuffleMode = shuffleMode
-        )
-    }
-
-    /** The queue in both orders. */
-    class Lists(
-        val base: List<QueueItem>,
-        val shuffled: List<QueueItem>
-    ) {
-        fun get(shuffleMode: ShuffleMode): List<QueueItem> = when (shuffleMode) {
-            ShuffleMode.Off -> base
-            ShuffleMode.On -> shuffled
-        }
+        val published = _queueState.value.republished(
+            size = entries.size,
+            shuffledIndices = shuffleOrder.toList(),
+            currentIndex = currentIndex,
+            shuffleMode = shuffleMode,
+            isRestored = isRestored
+        ) { index, isCurrent -> QueueItem(entries[index].uid, entries[index].song, isCurrent) } ?: return
+        lists = published.lists
+        _queueState.value = published.state
     }
 }

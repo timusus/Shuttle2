@@ -1,10 +1,12 @@
 package com.simplecityapps.shuttle.shared.playback
 
 import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.PlaybackPolicy
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.queue.QueueItem
+import com.simplecityapps.playback.queue.QueueModel
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.RepeatMode
@@ -12,7 +14,6 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.Song
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.EmptyCoroutineContext
-import kotlin.math.max
 import kotlin.random.Random
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -36,7 +37,7 @@ import kotlinx.coroutines.withContext
  * (reloading it if it changed) and the item after it, so it can join the two gaplessly. When the engine moves on to the
  * next track, the queue's current item follows.
  *
- * Songs that fail to load are skipped for the next one, as `ItemLoader` skips them: up to [MAX_ATTEMPTS] in a row,
+ * Songs that fail to load are skipped for the next one, as `ItemLoader` skips them: up to [PlaybackPolicy.MAX_LOAD_ATTEMPTS] in a row,
  * never past the end of the queue, each reported on [playbackFailureFlow] (bar one [resolver] couldn't resolve). A
  * load that doesn't skip (a restore) leaves a failed song current, paused, until it's played.
  *
@@ -351,7 +352,7 @@ class IosPlayerController(
 
     /**
      * [feed], the current item, failed to load: skipped for the one after it (not wrapping), as `ItemLoader` does,
-     * unless the load that loaded it doesn't skip, it had already been playing, or [MAX_ATTEMPTS] items failed in a
+     * unless the load that loaded it doesn't skip, it had already been playing, or [PlaybackPolicy.MAX_LOAD_ATTEMPTS] items failed in a
      * row; then playback stops there.
      */
     private fun onCurrentFailed(feed: Feed) {
@@ -362,7 +363,7 @@ class IosPlayerController(
         if (!feed.ready && skips) {
             loadFailures++
             val following = queue.following(feed.item.uid)
-            if (following != null && loadFailures < MAX_ATTEMPTS) {
+            if (following != null && loadFailures < PlaybackPolicy.MAX_LOAD_ATTEMPTS) {
                 pendingLoad = pending?.let { PendingLoad(it.completion, it.skipUnloadable, attempt = loadFailures + 1) }
                 queue.setCurrent(following.uid)
                 startLoad(following, 0)
@@ -465,7 +466,7 @@ class IosPlayerController(
             playWhenReady = false
             pendingLoad = PendingLoad(completion, skipUnloadable)
             loadFailures = 0
-            startLoad(item, seekPosition ?: startOf(item.song))
+            startLoad(item, seekPosition ?: PlaybackPolicy.startOf(item.song))
         }
     }
 
@@ -482,7 +483,7 @@ class IosPlayerController(
         when {
             currentFeed == null || currentFeed.item.uid != item.uid || currentFeed.failed ||
                 (currentFeed.sent && engineState == IosAudioPlayerState.Idle) -> {
-                val start = startOf(item.song).takeUnless { isNearEnd(it, item.song) } ?: 0
+                val start = PlaybackPolicy.startOf(item.song).takeUnless { isNearEnd(it, item.song) } ?: 0
                 startLoad(item, start)
             }
 
@@ -503,7 +504,7 @@ class IosPlayerController(
         song: Song
     ): Boolean {
         val duration = currentDuration() ?: song.duration
-        return positionMs > duration - NEAR_END_MS
+        return PlaybackPolicy.isNearEnd(positionMs, duration)
     }
 
     override fun pause() = onMain {
@@ -542,7 +543,7 @@ class IosPlayerController(
         force: Boolean,
         completion: ((Result<Any?>) -> Unit)?
     ) = onMain {
-        if (force || (getProgress() ?: 0) < RESTART_THRESHOLD_MS) {
+        if (force || (getProgress() ?: 0) < PlaybackPolicy.RESTART_THRESHOLD_MS) {
             queue.previous()?.let { queue.setCurrent(it.uid) }
             playFromStart(completion)
         } else {
@@ -782,20 +783,8 @@ class IosPlayerController(
     }
 
     companion object {
-        /** How many songs in a row a load tries before giving up on ones that fail to load (`ItemLoader.MAX_ATTEMPTS`). */
-        const val MAX_ATTEMPTS = 15
-
-        private const val NEAR_END_MS = 200
-        private const val RESTART_THRESHOLD_MS = 2_000
-
         /** How many events a flow of them buffers for a collector that hasn't caught up. */
         private const val EVENT_BUFFER = 64
-
-        /** How far back a podcast or audiobook resumes from where it was left (`QueueStore.SPOKEN_REWIND_MS`). */
-        private const val SPOKEN_REWIND_MS = 5000
-
-        /** Where [song] itself says to start: podcasts and audiobooks a little before where they were left, else 0 (`QueueStore.startOf`). */
-        fun startOf(song: Song): Int = if (song.type == Song.Type.Podcast || song.type == Song.Type.Audiobook) max(0, song.playbackPosition - SPOKEN_REWIND_MS) else 0
 
         private fun <T> eventFlow() = MutableSharedFlow<T>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     }

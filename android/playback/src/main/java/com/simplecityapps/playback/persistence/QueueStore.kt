@@ -5,6 +5,7 @@ import androidx.media3.common.Player
 import androidx.tracing.trace
 import androidx.tracing.traceAsync
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.playback.PlaybackPolicy
 import com.simplecityapps.playback.queue.PreparedQueue
 import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.QueueFacade
@@ -17,7 +18,6 @@ import com.simplecityapps.playback.queue.toShuffleMode
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlin.coroutines.CoroutineContext
-import kotlin.math.max
 import kotlin.time.TimeSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -149,8 +149,8 @@ class QueueStore(
 
     // The position to resume from
 
-    /** Where to resume [song] from: the saved position, else where the song itself says to start ([startOf]). */
-    fun resumePosition(song: Song?): Int = playbackPreferenceManager.playbackPosition ?: song?.let(::startOf) ?: 0
+    /** Where to resume [song] from: the saved position, else where the song itself says to start ([PlaybackPolicy.startOf]). */
+    fun resumePosition(song: Song?): Int = playbackPreferenceManager.playbackPosition ?: song?.let(PlaybackPolicy::startOf) ?: 0
 
     /**
      * Playback came back from a Cast receiver: saves the position the receiver was at, which the local player now
@@ -346,12 +346,6 @@ class QueueStore(
     companion object {
         /** How often the position is saved while playing. */
         const val SAVE_INTERVAL_MS = 1_000L
-
-        /** How far back a podcast or audiobook resumes from where it was left, so the listener catches the thread. */
-        private const val SPOKEN_REWIND_MS = 5000
-
-        /** Where [song] itself says to start: podcasts and audiobooks a little before where they were left, else 0. */
-        fun startOf(song: Song): Int = if (song.type == Song.Type.Podcast || song.type == Song.Type.Audiobook) max(0, song.playbackPosition - SPOKEN_REWIND_MS) else 0
     }
 }
 

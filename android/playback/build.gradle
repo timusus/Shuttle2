@@ -44,6 +44,9 @@ dependencies {
     // Shuttle Core
     implementation project(path: ':android:core')
 
+    // The playback policy Android shares with iOS: shuffle order, queue publishing and navigation, start positions
+    implementation project(path: ':android:playback:core')
+
     // Shuttle Media Provider
     implementation project(path: ':android:mediaprovider:core')
 

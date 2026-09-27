@@ -106,7 +106,7 @@ class ItemLoader(
     }
 
     /**
-     * An item that fails to load is skipped for the next one, up to [MAX_ATTEMPTS] in a row and never past the end of
+     * An item that fails to load is skipped for the next one, up to [PlaybackPolicy.MAX_LOAD_ATTEMPTS] in a row and never past the end of
      * the queue, whether it was loaded directly or reached by playing on. A load that doesn't skip (a restore) leaves
      * it current, paused, unless it's played meanwhile: playing it tries it again, and skips it then. An item that
      * fails once it's playing stops playback.
@@ -123,7 +123,7 @@ class ItemLoader(
         if (failedEntry != null && failedEntry.uid != readyUid && skips) {
             loadFailures++
             val next = player.currentTimeline.getNextWindowIndex(failedIndex, Player.REPEAT_MODE_OFF, player.shuffleModeEnabled)
-            if (next != C.INDEX_UNSET && loadFailures < MAX_ATTEMPTS) {
+            if (next != C.INDEX_UNSET && loadFailures < PlaybackPolicy.MAX_LOAD_ATTEMPTS) {
                 pendingLoad = pendingLoad?.copy(attempt = loadFailures + 1)
                 player.seekTo(next, 0)
                 player.prepare()
@@ -154,11 +154,6 @@ class ItemLoader(
         val skipUnloadable: Boolean,
         val attempt: Int = 1
     )
-
-    companion object {
-        /** How many songs in a row a load tries before giving up on ones that fail to load. */
-        const val MAX_ATTEMPTS = 15
-    }
 }
 
 /** How many events a flow of them buffers for a collector that hasn't caught up. */

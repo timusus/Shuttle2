@@ -262,7 +262,7 @@ class PlaybackFacade(
             Timber.v("load(seekPosition: $seekPosition) ${entry.song.name}")
             callHold.cancel()
             player.playWhenReady = false
-            loadCurrent(seekPosition ?: QueueStore.startOf(entry.song), skipUnloadable, completion)
+            loadCurrent(seekPosition ?: PlaybackPolicy.startOf(entry.song), skipUnloadable, completion)
         }
     }
 
@@ -305,7 +305,7 @@ class PlaybackFacade(
 
     private fun isNearEndOfCurrentSong(positionMs: Int): Boolean {
         val duration = getDuration() ?: currentEntry?.song?.duration ?: return false
-        return positionMs > duration - NEAR_END_MS
+        return PlaybackPolicy.isNearEnd(positionMs, duration)
     }
 
     /** A user- or system-driven pause. The player keeps audio focus while paused (see [com.simplecityapps.playback.exoplayer.ExoPlayerFactory]). */
@@ -342,7 +342,7 @@ class PlaybackFacade(
         completion: ((Result<Any?>) -> Unit)?
     ) = playerThread.run {
         Timber.v("skipToPrev()")
-        if (force || (getProgress() ?: 0) < RESTART_THRESHOLD_MS) {
+        if (force || (getProgress() ?: 0) < PlaybackPolicy.RESTART_THRESHOLD_MS) {
             queueOperations.skipToPrevious()
             playFromStart(completion)
         } else {
@@ -443,10 +443,5 @@ class PlaybackFacade(
         } else {
             queueOperations.clear()
         }
-    }
-
-    companion object {
-        private const val NEAR_END_MS = 200
-        private const val RESTART_THRESHOLD_MS = 2_000
     }
 }

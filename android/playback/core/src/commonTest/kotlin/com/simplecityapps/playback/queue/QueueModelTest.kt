@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.shared.playback
+package com.simplecityapps.playback.queue
 
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode

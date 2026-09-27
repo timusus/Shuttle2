@@ -72,7 +72,7 @@ class QueueFacade(
 
     /**
      * Sets [queue] as [setQueue] does, only if the queue's [QueueState.contentVersion] is still [contentVersion], and
-     * sets the shuffle mode to [shuffleMode] with it: the mode says which order [PreparedQueue.position] is in, so it's
+     * sets the shuffle mode to [shuffleMode] with it: the mode says which order [NewQueueOrder.position] is in, so it's
      * the caller's, not whatever the player's mode happens to be. Main thread only, so the check and the set are one
      * step, which no other change can come between, and a caller can do more in that same step.
      *
@@ -107,26 +107,14 @@ class QueueFacade(
      * The item after the current one, as the player would play it. [ignoreRepeat] treats the repeat mode as
      * [RepeatMode.All].
      */
-    override fun getNext(ignoreRepeat: Boolean): QueueItem? = nextIndex(if (ignoreRepeat) RepeatMode.All else repeatModeFlow.value)?.let { publisher.lists.base.getOrNull(it) }
+    override fun getNext(ignoreRepeat: Boolean): QueueItem? = queueStateFlow.value.next(if (ignoreRepeat) RepeatMode.All else repeatModeFlow.value)
 
-    override fun getPrevious(): QueueItem? {
-        val state = queueStateFlow.value
-        val position = state.currentPosition ?: return null
-        return state.items.getOrNull(position - 1)
-    }
+    override fun getPrevious(): QueueItem? = queueStateFlow.value.previous()
 
     /** The playlist index of the item after the current one under [repeatMode], or null if there's none. */
     private fun nextIndex(repeatMode: RepeatMode): Int? {
-        val lists = publisher.lists
-        val state = queueStateFlow.value
-        val position = state.currentPosition ?: return null
-        val presented = lists.get(state.shuffleMode)
-        val next = when (repeatMode) {
-            RepeatMode.Off -> presented.getOrNull(position + 1)
-            RepeatMode.All -> presented.getOrNull(position + 1) ?: presented.firstOrNull()
-            RepeatMode.One -> state.currentItem
-        } ?: return null
-        return lists.base.indexOf(next).takeIf { it != -1 }
+        val next = queueStateFlow.value.next(repeatMode) ?: return null
+        return publisher.lists.base.indexOf(next).takeIf { it != -1 }
     }
 
     override fun skipToNext(ignoreRepeat: Boolean): Boolean {

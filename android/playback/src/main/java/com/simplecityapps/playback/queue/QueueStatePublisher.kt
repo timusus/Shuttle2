@@ -40,7 +40,7 @@ internal class QueueStatePublisher(
 
     /** The unshuffled and shuffled queue [queueStateFlow] last published. */
     @Volatile
-    var lists = Lists(emptyList(), emptyList())
+    var lists = QueueLists.Empty
         private set
 
     /** Whether the saved queue has been restored; published as [QueueState.isRestored]. */
@@ -84,56 +84,19 @@ internal class QueueStatePublisher(
         return result
     }
 
-    /**
-     * Publishes the player's queue, if it differs from the last published. The versions record what changed
-     * since: the order or membership of the presented items ([QueueState.contentVersion]), anything but a
-     * reordering with the same items and shuffle mode ([QueueState.nonMoveContentVersion]), or only their song
-     * data ([QueueState.songDataVersion]).
-     */
+    /** Publishes the player's queue, if it differs from the last published (see [republished] for the versions). */
     fun publish() {
         if (batchDepth > 0) return
         val entries = player.queueEntries()
         songUriResolver.retainOnly(entries)
-        val current = player.currentMediaItemIndex.takeIf { entries.isNotEmpty() }
-        val base = entries.mapIndexed { index, entry -> entry.toQueueItem(isCurrent = index == current) }
-        val shuffled = player.shuffledIndices().map { base[it] }
-        val shuffleMode = player.shuffleModeEnabled.toShuffleMode()
-        val items = if (shuffleMode == ShuffleMode.On) shuffled else base
-        val currentItem = current?.let { base[it] }
-
-        val previous = _queueState.value
-        val uids = items.map { it.uid }
-        val previousUids = previous.items.map { it.uid }
-        val songsChanged = items.map { it.song } != previous.items.map { it.song }
-        val currentPosition = currentItem?.let { items.indexOf(it) }?.takeIf { it != -1 }
-        val unchanged = uids == previousUids && !songsChanged && currentItem?.uid == previous.currentItem?.uid &&
-            currentPosition == previous.currentPosition && shuffleMode == previous.shuffleMode && isRestored == previous.isRestored
-        if (unchanged) return
-
-        val contentChanged = uids != previousUids
-        val moveOnly = contentChanged && shuffleMode == previous.shuffleMode && uids.sorted() == previousUids.sorted()
-        lists = Lists(base, shuffled)
-        _queueState.value = QueueState(
-            items = items,
-            currentItem = currentItem,
-            currentPosition = currentPosition,
-            version = previous.version + 1,
-            contentVersion = previous.contentVersion + if (contentChanged) 1 else 0,
-            nonMoveContentVersion = previous.nonMoveContentVersion + if (contentChanged && !moveOnly) 1 else 0,
-            songDataVersion = previous.songDataVersion + if (!contentChanged && songsChanged) 1 else 0,
-            isRestored = isRestored,
-            shuffleMode = shuffleMode
-        )
-    }
-
-    /** The queue in both orders, as last published. */
-    class Lists(
-        val base: List<QueueItem>,
-        val shuffled: List<QueueItem>
-    ) {
-        fun get(shuffleMode: ShuffleMode): List<QueueItem> = when (shuffleMode) {
-            ShuffleMode.Off -> base
-            ShuffleMode.On -> shuffled
-        }
+        val published = _queueState.value.republished(
+            size = entries.size,
+            shuffledIndices = player.shuffledIndices(),
+            currentIndex = player.currentMediaItemIndex,
+            shuffleMode = player.shuffleModeEnabled.toShuffleMode(),
+            isRestored = isRestored
+        ) { index, isCurrent -> entries[index].toQueueItem(isCurrent) } ?: return
+        lists = published.lists
+        _queueState.value = published.state
     }
 }

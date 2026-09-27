@@ -43,6 +43,8 @@ kotlin {
         commonMain.dependencies {
             api(project(":android:domain"))
             api(project(":android:presentation"))
+            // The playback policy the iOS player controller shares with Android's Media3 queue (#597).
+            implementation(project(":android:playback:core"))
             api(libs.kotlinx.coroutinesCore)
             implementation(libs.kotlinx.datetime)
         }

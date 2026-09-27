@@ -46,6 +46,7 @@ object ModuleLayers {
         ":android:imageloader" to ModuleLayer.DATA,
         ":android:networking" to ModuleLayer.DATA,
         ":android:playback" to ModuleLayer.DATA,
+        ":android:playback:core" to ModuleLayer.DATA,
         ":android:saf" to ModuleLayer.DATA,
         ":android:scrobbling" to ModuleLayer.DATA,
         ":android:trial" to ModuleLayer.DATA,

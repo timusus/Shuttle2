@@ -2,13 +2,17 @@ package com.simplecityapps.playback.engine
 
 import androidx.media3.common.C
 import androidx.media3.exoplayer.source.ShuffleOrder
+import com.simplecityapps.playback.queue.ShuffleOrder as QueueShuffleOrder
 import io.kotest.matchers.shouldBe
 import org.junit.Test
 
-/** The shuffled order keeps every item's place through playlist edits, including a song queued more than once. */
+/**
+ * Media3 walks the shared order as it plays, and the shuffled order keeps every item's place through playlist edits,
+ * including a song queued more than once. The shared order's own rules (saved and new orders) are `ShuffleOrderTest`'s.
+ */
 class S2ShuffleOrderTest {
     // Playlist [a, b, a, c], shuffled as a(2), c(3), a(0), b(1).
-    private val order = S2ShuffleOrder(intArrayOf(2, 3, 0, 1))
+    private val order = S2ShuffleOrder(QueueShuffleOrder(listOf(2, 3, 0, 1)))
 
     @Test
     fun `next and previous follow the order`() {
@@ -44,28 +48,6 @@ class S2ShuffleOrderTest {
     @Test
     fun `cleared, the order is empty`() {
         order.cloneAndClear().length shouldBe 0
-    }
-
-    @Test
-    fun `a saved order matches each copy of a song to its own item`() {
-        S2ShuffleOrder.matching(listOf("a", "b", "a", "c"), listOf("a", "c", "a", "b")).toList() shouldBe listOf(0, 3, 2, 1)
-    }
-
-    @Test
-    fun `a saved order drops songs the playlist doesn't hold and appends the ones it doesn't list`() {
-        val playlist = listOf("a", "b", "a", "c")
-        val saved = listOf("a", "x", "c", "a", "a")
-
-        S2ShuffleOrder.matching(playlist, saved).toList() shouldBe listOf(0, 3, 2, 1)
-        S2ShuffleOrder.matchedIndices(playlist, saved) shouldBe listOf(0, null, 3, 2, null)
-    }
-
-    @Test
-    fun `a shuffled order starts at the given item`() {
-        val shuffled = S2ShuffleOrder.shuffled(10, firstIndex = 7)
-
-        shuffled.firstIndex shouldBe 7
-        shuffled.toList().sorted() shouldBe (0 until 10).toList()
     }
 
     /** The playlist indices in the order [ShuffleOrder]'s own navigation walks them. */
