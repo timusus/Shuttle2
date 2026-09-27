@@ -11,6 +11,7 @@ class ModuleLayerRulesTest {
         ":networking" to ModuleLayer.DATA,
         ":jellyfin" to ModuleLayer.PROVIDER,
         ":emby" to ModuleLayer.PROVIDER,
+        ":presentation" to ModuleLayer.VIEWMODEL,
         ":designsystem" to ModuleLayer.PRESENTATION,
         ":app" to ModuleLayer.COMPOSITION_ROOT,
     )
@@ -28,6 +29,9 @@ class ModuleLayerRulesTest {
                 dep(":playback", ":networking"),
                 dep(":jellyfin", ":networking"),
                 dep(":designsystem", ":domain"),
+                dep(":presentation", ":domain"),
+                dep(":designsystem", ":presentation"),
+                dep(":app", ":presentation"),
                 dep(":app", ":jellyfin"),
                 dep(":app", ":designsystem"),
             ),
@@ -51,6 +55,12 @@ class ModuleLayerRulesTest {
     @Test
     fun presentationToDataIsForbidden() {
         assertEquals(setOf(":designsystem -> :playback"), check(listOf(dep(":designsystem", ":playback"))).newViolations.keys)
+    }
+
+    @Test
+    fun sharedViewModelsSeeDomainOnly() {
+        val violations = check(listOf(dep(":presentation", ":designsystem"), dep(":presentation", ":playback"), dep(":presentation", ":core"))).newViolations
+        assertEquals(setOf(":presentation -> :designsystem", ":presentation -> :playback", ":presentation -> :core"), violations.keys)
     }
 
     @Test

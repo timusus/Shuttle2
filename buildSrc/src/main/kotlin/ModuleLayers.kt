@@ -16,7 +16,13 @@ enum class ModuleLayer(val label: String) {
     /** Media provider implementations. Data, but only the composition root may depend on one. */
     PROVIDER("provider"),
 
-    /** Compose components and screens. Sees domain types only, never data. */
+    /**
+     * The shared ViewModels, their UI state and screen use cases (`:android:presentation`, KMP commonMain, #586):
+     * what Compose and SwiftUI both render. Sees domain types only; never data, and never the Compose layer.
+     */
+    VIEWMODEL("viewmodel"),
+
+    /** Compose components and screens. Sees domain types and the shared ViewModels only, never data. */
     PRESENTATION("presentation"),
 
     /** `:android:app`: the only module allowed to see everything, to create the Metro dependency graph. */
@@ -47,6 +53,7 @@ object ModuleLayers {
         ":android:mediaprovider:jellyfin" to ModuleLayer.PROVIDER,
         ":android:mediaprovider:emby" to ModuleLayer.PROVIDER,
         ":android:mediaprovider:plex" to ModuleLayer.PROVIDER,
+        ":android:presentation" to ModuleLayer.VIEWMODEL,
         ":android:designsystem" to ModuleLayer.PRESENTATION,
         ":android:app" to ModuleLayer.COMPOSITION_ROOT,
         // The iOS umbrella: links the shared modules into Shared.framework, as :android:app does the APK (#587).
@@ -66,7 +73,9 @@ object ModuleLayers {
         ModuleLayer.DOMAIN to setOf(ModuleLayer.CORE),
         ModuleLayer.DATA to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN, ModuleLayer.DATA),
         ModuleLayer.PROVIDER to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN, ModuleLayer.DATA),
-        ModuleLayer.PRESENTATION to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN, ModuleLayer.PRESENTATION, ModuleLayer.FIXTURES),
+        // Not core: :android:core is Android-only, and this layer compiles for iOS too.
+        ModuleLayer.VIEWMODEL to setOf(ModuleLayer.DOMAIN),
+        ModuleLayer.PRESENTATION to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN, ModuleLayer.VIEWMODEL, ModuleLayer.PRESENTATION, ModuleLayer.FIXTURES),
         ModuleLayer.COMPOSITION_ROOT to ModuleLayer.entries.toSet() - ModuleLayer.TOOLING,
         ModuleLayer.FIXTURES to setOf(ModuleLayer.CORE, ModuleLayer.DOMAIN),
         ModuleLayer.TOOLING to emptySet(),

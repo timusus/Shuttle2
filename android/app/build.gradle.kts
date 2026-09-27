@@ -177,6 +177,8 @@ android {
 
         // Shuttle
         implementation(project(":android:domain"))
+        // The shared ViewModels, their UI state and strings (iOS port phase 4, #586)
+        implementation(project(":android:presentation"))
         implementation(project(":android:downloads"))
         implementation(project(":android:mediaprovider:core"))
         implementation(project(":android:mediaprovider:local"))

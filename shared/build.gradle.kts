@@ -34,12 +34,15 @@ kotlin {
             // Swift sees the domain types (Song, Album, ...) under their own names, not prefixed
             // `Android_domain...` copies. Each exported module must also be an `api` dependency.
             export(project(":android:domain"))
+            // The shared ViewModels and their UI state (#586).
+            export(project(":android:presentation"))
         }
     }
 
     sourceSets {
         commonMain.dependencies {
             api(project(":android:domain"))
+            api(project(":android:presentation"))
             api(libs.kotlinx.coroutinesCore)
             implementation(libs.kotlinx.datetime)
         }
