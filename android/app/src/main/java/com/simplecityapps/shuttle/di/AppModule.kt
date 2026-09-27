@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.di
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.LruCache
-import com.simplecityapps.mediaprovider.PlaylistExporter
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.debug.livelog.LiveLogSink
 import com.simplecityapps.shuttle.di.ApplicationContext
@@ -18,7 +17,6 @@ import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import java.time.Clock
 import java.util.*
-import kotlinx.coroutines.CoroutineDispatcher
 
 @ContributesTo(AppScope::class)
 @BindingContainer
@@ -39,13 +37,6 @@ object AppModule {
             value: Bitmap
         ): Int = value.allocationByteCount
     }
-
-    @SingleIn(AppScope::class)
-    @Provides
-    fun providePlaylistExporter(
-        @ApplicationContext context: Context,
-        @IoDispatcher ioDispatcher: CoroutineDispatcher,
-    ): PlaylistExporter = PlaylistExporter(context, ioDispatcher)
 
     @SingleIn(AppScope::class)
     @Provides

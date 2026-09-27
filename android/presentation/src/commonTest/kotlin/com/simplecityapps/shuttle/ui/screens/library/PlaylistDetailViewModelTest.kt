@@ -4,6 +4,7 @@ import com.simplecityapps.createPlaylist
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
+import com.simplecityapps.mediaprovider.M3uWriter
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
@@ -12,33 +13,44 @@ import com.simplecityapps.shuttle.ui.actions.ExportPlaylist
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
+import com.simplecityapps.shuttle.ui.actions.PlaylistFileWriter
 import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
 import com.simplecityapps.shuttle.ui.actions.ReorderPlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
-import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
-import io.mockk.coEvery
-import io.mockk.mockk
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaylistDetailViewModelTest {
 
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     private val playlistRepository = FakePlaylistRepository()
     private val songs = listOf(createSong(id = 1, name = "One"), createSong(id = 2, name = "Two"), createSong(id = 3, name = "Three"))
 
-    // Real Uri/ContentResolver export I/O is covered by ExportPlaylistTest; this ViewModel only
-    // cares about the Success/Failure event mapping.
-    private val exportPlaylist = mockk<ExportPlaylist>()
+    // Real Uri/ContentResolver export I/O is covered by ContentResolverPlaylistFileWriterTest; this
+    // ViewModel only cares about the Success/Failure event mapping.
+    private var fileWriteResult: ExportPlaylist.Result = ExportPlaylist.Result.Success
+    private val exportPlaylist = ExportPlaylist(M3uWriter(), PlaylistFileWriter { _, _ -> fileWriteResult })
 
     private fun createViewModel(playlistId: Long): PlaylistDetailViewModel = PlaylistDetailViewModel(
         playlistId,
@@ -160,7 +172,7 @@ class PlaylistDetailViewModelTest {
 
     @Test
     fun `export suggests a file name, then posts the exporter's result`() = runTest {
-        coEvery { exportPlaylist(any(), any(), any()) } returns ExportPlaylist.Result.Success
+        fileWriteResult = ExportPlaylist.Result.Success
         val viewModel = viewModel(createPlaylist(id = 7, name = "Road Trip"))
         collect(viewModel)
 
@@ -178,7 +190,7 @@ class PlaylistDetailViewModelTest {
 
     @Test
     fun `a failed export posts the exporter's error`() = runTest {
-        coEvery { exportPlaylist(any(), any(), any()) } returns ExportPlaylist.Result.Failure("permission denied")
+        fileWriteResult = ExportPlaylist.Result.Failure("permission denied")
         val viewModel = viewModel(createPlaylist(id = 7, name = "Road Trip"))
         collect(viewModel)
 

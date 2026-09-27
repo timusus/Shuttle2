@@ -2,8 +2,6 @@ package com.simplecityapps.shuttle.ui.actions
 
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
-import com.simplecityapps.createSong
-import com.simplecityapps.mediaprovider.PlaylistExporter
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -15,15 +13,15 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
-class ExportPlaylistTest {
+class ContentResolverPlaylistFileWriterTest {
 
-    private val exportPlaylist = ExportPlaylist(PlaylistExporter(ApplicationProvider.getApplicationContext(), UnconfinedTestDispatcher()))
+    private val fileWriter = ContentResolverPlaylistFileWriter(ApplicationProvider.getApplicationContext(), UnconfinedTestDispatcher())
 
     @Test
-    fun `writes the songs to the destination as m3u`() = runTest {
+    fun `writes the text to the destination`() = runTest {
         val file = File.createTempFile("playlist", ".m3u")
 
-        val result = exportPlaylist("Road Trip", listOf(createSong(id = 1, name = "One")), Uri.fromFile(file).toString())
+        val result = fileWriter.write(Uri.fromFile(file).toString(), "#EXTM3U\n")
 
         result shouldBe ExportPlaylist.Result.Success
         file.readText() shouldContain "#EXTM3U"
@@ -31,7 +29,7 @@ class ExportPlaylistTest {
 
     @Test
     fun `an unopenable destination fails`() = runTest {
-        val result = exportPlaylist("Road Trip", listOf(createSong(id = 1, name = "One")), "content://no.such.authority/doc/1")
+        val result = fileWriter.write("content://no.such.authority/doc/1", "#EXTM3U\n")
 
         result.shouldBeInstanceOf<ExportPlaylist.Result.Failure>()
     }

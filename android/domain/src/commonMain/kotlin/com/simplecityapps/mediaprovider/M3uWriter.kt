@@ -2,13 +2,14 @@ package com.simplecityapps.mediaprovider
 
 import com.simplecityapps.shuttle.model.Entry
 import com.simplecityapps.shuttle.model.Song
+import dev.zacsweers.metro.Inject
 
 /**
  * Generates extended m3u playlist content from a list of songs, using [Song.path] as-is.
  * The importer ([M3uParser] via `TaglibMediaProvider.findPlaylists`) matches entries back to
  * songs by filename, not full path equality, so a raw device path round-trips safely.
  */
-class M3uWriter {
+class M3uWriter @Inject constructor() {
     fun write(songs: List<Song>): String = write(songs, preservedEntries = emptyMap())
 
     /**
