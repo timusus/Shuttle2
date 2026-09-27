@@ -1,7 +1,8 @@
 // The local library: the Room database every provider's songs and playlists are stored in, the repositories over it,
 // and the MediaStore/TagLib providers. Multiplatform for the iOS port (#584, docs/architecture/ios-port/phase-2-data.md):
 // the database and the repositories that need nothing Android live in commonMain; the providers, SAF and the
-// repositories that still log through Timber are androidMain.
+// repositories that need Android or :android:mediaprovider:core (LocalSongRepository, LocalPlaylistRepository) are
+// androidMain.
 import com.android.build.api.variant.KotlinMultiplatformAndroidComponentsExtension
 
 plugins {
@@ -33,6 +34,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":android:core"))
             implementation(project(":android:domain"))
             api(libs.androidx.room.runtime)
             implementation(libs.kotlinx.coroutinesCore)
@@ -41,7 +43,6 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.androidx.core)
-            implementation(project(":android:core"))
             implementation(project(":android:mediaprovider:core"))
             implementation(project(":android:saf"))
             implementation(libs.timusus.ktaglib)
