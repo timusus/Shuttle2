@@ -23,7 +23,8 @@ import org.json.JSONObject
  * Each entry's content id is its stream URL with the entry's uid as the fragment, which HTTP never sends: Media3 keys
  * the items it sent by content id, so two entries for the same song must differ. The uid also rides in the custom
  * data, and an item the receiver reports back is the entry's own [MediaItem] (tagged with its queue entry) for as
- * long as it was last sent.
+ * long as it was last sent. The song id rides there too, so a song this phone sent before S2 was last stopped, whose
+ * entry is gone, is still known by its song (see [castSongId]).
  */
 class CastMediaItemConverter(
     /** The phone's address on the network the receiver streams from. */
@@ -57,22 +58,26 @@ class CastMediaItemConverter(
                 .setContentType(streams.contentType(song))
                 .setStreamDuration(song.duration.toLong())
                 .setMetadata(metadata)
-                .setCustomData(JSONObject().put(KEY_UID, entry.uid))
+                .setCustomData(JSONObject().put(KEY_UID, entry.uid).put(KEY_SONG_ID, song.id))
                 .build()
         return MediaQueueItem.Builder(mediaInfo).build()
     }
 
     /**
-     * The entry's own item, if it's among those last sent; else (an item another sender queued) one that plays its
-     * stream, with no queue entry.
+     * The entry's own item, if it's among those last sent; else one that plays its stream, with no queue entry, and
+     * with its song (see [castSongId]) if this phone sent it: before S2 was last stopped, or before a new queue.
      */
     override fun toMediaItem(mediaQueueItem: MediaQueueItem): MediaItem {
         val mediaInfo = mediaQueueItem.media
-        val uid = mediaInfo?.customData?.optLong(KEY_UID, NO_UID)?.takeIf { it != NO_UID }
+        val customData = mediaInfo?.customData
+        val uid = customData?.optLong(KEY_UID, NO_UID)?.takeIf { it != NO_UID }
         uid?.let(sent::get)?.let { return it }
+        val url = mediaInfo?.contentUrl ?: mediaInfo?.contentId
+        val songId = customData?.optLong(KEY_SONG_ID, NO_UID)?.takeIf { it != NO_UID && Uri.parse(url.orEmpty()).host == hostAddress() }
         return MediaItem.Builder()
             .setMediaId(mediaInfo?.contentId ?: MediaItem.DEFAULT_MEDIA_ID)
-            .setUri(mediaInfo?.contentUrl ?: mediaInfo?.contentId)
+            .setUri(url)
+            .setTag(songId?.let(::SentSong))
             .build()
     }
 
@@ -85,6 +90,7 @@ class CastMediaItemConverter(
     companion object {
         const val PORT = 5000
         private const val KEY_UID = "uid"
+        private const val KEY_SONG_ID = "songId"
         private const val NO_UID = Long.MIN_VALUE
 
         fun audioUrl(
@@ -115,3 +121,13 @@ class CastMediaItemConverter(
         }
     }
 }
+
+/** The song of an item this phone sent a receiver whose queue entry this converter no longer knows. */
+private data class SentSong(val songId: Long)
+
+/**
+ * The song this item from a Cast receiver plays, if this phone sent it: its entry's, or else the one it was sent for
+ * (see [CastMediaItemConverter.toMediaItem]). Null for an item another sender queued.
+ */
+val MediaItem.castSongId: Long?
+    get() = queueEntryOrNull?.song?.id ?: (localConfiguration?.tag as? SentSong)?.songId

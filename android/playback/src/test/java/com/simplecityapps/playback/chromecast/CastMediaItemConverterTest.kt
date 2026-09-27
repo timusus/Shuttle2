@@ -113,6 +113,33 @@ class CastMediaItemConverterTest {
     fun `an item another sender queued comes back without an entry`() {
         val foreign = MediaQueueItem.Builder(MediaInfo.Builder("http://elsewhere/track.mp3").build()).build()
 
-        converter.toMediaItem(foreign).queueEntryOrNull.shouldBeNull()
+        val reported = converter.toMediaItem(foreign)
+
+        reported.queueEntryOrNull.shouldBeNull()
+        reported.castSongId.shouldBeNull()
+    }
+
+    @Test
+    fun `an entry's song comes back with it`() {
+        converter.toMediaItem(converter.toMediaQueueItem(QueueEntry(uid = 42, song = song).toMediaItem())).castSongId shouldBe 7L
+    }
+
+    @Test
+    fun `an item this phone sent before S2 was stopped comes back with its song, though not its entry`() {
+        val earlier = CastMediaItemConverter({ "192.168.1.20" }, CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext), "Unknown")
+        val queueItem = earlier.toMediaQueueItem(QueueEntry(uid = 42, song = song).toMediaItem())
+
+        val reported = converter.toMediaItem(queueItem)
+
+        reported.queueEntryOrNull.shouldBeNull()
+        reported.castSongId shouldBe 7L
+    }
+
+    @Test
+    fun `an item another phone sent comes back without a song`() {
+        val otherPhone = CastMediaItemConverter({ "192.168.1.30" }, CastStreams(FakeMediaInfoProvider(), EmptyCoroutineContext), "Unknown")
+        val queueItem = otherPhone.toMediaQueueItem(QueueEntry(uid = 42, song = song).toMediaItem())
+
+        converter.toMediaItem(queueItem).castSongId.shouldBeNull()
     }
 }
