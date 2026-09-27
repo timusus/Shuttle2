@@ -95,7 +95,7 @@ Emulator section — that's the single source of truth, kept in sync with `suppo
 - **`:android:downloads`** — Offline downloads of remote-provider songs
 - **`:android:saf`** — Storage Access Framework helpers
 - **`:android:core`** — Shared utilities, logging, DI qualifiers and the Metro worker factory
-- **`:android:networking`** — Retrofit + OkHttp + Moshi network layer
+- **`:android:networking`** — Ktor + OkHttp (Darwin on iOS) network layer, kotlinx.serialization for JSON
 - **`:android:imageloader`** — Coil artwork loading: per-model fetchers, keys and the app ImageLoader
 - **`:android:trial`** — Trial/subscription management via Play Billing
 
@@ -123,7 +123,7 @@ Repository pattern backed by Room database. MediaProvider implementations (local
 - **Version catalog**: `gradle/libs.versions.toml`
 - **Versioning**: Date-based from git tags (`vYYMMDDNN` → version code `YYMMDDNN`, version name `YYYY.MM.DD`)
 - Debug builds use `.dev` app ID suffix
-- R8 full mode is disabled (Retrofit compatibility)
+- R8 full mode is disabled; Retrofit (the original reason) is gone as of #585, so this could be revisited (#598)
 
 ## Code Style
 
