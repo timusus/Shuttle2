@@ -237,19 +237,11 @@ struct PlaylistRow: View {
     let coverSong: Song?
 
     var body: some View {
-        HStack(spacing: Spacing.smallMedium) {
-            RemoteArtwork(id: coverSong?.id ?? playlist.id, points: ArtworkSize.row) {
-                guard let coverSong else { return nil }
-                return try await AppGraph.shared.artworkUrls.url(song: coverSong)
-            }
-            .artworkTile(ArtworkSize.row)
-            VStack(alignment: .leading, spacing: Spacing.tiny) {
-                Text(playlist.name).lineLimit(1)
-                Text(playlist.songCount == 1 ? "1 song" : "\(playlist.songCount) songs")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-        }
+        MediaRow(
+            playlist.name,
+            subtitle: playlist.songCount == 1 ? "1 song" : "\(playlist.songCount) songs",
+            artwork: coverSong.map { .song($0) },
+            placeholderSymbol: "music.note.list"
+        )
     }
 }

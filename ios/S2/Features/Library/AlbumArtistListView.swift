@@ -92,17 +92,13 @@ struct AlbumArtistRow: View {
     let albumArtist: AlbumArtist
 
     var body: some View {
-        HStack(spacing: Spacing.smallMedium) {
-            RemoteArtwork(.albumArtist(albumArtist), points: ArtworkSize.row)
-                .artworkCircle(ArtworkSize.row)
-            VStack(alignment: .leading, spacing: Spacing.tiny) {
-                Text(albumArtist.name ?? albumArtist.friendlyArtistName ?? "Unknown Artist").lineLimit(1)
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-        }
+        MediaRow(
+            albumArtist.name ?? albumArtist.friendlyArtistName ?? "Unknown Artist",
+            subtitle: subtitle,
+            artwork: .albumArtist(albumArtist),
+            artworkShape: .circle,
+            placeholderSymbol: "music.mic"
+        )
     }
 
     private var subtitle: String {

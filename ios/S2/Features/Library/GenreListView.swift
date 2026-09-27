@@ -91,21 +91,6 @@ struct GenreRow: View {
     let genre: Genre
 
     var body: some View {
-        HStack(spacing: Spacing.smallMedium) {
-            Color(.secondarySystemBackground)
-                .overlay {
-                    Image(systemName: "guitars")
-                        .foregroundStyle(.primary.opacity(0.15))
-                }
-                .artworkTile(ArtworkSize.row)
-                .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: Spacing.tiny) {
-                Text(genre.name).lineLimit(1)
-                Text(genre.songCount == 1 ? "1 song" : "\(genre.songCount) songs")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-        }
+        MediaRow(genre.name, subtitle: genre.songCount == 1 ? "1 song" : "\(genre.songCount) songs", placeholderSymbol: "guitars")
     }
 }

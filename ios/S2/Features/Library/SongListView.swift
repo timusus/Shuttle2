@@ -84,23 +84,16 @@ struct SongRow: View {
     let song: Song
 
     var body: some View {
-        HStack(spacing: Spacing.smallMedium) {
-            RemoteArtwork(.song(song), points: ArtworkSize.row)
-                .artworkTile(ArtworkSize.row)
-            VStack(alignment: .leading, spacing: Spacing.tiny) {
-                Text(song.name ?? "Unknown").lineLimit(1)
-                    .accessibilityIdentifier("songRow.title")
-                Text([song.friendlyArtistName, song.album].compactMap { $0 }.joined(separator: " · "))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-            Spacer(minLength: Spacing.small)
+        MediaRow(
+            song.name ?? "Unknown",
+            subtitle: [song.friendlyArtistName, song.album].compactMap { $0 }.joined(separator: " · "),
+            artwork: .song(song),
+            titleIdentifier: "songRow.title"
+        ) {
             Text(Duration.milliseconds(Int64(song.duration)).formatted(.time(pattern: .minuteSecond)))
                 .font(.s2RowTime)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.s2SecondaryText)
         }
-        .contentShape(Rectangle())
     }
 }
 
