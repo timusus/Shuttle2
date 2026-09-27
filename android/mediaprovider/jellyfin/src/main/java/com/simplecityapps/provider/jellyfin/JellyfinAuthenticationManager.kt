@@ -11,8 +11,12 @@ import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.provider.jellyfin.http.AuthenticationResult
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.provider.jellyfin.http.authenticate
+import com.simplecityapps.provider.jellyfin.http.authenticateWithQuickConnect
+import com.simplecityapps.provider.jellyfin.http.initiateQuickConnect
+import com.simplecityapps.provider.jellyfin.http.isQuickConnectEnabled
 import com.simplecityapps.provider.jellyfin.http.me
 import com.simplecityapps.provider.jellyfin.http.mediaBrowserAuthorization
+import com.simplecityapps.provider.jellyfin.http.pollQuickConnect
 import java.util.UUID
 import timber.log.Timber
 
@@ -60,11 +64,7 @@ class JellyfinAuthenticationManager(
 
         return when (authenticationResult) {
             is NetworkResult.Success<AuthenticationResult> -> {
-                val authenticatedCredentials = AuthenticatedCredentials(
-                    accessToken = authenticationResult.body.accessToken,
-                    userId = authenticationResult.body.user.id,
-                    canDownload = authenticationResult.body.user.policy?.enableContentDownloading ?: false
-                )
+                val authenticatedCredentials = authenticationResult.body.toAuthenticatedCredentials()
                 credentialStore.authenticatedCredentials = authenticatedCredentials
                 Result.success(authenticatedCredentials)
             }
@@ -79,6 +79,53 @@ class JellyfinAuthenticationManager(
             }
         }
     }
+
+    /** Whether the server supports the Quick Connect sign-in flow. Servers before it existed return false, never an error. */
+    suspend fun isQuickConnectEnabled(address: String): Boolean = when (val result = userService.isQuickConnectEnabled(address)) {
+        is NetworkResult.Success -> result.body
+        is NetworkResult.Failure -> false
+    }
+
+    /** Starts a Quick Connect attempt, returning the code to show the user and the secret used to poll and redeem it. */
+    suspend fun initiateQuickConnect(address: String): Result<QuickConnectCode> = when (
+        val result = userService.initiateQuickConnect(address, clientIdentity.id, clientIdentity.deviceName, clientIdentity.version)
+    ) {
+        is NetworkResult.Success -> Result.success(QuickConnectCode(code = result.body.code, secret = result.body.secret))
+        is NetworkResult.Failure -> Result.failure(result.error)
+    }
+
+    /** A 401 means the code was denied or expired server-side; Jellyfin's API has no separate signal for that. */
+    suspend fun pollQuickConnect(address: String, secret: String): Result<QuickConnectPollState> = when (
+        val result = userService.pollQuickConnect(address, secret, clientIdentity.id, clientIdentity.deviceName, clientIdentity.version)
+    ) {
+        is NetworkResult.Success -> Result.success(if (result.body.authenticated) QuickConnectPollState.Authenticated else QuickConnectPollState.Pending)
+
+        is NetworkResult.Failure ->
+            if ((result.error as? RemoteServiceHttpError)?.httpStatusCode == HttpStatusCode.Unauthorized) {
+                Result.success(QuickConnectPollState.Denied)
+            } else {
+                Result.failure(result.error)
+            }
+    }
+
+    /** Redeems an approved Quick Connect secret for a token, stored the same way a password sign-in's token is. */
+    suspend fun authenticateWithQuickConnect(address: String, secret: String): Result<AuthenticatedCredentials> = when (
+        val result = userService.authenticateWithQuickConnect(address, secret, clientIdentity.id, clientIdentity.deviceName, clientIdentity.version)
+    ) {
+        is NetworkResult.Success<AuthenticationResult> -> {
+            val authenticatedCredentials = result.body.toAuthenticatedCredentials()
+            credentialStore.authenticatedCredentials = authenticatedCredentials
+            Result.success(authenticatedCredentials)
+        }
+
+        is NetworkResult.Failure -> Result.failure(result.error)
+    }
+
+    private fun AuthenticationResult.toAuthenticatedCredentials() = AuthenticatedCredentials(
+        accessToken = accessToken,
+        userId = user.id,
+        canDownload = user.policy?.enableContentDownloading ?: false
+    )
 
     /**
      * Re-fetches `Policy.EnableContentDownloading` for [authenticatedCredentials] and updates the

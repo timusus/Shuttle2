@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.jellyfin.http.AuthenticationResult
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
+import com.simplecityapps.provider.jellyfin.http.QuickConnectResult
 import com.simplecityapps.provider.jellyfin.http.User
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -51,6 +52,20 @@ class JellyfinMediaInfoProviderTest {
                 url: String,
                 authorization: String
             ): NetworkResult<User> = error("not called")
+
+            override suspend fun quickConnectEnabledImpl(url: String): NetworkResult<Boolean> = error("not called")
+
+            override suspend fun quickConnectInitiatePostImpl(url: String, header: String): NetworkResult<QuickConnectResult> = error("not called")
+
+            override suspend fun quickConnectInitiateGetImpl(url: String, header: String): NetworkResult<QuickConnectResult> = error("not called")
+
+            override suspend fun quickConnectConnectImpl(url: String, header: String): NetworkResult<QuickConnectResult> = error("not called")
+
+            override suspend fun authenticateWithQuickConnectImpl(
+                url: String,
+                body: Map<String, String>,
+                header: String
+            ): NetworkResult<AuthenticationResult> = error("not called")
         },
         credentialStore = credentialStore,
         clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "1.0", deviceName = "TestDevice")

@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.jellyfin.http.AuthenticationResult
 import com.simplecityapps.provider.jellyfin.http.Policy
+import com.simplecityapps.provider.jellyfin.http.QuickConnectResult
 import com.simplecityapps.provider.jellyfin.http.User
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.provider.jellyfin.http.mediaBrowserAuthorization
@@ -42,6 +43,20 @@ class JellyfinAuthenticationTest {
                 url: String,
                 authorization: String
             ): NetworkResult<User> = meResult
+
+            override suspend fun quickConnectEnabledImpl(url: String): NetworkResult<Boolean> = error("not called")
+
+            override suspend fun quickConnectInitiatePostImpl(url: String, header: String): NetworkResult<QuickConnectResult> = error("not called")
+
+            override suspend fun quickConnectInitiateGetImpl(url: String, header: String): NetworkResult<QuickConnectResult> = error("not called")
+
+            override suspend fun quickConnectConnectImpl(url: String, header: String): NetworkResult<QuickConnectResult> = error("not called")
+
+            override suspend fun authenticateWithQuickConnectImpl(
+                url: String,
+                body: Map<String, String>,
+                header: String
+            ): NetworkResult<AuthenticationResult> = error("not called")
         },
         credentialStore = credentialStore,
         clientIdentity = clientIdentity
