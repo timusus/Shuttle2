@@ -71,6 +71,31 @@ check the team with `security find-certificate -c "Apple Development" -p | opens
 changes the app's signing identity, and iOS refuses to upgrade an install across teams
 (`MismatchedApplicationIdentifierEntitlement`) — delete the app from the device first.
 
+## Running the POC
+
+DEBUG builds sign in to a Jellyfin or Emby server from four launch-environment variables
+(`DebugServerSeed`, until `ServerSignInView` lands in phase 7): `S2_SERVER_TYPE` (`jellyfin`/`emby`),
+`S2_SERVER_URL` (with scheme, e.g. `https://music.example.com`), `S2_SERVER_USER`, `S2_SERVER_PASSWORD`.
+The session is saved in the Keychain, so later launches import without them. The password and
+token are never logged; the outcome is (`log stream --predicate 'category == "DebugServerSeed"'`), and a
+failed sign-in shows in the Library's empty state.
+
+```bash
+# Simulator: build (commands 1-3 above, or test.sh), then install and launch with SIMCTL_CHILD_ env
+xcrun simctl install <udid> ios/build/DerivedData/Build/Products/Debug-iphonesimulator/S2.app
+SIMCTL_CHILD_S2_SERVER_TYPE=jellyfin SIMCTL_CHILD_S2_SERVER_URL=https://music.example.com \
+  SIMCTL_CHILD_S2_SERVER_USER=me SIMCTL_CHILD_S2_SERVER_PASSWORD='...' \
+  xcrun simctl launch <udid> com.simplecityapps.shuttle.dev
+
+# Device: export them, and install-device.sh hands them to devicectl --environment-variables
+S2_SERVER_TYPE=emby S2_SERVER_URL=https://music.example.com S2_SERVER_USER=me S2_SERVER_PASSWORD='...' \
+  ios/scripts/install-device.sh
+```
+
+Launching from Xcode works too: put the four in the scheme's Run > Environment Variables (don't commit
+the scheme change). The app imports at launch; Library shows the progress, then its categories. Songs
+plays the list from the tapped song; Albums opens a placeholder album page; pull to refresh re-imports.
+
 ## Layout
 
 ```
@@ -94,6 +119,8 @@ ios/
     KMP/AppGraph.swift      # initialize() at launch: IosAppDependencies, the composition point
     KMP/ViewModelCache.swift     # keyed, LRU-capped screen view models, cleared when their screen leaves
     KMP/CombineFlowBridge.swift  # Publisher.toKotlinFlow: Combine -> a Swift-fed WritableFlow, deduplicated
+    KMP/ViewModelGroup.swift     # a screen's several shared ViewModels, cached and cleared under one key
+    KMP/ConsumeEvents.swift      # .consumeEvents: PendingEvent one-shots, consumed once, id handed back
     Platform/Audio/         # AudioSessionController, NowPlayingController, EngineAudioPlayer (the Kotlin
                             # IosAudioPlayer), PlaybackSystemCoordinator (wires them to IosPlayerController)
   Playback/                 # the S2Playback package: the gapless engine (see its README); no AVAudioSession.
