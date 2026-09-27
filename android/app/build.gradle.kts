@@ -24,7 +24,7 @@ android {
     defaultConfig {
         applicationId = "com.simplecityapps.shuttle"
         // 24: Compose 1.13, which material3 1.5.0-alpha29 brings in, no longer supports API 23.
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionName = versionName()
         versionCode = versionCode()
@@ -91,8 +91,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
         isCoreLibraryDesugaringEnabled = true
     }
 
@@ -292,7 +292,7 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_21)
         freeCompilerArgs.addAll(
             "-Xopt-in=kotlin.RequiresOptIn",
             "-Xopt-in=kotlin.time.ExperimentalTime"

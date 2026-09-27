@@ -8,7 +8,7 @@ plugins {
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 
     compilerOptions {
         freeCompilerArgs.add("-Xexpect-actual-classes")
@@ -16,7 +16,7 @@ kotlin {
 
     android {
         compileSdk = 36
-        minSdk = 24
+        minSdk = 26
         // Runs commonTest (and androidHostTest) on the JVM, as testDebugUnitTest does for Android modules. AGP allows
         // one host test component, so it's configured here for every module: with the Android resources and assets
         // Robolectric tests read (the Room migration tests load the exported schemas as assets).

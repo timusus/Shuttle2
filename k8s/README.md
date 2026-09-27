@@ -30,6 +30,7 @@ Ported from OffBookPlus `k8s/` (colima+docker+rsync flow), adapted for a
 remote cluster: no colima (`ensure_cluster` dropped), no rsync (tar +
 `kubectl cp` via a seed pod), no prebuilt image (SDK bootstraps at runtime
 from `eclipse-temurin:21-jdk-noble` — internet confirmed from the cluster).
+The image's JDK 21 satisfies the Gradle toolchain (`languageVersion=21`) via auto-detection, so no separate JDK provisioning is needed.
 
 ## Dockerfile
 
