@@ -17,10 +17,15 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Qualifier
 import javax.inject.Singleton
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class LastFmMoshi
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -41,6 +46,7 @@ object ScrobblingModule {
     @Provides
     fun provideScrobbleDao(database: ScrobbleDatabase): ScrobbleDao = database.scrobbleDao()
 
+    @LastFmMoshi
     @Singleton
     @Provides
     fun provideLastFmMoshi(): Moshi = Moshi.Builder()
@@ -52,7 +58,7 @@ object ScrobblingModule {
     @Provides
     fun provideLastFmApi(
         okHttpClient: OkHttpClient,
-        moshi: Moshi
+        @LastFmMoshi moshi: Moshi
     ): LastFmApi = Retrofit.Builder()
         .baseUrl(LASTFM_BASE_URL)
         .client(okHttpClient)
