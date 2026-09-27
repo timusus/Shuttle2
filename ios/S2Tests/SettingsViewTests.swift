@@ -150,4 +150,16 @@ struct SettingsViewTests {
         #expect((try? sut.inspect().find(text: "Version")) != nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "settings.acknowledgements")) != nil)
     }
+
+    @Test func eachRowLeadsWithItsIconSquare() throws {
+        #expect(SettingsIcon(id: "settings.equalizer") == SettingsIcon(id: "settings.equalizer"))
+        #expect(SettingsIcon(id: "replaygain_mode").systemImage == "waveform")
+        #expect(SettingsIcon(id: "pref_media_rescan").systemImage == "arrow.clockwise")
+        // A row the mapping doesn't know still gets a square, so the column lines up.
+        #expect(SettingsIcon(id: "something_new").systemImage == "gearshape.fill")
+        let sut = SettingsContent(sections: [
+            SettingsSection(id: "s", title: nil, rows: [.toggle(key: "shuffle", title: "Shuffle", summary: nil, isOn: false, isEnabled: true)]),
+        ])
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "settings.shuffle").find(IconSquare.self)) != nil)
+    }
 }

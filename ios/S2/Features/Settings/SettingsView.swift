@@ -198,12 +198,19 @@ struct SettingsContent: View {
                 }
             }
             Section {
-                LabeledContent("Version", value: Self.appVersion)
-                    .accessibilityIdentifier("settings.version")
-                // The licences (FFmpeg's LGPL notice) live in the app's Settings bundle, the iOS place for them.
-                Button("Acknowledgements") {
-                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                LabeledContent {
+                    Text(Self.appVersion)
+                } label: {
+                    Label { Text("Version") } icon: { IconSquare(systemImage: "info", style: .filled(.gray)) }
                 }
+                .accessibilityIdentifier("settings.version")
+                // The licences (FFmpeg's LGPL notice) live in the app's Settings bundle, the iOS place for them.
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                } label: {
+                    Label { Text("Acknowledgements") } icon: { IconSquare(systemImage: "doc.text.fill", style: .filled(.gray)) }
+                }
+                .tint(.primary)
                 .accessibilityIdentifier("settings.acknowledgements")
             } header: {
                 Text("About")
@@ -227,23 +234,26 @@ struct SettingsContent: View {
 
     @ViewBuilder
     private func rowView(_ row: SettingsRow) -> some View {
+        let icon = SettingsIcon(id: row.id)
         switch row {
         case .link(let id, let title, let systemImage, let route):
             NavigationLink(value: route) {
-                Label(title, systemImage: systemImage)
+                Label { Text(title) } icon: { IconSquare(systemImage: systemImage, style: .filled(icon.color)) }
             }
             .accessibilityIdentifier(id)
         case .toggle(let key, let title, let summary, let isOn, let isEnabled):
             Toggle(isOn: Binding(get: { isOn }, set: { onToggle(key, $0) })) {
-                RowLabel(title: title, summary: summary)
+                Label { RowLabel(title: title, summary: summary) } icon: { icon.square }
             }
             .disabled(!isEnabled)
             .accessibilityIdentifier("settings.\(key)")
         case .choice(let key, let title, let options, let selected, let isEnabled):
-            Picker(title, selection: Binding(get: { selected }, set: { onChoose(key, $0) })) {
+            Picker(selection: Binding(get: { selected }, set: { onChoose(key, $0) })) {
                 ForEach(options.indices, id: \.self) { index in
                     Text(options[index]).tag(index)
                 }
+            } label: {
+                Label { Text(title) } icon: { icon.square }
             }
             .disabled(!isEnabled)
             .accessibilityIdentifier("settings.\(key)")
@@ -255,15 +265,17 @@ struct SettingsContent: View {
                     onAction(key)
                 }
             } label: {
-                RowLabel(title: title, summary: summary)
+                Label { RowLabel(title: title, summary: summary) } icon: { icon.square }
             }
             .tint(.primary)
             .disabled(!isEnabled)
             .accessibilityIdentifier("settings.\(key)")
         case .slider(let key, let title, let value, let range, let valueLabel, let isEnabled):
-            VStack(alignment: .leading) {
-                LabeledContent(title) {
+            VStack(alignment: .leading, spacing: Spacing.small) {
+                LabeledContent {
                     if let valueLabel { Text(valueLabel).monospacedDigit() }
+                } label: {
+                    Label { Text(title) } icon: { icon.square }
                 }
                 Slider(value: Binding(get: { value }, set: { onSlide(key, $0) }), in: range) {
                     Text(title)
@@ -284,13 +296,38 @@ struct SettingsContent: View {
     }
 }
 
+/// A row's leading icon, iOS Settings style: a white symbol on a coloured rounded square (`IconSquare`), picked by
+/// the row's key. A key this doesn't know gets a grey gear, so a new catalog row still lines up.
+struct SettingsIcon: Equatable {
+    let systemImage: String
+    let color: Color
+
+    init(id: String) {
+        (systemImage, color) = switch id {
+        case "settings.sources": ("server.rack", .blue)
+        case "settings.equalizer": ("slider.vertical.3", .pink)
+        case "pref_retain_shuffle_on_new_queue": ("shuffle", .orange)
+        case "replaygain_mode": ("waveform", .purple)
+        case "preamp_gain": ("speaker.wave.2.fill", .indigo)
+        case "pref_streaming_quality_unmetered": ("wifi", .cyan)
+        case "pref_streaming_quality_metered": ("antenna.radiowaves.left.and.right", .green)
+        case "pref_media_rescan": ("arrow.clockwise", .teal)
+        case "artwork_local_only": ("photo.fill", .mint)
+        case "pref_show_home_on_launch": ("house.fill", .red)
+        default: ("gearshape.fill", .gray)
+        }
+    }
+
+    var square: IconSquare { IconSquare(systemImage: systemImage, style: .filled(color)) }
+}
+
 /// A row's title, with its summary beneath in the secondary style.
 private struct RowLabel: View {
     let title: String
     let summary: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: Spacing.tiny) {
             Text(title)
             if let summary {
                 Text(summary).font(.subheadline).foregroundStyle(.secondary)
