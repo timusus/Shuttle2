@@ -67,13 +67,15 @@ class TaglibMediaProvider(
         }
         val files = mediaStoreFiles.orEmpty()
         val total = files.size + extraDocuments.size
+        // Songs already in the library, so files that haven't changed since the last import skip TagLib
+        val existingByPath = existingSongs.associateBy { song -> song.path }
         val filesWithImages =
             withContext(Dispatchers.IO) {
                 val folderImageReader = FolderImageReader(sharedStorageListsImages = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
                 files.map { file -> file to folderImageReader.imagesNear(file.path) }
             }
         val songs = mutableListOf<Song>()
-        merge(getSongs(filesWithImages), getExtraSongs(extraDocuments))
+        merge(getSongs(filesWithImages, existingByPath), getExtraSongs(extraDocuments))
             .collectIndexed { index, song ->
                 emit(
                     FlowEvent.Progress(
@@ -163,10 +165,15 @@ class TaglibMediaProvider(
             fileScanner.getAudioFile(context, kTagLib, node.uri)?.toSong(type, emptyList())
         }.mapNotNull { it }
 
-    private fun getSongs(files: List<Pair<MediaStoreAudioFile, List<FolderImage>>>): Flow<Song> = files
+    private fun getSongs(
+        files: List<Pair<MediaStoreAudioFile, List<FolderImage>>>,
+        existingByPath: Map<String, Song>
+    ): Flow<Song> = files
         .asFlow()
         .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { (file, folderImages) ->
-            readAudioFile(file)?.toSong(type, folderImages)
+            // An unchanged file keeps its stored row as-is: no FD open, no TagLib parse. The stored song carries
+            // the library id, play counts and artwork version, which a fresh parse would zero out before the diff.
+            file.unchangedSong(existingByPath) ?: readAudioFile(file)?.toSong(type, folderImages)
         }.mapNotNull { it }
 
     private suspend fun readAudioFile(file: MediaStoreAudioFile): AudioFile? = withContext(Dispatchers.IO) {
