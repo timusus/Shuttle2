@@ -54,6 +54,7 @@ struct MiniPlayerBar: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(title == nil ? .secondary : .primary)
                             .lineLimit(1)
+                            .accessibilityIdentifier("miniPlayer.title")
                         if let artist {
                             Text(artist)
                                 .font(.caption)
@@ -68,6 +69,7 @@ struct MiniPlayerBar: View {
             .buttonStyle(.plain)
             .accessibilityLabel(accessibilityLabel)
             .accessibilityHint("Opens Now Playing")
+            .accessibilityIdentifier("miniPlayer.open")
 
             Button(action: onPlayPause) {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
@@ -75,6 +77,7 @@ struct MiniPlayerBar: View {
                     .frame(width: 44, height: 44)
             }
             .accessibilityLabel(isPlaying ? "Pause" : "Play")
+            .accessibilityIdentifier("miniPlayer.playPause")
 
             Button(action: onNext) {
                 Image(systemName: "forward.fill")
@@ -82,11 +85,11 @@ struct MiniPlayerBar: View {
                     .frame(width: 44, height: 44)
             }
             .accessibilityLabel("Next")
+            .accessibilityIdentifier("miniPlayer.next")
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(.bar)
-        .accessibilityIdentifier("miniPlayer")
     }
 
     private var accessibilityLabel: String {

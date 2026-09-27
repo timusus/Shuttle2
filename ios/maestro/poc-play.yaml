@@ -1,0 +1,40 @@
+# The iOS POC end to end against a real server (#587): Library > Songs, tap the first song, and the mini
+# player shows that song playing. Seed the session first with `ios/scripts/run-sim-server.sh emby|jellyfin`
+# (it builds, installs and launches signed in); this flow relaunches without clearing state, so the saved
+# session imports again, which the Songs screen shows until it's done.
+#
+#   maestro --udid <simulator> test --test-output-dir /tmp/s2-ios-e2e/maestro ios/maestro/poc-play.yaml
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+# The tab bar's Library item (not the navigation title): reselecting it pops a restored path to the root.
+- tapOn:
+    text: "Library"
+    id: "music.note.list"
+- extendedWaitUntil:
+    visible: "Songs"
+    timeout: 60000
+- takeScreenshot: 1-library
+- tapOn: "Songs"
+- extendedWaitUntil:
+    visible:
+      id: "songRow.title"
+    timeout: 120000
+- takeScreenshot: 2-songs
+- copyTextFrom:
+    id: "songRow.title"
+    index: 0
+- tapOn:
+    id: "songRow.title"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "miniPlayer.title"
+      text: ${maestro.copiedText}
+    timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: "miniPlayer.playPause"
+      text: "Pause"
+    timeout: 15000
+- takeScreenshot: 3-mini-player-playing

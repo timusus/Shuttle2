@@ -87,6 +87,7 @@ struct SongRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
                 Text(song.name ?? "Unknown").lineLimit(1)
+                    .accessibilityIdentifier("songRow.title")
                 Text([song.friendlyArtistName, song.album].compactMap { $0 }.joined(separator: " · "))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
