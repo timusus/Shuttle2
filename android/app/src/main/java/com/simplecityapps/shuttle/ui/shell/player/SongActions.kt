@@ -11,6 +11,7 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,6 +57,7 @@ internal fun rememberSongActionsState(): SongActionsState = remember { SongActio
  * The open song sheet of [state]: the queue's own [leading] actions (Play next, Remove), the shared
  * actions [PlayerActions.songActions] allows, sent through [PlayerActions.onMediaAction], then [trailing] (Save queue to playlist, Clear queue).
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SongActionsHost(
     state: SongActionsState,
