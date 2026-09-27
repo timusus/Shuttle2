@@ -6,8 +6,11 @@ import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.shared.playback.FakeIosAudioPlayer
+import com.simplecityapps.shuttle.ui.screens.library.GenreDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewModel
+import com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel
 import com.simplecityapps.shuttle.ui.shell.ShellTab
 import com.simplecityapps.shuttle.ui.shell.ShellViewModel
 import io.kotest.matchers.shouldBe
@@ -45,9 +48,23 @@ class IosAppGraphTest {
         graph.whatsNewViewModel
         graph.sourcesViewModel
         graph.serverTypePickerViewModel
+        graph.albumDetailViewModelFactory
+        graph.albumArtistDetailViewModelFactory
+        graph.genreDetailViewModelFactory
+        graph.playlistDetailViewModelFactory
+        graph.smartPlaylistDetailViewModelFactory
+        graph.songInfoViewModelFactory
         graph.mediaSources
         graph.songImportStateProvider
         graph.serverSignIn
+        graph.artworkUrls
+    }
+
+    @Test
+    fun theAssistedFactoriesCreateTheirViewModels() {
+        graph.genreDetailViewModelFactory.create("Jazz").shouldBeInstanceOf<GenreDetailViewModel>()
+        graph.playlistDetailViewModelFactory.create(1L).shouldBeInstanceOf<PlaylistDetailViewModel>()
+        graph.songInfoViewModelFactory.create(1L).shouldBeInstanceOf<SongInfoViewModel>()
     }
 
     @Test

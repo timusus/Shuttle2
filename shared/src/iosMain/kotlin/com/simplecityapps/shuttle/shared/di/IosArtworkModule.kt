@@ -4,13 +4,18 @@ import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 
-/** Artwork urls on the signed-in Jellyfin or Emby server, the iOS twin of Android's `ImageLoaderModule` aggregate. */
+/**
+ * Artwork urls on the signed-in Jellyfin or Emby server, the iOS twin of Android's `ImageLoaderModule` aggregate, and
+ * the artwork seed colour.
+ */
 @ContributesTo(AppScope::class)
 @BindingContainer
 class IosArtworkModule {
@@ -20,4 +25,12 @@ class IosArtworkModule {
         jellyfin: JellyfinRemoteArtworkProvider,
         emby: EmbyRemoteArtworkProvider
     ): RemoteArtworkProvider = AggregateRemoteArtworkProvider(setOf(jellyfin, emby))
+
+    /**
+     * No artwork seed on iOS yet (S9, phase-4-platform-seams.md): Swift decodes the artwork, and nothing extracts a
+     * colour from it until the themed surfaces arrive with the player and detail screens (phase 7). [ArtworkSeed.None]
+     * is what Android reports for artwork it can't seed from, so those surfaces keep the app's own scheme.
+     */
+    @Provides
+    fun provideArtworkSeedSource(): ArtworkSeedSource = ArtworkSeedSource { ArtworkSeed.None }
 }
