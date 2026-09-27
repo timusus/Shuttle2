@@ -176,8 +176,8 @@ paths are under `android/app/.../ui/`.
 | Playlist detail | `PlaylistDetailScreen.kt` | `PlaylistDetailViewModel` (4, `Long`) | `PlaylistDetailView` | 5 | reorder in `EditMode` with `.onMove`; export deferred with `ExportPlaylist` (phase 8, via `ShareLink`) |
 | Smart playlist detail | `SmartPlaylistDetailScreen.kt` | `SmartPlaylistDetailViewModel` (4, `String`) | `SmartPlaylistDetailView` | 5 | |
 | Mini player | `shell/player/MiniPlayer.kt` | `PlayerViewModel` (5) | `MiniPlayerView` (restyled, #587) | 6 | #593: bottom accessory, accessibility label/value/hint. Draws the current song's cover |
-| Now Playing | `shell/player/NowPlaying.kt`, `PlayerContent.kt` | `PlayerViewModel` (5) | `NowPlayingView` (rebuilt, #587) | 6 | cover, title and artist, scrubber (monospaced elapsed/remaining), transport, shuffle, repeat, queue button; full-screen cover in compact, form sheet otherwise (`NowPlayingPresentationStyle`). `AVRoutePickerView` beside the controls in place of Cast still to come |
-| Queue | `shell/player/QueueList.kt` | `PlayerViewModel` (5) | `NowPlayingQueueList` (tap to skip, #587) | 6 | from Now Playing's queue button through `playerSheet`: a sheet in compact, a popover otherwise (`PlayerSubSheetStyle`), after Podcasts. `.onMove`/`.onDelete` in place of Android's swipe-to-dismiss still to come |
+| Now Playing | `shell/player/NowPlaying.kt`, `PlayerContent.kt` | `PlayerViewModel` (5) | `NowPlayingView` (rebuilt, #587) | 6 | cover, title and artist, scrubber (monospaced elapsed/remaining), transport, shuffle, repeat, queue button; full-screen cover in compact, form sheet otherwise (`NowPlayingPresentationStyle`). Favourite toggle and a song actions menu (Add to Playlist, Go to Album/Artist, Exclude; #621) beside the title, and `AirPlayButton` (`AVRoutePickerView`) in the bottom bar in place of Cast. The VM's events show as a `PlayerNotice` |
+| Queue | `shell/player/QueueList.kt` | `PlayerViewModel` (5) | `NowPlayingQueueList` (editable, #621) | 6 | from Now Playing's queue button through `playerSheet`: a sheet in compact, a popover otherwise (`PlayerSubSheetStyle`), after Podcasts. Rows keyed by queue uid; Edit/Done reorders with `.onMove`, swipe (`.onDelete`) removes, context menu Play Next / Remove, Clear in the toolbar; removals and clearing offer Undo |
 | Home | `screens/home/HomeScreen.kt` | `HomeViewModel` (3) | `HomeView` (done, #587) | 7 | resume hero, and recently played/added/most played albums plus "something different" artists as horizontal shelves (`Components/RemoteArtwork.swift` for the artwork); no What's New card or analytics-consent banner yet (no changelog/settings screen to open from one); tile actions are `.contextMenu`, not a ported actions sheet |
 | Search | `screens/search/SearchScreen.kt` | `SearchViewModel` (3) | `SearchView` (exists, placeholder) | 7 | `.searchable` on the Search tab's stack; recent searches as suggestions |
 | Settings entry | `screens/settings/SettingsScreens.kt` | `SettingsViewModel` (3) | `SettingsView` (done, #589) | 7 (entry point in 5) | One grouped `Form` over `IosSettingsCatalog` (`:shared`), not Android's screen per destination: Playback & sound (keep shuffle), Sources (a row pushing `Route.sources`, then streaming quality on Wi-Fi and mobile data), Library (Rescan; artwork local only), and a Swift About section (version; Acknowledgements opens the app's page in the Settings app, where `Settings.bundle` holds the licences). Left out, because nothing on iOS acts on them yet: appearance (Material theme), show Home on launch, USB DAC, EQ/ReplayGain/preamp (#604), report playback, download on Wi-Fi only, rescan frequency, excluded songs and folders (phase 8), the artwork service and cache actions, privacy, What's New, Licences and debug logs. `IosSettingsEffects` rescans through `MediaSources`. Titles come from `ios/S2/en.lproj/Localizable.strings`, generated from Android's strings by `ios/scripts/generate-strings.py` |
@@ -211,6 +211,28 @@ player catches up.
 `MiniPlayerBar`, `NowPlayingContent` and `NowPlayingQueueList` take only those values. Now Playing's bottom bar
 has a speed menu and a sleep timer menu (15 to 60 minutes, or off); both work on iOS through the VM. Speed isn't
 saved across launches, and ReplayGain isn't offered until the engine applies it (#604).
+
+Song actions and queue editing (#621). The binding also collects these:
+- The VM's `playlists()` and `songActions(song:)` for the current song.
+- `NowPlayingSongAction` keeps the actions iOS can run: Add to Playlist, Go to Album, Go to Artist and Exclude.
+  Edit Tags and Song Info are left out until those screens exist.
+- The title row has a favourite toggle (`toggleFavourite`) and an ellipsis menu. Its Add to Playlist submenu
+  offers New Playlist… (an alert), Favorites and each playlist.
+- The actions go to `onMediaAction` with the current song as the selection.
+
+The queue list keys rows by queue uid:
+- Edit mode reorders them through `moveQueueItem(uid, afterUid)`; `NowPlayingQueueList.move` turns
+  `.onMove`'s offsets into uids.
+- A swipe or the context menu removes a row; Play Next and Clear are also offered.
+- Moves and removals show at once, then the player's queue replaces them.
+
+The VM's one-shot events come through `binding.events` and `.consumeEvents` in `NowPlayingView`.
+`PlayerEventOutcome.resolve` maps them:
+- Queue cleared, item removed, server song skipped and action messages become a `PlayerNotice`. This is a
+  five-second banner, after Podcasts' `UndoToast`. It carries Undo, or the snackbar's action (Add Anyway), and
+  is announced to VoiceOver.
+- Go to Album or Artist closes Now Playing and pushes the route through `Navigator.open`, via `ContentView`'s
+  `onOpen`.
 
 ### Design tokens (#587)
 
