@@ -46,24 +46,27 @@ class ClippingMediaSourceInternalsTest {
         shadowOf(Looper.getMainLooper()).idle()
     }
 
-    /** A source for [item], with its period starting at the window (as a progressive stream's does), that can update its item in place. */
-    private fun fakeSource(item: MediaItem): FakeMediaSource {
-        val window =
-            FakeTimeline.TimelineWindowDefinition
-                .Builder()
-                .setUid(item.mediaId)
-                .setDurationUs(DURATION_MS * 1000)
-                .setWindowPositionInFirstPeriodUs(0)
-                .setMediaItem(item)
-                .build()
-        return FakeMediaSource
+    /** A timeline for [item], with its period starting at the window (as a progressive stream's does). */
+    private fun timelineFor(item: MediaItem): FakeTimeline = FakeTimeline(
+        FakeTimeline.TimelineWindowDefinition
             .Builder()
-            .setTimeline(FakeTimeline(window))
-            .setFormats(ExoPlayerTestRunner.AUDIO_FORMAT)
-            .setTrackDataFactory(FakeMediaPeriod.TrackDataFactory.samplesWithRateDurationAndKeyframeInterval(0, 10f, DURATION_MS * 1000, 1))
+            .setUid(item.mediaId)
+            .setDurationUs(DURATION_MS * 1000)
+            .setWindowPositionInFirstPeriodUs(0)
+            .setMediaItem(item)
             .build()
-            .apply { setCanUpdateMediaItems(true) }
-    }
+    )
+
+    /** A source over [timeline] that can update its item in place. */
+    private fun fakeSource(timeline: FakeTimeline): FakeMediaSource = FakeMediaSource
+        .Builder()
+        .setTimeline(timeline)
+        .setFormats(ExoPlayerTestRunner.AUDIO_FORMAT)
+        .setTrackDataFactory(FakeMediaPeriod.TrackDataFactory.samplesWithRateDurationAndKeyframeInterval(0, 10f, DURATION_MS * 1000, 1))
+        .build()
+        .apply { setCanUpdateMediaItems(true) }
+
+    private fun fakeSource(item: MediaItem): FakeMediaSource = fakeSource(timelineFor(item))
 
     private fun clip(
         source: MediaSource,
@@ -108,7 +111,8 @@ class ClippingMediaSourceInternalsTest {
     @Test
     fun `a ClippingMediaSource reverts to the child's original item once its timeline refreshes again`() {
         val original = MediaItem.Builder().setMediaId("a").setMediaMetadata(MediaMetadata.Builder().setTitle("Original").build()).build()
-        val child = fakeSource(original)
+        val originalTimeline = timelineFor(original)
+        val child = fakeSource(originalTimeline)
 
         player.setMediaSource(clip(child, 8_000))
         player.prepare()
@@ -117,12 +121,10 @@ class ClippingMediaSourceInternalsTest {
         val renamed = original.buildUpon().setMediaMetadata(MediaMetadata.Builder().setTitle("Renamed").build()).build()
         player.replaceMediaItem(0, renamed)
         driver.idle()
-        player.currentMediaItem?.mediaMetadata?.title shouldBe "Renamed"
+        player.getMediaItemAt(0).mediaMetadata.title shouldBe "Renamed"
 
         // The child refreshes its timeline again for some unrelated reason, still carrying the item it was prepared with.
-        child.setNewSourceInfo(checkNotNull(child.initialTimeline))
-        driver.idle()
-
-        player.currentMediaItem?.mediaMetadata?.title shouldBe "Original"
+        child.setNewSourceInfo(originalTimeline)
+        driver.runUntil { player.getMediaItemAt(0).mediaMetadata.title == "Original" }
     }
 }
