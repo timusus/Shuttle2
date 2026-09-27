@@ -1,0 +1,58 @@
+# Signs in to a Jellyfin test server through the real sign-in screen (#587): from a signed-out launch, Library's
+# empty state > Add a Source > Connect a Server > Jellyfin, type the address and username, then Quick Connect. The
+# test env files hold an API key, not a password, so the flow approves its own Quick Connect code with the key
+# (approve-quick-connect.js), as a second Jellyfin app would. Ends back on Sources with the server connected.
+#
+# Env (pass with -e, from ios/scripts/maestro-sim.sh; never commit or print them): SERVER_URL, API_KEY, and
+# SERVER_USER, the user the code is approved for.
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- tapOn:
+    text: "Library"
+    id: "music.note.list"
+- tapOn:
+    id: "libraryEmpty.addSource"
+- tapOn:
+    id: "sources.addServer"
+- tapOn:
+    id: "serverTypePicker.Jellyfin"
+- extendedWaitUntil:
+    visible:
+      id: "serverSignIn.address"
+    timeout: 10000
+- tapOn:
+    id: "serverSignIn.address"
+- eraseText: 40
+- inputText: ${SERVER_URL}
+- tapOn:
+    id: "serverSignIn.username"
+- inputText: ${SERVER_USER}
+# Not hideKeyboard: on iOS it can press Return, which moves to the password field and then signs in with an empty
+# password. Dragging the form dismisses the keyboard instead.
+- swipe:
+    start: 50%, 35%
+    end: 50%, 60%
+- takeScreenshot: 1-sign-in-form
+- extendedWaitUntil:
+    visible:
+      id: "serverSignIn.quickConnect"
+    timeout: 15000
+- tapOn:
+    id: "serverSignIn.quickConnect"
+- extendedWaitUntil:
+    visible:
+      id: "serverSignIn.quickConnectCode"
+    timeout: 15000
+- takeScreenshot: 2-quick-connect-code
+- copyTextFrom:
+    id: "serverSignIn.quickConnectCode"
+- runScript:
+    file: approve-quick-connect.js
+- extendedWaitUntil:
+    visible:
+      id: "sources.server.Jellyfin"
+    timeout: 30000
+- takeScreenshot: 3-sources-connected

@@ -114,6 +114,17 @@ final class Navigator {
         }
     }
 
+    /// Pops `route` off whichever path it tops, selected or not: a screen that closes itself (a finished sign-in)
+    /// may finish after the user has switched tabs. A path it doesn't top is left alone.
+    func pop(_ route: Route) {
+        for tab in AppTab.allCases where path(for: tab).last == route {
+            setPath(Array(path(for: tab).dropLast()), for: tab)
+        }
+        for (category, path) in libraryCategoryPaths where path.last == route {
+            libraryCategoryPaths[category] = Array(path.dropLast())
+        }
+    }
+
     func path(for tab: AppTab) -> [Route] {
         switch tab {
         case .home: homePath

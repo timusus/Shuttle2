@@ -179,16 +179,14 @@ paths are under `android/app/.../ui/`.
 | Home | `screens/home/HomeScreen.kt` | `HomeViewModel` (3) | `HomeView` (done, #587) | 7 | resume hero, and recently played/added/most played albums plus "something different" artists as horizontal shelves (`Components/RemoteArtwork.swift` for the artwork); no What's New card or analytics-consent banner yet (no changelog/settings screen to open from one); tile actions are `.contextMenu`, not a ported actions sheet |
 | Search | `screens/search/SearchScreen.kt` | `SearchViewModel` (3) | `SearchView` (exists, placeholder) | 7 | `.searchable` on the Search tab's stack; recent searches as suggestions |
 | Settings entry | `screens/settings/SettingsScreens.kt` | `SettingsViewModel` (3) | `SettingsView` | 7 (entry point in 5) | `Form`; `SettingsEffects`' clipboard and share become `UIPasteboard` and `ShareLink` |
-| Sources, sign-in | `screens/sources/` | `SourcesViewModel`, `ServerTypePickerViewModel` (3), `ServerSignInViewModel` (4) | `SourcesView` (done, #587), `ServerSignInView` | 7 | `Route.sources`, pushed from a Library toolbar item and the empty states until Settings exists; lists the connected servers (tap: sign in again or remove, as Android's server dialog; swipe to remove) and Scan Now. "Connect a Server" presents `ServerTypePicker` as a sheet; a type passes `TryAddServer` and pushes `Route.serverSignIn(type:)`, which shows "not built yet" until `ServerSignInView` lands on the shared `ServerSignInViewModel`. No "This device" or folder rows until local files (phase 8). See the debug sign-in below |
+| Sources, sign-in | `screens/sources/` | `SourcesViewModel`, `ServerTypePickerViewModel` (3), `ServerSignInViewModel` (4) | `SourcesView`, `ServerSignInView` (both done, #587) | 7 | `Route.sources`, pushed from a Library toolbar item and the empty states until Settings exists; lists the connected servers (tap: sign in again or remove, as Android's server dialog; swipe to remove) and Scan Now. "Connect a Server" presents `ServerTypePicker` as a sheet; a type passes `TryAddServer` and pushes `Route.serverSignIn(type:)`: `ServerSignInView`, a `Form` on the shared `ServerSignInViewModel` (address, username and password with Keychain autofill, remember password, Sign In with its progress, an inline error whose Try Again retries, Jellyfin Quick Connect's code in place of the form while it waits). On success it calls `ServerTypePickerViewModel.onServerConnected`, which enables the provider and imports, and pops back to Sources on the `Finished` event. Plex isn't offered (`MediaProviderType.signInTypes`) until its provider is in `:shared`. No "This device" or folder rows until local files (phase 8) |
 | Song info | `screens/songinfo/` | `SongInfoViewModel` (4) | `SongInfoView` | 7 | sheet |
 
-**Sign-in for the phase 5 checkpoint.** The checkpoint browses a Jellyfin library, but Sources and sign-in
-are phase 7. A DEBUG-only `DebugServerSeed` *(Swift)* reads `S2_SERVER_TYPE` (`jellyfin` or
-`emby`), `S2_SERVER_URL`, `S2_SERVER_USER` and `S2_SERVER_PASSWORD` from the launch environment
-(`SIMCTL_CHILD_`-prefixed on the simulator; `install-device.sh` forwards them to `devicectl` on a device),
-signs in through :shared's `ServerSignIn` (the provider's authentication manager, then `ConnectServer`)
-and so imports; a saved session just imports. It is deleted when `ServerSignInView` lands. Import on iOS runs at launch
-and on pull-to-refresh; a `BGAppRefreshTask` is phase 9 (Android uses WorkManager).
+**Sign-in.** The phase 5 checkpoint first signed in through a DEBUG-only launch-environment seed
+(`DebugServerSeed` and :shared's `ServerSignIn`, #611); both went when `ServerSignInView` landed, so the app
+signs in only through Sources, and the Maestro flows do the same (`ios/maestro/sign-in-jellyfin.yaml`). A saved
+session just imports. Import on iOS runs at launch and on pull-to-refresh; a `BGAppRefreshTask` is phase 9
+(Android uses WorkManager).
 
 **Rows and tests.** Each screen is an `Observing` wrapper plus a plain view taking values, with a
 ViewInspector test on the plain view (`.claude/rules/ios.md`). Rows (`SongRow`, `AlbumTile`,
@@ -281,7 +279,7 @@ main), the adapter (#588), and the data and provider leftovers that block a real
 | P5-2 | Swift composition: `AppGraph.initialize()`, `IosPlatformBindings`, `ViewModelClearer` + `KotlinViewModelEntry`, `.consumeEvents`, `Localizable.xcstrings` + `export-strings.sh`. **Partly done (#587):** `AppGraph.initialize()`, clearing through `ViewModelCache` + `ClearableViewModel` (a screen's several ViewModels cached as one `ViewModelGroup`), `.consumeEvents` (`KMP/ConsumeEvents.swift`); the strings catalogue is still to do | P5-1 | S | standard |
 | P5-3 | Navigation: `Route`, typed paths, `navigationDestination`, `retainOnly` on path change, navigator rules with unit tests, `@SceneStorage`, library categories on compact and in the sidebar, the wide inspector slot (empty until phase 6), the Settings gear | P5-2 | M | standard |
 | P5-4 | Artwork: `ArtworkUrls` in Kotlin; `ArtworkLoader` + `ArtworkImage` ported from Podcasts with their tests | P5-2, #585 (Jellyfin) | M | standard |
-| P5-5 | Library root and empty state on `LibraryViewModel`/`LibraryEmptyViewModel`; `DebugServerSeed`; import at launch and on refresh. **Done (#587)**, the POC's: categories from the enabled tabs, a `ContentUnavailableView` empty state, the import's progress row, pull to refresh | P5-3, #584, #585 | S | standard |
+| P5-5 | Library root and empty state on `LibraryViewModel`/`LibraryEmptyViewModel`; a debug sign-in seed (since removed); import at launch and on refresh. **Done (#587)**, the POC's: categories from the enabled tabs, a `ContentUnavailableView` empty state, the import's progress row, pull to refresh | P5-3, #584, #585 | S | standard |
 | P5-6a | Rows and `MediaActionsMenu` (context menu, swipes); Songs and Albums lists. **Core done (#587):** both lists on their ViewModels, a song tap plays the list from it, an album row pushes its route, a context menu plays or queues; artwork, swipes, selection, sort and the grid remain | P5-4, P5-5, wave 2 | M | standard |
 | P5-6b | Album artists, Genres, Playlists lists (create, rename, delete). **Core done (#587):** all three lists on their ViewModels, with artwork on Album Artists and Playlists rows, context menu media actions, and playlist create/rename/delete through alerts; selection, sort and the smart playlist rows' own detail remain | P5-6a | M | standard |
 | P5-7 | Detail screens: album, album artist, genre, playlist (reorder), smart playlist | P5-6a, wave 4 | M | standard |
@@ -304,8 +302,8 @@ per §2 above; the placeholder gear was removed until phase 7 has a real screen.
 **The #587 proof of concept landed** (P5-5 and the core of P5-6a, with the P5-2 pieces they need):
 the Library root (`LibraryView`), Songs (`SongListView`) and Albums (`AlbumListView`) on their shared
 ViewModels, each an `Observing` wrapper plus a plain `...Content` view tested with ViewInspector
-(`LibraryViewTests`, `LibraryListTests`, `DebugServerConfigTests`); `LibraryImport` imports at launch
-and on pull-to-refresh; `DebugServerSeed` signs in from the environment. How to run it is in
+(`LibraryViewTests`, `LibraryListTests`); `LibraryImport` imports at launch and on pull-to-refresh. It signed in
+through a debug launch seed until `ServerSignInView` (`ServerSignInViewTests`) replaced it. How to run it is in
 `.claude/rules/ios.md`, "Running the POC".
 
 Phase 6 then adds the mini player (#593), Now Playing, queue and the inspector's content on the same

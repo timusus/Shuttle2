@@ -54,7 +54,7 @@ struct SourcesViewTests {
 
     @Test func noServersExplainsWhatToConnectAndHidesTheScan() throws {
         let sut = SourcesContent(state: SourcesState(servers: []))
-        #expect((try? sut.inspect().find(text: "Stream your library from a Jellyfin, Emby or Plex server.")) != nil)
+        #expect((try? sut.inspect().find(text: "Stream your library from a Jellyfin or Emby server.")) != nil)
         #expect((try? sut.inspect().find(text: "Scan Now")) == nil)
     }
 
@@ -75,16 +75,18 @@ struct SourcesViewTests {
 
     // MARK: Picker -> sign-in route
 
-    @Test func pickerListsEveryTypeTheViewModelOffers() throws {
-        let sut = ServerTypePicker(types: SourcesViewModelKt.ServerTypes, onSelect: { _ in })
-        for title in ["Jellyfin", "Emby", "Plex"] {
+    @Test func pickerListsTheTypesIOSCanSignInTo() throws {
+        #expect(MediaProviderType.signInTypes == [.jellyfin, .emby])
+        let sut = ServerTypePicker(types: MediaProviderType.signInTypes, onSelect: { _ in })
+        for title in ["Jellyfin", "Emby"] {
             #expect((try? sut.inspect().find(text: title)) != nil)
         }
+        #expect((try? sut.inspect().find(text: "Plex")) == nil)
     }
 
     @Test func choosingATypeInThePickerReportsIt() throws {
         var chosen: MediaProviderType?
-        let sut = ServerTypePicker(types: SourcesViewModelKt.ServerTypes, onSelect: { chosen = $0 })
+        let sut = ServerTypePicker(types: MediaProviderType.signInTypes, onSelect: { chosen = $0 })
         try sut.inspect().find(viewWithAccessibilityIdentifier: "serverTypePicker.Emby").button().tap()
         #expect(chosen == .emby)
     }
@@ -112,12 +114,6 @@ struct SourcesViewTests {
         #expect(decoded == routes)
         #expect(Route.serverType(named: "Emby") == .emby)
         #expect(Route.serverType(named: "Gopher") == nil)
-    }
-
-    @Test func theSignInDestinationSaysItIsNotBuiltYet() throws {
-        let sut = ServerSignInPendingView(type: .jellyfin)
-        #expect((try? sut.inspect().find(text: "Sign-in Isn't Built Yet")) != nil)
-        #expect((try? sut.inspect().find(text: "Signing in to Jellyfin from the app is coming next.")) != nil)
     }
 
     // MARK: Reachability

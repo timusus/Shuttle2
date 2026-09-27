@@ -33,7 +33,7 @@ struct SourcesView: View {
                 navigator?.open(.serverSignIn(type))
             }
         }) {
-            ServerTypePicker(types: SourcesViewModelKt.ServerTypes, onSelect: { type in
+            ServerTypePicker(types: MediaProviderType.signInTypes, onSelect: { type in
                 choice.select(type)
                 showsPicker = false
             })
@@ -95,6 +95,12 @@ struct SourcesState: Equatable {
 }
 
 extension MediaProviderType {
+    /// The server types the picker offers on iOS: the shared `ServerTypes` less Plex, whose provider isn't in
+    /// `:shared` yet, so its sign-in has no authentication to run.
+    static var signInTypes: [MediaProviderType] {
+        SourcesViewModelKt.ServerTypes.filter { $0 != .plex }
+    }
+
     /// The name Sources and the picker show (Android's `titleRes`).
     var title: String {
         switch self {
@@ -141,7 +147,7 @@ struct SourcesContent: View {
                 Text("Servers")
             } footer: {
                 if state.servers.isEmpty {
-                    Text("Stream your library from a Jellyfin, Emby or Plex server.")
+                    Text("Stream your library from a Jellyfin or Emby server.")
                 }
             }
             if !state.servers.isEmpty {
@@ -196,7 +202,7 @@ extension SourcesState.Scan {
     }
 }
 
-/// "Connect a Server": a row per type the shared ViewModel offers (`ServerTypes`), as Android's picker sheet.
+/// "Connect a Server": a row per type iOS can sign in to (`MediaProviderType.signInTypes`), as Android's picker sheet.
 struct ServerTypePicker: View {
     let types: [MediaProviderType]
     let onSelect: (MediaProviderType) -> Void
@@ -220,20 +226,6 @@ struct ServerTypePicker: View {
             }
         }
         .presentationDetents([.medium, .large])
-    }
-}
-
-/// The sign-in destination until `ServerSignInView` lands on the shared `ServerSignInViewModel` (phase 7).
-struct ServerSignInPendingView: View {
-    let type: MediaProviderType?
-
-    var body: some View {
-        ContentUnavailableView {
-            Label("Sign-in Isn't Built Yet", systemImage: "hammer")
-        } description: {
-            Text("Signing in to \(type?.title ?? "this server") from the app is coming next.")
-        }
-        .navigationTitle(type?.title ?? "Sign In")
     }
 }
 

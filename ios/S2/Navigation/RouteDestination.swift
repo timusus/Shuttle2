@@ -14,8 +14,12 @@ struct RouteDestinationView: View {
             AlbumListView()
         case .sources:
             SourcesView()
-        case .serverSignIn(let type):
-            ServerSignInPendingView(type: Route.serverType(named: type))
+        case .serverSignIn(let name):
+            if let type = Route.serverType(named: name) {
+                ServerSignInView(type: type)
+            } else {
+                Text("Unknown server type")
+            }
         case .libraryCategory(.albumArtists):
             AlbumArtistListView()
         case .libraryCategory(.genres):

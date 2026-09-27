@@ -50,7 +50,7 @@ runtime, so `test.sh`'s default when none is booted) `AppShellTests`' two TabVie
 ## Running on a device
 
 ```bash
-ios/scripts/install-device.sh [jellyfin|emby] [DEVICE_ID] [TEAM_ID]   # default team 9HYNX943MQ (Podcasts'); server: "Running the POC"
+ios/scripts/install-device.sh [DEVICE_ID] [TEAM_ID]   # default team 9HYNX943MQ (Podcasts')
 ```
 
 Builds FFmpeg and the device (`iosArm64`) `Shared.framework`, then builds, installs and launches
@@ -73,45 +73,37 @@ changes the app's signing identity, and iOS refuses to upgrade an install across
 
 ## Running the POC
 
-DEBUG builds sign in to a Jellyfin or Emby server from launch-environment variables (`DebugServerSeed`,
-until `ServerSignInView` lands in phase 7): `S2_SERVER_TYPE` (`jellyfin`/`emby`), `S2_SERVER_URL` (with
-scheme; plain `http://` LAN servers work, ATS allows them), and either `S2_SERVER_API_KEY` (an admin API
-key; `S2_SERVER_USER` names the user to sign in as, default `shuttle-test`) or `S2_SERVER_USER` +
-`S2_SERVER_PASSWORD`. A key wins over a password: the seed looks the user up with it (`GET /Users`) and
-saves the key as that user's token. The session is saved in the Keychain, so later launches import
-without them. The key, password and token are never logged; the outcome is
-(`log stream --predicate 'category == "DebugServerSeed"'`), and a failed sign-in shows in the Library's
-empty state. With a key, `/Users/Me` fails (HTTP 500 refreshing the download permission), as on Android.
+The app signs in only through its own screen: Library's empty state (or its toolbar) > Sources > Connect a
+Server > Jellyfin or Emby (`ServerSignInView` on the shared `ServerSignInViewModel`). The address needs its
+scheme; plain `http://` LAN servers work, ATS allows them. The session is saved in the Keychain, so later
+launches import without signing in again.
 
 ```bash
-# Simulator, the usual path: reads ~/.config/s2-test/<server>.env (URL=, API_KEY=, as
-# support/scripts/seed-remote-provider.sh does), builds, installs and launches signed in. The key only
-# travels as a SIMCTL_CHILD_ env variable. BUILD=0 skips the build; RESET=1 wipes the simulator keychain
+# Build, install and launch on the simulator. BUILD=0 skips the build; RESET=1 wipes the simulator keychain
 # (the saved session) first; S2_SIMULATOR_UDID picks the simulator (default the iPhone 16 Pro, iOS 18.5)
-ios/scripts/run-sim-server.sh emby
+ios/scripts/run-sim-server.sh
 
-# Device: the same env file; devicectl only takes the environment on its command line, so the key is
-# visible in the process list while it runs
-ios/scripts/install-device.sh jellyfin [DEVICE_ID] [TEAM_ID]
-
-# Or by hand, with a password
-SIMCTL_CHILD_S2_SERVER_TYPE=jellyfin SIMCTL_CHILD_S2_SERVER_URL=https://music.example.com \
-  SIMCTL_CHILD_S2_SERVER_USER=me SIMCTL_CHILD_S2_SERVER_PASSWORD='...' \
-  xcrun simctl launch <udid> com.simplecityapps.shuttle.dev
+# Device
+ios/scripts/install-device.sh [DEVICE_ID] [TEAM_ID]
 ```
 
-Launching from Xcode works too: put the variables in the scheme's Run > Environment Variables (don't
-commit the scheme change). The app imports at launch; Library shows the progress, then its categories.
-Songs plays the list from the tapped song; Albums opens a placeholder album page; pull to refresh re-imports.
+The app imports at launch; Library shows the progress, then its categories. Songs plays the list from the
+tapped song; Albums opens a placeholder album page; pull to refresh re-imports.
 
-The end-to-end check, after `run-sim-server.sh` has signed in: Library > Songs, tap the first song, and
-the mini player shows it playing (screenshots under the output dir's `<timestamp>/poc-play/`):
+The end-to-end check signs in through the app, then Library > Songs, tap the first song, and the mini player
+shows it playing (screenshots under the output dir's `<timestamp>/`):
 
 ```bash
-maestro --udid <simulator> test --test-output-dir /tmp/s2-ios-e2e/maestro ios/maestro/poc-play.yaml
+S2_SIMULATOR_UDID=<simulator> ios/scripts/maestro-sim.sh             # poc-play.yaml; or name another flow
 ```
 
-The flow finds views by `accessibilityIdentifier` (`songRow.title`, `miniPlayer.title`,
+`maestro-sim.sh` reads `~/.config/s2-test/jellyfin.env` (`URL=`, `API_KEY=`) and passes both with `-e`; they
+are never printed or committed. The env file has no password, so `sign-in-jellyfin.yaml` types the address and
+username (`shuttle-test`), taps Use Quick Connect and approves its own code with the API key
+(`approve-quick-connect.js`, `POST /QuickConnect/Authorize`), as a second Jellyfin app would. Emby has no Quick
+Connect, so no flow signs in to it without a password.
+
+The flows find views by `accessibilityIdentifier` (`serverSignIn.*`, `songRow.title`, `miniPlayer.title`,
 `miniPlayer.playPause`); an id on a container overrides its children's, so give each control its own.
 
 ## Layout
@@ -127,8 +119,9 @@ ios/
   scripts/build-ffmpeg.sh      # FFmpeg n7.1.5, dynamic LGPL xcframeworks -> Playback/Frameworks (gitignored)
   scripts/test.sh              # S2 scheme on a simulator, or --package for swift test
   scripts/install-device.sh    # builds + installs + launches on a physical device (see below)
-  scripts/run-sim-server.sh    # builds + installs + launches on the simulator signed in to a test server
-  maestro/                  # Maestro flows against the simulator (poc-play.yaml)
+  scripts/run-sim-server.sh    # builds + installs + launches on the simulator ("Running the POC")
+  scripts/maestro-sim.sh       # runs a maestro/ flow, passing the Jellyfin test server's env with -e
+  maestro/                  # Maestro flows against the simulator (sign-in-jellyfin.yaml, poc-play.yaml)
   S2/
     Settings.bundle/        # Settings > S2 > Acknowledgements: FFmpeg's LGPL notice, relink note, LGPL text
     Info.plist              # generated by XcodeGen from project.yml `info:` (UIBackgroundModes); don't edit

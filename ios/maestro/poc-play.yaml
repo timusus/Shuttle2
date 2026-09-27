@@ -1,26 +1,24 @@
-# The iOS POC end to end against a real server (#587): Library > Songs, tap the first song, and the mini
-# player shows that song playing. Seed the session first with `ios/scripts/run-sim-server.sh emby|jellyfin`
-# (it builds, installs and launches signed in); this flow relaunches without clearing state, so the saved
-# session imports again, which the Songs screen shows until it's done.
+# The iOS POC end to end against a real server (#587): sign in to Jellyfin through the app (sign-in-jellyfin.yaml,
+# from a signed-out launch), then Library > Songs, tap the first song, and the mini player shows that song playing.
+# Run it with ios/scripts/maestro-sim.sh, which reads the server's env file and passes it with -e:
 #
-#   maestro --udid <simulator> test --test-output-dir /tmp/s2-ios-e2e/maestro ios/maestro/poc-play.yaml
+#   ios/scripts/maestro-sim.sh poc-play.yaml
 appId: com.simplecityapps.shuttle.dev
 ---
-- launchApp
-# The tab bar's Library item (not the navigation title): reselecting it pops a restored path to the root.
+- runFlow: sign-in-jellyfin.yaml
 - tapOn:
     text: "Library"
     id: "music.note.list"
 - extendedWaitUntil:
     visible: "Songs"
     timeout: 60000
-- takeScreenshot: 1-library
+- takeScreenshot: 4-library
 - tapOn: "Songs"
 - extendedWaitUntil:
     visible:
       id: "songRow.title"
     timeout: 120000
-- takeScreenshot: 2-songs
+- takeScreenshot: 5-songs
 - copyTextFrom:
     id: "songRow.title"
     index: 0
@@ -37,4 +35,4 @@ appId: com.simplecityapps.shuttle.dev
       id: "miniPlayer.playPause"
       text: "Pause"
     timeout: 15000
-- takeScreenshot: 3-mini-player-playing
+- takeScreenshot: 6-mini-player-playing
