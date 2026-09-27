@@ -209,6 +209,28 @@ interface IosAudioPlayerListener {                        // Swift calls these o
     next, shuffle, seek, remove, relaunch restores queue and position); audible gapless, lock screen,
     interruption and AirPlay go to `docs/testing/device-checks.md`.
 
+### Status of step 7 (app wiring)
+
+Done, in `ios/S2/Platform/Audio/` and `ios/S2/KMP/AppGraph.swift`:
+
+- `EngineAudioPlayer` is the Swift `IosAudioPlayer`: one engine call per method, each engine report
+  forwarded to the Kotlin listener synchronously on the main queue. The engine is behind an
+  `AudioEngine` protocol (`MusicPlaybackController+AudioEngine.swift`), so the adapter's tests run on
+  a fake. Kotlin (`IosPlayerController`) keeps all policy: it feeds the next track after each
+  transition and skips a track that fails to load.
+- `PlaybackSystemCoordinator` owns the wiring. `AudioSessionController` interruptions and routes
+  pause or resume the controller, a media-services reset rebuilds the engine and reloads, and the
+  session is activated before any play. `NowPlayingController` follows the queue, state, progress and
+  speed flows, and its remote commands call `PlaybackOperations` (next ignores repeat, previous
+  unforced, ±30/10 s skips for non-music songs, as on Android).
+- `AppGraph.initialize()` (from `S2App.init`) builds the engine, the adapter, `IosAppGraph(audioPlayer:)`
+  and the coordinator once.
+
+Still open (#588): the FFmpeg xcframework isn't built or shipped yet, so nothing decodes; stream
+resolution is a placeholder (a song's path as its URL, so the demo library's `demo://` songs fail and
+are skipped); artwork waits for a shared image loader; the output sample rate has no consumer until
+the EQ is shared; queue persistence is not wired.
+
 ## Risks
 
 1. **Engine effort and device-only truth**: the multi-item controller is new code in the part

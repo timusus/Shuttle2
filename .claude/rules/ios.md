@@ -42,7 +42,8 @@ Xcode 27.2 beta.
 
 ```
 shared/                     # :shared: s2.kmp-library + SKIE, exports :android:domain and :android:presentation
-  src/iosMain/.../IosAppGraph.kt   # the iOS graph (placeholder: in-memory songs until Metro, #583)
+  src/iosMain/.../IosAppGraph.kt   # the iOS graph, built by AppGraph.initialize() with the Swift audio player
+                                   # (placeholder: in-memory songs until Metro, #583)
 ios/
   project.yml               # source of truth; S2.xcodeproj is generated but committed (as in Podcasts)
   scripts/build-framework.sh
@@ -52,11 +53,13 @@ ios/
     Navigation/             # AppTab, Navigator (selected tab + one path per tab), ShellContainer
     Theme/LayoutTier.swift  # compact / regular / wide, same vocabulary as Android
     Features/               # Home, Library, Search, Playback (mini player, Now Playing presentation)
-    KMP/AppGraph.swift      # the Swift handle on IosAppGraph
+    KMP/AppGraph.swift      # initialize() at launch: IosAppDependencies, the composition point
     KMP/ViewModelCache.swift     # keyed, LRU-capped screen view models, cleared when their screen leaves
     KMP/CombineFlowBridge.swift  # Publisher.toKotlinFlow: Combine -> a Swift-fed WritableFlow, deduplicated
-    Platform/Audio/         # AudioSessionController, NowPlayingController (+ SystemRemoteCommandCenter)
-  Playback/                 # the S2Playback package: the gapless engine (see its README); no AVAudioSession
+    Platform/Audio/         # AudioSessionController, NowPlayingController, EngineAudioPlayer (the Kotlin
+                            # IosAudioPlayer), PlaybackSystemCoordinator (wires them to IosPlayerController)
+  Playback/                 # the S2Playback package: the gapless engine (see its README); no AVAudioSession.
+                            # A local package dependency of the S2 target only (project.yml `packages:`)
   S2Tests/                  # ViewInspector + swift-testing
 ```
 
@@ -99,12 +102,20 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
   `.shouldResume` only if we were playing and nothing paused or played meanwhile (Android's transient
   focus loss); no `.shouldResume` stays paused (permanent loss). `.oldDeviceUnavailable`: pause, never
   auto-resume (Android's becoming-noisy). Reports each new output sample rate (EQ coefficients) and asks
-  for an engine rebuild on a media-services reset. The player bridge must call `activate()` before play
-  and `playbackPaused()` on every pause.
+  for an engine rebuild on a media-services reset. `EngineAudioPlayer`'s `onWillPlay`/`onPaused` hooks call
+  `activate()` before any play and `playbackPaused()` on every pause.
 - `NowPlayingController`: metadata on `setItem`, elapsed/rate through `updatePlayback`, which only writes
   on a state/speed change, a >1 s jump or every 10 s (safe per tick). Artwork via the `loadArtwork`
   closure, dropped if the item changed. `SkipMode.interval` swaps next/previous for skip ±N s.
-- TODO(#588): the `IosAudioPlayer` bridge owns both and wires them to `IosPlayerController`.
+- `PlaybackSystemCoordinator` owns both and wires them to the Kotlin `IosPlayerController`
+  (`AppGraph.shared.playerController`): session events and remote commands call `PlaybackOperations`; Now
+  Playing follows the controller's flows. `AppGraph.initialize()` (from `S2App.init`) builds the
+  engine, `EngineAudioPlayer`, `IosAppGraph(audioPlayer:)` and the coordinator once.
+- `EngineAudioPlayer` is the Kotlin `IosAudioPlayer`: one engine call per method and no policy (the
+  queue, next track and failure handling are Kotlin's). **Threading:** Kotlin calls it on main; the
+  engine reports on the main queue and each report reaches the Kotlin listener synchronously there;
+  a failure found in the adapter (an unparseable URL) is posted to main, never raised inside the
+  Kotlin call. The engine sits behind the `AudioEngine` protocol so S2Tests use `FakeAudioEngine`.
 - Background audio is `UIBackgroundModes: [audio]` in project.yml's `info:`; nothing plays in the
   background without it.
 
@@ -131,3 +142,7 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
   notification into a Sendable event before hopping to main; keep it that way.
 - SourceKit in the editor shows "No such module 'Testing'" and "AVAudioSession is unavailable in macOS"
   for these files; xcodebuild is the truth.
+- **S2Tests never builds a real engine.** Tests make their own `IosAppGraph(audioPlayer:
+  EngineAudioPlayer(engine: FakeAudioEngine()))`; `AppGraph.shared` is the host app's, with a real
+  `MusicPlaybackController`. Kotlin work arrives on the main queue after the call returns, so await it
+  with `waitUntil { ... }` (`FakeAudioEngine.swift`).
