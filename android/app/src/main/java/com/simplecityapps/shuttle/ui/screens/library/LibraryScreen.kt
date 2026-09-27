@@ -238,6 +238,7 @@ fun LibraryTab.label(): String = stringResource(
 )
 
 /** Shows, hides and reorders the tabs; every change saves straight away. */
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun EditTabsSheet(
     uiState: LibraryUiState,
