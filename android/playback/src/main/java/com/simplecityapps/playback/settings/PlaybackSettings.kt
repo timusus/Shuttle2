@@ -3,11 +3,12 @@ package com.simplecityapps.playback.settings
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.settings.SettingsStore
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /** Settings > Playback & sound. The equalizer's preset and band gains are editor state, kept in PlaybackPreferenceManager. */
-@Singleton
+@SingleIn(AppScope::class)
 class PlaybackSettings @Inject constructor(
     store: SettingsStore
 ) {

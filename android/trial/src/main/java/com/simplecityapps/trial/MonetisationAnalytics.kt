@@ -3,11 +3,12 @@ package com.simplecityapps.trial
 import com.simplecityapps.shuttle.analytics.Analytics
 import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.model.MediaProviderType
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /** The paywall and server-use analytics events. */
-@Singleton
+@SingleIn(AppScope::class)
 class MonetisationAnalytics
 @Inject
 constructor(

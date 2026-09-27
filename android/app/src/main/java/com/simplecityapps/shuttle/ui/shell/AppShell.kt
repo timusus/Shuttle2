@@ -104,7 +104,7 @@ import kotlinx.coroutines.launch
  * a Navigation 3 display with list-detail, and the player as a sheet below 1200 dp or a
  * persistent pane from 1200 dp. The player state sits above the class branch, so one level
  * survives every resize, fold and rotation. [entryProvider] maps each route to its screen; tests of
- * the shell itself swap in screens that need no Hilt graph.
+ * the shell itself swap in screens that need no Metro graph.
  */
 @Composable
 fun AppShell(

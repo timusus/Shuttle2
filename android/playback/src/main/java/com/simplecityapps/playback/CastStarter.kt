@@ -5,8 +5,9 @@ import android.app.Application
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /**
  * Attaches Cast to [appPlayer] once the app first comes to the foreground ([startInForeground]), or once the playback
@@ -15,7 +16,7 @@ import javax.inject.Singleton
  * activity's or the service's start. A process started only in the background for anything else (a library scan, a
  * widget update) never sets Cast up. A Cast session left running resumes once it's attached.
  */
-@Singleton
+@SingleIn(AppScope::class)
 class CastStarter
 @Inject
 constructor(

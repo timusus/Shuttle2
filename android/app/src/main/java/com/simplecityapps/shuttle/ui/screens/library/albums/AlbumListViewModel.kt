@@ -16,8 +16,10 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlin.random.Random
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,7 +29,8 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-@HiltViewModel
+@ViewModelKey(AlbumListViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class AlbumListViewModel @Inject constructor(
     observeAlbums: ObserveAlbums,
     private val observeSongs: ObserveSongs,

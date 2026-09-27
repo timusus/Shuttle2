@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult.Message
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /**
  * Carries out a [MediaAction] and says what the UI should do next. A ViewModel delegates to it and hands the

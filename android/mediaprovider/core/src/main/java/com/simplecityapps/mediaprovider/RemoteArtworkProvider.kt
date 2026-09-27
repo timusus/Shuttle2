@@ -2,7 +2,7 @@ package com.simplecityapps.mediaprovider
 
 import android.net.Uri
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Qualifier
+import dev.zacsweers.metro.Qualifier
 
 interface RemoteArtworkProvider {
     fun handles(uri: Uri): Boolean

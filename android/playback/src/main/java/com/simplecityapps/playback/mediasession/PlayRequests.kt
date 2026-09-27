@@ -11,11 +11,12 @@ import com.simplecityapps.playback.androidauto.PlayQueue
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlin.coroutines.resume
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +35,7 @@ import timber.log.Timber
  * from another app, or a voice search. Each resolves to songs, which replace the queue through [QueueOperations].
  * The media session's callback and the app's own entry points (a search intent, a file opened with the app) share it.
  */
-@Singleton
+@SingleIn(AppScope::class)
 class PlayRequests
 @Inject
 constructor(

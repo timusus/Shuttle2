@@ -51,7 +51,6 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
@@ -87,6 +86,7 @@ import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 
 /** What the container's chrome shows for the current tab: its count, selection and overflow options. */
@@ -296,9 +296,9 @@ fun LibraryDestination(
     onOpen: (NavKey) -> Unit,
     onNavigate: (NavigationTarget) -> Unit,
 ) {
-    val viewModel: LibraryViewModel = hiltViewModel()
+    val viewModel: LibraryViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val emptyViewModel: LibraryEmptyViewModel = hiltViewModel()
+    val emptyViewModel: LibraryEmptyViewModel = metroViewModel()
     val content by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
     var connectingServer by rememberSaveable { mutableStateOf(false) }
@@ -307,9 +307,9 @@ fun LibraryDestination(
     }
 
     // The only tabs that support selection (#225); Genres/Playlists/Folders have none to clear.
-    val songViewModel: SongListViewModel = hiltViewModel()
-    val albumViewModel: AlbumListViewModel = hiltViewModel()
-    val artistViewModel: AlbumArtistListViewModel = hiltViewModel()
+    val songViewModel: SongListViewModel = metroViewModel()
+    val albumViewModel: AlbumListViewModel = metroViewModel()
+    val artistViewModel: AlbumArtistListViewModel = metroViewModel()
     val selectionCoordinator = remember(songViewModel, albumViewModel, artistViewModel) {
         LibrarySelectionCoordinator { tab ->
             when (tab) {
@@ -358,7 +358,7 @@ private fun LibraryPage(
 ) {
     when (tab) {
         LibraryTab.Songs -> {
-            val viewModel: SongListViewModel = hiltViewModel()
+            val viewModel: SongListViewModel = metroViewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             SongsPage(
                 state = state,
@@ -373,7 +373,7 @@ private fun LibraryPage(
         }
 
         LibraryTab.Albums -> {
-            val viewModel: AlbumListViewModel = hiltViewModel()
+            val viewModel: AlbumListViewModel = metroViewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             val snackbarHostState = LocalShellSnackbarHostState.current
             val resources = LocalResources.current
@@ -396,7 +396,7 @@ private fun LibraryPage(
         }
 
         LibraryTab.Artists -> {
-            val viewModel: AlbumArtistListViewModel = hiltViewModel()
+            val viewModel: AlbumArtistListViewModel = metroViewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             ArtistsPage(
                 state = state,
@@ -409,7 +409,7 @@ private fun LibraryPage(
         }
 
         LibraryTab.Genres -> {
-            val viewModel: GenreListViewModel = hiltViewModel()
+            val viewModel: GenreListViewModel = metroViewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             GenresPage(
                 state = state,
@@ -419,7 +419,7 @@ private fun LibraryPage(
         }
 
         LibraryTab.Playlists -> {
-            val viewModel: PlaylistListViewModel = hiltViewModel()
+            val viewModel: PlaylistListViewModel = metroViewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             var dialog by remember { mutableStateOf<PlaylistDialog?>(null) }
             var creating by rememberSaveable { mutableStateOf(false) }
@@ -452,7 +452,7 @@ private fun LibraryPage(
         }
 
         LibraryTab.Folders -> {
-            val viewModel: FolderListViewModel = hiltViewModel()
+            val viewModel: FolderListViewModel = metroViewModel()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             BackHandler(enabled = state.canNavigateUp, onBack = viewModel::onNavigateUp)
             FoldersPage(
@@ -471,7 +471,7 @@ private fun LibraryPage(
 @Composable
 private fun tabChrome(tab: LibraryTab?): LibraryTabChrome = when (tab) {
     LibraryTab.Songs -> {
-        val viewModel: SongListViewModel = hiltViewModel()
+        val viewModel: SongListViewModel = metroViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         LibraryTabChrome(
             subtitle = pluralString(R.plurals.songsPlural, state.songs.size),
@@ -496,7 +496,7 @@ private fun tabChrome(tab: LibraryTab?): LibraryTabChrome = when (tab) {
     }
 
     LibraryTab.Albums -> {
-        val viewModel: AlbumListViewModel = hiltViewModel()
+        val viewModel: AlbumListViewModel = metroViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         LibraryTabChrome(
             subtitle = pluralString(R.plurals.albumsPlural, state.albums.size),
@@ -520,7 +520,7 @@ private fun tabChrome(tab: LibraryTab?): LibraryTabChrome = when (tab) {
     }
 
     LibraryTab.Artists -> {
-        val viewModel: AlbumArtistListViewModel = hiltViewModel()
+        val viewModel: AlbumArtistListViewModel = metroViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         LibraryTabChrome(
             subtitle = pluralString(R.plurals.library_count_artists, state.albumArtists.size),
@@ -532,7 +532,7 @@ private fun tabChrome(tab: LibraryTab?): LibraryTabChrome = when (tab) {
     }
 
     LibraryTab.Genres -> {
-        val viewModel: GenreListViewModel = hiltViewModel()
+        val viewModel: GenreListViewModel = metroViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         LibraryTabChrome(
             subtitle = pluralString(R.plurals.library_count_genres, state.genres.size),
@@ -547,7 +547,7 @@ private fun tabChrome(tab: LibraryTab?): LibraryTabChrome = when (tab) {
     }
 
     LibraryTab.Playlists -> {
-        val viewModel: PlaylistListViewModel = hiltViewModel()
+        val viewModel: PlaylistListViewModel = metroViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         LibraryTabChrome(
             subtitle = pluralString(R.plurals.library_count_playlists, state.playlists.size),

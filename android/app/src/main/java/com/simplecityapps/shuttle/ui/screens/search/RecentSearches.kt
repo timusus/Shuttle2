@@ -1,15 +1,16 @@
 package com.simplecityapps.shuttle.ui.screens.search
 
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.updateAndGet
 
 /** The last [MaxRecentSearches] queries the user searched for, newest first, persisted across launches. */
-@Singleton
+@SingleIn(AppScope::class)
 class RecentSearches @Inject constructor(
     private val preferenceManager: GeneralPreferenceManager,
 ) {

@@ -1,8 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 apply plugin: 'com.android.library'
-apply plugin: 'dagger.hilt.android.plugin'
-apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'dev.zacsweers.metro'
 
 android {
     compileSdk = 37
@@ -44,9 +43,8 @@ dependencies {
     // TagLib
     implementation(libs.timusus.ktaglib)
 
-    // Hilt
-    implementation libs.hilt
-    ksp libs.hilt.compiler
+    // AndroidX Core (NotificationCompat, toUri, getSystemService)
+    implementation libs.androidx.core
 
     // Folder artwork lists SAF document trees
     implementation libs.androidx.documentfile

@@ -2,14 +2,15 @@ package com.simplecityapps.shuttle.telemetry
 
 import android.app.Application
 import com.simplecityapps.shuttle.BuildConfig
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import io.sentry.Breadcrumb
 import io.sentry.Sentry
 import io.sentry.SentryLevel
 import io.sentry.SentryOptions
 import io.sentry.android.core.SentryAndroid
 import io.sentry.android.core.SentryAndroidOptions
-import javax.inject.Inject
-import javax.inject.Singleton
 import timber.log.Timber
 
 /**
@@ -17,7 +18,7 @@ import timber.log.Timber
  * closed again if they turn it off, which uninstalls its crash handler. Without a DSN (local builds, tests) it never
  * starts at all.
  */
-@Singleton
+@SingleIn(AppScope::class)
 class SentryCrashReporting @Inject constructor(
     private val application: Application
 ) : CrashReportingSdk {

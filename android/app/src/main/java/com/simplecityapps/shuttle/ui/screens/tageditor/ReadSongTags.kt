@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.tageditor
 
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /** A song the editor can write, with the tags read from its file. */
 data class EditableSong(

@@ -32,7 +32,6 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
@@ -56,6 +55,7 @@ import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -230,7 +230,7 @@ fun PlaylistDetailDestination(
     onNavigateUp: () -> Unit,
     onNavigate: (NavigationTarget) -> Unit,
 ) {
-    val viewModel = hiltViewModel<PlaylistDetailViewModel, PlaylistDetailViewModel.Factory> { it.create(route.playlistId) }
+    val viewModel = assistedMetroViewModel<PlaylistDetailViewModel, PlaylistDetailViewModel.Factory> { create(route.playlistId) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalResources.current
     val snackbarHostState = LocalShellSnackbarHostState.current

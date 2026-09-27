@@ -27,10 +27,12 @@ import com.simplecityapps.playback.mediasession.awaitRestored
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.queueEntryOrNull
+import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.settings.ArtworkSettings
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -49,8 +51,12 @@ import timber.log.Timber
  * [ForegroundStarts] keeps a start in the foreground until its command has run, as the app starts too.
  */
 @UnstableApi
-@AndroidEntryPoint
 class PlaybackService : MediaLibraryService() {
+    @ContributesTo(AppScope::class)
+    interface Injector {
+        fun inject(service: PlaybackService)
+    }
+
     @Inject
     lateinit var player: Player
 
@@ -73,7 +79,7 @@ class PlaybackService : MediaLibraryService() {
     lateinit var artworkImageLoader: ArtworkImageLoader
 
     @Inject
-    lateinit var artworkCache: LruCache<String, Bitmap?>
+    lateinit var artworkCache: LruCache<String, Bitmap>
 
     @Inject
     lateinit var artworkSettings: ArtworkSettings
@@ -92,6 +98,7 @@ class PlaybackService : MediaLibraryService() {
     private lateinit var foregroundStarts: ForegroundStarts
 
     override fun onCreate() {
+        appGraph<Injector>().inject(this)
         super.onCreate()
         Timber.v("onCreate()")
 

@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 apply plugin: 'com.android.library'
 apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'dev.zacsweers.metro'
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas".toString())
@@ -55,6 +56,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Shuttle Core
+    implementation(libs.androidx.core)
     implementation(project(":android:core"))
     implementation(project(":android:domain"))
 
@@ -86,9 +88,6 @@ dependencies {
     // Moshi
     ksp(libs.moshi.kotlinCodegen)
 
-    // Hilt
-    implementation libs.hilt
-    ksp libs.hilt.compiler
 
     implementation libs.kotlinx.datetime
 }

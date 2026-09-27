@@ -14,7 +14,7 @@ class ConventionRules {
     }
 
     @Test
-    fun `Android components and Hilt and Room declarations carry their conventional suffix`() {
+    fun `Android components and Metro and Room declarations carry their conventional suffix`() {
         val bySuperclass = Production.classes.flatMap { declaration ->
             SUPERCLASS_SUFFIXES
                 .filter { (parents, _) -> declaration.parents().any { it.name.substringBefore('<') in parents } }
@@ -51,11 +51,10 @@ class ConventionRules {
         )
 
         val ANNOTATION_SUFFIXES = listOf(
-            "Module" to "Module",
+            "BindingContainer" to "Module",
             "Dao" to "Dao",
             "Database" to "Database",
-            "HiltViewModel" to "ViewModel",
-            "HiltWorker" to "Worker",
+            "ViewModelKey" to "ViewModel",
         )
     }
 }

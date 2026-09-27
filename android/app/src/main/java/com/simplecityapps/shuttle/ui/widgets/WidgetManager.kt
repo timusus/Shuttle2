@@ -13,14 +13,13 @@ import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.AppearanceSettings
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +39,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * The single path that keeps the home-screen widgets current. Playback state, queue, shuffle and repeat changes
  * request an update; requests are debounced, and each one writes the shared widget state once and redraws every widget.
  */
-@Singleton
+@SingleIn(AppScope::class)
 class WidgetManager
 @Inject
 constructor(
@@ -222,9 +221,8 @@ internal fun CoroutineScope.launchWidgetUpdateRequests(
     }
 }
 
-/** How the widget receivers, which Hilt can't inject, reach the [WidgetManager]. */
-@EntryPoint
-@InstallIn(SingletonComponent::class)
+/** How the widget receivers, which the graph doesn't construct, reach the [WidgetManager]. */
+@ContributesTo(AppScope::class)
 interface WidgetEntryPoint {
     fun widgetManager(): WidgetManager
 }

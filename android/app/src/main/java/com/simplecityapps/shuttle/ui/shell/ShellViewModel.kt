@@ -3,8 +3,10 @@ package com.simplecityapps.shuttle.ui.shell
 import androidx.lifecycle.ViewModel
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +20,8 @@ data class ShellUiState(
 )
 
 /** The shell's launch state, from Settings. */
-@HiltViewModel
+@ViewModelKey(ShellViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class ShellViewModel @Inject constructor(
     readSetting: ReadSetting,
 ) : ViewModel() {

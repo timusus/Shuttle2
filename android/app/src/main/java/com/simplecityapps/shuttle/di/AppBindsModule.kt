@@ -14,29 +14,24 @@ import com.simplecityapps.shuttle.appinitializers.ShortcutInitializer
 import com.simplecityapps.shuttle.appinitializers.TelemetryInitializer
 import com.simplecityapps.shuttle.appinitializers.TimberInitializer
 import com.simplecityapps.shuttle.appinitializers.WidgetInitializer
-import com.simplecityapps.shuttle.debug.livelog.LiveLogSink
 import com.simplecityapps.shuttle.entitlement.EntitledServerStreamPolicy
-import com.simplecityapps.shuttle.ui.screens.settings.LiveLogEntryPoint
 import com.simplecityapps.shuttle.ui.screens.sources.DefaultMediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.SafScannerFolderStore
 import com.simplecityapps.shuttle.ui.screens.sources.ScannerFolderStore
-import dagger.Binds
-import dagger.BindsOptionalOf
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import dagger.multibindings.IntoSet
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.IntoSet
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 abstract class AppBindsModule {
     @Binds
     abstract fun bindSongImportStateProvider(impl: MediaImporter): SongImportStateProvider
 
     @Binds
-    @Singleton
     abstract fun bindServerStreamPolicy(impl: EntitledServerStreamPolicy): ServerStreamPolicy
 
     @Binds
@@ -84,11 +79,4 @@ abstract class AppBindsModule {
     @Binds
     @IntoSet
     abstract fun provideAppearanceInitializer(bind: AppearanceInitializer): AppInitializer
-
-    /** Absent in release: only the debug build (`android/app/src/debug`) binds these. */
-    @BindsOptionalOf
-    abstract fun bindLiveLogSink(): LiveLogSink
-
-    @BindsOptionalOf
-    abstract fun bindLiveLogEntryPoint(): LiveLogEntryPoint
 }

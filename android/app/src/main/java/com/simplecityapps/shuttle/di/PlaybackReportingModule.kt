@@ -8,11 +8,11 @@ import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.shuttle.playbackreporting.PendingPlays
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportSender
 import com.simplecityapps.shuttle.query.SongQuery
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,16 +20,16 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.plus
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 class PlaybackReportingModule {
     // Each provider module contributes its reporter to the set.
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideAggregatePlaybackReporter(reporters: Set<@JvmSuppressWildcards PlaybackReporter>): AggregatePlaybackReporter = AggregatePlaybackReporter(reporters)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun providePlaybackReportSender(
         playbackReporter: AggregatePlaybackReporter,
         sharedPreferences: SharedPreferences,

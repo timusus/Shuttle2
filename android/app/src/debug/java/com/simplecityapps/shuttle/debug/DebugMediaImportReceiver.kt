@@ -4,8 +4,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.simplecityapps.mediaprovider.MediaImporter
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import com.simplecityapps.shuttle.di.appGraph
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,8 +20,12 @@ import kotlinx.coroutines.launch
  * moves its own work to IO but notifies its listeners on the caller's thread, and an IO caller
  * crashes Settings > Media's listener if the import finishes while that screen is open (#386).
  */
-@AndroidEntryPoint
 class DebugMediaImportReceiver : BroadcastReceiver() {
+    @ContributesTo(AppScope::class)
+    interface Injector {
+        fun inject(receiver: DebugMediaImportReceiver)
+    }
+
     @Inject
     lateinit var mediaImporter: MediaImporter
 
@@ -27,6 +33,7 @@ class DebugMediaImportReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
+        context.appGraph<Injector>().inject(this)
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.Main).launch {
             try {

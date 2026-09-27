@@ -2,7 +2,9 @@ package com.simplecityapps.shuttle.ui.screens.library.folders
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
@@ -11,8 +13,13 @@ import com.simplecityapps.shuttle.model.FolderNode
 import com.simplecityapps.shuttle.model.FolderTree
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactoryKey
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -45,13 +52,22 @@ data class FolderListUiState(
     val canNavigateUp: Boolean get() = currentFolder != null
 }
 
-@HiltViewModel
-class FolderListViewModel @Inject constructor(
+class FolderListViewModel @AssistedInject constructor(
     observeSongs: ObserveSongs,
-    private val savedStateHandle: SavedStateHandle,
+    @Assisted private val savedStateHandle: SavedStateHandle,
     @IoDispatcher ioDispatcher: CoroutineDispatcher,
     mediaImportObserver: SongImportStateProvider,
 ) : ViewModel() {
+    @AssistedFactory
+    @ViewModelAssistedFactoryKey(FolderListViewModel::class)
+    @ContributesIntoMap(AppScope::class)
+    fun interface Factory : ViewModelAssistedFactory {
+        override fun create(extras: CreationExtras): FolderListViewModel = create(extras.createSavedStateHandle())
+
+        fun create(
+            @Assisted savedStateHandle: SavedStateHandle
+        ): FolderListViewModel
+    }
 
     /** Derived once per library change, so navigating between folders doesn't rebuild it. */
     private val folderTree: StateFlow<FolderTree?> = observeSongs()

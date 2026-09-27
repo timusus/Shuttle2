@@ -20,8 +20,9 @@ import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -37,7 +38,7 @@ import kotlinx.coroutines.flow.shareIn
  * the main thread whenever a repository emits. Shared by every search screen; it stops following the library a minute
  * after the last one goes, so reopening search soon after reuses the index.
  */
-@Singleton
+@SingleIn(AppScope::class)
 class LibrarySearchIndex @Inject constructor(
     albumArtistRepository: AlbumArtistRepository,
     albumRepository: AlbumRepository,

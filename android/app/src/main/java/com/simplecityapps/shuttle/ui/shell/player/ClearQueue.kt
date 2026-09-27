@@ -5,7 +5,7 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /** A cleared queue as it stood, in both orders, so [RestoreQueue] can put it back. */
 data class QueueSnapshot(

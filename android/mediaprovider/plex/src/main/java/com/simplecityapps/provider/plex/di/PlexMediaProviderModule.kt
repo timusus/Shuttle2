@@ -21,30 +21,30 @@ import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.PlaybackReportingService
 import com.simplecityapps.provider.plex.http.PlexClientHeaderInterceptor
 import com.simplecityapps.provider.plex.http.UserService
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import dagger.multibindings.IntoMap
-import dagger.multibindings.IntoSet
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.IntoSet
+import dev.zacsweers.metro.Named
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import java.util.concurrent.TimeUnit
-import javax.inject.Named
-import javax.inject.Singleton
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.create
 
-@InstallIn(SingletonComponent::class)
-@Module
-open class PlexMediaProviderModule {
+@ContributesTo(AppScope::class)
+@BindingContainer
+class PlexMediaProviderModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     @Named("PlexRetrofit")
     fun provideRetrofit(
         @ApplicationContext context: Context,
@@ -65,24 +65,24 @@ open class PlexMediaProviderModule {
         .build()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideUserService(
         @Named("PlexRetrofit") retrofit: Retrofit
     ): UserService = retrofit.create()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideItemsService(
         @Named("PlexRetrofit") retrofit: Retrofit
     ): ItemsService = retrofit.create()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     @Named("PlexCredentialStore")
     fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): ServerCredentialStore = ServerCredentialStore(securePreferenceManager, prefix = "plex", addressKey = "plex_host")
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun providePlexAuthenticationManager(
         userService: UserService,
         @Named("PlexCredentialStore") credentialStore: ServerCredentialStore,
@@ -90,7 +90,7 @@ open class PlexMediaProviderModule {
     ): PlexAuthenticationManager = PlexAuthenticationManager(userService, credentialStore, clientIdentity)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun providePlexMediaProvider(
         @ApplicationContext context: Context,
         authenticationManager: PlexAuthenticationManager,
@@ -98,7 +98,7 @@ open class PlexMediaProviderModule {
     ): PlexMediaProvider = PlexMediaProvider(context, authenticationManager, itemsService)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     @IntoMap
     @MediaProviderTypeKey(MediaProviderType.Plex)
     fun providePlexMediaInfoProvider(
@@ -107,7 +107,7 @@ open class PlexMediaProviderModule {
     ): MediaInfoProvider = PlexMediaInfoProvider(authenticationManager, streamingBitrateCap)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun providePlaybackReportingService(
         @Named("PlexRetrofit") retrofit: Retrofit
     ): PlaybackReportingService = retrofit.create()

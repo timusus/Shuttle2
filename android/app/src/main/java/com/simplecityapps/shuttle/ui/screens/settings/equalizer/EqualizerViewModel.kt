@@ -9,8 +9,10 @@ import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.ui.screens.equalizer.FrequencyResponsePoint
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +42,8 @@ data class EqualizerUiState(
  * [EqualizerAudioProcessor] straight away, as the legacy DSP screen did; moving a band switches to the
  * Custom preset, which is stored once the drag ends.
  */
-@HiltViewModel
+@ViewModelKey(EqualizerViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class EqualizerViewModel @Inject constructor(
     observeSetting: ObserveSetting,
     readSetting: ReadSetting,

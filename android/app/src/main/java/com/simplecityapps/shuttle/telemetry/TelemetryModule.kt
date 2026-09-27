@@ -1,13 +1,13 @@
 package com.simplecityapps.shuttle.telemetry
 
 import com.simplecityapps.shuttle.analytics.Analytics
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 abstract class TelemetryModule {
     @Binds
     abstract fun bindCrashReportingSdk(impl: SentryCrashReporting): CrashReportingSdk

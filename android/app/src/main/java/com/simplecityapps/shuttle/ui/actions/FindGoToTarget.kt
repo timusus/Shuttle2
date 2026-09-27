@@ -4,7 +4,7 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.firstOrNull
 
 /** Finds the album or artist screen a "Go to album" or "Go to artist" action opens, for a single song or album. */

@@ -2,11 +2,12 @@ package com.simplecityapps.shuttle.settings
 
 import android.content.Context
 import android.content.SharedPreferences
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /** Binds [Setting]s to the app's default SharedPreferences, the file the settings screens have always written. */
-@Singleton
+@SingleIn(AppScope::class)
 class SettingsStore @Inject constructor(
     private val sharedPreferences: SharedPreferences
 ) {

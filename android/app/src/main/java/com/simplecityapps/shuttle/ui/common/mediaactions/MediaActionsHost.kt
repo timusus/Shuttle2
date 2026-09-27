@@ -35,7 +35,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.R
@@ -55,6 +54,7 @@ import com.simplecityapps.shuttle.ui.actions.format
 import com.simplecityapps.shuttle.ui.actions.toIntent
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 
 /** What an actions sheet acts on, and how its header reads. */
@@ -108,7 +108,7 @@ class MediaActionsState internal constructor(
 @Composable
 fun MediaActionsHost(
     onNavigate: (NavigationTarget) -> Unit,
-    viewModel: MediaActionsViewModel = hiltViewModel(),
+    viewModel: MediaActionsViewModel = metroViewModel(),
     content: @Composable (MediaActionsState) -> Unit,
 ) {
     val state = remember(viewModel) { MediaActionsState(viewModel::dispatch) }

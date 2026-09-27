@@ -5,32 +5,32 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import timber.log.Timber
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 class PersistenceModule {
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideSharedPrefs(
         @ApplicationContext context: Context
     ): SharedPreferences = context.defaultSharedPreferences()
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideGeneralPreferenceManager(preference: SharedPreferences): GeneralPreferenceManager = GeneralPreferenceManager(preference)
 
     @SuppressLint("ApplySharedPref")
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideSecurePreferenceManager(
         @ApplicationContext context: Context

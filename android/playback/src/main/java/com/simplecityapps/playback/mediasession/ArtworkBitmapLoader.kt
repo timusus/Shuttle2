@@ -33,7 +33,7 @@ import com.simplecityapps.shuttle.settings.ArtworkSettings
 class ArtworkBitmapLoader(
     private val context: Context,
     private val artworkImageLoader: ArtworkImageLoader,
-    private val artworkCache: LruCache<String, Bitmap?>,
+    private val artworkCache: LruCache<String, Bitmap>,
     private val artworkSettings: ArtworkSettings,
     private val currentSong: () -> Song?
 ) : BitmapLoader {

@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.appinitializers
 import android.app.Application
 import android.util.Log
 import androidx.tracing.trace
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 class AppInitializers
 @Inject

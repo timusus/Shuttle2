@@ -27,19 +27,19 @@ import com.simplecityapps.playback.queue.QueueSongRefresher
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.squareup.moshi.Moshi
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 class PlaybackModule {
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideQueueFacade(
         player: ExoPlayer,
@@ -51,7 +51,7 @@ class PlaybackModule {
     @Provides
     fun provideQueueOperations(queueFacade: QueueFacade): QueueOperations = queueFacade
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideQueueStore(
         activePlayer: Player,
@@ -62,7 +62,7 @@ class PlaybackModule {
         @AppCoroutineScope appCoroutineScope: CoroutineScope
     ): QueueStore = QueueStore(activePlayer, localPlayer, queueFacade, playbackPreferenceManager, songRepository, appCoroutineScope)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideQueueSongRefresher(
         songRepository: SongRepository,
@@ -70,7 +70,7 @@ class PlaybackModule {
         @AppCoroutineScope appCoroutineScope: CoroutineScope
     ): QueueSongRefresher = QueueSongRefresher(songRepository, queueOperations, appCoroutineScope)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun providePlaybackPreferenceManager(
         sharedPreferences: SharedPreferences,
@@ -101,7 +101,7 @@ class PlaybackModule {
         @ApplicationContext context: Context
     ): AudioEffectSessionManager = AudioEffectSessionManager(context)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideBitPerfectOutput(
         audioManager: AudioManager?,
@@ -112,7 +112,7 @@ class PlaybackModule {
         @AppCoroutineScope appCoroutineScope: CoroutineScope
     ): BitPerfectOutput = BitPerfectOutput(audioManager, playbackSettings, audioTrackMonitor, equalizerAudioProcessor, replayGainAudioProcessor, appCoroutineScope)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideSleepTimer(
         playbackOperations: PlaybackOperations,

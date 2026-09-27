@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.shell.player
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /**
  * A change to the queue from its rows, which name them by uid rather than index, so a queue that changed meanwhile

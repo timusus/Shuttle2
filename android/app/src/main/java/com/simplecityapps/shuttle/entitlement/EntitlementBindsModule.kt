@@ -4,11 +4,11 @@ import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.shell.player.ObserveGatedServerSkip
 import com.simplecityapps.trial.Entitlement
 import com.simplecityapps.trial.ServerAccessGate
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,14 +16,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /**
- * The Hilt bindings that need [Entitlement] (`:android:trial`): kept out of `ui` sources (`UiModuleRules`) so
+ * The bindings that need [Entitlement] (`:android:trial`): kept out of `ui` sources (`UiModuleRules`) so
  * the screens that need entitlement state depend on a domain port instead.
  */
-@Module
-@InstallIn(SingletonComponent::class)
+@BindingContainer
+@ContributesTo(AppScope::class)
 object EntitlementBindsModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideObserveServerStreamingNeedsPro(
         entitlement: @JvmSuppressWildcards StateFlow<Entitlement>,
         @AppCoroutineScope appCoroutineScope: CoroutineScope

@@ -1,8 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 apply plugin: 'com.android.library'
-apply plugin: 'com.google.devtools.ksp'
-apply plugin: 'dagger.hilt.android.plugin'
+apply plugin: 'dev.zacsweers.metro'
 
 android {
     compileSdk = 37
@@ -54,12 +53,12 @@ dependencies {
     // AndroidX Annotations
     api libs.androidx.annotation
 
-    // Hilt core
-    implementation libs.hilt
-    ksp libs.hilt.compiler
 
     // Timber
     api libs.timber
+
+    // WorkManager: the Metro-backed WorkerFactory the modules contribute their workers to
+    implementation libs.androidx.work.runtime.ktx
 
     // Tracing: trace() sections for startup and queue restore
     api libs.androidx.tracing

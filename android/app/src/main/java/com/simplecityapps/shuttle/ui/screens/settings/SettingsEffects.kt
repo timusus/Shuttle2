@@ -17,18 +17,18 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.widgets.WidgetManager
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
 import java.util.Date
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -114,8 +114,8 @@ class AndroidSettingsEffects @Inject constructor(
     }
 }
 
-@Module
-@InstallIn(SingletonComponent::class)
+@BindingContainer
+@ContributesTo(AppScope::class)
 abstract class SettingsEffectsModule {
     @Binds
     abstract fun bindSettingsEffects(effects: AndroidSettingsEffects): SettingsEffects

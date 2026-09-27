@@ -6,9 +6,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInRoute
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 /**
  * "Connect a server" from Home or Library (#487): the type picker, then the chosen type's existing sign-in dialog,
@@ -18,7 +18,7 @@ import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInRoute
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServerTypePickerRoute(onDismissRequest: () -> Unit) {
-    val viewModel: ServerTypePickerViewModel = hiltViewModel()
+    val viewModel: ServerTypePickerViewModel = metroViewModel()
     var signingIn by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
 
     val signingInType = signingIn

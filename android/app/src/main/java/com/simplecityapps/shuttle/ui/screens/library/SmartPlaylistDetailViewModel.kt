@@ -7,10 +7,13 @@ import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -26,14 +29,15 @@ data class SmartPlaylistDetailUiState(
 )
 
 /** One of the built-in smart playlists, resolved from its [SmartPlaylistId] slug; its songs in the playlist's own sort. */
-@HiltViewModel(assistedFactory = SmartPlaylistDetailViewModel.Factory::class)
 class SmartPlaylistDetailViewModel @AssistedInject constructor(
     @Assisted smartPlaylistId: String,
     observeSongs: ObserveSongs,
     observeCurrentSong: ObserveCurrentSong,
 ) : ViewModel() {
     @AssistedFactory
-    interface Factory {
+    @ManualViewModelAssistedFactoryKey(Factory::class)
+    @ContributesIntoMap(AppScope::class)
+    interface Factory : ManualViewModelAssistedFactory {
         fun create(smartPlaylistId: String): SmartPlaylistDetailViewModel
     }
 

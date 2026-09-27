@@ -6,7 +6,7 @@ import com.simplecityapps.provider.emby.http.PlaybackReport
 import com.simplecityapps.provider.emby.http.PlaybackReportingService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime

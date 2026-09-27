@@ -8,11 +8,11 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.scrobbling.worker.ScrobbleFlushWorker
-import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.zacsweers.metro.Inject
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 /**
  * Where a [com.simplecityapps.shuttle.scrobbling.ScrobblePlanner.Decision.Scrobble] lands: queued in Room so it

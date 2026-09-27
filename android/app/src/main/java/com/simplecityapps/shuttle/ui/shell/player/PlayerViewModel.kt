@@ -2,7 +2,9 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.CreationExtras
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.persistence.NowPlayingSnapshot
@@ -26,8 +28,13 @@ import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ViewModelAssistedFactoryKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -65,8 +72,7 @@ fun interface ObserveGatedServerSkip {
  * uiState carries the playback position beside the rest (see [PlayerScreenState]).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-@HiltViewModel
-class PlayerViewModel @Inject constructor(
+class PlayerViewModel @AssistedInject constructor(
     observeQueue: ObserveQueue,
     observePlayback: ObservePlayback,
     observeProgress: ObserveProgress,
@@ -88,9 +94,20 @@ class PlayerViewModel @Inject constructor(
     private val restoreQueue: RestoreQueue,
     private val availableMediaActions: AvailableMediaActions,
     private val mediaActionHandler: MediaActionHandler,
-    private val savedStateHandle: SavedStateHandle,
+    @Assisted private val savedStateHandle: SavedStateHandle,
 ) : ViewModel(),
     PlayerActions {
+    @AssistedFactory
+    @ViewModelAssistedFactoryKey(PlayerViewModel::class)
+    @ContributesIntoMap(AppScope::class)
+    fun interface Factory : ViewModelAssistedFactory {
+        override fun create(extras: CreationExtras): PlayerViewModel = create(extras.createSavedStateHandle())
+
+        fun create(
+            @Assisted savedStateHandle: SavedStateHandle
+        ): PlayerViewModel
+    }
+
     private val castAvailable = castAvailability.isAvailable()
 
     // Shown on a cold start until the saved queue is restored, then the restored queue's own song takes over.

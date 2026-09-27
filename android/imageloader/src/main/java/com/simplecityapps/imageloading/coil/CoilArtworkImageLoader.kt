@@ -15,9 +15,9 @@ import coil3.size.pxOrElse
 import coil3.toBitmap
 import coil3.transform.Transformation
 import com.simplecityapps.imageloading.ArtworkImageLoader
-import dagger.hilt.android.qualifiers.ApplicationContext
+import com.simplecityapps.shuttle.di.ApplicationContext
+import dev.zacsweers.metro.Inject
 import java.io.ByteArrayOutputStream
-import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

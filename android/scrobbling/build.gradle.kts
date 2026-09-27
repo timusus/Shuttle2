@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 // this slice adds the Room queue, the flush worker and the Last.fm client; the planner itself is pure Kotlin.
 plugins {
     id("com.android.library")
-    id("dagger.hilt.android.plugin")
+    id("dev.zacsweers.metro")
     id("com.google.devtools.ksp")
 }
 
@@ -50,8 +50,6 @@ dependencies {
 
     // WorkManager: the flush worker
     implementation(libs.androidx.work.runtime.ktx)
-    implementation(libs.androidx.hilt.work)
-    ksp(libs.androidx.hilt.compiler)
 
     // Last.fm client
     implementation(libs.retrofit2.retrofit)
@@ -59,10 +57,6 @@ dependencies {
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)
     ksp(libs.moshi.kotlinCodegen)
-
-    // Hilt
-    implementation(libs.hilt)
-    ksp(libs.hilt.compiler)
 
     // Testing
     testImplementation(libs.junit)

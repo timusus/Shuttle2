@@ -35,18 +35,18 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
 import com.simplecityapps.mediaprovider.RemoteArtworkInterceptor
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.ArtworkSettings
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import dagger.multibindings.Multibinds
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Multibinds
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import java.io.IOException
-import javax.inject.Singleton
 import okhttp3.Credentials
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -54,20 +54,20 @@ import okio.Path.Companion.toOkioPath
 
 object NoConnectivityException : IOException("No connectivity")
 
-@Module
-@InstallIn(SingletonComponent::class)
+@BindingContainer
+@ContributesTo(AppScope::class)
 interface RemoteArtworkInterceptorModule {
     // Empty unless a provider module contributes one
-    @Multibinds
+    @Multibinds(allowEmpty = true)
     @RemoteArtworkInterceptor
     fun remoteArtworkInterceptors(): Set<Interceptor>
 }
 
-@Module
-@InstallIn(SingletonComponent::class)
+@BindingContainer
+@ContributesTo(AppScope::class)
 object CoilModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideImageLoader(
         @ApplicationContext context: Context,
         okHttpClient: OkHttpClient,

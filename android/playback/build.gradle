@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 apply plugin: 'com.android.library'
-apply plugin: 'dagger.hilt.android.plugin'
+apply plugin: 'dev.zacsweers.metro'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
@@ -38,6 +38,9 @@ kotlin {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
+    // AndroidX Core
+    implementation libs.androidx.core
+
     // Shuttle Core
     implementation project(path: ':android:core')
 
@@ -50,9 +53,6 @@ dependencies {
     // AndroidX DocumentFile
     implementation libs.androidx.documentfile
 
-    // Hilt
-    implementation libs.hilt
-    ksp libs.hilt.compiler
 
     // Chromecast
     implementation libs.google.play.services.cast.framework

@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
@@ -23,6 +22,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
+import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 /** Genre detail (inventory §1): the albums its songs come from, then every song. */
 @Composable
@@ -89,7 +89,7 @@ fun GenreDetailDestination(
     onOpen: (NavKey) -> Unit,
     onNavigate: (NavigationTarget) -> Unit,
 ) {
-    val viewModel = hiltViewModel<GenreDetailViewModel, GenreDetailViewModel.Factory> { it.create(route.genreName) }
+    val viewModel = assistedMetroViewModel<GenreDetailViewModel, GenreDetailViewModel.Factory> { create(route.genreName) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     MediaActionsHost(onNavigate = onNavigate) { actions ->
         GenreDetailScreen(

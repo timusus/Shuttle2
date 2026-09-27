@@ -8,7 +8,7 @@ import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.mediaprovider.server.DirectPlayFormats
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 class PlexMediaInfoProvider
 @Inject

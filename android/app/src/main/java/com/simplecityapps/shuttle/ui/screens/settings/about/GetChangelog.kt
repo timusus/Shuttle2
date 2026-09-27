@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings.about
 
 import com.simplecityapps.shuttle.ui.screens.changelog.Changeset
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 class GetChangelog @Inject constructor(
     private val changelogRepository: ChangelogRepository

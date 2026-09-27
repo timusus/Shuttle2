@@ -2,9 +2,9 @@ package com.simplecityapps.shuttle.ui
 
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.trial.Entitlement
+import dev.zacsweers.metro.Inject
 import java.util.Date
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 
 /**
  * When to ask for a Play review: a week after S2 Pro was first seen, then at most every 30 days

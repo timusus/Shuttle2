@@ -3,14 +3,14 @@ package com.simplecityapps.shuttle.ui.actions
 import android.content.Context
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -30,8 +30,8 @@ class SafSongFileDeleter @Inject constructor(
     }
 }
 
-@Module
-@InstallIn(SingletonComponent::class)
+@BindingContainer
+@ContributesTo(AppScope::class)
 abstract class SongFileDeleterModule {
     @Binds
     abstract fun bindSongFileDeleter(deleter: SafSongFileDeleter): SongFileDeleter

@@ -2,11 +2,12 @@ package com.simplecityapps.shuttle.ui.screens.sources
 
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.settings.SettingsStore
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /** Where the library comes from on this device: the music permission's history and the scanner's folders. */
-@Singleton
+@SingleIn(AppScope::class)
 class SourcesSettings @Inject constructor(
     store: SettingsStore
 ) {

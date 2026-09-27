@@ -10,6 +10,7 @@ import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.offline.DownloadManager
 import androidx.media3.exoplayer.offline.DownloadNotificationHelper
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.downloads.DefaultSongDownloadManager
 import com.simplecityapps.shuttle.downloads.DefaultSongDownloadRepository
 import com.simplecityapps.shuttle.downloads.DownloadSettings
@@ -18,15 +19,14 @@ import com.simplecityapps.shuttle.downloads.SongDownloadRepository
 import com.simplecityapps.shuttle.downloads.downloadRequirements
 import com.simplecityapps.shuttle.downloads.runOnMainThreadBlocking
 import com.simplecityapps.shuttle.downloads.service.SongDownloadService
-import dagger.Binds
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.Qualifier
+import dev.zacsweers.metro.SingleIn
 import java.io.File
-import javax.inject.Qualifier
-import javax.inject.Singleton
 import timber.log.Timber
 
 /** The cache downloaded songs live in: app-private, never evicted. */
@@ -35,8 +35,8 @@ import timber.log.Timber
 annotation class DownloadCache
 
 @UnstableApi
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 abstract class DownloadsModule {
     @Binds
     abstract fun bindSongDownloadManager(impl: DefaultSongDownloadManager): SongDownloadManager
@@ -49,7 +49,7 @@ abstract class DownloadsModule {
         private const val TIMEOUT_MS = 30_000
 
         @Provides
-        @Singleton
+        @SingleIn(AppScope::class)
         fun provideDatabaseProvider(
             @ApplicationContext context: Context
         ): DatabaseProvider = StandaloneDatabaseProvider(context)
@@ -59,7 +59,7 @@ abstract class DownloadsModule {
          * nothing is ever evicted: a download only goes when it's removed.
          */
         @Provides
-        @Singleton
+        @SingleIn(AppScope::class)
         @DownloadCache
         fun provideDownloadCache(
             @ApplicationContext context: Context,
@@ -79,7 +79,7 @@ abstract class DownloadsModule {
         }
 
         @Provides
-        @Singleton
+        @SingleIn(AppScope::class)
         fun provideDownloadManager(
             @ApplicationContext context: Context,
             databaseProvider: DatabaseProvider,
@@ -93,7 +93,7 @@ abstract class DownloadsModule {
                     .setAllowCrossProtocolRedirects(true)
             // Media3's DownloadManager binds to whatever thread's Looper is current when it's
             // constructed (falling back to main only if the calling thread has none at all), and
-            // every later call must come from that same thread. Hilt resolves this singleton
+            // every later call must come from that same thread. Metro resolves this singleton
             // wherever it's first injected, which isn't guaranteed to be main, so force
             // construction onto main here rather than depending on caller discipline.
             return runOnMainThreadBlocking {
@@ -107,7 +107,7 @@ abstract class DownloadsModule {
         }
 
         @Provides
-        @Singleton
+        @SingleIn(AppScope::class)
         fun provideDownloadNotificationHelper(
             @ApplicationContext context: Context
         ): DownloadNotificationHelper = DownloadNotificationHelper(context, SongDownloadService.CHANNEL_ID)

@@ -1,7 +1,8 @@
 package com.simplecityapps.shuttle.settings
 
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /** Light, dark or follow the system. Stored by ordinal, so the order is fixed. */
 enum class ThemeMode {
@@ -20,7 +21,7 @@ enum class Accent {
     Amber
 }
 
-@Singleton
+@SingleIn(AppScope::class)
 class AppearanceSettings @Inject constructor(
     store: SettingsStore
 ) {

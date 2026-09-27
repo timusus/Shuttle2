@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.first
 
 /** What the player's transport, mode and speed controls ask of playback. */

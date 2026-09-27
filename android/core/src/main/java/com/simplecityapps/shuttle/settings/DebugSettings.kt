@@ -1,10 +1,11 @@
 package com.simplecityapps.shuttle.settings
 
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /** Settings > About > Advanced. */
-@Singleton
+@SingleIn(AppScope::class)
 class DebugSettings @Inject constructor(
     store: SettingsStore
 ) {

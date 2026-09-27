@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.search
 
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /**
  * The type chips a search is narrowed to. Empty is the All chip, and so is every type at once, which is how All is saved

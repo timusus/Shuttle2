@@ -4,7 +4,7 @@ import com.simplecityapps.mediaprovider.server.QuickConnectAuthentication
 import com.simplecityapps.mediaprovider.server.QuickConnectCode as SharedQuickConnectCode
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState as SharedQuickConnectPollState
 import com.simplecityapps.networking.userDescription
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 class JellyfinQuickConnectAuthentication @Inject constructor(
     private val authenticationManager: JellyfinAuthenticationManager,

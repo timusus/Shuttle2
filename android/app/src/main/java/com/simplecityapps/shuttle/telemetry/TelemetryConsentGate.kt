@@ -2,8 +2,9 @@ package com.simplecityapps.shuttle.telemetry
 
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.settings.PrivacySettings
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -26,7 +27,7 @@ interface AnalyticsSdk {
  * Crash reporting and analytics are separate choices ([PrivacySettings.crashReporting], [PrivacySettings.analytics]),
  * so each gates its own SDK.
  */
-@Singleton
+@SingleIn(AppScope::class)
 class TelemetryConsentGate @Inject constructor(
     private val privacySettings: PrivacySettings,
     private val crashReporting: CrashReportingSdk,

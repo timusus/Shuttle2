@@ -7,7 +7,7 @@ import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import timber.log.Timber
 
 /**

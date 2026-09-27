@@ -8,7 +8,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
@@ -20,6 +19,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
+import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 /** A built-in smart playlist (inventory §1): its songs in the playlist's own order, Play / Shuffle, and their actions. */
 @Composable
@@ -67,7 +67,7 @@ fun SmartPlaylistDetailDestination(
     onNavigateUp: () -> Unit,
     onNavigate: (NavigationTarget) -> Unit,
 ) {
-    val viewModel = hiltViewModel<SmartPlaylistDetailViewModel, SmartPlaylistDetailViewModel.Factory> { it.create(route.smartPlaylistId) }
+    val viewModel = assistedMetroViewModel<SmartPlaylistDetailViewModel, SmartPlaylistDetailViewModel.Factory> { create(route.smartPlaylistId) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val title = uiState.smartPlaylist?.let { stringResource(it.nameResId) }.orEmpty()
     val placeholder = uiState.smartPlaylist?.placeholder ?: ArtworkPlaceholder.SmartPlaylist

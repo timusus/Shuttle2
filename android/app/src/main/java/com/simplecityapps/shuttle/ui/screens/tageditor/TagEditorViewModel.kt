@@ -5,10 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.common.PendingEvents
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,7 +25,6 @@ import kotlinx.coroutines.launch
  * The tag editor for one song or several: reads the tags from the songs' files, lets the user change them, and
  * writes only the changed fields back.
  */
-@HiltViewModel(assistedFactory = TagEditorViewModel.Factory::class)
 class TagEditorViewModel @AssistedInject constructor(
     @Assisted songIds: List<Long>,
     observeSongs: ObserveSongs,
@@ -31,7 +33,9 @@ class TagEditorViewModel @AssistedInject constructor(
     private val tagFileAccess: TagFileAccess,
 ) : ViewModel() {
     @AssistedFactory
-    interface Factory {
+    @ManualViewModelAssistedFactoryKey(Factory::class)
+    @ContributesIntoMap(AppScope::class)
+    interface Factory : ManualViewModelAssistedFactory {
         fun create(songIds: List<Long>): TagEditorViewModel
     }
 

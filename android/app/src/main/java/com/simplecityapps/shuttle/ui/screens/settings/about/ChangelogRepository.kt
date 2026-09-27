@@ -1,11 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.settings.about
 
 import android.content.Context
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.ui.screens.changelog.Changeset
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber

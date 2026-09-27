@@ -1,5 +1,6 @@
 package com.simplecityapps.architecture
 
+import com.lemonappdev.konsist.api.declaration.KoClassDeclaration
 import com.lemonappdev.konsist.api.declaration.KoFileDeclaration
 import org.junit.Test
 
@@ -29,7 +30,7 @@ class PresentationRules {
         val violations = Production.viewModels.flatMap { viewModel ->
             buildList {
                 if (!viewModel.name.endsWith("ViewModel")) add(": not named *ViewModel")
-                if (viewModel.annotations.none { it.name == "HiltViewModel" }) add(": not @HiltViewModel")
+                if (!viewModel.isMetroViewModel()) add(": not contributed to the Metro ViewModel maps")
                 if (viewModel.hasParentWithName("AndroidViewModel")) add(": extends AndroidViewModel (8b)")
                 viewModel.constructorTypeNames()
                     .filter { it in setOf("Context", "Application", "Resources") }
@@ -41,7 +42,7 @@ class PresentationRules {
         }
         Baseline.assertMatches(
             "viewmodel-conventions",
-            "ViewModels are named *ViewModel, are @HiltViewModel, and have no Android framework dependencies (UDF 8b)",
+            "ViewModels are named *ViewModel, are contributed to the Metro ViewModel maps, and have no Android framework dependencies (UDF 8b)",
             violations,
         )
     }
@@ -102,7 +103,7 @@ class PresentationRules {
                 functions
                     .filter { it.hasPublicOrDefaultModifier && !it.hasOverrideModifier && it.name != "invoke" }
                     .forEach { add(": public fun ${it.name}") }
-                // Dagger's `@Inject constructor`, or Metro's class-level `@Inject` (the multiplatform domain, #582)
+                // Metro's `@Inject constructor`, or its class-level `@Inject`
                 val injectAnnotations = useCase.annotations + useCase.primaryConstructor?.annotations.orEmpty()
                 if (injectAnnotations.none { it.name == "Inject" || it.name == "AssistedInject" }) {
                     add(": no @Inject constructor")
@@ -141,10 +142,19 @@ class PresentationRules {
             declaration.functions(includeNested = false, includeLocal = false).any { it.name == "invoke" && it.hasOperatorModifier }
     }
 
+    /**
+     * Contributed to metrox-viewmodel's maps: `@ViewModelKey` on the class, or, for an assisted ViewModel, a
+     * nested factory keyed with `@ManualViewModelAssistedFactoryKey` or `@ViewModelAssistedFactoryKey`.
+     */
+    private fun KoClassDeclaration.isMetroViewModel() = annotations.any { it.name == "ViewModelKey" } ||
+        interfaces(includeNested = false).any { factory -> factory.annotations.any { it.name in ASSISTED_FACTORY_KEYS } }
+
     private fun KoFileDeclaration.isPresentation() = functions(includeNested = true, includeLocal = false).any { function -> function.annotations.any { it.name == "Composable" } } ||
         Production.viewModels.any { it.containingFile.path == path }
 
     private companion object {
+        val ASSISTED_FACTORY_KEYS = setOf("ManualViewModelAssistedFactoryKey", "ViewModelAssistedFactoryKey")
+
         val CHANNEL_FLOW_CALLS = listOf("receiveAsFlow", "consumeAsFlow")
 
         val DIRECT_DEPENDENCY_SUFFIXES = listOf("Operations", "Preference", "Preferences", "PreferenceManager", "Settings", "Store")

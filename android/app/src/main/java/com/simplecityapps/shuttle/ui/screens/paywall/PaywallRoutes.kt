@@ -16,7 +16,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -24,6 +23,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
 import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
@@ -32,10 +32,9 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import com.simplecityapps.trial.Billing
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import timber.log.Timber
@@ -90,8 +89,7 @@ fun PaywallHost(observePaywallRequests: ObservePaywallRequests) {
 }
 
 /** Play's purchase sheet needs an activity, so the entry opens it rather than the ViewModel. */
-@EntryPoint
-@InstallIn(SingletonComponent::class)
+@ContributesTo(AppScope::class)
 interface PaywallEntryPoint {
     fun billing(): Billing
 }
@@ -104,13 +102,13 @@ fun PaywallEntry(
     onStartTrial: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val viewModel = hiltViewModel<PaywallViewModel, PaywallViewModel.Factory> { it.create(source) }
+    val viewModel = assistedMetroViewModel<PaywallViewModel, PaywallViewModel.Factory> { create(source) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
     val activity = LocalActivity.current
     val uriHandler = LocalUriHandler.current
-    val billing = remember { EntryPointAccessors.fromApplication<PaywallEntryPoint>(context.applicationContext).billing() }
+    val billing = remember { context.appGraph<PaywallEntryPoint>().billing() }
     val scope = rememberCoroutineScope()
     ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
         when (event) {

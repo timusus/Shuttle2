@@ -5,19 +5,19 @@ import android.content.pm.PackageManager
 import android.os.Build
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.getOrCreateClientId
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 object ClientIdentityModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideClientIdentity(
         @ApplicationContext context: Context,
         securePreferenceManager: SecurePreferenceManager

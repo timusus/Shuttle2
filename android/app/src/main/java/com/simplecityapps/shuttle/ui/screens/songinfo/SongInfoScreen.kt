@@ -35,7 +35,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
@@ -52,6 +51,7 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
 import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoRoute
 import com.simplecityapps.shuttle.ui.shell.LocalInShellSheet
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -59,7 +59,7 @@ fun SongInfoDestination(
     route: SongInfoRoute,
     onNavigateUp: () -> Unit,
 ) {
-    val viewModel = hiltViewModel<SongInfoViewModel, SongInfoViewModel.Factory> { it.create(route.songId) }
+    val viewModel = assistedMetroViewModel<SongInfoViewModel, SongInfoViewModel.Factory> { create(route.songId) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = LocalShellSnackbarHostState.current

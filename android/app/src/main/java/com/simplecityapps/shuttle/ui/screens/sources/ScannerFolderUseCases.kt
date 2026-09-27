@@ -1,6 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.sources
 
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.StateFlow
 
 /** The folders picked in Sources, re-emitted as they change. */

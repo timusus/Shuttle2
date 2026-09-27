@@ -7,15 +7,16 @@ import com.posthog.android.PostHogAndroid
 import com.posthog.android.PostHogAndroidConfig
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.analytics.Analytics
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /**
  * [Analytics] through PostHog. Set up the first time the user opts in ([TelemetryConsentGate]), then opted in and out
  * as they change their mind; [capture] drops every event while they're opted out. Without an API key (local builds,
  * tests) it never sets up at all.
  */
-@Singleton
+@SingleIn(AppScope::class)
 class PostHogAnalytics @Inject constructor(
     private val application: Application
 ) : Analytics,

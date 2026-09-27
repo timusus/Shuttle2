@@ -4,14 +4,14 @@ import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.server.QuickConnectAuthentication
 import com.simplecityapps.provider.jellyfin.JellyfinQuickConnectAuthentication
 import com.simplecityapps.shuttle.model.MediaProviderType
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import dagger.multibindings.IntoMap
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.IntoMap
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 abstract class JellyfinQuickConnectModule {
     @Binds
     @IntoMap

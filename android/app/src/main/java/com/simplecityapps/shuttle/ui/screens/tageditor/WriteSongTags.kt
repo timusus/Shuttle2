@@ -4,7 +4,7 @@ import com.simplecityapps.localmediaprovider.local.provider.TagLibProperty
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlinx.datetime.LocalDate
 
 data class TagWriteResult(

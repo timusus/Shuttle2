@@ -1,24 +1,28 @@
 package com.simplecityapps.shuttle.debug.livelog
 
 import com.simplecityapps.shuttle.ui.screens.settings.LiveLogEntryPoint
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import java.util.Optional
 
-/** Fills the optional bindings `AppBindsModule` declares for the debug-only Live log screen. */
-@Module
-@InstallIn(SingletonComponent::class)
-abstract class LiveLogDebugModule {
+/**
+ * Binds the debug-only Live log screen. Release has no binding for the two `Optional`s, so their injection
+ * points fall back to their `Optional.empty()` defaults.
+ */
+@BindingContainer
+@ContributesTo(AppScope::class)
+interface LiveLogDebugModule {
     @Binds
-    @Singleton
-    abstract fun bindLiveLogBuffer(impl: InMemoryLiveLogBuffer): LiveLogBuffer
+    fun bindLiveLogBuffer(impl: InMemoryLiveLogBuffer): LiveLogBuffer
 
-    @Binds
-    @Singleton
-    abstract fun bindLiveLogSink(impl: InMemoryLiveLogBuffer): LiveLogSink
+    companion object {
+        @Provides
+        fun provideLiveLogSink(impl: InMemoryLiveLogBuffer): Optional<LiveLogSink> = Optional.of(impl)
 
-    @Binds
-    abstract fun bindLiveLogEntryPoint(impl: LiveLogEntryPointImpl): LiveLogEntryPoint
+        @Provides
+        fun provideLiveLogEntryPoint(impl: LiveLogEntryPointImpl): Optional<LiveLogEntryPoint> = Optional.of(impl)
+    }
 }

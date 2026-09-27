@@ -25,7 +25,7 @@ import okio.Buffer
  * artists, so Robolectric and Roborazzi tests show real artwork. Anything else fails to load and
  * keeps its placeholder, as it does with no hook at all.
  *
- * The replacement skips the app's `CoilModule` loader (it needs Hilt, which unit tests don't run),
+ * The replacement skips the app's `CoilModule` loader (it needs the Metro graph, which unit tests don't build),
  * loads on the calling thread and has no caches. Production loading is untouched. [install]
  * before setting content; [uninstall] in an `@After`.
  */

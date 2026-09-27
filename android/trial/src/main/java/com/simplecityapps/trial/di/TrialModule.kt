@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.content.getSystemService
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.BuildConfig
 import com.simplecityapps.trial.Entitlement
@@ -15,13 +16,12 @@ import com.simplecityapps.trial.PromoCodeService
 import com.simplecityapps.trial.ServerAccessGate
 import com.simplecityapps.trial.SharedPreferencesEntitlementStore
 import com.squareup.moshi.Moshi
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Named
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Named
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -30,11 +30,11 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 class TrialModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     @Named("S2ApiRetrofit")
     fun provideRetrofit(
         @ApplicationContext context: Context,
@@ -59,13 +59,13 @@ class TrialModule {
         .build()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun providePromoCodeService(
         @Named("S2ApiRetrofit") retrofit: Retrofit
     ): PromoCodeService = retrofit.create(PromoCodeService::class.java)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideBilling(
         @ApplicationContext context: Context,
         @AppCoroutineScope coroutineScope: CoroutineScope,
@@ -73,7 +73,7 @@ class TrialModule {
     ): Billing = PlayBilling(context, coroutineScope, analytics)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideEntitlementStore(
         @ApplicationContext context: Context
     ): EntitlementStore = SharedPreferencesEntitlementStore(
@@ -81,7 +81,7 @@ class TrialModule {
     )
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideEntitlementRepository(
         billing: Billing,
         store: EntitlementStore,
@@ -101,6 +101,6 @@ class TrialModule {
     fun provideEntitlement(entitlementRepository: EntitlementRepository): StateFlow<Entitlement> = entitlementRepository.entitlement
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideServerAccessGate(entitlementRepository: EntitlementRepository): ServerAccessGate = ServerAccessGate(entitlementRepository.entitlement, entitlementRepository::startServerTrialIfEligible)
 }

@@ -18,10 +18,13 @@ import com.simplecityapps.shuttle.ui.actions.ReorderPlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.UpdatePlaylistSortOrder
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -70,7 +73,6 @@ sealed interface PlaylistDetailEvent {
  * multi-selection for batch removal, and the manage actions (sort, rename, clear, delete, export to m3u).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-@HiltViewModel(assistedFactory = PlaylistDetailViewModel.Factory::class)
 class PlaylistDetailViewModel @AssistedInject constructor(
     @Assisted playlistId: Long,
     observePlaylists: ObservePlaylists,
@@ -84,7 +86,9 @@ class PlaylistDetailViewModel @AssistedInject constructor(
     observeCurrentSong: ObserveCurrentSong,
 ) : ViewModel() {
     @AssistedFactory
-    interface Factory {
+    @ManualViewModelAssistedFactoryKey(Factory::class)
+    @ContributesIntoMap(AppScope::class)
+    interface Factory : ManualViewModelAssistedFactory {
         fun create(playlistId: Long): PlaylistDetailViewModel
     }
 

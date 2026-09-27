@@ -6,11 +6,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.simplecityapps.playback.mediasession.PlayRequests
+import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
 import com.simplecityapps.shuttle.ui.screens.paywall.PaywallHost
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
@@ -20,8 +22,11 @@ import com.simplecityapps.shuttle.ui.shell.ShellRoute
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.EntitlementRepository
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
+import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -29,8 +34,15 @@ import timber.log.Timber
  * The app's only screen: the Compose shell (docs/architecture/app-shell.md). An AppCompatActivity, because the
  * server sign-in dialogs and the Cast route chooser show as dialog fragments over it.
  */
-@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+    @ContributesTo(AppScope::class)
+    interface Injector {
+        fun inject(activity: MainActivity)
+    }
+
+    @Inject
+    lateinit var viewModelFactory: MetroViewModelFactory
+
     @Inject
     lateinit var themeManager: ThemeManager
 
@@ -64,6 +76,7 @@ class MainActivity : AppCompatActivity() {
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        appGraph<Injector>().inject(this)
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
@@ -71,9 +84,11 @@ class MainActivity : AppCompatActivity() {
         themeManager.setTheme(this)
 
         setContent {
-            S2AppTheme {
-                ShellRoute()
-                PaywallHost(observePaywallRequests)
+            CompositionLocalProvider(LocalMetroViewModelFactory provides viewModelFactory) {
+                S2AppTheme {
+                    ShellRoute()
+                    PaywallHost(observePaywallRequests)
+                }
             }
         }
 

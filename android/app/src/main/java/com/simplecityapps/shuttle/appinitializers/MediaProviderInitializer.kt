@@ -4,10 +4,10 @@ import android.app.Application
 import android.content.Context
 import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.mediaprovider.worker.MediaImportWorker
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.ui.screens.sources.DefaultMediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 class MediaProviderInitializer
 @Inject

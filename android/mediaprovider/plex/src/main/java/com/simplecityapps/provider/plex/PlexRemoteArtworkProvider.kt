@@ -7,7 +7,7 @@ import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.Metadata
 import com.simplecityapps.provider.plex.http.item
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /** Artwork urls on the signed-in Plex server; they carry no token, which [PlexArtworkTokenInterceptor] adds at request time. */
 class PlexRemoteArtworkProvider

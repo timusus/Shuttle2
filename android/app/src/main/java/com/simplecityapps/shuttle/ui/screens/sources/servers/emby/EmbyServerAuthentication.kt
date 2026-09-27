@@ -5,7 +5,7 @@ import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.shuttle.ui.screens.sources.servers.SavedServerLogin
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerAuthentication
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerLogin
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 class EmbyServerAuthentication @Inject constructor(
     private val authenticationManager: EmbyAuthenticationManager,

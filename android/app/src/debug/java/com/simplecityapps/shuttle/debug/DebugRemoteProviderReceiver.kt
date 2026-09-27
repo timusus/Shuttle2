@@ -10,10 +10,12 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
+import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.model.MediaProviderType
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
-import javax.inject.Named
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.Named
 import timber.log.Timber
 
 /**
@@ -29,8 +31,12 @@ import timber.log.Timber
  * token for parity with Plex's [ServerCredentialStore.authenticatedCredentials],
  * so the seed script can pass a placeholder instead of looking one up.
  */
-@AndroidEntryPoint
 class DebugRemoteProviderReceiver : BroadcastReceiver() {
+    @ContributesTo(AppScope::class)
+    interface Injector {
+        fun inject(receiver: DebugRemoteProviderReceiver)
+    }
+
     @Inject
     @field:Named("JellyfinCredentialStore")
     lateinit var jellyfinCredentialStore: ServerCredentialStore
@@ -62,6 +68,7 @@ class DebugRemoteProviderReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
+        context.appGraph<Injector>().inject(this)
         val address = intent.getStringExtra(EXTRA_ADDRESS)?.trimEnd('/')
         val userId = intent.getStringExtra(EXTRA_USER_ID)
         val accessToken = intent.getStringExtra(EXTRA_ACCESS_TOKEN)

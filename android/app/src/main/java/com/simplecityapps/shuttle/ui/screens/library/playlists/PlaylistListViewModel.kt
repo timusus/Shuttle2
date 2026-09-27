@@ -16,8 +16,10 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistId
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,7 +32,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
-@HiltViewModel
+@ViewModelKey(PlaylistListViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class PlaylistListViewModel @Inject constructor(
     observePlaylists: ObservePlaylists,
     private val createPlaylist: CreatePlaylist,

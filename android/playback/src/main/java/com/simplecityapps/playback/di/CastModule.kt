@@ -8,17 +8,17 @@ import com.simplecityapps.playback.chromecast.CastService
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.chromecast.CastStreams
 import com.simplecityapps.playback.chromecast.HttpServer
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import com.simplecityapps.shuttle.di.ApplicationContext
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 class CastModule {
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideCastService(
         @ApplicationContext context: Context,
@@ -27,18 +27,18 @@ class CastModule {
         streams: CastStreams
     ): CastService = CastService(context, songRepository, artworkImageLoader, streams)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideCastStreams(mediaInfoProvider: AggregateMediaInfoProvider): CastStreams = CastStreams(mediaInfoProvider)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideHttpServer(
         castService: CastService,
         streams: CastStreams
     ): HttpServer = HttpServer(castService, streams)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideCastSessionManager(
         @ApplicationContext context: Context,

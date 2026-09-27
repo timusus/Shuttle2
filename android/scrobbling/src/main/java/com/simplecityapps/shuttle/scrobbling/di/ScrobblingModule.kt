@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.scrobbling.di
 
 import android.content.Context
 import androidx.room.Room
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.scrobbling.lastfm.LASTFM_BASE_URL
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmSessionStore
@@ -11,14 +12,13 @@ import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDao
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDatabase
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import dagger.Binds
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Qualifier
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.Qualifier
+import dev.zacsweers.metro.SingleIn
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
@@ -27,17 +27,17 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 @Retention(AnnotationRetention.BINARY)
 annotation class LastFmMoshi
 
-@Module
-@InstallIn(SingletonComponent::class)
+@BindingContainer
+@ContributesTo(AppScope::class)
 abstract class ScrobblingBindingsModule {
     @Binds
     abstract fun bindLastFmSessionStore(impl: SecurePreferenceLastFmSessionStore): LastFmSessionStore
 }
 
-@Module
-@InstallIn(SingletonComponent::class)
+@BindingContainer
+@ContributesTo(AppScope::class)
 object ScrobblingModule {
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideScrobbleDatabase(
         @ApplicationContext context: Context
@@ -47,14 +47,14 @@ object ScrobblingModule {
     fun provideScrobbleDao(database: ScrobbleDatabase): ScrobbleDao = database.scrobbleDao()
 
     @LastFmMoshi
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideLastFmMoshi(): Moshi = Moshi.Builder()
         .add(ScrobblesJsonAdapterFactory())
         .addLast(KotlinJsonAdapterFactory())
         .build()
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideLastFmApi(
         okHttpClient: OkHttpClient,

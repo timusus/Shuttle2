@@ -12,10 +12,13 @@ import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
 import com.simplecityapps.shuttle.ui.actions.ObserveSongsForGenre
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,7 +39,6 @@ data class GenreDetailUiState(
 
 /** One genre's songs and the albums they come from, loaded by the genre's name. */
 @OptIn(ExperimentalCoroutinesApi::class)
-@HiltViewModel(assistedFactory = GenreDetailViewModel.Factory::class)
 class GenreDetailViewModel @AssistedInject constructor(
     @Assisted genreName: String,
     observeGenres: ObserveGenres,
@@ -45,7 +47,9 @@ class GenreDetailViewModel @AssistedInject constructor(
     observeCurrentSong: ObserveCurrentSong,
 ) : ViewModel() {
     @AssistedFactory
-    interface Factory {
+    @ManualViewModelAssistedFactoryKey(Factory::class)
+    @ContributesIntoMap(AppScope::class)
+    interface Factory : ManualViewModelAssistedFactory {
         fun create(genreName: String): GenreDetailViewModel
     }
 

@@ -2,8 +2,10 @@ package com.simplecityapps.shuttle.debug.livelog
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -12,7 +14,8 @@ import kotlinx.coroutines.flow.stateIn
 data class LiveLogUiState(val lines: List<LiveLogLine> = emptyList())
 
 /** Backs the Live log screen: [LiveLogBuffer]'s recent output, live. */
-@HiltViewModel
+@ViewModelKey(LiveLogViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class LiveLogViewModel
 @Inject
 constructor(

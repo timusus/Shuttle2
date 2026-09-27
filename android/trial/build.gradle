@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     id 'com.android.library'
     id 'com.google.devtools.ksp'
+    id 'dev.zacsweers.metro'
 }
 
 android {
@@ -56,9 +57,6 @@ dependencies {
     // Timber
     implementation libs.timber
 
-    // Hilt
-    implementation libs.hilt
-    ksp libs.hilt.compiler
 
     // Coroutines
     api(libs.kotlinx.coroutinesCore)

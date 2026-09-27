@@ -12,8 +12,10 @@ import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -45,7 +47,8 @@ enum class HomeEvent {
     AnalyticsNowOn,
 }
 
-@HiltViewModel
+@ViewModelKey(HomeViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class HomeViewModel @Inject constructor(
     homeSections: HomeSections,
     private val isWhatsNewPending: IsWhatsNewPending,

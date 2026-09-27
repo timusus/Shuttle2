@@ -8,9 +8,10 @@ import android.provider.DocumentsContract
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FolderFilter
 import com.simplecityapps.localmediaprovider.local.provider.taglib.ScannerFolders
 import com.simplecityapps.localmediaprovider.local.provider.taglib.externalStorageTreeFolder
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
-import javax.inject.Singleton
+import com.simplecityapps.shuttle.di.ApplicationContext
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -72,7 +73,7 @@ interface ScannerFolderStore {
  * remove, and a stale [load] can't overwrite a newer one in [folders]. The methods are plain blocking calls (the
  * scanner reads [scannerFolders] synchronously), hence a JVM monitor rather than a coroutine `Mutex`.
  */
-@Singleton
+@SingleIn(AppScope::class)
 class SafScannerFolderStore @Inject constructor(
     @ApplicationContext private val context: Context,
     private val settings: SourcesSettings

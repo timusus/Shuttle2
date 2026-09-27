@@ -18,11 +18,10 @@ import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueSongRefresher
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
-import dagger.Lazy
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -65,10 +64,10 @@ constructor(
 
     /** Each starts itself when it's created, so creating it here is what starts it; Cast waits for the foreground. */
     private fun startPlaybackComponents(application: Application) {
-        castStarter.get().startInForeground(application)
-        playRequests.get().launchPlaybackFailureMessages()
-        bitPerfectOutput.get()
-        queueSongRefresher.get()
+        castStarter.value.startInForeground(application)
+        playRequests.value.launchPlaybackFailureMessages()
+        bitPerfectOutput.value
+        queueSongRefresher.value
     }
 
     /** Compared against a snapshot taken here, so the initial state isn't handled as a change, and none made in between is missed. */

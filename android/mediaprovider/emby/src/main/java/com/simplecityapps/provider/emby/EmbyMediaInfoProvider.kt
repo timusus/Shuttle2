@@ -8,7 +8,7 @@ import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.StreamingBitrateCap
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 class EmbyMediaInfoProvider
 @Inject

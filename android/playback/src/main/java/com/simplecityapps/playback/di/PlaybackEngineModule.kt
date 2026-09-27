@@ -35,20 +35,19 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.analytics.Analytics
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.MediaProviderType
-import dagger.Lazy
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 class PlaybackEngineModule {
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideEqualizer(
         playbackPreferenceManager: PlaybackPreferenceManager,
@@ -67,14 +66,14 @@ class PlaybackEngineModule {
         preset = playbackPreferenceManager.preset
     }
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideReplayGainAudioProcessor(playbackSettings: PlaybackSettings): ReplayGainAudioProcessor = ReplayGainAudioProcessor(playbackSettings.replayGainMode.value, playbackSettings.preAmpGain.value.toDouble())
 
     @Provides
     fun provideEqualizerFrequencyResponse(): EqualizerFrequencyResponse = DefaultEqualizerFrequencyResponse()
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideAggregateMediaInfoProvider(
         // Each remote provider module contributes its own entry (see MediaProviderTypeKey)
@@ -82,15 +81,15 @@ class PlaybackEngineModule {
         serverStreamPolicy: ServerStreamPolicy
     ): AggregateMediaInfoProvider = AggregateMediaInfoProvider(providers.values, serverStreamPolicy)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideAudioTrackMonitor(): AudioTrackMonitor = AudioTrackMonitor()
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideSongUriResolver(mediaInfoProvider: AggregateMediaInfoProvider): SongUriResolver = SongUriResolver(MediaInfoMediaResolver(mediaInfoProvider))
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideExoPlayerFactory(
         @ApplicationContext context: Context,
@@ -111,18 +110,18 @@ class PlaybackEngineModule {
     )
 
     // The local player: it owns the queue, and plays it when not casting. It lives on the main looper.
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideExoPlayer(exoPlayerFactory: ExoPlayerFactory): ExoPlayer = trace("S2 build ExoPlayer") { exoPlayerFactory.create() }
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideCastMediaItemConverter(
         @ApplicationContext context: Context,
         streams: CastStreams
     ): CastMediaItemConverter = CastMediaItemConverter(CastMediaItemConverter.wifiAddress(context), streams, context.getString(com.simplecityapps.core.R.string.unknown))
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideCastQueue(
         @ApplicationContext context: Context,
@@ -140,7 +139,7 @@ class PlaybackEngineModule {
     // The player the app plays through: the ExoPlayer, then, once Cast is attached (see CastStarter), a Cast player
     // around it that plays on a Cast receiver while a Cast session is up. The Cast player is built on the main thread,
     // as Cast requires.
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideAppPlayer(
         @ApplicationContext context: Context,
@@ -151,10 +150,10 @@ class PlaybackEngineModule {
         castSessionManager: Lazy<CastSessionManager>,
         audioEffectSessionManager: AudioEffectSessionManager
     ): AppPlayer = AppPlayer(exoPlayer) {
-        if (castSessionManager.get().start()) {
+        if (castSessionManager.value.start()) {
             CastPlayer.Builder(context)
                 .setLocalPlayer(exoPlayer)
-                .setRemotePlayer(RemoteCastPlayer.Builder(context).setMediaItemConverter(converter.get()).build())
+                .setRemotePlayer(RemoteCastPlayer.Builder(context).setMediaItemConverter(converter.value).build())
                 .setTransferCallback(castQueue)
                 .build()
                 .also(castQueue::attach)
@@ -169,7 +168,7 @@ class PlaybackEngineModule {
     @Provides
     fun providePlayer(appPlayer: AppPlayer): Player = appPlayer
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun providePlaybackOperations(
         @ApplicationContext context: Context,

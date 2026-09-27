@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.scrobbling.lastfm
 
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /**
  * The signed-in Last.fm session key ([authspec](https://www.last.fm/api/authspec)), which doesn't expire on

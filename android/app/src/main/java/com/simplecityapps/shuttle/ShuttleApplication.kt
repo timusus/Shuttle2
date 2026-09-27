@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle
 
 import android.app.Application
 import android.content.Intent
-import androidx.hilt.work.HiltWorkerFactory
 import androidx.tracing.trace
 import androidx.work.Configuration
 import coil3.ImageLoader
@@ -11,24 +10,29 @@ import coil3.SingletonImageLoader
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.di.AppGraph
+import com.simplecityapps.shuttle.di.AppGraphOwner
+import com.simplecityapps.shuttle.di.MetroWorkerFactory
 import com.simplecityapps.shuttle.ui.MainActivity
 import com.simplecityapps.shuttle.ui.ThemeManager
-import dagger.Lazy
-import dagger.hilt.android.HiltAndroidApp
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.createGraphFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DEBUG_PROPERTY_NAME
 import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_ON
 import timber.log.Timber
 
-@HiltAndroidApp
 class ShuttleApplication :
     Application(),
     ActivityIntentProvider,
     Configuration.Provider,
-    SingletonImageLoader.Factory {
+    SingletonImageLoader.Factory,
+    AppGraphOwner {
+    // Lazy: a content provider can reach the graph before onCreate.
+    override val appGraph: AppGraph by lazy { createGraphFactory<AppGraph.Factory>().create(this) }
+
     @Inject
-    lateinit var workerFactory: HiltWorkerFactory
+    lateinit var workerFactory: MetroWorkerFactory
 
     @Inject
     lateinit var initializers: AppInitializers
@@ -47,6 +51,7 @@ class ShuttleApplication :
     lateinit var imageLoader: Lazy<ImageLoader>
 
     override fun onCreate() = trace("S2 Application.onCreate") {
+        appGraph.inject(this)
         super.onCreate()
 
         themeManager.setDayNightMode()
@@ -81,7 +86,7 @@ class ShuttleApplication :
                 .setWorkerFactory(workerFactory)
                 .build()
 
-    // Coil: AsyncImage and every other singleton-loader call use the Hilt ImageLoader and its artwork fetchers
+    // Coil: AsyncImage and every other singleton-loader call use the graph's ImageLoader and its artwork fetchers
 
-    override fun newImageLoader(context: PlatformContext): ImageLoader = imageLoader.get()
+    override fun newImageLoader(context: PlatformContext): ImageLoader = imageLoader.value
 }

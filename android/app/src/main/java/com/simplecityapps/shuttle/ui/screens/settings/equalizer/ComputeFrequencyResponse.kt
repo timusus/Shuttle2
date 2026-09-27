@@ -5,7 +5,7 @@ import com.simplecityapps.playback.equalizer.EqualizerFrequencyResponse
 import com.simplecityapps.shuttle.ui.screens.equalizer.FrequencyResponsePoint
 import com.simplecityapps.shuttle.ui.screens.equalizer.MAX_FREQUENCY_HZ
 import com.simplecityapps.shuttle.ui.screens.equalizer.MIN_FREQUENCY_HZ
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 

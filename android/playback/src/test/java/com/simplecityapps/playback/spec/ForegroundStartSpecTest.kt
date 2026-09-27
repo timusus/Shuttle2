@@ -35,7 +35,7 @@ import org.robolectric.shadows.ShadowService
  * The foreground rules in docs/testing/playback-behaviour-spec.md: a start of the playback service in the foreground (the
  * widget, a shortcut, a headset's play button, a voice search) as the app starts, with the saved queue still being restored. The service
  * under test is [PlaybackService]'s start handling and foreground hold over a [SessionHarness]'s session, as
- * PlaybackService itself needs Hilt.
+ * PlaybackService itself needs the Metro graph.
  */
 @UnstableApi
 @RunWith(RobolectricTestRunner::class)

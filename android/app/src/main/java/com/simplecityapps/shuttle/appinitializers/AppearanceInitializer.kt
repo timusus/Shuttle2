@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
 import com.simplecityapps.shuttle.settings.SettleDynamicColourDefault
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 class AppearanceInitializer
 @Inject

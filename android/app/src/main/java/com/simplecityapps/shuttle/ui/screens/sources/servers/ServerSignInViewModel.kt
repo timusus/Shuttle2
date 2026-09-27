@@ -6,10 +6,13 @@ import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -83,7 +86,6 @@ sealed interface ServerSignInEvent {
  * authentication's progress and outcome.
  */
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-@HiltViewModel(assistedFactory = ServerSignInViewModel.Factory::class)
 class ServerSignInViewModel @AssistedInject constructor(
     @Assisted private val type: MediaProviderType,
     readServerLogin: ReadServerLogin,
@@ -94,7 +96,9 @@ class ServerSignInViewModel @AssistedInject constructor(
     private val signInWithQuickConnect: SignInWithQuickConnect,
 ) : ViewModel() {
     @AssistedFactory
-    interface Factory {
+    @ManualViewModelAssistedFactoryKey(Factory::class)
+    @ContributesIntoMap(AppScope::class)
+    interface Factory : ManualViewModelAssistedFactory {
         fun create(type: MediaProviderType): ServerSignInViewModel
     }
 

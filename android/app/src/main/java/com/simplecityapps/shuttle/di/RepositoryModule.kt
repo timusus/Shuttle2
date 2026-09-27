@@ -16,27 +16,27 @@ import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.smartplaylists.SmartPlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 class RepositoryModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideSongRepository(
         database: MediaDatabase,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
     ): SongRepository = LocalSongRepository(appCoroutineScope, database.songDataDao())
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideMediaImporter(
         @ApplicationContext context: Context,
         songRepository: SongRepository,
@@ -45,21 +45,21 @@ class RepositoryModule {
     ): MediaImporter = MediaImporter(context, songRepository, playlistStore, preferenceManager)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideAlbumRepository(
         database: MediaDatabase,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
     ): AlbumRepository = LocalAlbumRepository(appCoroutineScope, database.songDataDao())
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideAlbumArtistRepository(
         database: MediaDatabase,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
     ): AlbumArtistRepository = LocalAlbumArtistRepository(appCoroutineScope, database.songDataDao())
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideLocalPlaylistRepository(
         @ApplicationContext context: Context,
         database: MediaDatabase,
@@ -73,11 +73,11 @@ class RepositoryModule {
     fun provideImportedPlaylistStore(playlistRepository: LocalPlaylistRepository): ImportedPlaylistStore = playlistRepository
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideSmartPlaylistRepository(database: MediaDatabase): SmartPlaylistRepository = LocalSmartPlaylistRepository(database.smartPlaylistDao())
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideGenreRepository(
         songRepository: SongRepository,
         @AppCoroutineScope appCoroutineScope: CoroutineScope

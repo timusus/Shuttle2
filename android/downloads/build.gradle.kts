@@ -2,8 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.library")
-    id("dagger.hilt.android.plugin")
-    id("com.google.devtools.ksp")
+    id("dev.zacsweers.metro")
 }
 
 android {
@@ -41,10 +40,6 @@ dependencies {
     // Media3: DownloadManager, DownloadService and the SimpleCache index database
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.database)
-
-    // Hilt
-    implementation(libs.hilt)
-    ksp(libs.hilt.compiler)
 
     // Testing
     testImplementation(libs.junit)

@@ -6,10 +6,8 @@ import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.simplecityapps.playback.PlaybackService
-import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 
-@AndroidEntryPoint
 class ShortcutHandlerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

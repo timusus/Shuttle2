@@ -9,8 +9,10 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -43,7 +45,8 @@ val ServerTypes = listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, Med
  * Settings > Sources (#379): this device on or off, the S2 scanner's folders, a rescan, and the media servers. Folder
  * and source changes start a scan, so the library follows them straight away.
  */
-@HiltViewModel
+@ViewModelKey(SourcesViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class SourcesViewModel @Inject constructor(
     private val mediaSources: MediaSources,
     observeScannerFolders: ObserveScannerFolders,

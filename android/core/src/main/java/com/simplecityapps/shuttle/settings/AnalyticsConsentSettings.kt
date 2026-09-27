@@ -1,14 +1,15 @@
 package com.simplecityapps.shuttle.settings
 
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /**
  * Analytics consent history. [asked] is a leftover from the deleted Home consent card (#421), kept so
  * InstallDefaults can migrate anyone who answered or dismissed it into an explicit opt-out (#481).
  * [noticeShown] tracks the one-time notice that replaced the card.
  */
-@Singleton
+@SingleIn(AppScope::class)
 class AnalyticsConsentSettings @Inject constructor(
     store: SettingsStore
 ) {

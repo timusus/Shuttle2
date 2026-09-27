@@ -4,7 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     id("com.android.application")
     id("com.mikepenz.aboutlibraries.plugin.android")
-    id("dagger.hilt.android.plugin")
+    id("dev.zacsweers.metro")
     alias(libs.plugins.sentry)
     id("com.google.devtools.ksp")
     alias(libs.plugins.compose.compiler)
@@ -160,7 +160,7 @@ android {
         implementation(libs.androidx.material3.adaptive)
         implementation(libs.androidx.material3.adaptive.layout)
         implementation(libs.androidx.material3.adaptive.navigation3)
-        implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+        implementation(libs.metrox.viewmodel.compose)
         implementation(libs.kotlinx.serialization.core)
 
         // Shuttle Core
@@ -203,13 +203,6 @@ android {
 
         // Material
         implementation(libs.google.material)
-
-        // Hilt
-        implementation(libs.hilt)
-        ksp(libs.hilt.compiler)
-
-        androidTestImplementation(libs.hilt.android.testing)
-        kspAndroidTest(libs.hilt.compiler)
 
         // Leak Canary
         debugImplementation(libs.leakcanary.android)
@@ -296,21 +289,11 @@ android {
 
         // WorkManager
         implementation(libs.androidx.work.runtime.ktx)
-        implementation(libs.androidx.hilt.work)
-        ksp(libs.androidx.hilt.compiler)
 
         lintChecks(libs.compose.lint.checks)
     }
 
     buildFeatures.buildConfig = true
-}
-
-// Hilt's hiltJavaCompile<Variant> task runs javac over a processor path (hiltAnnotationProcessor<Variant>)
-// that extends the variant's ksp configuration. javac then discovers moshi-kotlin-codegen's legacy APT
-// processor and prints its "Kapt support ... is deprecated" warning. Moshi codegen already runs via KSP,
-// so drop it from that javac processor path only.
-configurations.matching { it.name.startsWith("hiltAnnotationProcessor") }.configureEach {
-    exclude(group = "com.squareup.moshi", module = "moshi-kotlin-codegen")
 }
 
 kotlin {

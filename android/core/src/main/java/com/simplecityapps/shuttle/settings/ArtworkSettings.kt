@@ -1,9 +1,10 @@
 package com.simplecityapps.shuttle.settings
 
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
-@Singleton
+@SingleIn(AppScope::class)
 class ArtworkSettings @Inject constructor(
     store: SettingsStore
 ) {

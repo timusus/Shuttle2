@@ -9,7 +9,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -31,6 +30,7 @@ import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.HomeRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 fun EntryProviderScope<NavKey>.homeEntries(navigator: AppNavigator) {
     entry<HomeRoute> {
@@ -42,10 +42,10 @@ fun EntryProviderScope<NavKey>.homeEntries(navigator: AppNavigator) {
 private fun HomeDestination(
     onOpen: (NavKey) -> Unit,
     onNavigate: (NavigationTarget) -> Unit,
-    viewModel: HomeViewModel = hiltViewModel(),
+    viewModel: HomeViewModel = metroViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val emptyViewModel: LibraryEmptyViewModel = hiltViewModel()
+    val emptyViewModel: LibraryEmptyViewModel = metroViewModel()
     val emptyState by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
     val snackbarHostState = LocalShellSnackbarHostState.current

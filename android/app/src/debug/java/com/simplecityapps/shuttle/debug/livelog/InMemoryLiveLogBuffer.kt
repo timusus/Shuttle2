@@ -1,15 +1,16 @@
 package com.simplecityapps.shuttle.debug.livelog
 
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import java.util.concurrent.atomic.AtomicLong
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 /** Keeps the most recent [CAPACITY] lines; older ones drop off the front as new ones arrive. */
-@Singleton
+@SingleIn(AppScope::class)
 class InMemoryLiveLogBuffer
 @Inject
 constructor() :

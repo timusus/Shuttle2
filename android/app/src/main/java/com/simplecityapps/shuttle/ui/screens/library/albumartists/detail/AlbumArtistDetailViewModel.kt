@@ -16,10 +16,13 @@ import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,7 +38,6 @@ import kotlinx.coroutines.launch
  * One album artist's albums and songs, loaded by [groupKey], the key its route carries. Song and album
  * actions go through the screen's MediaActionsHost; this derives state, unfolds albums and shuffles by album.
  */
-@HiltViewModel(assistedFactory = AlbumArtistDetailViewModel.Factory::class)
 class AlbumArtistDetailViewModel @AssistedInject constructor(
     @Assisted private val groupKey: AlbumArtistGroupKey,
     observeAlbumArtists: ObserveAlbumArtists,
@@ -47,7 +49,9 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
 ) : ViewModel() {
 
     @AssistedFactory
-    interface Factory {
+    @ManualViewModelAssistedFactoryKey(Factory::class)
+    @ContributesIntoMap(AppScope::class)
+    interface Factory : ManualViewModelAssistedFactory {
         fun create(groupKey: AlbumArtistGroupKey): AlbumArtistDetailViewModel
     }
 

@@ -6,10 +6,10 @@ import android.net.Uri
 import android.os.Build
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.offline.DownloadService
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.downloads.service.SongDownloadService
 import com.simplecityapps.shuttle.model.Song
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import timber.log.Timber
 
 /** Starts and removes song downloads. Their state is read through [SongDownloadRepository]. */

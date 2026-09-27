@@ -4,7 +4,7 @@
  * dependencies of every module.
  */
 enum class ModuleLayer(val label: String) {
-    /** Logging, dispatchers, settings storage, Hilt qualifiers. Usable by every layer; depends on nothing of ours. */
+    /** Logging, dispatchers, settings storage, DI qualifiers. Usable by every layer; depends on nothing of ours. */
     CORE("core"),
 
     /** Models, repository and service interfaces, use cases. */
@@ -19,7 +19,7 @@ enum class ModuleLayer(val label: String) {
     /** Compose components and screens. Sees domain types only, never data. */
     PRESENTATION("presentation"),
 
-    /** `:android:app`: the only module allowed to see everything, to aggregate the Hilt modules. */
+    /** `:android:app`: the only module allowed to see everything, to create the Metro dependency graph. */
     COMPOSITION_ROOT("composition root"),
 
     /** Test/debug-only fixtures (#402 keeps them off release classpaths). */

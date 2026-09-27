@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 import com.simplecityapps.mediaprovider.server.QuickConnectAuthentication
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.shuttle.model.MediaProviderType
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

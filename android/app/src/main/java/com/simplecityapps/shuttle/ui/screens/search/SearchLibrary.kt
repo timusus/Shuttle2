@@ -8,7 +8,7 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf

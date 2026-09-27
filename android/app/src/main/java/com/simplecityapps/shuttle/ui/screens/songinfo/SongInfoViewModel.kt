@@ -8,10 +8,13 @@ import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
+import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactoryKey
 import java.net.URLDecoder
 import java.util.Locale
 import kotlinx.coroutines.flow.SharingStarted
@@ -25,13 +28,14 @@ data class SongInfoUiState(
 )
 
 /** One song's details, kept current with the library (a tag edit shows up straight away). */
-@HiltViewModel(assistedFactory = SongInfoViewModel.Factory::class)
 class SongInfoViewModel @AssistedInject constructor(
     @Assisted songId: Long,
     observeSongs: ObserveSongs,
 ) : ViewModel() {
     @AssistedFactory
-    interface Factory {
+    @ManualViewModelAssistedFactoryKey(Factory::class)
+    @ContributesIntoMap(AppScope::class)
+    interface Factory : ManualViewModelAssistedFactory {
         fun create(songId: Long): SongInfoViewModel
     }
 

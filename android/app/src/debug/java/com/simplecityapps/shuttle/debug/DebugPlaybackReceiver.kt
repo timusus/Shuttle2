@@ -15,10 +15,12 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.sleeptimer.SleepTimer
+import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.PlaySongs
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -36,8 +38,12 @@ import org.json.JSONObject
  *
  * Actions run on the main thread, like the UI calls they stand in for.
  */
-@AndroidEntryPoint
 class DebugPlaybackReceiver : BroadcastReceiver() {
+    @ContributesTo(AppScope::class)
+    interface Injector {
+        fun inject(receiver: DebugPlaybackReceiver)
+    }
+
     @Inject
     lateinit var playbackOperations: PlaybackOperations
 
@@ -66,6 +72,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
+        context.appGraph<Injector>().inject(this)
         val action = intent.action?.removePrefix(ACTION_PREFIX) ?: return
         val pendingResult = goAsync()
         scope.launch {

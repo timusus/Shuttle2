@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -17,6 +16,7 @@ import com.simplecityapps.shuttle.ui.screens.library.openTarget
 import com.simplecityapps.shuttle.ui.screens.library.route
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.SearchRoute
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 fun EntryProviderScope<NavKey>.searchEntries(navigator: AppNavigator) {
     entry<SearchRoute> { SearchDestination(onOpen = navigator::open, onNavigate = navigator::openTarget) }
@@ -26,7 +26,7 @@ fun EntryProviderScope<NavKey>.searchEntries(navigator: AppNavigator) {
 private fun SearchDestination(
     onOpen: (NavKey) -> Unit,
     onNavigate: (NavigationTarget) -> Unit,
-    viewModel: SearchViewModel = hiltViewModel(),
+    viewModel: SearchViewModel = metroViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val queryState = rememberTextFieldState()

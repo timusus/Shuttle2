@@ -4,7 +4,7 @@ import android.app.Application
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.downloads.DownloadFallbackObserver
 import com.simplecityapps.shuttle.downloads.DownloadRequirementsManager
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 
 /**

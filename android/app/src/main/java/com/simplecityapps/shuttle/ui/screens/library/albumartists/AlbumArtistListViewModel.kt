@@ -12,8 +12,10 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -32,7 +34,8 @@ data class AlbumArtistListUiState(
     val isSelecting: Boolean get() = selectedArtists.isNotEmpty()
 }
 
-@HiltViewModel
+@ViewModelKey(AlbumArtistListViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class AlbumArtistListViewModel @Inject constructor(
     observeAlbumArtists: ObserveAlbumArtists,
     readSetting: ReadLibraryViewSetting,

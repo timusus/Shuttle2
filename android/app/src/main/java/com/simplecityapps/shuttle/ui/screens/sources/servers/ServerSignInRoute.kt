@@ -4,11 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
+import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 /**
  * Shows a [type] server's sign-in dialog. Its ViewModel lives only as long as the dialog, so each opening starts
@@ -21,10 +21,10 @@ fun ServerSignInRoute(
     onConnected: (MediaProviderType) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val viewModel = hiltViewModel<ServerSignInViewModel, ServerSignInViewModel.Factory>(
+    val viewModel = assistedMetroViewModel<ServerSignInViewModel, ServerSignInViewModel.Factory>(
         viewModelStoreOwner = rememberViewModelStoreOwner(),
         key = type.name,
-    ) { it.create(type) }
+    ) { create(type) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val currentOnConnected by rememberUpdatedState(onConnected)
     val currentOnDismiss by rememberUpdatedState(onDismiss)

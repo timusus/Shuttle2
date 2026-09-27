@@ -2,8 +2,7 @@
 // playback operations interfaces, and the shared use cases, no Android. Multiplatform for the iOS port (#582).
 plugins {
     id("s2.kmp-library")
-    // Metro generates the use cases' `@Inject` factories here, where the classes live. Until :android:app moves
-    // off Hilt (#583), app/di/DomainBridgeModule.kt provides them to Hilt by hand.
+    // Metro generates the use cases' `@Inject` factories here, where the classes live, for the app graph to use.
     alias(libs.plugins.metro)
     // Smart playlist rules are stored as JSON; the codec lives beside the rule model (#506).
     alias(libs.plugins.kotlin.serialization)

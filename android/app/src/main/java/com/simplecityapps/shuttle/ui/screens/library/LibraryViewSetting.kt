@@ -6,7 +6,7 @@ import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferences
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferences
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /** A library list's saved sort order or view mode, read with [ReadLibraryViewSetting] and saved with [SaveLibraryViewSetting]. */
 sealed class LibraryViewSetting<T>(

@@ -2,8 +2,10 @@ package com.simplecityapps.shuttle.ui.screens.settings.about
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,7 +16,8 @@ data class LicencesUiState(
     val loading: Boolean = true
 )
 
-@HiltViewModel
+@ViewModelKey(LicencesViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class LicencesViewModel @Inject constructor(
     getLicences: GetLicences
 ) : ViewModel() {

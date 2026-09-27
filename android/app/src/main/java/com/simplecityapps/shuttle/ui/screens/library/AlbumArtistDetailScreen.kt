@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
@@ -36,6 +35,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumAr
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailViewModel
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 /**
  * Album artist detail (inventory §1): albums newest first, each expanding its tracks inline when tapped, then every
@@ -130,7 +130,7 @@ fun AlbumArtistDetailDestination(
     onOpen: (NavKey) -> Unit,
     onNavigate: (NavigationTarget) -> Unit,
 ) {
-    val viewModel = hiltViewModel<AlbumArtistDetailViewModel, AlbumArtistDetailViewModel.Factory> { it.create(route.groupKey) }
+    val viewModel = assistedMetroViewModel<AlbumArtistDetailViewModel, AlbumArtistDetailViewModel.Factory> { create(route.groupKey) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalResources.current
     val snackbarHostState = LocalShellSnackbarHostState.current

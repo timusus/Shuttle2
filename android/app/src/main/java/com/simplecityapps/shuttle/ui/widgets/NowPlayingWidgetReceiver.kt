@@ -4,7 +4,7 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
-import dagger.hilt.android.EntryPointAccessors
+import com.simplecityapps.shuttle.di.appGraph
 
 /**
  * Receivers for the small and large now playing widgets. Both draw the same [NowPlayingWidget]; they're
@@ -21,7 +21,7 @@ abstract class NowPlayingWidgetReceiver : GlanceAppWidgetReceiver() {
     ) {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
         // A widget was just placed or the app updated: make sure the shared state reflects what's playing.
-        EntryPointAccessors.fromApplication(context, WidgetEntryPoint::class.java).widgetManager().requestUpdate()
+        context.appGraph<WidgetEntryPoint>().widgetManager().requestUpdate()
     }
 }
 

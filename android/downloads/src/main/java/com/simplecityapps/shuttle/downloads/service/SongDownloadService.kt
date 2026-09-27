@@ -14,14 +14,15 @@ import androidx.media3.exoplayer.offline.DownloadService
 import androidx.media3.exoplayer.scheduler.PlatformScheduler
 import androidx.media3.exoplayer.scheduler.Requirements
 import androidx.media3.exoplayer.scheduler.Scheduler
+import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.downloads.R
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
 import timber.log.Timber
 
 /** Runs song downloads in a foreground service, with a progress notification. */
 @UnstableApi
-@AndroidEntryPoint
 class SongDownloadService :
     DownloadService(
         NOTIFICATION_ID,
@@ -30,12 +31,23 @@ class SongDownloadService :
         R.string.download_notification_channel_name,
         R.string.download_notification_channel_description
     ) {
+    @ContributesTo(AppScope::class)
+    interface Injector {
+        fun inject(service: SongDownloadService)
+    }
+
     // Not named downloadManager: its getter would clash with getDownloadManager() below.
     @Inject
     lateinit var manager: DownloadManager
 
     @Inject
     lateinit var notificationHelper: DownloadNotificationHelper
+
+    // Injected before super.onCreate(), which reads getDownloadManager().
+    override fun onCreate() {
+        appGraph<Injector>().inject(this)
+        super.onCreate()
+    }
 
     override fun getDownloadManager(): DownloadManager = manager
 

@@ -5,15 +5,15 @@ import com.simplecityapps.shuttle.ui.screens.sources.servers.emby.EmbyServerAuth
 import com.simplecityapps.shuttle.ui.screens.sources.servers.jellyfin.JellyfinServerAuthentication
 import com.simplecityapps.shuttle.ui.screens.sources.servers.plex.PlexServerAuthentication
 import com.simplecityapps.trial.MonetisationAnalytics
-import dagger.Binds
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import dagger.multibindings.IntoMap
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.Provides
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 abstract class ServerAuthenticationModule {
     @Binds
     @IntoMap

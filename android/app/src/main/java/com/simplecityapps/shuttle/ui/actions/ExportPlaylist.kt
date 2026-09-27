@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.actions
 import android.net.Uri
 import com.simplecityapps.mediaprovider.PlaylistExporter
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /** Writes [songs] as an m3u under [name] to [destination], a content Uri string from the document picker. */
 class ExportPlaylist @Inject constructor(

@@ -22,10 +22,12 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.shuttle.coroutines.concurrentMap
+import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.settings.ArtworkSettings
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -40,10 +42,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
-@AndroidEntryPoint
 class ArtworkDownloadService :
     Service(),
     CoroutineScope {
+    @ContributesTo(AppScope::class)
+    interface Injector {
+        fun inject(service: ArtworkDownloadService)
+    }
+
     private val notificationManager: NotificationManager? by lazy {
         getSystemService()
     }
@@ -78,6 +84,7 @@ class ArtworkDownloadService :
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
+        appGraph<Injector>().inject(this)
         super.onCreate()
 
         if (artworkSettings.wifiOnly.value && connectivityManager?.isActiveNetworkMetered == true) {

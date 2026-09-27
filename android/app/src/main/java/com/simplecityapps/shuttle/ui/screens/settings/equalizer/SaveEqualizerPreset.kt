@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.settings.equalizer
 
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /** Stores [Equalizer.Presets.Preset] as the equalizer's preset; for the Custom preset, its band gains too. */
 class SaveEqualizerPreset @Inject constructor(

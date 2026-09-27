@@ -2,8 +2,10 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.lifecycle.ViewModel
 import com.simplecityapps.shuttle.persistence.LibraryTab
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,7 +25,8 @@ data class LibraryUiState(
  * The library container: which tabs show, in what order, and which one is current. All three persist through
  * [ReadLibraryTabs], [SaveLibraryTabs] and [SaveCurrentLibraryTab].
  */
-@HiltViewModel
+@ViewModelKey(LibraryViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class LibraryViewModel @Inject constructor(
     private val readLibraryTabs: ReadLibraryTabs,
     private val saveLibraryTabs: SaveLibraryTabs,

@@ -5,15 +5,17 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.downloads.SongDownloadRepository
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.DownloadSongs
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
-import dagger.hilt.android.AndroidEntryPoint
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
 import java.io.File
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,8 +32,12 @@ import org.json.JSONObject
  *
  * Downloads go through [DownloadSongs], the same path as the actions sheet's Download.
  */
-@AndroidEntryPoint
 class DebugDownloadReceiver : BroadcastReceiver() {
+    @ContributesTo(AppScope::class)
+    interface Injector {
+        fun inject(receiver: DebugDownloadReceiver)
+    }
+
     @Inject
     lateinit var songRepository: SongRepository
 
@@ -48,6 +54,7 @@ class DebugDownloadReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
+        context.appGraph<Injector>().inject(this)
         val action = intent.action?.removePrefix(DebugPlaybackReceiver.ACTION_PREFIX) ?: return
         val pendingResult = goAsync()
         scope.launch {

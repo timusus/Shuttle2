@@ -5,15 +5,16 @@ import android.graphics.Bitmap
 import android.os.Build
 import com.simplecityapps.imageloading.ArtworkImageLoader
 import com.simplecityapps.playback.getArtworkCacheKey
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Song
-import dagger.hilt.android.qualifiers.ApplicationContext
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import java.io.File
 import java.io.IOException
 import java.security.MessageDigest
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -26,7 +27,7 @@ import timber.log.Timber
  * every layout, capped so a tablet doesn't send the launcher a huge bitmap. [WidgetManager] calls it from one
  * coroutine at a time, but the bookkeeping is a concurrent set so a stray caller can't corrupt it.
  */
-@Singleton
+@SingleIn(AppScope::class)
 class WidgetArtworkStore
 @Inject
 constructor(

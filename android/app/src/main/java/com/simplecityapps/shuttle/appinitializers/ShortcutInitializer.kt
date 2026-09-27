@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.appinitializers
 import android.app.Application
 import android.os.Build
 import com.simplecityapps.shuttle.ui.ShortcutManager
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 class ShortcutInitializer
 @Inject

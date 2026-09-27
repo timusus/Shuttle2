@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
@@ -24,6 +23,7 @@ import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailViewModel
 import com.simplecityapps.shuttle.ui.shell.AlbumRoute
+import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 /** Album detail (inventory §1): the album's songs by disc, Play / Shuffle, and the album's actions in the overflow. */
 @Composable
@@ -95,7 +95,7 @@ fun AlbumDetailDestination(
     onNavigateUp: () -> Unit,
     onNavigate: (NavigationTarget) -> Unit,
 ) {
-    val viewModel = hiltViewModel<AlbumDetailViewModel, AlbumDetailViewModel.Factory> { it.create(route.groupKey) }
+    val viewModel = assistedMetroViewModel<AlbumDetailViewModel, AlbumDetailViewModel.Factory> { create(route.groupKey) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     MediaActionsHost(onNavigate = onNavigate) { actions ->
         AlbumDetailScreen(

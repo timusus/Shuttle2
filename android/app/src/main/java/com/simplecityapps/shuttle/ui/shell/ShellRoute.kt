@@ -14,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
@@ -26,6 +25,7 @@ import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 
@@ -36,8 +36,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 @Composable
 fun ShellRoute(
     modifier: Modifier = Modifier,
-    viewModel: PlayerViewModel = hiltViewModel(),
-    shellViewModel: ShellViewModel = hiltViewModel(),
+    viewModel: PlayerViewModel = metroViewModel(),
+    shellViewModel: ShellViewModel = metroViewModel(),
 ) {
     val playerState = viewModel.uiState.collectAsStateWithLifecycle()
     // Read apart from the progress, so a tick recomposes only what reads the progress.

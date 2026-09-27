@@ -1,7 +1,8 @@
 package com.simplecityapps.shuttle.downloads
 
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -15,7 +16,7 @@ import kotlinx.coroutines.flow.onEach
  * service with nothing to show (a `ForegroundServiceDidNotStartInTimeException` risk on slow
  * devices, and battery churn for nothing).
  */
-@Singleton
+@SingleIn(AppScope::class)
 class DownloadRequirementsManager @Inject constructor(
     private val songDownloadManager: SongDownloadManager,
     private val downloadSettings: DownloadSettings

@@ -2,10 +2,11 @@ package com.simplecityapps.shuttle.downloads
 
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.settings.SettingsStore
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
-@Singleton
+@SingleIn(AppScope::class)
 class DownloadSettings @Inject constructor(
     store: SettingsStore
 ) {

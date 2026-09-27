@@ -3,8 +3,8 @@ package com.simplecityapps.shuttle.ui.screens.settings.about
 import android.content.Context
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.util.withContext
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
+import com.simplecityapps.shuttle.di.ApplicationContext
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 

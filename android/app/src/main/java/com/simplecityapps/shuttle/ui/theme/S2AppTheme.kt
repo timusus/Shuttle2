@@ -6,7 +6,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -17,8 +16,11 @@ import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.ThemeMode
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -32,7 +34,8 @@ data class AppThemeState(
 )
 
 /** The Appearance settings the Compose theme follows, live, so a change in Settings restyles the app without a restart. */
-@HiltViewModel
+@ViewModelKey(AppThemeViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class AppThemeViewModel @Inject constructor(
     observeSetting: ObserveSetting,
     readSetting: ReadSetting
@@ -58,7 +61,7 @@ class AppThemeViewModel @Inject constructor(
 /** [S2Theme] styled by the user's Appearance settings. */
 @Composable
 fun S2AppTheme(
-    viewModel: AppThemeViewModel = hiltViewModel(),
+    viewModel: AppThemeViewModel = metroViewModel(),
     content: @Composable () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()

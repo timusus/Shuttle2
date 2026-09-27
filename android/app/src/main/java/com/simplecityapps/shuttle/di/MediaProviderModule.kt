@@ -7,28 +7,28 @@ import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStor
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreTagReader
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.sources.SafScannerFolderStore
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 class MediaProviderModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideFileScanner(): FileScanner = FileScanner()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideKTagLib(): KTagLib = KTagLib()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideTagLibSongProvider(
         @ApplicationContext context: Context,
         kTagLib: KTagLib,
@@ -37,14 +37,14 @@ class MediaProviderModule {
     ): TaglibMediaProvider = TaglibMediaProvider(context, kTagLib, fileScanner, folderStore::scannerFolders)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideMediaStoreTagReader(
         @ApplicationContext context: Context,
         kTagLib: KTagLib
     ): MediaStoreTagReader = KTagLibMediaStoreTagReader(context, kTagLib)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideMediaStoreSongProvider(
         @ApplicationContext context: Context,
         tagReader: MediaStoreTagReader,

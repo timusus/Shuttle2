@@ -1,11 +1,11 @@
 package com.simplecityapps.shuttle.di
 
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Qualifier
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.Qualifier
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -14,21 +14,21 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import timber.log.Timber
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 class CoroutineModule {
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun coroutineExceptionHandler(): CoroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
         Timber.e(throwable)
     }
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     @AppSupervisorJob
     fun appSupervisorJob(): Job = SupervisorJob()
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     @AppCoroutineScope
     fun provideAppCoroutineScope(

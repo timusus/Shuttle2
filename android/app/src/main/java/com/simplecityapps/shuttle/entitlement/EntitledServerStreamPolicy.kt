@@ -5,8 +5,9 @@ import com.simplecityapps.shuttle.downloads.SongDownload
 import com.simplecityapps.shuttle.downloads.SongDownloadRepository
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.trial.ServerAccessGate
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -17,7 +18,7 @@ import kotlinx.coroutines.flow.asSharedFlow
  * A single instance ([Singleton]), so [gatedSongs] sees every denial regardless of which injection site
  * triggers it.
  */
-@Singleton
+@SingleIn(AppScope::class)
 class EntitledServerStreamPolicy
 @Inject
 constructor(

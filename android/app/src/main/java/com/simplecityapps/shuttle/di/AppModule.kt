@@ -7,6 +7,7 @@ import android.util.LruCache
 import com.simplecityapps.mediaprovider.PlaylistExporter
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.debug.livelog.LiveLogSink
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
@@ -17,29 +18,28 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPref
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferences
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferences
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Named
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import java.time.Clock
 import java.util.*
-import javax.inject.Named
-import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
 
-@InstallIn(SingletonComponent::class)
-@Module(includes = [AppBindsModule::class])
-class AppModule {
-    @Singleton
+@ContributesTo(AppScope::class)
+@BindingContainer
+object AppModule {
+    @SingleIn(AppScope::class)
     @Provides
     fun provideDebugLoggingTree(
         @ApplicationContext context: Context,
         debugSettings: DebugSettings,
-        liveLogSink: Optional<LiveLogSink>
+        liveLogSink: Optional<LiveLogSink> = Optional.empty()
     ): DebugLoggingTree = DebugLoggingTree(context, debugSettings, liveLogSink)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideArtworkCache(): LruCache<String, Bitmap> = object : LruCache<String, Bitmap>(10 * 1024 * 1024) {
         override fun sizeOf(
@@ -48,7 +48,7 @@ class AppModule {
         ): Int = value.allocationByteCount
     }
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun providePlaylistExporter(
         @ApplicationContext context: Context,
@@ -58,19 +58,19 @@ class AppModule {
     @Provides
     fun provideSortPreferences(preference: SharedPreferences): SortPreferences = SortPreferenceManager(preference)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideArtistListPreferences(preferenceManager: GeneralPreferenceManager): ArtistListPreferences = ArtistListPreferenceManager(preferenceManager)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideAlbumListPreferences(preferenceManager: GeneralPreferenceManager): AlbumListPreferences = AlbumListPreferenceManager(preferenceManager)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideThemeManager(appearanceSettings: AppearanceSettings): ThemeManager = ThemeManager(appearanceSettings)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     @Named("randomSeed")
     fun provideRandomSeed(): Long = Random().nextLong()

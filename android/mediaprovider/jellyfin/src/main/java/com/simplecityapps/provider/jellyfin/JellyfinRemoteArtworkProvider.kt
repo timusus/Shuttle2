@@ -8,8 +8,8 @@ import com.simplecityapps.provider.jellyfin.http.Item
 import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.item
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Inject
-import javax.inject.Named
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.Named
 
 /** Artwork urls on the signed-in Jellyfin server; null when the server doesn't know the song's album or artist. */
 class JellyfinRemoteArtworkProvider

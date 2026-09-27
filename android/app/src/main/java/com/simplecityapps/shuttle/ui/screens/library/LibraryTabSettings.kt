@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.LibraryTab
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /** The library container's saved tabs: every tab in the user's order, the ones shown, and the one last open. */
 data class LibraryTabs(

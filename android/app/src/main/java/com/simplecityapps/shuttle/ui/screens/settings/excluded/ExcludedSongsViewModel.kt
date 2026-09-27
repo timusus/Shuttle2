@@ -8,8 +8,10 @@ import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -22,7 +24,8 @@ data class ExcludedSongsUiState(
 )
 
 /** The songs hidden from the library, and the way back in for each. */
-@HiltViewModel
+@ViewModelKey(ExcludedSongsViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class ExcludedSongsViewModel @Inject constructor(
     observeSongs: ObserveSongs,
     private val mediaActionHandler: MediaActionHandler

@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.home
 
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /** Whether the What's new card should show: changelog-on-launch is on and this version's notes haven't been seen. */
 class IsWhatsNewPending @Inject constructor(

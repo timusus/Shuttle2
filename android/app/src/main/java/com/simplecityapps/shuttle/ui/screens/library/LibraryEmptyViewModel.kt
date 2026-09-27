@@ -3,8 +3,10 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.lifecycle.ViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccessCoordinator
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.StateFlow
 
 /** An import in progress: the provider's latest message ("Artist • Song") and how far through it is, if it knows. */
@@ -29,7 +31,8 @@ sealed interface LibraryAvailability {
  * per screen. The screen reports the permission ([onAccessChecked] on every resume, [onAccessResult] after the
  * system prompt), because only the Activity can ask whether a rationale should show.
  */
-@HiltViewModel
+@ViewModelKey(LibraryEmptyViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class LibraryEmptyViewModel @Inject constructor(
     private val musicAccess: MusicAccessCoordinator,
 ) : ViewModel() {

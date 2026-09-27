@@ -11,13 +11,13 @@ import coil3.toBitmap
 import com.simplecityapps.imageloading.coil.artworkCacheKey
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.designsystem.theme.SeedColorCache
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Song
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import timber.log.Timber
 
 /** Loads the seed colour of a song's artwork, for a scheme tinted by it. */
@@ -58,11 +58,11 @@ class CoilArtworkSeedSource(
     }
 }
 
-@Module
-@InstallIn(SingletonComponent::class)
+@BindingContainer
+@ContributesTo(AppScope::class)
 object ArtworkSeedModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideArtworkSeedSource(
         @ApplicationContext context: Context,
         imageLoader: ImageLoader,

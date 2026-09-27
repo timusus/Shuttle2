@@ -1,9 +1,10 @@
 package com.simplecityapps.shuttle.scrobbling.worker
 
 import android.content.Context
-import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.simplecityapps.shuttle.di.WorkerInstanceFactory
+import com.simplecityapps.shuttle.di.WorkerKey
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmApi
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmCredentials
 import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmScrobbleResponse
@@ -12,8 +13,12 @@ import com.simplecityapps.shuttle.scrobbling.lastfm.LastFmSigner
 import com.simplecityapps.shuttle.scrobbling.queue.QueuedScrobbleEntity
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleDao
 import com.simplecityapps.shuttle.scrobbling.queue.ScrobbleQueue
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedInject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.binding
 
 /**
  * Drains the Last.fm queue, oldest first, [ScrobbleQueue.BATCH_SIZE] at a time (#503 slice 2). A batch that
@@ -24,7 +29,6 @@ import dagger.assisted.AssistedInject
  * batch. Runs before any of that: entries older than [ScrobbleQueue.MAX_AGE] are dropped, since Last.fm
  * rejects their timestamp regardless.
  */
-@HiltWorker
 class ScrobbleFlushWorker
 @AssistedInject
 constructor(
@@ -35,6 +39,11 @@ constructor(
     private val lastFmSessionStore: LastFmSessionStore,
     private val lastFmCredentials: LastFmCredentials
 ) : CoroutineWorker(appContext, workerParams) {
+    @WorkerKey(ScrobbleFlushWorker::class)
+    @ContributesIntoMap(AppScope::class, binding = binding<WorkerInstanceFactory<*>>())
+    @AssistedFactory
+    interface Factory : WorkerInstanceFactory<ScrobbleFlushWorker>
+
     override suspend fun doWork(): Result {
         val cutoffEpochSec = (System.currentTimeMillis() - ScrobbleQueue.MAX_AGE) / 1000
         scrobbleDao.deleteOlderThan(cutoffEpochSec)

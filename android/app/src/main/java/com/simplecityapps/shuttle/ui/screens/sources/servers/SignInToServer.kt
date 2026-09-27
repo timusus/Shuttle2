@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import com.simplecityapps.networking.userDescription
 import com.simplecityapps.shuttle.model.MediaProviderType
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import timber.log.Timber
 
 /**

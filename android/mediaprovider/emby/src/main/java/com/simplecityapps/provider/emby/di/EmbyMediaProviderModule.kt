@@ -21,29 +21,29 @@ import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.provider.emby.http.ItemsService
 import com.simplecityapps.provider.emby.http.PlaybackReportingService
 import com.simplecityapps.provider.emby.http.UserService
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import dagger.multibindings.IntoMap
-import dagger.multibindings.IntoSet
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.IntoSet
+import dev.zacsweers.metro.Named
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import java.util.concurrent.TimeUnit
-import javax.inject.Named
-import javax.inject.Singleton
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.create
 
-@InstallIn(SingletonComponent::class)
-@Module
-open class EmbyMediaProviderModule {
+@ContributesTo(AppScope::class)
+@BindingContainer
+class EmbyMediaProviderModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     @Named("EmbyRetrofit")
     fun provideRetrofit(
         @ApplicationContext context: Context,
@@ -62,25 +62,25 @@ open class EmbyMediaProviderModule {
         .build()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideUserService(
         @Named("EmbyRetrofit") retrofit: Retrofit
     ): UserService = retrofit.create()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideItemsService(
         @Named("EmbyRetrofit") retrofit: Retrofit
     ): ItemsService = retrofit.create()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideTranscodeService(
         @Named("EmbyRetrofit") retrofit: Retrofit
     ): EmbyTranscodeService = retrofit.create()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     @Named("EmbyCredentialStore")
     fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): ServerCredentialStore = ServerCredentialStore(securePreferenceManager, prefix = "emby").apply {
         if (BuildConfig.DEBUG) {
@@ -92,7 +92,7 @@ open class EmbyMediaProviderModule {
     }
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideEmbyAuthenticationManager(
         userService: UserService,
         @Named("EmbyCredentialStore") credentialStore: ServerCredentialStore,
@@ -100,7 +100,7 @@ open class EmbyMediaProviderModule {
     ): EmbyAuthenticationManager = EmbyAuthenticationManager(userService, credentialStore, clientIdentity)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideEmbyMediaProvider(
         @ApplicationContext context: Context,
         authenticationManager: EmbyAuthenticationManager,
@@ -108,7 +108,7 @@ open class EmbyMediaProviderModule {
     ): EmbyMediaProvider = EmbyMediaProvider(context, authenticationManager, itemsService)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     @IntoMap
     @MediaProviderTypeKey(MediaProviderType.Emby)
     fun provideEmbyMediaInfoProvider(
@@ -118,7 +118,7 @@ open class EmbyMediaProviderModule {
     ): MediaInfoProvider = EmbyMediaInfoProvider(authenticationManager, embyTranscodeService, streamingBitrateCap)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun providePlaybackReportingService(
         @Named("EmbyRetrofit") retrofit: Retrofit
     ): PlaybackReportingService = retrofit.create()

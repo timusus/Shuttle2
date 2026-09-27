@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     id 'com.android.library'
     id 'com.google.devtools.ksp'
+    id 'dev.zacsweers.metro'
 }
 
 android {
@@ -48,9 +49,6 @@ dependencies {
     implementation(project(":android:networking"))
 
     ksp(libs.moshi.kotlinCodegen)
-
-    implementation libs.hilt
-    ksp libs.hilt.compiler
 
     implementation project(':android:domain')
 

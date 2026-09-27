@@ -1,7 +1,8 @@
 package com.simplecityapps.shuttle.settings
 
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /** The most a Jellyfin, Emby or Plex stream may use. [Original] streams the file as it is. */
 enum class StreamingQuality(val maxBitrateKbps: Int?) {
@@ -12,7 +13,7 @@ enum class StreamingQuality(val maxBitrateKbps: Int?) {
 }
 
 /** Settings > Sources: streaming quality from Jellyfin, Emby and Plex, one cap for unmetered networks and one for metered. */
-@Singleton
+@SingleIn(AppScope::class)
 class StreamingSettings @Inject constructor(
     store: SettingsStore
 ) {

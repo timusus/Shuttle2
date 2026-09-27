@@ -44,7 +44,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.simplecityapps.shuttle.R
@@ -58,6 +57,7 @@ import com.simplecityapps.shuttle.designsystem.component.SettingsHeader
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
+import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 import kotlinx.coroutines.launch
 
 /** The tag editor route: loads the songs' tags, saves the changes, reports how the save went and closes. */
@@ -66,7 +66,7 @@ fun TagEditorDestination(
     route: TagEditorRoute,
     onNavigateUp: () -> Unit,
 ) {
-    val viewModel = hiltViewModel<TagEditorViewModel, TagEditorViewModel.Factory> { it.create(route.songIds) }
+    val viewModel = assistedMetroViewModel<TagEditorViewModel, TagEditorViewModel.Factory> { create(route.songIds) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val resources = LocalResources.current
     val snackbarHostState = LocalShellSnackbarHostState.current

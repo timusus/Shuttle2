@@ -4,22 +4,22 @@ import com.simplecityapps.core.BuildConfig
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.util.*
-import javax.inject.Singleton
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import timber.log.Timber
 
-@InstallIn(SingletonComponent::class)
-@Module
-open class NetworkingModule {
-    @Singleton
+@ContributesTo(AppScope::class)
+@BindingContainer
+class NetworkingModule {
+    @SingleIn(AppScope::class)
     @Provides
     fun provideLoggingInterceptor(): HttpLoggingInterceptor = HttpLoggingInterceptor { message ->
         Timber.tag(NETWORK_LOG_TAG).v(message)
@@ -27,7 +27,7 @@ open class NetworkingModule {
         level = HttpLoggingInterceptor.Level.NONE
     }
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient = OkHttpClient.Builder()
         .apply {
@@ -38,7 +38,7 @@ open class NetworkingModule {
         .addInterceptor(loggingInterceptor)
         .build()
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideMoshi(): Moshi = Moshi.Builder()
         .addLast(KotlinJsonAdapterFactory())

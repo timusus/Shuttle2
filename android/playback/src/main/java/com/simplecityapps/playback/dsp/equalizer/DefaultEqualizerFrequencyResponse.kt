@@ -4,7 +4,7 @@ import com.simplecityapps.playback.equalizer.EqualizerBandGain
 import com.simplecityapps.playback.equalizer.EqualizerFrequencyResponse
 import com.simplecityapps.playback.equalizer.EqualizerResponse
 import com.simplecityapps.playback.equalizer.FrequencyResponsePoint
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlin.math.log10
 import kotlin.math.pow
 

@@ -3,7 +3,7 @@ package com.simplecityapps.mediaprovider
 import android.net.Uri
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import dagger.MapKey
+import dev.zacsweers.metro.MapKey
 import java.io.File
 
 data class MediaInfo(val path: Uri, val mimeType: String, val isRemote: Boolean)

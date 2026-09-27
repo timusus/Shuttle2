@@ -3,11 +3,12 @@ package com.simplecityapps.mediaprovider.settings
 import com.simplecityapps.mediaprovider.worker.ImportFrequency
 import com.simplecityapps.shuttle.settings.Setting
 import com.simplecityapps.shuttle.settings.SettingsStore
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
 /** Settings > Library (scanning) and Settings > Sources (servers). */
-@Singleton
+@SingleIn(AppScope::class)
 class LibrarySettings @Inject constructor(
     store: SettingsStore
 ) {

@@ -10,9 +10,11 @@ import com.simplecityapps.playback.CallMonitor
 import com.simplecityapps.playback.PlaybackFacade
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.di.PlaybackEngineModule
+import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyResponse
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.engine.SongUriResolver
+import com.simplecityapps.playback.equalizer.EqualizerFrequencyResponse
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
@@ -20,42 +22,42 @@ import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
 import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import dagger.hilt.testing.TestInstallIn
-import javax.inject.Singleton
+import com.simplecityapps.shuttle.di.ApplicationContext
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 
-@Module
-@TestInstallIn(
-    components = [SingletonComponent::class],
-    replaces = [PlaybackEngineModule::class]
-)
+@BindingContainer
+@ContributesTo(AppScope::class, replaces = [PlaybackEngineModule::class])
 class TestPlaybackEngineModule {
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideEqualizerAudioProcessor(): EqualizerAudioProcessor = EqualizerAudioProcessor(false)
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideReplayGainAudioProcessor(): ReplayGainAudioProcessor = ReplayGainAudioProcessor(ReplayGainMode.Off, 0.0)
 
-    @Singleton
+    @Provides
+    fun provideEqualizerFrequencyResponse(): EqualizerFrequencyResponse = DefaultEqualizerFrequencyResponse()
+
+    @SingleIn(AppScope::class)
     @Provides
     fun provideAggregateMediaInfoProvider(): AggregateMediaInfoProvider = AggregateMediaInfoProvider(mutableSetOf())
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideAudioTrackMonitor(): AudioTrackMonitor = AudioTrackMonitor()
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideSongUriResolver(mediaInfoProvider: AggregateMediaInfoProvider): SongUriResolver = SongUriResolver(MediaInfoMediaResolver(mediaInfoProvider))
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideExoPlayer(
         @ApplicationContext context: Context,
@@ -66,14 +68,14 @@ class TestPlaybackEngineModule {
     ): ExoPlayer = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver).create()
 
     // No Cast player in tests: the app plays through the ExoPlayer, and attaching Cast does nothing.
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun provideAppPlayer(exoPlayer: ExoPlayer): AppPlayer = AppPlayer(exoPlayer, castPlayer = null)
 
     @Provides
     fun providePlayer(appPlayer: AppPlayer): Player = appPlayer
 
-    @Singleton
+    @SingleIn(AppScope::class)
     @Provides
     fun providePlaybackOperations(
         @ApplicationContext context: Context,

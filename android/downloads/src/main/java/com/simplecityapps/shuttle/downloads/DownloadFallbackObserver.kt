@@ -6,9 +6,10 @@ import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadManager
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import java.util.Collections
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -24,7 +25,7 @@ import timber.log.Timber
  * fails for a different reason (network, disk) should keep retrying normally, so only a 401/403
  * consumes the one fallback attempt.
  */
-@Singleton
+@SingleIn(AppScope::class)
 @UnstableApi
 class DownloadFallbackObserver
 @Inject

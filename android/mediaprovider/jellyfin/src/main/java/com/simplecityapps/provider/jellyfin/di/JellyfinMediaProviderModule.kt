@@ -21,29 +21,29 @@ import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService
 import com.simplecityapps.provider.jellyfin.http.UserService
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import dagger.multibindings.IntoMap
-import dagger.multibindings.IntoSet
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.IntoMap
+import dev.zacsweers.metro.IntoSet
+import dev.zacsweers.metro.Named
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 import java.util.concurrent.TimeUnit
-import javax.inject.Named
-import javax.inject.Singleton
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.create
 
-@InstallIn(SingletonComponent::class)
-@Module
-open class JellyfinMediaProviderModule {
+@ContributesTo(AppScope::class)
+@BindingContainer
+class JellyfinMediaProviderModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     @Named("JellyfinRetrofit")
     fun provideRetrofit(
         @ApplicationContext context: Context,
@@ -62,25 +62,25 @@ open class JellyfinMediaProviderModule {
         .build()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideUserService(
         @Named("JellyfinRetrofit") retrofit: Retrofit
     ): UserService = retrofit.create()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideItemsService(
         @Named("JellyfinRetrofit") retrofit: Retrofit
     ): ItemsService = retrofit.create()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideTranscodeService(
         @Named("JellyfinRetrofit") retrofit: Retrofit
     ): JellyfinTranscodeService = retrofit.create()
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     @Named("JellyfinCredentialStore")
     fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): ServerCredentialStore = ServerCredentialStore(securePreferenceManager, prefix = "jellyfin").apply {
         if (BuildConfig.DEBUG) {
@@ -92,7 +92,7 @@ open class JellyfinMediaProviderModule {
     }
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideJellyfinAuthenticationManager(
         userService: UserService,
         @Named("JellyfinCredentialStore") credentialStore: ServerCredentialStore,
@@ -100,7 +100,7 @@ open class JellyfinMediaProviderModule {
     ): JellyfinAuthenticationManager = JellyfinAuthenticationManager(userService, credentialStore, clientIdentity)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideJellyfinMediaProvider(
         @ApplicationContext context: Context,
         authenticationManager: JellyfinAuthenticationManager,
@@ -108,7 +108,7 @@ open class JellyfinMediaProviderModule {
     ): JellyfinMediaProvider = JellyfinMediaProvider(context, authenticationManager, itemsService)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     @IntoMap
     @MediaProviderTypeKey(MediaProviderType.Jellyfin)
     fun provideJellyfinMediaInfoProvider(
@@ -118,7 +118,7 @@ open class JellyfinMediaProviderModule {
     ): MediaInfoProvider = JellyfinMediaInfoProvider(authenticationManager, transcodeService, streamingBitrateCap)
 
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun providePlaybackReportingService(
         @Named("JellyfinRetrofit") retrofit: Retrofit
     ): PlaybackReportingService = retrofit.create()

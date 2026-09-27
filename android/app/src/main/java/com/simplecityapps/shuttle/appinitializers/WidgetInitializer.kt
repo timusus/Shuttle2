@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.appinitializers
 import android.annotation.SuppressLint
 import android.app.Application
 import com.simplecityapps.shuttle.ui.widgets.WidgetManager
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 class WidgetInitializer
 @Inject

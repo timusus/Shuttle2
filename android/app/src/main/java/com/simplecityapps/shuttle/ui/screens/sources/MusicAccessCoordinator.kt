@@ -6,8 +6,9 @@ import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,7 +28,7 @@ import kotlinx.coroutines.flow.stateIn
  * already held (granted in system settings while backgrounded, or restored with a backup) without rescanning a
  * library that already has one.
  */
-@Singleton
+@SingleIn(AppScope::class)
 class MusicAccessCoordinator @Inject constructor(
     observeSongs: ObserveSongs,
     importState: SongImportStateProvider,

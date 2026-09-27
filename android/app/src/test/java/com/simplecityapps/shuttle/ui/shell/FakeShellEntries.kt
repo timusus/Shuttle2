@@ -29,7 +29,7 @@ import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoMetadata
 import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoRoute
 
 /**
- * Stand-in screens for the shell's own tests: the real destinations need the Hilt graph, and these tests exercise
+ * Stand-in screens for the shell's own tests: the real destinations need the Metro graph, and these tests exercise
  * tabs, list-detail, sheets and back stacks rather than any one screen. Home lists the first eight sample albums and Library
  * all of them; an album lists its tracks under the library's detail header; an artist lists its albums.
  */
@@ -59,7 +59,7 @@ fun fakeShellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey
         val artist = SampleLibrary.artists.firstOrNull { it.toAlbumArtist().route == route }
         FakeList(artist?.name ?: route.albumArtistKey.orEmpty(), artist?.albums.orEmpty(), openAlbum)
     }
-    // The real screen, so a sheet shows what a phone would; its ViewModel needs the Hilt graph.
+    // The real screen, so a sheet shows what a phone would; its ViewModel needs the Metro graph.
     entry<SongInfoRoute>(metadata = SongInfoMetadata) { SongInfoScreen(uiState = songInfoReady(), onNavigateUp = { navigator.back() }, onCopyPath = {}) }
     entry<SettingsRoute> { FakeList("Settings", emptyList(), openAlbum) }
     entry<EqualizerRoute> { FakeList("Equalizer screen", emptyList(), openAlbum) }

@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -43,7 +45,8 @@ data class SearchUiState(
 )
 
 @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-@HiltViewModel
+@ViewModelKey(SearchViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class SearchViewModel @Inject constructor(
     private val searchLibrary: SearchLibrary,
     private val recentSearches: RecentSearches,

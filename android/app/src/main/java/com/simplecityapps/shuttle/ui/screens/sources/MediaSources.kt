@@ -15,8 +15,9 @@ import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import javax.inject.Inject
-import javax.inject.Singleton
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,7 +60,7 @@ interface MediaSources {
 /** Songs on this device come from the S2 scanner, or the Android (MediaStore) provider for users who chose it before. */
 val MediaProviderType.isLocal: Boolean get() = this == MediaProviderType.Shuttle || this == MediaProviderType.MediaStore
 
-@Singleton
+@SingleIn(AppScope::class)
 class DefaultMediaSources @Inject constructor(
     private val preferences: PlaybackPreferenceManager,
     private val generalPreferences: GeneralPreferenceManager,

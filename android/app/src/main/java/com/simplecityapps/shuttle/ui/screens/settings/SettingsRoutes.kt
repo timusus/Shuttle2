@@ -7,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,9 +31,12 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import com.simplecityapps.shuttle.ui.screens.sources.sourcesRows
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import java.util.Optional
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -87,12 +89,12 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     entry<ExcludedSongsRoute> { ExcludedSongsEntry(onNavigateUp = { navigateUp() }) }
     entry<LiveLogRoute> { LiveLogEntry(onNavigateUp = { navigateUp() }) }
     entry<WhatsNewRoute> {
-        val viewModel: WhatsNewViewModel = hiltViewModel()
+        val viewModel: WhatsNewViewModel = metroViewModel()
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         WhatsNewScreen(uiState = uiState, onNavigateUp = { navigateUp() })
     }
     entry<LicencesRoute> {
-        val viewModel: LicencesViewModel = hiltViewModel()
+        val viewModel: LicencesViewModel = metroViewModel()
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         val uriHandler = LocalUriHandler.current
         LicencesScreen(
@@ -109,7 +111,7 @@ private fun SettingsDestinationEntry(
     onNavigateUp: () -> Unit,
     onOpenLink: (SettingsLink) -> Unit
 ) {
-    val viewModel: SettingsViewModel = hiltViewModel()
+    val viewModel: SettingsViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
@@ -153,7 +155,7 @@ private val SettingsUiEvent.message: Int
 
 @Composable
 private fun EqualizerEntry(onNavigateUp: () -> Unit) {
-    val viewModel: EqualizerViewModel = hiltViewModel()
+    val viewModel: EqualizerViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     EqualizerScreen(
         uiState = uiState,
@@ -168,7 +170,7 @@ private fun EqualizerEntry(onNavigateUp: () -> Unit) {
 
 @Composable
 private fun ExcludedSongsEntry(onNavigateUp: () -> Unit) {
-    val viewModel: ExcludedSongsViewModel = hiltViewModel()
+    val viewModel: ExcludedSongsViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     ExcludedSongsScreen(
         uiState = uiState,
@@ -181,20 +183,21 @@ private fun ExcludedSongsEntry(onNavigateUp: () -> Unit) {
 data class LiveLogGateUiState(val entryPoint: LiveLogEntryPoint? = null)
 
 /**
- * Resolves the debug-only [LiveLogEntryPoint] via Hilt's optional binding, so this file never imports a
+ * Resolves the debug-only [LiveLogEntryPoint] via an optional binding, so this file never imports a
  * class that only exists in the debug build. Absent in release, where the row that opens this route is also
  * hidden (see [com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog]).
  */
-@HiltViewModel
+@ViewModelKey(LiveLogGateViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class LiveLogGateViewModel @Inject constructor(
-    entryPoint: Optional<LiveLogEntryPoint>
+    entryPoint: Optional<LiveLogEntryPoint> = Optional.empty()
 ) : ViewModel() {
     val uiState: StateFlow<LiveLogGateUiState> = MutableStateFlow(LiveLogGateUiState(entryPoint.orElse(null))).asStateFlow()
 }
 
 @Composable
 private fun LiveLogEntry(onNavigateUp: () -> Unit) {
-    val gate: LiveLogGateViewModel = hiltViewModel()
+    val gate: LiveLogGateViewModel = metroViewModel()
     val uiState by gate.uiState.collectAsStateWithLifecycle()
     val entryPoint = uiState.entryPoint
     if (entryPoint != null) {

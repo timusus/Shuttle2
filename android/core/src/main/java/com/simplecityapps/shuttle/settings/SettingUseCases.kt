@@ -1,6 +1,6 @@
 package com.simplecityapps.shuttle.settings
 
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.flow.Flow
 
 /** The stored value of [Setting]s in the [SettingsStore]: the current value, then every change to it. */

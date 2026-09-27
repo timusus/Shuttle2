@@ -9,7 +9,6 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.testing.MainDispatcherRule
-import dagger.Lazy
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -43,19 +42,19 @@ class PlaybackInitializerTest {
         songRepository = songRepository,
         playbackOperations = playbackOperations,
         queueStore = queueStore,
-        castStarter = Lazy {
+        castStarter = lazy {
             startedComponents += "cast"
             mockk(relaxed = true)
         },
-        playRequests = Lazy {
+        playRequests = lazy {
             startedComponents += "play requests"
             mockk(relaxed = true)
         },
-        bitPerfectOutput = Lazy {
+        bitPerfectOutput = lazy {
             startedComponents += "bit-perfect"
             mockk(relaxed = true)
         },
-        queueSongRefresher = Lazy {
+        queueSongRefresher = lazy {
             startedComponents += "queue song refresher"
             mockk(relaxed = true)
         },

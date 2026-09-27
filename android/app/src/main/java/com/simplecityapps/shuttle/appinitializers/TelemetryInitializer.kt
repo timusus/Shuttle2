@@ -4,7 +4,7 @@ import android.app.Application
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.telemetry.SentryBreadcrumbTree
 import com.simplecityapps.shuttle.telemetry.TelemetryConsentGate
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 import timber.log.Timber
 
 /** Applies the stored crash reporting and analytics choices, first of all the initializers. */

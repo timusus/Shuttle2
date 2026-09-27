@@ -3,18 +3,18 @@ package com.simplecityapps.shuttle.di
 import android.content.Context
 import com.simplecityapps.localmediaprovider.local.data.room.DatabaseProvider
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import javax.inject.Singleton
+import com.simplecityapps.shuttle.di.ApplicationContext
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Provides
+import dev.zacsweers.metro.SingleIn
 
-@InstallIn(SingletonComponent::class)
-@Module
+@ContributesTo(AppScope::class)
+@BindingContainer
 class DatabaseModule {
     @Provides
-    @Singleton
+    @SingleIn(AppScope::class)
     fun provideMediaDatabase(
         @ApplicationContext context: Context
     ): MediaDatabase = DatabaseProvider(context).database

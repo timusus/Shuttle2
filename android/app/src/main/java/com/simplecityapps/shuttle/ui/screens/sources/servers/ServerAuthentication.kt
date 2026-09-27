@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import com.simplecityapps.shuttle.model.MediaProviderType
-import dagger.MapKey
+import dev.zacsweers.metro.MapKey
 
 /** What a server's sign-in form submits. [authCode] is Plex's optional two-factor code. */
 data class ServerLogin(

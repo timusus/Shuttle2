@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /**
  * Tells a new install from an upgrade, once per launch and before anything reads the settings it seeds. Every launch

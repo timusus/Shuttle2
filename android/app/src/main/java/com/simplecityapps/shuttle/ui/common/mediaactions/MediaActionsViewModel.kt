@@ -12,8 +12,10 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,7 +40,8 @@ data class MediaActionsUiState(
  * here. Scoped to the destination's nav entry.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-@HiltViewModel
+@ViewModelKey(MediaActionsViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class MediaActionsViewModel @Inject constructor(
     private val handler: MediaActionHandler,
     private val availableMediaActions: AvailableMediaActions,

@@ -4,10 +4,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import com.simplecityapps.shuttle.di.appGraph
 import com.simplecityapps.trial.DebugEntitlementOverride
 import com.simplecityapps.trial.EntitlementRepository
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
 
 /**
  * Debug-build-only: overrides the resolved entitlement so paywall UI (the add-server disclosure, the
@@ -15,8 +17,12 @@ import javax.inject.Inject
  * trial. Debug builds otherwise always resolve Pro. `--es state free|trial|pro|real` (`real` clears the
  * override). Replies on logcat tag [TAG]; `support/scripts/s2-debug.sh` wraps the broadcast syntax.
  */
-@AndroidEntryPoint
 class DebugEntitlementReceiver : BroadcastReceiver() {
+    @ContributesTo(AppScope::class)
+    interface Injector {
+        fun inject(receiver: DebugEntitlementReceiver)
+    }
+
     @Inject
     lateinit var entitlementRepository: EntitlementRepository
 
@@ -24,6 +30,7 @@ class DebugEntitlementReceiver : BroadcastReceiver() {
         context: Context,
         intent: Intent
     ) {
+        context.appGraph<Injector>().inject(this)
         val state = intent.getStringExtra("state")
         val override = when (state?.lowercase()) {
             "free" -> DebugEntitlementOverride.Free

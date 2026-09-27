@@ -11,9 +11,11 @@ import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.ContributesIntoMap
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import java.util.Date
-import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,7 +47,8 @@ sealed interface SettingsUiEvent {
 }
 
 /** Backs every settings destination: reads and writes the catalog's settings. */
-@HiltViewModel
+@ViewModelKey(SettingsViewModel::class)
+@ContributesIntoMap(AppScope::class)
 class SettingsViewModel @Inject constructor(
     observeSetting: ObserveSetting,
     private val readSetting: ReadSetting,

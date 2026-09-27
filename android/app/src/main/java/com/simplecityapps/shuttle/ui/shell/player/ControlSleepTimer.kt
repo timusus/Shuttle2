@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 sealed interface SleepTimerCommand {
     /** Pauses after [durationMs], or at the end of the song playing then when [playToEnd]. */

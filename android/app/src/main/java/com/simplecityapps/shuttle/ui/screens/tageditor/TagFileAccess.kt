@@ -13,15 +13,15 @@ import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.externalStorageTreeFolder
 import com.simplecityapps.mediaprovider.model.AudioFile
+import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Song
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.BindingContainer
+import dev.zacsweers.metro.Binds
+import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.Inject
 import java.io.File
 import java.io.FileNotFoundException
-import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -175,8 +175,8 @@ internal fun documentIdForPath(
     return if (treeDocumentId.endsWith(':')) treeDocumentId + relative else "${treeDocumentId.trimEnd('/')}/$relative"
 }
 
-@Module
-@InstallIn(SingletonComponent::class)
+@BindingContainer
+@ContributesTo(AppScope::class)
 interface TagFileAccessModule {
     @Binds
     fun bindTagFileAccess(access: DeviceTagFileAccess): TagFileAccess

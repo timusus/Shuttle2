@@ -1,6 +1,6 @@
 package com.simplecityapps.shuttle.settings
 
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /**
  * Settles Dynamic colour once, on launch, when nothing is stored for it: on for a new install (#496), off for

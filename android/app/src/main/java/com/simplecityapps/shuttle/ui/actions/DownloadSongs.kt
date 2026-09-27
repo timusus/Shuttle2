@@ -4,7 +4,7 @@ import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.shuttle.downloads.SongDownloadManager
 import com.simplecityapps.shuttle.entitlement.TryDownloadFromServer
 import com.simplecityapps.shuttle.model.Song
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /**
  * Downloads a selection's remote songs for offline playback ([download] true), or removes their downloads ([download]

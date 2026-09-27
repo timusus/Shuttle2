@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import com.simplecityapps.mediaprovider.server.QuickConnectAuthentication
 import com.simplecityapps.shuttle.model.MediaProviderType
-import javax.inject.Inject
+import dev.zacsweers.metro.Inject
 
 /** Whether [type]'s server at [address] supports Quick Connect sign-in. False, with no network call, for a type without one. */
 class CheckQuickConnectAvailable @Inject constructor(

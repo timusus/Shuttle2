@@ -12,8 +12,8 @@ import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportPlanner
 import com.simplecityapps.shuttle.playbackreporting.PlaybackReportSender
+import dev.zacsweers.metro.Inject
 import java.util.UUID
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
