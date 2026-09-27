@@ -122,7 +122,7 @@ private fun ServerSignInBody(
             )
         }
     }
-}}
+}
 
 @Composable
 private fun SignInFields(
