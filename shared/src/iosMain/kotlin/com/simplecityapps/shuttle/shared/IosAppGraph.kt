@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.shared
 
+import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
@@ -31,6 +32,7 @@ import com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInViewModel
 import com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorViewModel
 import com.simplecityapps.shuttle.ui.shell.ShellViewModel
+import com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Provides
@@ -101,6 +103,12 @@ interface IosAppGraph : ViewModelGraph {
     /** A Jellyfin or Emby server's sign-in form, including Jellyfin Quick Connect. Plex joins with its provider. */
     val serverSignInViewModelFactory: ServerSignInViewModel.Factory
 
+    /**
+     * The mini player and Now Playing's ViewModel. Swift builds one through [createPlayerViewModel], which hands it the
+     * saved state it needs.
+     */
+    val playerViewModelFactory: PlayerViewModel.Factory
+
     @DependencyGraph.Factory
     fun interface Factory {
         /** [audioPlayer]: the Swift adapter over the S2Playback engine. */
@@ -112,3 +120,9 @@ interface IosAppGraph : ViewModelGraph {
 
 /** Builds the graph: `IosAppGraphKt.createIosAppGraph(audioPlayer:)` from Swift, once per process. */
 fun createIosAppGraph(audioPlayer: IosAudioPlayer): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer)
+
+/**
+ * The player's ViewModel, with a fresh `SavedStateHandle`: iOS has no saved state to restore it from, so its open Now
+ * Playing panel starts closed each launch. From Swift, `IosAppGraphKt.createPlayerViewModel(graph)`.
+ */
+fun IosAppGraph.createPlayerViewModel(): PlayerViewModel = playerViewModelFactory.create(SavedStateHandle())

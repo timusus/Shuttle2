@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInViewModel
 import com.simplecityapps.shuttle.ui.shell.ShellTab
 import com.simplecityapps.shuttle.ui.shell.ShellViewModel
+import com.simplecityapps.shuttle.ui.shell.player.PlayerViewModel
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.kotest.matchers.types.shouldBeSameInstanceAs
@@ -59,6 +60,7 @@ class IosAppGraphTest {
         graph.smartPlaylistDetailViewModelFactory
         graph.songInfoViewModelFactory
         graph.serverSignInViewModelFactory
+        graph.playerViewModelFactory
         graph.mediaSources
         graph.songImportStateProvider
         graph.artworkUrls
@@ -83,6 +85,16 @@ class IosAppGraphTest {
     @Test
     fun settingsReadTheIosCatalog() {
         graph.settingsCatalog shouldBeSameInstanceAs IosSettingsCatalog
+    }
+
+    @Test
+    fun thePlayerViewModelIsBuiltOverTheGraphsPlayback() {
+        val viewModel = graph.createPlayerViewModel()
+
+        viewModel.shouldBeInstanceOf<PlayerViewModel>()
+        // No saved queue on iOS yet: nothing stands in for one, so the player starts empty.
+        viewModel.uiState.value.player.hasQueue shouldBe false
+        viewModel.uiState.value.player.castAvailable shouldBe false
     }
 
     @Test

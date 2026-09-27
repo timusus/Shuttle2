@@ -3,20 +3,20 @@ import SwiftUI
 /// Now Playing, after Shuttle Podcasts' player: the cover, a large title and artist, a scrubber with
 /// monospaced elapsed and remaining times, the transport, and shuffle, repeat and the queue along the bottom.
 /// Presented by `nowPlayingPresentation` (a full-screen cover in `compact`, a form sheet otherwise); the queue
-/// opens through `playerSheet` (a sheet in `compact`, a popover otherwise). Bound to `PlayerModel` through
-/// `PlayerBinding.swift` only.
+/// opens through `playerSheet` (a sheet in `compact`, a popover otherwise). Bound to the shared `PlayerViewModel`
+/// through `PlayerBinding` only.
 struct NowPlayingView: View {
-    let model: PlayerModel
+    let binding: PlayerBinding
     @Environment(\.dismiss) private var dismiss
 
-    /// `model` defaults to the same `PlayerModel` `MiniPlayerView` uses (`AppGraph.dependencies.playerModel`),
+    /// `binding` defaults to the same `PlayerBinding` `MiniPlayerView` uses (`AppGraph.dependencies.playerBinding`),
     /// so the two always show the same state.
-    init(model: PlayerModel = AppGraph.dependencies.playerModel) {
-        self.model = model
+    init(binding: PlayerBinding = AppGraph.dependencies.playerBinding) {
+        self.binding = binding
     }
 
     var body: some View {
-        NowPlayingContent(state: model.nowPlayingState, actions: model.playerActions, onClose: { dismiss() })
+        NowPlayingContent(state: binding.nowPlaying, actions: binding.actions, onClose: { dismiss() })
     }
 }
 
@@ -139,6 +139,14 @@ struct NowPlayingContent: View {
 
             Spacer()
 
+            speedMenu
+
+            Spacer()
+
+            sleepTimerMenu
+
+            Spacer()
+
             Button { showQueue = true } label: {
                 Image(systemName: "list.bullet")
                     .modeGlyph(isOn: false)
@@ -153,6 +161,53 @@ struct NowPlayingContent: View {
                 }
             }
         }
+    }
+
+    /// The playback speeds offered, 1 being normal.
+    static let speeds: [Float] = [0.5, 0.75, 1, 1.25, 1.5, 2]
+
+    /// The sleep timer's durations, in minutes.
+    static let sleepTimerMinutes = [15, 30, 45, 60]
+
+    private var speedMenu: some View {
+        Menu {
+            ForEach(Self.speeds, id: \.self) { speed in
+                Button { actions.setSpeed(speed) } label: {
+                    if speed == state.playbackSpeed {
+                        Label(Self.speedText(speed), systemImage: "checkmark")
+                    } else {
+                        Text(Self.speedText(speed))
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "gauge.with.dots.needle.50percent")
+                .modeGlyph(isOn: state.playbackSpeed != 1)
+        }
+        .accessibilityLabel("Playback Speed")
+        .accessibilityValue(Self.speedText(state.playbackSpeed))
+        .accessibilityIdentifier("nowPlaying.speed")
+    }
+
+    private var sleepTimerMenu: some View {
+        Menu {
+            ForEach(Self.sleepTimerMinutes, id: \.self) { minutes in
+                Button("\(minutes) Minutes") { actions.startSleepTimer(minutes) }
+            }
+            if state.sleepTimerActive {
+                Button("Turn Off Timer", role: .destructive, action: actions.stopSleepTimer)
+            }
+        } label: {
+            Image(systemName: state.sleepTimerActive ? "moon.zzz.fill" : "moon.zzz")
+                .modeGlyph(isOn: state.sleepTimerActive)
+        }
+        .accessibilityLabel("Sleep Timer")
+        .accessibilityValue(state.sleepTimerActive ? "On" : "Off")
+        .accessibilityIdentifier("nowPlaying.sleepTimer")
+    }
+
+    static func speedText(_ speed: Float) -> String {
+        speed.formatted(.number.precision(.fractionLength(0...2))) + "×"
     }
 
     private var repeatValue: String {

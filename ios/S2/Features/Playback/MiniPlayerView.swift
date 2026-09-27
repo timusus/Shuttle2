@@ -3,26 +3,25 @@ import SwiftUI
 
 /// The bar every tab's screens inset at the bottom (`tabViewBottomAccessory` / safe-area inset
 /// candidate, #593): the song's cover, title and artist, play/pause and next; tapping opens Now Playing.
-/// Bound to `PlayerModel` through `PlayerBinding` (the one place a later re-wire to the shared
-/// `PlayerViewModel`, phase 4 wave 5, touches).
+/// Bound to the shared `PlayerViewModel` through `PlayerBinding`, reading only its `miniPlayer` state.
 struct MiniPlayerView: View {
-    let model: PlayerModel
+    let binding: PlayerBinding
     @Binding var showNowPlaying: Bool
 
-    /// `model` defaults to the app's single `PlayerModel`, built once in `IosAppDependencies`: a view
-    /// struct like this one is re-initialised on every parent body, so a fresh `PlayerModel` per init
+    /// `binding` defaults to the app's single `PlayerBinding`, built once in `IosAppDependencies`: a view
+    /// struct like this one is re-initialised on every parent body, so a fresh binding per init
     /// would restart its flows every time (`.claude/rules/ios.md`).
     init(
         showNowPlaying: Binding<Bool>,
-        model: PlayerModel = AppGraph.dependencies.playerModel
+        binding: PlayerBinding = AppGraph.dependencies.playerBinding
     ) {
-        self.model = model
+        self.binding = binding
         self._showNowPlaying = showNowPlaying
     }
 
     var body: some View {
-        let state = model.miniPlayerState
-        let actions = model.playerActions
+        let state = binding.miniPlayer
+        let actions = binding.actions
         MiniPlayerBar(
             title: state.title,
             artist: state.artist,

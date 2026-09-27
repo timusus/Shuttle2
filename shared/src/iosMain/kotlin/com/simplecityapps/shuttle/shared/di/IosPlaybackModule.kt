@@ -61,7 +61,11 @@ class IosPlaybackModule {
             scope = CoroutineScope(job + Dispatchers.Main.immediate + exceptionHandler),
             retainShuffleOnNewQueue = { retainShuffle.value },
             random = random
-        )
+        ).apply {
+            // iOS doesn't save its queue yet, so there is nothing to restore: the queue is as restored as it gets, and
+            // an empty one means no queue rather than one still loading.
+            queueOperations.hasRestoredQueue = true
+        }
     }
 
     @Provides

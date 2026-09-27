@@ -85,6 +85,17 @@ struct NowPlayingViewTests {
         #expect(try repeatButton.accessibilityValue().string() == "One")
     }
 
+    @Test func speedAndSleepTimerReportTheirState() throws {
+        var playing = state()
+        playing.playbackSpeed = 1.5
+        playing.sleepTimerActive = true
+        let sut = NowPlayingContent(state: playing)
+        let speed = try sut.inspect().find(viewWithAccessibilityLabel: "Playback Speed")
+        #expect(try speed.accessibilityValue().string() == NowPlayingContent.speedText(1.5))
+        let sleepTimer = try sut.inspect().find(viewWithAccessibilityLabel: "Sleep Timer")
+        #expect(try sleepTimer.accessibilityValue().string() == "On")
+    }
+
     @Test func theQueueListsEachSongAndSkipsToATappedOne() throws {
         var selected: Int?
         let sut = NowPlayingQueueList(queue: queue, onSelect: { selected = $0 })
