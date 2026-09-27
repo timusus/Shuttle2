@@ -17,6 +17,8 @@ constructor(
     private val jellyfinTranscodeService: JellyfinTranscodeService,
     private val streamingBitrateCap: StreamingBitrateCap
 ) : MediaInfoProvider {
+    private val streamUrls = JellyfinStreamUrlProvider(jellyfinAuthenticationManager, streamingBitrateCap)
+
     override fun handles(scheme: String?): Boolean = scheme == "jellyfin"
 
     @Throws(IllegalStateException::class)
@@ -38,15 +40,7 @@ constructor(
      * assert on it without pulling Robolectric into this module for `Uri.parse`.
      */
     @Throws(IllegalStateException::class)
-    internal fun buildPlaybackPathString(song: Song): String {
-        val authenticatedCredentials = jellyfinAuthenticationManager.getAuthenticatedCredentials()
-            ?: throw IllegalStateException("Failed to authenticate")
-        return jellyfinAuthenticationManager.buildJellyfinPath(
-            itemId = song.path.substringAfterLast('/'),
-            authenticatedCredentials = authenticatedCredentials,
-            maxBitrateKbps = streamingBitrateCap.maxBitrateKbps()
-        ) ?: throw IllegalStateException("Failed to build jellyfin path")
-    }
+    internal fun buildPlaybackPathString(song: Song): String = streamUrls.streamUrl(song)
 
     private suspend fun getMimeType(
         path: Uri,

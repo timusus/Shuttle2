@@ -17,6 +17,8 @@ constructor(
     private val embyTranscodeService: EmbyTranscodeService,
     private val streamingBitrateCap: StreamingBitrateCap
 ) : MediaInfoProvider {
+    private val streamUrls = EmbyStreamUrlProvider(embyAuthenticationManager, streamingBitrateCap)
+
     override fun handles(scheme: String?): Boolean = scheme == "emby"
 
     @Throws(IllegalStateException::class)
@@ -38,15 +40,7 @@ constructor(
      * assert on it without pulling Robolectric into this module for `Uri.parse`.
      */
     @Throws(IllegalStateException::class)
-    internal fun buildPlaybackPathString(song: Song): String {
-        val authenticatedCredentials = embyAuthenticationManager.getAuthenticatedCredentials()
-            ?: throw IllegalStateException("Failed to authenticate")
-        return embyAuthenticationManager.buildEmbyPath(
-            itemId = song.path.substringAfterLast('/'),
-            authenticatedCredentials = authenticatedCredentials,
-            maxBitrateKbps = streamingBitrateCap.maxBitrateKbps()
-        ) ?: throw IllegalStateException("Failed to build emby path")
-    }
+    internal fun buildPlaybackPathString(song: Song): String = streamUrls.streamUrl(song)
 
     private suspend fun getMimeType(
         path: Uri,
