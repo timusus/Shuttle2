@@ -1,4 +1,4 @@
 .build/
 .swiftpm/
-# The FFmpeg xcframework is a build artefact (scripts/build-ffmpeg.sh); see README.md.
+# The FFmpeg xcframeworks are a build artefact (ios/scripts/build-ffmpeg.sh); see README.md.
 Frameworks/

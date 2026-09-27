@@ -67,7 +67,6 @@ final class MusicPlaybackControllerTests: XCTestCase {
     /// 44.1 kHz then 48 kHz, both FFmpeg-decoded into a 48 kHz engine: the render is exactly what
     /// the two decoders produced, one after the other.
     func testFormatChangeIsGapless() throws {
-        try XCTSkipUnless(FFmpegStreamDecoder.isAvailable, "no FFmpeg xcframework (scripts/build-ffmpeg.sh)")
         let urlA = try TestSignal.writeSineWAV(sampleRate: 44_100, seconds: 0.3, frequency: 440, amplitude: 0.4)
         let urlB = try TestSignal.writeSineWAV(sampleRate: 48_000, seconds: 0.3, frequency: 660, amplitude: 0.4)
         defer {

@@ -15,10 +15,6 @@ final class StreamingPCMReaderTests: XCTestCase {
     private var server: LoopbackMediaServer?
     private var reader: StreamingPCMReader?
 
-    override func setUpWithError() throws {
-        try XCTSkipUnless(FFmpegStreamDecoder.isAvailable, "no FFmpeg xcframework (scripts/build-ffmpeg.sh)")
-    }
-
     override func tearDown() {
         reader?.cancel()
         reader = nil

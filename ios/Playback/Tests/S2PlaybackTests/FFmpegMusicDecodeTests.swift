@@ -2,14 +2,10 @@ import XCTest
 @testable import S2Playback
 import S2PlaybackTestSupport
 
-/// The formats S2 adds over Podcasts decode through the FFmpeg build (`scripts/build-ffmpeg.sh`),
+/// The formats S2 adds over Podcasts decode through the FFmpeg build (`ios/scripts/build-ffmpeg.sh`),
 /// and the decoder converts them to the engine's output format. Fixtures were made with the
 /// ffmpeg CLI; see ios/Playback/README.md.
 final class FFmpegMusicDecodeTests: XCTestCase {
-
-    override func setUpWithError() throws {
-        try XCTSkipUnless(FFmpegStreamDecoder.isAvailable, "no FFmpeg xcframework (scripts/build-ffmpeg.sh)")
-    }
 
     private func fixture(_ name: String, _ ext: String) throws -> URL {
         try XCTUnwrap(LoopbackMediaServer.fixtureURL(name, withExtension: ext))
