@@ -43,8 +43,8 @@ data class LastFmScrobbleResponse(
         /** `error` code: the session key is invalid or expired; sign the user out rather than retry. */
         const val ERROR_INVALID_SESSION = 9
 
-        /** `error` codes retried with backoff: rate limited, then the service temporarily unavailable. */
-        val RETRYABLE_ERRORS = setOf(11, 16)
+        /** `error` codes retried with backoff: service offline, temporarily unavailable, or rate limit exceeded. */
+        val RETRYABLE_ERRORS = setOf(11, 16, 29)
     }
 }
 

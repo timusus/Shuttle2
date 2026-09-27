@@ -143,6 +143,17 @@ class ScrobbleFlushWorkerTest {
     }
 
     @Test
+    fun `a rate-limited error code keeps the queue and asks WorkManager to retry`() = runTest {
+        dao.enqueue(entity(1))
+        api.enqueue(Response.success(LastFmScrobbleResponse(error = 29)))
+
+        val result = buildWorker().doWork()
+
+        result shouldBe ListenableWorker.Result.retry()
+        dao.count(QueuedScrobbleEntity.SERVICE_LASTFM) shouldBe 1
+    }
+
+    @Test
     fun `an HTTP failure keeps the queue and asks WorkManager to retry`() = runTest {
         dao.enqueue(entity(1))
         api.enqueue(Response.error(500, "".toResponseBody("text/plain".toMediaType())))
