@@ -37,6 +37,13 @@ stream indices to a track and a media frame. The node's `playerTime` maps to the
 through anchors, which move only if the node starved. Position, the transition callback and the
 end of the queue all come from that mapping.
 
+**Failures.** A track that can't be opened or read is reported through `onFailed` and counts as
+ended. A current track that fails carries on into the next, if one is set. A next that fails to open
+is never transitioned into: the current track ends, and Kotlin, told of the failure, decides what
+follows. A next set while the queue's end is scheduled but not yet heard (including straight after a
+load whose current track failed) carries on from the last frame. After the end of a track that
+failed, `setNext` starts the new next at once; after one that played out, Kotlin loads what follows.
+
 **Scheduling.** The controller keeps `scheduleAheadSeconds` (default 1 s) of processed audio queued
 ahead of the playhead. It refills on buffer completion and on a 100 ms ticker, which also emits
 `onPosition`. An EQ change is heard at most that far ahead; the byte source's own read-ahead is what

@@ -59,6 +59,28 @@ final class RecordingTrackSource: TrackPCMSource {
     func interrupt() { inner.interrupt() }
 }
 
+/// A track that can't be opened, as a missing file or a dead URL; or, `atRead`, one that opens and
+/// fails on its first read, as a corrupt file.
+final class FailingTrackSource: TrackPCMSource {
+    private let atRead: Bool
+
+    init(atRead: Bool = false) { self.atRead = atRead }
+
+    func open(sampleRate: Double, channelCount: Int) throws -> Int64? {
+        if atRead { return 48_000 }
+        throw TrackSourceError.failed("can't open")
+    }
+
+    func seek(toFrame frame: Int64) throws {}
+
+    func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) throws -> Int {
+        throw TrackSourceError.failed("can't decode")
+    }
+
+    func cancel() {}
+    func interrupt() {}
+}
+
 enum TestSignal {
     /// Deterministic noise in ±`amplitude`, never exactly zero, left and right different, so a
     /// sample out of place or a frame inserted is visible.

@@ -180,6 +180,93 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertEqual(log.states.last, .ended)
     }
 
+    // MARK: - Failures
+
+    private func failing(_ uid: String, atRead: Bool = false) -> PlaybackTrack {
+        PlaybackTrack(uid: uid) { FailingTrackSource(atRead: atRead) }
+    }
+
+    /// The owner loads with no next and hands the next over straight after, as the shared
+    /// `IosPlayerController` does. A current that failed to open has drained the queue by then; the
+    /// engine carries on into the new next, as it would have into a next given with the load.
+    func testNextSetAfterTheCurrentFailedToOpenPlays() throws {
+        let (controller, log) = try makeController()
+        let b = TestSignal.noise(frames: 12_000, seed: 15)
+        controller.load(current: failing("A"), next: nil, playWhenReady: true)
+        controller.setNext(track("B", b))
+        controller.syncForTesting()
+        let out = try OfflineRenderer(controller: controller, slice: 512).render(frames: 12_000 + 1_024, log: log)
+        assertEqual(out.left[0..<12_000], out.right[0..<12_000], b)
+        controller.syncForTesting()
+        XCTAssertEqual(log.failures, ["A"])
+        XCTAssertEqual(log.transitions, ["B"])
+        XCTAssertEqual(log.states.last, .ended)
+    }
+
+    /// A next that failed to open is never transitioned into: the current track ends, and the owner
+    /// (which got the failure) decides what comes after it.
+    func testFailedNextEndsTheCurrentTrackWithoutATransition() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 6_000, seed: 16)
+        controller.load(current: track("A", a), next: failing("B"), playWhenReady: true)
+        controller.syncForTesting()
+        let out = try OfflineRenderer(controller: controller, slice: 512).render(frames: 6_000 + 1_024, log: log)
+        assertEqual(out.left[0..<6_000], out.right[0..<6_000], a)
+        controller.syncForTesting()
+        XCTAssertEqual(log.failures, ["B"])
+        XCTAssertEqual(log.transitions, [])
+        XCTAssertEqual(log.states.last, .ended)
+        XCTAssertEqual(controller.position?.uid, "A")
+    }
+
+    /// The next failed to open once the current track's end was scheduled; a replacement next set
+    /// before the end is heard carries on from the last frame, gapless.
+    func testNextSetAfterAFailedNextStaysGapless() throws {
+        let (controller, log) = try makeController(scheduleAhead: 0.5)
+        let a = TestSignal.noise(frames: 12_000, seed: 17)
+        let c = TestSignal.noise(frames: 6_000, seed: 18)
+        controller.load(current: track("A", a), next: failing("B"), playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        let head = try renderer.render(frames: 2_048)
+        controller.setNext(track("C", c))
+        controller.syncForTesting()
+        let rest = try renderer.render(frames: 18_000 - 2_048 + 1_024, log: log)
+        let left = head.left + rest.left
+        let right = head.right + rest.right
+        assertEqual(left[0..<18_000], right[0..<18_000], a + c)
+        XCTAssertTrue(left[18_000...].allSatisfy { $0 == 0 })
+        controller.syncForTesting()
+        XCTAssertEqual(log.failures, ["B"])
+        XCTAssertEqual(log.transitions, ["C"])
+        XCTAssertEqual(log.states.last, .ended)
+    }
+
+    /// A next that opened but failed before its first frame is transitioned into and ends at once.
+    /// The owner hands over the track after it once the end is reported; it starts from its top.
+    func testNextSetAfterAFailedTrackEndedStartsIt() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 6_000, seed: 19)
+        let c = TestSignal.noise(frames: 6_000, seed: 20)
+        controller.load(current: track("A", a), next: failing("B", atRead: true), playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        let head = try renderer.render(frames: 6_000 + 1_024, log: log)
+        assertEqual(head.left[0..<6_000], head.right[0..<6_000], a)
+        controller.syncForTesting()
+        XCTAssertEqual(log.transitions, ["B"])
+        XCTAssertEqual(log.states.last, .ended)
+
+        controller.setNext(track("C", c))
+        controller.syncForTesting()
+        let rest = try renderer.render(frames: 6_000 + 1_024, log: log)
+        assertEqual(rest.left[0..<6_000], rest.right[0..<6_000], c)
+        controller.syncForTesting()
+        XCTAssertEqual(log.failures, ["B"])
+        XCTAssertEqual(log.transitions, ["B", "C"])
+        XCTAssertEqual(log.states.suffix(3), [.ended, .playing, .ended])
+    }
+
     // MARK: - DSP
 
     func testFlatEqualizerIsIdentity() throws {

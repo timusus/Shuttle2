@@ -2,6 +2,12 @@
 import Foundation
 #if canImport(CS2StreamDecode)
     import CS2StreamDecode
+#else
+    // S2: stream_decode.h's read results, so `ReaderBox` compiles without the FFmpeg xcframework.
+    private let STREAM_READ_EOF: Int32 = -1
+    private let STREAM_READ_CANCELLED: Int32 = -2
+    private let STREAM_READ_ERROR: Int32 = -3
+    private let STREAM_READ_INTERRUPTED: Int32 = -4
 #endif
 
 /// What the container says about the audio behind a ``StreamByteReader``.

@@ -113,6 +113,8 @@ public final class MusicPlaybackController {
         let track: PlaybackTrack
         let source: TrackPCMSource
         var opened = false
+        /// It could not be opened, or a read failed.
+        var failed = false
         var durationFrames: Int64?
 
         init(track: PlaybackTrack) {
@@ -245,10 +247,17 @@ public final class MusicPlaybackController {
 
     /// Set, replace or clear the item after the current one. If the old next has already started
     /// to be scheduled, the scheduled audio is rebuilt from the current position.
+    ///
+    /// A next set once the queue's end is scheduled (the current track ran out or failed, or the
+    /// old next failed to open) carries on from the last frame, and so does one set in the same
+    /// breath as a load whose current track failed to open. After a track that failed has ended,
+    /// the new next starts at once; after one that played out, the owner loads what follows.
     public func setNext(_ track: PlaybackTrack?) {
         engineQueue.async { [self] in
             guard let current else { return }
-            updateTimeline()
+            // Follow the playhead into the next track, but leave concluding the end to the ticker:
+            // an end not yet reported is what the new next carries on from.
+            updateTimeline(concludingEnd: false)
             if let old = next, old.opened {
                 // The old next is already (partly or wholly) in the node's queue behind the
                 // current track, and scheduled buffers cannot be taken back: rebuild.
@@ -257,12 +266,15 @@ public final class MusicPlaybackController {
                 restart(atFrame: currentMediaFrame())
                 return
             }
-            let hadNext = next != nil
             next?.source.cancel()
             next = track.map(Slot.init)
-            if !hadNext, drained, reading == nil, let next, current.opened {
-                // The queue's end was already scheduled: carry on into the new next from there.
+            guard let next else { return }
+            if state == .ended {
+                if current.failed { promote(next, restartingAt: 0) }
+            } else if drained, reading == nil {
                 drained = false
+                // The node may have run dry already: the new next starts where its clock is.
+                if buffersInFlight == 0 { starved = true }
                 beginReading(next)
                 fill()
             }
@@ -416,6 +428,7 @@ public final class MusicPlaybackController {
     }
 
     private func reportFailure(_ slot: Slot, _ error: Error) {
+        slot.failed = true
         log.error("track \(slot.track.uid, privacy: .public) failed: \(String(describing: error), privacy: .public)")
         let uid = slot.track.uid
         let callback = callbackLock.withLock { callbacks.failed }
@@ -508,10 +521,29 @@ public final class MusicPlaybackController {
         emitPosition()
     }
 
+    /// Carry on from the current track into `slot`, the next. A next that can't be opened gets no
+    /// segment, so it is never transitioned into: the current track ends, and the owner, told of
+    /// the failure, decides what follows it.
     private func beginReading(_ slot: Slot) {
         setReading(slot)
-        _ = openIfNeeded(slot)
-        appendSegment(for: slot, mediaStart: 0)
+        if openIfNeeded(slot) { appendSegment(for: slot, mediaStart: 0) }
+    }
+
+    /// Make `slot` (the next) the current track, report the transition, and start the stream at
+    /// `frame` of it.
+    private func promote(_ slot: Slot, restartingAt frame: Int64) {
+        current?.source.cancel()
+        current = slot
+        next = nil
+        reportTransition(to: slot)
+        openIfNeeded(slot)
+        restart(atFrame: frame)
+    }
+
+    private func reportTransition(to slot: Slot) {
+        let uid = slot.track.uid
+        let callback = callbackLock.withLock { callbacks.transition }
+        if let callback { callbackQueue.async { callback(uid) } }
     }
 
     private func appendSegment(for slot: Slot, mediaStart: Int64) {
@@ -631,7 +663,7 @@ public final class MusicPlaybackController {
     }
 
     /// Follow the playhead: promote the next track once it is being heard, notice the end.
-    private func updateTimeline() {
+    private func updateTimeline(concludingEnd: Bool = true) {
         guard current != nil else { return }
         let stream = playedStreamIndex()
         let segment = timelineLock.withLock { Self.segment(at: stream, in: timeline) }
@@ -644,11 +676,9 @@ public final class MusicPlaybackController {
             timelineLock.withLock {
                 timeline.segments.removeAll { $0.streamStart < segment.streamStart }
             }
-            let uid = next.track.uid
-            let callback = callbackLock.withLock { callbacks.transition }
-            if let callback { callbackQueue.async { callback(uid) } }
+            reportTransition(to: next)
         }
-        if drained, state == .playing, stream >= outputIndex {
+        if concludingEnd, drained, state == .playing, stream >= outputIndex {
             player.stop()
             timelineLock.withLock { timeline.held = outputIndex }
             stopTicker()
