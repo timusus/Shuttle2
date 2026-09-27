@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
-import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackOperations
@@ -23,7 +22,6 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.settings.AppearanceSettings
@@ -41,6 +39,7 @@ import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import com.simplecityapps.shuttle.ui.screens.settings.FakeSettingsEffects
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import io.kotest.matchers.shouldBe
@@ -60,6 +59,9 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
+/** The seed the fake artwork source extracts, as sRGB ARGB. */
+private const val RED = 0xFFFF0000.toInt()
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlayerViewModelTest {
 
@@ -75,7 +77,7 @@ class PlayerViewModelTest {
     private val seededSongs = mutableListOf<Song>()
     private val seedSource = ArtworkSeedSource { song ->
         seededSongs += song
-        ArtworkSeed.Available(Color.Red)
+        ArtworkSeed.Available(RED)
     }
     private val gatedSongs = MutableSharedFlow<Song>()
 
@@ -303,7 +305,7 @@ class PlayerViewModelTest {
         val viewModel = viewModel()
         val album = songs("One", "Two", album = "First")
         queueOperations.queueStateFlow.value = queueOf(album)
-        viewModel.uiState.value.player.seed shouldBe ArtworkSeed.Available(Color.Red)
+        viewModel.uiState.value.player.seed shouldBe ArtworkSeed.Available(RED)
 
         queueOperations.queueStateFlow.value = queueOf(album + createSong(id = 7, name = "Three", album = "Second"))
         seededSongs.map { it.name } shouldBe listOf("One")

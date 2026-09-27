@@ -9,7 +9,6 @@ import coil3.request.SuccessResult
 import coil3.request.allowHardware
 import coil3.toBitmap
 import com.simplecityapps.imageloading.coil.artworkCacheKey
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.designsystem.theme.SeedColorCache
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Song

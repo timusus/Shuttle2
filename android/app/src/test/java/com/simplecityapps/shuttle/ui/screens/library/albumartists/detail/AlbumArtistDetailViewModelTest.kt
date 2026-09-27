@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
-import androidx.compose.ui.graphics.Color
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createSong
@@ -13,7 +12,6 @@ import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSharedPreferences
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
@@ -21,6 +19,7 @@ import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import com.simplecityapps.testing.MainDispatcherRule
@@ -33,6 +32,9 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
+/** The seed the fake artwork source extracts, as sRGB ARGB. */
+private const val RED = 0xFFFF0000.toInt()
+
 /** Focused ViewModel unit tests for behaviour that can't be observed through the UI. */
 @ExperimentalCoroutinesApi
 class AlbumArtistDetailViewModelTest {
@@ -43,7 +45,7 @@ class AlbumArtistDetailViewModelTest {
     private val seededAlbums = mutableListOf<String?>()
     private val seedSource = ArtworkSeedSource { song ->
         seededAlbums += song.album
-        ArtworkSeed.Available(Color.Red)
+        ArtworkSeed.Available(RED)
     }
     private val settingsStore = SettingsStore(FakeSharedPreferences())
 
@@ -240,7 +242,7 @@ class AlbumArtistDetailViewModelTest {
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
-        viewModel.uiState.value.seed shouldBe ArtworkSeed.Available(Color.Red)
+        viewModel.uiState.value.seed shouldBe ArtworkSeed.Available(RED)
         seededAlbums shouldBe listOf("Loose Change")
     }
 

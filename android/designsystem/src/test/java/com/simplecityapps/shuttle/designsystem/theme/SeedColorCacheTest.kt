@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.materialkolor.ktx.toHct
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -94,7 +95,7 @@ class SeedColorCacheTest {
         cache.put("c", red)
         cache.size shouldBe 2
         cache["b"] shouldBe null
-        cache["a"] shouldBe ArtworkSeed.Available(red)
-        cache["c"] shouldBe ArtworkSeed.Available(red)
+        cache["a"] shouldBe ArtworkSeed.Available(red.toArgb())
+        cache["c"] shouldBe ArtworkSeed.Available(red.toArgb())
     }
 }

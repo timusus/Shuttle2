@@ -4,13 +4,13 @@ import androidx.compose.runtime.Immutable
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
 import com.simplecityapps.shuttle.ui.common.PendingEvent
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import kotlinx.coroutines.flow.Flow
 
 /** A song in the queue, and the one Now Playing shows when it is the current item. */

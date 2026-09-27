@@ -53,6 +53,8 @@ dependencies {
     implementation(libs.androidx.foundation)
     implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.materialkolor)
+    // ArtworkSeed: the shared UI state's platform-neutral seed, which ArtworkTheme draws (#586).
+    implementation(project(":android:presentation"))
     implementation(libs.androidx.ui.tooling.preview)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.activity.compose)

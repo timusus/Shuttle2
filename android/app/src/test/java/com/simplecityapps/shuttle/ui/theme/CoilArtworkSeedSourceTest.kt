@@ -9,7 +9,6 @@ import coil3.fetch.FetchResult
 import coil3.fetch.Fetcher
 import coil3.fetch.SourceFetchResult
 import com.simplecityapps.createSong
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe

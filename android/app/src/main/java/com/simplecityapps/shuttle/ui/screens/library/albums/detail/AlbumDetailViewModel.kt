@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Song
@@ -11,6 +10,7 @@ import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted

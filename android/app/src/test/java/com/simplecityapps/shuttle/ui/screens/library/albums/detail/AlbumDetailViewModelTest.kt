@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
-import androidx.compose.ui.graphics.Color
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumRepository
@@ -13,12 +12,12 @@ import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import com.simplecityapps.testing.MainDispatcherRule
@@ -30,6 +29,9 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 
+/** The seed the fake artwork source extracts, as sRGB ARGB. */
+private const val RED = 0xFFFF0000.toInt()
+
 /** Direct ViewModel state tests, replacing the deleted AlbumDetail integration tests (#478). */
 @ExperimentalCoroutinesApi
 class AlbumDetailViewModelTest {
@@ -40,7 +42,7 @@ class AlbumDetailViewModelTest {
     private val seededAlbums = mutableListOf<String?>()
     private val seedSource = ArtworkSeedSource { song ->
         seededAlbums += song.album
-        ArtworkSeed.Available(Color.Red)
+        ArtworkSeed.Available(RED)
     }
     private val settingsStore = SettingsStore(FakeSharedPreferences())
 
@@ -118,7 +120,7 @@ class AlbumDetailViewModelTest {
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
-        viewModel.uiState.value.seed shouldBe ArtworkSeed.Available(Color.Red)
+        viewModel.uiState.value.seed shouldBe ArtworkSeed.Available(RED)
         seededAlbums shouldBe listOf("Cassette Summer")
     }
 

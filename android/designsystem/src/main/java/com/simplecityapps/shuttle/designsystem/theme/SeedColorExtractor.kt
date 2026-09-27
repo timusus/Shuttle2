@@ -2,9 +2,11 @@ package com.simplecityapps.shuttle.designsystem.theme
 
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.materialkolor.ktx.toHct
 import com.materialkolor.quantize.QuantizerCelebi
 import com.materialkolor.score.Score
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -45,15 +47,15 @@ fun extractSeedColor(bitmap: Bitmap): Color? {
  * process. Remembers misses too, so artwork without a usable seed isn't re-scanned.
  */
 class SeedColorCache(private val maxSize: Int = 100) {
-    private val entries = object : LinkedHashMap<String, Color>(16, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Color>): Boolean = size > maxSize
+    private val entries = object : LinkedHashMap<String, ArtworkSeed>(16, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, ArtworkSeed>): Boolean = size > maxSize
     }
 
     /** The cached seed for [key]: [ArtworkSeed.Available], [ArtworkSeed.None] for a remembered miss, or null if not cached. */
-    operator fun get(key: String): ArtworkSeed? = synchronized(entries) { entries[key] }?.toArtworkSeed()
+    operator fun get(key: String): ArtworkSeed? = synchronized(entries) { entries[key] }
 
     fun put(key: String, seed: Color?) {
-        synchronized(entries) { entries[key] = seed ?: Color.Unspecified }
+        synchronized(entries) { entries[key] = seed.toArtworkSeed() }
     }
 
     val size: Int get() = synchronized(entries) { entries.size }
@@ -70,5 +72,5 @@ class SeedColorCache(private val maxSize: Int = 100) {
         return seed.toArtworkSeed()
     }
 
-    private fun Color?.toArtworkSeed(): ArtworkSeed = if (this == null || this == Color.Unspecified) ArtworkSeed.None else ArtworkSeed.Available(this)
+    private fun Color?.toArtworkSeed(): ArtworkSeed = if (this == null) ArtworkSeed.None else ArtworkSeed.Available(toArgb())
 }

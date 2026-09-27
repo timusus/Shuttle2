@@ -2,21 +2,9 @@ package com.simplecityapps.shuttle.designsystem.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
-
-/** Where an artwork seed is in its extraction, as seen by [ArtworkTheme]. */
-@Immutable
-sealed interface ArtworkSeed {
-    /** Extraction is in flight: keep showing the previous seed. */
-    data object Loading : ArtworkSeed
-
-    /** No artwork, or extraction failed: fall back to the root scheme. */
-    data object None : ArtworkSeed
-
-    data class Available(val color: Color) : ArtworkSeed
-}
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 
 /**
  * Nests an artwork-seeded scheme under [S2Theme] for the player and artwork detail screens.
@@ -34,7 +22,7 @@ fun ArtworkTheme(
     // Plain memory, not state: it only feeds the seed chosen in this same composition.
     val lastSeed = remember { SeedMemory() }
     val effectiveSeed = when (seed) {
-        is ArtworkSeed.Available -> seed.color.also { lastSeed.color = it }
+        is ArtworkSeed.Available -> Color(seed.argb).also { lastSeed.color = it }
         ArtworkSeed.Loading -> lastSeed.color
         ArtworkSeed.None -> null.also { lastSeed.color = null }
     }

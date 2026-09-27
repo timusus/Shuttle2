@@ -14,7 +14,6 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.ObserveSetting
@@ -27,6 +26,7 @@ import com.simplecityapps.shuttle.ui.actions.ObserveFavouriteSongIds
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.ToggleFavourite
 import com.simplecityapps.shuttle.ui.common.PendingEvents
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted

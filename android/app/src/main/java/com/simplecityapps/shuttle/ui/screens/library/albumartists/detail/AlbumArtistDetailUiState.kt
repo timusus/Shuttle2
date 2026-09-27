@@ -1,11 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.PendingEvent
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 
 data class AlbumArtistDetailUiState(
     val albumArtist: AlbumArtist? = null,

@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.theme
 
 import com.simplecityapps.imageloading.coil.artworkCacheKey
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting

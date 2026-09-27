@@ -15,10 +15,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.simplecityapps.shuttle.designsystem.theme.ArtworkSeed
+import androidx.compose.ui.graphics.toArgb
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.designsystem.theme.S2Contrast
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 
 /**
  * The scheme columns a board can be reviewed in: the brand accent and three fixed artwork seeds
@@ -61,7 +62,7 @@ fun CatalogTheme(
         }
         MaterialExpressiveTheme(motionScheme = motion) {
             CompositionLocalProvider(LocalCatalogScheme provides scheme) {
-                ArtworkTheme(seed = scheme.seed?.let(ArtworkSeed::Available) ?: ArtworkSeed.None) {
+                ArtworkTheme(seed = scheme.seed?.let { ArtworkSeed.Available(it.toArgb()) } ?: ArtworkSeed.None) {
                     Surface(modifier = modifier, content = content)
                 }
             }
