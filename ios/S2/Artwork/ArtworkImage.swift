@@ -13,8 +13,7 @@ private let artworkArrival = Animation.easeInOut(duration: 0.3)
 /// tile. A nil url is not a loading state: nothing to request means the placeholder, at once and for
 /// good, instead of a spinner that never resolves.
 ///
-/// Not yet wired into any row (P5-4, #587): see `docs/architecture/ios-port/phase-5-ios-app.md`,
-/// "Artwork" for the call sites this is for.
+/// Call sites go through `RemoteArtwork`, which looks the url up first (`Components/RemoteArtwork.swift`).
 struct ArtworkImage<Placeholder: View>: View {
     let url: URL?
     /// The longest edge of the frame this artwork is drawn into, in points.

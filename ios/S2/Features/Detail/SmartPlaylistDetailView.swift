@@ -74,7 +74,7 @@ struct SmartPlaylistDetailContent: View {
             .navigationTitle(smartPlaylist.id.title)
             .navigationBarTitleDisplayMode(.inline)
         } else {
-            ContentUnavailableView("Playlist Not Found", systemImage: "star")
+            EmptyState("Playlist Not Found", systemImage: "star")
         }
     }
 

@@ -66,7 +66,7 @@ struct AlbumListContent: View {
         case .scanning:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
-            ContentUnavailableView("No Albums", systemImage: "square.stack", description: Text("Pull to refresh to import."))
+            EmptyState("No Albums", systemImage: "square.stack", message: "Pull to refresh to import.")
         case .ready:
             List {
                 ForEach(state.albums, id: \.stableId) { album in
@@ -90,12 +90,16 @@ struct AlbumRow: View {
     let album: Album
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(album.name ?? "Unknown").lineLimit(1)
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
+        HStack(spacing: Spacing.smallMedium) {
+            RemoteArtwork(.album(album), points: ArtworkSize.albumRow)
+                .artworkTile(ArtworkSize.albumRow)
+            VStack(alignment: .leading, spacing: Spacing.tiny) {
+                Text(album.name ?? "Unknown").lineLimit(1)
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
         }
     }
 

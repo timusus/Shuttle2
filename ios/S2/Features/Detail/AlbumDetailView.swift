@@ -63,7 +63,7 @@ struct AlbumDetailContent: View {
         case .loading:
             ProgressView()
         case .empty:
-            ContentUnavailableView("Album Not Found", systemImage: "square.stack")
+            EmptyState("Album Not Found", systemImage: "square.stack")
         case .ready:
             if let album = state.album {
                 List {
@@ -88,7 +88,7 @@ struct AlbumDetailContent: View {
                 .navigationTitle(album.name ?? "Album")
                 .navigationBarTitleDisplayMode(.inline)
             } else {
-                ContentUnavailableView("Album Not Found", systemImage: "square.stack")
+                EmptyState("Album Not Found", systemImage: "square.stack")
             }
         }
     }
@@ -115,11 +115,11 @@ struct AlbumDetailContent: View {
                 onPlay: { onPlay(0) },
                 onShuffle: onShuffle
             ) {
-                RemoteArtwork(id: album.stableId, points: 160) {
+                RemoteArtwork(id: album.stableId, points: ArtworkSize.hero) {
                     try await AppGraph.shared.artworkUrls.url(album: album)
                 }
-                .frame(width: 160, height: 160)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .frame(width: ArtworkSize.hero, height: ArtworkSize.hero)
+                .clipShape(RoundedRectangle(cornerRadius: Radius.large, style: .continuous))
             }
             .listRowInsets(EdgeInsets())
         }
@@ -148,7 +148,7 @@ struct AlbumSongRow: View {
                     .foregroundStyle(.secondary)
                     .frame(width: 24, alignment: .trailing)
             }
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(song.name ?? "Unknown")
                     .lineLimit(1)
                     .foregroundStyle(playing ? Color.accentColor : .primary)

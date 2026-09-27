@@ -9,14 +9,6 @@ import Shared
 @MainActor
 @Observable
 final class PlayerModel {
-    /// One row in the queue list, as `NowPlayingView` shows it.
-    struct QueueRow: Identifiable, Equatable {
-        let id: Int64
-        let title: String
-        let artist: String?
-        let isCurrent: Bool
-    }
-
     private let playback: IosPlayerController
     /// `nonisolated(unsafe)`: only `deinit` touches it off the main actor, and by then no other access
     /// can be concurrent (deinit runs once the last reference is gone).
@@ -25,11 +17,13 @@ final class PlayerModel {
     private(set) var title: String?
     private(set) var artist: String?
     private(set) var album: String?
+    /// The current song's cover, nil when nothing is queued.
+    private(set) var artwork: ArtworkSource?
     private(set) var isPlaying = false
     private(set) var isLoading = false
     private(set) var positionMs: Int = 0
     private(set) var durationMs: Int = 0
-    private(set) var queue: [QueueRow] = []
+    private(set) var queue: [NowPlayingQueueRow] = []
     /// The current item's index into `queue`, for the queue list's tap-to-skip.
     private(set) var queuePosition: Int?
 
@@ -78,12 +72,14 @@ final class PlayerModel {
         title = song?.name
         artist = song?.friendlyArtistName
         album = song?.album
+        artwork = song.map(ArtworkSource.song)
         queuePosition = state.currentPosition.map { Int($0.intValue) }
         queue = state.items.map { item in
-            QueueRow(
+            NowPlayingQueueRow(
                 id: item.uid,
                 title: item.song.name ?? "Unknown",
                 artist: item.song.friendlyArtistName,
+                artwork: .song(item.song),
                 isCurrent: item.isCurrent
             )
         }

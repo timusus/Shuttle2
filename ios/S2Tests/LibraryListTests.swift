@@ -66,6 +66,22 @@ struct LibraryListTests {
         #expect((try? AlbumListContent(state: albumState([], .scanning)).inspect().find(text: "Importing your library…")) != nil)
     }
 
+    @Test func songAndAlbumRowsDrawTheirArtwork() throws {
+        let songRow = SongRow(song: TestSongs.demo[0])
+        #expect((try? songRow.inspect().find(RemoteArtwork<ArtworkPlaceholder>.self)) != nil)
+        let albumRow = AlbumRow(album: album("OK Computer", artist: "Radiohead", songs: 12, year: 1997))
+        #expect((try? albumRow.inspect().find(RemoteArtwork<ArtworkPlaceholder>.self)) != nil)
+        #expect(ArtworkSource.album(albumRow.album) == ArtworkSource(id: "ok computer") { nil })
+    }
+
+    @Test func emptyStatesUseTheSharedEmptyState() throws {
+        let songs = try SongListContent(state: songState([], .empty)).inspect()
+        #expect((try? songs.find(EmptyState<EmptyView>.self)) != nil)
+        #expect((try? songs.find(text: "Pull to refresh to import.")) != nil)
+        let albums = try AlbumListContent(state: albumState([], .empty)).inspect()
+        #expect((try? albums.find(EmptyState<EmptyView>.self)) != nil)
+    }
+
     @Test func playbackMessagesBecomeAlerts() {
         #expect(MediaActionText.alert(for: MediaActionMessagePlaybackFailed(reason: "offline")) == "Couldn't play: offline")
         #expect(MediaActionText.alert(for: MediaActionMessageNoSongs.shared) == "There's nothing to play.")

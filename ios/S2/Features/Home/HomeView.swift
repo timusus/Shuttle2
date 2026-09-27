@@ -67,13 +67,9 @@ struct HomeContent: View {
         case .loading:
             ProgressView()
         case .empty:
-            ContentUnavailableView {
-                Label("No Music", systemImage: "house")
-            } description: {
-                Text("Connect a Jellyfin, Emby or Plex server to stream your music.")
-            } actions: {
+            // Plex isn't offered on iOS until its provider is in :shared (`MediaProviderType.signInTypes`).
+            EmptyState("No Music", systemImage: "house", message: "Connect a Jellyfin or Emby server to stream your music.") {
                 NavigationLink("Add a Source", value: Route.sources)
-                    .buttonStyle(.borderedProminent)
                     .accessibilityIdentifier("homeEmpty.addSource")
             }
         case .content(let content):
@@ -129,31 +125,39 @@ private struct ResumeHero: View {
     let onShuffleQueue: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
-            RemoteArtwork(id: resume.song.id, points: 56) {
-                try await AppGraph.shared.artworkUrls.url(song: resume.song)
-            }
-            .frame(width: 56, height: 56)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+        HStack(spacing: Spacing.smallMedium) {
+            RemoteArtwork(.song(resume.song), points: ArtworkSize.albumRow)
+                .artworkTile(ArtworkSize.albumRow, cornerRadius: Radius.medium)
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(resume.song.name ?? "Unknown").font(.headline).lineLimit(1)
                 Text(resume.song.albumArtist ?? "Unknown").font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
-                Text(timeLeft).font(.caption).foregroundStyle(.secondary)
+                Text(timeLeft).font(.s2Time).foregroundStyle(.s2SecondaryText)
             }
 
-            Spacer()
+            Spacer(minLength: 0)
 
-            Button("Shuffle Queue", systemImage: "shuffle", action: onShuffleQueue)
-                .labelStyle(.iconOnly)
-                .buttonStyle(.plain)
+            Button(action: onShuffleQueue) {
+                Image(systemName: "shuffle")
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Shuffle Queue")
 
-            Button(resume.playing ? "Pause" : "Play", systemImage: resume.playing ? "pause.circle.fill" : "play.circle.fill", action: onTogglePlayback)
-                .labelStyle(.iconOnly)
-                .font(.title)
-                .buttonStyle(.plain)
+            Button(action: onTogglePlayback) {
+                Image(systemName: resume.playing ? "pause.circle.fill" : "play.circle.fill")
+                    .font(.largeTitle)
+                    .foregroundStyle(.tint)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(resume.playing ? "Pause" : "Play")
         }
-        .padding(.vertical, 4)
+        .padding(.horizontal, Spacing.medium)
+        .padding(.vertical, Spacing.small)
     }
 
     private var timeLeft: String {
@@ -175,9 +179,9 @@ private struct AlbumShelf: View {
     var body: some View {
         if !albums.isEmpty {
             Section {
-                Text(title).font(.headline).listRowSeparator(.hidden)
+                Text(title).font(.s2SectionTitle).accessibilityAddTraits(.isHeader).listRowSeparator(.hidden)
                 ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(alignment: .top, spacing: 12) {
+                    LazyHStack(alignment: .top, spacing: Spacing.smallMedium) {
                         ForEach(albums, id: \.stableId) { album in
                             AlbumTile(album: album, showPlayCount: showPlayCount, onTap: { onTap(album) })
                                 .contextMenu {
@@ -188,6 +192,7 @@ private struct AlbumShelf: View {
                         }
                     }
                 }
+                .contentMargins(.horizontal, Spacing.medium, for: .scrollContent)
                 .listRowInsets(EdgeInsets())
                 .listRowSeparator(.hidden)
             }
@@ -207,9 +212,9 @@ private struct ArtistShelf: View {
     var body: some View {
         if !artists.isEmpty {
             Section {
-                Text(title).font(.headline).listRowSeparator(.hidden)
+                Text(title).font(.s2SectionTitle).accessibilityAddTraits(.isHeader).listRowSeparator(.hidden)
                 ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(alignment: .top, spacing: 12) {
+                    LazyHStack(alignment: .top, spacing: Spacing.smallMedium) {
                         ForEach(artists, id: \.stableId) { artist in
                             ArtistTile(artist: artist, onTap: { onTap(artist) })
                                 .contextMenu {
@@ -220,6 +225,7 @@ private struct ArtistShelf: View {
                         }
                     }
                 }
+                .contentMargins(.horizontal, Spacing.medium, for: .scrollContent)
                 .listRowInsets(EdgeInsets())
                 .listRowSeparator(.hidden)
             }
@@ -227,7 +233,6 @@ private struct ArtistShelf: View {
     }
 }
 
-private let shelfTileSize: CGFloat = 120
 
 private struct AlbumTile: View {
     let album: Album
@@ -236,16 +241,16 @@ private struct AlbumTile: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 4) {
-                RemoteArtwork(id: album.stableId, points: shelfTileSize) {
+            VStack(alignment: .leading, spacing: Spacing.xsmall) {
+                RemoteArtwork(id: album.stableId, points: ArtworkSize.shelf) {
                     try await AppGraph.shared.artworkUrls.url(album: album)
                 }
-                .frame(width: shelfTileSize, height: shelfTileSize)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .frame(width: ArtworkSize.shelf, height: ArtworkSize.shelf)
+                .clipShape(RoundedRectangle(cornerRadius: Radius.medium, style: .continuous))
                 Text(album.name ?? "Unknown").font(.subheadline).lineLimit(1)
                 Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
-            .frame(width: shelfTileSize)
+            .frame(width: ArtworkSize.shelf)
         }
         .buttonStyle(.plain)
     }
@@ -262,17 +267,17 @@ private struct ArtistTile: View {
 
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 4) {
-                RemoteArtwork(id: artist.stableId, points: shelfTileSize) {
+            VStack(alignment: .leading, spacing: Spacing.xsmall) {
+                RemoteArtwork(id: artist.stableId, points: ArtworkSize.shelf) {
                     try await AppGraph.shared.artworkUrls.url(albumArtist: artist)
                 }
-                .frame(width: shelfTileSize, height: shelfTileSize)
+                .frame(width: ArtworkSize.shelf, height: ArtworkSize.shelf)
                 .clipShape(Circle())
                 Text(artist.name ?? "Unknown").font(.subheadline).lineLimit(1)
                 Text(artist.albumCount == 1 ? "1 album" : "\(artist.albumCount) albums")
                     .font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
-            .frame(width: shelfTileSize)
+            .frame(width: ArtworkSize.shelf)
         }
         .buttonStyle(.plain)
     }

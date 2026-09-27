@@ -68,7 +68,7 @@ struct AlbumArtistListContent: View {
         case .scanning:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
-            ContentUnavailableView("No Artists", systemImage: "person.2", description: Text("Pull to refresh to import."))
+            EmptyState("No Artists", systemImage: "person.2", message: "Pull to refresh to import.")
         case .ready:
             List {
                 ForEach(state.albumArtists, id: \.stableId) { artist in
@@ -92,13 +92,10 @@ struct AlbumArtistRow: View {
     let albumArtist: AlbumArtist
 
     var body: some View {
-        HStack(spacing: 12) {
-            RemoteArtwork(id: albumArtist.stableId, points: 44) {
-                try await AppGraph.shared.artworkUrls.url(albumArtist: albumArtist)
-            }
-                .frame(width: 44, height: 44)
-                .clipShape(Circle())
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: Spacing.smallMedium) {
+            RemoteArtwork(.albumArtist(albumArtist), points: ArtworkSize.row)
+                .artworkCircle(ArtworkSize.row)
+            VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(albumArtist.name ?? albumArtist.friendlyArtistName ?? "Unknown Artist").lineLimit(1)
                 Text(subtitle)
                     .font(.subheadline)

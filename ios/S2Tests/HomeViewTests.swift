@@ -91,7 +91,8 @@ struct HomeViewTests {
         let sut = HomeContent(state: content(resume: resume), onTogglePlayback: { toggled = true })
         #expect((try? sut.inspect().find(text: "Paranoid Android")) != nil)
         #expect((try? sut.inspect().find(text: "1:30 left")) != nil)
-        try sut.inspect().find(button: "Play").tap()
+        // An icon button now: found by its VoiceOver label.
+        try sut.inspect().find(viewWithAccessibilityLabel: "Play").button().tap()
         #expect(toggled)
     }
 

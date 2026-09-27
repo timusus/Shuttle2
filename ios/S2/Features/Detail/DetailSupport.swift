@@ -15,11 +15,12 @@ struct DetailHero<Artwork: View>: View {
     @Environment(\.layoutTier) private var layoutTier
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Spacing.smallMedium) {
             artwork()
-            VStack(spacing: 4) {
+            VStack(spacing: Spacing.xsmall) {
                 Text(title)
-                    .font(.title2.weight(.semibold))
+                    .font(.s2Title2)
+                    .accessibilityAddTraits(.isHeader)
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
                 if let subtitle, !subtitle.isEmpty {
@@ -29,7 +30,7 @@ struct DetailHero<Artwork: View>: View {
                         .multilineTextAlignment(.center)
                 }
             }
-            HStack(spacing: 12) {
+            HStack(spacing: Spacing.smallMedium) {
                 Button(action: onPlay) {
                     Label("Play", systemImage: "play.fill").frame(maxWidth: .infinity)
                 }
@@ -39,11 +40,11 @@ struct DetailHero<Artwork: View>: View {
                 }
                 .buttonStyle(.bordered)
             }
-            .padding(.top, 4)
+            .padding(.top, Spacing.xsmall)
         }
         .frame(maxWidth: layoutTier == .compact ? .infinity : 440)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
+        .padding(.vertical, Spacing.smallMedium)
     }
 }
 
@@ -51,7 +52,7 @@ struct DetailHero<Artwork: View>: View {
 /// `GenreRow`'s icon-placeholder pattern at hero size.
 struct DetailPlaceholderArtwork: View {
     let systemImage: String
-    var points: CGFloat = 160
+    var points: CGFloat = ArtworkSize.hero
 
     var body: some View {
         Color(.secondarySystemBackground)
@@ -61,7 +62,7 @@ struct DetailPlaceholderArtwork: View {
                     .foregroundStyle(.primary.opacity(0.15))
             }
             .frame(width: points, height: points)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: Radius.large, style: .continuous))
     }
 }
 

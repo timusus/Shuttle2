@@ -134,13 +134,8 @@ struct LibraryRootContent: View {
             case .loading:
                 ProgressView()
             case .empty where !importStatus.isImporting:
-                ContentUnavailableView {
-                    Label("No Music", systemImage: "music.note.house")
-                } description: {
-                    Text("Connect a Jellyfin or Emby server to stream your music.")
-                } actions: {
+                EmptyState("No Music", systemImage: "music.note.house", message: "Connect a Jellyfin or Emby server to stream your music.") {
                     NavigationLink("Add a Source", value: Route.sources)
-                        .buttonStyle(.borderedProminent)
                         .accessibilityIdentifier("libraryEmpty.addSource")
                 }
             case .empty, .hasMusic:
@@ -167,7 +162,7 @@ struct ImportStatusRow: View {
         case .idle:
             EmptyView()
         case .importing(let provider, let message, let fraction):
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: Spacing.small) {
                 Text("Importing from \(provider)…")
                 if let fraction {
                     ProgressView(value: fraction)

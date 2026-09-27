@@ -67,7 +67,7 @@ struct GenreListContent: View {
         case .scanning:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
-            ContentUnavailableView("No Genres", systemImage: "guitars", description: Text("Pull to refresh to import."))
+            EmptyState("No Genres", systemImage: "guitars", message: "Pull to refresh to import.")
         case .ready:
             List {
                 ForEach(state.genres, id: \.name) { genre in
@@ -91,15 +91,15 @@ struct GenreRow: View {
     let genre: Genre
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Spacing.smallMedium) {
             Color(.secondarySystemBackground)
                 .overlay {
                     Image(systemName: "guitars")
                         .foregroundStyle(.primary.opacity(0.15))
                 }
-                .frame(width: 44, height: 44)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-            VStack(alignment: .leading, spacing: 2) {
+                .artworkTile(ArtworkSize.row)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(genre.name).lineLimit(1)
                 Text(genre.songCount == 1 ? "1 song" : "\(genre.songCount) songs")
                     .font(.subheadline)

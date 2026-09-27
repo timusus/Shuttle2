@@ -50,7 +50,7 @@ struct NowPlayingContent: View {
     let isPlaying: Bool
     let positionMs: Int
     let durationMs: Int
-    let queue: [PlayerModel.QueueRow]
+    let queue: [NowPlayingQueueRow]
     let onSeek: (Int) -> Void
     let onPlayPause: () -> Void
     let onNext: () -> Void

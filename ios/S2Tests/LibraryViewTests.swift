@@ -23,6 +23,14 @@ struct LibraryViewTests {
         #expect((try? sut.inspect().find(text: LibraryCategory.songs.title)) == nil)
     }
 
+    @Test func theEmptyStatesOneActionOpensSources() throws {
+        let sut = LibraryRootContent(categories: [], availability: .empty, importStatus: .idle)
+        let link = try sut.inspect().find(viewWithAccessibilityIdentifier: "libraryEmpty.addSource")
+        #expect((try? link.find(text: "Add a Source")) != nil)
+        // The toolbar's Sources link aside, the empty state's is the only other link.
+        #expect(try sut.inspect().findAll(ViewType.NavigationLink.self).count >= 1)
+    }
+
     @Test func anImportInProgressShowsItsRowInsteadOfTheEmptyState() throws {
         let sut = LibraryRootContent(
             categories: [], availability: .empty,

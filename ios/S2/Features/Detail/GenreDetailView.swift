@@ -81,25 +81,25 @@ struct GenreDetailContent: View {
             .navigationTitle(genre.name)
             .navigationBarTitleDisplayMode(.inline)
         } else {
-            ContentUnavailableView("Genre Not Found", systemImage: "guitars")
+            EmptyState("Genre Not Found", systemImage: "guitars")
         }
     }
 
     private var albumShelf: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .top, spacing: Spacing.medium) {
                 ForEach(state.albums, id: \.stableId) { album in
                     NavigationLink(value: Route.album(album)) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            RemoteArtwork(id: album.stableId, points: 120) {
+                        VStack(alignment: .leading, spacing: Spacing.xsmall) {
+                            RemoteArtwork(id: album.stableId, points: ArtworkSize.shelf) {
                                 try await AppGraph.shared.artworkUrls.url(album: album)
                             }
-                            .frame(width: 120, height: 120)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .frame(width: ArtworkSize.shelf, height: ArtworkSize.shelf)
+                            .clipShape(RoundedRectangle(cornerRadius: Radius.medium, style: .continuous))
                             Text(album.name ?? "Unknown")
                                 .font(.footnote)
                                 .lineLimit(1)
-                                .frame(width: 120, alignment: .leading)
+                                .frame(width: ArtworkSize.shelf, alignment: .leading)
                         }
                     }
                     .buttonStyle(.plain)

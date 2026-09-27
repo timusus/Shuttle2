@@ -138,7 +138,7 @@ struct PlaylistDetailContent: View {
                 Button("Cancel", role: .cancel) {}
             }
         } else {
-            ContentUnavailableView("Playlist Not Found", systemImage: "music.note.list")
+            EmptyState("Playlist Not Found", systemImage: "music.note.list")
         }
     }
 
@@ -163,12 +163,12 @@ struct PlaylistDetailContent: View {
                 onPlay: { onPlay(0) },
                 onShuffle: onShuffle
             ) {
-                RemoteArtwork(id: state.songs.first?.song.id ?? playlist.id, points: 160) {
+                RemoteArtwork(id: state.songs.first?.song.id ?? playlist.id, points: ArtworkSize.hero) {
                     guard let coverSong = state.songs.first?.song else { return nil }
                     return try await AppGraph.shared.artworkUrls.url(song: coverSong)
                 }
-                .frame(width: 160, height: 160)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .frame(width: ArtworkSize.hero, height: ArtworkSize.hero)
+                .clipShape(RoundedRectangle(cornerRadius: Radius.large, style: .continuous))
             }
             .listRowInsets(EdgeInsets())
         }

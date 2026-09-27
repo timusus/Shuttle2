@@ -6,14 +6,14 @@ import ViewInspector
 /// `NowPlayingContent`'s content and commands, as plain values in (no Kotlin) per `.claude/rules/ios.md`.
 @MainActor
 struct NowPlayingViewTests {
-    private let queue: [PlayerModel.QueueRow] = [
+    private let queue: [NowPlayingQueueRow] = [
         .init(id: 1, title: "Paranoid Android", artist: "Radiohead", isCurrent: true),
         .init(id: 2, title: "Hyperballad", artist: "Björk", isCurrent: false),
     ]
 
     private func makeSut(
         title: String? = "Paranoid Android",
-        queue: [PlayerModel.QueueRow]? = nil,
+        queue: [NowPlayingQueueRow]? = nil,
         onPlayPause: @escaping () -> Void = {},
         onNext: @escaping () -> Void = {},
         onPrevious: @escaping () -> Void = {},

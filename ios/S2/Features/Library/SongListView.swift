@@ -60,7 +60,7 @@ struct SongListContent: View {
         case .scanning:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
-            ContentUnavailableView("No Songs", systemImage: "music.note", description: Text("Pull to refresh to import."))
+            EmptyState("No Songs", systemImage: "music.note", message: "Pull to refresh to import.")
         case .ready:
             List {
                 ForEach(Array(state.songs.enumerated()), id: \.element.id) { index, song in
@@ -84,8 +84,10 @@ struct SongRow: View {
     let song: Song
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(spacing: Spacing.smallMedium) {
+            RemoteArtwork(.song(song), points: ArtworkSize.row)
+                .artworkTile(ArtworkSize.row)
+            VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(song.name ?? "Unknown").lineLimit(1)
                     .accessibilityIdentifier("songRow.title")
                 Text([song.friendlyArtistName, song.album].compactMap { $0 }.joined(separator: " · "))
@@ -93,9 +95,9 @@ struct SongRow: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
-            Spacer()
+            Spacer(minLength: Spacing.small)
             Text(Duration.milliseconds(Int64(song.duration)).formatted(.time(pattern: .minuteSecond)))
-                .font(.subheadline.monospacedDigit())
+                .font(.s2RowTime)
                 .foregroundStyle(.secondary)
         }
         .contentShape(Rectangle())
@@ -107,7 +109,7 @@ struct LibraryScanningView: View {
     let progress: Shared.Progress?
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Spacing.smallMedium) {
             if let progress {
                 ProgressView(value: Double(progress.asFloat()))
                     .frame(maxWidth: 240)

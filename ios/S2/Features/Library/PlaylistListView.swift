@@ -237,14 +237,13 @@ struct PlaylistRow: View {
     let coverSong: Song?
 
     var body: some View {
-        HStack(spacing: 12) {
-            RemoteArtwork(id: coverSong?.id ?? playlist.id, points: 44) {
+        HStack(spacing: Spacing.smallMedium) {
+            RemoteArtwork(id: coverSong?.id ?? playlist.id, points: ArtworkSize.row) {
                 guard let coverSong else { return nil }
                 return try await AppGraph.shared.artworkUrls.url(song: coverSong)
             }
-            .frame(width: 44, height: 44)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            VStack(alignment: .leading, spacing: 2) {
+            .artworkTile(ArtworkSize.row)
+            VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(playlist.name).lineLimit(1)
                 Text(playlist.songCount == 1 ? "1 song" : "\(playlist.songCount) songs")
                     .font(.subheadline)

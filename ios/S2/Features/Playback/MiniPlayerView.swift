@@ -2,9 +2,9 @@ import Shared
 import SwiftUI
 
 /// The bar every tab's screens inset at the bottom (`tabViewBottomAccessory` / safe-area inset
-/// candidate, #593): song, artist, play/pause and next; tapping opens Now Playing. Bound to
-/// `PlayerModel` over the Kotlin `IosPlayerController` (#588); the shared `PlayerViewModel` isn't
-/// ported yet (phase 4 wave 5, docs/architecture/ios-port/phase-5-ios-app.md).
+/// candidate, #593): the song's cover, title and artist, play/pause and next; tapping opens Now Playing.
+/// Bound to `PlayerModel` through `PlayerBinding` (the one place a later re-wire to the shared
+/// `PlayerViewModel`, phase 4 wave 5, touches).
 struct MiniPlayerView: View {
     let model: PlayerModel
     @Binding var showNowPlaying: Bool
@@ -21,13 +21,16 @@ struct MiniPlayerView: View {
     }
 
     var body: some View {
+        let state = model.nowPlayingState
+        let actions = model.playerActions
         MiniPlayerBar(
-            title: model.title,
-            artist: model.artist,
-            isPlaying: model.isPlaying,
+            title: state.title,
+            artist: state.artist,
+            artwork: state.artwork,
+            isPlaying: state.isPlaying,
             onTap: { showNowPlaying = true },
-            onPlayPause: model.togglePlayPause,
-            onNext: model.next
+            onPlayPause: actions.playPause,
+            onNext: actions.next
         )
     }
 }
@@ -36,19 +39,18 @@ struct MiniPlayerView: View {
 struct MiniPlayerBar: View {
     let title: String?
     let artist: String?
+    let artwork: ArtworkSource?
     let isPlaying: Bool
     let onTap: () -> Void
     let onPlayPause: () -> Void
     let onNext: () -> Void
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Spacing.small) {
             Button(action: onTap) {
-                HStack(spacing: 12) {
-                    Image(systemName: "music.note")
-                        .frame(width: 40, height: 40)
-                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
-                        .accessibilityHidden(true)
+                HStack(spacing: Spacing.smallMedium) {
+                    cover
+                        .artworkTile(ArtworkSize.row)
                     VStack(alignment: .leading, spacing: 0) {
                         Text(title ?? "Not Playing")
                             .font(.subheadline.weight(.semibold))
@@ -57,7 +59,7 @@ struct MiniPlayerBar: View {
                             .accessibilityIdentifier("miniPlayer.title")
                         if let artist {
                             Text(artist)
-                                .font(.caption)
+                                .font(.footnote)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }
@@ -73,9 +75,12 @@ struct MiniPlayerBar: View {
 
             Button(action: onPlayPause) {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                    .font(.title3)
+                    .font(.title2)
+                    .contentTransition(.symbolEffect(.replace))
                     .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .accessibilityLabel(isPlaying ? "Pause" : "Play")
             .accessibilityIdentifier("miniPlayer.playPause")
 
@@ -83,13 +88,29 @@ struct MiniPlayerBar: View {
                 Image(systemName: "forward.fill")
                     .font(.title3)
                     .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             .accessibilityLabel("Next")
             .accessibilityIdentifier("miniPlayer.next")
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.leading, Spacing.small)
+        .padding(.trailing, Spacing.xsmall)
+        .padding(.vertical, Spacing.xsmall)
         .background(.bar)
+        .overlay(alignment: .top) {
+            Divider()
+        }
+    }
+
+    /// The song's cover, or the placeholder tile when nothing is queued.
+    @ViewBuilder
+    private var cover: some View {
+        if let artwork {
+            RemoteArtwork(artwork, points: ArtworkSize.row)
+        } else {
+            ArtworkPlaceholder()
+        }
     }
 
     private var accessibilityLabel: String {
@@ -109,9 +130,12 @@ extension View {
 }
 
 #Preview("Playing") {
-    MiniPlayerBar(title: "Paranoid Android", artist: "Radiohead", isPlaying: true, onTap: {}, onPlayPause: {}, onNext: {})
+    MiniPlayerBar(
+        title: "Paranoid Android", artist: "Radiohead", artwork: nil, isPlaying: true,
+        onTap: {}, onPlayPause: {}, onNext: {}
+    )
 }
 
 #Preview("Not playing") {
-    MiniPlayerBar(title: nil, artist: nil, isPlaying: false, onTap: {}, onPlayPause: {}, onNext: {})
+    MiniPlayerBar(title: nil, artist: nil, artwork: nil, isPlaying: false, onTap: {}, onPlayPause: {}, onNext: {})
 }

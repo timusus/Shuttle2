@@ -61,7 +61,7 @@ struct AlbumArtistDetailContent: View {
         case .loading:
             ProgressView()
         case .empty:
-            ContentUnavailableView("Artist Not Found", systemImage: "person.2")
+            EmptyState("Artist Not Found", systemImage: "person.2")
         case .ready:
             if let artist = state.albumArtist {
                 List {
@@ -89,27 +89,27 @@ struct AlbumArtistDetailContent: View {
                 .navigationTitle(artist.name ?? artist.friendlyArtistName ?? "Artist")
                 .navigationBarTitleDisplayMode(.inline)
             } else {
-                ContentUnavailableView("Artist Not Found", systemImage: "person.2")
+                EmptyState("Artist Not Found", systemImage: "person.2")
             }
         }
     }
 
     private var albumShelf: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .top, spacing: Spacing.medium) {
                 ForEach(state.albums, id: \.stableId) { album in
                     NavigationLink(value: Route.album(album)) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            RemoteArtwork(id: album.stableId, points: 120) {
+                        VStack(alignment: .leading, spacing: Spacing.xsmall) {
+                            RemoteArtwork(id: album.stableId, points: ArtworkSize.shelf) {
                                 try await AppGraph.shared.artworkUrls.url(album: album)
                             }
-                            .frame(width: 120, height: 120)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .frame(width: ArtworkSize.shelf, height: ArtworkSize.shelf)
+                            .clipShape(RoundedRectangle(cornerRadius: Radius.medium, style: .continuous))
                             Text(album.name ?? "Unknown")
                                 .font(.footnote)
                                 .foregroundStyle(.primary)
                                 .lineLimit(1)
-                                .frame(width: 120, alignment: .leading)
+                                .frame(width: ArtworkSize.shelf, alignment: .leading)
                         }
                     }
                     .buttonStyle(.plain)
@@ -128,10 +128,10 @@ struct AlbumArtistDetailContent: View {
                 onPlay: { onPlay(0) },
                 onShuffle: onShuffle
             ) {
-                RemoteArtwork(id: artist.stableId, points: 160) {
+                RemoteArtwork(id: artist.stableId, points: ArtworkSize.hero) {
                     try await AppGraph.shared.artworkUrls.url(albumArtist: artist)
                 }
-                .frame(width: 160, height: 160)
+                .frame(width: ArtworkSize.hero, height: ArtworkSize.hero)
                 .clipShape(Circle())
             }
             .listRowInsets(EdgeInsets())
