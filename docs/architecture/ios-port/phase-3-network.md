@@ -256,3 +256,64 @@ fixture servers (`seed-remote-provider.sh`), before phase 4 (ViewModels) starts.
    would have tolerated) can surface only against a real server, not the existing fixtures — the
    provider batch step should re-run against live Jellyfin/Emby/Plex test servers, not just replay
    the current JSON fixtures.
+
+## 6. What landed
+
+Steps 1 to 3 moved the networking core and each provider's HTTP services and DTOs to Ktor in commonMain. A second
+pass then moved the rest of each provider's code into commonMain, one commit per module.
+
+**`:android:mediaprovider:server`.** In commonMain: `ServerCredentialStore`, `withServerSession`, `pagedFlow`,
+`checkSession`, `QuickConnectAuthentication`, `DirectPlayFormats`, `ServerStrings` and `mediaBrowserAuthorization`. The JVM-only APIs they used
+have KMP replacements:
+- An expect `Lock` replaces `synchronized`. It is `NSLock` on iOS.
+- `Logger` replaces Timber.
+
+Only two things stay in androidMain, because both read a `Context`:
+- `ResourceServerStrings`, the contributed `ServerStrings` binding.
+- `isDebuggable`.
+
+**Jellyfin, Emby and Plex.** Each module's commonMain now holds:
+- the provider, the authentication manager, the playback reporter and the artwork provider;
+- a `*MediaProviderModule` that builds them from a `@Named("<Provider>HttpClient") HttpClient`.
+
+The JVM-only APIs they used have KMP replacements:
+- `ServerStrings` replaces `Context.getString`.
+- Ktor's `parseUrl` replaces `Uri.parse`.
+- `kotlin.uuid.Uuid` replaces `java.util.UUID`.
+- `Logger` replaces Timber.
+- For Plex, `formUrlEncode` replaces `URLEncoder`. It gives the same bytes, and a host test checks that.
+
+Each module also has a `*AndroidModule` in androidMain. It keeps:
+- the OkHttp-backed client (the app's proxy and logging, with a 90s read timeout);
+- the `MediaInfoProvider`, whose `MediaInfo` carries an `android.net.Uri`;
+- for Jellyfin and Emby, the credential store, because its debug-build sign-in reads a `Context`;
+- for Plex, `PlexArtworkTokenInterceptor`, the OkHttp interceptor on the image loader's client.
+
+Plex's credential store has no debug-build seed, so it is common.
+
+New interfaces and seams:
+- `ServerStrings.unknownName`.
+- `PlexStrings` holds Plex's missing-music-library message. On Android it is `ResourcePlexStrings`.
+- `PLEX_PLATFORM` is the `X-Plex-Platform` and `X-Plex-Device` value: "Android" on Android, "iOS" on iOS.
+- `MediaProviderTypeKey` moved to `:android:mediaprovider:core`'s commonMain.
+
+**What iOS must provide.** To build the Jellyfin provider, the iOS graph must supply:
+- `@Named("JellyfinHttpClient") HttpClient`, a Darwin client from `createHttpClient`;
+- `@Named("JellyfinCredentialStore") ServerCredentialStore`, as `ServerCredentialStore(securePreferenceManager, prefix = "jellyfin")`;
+- a `ServerStrings`;
+- `ClientIdentity`;
+- `SecurePreferenceManager`.
+
+Emby needs the same, with the `Emby` names. Plex needs its HTTP client (with `sendPlexClientHeaders`), a
+`ServerStrings` and a `PlexStrings`. The artwork URL building (`ArtworkUrls`, phase 5) belongs in `:shared`, not here.
+
+**Tests.** Every provider and server test runs in commonTest, on the Android host and the iOS simulator, except:
+- each provider's `MediaInfoProvider` test;
+- the Plex artwork interceptor test;
+- the `formUrlEncode` parity test.
+
+These three need Android or the JVM. Supporting changes:
+- `FixtureServer` fixtures are read through an expect `readFixture`.
+- Kotlin/Native bundles no test resources, so on iOS `readFixture` reads the module's `src/commonTest/resources`.
+  `s2.kmp-library` passes that path to simulator tests as `S2_TEST_RESOURCES`.
+- Native test names can't contain `,`, `(`, `)` or `#`, so the moved tests' names use ` - ` instead.
