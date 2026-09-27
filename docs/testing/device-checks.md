@@ -264,3 +264,11 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 - [ ] Equalizer: turn it on, pick a preset (including Vocal reduce) and move the preamp; kill and relaunch the app; all three are kept and still audibly apply.
 - [ ] Settings: the ReplayGain toggle still changes playback loudness between tracks.
 - [ ] Settings: copying and sharing the logs still works, and the last-scan date shows the same as before.
+
+## iOS Now Playing parity (#621)
+
+- [ ] iPhone: the AirPlay button lists the AirPlay speakers and moves playback to one.
+- [ ] iPhone: in the queue, Edit then drag a song to reorder it; swipe one away and Undo brings it back; Clear and Undo.
+- [ ] iPhone: heart the playing song; it shows in Favorites and stays hearted after relaunch.
+- [ ] iPhone: play a queue at 1.5x, shuffle on, repeat all; pause mid-song, kill and relaunch; the same queue, song, position, speed and modes come back, paused.
+- [ ] iPhone: Go to Album and Go to Artist from the Now Playing menu close the player and open that screen.
