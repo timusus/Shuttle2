@@ -1,30 +1,103 @@
+import Shared
 import SwiftUI
 
-/// Placeholder mini player: the bar every tab's screens inset at the bottom. Tapping it opens Now
-/// Playing. Real state arrives with the iOS player controller (#588).
+/// The bar every tab's screens inset at the bottom (`tabViewBottomAccessory` / safe-area inset
+/// candidate, #593): song, artist, play/pause and next; tapping opens Now Playing. Bound to
+/// `PlayerModel` over the Kotlin `IosPlayerController` (#588); the shared `PlayerViewModel` isn't
+/// ported yet (phase 4 wave 5, docs/architecture/ios-port/phase-5-ios-app.md).
 struct MiniPlayerView: View {
+    let model: PlayerModel
     @Binding var showNowPlaying: Bool
 
+    /// `model` defaults to the app's single, cached `PlayerModel` (see `PlayerModel.shared`): a view
+    /// struct like this one is re-initialised on every parent body, so a fresh `PlayerModel` per init
+    /// would restart its flows every time (`.claude/rules/ios.md`).
+    init(
+        showNowPlaying: Binding<Bool>,
+        model: PlayerModel = .shared
+    ) {
+        self.model = model
+        self._showNowPlaying = showNowPlaying
+    }
+
     var body: some View {
-        Button {
-            showNowPlaying = true
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "music.note")
-                    .frame(width: 40, height: 40)
-                    .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
-                Text("Not Playing")
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Image(systemName: "play.fill")
-                    .foregroundStyle(.tertiary)
+        MiniPlayerBar(
+            title: model.title,
+            artist: model.artist,
+            isPlaying: model.isPlaying,
+            onTap: { showNowPlaying = true },
+            onPlayPause: model.togglePlayPause,
+            onNext: model.next
+        )
+    }
+}
+
+/// The mini player's content: plain values in, so it previews and tests (ViewInspector) without Kotlin.
+struct MiniPlayerBar: View {
+    let title: String?
+    let artist: String?
+    let isPlaying: Bool
+    let onTap: () -> Void
+    let onPlayPause: () -> Void
+    let onNext: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Button(action: onTap) {
+                HStack(spacing: 12) {
+                    Image(systemName: "music.note")
+                        .frame(width: 40, height: 40)
+                        .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(title ?? "Not Playing")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(title == nil ? .secondary : .primary)
+                            .lineLimit(1)
+                        if let artist {
+                            Text(artist)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                }
+                .contentShape(Rectangle())
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel(accessibilityLabel)
+            .accessibilityHint("Opens Now Playing")
+
+            Button(action: onPlayPause) {
+                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel(isPlaying ? "Pause" : "Play")
+
+            Button(action: onNext) {
+                Image(systemName: "forward.fill")
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
+            }
+            .accessibilityLabel("Next")
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
         .background(.bar)
         .accessibilityIdentifier("miniPlayer")
     }
+
+    private var accessibilityLabel: String {
+        [title ?? "Not Playing", artist].compactMap { $0 }.joined(separator: ", ")
+    }
+}
+
+#Preview("Playing") {
+    MiniPlayerBar(title: "Paranoid Android", artist: "Radiohead", isPlaying: true, onTap: {}, onPlayPause: {}, onNext: {})
+}
+
+#Preview("Not playing") {
+    MiniPlayerBar(title: nil, artist: nil, isPlaying: false, onTap: {}, onPlayPause: {}, onNext: {})
 }

@@ -191,6 +191,16 @@ and on pull-to-refresh; a `BGAppRefreshTask` is phase 9 (Android uses WorkManage
 ViewInspector test on the plain view (`.claude/rules/ios.md`). Rows (`SongRow`, `AlbumTile`,
 `ArtistRow` *(new)*) are shared components under `ios/S2/Components/` *(new)*.
 
+**Mini player / Now Playing POC (#588).** `ios/S2/Features/Playback/PlayerModel.swift` is a small
+`@Observable` class that reads `AppGraph.shared.playerController`'s flows (current song, transport
+state, progress, queue) and forwards commands back to it; it stands in for the shared `PlayerViewModel`
+until that's ported (phase 4 wave 5). `MiniPlayerView` and `NowPlayingView` already default their
+`model:` parameter to the app's single cached instance (`PlayerModel.shared`, backed by
+`ViewModelCache`), so no wiring is needed at their existing call sites
+(`AppShell`'s `MiniPlayerView(showNowPlaying:)`, `ContentView`'s `NowPlayingView()`
+`.nowPlayingPresentation`) — swapping in the real `PlayerViewModel` later is a matter of replacing
+`PlayerModel`'s internals, not the views' call sites.
+
 ### Artwork
 
 `:android:imageloader` is Coil and stays Android-only, but its inputs are portable: a model's artwork is
