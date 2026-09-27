@@ -20,6 +20,10 @@
 # env:
 #   CONFIGURATION  Debug (default) or Release.
 #   LAUNCH         1 (default) or 0 to install without launching.
+#   S2_SERVER_TYPE, S2_SERVER_URL, S2_SERVER_USER, S2_SERVER_PASSWORD
+#                  Debug only: handed to the launched app, which signs in to that Jellyfin/Emby server
+#                  and imports (DebugServerSeed; .claude/rules/ios.md "Running the POC"). The
+#                  password is never printed.
 set -euo pipefail
 
 DEVICE="${1:-00008140-000539602E90401C}"
@@ -82,7 +86,13 @@ if [ "$install_rc" != "0" ]; then
 fi
 if [ "$LAUNCH" = "1" ]; then
   echo "==> Launching"
-  xcrun devicectl device process launch --device "$DEVICE" com.simplecityapps.shuttle.dev \
+  # The POC's server login, if exported: devicectl takes launch environment as one JSON object.
+  env_args=()
+  if [ -n "${S2_SERVER_TYPE:-}" ]; then
+    echo "==> Passing the ${S2_SERVER_TYPE} server login for ${S2_SERVER_USER:-?} at ${S2_SERVER_URL:-?}"
+    env_args=(--environment-variables "$(python3 -c 'import json, os; print(json.dumps({k: os.environ.get(k, "") for k in ["S2_SERVER_TYPE", "S2_SERVER_URL", "S2_SERVER_USER", "S2_SERVER_PASSWORD"]}))')")
+  fi
+  xcrun devicectl device process launch --device "$DEVICE" ${env_args[@]+"${env_args[@]}"} com.simplecityapps.shuttle.dev \
     || echo "Launch refused: unlock the phone and trust the developer profile, then open the app manually."
 else
   echo "==> Installed; not launching (LAUNCH=0)"

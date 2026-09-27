@@ -1,15 +1,21 @@
 import SwiftUI
 
-/// Placeholder content for every `Route`, keyed by case. `navigationDestination(for: Route.self)` and each
-/// library category's own root (regular/wide) resolve to this until P5-5/6 replace it screen by screen
-/// (`docs/architecture/ios-port/phase-5-ios-app.md` section 3). Never references Kotlin: P5-3 only wires
-/// navigation, not data.
+/// The screen for every `Route`, keyed by case. `navigationDestination(for: Route.self)` and each library
+/// category's own root (regular/wide) resolve to this. Songs and Albums are real (P5-6a); the rest are placeholders
+/// until P5-6/7 replace them screen by screen (`docs/architecture/ios-port/phase-5-ios-app.md` section 3).
 struct RouteDestinationView: View {
     let route: Route
 
     var body: some View {
-        Text(title)
-            .navigationTitle(title)
+        switch route {
+        case .libraryCategory(.songs):
+            SongListView()
+        case .libraryCategory(.albums):
+            AlbumListView()
+        default:
+            Text(title)
+                .navigationTitle(title)
+        }
     }
 
     private var title: String {
@@ -25,7 +31,7 @@ struct RouteDestinationView: View {
 }
 
 extension View {
-    /// One `navigationDestination` for every stack, mapping each pushed `Route` to its placeholder.
+    /// One `navigationDestination` for every stack, mapping each pushed `Route` to its screen.
     func routeDestinations() -> some View {
         navigationDestination(for: Route.self) { route in
             RouteDestinationView(route: route)
