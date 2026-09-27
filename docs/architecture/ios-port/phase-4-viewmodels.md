@@ -134,7 +134,10 @@ call `.consume(id)` the same way the Compose route does with `ConsumeEvents`. No
 needed; write one small SwiftUI helper (`ConsumeEvents`-equivalent view modifier) once in the iOS shell
 (phase 5) and every screen gets it for free. Watch `SettingsViewModel`: its events are entangled with
 `SettingsEffects`, which currently executes Context-bound side effects itself instead of just describing
-them (see table) — untangle that as part of moving `SettingsViewModel`, not after.
+them (see table) — untangle that as part of moving `SettingsViewModel`, not after. The effect shapes
+(injected call vs route-executed event) for every Android-bound dependency are designed in
+[phase-4-platform-seams.md](phase-4-platform-seams.md); note `TagEditorEvent.RequestWriteConsent` carries an
+`IntentSender` today, fixed there (S2).
 
 ## 5. App-level use cases still in `:app`
 
@@ -158,7 +161,7 @@ platform-bound, but most just need to move into `presentation` alongside their V
   already look like one class per concern, good) with the Android implementation stayed in `:android:app`
   and a new iOS implementation added in later phases (2, 3, 8, 9 respectively) — the *use case* and its
   *result type* move to `presentation` immediately; only the concrete class implementing the platform work
-  stays back.
+  stays back. Interfaces, Android/iOS implementations and landing order: [phase-4-platform-seams.md](phase-4-platform-seams.md).
 
 Net effect: phase 4 isn't just "move 29 files," it's "extract ~40 use case classes' interfaces into
 `presentation`, move the ones with zero Android imports outright, and split the rest into
@@ -204,4 +207,5 @@ Total: 6+6+6+9+2 = 29, matching the phase table's "easy 18 → assisted 9 → Pl
 3. **`SettingsEffects` and `TagFileAccess`** are the only two files with heavy direct Android framework
    imports (`Context`, `ClipboardManager`, `Intent`, `Uri`, `DocumentsContract`, `MediaStore`) reachable
    from a ViewModel constructor — both need a real interface-extraction design pass (`hard` tier), not a
-   mechanical move.
+   mechanical move. Done in [phase-4-platform-seams.md](phase-4-platform-seams.md), which brings the
+   remaining steps down to `standard`/`mechanical`.
