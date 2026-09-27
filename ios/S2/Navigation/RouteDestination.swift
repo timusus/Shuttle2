@@ -16,6 +16,12 @@ struct RouteDestinationView: View {
             SourcesView()
         case .serverSignIn(let type):
             ServerSignInPendingView(type: Route.serverType(named: type))
+        case .libraryCategory(.albumArtists):
+            AlbumArtistListView()
+        case .libraryCategory(.genres):
+            GenreListView()
+        case .libraryCategory(.playlists):
+            PlaylistListView()
         default:
             Text(title)
                 .navigationTitle(title)

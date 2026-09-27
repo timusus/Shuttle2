@@ -233,8 +233,8 @@ yet wired into any row; each call site is a one-line change once P5-6a/b/7 land:
   the title, from `graph.artworkUrls.url(song: song)`.
 - `AlbumTile`/album rows (`ios/S2/Features/Library/AlbumListView.swift`): `ArtworkImage(url: ..., points:
   ...)` from `graph.artworkUrls.url(album: album)`.
-- Album artist rows (P5-6b, `ArtistRow`, not yet added): from `graph.artworkUrls.url(albumArtist:
-  albumArtist)`.
+- Album artist rows: **done (P5-6b, #587)** — `AlbumArtistRow` (`AlbumArtistListView.swift`) via
+  `ArtworkAsyncImage`, from `graph.artworkUrls.url(albumArtist:)`.
 - `MiniPlayerView`/`NowPlayingView` (`ios/S2/Features/Playback/`): the current song's artwork, from
   `graph.artworkUrls.url(song: song)` off `PlayerModel`'s current song.
 
@@ -283,7 +283,7 @@ main), the adapter (#588), and the data and provider leftovers that block a real
 | P5-4 | Artwork: `ArtworkUrls` in Kotlin; `ArtworkLoader` + `ArtworkImage` ported from Podcasts with their tests | P5-2, #585 (Jellyfin) | M | standard |
 | P5-5 | Library root and empty state on `LibraryViewModel`/`LibraryEmptyViewModel`; `DebugServerSeed`; import at launch and on refresh. **Done (#587)**, the POC's: categories from the enabled tabs, a `ContentUnavailableView` empty state, the import's progress row, pull to refresh | P5-3, #584, #585 | S | standard |
 | P5-6a | Rows and `MediaActionsMenu` (context menu, swipes); Songs and Albums lists. **Core done (#587):** both lists on their ViewModels, a song tap plays the list from it, an album row pushes its route, a context menu plays or queues; artwork, swipes, selection, sort and the grid remain | P5-4, P5-5, wave 2 | M | standard |
-| P5-6b | Album artists, Genres, Playlists lists (create, rename, delete) | P5-6a | M | standard |
+| P5-6b | Album artists, Genres, Playlists lists (create, rename, delete). **Core done (#587):** all three lists on their ViewModels, with artwork on Album Artists and Playlists rows, context menu media actions, and playlist create/rename/delete through alerts; selection, sort and the smart playlist rows' own detail remain | P5-6a | M | standard |
 | P5-7 | Detail screens: album, album artist, genre, playlist (reorder), smart playlist | P5-6a, wave 4 | M | standard |
 | P5-8 | Checkpoint: simulator build, ViewInspector for every screen, one simulator run against a test Jellyfin (browse each category, open each detail, relaunch keeps the path) | all | S | mechanical |
 
