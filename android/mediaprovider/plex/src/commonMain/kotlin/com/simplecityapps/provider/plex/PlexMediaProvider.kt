@@ -1,14 +1,12 @@
 package com.simplecityapps.provider.plex
 
-import android.content.Context
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
-import com.simplecityapps.mediaprovider.R
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.Page
-import com.simplecityapps.mediaprovider.server.ResourceServerStrings
+import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.pagedFlow
 import com.simplecityapps.mediaprovider.server.withServerSession
 import com.simplecityapps.networking.retrofit.NetworkResult
@@ -17,6 +15,7 @@ import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.Metadata
 import com.simplecityapps.provider.plex.http.QueryResult
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import kotlin.time.Instant
@@ -25,23 +24,25 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDate
-import timber.log.Timber
 
 class PlexMediaProvider(
-    private val context: Context,
+    private val strings: ServerStrings,
+    private val plexStrings: PlexStrings,
     private val authenticationManager: PlexAuthenticationManager,
     private val itemsService: ItemsService
 ) : MediaProvider {
     override val type: MediaProviderType
         get() = MediaProviderType.Plex
 
-    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(ResourceServerStrings(context), authenticationManager.getAddress(), ::authenticate) { address, credentials ->
+    private val logger = Logger.tagged("PlexMediaProvider")
+
+    override fun findSongs(existingSongs: List<Song>): Flow<FlowEvent<List<Song>, MessageProgress>> = withServerSession(strings, authenticationManager.getAddress(), ::authenticate) { address, credentials ->
         when (val sectionsResult = authenticationManager.checkSession(credentials, itemsService.sections(url = address, token = credentials.accessToken))) {
             is NetworkResult.Success<QueryResult> -> {
                 val section = sectionsResult.body.mediaContainer.directories?.firstOrNull { it.title.equals("music", true) }?.key
                 if (section == null) {
-                    Timber.e("Failed to find 'music' section")
-                    emit(FlowEvent.Failure(context.getString(R.string.media_provider_plex_music_library_missing)))
+                    logger.error { "Failed to find 'music' section" }
+                    emit(FlowEvent.Failure(plexStrings.musicLibraryMissing))
                 } else {
                     emitAll(
                         queryItems(address, credentials, section).map { event ->
@@ -56,7 +57,7 @@ class PlexMediaProvider(
             }
 
             is NetworkResult.Failure -> {
-                Timber.e(sectionsResult.error, sectionsResult.error.userDescription())
+                logger.error(sectionsResult.error) { sectionsResult.error.userDescription() }
                 emit(FlowEvent.Failure(sectionsResult.error.userDescription()))
             }
         }
@@ -72,7 +73,7 @@ class PlexMediaProvider(
         address: String,
         credentials: AuthenticatedCredentials,
         section: String
-    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow(context.getString(R.string.media_provider_querying_api)) { offset, limit ->
+    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow(strings.queryingApi) { offset, limit ->
         authenticationManager.checkSession(
             credentials,
             itemsService.items(

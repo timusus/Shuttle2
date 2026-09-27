@@ -17,10 +17,10 @@ import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.client.request.HttpRequestData
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlin.time.Instant
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
 
 class PlexPlaybackReporterTest {
     private val server = FixtureServer("plex")
@@ -49,7 +49,7 @@ class PlexPlaybackReporterTest {
     )
     private val session = PlaybackSession(song, "session-1")
 
-    @After
+    @AfterTest
     fun tearDown() {
         server.close()
     }
@@ -81,7 +81,7 @@ class PlexPlaybackReporterTest {
     }
 
     @Test
-    fun `stopping reports the stopped timeline without a scrobble, even at the end`() = runTest {
+    fun `stopping reports the stopped timeline without a scrobble - even at the end`() = runTest {
         server.respond(TIMELINE)
 
         reporter.stop(session, positionMs = 200_000) shouldBe true

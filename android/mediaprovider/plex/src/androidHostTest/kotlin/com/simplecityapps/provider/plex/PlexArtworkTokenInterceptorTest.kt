@@ -6,12 +6,12 @@ import com.simplecityapps.provider.plex.http.PLEX_TOKEN
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
-import org.junit.Test
 
 class PlexArtworkTokenInterceptorTest {
     private val credentialStore = ServerCredentialStore(SecurePreferenceManager(InMemoryKeyValueStore()), "plex").apply {
@@ -25,7 +25,7 @@ class PlexArtworkTokenInterceptorTest {
     }
 
     @Test
-    fun `leaves the url alone, so the token never reaches the image cache's key`() {
+    fun `leaves the url alone - so the token never reaches the image cache's key`() {
         val url = "http://plex.local:32400/library/metadata/1/thumb/1700000000"
 
         send(url).url.toString() shouldBe url

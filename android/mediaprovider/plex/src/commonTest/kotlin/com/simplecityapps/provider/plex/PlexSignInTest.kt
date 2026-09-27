@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.createHttpClient
 import com.simplecityapps.provider.plex.http.ItemsService
+import com.simplecityapps.provider.plex.http.PLEX_PLATFORM
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.provider.plex.http.plexClientHeaders
 import com.simplecityapps.provider.plex.http.sendPlexClientHeaders
@@ -15,9 +16,9 @@ import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
 
 /** Signing in through plex.tv, on a client configured as the app's is: every request carries the client identity. */
 class PlexSignInTest {
@@ -33,13 +34,13 @@ class PlexSignInTest {
 
     private val authenticationManager = PlexAuthenticationManager(UserService(client), credentialStore, clientIdentity)
 
-    @After
+    @AfterTest
     fun tearDown() {
         server.close()
     }
 
     @Test
-    fun `signing in posts the login to plex tv, the two-factor code after the password`() = runTest {
+    fun `signing in posts the login to plex tv - the two-factor code after the password`() = runTest {
         server.respond(SIGN_IN, "sign_in.json", method = "POST")
 
         authenticationManager.authenticate(server.address, LoginCredentials("listener", "secret", authCode = "123456"))
@@ -80,7 +81,7 @@ class PlexSignInTest {
     }
 
     @Test
-    fun `signing in sends a JSON Content-Type, as Retrofit did even with no body`() = runTest {
+    fun `signing in sends a JSON Content-Type - as Retrofit did even with no body`() = runTest {
         server.respond(SIGN_IN, "sign_in.json", method = "POST")
 
         authenticationManager.authenticate(server.address, LoginCredentials("listener", "secret"))
@@ -100,7 +101,7 @@ class PlexSignInTest {
             request.headers["X-Plex-Client-Identifier"] shouldBe "device-1"
             request.headers["X-Plex-Product"] shouldBe "Shuttle2.0"
             request.headers["X-Plex-Version"] shouldBe "2026.09.24"
-            request.headers["X-Plex-Platform"] shouldBe "Android"
+            request.headers["X-Plex-Platform"] shouldBe PLEX_PLATFORM
             request.headers["X-Plex-Device-Name"] shouldBe "Pixel"
             request.headers["Accept"]!! shouldContain "application/json"
         }

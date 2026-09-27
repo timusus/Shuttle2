@@ -1,10 +1,8 @@
 package com.simplecityapps.provider.plex
 
-import android.content.Context
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MessageProgress
-import com.simplecityapps.mediaprovider.R
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
@@ -20,20 +18,14 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 /** The Plex sync engine against a fixture server serving JSON fixtures in the server's response shape (#575). */
-@RunWith(RobolectricTestRunner::class)
 class PlexMediaProviderTest {
-    private val context: Context = RuntimeEnvironment.getApplication()
-
     private val server = FixtureServer("plex")
 
     private val client = createHttpClient(server.engine)
@@ -47,9 +39,9 @@ class PlexMediaProviderTest {
             clientIdentity = ClientIdentity(id = "device-1", clientName = "Shuttle2.0", version = "2026.09.26", deviceName = "Pixel")
         )
 
-    private val provider = PlexMediaProvider(context, authenticationManager, ItemsService(client))
+    private val provider = PlexMediaProvider(TestServerStrings, TestPlexStrings, authenticationManager, ItemsService(client))
 
-    @After
+    @AfterTest
     fun tearDown() {
         server.close()
     }
@@ -75,7 +67,7 @@ class PlexMediaProviderTest {
     }
 
     @Test
-    fun `the sync finds the music section, then asks it for tracks with the session token`() {
+    fun `the sync finds the music section - then asks it for tracks with the session token`() {
         signedIn()
         server.respond(SECTIONS, "sections.json")
         server.respond(ITEMS, "songs.json")
@@ -106,7 +98,7 @@ class PlexMediaProviderTest {
         val events = provider.findSongs(emptyList()).events()
 
         events.last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe
-            context.getString(R.string.media_provider_plex_music_library_missing)
+            TestPlexStrings.musicLibraryMissing
         server.requestsTo(ITEMS).shouldBeEmpty()
     }
 
@@ -191,14 +183,14 @@ class PlexMediaProviderTest {
 
         val events = provider.findSongs(emptyList()).events()
 
-        events.last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe context.getString(R.string.media_provider_authentication_error)
+        events.last().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe TestServerStrings.authenticationError
         server.requests.shouldBeEmpty()
     }
 
     @Test
     fun `no server address fails the sync`() {
         provider.findSongs(emptyList()).events().single().shouldBeInstanceOf<FlowEvent.Failure>().message shouldBe
-            context.getString(R.string.media_provider_address_missing)
+            TestServerStrings.addressMissing
     }
 
     private fun signedIn() {

@@ -2,7 +2,7 @@ package com.simplecityapps.provider.plex.http
 
 import com.simplecityapps.mediaprovider.ClientIdentity
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 class PlexClientHeadersTest {
     @Test
@@ -13,7 +13,7 @@ class PlexClientHeadersTest {
             "X-Plex-Client-Identifier" to "device-1",
             "X-Plex-Product" to "Shuttle2.0",
             "X-Plex-Version" to "2026.09.24",
-            "X-Plex-Platform" to "Android",
+            "X-Plex-Platform" to PLEX_PLATFORM,
             "X-Plex-Device-Name" to "Pixel"
         )
     }

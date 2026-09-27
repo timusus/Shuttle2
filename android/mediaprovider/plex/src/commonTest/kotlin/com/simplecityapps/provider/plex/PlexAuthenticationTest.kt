@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.createHttpClient
+import com.simplecityapps.provider.plex.http.PLEX_PLATFORM
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -12,7 +13,7 @@ import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import io.kotest.matchers.shouldBe
 import io.ktor.http.Url
-import org.junit.Test
+import kotlin.test.Test
 
 /** Plex has no separate download endpoint: the part-file path is already the original file. */
 class PlexAuthenticationTest {
@@ -35,7 +36,7 @@ class PlexAuthenticationTest {
         path shouldBe "http://plex.local:32400/library/parts/42/file.mp3" +
             "?X-Plex-Token=token123" +
             "&X-Plex-Client-Identifier=${clientIdentity.id}" +
-            "&X-Plex-Device=Android"
+            "&X-Plex-Device=$PLEX_PLATFORM"
     }
 
     @Test
@@ -70,7 +71,7 @@ class PlexAuthenticationTest {
     }
 
     @Test
-    fun `progressive transcode url asks the universal transcoder for a single MP3 file, not HLS (#567)`() {
+    fun `progressive transcode url asks the universal transcoder for a single MP3 file - not HLS - issue 567`() {
         val path = authenticationManager.buildPlexProgressiveTranscodePath(
             song = song(externalId = "/library/parts/42/file.wma", path = "plex:///library/metadata/107898"),
             authenticatedCredentials = credentials,

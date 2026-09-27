@@ -7,19 +7,22 @@ import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.checkSession
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.plex.http.AuthenticationResult
+import com.simplecityapps.provider.plex.http.PLEX_PLATFORM
 import com.simplecityapps.provider.plex.http.PLEX_TOKEN
 import com.simplecityapps.provider.plex.http.UserService
+import com.simplecityapps.provider.plex.http.formUrlEncode
 import com.simplecityapps.provider.plex.http.plexClientHeaders
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.Song
-import java.net.URLEncoder
-import java.util.UUID
-import timber.log.Timber
+import kotlin.uuid.Uuid
 
 class PlexAuthenticationManager(
     private val userService: UserService,
     private val credentialStore: ServerCredentialStore,
     private val clientIdentity: ClientIdentity
 ) {
+    private val logger = Logger.tagged("PlexAuthenticationManager")
+
     fun getLoginCredentials(): LoginCredentials? = credentialStore.loginCredentials
 
     fun setLoginCredentials(loginCredentials: LoginCredentials?) {
@@ -44,7 +47,7 @@ class PlexAuthenticationManager(
         address: String,
         loginCredentials: LoginCredentials
     ): Result<AuthenticatedCredentials> {
-        Timber.d("authenticate(address: $address)")
+        logger.debug { "authenticate(address: $address)" }
         val authenticationResult =
             userService.authenticate(
                 username = loginCredentials.username,
@@ -70,14 +73,14 @@ class PlexAuthenticationManager(
         authenticatedCredentials: AuthenticatedCredentials
     ): String? {
         if (credentialStore.address == null) {
-            Timber.w("Invalid plex address (${credentialStore.address})")
+            logger.warn { "Invalid plex address (${credentialStore.address})" }
             return null
         }
 
         return "${credentialStore.address}${song.externalId}" +
             "?X-Plex-Token=${authenticatedCredentials.accessToken}" +
             "&X-Plex-Client-Identifier=${clientIdentity.id}" +
-            "&X-Plex-Device=Android"
+            "&X-Plex-Device=$PLEX_PLATFORM"
     }
 
     /**
@@ -90,14 +93,14 @@ class PlexAuthenticationManager(
         song: Song,
         authenticatedCredentials: AuthenticatedCredentials,
         maxBitrateKbps: Int,
-        session: String = UUID.randomUUID().toString()
+        session: String = Uuid.random().toString()
     ): String? {
         val address = credentialStore.address ?: run {
-            Timber.w("Invalid plex address (null)")
+            logger.warn { "Invalid plex address (null)" }
             return null
         }
         val ratingKey = plexRatingKey(song.path) ?: run {
-            Timber.w("No plex ratingKey in ${song.path}")
+            logger.warn { "No plex ratingKey in ${song.path}" }
             return null
         }
         val query = linkedMapOf(
@@ -112,7 +115,7 @@ class PlexAuthenticationManager(
         ) + plexClientHeaders(clientIdentity) + (PLEX_TOKEN to authenticatedCredentials.accessToken)
 
         return "$address/music/:/transcode/universal/start.m3u8?" +
-            query.entries.joinToString("&") { (name, value) -> "$name=${URLEncoder.encode(value, "UTF-8")}" }
+            query.entries.joinToString("&") { (name, value) -> "$name=${formUrlEncode(value)}" }
     }
 
     /**
@@ -127,11 +130,11 @@ class PlexAuthenticationManager(
         bitrateKbps: Int
     ): String? {
         val address = credentialStore.address ?: run {
-            Timber.w("Invalid plex address (null)")
+            logger.warn { "Invalid plex address (null)" }
             return null
         }
         val ratingKey = plexRatingKey(song.path) ?: run {
-            Timber.w("No plex ratingKey in ${song.path}")
+            logger.warn { "No plex ratingKey in ${song.path}" }
             return null
         }
         val query = linkedMapOf(
@@ -144,6 +147,6 @@ class PlexAuthenticationManager(
         ) + plexClientHeaders(clientIdentity) + (PLEX_TOKEN to authenticatedCredentials.accessToken)
 
         return "$address/music/:/transcode/universal/start.mp3?" +
-            query.entries.joinToString("&") { (name, value) -> "$name=${URLEncoder.encode(value, "UTF-8")}" }
+            query.entries.joinToString("&") { (name, value) -> "$name=${formUrlEncode(value)}" }
     }
 }

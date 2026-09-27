@@ -17,8 +17,8 @@ import com.simplecityapps.shuttle.settings.StreamingSettings
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldStartWith
+import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
 
 /**
  * Exercises [PlexMediaInfoProvider] itself (not just [PlexAuthenticationManager.buildPlexPath],
@@ -47,7 +47,7 @@ class PlexMediaInfoProviderTest {
     private val provider = PlexMediaInfoProvider(authenticationManager, StreamingBitrateCap(streamingSettings) { metered })
 
     @Test
-    fun `download stream is the same original part-file url used for streaming, with the song's mime type`() = runTest {
+    fun `download stream is the same original part-file url used for streaming - with the song's mime type`() = runTest {
         credentialStore.authenticatedCredentials = credentials
         val song = song(externalId = "/library/parts/42/file.mp3")
 
@@ -122,7 +122,7 @@ class PlexMediaInfoProviderTest {
     }
 
     @Test
-    fun `stream transcodes a format the player can't decode, with no cap (#362)`() {
+    fun `stream transcodes a format the player can't decode - with no cap - issue 362`() {
         credentialStore.authenticatedCredentials = credentials
 
         val stream = provider.buildStream(song(externalId = "/library/parts/43/1600000000/file.wma", bitRate = 128))
@@ -154,7 +154,7 @@ class PlexMediaInfoProviderTest {
     }
 
     @Test
-    fun `stream transcodes ALAC even inside a container the player otherwise decodes (#567)`() {
+    fun `stream transcodes ALAC even inside a container the player otherwise decodes - issue 567`() {
         credentialStore.authenticatedCredentials = credentials
 
         val stream = provider.buildStream(song(externalId = "/library/parts/46/1600000000/file.m4a", bitRate = 1_000, audioCodec = "alac"))
@@ -180,7 +180,7 @@ class PlexMediaInfoProviderTest {
     }
 
     @Test
-    fun `download stream transcodes a format the player can't decode into a single playable file, not HLS (#567)`() = runTest {
+    fun `download stream transcodes a format the player can't decode into a single playable file - not HLS - issue 567`() = runTest {
         credentialStore.authenticatedCredentials = credentials
 
         val stream = provider.buildDownloadStream(song(externalId = "/library/parts/47/1600000000/file.wma", bitRate = 128))!!
@@ -192,7 +192,7 @@ class PlexMediaInfoProviderTest {
     }
 
     @Test
-    fun `download stream transcodes ALAC even inside a container the player otherwise decodes (#567)`() = runTest {
+    fun `download stream transcodes ALAC even inside a container the player otherwise decodes - issue 567`() = runTest {
         credentialStore.authenticatedCredentials = credentials
 
         val stream = provider.buildDownloadStream(song(externalId = "/library/parts/48/1600000000/file.m4a", bitRate = 1_000, audioCodec = "alac"))!!

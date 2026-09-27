@@ -19,9 +19,9 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
-import org.junit.After
-import org.junit.Test
 
 class PlexRemoteArtworkProviderTest {
     // Each fixture is the response body itself
@@ -45,7 +45,7 @@ class PlexRemoteArtworkProviderTest {
     private val song = song(path = "plex:///library/metadata/107898")
 
     @Test
-    fun `album artwork url is the item's parent thumb, without the plex token`() = runTest {
+    fun `album artwork url is the item's parent thumb - without the plex token`() = runTest {
         respond(metadata(parentThumb = "/library/metadata/107898/thumb/1700000000"))
 
         provider.getAlbumArtworkUrl(song) shouldBe "${server.address}/library/metadata/107898/thumb/1700000000"
@@ -105,7 +105,7 @@ class PlexRemoteArtworkProviderTest {
         server.requests.shouldBeEmpty()
     }
 
-    @After
+    @AfterTest
     fun tearDown() {
         server.close()
     }

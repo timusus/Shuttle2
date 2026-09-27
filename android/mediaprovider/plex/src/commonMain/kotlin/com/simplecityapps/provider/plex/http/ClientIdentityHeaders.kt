@@ -7,6 +7,9 @@ fun plexClientHeaders(clientIdentity: ClientIdentity): Map<String, String> = map
     "X-Plex-Client-Identifier" to clientIdentity.id,
     "X-Plex-Product" to clientIdentity.clientName,
     "X-Plex-Version" to clientIdentity.version,
-    "X-Plex-Platform" to "Android",
+    "X-Plex-Platform" to PLEX_PLATFORM,
     "X-Plex-Device-Name" to clientIdentity.deviceName
 )
+
+/** The platform Plex lists this client under (`X-Plex-Platform`, `X-Plex-Device`). */
+internal expect val PLEX_PLATFORM: String

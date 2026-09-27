@@ -4,8 +4,8 @@ import com.simplecityapps.networking.S2Json
 import com.simplecityapps.provider.plex.http.Metadata
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlin.time.Instant
-import org.junit.Test
 
 class MetadataToSongTest {
     @Test
