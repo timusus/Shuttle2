@@ -42,7 +42,6 @@
 		9D1A42B52CE59007F5DFA5A7 /* LayoutTier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467103A9C583DD5E8967EABF /* LayoutTier.swift */; };
 		A12FAD75FAC331471138D9B0 /* PlaybackSystemCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F97906E25504493A67DA322 /* PlaybackSystemCoordinatorTests.swift */; };
 		A4DB8F671CB561F475D9337B /* Navigator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89689E4CDFC9350CB0EFB888 /* Navigator.swift */; };
-		A51C8366DA088C495D46CC29 /* SettingsPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0BBCCD8BEED9EB2837BF229 /* SettingsPresentation.swift */; };
 		A5FC469E9A6B7236B4187BA6 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158B1F52DF06F29C91362AA1 /* SearchView.swift */; };
 		A7677505BD6ABB9546620C0D /* Route.swift in Sources */ = {isa = PBXBuildFile; fileRef = 102211043771B638F9DEBB28 /* Route.swift */; };
 		A8A521383C88462C5210FEF1 /* EngineAudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFFBC031880E93536DB77D51 /* EngineAudioPlayer.swift */; };
@@ -124,7 +123,6 @@
 		BE0563753774CA8C18BFCA94 /* FakeAudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeAudioEngine.swift; sourceTree = "<group>"; };
 		C8AC265BC9335CC1C9710C63 /* MiniPlayerViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiniPlayerViewTests.swift; sourceTree = "<group>"; };
 		C8FAA90B5B4E1E1DABEB1687 /* DebugServerSeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugServerSeed.swift; sourceTree = "<group>"; };
-		D0BBCCD8BEED9EB2837BF229 /* SettingsPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPresentation.swift; sourceTree = "<group>"; };
 		D0D38E5CC8D77C5BA07D5821 /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
 		D6F13B4E6E24F493A2104D75 /* PlayerPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPresentation.swift; sourceTree = "<group>"; };
 		E5B4C7411078C92EE8985A4B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -235,7 +233,6 @@
 				89689E4CDFC9350CB0EFB888 /* Navigator.swift */,
 				102211043771B638F9DEBB28 /* Route.swift */,
 				9439F2E0407BF9275E4CEC04 /* RouteDestination.swift */,
-				D0BBCCD8BEED9EB2837BF229 /* SettingsPresentation.swift */,
 				67AA5EABDB43DCBE61D34029 /* ShellContainer.swift */,
 			);
 			path = Navigation;
@@ -476,7 +473,6 @@
 				090C3713C7D8C7CDF2ACBA76 /* RouteDestination.swift in Sources */,
 				DA730FACA000899524710C84 /* S2App.swift in Sources */,
 				A5FC469E9A6B7236B4187BA6 /* SearchView.swift in Sources */,
-				A51C8366DA088C495D46CC29 /* SettingsPresentation.swift in Sources */,
 				6A67D7A370D304760B517B8D /* ShellContainer.swift in Sources */,
 				43AB85762965B15754A34D88 /* SongListView.swift in Sources */,
 				D81817D1E15FF9445D39A71D /* ViewModelCache.swift in Sources */,

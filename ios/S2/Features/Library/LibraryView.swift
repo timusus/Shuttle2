@@ -28,7 +28,6 @@ struct LibraryView: View {
         }
         .refreshable { LibraryImport.refresh() }
         .navigationTitle(AppTab.library.title)
-        .settingsGear(navigator)
     }
 
     private static var emptyNote: String? {

@@ -82,15 +82,6 @@ struct AppShell: View {
         }
         .accessibilityIdentifier(container.accessibilityIdentifier)
         .modifier(PlayerInspectorModifier(tier: tier, navigator: navigator))
-        .sheet(isPresented: settingsBinding) {
-            NavigationStack {
-                SettingsPlaceholderView()
-            }
-        }
-    }
-
-    private var settingsBinding: Binding<Bool> {
-        Binding(get: { navigator.showsSettings }, set: { navigator.showsSettings = $0 })
     }
 
     // MARK: - Compact (tab bar)

@@ -33,7 +33,6 @@ struct HomeView: View {
         }
         .refreshable { LibraryImport.refresh() }
         .navigationTitle(AppTab.home.title)
-        .settingsGear(navigator)
     }
 }
 
@@ -170,7 +169,7 @@ private struct AlbumShelf: View {
             Section {
                 Text(title).font(.headline).listRowSeparator(.hidden)
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: .top, spacing: 12) {
+                    LazyHStack(alignment: .top, spacing: 12) {
                         ForEach(Array(albums.enumerated()), id: \.offset) { _, album in
                             AlbumTile(album: album, showPlayCount: showPlayCount, onTap: { onTap(album) })
                                 .contextMenu {
@@ -202,7 +201,7 @@ private struct ArtistShelf: View {
             Section {
                 Text(title).font(.headline).listRowSeparator(.hidden)
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: .top, spacing: 12) {
+                    LazyHStack(alignment: .top, spacing: 12) {
                         ForEach(Array(artists.enumerated()), id: \.offset) { _, artist in
                             ArtistTile(artist: artist, onTap: { onTap(artist) })
                                 .contextMenu {

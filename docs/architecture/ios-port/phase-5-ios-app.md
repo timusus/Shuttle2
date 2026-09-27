@@ -126,7 +126,8 @@ Decisions:
 - **The player is not a route**, as on Android. Presentation state (`showNowPlaying`, and
   `showsPlayerInspector` *(new)*) lives on `ContentView`/`Navigator`, never in a path.
 - **Settings** is a gear toolbar item on the Home and Library roots (Android #485) presenting a sheet
-  with its own `NavigationStack`; its screens are phase 7.
+  with its own `NavigationStack`; the gear is added with the first real settings screen (phase 7, #589),
+  not before (no placeholder sheet).
 
 ### Paths and routes
 
@@ -294,12 +295,11 @@ step rebuilds the framework (`ios/scripts/build-framework.sh`) and regenerates t
 **P5-3 landed.** `Route`/`LibraryCategory` (`Navigation/Route.swift`), `Navigator` (`RootSelection`,
 per-tab paths, per-library-category paths, the reselect-pops-to-root rule, `retainOnly` on every path
 change, `@SceneStorage` round-tripping via `StoredPath`/`StoredCategoryPaths`), placeholder
-`navigationDestination` views (`RouteDestination.swift`) and the Settings gear
-(`SettingsPresentation.swift`), all covered by `RouteTests`/`NavigatorTests`. `ContentView`'s
+`navigationDestination` views (`RouteDestination.swift`), all covered by `RouteTests`/`NavigatorTests`. `ContentView`'s
 `AppShell` wires the compact `TabView`, the iOS 18 sidebar-adaptable `TabView`, and the iOS 17
 `NavigationSplitView` fallback to `Navigator.selection`, with library categories as sidebar rows/tabs
-rather than a "Library" tab. Settings is a gear + sheet on the Home/Library roots, not a fourth tab, per
-§2 above. The wide inspector slot is an empty `.inspector` toggle, content deferred to phase 6.
+rather than a "Library" tab. Settings will be a gear + sheet on the Home/Library roots, not a fourth tab,
+per §2 above; the placeholder gear was removed until phase 7 has a real screen. The wide inspector slot is an empty `.inspector` toggle, content deferred to phase 6.
 
 **The #587 proof of concept landed** (P5-5 and the core of P5-6a, with the P5-2 pieces they need):
 the Library root (`LibraryView`), Songs (`SongListView`) and Albums (`AlbumListView`) on their shared

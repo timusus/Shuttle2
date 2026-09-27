@@ -62,8 +62,6 @@ final class Navigator {
     var searchPath: [Route] = [] { didSet { retainViewModels() } }
     private var libraryCategoryPaths: [LibraryCategory: [Route]] = [:] { didSet { retainViewModels() } }
 
-    /// The Settings sheet (a gear on the Home and Library roots, `ios-port/phase-5-ios-app.md` section 2).
-    var showsSettings = false
     /// The wide inspector slot; empty until phase 6 wires Now Playing into it.
     var showsPlayerInspector = false
 
