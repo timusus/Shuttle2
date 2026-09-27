@@ -6,7 +6,15 @@ import os
 /// The Kotlin side (`EnginePlayerController`, phase-6-playback.md) owns the queue, shuffle and
 /// repeat; it hands the engine the current item and the next one and nothing else.
 public struct PlaybackTrack {
+    /// This hand-over of the track, for telling reports apart: the owner gives every hand-over a new
+    /// one, even of the same stream.
     public let uid: String
+    /// What the track plays, for telling whether two hand-overs are the same stream: a pre-opened
+    /// next the owner hands back (as the current track after a skip onto it, or as the next again)
+    /// is kept when this matches. A file or HTTP(S) track's URL and headers; nil never matches. A
+    /// server stream's URL names its session and transcode, so the same song resolved again (at
+    /// another quality, from a position) is another stream, and is opened again.
+    public let streamIdentity: String?
     /// ReplayGain in dB, already resolved (track or album mode, preamp, clipping policy) by the
     /// shared Kotlin code. 0 is unity.
     public let gainDb: Float
@@ -17,11 +25,13 @@ public struct PlaybackTrack {
 
     public init(
         uid: String,
+        streamIdentity: String? = nil,
         gainDb: Float = 0,
         expectedDurationMs: Int64? = nil,
         makeSource: @escaping () -> TrackPCMSource
     ) {
         self.uid = uid
+        self.streamIdentity = streamIdentity
         self.gainDb = gainDb
         self.expectedDurationMs = expectedDurationMs
         self.makeSource = makeSource
@@ -35,9 +45,16 @@ public struct PlaybackTrack {
         gainDb: Float = 0,
         expectedDurationMs: Int64? = nil
     ) {
-        self.init(uid: uid, gainDb: gainDb, expectedDurationMs: expectedDurationMs) {
+        let identity = ([url.absoluteString] + headers.sorted { $0.key < $1.key }.map { "\($0.key): \($0.value)" })
+            .joined(separator: "\n")
+        self.init(uid: uid, streamIdentity: identity, gainDb: gainDb, expectedDurationMs: expectedDurationMs) {
             FFmpegTrackSource(url: url, headers: headers)
         }
+    }
+
+    /// Whether `other` is a hand-over of the same stream.
+    func playsSameStream(as other: PlaybackTrack) -> Bool {
+        streamIdentity != nil && streamIdentity == other.streamIdentity
     }
 }
 
@@ -57,12 +74,17 @@ public struct PlaybackTrack {
 /// track and the end of the queue all come from that mapping, so they follow what was heard.
 ///
 /// **Pre-opening.** The next track is opened, and its first chunk decoded, on a background queue
-/// from `preopenSeconds` before the current track's end (from the start, when neither the
-/// container nor ``PlaybackTrack/expectedDurationMs`` gives the end), so a slow HTTP open or a
-/// transcode that takes seconds to start is ready by the join. Reaching the join before it is,
-/// the stream waits for it: the node runs dry and resumes on the next track's first frame. A
-/// pre-opened track that stops being next (skipped, replaced, cleared) is cancelled; one that
-/// hasn't been read yet survives a seek, and a load that hands it back as the next.
+/// ahead of the join, so a slow HTTP open or a transcode that takes seconds to start is ready by
+/// then. How far ahead is ``PreopenLead``: `preopenSeconds`, or twice the slowest recent open when
+/// that is longer, so a server that takes longer than the window to answer still makes the join.
+/// The end is the container's duration, or ``PlaybackTrack/expectedDurationMs``; with neither,
+/// the next is opened once `steadySeconds` of the current track have been read since its load or
+/// last seek, after the current track's own start and past a quick skip. Reaching the join before
+/// the open is done, the stream waits for it: the node runs dry and resumes on the next track's
+/// first frame. A pre-opened track that stops being next (replaced, cleared, a load of another
+/// stream) is cancelled; one that hasn't been read yet survives a seek, and a load that hands its
+/// stream back (``PlaybackTrack/streamIdentity``), as the next again or as the current track (a
+/// skip onto it), which then starts on what was already opened.
 ///
 /// **Threading.** Public methods may be called from any thread and return at once. Everything
 /// that touches a source (seek, read: blocking I/O over HTTP) and every node operation runs on one
@@ -145,7 +167,9 @@ public final class MusicPlaybackController {
     /// heard, so it is short; the byte source's own read-ahead is what rides out the network.
     private let scheduleAheadFrames: Int64
     /// How long before the current track's end the next is opened. See the class doc.
-    private let preopenFrames: Int64
+    private var preopenLead: PreopenLead
+    /// How much of a current track of unknown length is read before the next is opened.
+    private let steadyFrames: Int64
     private static let chunkFrames = 4096
 
     // MARK: Engine-queue state
@@ -154,7 +178,8 @@ public final class MusicPlaybackController {
         private static var lastId = 0
         /// Unique for the controller's life (engine queue only), unlike an object address.
         let id: Int
-        let track: PlaybackTrack
+        /// Replaced by a load that hands the same stream back, taking the slot over.
+        var track: PlaybackTrack
         let source: TrackPCMSource
         var opened = false
         /// Opened and neither read nor sought since: the source is at its first frame (or, primed,
@@ -166,9 +191,10 @@ public final class MusicPlaybackController {
         /// Non-nil while the source is being opened on the prepare queue; left when it's done,
         /// with `prepared` set. Nothing else touches the source until then.
         var preparing: DispatchGroup?
-        /// What the open found (the duration) and the first frames it decoded, or its error.
-        /// Written on the prepare queue before `preparing` is left; applied on the engine queue.
-        var prepared: Result<(duration: Int64?, primed: [Float], primeError: Error?), Error>?
+        /// What the open found (the duration), the first frames it decoded and how long that took,
+        /// or its error. Written on the prepare queue before `preparing` is left; applied on the
+        /// engine queue.
+        var prepared: Result<(duration: Int64?, primed: [Float], primeError: Error?, seconds: Double), Error>?
         /// Decoded ahead by the open, read before the source: interleaved, at the output format.
         var primed: [Float] = []
         /// The open's read failed: the first read fails with it, as it would have.
@@ -253,13 +279,15 @@ public final class MusicPlaybackController {
         renderingMode: RenderingMode = .realtime,
         scheduleAheadSeconds: Double = 1.0,
         preopenSeconds: Double = 10,
+        steadySeconds: Double = 5,
         callbackQueue: DispatchQueue = .main
     ) throws {
         self.outputSampleRate = outputSampleRate
         self.renderingMode = renderingMode
         self.callbackQueue = callbackQueue
         self.scheduleAheadFrames = Int64(scheduleAheadSeconds * outputSampleRate)
-        self.preopenFrames = Int64(preopenSeconds * outputSampleRate)
+        self.preopenLead = PreopenLead(minimumSeconds: preopenSeconds)
+        self.steadyFrames = Int64(steadySeconds * outputSampleRate)
         guard let format = AVAudioFormat(standardFormatWithSampleRate: outputSampleRate, channels: 2) else {
             throw TrackSourceError.failed("no stereo float format at \(outputSampleRate) Hz")
         }
@@ -290,20 +318,20 @@ public final class MusicPlaybackController {
 
     // MARK: - Public API
 
-    /// Replace the queue with `current` (starting at `startMs`) and `next`. A `next` with the uid
-    /// of the next track already loaded keeps it, opened or opening, if none of it has been read:
-    /// what a stream re-opened for a seek hands back.
+    /// Replace the queue with `current` (starting at `startMs`) and `next`. The next track already
+    /// loaded, opened or opening, is kept if none of it has been read and `current` or `next` is
+    /// its stream (``PlaybackTrack/streamIdentity``): a skip onto it starts on what was already
+    /// opened, and a stream re-opened for a seek hands its next back.
     public func load(current track: PlaybackTrack, next nextTrack: PlaybackTrack?, startMs: Int64 = 0, playWhenReady: Bool) {
         interruptActiveRead()
         engineQueue.async { [self] in
-            let kept = next.flatMap { old in
-                old.track.uid == nextTrack?.uid && old.atStart && !old.failed && reading !== old ? old : nil
-            }
-            if kept != nil { next = nil }
+            var reusable = next.flatMap { old in old.atStart && !old.failed && reading !== old ? old : nil }
+            if reusable != nil { next = nil }
             teardown()
-            let slot = Slot(track: track)
+            let slot = take(&reusable, for: track) ?? Slot(track: track)
             current = slot
-            next = kept ?? nextTrack.map(Slot.init)
+            next = nextTrack.map { take(&reusable, for: $0) ?? Slot(track: $0) }
+            reusable.map(release)
             self.playWhenReady = playWhenReady
             setState(.loading)
             openIfNeeded(slot)
@@ -356,6 +384,14 @@ public final class MusicPlaybackController {
                 prepareNextIfDue()
             }
         }
+    }
+
+    /// `slot` (cleared) relabelled as `track`, if it's `track`'s stream.
+    private func take(_ slot: inout Slot?, for track: PlaybackTrack) -> Slot? {
+        guard let taken = slot, taken.track.playsSameStream(as: track) else { return nil }
+        slot = nil
+        taken.track = track
+        return taken
     }
 
     public func play() {
@@ -589,8 +625,10 @@ public final class MusicPlaybackController {
         }
         guard !slot.opened, !slot.failed else { return slot.opened }
         do {
+            let started = DispatchTime.now().uptimeNanoseconds
             slot.durationFrames = try slot.source.open(sampleRate: outputSampleRate, channelCount: outputChannelCount)
             slot.opened = true
+            preopenLead.record(openSeconds: Self.seconds(since: started))
             return true
         } catch {
             reportFailure(slot, error)
@@ -598,18 +636,27 @@ public final class MusicPlaybackController {
         }
     }
 
-    /// Open the next track off the engine queue once the current one is within `preopenFrames` of
-    /// its end (read, not heard: the stream reaches the join a schedule-ahead before the ear). At
-    /// once when neither the container nor the track's expected duration says where the end is.
+    /// Open the next track off the engine queue once the current one is within the pre-open lead
+    /// of its end (read, not heard: the stream reaches the join a schedule-ahead before the ear).
+    /// When neither the container nor the track's expected duration says where the end is, once
+    /// `steadyFrames` of it have been read since the stream last started.
     private func prepareNextIfDue() {
         guard let current, let next, !next.opened, !next.failed, next.preparing == nil else { return }
         if reading === current, current.opened, !current.failed,
-           let duration = current.durationFrames ?? current.track.expectedDurationMs.map({ frames(ms: $0) }),
            let segment = timelineLock.withLock({ timeline.segments.last { $0.slot == current.id } }) {
-            let readTo = segment.mediaStart + inputIndex - segment.streamStart
-            guard duration - readTo <= preopenFrames else { return }
+            let streamed = inputIndex - segment.streamStart
+            if let duration = current.durationFrames ?? current.track.expectedDurationMs.map({ frames(ms: $0) }) {
+                let lead = Int64(preopenLead.seconds * outputSampleRate)
+                guard duration - (segment.mediaStart + streamed) <= lead else { return }
+            } else {
+                guard streamed >= steadyFrames else { return }
+            }
         }
         prepare(next)
+    }
+
+    private static func seconds(since uptimeNanoseconds: UInt64) -> Double {
+        Double(DispatchTime.now().uptimeNanoseconds - uptimeNanoseconds) / 1e9
     }
 
     /// Start opening `slot` on the prepare queue, and decoding its first chunk, so its first read
@@ -625,6 +672,7 @@ public final class MusicPlaybackController {
         let channels = outputChannelCount
         let chunkFrames = Self.chunkFrames
         prepareQueue.async { [weak self] in
+            let started = DispatchTime.now().uptimeNanoseconds
             slot.prepared = Result {
                 let duration = try source.open(sampleRate: sampleRate, channelCount: channels)
                 var primed = [Float](repeating: 0, count: chunkFrames * channels)
@@ -638,7 +686,7 @@ public final class MusicPlaybackController {
                     primed = []
                     primeError = error
                 }
-                return (duration: duration, primed: primed, primeError: primeError)
+                return (duration: duration, primed: primed, primeError: primeError, seconds: Self.seconds(since: started))
             }
             group.leave()
             if let self {
@@ -668,6 +716,7 @@ public final class MusicPlaybackController {
             slot.primed = result.primed
             slot.primeError = result.primeError
             slot.opened = true
+            preopenLead.record(openSeconds: result.seconds)
         case let .failure(error):
             reportFailure(slot, error)
         case nil:

@@ -44,15 +44,32 @@ follows. A next set while the queue's end is scheduled but not yet heard (includ
 load whose current track failed) carries on from the last frame. After the end of a track that
 failed, `setNext` starts the new next at once; after one that played out, Kotlin loads what follows.
 
-**Pre-opening (#605).** The next track is opened, and its first chunk decoded, on a background queue
-from `preopenSeconds` (default 10 s) before the current track's end, so a slow HTTP open or a
-transcode that takes seconds to start is ready by the join. The end is the container's duration, or
-`PlaybackTrack.expectedDurationMs` (the library's, from Kotlin) when the container has none, as a
-progressive transcode doesn't; with neither, the next opens at once. If the stream reaches the join
-first, it waits: the current track's last frames go out, the node runs dry, and the next resumes the
-stream from its first frame once open. A pre-opened next that stops being next (a skip, a new next,
-a cleared one) is cancelled. One not read yet survives a seek, and a load that hands the same uid
-back as the next: Kotlin does that when it re-opens a transcode for a seek.
+**Pre-opening (#605, #620).** The next track is opened, and its first chunk decoded, on a background
+queue ahead of the current track's end, so a slow HTTP open or a transcode that takes seconds to
+start is ready by the join. The end is the container's duration, or `PlaybackTrack.expectedDurationMs`
+(the library's, from Kotlin) when the container has none, as a progressive transcode doesn't. If the
+stream reaches the join first, it waits: the current track's last frames go out, the node runs dry,
+and the next resumes the stream from its first frame once open.
+
+- *How far ahead* is `PreopenLead`: `preopenSeconds` (default 10 s), or twice the slowest of the last
+  five opens (to the first decoded chunk; the current track's own load counts) when that's longer,
+  capped at 60 s. A fixed window left a gap whenever a server took longer than it to answer; the lead
+  follows what opens have actually been taking, with room for one slower than any seen, and shrinks
+  back as slow ones age out. The first open on a slow server can still be late (nothing measured
+  yet), but the current track's own load is measured before its next is due, so that is rare.
+- *With no end known* (neither a container duration nor an expected one), the next opens once
+  `steadySeconds` (default 5 s) of the current track have been read since its load or last seek:
+  not at once, where it would compete with the current track's own start and be wasted by a quick
+  skip. A track of unknown length shorter than that joins with the open's wait.
+- *Identity.* A pre-opened next that stops being next (a new next, a cleared one, a load of other
+  streams) is cancelled. One not read yet survives a seek, and a load that hands its stream back,
+  matched on `PlaybackTrack.streamIdentity` (a URL track's URL and headers), not on the hand-over
+  `uid`, which Kotlin makes new for every hand-over: as the next again (Kotlin re-opening a transcode
+  for a seek) or as the current track (a skip onto it, which then starts on the open and decoded
+  first chunk, under the new uid and gain). A server URL carries its play session and transcode
+  parameters, so the same song resolved again (another quality, a transcode from a position) is
+  another stream and is opened afresh; Kotlin hands the pre-opened next's stream back for a skip
+  instead of resolving the song again (`IosPlayerController.startLoad`).
 
 **Scheduling.** The controller keeps `scheduleAheadSeconds` (default 1 s) of processed audio queued
 ahead of the playhead. It refills on buffer completion and on a 100 ms ticker, which also emits
@@ -220,12 +237,16 @@ sources handed over. `MusicPlaybackControllerTests` covers:
 - **DSP.** A flat EQ is bit-exact identity, and a peaking band changes the signal. ReplayGain
   −6 dB scales every sample by 0.501187. The limiter holds a +12 dB boost under the ceiling.
 
-`PreopenTests` covers the next track's open (#605): it starts `preopenSeconds` before the end, by
-the container's duration or the expected one; a replaced or skipped next is cancelled; a seek, or a
-load handing the same next back, keeps it; the stream waits for an open still in flight, in silence,
-then plays the next from its first frame, or ends if the next is cleared. And the gap itself: a
-real-time render into a next served by `LoopbackMediaServer` 1.5 s late has no gap pre-opened, and
-about 0.9 s of silence opened at the join.
+`PreopenTests` covers the next track's open (#605, #620): it starts `preopenSeconds` before the end,
+by the container's duration or the expected one, or once `steadySeconds` are read with neither; a
+0.3 s open widens a 0.1 s lead (only the lower bound is asserted, so a loaded machine can't fail it);
+a replaced next, or a load of another stream, is cancelled; a seek, or a load handing the same stream
+back as next or current (a skip onto it, even mid-open), keeps it, and the skip plays it sample-exact
+at the new gain; another stream of the same song (a different identity, or none) is opened afresh;
+the stream waits for an open still in flight, in silence, then plays the next from its first frame,
+or ends if the next is cleared. And the gap itself: a real-time render into a next served by
+`LoopbackMediaServer` 1.5 s late has no gap pre-opened, and about 0.9 s of silence opened at the
+join. `PreopenLeadTests` pins the lead's rule.
 
 `PrimingAndSeekTests` decodes 2 s chirps (AAC in MP4, MP3, Opus), whose phase names every sample, and
 cross-correlates to find where the decoded audio came from: the priming is trimmed at the start and
@@ -307,6 +328,7 @@ Do not add a GPL-only component (for example `--enable-gpl` or libx264-style ext
   the frame it syncs to with the time asked for, so a mid-file seek can land up to 1,152 frames
   (26 ms) off. A seek to 0:00 is exact. Exact seeking needs an index of frame offsets (#619).
 - **Pre-open timing without a duration.** A next after a stream with neither a container duration
-  nor an expected one is opened as soon as it's set, and its connection then idles until the join.
+  nor an expected one is opened once the current track is steady, and its connection then idles
+  until the join.
 - **No audio session.** No `AVAudioSession` work, interruptions or route callbacks toward Kotlin;
   the app owns the session (phase 6 step 7).
