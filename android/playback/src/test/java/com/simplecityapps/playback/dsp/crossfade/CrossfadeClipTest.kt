@@ -350,12 +350,29 @@ class CrossfadeClipTest {
     @Test
     fun `repeat-one plans a plain unfaded join at the loop point, and reports no skip when it loops`() {
         player.repeatMode = Player.REPEAT_MODE_ONE
-        queueWithAClipped()
+        queue(a, b)
+        driver.runUntil { tails.decoding == a.uid }
+        tails.land(a)
+        driver.idle()
 
+        player.getMediaItemAt(0).clipEndMs() shouldBe SONG_MS - CROSSFADE_MS
         mixer.plans.getValue(a.uid).next shouldBe CrossfadePlan.Next.Join
 
+        var loopedToRepeat = 0
+        player.addListener(
+            object : Player.Listener {
+                override fun onPositionDiscontinuity(
+                    oldPosition: Player.PositionInfo,
+                    newPosition: Player.PositionInfo,
+                    reason: Int
+                ) {
+                    if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) loopedToRepeat++
+                }
+            }
+        )
+
         player.play()
-        driver.runUntil(limitMs = 2L * SONG_MS) { clock.elapsedRealtime() > SONG_MS - CROSSFADE_MS }
+        driver.runUntil(limitMs = 2L * SONG_MS) { loopedToRepeat > 0 }
 
         player.currentMediaItemIndex shouldBe 0
         skips.shouldBeEmpty()
