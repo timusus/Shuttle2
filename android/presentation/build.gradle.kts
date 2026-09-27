@@ -32,6 +32,8 @@ kotlin {
             api(libs.kotlinx.coroutinesCore)
             // Changeset's release date
             api(libs.kotlinx.datetime)
+            // The equalizer's plotted frequency response
+            api(libs.kotlinx.collections.immutable)
             // The bundled changelog and licences metadata
             implementation(libs.kotlinx.serialization.json)
         }

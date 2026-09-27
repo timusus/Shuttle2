@@ -2,6 +2,7 @@ package com.simplecityapps.playback.persistence
 
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
+import com.simplecityapps.playback.equalizer.EqualizerPresetStore
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -15,7 +16,7 @@ import kotlinx.serialization.json.Json
 
 class PlaybackPreferenceManager(
     private val store: KeyValueStore
-) {
+) : EqualizerPresetStore {
     /**
      * A comma separated list of song ids
      */
@@ -101,7 +102,7 @@ class PlaybackPreferenceManager(
                 }
         }
 
-    var preset: Equalizer.Presets.Preset
+    override var preset: Equalizer.Presets.Preset
         set(value) {
             store.putString("preset_name", value.name)
         }
@@ -110,7 +111,7 @@ class PlaybackPreferenceManager(
             return Equalizer.Presets.all.firstOrNull { preset -> preset.name == name } ?: Equalizer.Presets.custom
         }
 
-    var customPresetBands: List<EqualizerBand>?
+    override var customPresetBands: List<EqualizerBand>?
         set(value) {
             store.putString("custom_preset_bands", json.encodeToString(equalizerBandsSerializer, value))
         }

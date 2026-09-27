@@ -6,6 +6,7 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.platform.LocalResources
+import com.simplecityapps.core.R as CoreR
 import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.R
 
@@ -151,6 +152,12 @@ val StringKey.resId: Int
         StringKey.PREF_FILE_LOGGING_SUBTITLE -> R.string.pref_file_logging_subtitle
         StringKey.PREF_COPY_DEBUG_LOGS_SUBTITLE -> R.string.pref_copy_debug_logs_subtitle
         StringKey.PREF_VIEW_LIVE_LOG_TITLE -> R.string.pref_view_live_log_title
+        StringKey.EQ_PRESET_FLAT -> CoreR.string.eq_preset_flat
+        StringKey.EQ_PRESET_CUSTOM -> CoreR.string.eq_preset_custom
+        StringKey.EQ_PRESET_BASS_BOOST -> CoreR.string.eq_preset_bass_boost
+        StringKey.EQ_PRESET_BASS_REDUCE -> CoreR.string.eq_preset_bass_reduce
+        StringKey.EQ_PRESET_VOCAL_BOOST -> CoreR.string.eq_preset_vocal_boost
+        StringKey.EQ_PRESET_VOCAL_REDUCE -> CoreR.string.eq_preset_vocal_reduce
     }
 
 /** The Android resource behind [this] key: `R.plurals.<key>`. */

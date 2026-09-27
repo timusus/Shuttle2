@@ -1,17 +1,13 @@
 package com.simplecityapps.playback.dsp.equalizer
 
-import androidx.annotation.StringRes
-
 object Equalizer {
     object Presets {
         sealed class Preset(
             val name: String,
-            @StringRes val nameResId: Int,
             val bands: List<NyquistBand>
         ) {
             object Flat : Preset(
                 "Flat",
-                com.simplecityapps.core.R.string.eq_preset_flat,
                 listOf(
                     EqualizerBand(32, 0.0).toNyquistBand(),
                     EqualizerBand(63, 0.0).toNyquistBand(),
@@ -28,7 +24,6 @@ object Equalizer {
 
             object Custom : Preset(
                 "Custom",
-                com.simplecityapps.core.R.string.eq_preset_custom,
                 listOf(
                     EqualizerBand(32, 0.0).toNyquistBand(),
                     EqualizerBand(63, 0.0).toNyquistBand(),
@@ -45,7 +40,6 @@ object Equalizer {
 
             object BassBoost : Preset(
                 "Bass Boost",
-                com.simplecityapps.core.R.string.eq_preset_bass_boost,
                 listOf(
                     EqualizerBand(32, 6.0).toNyquistBand(),
                     EqualizerBand(63, 5.0).toNyquistBand(),
@@ -62,7 +56,6 @@ object Equalizer {
 
             object BassReducer : Preset(
                 "Bass Reduction",
-                com.simplecityapps.core.R.string.eq_preset_bass_reduce,
                 listOf(
                     EqualizerBand(32, -6.0).toNyquistBand(),
                     EqualizerBand(63, -5.0).toNyquistBand(),
@@ -79,7 +72,6 @@ object Equalizer {
 
             object VocalBoost : Preset(
                 "Vocal Boost",
-                com.simplecityapps.core.R.string.eq_preset_vocal_boost,
                 listOf(
                     EqualizerBand(32, -2.0).toNyquistBand(),
                     EqualizerBand(63, -3.0).toNyquistBand(),
@@ -96,7 +88,6 @@ object Equalizer {
 
             object VocalReducer : Preset(
                 "Vocal Reduction",
-                com.simplecityapps.core.R.string.eq_preset_vocal_Reduce,
                 listOf(
                     EqualizerBand(32, 2.0).toNyquistBand(),
                     EqualizerBand(63, 3.0).toNyquistBand(),
@@ -113,7 +104,7 @@ object Equalizer {
 
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
-                if (javaClass != other?.javaClass) return false
+                if (this::class != other?.let { it::class }) return false
 
                 other as Preset
 

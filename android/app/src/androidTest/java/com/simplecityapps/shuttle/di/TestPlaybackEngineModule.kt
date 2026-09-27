@@ -14,11 +14,14 @@ import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyRespon
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.engine.SongUriResolver
+import com.simplecityapps.playback.equalizer.EqualizerControl
 import com.simplecityapps.playback.equalizer.EqualizerFrequencyResponse
+import com.simplecityapps.playback.equalizer.EqualizerPresetStore
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
+import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.settings.PlaybackSettings
@@ -37,6 +40,12 @@ class TestPlaybackEngineModule {
     @SingleIn(AppScope::class)
     @Provides
     fun provideEqualizerAudioProcessor(): EqualizerAudioProcessor = EqualizerAudioProcessor(false)
+
+    @Provides
+    fun provideEqualizerControl(equalizer: EqualizerAudioProcessor): EqualizerControl = equalizer
+
+    @Provides
+    fun provideEqualizerPresetStore(playbackPreferenceManager: PlaybackPreferenceManager): EqualizerPresetStore = playbackPreferenceManager
 
     @SingleIn(AppScope::class)
     @Provides

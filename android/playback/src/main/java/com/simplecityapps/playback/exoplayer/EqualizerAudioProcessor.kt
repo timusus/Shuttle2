@@ -10,6 +10,7 @@ import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
 import com.simplecityapps.playback.dsp.equalizer.cascadeAttenuation
 import com.simplecityapps.playback.dsp.equalizer.toNyquistBand
+import com.simplecityapps.playback.equalizer.EqualizerControl
 import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
 import java.nio.ByteBuffer
@@ -31,7 +32,8 @@ import timber.log.Timber
 class EqualizerAudioProcessor(
     enabled: Boolean,
     preampGainDb: Float = 0f
-) : BaseAudioProcessor() {
+) : BaseAudioProcessor(),
+    EqualizerControl {
     /** What the audio thread applies. [bands] are copies: the custom preset's bands are edited in place. */
     private class Settings(
         val enabled: Boolean,
@@ -46,7 +48,7 @@ class EqualizerAudioProcessor(
     private var settings = Settings(enabled, Equalizer.Presets.flat.snapshot(), preampGainDb)
 
     /** Set on the main thread. The band gains are captured when it's set; edits made after that apply once it's set again. */
-    var preset: Equalizer.Presets.Preset = Equalizer.Presets.flat
+    override var preset: Equalizer.Presets.Preset = Equalizer.Presets.flat
         set(value) {
             field = value
             settings = Settings(settings.enabled, value.snapshot(), settings.preampGainDb)
@@ -57,7 +59,7 @@ class EqualizerAudioProcessor(
      * level a boosted preset loses to headroom, at the risk of clipping, which the clamp at the end of the stage
      * still bounds. Set on the main thread; applies from the next buffer.
      */
-    var preampGainDb: Float
+    override var preampGainDb: Float
         get() = settings.preampGainDb
         set(value) {
             settings = Settings(settings.enabled, settings.bands, value)
@@ -71,12 +73,12 @@ class EqualizerAudioProcessor(
     var bypassed: Boolean = false
 
     // Maximum allowed gain/cut for each band
-    val maxBandGain = 12
+    override val maxBandGain = 12
 
     // Maximum allowed preamp gain/cut
-    val maxPreampGain = 12
+    override val maxPreampGain = 12
 
-    var enabled: Boolean
+    override var enabled: Boolean
         get() = settings.enabled
         set(value) {
             settings = Settings(value, settings.bands, settings.preampGainDb)
@@ -117,7 +119,7 @@ class EqualizerAudioProcessor(
     private val _outputSampleRateHz = MutableStateFlow<Int?>(null)
 
     /** The output sample rate the processor is currently configured for, or null before the first [onFlush]. */
-    val outputSampleRateHz: StateFlow<Int?> = _outputSampleRateHz.asStateFlow()
+    override val outputSampleRateHz: StateFlow<Int?> = _outputSampleRateHz.asStateFlow()
 
     private fun updateBandProcessors(bands: List<EqualizerBand>) {
         if (outputAudioFormat.channelCount <= 0) {

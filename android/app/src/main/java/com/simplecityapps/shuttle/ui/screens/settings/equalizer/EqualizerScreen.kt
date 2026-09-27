@@ -31,6 +31,7 @@ import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.simplecityapps.shuttle.ui.screens.equalizer.FrequencyResponseChart
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsScaffold
+import com.simplecityapps.shuttle.ui.text.stringResource
 import java.util.Locale
 
 @Composable
@@ -61,7 +62,7 @@ fun EqualizerScreen(
                     { shapes: ListItemShapes ->
                         ChoiceSetting(
                             title = stringResource(R.string.dsp_equalizer_hint_preset),
-                            value = stringResource(uiState.selectedPreset.nameResId),
+                            value = stringResource(uiState.selectedPreset.nameKey),
                             onClick = { choosingPreset = true },
                             enabled = uiState.enabled,
                             shapes = shapes
@@ -116,7 +117,7 @@ fun EqualizerScreen(
             dismissLabel = stringResource(android.R.string.cancel)
         ) {
             S2ChoiceList(
-                options = uiState.presets.map { stringResource(it.nameResId) },
+                options = uiState.presets.map { stringResource(it.nameKey) },
                 selectedIndex = uiState.presets.indexOf(uiState.selectedPreset),
                 onSelect = { index ->
                     choosingPreset = false

@@ -25,5 +25,5 @@
     <!-- Shown on equalizer screen. EQ Preset Vocal boost-->
     <string name="eq_preset_vocal_boost">ボーカル強調</string>
     <!-- Shown on equalizer screen. EQ Preset Vocal reduction-->
-    <string name="eq_preset_vocal_Reduce">ボーカル控えめ</string>
+    <string name="eq_preset_vocal_reduce">ボーカル控えめ</string>
 </resources>

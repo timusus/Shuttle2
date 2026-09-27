@@ -199,6 +199,7 @@ class SettingsRepositoriesTest {
         val privacy = PrivacySettings(store)
         val debug = DebugSettings(store)
         val playback = PlaybackSettings(store)
+        val equalizer = EqualizerSettings(store)
         val library = LibrarySettings(store)
         val downloads = DownloadSettings(store)
         return listOf(
@@ -217,7 +218,7 @@ class SettingsRepositoriesTest {
             debug.fileLogging,
             playback.retainShuffleOnNewQueue,
             playback.usbDacDirectOutput,
-            playback.equalizerEnabled,
+            equalizer.enabled,
             playback.replayGainMode,
             playback.preAmpGain,
             library.rescanFrequency,

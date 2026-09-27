@@ -3,8 +3,8 @@ package com.simplecityapps.shuttle.ui.screens.settings.equalizer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
-import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
-import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.playback.equalizer.EqualizerControl
+import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
@@ -39,7 +39,7 @@ data class EqualizerUiState(
 
 /**
  * The equalizer: the on/off switch, the preset, the preamp and the band gains. Changes go to the live
- * [EqualizerAudioProcessor] straight away, as the legacy DSP screen did; moving a band switches to the
+ * [EqualizerControl] straight away, as the legacy DSP screen did; moving a band switches to the
  * Custom preset, which is stored once the drag ends.
  */
 @ViewModelKey(EqualizerViewModel::class)
@@ -49,28 +49,28 @@ class EqualizerViewModel @Inject constructor(
     readSetting: ReadSetting,
     private val saveSetting: SaveSetting,
     private val saveEqualizerPreset: SaveEqualizerPreset,
-    private val equalizerAudioProcessor: EqualizerAudioProcessor,
+    private val equalizer: EqualizerControl,
     private val computeFrequencyResponse: ComputeFrequencyResponse
 ) : ViewModel() {
-    private val preset = MutableStateFlow(equalizerAudioProcessor.preset)
-    private val bands = MutableStateFlow(equalizerAudioProcessor.preset.bandStates())
+    private val preset = MutableStateFlow(equalizer.preset)
+    private val bands = MutableStateFlow(equalizer.preset.bandStates())
 
     val uiState: StateFlow<EqualizerUiState> = combine(
-        observeSetting(PlaybackSettings.EqualizerEnabled),
+        observeSetting(EqualizerSettings.Enabled),
         preset,
         bands,
-        observeSetting(PlaybackSettings.EqualizerPreampGain),
-        equalizerAudioProcessor.outputSampleRateHz,
+        observeSetting(EqualizerSettings.PreampGain),
+        equalizer.outputSampleRateHz,
         ::stateOf
     ).stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = stateOf(
-            enabled = readSetting(PlaybackSettings.EqualizerEnabled),
+            enabled = readSetting(EqualizerSettings.Enabled),
             preset = preset.value,
             bands = bands.value,
-            preampGainDb = readSetting(PlaybackSettings.EqualizerPreampGain),
-            outputSampleRateHz = equalizerAudioProcessor.outputSampleRateHz.value
+            preampGainDb = readSetting(EqualizerSettings.PreampGain),
+            outputSampleRateHz = equalizer.outputSampleRateHz.value
         )
     )
 
@@ -93,12 +93,12 @@ class EqualizerViewModel @Inject constructor(
     }
 
     fun onEnabledChange(enabled: Boolean) {
-        saveSetting(PlaybackSettings.EqualizerEnabled, enabled)
-        equalizerAudioProcessor.enabled = enabled
+        saveSetting(EqualizerSettings.Enabled, enabled)
+        equalizer.enabled = enabled
     }
 
     fun onPresetSelect(selected: Equalizer.Presets.Preset) {
-        equalizerAudioProcessor.preset = selected
+        equalizer.preset = selected
         saveEqualizerPreset(selected)
         preset.value = selected
         bands.value = selected.bandStates()
@@ -109,21 +109,21 @@ class EqualizerViewModel @Inject constructor(
         frequency: Int,
         gainDb: Float
     ) {
-        val maxGain = equalizerAudioProcessor.maxBandGain.toFloat()
+        val maxGain = equalizer.maxBandGain.toFloat()
         val gains = bands.value.map { band -> if (band.frequency == frequency) band.copy(gainDb = gainDb.coerceIn(-maxGain, maxGain)) else band }
         val custom = Equalizer.Presets.custom
         gains.forEach { band -> custom.bands.first { it.centerFrequency == band.frequency }.gain = band.gainDb.toDouble() }
-        equalizerAudioProcessor.preset = custom
+        equalizer.preset = custom
         preset.value = custom
         bands.value = gains
     }
 
     /** Plays and stores the preamp at [gainDb], within the processor's limit. */
     fun onPreampGainChange(gainDb: Float) {
-        val maxGain = equalizerAudioProcessor.maxPreampGain.toFloat()
+        val maxGain = equalizer.maxPreampGain.toFloat()
         val gain = gainDb.coerceIn(-maxGain, maxGain)
-        saveSetting(PlaybackSettings.EqualizerPreampGain, gain)
-        equalizerAudioProcessor.preampGainDb = gain
+        saveSetting(EqualizerSettings.PreampGain, gain)
+        equalizer.preampGainDb = gain
     }
 
     /** Stores the Custom preset once a band stops moving. */

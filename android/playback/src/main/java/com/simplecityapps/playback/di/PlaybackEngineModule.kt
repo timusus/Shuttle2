@@ -24,7 +24,9 @@ import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyRespon
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.engine.SongUriResolver
+import com.simplecityapps.playback.equalizer.EqualizerControl
 import com.simplecityapps.playback.equalizer.EqualizerFrequencyResponse
+import com.simplecityapps.playback.equalizer.EqualizerPresetStore
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
@@ -37,6 +39,7 @@ import com.simplecityapps.shuttle.analytics.Analytics
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.settings.EqualizerSettings
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -51,8 +54,8 @@ class PlaybackEngineModule {
     @Provides
     fun provideEqualizer(
         playbackPreferenceManager: PlaybackPreferenceManager,
-        playbackSettings: PlaybackSettings
-    ): EqualizerAudioProcessor = EqualizerAudioProcessor(playbackSettings.equalizerEnabled.value, playbackSettings.equalizerPreampGain.value).apply {
+        equalizerSettings: EqualizerSettings
+    ): EqualizerAudioProcessor = EqualizerAudioProcessor(equalizerSettings.enabled.value, equalizerSettings.preampGain.value).apply {
         // Restore custom eq bands first: setting the preset captures its band gains
         playbackPreferenceManager.customPresetBands?.forEach { restoredBand ->
             Equalizer.Presets.custom.bands.forEach { customBand ->
@@ -65,6 +68,12 @@ class PlaybackEngineModule {
         // Restore current eq
         preset = playbackPreferenceManager.preset
     }
+
+    @Provides
+    fun provideEqualizerControl(equalizer: EqualizerAudioProcessor): EqualizerControl = equalizer
+
+    @Provides
+    fun provideEqualizerPresetStore(playbackPreferenceManager: PlaybackPreferenceManager): EqualizerPresetStore = playbackPreferenceManager
 
     @SingleIn(AppScope::class)
     @Provides

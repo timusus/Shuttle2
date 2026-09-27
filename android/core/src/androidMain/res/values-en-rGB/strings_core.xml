@@ -25,5 +25,5 @@
     <!-- Shown on equalizer screen. EQ Preset Vocal boost-->
     <string name="eq_preset_vocal_boost">Vocal boost</string>
     <!-- Shown on equalizer screen. EQ Preset Vocal reduction-->
-    <string name="eq_preset_vocal_Reduce">Vocal reduction</string>
+    <string name="eq_preset_vocal_reduce">Vocal reduction</string>
 </resources>

@@ -6,8 +6,8 @@ import com.simplecityapps.playback.dsp.equalizer.DefaultEqualizerFrequencyRespon
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
@@ -30,7 +30,7 @@ class EqualizerViewModelTest {
 
     private val prefs = InMemoryKeyValueStore()
     private val store = SettingsStore(prefs)
-    private val playbackSettings = PlaybackSettings(store)
+    private val equalizerSettings = EqualizerSettings(store)
     private val preferenceManager = PlaybackPreferenceManager(prefs)
     private val processor = EqualizerAudioProcessor(enabled = false).apply { preset = Equalizer.Presets.flat }
 
@@ -59,7 +59,7 @@ class EqualizerViewModelTest {
         viewModel().onEnabledChange(true)
 
         processor.enabled shouldBe true
-        playbackSettings.equalizerEnabled.value shouldBe true
+        equalizerSettings.enabled.value shouldBe true
     }
 
     @Test
@@ -129,7 +129,7 @@ class EqualizerViewModelTest {
         viewModel.onPreampGainChange(4.5f)
 
         processor.preampGainDb shouldBe 4.5f
-        playbackSettings.equalizerPreampGain.value shouldBe 4.5f
+        equalizerSettings.preampGain.value shouldBe 4.5f
         viewModel.uiState.value.preampGainDb shouldBe 4.5f
     }
 
@@ -138,12 +138,12 @@ class EqualizerViewModelTest {
         viewModel().onPreampGainChange(-40f)
 
         processor.preampGainDb shouldBe -processor.maxPreampGain.toFloat()
-        playbackSettings.equalizerPreampGain.value shouldBe -processor.maxPreampGain.toFloat()
+        equalizerSettings.preampGain.value shouldBe -processor.maxPreampGain.toFloat()
     }
 
     @Test
     fun `the state starts from the stored preamp`() {
-        playbackSettings.equalizerPreampGain.value = -2f
+        equalizerSettings.preampGain.value = -2f
 
         viewModel().uiState.value.preampGainDb shouldBe -2f
     }

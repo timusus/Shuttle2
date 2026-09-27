@@ -25,5 +25,5 @@
     <!-- Shown on equalizer screen. EQ Preset Vocal boost-->
     <string name="eq_preset_vocal_boost">Potenzia le voci</string>
     <!-- Shown on equalizer screen. EQ Preset Vocal reduction-->
-    <string name="eq_preset_vocal_Reduce">Riduci le voci</string>
+    <string name="eq_preset_vocal_reduce">Riduci le voci</string>
 </resources>
