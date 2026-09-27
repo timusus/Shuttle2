@@ -185,8 +185,9 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
 - `AudioSessionController`: `.playback` / `.default` / `.longFormAudio`. Interruption: pause; resume on
   `.shouldResume` only if we were playing and nothing paused or played meanwhile (Android's transient
   focus loss); no `.shouldResume` stays paused (permanent loss). `.oldDeviceUnavailable`: pause, never
-  auto-resume (Android's becoming-noisy). Reports each new output sample rate (EQ coefficients) and asks
-  for an engine rebuild on a media-services reset. `EngineAudioPlayer`'s `onWillPlay`/`onPaused` hooks call
+  auto-resume (Android's becoming-noisy). Asks for an engine rebuild on a media-services reset. It ignores
+  the route's sample rate: the engine renders at a fixed 48 kHz, the rate the shared EQ is designed at
+  (`phase-6-playback.md`, step 8). `EngineAudioPlayer`'s `onWillPlay`/`onPaused` hooks call
   `activate()` before any play and `playbackPaused()` on every pause.
 - `NowPlayingController`: metadata on `setItem`, elapsed/rate through `updatePlayback`, which only writes
   on a state/speed change, a >1 s jump or every 10 s (safe per tick). Artwork via the `loadArtwork`

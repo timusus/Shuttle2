@@ -4,7 +4,8 @@ import SwiftUI
 /// Settings (#589 phase 7, #612): the shared `SettingsViewModel` over `IosSettingsCatalog`, as one grouped `Form`.
 /// Presented as a sheet from the gear on the Home and Library roots (`AppShell`), with its own `NavigationStack`
 /// on `Navigator.settingsPath`, so the Sources row pushes Sources (and its sign-in) inside the sheet. The catalog
-/// holds only the rows iOS acts on; what it leaves out, and why, is on `IosSettingsCatalog`.
+/// holds only the rows iOS acts on; what it leaves out, and why, is on `IosSettingsCatalog`. The Equalizer row pushes
+/// `EqualizerView` the same way.
 struct SettingsView: View {
     var body: some View {
         let viewModel = ViewModelCache.shared.viewModel(Navigator.settingsCacheKey) { AppGraph.shared.settingsViewModel }
@@ -21,6 +22,11 @@ struct SettingsView: View {
                     onChoose: { key, index in
                         if let item = catalog.item(key: key) as? SettingItemChoice<AnyObject> {
                             viewModel.onChoiceSelect(item: item, optionIndex: Int32(index))
+                        }
+                    },
+                    onSlide: { key, position in
+                        if let item = catalog.item(key: key) as? SettingItemSlider<AnyObject> {
+                            viewModel.onSliderChange(item: item, position: position)
                         }
                     },
                     onAction: { key in
@@ -67,11 +73,13 @@ struct SettingsSection: Equatable, Identifiable {
 
 /// One row, in plain values: what it draws and the key its callback carries back.
 enum SettingsRow: Equatable, Identifiable {
-    /// Pushes another screen: Sources, from the Sources section.
+    /// Pushes another screen: Sources, from the Sources section, and the Equalizer.
     case link(id: String, title: String, systemImage: String, route: Route)
     case toggle(key: String, title: String, summary: String?, isOn: Bool, isEnabled: Bool)
     case choice(key: String, title: String, options: [String], selected: Int, isEnabled: Bool)
     case action(key: String, title: String, summary: String?, confirmation: Confirmation?, isEnabled: Bool)
+    /// A continuous slider over `range`, its value shown by `valueLabel` (nil: not shown).
+    case slider(key: String, title: String, value: Float, range: ClosedRange<Float>, valueLabel: String?, isEnabled: Bool)
 
     struct Confirmation: Equatable {
         var title: String
@@ -82,7 +90,8 @@ enum SettingsRow: Equatable, Identifiable {
     var id: String {
         switch self {
         case .link(let id, _, _, _): id
-        case .toggle(let key, _, _, _, _), .choice(let key, _, _, _, _), .action(let key, _, _, _, _): key
+        case .toggle(let key, _, _, _, _), .choice(let key, _, _, _, _), .action(let key, _, _, _, _),
+             .slider(let key, _, _, _, _, _): key
         }
     }
 }
@@ -90,8 +99,8 @@ enum SettingsRow: Equatable, Identifiable {
 extension SettingsSection {
     /// The catalog's screens as sections: each screen opens with a section under its own title (holding its first
     /// group, if that group is untitled), and every titled group is a section of its own. The Sources screen's
-    /// opening section leads with the row that pushes Sources. Navigate and Slider rows have no iOS form (the iOS
-    /// catalog has none), so they're left out rather than drawn as rows that do nothing.
+    /// opening section leads with the row that pushes Sources. A Navigate row is a link when iOS has its screen (the
+    /// Equalizer) and left out otherwise, rather than drawn as a row that does nothing.
     static func sections(catalog: SettingsCatalog, state: SettingsUiState, rescanStarted: Bool = false) -> [SettingsSection] {
         catalog.screens.flatMap { screen -> [SettingsSection] in
             let destination = screen.destination
@@ -146,6 +155,18 @@ extension SettingsSection {
                 },
                 isEnabled: enabled
             )
+        case let slider as SettingItemSlider<AnyObject>:
+            let value = state.sliderValue(item: slider)
+            return .slider(
+                key: slider.key,
+                title: title,
+                value: value,
+                range: slider.minimum...slider.maximum,
+                valueLabel: slider.isDecibels ? String(format: "%+.1f dB", value) : nil,
+                isEnabled: enabled
+            )
+        case let link as SettingItemNavigate where link.target == .equalizer:
+            return .link(id: "settings.equalizer", title: title, systemImage: "slider.vertical.3", route: .equalizer)
         default:
             return nil
         }
@@ -157,6 +178,7 @@ struct SettingsContent: View {
     let sections: [SettingsSection]
     var onToggle: (String, Bool) -> Void = { _, _ in }
     var onChoose: (String, Int) -> Void = { _, _ in }
+    var onSlide: (String, Float) -> Void = { _, _ in }
     var onAction: (String) -> Void = { _ in }
 
     @Environment(\.openURL) private var openURL
@@ -238,6 +260,18 @@ struct SettingsContent: View {
             .tint(.primary)
             .disabled(!isEnabled)
             .accessibilityIdentifier("settings.\(key)")
+        case .slider(let key, let title, let value, let range, let valueLabel, let isEnabled):
+            VStack(alignment: .leading) {
+                LabeledContent(title) {
+                    if let valueLabel { Text(valueLabel).monospacedDigit() }
+                }
+                Slider(value: Binding(get: { value }, set: { onSlide(key, $0) }), in: range) {
+                    Text(title)
+                }
+                .accessibilityIdentifier("settings.\(key)")
+                .accessibilityValue(valueLabel ?? String(format: "%.1f", value))
+            }
+            .disabled(!isEnabled)
         }
     }
 

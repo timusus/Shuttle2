@@ -49,6 +49,8 @@ enum Route: Hashable, Codable {
     case sources
     /// A server's sign-in, keyed by the `MediaProviderType`'s name (`Route.serverSignIn(_:)`).
     case serverSignIn(type: String)
+    /// The equalizer (Android's `EqualizerRoute`), pushed from Settings' Equalizer row.
+    case equalizer
 
     /// The `ViewModelCache` key for the screen this route resolves to (`ios.md`, "Swift ↔ Kotlin").
     var cacheKey: String {
@@ -61,6 +63,7 @@ enum Route: Hashable, Codable {
         case .smartPlaylist(let id): "smartPlaylist:\(id)"
         case .sources: "sources"
         case .serverSignIn(let type): "serverSignIn:\(type)"
+        case .equalizer: "equalizer"
         }
     }
 }

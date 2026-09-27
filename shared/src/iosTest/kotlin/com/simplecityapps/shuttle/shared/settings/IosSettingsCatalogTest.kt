@@ -1,10 +1,10 @@
 package com.simplecityapps.shuttle.shared.settings
 
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ArtworkSettings
 import com.simplecityapps.shuttle.settings.DebugSettings
-import com.simplecityapps.shuttle.settings.EqualizerSettings
 import com.simplecityapps.shuttle.settings.PrivacySettings
 import com.simplecityapps.shuttle.settings.StreamingQuality
 import com.simplecityapps.shuttle.settings.StreamingSettings
@@ -12,7 +12,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.SettingsUiState
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
-import io.kotest.matchers.collections.shouldBeEmpty
+import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldNotContainAnyOf
 import io.kotest.matchers.shouldBe
@@ -35,6 +35,8 @@ class IosSettingsCatalogTest {
     fun theStoredSettingsAreExactlyTheOnesIosReads() {
         catalog.settings.map { it.key } shouldContainExactly listOf(
             PlaybackSettings.RetainShuffleOnNewQueue.key,
+            PlaybackSettings.ReplayGain.key,
+            PlaybackSettings.PreAmpGain.key,
             StreamingSettings.UnmeteredQuality.key,
             StreamingSettings.MeteredQuality.key,
             ArtworkSettings.LocalOnly.key
@@ -54,9 +56,6 @@ class IosSettingsCatalogTest {
             AppearanceSettings.AccentColour.key,
             AppearanceSettings.WidgetBackgroundOpacity.key,
             PlaybackSettings.UsbDacDirectOutput.key,
-            PlaybackSettings.ReplayGain.key,
-            PlaybackSettings.PreAmpGain.key,
-            EqualizerSettings.Enabled.key,
             ArtworkSettings.WifiOnly.key,
             ArtworkSettings.MediaSessionArtwork.key,
             PrivacySettings.CrashReporting.key,
@@ -66,19 +65,34 @@ class IosSettingsCatalogTest {
     }
 
     @Test
-    fun noRowNeedsARouteOrSliderSwiftDoesNotDraw() {
-        catalog.items.filter { it is SettingItem.Navigate || it is SettingItem.Slider<*> }.shouldBeEmpty()
+    fun theOnlyLinkIsTheEqualizerAndTheOnlySliderTheReplayGainPreamp() {
+        catalog.items.filterIsInstance<SettingItem.Navigate>().map { it.target } shouldContainExactly listOf(SettingsLink.Equalizer)
+        catalog.items.filterIsInstance<SettingItem.Slider<*>>().map { it.setting } shouldContainExactly listOf(PlaybackSettings.PreAmpGain)
     }
 
     @Test
     fun theStateReadsAnswerInPlainTypes() {
-        val shuffle = catalog.playbackAndSound.items.single() as SettingItem.Switch
+        val shuffle = catalog.playbackAndSound.items.filterIsInstance<SettingItem.Switch>().single()
         val metered = catalog.sources.items.filterIsInstance<SettingItem.Choice<*>>().single { it.setting == StreamingSettings.MeteredQuality }
-        val state = SettingsUiState(values = mapOf(shuffle.key to true, metered.key to StreamingQuality.Kbps192))
+        val replayGain = catalog.playbackAndSound.items.filterIsInstance<SettingItem.Choice<*>>().single()
+        val preamp = catalog.playbackAndSound.items.filterIsInstance<SettingItem.Slider<*>>().single()
+        val state = SettingsUiState(
+            values = mapOf(
+                shuffle.key to true,
+                metered.key to StreamingQuality.Kbps192,
+                replayGain.key to ReplayGainMode.Album,
+                preamp.key to -2.5f
+            )
+        )
 
         state.isOn(shuffle) shouldBe true
         state.selectedIndex(metered) shouldBe 2
         state.isEnabled(metered, catalog) shouldBe true
+        state.selectedIndex(replayGain) shouldBe 1
+        state.sliderValue(preamp) shouldBe -2.5f
+        preamp.minimum shouldBe -12f
+        preamp.maximum shouldBe 12f
         SettingsUiState().isOn(shuffle) shouldBe false
+        SettingsUiState().sliderValue(preamp) shouldBe 0f
     }
 }

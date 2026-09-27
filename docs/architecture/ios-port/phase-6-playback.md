@@ -124,8 +124,8 @@ and the transcode protocol (`http` progressive, container `mp3` or `aac`/`adts`)
 progressive transcode is not range-seekable: restart the request with `StartTimeTicks` (Jellyfin/Emby)
 or `offset` (Plex) and tell the reader its base position.
 
-**Graph**: `playerNode -> timePitch -> mainMixer -> output`, one fixed format (float32 stereo at the
-session's output rate). FFmpeg `swresample` converts every track into it, so tracks of different
+**Graph**: `playerNode -> timePitch -> mainMixer -> output`, one fixed format (float32 stereo at a
+fixed 48 kHz; see "Status of step 8" for why not the session's rate). FFmpeg `swresample` converts every track into it, so tracks of different
 rates never reconnect the node and gapless is just "keep scheduling". In the PCM path, per buffer:
 ReplayGain gain -> EQ cascade (with preamp/headroom from Kotlin) -> `LookaheadLimiter` -> volume. The
 render thread never calls Kotlin.
@@ -151,7 +151,7 @@ interface IosAudioPlayerListener {                        // Swift calls these o
     fun onTransition(fromUid: Long, toUid: Long)          // gapless handover at the sample boundary
     fun onFailed(uid: Long, message: String)
     fun onUserSeek(positionMs: Long)                      // lock screen / CarPlay seeks
-    fun onOutputRouteChanged(sampleRate: Int)             // recompute EQ coefficients
+    fun onOutputRouteChanged(sampleRate: Int)             // dropped: the engine rate is fixed (step 8)
 }
 ```
 
@@ -298,8 +298,42 @@ plays each format through the controller: MP3, AAC and ALAC in MP4, FLAC, Opus, 
 
 Still open (#588): stream
 resolution is a placeholder (a song's path as its URL, so the demo library's `demo://` songs fail and
-are skipped); artwork waits for a shared image loader; the output sample rate has no consumer until
-the EQ is shared; queue persistence is not wired.
+are skipped); artwork waits for a shared image loader; queue persistence is not wired.
+
+### Status of step 8 (ReplayGain and EQ, #604)
+
+Done. What is shared and what is platform:
+
+- **Shared (commonMain).** `SongStreamResolver` puts Android's `replayGainDb(mode, preamp, tags)` into
+  every `IosStream`'s `gainDb`, reading `PlaybackSettings.ReplayGain` and `PreAmpGain` (±12 dB,
+  `MAX_REPLAY_GAIN_PREAMP_DB`) as each song is resolved, so a changed mode applies from the next song.
+  `IosEqualizer` is iOS's `EqualizerControl`: it designs the preset's ten bands with
+  `EqualizerCascade` (Android's `BandProcessor` maths, five coefficients per band) at
+  `IosAudioPlayer.engineSampleRate()`, adds the cascade's headroom to the user's preamp, and calls
+  `IosAudioPlayer.setEqualizer`. `KeyValueEqualizerPresetStore` stores the preset on both platforms
+  (Android's `PlaybackPreferenceManager` delegates to it, same keys). The shared `EqualizerViewModel`,
+  `EqualizerFrequencyResponse` and the Settings rows (Equalizer link, ReplayGain mode, preamp) are bound
+  in `IosAppGraph`/`IosSettingsCatalog`.
+- **Platform (Swift).** `EngineAudioPlayer` hands the coefficients to the engine and again to a rebuilt
+  engine after a media-services reset. The engine's `PCMProcessor` runs gain × preamp, the biquads, then
+  the `LookaheadLimiter` (-0.1 dBFS ceiling): the limiter is the clipping prevention, so a +12 dB
+  ReplayGain boost is held under full scale rather than wrapped. `EqualizerView` is the SwiftUI screen.
+
+**Why the engine stays at 48 kHz.** The EQ's coefficients are only right at the rate they were designed
+for; a 1 kHz band designed for 48 kHz and run at 44.1 kHz sits about 8.8% low. The engine converts every
+track to its own fixed format, and the main mixer resamples that to whatever the route runs at, so the
+rate the filters run at is always the engine's 48 kHz, never the route's. Following the route instead
+(the old `AudioSessionController` sample-rate report) would have meant rebuilding the graph on each
+route change: the scheduled-ahead audio already filtered at the old rate plays out wrong, the pre-opened
+next track and the gapless join are lost, and the coefficients go stale between the change and the
+rebuild. Built-in hardware and most Bluetooth routes run at 48 kHz anyway, so the mixer's conversion is
+usually a no-op. The session's rate is therefore no one's business: the report and the TODO that
+consumed it are deleted, and `IosEqualizer.outputSampleRateHz` is a constant.
+
+Verified by `EqualizerCascadeTest` (the pinned 48 kHz coefficients of a +6 dB 1 kHz band, and a sine
+through them gaining 6 dB), the package's `testAKotlinDesignedBandBoostsItsFrequencyBySixDecibelsAtTheEngineRate`
+(the same coefficients through the engine: +6.00 ± 0.05 dB), the ReplayGain and limiter package tests,
+and `IosAppGraphTest`/`EngineAudioPlayerTests` (the saved EQ reaches the engine at launch).
 
 ## Risks
 
