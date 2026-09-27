@@ -3,8 +3,8 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 import com.simplecityapps.fakes.FakeQuickConnectAuthentication
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
 
 class CheckQuickConnectAvailableTest {
     private val jellyfin = FakeQuickConnectAuthentication()

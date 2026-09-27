@@ -1,12 +1,13 @@
-package com.simplecityapps.shuttle.ui.screens.sources.servers.plex
+package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.server.LoginCredentials
-import com.simplecityapps.provider.plex.PlexAuthenticationManager
-import com.simplecityapps.shuttle.ui.screens.sources.servers.SavedServerLogin
-import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerAuthentication
-import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerLogin
+import com.simplecityapps.mediaprovider.server.SavedServerLogin
+import com.simplecityapps.mediaprovider.server.ServerAuthentication
+import com.simplecityapps.mediaprovider.server.ServerLogin
+import com.simplecityapps.networking.userDescription
 import dev.zacsweers.metro.Inject
 
+/** Plex's password sign-in, for the shared sign-in form. */
 class PlexServerAuthentication @Inject constructor(
     private val authenticationManager: PlexAuthenticationManager,
 ) : ServerAuthentication {
@@ -17,7 +18,9 @@ class PlexServerAuthentication @Inject constructor(
 
     override suspend fun authenticate(login: ServerLogin): Result<Unit> {
         authenticationManager.setAddress(login.address)
-        return authenticationManager.authenticate(login.address, login.credentials()).map {}
+        return authenticationManager.authenticate(login.address, login.credentials())
+            .map {}
+            .recoverCatching { error -> throw Exception(error.userDescription(), error) }
     }
 
     override fun rememberLogin(login: ServerLogin) = authenticationManager.setLoginCredentials(login.credentials())

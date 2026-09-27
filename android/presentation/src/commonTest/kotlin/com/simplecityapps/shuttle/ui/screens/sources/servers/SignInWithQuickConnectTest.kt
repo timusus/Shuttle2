@@ -4,12 +4,12 @@ import com.simplecityapps.fakes.FakeQuickConnectAuthentication
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
 
 class SignInWithQuickConnectTest {
     private val quickConnect = FakeQuickConnectAuthentication()

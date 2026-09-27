@@ -1,22 +1,27 @@
 package com.simplecityapps.provider.plex.di
 
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.provider.plex.PlexPlaybackReporter
 import com.simplecityapps.provider.plex.PlexRemoteArtworkProvider
+import com.simplecityapps.provider.plex.PlexServerAuthentication
 import com.simplecityapps.provider.plex.PlexStrings
 import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.PlaybackReportingService
 import com.simplecityapps.provider.plex.http.UserService
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
@@ -71,4 +76,9 @@ class PlexMediaProviderModule {
     @Provides
     @IntoSet
     fun provideRemoteArtworkProvider(provider: PlexRemoteArtworkProvider): RemoteArtworkProvider = provider
+
+    @Provides
+    @IntoMap
+    @MediaProviderTypeKey(MediaProviderType.Plex)
+    fun provideServerAuthentication(authentication: PlexServerAuthentication): ServerAuthentication = authentication
 }

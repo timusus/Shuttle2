@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.shared
 
 import androidx.lifecycle.viewmodel.CreationExtras
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.UserDefaultsKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.SaveSetting
@@ -11,6 +12,7 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryViewModel
 import com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailViewModel
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel
+import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInViewModel
 import com.simplecityapps.shuttle.ui.shell.ShellTab
 import com.simplecityapps.shuttle.ui.shell.ShellViewModel
 import io.kotest.matchers.shouldBe
@@ -54,6 +56,7 @@ class IosAppGraphTest {
         graph.playlistDetailViewModelFactory
         graph.smartPlaylistDetailViewModelFactory
         graph.songInfoViewModelFactory
+        graph.serverSignInViewModelFactory
         graph.mediaSources
         graph.songImportStateProvider
         graph.serverSignIn
@@ -65,6 +68,8 @@ class IosAppGraphTest {
         graph.genreDetailViewModelFactory.create("Jazz").shouldBeInstanceOf<GenreDetailViewModel>()
         graph.playlistDetailViewModelFactory.create(1L).shouldBeInstanceOf<PlaylistDetailViewModel>()
         graph.songInfoViewModelFactory.create(1L).shouldBeInstanceOf<SongInfoViewModel>()
+        graph.serverSignInViewModelFactory.create(MediaProviderType.Jellyfin).shouldBeInstanceOf<ServerSignInViewModel>()
+        graph.serverSignInViewModelFactory.create(MediaProviderType.Emby).shouldBeInstanceOf<ServerSignInViewModel>()
     }
 
     @Test

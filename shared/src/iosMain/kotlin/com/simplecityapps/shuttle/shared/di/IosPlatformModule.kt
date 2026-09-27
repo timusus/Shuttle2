@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.shared.di
 
 import com.simplecityapps.localmediaprovider.local.repository.PlaylistFileSync
+import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.entitlement.TryDownloadFromServer
 import com.simplecityapps.shuttle.model.Song
@@ -11,6 +12,7 @@ import com.simplecityapps.shuttle.ui.screens.sources.FolderKind
 import com.simplecityapps.shuttle.ui.screens.sources.FolderLists
 import com.simplecityapps.shuttle.ui.screens.sources.ScannerFolderStore
 import com.simplecityapps.shuttle.ui.screens.sources.SourceFolder
+import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInAnalytics
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -70,6 +72,17 @@ class IosPlatformModule {
     /** No entitlements on iOS until phase 9, so a server's sign-in always opens. */
     @Provides
     fun provideTryAddServer(): TryAddServer = TryAddServer { true }
+
+    /** No entitlements on iOS until phase 9, so the sign-in never discloses that streaming needs Pro. */
+    @Provides
+    fun provideObserveServerStreamingNeedsPro(): ObserveServerStreamingNeedsPro {
+        val needsPro = MutableStateFlow(false).asStateFlow()
+        return ObserveServerStreamingNeedsPro { needsPro }
+    }
+
+    /** No monetisation analytics on iOS until StoreKit (#609), so a sign-in isn't recorded. */
+    @Provides
+    fun provideServerSignInAnalytics(): ServerSignInAnalytics = ServerSignInAnalytics { }
 
     /** iOS has no local-file scanner, so there are no scanner folders and none can be picked. */
     @Provides

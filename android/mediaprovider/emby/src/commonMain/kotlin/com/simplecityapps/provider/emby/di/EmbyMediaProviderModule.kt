@@ -1,8 +1,10 @@
 package com.simplecityapps.provider.emby.di
 
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.StreamProfile
@@ -10,13 +12,16 @@ import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.emby.EmbyPlaybackReporter
 import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
+import com.simplecityapps.provider.emby.EmbyServerAuthentication
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.provider.emby.http.ItemsService
 import com.simplecityapps.provider.emby.http.PlaybackReportingService
 import com.simplecityapps.provider.emby.http.UserService
+import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
@@ -70,4 +75,9 @@ class EmbyMediaProviderModule {
     @Provides
     @IntoSet
     fun provideRemoteArtworkProvider(provider: EmbyRemoteArtworkProvider): RemoteArtworkProvider = provider
+
+    @Provides
+    @IntoMap
+    @MediaProviderTypeKey(MediaProviderType.Emby)
+    fun provideServerAuthentication(authentication: EmbyServerAuthentication): ServerAuthentication = authentication
 }

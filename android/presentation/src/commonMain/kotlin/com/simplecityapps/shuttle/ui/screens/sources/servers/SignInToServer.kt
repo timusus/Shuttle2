@@ -1,9 +1,10 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
-import com.simplecityapps.networking.userDescription
+import com.simplecityapps.mediaprovider.server.ServerAuthentication
+import com.simplecityapps.mediaprovider.server.ServerLogin
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.Inject
-import timber.log.Timber
 
 /**
  * Signs in to a [type] server with [login][invoke]. Once it's in, the sign-in is recorded for analytics, and the login
@@ -11,7 +12,7 @@ import timber.log.Timber
  * or download does (ServerAccessGate), so a sign-in the user backs out of doesn't use it up.
  */
 class SignInToServer @Inject constructor(
-    private val authentications: Map<MediaProviderType, @JvmSuppressWildcards ServerAuthentication>,
+    private val authentications: Map<MediaProviderType, ServerAuthentication>,
     private val analytics: ServerSignInAnalytics,
 ) {
     sealed interface Result {
@@ -34,9 +35,14 @@ class SignInToServer @Inject constructor(
                 Result.Success
             },
             onFailure = { error ->
-                Timber.e("$type authentication failed. Error ${error.localizedMessage}")
-                Result.Failure(error.userDescription())
+                logger.error { "$type authentication failed. Error ${error.message}" }
+                Result.Failure(error.message ?: UNKNOWN_ERROR_MESSAGE)
             },
         )
+    }
+
+    private companion object {
+        const val UNKNOWN_ERROR_MESSAGE = "An unknown error occurred."
+        val logger = Logger.tagged("SignInToServer")
     }
 }

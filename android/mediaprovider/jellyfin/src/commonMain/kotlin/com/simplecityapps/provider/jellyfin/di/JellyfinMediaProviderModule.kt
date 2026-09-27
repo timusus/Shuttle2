@@ -1,8 +1,10 @@
 package com.simplecityapps.provider.jellyfin.di
 
 import com.simplecityapps.mediaprovider.ClientIdentity
+import com.simplecityapps.mediaprovider.MediaProviderTypeKey
 import com.simplecityapps.mediaprovider.PlaybackReporter
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.server.ServerAuthentication
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.mediaprovider.server.ServerStrings
 import com.simplecityapps.mediaprovider.server.StreamProfile
@@ -10,13 +12,16 @@ import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinPlaybackReporter
 import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
+import com.simplecityapps.provider.jellyfin.JellyfinServerAuthentication
 import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService
 import com.simplecityapps.provider.jellyfin.http.UserService
+import com.simplecityapps.shuttle.model.MediaProviderType
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
+import dev.zacsweers.metro.IntoMap
 import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Named
 import dev.zacsweers.metro.Provides
@@ -70,4 +75,9 @@ class JellyfinMediaProviderModule {
     @Provides
     @IntoSet
     fun provideRemoteArtworkProvider(provider: JellyfinRemoteArtworkProvider): RemoteArtworkProvider = provider
+
+    @Provides
+    @IntoMap
+    @MediaProviderTypeKey(MediaProviderType.Jellyfin)
+    fun provideServerAuthentication(authentication: JellyfinServerAuthentication): ServerAuthentication = authentication
 }

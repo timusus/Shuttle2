@@ -3,26 +3,38 @@ package com.simplecityapps.shuttle.ui.screens.sources.servers
 import com.simplecityapps.fakes.FakeQuickConnectAuthentication
 import com.simplecityapps.fakes.FakeServerAuthentication
 import com.simplecityapps.mediaprovider.server.QuickConnectPollState
+import com.simplecityapps.mediaprovider.server.SavedServerLogin
+import com.simplecityapps.mediaprovider.server.ServerLogin
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ServerSignInViewModelTest {
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     private val server = FakeServerAuthentication()
     private val quickConnect = FakeQuickConnectAuthentication()
@@ -159,13 +171,13 @@ class ServerSignInViewModelTest {
 
     @Test
     fun `a failed sign-in shows why, and Retry returns to the form as it was`() = runTest {
-        server.failure = IllegalStateException("boom")
+        server.failure = Exception("The server could not be reached.")
         val viewModel = viewModel()
         viewModel.onUsernameChange("sam")
 
         viewModel.onAuthenticate()
         runCurrent()
-        viewModel.uiState.value.step shouldBe ServerSignInStep.Failed("An unknown error occurred.")
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Failed("The server could not be reached.")
         viewModel.events shouldBe emptyList()
 
         viewModel.onRetry()

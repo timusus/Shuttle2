@@ -50,8 +50,8 @@ ViewModels through both the typed property and `metroViewModelFactory`. No hint 
 graph takes the platform objects (`KeyValueStore`, `BundledText`, `AppVersion`) through its `Factory`, and
 `excludes` the ViewModels whose dependencies iOS can't provide yet; each later wave drops its exclusion once
 iOS binds what the ViewModel needs. Phase 5's P5-1 (#587) merged it with the placeholder `IosAppGraph`:
-one Metro graph that Swift builds through its `Factory`, excluding only wave 3's Settings and Equalizer
-ViewModels.
+one Metro graph that Swift builds through its `Factory`, excluding wave 3's Settings and Equalizer
+ViewModels and, since wave 4, `TagEditorViewModel`.
 
 **`ArtworkSeed`** (§1) became one platform-neutral type rather than two:
 `com.simplecityapps.shuttle.ui.theme.ArtworkSeed` in `presentation`'s `commonMain`, whose `Available` holds
@@ -228,28 +228,39 @@ Seven of the nine assisted ViewModels moved to `presentation`'s `commonMain`, ea
     `presentation-testing`'s `creationFunctions.kt` (alongside `createSong` etc.) because `:android:app`'s
     `TagEditorScenarios.kt` needs it too and can't see another module's `commonTest`.
 
-**`ServerSignInViewModel` stays in app.** Every constructor dependency is app-only and wraps
-Jellyfin/Emby/Plex sign-in: `SignInWithQuickConnect` needs `QuickConnectAuthentication`/
-`QuickConnectPollState` (`:android:mediaprovider:server`), `SignInToServer` needs `userDescription`
-(`:android:networking`) — both data-layer modules presentation can't depend on. Unblocking it means moving
-those types down to domain first, which this wave didn't do; nothing else does either.
+**`ServerSignInViewModel`** moved too, in a follow-up (#586). The wave's first reason for keeping it in app
+was mostly wrong: `QuickConnectAuthentication`, the authentication managers and `userDescription` were already
+commonMain. The real blocker was the layering (presentation sees only core and domain), so:
+- the ports `ServerAuthentication`, `ServerLogin`, `SavedServerLogin` and `QuickConnectAuthentication`
+  (with `QuickConnectCode`/`QuickConnectPollState`) live in `:android:domain`, package
+  `com.simplecityapps.mediaprovider.server`;
+- each provider module binds its own `ServerAuthentication` (`JellyfinServerAuthentication`,
+  `EmbyServerAuthentication`, `PlexServerAuthentication`) `@IntoMap` under `MediaProviderTypeKey`, and maps a
+  failure to its `userDescription()` there, so `SignInToServer` shows the message as it comes;
+- the ViewModel and its use cases (`SignInToServer`, `SignInWithQuickConnect`, `CheckQuickConnectAvailable`,
+  `ReadServerLogin`, `ForgetServerLogin`) are in `presentation`'s `commonMain`, and the analytics call is the
+  `ServerSignInAnalytics` port, bound to `MonetisationAnalytics` in app's `di/ServerSignInAnalyticsModule`.
 
-**`PaywallViewModel`** — see the S5 section below for its outcome this wave.
+iOS builds it from `IosAppGraph.serverSignInViewModelFactory` for Jellyfin (with Quick Connect) and Emby; Plex
+joins when `:shared` depends on the Plex provider. Until entitlements (phase 9) and StoreKit (#609) there is no
+Pro disclosure and no sign-in analytics on iOS.
+
+**`PaywallViewModel` (S5) is deferred to StoreKit (#609).** It needs `Billing`, `Entitlement` and
+`MonetisationAnalytics`, which are Play Billing on Android and have no iOS counterpart yet, so it stays in app.
+
+**iOS bindings for the wave's seams.** `IosAppGraph` binds or excludes each one:
+- S3 `PlaylistFileWriter` is real: `FilePlaylistFileWriter` writes the M3U as UTF-8 with Foundation.
+- S9 `ArtworkSeedSource` always gives `ArtworkSeed.None` until artwork colour extraction arrives in phase 7.
+- S2 `TagFileAccess` has no iOS implementation until phase 8, so `TagEditorViewModel.Factory` is excluded.
+
+The other assisted ViewModels are exposed as factory properties (`albumDetailViewModelFactory` and so on), and
+`IosAppGraphTest` reads each one and creates several.
 
 **Architecture baseline.** `ui-module-imports.txt`'s stale entries for the pre-rename `TagFileAccess`,
 `ReadSongTags`/`TagField`/`WriteSongTags` (moved out of app entirely) and `ArtworkSeedSource`/
 `ObserveArtworkSeed` (renamed to `CoilArtworkSeedSource`) were regenerated via
 `-PupdateArchitectureBaselines`: 11 stale lines removed, replaced by 4 renamed equivalents
 (`DeviceTagFileAccess` x3, `CoilArtworkSeedSource` x1) — same violations, new names, net shrinkage.
-
-**Known iOS gap (not fixed this wave, out of `shared/src/iosMain` scope).** `:shared:compileKotlinIosSimulatorArm64`
-fails with `Metro/MissingBinding` for `ArtworkSeedSource`, `PlaylistFileWriter` and (as of S2) `TagFileAccess`:
-`IosAppGraph` (`shared/src/iosMain`) hasn't added these wave-4 ViewModels to its `excludes` list (last
-touched at #587's P5-1, before any wave-4 ViewModel moved) or bound iOS implementations for their seams.
-`:android:presentation:compileKotlinIosSimulatorArm64` itself succeeds — the presentation module's own code
-is iOS-clean; the failure is entirely in `:shared`'s graph wiring, which phase 5 owns. Needs `IosAppGraph`
-updated (either exclude `AlbumArtistDetailViewModel`/`AlbumDetailViewModel`/`PlaylistDetailViewModel`/
-`TagEditorViewModel`, or bind iOS-side seam implementations) before `:shared:iosSimulatorArm64Test` can run.
 
 ## Per-ViewModel table
 
@@ -284,7 +295,7 @@ migration; **platform** = never fully shared, needs an expect/actual boundary.
 | SmartPlaylistDetailViewModel | `screens/library/SmartPlaylistDetailViewModel.kt` | assisted `String`; `ObserveSongs`, `ObserveCurrentSong` | domain-kmp (`EvaluateSmartPlaylist` used inside, also domain-kmp) | none | 4 |
 | PlaylistDetailViewModel | `screens/library/PlaylistDetailViewModel.kt` | assisted `Long`; `ObservePlaylists`, `ObservePlaylistSongs`, `UpdatePlaylistSortOrder`, `ReorderPlaylistSongs`, `RenamePlaylist`, `ClearPlaylist`, `DeletePlaylist`, `ExportPlaylist`, `ObserveCurrentSong` | all domain-kmp except `ExportPlaylist` (app-only, writes an M3U via SAF) — phase 2/3 and possibly platform (file write target differs on iOS) | comment references a file-picker `Uri` handed to `exportTo`, but the ViewModel's own signature takes a destination path/handle, not `android.net.Uri` — confirm at implementation | 4 |
 | SongInfoViewModel | `screens/songinfo/SongInfoViewModel.kt` | assisted `Long`; `ObserveSongs` | domain-kmp | **`SongInfoRow`/`SongInfoSection` (same file's `Song.infoSections()`) carry `@StringRes val label: Int`** — Android resource IDs baked into a "UiState-adjacent" model; 23 `R.string` references in this one file — see §2 | 4 |
-| ServerSignInViewModel | `screens/sources/servers/ServerSignInViewModel.kt` | assisted `MediaProviderType`; `ReadServerLogin`, `SignInToServer`, `ForgetServerLogin`, `ObserveServerStreamingNeedsPro`, `CheckQuickConnectAvailable`, `SignInWithQuickConnect` | all app-only, wrap Jellyfin/Emby/Plex sign-in — phase 3 (Ktor); `ObserveServerStreamingNeedsPro` is domain-kmp already | none | 4 |
+| ServerSignInViewModel | `screens/sources/servers/ServerSignInViewModel.kt` | assisted `MediaProviderType`; `ReadServerLogin`, `SignInToServer`, `ForgetServerLogin`, `ObserveServerStreamingNeedsPro`, `CheckQuickConnectAvailable`, `SignInWithQuickConnect` | moved with it; the auth ports went to domain, their implementations to the providers (#586) | none | 4 |
 | PaywallViewModel | `screens/paywall/PaywallViewModel.kt` | assisted `PaywallSource`; `StateFlow<Entitlement>`, `Billing`, `MonetisationAnalytics` | `Billing`/`Entitlement`/`MonetisationAnalytics` (`:android:trial`, Android-only, Play Billing) — needs an `Entitlements` expect/actual behind StoreKit 2 on iOS (phase 9), not a data/network phase | none in state itself; the blocker is the platform billing SDK, per the phase table's "Paywall behind `Entitlements`" note | 4 |
 | TagEditorViewModel | `screens/tageditor/TagEditorViewModel.kt` | assisted `List<Long>`; `ObserveSongs`, `ReadSongTags`, `WriteSongTags`, `TagFileAccess` | `ReadSongTags`/`WriteSongTags` app-only (KTagLib); **`TagFileAccess` imports `ContentUris`, `IntentSender`, `Uri`, `DocumentsContract`, `MediaStore`, SAF** — genuinely platform-bound, deferred to iOS local-file support (phase 8), not just phase 2/3 | heaviest Android surface of any VM's dependency graph; keep the ViewModel's own state Android-free and gate the feature behind a platform capability check | 4 |
 | FolderListViewModel | `screens/library/folders/FolderListViewModel.kt` | `ObserveSongs`, `SavedStateHandle`, `@IoDispatcher CoroutineDispatcher`, `SongImportStateProvider` | `SongImportStateProvider` — phase 2; `SavedStateHandle` itself is KMP (lifecycle 2.9+) per the port decisions doc | none | 5 |

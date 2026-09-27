@@ -28,6 +28,7 @@ import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel
+import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInViewModel
 import com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorViewModel
 import com.simplecityapps.shuttle.ui.shell.ShellViewModel
 import dev.zacsweers.metro.AppScope
@@ -94,6 +95,9 @@ interface IosAppGraph : ViewModelGraph {
     val playlistDetailViewModelFactory: PlaylistDetailViewModel.Factory
     val smartPlaylistDetailViewModelFactory: SmartPlaylistDetailViewModel.Factory
     val songInfoViewModelFactory: SongInfoViewModel.Factory
+
+    /** A Jellyfin or Emby server's sign-in form, including Jellyfin Quick Connect. Plex joins with its provider. */
+    val serverSignInViewModelFactory: ServerSignInViewModel.Factory
 
     @DependencyGraph.Factory
     fun interface Factory {

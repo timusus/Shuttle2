@@ -1,8 +1,8 @@
 package com.simplecityapps.fakes
 
-import com.simplecityapps.shuttle.ui.screens.sources.servers.SavedServerLogin
-import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerAuthentication
-import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerLogin
+import com.simplecityapps.mediaprovider.server.SavedServerLogin
+import com.simplecityapps.mediaprovider.server.ServerAuthentication
+import com.simplecityapps.mediaprovider.server.ServerLogin
 import kotlinx.coroutines.CompletableDeferred
 
 /**

@@ -1,12 +1,13 @@
-package com.simplecityapps.shuttle.ui.screens.sources.servers.emby
+package com.simplecityapps.provider.emby
 
 import com.simplecityapps.mediaprovider.server.LoginCredentials
-import com.simplecityapps.provider.emby.EmbyAuthenticationManager
-import com.simplecityapps.shuttle.ui.screens.sources.servers.SavedServerLogin
-import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerAuthentication
-import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerLogin
+import com.simplecityapps.mediaprovider.server.SavedServerLogin
+import com.simplecityapps.mediaprovider.server.ServerAuthentication
+import com.simplecityapps.mediaprovider.server.ServerLogin
+import com.simplecityapps.networking.userDescription
 import dev.zacsweers.metro.Inject
 
+/** Emby's password sign-in, for the shared sign-in form. */
 class EmbyServerAuthentication @Inject constructor(
     private val authenticationManager: EmbyAuthenticationManager,
 ) : ServerAuthentication {
@@ -17,7 +18,9 @@ class EmbyServerAuthentication @Inject constructor(
 
     override suspend fun authenticate(login: ServerLogin): Result<Unit> {
         authenticationManager.setAddress(login.address)
-        return authenticationManager.authenticate(login.address, login.credentials()).map {}
+        return authenticationManager.authenticate(login.address, login.credentials())
+            .map {}
+            .recoverCatching { error -> throw Exception(error.userDescription(), error) }
     }
 
     override fun rememberLogin(login: ServerLogin) = authenticationManager.setLoginCredentials(login.credentials())

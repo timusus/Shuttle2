@@ -6,7 +6,7 @@ import dev.zacsweers.metro.Inject
 
 /** Whether [type]'s server at [address] supports Quick Connect sign-in. False, with no network call, for a type without one. */
 class CheckQuickConnectAvailable @Inject constructor(
-    private val authentications: Map<MediaProviderType, @JvmSuppressWildcards QuickConnectAuthentication>,
+    private val authentications: Map<MediaProviderType, QuickConnectAuthentication>,
 ) {
     suspend operator fun invoke(type: MediaProviderType, address: String): Boolean {
         val authentication = authentications[type] ?: return false

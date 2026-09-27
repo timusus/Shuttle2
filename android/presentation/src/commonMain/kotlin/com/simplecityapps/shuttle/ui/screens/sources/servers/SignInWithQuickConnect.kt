@@ -15,7 +15,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * coroutine (the user backs out) stops the polling loop; nothing here outlives the collector.
  */
 class SignInWithQuickConnect @Inject constructor(
-    private val authentications: Map<MediaProviderType, @JvmSuppressWildcards QuickConnectAuthentication>,
+    private val authentications: Map<MediaProviderType, QuickConnectAuthentication>,
     private val analytics: ServerSignInAnalytics,
 ) {
     sealed interface State {

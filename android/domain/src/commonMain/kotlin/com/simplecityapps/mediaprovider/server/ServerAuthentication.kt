@@ -1,7 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.sources.servers
-
-import com.simplecityapps.shuttle.model.MediaProviderType
-import dev.zacsweers.metro.MapKey
+package com.simplecityapps.mediaprovider.server
 
 /** What a server's sign-in form submits. [authCode] is Plex's optional two-factor code. */
 data class ServerLogin(
@@ -18,7 +15,10 @@ data class SavedServerLogin(
     val password: String? = null,
 )
 
-/** Signs in to one kind of media server, over its provider's authentication manager. */
+/**
+ * Signs in to one kind of media server, over its provider's authentication manager. Each provider binds its own,
+ * keyed by its `MediaProviderType`. A [Result] failure's message is already fit to show the user.
+ */
 interface ServerAuthentication {
     fun savedLogin(): SavedServerLogin
 
@@ -29,12 +29,3 @@ interface ServerAuthentication {
 
     fun forgetLogin()
 }
-
-/** Records a successful server sign-in for the monetisation funnel. */
-fun interface ServerSignInAnalytics {
-    fun onServerConnected(type: MediaProviderType)
-}
-
-/** Keys a [ServerAuthentication] binding by the server it signs in to. */
-@MapKey
-annotation class ServerTypeKey(val value: MediaProviderType)

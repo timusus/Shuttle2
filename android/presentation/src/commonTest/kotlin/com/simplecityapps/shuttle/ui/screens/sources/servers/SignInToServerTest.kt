@@ -1,10 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
 import com.simplecityapps.fakes.FakeServerAuthentication
+import com.simplecityapps.mediaprovider.server.ServerLogin
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
+import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
-import org.junit.Test
 
 class SignInToServerTest {
     private val plex = FakeServerAuthentication()
@@ -36,11 +37,18 @@ class SignInToServerTest {
 
     @Test
     fun `a failed sign-in reports why, and neither remembers the login nor is recorded`() = runTest {
-        plex.failure = IllegalStateException("boom")
+        plex.failure = Exception("The server could not be reached.")
 
-        signIn(MediaProviderType.Plex, login, rememberLogin = true) shouldBe SignInToServer.Result.Failure("An unknown error occurred.")
+        signIn(MediaProviderType.Plex, login, rememberLogin = true) shouldBe SignInToServer.Result.Failure("The server could not be reached.")
 
         plex.remembered shouldBe null
         connected shouldBe emptyList()
+    }
+
+    @Test
+    fun `a failure without a message reports an unknown error`() = runTest {
+        plex.failure = IllegalStateException()
+
+        signIn(MediaProviderType.Plex, login, rememberLogin = true) shouldBe SignInToServer.Result.Failure("An unknown error occurred.")
     }
 }
