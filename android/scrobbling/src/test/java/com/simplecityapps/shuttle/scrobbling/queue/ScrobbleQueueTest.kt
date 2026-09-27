@@ -44,6 +44,15 @@ class ScrobbleQueueTest {
     }
 
     @Test
+    fun `enqueuing while a flush is already pending appends a follow-up run rather than dropping it`() = runTest {
+        scrobbleQueue.enqueue(createSong(id = 1, duration = 200_000), startedAtEpochSec = 1_000)
+        scrobbleQueue.enqueue(createSong(id = 2, duration = 200_000), startedAtEpochSec = 2_000)
+
+        val work = WorkManager.getInstance(context).getWorkInfosForUniqueWork(ScrobbleQueue.UNIQUE_WORK_NAME).get()
+        work.size shouldBe 2
+    }
+
+    @Test
     fun `enqueuing the same play twice never duplicates the row`() = runTest {
         val song = createSong(id = 1, duration = 200_000)
 
