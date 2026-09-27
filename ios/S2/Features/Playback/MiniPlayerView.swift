@@ -21,7 +21,7 @@ struct MiniPlayerView: View {
     }
 
     var body: some View {
-        let state = model.nowPlayingState
+        let state = model.miniPlayerState
         let actions = model.playerActions
         MiniPlayerBar(
             title: state.title,
