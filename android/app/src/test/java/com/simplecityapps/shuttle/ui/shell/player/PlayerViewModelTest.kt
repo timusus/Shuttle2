@@ -20,8 +20,6 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.clone
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
-import com.simplecityapps.shuttle.designsystem.component.QueuePosition
-import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore

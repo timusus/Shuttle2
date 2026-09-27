@@ -20,8 +20,8 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
-import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
+import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song

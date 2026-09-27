@@ -59,7 +59,6 @@ import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.R as DesignR
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
-import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonSize

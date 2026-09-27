@@ -25,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.format.formatDuration
 
 /**
  * The now-playing seek bar: an M3 `Slider` (thumb, drag, semantics) whose track is the
@@ -78,27 +79,6 @@ fun S2SeekBar(
             Text(formatDuration(durationMs), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
-}
-
-/**
- * "m:ss", or "h:mm:ss" from an hour: how the seek bar and queue rows show a time.
- * @param zeroValue returned instead, if given, when [ms] is 0.
- * @param padded space-pads the leading hour/minute to two digits (the detail-screen song rows rely on it).
- */
-fun formatDuration(
-    ms: Long,
-    zeroValue: String? = null,
-    padded: Boolean = false,
-): String {
-    if (ms == 0L && zeroValue != null) {
-        return zeroValue
-    }
-    val totalSeconds = ms / 1000
-    val hours = totalSeconds / 3600
-    val minutes = totalSeconds % 3600 / 60
-    val seconds = totalSeconds % 60
-    val leading = if (padded) "%2d" else "%d"
-    return if (hours > 0) "$leading:%02d:%02d".format(hours, minutes, seconds) else "$leading:%02d".format(minutes, seconds)
 }
 
 @Preview

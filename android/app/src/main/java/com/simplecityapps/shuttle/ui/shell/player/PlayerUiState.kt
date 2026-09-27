@@ -2,8 +2,6 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import androidx.compose.runtime.Immutable
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
-import com.simplecityapps.shuttle.designsystem.component.QueuePosition
-import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction

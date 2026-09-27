@@ -11,8 +11,8 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
-import com.simplecityapps.shuttle.designsystem.component.formatDuration
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
+import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction

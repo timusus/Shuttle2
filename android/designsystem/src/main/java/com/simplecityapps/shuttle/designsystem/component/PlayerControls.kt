@@ -51,9 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.Morph
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.ui.shell.player.S2RepeatMode
 import kotlin.math.roundToInt
-
-enum class S2RepeatMode { Off, All, One }
 
 /**
  * The transport's scale. [Regular] fits the 360 dp pane; [Large] is the phone's Now Playing, with a

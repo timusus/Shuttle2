@@ -55,7 +55,6 @@ import androidx.window.core.layout.WindowSizeClass
 import androidx.window.core.layout.computeWindowSizeClass
 import com.simplecityapps.createSong
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
-import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
@@ -75,6 +74,7 @@ import com.simplecityapps.shuttle.ui.shell.player.PlayerSong
 import com.simplecityapps.shuttle.ui.shell.player.PlayerTestTags
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiEvent
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiState
+import com.simplecityapps.shuttle.ui.shell.player.QueuePosition
 import com.simplecityapps.shuttle.ui.shell.player.description
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow

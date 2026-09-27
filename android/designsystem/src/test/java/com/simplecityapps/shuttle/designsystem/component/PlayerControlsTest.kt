@@ -13,6 +13,7 @@ import androidx.compose.ui.test.up
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
+import com.simplecityapps.shuttle.ui.shell.player.S2RepeatMode
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test

@@ -8,16 +8,16 @@ import androidx.compose.ui.Modifier
 import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
-import com.simplecityapps.shuttle.designsystem.component.QueuePosition
 import com.simplecityapps.shuttle.designsystem.component.QueueRow
 import com.simplecityapps.shuttle.designsystem.component.S2MiniPlayer
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
 import com.simplecityapps.shuttle.designsystem.component.S2PlaybackProgress
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControls
-import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.designsystem.component.S2SeekBar
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.fixtures.SampleSong
+import com.simplecityapps.shuttle.ui.shell.player.QueuePosition
+import com.simplecityapps.shuttle.ui.shell.player.S2RepeatMode
 
 private val nowPlaying = SampleLibrary.album("undertow").songs[1]
 

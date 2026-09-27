@@ -13,7 +13,7 @@ import com.simplecityapps.shuttle.designsystem.component.AlbumRow
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
-import com.simplecityapps.shuttle.designsystem.component.formatDuration
+import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song

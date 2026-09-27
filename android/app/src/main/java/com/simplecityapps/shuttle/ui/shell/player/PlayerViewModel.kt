@@ -12,8 +12,6 @@ import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.settings.PlaybackSettings
-import com.simplecityapps.shuttle.designsystem.component.QueuePosition
-import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.ObserveSetting

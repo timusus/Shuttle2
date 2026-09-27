@@ -159,13 +159,18 @@ Only two real offenders, both traced above:
   needs a shared seed-extraction algorithm too (currently Coil/Palette-based in `SeedColorExtractor`) —
   track as a phase 2/3 follow-up, not blocking the VM move itself if the seed type becomes a plain value.
   *Done in wave 0, as a single type in `presentation`; see "Wave 0".*
-- **Designsystem types in `PlayerUiState`, found in wave 0:** `QueuePosition` and `S2RepeatMode` are enums
-  in `designsystem` (`component/QueueRow.kt`, `component/PlayerControls.kt`). They are plain Kotlin, but the
-  `viewmodel` layer can't see `designsystem`, so they move to `presentation`, where `designsystem` imports
-  them, before wave 5. `SongInfoViewModel` likewise calls `designsystem`'s `formatDuration`, which moves
-  (or gets a shared twin) before wave 4. The JVM-only calls in ViewModel files (`String.format(Locale, ...)`,
-  `URLDecoder` in `SongInfoViewModel`, `java.util.Date` in `SettingsViewModel`) need common replacements in
-  their waves.
+- **Designsystem types in `PlayerUiState`, found in wave 0:** `QueuePosition` and `S2RepeatMode` were enums
+  in `designsystem` (`component/QueueRow.kt`, `component/PlayerControls.kt`). *Done, ahead of wave 5:* both
+  moved to `:android:presentation` commonMain (`ui/shell/player/QueuePosition.kt`, `S2RepeatMode.kt`, the
+  same package `PlayerUiState`/`PlayerViewModel` already use in `:android:app`, so those two files and
+  `NowPlayingList.kt`/`QueueList.kt` need no import at all); `designsystem` now imports them from
+  `presentation`, which it already depended on for `ArtworkSeed`. `SongInfoViewModel`'s call to
+  `designsystem`'s `formatDuration` is *done, ahead of wave 4* too: `formatDuration` moved to
+  `:android:domain` commonMain (`format/DurationFormat.kt`, reachable from both `viewmodel` and
+  `presentation` layers), with its `String.format`-based hour/minute/second padding rewritten as plain
+  `Long.toString().padStart(...)` — same output, no JVM-only calls. The JVM-only calls in ViewModel files
+  themselves (`String.format(Locale, ...)`, `URLDecoder` in `SongInfoViewModel`, `java.util.Date` in
+  `SettingsViewModel`) still need common replacements in their waves.
 - **`EqualizerUiState.frequencyResponse: ImmutableList<FrequencyResponsePoint>`** — no fix needed;
   `kotlinx.collections.immutable` is already multiplatform and the task brief says Compose-flavoured
   collection types are fine.

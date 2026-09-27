@@ -55,7 +55,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
-import com.simplecityapps.shuttle.designsystem.component.formatDuration
+import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.ui.actions.MediaSelection

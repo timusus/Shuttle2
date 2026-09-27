@@ -45,7 +45,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonGroup
 import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
-import com.simplecityapps.shuttle.designsystem.component.formatDuration
+import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre

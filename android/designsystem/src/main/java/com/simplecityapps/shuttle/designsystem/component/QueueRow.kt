@@ -21,9 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
-
-/** Where a song sits in the queue relative to the current one. */
-enum class QueuePosition { Played, Current, Upcoming }
+import com.simplecityapps.shuttle.ui.shell.player.QueuePosition
 
 /**
  * A song in the queue with a trailing drag handle. The caller's reorder library attaches its

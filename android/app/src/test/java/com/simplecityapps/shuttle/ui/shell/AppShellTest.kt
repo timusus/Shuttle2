@@ -4,7 +4,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import com.simplecityapps.createPlaylist
-import com.simplecityapps.shuttle.designsystem.component.S2RepeatMode
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionMessage
@@ -18,6 +17,7 @@ import com.simplecityapps.shuttle.ui.shell.player.NowPlayingItems
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
+import com.simplecityapps.shuttle.ui.shell.player.S2RepeatMode
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.floats.plusOrMinus
 import io.kotest.matchers.shouldBe
