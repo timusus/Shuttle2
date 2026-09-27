@@ -1,0 +1,207 @@
+# Phase 4: ViewModels → shared `presentation` module
+
+Design for issue #586 (epic #581). Moves all 29 ViewModels under
+`android/app/src/main/java/com/simplecityapps/shuttle/ui/**`, their `UiState`/action/event types, and the
+app-level use cases that feed them into a new KMP module (`android:presentation`, `commonMain`), so SwiftUI
+consumes them through SKIE. Written against the current tree: Hilt annotations below read as Metro once
+phase 1 lands (`@Inject constructor` → Metro `@Inject`, `@AssistedInject`/`@Assisted`/`@AssistedFactory` →
+Metro's assisted factory, `@HiltViewModel` → Metro's ViewModel binding) — no behavioural difference to this
+plan.
+
+**State of the codebase today (good news):** none of the 29 ViewModel files import any `android.*` package
+outside `androidx.lifecycle`/`androidx.annotation`. No `Bitmap`, `ImageVector`, `java.time`, or literal
+`android.net.Uri` in ViewModel state. Only one has stability annotations (`ImmutableList` in
+`EqualizerViewModel`). Two use `SavedStateHandle` (KMP-safe per the port decisions doc). The real Android-isms
+live one layer down, in the **use cases** the ViewModels call — see the table's "not yet KMP" column and
+§5.
+
+## Per-ViewModel table
+
+Legend: **domain-kmp** = dependency's interface already lives in `:android:domain` (KMP since phase 0/#582);
+**app-only** = the use case class lives in `:android:app`, must move into `presentation` with its ViewModel;
+**phase 2** = blocked until Room KMP + shared prefs interfaces land; **phase 3** = blocked until Ktor
+migration; **platform** = never fully shared, needs an expect/actual boundary.
+
+| ViewModel | File | Constructor deps | Not-yet-KMP deps (unblocking phase) | Android-isms | Wave |
+|---|---|---|---|---|---|
+| LicencesViewModel | `screens/settings/about/LicencesViewModel.kt` | `GetLicences` | `GetLicences` app-only, reads a bundled asset — phase 2 (assets/resources) | none | 1 |
+| WhatsNewViewModel | `screens/settings/about/WhatsNewViewModel.kt` | `GetChangelog`, `MarkChangelogViewed` | both app-only; `MarkChangelogViewed` touches `GeneralPreferenceManager` — phase 2 | none | 1 |
+| ShellViewModel | `shell/ShellViewModel.kt` | `ReadSetting` | `ReadSetting`/`SaveSetting`/`ObserveSetting` live in `:android:core` (Android-only) — phase 2 | none | 1 |
+| LibraryEmptyViewModel | `screens/library/LibraryEmptyViewModel.kt` | `MusicAccessCoordinator` | `MusicAccessCoordinator` (app-only) wraps `SongImportStateProvider` (`:android:mediaprovider:core`, Android-only) — phase 2 | none | 1 |
+| LibraryViewModel | `screens/library/LibraryViewModel.kt` | `ReadLibraryTabs`, `SaveLibraryTabs`, `SaveCurrentLibraryTab` | all three app-only, backed by `GeneralPreferenceManager` — phase 2 | none | 1 |
+| ExcludedSongsViewModel | `screens/settings/excluded/ExcludedSongsViewModel.kt` | `ObserveSongs`, `MediaActionHandler` | `ObserveSongs` domain-kmp; `MediaActionHandler` app-only, coordinates snackbar/share/delete — phase 2/3 (repos + SAF) | none | 1 |
+| AlbumArtistListViewModel | `screens/library/albumartists/AlbumArtistListViewModel.kt` | `ObserveAlbumArtists`, `ReadLibraryViewSetting`, `SaveLibraryViewSetting`, `SongImportStateProvider` | `ReadLibraryViewSetting`/`SaveLibraryViewSetting` app-only (prefs) — phase 2; `SongImportStateProvider` — phase 2 | none | 2 |
+| AlbumListViewModel | `screens/library/albums/AlbumListViewModel.kt` | `ObserveAlbums`, `ObserveSongs`, `ShuffleAlbums`, `ReadLibraryViewSetting`, `SaveLibraryViewSetting`, `SongImportStateProvider`, `Random` | same prefs/import deps — phase 2; `ShuffleAlbums`/`ObserveAlbums` domain-kmp | `kotlin.random.Random` is fine (stdlib) | 2 |
+| GenreListViewModel | `screens/library/genres/GenreListViewModel.kt` | `ObserveGenres`, `ReadLibraryViewSetting`, `SaveLibraryViewSetting`, `SongImportStateProvider` | same — phase 2 | none | 2 |
+| SongListViewModel | `screens/library/songs/SongListViewModel.kt` | `ObserveSongs`, `ReadLibraryViewSetting`, `SaveLibraryViewSetting`, `@IoDispatcher CoroutineDispatcher`, `SongImportStateProvider` | same — phase 2; `@IoDispatcher` qualifier needs a KMP `Dispatchers.IO`-equivalent binding | none | 2 |
+| PlaylistListViewModel | `screens/library/playlists/PlaylistListViewModel.kt` | `ObservePlaylists`, `CreatePlaylist`, `RenamePlaylist`, `ClearPlaylist`, `DeletePlaylist`, `ReadLibraryViewSetting`, `SaveLibraryViewSetting`, `SongImportStateProvider`, `ObservePlaylistCovers` | prefs/import — phase 2; playlist use cases domain-kmp; `ObservePlaylistCovers` domain-kmp but resolves artwork paths — verify no Coil coupling | none | 2 |
+| MediaActionsViewModel | `common/mediaactions/MediaActionsViewModel.kt` | `MediaActionHandler`, `AvailableMediaActions`, `ObservePlaylists` | `MediaActionHandler`/`AvailableMediaActions` app-only — coordinate share/delete/SAF, phase 2/3 | none | 2 |
+| HomeViewModel | `screens/home/HomeViewModel.kt` | `HomeSections`, `IsWhatsNewPending`, `MarkChangelogViewed`, `ReadSetting`, `SaveSetting`, `ObserveResumeQueue`, `TogglePlayback` | `HomeSections` app-only (repo queries, `@IoDispatcher`) — phase 2; `IsWhatsNewPending`/`MarkChangelogViewed`/`ReadSetting`/`SaveSetting` — phase 2; `ObserveResumeQueue`/`TogglePlayback` app-only wrapping `PlaybackOperations`/`QueueOperations` (domain-kmp interfaces, so logic itself is portable now) | none | 3 |
+| SearchViewModel | `screens/search/SearchViewModel.kt` | `SearchLibrary`, `RecentSearches`, `ReadSearchCategories`, `SaveSearchCategories` | all four app-only; `SearchLibrary` queries repos (domain-kmp interfaces) but is itself an app class — move as-is; `RecentSearches`/categories are prefs-backed — phase 2 | none | 3 |
+| SettingsViewModel | `screens/settings/SettingsViewModel.kt` | `ObserveSetting`, `ReadSetting`, `SaveSetting`, `SettingsEffects` | settings — phase 2; **`SettingsEffects` imports `android.content.Context`, `ClipboardManager`, `Intent`, `TransactionTooLargeException` directly** — genuine platform dependency, not a phase gate | ViewModel calls straight into Context-bound code today — needs splitting into a use case (state/intent only) + route-composable-executed effect, per UDF principle 8b | 3 |
+| ServerTypePickerViewModel | `screens/sources/ServerTypePickerViewModel.kt` | `TryAddServer`, `ConnectServer` | `TryAddServer` domain-kmp (`:android:domain/entitlement`); `ConnectServer` app-only, calls into provider sign-in — phase 3 (Ktor) | none | 3 |
+| SourcesViewModel | `screens/sources/SourcesViewModel.kt` | `MediaSources`, `ObserveScannerFolders`, `AddScannerFolder`, `RemoveScannerFolder`, `RefreshScannerFolders`, `SongImportStateProvider`, `TryAddServer`, `ConnectServer` | `MediaSources` app-only, directly wires `MediaStoreMediaProvider`/`TaglibMediaProvider`/Jellyfin/Emby/Plex providers + `PlaybackPreferenceManager` — phase 2 (repos) and phase 3 (providers); scanner-folder use cases app-only (SAF tree URIs as `String`, not `Uri` — already portable) | `onFolderPicked(kind, treeUri: String?)` — already string-typed, good | 3 |
+| EqualizerViewModel | `screens/settings/equalizer/EqualizerViewModel.kt` | `ObserveSetting`, `ReadSetting`, `SaveSetting`, `SaveEqualizerPreset`, `EqualizerAudioProcessor`, `ComputeFrequencyResponse` | settings — phase 2; **`EqualizerAudioProcessor` (`:android:playback`, ExoPlayer-specific) is genuinely platform-bound** — needs an `expect/actual` DSP interface, not just a data/network phase | `ImmutableList<FrequencyResponsePoint>` in `EqualizerUiState` — kotlinx.collections.immutable is multiplatform, fine as-is | 3 |
+| AlbumArtistDetailViewModel | `screens/library/albumartists/detail/AlbumArtistDetailViewModel.kt` | assisted `AlbumArtistGroupKey`; `ObserveAlbumArtists`, `ObserveAlbums`, `ObserveSongs`, `ObserveCurrentSong`, `ObserveArtworkSeed`, `ShuffleAlbums` | all domain-kmp except `ObserveArtworkSeed` (app-only) — see §3 for its Compose `Color` payload | `ArtworkSeed.Available(color: androidx.compose.ui.graphics.Color)` — Compose type in state, see §1/§3 | 4 |
+| AlbumDetailViewModel | `screens/library/albums/detail/AlbumDetailViewModel.kt` | assisted `AlbumGroupKey?`; `ObserveSongs`, `ObserveAlbums`, `ObserveCurrentSong`, `ObserveArtworkSeed` | same as above | same `ArtworkSeed` issue | 4 |
+| GenreDetailViewModel | `screens/library/GenreDetailViewModel.kt` | assisted `String` (genre name); `ObserveGenres`, `ObserveSongsForGenre`, `ObserveAlbums`, `ObserveCurrentSong` | all domain-kmp | none | 4 |
+| SmartPlaylistDetailViewModel | `screens/library/SmartPlaylistDetailViewModel.kt` | assisted `String`; `ObserveSongs`, `ObserveCurrentSong` | domain-kmp (`EvaluateSmartPlaylist` used inside, also domain-kmp) | none | 4 |
+| PlaylistDetailViewModel | `screens/library/PlaylistDetailViewModel.kt` | assisted `Long`; `ObservePlaylists`, `ObservePlaylistSongs`, `UpdatePlaylistSortOrder`, `ReorderPlaylistSongs`, `RenamePlaylist`, `ClearPlaylist`, `DeletePlaylist`, `ExportPlaylist`, `ObserveCurrentSong` | all domain-kmp except `ExportPlaylist` (app-only, writes an M3U via SAF) — phase 2/3 and possibly platform (file write target differs on iOS) | comment references a file-picker `Uri` handed to `exportTo`, but the ViewModel's own signature takes a destination path/handle, not `android.net.Uri` — confirm at implementation | 4 |
+| SongInfoViewModel | `screens/songinfo/SongInfoViewModel.kt` | assisted `Long`; `ObserveSongs` | domain-kmp | **`SongInfoRow`/`SongInfoSection` (same file's `Song.infoSections()`) carry `@StringRes val label: Int`** — Android resource IDs baked into a "UiState-adjacent" model; 23 `R.string` references in this one file — see §2 | 4 |
+| ServerSignInViewModel | `screens/sources/servers/ServerSignInViewModel.kt` | assisted `MediaProviderType`; `ReadServerLogin`, `SignInToServer`, `ForgetServerLogin`, `ObserveServerStreamingNeedsPro`, `CheckQuickConnectAvailable`, `SignInWithQuickConnect` | all app-only, wrap Jellyfin/Emby/Plex sign-in — phase 3 (Ktor); `ObserveServerStreamingNeedsPro` is domain-kmp already | none | 4 |
+| PaywallViewModel | `screens/paywall/PaywallViewModel.kt` | assisted `PaywallSource`; `StateFlow<Entitlement>`, `Billing`, `MonetisationAnalytics` | `Billing`/`Entitlement`/`MonetisationAnalytics` (`:android:trial`, Android-only, Play Billing) — needs an `Entitlements` expect/actual behind StoreKit 2 on iOS (phase 9), not a data/network phase | none in state itself; the blocker is the platform billing SDK, per the phase table's "Paywall behind `Entitlements`" note | 4 |
+| TagEditorViewModel | `screens/tageditor/TagEditorViewModel.kt` | assisted `List<Long>`; `ObserveSongs`, `ReadSongTags`, `WriteSongTags`, `TagFileAccess` | `ReadSongTags`/`WriteSongTags` app-only (KTagLib); **`TagFileAccess` imports `ContentUris`, `IntentSender`, `Uri`, `DocumentsContract`, `MediaStore`, SAF** — genuinely platform-bound, deferred to iOS local-file support (phase 8), not just phase 2/3 | heaviest Android surface of any VM's dependency graph; keep the ViewModel's own state Android-free and gate the feature behind a platform capability check | 4 |
+| FolderListViewModel | `screens/library/folders/FolderListViewModel.kt` | `ObserveSongs`, `SavedStateHandle`, `@IoDispatcher CoroutineDispatcher`, `SongImportStateProvider` | `SongImportStateProvider` — phase 2; `SavedStateHandle` itself is KMP (lifecycle 2.9+) per the port decisions doc | none | 5 |
+| PlayerViewModel | `shell/player/PlayerViewModel.kt` | `ObserveQueue`, `ObservePlayback`, `ObserveProgress`, `ObserveGatedServerSkip`, `ControlPlayback`, `EditQueue`, `ObserveFavouriteSongIds`, `ToggleFavourite`, `ObservePlaylists`, `ControlSleepTimer`, `ReadSleepTimeRemaining`, `ReadSleepTimerPlayToEnd`, `ObserveSetting`, `SetReplayGainMode`, `ObserveArtworkSeed`, `CastAvailability`, `SavedNowPlaying`, `ClearQueue`, `RestoreQueue`, `AvailableMediaActions`, `MediaActionHandler`, `SavedStateHandle` | largest fan-out in the app: `ObservePlayback`/`ObserveQueue`/`ObserveProgress`/`ControlPlayback`/`EditQueue`/`ClearQueue`/`RestoreQueue` wrap `PlaybackOperations`/`QueueOperations` (domain-kmp interfaces, portable now); `ControlSleepTimer`/`CastAvailability`/`SavedNowPlaying` app-only and Android-flavoured (Cast SDK, prefs) — phase 2/3 and platform (AirPlay is phase 9); `ObserveArtworkSeed` — same Compose `Color` issue as §1/§3; `SetReplayGainMode` pulls in `SettingsEffects` transitively | biggest single risk in the whole phase — see Wave 5 and Risks | 5 |
+
+18 "easy" @Inject VMs (waves 1–3) + 9 assisted VMs (wave 4) + PlayerViewModel/FolderListViewModel (wave 5) = 29.
+
+## 1. Compose-flavoured UI state
+
+Only two real offenders, both traced above:
+
+- **`ArtworkSeed.Available(val color: androidx.compose.ui.graphics.Color)`** (`android/designsystem/.../ArtworkTheme.kt`),
+  produced by `ObserveArtworkSeed` and consumed by `PlayerViewModel`, `AlbumDetailViewModel`,
+  `AlbumArtistDetailViewModel`. Fix: define a platform-neutral `ArtworkSeed` in `presentation` using an ARGB
+  `Int` (or a 3-float RGB record) instead of `Color`; keep `designsystem`'s `Color`-based type only as an
+  Android-side mapping used by `ArtworkTheme`, and add an equivalent SwiftUI `Color` mapping on iOS. This
+  needs a shared seed-extraction algorithm too (currently Coil/Palette-based in `SeedColorExtractor`) —
+  track as a phase 2/3 follow-up, not blocking the VM move itself if the seed type becomes a plain value.
+- **`EqualizerUiState.frequencyResponse: ImmutableList<FrequencyResponsePoint>`** — no fix needed;
+  `kotlinx.collections.immutable` is already multiplatform and the task brief says Compose-flavoured
+  collection types are fine.
+
+No other ViewModel file uses `@Immutable`/`@Stable`, `TextFieldState`, or `AnnotatedString`. `LibraryTabSettings`
+and view-mode/sort-order enums are plain Kotlin. Route composables (which stay Android/SwiftUI-specific)
+own the actual Compose-only rendering; keep it that way — don't let a "just move everything" pass drag a
+`ColorScheme` or `Modifier` into `presentation`.
+
+## 2. User-visible strings
+
+`grep -c "R\.string"` across `ui/**` = **551 occurrences total**, but almost all of that is inside
+`@Composable` files (route screens, components) which correctly stay per-platform. The count that actually
+lives in logic that's moving to `presentation` is much smaller and concentrated:
+
+| File | R.string count | Note |
+|---|---|---|
+| `screens/settings/model/SettingsCatalog.kt` | 78 | Settings screen's declarative catalog — titles/summaries per setting row |
+| `screens/songinfo/SongInfoViewModel.kt` | 23 | `SongInfoRow`/`SongInfoSection` labels, see table above |
+| `screens/tageditor/TagField.kt` | 15 | field labels for the tag editor form model |
+| `screens/settings/model/SettingItem.kt` | 6 | |
+| `actions/MediaActionMessageFormat.kt` | 12 | snackbar text for media action results |
+| `screens/library/LibraryRoutes.kt` | 4 | tab titles |
+| `ShortcutHelper.kt` | 4 | Android launcher shortcuts — platform-only, stays in `:android:app` |
+| `common/error/ErrorHelper.kt` | 2 | |
+| `screens/settings/SettingsEffects.kt` | 1 | |
+| `screens/playlistmenu/PlaylistData.kt` | 1 | |
+
+**Recommendation: string keys resolved per platform**, not Compose Multiplatform resources and not Moko.
+Reasons: (1) the app already has a mature Android `strings.xml` catalogue and translations — Compose MP
+resources or Moko would mean a parallel resource system or a lossy migration; (2) the existing UDF pattern
+(principle 4, principle 8b) already treats strings as the route composable's job — events are "typed by
+what happened," and "the route composable maps them to user-facing text using string resources; the
+ViewModel never resolves string resources." The fix is mechanical, not architectural: replace
+`@StringRes Int` fields (`SongInfoRow.label`, `SongInfoSection.title`, `SettingsCatalog`/`SettingItem`
+entries) with a small sealed `StringKey` (or plain enum) in `presentation`, and give each platform a
+`StringKey -> String` resolver (Android: a `Map`/`when` to `context.getString(R.string.x)`; iOS: a
+`when` to `String(localized:)` or an `.strings` table keyed the same way). `MediaActionMessageFormat`'s 12
+sites already return typed results (`MediaActionResult`) per principle 4 — confirm they resolve strings at
+the route composable today; if a few resolve inline, fold that into the same `StringKey` sweep.
+`ShortcutHelper` stays Android-only (launcher shortcuts don't exist on iOS).
+
+## 3. Artwork/image models
+
+No ViewModel imports Coil, `ArtworkFetcher`, or any `imageloading.*` type — confirmed by grep. ViewModels
+pass plain domain models (`Song`, `Album`, `AlbumArtist`, `Playlist`) in `UiState`; the Android route
+composable turns those into a Coil request (`AsyncImage(model = song)`) using the per-model `ArtworkFetcher`
+already keyed by domain type (`ArtworkKeys.kt`). That pattern already generalizes to iOS: the shared
+`UiState` keeps carrying the domain model, and Swift resolves artwork with its own image pipeline
+(`AsyncImage(url:)`/Kingfisher-equivalent keyed the same way `ArtworkFetcher` keys Android's). The only
+artwork-shaped value that leaks into shared state is `ArtworkSeed`'s `Color` (§1) — fix that one place and
+this section is done. `ObservePlaylistCovers` (used by `PlaylistListViewModel`) returns cover-art
+identifiers, not bitmaps — verify at wave 2 that it stays identifier-only.
+
+## 4. Effects / one-shot events
+
+The app already follows the UDF doc's principle 4 uniformly: every VM with dismissable one-off behaviour
+(snackbar, navigation, add-to-queue confirmation) uses `PendingEvent<T>`/`PendingEvents<T>` in `UiState`,
+not a `Channel` or bare `SharedFlow`. 11 ViewModels use this pattern today (`PlayerViewModel`,
+`SettingsViewModel`, `HomeViewModel`, `TagEditorViewModel`, `PlaylistDetailViewModel`, `SourcesViewModel`,
+`PaywallViewModel`, `MediaActionsViewModel`, `AlbumListViewModel`, `ServerSignInViewModel`,
+`AlbumArtistDetailViewModel`). This is the best-case shape for Swift: SKIE turns the `StateFlow<UiState>`
+into an `Observing`/`@Published`-equivalent, and the events list is just a field the SwiftUI view reads —
+call `.consume(id)` the same way the Compose route does with `ConsumeEvents`. No new bridging type is
+needed; write one small SwiftUI helper (`ConsumeEvents`-equivalent view modifier) once in the iOS shell
+(phase 5) and every screen gets it for free. Watch `SettingsViewModel`: its events are entangled with
+`SettingsEffects`, which currently executes Context-bound side effects itself instead of just describing
+them (see table) — untangle that as part of moving `SettingsViewModel`, not after.
+
+## 5. App-level use cases still in `:app`
+
+Everything a ViewModel injects that isn't in `:android:domain` today lives in `:android:app`, in the same
+package as its ViewModel (per the UDF doc's use-case convention). None of these can stay in `:android:app`
+once their ViewModel moves — Metro (post phase 1) can still bind them from an Android-only module if truly
+platform-bound, but most just need to move into `presentation` alongside their ViewModel:
+
+- **`HomeChangelogUseCases.kt`** (`IsWhatsNewPending`, `MarkChangelogViewed`) — reads `GeneralPreferenceManager`
+  and `BuildConfig.VERSION_NAME`. Needs a shared "app version" `expect`/platform value and the settings
+  interface from phase 2.
+- **`HomeResumeUseCases.kt`** (`ObserveResumeQueue`) — wraps `PlaybackOperations`/`QueueOperations`
+  (domain-kmp interfaces already) — moves cleanly, no blocker beyond compiling in commonMain.
+- **`ScannerFolderUseCases.kt`** (`ObserveScannerFolders`, `AddScannerFolder`, `RemoveScannerFolder`,
+  `RefreshScannerFolders`) — already string-typed (SAF tree URI as `String`), but `ScannerFolderStore`
+  itself and folder scanning are Android/SAF-specific; the use cases move, their `FolderStore`
+  implementation stays behind an interface with an Android impl now and an iOS Files-app impl at phase 8.
+- **`MusicAccessCoordinator`**, **`MediaSources`**, **`SettingsEffects`**, **`TagFileAccess`**,
+  **`ExportPlaylist`**, **`ConnectServer`** — each wraps genuinely platform-bound systems (MediaStore,
+  ClipboardManager/Intent, SAF, provider sign-in networking). These need an interface extracted now (most
+  already look like one class per concern, good) with the Android implementation stayed in `:android:app`
+  and a new iOS implementation added in later phases (2, 3, 8, 9 respectively) — the *use case* and its
+  *result type* move to `presentation` immediately; only the concrete class implementing the platform work
+  stays back.
+
+Net effect: phase 4 isn't just "move 29 files," it's "extract ~40 use case classes' interfaces into
+`presentation`, move the ones with zero Android imports outright, and split the rest into
+(interface in `presentation`) + (Android impl staying in `:android:app`, bound by Metro)."
+
+## 6. Tests: `android/app/src/test` → `commonTest`
+
+25 of 29 ViewModels already have a dedicated unit test (`*ViewModelTest.kt`); the four without
+(`AlbumArtistListViewModel`, `GenreListViewModel`, `LicencesViewModel`, `WhatsNewViewModel`) are covered
+only through UI integration tests today. All 25 existing ViewModel tests are **pure JVM tests using fakes**
+(`FakeSongRepository`, `FakePlaybackOperations`, `FakeQueueOperations`, `FakeSharedPreferences`, etc. from
+`android/app/src/test/java/com/simplecityapps/fakes`) — none import Robolectric or `androidx.test`. These
+move to `presentation`'s `commonTest` largely unchanged: `runTest`, `StateFlow` assertions and fakes are all
+KMP-safe. The fakes themselves currently live in `:android:app`'s test sources (JVM-only) and need to move
+to a KMP-visible location too — either promote them into `:android:domain`'s test fixtures (already KMP) or
+convert `:android:fixtures` to `s2.kmp-library` alongside the ViewModel move, since both the presentation
+module and any future iOS-side test would need them.
+
+**Stays in Android's Robolectric suite (30 files today, robot pattern):** every Compose UI characterisation
+test (`*Test.kt` importing `createComposeRule`/`Robot`) — these test the Composable rendering a `UiState`,
+which is Android/SwiftUI-specific by definition. They keep living in `android/app/src/test`, continue
+targeting the Compose screens, and are joined by ViewInspector tests on the iOS side (phase 5+) rather than
+replaced.
+
+## 7. Waves
+
+| Wave | ViewModels | Size | Verification | Risks |
+|---|---|---|---|---|
+| 1 | LicencesViewModel, WhatsNewViewModel, ShellViewModel, LibraryEmptyViewModel, LibraryViewModel, ExcludedSongsViewModel | 6 | `compileKotlinIosSimulatorArm64`, `compileDebugKotlinAndroid` on `presentation`; move their 4 existing unit tests to commonTest, run `./gradlew :android:presentation:allTests` | Settles the module skeleton and prefs-interface shape everyone else depends on — get `ReadSetting`/`SaveSetting`'s new home right here before waves 2–5 build on it |
+| 2 | AlbumArtistListViewModel, AlbumListViewModel, GenreListViewModel, SongListViewModel, PlaylistListViewModel, MediaActionsViewModel | 6 | same compile targets; unit tests moved; `unit-test --changed` for the app module (still wires the old locations via typealias/re-export during transition) | The `ReadLibraryViewSetting`/`SaveLibraryViewSetting`/`SongImportStateProvider` trio repeats across all six — get the shared interface right once, or the wave regresses at review |
+| 3 | HomeViewModel, SearchViewModel, SettingsViewModel, ServerTypePickerViewModel, SourcesViewModel, EqualizerViewModel | 6 | same, plus a manual smoke of Settings (ReplayGain toggle) since `SettingsEffects` is being split | Untangling `SettingsEffects`'s direct `Context`/`ClipboardManager`/`Intent` use is real design work, not mechanical — budget a `hard`-tier worker, not `standard` |
+| 4 | AlbumArtistDetailViewModel, AlbumDetailViewModel, GenreDetailViewModel, SmartPlaylistDetailViewModel, PlaylistDetailViewModel, SongInfoViewModel, ServerSignInViewModel, PaywallViewModel, TagEditorViewModel | 9 | Metro assisted factories must exist (phase 1) before this wave starts; compile targets as above; `R.string`→`StringKey` sweep for `SongInfoViewModel` verified by its existing unit test plus a new `StringKey` resolver test | Assisted injection through Metro on both platforms is new territory — first wave to prove the `Factory.create(...)` pattern the port doc specifies; `TagFileAccess`/`ExportPlaylist` should probably move as interface-only stubs, with their Android impl staying behind, deferring full behaviour to phase 8 |
+| 5 | FolderListViewModel, PlayerViewModel | 2 | full verify (`testDebugUnitTest`, `assembleDebug`, `verifyRoborazziDebug`) plus a Maestro playback smoke — this is the **Android parity gate** the phase table calls for | `PlayerViewModel` has the largest fan-out in the app (22 constructor params) and touches Cast, sleep timer, replay gain, and the `ArtworkSeed` Compose-`Color` issue simultaneously — do not combine with any other wave; treat a partial fix (e.g., stubbing Cast) as acceptable if flagged, not as done |
+
+Total: 6+6+6+9+2 = 29, matching the phase table's "easy 18 → assisted 9 → Player/Folder."
+
+**Cross-cutting risks, not tied to one wave:**
+1. **`ArtworkSeed`'s `Color` payload** (§1) touches 3 ViewModels across waves 4–5; fixing it once, early
+   (wave 1 or 2, even though its consumers land later), avoids rework.
+2. **The settings/prefs interface shape** (`ReadSetting`/`SaveSetting`/`ObserveSetting`, currently
+   `:android:core`, Android-only) blocks more ViewModels (14 of 29) than any other single dependency —
+   sequence phase 2's "prefs behind shared interfaces" checkpoint to land before wave 2, not after.
+3. **`SettingsEffects` and `TagFileAccess`** are the only two files with heavy direct Android framework
+   imports (`Context`, `ClipboardManager`, `Intent`, `Uri`, `DocumentsContract`, `MediaStore`) reachable
+   from a ViewModel constructor — both need a real interface-extraction design pass (`hard` tier), not a
+   mechanical move.
