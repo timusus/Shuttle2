@@ -31,11 +31,13 @@ struct RouteDestinationView: View {
 }
 
 extension View {
-    /// One `navigationDestination` for every stack, mapping each pushed `Route` to its screen. Apply it to the stack's
-    /// root screen, inside the `NavigationStack`: on the stack itself SwiftUI ignores it and no `NavigationLink` pushes.
-    func routeDestinations() -> some View {
+    /// One `navigationDestination` for every stack, mapping each pushed `Route` to its screen, with the mini player
+    /// inset as on the root. Apply it to the stack's root screen, inside the `NavigationStack`: on the stack itself
+    /// SwiftUI ignores it and no `NavigationLink` pushes.
+    func routeDestinations(showNowPlaying: Binding<Bool>) -> some View {
         navigationDestination(for: Route.self) { route in
             RouteDestinationView(route: route)
+                .miniPlayerInset(showNowPlaying: showNowPlaying)
         }
     }
 }

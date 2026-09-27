@@ -94,6 +94,17 @@ struct MiniPlayerBar: View {
     }
 }
 
+extension View {
+    /// Insets the mini player at the bottom of this screen. Apply it INSIDE the `NavigationStack`, to the root screen
+    /// and to every pushed one (`routeDestinations`): attached to the stack itself (Shuttle Podcasts found) the bar
+    /// draws but reserves no safe area and receives no touches.
+    func miniPlayerInset(showNowPlaying: Binding<Bool>) -> some View {
+        safeAreaInset(edge: .bottom, spacing: 0) {
+            MiniPlayerView(showNowPlaying: showNowPlaying)
+        }
+    }
+}
+
 #Preview("Playing") {
     MiniPlayerBar(title: "Paranoid Android", artist: "Radiohead", isPlaying: true, onTap: {}, onPlayPause: {}, onNext: {})
 }

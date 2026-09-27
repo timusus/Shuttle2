@@ -178,18 +178,21 @@ struct AppShell: View {
         switch tab {
         case .home:
             NavigationStack(path: $navigator.homePath) {
-                withMiniPlayer(HomeView(navigator: navigator))
-                    .routeDestinations()
+                HomeView(navigator: navigator)
+                    .miniPlayerInset(showNowPlaying: $showNowPlaying)
+                    .routeDestinations(showNowPlaying: $showNowPlaying)
             }
         case .library:
             NavigationStack(path: $navigator.libraryPath) {
-                withMiniPlayer(LibraryView(navigator: navigator))
-                    .routeDestinations()
+                LibraryView(navigator: navigator)
+                    .miniPlayerInset(showNowPlaying: $showNowPlaying)
+                    .routeDestinations(showNowPlaying: $showNowPlaying)
             }
         case .search:
             NavigationStack(path: $navigator.searchPath) {
-                withMiniPlayer(SearchView())
-                    .routeDestinations()
+                SearchView()
+                    .miniPlayerInset(showNowPlaying: $showNowPlaying)
+                    .routeDestinations(showNowPlaying: $showNowPlaying)
             }
         }
     }
@@ -198,16 +201,9 @@ struct AppShell: View {
     /// straight into the sidebar, with no extra hub screen in front of it.
     private func categoryStack(for category: LibraryCategory) -> some View {
         NavigationStack(path: navigator.binding(for: category)) {
-            withMiniPlayer(RouteDestinationView(route: .libraryCategory(category)))
-                .routeDestinations()
-        }
-    }
-
-    /// Attaches the mini player to a screen INSIDE its `NavigationStack`. Attached to the stack itself
-    /// (Shuttle Podcasts found) the bar draws but reserves no safe area and receives no touches.
-    private func withMiniPlayer(_ content: some View) -> some View {
-        content.safeAreaInset(edge: .bottom, spacing: 0) {
-            MiniPlayerView(showNowPlaying: $showNowPlaying)
+            RouteDestinationView(route: .libraryCategory(category))
+                .miniPlayerInset(showNowPlaying: $showNowPlaying)
+                .routeDestinations(showNowPlaying: $showNowPlaying)
         }
     }
 }
