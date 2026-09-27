@@ -1,8 +1,8 @@
 package com.simplecityapps.trial
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class PromoCode(
     val promoCode: String
 )

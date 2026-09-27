@@ -28,9 +28,6 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
-
-            // NetworkResultAdapterFactory, the Retrofit call adapter :android:trial still builds its service on
-            implementation(libs.retrofit2.retrofit)
         }
 
         iosMain.dependencies {

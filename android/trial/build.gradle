@@ -4,6 +4,7 @@ plugins {
     id 'com.android.library'
     id 'com.google.devtools.ksp'
     id 'dev.zacsweers.metro'
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -42,17 +43,8 @@ dependencies {
     // OKHttp
     implementation libs.okhttp3.okhttp
 
-    // Retrofit
-    implementation libs.retrofit2.converterMoshi
-
     // Billing
     implementation libs.billingclient.billingKtx
-
-    // Moshi
-    implementation libs.moshi
-    implementation libs.moshi.kotlin
-    implementation libs.moshi.adapters
-    ksp(libs.moshi.kotlinCodegen)
 
     // Timber
     implementation libs.timber
@@ -68,4 +60,5 @@ dependencies {
     testImplementation libs.junit
     testImplementation libs.mockk
     testImplementation(libs.kotlinx.coroutinesTest)
+    testImplementation(libs.ktor.client.mock)
 }
