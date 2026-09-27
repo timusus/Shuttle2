@@ -14,11 +14,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
-import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -41,6 +40,7 @@ import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
+import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -60,14 +60,20 @@ class ServerSignInActions(
 )
 
 /** A Jellyfin, Emby or Plex server's sign-in dialog. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ServerSignInDialog(
     uiState: ServerSignInUiState,
     actions: ServerSignInActions,
 ) {
-    BasicAlertDialog(onDismissRequest = actions.onDismiss) {
-        ServerSignInForm(uiState, actions)
+    S2Dialog(
+        title = stringResource(uiState.type.longTitleRes),
+        onDismissRequest = actions.onDismiss,
+        confirmLabel = stringResource(R.string.media_provider_button_authenticate),
+        onConfirm = actions.onAuthenticate,
+        dismissLabel = stringResource(R.string.dialog_button_close),
+        confirmEnabled = uiState.step == ServerSignInStep.Form,
+    ) {
+        ServerSignInBody(uiState, actions)
     }
 }
 
@@ -88,27 +94,35 @@ internal fun ServerSignInForm(
         dismissLabel = stringResource(R.string.dialog_button_close),
         confirmEnabled = uiState.step == ServerSignInStep.Form,
     ) {
-        when (val step = uiState.step) {
-            ServerSignInStep.Form -> SignInFields(uiState, actions)
-
-            ServerSignInStep.Authenticating -> Progress(stringResource(R.string.media_provider_authenticating), showSpinner = true)
-
-            is ServerSignInStep.AwaitingCode -> QuickConnectCode(step.code, actions.onCancelQuickConnect)
-
-            ServerSignInStep.Connected -> Progress(stringResource(R.string.media_provider_authentication_success), showSpinner = false)
-
-            is ServerSignInStep.Failed -> Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(step.message, textAlign = TextAlign.Center)
-                S2Button(
-                    text = stringResource(R.string.dialog_button_retry),
-                    onClick = actions.onRetry,
-                    style = S2ButtonStyle.Outlined,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
-        }
+        ServerSignInBody(uiState, actions)
     }
 }
+
+@Composable
+private fun ServerSignInBody(
+    uiState: ServerSignInUiState,
+    actions: ServerSignInActions,
+) {
+    when (val step = uiState.step) {
+        ServerSignInStep.Form -> SignInFields(uiState, actions)
+
+        ServerSignInStep.Authenticating -> Progress(stringResource(R.string.media_provider_authenticating), showSpinner = true)
+
+        is ServerSignInStep.AwaitingCode -> QuickConnectCode(step.code, actions.onCancelQuickConnect)
+
+        ServerSignInStep.Connected -> Progress(stringResource(R.string.media_provider_authentication_success), showSpinner = false)
+
+        is ServerSignInStep.Failed -> Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(step.message, textAlign = TextAlign.Center)
+            S2Button(
+                text = stringResource(R.string.dialog_button_retry),
+                onClick = actions.onRetry,
+                style = S2ButtonStyle.Outlined,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+    }
+}}
 
 @Composable
 private fun SignInFields(
@@ -185,6 +199,7 @@ private fun SignInFields(
 }
 
 /** Quick Connect's code, up until the user approves it in another Jellyfin client or cancels. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun QuickConnectCode(
     code: String,
@@ -199,7 +214,7 @@ private fun QuickConnectCode(
     ) {
         Text(stringResource(R.string.media_provider_quick_connect_instructions), textAlign = TextAlign.Center)
         Text(code, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
-        CircularProgressIndicator()
+        LoadingIndicator()
         S2Button(
             text = stringResource(R.string.dialog_button_cancel),
             onClick = onCancel,
@@ -242,6 +257,7 @@ private fun PasswordField(
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun Progress(
     message: String,
@@ -254,7 +270,7 @@ private fun Progress(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        if (showSpinner) CircularProgressIndicator()
+        if (showSpinner) LoadingIndicator()
         Text(message, textAlign = TextAlign.Center)
     }
 }
