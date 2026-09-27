@@ -1,4 +1,4 @@
-package com.simplecityapps.provider.emby
+package com.simplecityapps.mediaprovider.server
 
 import java.util.concurrent.CopyOnWriteArrayList
 import mockwebserver3.Dispatcher
@@ -7,10 +7,11 @@ import mockwebserver3.MockWebServer
 import mockwebserver3.RecordedRequest
 
 /**
- * A [MockWebServer] that answers each Emby endpoint with a JSON fixture from `src/test/resources/emby`.
- * Requests nothing was registered for get a 404, the way a server answers an unknown path.
+ * A [MockWebServer] that answers each endpoint of a media server with a JSON fixture from the test resources'
+ * [fixtureDir] (`src/test/resources/jellyfin`, say). Requests nothing was registered for get a 404, the way a server
+ * answers an unknown path.
  */
-class EmbyServer : AutoCloseable {
+class FixtureServer(private val fixtureDir: String) : AutoCloseable {
     private class Route(
         val method: String,
         val path: String,
@@ -63,5 +64,5 @@ class EmbyServer : AutoCloseable {
         server.close()
     }
 
-    private fun fixture(name: String): String = checkNotNull(javaClass.classLoader.getResource("emby/$name")) { "No fixture emby/$name" }.readText()
+    private fun fixture(name: String): String = checkNotNull(javaClass.classLoader.getResource("$fixtureDir/$name")) { "No fixture $fixtureDir/$name" }.readText()
 }

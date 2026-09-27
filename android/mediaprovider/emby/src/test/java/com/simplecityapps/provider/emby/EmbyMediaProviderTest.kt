@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.R
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
+import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.LoginCredentials
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
@@ -39,7 +40,7 @@ import retrofit2.create
 class EmbyMediaProviderTest {
     private val context: Context = RuntimeEnvironment.getApplication()
 
-    private val server = EmbyServer()
+    private val server = FixtureServer("emby")
 
     private val retrofit =
         Retrofit.Builder()

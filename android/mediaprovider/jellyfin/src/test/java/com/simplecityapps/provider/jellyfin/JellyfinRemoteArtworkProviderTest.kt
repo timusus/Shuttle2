@@ -3,6 +3,7 @@ package com.simplecityapps.provider.jellyfin
 import com.simplecityapps.mediaprovider.ClientIdentity
 import com.simplecityapps.mediaprovider.server.AuthenticatedCredentials
 import com.simplecityapps.mediaprovider.server.FakeSharedPreferences
+import com.simplecityapps.mediaprovider.server.FixtureServer
 import com.simplecityapps.mediaprovider.server.ServerCredentialStore
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -25,7 +26,7 @@ import retrofit2.create
 /** Artwork urls for Jellyfin songs, which have no image when the server doesn't know the song's album or artist. */
 @RunWith(RobolectricTestRunner::class)
 class JellyfinRemoteArtworkProviderTest {
-    private val server = JellyfinServer()
+    private val server = FixtureServer("jellyfin")
 
     private val retrofit =
         Retrofit.Builder()
