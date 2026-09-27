@@ -175,7 +175,7 @@ paths are under `android/app/.../ui/`.
 | Mini player | `shell/player/MiniPlayer.kt` | `PlayerViewModel` (5) | `MiniPlayerView` (exists) | 6 | #593: bottom accessory, accessibility label/value/hint |
 | Now Playing | `shell/player/NowPlaying.kt`, `PlayerContent.kt` | `PlayerViewModel` (5) | `NowPlayingView` (exists) | 6 | `AVRoutePickerView` beside the controls in place of Cast |
 | Queue | `shell/player/QueueList.kt` | `PlayerViewModel` (5) | `QueueView` | 6 | `.onMove`/`.onDelete` in place of Android's swipe-to-dismiss |
-| Home | `screens/home/HomeScreen.kt` | `HomeViewModel` (3) | `HomeView` (exists, placeholder) | 7 | |
+| Home | `screens/home/HomeScreen.kt` | `HomeViewModel` (3) | `HomeView` (done, #587) | 7 | resume hero, and recently played/added/most played albums plus "something different" artists as horizontal shelves (`Components/RemoteArtwork.swift` for the artwork); no What's New card or analytics-consent banner yet (no changelog/settings screen to open from one); tile actions are `.contextMenu`, not a ported actions sheet |
 | Search | `screens/search/SearchScreen.kt` | `SearchViewModel` (3) | `SearchView` (exists, placeholder) | 7 | `.searchable` on the Search tab's stack; recent searches as suggestions |
 | Settings entry | `screens/settings/SettingsScreens.kt` | `SettingsViewModel` (3) | `SettingsView` | 7 (entry point in 5) | `Form`; `SettingsEffects`' clipboard and share become `UIPasteboard` and `ShareLink` |
 | Sources, sign-in | `screens/sources/` | `SourcesViewModel`, `ServerTypePickerViewModel` (3), `ServerSignInViewModel` (4) | `SourcesView`, `ServerSignInView` | 7 | see the debug sign-in below |
