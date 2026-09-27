@@ -3,7 +3,13 @@ package com.simplecityapps.shuttle.shared
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.platform.AppVersion
 import com.simplecityapps.shuttle.platform.BundledText
+import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsViewModel
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyViewModel
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListViewModel
+import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListViewModel
+import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
+import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
+import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsViewModel
 import com.simplecityapps.shuttle.ui.shell.ShellViewModel
 import dev.zacsweers.metro.AppScope
@@ -20,10 +26,24 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
  * Swift passes the platform objects to [Factory.create]. The ViewModels whose dependencies iOS can't provide yet
  * (the repositories and media sources the later waves bring) are excluded until it can.
  * [IosAppGraph] becomes this graph once the Swift side creates it.
+ *
+ * Wave 2's six ViewModels stay excluded too: they need the Song/Album/AlbumArtist/Genre/Playlist repositories,
+ * `QueueOperations`/`PlaybackOperations`, `PlatformFeatures`, `SongDownloader` and friends, none of which iOS
+ * binds yet. Phase 5's `IosAppGraph` drops these exclusions once it binds the commonMain repositories and
+ * `IosPlayerController`.
  */
 @DependencyGraph(
     AppScope::class,
-    excludes = [ExcludedSongsViewModel::class, LibraryEmptyViewModel::class],
+    excludes = [
+        ExcludedSongsViewModel::class,
+        LibraryEmptyViewModel::class,
+        AlbumArtistListViewModel::class,
+        AlbumListViewModel::class,
+        GenreListViewModel::class,
+        SongListViewModel::class,
+        PlaylistListViewModel::class,
+        MediaActionsViewModel::class,
+    ],
 )
 interface SharedAppGraph : ViewModelGraph {
     val shellViewModel: ShellViewModel

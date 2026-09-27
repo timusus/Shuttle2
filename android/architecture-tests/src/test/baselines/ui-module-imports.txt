@@ -1,7 +1,5 @@
 # Files under ui/** (outside MainActivity, the shortcut/review helpers and ui/widgets, which stay in :android:app) must not import data, provider or other app-only declarations; move the dependency behind a domain port or use case
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
-com.simplecityapps.shuttle.ui.actions.AvailableMediaActions -> com.simplecityapps.shuttle.downloads.SongDownload (:android:downloads)
-com.simplecityapps.shuttle.ui.actions.AvailableMediaActions -> com.simplecityapps.shuttle.downloads.SongDownloadRepository (:android:downloads)
 com.simplecityapps.shuttle.ui.actions.ExportPlaylist -> com.simplecityapps.mediaprovider.PlaylistExporter (:android:mediaprovider:core)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallRoutes -> com.simplecityapps.trial.Billing (:android:trial)
 com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> com.simplecityapps.mediaprovider.iconResId (:android:mediaprovider:core)
