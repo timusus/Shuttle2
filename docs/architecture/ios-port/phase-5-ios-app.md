@@ -146,7 +146,10 @@ Decisions:
   tab pops to its root, the start tab comes from `ShellViewModel` once per launch, `open(route)` appends
   to the selected tab's path. iOS has no back to the start tab (the system back is per stack).
 - Paths survive relaunch through `@SceneStorage` holding the encoded `[Route]`s, as Android's back
-  stacks survive process death.
+  stacks survive process death. The selected tab isn't restored: `S2App` reads `ShellViewModel`'s start tab
+  once and hands it to `Navigator`. Show Home on launch defaults to on for iOS only, through the
+  `NSUserDefaults` registration domain (`IosSettingDefaults`), and is a switch in Settings > Appearance.
+  Before #623 the selection was hard-wired to Library and the restored Library path reopened Album Artists.
 
 **No shared route type.** A shared `Destination` in `presentation` could drive both, but no ViewModel
 emits or takes a route (grepped), the arguments that must agree (`AlbumGroupKey`, `AlbumArtistGroupKey`,
@@ -187,8 +190,18 @@ paths are under `android/app/.../ui/`.
 **Sign-in.** The phase 5 checkpoint first signed in through a DEBUG-only launch-environment seed
 (`DebugServerSeed` and :shared's `ServerSignIn`, #611); both went when `ServerSignInView` landed, so the app
 signs in only through Sources, and the Maestro flows do the same (`ios/maestro/sign-in-jellyfin.yaml`). A saved
-session just imports. Import on iOS runs at launch and on pull-to-refresh; a `BGAppRefreshTask` is phase 9
-(Android uses WorkManager).
+session just imports. Import on iOS runs after a sign-in, on pull-to-refresh and Sources' Rescan, and at
+launch only until an import has finished once (`MediaSources.hasScanned`, Android's `scanIfNeverScanned`). A
+`BGAppRefreshTask` is phase 9 (Android uses WorkManager). The library lives in Room, so a relaunch shows it at
+once. Before #623, iOS re-imported on every launch, and the shared list VMs dropped their items for the whole
+import, so the lists sat on "Importing your library…" for minutes. The list states now keep their items while
+`Scanning`; iOS shows the placeholder only when the list is empty, and Android still maps `Scanning` to its
+placeholder.
+
+**Mini player docking (#623).** `safeAreaInset` sizes to the view it is attached to. On content that doesn't
+fill the screen (a spinner, an empty state, the importing placeholder), the bar sat just under that content,
+mid-screen. `dockedAtBottom` stretches the screen to full size before insetting the bar, and a hosted layout
+test in `MiniPlayerViewTests` pins this.
 
 **Rows and tests.** Each screen is an `Observing` wrapper plus a plain view taking values, with a
 ViewInspector test on the plain view (`.claude/rules/ios.md`). Rows (`SongRow`, `AlbumTile`,

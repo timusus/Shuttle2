@@ -122,9 +122,18 @@ extension View {
     /// and to every pushed one (`routeDestinations`): attached to the stack itself (Shuttle Podcasts found) the bar
     /// draws but reserves no safe area and receives no touches.
     func miniPlayerInset(showNowPlaying: Binding<Bool>) -> some View {
-        safeAreaInset(edge: .bottom, spacing: 0) {
+        dockedAtBottom {
             MiniPlayerView(showNowPlaying: showNowPlaying)
         }
+    }
+
+    /// Insets `bar` at the bottom of this screen, stretching the screen to fill first: `safeAreaInset` sizes to the
+    /// view it's attached to, so on content that doesn't fill (a `ProgressView`, an empty state, the importing
+    /// placeholder) the bar sat just under it, mid-screen above an empty band, instead of docking above the tab bar
+    /// (#623).
+    func dockedAtBottom<Bar: View>(@ViewBuilder _ bar: () -> Bar) -> some View {
+        frame(maxWidth: .infinity, maxHeight: .infinity)
+            .safeAreaInset(edge: .bottom, spacing: 0, content: bar)
     }
 }
 

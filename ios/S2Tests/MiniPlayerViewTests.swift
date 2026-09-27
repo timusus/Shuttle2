@@ -21,6 +21,29 @@ struct MiniPlayerViewTests {
         )
     }
 
+    /// Under content that doesn't fill the screen (a spinner, an empty state), the bar still docks at the bottom of the
+    /// safe area rather than just under the content, mid-screen (#623).
+    @Test func theBarDocksAtTheBottomUnderContentThatDoesNotFill() async throws {
+        let probe = FrameProbe()
+        let view = ProgressView().dockedAtBottom {
+            Color.red.frame(height: 50)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { probe.frame = $0 }
+        }
+        let scene = try #require(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = UIWindow(windowScene: scene)
+        window.frame = CGRect(x: 0, y: 0, width: 390, height: 800)
+        window.rootViewController = UIHostingController(rootView: view)
+        window.makeKeyAndVisible()
+        defer { window.isHidden = true }
+        window.layoutIfNeeded()
+        for _ in 0..<20 where probe.frame == .zero {
+            try await Task.sleep(for: .milliseconds(50))
+        }
+
+        let bottom = window.bounds.height - window.safeAreaInsets.bottom
+        #expect(abs(probe.frame.maxY - bottom) < 1, "bar ends at \(probe.frame.maxY), the safe area at \(bottom)")
+    }
+
     @Test func showsTheCurrentSongAndArtist() throws {
         let sut = makeSut()
         #expect((try? sut.inspect().find(text: "Paranoid Android")) != nil)
@@ -63,4 +86,9 @@ struct MiniPlayerViewTests {
         try sut.inspect().findAll(ViewType.Button.self)[2].tap()
         #expect(skipped)
     }
+}
+
+@MainActor
+private final class FrameProbe {
+    var frame: CGRect = .zero
 }
