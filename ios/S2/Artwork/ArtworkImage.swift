@@ -83,17 +83,33 @@ extension ArtworkImage where Placeholder == ArtworkPlaceholder {
     }
 }
 
-/// The default placeholder: a neutral tile with a music note, until the real cover arrives or in place
-/// of one that doesn't exist.
+/// The placeholder, until the real cover arrives or in place of one that doesn't exist: a soft gradient of the
+/// tint in scope (`\.artworkTint`, the accent outside a tinted screen) over the secondary background, with a
+/// symbol at about a third of the tile. `symbol` says what's missing: `music.note` for a song or album,
+/// `music.mic` for an artist, `guitars` for a genre, `music.note.list` for a playlist.
 struct ArtworkPlaceholder: View {
+    var symbol: String = "music.note"
+
+    @Environment(\.artworkTint) private var tint
+
     var body: some View {
-        Color(.secondarySystemBackground)
-            .overlay {
-                Image(systemName: "music.note")
+        GeometryReader { proxy in
+            let glyph = min(proxy.size.width, proxy.size.height) * 0.38
+            ZStack {
+                Color(.secondarySystemBackground)
+                LinearGradient(
+                    colors: [tint.opacity(0.28), tint.opacity(0.08)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                Image(systemName: symbol)
                     .resizable()
                     .scaledToFit()
-                    .padding(8)
-                    .foregroundStyle(.primary.opacity(0.15))
+                    .fontWeight(.medium)
+                    .frame(width: glyph, height: glyph)
+                    .foregroundStyle(tint.opacity(0.6))
             }
+        }
+        .accessibilityHidden(true)
     }
 }
