@@ -1,4 +1,4 @@
-/* Copied from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Spine/Sources/CStreamDecode/stream_decode.c — see ios/Playback/README.md. */
+/* Adapted from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Spine/Sources/CStreamDecode/stream_decode.c — see ios/Playback/README.md. S2 additions are marked "S2:". */
 /*
  * stream_decode.c — see stream_decode.h.
  *
@@ -209,7 +209,7 @@ static int64_t probe_id3_offset(StreamDecoder *d) {
 
 /* ── resampler ───────────────────────────────────────────────────────────── */
 
-/* Float32 interleaved out, at `out_rate` / `out_channels`. In Podcasts the resampler only
+/* S2: float32 interleaved out, at `out_rate` / `out_channels`. In Podcasts the resampler only
  * interleaved and converted the sample format (the player ran at the source's rate); S2's player
  * runs one fixed format so tracks of different rates are scheduled back to back on one node, and
  * this is where every track is converted into it (phase-6-playback.md §3, "Graph"). */
@@ -316,7 +316,7 @@ static int pump(StreamDecoder *d) {
             if (d->frame->sample_rate != d->swr_in_rate
                 || d->frame->ch_layout.nb_channels != d->swr_in_channels
                 || d->frame->format != d->swr_in_fmt) {
-                /* The codec changed format mid-stream (a chained Ogg, an ADTS rate switch). The old
+                /* S2: the codec changed format mid-stream (a chained Ogg, an ADTS rate switch). The old
                  * resampler's tail is a few samples of the old format; dropping it beats feeding
                  * this frame to a resampler that would reinterpret it. */
                 int swr_rc = init_swr_from(d, &d->frame->ch_layout, d->frame->sample_rate, d->frame->format);

@@ -1,4 +1,4 @@
-// Copied from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Spine/Sources/SpineNative/FFmpegStreamDecoder.swift — see ios/Playback/README.md.
+// Adapted from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Spine/Sources/SpineNative/FFmpegStreamDecoder.swift — see ios/Playback/README.md. S2 additions are marked "S2:".
 import Foundation
 #if canImport(CS2StreamDecode)
     import CS2StreamDecode

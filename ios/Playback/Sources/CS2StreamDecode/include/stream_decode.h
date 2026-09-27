@@ -1,4 +1,4 @@
-/* Copied from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Spine/Sources/CStreamDecode/include/stream_decode.h — see ios/Playback/README.md. */
+/* Adapted from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Spine/Sources/CStreamDecode/include/stream_decode.h — see ios/Playback/README.md. S2 additions are marked "S2:". */
 /*
  * stream_decode.h — the PLAYBACK decoder, for iOS.
  *
