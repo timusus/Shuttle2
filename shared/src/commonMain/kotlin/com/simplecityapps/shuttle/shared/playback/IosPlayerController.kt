@@ -88,6 +88,9 @@ class IosPlayerController(
 
         /** The engine can't seek its stream (it said so once), so a seek re-opens the stream at the position. */
         var seeksByReopening = false
+
+        /** What the engine was last handed for it. */
+        var handedOver: IosAudioTrack? = null
     }
 
     private class PendingLoad(
@@ -204,11 +207,19 @@ class IosPlayerController(
         null
     }
 
-    private fun Feed.track(stream: IosStream) = IosAudioTrack(id, stream.url, stream.headers, stream.gainDb)
+    private fun Feed.track(stream: IosStream) = IosAudioTrack(
+        id,
+        stream.url,
+        stream.headers,
+        stream.gainDb,
+        (item.song.duration - offsetMs).takeIf { it > 0 }?.toLong() ?: -1
+    ).also { handedOver = it }
 
     /**
      * Replaces the engine's current track with [item] at [startMs], then feeds the next. [reopen] is for a stream the
      * engine can't seek (a progressive transcode): it's resolved again to start at [startMs], and played from its start.
+     * A reopen leaves the next item as it was, so it's kept and handed back to the engine as its next, which keeps the
+     * stream it already opened for it.
      */
     private fun startLoad(
         item: QueueItem,
@@ -216,7 +227,8 @@ class IosPlayerController(
         reopen: Boolean = false
     ) {
         loadJob?.cancel()
-        nextJob?.cancel()
+        val keepNext = reopen && next?.failed == false
+        if (!keepNext) nextJob?.cancel()
         val feed = newFeed(item)
         if (reopen) {
             feed.offsetMs = startMs
@@ -224,8 +236,10 @@ class IosPlayerController(
             feed.seeksByReopening = true
         }
         current = feed
-        next = null
-        engineNext = null
+        if (!keepNext) {
+            next = null
+            engineNext = null
+        }
         engineState = IosAudioPlayerState.Loading
         publishProgress(startMs)
         publishState()
@@ -241,7 +255,8 @@ class IosPlayerController(
             }
             feed.sent = true
             feed.opensAtPosition = stream.opensAtPosition
-            player.load(feed.track(stream), null, (startMs - feed.offsetMs).toLong(), playWhenReady)
+            val handedBack = engineNext?.takeIf { !it.failed }?.handedOver
+            player.load(feed.track(stream), handedBack, (startMs - feed.offsetMs).toLong(), playWhenReady)
             feedNext()
         }
         if (current === feed && job.isActive) loadJob = job

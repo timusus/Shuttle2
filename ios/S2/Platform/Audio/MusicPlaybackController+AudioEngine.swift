@@ -37,7 +37,13 @@ extension MusicPlaybackController: AudioEngine {
 
 private extension PlaybackTrack {
     init(_ track: EngineTrack) {
-        self.init(uid: track.id, url: track.url, headers: track.headers, gainDb: track.gainDb)
+        self.init(
+            uid: track.id,
+            url: track.url,
+            headers: track.headers,
+            gainDb: track.gainDb,
+            expectedDurationMs: track.expectedDurationMs
+        )
     }
 }
 

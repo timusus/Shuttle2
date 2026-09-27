@@ -97,16 +97,21 @@ enum class IosAudioPlayerState {
 }
 
 /**
- * A track as the engine sees it: `PlaybackTrack(uid:url:headers:gainDb:)`. [id] is unique to this handing of the track
- * to the engine (a queue item played twice in a row, on repeat one, gets two), so a report for a track the engine has
- * since dropped can be told apart.
+ * A track as the engine sees it: `PlaybackTrack(uid:url:headers:gainDb:expectedDurationMs:)`. [id] is unique to this
+ * handing of the track to the engine (a queue item played twice in a row, on repeat one, gets two), so a report for a
+ * track the engine has since dropped can be told apart.
  */
 class IosAudioTrack(
     val id: String,
     val url: String,
     val headers: Map<String, String>,
     /** ReplayGain in dB, resolved (track or album mode, preamp, clipping) by [IosStreamResolver]; 0 is unity. */
-    val gainDb: Float
+    val gainDb: Float,
+    /**
+     * How long the stream should run (ms), from the library, or -1 if unknown. The engine times opening the next track
+     * by the current one's end, and a progressive transcode's container doesn't say where that is.
+     */
+    val expectedDurationMs: Long
 ) {
     override fun toString(): String = "IosAudioTrack($id, $url)"
 }

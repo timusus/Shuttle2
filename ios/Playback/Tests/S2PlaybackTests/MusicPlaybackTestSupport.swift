@@ -151,6 +151,9 @@ final class CallbackLog {
 struct OfflineRenderer {
     let controller: MusicPlaybackController
     let slice: AVAudioFrameCount
+    /// Wait out the next track's open at each pump, as if it were instant. False renders what a
+    /// listener hears while it's slow.
+    var awaitingOpens = true
 
     /// `(left, right)` for the next `frames` frames.
     func render(frames: Int, log: CallbackLog? = nil, renderedBefore: Int = 0) throws -> (left: [Float], right: [Float]) {
@@ -159,14 +162,14 @@ struct OfflineRenderer {
         left.reserveCapacity(frames)
         right.reserveCapacity(frames)
         while left.count < frames {
-            controller.pumpForTesting()
+            controller.pumpForTesting(awaitingOpens: awaitingOpens)
             let before = log?.transitions.count ?? 0
             let count = min(Int(slice), frames - left.count)
             let buffer = try controller.renderOffline(frameCount: AVAudioFrameCount(count))
             let data = buffer.floatChannelData!
             left.append(contentsOf: UnsafeBufferPointer(start: data[0], count: Int(buffer.frameLength)))
             right.append(contentsOf: UnsafeBufferPointer(start: data[1], count: Int(buffer.frameLength)))
-            controller.pumpForTesting()
+            controller.pumpForTesting(awaitingOpens: awaitingOpens)
             if let log, log.transitions.count > before { log.transitionFrames.append(renderedBefore + left.count) }
         }
         return (left, right)

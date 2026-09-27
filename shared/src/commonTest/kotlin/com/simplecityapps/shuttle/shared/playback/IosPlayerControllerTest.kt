@@ -534,7 +534,7 @@ class IosPlayerControllerTest {
         controller.seekTo(30_000)
         engine.settle()
 
-        engine.calls shouldBe listOf("seek 30000", "load song:1?from=30000@0 playing", "next song:2")
+        engine.calls shouldBe listOf("seek 30000", "load song:1?from=30000@0 playing next song:2")
         controller.progressFlow.value?.position shouldBe 30_000
         controller.playbackState() shouldBe PlaybackState.Playing
 
@@ -559,9 +559,25 @@ class IosPlayerControllerTest {
         controller.seekTo(0)
         engine.settle()
 
-        engine.calls shouldBe listOf("load song:1?from=10000@0 playing", "next song:2", "load song:1@0 playing", "next song:2")
+        engine.calls shouldBe listOf("load song:1?from=10000@0 playing next song:2", "load song:1@0 playing next song:2")
         controller.progressFlow.value?.position shouldBe 0
         controller.currentSong shouldBe a
+    }
+
+    @Test
+    fun `re-opening a transcode hands the engine back the next it already has`() = test { controller ->
+        server += a.id
+        engine.unseekable += url(a)
+        controller.start(listOf(a, b))
+        val next = engine.next
+
+        controller.seekTo(30_000)
+        engine.settle()
+
+        // The same track, id and all, so the engine keeps the stream it opened for it.
+        engine.next shouldBe next
+        engine.finishTrack()
+        controller.currentSong shouldBe b
     }
 
     @Test
@@ -613,7 +629,7 @@ class IosPlayerControllerTest {
         engine.settle()
 
         // A late report for the first song's track, from before the skip.
-        engine.load(IosAudioTrack("stale", url(a), emptyMap(), 0f), null, 0, playWhenReady = false)
+        engine.load(IosAudioTrack("stale", url(a), emptyMap(), 0f, -1), null, 0, playWhenReady = false)
         engine.settle()
 
         controller.currentSong shouldBe b

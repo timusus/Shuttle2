@@ -7,6 +7,8 @@ struct EngineTrack: Equatable {
     let headers: [String: String]
     /// ReplayGain in dB, resolved by Kotlin; 0 is unity.
     let gainDb: Float
+    /// The library's duration of the stream (ms), nil if unknown: when to open the track after it.
+    let expectedDurationMs: Int64?
 }
 
 /// `MusicPlaybackController.State`.

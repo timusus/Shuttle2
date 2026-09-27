@@ -44,6 +44,16 @@ follows. A next set while the queue's end is scheduled but not yet heard (includ
 load whose current track failed) carries on from the last frame. After the end of a track that
 failed, `setNext` starts the new next at once; after one that played out, Kotlin loads what follows.
 
+**Pre-opening (#605).** The next track is opened, and its first chunk decoded, on a background queue
+from `preopenSeconds` (default 10 s) before the current track's end, so a slow HTTP open or a
+transcode that takes seconds to start is ready by the join. The end is the container's duration, or
+`PlaybackTrack.expectedDurationMs` (the library's, from Kotlin) when the container has none, as a
+progressive transcode doesn't; with neither, the next opens at once. If the stream reaches the join
+first, it waits: the current track's last frames go out, the node runs dry, and the next resumes the
+stream from its first frame once open. A pre-opened next that stops being next (a skip, a new next,
+a cleared one) is cancelled. One not read yet survives a seek, and a load that hands the same uid
+back as the next: Kotlin does that when it re-opens a transcode for a seek.
+
 **Scheduling.** The controller keeps `scheduleAheadSeconds` (default 1 s) of processed audio queued
 ahead of the playhead. It refills on buffer completion and on a 100 ms ticker, which also emits
 `onPosition`. An EQ change is heard at most that far ahead; the byte source's own read-ahead is what
@@ -71,8 +81,10 @@ it at 0. Both are reported through `onSeekUnsupported(uid, ms)`, and the owner (
 `IosPlayerController`) re-opens the stream at the position with `StartTimeTicks`. A next track that
 the skipped seek interrupted is sought back to where it was read to, so the join stays gapless.
 
-**Threading.** Public methods return at once. All source I/O and node operations run on one serial
-engine queue. A seek or stop first interrupts a read stalled on the network. Callbacks arrive on
+**Threading.** Public methods return at once. Source seeks and reads and all node operations run on
+one serial engine queue; a next track's open runs on a background queue, and nothing touches its
+source until it's done. A seek or stop first interrupts a read stalled on the network (never an
+open in flight). Callbacks arrive on
 `callbackQueue` (main by default).
 
 ## Provenance: copied, adapted, new
@@ -186,7 +198,7 @@ The link adds `-Wl,-dead_strip_dylibs`.
 ## Tests
 
 ```sh
-ios/scripts/test.sh --package    # swift test in ios/Playback, on the Mac: 107 XCTest + 10 swift-testing
+ios/scripts/test.sh --package    # swift test in ios/Playback, on the Mac: 134 XCTest + 10 swift-testing
 ios/scripts/test.sh              # the app's S2 scheme on an available iPhone simulator
 ```
 
@@ -206,6 +218,18 @@ sources handed over. `MusicPlaybackControllerTests` covers:
   already-scheduled next, and setting a next after the queue's end was scheduled are all gapless.
 - **DSP.** A flat EQ is bit-exact identity, and a peaking band changes the signal. ReplayGain
   −6 dB scales every sample by 0.501187. The limiter holds a +12 dB boost under the ceiling.
+
+`PreopenTests` covers the next track's open (#605): it starts `preopenSeconds` before the end, by
+the container's duration or the expected one; a replaced or skipped next is cancelled; a seek, or a
+load handing the same next back, keeps it; the stream waits for an open still in flight, in silence,
+then plays the next from its first frame, or ends if the next is cleared. And the gap itself: a
+real-time render into a next served by `LoopbackMediaServer` 1.5 s late has no gap pre-opened, and
+about 0.9 s of silence opened at the join.
+
+`PrimingAndSeekTests` decodes 2 s chirps (AAC in MP4, MP3, Opus), whose phase names every sample, and
+cross-correlates to find where the decoded audio came from: the priming is trimmed at the start and
+after a seek back to 0:00, the end padding is trimmed (exactly 2 s of frames), and a seek lands on
+the frame asked for (MP3 within one frame; see Known limits).
 
 `FFmpegMusicDecodeTests` covers:
 
@@ -233,6 +257,10 @@ ffmpeg -f lavfi -i "$S:duration=0.5"  -af "$A" -c:a vorbis -strict -2 -q:a 3 ton
 ffmpeg -f lavfi -i "$S:duration=0.5"  -af "$A" -sample_fmt s16p -c:a alac tone-44k-alac.m4a      # 15 KB
 ffmpeg -f lavfi -i "$S:duration=0.25" -af "$A" -c:a pcm_s16be tone-44k.aiff                      # 43 KB
 ffmpeg -f lavfi -i "sine=frequency=440:sample_rate=48000:duration=0.25" -af "$A" -c:a pcm_s24le tone-48k-s24.wav  # 70 KB
+# chirp: the formula in PrimingAndSeekTests, as an aevalsrc at the rate given
+ffmpeg -f lavfi -i "$(chirp 44100)" -c:a aac -b:a 128k chirp-44k-aac.m4a                      # 33 KB
+ffmpeg -f lavfi -i "$(chirp 44100)" -c:a libmp3lame -b:a 128k chirp-44k.mp3                   # 32 KB
+ffmpeg -f lavfi -i "$(chirp 48000)" -c:a libopus -b:a 64k chirp-48k.opus                      # 18 KB
 ```
 
 ## LGPL notes
@@ -274,9 +302,10 @@ Do not add a GPL-only component (for example `--enable-gpl` or libx264-style ext
   is scheduled, so it is approximate by the scheduling latency.
 - **Time-pitch position.** Off 1×, the time-pitch unit's own buffering makes position lead what is
   heard by up to one block.
-- **Seek to 0 in AAC-in-MP4 (suspected, not yet tested).** A load trims the encoder priming: the
-  controller doesn't seek a source it has just opened (`Slot.atStart`). FFmpeg's seek to the start of
-  an MP4 loses the edit list's skip, though, so a later seek back to 0:00 probably plays the priming
-  (typically 2,112 frames). The fix would go in `stream_decoder_seek`.
+- **MP3 seeks are within one frame.** FFmpeg's MP3 seek (the Xing TOC, or the bitrate for CBR) stamps
+  the frame it syncs to with the time asked for, so a mid-file seek can land up to 1,152 frames
+  (26 ms) off. A seek to 0:00 is exact. Exact seeking needs an index of frame offsets (#619).
+- **Pre-open timing without a duration.** A next after a stream with neither a container duration
+  nor an expected one is opened as soon as it's set, and its connection then idles until the join.
 - **No audio session.** No `AVAudioSession` work, interruptions or route callbacks toward Kotlin;
   the app owns the session (phase 6 step 7).

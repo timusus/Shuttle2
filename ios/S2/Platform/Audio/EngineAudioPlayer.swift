@@ -125,7 +125,13 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
             DispatchQueue.main.async { [weak self] in self?.listener?.onFailed(trackId: id, message: message) }
             return nil
         }
-        return EngineTrack(id: track.id, url: url, headers: track.headers, gainDb: track.gainDb)
+        return EngineTrack(
+            id: track.id,
+            url: url,
+            headers: track.headers,
+            gainDb: track.gainDb,
+            expectedDurationMs: track.expectedDurationMs > 0 ? track.expectedDurationMs : nil
+        )
     }
 }
 

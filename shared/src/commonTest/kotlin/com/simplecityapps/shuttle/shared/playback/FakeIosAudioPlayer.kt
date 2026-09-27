@@ -45,7 +45,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         startMs: Long,
         playWhenReady: Boolean
     ) {
-        calls += "load ${current.url}@$startMs${if (playWhenReady) " playing" else ""}"
+        calls += "load ${current.url}@$startMs${if (playWhenReady) " playing" else ""}${next?.let { " next ${it.url}" } ?: ""}"
         this.current = current
         this.next = next
         this.playWhenReady = playWhenReady
