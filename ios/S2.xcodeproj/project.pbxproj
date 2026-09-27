@@ -28,6 +28,7 @@
 		2C7B3FD103869E7BB31DC2A7 /* NavigatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A6ADEACA55D27E692A2C22 /* NavigatorTests.swift */; };
 		2D1E96D1ECC97DF4A709C917 /* ViewModelGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 214D546417D1085A1C2B5F67 /* ViewModelGroup.swift */; };
 		31622DC97DF270EF81190A43 /* PlayerPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6F13B4E6E24F493A2104D75 /* PlayerPresentation.swift */; };
+		3175D4D1DC6565C41E534C91 /* LibraryCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 205F2D98E447A246625BE4A5 /* LibraryCollection.swift */; };
 		3276AA0BF67F5F0A9B6E0D28 /* PlayerBindingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4508034A93DD7E7D4C59E362 /* PlayerBindingTests.swift */; };
 		34C47AF9BC740718A6B15B47 /* NowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D38E5CC8D77C5BA07D5821 /* NowPlayingView.swift */; };
 		35711F16198C1340CC43E55A /* MiniPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528C6644D4642CD20178A704 /* MiniPlayerView.swift */; };
@@ -130,6 +131,7 @@
 		17CAC2177C448E5AAF2FC3D4 /* HomeViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewTests.swift; sourceTree = "<group>"; };
 		191927F39E29CE059057C079 /* LibraryListTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryListTests.swift; sourceTree = "<group>"; };
 		1C4156A63D9F30E876660749 /* LayoutTierTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutTierTests.swift; sourceTree = "<group>"; };
+		205F2D98E447A246625BE4A5 /* LibraryCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryCollection.swift; sourceTree = "<group>"; };
 		20E688A48CB9963C2F8837D2 /* S2App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = S2App.swift; sourceTree = "<group>"; };
 		214D546417D1085A1C2B5F67 /* ViewModelGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModelGroup.swift; sourceTree = "<group>"; };
 		219D34D59A017AC9E82F0C9E /* GenreListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenreListView.swift; sourceTree = "<group>"; };
@@ -400,6 +402,7 @@
 				969D7BE4B5B0AC1094B37103 /* AlbumArtistListView.swift */,
 				9EB97ABD546F19AAB459025C /* AlbumListView.swift */,
 				219D34D59A017AC9E82F0C9E /* GenreListView.swift */,
+				205F2D98E447A246625BE4A5 /* LibraryCollection.swift */,
 				52FDEC92D75DB433244B1C2E /* LibraryImport.swift */,
 				2F74B98EFB99516DD895C476 /* LibraryView.swift */,
 				2F76D1A68F4085AD3F385D00 /* PlaylistListView.swift */,
@@ -622,6 +625,7 @@
 				B72F8880FF3CF21C649FB03E /* GenreListView.swift in Sources */,
 				F3ABB063A6171C619BAB09B8 /* HomeView.swift in Sources */,
 				9D1A42B52CE59007F5DFA5A7 /* LayoutTier.swift in Sources */,
+				3175D4D1DC6565C41E534C91 /* LibraryCollection.swift in Sources */,
 				B8399C63B96189E50C51B76E /* LibraryImport.swift in Sources */,
 				9B1E89BAD9F71286BF2437AA /* LibraryView.swift in Sources */,
 				B0FB022FA7D066955A64D070 /* MarqueeText.swift in Sources */,
