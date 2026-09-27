@@ -17,8 +17,12 @@ kotlin {
     android {
         compileSdk = 36
         minSdk = 24
-        // Runs commonTest (and androidHostTest) on the JVM, as testDebugUnitTest does for Android modules.
-        withHostTest {}
+        // Runs commonTest (and androidHostTest) on the JVM, as testDebugUnitTest does for Android modules. AGP allows
+        // one host test component, so it's configured here for every module: with the Android resources and assets
+        // Robolectric tests read (the Room migration tests load the exported schemas as assets).
+        withHostTest {
+            isIncludeAndroidResources = true
+        }
     }
 
     iosArm64()
@@ -34,4 +38,9 @@ tasks.register<Test>("testDebugUnitTest") {
     description = "Runs this module's host tests (same as :testAndroidHostTest, named for the project-wide unit test sweep)."
     testClassesDirs = files(provider { hostTest.map { it.testClassesDirs } })
     classpath = files(provider { hostTest.map { it.classpath } })
+    // And the JVM settings AGP gives it: Robolectric needs its --add-opens and headless AWT.
+    hostTest.forEach { androidHostTest ->
+        jvmArgs(androidHostTest.jvmArgs.orEmpty().filterNot { it in jvmArgs.orEmpty() })
+        systemProperties(androidHostTest.systemProperties)
+    }
 }

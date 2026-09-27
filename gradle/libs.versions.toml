@@ -194,6 +194,8 @@ kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", ve
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
 aboutlibraries-android = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutlibraries" }
 android-application = { id = "com.android.application", version.ref = "agp" }
+# Room KMP: sets the schema directory for every target's KSP run (the room.schemaLocation argument is Android-only).
+androidx-room = { id = "androidx.room", version.ref = "room-compiler" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
