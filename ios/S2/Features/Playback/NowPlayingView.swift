@@ -137,7 +137,7 @@ struct NowPlayingContent: View {
         }
         .aspectRatio(1, contentMode: .fit)
         .frame(maxWidth: artworkPoints)
-        .clipShape(RoundedRectangle(cornerRadius: Radius.large, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: ArtworkCorner.player, style: .continuous))
         .shadow(color: .black.opacity(0.15), radius: 12, y: 6)
         .accessibilityHidden(true)
     }

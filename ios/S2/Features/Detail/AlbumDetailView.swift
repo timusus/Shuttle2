@@ -119,7 +119,7 @@ struct AlbumDetailContent: View {
                     try await AppGraph.shared.artworkUrls.url(album: album)
                 }
                 .frame(width: ArtworkSize.hero, height: ArtworkSize.hero)
-                .clipShape(RoundedRectangle(cornerRadius: Radius.large, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: ArtworkCorner.hero, style: .continuous))
             }
             .listRowInsets(EdgeInsets())
         }

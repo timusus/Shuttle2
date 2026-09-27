@@ -127,7 +127,7 @@ private struct ResumeHero: View {
     var body: some View {
         HStack(spacing: Spacing.smallMedium) {
             RemoteArtwork(.song(resume.song), points: ArtworkSize.albumRow)
-                .artworkTile(ArtworkSize.albumRow, cornerRadius: Radius.medium)
+                .artworkTile(ArtworkSize.albumRow, cornerRadius: ArtworkCorner.row)
 
             VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(resume.song.name ?? "Unknown").font(.headline).lineLimit(1)
@@ -246,7 +246,7 @@ private struct AlbumTile: View {
                     try await AppGraph.shared.artworkUrls.url(album: album)
                 }
                 .frame(width: ArtworkSize.shelf, height: ArtworkSize.shelf)
-                .clipShape(RoundedRectangle(cornerRadius: Radius.medium, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous))
                 Text(album.name ?? "Unknown").font(.subheadline).lineLimit(1)
                 Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }

@@ -168,7 +168,7 @@ struct PlaylistDetailContent: View {
                     return try await AppGraph.shared.artworkUrls.url(song: coverSong)
                 }
                 .frame(width: ArtworkSize.hero, height: ArtworkSize.hero)
-                .clipShape(RoundedRectangle(cornerRadius: Radius.large, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: ArtworkCorner.hero, style: .continuous))
             }
             .listRowInsets(EdgeInsets())
         }

@@ -104,7 +104,7 @@ struct AlbumArtistDetailContent: View {
                                 try await AppGraph.shared.artworkUrls.url(album: album)
                             }
                             .frame(width: ArtworkSize.shelf, height: ArtworkSize.shelf)
-                            .clipShape(RoundedRectangle(cornerRadius: Radius.medium, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous))
                             Text(album.name ?? "Unknown")
                                 .font(.footnote)
                                 .foregroundStyle(.primary)

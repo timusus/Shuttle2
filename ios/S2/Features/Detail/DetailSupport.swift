@@ -62,7 +62,7 @@ struct DetailPlaceholderArtwork: View {
                     .foregroundStyle(.primary.opacity(0.15))
             }
             .frame(width: points, height: points)
-            .clipShape(RoundedRectangle(cornerRadius: Radius.large, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: ArtworkCorner.hero, style: .continuous))
     }
 }
 

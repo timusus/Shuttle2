@@ -7,14 +7,28 @@ import SwiftUI
 /// large title is system chrome and is never overridden. Every style is relative to a text style, so all of
 /// them follow Dynamic Type.
 extension Font {
-    /// A screen's in-content title: the Now Playing song.
+    /// A screen's largest in-content title.
     static let s2Title = Font.system(.title, design: .rounded, weight: .bold)
     /// A detail hero's title; an empty state's title.
     static let s2Title2 = Font.system(.title2, design: .rounded, weight: .bold)
     static let s2Title3 = Font.system(.title3, design: .rounded, weight: .semibold)
 
-    /// In-content section headers: Home's shelves, "Up Next".
+    /// The Now Playing song title (a `MarqueeText` line). Its artist line is `.title3` in SF Pro.
+    static let s2PlayerTitle = Font.system(.title2, design: .rounded, weight: .bold)
+
+    /// In-content section headers: Home's shelves, "Up Next" (`SectionHeader`).
     static let s2SectionTitle = Font.system(.title3, design: .rounded, weight: .bold)
+
+    /// A card's or row's title where it needs more weight than body: the resume card's song, a tile's title.
+    static let s2Headline = Font.system(.headline, design: .rounded)
+
+    /// Labels that title a run of rows rather than a section: disc headers, "Now Playing" over the queue's
+    /// card.
+    static let s2GroupHeader = Font.system(.caption, design: .rounded, weight: .semibold)
+
+    /// Secondary labels above or below a title: the "Continue" over the resume card, a hero's
+    /// "artist · year · 12 songs". `caption` at medium weight, not `caption2` regular, which reads as noise.
+    static let s2Eyebrow = Font.system(.caption, design: .rounded, weight: .medium)
 
     /// A row's trailing time or count (a song's duration).
     static let s2RowTime = Font.subheadline.monospacedDigit()

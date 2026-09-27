@@ -128,7 +128,7 @@ struct PlayerNoticeBanner: View {
         .padding(.horizontal, Spacing.medium)
         .padding(.vertical, Spacing.small)
         .frame(minHeight: 48)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Radius.large, style: .continuous))
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous))
         .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
         .padding(.horizontal, Spacing.medium)
         .contentShape(Rectangle())

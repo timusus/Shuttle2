@@ -57,17 +57,35 @@ struct ArtworkSource: Equatable {
 }
 
 extension View {
-    /// Frames and clips artwork to a square tile of `points`, rounded by `cornerRadius` (a `Radius` token).
-    func artworkTile(_ points: CGFloat, cornerRadius: CGFloat = Radius.small) -> some View {
+    /// Frames artwork to a square tile of `points` and styles it (`artworkStyle`): continuous corners of
+    /// `cornerRadius` (an `ArtworkCorner` token) and the hairline.
+    func artworkTile(_ points: CGFloat, cornerRadius: CGFloat = ArtworkCorner.row) -> some View {
         frame(width: points, height: points)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .artworkStyle(cornerRadius: cornerRadius)
     }
 
-    /// Frames and clips artwork to a circle of `points` across: an artist's picture.
+    /// Frames and clips artwork to a circle of `points` across, with the hairline: an artist's picture.
     func artworkCircle(_ points: CGFloat) -> some View {
         frame(width: points, height: points)
             .clipShape(Circle())
+            .overlay { Circle().strokeBorder(ArtworkHairline.color, lineWidth: ArtworkHairline.width) }
     }
+
+    /// Clips artwork to S2's continuous corner and draws a 1 px hairline over it, after Shuttle Podcasts'
+    /// `artworkStyle`. The hairline is what keeps a white-cornered cover from bleeding into a white list (and a
+    /// black one into a dark list); `Color.primary` at 8% gives near-black in light mode and near-white in dark.
+    /// Rows and tiles take this and no shadow; heroes and the player add `artworkShadow` on top.
+    func artworkStyle(cornerRadius: CGFloat = ArtworkCorner.row) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        return clipShape(shape)
+            .overlay { shape.strokeBorder(ArtworkHairline.color, lineWidth: ArtworkHairline.width) }
+    }
+}
+
+/// The artwork edge `artworkStyle` and `artworkCircle` draw.
+enum ArtworkHairline {
+    static let color = Color.primary.opacity(0.08)
+    static let width = Spacing.hairline
 }
 
 /// A stable identity for list rows and `RemoteArtwork`'s `id`: the group key Kotlin computed when
