@@ -3,20 +3,28 @@ import Foundation
 @testable import S2Playback
 
 /// A track held in memory as interleaved stereo float32, already at the controller's rate.
+/// `seekable: false` is a progressive transcode: no length, and a seek fails the test.
 final class InMemoryTrackSource: TrackPCMSource {
     let samples: [Float]
+    let isSeekable: Bool
     private var cursor = 0
 
-    init(samples: [Float]) { self.samples = samples }
+    init(samples: [Float], seekable: Bool = true) {
+        self.samples = samples
+        isSeekable = seekable
+    }
 
     var frameCount: Int { samples.count / 2 }
 
     func open(sampleRate: Double, channelCount: Int) throws -> Int64? {
         precondition(channelCount == 2)
-        return Int64(frameCount)
+        return isSeekable ? Int64(frameCount) : nil
     }
 
-    func seek(toFrame frame: Int64) throws { cursor = min(Int(frame), frameCount) }
+    func seek(toFrame frame: Int64) throws {
+        guard isSeekable else { throw TrackSourceError.failed("sought an unseekable source") }
+        cursor = min(Int(frame), frameCount)
+    }
 
     func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) throws -> Int {
         let frames = min(maxFrames, frameCount - cursor)
@@ -126,6 +134,7 @@ final class CallbackLog {
     private(set) var transitions: [String] = []
     private(set) var states: [MusicPlaybackController.State] = []
     private(set) var failures: [String] = []
+    private(set) var seeksUnsupported: [String] = []
     /// Frames rendered when each transition was seen, filled in by ``OfflineRenderer``.
     var transitionFrames: [Int] = []
 
@@ -133,6 +142,7 @@ final class CallbackLog {
         controller.onTransition = { [weak self] in self?.transitions.append($0) }
         controller.onStateChanged = { [weak self] state, _ in self?.states.append(state) }
         controller.onFailed = { [weak self] uid, _ in self?.failures.append(uid) }
+        controller.onSeekUnsupported = { [weak self] uid, ms in self?.seeksUnsupported.append("\(uid) \(ms)") }
     }
 }
 

@@ -64,6 +64,13 @@ bypassed, it pulls a whole render block (4096 frames) ahead of the player node a
 node's clock then runs a block ahead of what is heard, and a seek plays out the stale block first.
 Both are measured, and the seek test catches them.
 
+**Unseekable streams (#606).** A server's progressive transcode has no length and `Accept-Ranges:
+none`, so no byte maps to a time and `FFmpegTrackSource.isSeekable` is false. The controller never
+seeks or interrupts such a source. A seek leaves it playing where it was. A load at a position starts
+it at 0. Both are reported through `onSeekUnsupported(uid, ms)`, and the owner (Kotlin's
+`IosPlayerController`) re-opens the stream at the position with `StartTimeTicks`. A next track that
+the skipped seek interrupted is sought back to where it was read to, so the join stays gapless.
+
 **Threading.** Public methods return at once. All source I/O and node operations run on one serial
 engine queue. A seek or stop first interrupts a read stalled on the network. Callbacks arrive on
 `callbackQueue` (main by default).

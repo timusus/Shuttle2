@@ -17,8 +17,8 @@ public enum TrackSourceError: Error, Equatable {
 /// implementation; tests use an in-memory one, which is what lets the gapless claims be checked
 /// sample for sample.
 ///
-/// Called on the controller's engine queue only, except ``cancel()`` and ``interrupt()``, which are
-/// safe from any thread.
+/// Called on the controller's engine queue only, except ``cancel()``, ``interrupt()`` and
+/// ``isSeekable``, which are safe from any thread.
 public protocol TrackPCMSource: AnyObject {
     /// Open the track and convert everything read afterwards to `sampleRate` Hz, `channelCount`
     /// channels. Blocking. Returns the duration in OUTPUT frames, nil when the container does not
@@ -28,12 +28,23 @@ public protocol TrackPCMSource: AnyObject {
     /// Position the next ``read(into:maxFrames:)`` at exactly `frame` (output frames from the start).
     func seek(toFrame frame: Int64) throws
 
+    /// Whether ``seek(toFrame:)`` can work, asked once the source is open. False for a stream of
+    /// unknown length (a server's progressive transcode): no byte maps to a time, and its host
+    /// answers every range from the start. The controller never seeks one; it reports
+    /// `onSeekUnsupported` and the owner re-opens the stream at the position. Nor does it ever
+    /// interrupt one, since only a seek undoes an interrupt. Safe from any thread.
+    var isSeekable: Bool { get }
+
     /// Read up to `maxFrames` interleaved frames into `buffer`. Returns the frames written; 0 is
     /// the end of the track. Throws on failure, cancel or interrupt.
     func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) throws -> Int
 
     func cancel()
     func interrupt()
+}
+
+public extension TrackPCMSource {
+    var isSeekable: Bool { true }
 }
 
 /// A track decoded by FFmpeg from a file or an HTTP(S) URL.
@@ -110,6 +121,14 @@ public final class FFmpegTrackSource: TrackPCMSource {
             if got == 0 { return }
             skip -= Int64(got)
         }
+    }
+
+    /// A file, or an HTTP stream whose length the host gave (`Content-Range` or `Content-Length`).
+    /// A transcode streamed as it is made has neither.
+    public var isSeekable: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return reader?.totalLength != nil
     }
 
     public func read(into buffer: UnsafeMutablePointer<Float>, maxFrames: Int) throws -> Int {

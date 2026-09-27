@@ -21,6 +21,7 @@ public final class LoopbackMediaServer: @unchecked Sendable {
     private var _requestHeads: [String] = []
     private var _servedBytes: Int64 = 0
     private var _respondsWholeBodyIgnoringRange = false
+    private var _streamsWithoutLength = false
     private var _failNextRequest = false
     private var _rejectNextRangeStartingAt: Int64?
     private var _rejectedHostStatus: (host: String, status: Int)?
@@ -73,6 +74,13 @@ public final class LoopbackMediaServer: @unchecked Sendable {
     public var respondsWholeBodyIgnoringRange: Bool {
         get { lock.lock(); defer { lock.unlock() }; return _respondsWholeBodyIgnoringRange }
         set { lock.lock(); _respondsWholeBodyIgnoringRange = newValue; lock.unlock() }
+    }
+
+    /// Answer `200 OK` with the whole body, `Accept-Ranges: none` and no `Content-Length`, ending it
+    /// by closing the connection: a server's progressive transcode, streamed as it is made (#606).
+    public var streamsWithoutLength: Bool {
+        get { lock.lock(); defer { lock.unlock() }; return _streamsWithoutLength }
+        set { lock.lock(); _streamsWithoutLength = newValue; lock.unlock() }
     }
 
     /// Drop the next request's connection without a response, once. The transport failure a retry
@@ -297,7 +305,8 @@ public final class LoopbackMediaServer: @unchecked Sendable {
         var delay = range.lowerBound == 0 ? _delayForOffsetZero : 0
         if let held = _delayForRangeStartingAt, held.offset == range.lowerBound { delay = held.seconds }
         delay = max(delay, _delayForEveryRange)
-        let wholeBody = _respondsWholeBodyIgnoringRange
+        let withoutLength = _streamsWithoutLength
+        let wholeBody = _respondsWholeBodyIgnoringRange || withoutLength
         let shouldFail = _failNextRequest
         if shouldFail { _failNextRequest = false }
         var rejectedRange = false
@@ -345,7 +354,11 @@ public final class LoopbackMediaServer: @unchecked Sendable {
 
         let slice = wholeBody ? body : body.subdata(in: Int(range.lowerBound)..<Int(range.upperBound + 1))
         var header: String
-        if wholeBody {
+        if withoutLength {
+            header = "HTTP/1.1 200 OK\r\n"
+            header += "Content-Type: \(mimeType)\r\n"
+            header += "Accept-Ranges: none\r\n"
+        } else if wholeBody {
             header = "HTTP/1.1 200 OK\r\n"
             header += "Content-Type: \(mimeType)\r\n"
             header += "Accept-Ranges: bytes\r\n"
@@ -355,7 +368,7 @@ public final class LoopbackMediaServer: @unchecked Sendable {
             header += "Accept-Ranges: bytes\r\n"
             header += "Content-Range: bytes \(range.lowerBound)-\(range.upperBound)/\(body.count)\r\n"
         }
-        header += "Content-Length: \(slice.count)\r\n"
+        if !withoutLength { header += "Content-Length: \(slice.count)\r\n" }
         header += "Connection: close\r\n\r\n"
         if let heldAfter, heldAfter < slice.count {
             // Headers and the first bytes now, the rest on release — see

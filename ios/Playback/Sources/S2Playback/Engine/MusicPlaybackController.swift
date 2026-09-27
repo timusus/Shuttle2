@@ -89,6 +89,15 @@ public final class MusicPlaybackController {
         set { callbackLock.withLock { callbacks.position = newValue } }
     }
 
+    /// The current track can't be sought to the position (uid, ms into the track): its source
+    /// isn't seekable (``TrackPCMSource/isSeekable``, a progressive transcode). A seek leaves it
+    /// playing where it was; a load at a position starts it at its beginning. The owner re-opens
+    /// the stream at the position.
+    public var onSeekUnsupported: ((String, Int64) -> Void)? {
+        get { callbackLock.withLock { callbacks.seekUnsupported } }
+        set { callbackLock.withLock { callbacks.seekUnsupported = newValue } }
+    }
+
     // MARK: Engine
 
     let engine = AVAudioEngine()
@@ -188,6 +197,7 @@ public final class MusicPlaybackController {
         var transition: ((String) -> Void)?
         var failed: ((String, Error) -> Void)?
         var position: ((String, Int64) -> Void)?
+        var seekUnsupported: ((String, Int64) -> Void)?
     }
 
     private let callbackLock = NSLock()
@@ -309,12 +319,20 @@ public final class MusicPlaybackController {
         }
     }
 
-    /// Seek within the current track. Exact: the first frame heard is the frame at `ms`.
+    /// Seek within the current track. Exact: the first frame heard is the frame at `ms`. A track
+    /// whose source can't seek plays on untouched, reported through ``onSeekUnsupported``.
     public func seek(toMs ms: Int64) {
-        interruptActiveRead()
+        // An interrupt is only undone by a seek, so a source that can't seek is never interrupted:
+        // it would never read again.
+        if let active = activeSourceLock.withLock({ activeSource }), active.isSeekable { active.interrupt() }
         engineQueue.async { [self] in
-            guard current != nil else { return }
             updateTimeline()
+            guard let current else { return }
+            guard !current.opened || current.failed || current.source.isSeekable else {
+                reportSeekUnsupported(current, ms: ms)
+                resumeReadingNext()
+                return
+            }
             restart(atFrame: frames(ms: ms))
         }
     }
@@ -439,6 +457,27 @@ public final class MusicPlaybackController {
         if let callback { callbackQueue.async { callback(uid, error) } }
     }
 
+    private func reportSeekUnsupported(_ slot: Slot, ms: Int64) {
+        log.info("track \(slot.track.uid, privacy: .public) can't seek; reporting \(ms) ms")
+        let uid = slot.track.uid
+        let callback = callbackLock.withLock { callbacks.seekUnsupported }
+        if let callback { callbackQueue.async { callback(uid, ms) } }
+    }
+
+    /// A seek that didn't happen may have interrupted the next track, already being read behind an
+    /// unseekable current one. Sought to exactly where it was read to, it carries on seamlessly.
+    private func resumeReadingNext() {
+        guard let slot = reading, slot !== current, slot.opened, !slot.failed else { return }
+        let streamStart = timelineLock.withLock { timeline.segments.last { $0.slot == slot.id }?.streamStart }
+        guard let streamStart else { return }
+        do {
+            try slot.source.seek(toFrame: inputIndex - streamStart)
+        } catch {
+            reportFailure(slot, error)
+        }
+        fill()
+    }
+
     private func releaseHold() {
         timelineLock.withLock {
             timeline.resumedFrom = timeline.held ?? timeline.resumedFrom
@@ -506,7 +545,13 @@ public final class MusicPlaybackController {
         // S2: a source still at its first frame is not sought to frame 0. The decoder's start trims
         // the encoder delay (an MP4's edit list, Opus pre-skip); FFmpeg's seek to the start of an
         // AAC-in-MP4 track does not, and ~2,100 frames of priming would open every load.
-        if current.opened, !(frame == 0 && current.atStart) {
+        if current.opened, !current.failed, !current.source.isSeekable, !(frame == 0 && current.atStart) {
+            // A progressive transcode: it plays on from where it was read to, and the owner is told
+            // so it can re-open the stream at the frame. After a load that is its start; after a
+            // speed or output change it is about where it was heard.
+            if current.atStart { startFrame = 0 }
+            reportSeekUnsupported(current, ms: ms(frames: frame))
+        } else if current.opened, !(frame == 0 && current.atStart) {
             current.atStart = false
             do {
                 try current.source.seek(toFrame: frame)

@@ -133,6 +133,61 @@ final class MusicPlaybackControllerTests: XCTestCase {
         assertEqual(out.left[0..<36_000], out.right[0..<36_000], Array(a[(12_000 * 2)...]) + b)
     }
 
+    // MARK: - Unseekable (a progressive transcode, #606)
+
+    private func transcode(_ uid: String, _ samples: [Float]) -> PlaybackTrack {
+        PlaybackTrack(uid: uid, gainDb: 0) { InMemoryTrackSource(samples: samples, seekable: false) }
+    }
+
+    func testSeekOnAnUnseekableTrackPlaysOnAndIsReported() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 48_000, seed: 6)
+        controller.load(current: transcode("A", a), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        let renderer = OfflineRenderer(controller: controller, slice: 512)
+        _ = try renderer.render(frames: 9_600)
+
+        controller.seek(toMs: 800)
+        controller.syncForTesting()
+        let out = try renderer.render(frames: 9_600)
+
+        // Nothing dropped, nothing sought: the stream carries on from where it was heard.
+        assertEqual(out.left[0..<9_600], out.right[0..<9_600], Array(a[(9_600 * 2)..<(19_200 * 2)]))
+        XCTAssertEqual(log.seeksUnsupported, ["A 800"])
+        XCTAssertEqual(log.failures, [])
+        XCTAssertEqual(controller.position?.uid, "A")
+    }
+
+    func testLoadAtAPositionOnAnUnseekableTrackStartsAtItsStartAndIsReported() throws {
+        let (controller, log) = try makeController()
+        let a = TestSignal.noise(frames: 24_000, seed: 7)
+        controller.load(current: transcode("A", a), next: nil, startMs: 250, playWhenReady: true)
+        controller.syncForTesting()
+        let out = try OfflineRenderer(controller: controller, slice: 512).render(frames: 9_600)
+
+        assertEqual(out.left[0..<9_600], out.right[0..<9_600], Array(a[0..<(9_600 * 2)]))
+        XCTAssertEqual(log.seeksUnsupported, ["A 250"])
+        XCTAssertEqual(log.failures, [])
+        XCTAssertEqual(Double(try XCTUnwrap(controller.position).ms), 190, accuracy: 15)
+    }
+
+    /// The seek that didn't happen doesn't disturb the next track already being read behind the
+    /// unseekable one: the join stays gapless.
+    func testSeekOnAnUnseekableTrackKeepsTheNextGapless() throws {
+        let (controller, log) = try makeController(scheduleAhead: 1.0)
+        let a = TestSignal.noise(frames: 24_000, seed: 8)
+        let b = TestSignal.noise(frames: 24_000, seed: 9)
+        controller.load(current: transcode("A", a), next: track("B", b), playWhenReady: true)
+        controller.syncForTesting()
+        controller.seek(toMs: 250)
+        controller.syncForTesting()
+        let out = try OfflineRenderer(controller: controller, slice: 512).render(frames: 48_000)
+
+        assertEqual(out.left[0..<48_000], out.right[0..<48_000], a + b)
+        XCTAssertEqual(log.seeksUnsupported, ["A 250"])
+        XCTAssertEqual(log.failures, [])
+    }
+
     func testReplacingAnAlreadyScheduledNextPlaysTheNewOne() throws {
         let (controller, log) = try makeController(scheduleAhead: 1.0)
         let a = TestSignal.noise(frames: 24_000, seed: 6)
