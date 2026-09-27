@@ -24,14 +24,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
+import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import com.simplecityapps.trial.Billing
-import com.simplecityapps.trial.PaywallSource
-import com.simplecityapps.trial.ServerAccessGate
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -62,17 +62,17 @@ fun EntryProviderScope<NavKey>.paywallEntries(navigator: AppNavigator) {
 }
 
 /**
- * Shows the paywall full-screen, over whatever's on screen, whenever [serverAccessGate] refuses an action, while the
- * lifecycle is at least STARTED.
+ * Shows the paywall full-screen, over whatever's on screen, whenever [observePaywallRequests] reports a refused
+ * action, while the lifecycle is at least STARTED.
  */
 @Composable
-fun PaywallHost(serverAccessGate: ServerAccessGate) {
+fun PaywallHost(observePaywallRequests: ObservePaywallRequests) {
     var activeSource by rememberSaveable { mutableStateOf<PaywallSource?>(null) }
     val lifecycleOwner = LocalLifecycleOwner.current
-    LaunchedEffect(serverAccessGate, lifecycleOwner) {
+    LaunchedEffect(observePaywallRequests, lifecycleOwner) {
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             // A request while it's showing leaves it as it is
-            serverAccessGate.paywallRequests.collect { source -> if (activeSource == null) activeSource = source }
+            observePaywallRequests().collect { source -> if (activeSource == null) activeSource = source }
         }
     }
     activeSource?.let { source ->

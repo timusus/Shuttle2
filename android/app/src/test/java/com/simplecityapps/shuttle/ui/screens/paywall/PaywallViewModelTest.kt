@@ -1,12 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.paywall
 
 import com.simplecityapps.fakes.FakeBilling
+import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.testing.MainDispatcherRule
 import com.simplecityapps.trial.Entitlement
 import com.simplecityapps.trial.MonetisationAnalytics
 import com.simplecityapps.trial.PaywallOffers
 import com.simplecityapps.trial.PaywallPlan
-import com.simplecityapps.trial.PaywallSource
 import com.simplecityapps.trial.ProSource
 import com.simplecityapps.trial.RestoreResult
 import io.kotest.matchers.shouldBe

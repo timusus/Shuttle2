@@ -41,4 +41,7 @@ object EntitlementBindsModule {
 
     @Provides
     fun provideTryDownloadFromServer(serverAccessGate: ServerAccessGate): TryDownloadFromServer = TryDownloadFromServer(serverAccessGate::tryDownloadFromServer)
+
+    @Provides
+    fun provideObservePaywallRequests(serverAccessGate: ServerAccessGate): ObservePaywallRequests = ObservePaywallRequests { serverAccessGate.paywallRequests }
 }

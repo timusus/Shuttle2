@@ -2,9 +2,9 @@ package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.trial.Entitlement
-import com.simplecityapps.trial.PaywallSource
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.launch

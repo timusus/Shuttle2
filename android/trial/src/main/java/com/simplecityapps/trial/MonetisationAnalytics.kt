@@ -1,6 +1,7 @@
 package com.simplecityapps.trial
 
 import com.simplecityapps.shuttle.analytics.Analytics
+import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.model.MediaProviderType
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,14 +22,4 @@ constructor(
     fun trialStarted() = analytics.capture("trial_started")
 
     fun serverConnected(type: MediaProviderType) = analytics.capture("server_connected", mapOf("type" to type.name.lowercase()))
-}
-
-/** Where the paywall was opened from. */
-enum class PaywallSource(val value: String) {
-    LibraryTrialChip("library_trial_chip"),
-    QueueTrialChip("queue_trial_chip"),
-    Settings("settings"),
-    AddServer("add_server"),
-    ServerPlayback("server_playback"),
-    ServerDownload("server_download")
 }

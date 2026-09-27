@@ -1,5 +1,6 @@
 package com.simplecityapps.trial
 
+import com.simplecityapps.shuttle.entitlement.PaywallSource
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow

@@ -1,5 +1,6 @@
 package com.simplecityapps.trial
 
+import com.simplecityapps.shuttle.entitlement.PaywallSource
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow

@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.paywall
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simplecityapps.shuttle.entitlement.PaywallSource
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.trial.Billing
@@ -10,7 +11,6 @@ import com.simplecityapps.trial.MonetisationAnalytics
 import com.simplecityapps.trial.PaywallOffer
 import com.simplecityapps.trial.PaywallOffers
 import com.simplecityapps.trial.PaywallPlan
-import com.simplecityapps.trial.PaywallSource
 import com.simplecityapps.trial.ProSource
 import com.simplecityapps.trial.RestoreResult
 import dagger.assisted.Assisted

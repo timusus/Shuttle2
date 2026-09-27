@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.simplecityapps.playback.mediasession.PlayRequests
+import com.simplecityapps.shuttle.entitlement.ObservePaywallRequests
 import com.simplecityapps.shuttle.ui.screens.paywall.PaywallHost
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.MusicPermission
@@ -19,7 +20,6 @@ import com.simplecityapps.shuttle.ui.shell.ShellRoute
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
 import com.simplecityapps.trial.Billing
 import com.simplecityapps.trial.EntitlementRepository
-import com.simplecityapps.trial.ServerAccessGate
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.launch
@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var billing: Billing
 
     @Inject
-    lateinit var serverAccessGate: ServerAccessGate
+    lateinit var observePaywallRequests: ObservePaywallRequests
 
     @Inject
     lateinit var playRequests: PlayRequests
@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             S2AppTheme {
                 ShellRoute()
-                PaywallHost(serverAccessGate)
+                PaywallHost(observePaywallRequests)
             }
         }
 
