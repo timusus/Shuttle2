@@ -56,4 +56,7 @@ Phase designs: [2 data](ios-port/phase-2-data.md), [3 network](ios-port/phase-3-
 [4 ViewModels](ios-port/phase-4-viewmodels.md) and its [platform seams](ios-port/phase-4-platform-seams.md),
 [5 iOS app](ios-port/phase-5-ios-app.md), [6 playback](ios-port/phase-6-playback.md).
 
+[Parity checklist](ios-port/parity.md): every user-facing Android feature, weighted by iOS effort,
+with a computed completion percentage.
+
 During phases 0–4, other sessions don't start new work in `android/app`, `android/domain` or DI modules.
