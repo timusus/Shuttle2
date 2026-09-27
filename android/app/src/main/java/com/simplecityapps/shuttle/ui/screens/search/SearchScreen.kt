@@ -14,27 +14,17 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.clearText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.SearchBarState
+import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.mediaprovider.search.SearchHit
@@ -43,7 +33,7 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.S2FilterChip
-import com.simplecityapps.shuttle.designsystem.component.S2IconButton
+import com.simplecityapps.shuttle.designsystem.component.S2SearchBar
 import com.simplecityapps.shuttle.designsystem.component.SearchNoResults
 import com.simplecityapps.shuttle.designsystem.component.SearchRecentRow
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
@@ -68,75 +58,66 @@ class SearchCallbacks(
 )
 
 /**
- * The Search destination (redesign inventory, section 2): a search field over filter chips, then the recent searches
- * while the field is empty, or the results grouped by type. [queryState] holds the field's text; the destination
- * feeds it to the ViewModel.
+ * The Search destination (redesign inventory, section 2): the M3 search bar over filter chips,
+ * then the recent searches while the field is empty, or the results grouped by type. [queryState]
+ * holds the field's text; the destination feeds it to the ViewModel. The bar opens expanded, ready
+ * to type; from the Expanded width class the search view docks under it ([docked]).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
     uiState: SearchUiState,
     queryState: TextFieldState,
     callbacks: SearchCallbacks,
     modifier: Modifier = Modifier,
+    searchBarState: SearchBarState = rememberSearchBarState(),
+    docked: Boolean = false,
 ) {
-    val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
-    // Arriving with nothing typed means the user wants to type.
-    LaunchedEffect(Unit) { if (queryState.text.isEmpty()) focusRequester.requestFocus() }
+    // A search destination opens ready to type.
+    LaunchedEffect(Unit) { searchBarState.animateToExpanded() }
 
     Column(modifier.fillMaxSize()) {
-        Surface(
-            shape = SearchBarDefaults.inputFieldShape,
-            color = SearchBarDefaults.colors().containerColor,
-            modifier = Modifier
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .fillMaxWidth(),
+        S2SearchBar(
+            state = searchBarState,
+            textFieldState = queryState,
+            onSearch = { callbacks.onSearch() },
+            placeholder = stringResource(R.string.search_placeholder),
+            docked = docked,
+            modifier = Modifier.statusBarsPadding(),
         ) {
-            SearchBarDefaults.InputField(
-                state = queryState,
-                onSearch = {
-                    callbacks.onSearch()
-                    focusManager.clearFocus()
-                },
-                expanded = false,
-                onExpandedChange = {},
-                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-                placeholder = { Text(stringResource(R.string.search_placeholder)) },
-                leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = null) },
-                trailingIcon = if (queryState.text.isNotEmpty()) {
-                    { S2IconButton(Icons.Rounded.Close, stringResource(com.simplecityapps.shuttle.designsystem.R.string.ds_clear_search), { queryState.clearText() }) }
-                } else {
-                    null
-                },
-            )
-        }
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp),
-        ) {
-            S2FilterChip(
-                label = stringResource(R.string.search_category_all),
-                selected = uiState.categories.isEmpty(),
-                onClick = callbacks.onSelectAll,
-            )
-            SearchCategory.entries.forEach { category ->
-                S2FilterChip(
-                    label = category.label(),
-                    selected = category in uiState.categories,
-                    onClick = { callbacks.onToggleCategory(category) },
-                )
+            FilterChips(uiState, callbacks)
+            when (val content = uiState.content) {
+                is SearchContent.Recent -> RecentSearches(content.searches, onSelect = { queryState.edit { replace(0, length, it) } }, onRemove = callbacks.onRemoveRecentSearch)
+                SearchContent.Searching -> LoadingState(Modifier.fillMaxSize())
+                is SearchContent.NoResults -> SearchNoResults(content.query, Modifier.fillMaxSize())
+                is SearchContent.Results -> SearchResultList(content.query, content.results, callbacks)
             }
         }
-        when (val content = uiState.content) {
-            is SearchContent.Recent -> RecentSearches(content.searches, onSelect = { queryState.edit { replace(0, length, it) } }, onRemove = callbacks.onRemoveRecentSearch)
-            SearchContent.Searching -> LoadingState(Modifier.fillMaxSize())
-            is SearchContent.NoResults -> SearchNoResults(content.query, Modifier.fillMaxSize())
-            is SearchContent.Results -> SearchResultList(content.query, content.results, callbacks)
+    }
+}
+
+@Composable
+private fun FilterChips(
+    uiState: SearchUiState,
+    callbacks: SearchCallbacks,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp),
+    ) {
+        S2FilterChip(
+            label = stringResource(R.string.search_category_all),
+            selected = uiState.categories.isEmpty(),
+            onClick = callbacks.onSelectAll,
+        )
+        SearchCategory.entries.forEach { category ->
+            S2FilterChip(
+                label = category.label(),
+                selected = category in uiState.categories,
+                onClick = { callbacks.onToggleCategory(category) },
+            )
         }
     }
 }

@@ -58,6 +58,8 @@ fun S2Theme(
     val motionScheme = remember { MotionScheme.expressive() }
     val context = LocalContext.current
     val targetScheme = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        // M3 builds dynamic schemes from the wallpaper with no contrast-level hook, so they ship as
+        // the platform makes them; S2Contrast shapes the generated accent and artwork schemes only.
         if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     } else {
         remember(accent, darkTheme, contrast) { accentColorScheme(accent, darkTheme, contrast) }

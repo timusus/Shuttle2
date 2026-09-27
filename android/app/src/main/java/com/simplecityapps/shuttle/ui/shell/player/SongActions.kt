@@ -11,8 +11,6 @@ import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +28,7 @@ import com.simplecityapps.mediaprovider.R as MediaProviderR
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2ActionsSheet
+import com.simplecityapps.shuttle.designsystem.component.S2Dialog
 import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionType
@@ -57,7 +56,6 @@ internal fun rememberSongActionsState(): SongActionsState = remember { SongActio
  * The open song sheet of [state]: the queue's own [leading] actions (Play next, Remove), the shared
  * actions [PlayerActions.songActions] allows, sent through [PlayerActions.onMediaAction], then [trailing] (Save queue to playlist, Clear queue).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun SongActionsHost(
     state: SongActionsState,
@@ -109,14 +107,24 @@ internal fun SongActionsHost(
 }
 
 /** Names a new playlist; any non-blank name will do, duplicates included, as before. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun NewPlaylistDialog(
     onCreate: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    BasicAlertDialog(onDismissRequest = onDismiss) {
-        NewPlaylistForm(onCreate, onDismiss)
+    var name by rememberSaveable { mutableStateOf("") }
+    S2Dialog(
+        title = stringResource(R.string.playlist_menu_create_playlist),
+        onDismissRequest = onDismiss,
+        confirmLabel = stringResource(R.string.player_create_playlist),
+        onConfirm = {
+            onCreate(name.trim())
+            onDismiss()
+        },
+        dismissLabel = stringResource(R.string.dialog_button_cancel),
+        confirmEnabled = name.isNotBlank(),
+    ) {
+        NewPlaylistNameField(name, { name = it })
     }
 }
 
@@ -141,14 +149,22 @@ internal fun NewPlaylistForm(
         dismissLabel = stringResource(R.string.dialog_button_cancel),
         confirmEnabled = name.isNotBlank(),
     ) {
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text(stringResource(R.string.playlist_create_dialog_playlist_name_hint)) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        NewPlaylistNameField(name, { name = it })
     }
+}
+
+@Composable
+private fun NewPlaylistNameField(
+    name: String,
+    onNameChange: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = name,
+        onValueChange = onNameChange,
+        label = { Text(stringResource(R.string.playlist_create_dialog_playlist_name_hint)) },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 /** The menu label of the shared actions the player offers; null for the rest. */
