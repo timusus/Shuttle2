@@ -14,6 +14,7 @@ struct GenreDetailView: View {
         Observing(models.genre.uiState, models.actions.uiState) { state, actions in
             GenreDetailContent(
                 state: state,
+                isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
                 onPlay: { index in
                     models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index)))
                 },
@@ -45,9 +46,11 @@ final class GenreDetailModels: ViewModelGroup {
     var members: [Lifecycle_viewmodelViewModel] { [genre, actions] }
 }
 
-/// The Genre detail screen from a `GenreDetailUiState`.
+/// The Genre detail screen from a `GenreDetailUiState`, in a `DetailScaffold` with the app's accent (a genre has no
+/// cover to tint from).
 struct GenreDetailContent: View {
     let state: GenreDetailUiState
+    var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }
     var onShuffle: () -> Void = {}
     var onPlayNext: (Song) -> Void = { _ in }
@@ -57,17 +60,26 @@ struct GenreDetailContent: View {
         if state.loading {
             ProgressView()
         } else if let genre = state.genre {
-            List {
-                heroSection(genre)
-                if !state.albums.isEmpty {
-                    Section("Albums") {
-                        albumShelf.listRowInsets(EdgeInsets())
-                    }
+            DetailScaffold(title: genre.name, tintSource: nil) { layout in
+                DetailHero(
+                    title: genre.name,
+                    subtitle: eyebrow(pluralized(Int(genre.songCount), "song"), totalDuration(state.songs)),
+                    layout: layout,
+                    onPlay: { onPlay(0) },
+                    onShuffle: onShuffle
+                ) { points in
+                    DetailPlaceholderArtwork(systemImage: "guitars", points: points)
                 }
-                Section("Songs") {
+            } rows: {
+                if !state.albums.isEmpty {
+                    DetailAlbumShelf(title: "Albums", albums: state.albums, subtitle: { $0.albumArtist })
+                }
+                Section {
+                    SectionHeader("Songs")
+                        .listRowSeparator(.hidden)
                     ForEach(Array(state.songs.enumerated()), id: \.element.id) { index, song in
                         Button { onPlay(index) } label: {
-                            AlbumSongRow(song: song, playing: song.id == state.currentSong?.id)
+                            DetailSongRow(song: song, playback: rowPlayback(song, current: state.currentSong, isPlaying: isPlaying))
                         }
                         .buttonStyle(.plain)
                         .contextMenu {
@@ -77,51 +89,8 @@ struct GenreDetailContent: View {
                     }
                 }
             }
-            .listStyle(.plain)
-            .navigationTitle(genre.name)
-            .navigationBarTitleDisplayMode(.inline)
         } else {
             EmptyState("Genre Not Found", systemImage: "guitars")
         }
-    }
-
-    private var albumShelf: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: Spacing.medium) {
-                ForEach(state.albums, id: \.stableId) { album in
-                    NavigationLink(value: Route.album(album)) {
-                        VStack(alignment: .leading, spacing: Spacing.xsmall) {
-                            RemoteArtwork(id: album.stableId, points: ArtworkSize.shelf) {
-                                try await AppGraph.shared.artworkUrls.url(album: album)
-                            }
-                            .frame(width: ArtworkSize.shelf, height: ArtworkSize.shelf)
-                            .clipShape(RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous))
-                            Text(album.name ?? "Unknown")
-                                .font(.footnote)
-                                .lineLimit(1)
-                                .frame(width: ArtworkSize.shelf, alignment: .leading)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal)
-        }
-    }
-
-    @ViewBuilder
-    private func heroSection(_ genre: Genre) -> some View {
-        Section {
-            DetailHero(
-                title: genre.name,
-                subtitle: pluralized(Int(genre.songCount), "song"),
-                onPlay: { onPlay(0) },
-                onShuffle: onShuffle
-            ) {
-                DetailPlaceholderArtwork(systemImage: "guitars")
-            }
-            .listRowInsets(EdgeInsets())
-        }
-        .listRowSeparator(.hidden)
     }
 }

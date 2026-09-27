@@ -12,7 +12,7 @@ struct SmartPlaylistDetailTests {
         let state = SmartPlaylistDetailUiState(smartPlaylist: SmartPlaylistId.favourites.smartPlaylist, songs: TestSongs.demo, currentSong: nil, loading: false)
         let sut = SmartPlaylistDetailContent(state: state)
         #expect((try? sut.inspect().find(text: "Favourites")) != nil)
-        #expect((try? sut.inspect().find(text: "5 songs")) != nil)
+        #expect((try? sut.inspect().find(ViewType.Text.self, where: { try $0.string().hasPrefix("5 songs · ") })) != nil)
         #expect((try? sut.inspect().find(text: "Pyramid Song")) != nil)
     }
 

@@ -23,7 +23,7 @@ struct PlaylistDetailTests {
         let state = PlaylistDetailUiState(playlist: playlist(), songs: songs, selectedIds: [], currentSong: nil, loading: false, events: [])
         let sut = PlaylistDetailContent(state: state)
         #expect((try? sut.inspect().find(text: "Road Trip")) != nil)
-        #expect((try? sut.inspect().find(text: "2 songs")) != nil)
+        #expect((try? sut.inspect().find(ViewType.Text.self, where: { try $0.string().hasPrefix("2 songs · ") })) != nil)
         #expect((try? sut.inspect().find(text: "Paranoid Android")) != nil)
         #expect((try? sut.inspect().find(text: "Hyperballad")) != nil)
     }

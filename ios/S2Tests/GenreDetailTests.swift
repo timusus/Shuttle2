@@ -23,7 +23,7 @@ struct GenreDetailTests {
         let state = GenreDetailUiState(genre: genre(), albums: [album("Mezzanine")], songs: TestSongs.demo, currentSong: nil, loading: false)
         let sut = GenreDetailContent(state: state)
         #expect((try? sut.inspect().find(text: "Trip Hop")) != nil)
-        #expect((try? sut.inspect().find(text: "2 songs")) != nil)
+        #expect((try? sut.inspect().find(ViewType.Text.self, where: { try $0.string().hasPrefix("2 songs · ") })) != nil)
         #expect((try? sut.inspect().find(text: "Mezzanine")) != nil)
         #expect((try? sut.inspect().find(text: "Teardrop")) != nil)
     }

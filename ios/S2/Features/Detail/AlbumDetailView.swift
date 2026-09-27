@@ -1,9 +1,10 @@
 import Shared
 import SwiftUI
 
-/// Album detail (P5-7): hero (artwork, title, artist/year), Play/Shuffle, then the album's songs, split into
-/// "Disc N" sections when it has more than one. A tap plays the album from that song; its context menu has the
-/// shared media actions. Modeled on Android's `AlbumDetailScreen.kt`.
+/// Album detail (P5-7, polished in #624): a hero tinted from the cover (artwork, title, artist · year · songs ·
+/// duration, Play/Shuffle), then the album's tracks, split into "Disc N" groups when it has more than one. A tap
+/// plays the album from that track; its context menu has the shared media actions. Modeled on Android's
+/// `AlbumDetailScreen.kt`.
 struct AlbumDetailView: View {
     let albumKey: String?
     let albumArtistKey: String?
@@ -19,6 +20,7 @@ struct AlbumDetailView: View {
         Observing(models.album.uiState, models.actions.uiState) { state, actions in
             AlbumDetailContent(
                 state: state,
+                isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
                 onPlay: { index in
                     models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index)))
                 },
@@ -50,9 +52,11 @@ final class AlbumDetailModels: ViewModelGroup {
     var members: [Lifecycle_viewmodelViewModel] { [album, actions] }
 }
 
-/// The Album detail screen from an `AlbumDetailUiState`.
+/// The Album detail screen from an `AlbumDetailUiState`, in a `DetailScaffold` tinted from the album's cover.
 struct AlbumDetailContent: View {
     let state: AlbumDetailUiState
+    /// Whether the player is playing, so the current track's indicator animates or holds still.
+    var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }
     var onShuffle: () -> Void = {}
     var onPlayNext: (Song) -> Void = { _ in }
@@ -66,30 +70,54 @@ struct AlbumDetailContent: View {
             EmptyState("Album Not Found", systemImage: "square.stack")
         case .ready:
             if let album = state.album {
-                List {
-                    heroSection(album)
+                DetailScaffold(title: album.name ?? "Album", tintSource: .album(album)) { layout in
+                    DetailHero(
+                        title: album.name ?? "Unknown Album",
+                        subtitle: subtitle(album),
+                        layout: layout,
+                        onPlay: { onPlay(0) },
+                        onShuffle: onShuffle
+                    ) { points in
+                        RemoteArtwork(.album(album), points: points)
+                            .artworkTile(points, cornerRadius: ArtworkCorner.hero)
+                    }
+                } rows: {
                     ForEach(discs, id: \.disc) { group in
-                        Section(discs.count > 1 ? "Disc \(group.disc)" : "") {
+                        Section {
                             ForEach(group.songs, id: \.id) { song in
-                                let index = state.songs.firstIndex(where: { $0.id == song.id }) ?? 0
-                                Button { onPlay(index) } label: {
-                                    AlbumSongRow(song: song, playing: song.id == state.currentSong?.id)
-                                }
-                                .buttonStyle(.plain)
-                                .contextMenu {
-                                    Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
-                                    Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
-                                }
+                                trackRow(song, album: album)
+                            }
+                        } header: {
+                            if discs.count > 1 {
+                                Text("Disc \(group.disc)")
+                                    .font(.s2GroupHeader)
+                                    .foregroundStyle(.s2SecondaryText)
+                                    .textCase(.uppercase)
                             }
                         }
                     }
                 }
-                .listStyle(.plain)
-                .navigationTitle(album.name ?? "Album")
-                .navigationBarTitleDisplayMode(.inline)
             } else {
                 EmptyState("Album Not Found", systemImage: "square.stack")
             }
+        }
+    }
+
+    private func trackRow(_ song: Song, album: Album) -> some View {
+        let index = state.songs.firstIndex(where: { $0.id == song.id }) ?? 0
+        return Button { onPlay(index) } label: {
+            TrackRow(
+                number: song.track.map { Int($0.intValue) },
+                title: song.name ?? "Unknown",
+                subtitle: trackArtist(song, album: album),
+                durationMs: Int64(song.duration),
+                playback: rowPlayback(song, current: state.currentSong, isPlaying: isPlaying)
+            )
+        }
+        .buttonStyle(.plain)
+        .contextMenu {
+            Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
+            Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
         }
     }
 
@@ -106,64 +134,19 @@ struct AlbumDetailContent: View {
         return order.sorted().map { (disc: $0, songs: groups[$0] ?? []) }
     }
 
-    @ViewBuilder
-    private func heroSection(_ album: Album) -> some View {
-        Section {
-            DetailHero(
-                title: album.name ?? "Unknown Album",
-                subtitle: subtitle(album),
-                onPlay: { onPlay(0) },
-                onShuffle: onShuffle
-            ) {
-                RemoteArtwork(id: album.stableId, points: ArtworkSize.hero) {
-                    try await AppGraph.shared.artworkUrls.url(album: album)
-                }
-                .frame(width: ArtworkSize.hero, height: ArtworkSize.hero)
-                .clipShape(RoundedRectangle(cornerRadius: ArtworkCorner.hero, style: .continuous))
-            }
-            .listRowInsets(EdgeInsets())
-        }
-        .listRowSeparator(.hidden)
+    /// A track's own artist, only where it differs from the album's (a compilation, a guest): on every row of a
+    /// one-artist album it would repeat the hero.
+    private func trackArtist(_ song: Song, album: Album) -> String? {
+        guard let artist = song.friendlyArtistName, artist != (album.friendlyArtistName ?? album.albumArtist) else { return nil }
+        return artist
     }
 
     private func subtitle(_ album: Album) -> String {
-        var parts: [String] = []
-        if let artist = album.friendlyArtistName ?? album.albumArtist { parts.append(artist) }
-        if let year = album.year { parts.append(String(year.intValue)) }
-        parts.append(pluralized(state.songs.count, "song"))
-        return parts.joined(separator: " · ")
-    }
-}
-
-/// One album track: its number, title/artist and duration; highlighted while it's the current song.
-struct AlbumSongRow: View {
-    let song: Song
-    var playing: Bool = false
-
-    var body: some View {
-        HStack {
-            if let track = song.track {
-                Text("\(track.intValue)")
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .frame(width: 24, alignment: .trailing)
-            }
-            VStack(alignment: .leading, spacing: Spacing.tiny) {
-                Text(song.name ?? "Unknown")
-                    .lineLimit(1)
-                    .foregroundStyle(playing ? Color.accentColor : .primary)
-                if let artist = song.friendlyArtistName {
-                    Text(artist)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
-            Spacer()
-            Text(Duration.milliseconds(Int64(song.duration)).formatted(.time(pattern: .minuteSecond)))
-                .font(.subheadline.monospacedDigit())
-                .foregroundStyle(.secondary)
-        }
-        .contentShape(Rectangle())
+        eyebrow(
+            album.friendlyArtistName ?? album.albumArtist,
+            album.year.map { String($0.intValue) },
+            pluralized(state.songs.count, "song"),
+            totalDuration(state.songs)
+        )
     }
 }

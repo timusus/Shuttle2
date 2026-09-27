@@ -1,11 +1,12 @@
 import Shared
 import SwiftUI
 
-/// Album artist detail (P5-7): hero (circular artwork, name), Play/Shuffle, a horizontal shelf of the artist's
-/// albums (each pushing `Route.album`), then every one of the artist's songs across those albums. A tap plays
-/// from that song; its context menu has the shared media actions. Modeled on Android's
-/// `AlbumArtistDetailScreen.kt`, minus its inline per-album expansion — the shelf covers the same "browse by
-/// album" need with less chrome, and the flat song list still lets you play the whole discography from any point.
+/// Album artist detail (P5-7, polished in #624): a hero tinted from the artist's picture (circular artwork, name,
+/// albums · songs, Play/Shuffle), a shelf of the artist's album tiles (each zooming into `Route.album`), then every
+/// one of the artist's songs across those albums. A tap plays from that song; its context menu has the shared media
+/// actions. Modeled on Android's `AlbumArtistDetailScreen.kt`, minus its inline per-album expansion — the shelf
+/// covers the same "browse by album" need with less chrome, and the flat song list still lets you play the whole
+/// discography from any point.
 struct AlbumArtistDetailView: View {
     let albumArtistKey: String?
 
@@ -17,6 +18,7 @@ struct AlbumArtistDetailView: View {
         Observing(models.artist.uiState, models.actions.uiState) { state, actions in
             AlbumArtistDetailContent(
                 state: state,
+                isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
                 onPlay: { index in
                     models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index)))
                 },
@@ -48,9 +50,11 @@ final class AlbumArtistDetailModels: ViewModelGroup {
     var members: [Lifecycle_viewmodelViewModel] { [artist, actions] }
 }
 
-/// The Album Artist detail screen from an `AlbumArtistDetailUiState`.
+/// The Album Artist detail screen from an `AlbumArtistDetailUiState`, in a `DetailScaffold` tinted from the artist's
+/// picture.
 struct AlbumArtistDetailContent: View {
     let state: AlbumArtistDetailUiState
+    var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }
     var onShuffle: () -> Void = {}
     var onPlayNext: (Song) -> Void = { _ in }
@@ -64,18 +68,30 @@ struct AlbumArtistDetailContent: View {
             EmptyState("Artist Not Found", systemImage: "person.2")
         case .ready:
             if let artist = state.albumArtist {
-                List {
-                    heroSection(artist)
-                    if !state.albums.isEmpty {
-                        Section("Albums") {
-                            albumShelf
-                                .listRowInsets(EdgeInsets())
+                let name = artist.name ?? artist.friendlyArtistName ?? "Unknown Artist"
+                DetailScaffold(title: name, tintSource: .albumArtist(artist)) { layout in
+                    DetailHero(
+                        title: name,
+                        subtitle: eyebrow(pluralized(state.albums.count, "album"), pluralized(state.songs.count, "song")),
+                        layout: layout,
+                        onPlay: { onPlay(0) },
+                        onShuffle: onShuffle
+                    ) { points in
+                        RemoteArtwork(.albumArtist(artist), points: points) {
+                            ArtworkPlaceholder(symbol: "person.fill")
                         }
+                        .artworkCircle(points)
                     }
-                    Section("Songs") {
+                } rows: {
+                    if !state.albums.isEmpty {
+                        DetailAlbumShelf(title: "Albums", albums: state.albums, subtitle: { $0.year.map { String($0.intValue) } })
+                    }
+                    Section {
+                        SectionHeader("Songs")
+                            .listRowSeparator(.hidden)
                         ForEach(Array(state.songs.enumerated()), id: \.element.id) { index, song in
                             Button { onPlay(index) } label: {
-                                AlbumSongRow(song: song, playing: song.id == state.currentSong?.id)
+                                DetailSongRow(song: song, playback: rowPlayback(song, current: state.currentSong, isPlaying: isPlaying))
                             }
                             .buttonStyle(.plain)
                             .contextMenu {
@@ -85,61 +101,43 @@ struct AlbumArtistDetailContent: View {
                         }
                     }
                 }
-                .listStyle(.plain)
-                .navigationTitle(artist.name ?? artist.friendlyArtistName ?? "Artist")
-                .navigationBarTitleDisplayMode(.inline)
             } else {
                 EmptyState("Artist Not Found", systemImage: "person.2")
             }
         }
     }
+}
 
-    private var albumShelf: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: Spacing.medium) {
-                ForEach(state.albums, id: \.stableId) { album in
-                    NavigationLink(value: Route.album(album)) {
-                        VStack(alignment: .leading, spacing: Spacing.xsmall) {
-                            RemoteArtwork(id: album.stableId, points: ArtworkSize.shelf) {
-                                try await AppGraph.shared.artworkUrls.url(album: album)
-                            }
-                            .frame(width: ArtworkSize.shelf, height: ArtworkSize.shelf)
-                            .clipShape(RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous))
-                            Text(album.name ?? "Unknown")
-                                .font(.footnote)
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-                                .frame(width: ArtworkSize.shelf, alignment: .leading)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal)
-        }
-    }
+/// A detail screen's shelf of album tiles under a `SectionHeader`, as one `List` section: each tile pushes its album
+/// and is the zoom source for it.
+struct DetailAlbumShelf: View {
+    let title: String
+    let albums: [Album]
+    let subtitle: (Album) -> String?
 
-    @ViewBuilder
-    private func heroSection(_ artist: AlbumArtist) -> some View {
+    @Environment(\.layoutTier) private var layoutTier
+
+    var body: some View {
+        let inset = AdaptiveLayout.contentInset(layoutTier)
         Section {
-            DetailHero(
-                title: artist.name ?? artist.friendlyArtistName ?? "Unknown Artist",
-                subtitle: subtitle,
-                onPlay: { onPlay(0) },
-                onShuffle: onShuffle
-            ) {
-                RemoteArtwork(id: artist.stableId, points: ArtworkSize.hero) {
-                    try await AppGraph.shared.artworkUrls.url(albumArtist: artist)
+            VStack(alignment: .leading, spacing: Spacing.smallMedium) {
+                SectionHeader(title)
+                    .padding(.horizontal, inset)
+                Shelf(inset: inset) {
+                    ForEach(albums, id: \.stableId) { album in
+                        let route = Route.album(album)
+                        NavigationLink(value: route) {
+                            AlbumTileLabel(album: album, subtitle: subtitle(album))
+                        }
+                        .buttonStyle(.pressScale)
+                        .zoomSource(id: route.cacheKey)
+                    }
                 }
-                .frame(width: ArtworkSize.hero, height: ArtworkSize.hero)
-                .clipShape(Circle())
             }
+            .padding(.vertical, Spacing.small)
             .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
         }
         .listRowSeparator(.hidden)
-    }
-
-    private var subtitle: String {
-        "\(pluralized(state.albums.count, "album")) · \(pluralized(state.songs.count, "song"))"
     }
 }

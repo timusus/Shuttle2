@@ -34,7 +34,7 @@ struct AlbumDetailTests {
         let state = AlbumDetailUiState(album: album(), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared)
         let sut = AlbumDetailContent(state: state)
         #expect((try? sut.inspect().find(text: "OK Computer")) != nil)
-        #expect((try? sut.inspect().find(text: "Radiohead · 1997 · 2 songs")) != nil)
+        #expect((try? sut.inspect().find(ViewType.Text.self, where: { try $0.string().hasPrefix("Radiohead · 1997 · 2 songs · ") })) != nil)
         #expect((try? sut.inspect().find(text: "Airbag")) != nil)
         #expect((try? sut.inspect().find(text: "Paranoid Android")) != nil)
     }

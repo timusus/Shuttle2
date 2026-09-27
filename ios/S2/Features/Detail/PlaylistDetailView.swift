@@ -18,6 +18,7 @@ struct PlaylistDetailView: View {
         Observing(models.playlist.uiState, models.actions.uiState) { state, actions in
             PlaylistDetailContent(
                 state: state,
+                isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
                 onPlay: { index in
                     models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), position: Int32(index)))
                 },
@@ -60,9 +61,10 @@ final class PlaylistDetailModels: ViewModelGroup {
     var members: [Lifecycle_viewmodelViewModel] { [playlist, actions] }
 }
 
-/// The Playlist detail screen from a `PlaylistDetailUiState`.
+/// The Playlist detail screen from a `PlaylistDetailUiState`, in a `DetailScaffold` tinted from its first song's cover.
 struct PlaylistDetailContent: View {
     let state: PlaylistDetailUiState
+    var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }
     var onShuffle: () -> Void = {}
     var onPlayNext: (Song) -> Void = { _ in }
@@ -82,14 +84,29 @@ struct PlaylistDetailContent: View {
         if state.loading {
             ProgressView()
         } else if let playlist = state.playlist {
-            List {
-                heroSection(playlist)
-                Section("Songs") {
+            let cover = state.songs.first.map { ArtworkSource.song($0.song) }
+            DetailScaffold(title: playlist.name, tintSource: cover) { layout in
+                DetailHero(
+                    title: playlist.name,
+                    subtitle: eyebrow(pluralized(Int(playlist.songCount), "song"), totalDuration(state.songs.map(\.song))),
+                    layout: layout,
+                    onPlay: { onPlay(0) },
+                    onShuffle: onShuffle
+                ) { points in
+                    if let cover {
+                        RemoteArtwork(cover, points: points)
+                            .artworkTile(points, cornerRadius: ArtworkCorner.hero)
+                    } else {
+                        DetailPlaceholderArtwork(systemImage: "music.note.list", points: points)
+                    }
+                }
+            } rows: {
+                Section {
                     ForEach(state.songs, id: \.id) { entry in
                         Button {
                             if let index = state.songs.firstIndex(where: { $0.id == entry.id }) { onPlay(index) }
                         } label: {
-                            AlbumSongRow(song: entry.song, playing: entry.song.id == state.currentSong?.id)
+                            DetailSongRow(song: entry.song, playback: rowPlayback(entry.song, current: state.currentSong, isPlaying: isPlaying))
                         }
                         .buttonStyle(.plain)
                         .contextMenu {
@@ -106,10 +123,7 @@ struct PlaylistDetailContent: View {
                     .onMove { source, destination in move(source, to: destination) }
                 }
             }
-            .listStyle(.plain)
             .environment(\.editMode, $editMode)
-            .navigationTitle(playlist.name)
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 if state.canReorder {
                     EditButton()
@@ -152,27 +166,6 @@ struct PlaylistDetailContent: View {
         guard songs.indices.contains(toIndex) else { return }
         onMove(songs[from].id, songs[toIndex].id)
         onMoveFinished()
-    }
-
-    @ViewBuilder
-    private func heroSection(_ playlist: Playlist) -> some View {
-        Section {
-            DetailHero(
-                title: playlist.name,
-                subtitle: pluralized(Int(playlist.songCount), "song"),
-                onPlay: { onPlay(0) },
-                onShuffle: onShuffle
-            ) {
-                RemoteArtwork(id: state.songs.first?.song.id ?? playlist.id, points: ArtworkSize.hero) {
-                    guard let coverSong = state.songs.first?.song else { return nil }
-                    return try await AppGraph.shared.artworkUrls.url(song: coverSong)
-                }
-                .frame(width: ArtworkSize.hero, height: ArtworkSize.hero)
-                .clipShape(RoundedRectangle(cornerRadius: ArtworkCorner.hero, style: .continuous))
-            }
-            .listRowInsets(EdgeInsets())
-        }
-        .listRowSeparator(.hidden)
     }
 }
 

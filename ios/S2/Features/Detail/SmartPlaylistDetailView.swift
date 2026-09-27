@@ -14,6 +14,7 @@ struct SmartPlaylistDetailView: View {
         Observing(models.playlist.uiState, models.actions.uiState) { state, actions in
             SmartPlaylistDetailContent(
                 state: state,
+                isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
                 onPlay: { index in
                     models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index)))
                 },
@@ -45,9 +46,10 @@ final class SmartPlaylistDetailModels: ViewModelGroup {
     var members: [Lifecycle_viewmodelViewModel] { [playlist, actions] }
 }
 
-/// The Smart Playlist detail screen from a `SmartPlaylistDetailUiState`.
+/// The Smart Playlist detail screen from a `SmartPlaylistDetailUiState`, in a `DetailScaffold` with the app's accent.
 struct SmartPlaylistDetailContent: View {
     let state: SmartPlaylistDetailUiState
+    var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }
     var onShuffle: () -> Void = {}
     var onPlayNext: (Song) -> Void = { _ in }
@@ -57,11 +59,20 @@ struct SmartPlaylistDetailContent: View {
         if state.loading {
             ProgressView()
         } else if let smartPlaylist = state.smartPlaylist {
-            List {
-                heroSection(smartPlaylist)
+            DetailScaffold(title: smartPlaylist.id.title, tintSource: nil) { layout in
+                DetailHero(
+                    title: smartPlaylist.id.title,
+                    subtitle: eyebrow(pluralized(state.songs.count, "song"), totalDuration(state.songs)),
+                    layout: layout,
+                    onPlay: { onPlay(0) },
+                    onShuffle: onShuffle
+                ) { points in
+                    DetailPlaceholderArtwork(systemImage: "star", points: points)
+                }
+            } rows: {
                 ForEach(Array(state.songs.enumerated()), id: \.element.id) { index, song in
                     Button { onPlay(index) } label: {
-                        AlbumSongRow(song: song, playing: song.id == state.currentSong?.id)
+                        DetailSongRow(song: song, playback: rowPlayback(song, current: state.currentSong, isPlaying: isPlaying))
                     }
                     .buttonStyle(.plain)
                     .contextMenu {
@@ -70,27 +81,8 @@ struct SmartPlaylistDetailContent: View {
                     }
                 }
             }
-            .listStyle(.plain)
-            .navigationTitle(smartPlaylist.id.title)
-            .navigationBarTitleDisplayMode(.inline)
         } else {
             EmptyState("Playlist Not Found", systemImage: "star")
         }
-    }
-
-    @ViewBuilder
-    private func heroSection(_ smartPlaylist: SmartPlaylist) -> some View {
-        Section {
-            DetailHero(
-                title: smartPlaylist.id.title,
-                subtitle: pluralized(state.songs.count, "song"),
-                onPlay: { onPlay(0) },
-                onShuffle: onShuffle
-            ) {
-                DetailPlaceholderArtwork(systemImage: "star")
-            }
-            .listRowInsets(EdgeInsets())
-        }
-        .listRowSeparator(.hidden)
     }
 }
