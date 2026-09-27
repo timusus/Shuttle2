@@ -246,6 +246,12 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 - [ ] Crossfade on (#569): start casting mid-song; the receiver plays each song whole (no early cut), and coming back crossfades locally again. PostHog shows a `crossfade_skipped` event with `reason` `cast` as the receiver moves on, and `unseekable` or `tail_late` for a transcoded server song that plays whole.
 - [ ] Equalizer: Bass boost with the preamp at 0 dB is quieter than EQ off, as expected; raising the preamp brings the level back, and at +12 dB with a loud track it clips cleanly (no crackle or wrap-around noise).
 
+## Jellyfin Quick Connect (#505)
+
+- [ ] In the Jellyfin sign-in dialog, tap Use Quick Connect. S2 shows a code; open a browser to the same server's web client, sign in, and enter the code under Quick Connect. S2 signs in without ever asking for a password.
+- [ ] Start Quick Connect, then close the dialog before approving. Reopening it and starting again works cleanly (no stuck poll from the first attempt).
+- [ ] Start Quick Connect and let it sit unapproved for the full ten minutes: it reports the code expired.
+
 ## Favourites as a song flag (#528, #497)
 
 - [ ] Upgrade from the Play build with a few songs in Favorites (and a Favoriten playlist made under German, if you have one): after the upgrade, Library → Playlists shows one Favorites smart playlist first, holding all of them, newest favourite first, and no old Favorites playlist.

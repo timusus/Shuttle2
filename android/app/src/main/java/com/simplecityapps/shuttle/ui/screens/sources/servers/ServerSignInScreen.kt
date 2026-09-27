@@ -19,6 +19,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -54,6 +55,8 @@ class ServerSignInActions(
     val onAuthenticate: () -> Unit,
     val onRetry: () -> Unit,
     val onDismiss: () -> Unit,
+    val onUseQuickConnect: () -> Unit,
+    val onCancelQuickConnect: () -> Unit,
 )
 
 /** A Jellyfin, Emby or Plex server's sign-in dialog. */
@@ -89,6 +92,8 @@ internal fun ServerSignInForm(
             ServerSignInStep.Form -> SignInFields(uiState, actions)
 
             ServerSignInStep.Authenticating -> Progress(stringResource(R.string.media_provider_authenticating), showSpinner = true)
+
+            is ServerSignInStep.AwaitingCode -> QuickConnectCode(step.code, actions.onCancelQuickConnect)
 
             ServerSignInStep.Connected -> Progress(stringResource(R.string.media_provider_authentication_success), showSpinner = false)
 
@@ -168,6 +173,38 @@ private fun SignInFields(
             Spacer(Modifier.width(16.dp))
             Switch(checked = form.rememberPassword, onCheckedChange = actions.onRememberPasswordChange)
         }
+        if (uiState.quickConnectEnabled) {
+            S2Button(
+                text = stringResource(R.string.media_provider_button_use_quick_connect),
+                onClick = actions.onUseQuickConnect,
+                style = S2ButtonStyle.Outlined,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+/** Quick Connect's code, up until the user approves it in another Jellyfin client or cancels. */
+@Composable
+private fun QuickConnectCode(
+    code: String,
+    onCancel: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(stringResource(R.string.media_provider_quick_connect_instructions), textAlign = TextAlign.Center)
+        Text(code, style = MaterialTheme.typography.headlineMedium, textAlign = TextAlign.Center)
+        CircularProgressIndicator()
+        S2Button(
+            text = stringResource(R.string.dialog_button_cancel),
+            onClick = onCancel,
+            style = S2ButtonStyle.Outlined,
+        )
     }
 }
 
@@ -231,7 +268,7 @@ private val MediaProviderType.longTitleRes: Int
         MediaProviderType.Shuttle, MediaProviderType.MediaStore -> error("$this has no sign-in")
     }
 
-private val previewActions = ServerSignInActions({}, {}, {}, {}, {}, {}, {}, {})
+private val previewActions = ServerSignInActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 @Preview
 @Composable
@@ -253,6 +290,17 @@ private fun JellyfinSignInMissingFields() {
                 MediaProviderType.Jellyfin,
                 ServerSignInForm(address = "", missing = setOf(ServerSignInField.Address, ServerSignInField.Username)),
             ),
+            previewActions,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun JellyfinSignInAwaitingCode() {
+    S2Preview(darkTheme = false) {
+        ServerSignInForm(
+            ServerSignInUiState(MediaProviderType.Jellyfin, step = ServerSignInStep.AwaitingCode("123456")),
             previewActions,
         )
     }

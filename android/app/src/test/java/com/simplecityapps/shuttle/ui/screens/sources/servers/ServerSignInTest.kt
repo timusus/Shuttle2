@@ -140,4 +140,36 @@ class ServerSignInTest {
 
         robot.retried shouldBe 1
     }
+
+    @Test
+    fun `Quick Connect isn't offered until the server reports it enabled`() {
+        robot.setContent(serverSignInForm(quickConnectEnabled = false))
+        robot.assertTextNotDisplayed("Use Quick Connect")
+    }
+
+    @Test
+    fun `Quick Connect is offered once the server reports it enabled`() {
+        robot.setContent(serverSignInForm(quickConnectEnabled = true))
+        robot.assertTextDisplayed("Use Quick Connect")
+    }
+
+    @Test
+    fun `starting Quick Connect is forwarded`() {
+        robot.setContent(serverSignInForm(quickConnectEnabled = true))
+
+        robot.clickText("Use Quick Connect")
+
+        robot.quickConnectStarted shouldBe 1
+    }
+
+    @Test
+    fun `awaiting approval shows the code and a cancel action`() {
+        robot.setContent(serverSignInAwaitingCode("123456"))
+
+        robot.assertTextDisplayed("123456")
+        robot.assertFieldCount(0)
+        robot.clickText("Cancel")
+
+        robot.quickConnectCancelled shouldBe 1
+    }
 }

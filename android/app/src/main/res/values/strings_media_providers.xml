@@ -16,4 +16,6 @@
     <string name="media_provider_config_helper_address_plex">e.g. http://my.plex.server.com:32400</string>
     <string name="media_provider_config_show_password">Show password</string>
     <string name="media_provider_config_hide_password">Hide password</string>
+    <string name="media_provider_button_use_quick_connect">Use Quick Connect</string>
+    <string name="media_provider_quick_connect_instructions">Enter this code in another Jellyfin app to sign in</string>
 </resources>

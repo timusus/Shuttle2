@@ -6,9 +6,12 @@ fun serverSignInForm(
     type: MediaProviderType = MediaProviderType.Jellyfin,
     form: ServerSignInForm = ServerSignInForm(address = "http://"),
     showProDisclosure: Boolean = false,
-) = ServerSignInUiState(type, form, showProDisclosure = showProDisclosure)
+    quickConnectEnabled: Boolean = false,
+) = ServerSignInUiState(type, form, showProDisclosure = showProDisclosure, quickConnectEnabled = quickConnectEnabled)
 
 fun serverSignInAuthenticating(type: MediaProviderType = MediaProviderType.Jellyfin) = ServerSignInUiState(type, step = ServerSignInStep.Authenticating)
+
+fun serverSignInAwaitingCode(code: String, type: MediaProviderType = MediaProviderType.Jellyfin) = ServerSignInUiState(type, step = ServerSignInStep.AwaitingCode(code))
 
 fun serverSignInConnected(type: MediaProviderType = MediaProviderType.Jellyfin) = ServerSignInUiState(type, step = ServerSignInStep.Connected)
 

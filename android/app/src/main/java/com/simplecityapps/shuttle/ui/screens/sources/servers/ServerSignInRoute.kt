@@ -46,6 +46,8 @@ fun ServerSignInRoute(
             onAuthenticate = viewModel::onAuthenticate,
             onRetry = viewModel::onRetry,
             onDismiss = { currentOnDismiss() },
+            onUseQuickConnect = viewModel::onUseQuickConnect,
+            onCancelQuickConnect = viewModel::onCancelQuickConnect,
         )
     }
     ServerSignInDialog(uiState, actions)

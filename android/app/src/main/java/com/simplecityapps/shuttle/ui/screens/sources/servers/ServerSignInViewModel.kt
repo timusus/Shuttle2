@@ -10,11 +10,19 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -40,6 +48,9 @@ sealed interface ServerSignInStep {
 
     data object Authenticating : ServerSignInStep
 
+    /** Quick Connect's code is up, waiting for the user to approve it in another Jellyfin client. */
+    data class AwaitingCode(val code: String) : ServerSignInStep
+
     data object Connected : ServerSignInStep
 
     data class Failed(val message: String) : ServerSignInStep
@@ -52,6 +63,8 @@ data class ServerSignInUiState(
     val events: List<PendingEvent<ServerSignInEvent>> = emptyList(),
     /** True for a Free user, who hasn't had the server trial yet or has used it up: streaming is S2 Pro. */
     val showProDisclosure: Boolean = false,
+    /** True when [type]'s server at the typed address reports Quick Connect support. Jellyfin only. */
+    val quickConnectEnabled: Boolean = false,
 ) {
     /** Plex takes a two-factor code, and needs the password. */
     val asksForAuthCode: Boolean get() = type == MediaProviderType.Plex
@@ -69,6 +82,7 @@ sealed interface ServerSignInEvent {
  * A Jellyfin, Emby or Plex server's sign-in: the address and login, starting from the saved ones, then the
  * authentication's progress and outcome.
  */
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel(assistedFactory = ServerSignInViewModel.Factory::class)
 class ServerSignInViewModel @AssistedInject constructor(
     @Assisted private val type: MediaProviderType,
@@ -76,6 +90,8 @@ class ServerSignInViewModel @AssistedInject constructor(
     private val signInToServer: SignInToServer,
     private val forgetServerLogin: ForgetServerLogin,
     observeServerStreamingNeedsPro: ObserveServerStreamingNeedsPro,
+    checkQuickConnectAvailable: CheckQuickConnectAvailable,
+    private val signInWithQuickConnect: SignInWithQuickConnect,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
@@ -95,10 +111,17 @@ class ServerSignInViewModel @AssistedInject constructor(
     private val step = MutableStateFlow<ServerSignInStep>(ServerSignInStep.Form)
     private val events = PendingEvents<ServerSignInEvent>()
     private val needsPro = observeServerStreamingNeedsPro()
+    private val quickConnectEnabled = form
+        .map { it.address }
+        .distinctUntilChanged()
+        .debounce(QUICK_CONNECT_CHECK_DEBOUNCE_MILLIS)
+        .mapLatest { address -> checkQuickConnectAvailable(type, address) }
+        .onStart { emit(false) }
+    private var quickConnectJob: Job? = null
 
     val uiState: StateFlow<ServerSignInUiState> =
-        combine(form, step, events.flow, needsPro) { form, step, events, needsPro ->
-            ServerSignInUiState(type, form, step, events, showProDisclosure = needsPro)
+        combine(form, step, events.flow, needsPro, quickConnectEnabled) { form, step, events, needsPro, quickConnectEnabled ->
+            ServerSignInUiState(type, form, step, events, showProDisclosure = needsPro, quickConnectEnabled = quickConnectEnabled)
         }.stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
@@ -150,6 +173,36 @@ class ServerSignInViewModel @AssistedInject constructor(
         step.value = ServerSignInStep.Form
     }
 
+    fun onUseQuickConnect() {
+        if (step.value != ServerSignInStep.Form) return
+        val address = form.value.address
+        quickConnectJob = viewModelScope.launch {
+            signInWithQuickConnect(type, address).collect { state ->
+                when (state) {
+                    is SignInWithQuickConnect.State.AwaitingApproval -> step.value = ServerSignInStep.AwaitingCode(state.code)
+
+                    SignInWithQuickConnect.State.Success -> {
+                        step.value = ServerSignInStep.Connected
+                        events.post(ServerSignInEvent.Connected)
+                        delay(SUCCESS_SHOWN_MILLIS)
+                        events.post(ServerSignInEvent.Finished)
+                    }
+
+                    SignInWithQuickConnect.State.Expired -> step.value = ServerSignInStep.Failed(QUICK_CONNECT_EXPIRED_MESSAGE)
+
+                    is SignInWithQuickConnect.State.Failed -> step.value = ServerSignInStep.Failed(state.message)
+                }
+            }
+        }
+    }
+
+    /** Cancels an in-flight Quick Connect poll, whether the user backed out or the dialog is closing. */
+    fun onCancelQuickConnect() {
+        quickConnectJob?.cancel()
+        quickConnectJob = null
+        step.value = ServerSignInStep.Form
+    }
+
     fun onEventHandled(id: Long) = events.consume(id)
 
     private fun missingFields(form: ServerSignInForm): Set<ServerSignInField> = buildSet {
@@ -161,5 +214,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     private companion object {
         const val DEFAULT_ADDRESS = "http://"
         const val SUCCESS_SHOWN_MILLIS = 1_000L
+        const val QUICK_CONNECT_CHECK_DEBOUNCE_MILLIS = 500L
+        const val QUICK_CONNECT_EXPIRED_MESSAGE = "The code expired before it was approved."
     }
 }

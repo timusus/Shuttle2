@@ -19,6 +19,8 @@ class ServerSignInRobot(private val rule: ComposeContentTestRule) {
     var authenticated = 0
     var retried = 0
     var dismissed = 0
+    var quickConnectStarted = 0
+    var quickConnectCancelled = 0
     val passwords = mutableListOf<String>()
     val authCodes = mutableListOf<String>()
     val rememberPassword = mutableListOf<Boolean>()
@@ -36,6 +38,8 @@ class ServerSignInRobot(private val rule: ComposeContentTestRule) {
                     onAuthenticate = { authenticated++ },
                     onRetry = { retried++ },
                     onDismiss = { dismissed++ },
+                    onUseQuickConnect = { quickConnectStarted++ },
+                    onCancelQuickConnect = { quickConnectCancelled++ },
                 ),
             )
         }

@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.sources.servers
 
+import com.simplecityapps.fakes.FakeQuickConnectAuthentication
 import com.simplecityapps.fakes.FakeServerAuthentication
 import com.simplecityapps.shuttle.entitlement.ObserveServerStreamingNeedsPro
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -23,17 +24,22 @@ class ServerSignInViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val server = FakeServerAuthentication()
+    private val quickConnect = FakeQuickConnectAuthentication()
     private val connected = mutableListOf<MediaProviderType>()
     private val needsPro = MutableStateFlow(false)
 
     private fun TestScope.viewModel(type: MediaProviderType = MediaProviderType.Jellyfin): ServerSignInViewModel {
         val servers = mapOf(type to server)
+        val quickConnects = mapOf(MediaProviderType.Jellyfin to quickConnect)
+        val analytics = ServerSignInAnalytics { connected += it }
         return ServerSignInViewModel(
             type,
             ReadServerLogin(servers),
-            SignInToServer(servers, ServerSignInAnalytics { connected += it }),
+            SignInToServer(servers, analytics),
             ForgetServerLogin(servers),
             ObserveServerStreamingNeedsPro { needsPro },
+            CheckQuickConnectAvailable(quickConnects),
+            SignInWithQuickConnect(quickConnects, analytics),
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
         }
@@ -188,5 +194,65 @@ class ServerSignInViewModelTest {
     fun `a Trial or Pro user isn't shown the disclosure`() = runTest {
         needsPro.value = false
         viewModel().uiState.value.showProDisclosure shouldBe false
+    }
+
+    @Test
+    fun `Quick Connect is unavailable for a type with no binding`() = runTest {
+        val viewModel = viewModel(MediaProviderType.Plex)
+        viewModel.uiState.value.quickConnectEnabled shouldBe false
+    }
+
+    @Test
+    fun `the server's Quick Connect availability appears after a short debounce`() = runTest {
+        quickConnect.enabled = true
+        val viewModel = viewModel()
+
+        viewModel.uiState.value.quickConnectEnabled shouldBe false
+
+        advanceTimeBy(501)
+        runCurrent()
+        viewModel.uiState.value.quickConnectEnabled shouldBe true
+    }
+
+    @Test
+    fun `Quick Connect shows the code, then connects and finishes as a sign-in does`() = runTest {
+        quickConnect.pollState = QuickConnectPollState.Authenticated
+        val viewModel = viewModel()
+
+        viewModel.onUseQuickConnect()
+        viewModel.uiState.value.step shouldBe ServerSignInStep.AwaitingCode("123456")
+
+        advanceTimeBy(5_001)
+        runCurrent()
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
+        connected shouldBe listOf(MediaProviderType.Jellyfin)
+        viewModel.events shouldBe listOf(ServerSignInEvent.Connected)
+
+        advanceTimeBy(1_001)
+        viewModel.events shouldBe listOf(ServerSignInEvent.Connected, ServerSignInEvent.Finished)
+    }
+
+    @Test
+    fun `Quick Connect does nothing while the form isn't showing`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onAuthenticate()
+
+        viewModel.onUseQuickConnect()
+
+        quickConnect.authenticated shouldBe emptyList()
+    }
+
+    @Test
+    fun `denial fails, and cancelling mid-poll returns to the form without authenticating`() = runTest {
+        quickConnect.pending = CompletableDeferred()
+        val viewModel = viewModel()
+
+        viewModel.onUseQuickConnect()
+        viewModel.uiState.value.step shouldBe ServerSignInStep.AwaitingCode("123456")
+
+        viewModel.onCancelQuickConnect()
+
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Form
+        quickConnect.authenticated shouldBe emptyList()
     }
 }
