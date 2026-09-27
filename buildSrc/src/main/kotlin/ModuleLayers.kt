@@ -49,6 +49,8 @@ object ModuleLayers {
         ":android:mediaprovider:plex" to ModuleLayer.PROVIDER,
         ":android:designsystem" to ModuleLayer.PRESENTATION,
         ":android:app" to ModuleLayer.COMPOSITION_ROOT,
+        // The iOS umbrella: links the shared modules into Shared.framework, as :android:app does the APK (#587).
+        ":shared" to ModuleLayer.COMPOSITION_ROOT,
         ":android:fixtures" to ModuleLayer.FIXTURES,
         ":android:architecture-tests" to ModuleLayer.TOOLING,
     )
