@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 // debug design catalogue. Test and debug code only: never an implementation dependency of a release build.
 plugins {
     id("com.android.library")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -31,7 +32,7 @@ dependencies {
     val composeBom = platform(libs.androidx.compose.bom)
     implementation(composeBom)
     api("androidx.compose.ui:ui-graphics")
-    implementation(libs.moshi)
+    implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotest)

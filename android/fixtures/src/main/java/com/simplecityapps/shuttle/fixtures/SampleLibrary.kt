@@ -3,8 +3,9 @@ package com.simplecityapps.shuttle.fixtures
 import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import com.squareup.moshi.Moshi
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 /** A sample song. [id] is stable: the album's position in the manifest times 100, plus the track number. */
 data class SampleSong(
@@ -70,14 +71,13 @@ object SampleLibrary {
     val playlists: List<SamplePlaylist>
 
     init {
-        @Suppress("UNCHECKED_CAST")
-        val manifest = Moshi.Builder().build().adapter(Any::class.java).fromJson(resourceText("library.json")) as Map<String, Any?>
-        albums = (manifest.getValue("albums") as List<Map<String, Any?>>).mapIndexed(::parseAlbum)
+        val manifest = manifestJson.decodeFromString<Manifest>(resourceText("library.json"))
+        albums = manifest.albums.mapIndexed(::parseAlbum)
         val songsByRef = albums.flatMap { album -> album.songs.map { "${album.id}/${it.track}" to it } }.toMap()
-        playlists = (manifest.getValue("playlists") as List<Map<String, Any?>>).map { playlist ->
+        playlists = manifest.playlists.map { playlist ->
             SamplePlaylist(
-                name = playlist.getValue("name") as String,
-                songs = (playlist.getValue("tracks") as List<String>).map { ref -> songsByRef[ref] ?: error("Playlist track $ref isn't in the library") },
+                name = playlist.name,
+                songs = playlist.tracks.map { ref -> songsByRef[ref] ?: error("Playlist track $ref isn't in the library") },
             )
         }
     }
@@ -125,29 +125,22 @@ object SampleLibrary {
         BitmapFactory.decodeByteArray(bytes, 0, bytes.size).asImageBitmap()
     }
 
-    private fun parseAlbum(index: Int, json: Map<String, Any?>): SampleAlbum {
-        val id = json.getValue("id") as String
-        val title = json.getValue("title") as String
-        val artist = json.getValue("artist") as String
-        val year = (json.getValue("year") as Number).toInt()
-        val genre = json.getValue("genre") as String
-
-        @Suppress("UNCHECKED_CAST")
-        val songs = (json.getValue("tracks") as List<Map<String, Any?>>).mapIndexed { trackIndex, track ->
+    private fun parseAlbum(index: Int, album: ManifestAlbum): SampleAlbum {
+        val songs = album.tracks.mapIndexed { trackIndex, track ->
             SampleSong(
                 id = (index + 1) * 100L + trackIndex + 1,
-                title = track.getValue("title") as String,
-                artist = track["artist"] as String? ?: artist,
-                albumArtist = artist,
-                album = title,
-                albumId = id,
+                title = track.title,
+                artist = track.artist ?: album.artist,
+                albumArtist = album.artist,
+                album = album.title,
+                albumId = album.id,
                 track = trackIndex + 1,
-                durationSeconds = (track.getValue("duration") as Number).toInt(),
-                year = year,
-                genre = genre,
+                durationSeconds = track.duration,
+                year = album.year,
+                genre = album.genre,
             )
         }
-        return SampleAlbum(id, title, artist, year, genre, songs)
+        return SampleAlbum(album.id, album.title, album.artist, album.year, album.genre, songs)
     }
 
     private fun resourceBytes(path: String): ByteArray = SampleLibrary::class.java.classLoader!!.getResourceAsStream("$ROOT/$path")
@@ -158,3 +151,34 @@ object SampleLibrary {
 }
 
 internal fun formatDuration(seconds: Int): String = "%d:%02d".format(seconds / 60, seconds % 60)
+
+private val manifestJson = Json { ignoreUnknownKeys = true }
+
+@Serializable
+private data class Manifest(
+    val albums: List<ManifestAlbum>,
+    val playlists: List<ManifestPlaylist>,
+)
+
+@Serializable
+private data class ManifestAlbum(
+    val id: String,
+    val title: String,
+    val artist: String,
+    val year: Int,
+    val genre: String,
+    val tracks: List<ManifestTrack>,
+)
+
+@Serializable
+private data class ManifestTrack(
+    val title: String,
+    val artist: String? = null,
+    val duration: Int,
+)
+
+@Serializable
+private data class ManifestPlaylist(
+    val name: String,
+    val tracks: List<String>,
+)
