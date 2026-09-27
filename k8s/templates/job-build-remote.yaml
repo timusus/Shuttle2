@@ -41,17 +41,7 @@ spec:
                 # for the configuration cache to store the value).
                 command -v git >/dev/null || (apt-get update -qq && apt-get install -y -qq --no-install-recommends git > /dev/null)
               fi
-              if [ ! -d /mnt/jdks/17 ]; then
-                echo "==> provisioning JDK 17 toolchain (Gradle requests languageVersion=17; image ships 21)"
-                mkdir -p /mnt/jdks
-                curl -fsSL -o /tmp/jdk17.tar.gz "https://api.adoptium.net/v3/binary/latest/17/ga/linux/x64/jdk/hotspot/normal/eclipse"
-                tar -xzf /tmp/jdk17.tar.gz -C /mnt/jdks
-                mv /mnt/jdks/jdk-17* /mnt/jdks/17
-                rm /tmp/jdk17.tar.gz
-              fi
               mkdir -p /mnt/gradle
-              grep -q "org.gradle.java.installations.paths" /mnt/gradle/gradle.properties 2>/dev/null || \
-                echo "org.gradle.java.installations.paths=/mnt/jdks/17" >> /mnt/gradle/gradle.properties
               cd /mnt/workspace
               echo "local.properties:"; echo "sdk.dir=/mnt/sdk" > local.properties
               echo "==> ./gradlew __GRADLE_ARGS__"

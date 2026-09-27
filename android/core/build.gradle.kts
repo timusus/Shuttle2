@@ -20,9 +20,9 @@ kotlin {
             enable = true
         }
 
-        // All Android modules target JVM 17 (unified Sept 2026; was 11 pre-KMP conversion)
+        // All Android modules target JVM 21 (unified Sept 2026; was 11 pre-KMP conversion)
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
+            jvmTarget.set(JvmTarget.JVM_21)
         }
     }
 
