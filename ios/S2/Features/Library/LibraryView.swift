@@ -8,6 +8,7 @@ import SwiftUI
 ///
 /// `LibraryViewModel`'s enabled tabs, in the user's order, pick the categories; `LibraryEmptyViewModel` swaps them
 /// for the empty state while there are no songs; the import's progress shows below either. Pull to refresh imports.
+/// The toolbar and the empty state's action open Sources.
 struct LibraryView: View {
     let navigator: Navigator
 
@@ -146,10 +147,23 @@ struct LibraryRootContent: View {
                 ContentUnavailableView {
                     Label("No Music", systemImage: "music.note.house")
                 } description: {
-                    Text(emptyNote ?? "Sign in to a Jellyfin or Emby server, then pull to refresh.")
+                    Text(emptyNote ?? "Connect a Jellyfin, Emby or Plex server to stream your music.")
+                } actions: {
+                    NavigationLink("Add a Source", value: Route.sources)
+                        .buttonStyle(.borderedProminent)
+                        .accessibilityIdentifier("libraryEmpty.addSource")
                 }
             case .empty, .hasMusic:
                 EmptyView()
+            }
+        }
+        .toolbar {
+            // Sources lives here until Settings exists (phase 7), where it moves as on Android.
+            ToolbarItem(placement: .primaryAction) {
+                NavigationLink(value: Route.sources) {
+                    Label("Sources", systemImage: "server.rack")
+                }
+                .accessibilityIdentifier("library.sources")
             }
         }
     }

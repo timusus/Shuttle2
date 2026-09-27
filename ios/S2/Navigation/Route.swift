@@ -44,6 +44,11 @@ enum Route: Hashable, Codable {
     case genre(name: String)
     case playlist(id: Int64)
     case smartPlaylist(id: String)
+    /// Sources (Android's `SourcesRoute`, under Settings there): the media servers, from the Library toolbar or its
+    /// empty state until Settings exists (phase 7).
+    case sources
+    /// A server's sign-in, keyed by the `MediaProviderType`'s name (`Route.serverSignIn(_:)`).
+    case serverSignIn(type: String)
 
     /// The `ViewModelCache` key for the screen this route resolves to (`ios.md`, "Swift ↔ Kotlin").
     var cacheKey: String {
@@ -54,6 +59,8 @@ enum Route: Hashable, Codable {
         case .genre(let name): "genre:\(name)"
         case .playlist(let id): "playlist:\(id)"
         case .smartPlaylist(let id): "smartPlaylist:\(id)"
+        case .sources: "sources"
+        case .serverSignIn(let type): "serverSignIn:\(type)"
         }
     }
 }

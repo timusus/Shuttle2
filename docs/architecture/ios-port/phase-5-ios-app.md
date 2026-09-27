@@ -160,7 +160,7 @@ paths are under `android/app/.../ui/`.
 | Screen | Android | ViewModel (wave) | SwiftUI *(new unless noted)* | Phase | iOS differences |
 |---|---|---|---|---|---|
 | Library root | `screens/library/LibraryScreen.kt` | `LibraryViewModel` (1) | `LibraryView` (exists, placeholder) | 5 | category list / sidebar section, not a pager |
-| Library empty | `LibraryEmptyScreen.kt` | `LibraryEmptyViewModel` (1) | `LibraryEmptyView` | 5 | `ContentUnavailableView`; the action opens Sources (phase 7) |
+| Library empty | `LibraryEmptyScreen.kt` | `LibraryEmptyViewModel` (1) | `LibraryRootContent`'s overlay (done, #587) | 5 | `ContentUnavailableView`; its "Add a Source" action pushes `Route.sources` (Home's empty state has the same action) |
 | Songs | `LibraryPages.kt` | `SongListViewModel` (2) | `SongListView` | 5 | `List`; section index on iOS 26 (`sectionIndexLabel`), none before |
 | Albums | `LibraryPages.kt` | `AlbumListViewModel` (2) | `AlbumListView` | 5 | `LazyVGrid(.adaptive)` for grid mode, `List` for list mode |
 | Album artists | `LibraryPages.kt` | `AlbumArtistListViewModel` (2) | `AlbumArtistListView` | 5 | as albums |
@@ -179,7 +179,7 @@ paths are under `android/app/.../ui/`.
 | Home | `screens/home/HomeScreen.kt` | `HomeViewModel` (3) | `HomeView` (done, #587) | 7 | resume hero, and recently played/added/most played albums plus "something different" artists as horizontal shelves (`Components/RemoteArtwork.swift` for the artwork); no What's New card or analytics-consent banner yet (no changelog/settings screen to open from one); tile actions are `.contextMenu`, not a ported actions sheet |
 | Search | `screens/search/SearchScreen.kt` | `SearchViewModel` (3) | `SearchView` (exists, placeholder) | 7 | `.searchable` on the Search tab's stack; recent searches as suggestions |
 | Settings entry | `screens/settings/SettingsScreens.kt` | `SettingsViewModel` (3) | `SettingsView` | 7 (entry point in 5) | `Form`; `SettingsEffects`' clipboard and share become `UIPasteboard` and `ShareLink` |
-| Sources, sign-in | `screens/sources/` | `SourcesViewModel`, `ServerTypePickerViewModel` (3), `ServerSignInViewModel` (4) | `SourcesView`, `ServerSignInView` | 7 | see the debug sign-in below |
+| Sources, sign-in | `screens/sources/` | `SourcesViewModel`, `ServerTypePickerViewModel` (3), `ServerSignInViewModel` (4) | `SourcesView` (done, #587), `ServerSignInView` | 7 | `Route.sources`, pushed from a Library toolbar item and the empty states until Settings exists; lists the connected servers (tap: sign in again or remove, as Android's server dialog; swipe to remove) and Scan Now. "Connect a Server" presents `ServerTypePicker` as a sheet; a type passes `TryAddServer` and pushes `Route.serverSignIn(type:)`, which shows "not built yet" until `ServerSignInView` lands on the shared `ServerSignInViewModel`. No "This device" or folder rows until local files (phase 8). See the debug sign-in below |
 | Song info | `screens/songinfo/` | `SongInfoViewModel` (4) | `SongInfoView` | 7 | sheet |
 
 **Sign-in for the phase 5 checkpoint.** The checkpoint browses a Jellyfin library, but Sources and sign-in

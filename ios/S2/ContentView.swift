@@ -22,6 +22,8 @@ struct ContentView: View {
         let tier = LayoutTier.resolve(horizontalSizeClass: horizontalSizeClass, containerWidth: containerWidth)
         AppShell(tier: tier, navigator: navigator, showNowPlaying: $showNowPlaying)
             .environment(\.layoutTier, tier)
+            // For screens that push without a `NavigationLink`, such as Sources after its type picker closes.
+            .environment(navigator)
             .nowPlayingPresentation(isPresented: $showNowPlaying, tier: tier) {
                 NowPlayingView()
             }

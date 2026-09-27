@@ -12,6 +12,10 @@ struct RouteDestinationView: View {
             SongListView()
         case .libraryCategory(.albums):
             AlbumListView()
+        case .sources:
+            SourcesView()
+        case .serverSignIn(let type):
+            ServerSignInPendingView(type: Route.serverType(named: type))
         default:
             Text(title)
                 .navigationTitle(title)
@@ -26,6 +30,7 @@ struct RouteDestinationView: View {
         case .genre(let name): "Genre \(name)"
         case .playlist(let id): "Playlist \(id)"
         case .smartPlaylist(let id): "Smart playlist \(id)"
+        case .sources, .serverSignIn: ""
         }
     }
 }

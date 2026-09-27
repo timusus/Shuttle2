@@ -67,7 +67,15 @@ struct HomeContent: View {
         case .loading:
             ProgressView()
         case .empty:
-            ContentUnavailableView("No Music", systemImage: "house", description: Text("Sign in to a Jellyfin or Emby server, then pull to refresh."))
+            ContentUnavailableView {
+                Label("No Music", systemImage: "house")
+            } description: {
+                Text("Connect a Jellyfin, Emby or Plex server to stream your music.")
+            } actions: {
+                NavigationLink("Add a Source", value: Route.sources)
+                    .buttonStyle(.borderedProminent)
+                    .accessibilityIdentifier("homeEmpty.addSource")
+            }
         case .content(let content):
             List {
                 if let resume = content.resume {
