@@ -8,7 +8,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
-import org.junit.Test
+import kotlin.test.Test
 
 /**
  * What [PlaybackPreferenceManager] saves, key for key, and the JSON it reads: the JSON strings below are what the
@@ -83,7 +83,7 @@ class PlaybackPreferenceManagerTest {
     }
 
     @Test
-    fun `EQ bands Moshi wrote read back, and are written back byte for byte`() {
+    fun `EQ bands Moshi wrote read back and are written back byte for byte`() {
         store.putRaw("custom_preset_bands", MOSHI_BANDS)
 
         val bands = manager.customPresetBands!!
@@ -95,7 +95,7 @@ class PlaybackPreferenceManagerTest {
     }
 
     @Test
-    fun `a preset's bands are written as the two fields of a band, as Moshi wrote them`() {
+    fun `a preset's bands are written as the two fields of a band as Moshi wrote them`() {
         val bands = Equalizer.Presets.bassReducer.bands.toMutableList<EqualizerBand>()
         bands[1] = EqualizerBand(63, 2.5)
 
@@ -112,7 +112,7 @@ class PlaybackPreferenceManagerTest {
     }
 
     @Test
-    fun `a snapshot Moshi wrote reads back, and is written back byte for byte`() {
+    fun `a snapshot Moshi wrote reads back and is written back byte for byte`() {
         store.putRaw("now_playing", MOSHI_FULL_SNAPSHOT)
         store.putRaw("playback_position", 12_000)
 
@@ -123,7 +123,7 @@ class PlaybackPreferenceManagerTest {
     }
 
     @Test
-    fun `a snapshot Moshi wrote without its null fields reads them as null, and is written back byte for byte`() {
+    fun `a snapshot Moshi wrote without its null fields reads them as null and is written back byte for byte`() {
         store.putRaw("now_playing", MOSHI_SPARSE_SNAPSHOT)
 
         manager.nowPlaying shouldBe sparseSnapshot

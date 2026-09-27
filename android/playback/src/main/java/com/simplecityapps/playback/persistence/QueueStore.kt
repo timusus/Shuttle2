@@ -5,7 +5,6 @@ import androidx.media3.common.Player
 import androidx.tracing.trace
 import androidx.tracing.traceAsync
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackPolicy
 import com.simplecityapps.playback.queue.PreparedQueue
 import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.QueueFacade
@@ -74,8 +73,7 @@ class QueueStore(
     /** The queue as the shuffle mode presents it, and the current position in it, as last saved (or at creation). */
     private var savedPresentation = Presentation.of(localPlayer, savedOrder)
 
-    /** What [saveNowPlaying] saved last, to leave an unchanged one alone. */
-    private var savedNowPlaying: NowPlayingSnapshot? = null
+    private val writer = SavedQueueWriter(playbackPreferenceManager)
 
     /** The uid of [player]'s current entry, as of the last item transition. */
     private var currentUid: Long? = player.currentMediaItem?.queueEntryOrNull?.uid
@@ -116,41 +114,20 @@ class QueueStore(
         }
     }
 
-    /**
-     * Saves the queue in both orders. Songs that aren't in the library (files opened from other apps) are left out:
-     * there'd be nothing to restore them from, and their URI grants lapse with the app anyway. A queue that's what's
-     * saved already (the one a restore just set) is left alone.
-     */
+    /** Saves the queue in both orders ([SavedQueueWriter.saveQueue]). */
     private fun saveQueueIds(order: QueueOrder) {
-        val queueIds = order.entries.libraryIds()
-        if (queueIds != playbackPreferenceManager.queueIds) playbackPreferenceManager.queueIds = queueIds
-        val shuffleQueueIds = order.shuffled.map { index -> order.entries[index] }.libraryIds()
-        if (shuffleQueueIds != playbackPreferenceManager.shuffleQueueIds) playbackPreferenceManager.shuffleQueueIds = shuffleQueueIds
+        writer.saveQueue(order.entries.map { entry -> entry.song }, order.shuffled.map { index -> order.entries[index].song })
     }
 
-    private fun List<QueueEntry>.libraryIds(): String? = filter { entry -> entry.song.isInLibrary }.joinToString(",") { entry -> entry.song.id.toString() }.ifEmpty { null }
-
-    /** Saves the position in the saved queue and the song it names. Which one that is depends on the songs before it too, once some are left out. */
+    /** Saves the position in the saved queue and the song it names ([SavedQueueWriter.savePosition]). */
     private fun saveQueuePosition(presentation: Presentation) {
-        val savedPosition = savedQueuePosition(presentation.songs, presentation.currentPosition)
-        playbackPreferenceManager.queuePosition = savedPosition?.position
-        playbackPreferenceManager.restoreQueuePositionFromStart = savedPosition?.fromStart ?: false
-        saveNowPlaying(savedPosition?.let { presentation.songs.filter { song -> song.isInLibrary }[it.position] })
-    }
-
-    /** Saves [song] as the one the saved position names, unless it's what was saved last. */
-    private fun saveNowPlaying(song: Song?) {
-        val snapshot = song?.let(NowPlayingSnapshot::of)
-        if (snapshot != savedNowPlaying) {
-            savedNowPlaying = snapshot
-            playbackPreferenceManager.nowPlaying = snapshot
-        }
+        writer.savePosition(presentation.songs, presentation.currentPosition)
     }
 
     // The position to resume from
 
-    /** Where to resume [song] from: the saved position, else where the song itself says to start ([PlaybackPolicy.startOf]). */
-    fun resumePosition(song: Song?): Int = playbackPreferenceManager.playbackPosition ?: song?.let(PlaybackPolicy::startOf) ?: 0
+    /** Where to resume [song] from: the saved position, else where the song itself says to start (`PlaybackPolicy.startOf`). */
+    fun resumePosition(song: Song?): Int = playbackPreferenceManager.resumePosition(song)
 
     /**
      * Playback came back from a Cast receiver: saves the position the receiver was at, which the local player now
@@ -254,7 +231,7 @@ class QueueStore(
     ) {
         val timings = RestoreTimings()
         val savedQueue = if (queuePosition != null) {
-            readSavedQueue(shuffleMode, queuePosition, timings)
+            readQueue(shuffleMode, queuePosition, timings)
         } else {
             Timber.w("Queue restoration failed: queue position null")
             null
@@ -275,37 +252,28 @@ class QueueStore(
     }
 
     /** The saved queue, built ready to set, or null if there's none or none of its songs are left. */
-    private suspend fun readSavedQueue(
+    private suspend fun readQueue(
         shuffleMode: ShuffleMode,
         queuePosition: Int,
         timings: RestoreTimings
     ): SavedQueue? {
-        val songIds = timings.measure("prefs") { playbackPreferenceManager.queueIds.toSongIds().orEmpty() }
-        if (songIds.isEmpty()) return null
-        val shuffleSongIds = timings.measure("prefs") { playbackPreferenceManager.shuffleQueueIds.toSongIds() }
-
-        val songsById = timings.measureSuspending("DB") {
-            songRepository.getSongs(SongQuery.SongIds((songIds + shuffleSongIds.orEmpty()).distinct()))
-                .filterNotNull()
-                .firstOrNull()
-                .orEmpty()
-                .associateBy { song -> song.id }
+        val saved = playbackPreferenceManager.readSavedQueue(shuffleMode, queuePosition) { songIds ->
+            timings.measureSuspending("DB") {
+                songRepository.getSongs(SongQuery.SongIds(songIds))
+                    .filterNotNull()
+                    .firstOrNull()
+                    .orEmpty()
+                    .associateBy { song -> song.id }
+            }
         }
-
-        // A song gone from the library since the queue was saved is dropped, so the position is found again among
-        // the songs that are left, in the list the shuffle mode presents.
-        val songs = songIds.mapNotNull { songId -> songsById[songId] }
-        val shuffleSongs = shuffleSongIds?.mapNotNull { songId -> songsById[songId] }
-        val positionIds = if (shuffleMode == ShuffleMode.On && shuffleSongIds != null) shuffleSongIds else songIds
-        val restoredPosition = restoredQueuePosition(positionIds, queuePosition, songsById.keys)
-        if (restoredPosition == null) {
+        if (saved == null) {
             Timber.w("Queue restoration failed: none of the saved songs are in the library")
             return null
         }
 
         return SavedQueue(
-            queue = timings.measureSuspending("build") { queue.buildQueue(songs, shuffleSongs, restoredPosition.position) },
-            fromStart = restoredPosition.fromStart || playbackPreferenceManager.restoreQueuePositionFromStart
+            queue = timings.measureSuspending("build") { queue.buildQueue(saved.songs, saved.shuffleSongs, saved.position) },
+            fromStart = saved.fromStart
         )
     }
 
@@ -388,55 +356,6 @@ private class SavedQueue(
     val queue: PreparedQueue,
     val fromStart: Boolean
 )
-
-/**
- * A queue position to save or restore.
- *
- * @param fromStart true when the song at [position] isn't the one that was playing, so the saved playback
- * position isn't its position and it starts from the beginning.
- */
-internal data class QueuePosition(
-    val position: Int,
-    val fromStart: Boolean
-)
-
-/**
- * The position to save for [currentPosition] in [songs] (the queue as the shuffle mode presents it), once the
- * songs that aren't in the library are left out of the saved queue. When the current song is itself one of those,
- * it's the library song after it, or failing that the one before. Null when there's no position, or no library
- * song to save.
- */
-internal fun savedQueuePosition(
-    songs: List<Song>,
-    currentPosition: Int?
-): QueuePosition? = currentPosition?.let {
-    remainingQueuePosition(songs.map { song -> song.isInLibrary }, currentPosition)
-}
-
-/**
- * The position to restore [savedPosition] in [savedIds] to, once the songs missing from [restoredIds] are dropped.
- * When the saved song is itself missing, it's the restored song after it, or failing that the one before. Null
- * when the position is out of range or nothing was restored.
- */
-internal fun restoredQueuePosition(
-    savedIds: List<Long>,
-    savedPosition: Int,
-    restoredIds: Set<Long>
-): QueuePosition? = remainingQueuePosition(savedIds.map { songId -> songId in restoredIds }, savedPosition)
-
-/** Where [position] lands once the items [kept] marks false are removed; see [savedQueuePosition]. */
-private fun remainingQueuePosition(
-    kept: List<Boolean>,
-    position: Int
-): QueuePosition? {
-    if (position !in kept.indices) return null
-    val keptCount = kept.count { it }
-    if (keptCount == 0) return null
-    val keptBefore = kept.take(position).count { it }
-    return QueuePosition(position = minOf(keptBefore, keptCount - 1), fromStart = !kept[position])
-}
-
-private fun String?.toSongIds(): List<Long>? = this?.split(',')?.map { id -> id.toLong() }
 
 /** How long each stage of a restore took, traced as `S2 restore <stage>` and summed into the restore's log line. */
 private class RestoreTimings {

@@ -31,6 +31,8 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlin.test)
             implementation(libs.kotest)
+            // SavedQueueTest: the saved queue's reading suspends
+            implementation(libs.kotlinx.coroutinesTest)
         }
     }
 }
