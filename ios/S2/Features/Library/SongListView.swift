@@ -30,7 +30,7 @@ struct SongListView: View {
                         models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs)))
                     }
                 )
-                .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
+                .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.dispatch(action: $0) })
             }
         }
         .refreshable { LibraryImport.refresh() }
@@ -146,25 +146,35 @@ struct LibraryScanningView: View {
 }
 
 extension View {
-    /// Consumes `MediaActionsViewModel`'s results: the messages that matter on the POC's screens (playback
-    /// failed, nothing to play) as an alert; the rest are dropped until the snackbar lands.
-    func mediaActionResults(_ events: [PendingEvent<any MediaActionResult>], handled: @escaping (Int64) -> Void) -> some View {
-        modifier(MediaActionResultsModifier(events: events, handled: handled))
+    /// Consumes `MediaActionsViewModel`'s results: playback failed and nothing to play as an alert; with `send`, the
+    /// messages Now Playing shows as a notice (an Exclude, with its Undo, #650) show the same `PlayerNotice` here,
+    /// its button sending the result's snackbar action back through `send`. The rest are dropped.
+    func mediaActionResults(
+        _ events: [PendingEvent<any MediaActionResult>],
+        handled: @escaping (Int64) -> Void,
+        send: ((any MediaAction) -> Void)? = nil
+    ) -> some View {
+        modifier(MediaActionResultsModifier(events: events, handled: handled, send: send))
     }
 }
 
 private struct MediaActionResultsModifier: ViewModifier {
     let events: [PendingEvent<any MediaActionResult>]
     let handled: (Int64) -> Void
+    let send: ((any MediaAction) -> Void)?
     @State private var alert: String?
+    @State private var notice: PlayerNotice?
 
     func body(content: Content) -> some View {
         content
             .consumeEvents(events, handled: handled) { result in
                 if let message = (result as? MediaActionResultMessage).flatMap({ MediaActionText.alert(for: $0.message) }) {
                     alert = message
+                } else if let send, case .notice(let shown) = PlayerEventOutcome.resolve(result, send: send) {
+                    notice = shown
                 }
             }
+            .playerNotice($notice)
             .alert(alert ?? "", isPresented: Binding(get: { alert != nil }, set: { if !$0 { alert = nil } })) {
                 Button("OK", role: .cancel) {}
             }

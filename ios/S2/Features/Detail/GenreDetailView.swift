@@ -35,7 +35,7 @@ struct GenreDetailView: View {
                 },
                 onAlbumTap: { navigator.openAsserting(.album($0)) }
             )
-            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
+            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.dispatch(action: $0) })
         }
     }
 }

@@ -46,7 +46,7 @@ struct PlaylistDetailView: View {
                 onRename: { name in models.playlist.onRename(name: name) },
                 onDelete: { models.playlist.onDelete() }
             )
-            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
+            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.dispatch(action: $0) })
             .playlistDetailEvents(state.events, handled: { models.playlist.onEventHandled(id: $0) })
         }
     }

@@ -65,6 +65,22 @@ struct PlayerEventOutcomeTests {
         #expect(sent.first as? MediaActionInclude == undo)
     }
 
+    /// The Library's song lists get `MediaActionsViewModel`'s results directly, not as a player event: an Exclude
+    /// there shows the same notice, its Undo sent back as the Include (#650).
+    @Test func aListsExcludeResultShowsTheSameNoticeWithUndo() throws {
+        var sent: [any MediaAction] = []
+        let undo = MediaActionInclude(selection: selection)
+        let result = MediaActionResultMessage(message: MediaActionMessageExcluded(songCount: 1), action: SnackbarAction(label: .undo, action: undo))
+        guard case .notice(let shown) = PlayerEventOutcome.resolve(result, send: { sent.append($0) }) else {
+            Issue.record("expected a notice")
+            return
+        }
+        #expect(shown.message == "1 song excluded")
+        #expect(shown.actionTitle == "Undo")
+        shown.action?()
+        #expect(sent.first as? MediaActionInclude == undo)
+    }
+
     @Test func aMessageWithoutAnActionHasNoButton() throws {
         let event = PlayerUiEventMediaActionDone(
             result: MediaActionResultMessage(message: MediaActionMessageAddedToPlaylist(playlistName: "Road Trip", songCount: 1), action: nil)
