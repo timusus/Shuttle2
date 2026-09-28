@@ -57,9 +57,19 @@ struct PlaylistListTests {
         #expect(mosaics.map(\.isMosaic) == [false, true, false])
         #expect(mosaics.map(\.seed) == [SmartPlaylistId.favourites.title, "Road Trip", "Empty"])
         #expect(mosaics.last?.symbol == GeneratedArtwork.playlistSymbol)
-        // Shuffle left the toolbar (#643); New Playlist stays.
-        #expect((try? sut.inspect().find(button: "Shuffle")) == nil)
         #expect((try? sut.inspect().find(button: "New Playlist")) != nil)
+    }
+
+    /// Shuffle heads the list, as on every Library category (#643), while there are playlists of the user's to shuffle.
+    @Test func thePlaylistsListOpensWithItsShuffleRow() throws {
+        var shuffled = false
+        let playlists = [playlist(1, "Road Trip", songs: 12), playlist(2, "Chill", songs: 1)]
+        let sut = PlaylistListContent(state: state(playlists, .ready), onShuffle: { shuffled = true })
+        let row = try sut.inspect().find(viewWithAccessibilityIdentifier: "playlists.shuffle")
+        #expect((try? row.find(text: "2 playlists")) != nil)
+        try row.find(ViewType.Button.self).tap()
+        #expect(shuffled)
+        #expect((try? PlaylistListContent(state: state([], .ready)).inspect().find(viewWithAccessibilityIdentifier: "playlists.shuffle")) == nil)
     }
 
     @Test func placeholders() throws {

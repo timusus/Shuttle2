@@ -43,9 +43,17 @@ struct GenreListTests {
         #expect(mosaics.map(\.seed) == ["Trip Hop", "Art Rock", "Ambient"])
     }
 
-    @Test func theGenresListHasNoToolbarShuffle() throws {
-        let sut = GenreListContent(state: state([genre("Trip Hop", songs: 12)], .ready))
-        #expect((try? sut.inspect().find(button: "Shuffle")) == nil)
+    /// Shuffle heads the list, as on every Library category, rather than sitting in the toolbar (#643).
+    @Test func theGenresListOpensWithItsShuffleRow() throws {
+        var shuffled = false
+        let genres = [genre("Trip Hop", songs: 12), genre("Art Rock", songs: 1)]
+        let sut = GenreListContent(state: state(genres, .ready), onShuffle: { shuffled = true })
+        let row = try sut.inspect().find(viewWithAccessibilityIdentifier: "genres.shuffle")
+        #expect((try? row.find(text: "2 genres")) != nil)
+        try row.find(ViewType.Button.self).tap()
+        #expect(shuffled)
+        #expect(try sut.inspect().findAll(ViewType.Toolbar.self).isEmpty)
+        #expect((try? GenreListContent(state: state([], .loading)).inspect().find(viewWithAccessibilityIdentifier: "genres.shuffle")) == nil)
     }
 
     @Test func anImportKeepsShowingTheGenresAlreadyImported() throws {

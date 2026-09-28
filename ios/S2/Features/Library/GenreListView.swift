@@ -3,7 +3,8 @@ import SwiftUI
 
 /// Library > Genres (P5-6b): `GenreListViewModel`'s genres as a list; a row pushes the genre's detail route. A genre
 /// has no artwork of its own, so each row draws a `CoverMosaic` of its albums' covers (`GenreListViewModel.covers`,
-/// #643), which fill in after the list shows. Context menu plays or queues through the shared `MediaAction`s.
+/// #643), which fill in after the list shows. A Shuffle row heads the list, shuffling every genre. Context menu plays
+/// or queues through the shared `MediaAction`s.
 struct GenreListView: View {
     var body: some View {
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.genres).cacheKey) {
@@ -21,6 +22,9 @@ struct GenreListView: View {
                 },
                 onAddToQueue: { genre in
                     models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionGenres(genre: genre)))
+                },
+                onShuffle: {
+                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionGenres(genres: state.genres)))
                 }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
@@ -58,6 +62,7 @@ struct GenreListContent: View {
     var onPlay: (Genre) -> Void = { _ in }
     var onPlayNext: (Genre) -> Void = { _ in }
     var onAddToQueue: (Genre) -> Void = { _ in }
+    var onShuffle: () -> Void = {}
 
     var body: some View {
         switch state.loadingState {
@@ -68,7 +73,10 @@ struct GenreListContent: View {
         case .empty:
             EmptyState("No Genres", systemImage: "guitars", message: "Pull to refresh to import.")
         case .ready, .scanning:
-            LetterIndexedList(items: state.genres, id: \.name, sections: LetterIndex.sections(state.letterIndex, items: state.genres, id: \.name)) { _, genre in
+            LetterIndexedList(items: state.genres, id: \.name, sections: LetterIndex.sections(state.letterIndex, items: state.genres, id: \.name), header: {
+                ShuffleRow(count: state.genres.count, noun: "genre", action: onShuffle)
+                    .accessibilityIdentifier("genres.shuffle")
+            }) { _, genre in
                 LibraryRowLink(route: Route.genre(genre)) { GenreRow(genre: genre, covers: covers[genre.name] ?? []) }
                     .contextMenu {
                         Button("Play", systemImage: "play") { onPlay(genre) }

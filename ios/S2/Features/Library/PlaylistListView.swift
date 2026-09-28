@@ -4,7 +4,7 @@ import SwiftUI
 /// Library > Playlists (P5-6b): `PlaylistListViewModel`'s smart playlists (always shown) and user playlists (with
 /// the `CoverMosaic` of their cover songs, #643) as a list. Create and rename go through an `alert` with a `TextField`, per
 /// the HIG; delete is a destructive swipe with a confirmation. Context menu plays or queues through the shared
-/// `MediaAction`s, same as the other library lists.
+/// `MediaAction`s, same as the other library lists. A Shuffle row heads the list while there are playlists to shuffle.
 struct PlaylistListView: View {
     var body: some View {
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.playlists).cacheKey) {
@@ -21,6 +21,9 @@ struct PlaylistListView: View {
                 },
                 onAddToQueue: { playlist in
                     models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionPlaylists(playlist: playlist)))
+                },
+                onShuffle: {
+                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionPlaylists(playlists: state.playlists)))
                 },
                 onCreate: { name in models.playlists.onCreatePlaylist(name: name) },
                 onRename: { playlist, name in models.playlists.onRename(playlist: playlist, name: name) },
@@ -90,6 +93,7 @@ struct PlaylistListContent: View {
     var onPlay: (Playlist) -> Void = { _ in }
     var onPlayNext: (Playlist) -> Void = { _ in }
     var onAddToQueue: (Playlist) -> Void = { _ in }
+    var onShuffle: () -> Void = {}
     var onCreate: (String) -> Void = { _ in }
     var onRename: (Playlist, String) -> Void = { _, _ in }
     var onDelete: (Playlist) -> Void = { _ in }
@@ -103,7 +107,7 @@ struct PlaylistListContent: View {
         case .ready, .scanning:
             PlaylistListReadyView(
                 state: state, onPlay: onPlay, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue,
-                onCreate: onCreate, onRename: onRename, onDelete: onDelete
+                onShuffle: onShuffle, onCreate: onCreate, onRename: onRename, onDelete: onDelete
             )
         }
     }
@@ -116,6 +120,7 @@ private struct PlaylistListReadyView: View {
     let onPlay: (Playlist) -> Void
     let onPlayNext: (Playlist) -> Void
     let onAddToQueue: (Playlist) -> Void
+    let onShuffle: () -> Void
     let onCreate: (String) -> Void
     let onRename: (Playlist, String) -> Void
     let onDelete: (Playlist) -> Void
@@ -128,6 +133,10 @@ private struct PlaylistListReadyView: View {
 
     var body: some View {
         List {
+            if !state.playlists.isEmpty {
+                ShuffleRow(count: state.playlists.count, noun: "playlist", action: onShuffle)
+                    .accessibilityIdentifier("playlists.shuffle")
+            }
             Section("Smart Playlists") {
                 ForEach(state.smartPlaylists, id: \.id.id) { smartPlaylist in
                     SmartPlaylistRow(smartPlaylist: smartPlaylist)
