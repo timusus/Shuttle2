@@ -4,6 +4,9 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 @SingleIn(AppScope::class)
 class GeneralPreferenceManager @Inject constructor(
@@ -201,11 +204,14 @@ class GeneralPreferenceManager @Inject constructor(
 
     var lastMediaImportDate: Instant?
         set(value) {
-            store.putInstant("pref_media_last_rescan_date", value)
+            store.putInstant(LAST_MEDIA_IMPORT_DATE, value)
         }
         get() {
-            return store.getInstant("pref_media_last_rescan_date")
+            return store.getInstant(LAST_MEDIA_IMPORT_DATE)
         }
+
+    /** [lastMediaImportDate] now and each time it changes, so a screen shows an import's end as it's written (#648). */
+    fun observeLastMediaImportDate(): Flow<Instant?> = store.changes(LAST_MEDIA_IMPORT_DATE).map { lastMediaImportDate }.distinctUntilChanged()
 
     /** The first-run source setup (iOS) was finished or skipped, so it never opens by itself again. */
     var sourceSetupCompleted: Boolean
@@ -215,6 +221,10 @@ class GeneralPreferenceManager @Inject constructor(
         get() {
             return store.getBoolean("source_setup_completed", false)
         }
+
+    private companion object {
+        const val LAST_MEDIA_IMPORT_DATE = "pref_media_last_rescan_date"
+    }
 }
 
 enum class LibraryTab {

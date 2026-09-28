@@ -10,11 +10,13 @@ import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.ui.screens.settings.ObserveLastScanDate
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ForgetServer
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -38,6 +40,7 @@ class SourcesViewModelTest {
 
     private val folderStore = FakeScannerFolderStore()
     private val importState = FakeSongImportStateProvider()
+    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
 
     /** The paywall gate's answer: whether another server may be added before Pro. */
     private var serverAllowed = true
@@ -53,7 +56,7 @@ class SourcesViewModelTest {
         importState,
         TryAddServer { serverAllowed },
         ConnectServer(mediaSources),
-        GeneralPreferenceManager(InMemoryKeyValueStore()),
+        ObserveLastScanDate(preferences),
         ForgetServer(mapOf(MediaProviderType.Emby to emby)),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
@@ -179,6 +182,19 @@ class SourcesViewModelTest {
 
         importState.setState(SongImportState.ImportProgress(MediaProviderType.Shuttle, null, null))
         viewModel.uiState.value.scanError shouldBe null
+    }
+
+    @Test
+    fun `last updated shows an import's end when it's saved, after the import's last state (#648)`() = runTest {
+        val viewModel = viewModel(FakeMediaSources(MediaProviderType.Jellyfin))
+        viewModel.uiState.value.lastImport shouldBe null
+
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, null))
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Jellyfin, null))
+        val finished = Instant.fromEpochMilliseconds(1_700_000_000_000)
+        preferences.lastMediaImportDate = finished
+
+        viewModel.uiState.value.lastImport shouldBe finished
     }
 
     @Test

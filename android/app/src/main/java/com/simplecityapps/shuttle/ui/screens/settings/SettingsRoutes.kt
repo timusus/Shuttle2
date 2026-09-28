@@ -118,10 +118,6 @@ private fun SettingsDestinationEntry(
     ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
         snackbarHostState.showSnackbar(context.getString(event.message))
     }
-    LifecycleResumeEffect(viewModel) {
-        viewModel.onResume()
-        onPauseOrDispose {}
-    }
     SettingsDestinationScreen(
         screen = AndroidSettingsCatalog.screen(destination),
         uiState = uiState,

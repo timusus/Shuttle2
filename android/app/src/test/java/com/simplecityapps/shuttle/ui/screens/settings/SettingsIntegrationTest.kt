@@ -41,11 +41,14 @@ class SettingsIntegrationTest {
     private val effects = FakeSettingsEffects()
     private val robot = SettingsRobot(composeTestRule)
 
+    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+
     private fun viewModel() = SettingsViewModel(
         ObserveSetting(store),
         ReadSetting(store),
         SaveSetting(store),
-        ReadLastScanDate(GeneralPreferenceManager(InMemoryKeyValueStore())),
+        ReadLastScanDate(preferences),
+        ObserveLastScanDate(preferences),
         effects,
         AndroidSettingsCatalog
     )

@@ -38,7 +38,6 @@ struct SettingsView: View {
                 )
             }
         }
-        .onAppear { viewModel.onResume() }
     }
 }
 

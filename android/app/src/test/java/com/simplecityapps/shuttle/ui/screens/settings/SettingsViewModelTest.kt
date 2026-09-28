@@ -43,7 +43,7 @@ class SettingsViewModelTest {
         store = SettingsStore(prefs)
     }
 
-    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), effects, AndroidSettingsCatalog)
+    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), ObserveLastScanDate(preferenceManager), effects, AndroidSettingsCatalog)
 
     private inline fun <reified T : SettingItem> item(key: String): T = AndroidSettingsCatalog.items.filterIsInstance<T>().first { it.key == key }
 
@@ -180,13 +180,12 @@ class SettingsViewModelTest {
     }
 
     @Test
-    fun `resuming re-reads the last scan date`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `the last scan date updates as a scan finishes (#648)`() = runTest(mainDispatcherRule.testDispatcher) {
         val viewModel = viewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
+        runCurrent()
         val scanned = Instant.fromEpochMilliseconds(1_000)
         preferenceManager.lastMediaImportDate = scanned
-
-        viewModel.onResume()
         runCurrent()
 
         viewModel.uiState.value.lastScanDate shouldBe scanned

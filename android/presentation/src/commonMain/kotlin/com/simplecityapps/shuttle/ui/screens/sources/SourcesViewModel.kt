@@ -6,10 +6,10 @@ import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
+import com.simplecityapps.shuttle.ui.screens.settings.ObserveLastScanDate
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ForgetServer
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
@@ -61,13 +61,13 @@ class SourcesViewModel @Inject constructor(
     importState: SongImportStateProvider,
     private val tryAddServer: TryAddServer,
     private val connectServer: ConnectServer,
-    private val preferences: GeneralPreferenceManager,
+    observeLastScanDate: ObserveLastScanDate,
     private val forgetServer: ForgetServer,
 ) : ViewModel() {
     private val events = PendingEvents<SourcesEvent>()
 
     val uiState: StateFlow<SourcesUiState> =
-        combine(mediaSources.enabledTypes, observeScannerFolders(), importState.songImportState, events.flow) { types, folders, import, events ->
+        combine(mediaSources.enabledTypes, observeScannerFolders(), importState.songImportState, observeLastScanDate(), events.flow) { types, folders, import, lastImport, events ->
             SourcesUiState(
                 thisDevice = types.any { it.isLocal },
                 usesAndroidProvider = MediaProviderType.MediaStore in types,
@@ -75,7 +75,7 @@ class SourcesViewModel @Inject constructor(
                 scan = (import as? SongImportState.ImportProgress)?.let { ScanProgress(it.message, it.progress?.asFloat()) },
                 scanError = (import as? SongImportState.ImportComplete)?.error,
                 servers = ServerTypes.map { ServerSource(it, connected = it in types) },
-                lastImport = preferences.lastMediaImportDate,
+                lastImport = lastImport,
                 events = events,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SourcesUiState())

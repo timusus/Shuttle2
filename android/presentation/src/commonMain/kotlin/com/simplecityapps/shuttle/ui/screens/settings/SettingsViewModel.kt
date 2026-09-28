@@ -18,7 +18,6 @@ import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlin.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -53,25 +52,24 @@ class SettingsViewModel @Inject constructor(
     observeSetting: ObserveSetting,
     private val readSetting: ReadSetting,
     private val saveSetting: SaveSetting,
-    private val readLastScanDate: ReadLastScanDate,
+    readLastScanDate: ReadLastScanDate,
+    observeLastScanDate: ObserveLastScanDate,
     private val effects: SettingsEffects,
     catalog: SettingsCatalog
 ) : ViewModel() {
     private val catalogSettings = catalog.settings
 
-    private val lastScanDate = MutableStateFlow(readLastScanDate())
-
     private val events = PendingEvents<SettingsUiEvent>()
 
     val uiState: StateFlow<SettingsUiState> = combine(
         combine(catalogSettings.map { setting -> observeSetting(setting).map { setting.key to it } }) { it.toMap() },
-        lastScanDate,
+        observeLastScanDate(),
         events.flow
     ) { values, lastScan, events -> SettingsUiState(values = values, lastScanDate = lastScan, events = events) }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = SettingsUiState(values = catalogSettings.associate { it.key to readSetting(it) }, lastScanDate = lastScanDate.value)
+            initialValue = SettingsUiState(values = catalogSettings.associate { it.key to readSetting(it) }, lastScanDate = readLastScanDate())
         )
 
     private val sliderEffects = mutableMapOf<String, Job>()
@@ -135,11 +133,6 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onEventHandled(id: Long) = events.consume(id)
-
-    /** Re-reads what isn't observable, such as the last scan date, when the screen comes back into view. */
-    fun onResume() {
-        lastScanDate.value = readLastScanDate()
-    }
 
     private fun <T> select(
         item: SettingItem.Choice<T>,
