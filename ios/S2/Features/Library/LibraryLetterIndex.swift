@@ -122,7 +122,8 @@ struct LetterIndexStrip: View {
     /// The letter last jumped to: highlighted while a finger is on the strip, and VoiceOver's value.
     @State private var current: String?
     @State private var isDragging = false
-    @State private var height: CGFloat = 0
+    /// Where the letters sit in the strip's own space, the one the drag reports in.
+    @State private var lettersFrame: CGRect = .zero
     /// One letter's height at the current text size: caption2's line.
     @ScaledMetric(relativeTo: .caption2) private var letterHeight: CGFloat = 14
     @ScaledMetric(relativeTo: .caption2) private var width: CGFloat = 20
@@ -139,23 +140,25 @@ struct LetterIndexStrip: View {
         }
         .frame(width: width)
         .frame(maxHeight: letterHeight * CGFloat(sections.count))
-        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
+        .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.space)) } action: { lettersFrame = $0 }
         .padding(.horizontal, Spacing.xsmall)
         .padding(.vertical, Spacing.small)
+        .frame(maxHeight: .infinity)
+        // The whole trailing edge takes the drag, as in Contacts: above or below the letters picks the first or last.
         .contentShape(Rectangle())
+        .coordinateSpace(.named(Self.space))
         .gesture(
-            DragGesture(minimumDistance: 0)
+            DragGesture(minimumDistance: 0, coordinateSpace: .named(Self.space))
                 .onChanged { value in
                     if !isDragging {
                         // A new touch jumps even to the letter the last one ended on: the list may have moved since.
                         isDragging = true
                         current = nil
                     }
-                    select(at: value.location.y - Spacing.small)
+                    select(at: value.location.y)
                 }
                 .onEnded { _ in isDragging = false }
         )
-        .frame(maxHeight: .infinity)
         .sensoryFeedback(.selection, trigger: current) { _, new in new != nil }
         .dynamicTypeSize(...DynamicTypeSize.xxLarge)
         .accessibilityElement(children: .ignore)
@@ -172,10 +175,12 @@ struct LetterIndexStrip: View {
         .accessibilityIdentifier("library.sectionIndex")
     }
 
-    /// The letter under `y`, measured down from the first letter's top.
+    private static let space = "letterIndexStrip"
+
+    /// The letter under `y` in the strip's space.
     private func select(at y: CGFloat) {
-        guard height > 0, !sections.isEmpty else { return }
-        let position = Int((y / height * CGFloat(sections.count)).rounded(.down))
+        guard lettersFrame.height > 0, !sections.isEmpty else { return }
+        let position = Int(((y - lettersFrame.minY) / lettersFrame.height * CGFloat(sections.count)).rounded(.down))
         pick(min(max(position, 0), sections.count - 1))
     }
 
