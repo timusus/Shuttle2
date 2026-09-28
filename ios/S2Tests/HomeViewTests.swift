@@ -184,11 +184,23 @@ struct HomeViewTests {
         #expect(shuffle?.context is PlayContextSmartPlaylist)
     }
 
-    @Test func generatedArtworkKeepsItsHuePerName() {
-        #expect(GeneratedArtwork.hue(for: "Trip Hop") == GeneratedArtwork.hue(for: "trip hop"))
-        #expect(GeneratedArtwork.hue(for: "Trip Hop") != GeneratedArtwork.hue(for: "Jazz"))
-        #expect(GeneratedArtwork.genreSymbol("Alternative Rock") == "guitars")
-        #expect(GeneratedArtwork.genreSymbol("Polka") == "music.note")
+    @Test func generatedArtworkKeepsItsTonePerName() {
+        #expect(ArtworkPalette.toneIndex("Trip Hop") == ArtworkPalette.toneIndex("trip hop"))
+        // The slots Android's `GeneratedArtworkColors.index` picks for the same names (FNV-1a mod 8), so a genre has
+        // one tone on both platforms.
+        let slots = ["Jazz": 0, "Trip Hop": 5, "Rock": 4, "Ambient": 3]
+        for (name, slot) in slots {
+            #expect(ArtworkPalette.toneIndex(name) == slot, "\(name)")
+        }
+    }
+
+    @Test func everyGenreTileHasTheSameGlyph() throws {
+        let sut = HomeContent(state: content([section(.genrePicks, .genrePicks, [
+            HomeItemGenreItem(genre: genre("Alternative Rock")),
+            HomeItemGenreItem(genre: genre("Polka")),
+        ])]))
+        let glyphs = try sut.inspect().findAll(GeneratedArtwork.self).map { try $0.actualView().symbol }
+        #expect(glyphs == [GeneratedArtwork.genreSymbol, GeneratedArtwork.genreSymbol])
     }
 
     // MARK: Cold start and the rest

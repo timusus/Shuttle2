@@ -83,6 +83,7 @@
 		ACCCD2E8586E770E2C07D096 /* AlbumDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26298475CFBDD52FD92166E6 /* AlbumDetailView.swift */; };
 		AD30CBCBD32BA3F24F6B355E /* CombineFlowBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1633C34A912D4852F34CC2 /* CombineFlowBridgeTests.swift */; };
 		B0FB022FA7D066955A64D070 /* MarqueeText.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57C06B74E49F7F95F50A62E /* MarqueeText.swift */; };
+		B2017C3E5F7DB5964CD434D0 /* ArtworkPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDCC039C577D8A1D202C35A0 /* ArtworkPalette.swift */; };
 		B72F8880FF3CF21C649FB03E /* GenreListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 219D34D59A017AC9E82F0C9E /* GenreListView.swift */; };
 		B8399C63B96189E50C51B76E /* LibraryImport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52FDEC92D75DB433244B1C2E /* LibraryImport.swift */; };
 		B853C3B025A218C9E08FA400 /* EqualizerViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8D3E5BE60A178860D1F22FA /* EqualizerViewTests.swift */; };
@@ -232,6 +233,7 @@
 		CFFFB17EF4036829CFD54688 /* EqualizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
 		D0D38E5CC8D77C5BA07D5821 /* NowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingView.swift; sourceTree = "<group>"; };
 		D6F13B4E6E24F493A2104D75 /* PlayerPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerPresentation.swift; sourceTree = "<group>"; };
+		DDCC039C577D8A1D202C35A0 /* ArtworkPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkPalette.swift; sourceTree = "<group>"; };
 		E5B4C7411078C92EE8985A4B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		EFFBC031880E93536DB77D51 /* EngineAudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineAudioPlayer.swift; sourceTree = "<group>"; };
 		F2E9C9B867D2C9D540A8AF3C /* SettingsViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewTests.swift; sourceTree = "<group>"; };
@@ -305,6 +307,7 @@
 			isa = PBXGroup;
 			children = (
 				9BDFD4513B43CF4304880231 /* ArtworkColorExtractor.swift */,
+				DDCC039C577D8A1D202C35A0 /* ArtworkPalette.swift */,
 				98568006B2C16F9BF1BC3830 /* ArtworkTint.swift */,
 				467103A9C583DD5E8967EABF /* LayoutTier.swift */,
 				6FA31930A8CB79E30E7CB606 /* Motion.swift */,
@@ -659,6 +662,7 @@
 				FC765588CFC3B367E0D2CFB0 /* ArtworkColorExtractor.swift in Sources */,
 				73304BDD0F5F554C34287560 /* ArtworkImage.swift in Sources */,
 				D974D54BCFF1770DE0DF8A55 /* ArtworkLoader.swift in Sources */,
+				B2017C3E5F7DB5964CD434D0 /* ArtworkPalette.swift in Sources */,
 				F1039F380A383B28D4B1BC2F /* ArtworkTint.swift in Sources */,
 				126A2D1ECDCB2820F903D70A /* AudioEngine.swift in Sources */,
 				076ADE2573B4CCD76E1C2473 /* AudioSessionController.swift in Sources */,

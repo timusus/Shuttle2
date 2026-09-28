@@ -78,31 +78,24 @@ struct ArtworkImage<Placeholder: View>: View {
     }
 }
 
-/// The placeholder, until the real cover arrives or in place of one that doesn't exist: a soft gradient of the
-/// tint in scope (`\.artworkTint`, the accent outside a tinted screen) over the secondary background, with a
-/// symbol at about a third of the tile. `symbol` says what's missing: `music.note` for a song or album,
-/// `music.mic` for an artist, `guitars` for a genre, `music.note.list` for a playlist.
+/// The placeholder, until the real cover arrives or in place of one that doesn't exist (#646): a neutral system grey
+/// with a subtle symbol at about a third of the tile, the same on every screen whatever its tint. `symbol` says
+/// what's missing: `music.note` for a song, `square.stack` for an album, `music.mic` for an artist, `guitars` for a
+/// genre, `music.note.list` for a playlist.
 struct ArtworkPlaceholder: View {
     var symbol: String = "music.note"
 
-    @Environment(\.artworkTint) private var tint
-
     var body: some View {
         GeometryReader { proxy in
-            let glyph = min(proxy.size.width, proxy.size.height) * 0.38
+            let glyph = min(proxy.size.width, proxy.size.height) * ArtworkPalette.placeholderGlyphScale
             ZStack {
-                Color(.secondarySystemBackground)
-                LinearGradient(
-                    colors: [tint.opacity(0.28), tint.opacity(0.08)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                ArtworkPalette.placeholderFill
                 Image(systemName: symbol)
                     .resizable()
                     .scaledToFit()
                     .fontWeight(.medium)
                     .frame(width: glyph, height: glyph)
-                    .foregroundStyle(tint.opacity(0.6))
+                    .foregroundStyle(ArtworkPalette.placeholderGlyph)
             }
         }
         .accessibilityHidden(true)

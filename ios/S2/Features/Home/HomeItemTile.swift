@@ -136,70 +136,41 @@ struct HomeItemArtwork: View {
         case .artistItem(let it):
             RemoteArtwork(.albumArtist(it.albumArtist), points: size) { ArtworkPlaceholder(symbol: "music.mic") }
         case .playlistItem(let it):
-            GeneratedArtwork(seed: it.playlist.name, symbol: "music.note.list")
+            GeneratedArtwork(seed: it.playlist.name, symbol: GeneratedArtwork.playlistSymbol)
         case .smartPlaylistItem(let it):
             GeneratedArtwork(seed: it.smartPlaylistId.id, symbol: it.smartPlaylistId.symbol)
         case .genreItem(let it):
-            GeneratedArtwork(seed: it.genre.name, symbol: GeneratedArtwork.genreSymbol(it.genre.name))
+            GeneratedArtwork(seed: it.genre.name, symbol: GeneratedArtwork.genreSymbol)
         }
     }
 }
 
-/// Artwork for an item that has none: a gradient in a hue derived from its name, so each genre or playlist keeps
-/// its own colour from launch to launch and screen to screen, under a glyph for what it is.
+/// Artwork for an item that has none of its own (#646): one of a few muted tones, picked by the item's name so a
+/// genre or playlist keeps its tone from launch to launch, screen to screen and platform to platform (Android's
+/// `GeneratedArtwork`), under a small glyph for its kind. The title under the tile says which one it is.
 struct GeneratedArtwork: View {
     let seed: String
     let symbol: String
 
-    /// The glyph's share of the artwork's side, as `ArtworkPlaceholder`'s.
-    private static let glyphScale: CGFloat = 0.38
-    /// How far round the colour wheel the gradient's second stop sits from the first.
-    private static let hueShift = 0.08
+    /// A genre's glyph; every genre shares it, as on Android.
+    static let genreSymbol = "music.note.square.stack"
+    /// A playlist's glyph.
+    static let playlistSymbol = "music.note.list"
 
     var body: some View {
-        let hue = Self.hue(for: seed)
         GeometryReader { proxy in
+            let glyph = min(proxy.size.width, proxy.size.height) * ArtworkPalette.generatedGlyphScale
             ZStack {
-                LinearGradient(
-                    colors: [
-                        Color(hue: hue, saturation: 0.45, brightness: 0.88),
-                        Color(hue: (hue + Self.hueShift).truncatingRemainder(dividingBy: 1), saturation: 0.7, brightness: 0.58),
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                ArtworkPalette.tone(seed)
                 Image(systemName: symbol)
-                    .font(.system(size: min(proxy.size.width, proxy.size.height) * Self.glyphScale, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.92))
-                    .shadow(color: .black.opacity(0.15), radius: Spacing.xsmall, y: Spacing.tiny)
+                    .resizable()
+                    .scaledToFit()
+                    .fontWeight(.medium)
+                    .frame(width: glyph, height: glyph)
+                    .foregroundStyle(ArtworkPalette.generatedGlyph)
             }
         }
         .accessibilityHidden(true)
-    }
-
-    /// A hue in 0..<1 from the name, stable across launches (FNV-1a; Swift's `hashValue` is seeded per process).
-    static func hue(for seed: String) -> Double {
-        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
-        for byte in seed.lowercased().utf8 {
-            hash ^= UInt64(byte)
-            hash = hash &* 0x0000_0100_0000_01b3
-        }
-        return Double(hash % 360) / 360
-    }
-
-    /// A glyph for a genre by the words in its name, else a note.
-    static func genreSymbol(_ name: String) -> String {
-        let name = name.lowercased()
-        let symbols: [([String], String)] = [
-            (["rock", "metal", "punk", "grunge", "indie", "alternative"], "guitars"),
-            (["jazz", "blues", "soul", "funk", "swing"], "music.quarternote.3"),
-            (["electr", "dance", "house", "techno", "trance", "edm", "ambient", "synth"], "waveform"),
-            (["classical", "piano", "orchestra", "baroque", "opera"], "pianokeys"),
-            (["hip hop", "hip-hop", "rap", "r&b", "spoken"], "music.mic"),
-            (["folk", "country", "acoustic", "singer"], "music.note.house"),
-            (["soundtrack", "score", "film"], "film"),
-        ]
-        return symbols.first { words, _ in words.contains { name.contains($0) } }?.1 ?? "music.note"
     }
 }
 
