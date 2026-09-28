@@ -29,7 +29,7 @@ struct AlbumSectionHeader: View {
                 VStack(alignment: .leading, spacing: Spacing.tiny) {
                     Text(title)
                         .font(.headline)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(Color.primary)
                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
                     Text(subtitle)
                         .font(.subheadline)

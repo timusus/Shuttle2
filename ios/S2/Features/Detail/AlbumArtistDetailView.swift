@@ -194,7 +194,7 @@ struct AlbumArtistDetailContent: View {
                     } header: {
                         Text("Other Songs")
                             .font(.headline)
-                            .foregroundStyle(.primary)
+                            .foregroundStyle(Color.primary)
                             .textCase(nil)
                             .accessibilityAddTraits(.isHeader)
                     }
