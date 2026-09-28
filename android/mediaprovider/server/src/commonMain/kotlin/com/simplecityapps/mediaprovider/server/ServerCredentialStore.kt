@@ -81,6 +81,13 @@ class ServerCredentialStore(
             securePreferenceManager.putString(addressKey, value)
         }
 
+    /** Forgets the server outright: its address, the saved login and the session, as removing it from Sources does. */
+    fun clear() {
+        lock.withLock { writeAuthenticatedCredentials(null) }
+        loginCredentials = null
+        address = null
+    }
+
     private val _sessionExpired = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     /**

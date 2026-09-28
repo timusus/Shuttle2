@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
+import com.simplecityapps.shuttle.ui.screens.sources.servers.ForgetServer
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -61,6 +62,7 @@ class SourcesViewModel @Inject constructor(
     private val tryAddServer: TryAddServer,
     private val connectServer: ConnectServer,
     private val preferences: GeneralPreferenceManager,
+    private val forgetServer: ForgetServer,
 ) : ViewModel() {
     private val events = PendingEvents<SourcesEvent>()
 
@@ -112,7 +114,11 @@ class SourcesViewModel @Inject constructor(
     /** A server's sign-in dialog succeeded. */
     fun onServerConnected(type: MediaProviderType) = connectServer(type)
 
-    fun onRemoveServer(type: MediaProviderType) = mediaSources.disable(type)
+    /** Stops importing from [type]'s server, drops its music, and forgets its address and sign-in (#645). */
+    fun onRemoveServer(type: MediaProviderType) {
+        mediaSources.disable(type)
+        forgetServer(type)
+    }
 
     fun onEventHandled(id: Long) = events.consume(id)
 }

@@ -39,6 +39,9 @@ class JellyfinAuthenticationManager(
 
     fun getAddress(): String? = credentialStore.address
 
+    /** Forgets this server's address, saved login and session. */
+    fun forgetServer() = credentialStore.clear()
+
     /** [result], after signing out when the server rejected [credentials] with a 401 (#577). */
     fun <T : Any> checkSession(
         credentials: AuthenticatedCredentials,

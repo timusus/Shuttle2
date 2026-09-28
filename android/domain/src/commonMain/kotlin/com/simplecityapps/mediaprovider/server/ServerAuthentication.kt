@@ -27,5 +27,9 @@ interface ServerAuthentication {
 
     fun rememberLogin(login: ServerLogin)
 
+    /** Forgets the saved username and password, keeping the address and session. */
     fun forgetLogin()
+
+    /** Forgets the server: its address, the saved login and the session. */
+    fun forgetServer()
 }

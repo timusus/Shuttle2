@@ -17,6 +17,7 @@ class FakeServerAuthentication(
     val authenticated = mutableListOf<ServerLogin>()
     var remembered: ServerLogin? = null
     var forgotten = 0
+    var forgottenServer = 0
 
     override fun savedLogin(): SavedServerLogin = saved
 
@@ -32,5 +33,10 @@ class FakeServerAuthentication(
 
     override fun forgetLogin() {
         forgotten++
+    }
+
+    override fun forgetServer() {
+        saved = SavedServerLogin()
+        forgottenServer++
     }
 }

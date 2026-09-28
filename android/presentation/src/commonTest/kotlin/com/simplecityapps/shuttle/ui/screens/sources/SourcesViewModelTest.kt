@@ -2,12 +2,15 @@ package com.simplecityapps.shuttle.ui.screens.sources
 
 import com.simplecityapps.fakes.FakeMediaSources
 import com.simplecityapps.fakes.FakeScannerFolderStore
+import com.simplecityapps.fakes.FakeServerAuthentication
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.mediaprovider.SongImportState
+import com.simplecityapps.mediaprovider.server.SavedServerLogin
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.ui.screens.sources.servers.ForgetServer
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -39,6 +42,8 @@ class SourcesViewModelTest {
     /** The paywall gate's answer: whether another server may be added before Pro. */
     private var serverAllowed = true
 
+    private val emby = FakeServerAuthentication(SavedServerLogin("http://emby:8096", "tim", "secret"))
+
     private fun TestScope.viewModel(mediaSources: FakeMediaSources) = SourcesViewModel(
         mediaSources,
         ObserveScannerFolders(folderStore),
@@ -49,6 +54,7 @@ class SourcesViewModelTest {
         TryAddServer { serverAllowed },
         ConnectServer(mediaSources),
         GeneralPreferenceManager(InMemoryKeyValueStore()),
+        ForgetServer(mapOf(MediaProviderType.Emby to emby)),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
     }
@@ -150,6 +156,18 @@ class SourcesViewModelTest {
 
         viewModel.onRemoveServer(MediaProviderType.Emby)
         mediaSources.enabledTypes.value shouldBe emptyList()
+    }
+
+    @Test
+    fun `removing a server forgets its address and login`() = runTest {
+        val mediaSources = FakeMediaSources()
+        val viewModel = viewModel(mediaSources)
+        viewModel.onServerConnected(MediaProviderType.Emby)
+
+        viewModel.onRemoveServer(MediaProviderType.Emby)
+
+        emby.savedLogin() shouldBe SavedServerLogin()
+        emby.forgottenServer shouldBe 1
     }
 
     @Test

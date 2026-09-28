@@ -27,5 +27,7 @@ class JellyfinServerAuthentication @Inject constructor(
 
     override fun forgetLogin() = authenticationManager.setLoginCredentials(null)
 
+    override fun forgetServer() = authenticationManager.forgetServer()
+
     private fun ServerLogin.credentials() = LoginCredentials(username, password)
 }

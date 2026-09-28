@@ -54,6 +54,18 @@ class ServerCredentialStoreTest {
     }
 
     @Test
+    fun `clearing forgets the address, the login and the session`() {
+        writeLegacyKeys("plex", "plex_host")
+        val store = store("plex", addressKey = "plex_host")
+
+        store.clear()
+
+        store.address.shouldBeNull()
+        store.loginCredentials.shouldBeNull()
+        store.authenticatedCredentials.shouldBeNull()
+    }
+
+    @Test
     fun `reads plex's address from plex_host`() {
         writeLegacyKeys("plex", "plex_host")
         val store = store("plex", addressKey = "plex_host")
