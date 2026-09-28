@@ -67,6 +67,7 @@
 		87BE61D41895A26AB403D726 /* PlayerEventOutcomeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 589A21F654ABF5821FB118E5 /* PlayerEventOutcomeTests.swift */; };
 		87E7FAF7C7C7910AFA56B5D7 /* AlbumArtistListTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60C0C48BCE8CEF1B30FF9D34 /* AlbumArtistListTests.swift */; };
 		8DB510F3C2861DAE2E6D79ED /* NowPlayingViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48E0B40EF9B1410AFE3490A4 /* NowPlayingViewTests.swift */; };
+		8DB654A84EBD8D0D7A13656B /* LibraryGridTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796A3B12BBE0B079F29CF480 /* LibraryGridTests.swift */; };
 		952FFA6805354B6A7B73D0E7 /* RouteTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8D3127BEC11A3D89D92CAA2 /* RouteTests.swift */; };
 		9B1E89BAD9F71286BF2437AA /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F74B98EFB99516DD895C476 /* LibraryView.swift */; };
 		9D1A42B52CE59007F5DFA5A7 /* LayoutTier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467103A9C583DD5E8967EABF /* LayoutTier.swift */; };
@@ -184,6 +185,7 @@
 		76ADBE2382A54513A42CEACC /* S2.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = S2.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		77DAB02A2B7331E3CA3C4332 /* PlayerBinding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerBinding.swift; sourceTree = "<group>"; };
 		77F718CDD54F88ED9434F689 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		796A3B12BBE0B079F29CF480 /* LibraryGridTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryGridTests.swift; sourceTree = "<group>"; };
 		7D100B2699FDBBA93E472ED3 /* ConsumeEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConsumeEvents.swift; sourceTree = "<group>"; };
 		7E5961F296B2738309AF66BC /* AppGraph.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGraph.swift; sourceTree = "<group>"; };
 		7F87245A9FB0C0CD8A257CA4 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -475,6 +477,7 @@
 				40DB4BD291074658C1281380 /* GenreListTests.swift */,
 				17CAC2177C448E5AAF2FC3D4 /* HomeViewTests.swift */,
 				1C4156A63D9F30E876660749 /* LayoutTierTests.swift */,
+				796A3B12BBE0B079F29CF480 /* LibraryGridTests.swift */,
 				8B1B9EE110E1BFA6AF478F22 /* LibraryLetterIndexTests.swift */,
 				191927F39E29CE059057C079 /* LibraryListTests.swift */,
 				644FCDF9D90ECEA9AEB75600 /* LibraryViewTests.swift */,
@@ -723,6 +726,7 @@
 				406F210DE2687C5AFC4765C1 /* GenreListTests.swift in Sources */,
 				1A38A709B25F4854ACB8A784 /* HomeViewTests.swift in Sources */,
 				F96A02B9E3B2536F18277736 /* LayoutTierTests.swift in Sources */,
+				8DB654A84EBD8D0D7A13656B /* LibraryGridTests.swift in Sources */,
 				7470E4F2218A8D38E42764C1 /* LibraryLetterIndexTests.swift in Sources */,
 				7A701E93B15CFAEEF3311D42 /* LibraryListTests.swift in Sources */,
 				3C9A3CFCD175F341D2569B15 /* LibraryViewTests.swift in Sources */,

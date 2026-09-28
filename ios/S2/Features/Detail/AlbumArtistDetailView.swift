@@ -1,7 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Album artist detail (P5-7, polished in #624): a hero tinted from the artist's picture (circular artwork, name,
+/// Album artist detail (P5-7, polished in #624): a hero tinted from the artist's picture (the artist's picture, name,
 /// albums · songs, Play/Shuffle), a shelf of the artist's album tiles (each zooming into `Route.album`), then every
 /// one of the artist's songs across those albums. A tap plays from that song; its context menu has the shared media
 /// actions. Modeled on Android's `AlbumArtistDetailScreen.kt`, minus its inline per-album expansion — the shelf
@@ -84,7 +84,7 @@ struct AlbumArtistDetailContent: View {
                         RemoteArtwork(.albumArtist(artist), points: points) {
                             ArtworkPlaceholder(symbol: "person.fill")
                         }
-                        .artworkCircle(points)
+                        .artistArtworkTile(points)
                     }
                 } rows: {
                     if !state.albums.isEmpty {

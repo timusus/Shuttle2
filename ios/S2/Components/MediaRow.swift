@@ -11,7 +11,7 @@ import SwiftUI
 /// ```
 ///
 /// - Artwork is drawn by `RemoteArtwork` at `artworkSize` (`ArtworkSize.row`, or `.albumRow` for albums),
-///   rounded (`ArtworkCorner.row`) or a circle (artists), with the hairline and no shadow. A nil source draws
+///   rounded (`ArtworkCorner.row`) or, for an artist, `ArtistArtworkShape`, with the hairline and no shadow. A nil source draws
 ///   the tinted `ArtworkPlaceholder` with `placeholderSymbol`.
 /// - `playback` other than `.none` tints the title with `\.artworkTint` and lays an equaliser glyph over the
 ///   artwork, animated while `.playing` (still under Reduce Motion, and while `.paused`).
@@ -96,7 +96,7 @@ struct MediaRow<Trailing: View>: View {
 
         switch artworkShape {
         case .rounded: image.artworkTile(artworkSize)
-        case .circle: image.artworkCircle(artworkSize)
+        case .artist: image.artistArtworkTile(artworkSize)
         }
     }
 }
@@ -122,8 +122,8 @@ extension MediaRow where Trailing == EmptyView {
 enum MediaRowArtworkShape {
     /// Songs, albums, genres, playlists.
     case rounded
-    /// Artists.
-    case circle
+    /// Artists (`ArtistArtworkShape`).
+    case artist
 }
 
 /// Whether a row is the one playing.

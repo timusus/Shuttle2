@@ -207,13 +207,13 @@ private struct SmartPlaylistRow: View {
     let smartPlaylist: SmartPlaylist
 
     var body: some View {
-        NavigationLink(value: Route.smartPlaylist(smartPlaylist)) {
+        LibraryRowLink(route: Route.smartPlaylist(smartPlaylist)) {
             MediaRow(smartPlaylist.id.title, placeholderSymbol: smartPlaylist.id.symbol)
         }
     }
 }
 
-/// One user playlist row: its `NavigationLink`, context menu and destructive swipe-to-delete, split out of
+/// One user playlist row: its `LibraryRowLink`, context menu and destructive swipe-to-delete, split out of
 /// `PlaylistListContent`'s `List` so the type checker isn't asked to solve one giant view expression.
 private struct PlaylistListRow: View {
     let playlist: Playlist
@@ -225,7 +225,7 @@ private struct PlaylistListRow: View {
     let onRequestDelete: () -> Void
 
     var body: some View {
-        NavigationLink(value: Route.playlist(playlist)) {
+        LibraryRowLink(route: Route.playlist(playlist)) {
             PlaylistRow(playlist: playlist, coverSong: coverSong)
         }
         .contextMenu {

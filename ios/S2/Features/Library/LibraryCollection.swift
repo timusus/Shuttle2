@@ -19,8 +19,9 @@ struct ViewModeToggle: View {
     }
 }
 
-/// Adaptive columns of tiles, at least `ArtworkSize.gridMinimum` wide, within the readable content width. With an
-/// `index`, the letter strip down the trailing edge scrolls to each section's first tile, by the tile's id.
+/// Adaptive columns of tiles, at least `minimumTile` wide, within the readable content width: two on every iPhone
+/// in portrait (beside the letter index), more in landscape, more again on an iPad. With an `index`, the letter strip
+/// down the trailing edge scrolls to each section's first tile, by the tile's id.
 struct LibraryGrid<Content: View>: View {
     var index: [LetterIndexSection]?
     @ViewBuilder let content: () -> Content
@@ -29,9 +30,26 @@ struct LibraryGrid<Content: View>: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var columns: [GridItem] {
-        // Two narrow tiles can't hold accessibility-size titles; one full-width column can.
-        let minimum = dynamicTypeSize.isAccessibilitySize ? ArtworkSize.gridMinimum * 2 : ArtworkSize.gridMinimum
+        let minimum = Self.minimumTile(layoutTier, accessibilitySize: dynamicTypeSize.isAccessibilitySize)
         return [GridItem(.adaptive(minimum: minimum), spacing: AdaptiveLayout.gridSpacing, alignment: .top)]
+    }
+
+    /// The narrowest a tile gets. Compact width takes `ArtworkSize.gridMinimumCompact`, so two fit beside the index
+    /// on a 320 pt screen; wider tiers `ArtworkSize.gridMinimum`. Twice that at the accessibility text sizes, whose
+    /// titles two narrow tiles can't hold: one full-width column can.
+    static func minimumTile(_ tier: LayoutTier, accessibilitySize: Bool = false) -> CGFloat {
+        let minimum = tier == .compact ? ArtworkSize.gridMinimumCompact : ArtworkSize.gridMinimum
+        return accessibilitySize ? minimum * 2 : minimum
+    }
+
+    /// The columns the grid lays out in a container `width` wide, with an index strip `indexWidth` wide down its
+    /// trailing edge: the width left inside the content insets (and `AdaptiveLayout.contentMaxWidth`), filled as
+    /// SwiftUI fills an adaptive `GridItem`, with as many `minimumTile`s as fit `gridSpacing` apart.
+    static func columnCount(width: CGFloat, tier: LayoutTier, indexWidth: CGFloat = LetterIndexStrip.baseWidth, accessibilitySize: Bool = false) -> Int {
+        let spacing = AdaptiveLayout.gridSpacing
+        let available = min(width - indexWidth, AdaptiveLayout.contentMaxWidth) - AdaptiveLayout.contentInset(tier) * 2
+        let minimum = minimumTile(tier, accessibilitySize: accessibilitySize)
+        return max(1, Int(((available + spacing) / (minimum + spacing)).rounded(.down)))
     }
 
     var body: some View {
@@ -50,7 +68,7 @@ struct LibraryGrid<Content: View>: View {
     }
 }
 
-/// A grid tile: square (or, for an artist, round) artwork filling the column, with the title and a secondary line
+/// A grid tile: square artwork (an artist's in `ArtistArtworkShape`) filling the column, with the title and a secondary line
 /// under it. The playing item's title takes the tint and its artwork the animated indicator.
 struct LibraryTile: View {
     let title: String
@@ -63,9 +81,9 @@ struct LibraryTile: View {
     @Environment(\.artworkTint) private var tint
 
     var body: some View {
-        VStack(alignment: artworkShape == .circle ? .center : .leading, spacing: Spacing.small) {
+        VStack(alignment: .leading, spacing: Spacing.small) {
             cover
-            VStack(alignment: artworkShape == .circle ? .center : .leading, spacing: Spacing.tiny) {
+            VStack(alignment: .leading, spacing: Spacing.tiny) {
                 HStack(spacing: Spacing.xsmall) {
                     if playback != .none {
                         NowPlayingIndicator(isAnimating: playback == .playing)
@@ -85,9 +103,8 @@ struct LibraryTile: View {
                         .lineLimit(1)
                 }
             }
-            .multilineTextAlignment(artworkShape == .circle ? .center : .leading)
         }
-        .frame(maxWidth: .infinity, alignment: artworkShape == .circle ? .center : .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(playback == .none ? [] : .isSelected)
@@ -113,10 +130,8 @@ private struct TileShape: ViewModifier {
         switch shape {
         case .rounded:
             content.artworkStyle(cornerRadius: ArtworkCorner.tile)
-        case .circle:
-            content
-                .clipShape(Circle())
-                .overlay { Circle().strokeBorder(ArtworkHairline.color, lineWidth: ArtworkHairline.width) }
+        case .artist:
+            content.artistArtworkStyle()
         }
     }
 }
@@ -171,10 +186,9 @@ struct LibraryGridSkeleton: View {
             ForEach(0 ..< tiles, id: \.self) { _ in
                 VStack(alignment: .leading, spacing: Spacing.small) {
                     Group {
-                        if artworkShape == .circle {
-                            Circle().fill(Color(.systemGray5))
-                        } else {
-                            RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous).fill(Color(.systemGray5))
+                        switch artworkShape {
+                        case .rounded: RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous).fill(Color(.systemGray5))
+                        case .artist: ArtistArtworkShape().fill(Color(.systemGray5))
                         }
                     }
                     .aspectRatio(1, contentMode: .fit)

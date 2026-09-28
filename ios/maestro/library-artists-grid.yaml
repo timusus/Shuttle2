@@ -1,0 +1,59 @@
+# Screenshots of the Library's artist and album lists and grids (#624): the Album Artists list beside its A–Z index
+# (no row chevrons), the Album Artists and Albums grids (two columns on every iPhone), then an artist's detail hero.
+# Artist pictures are `ArtistArtworkShape` squircles throughout. iPhone only (the chip rail); signed in already: run
+# sign-in-jellyfin.yaml first. Leaves both lists in grid mode.
+#
+#   OUT=/tmp/s2-libfb/ios26 ios/scripts/maestro-sim.sh library-artists-grid.yaml
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+- tapOn: "Library"
+- tapOn:
+    id: "libraryChip.all"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "libraryCategory.albumArtists"
+    timeout: 120000
+- tapOn:
+    id: "libraryCategory.albumArtists"
+- waitForAnimationToEnd:
+    timeout: 5000
+# The view mode is remembered: start from the list.
+- runFlow:
+    when:
+      visible: "Show as List"
+    commands:
+      - tapOn:
+          id: "library.viewMode"
+      - waitForAnimationToEnd:
+          timeout: 5000
+- takeScreenshot: 1-artists-list
+- tapOn:
+    id: "library.viewMode"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 2-artists-grid
+- tapOn:
+    id: "libraryChip.albums"
+- waitForAnimationToEnd:
+    timeout: 5000
+- runFlow:
+    when:
+      visible: "Show as Grid"
+    commands:
+      - tapOn:
+          id: "library.viewMode"
+      - waitForAnimationToEnd:
+          timeout: 5000
+- takeScreenshot: 3-albums-grid
+- tapOn:
+    id: "libraryChip.albumArtists"
+- waitForAnimationToEnd:
+    timeout: 5000
+# The first tile, top left.
+- tapOn:
+    point: "25%,35%"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 4-artist-detail

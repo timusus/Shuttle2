@@ -106,7 +106,7 @@ struct AlbumListContent: View {
             } else {
                 LetterIndexedList(items: state.albums, id: \.stableId, sections: index) { _, album in
                     let playback = nowPlaying.playback(album: album)
-                    NavigationLink(value: Route.album(album)) { AlbumRow(album: album, playback: playback) }
+                    LibraryRowLink(route: Route.album(album)) { AlbumRow(album: album, playback: playback) }
                         .contextMenu { menu(album) }
                         .nowPlayingRowBackground(playback)
                 }

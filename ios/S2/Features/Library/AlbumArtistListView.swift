@@ -1,7 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Library > Album Artists (P5-6b): `AlbumArtistListViewModel`'s artists as a list (the default) or a grid of round
+/// Library > Album Artists (P5-6b): `AlbumArtistListViewModel`'s artists as a list (the default) or a grid of their
 /// pictures, switched from the toolbar and kept by the ViewModel (`setViewMode`). A row or tile pushes the artist's
 /// detail route and shows its artwork via `ArtworkUrls.requests(albumArtist:)`. Context menu plays or queues through the
 /// shared `MediaAction`s; there's no per-artist shuffle on the ViewModel, so the toolbar shuffle dispatches
@@ -82,7 +82,7 @@ struct AlbumArtistListContent: View {
     private var content: some View {
         switch state.loadingState {
         case .loading:
-            if state.viewMode == .grid { LibraryGridSkeleton(artworkShape: .circle) } else { LibraryListSkeleton() }
+            if state.viewMode == .grid { LibraryGridSkeleton(artworkShape: .artist) } else { LibraryListSkeleton() }
         case .scanning where state.albumArtists.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
@@ -97,7 +97,7 @@ struct AlbumArtistListContent: View {
                                 title: AlbumArtistRow.title(artist),
                                 subtitle: AlbumArtistRow.subtitle(artist),
                                 artwork: .albumArtist(artist),
-                                artworkShape: .circle,
+                                artworkShape: .artist,
                                 placeholderSymbol: "music.mic",
                                 playback: nowPlaying.playback(albumArtist: artist)
                             )
@@ -109,7 +109,7 @@ struct AlbumArtistListContent: View {
             } else {
                 LetterIndexedList(items: state.albumArtists, id: \.stableId, sections: index) { _, artist in
                     let playback = nowPlaying.playback(albumArtist: artist)
-                    NavigationLink(value: Route.albumArtist(artist)) { AlbumArtistRow(albumArtist: artist, playback: playback) }
+                    LibraryRowLink(route: Route.albumArtist(artist)) { AlbumArtistRow(albumArtist: artist, playback: playback) }
                         .contextMenu { menu(artist) }
                         .nowPlayingRowBackground(playback)
                 }
@@ -134,7 +134,7 @@ struct AlbumArtistRow: View {
             Self.title(albumArtist),
             subtitle: Self.subtitle(albumArtist),
             artwork: .albumArtist(albumArtist),
-            artworkShape: .circle,
+            artworkShape: .artist,
             placeholderSymbol: "music.mic",
             playback: playback
         )

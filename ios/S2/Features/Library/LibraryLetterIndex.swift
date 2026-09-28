@@ -77,6 +77,30 @@ struct LetterIndexedList<Item, ID: Hashable, Row: View>: View {
     }
 }
 
+/// A Library list row that pushes `route`, without the disclosure chevron, as Music and Contacts do, so nothing
+/// competes with the letter index down the same edge. The whole row taps through and VoiceOver reads it as a button.
+/// iOS 26 hides the chevron itself; before it the link sits invisibly behind the label, which the row's tap still
+/// reaches. Settings-style lists keep plain `NavigationLink`s and their chevrons.
+struct LibraryRowLink<Label: View>: View {
+    let route: Route
+    @ViewBuilder let label: () -> Label
+
+    var body: some View {
+        if #available(iOS 26, *) {
+            NavigationLink(value: route, label: label)
+                .navigationLinkIndicatorVisibility(.hidden)
+        } else {
+            ZStack {
+                NavigationLink(value: route) { EmptyView() }
+                    .opacity(0)
+                label()
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
+        }
+    }
+}
+
 private struct IndexedItem<Item, ID: Hashable> {
     let index: Int
     let item: Item
@@ -126,7 +150,13 @@ struct LetterIndexStrip: View {
     @State private var lettersFrame: CGRect = .zero
     /// One letter's height at the current text size: caption2's line.
     @ScaledMetric(relativeTo: .caption2) private var letterHeight: CGFloat = 14
-    @ScaledMetric(relativeTo: .caption2) private var width: CGFloat = 20
+    @ScaledMetric(relativeTo: .caption2) private var width: CGFloat = LetterIndexStrip.letterWidth
+
+    /// A letter's column at the default text size.
+    static let letterWidth: CGFloat = 20
+    /// The whole strip's width at the default text size, the letters and their padding: the width it takes from
+    /// the content beside it (`LibraryGrid.columnCount`).
+    static let baseWidth = letterWidth + Spacing.xsmall * 2
 
     var body: some View {
         VStack(spacing: 0) {

@@ -35,6 +35,10 @@ enum ArtworkCorner {
     static let hero: CGFloat = 20
     /// The Now Playing cover.
     static let player: CGFloat = 20
+    /// An artist's picture, at any size: its corner radius as a fraction of its side (`ArtistArtworkShape`). About
+    /// twice as round as an album's (8 on a 48 pt row, 16 on a 160 pt tile), so artists read as their own kind of
+    /// thing while staying in the same continuous-corner family.
+    static let artistFraction: CGFloat = 0.3
 }
 
 /// The artwork sizes rows, tiles and heroes draw at, in points (also the decode size `ArtworkImage` requests).
@@ -50,11 +54,14 @@ enum ArtworkSize {
     static let shelf: CGFloat = 150
     /// A Home shelf tile at regular and wide width.
     static let shelfRegular: CGFloat = 180
-    /// A circular artist tile on a shelf.
+    /// An artist tile on a shelf.
     static let artistShelf: CGFloat = 120
 
     /// The smallest cell of an adaptive grid: `GridItem(.adaptive(minimum: ArtworkSize.gridMinimum))`.
     static let gridMinimum: CGFloat = 160
+    /// The smallest Library grid tile at compact width: small enough that two fit beside the letter index on the
+    /// narrowest iPhone (`LibraryGrid.minimumTile`).
+    static let gridMinimumCompact: CGFloat = 120
 
     /// A detail screen's hero at compact width.
     static let hero: CGFloat = 240
