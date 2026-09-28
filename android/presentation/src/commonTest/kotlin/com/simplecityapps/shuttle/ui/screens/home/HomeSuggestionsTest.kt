@@ -12,7 +12,6 @@ import com.simplecityapps.mediaprovider.repository.playhistory.AlbumCompletions
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.GenrePlays
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
-import com.simplecityapps.mediaprovider.repository.suggestions.ImportDays
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.PlayContext
@@ -113,14 +112,13 @@ class HomeSuggestionsTest {
     }
 
     @Test
-    fun `rediscover and recently added ask for their windows`() = runTest {
+    fun `rediscover asks for its window, and recently added for the newest albums with none`() = runTest {
         suggestions.toRediscover = listOf(blue.groupKey!!)
         suggestions.recentlyAdded = listOf(kidA.groupKey!!)
-        suggestions.importDays = ImportDays(songs = 10, largestDay = 3)
 
         Rediscover(suggestions, resolve)(now) shouldBe listOf(HomeItem.AlbumItem(blue))
-        RecentlyAdded(suggestions, resolve)(now) shouldBe RecentlyAddedCandidates(listOf(HomeItem.AlbumItem(kidA)), ImportDays(10, 3))
-        suggestions.calls shouldBe listOf("albumsToRediscover(3, ${now - 90.days})", "recentlyAddedAlbums(${now - 60.days})")
+        RecentlyAdded(suggestions, resolve)() shouldBe listOf(HomeItem.AlbumItem(kidA))
+        suggestions.calls shouldBe listOf("albumsToRediscover(3, ${now - 90.days})", "recentlyAddedAlbums(30)")
     }
 
     @Test

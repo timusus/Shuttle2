@@ -36,11 +36,12 @@ interface SuggestionsRepository {
     /** The albums one of whose songs has played through, most recently first; at most [limit]. */
     suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumGroupKey>
 
-    /** The albums with a song added since [since], by their newest song, most recent first; at most [limit]. */
-    suspend fun recentlyAddedAlbums(
-        since: Instant,
-        limit: Int
-    ): List<AlbumGroupKey>
+    /**
+     * The library's newest albums, by the date their newest song was added, most recent first; at most [limit]. There's
+     * no window and no first-import rule: a library added all at once (a first import, or a server that scanned all its
+     * music on one day) still has its newest albums (#649).
+     */
+    suspend fun recentlyAddedAlbums(limit: Int): List<AlbumGroupKey>
 
     /**
      * The albums played through at least [minPlays] times all together or holding a favourite, none of whose songs has
@@ -51,13 +52,4 @@ interface SuggestionsRepository {
         playedBefore: Instant,
         limit: Int
     ): List<AlbumGroupKey>
-
-    /** How many songs the library holds, and how many of them the single busiest day added. */
-    suspend fun importDays(): ImportDays
 }
-
-/** The library's [songs], [largestDay] of which were added on the same (UTC) day. */
-data class ImportDays(
-    val songs: Int,
-    val largestDay: Int
-)

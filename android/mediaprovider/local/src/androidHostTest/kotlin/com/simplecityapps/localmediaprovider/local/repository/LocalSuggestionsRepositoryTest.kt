@@ -8,13 +8,13 @@ import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatab
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
-import com.simplecityapps.mediaprovider.repository.suggestions.ImportDays
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -107,15 +107,40 @@ class LocalSuggestionsRepositoryTest {
     }
 
     @Test
-    fun `recently added albums are those with a song added since a time, newest first`() = runTest {
+    fun `recently added albums are the newest by their newest song, however long ago`() = runTest {
         insert(
-            createSongData(album = "Old", track = 1).copy(dateAdded = now - 90.days),
-            createSongData(album = "Mixed", track = 1).copy(dateAdded = now - 80.days),
+            createSongData(album = "Old", track = 1).copy(dateAdded = now - 900.days),
+            createSongData(album = "Mixed", track = 1).copy(dateAdded = now - 800.days),
             createSongData(album = "Mixed", track = 2).copy(dateAdded = now - 2.days),
             createSongData(album = "New", track = 1).copy(dateAdded = now - 10.days)
         )
 
-        repository.recentlyAddedAlbums(since = now - 60.days, limit = 10) shouldBe listOf(key("mixed"), key("new"))
+        repository.recentlyAddedAlbums(limit = 10) shouldBe listOf(key("mixed"), key("new"), key("old"))
+        repository.recentlyAddedAlbums(limit = 2) shouldBe listOf(key("mixed"), key("new"))
+    }
+
+    @Test
+    fun `a Jellyfin library imported at once has its newest albums (#649)`() = runTest {
+        // As the Jellyfin mapper stores a song: DateCreated, the server's own scan time, as both dateAdded and
+        // lastModified. The test server scanned every song on the same day, fractions of a second apart.
+        val scanned = Instant.parse("2026-09-28T10:29:35.0745155Z")
+        val albums = (1..40).map { "Album $it" }
+        insert(
+            *albums.flatMapIndexed { index, album ->
+                (1..3).map { track ->
+                    val createdAt = scanned + (index * 3 + track).seconds / 100
+                    createSongData(album = album, track = track).copy(
+                        path = "jellyfin://item/$index-$track",
+                        externalId = "$index-$track",
+                        mediaProvider = MediaProviderType.Jellyfin,
+                        lastModified = createdAt,
+                        dateAdded = createdAt
+                    )
+                }
+            }.toTypedArray()
+        )
+
+        repository.recentlyAddedAlbums(limit = 3) shouldBe listOf(key("album 40"), key("album 39"), key("album 38"))
     }
 
     @Test
@@ -130,18 +155,6 @@ class LocalSuggestionsRepositoryTest {
         )
 
         repository.albumsToRediscover(minPlays = 3, playedBefore = now - 90.days, limit = 10) shouldBe listOf(key("loved"), key("favourite"))
-    }
-
-    @Test
-    fun `import days count the library and its busiest day`() = runTest {
-        repository.importDays() shouldBe ImportDays(songs = 0, largestDay = 0)
-        insert(
-            createSongData(album = "A", track = 1).copy(dateAdded = now),
-            createSongData(album = "A", track = 2).copy(dateAdded = now + 1.hours),
-            createSongData(album = "B", track = 1).copy(dateAdded = now - 3.days)
-        )
-
-        repository.importDays() shouldBe ImportDays(songs = 3, largestDay = 2)
     }
 
     @Test

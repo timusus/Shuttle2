@@ -1,6 +1,5 @@
 package com.simplecityapps.fakes
 
-import com.simplecityapps.mediaprovider.repository.suggestions.ImportDays
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -23,7 +22,6 @@ class FakeSuggestionsRepository : SuggestionsRepository {
     var recentlyCompleted: List<AlbumGroupKey> = emptyList()
     var recentlyAdded: List<AlbumGroupKey> = emptyList()
     var toRediscover: List<AlbumGroupKey> = emptyList()
-    var importDays = ImportDays(songs = 0, largestDay = 0)
 
     /** Every lookup and aggregate asked for, by name, so a test can check none reads more than it needs. */
     val calls = mutableListOf<String>()
@@ -43,16 +41,11 @@ class FakeSuggestionsRepository : SuggestionsRepository {
 
     override suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumGroupKey> = recentlyCompleted.take(limit)
 
-    override suspend fun recentlyAddedAlbums(
-        since: Instant,
-        limit: Int
-    ): List<AlbumGroupKey> = recentlyAdded.take(limit).also { calls += "recentlyAddedAlbums($since)" }
+    override suspend fun recentlyAddedAlbums(limit: Int): List<AlbumGroupKey> = recentlyAdded.take(limit).also { calls += "recentlyAddedAlbums($limit)" }
 
     override suspend fun albumsToRediscover(
         minPlays: Int,
         playedBefore: Instant,
         limit: Int
     ): List<AlbumGroupKey> = toRediscover.take(limit).also { calls += "albumsToRediscover($minPlays, $playedBefore)" }
-
-    override suspend fun importDays(): ImportDays = importDays
 }

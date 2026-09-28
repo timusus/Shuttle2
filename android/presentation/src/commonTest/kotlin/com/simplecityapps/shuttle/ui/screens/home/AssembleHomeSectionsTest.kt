@@ -3,8 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.home
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createGenre
-import com.simplecityapps.mediaprovider.repository.suggestions.ImportDays
-import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlin.time.Clock
@@ -38,7 +36,7 @@ class AssembleHomeSectionsTest {
         aroundThisTime = emptyList(),
         onRepeat = emptyList(),
         rediscover = emptyList(),
-        recentlyAdded = RecentlyAddedCandidates(emptyList(), ImportDays(songs = 100, largestDay = 10)),
+        recentlyAdded = emptyList(),
         genrePicks = GenrePickCandidates(emptyList(), emptyList()),
     )
 
@@ -63,7 +61,7 @@ class AssembleHomeSectionsTest {
                 aroundThisTime = albums.subList(1, 5).map { around(it, days = 3) },
                 onRepeat = listOf(OnRepeatCandidate(albums[0], 6, 3.0), OnRepeatCandidate(albums[9], 6, 2.0), OnRepeatCandidate(albums[12], 6, 1.0)),
                 rediscover = listOf(albums[9], albums[10], albums[13]),
-                recentlyAdded = empty.recentlyAdded.copy(items = listOf(albums[10], albums[11], albums[14])),
+                recentlyAdded = listOf(albums[10], albums[11], albums[14]),
                 genrePicks = GenrePickCandidates(emptyList(), genres),
             ),
         )
@@ -140,7 +138,7 @@ class AssembleHomeSectionsTest {
         val candidates = empty.copy(
             hasHistory = false,
             rediscover = albums.take(3),
-            recentlyAdded = empty.recentlyAdded.copy(items = albums.take(4)),
+            recentlyAdded = albums.take(4),
             genrePicks = GenrePickCandidates(played = listOf(genre("played")), largest = genres),
         )
 
@@ -213,15 +211,11 @@ class AssembleHomeSectionsTest {
     }
 
     @Test
-    fun `recently added hides while most of the library came in on one day`() {
+    fun `recently added shows the newest albums, on a first import too (#649)`() {
         val items = albums.take(3)
 
-        assemble(empty.copy(recentlyAdded = RecentlyAddedCandidates(items, ImportDays(songs = 100, largestDay = 80))))
-            .section(HomeSectionId.RecentlyAdded).items shouldBe items
-        assemble(empty.copy(recentlyAdded = RecentlyAddedCandidates(items, ImportDays(songs = 100, largestDay = 81))))
-            .map { it.id } shouldNotContain HomeSectionId.RecentlyAdded
-        assemble(empty.copy(hasHistory = false, recentlyAdded = RecentlyAddedCandidates(items, ImportDays(songs = 100, largestDay = 100))))
-            .map { it.id } shouldBe listOf(HomeSectionId.ShuffleAll)
+        assemble(empty.copy(recentlyAdded = items)).section(HomeSectionId.RecentlyAdded).items shouldBe items
+        assemble(empty.copy(hasHistory = false, recentlyAdded = items)).map { it.id } shouldBe listOf(HomeSectionId.RecentlyAdded, HomeSectionId.ShuffleAll)
     }
 
     @Test

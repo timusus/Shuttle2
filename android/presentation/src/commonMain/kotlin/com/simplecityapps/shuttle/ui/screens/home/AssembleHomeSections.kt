@@ -31,7 +31,7 @@ data class HomeCandidates(
     val aroundThisTime: List<AroundThisTimeCandidate>,
     val onRepeat: List<OnRepeatCandidate>,
     val rediscover: List<HomeItem>,
-    val recentlyAdded: RecentlyAddedCandidates,
+    val recentlyAdded: List<HomeItem>,
     val genrePicks: GenrePickCandidates,
 )
 
@@ -46,7 +46,7 @@ data class HomeCandidates(
  *   days. Titled for the part of the day.
  * - On repeat: albums and artists played through [ON_REPEAT_MIN_COMPLETIONS] times, by age-weighed completions.
  * - Rediscover: shuffled with a seed that changes each local day, so it holds still through the day.
- * - Recently added: hidden when more than [IMPORT_BURST_SHARE] of the library was added on one day, the first import.
+ * - Recently added: the library's newest albums, on a first import too, when everything was added at once (#649).
  * - Genre picks: played genres first, then the largest; [GENRE_PICKS_MIN] to [GENRE_PICKS_MAX] of them, else hidden.
  */
 fun assembleHomeSections(
@@ -56,10 +56,9 @@ fun assembleHomeSections(
 ): List<HomeSection> {
     val now = clock.now().toLocalDateTime(timeZone)
     val builder = SectionBuilder()
-    val recentlyAdded = candidates.recentlyAdded.items.takeUnless { candidates.recentlyAdded.isImportBurst() }.orEmpty()
     val coldStart = !candidates.hasHistory && candidates.jumpBackIn.lastCompleted.isEmpty()
     if (coldStart) {
-        builder.add(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, recentlyAdded, SECTION_SIZE)
+        builder.add(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, candidates.recentlyAdded, SECTION_SIZE)
         val largest = candidates.genrePicks.largest
         builder.add(HomeSectionId.GenrePicks, HomeSectionTitle.GenrePicks, largest, GENRE_PICKS_MAX, eligible = largest.size >= GENRE_PICKS_MIN)
         return builder.sections + HomeSection(HomeSectionId.ShuffleAll, HomeSectionTitle.ShuffleAll, emptyList())
@@ -84,7 +83,7 @@ fun assembleHomeSections(
     val rediscover = candidates.rediscover.shuffled(Random(now.date.toEpochDays()))
     builder.add(HomeSectionId.Rediscover, HomeSectionTitle.Rediscover, rediscover, SECTION_SIZE)
 
-    builder.add(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, recentlyAdded, SECTION_SIZE)
+    builder.add(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, candidates.recentlyAdded, SECTION_SIZE)
 
     val genrePicks = (candidates.genrePicks.played + candidates.genrePicks.largest).distinctBy { it.key }
     builder.add(HomeSectionId.GenrePicks, HomeSectionTitle.GenrePicks, genrePicks, GENRE_PICKS_MAX, eligible = genrePicks.size >= GENRE_PICKS_MIN)
@@ -97,8 +96,6 @@ internal fun partOfDay(hour: Int): HomeSectionTitle = when (hour) {
     in 12..17 -> HomeSectionTitle.ThisAfternoon
     else -> HomeSectionTitle.Tonight
 }
-
-private fun RecentlyAddedCandidates.isImportBurst(): Boolean = importDays.songs > 0 && importDays.largestDay > importDays.songs * IMPORT_BURST_SHARE
 
 /**
  * Adds sections in order, leaving out items an earlier section shows. Whether a section qualifies ([eligible]) is decided
@@ -132,7 +129,6 @@ internal const val AROUND_THIS_TIME_MIN_DAYS = 3
 internal const val AROUND_THIS_TIME_MIN_ITEMS = 3
 internal const val SAME_KIND_OF_DAY_WEIGHT = 1.5
 internal const val ON_REPEAT_MIN_COMPLETIONS = 5
-internal const val IMPORT_BURST_SHARE = 0.8
 internal const val GENRE_PICKS_MIN = 4
 internal const val GENRE_PICKS_MAX = 6
 
@@ -155,7 +151,7 @@ class LoadHomeSections @Inject constructor(
             aroundThisTime = if (hasHistory) aroundThisTime(now, timeZone) else emptyList(),
             onRepeat = if (hasHistory) onRepeat(now) else emptyList(),
             rediscover = rediscover(now),
-            recentlyAdded = recentlyAdded(now),
+            recentlyAdded = recentlyAdded(),
             genrePicks = genrePicks(now),
         )
         return assembleHomeSections(candidates, homeTime.clock, timeZone)

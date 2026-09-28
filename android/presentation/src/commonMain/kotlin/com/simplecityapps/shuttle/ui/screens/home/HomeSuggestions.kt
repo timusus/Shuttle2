@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.home
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.suggestions.ImportDays
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.shuttle.model.PlayContext
 import dev.zacsweers.metro.Inject
@@ -155,24 +154,15 @@ class Rediscover @Inject constructor(
     }
 }
 
-/** The albums added in the window, newest first, and how the library's songs spread over the days they were added. */
-data class RecentlyAddedCandidates(
-    val items: List<HomeItem>,
-    val importDays: ImportDays,
-)
-
+/** The library's newest albums by date added, newest first (#649). */
 class RecentlyAdded @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val resolveHomeItems: ResolveHomeItems,
 ) {
-    suspend operator fun invoke(now: Instant): RecentlyAddedCandidates = RecentlyAddedCandidates(
-        items = resolveHomeItems(suggestionsRepository.recentlyAddedAlbums(since = now - WINDOW_DAYS.days, limit = CANDIDATES).map { PlayContext.Album(it) }),
-        importDays = suggestionsRepository.importDays(),
-    )
+    suspend operator fun invoke(): List<HomeItem> = resolveHomeItems(suggestionsRepository.recentlyAddedAlbums(CANDIDATES).map { PlayContext.Album(it) })
 
-    companion object {
-        const val WINDOW_DAYS = 60
-        private const val CANDIDATES = 30
+    private companion object {
+        const val CANDIDATES = 30
     }
 }
 

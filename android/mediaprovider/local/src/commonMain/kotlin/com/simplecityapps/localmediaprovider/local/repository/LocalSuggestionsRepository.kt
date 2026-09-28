@@ -2,7 +2,6 @@ package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SuggestionsDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
-import com.simplecityapps.mediaprovider.repository.suggestions.ImportDays
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -61,10 +60,7 @@ class LocalSuggestionsRepository(
 
     override suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumGroupKey> = latestAlbums(suggestionsDao.completedSongs().map { it.id to it.at }, limit)
 
-    override suspend fun recentlyAddedAlbums(
-        since: Instant,
-        limit: Int
-    ): List<AlbumGroupKey> = latestAlbums(suggestionsDao.songsAddedSince(since).map { it.id to it.at }, limit)
+    override suspend fun recentlyAddedAlbums(limit: Int): List<AlbumGroupKey> = latestAlbums(suggestionsDao.songsAdded().map { it.id to it.at }, limit)
 
     override suspend fun albumsToRediscover(
         minPlays: Int,
@@ -85,8 +81,6 @@ class LocalSuggestionsRepository(
             .take(limit)
             .mapNotNull { it.key }
     }
-
-    override suspend fun importDays(): ImportDays = ImportDays(songs = suggestionsDao.countSongs(), largestDay = suggestionsDao.largestImportDay() ?: 0)
 
     private suspend fun identities(): Map<Long, AlbumIdentity> = albumIndex.albumIndex().identities
 

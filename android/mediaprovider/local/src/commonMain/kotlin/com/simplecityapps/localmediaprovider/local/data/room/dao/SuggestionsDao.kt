@@ -34,23 +34,13 @@ interface SuggestionsDao {
 
     @Query(
         "SELECT id, COALESCE(dateAdded, lastModified) AS at FROM songs " +
-            "WHERE blacklisted = 0 AND COALESCE(dateAdded, lastModified) >= :since"
+            "WHERE blacklisted = 0 AND COALESCE(dateAdded, lastModified) IS NOT NULL"
     )
-    suspend fun songsAddedSince(since: Instant): List<SongTimeRow>
+    suspend fun songsAdded(): List<SongTimeRow>
 
     /** The songs played or favourited, with what an album to rediscover is judged by. */
     @Query("SELECT id, playCount, lastPlayed, favouritedAt FROM songs WHERE blacklisted = 0 AND (playCount > 0 OR lastPlayed IS NOT NULL OR favouritedAt IS NOT NULL)")
     suspend fun playedSongs(): List<SongPlaysRow>
-
-    /** How many songs the busiest (UTC) day added. */
-    @Query(
-        "SELECT COUNT(*) AS songs FROM songs WHERE blacklisted = 0 " +
-            "GROUP BY COALESCE(dateAdded, lastModified) / 86400000 ORDER BY songs DESC LIMIT 1"
-    )
-    suspend fun largestImportDay(): Int?
-
-    @Query("SELECT COUNT(*) FROM songs WHERE blacklisted = 0")
-    suspend fun countSongs(): Int
 }
 
 data class SongTimeRow(
