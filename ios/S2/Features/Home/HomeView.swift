@@ -2,10 +2,12 @@ import Shared
 import SwiftUI
 
 /// Home (#587, polished in #624, sections from #633): a card to resume the queue, then the suggestion sections from
-/// the shared `HomeViewModel` (Jump Back In, the time of day, On Repeat, Rediscover, Recently Added, Genre Picks).
-/// A tap opens the album, artist or playlist (zooming from the tile on iOS 18+) or shuffles the genre; a tile's context menu plays or queues it
-/// through the shared `MediaAction`s. Before there's a library to shelve, the empty state, or the import's progress
-/// while one runs. Pull to refresh re-imports, in every state.
+/// the shared `HomeViewModel`. Jump Back In is a compact grid; the time of day, On Repeat, Rediscover, Recently Added
+/// and Genre Picks are shelves. A tap opens the album, artist or playlist (zooming from the tile on iOS 18+), or
+/// shuffles a Genre Picks tile; every tile's context menu and VoiceOver actions play, shuffle, queue or open it
+/// through the shared `MediaAction`s. Before anything has been played (cold start) Home offers Shuffle All and says it
+/// learns from listening. Before there's a library, the empty state, or the import's progress while one runs. Pull
+/// to refresh re-imports, in every state.
 struct HomeView: View {
     let navigator: Navigator
 
@@ -24,24 +26,25 @@ struct HomeView: View {
                 onShuffleQueue: {
                     if let action = models.home.shuffleQueue() { models.actions.dispatch(action: action) }
                 },
-                onItemTap: { item in
-                    switch onEnum(of: item) {
-                    case .albumItem(let it): navigator.open(.album(it.album))
-                    case .artistItem(let it): navigator.open(.albumArtist(albumArtistKey: it.albumArtist.groupKey.key))
-                    case .playlistItem(let it): navigator.open(.playlist(id: it.playlist.id))
-                    case .smartPlaylistItem(let it): navigator.open(.smartPlaylist(id: it.smartPlaylistId.id))
-                    case .genreItem: models.actions.dispatch(action: item.playAction())
-                    }
-                },
-                onPlay: { models.actions.dispatch(action: MediaActionPlay(selection: $0, position: 0)) },
-                onPlayNext: { models.actions.dispatch(action: MediaActionPlayNext(selection: $0)) },
-                onAddToQueue: { models.actions.dispatch(action: MediaActionAddToQueue(selection: $0)) }
+                onOpen: { item in navigator.open(Self.route(item)) },
+                onAction: { models.actions.dispatch(action: $0) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
             .consumeEvents((state as? HomeUiStateContent)?.events ?? [], handled: { models.home.onEventHandled(id: $0) }) { _ in }
         }
         .refreshable { LibraryImport.refresh() }
         .navigationTitle(AppTab.home.title)
+    }
+
+    /// The screen an item opens.
+    static func route(_ item: HomeItem) -> Route {
+        switch onEnum(of: item) {
+        case .albumItem(let it): .album(it.album)
+        case .artistItem(let it): .albumArtist(albumArtistKey: it.albumArtist.groupKey.key)
+        case .playlistItem(let it): .playlist(id: it.playlist.id)
+        case .smartPlaylistItem(let it): .smartPlaylist(id: it.smartPlaylistId.id)
+        case .genreItem(let it): .genre(name: it.genre.name)
+        }
     }
 }
 
@@ -63,7 +66,7 @@ final class HomeModels: ViewModelGroup {
 /// Home from a `HomeUiState`. `showWhatsNew`/`HomeEvent.AnalyticsNowOn` have no iOS surface yet (no
 /// changelog or analytics-consent screen until phase 7, #589), so their events are consumed and dropped.
 ///
-/// A `ScrollView` of a `LazyVStack`, not a `List`: the shelves and the resume card are full-bleed cards, and the
+/// A `ScrollView` of a `LazyVStack`, not a `List`: the grid, the shelves and the resume card are full-bleed, and the
 /// content is capped at `AdaptiveLayout.contentMaxWidth` and centred on an iPad.
 struct HomeContent: View {
     let state: HomeUiState
@@ -71,14 +74,14 @@ struct HomeContent: View {
     var onShuffleAll: () -> Void = {}
     var onTogglePlayback: () -> Void = {}
     var onShuffleQueue: () -> Void = {}
-    var onItemTap: (HomeItem) -> Void = { _ in }
-    var onPlay: (MediaSelection) -> Void = { _ in }
-    var onPlayNext: (MediaSelection) -> Void = { _ in }
-    var onAddToQueue: (MediaSelection) -> Void = { _ in }
+    /// Opens the item's screen.
+    var onOpen: (HomeItem) -> Void = { _ in }
+    /// Dispatches a play or queue action.
+    var onAction: (MediaAction) -> Void = { _ in }
 
     @Environment(\.layoutTier) private var layoutTier
-    /// The tile the last tap came from, the one zoom source for its route. An album can be on more than one shelf
-    /// (recently and most played), and a zoom from a shelf the user didn't touch would be wrong.
+    /// The tile the last tap came from, the one zoom source for its route. An album can be in more than one section,
+    /// and a zoom from a tile the user didn't touch would be wrong.
     @State private var zoomSourceKey: String?
 
     var body: some View {
@@ -92,13 +95,19 @@ struct HomeContent: View {
                     .containerRelativeFrame(.vertical)
             }
         case .content(let content):
+            let coldStart = content.sections.contains { $0.id == .shuffleAll }
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Spacing.large) {
                     if let resume = content.resume {
                         ResumeCard(resume: resume, onTogglePlayback: onTogglePlayback, onShuffleQueue: onShuffleQueue)
                             .padding(.horizontal, inset)
                     }
-                    ForEach(content.sections, id: \.id) { section in
+                    // Cold start's Shuffle All leads, above the shelves: the one sure thing to do with a new library.
+                    if coldStart {
+                        ColdStartCard(onShuffleAll: onShuffleAll)
+                            .padding(.horizontal, inset)
+                    }
+                    ForEach(content.sections.filter { $0.id != .shuffleAll && !$0.items.isEmpty }, id: \.id) { section in
                         sectionView(section)
                     }
                 }
@@ -108,7 +117,10 @@ struct HomeContent: View {
                 .frame(maxWidth: .infinity)
             }
             .toolbar {
-                Button("Shuffle", systemImage: "shuffle", action: onShuffleAll)
+                // Cold start has its own, larger Shuffle All.
+                if !coldStart {
+                    Button("Shuffle", systemImage: "shuffle", action: onShuffleAll)
+                }
             }
         }
     }
@@ -133,64 +145,61 @@ struct HomeContent: View {
         }
     }
 
-    /// One of Home's suggestion sections under its title: a shelf of its items, or for Shuffle All (cold start)
-    /// a button that shuffles the library.
-    @ViewBuilder
+    /// A section under its header: Jump Back In as a grid, the others as shelves.
     private func sectionView(_ section: HomeSection) -> some View {
-        let title = Self.title(section.title)
-        if section.id == .shuffleAll {
-            Button(title, systemImage: "shuffle", action: onShuffleAll)
-                .buttonStyle(.borderedProminent)
+        VStack(alignment: .leading, spacing: Spacing.smallMedium) {
+            header(section)
                 .padding(.horizontal, inset)
-                .accessibilityIdentifier("home.shuffleAll")
-        } else if !section.items.isEmpty {
-            VStack(alignment: .leading, spacing: Spacing.smallMedium) {
-                SectionHeader(title)
-                    .padding(.horizontal, inset)
+            if section.id == .jumpBackIn {
+                JumpBackInGrid(
+                    items: section.items,
+                    perform: onAction,
+                    open: onOpen,
+                    zoomSourceKey: zoomSourceKey,
+                    onTapped: { zoomSourceKey = $0 }
+                )
+                .padding(.horizontal, inset)
+            } else {
+                let mixed = Set(section.items.map(\.typeLabel)).count > 1
                 Shelf(inset: inset) {
                     ForEach(section.items, id: \.key) { item in
-                        tile(item, tileKey: "\(section.id)|\(item.key)")
+                        shelfTile(item, mixed: mixed, tileKey: "\(section.id)|\(item.key)")
                     }
                 }
             }
         }
     }
 
+    /// The Podcasts-style header, with See All only where a screen holds the whole of what the section samples.
     @ViewBuilder
-    private func tile(_ item: HomeItem, tileKey: String) -> some View {
-        let button = Button {
+    private func header(_ section: HomeSection) -> some View {
+        let title = Self.title(section.title)
+        switch section.id {
+        case .recentlyAdded: SectionHeader(title, seeAll: .smartPlaylist(id: "recently-added"))
+        case .genrePicks: SectionHeader(title, seeAll: .libraryCategory(.genres))
+        default: SectionHeader(title)
+        }
+    }
+
+    /// A shelf tile. A tap opens the item, or for a genre shuffles it (a Genre Pick is something to put on).
+    private func shelfTile(_ item: HomeItem, mixed: Bool, tileKey: String) -> some View {
+        let open: (HomeItem) -> Void = { item in
             zoomSourceKey = tileKey
-            onItemTap(item)
-        } label: {
-            switch onEnum(of: item) {
-            case .albumItem(let it): AlbumTileLabel(album: it.album, subtitle: it.album.albumArtist ?? "Unknown")
-            case .artistItem(let it): ArtistTileLabel(artist: it.albumArtist)
-            case .playlistItem(let it): PlainTileLabel(title: it.playlist.name, subtitle: "Playlist", symbol: "music.note.list")
-            case .smartPlaylistItem(let it): PlainTileLabel(title: it.smartPlaylistId.title, subtitle: "Playlist", symbol: it.smartPlaylistId.symbol)
-            case .genreItem(let it): PlainTileLabel(title: it.genre.name, subtitle: "Genre", symbol: "guitars")
+            onOpen(item)
+        }
+        return Button {
+            if item is HomeItemGenreItem {
+                onAction(item.playAction())
+            } else {
+                open(item)
             }
+        } label: {
+            HomeShelfTileLabel(item: item, mixed: mixed)
         }
         .buttonStyle(.pressScale)
-        switch onEnum(of: item) {
-        case .albumItem(let it):
-            button
-                .zoomSource(id: Route.album(it.album).cacheKey, tileKey: tileKey, activeKey: zoomSourceKey)
-                .accessibilityIdentifier("homeTile.album")
-                .contextMenu { mediaActions(MediaSelectionAlbums(album: it.album)) }
-        case .artistItem(let it):
-            button
-                .zoomSource(id: Route.albumArtist(albumArtistKey: it.albumArtist.groupKey.key).cacheKey, tileKey: tileKey, activeKey: zoomSourceKey)
-                .accessibilityIdentifier("homeTile.artist")
-                .contextMenu { mediaActions(MediaSelectionAlbumArtists(albumArtist: it.albumArtist)) }
-        case .playlistItem:
-            button.accessibilityIdentifier("homeTile.playlist")
-        case .smartPlaylistItem:
-            button.accessibilityIdentifier("homeTile.smartPlaylist")
-        case .genreItem(let it):
-            button
-                .accessibilityIdentifier("homeTile.genre")
-                .contextMenu { mediaActions(MediaSelectionGenres(genre: it.genre)) }
-        }
+        .zoomSource(for: item, tileKey: tileKey, activeKey: zoomSourceKey)
+        .accessibilityIdentifier("homeTile.\(item.typeLabel.lowercased())")
+        .homeItemActions(HomeItemActions(item: item, perform: onAction, open: open))
     }
 
     static func title(_ title: HomeSectionTitle) -> String {
@@ -206,41 +215,29 @@ struct HomeContent: View {
         case .shuffleAll: "Shuffle All"
         }
     }
-
-    @ViewBuilder
-    private func mediaActions(_ selection: MediaSelection) -> some View {
-        Button("Play", systemImage: "play") { onPlay(selection) }
-        Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(selection) }
-        Button("Add to Queue", systemImage: "text.append") { onAddToQueue(selection) }
-    }
 }
 
-/// A tile for an item without artwork of its own (a playlist, a smart playlist, a genre): a symbol placeholder at
-/// the album tile's size, its title and a subtitle.
-private struct PlainTileLabel: View {
-    let title: String
-    let subtitle: String
-    let symbol: String
-
-    @Environment(\.layoutTier) private var layoutTier
+/// Cold start: nothing played yet, so nothing to suggest from. A full-width Shuffle All and a line on how Home fills in.
+private struct ColdStartCard: View {
+    let onShuffleAll: () -> Void
 
     var body: some View {
-        let size = ArtworkSize.shelf(layoutTier)
-        VStack(alignment: .leading, spacing: Spacing.xsmall) {
-            ArtworkPlaceholder(symbol: symbol)
-                .artworkTile(size, cornerRadius: ArtworkCorner.tile)
-                .padding(.bottom, Spacing.xsmall)
-            Text(title)
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-            Text(subtitle)
-                .font(.caption)
+        VStack(alignment: .leading, spacing: Spacing.smallMedium) {
+            Button(action: onShuffleAll) {
+                Label("Shuffle All", systemImage: "shuffle")
+                    .font(.s2Headline)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            .controlSize(.large)
+            .accessibilityIdentifier("home.shuffleAll")
+            Label("Home learns from what you play: your albums, artists and genres show up here as you listen.", systemImage: "sparkles")
+                .font(.footnote)
                 .foregroundStyle(.s2SecondaryText)
-                .lineLimit(1)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("home.coldStartHint")
         }
-        .frame(width: size, alignment: .leading)
-        .contentShape(Rectangle())
     }
 }
 
@@ -263,20 +260,22 @@ private struct ResumeCardBody: View {
     let onTogglePlayback: () -> Void
     let onShuffleQueue: () -> Void
 
-    /// The card's cover, larger than a row's and smaller than a hero's.
-    private static let coverSize: CGFloat = 96
-
     @Environment(\.artworkTint) private var tint
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: ArtworkCorner.hero, style: .continuous)
+        // At the accessibility sizes the text takes the card's full width under the cover, rather than a sliver beside it.
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.medium))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: Spacing.medium))
         VStack(alignment: .leading, spacing: Spacing.medium) {
-            HStack(alignment: .center, spacing: Spacing.medium) {
-                RemoteArtwork(.song(resume.song), points: Self.coverSize)
-                    .artworkTile(Self.coverSize, cornerRadius: ArtworkCorner.tile)
+            layout {
+                RemoteArtwork(.song(resume.song), points: ArtworkSize.resumeCard)
+                    .artworkTile(ArtworkSize.resumeCard, cornerRadius: ArtworkCorner.tile)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: Spacing.xsmall) {
-                    Text("Continue")
+                    Text(resume.playing ? "Now Playing" : "Continue")
                         .font(.s2Eyebrow)
                         .textCase(.uppercase)
                         .foregroundStyle(tint)
@@ -291,6 +290,7 @@ private struct ResumeCardBody: View {
                         .font(.s2Time)
                         .foregroundStyle(.s2SecondaryText)
                 }
+                .accessibilityElement(children: .combine)
                 Spacer(minLength: 0)
             }
             HeroActions(
@@ -305,7 +305,7 @@ private struct ResumeCardBody: View {
         .background {
             ZStack {
                 Color(.secondarySystemBackground)
-                RemoteArtwork(.song(resume.song), points: Self.coverSize)
+                RemoteArtwork(.song(resume.song), points: ArtworkSize.resumeCard)
                     .blur(radius: Spacing.xlarge)
                     .scaleEffect(1.4)
                     .opacity(0.55)
@@ -321,6 +321,7 @@ private struct ResumeCardBody: View {
         .clipShape(shape)
         .overlay { shape.strokeBorder(ArtworkHairline.color, lineWidth: ArtworkHairline.width) }
         .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("home.resume")
     }
 
     private var timeLeft: String {
@@ -350,7 +351,7 @@ struct Shelf<Content: View>: View {
 }
 
 /// An album tile's face: the cover at `ArtworkSize.shelf(tier)` with the tile corner and hairline, its title and a
-/// subtitle. The label of whatever says what a tap does (a `Button` on Home, a `NavigationLink` on a detail screen).
+/// subtitle. The label of whatever says what a tap does (a `NavigationLink` on an artist's screen).
 struct AlbumTileLabel: View {
     let album: Album
     let subtitle: String?
@@ -381,35 +382,9 @@ struct AlbumTileLabel: View {
     }
 }
 
-/// An artist tile's face: the artist's picture (`ArtworkCorner.tile`, as an album tile) at `ArtworkSize.artistShelf` with the name and album count centred beneath.
-struct ArtistTileLabel: View {
-    let artist: AlbumArtist
-
-    var body: some View {
-        VStack(spacing: Spacing.xsmall) {
-            RemoteArtwork(.albumArtist(artist), points: ArtworkSize.artistShelf) {
-                ArtworkPlaceholder(symbol: "person.fill")
-            }
-            .artworkTile(ArtworkSize.artistShelf, cornerRadius: ArtworkCorner.tile)
-            .padding(.bottom, Spacing.xsmall)
-            Text(artist.name ?? artist.friendlyArtistName ?? "Unknown")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-            Text(artist.albumCount == 1 ? "1 album" : "\(artist.albumCount) albums")
-                .font(.caption)
-                .foregroundStyle(.s2SecondaryText)
-                .lineLimit(1)
-        }
-        .multilineTextAlignment(.center)
-        .frame(width: ArtworkSize.artistShelf)
-        .contentShape(Rectangle())
-    }
-}
-
-/// Which of several tiles showing one item is the zoom source for its screen. An item can be on more than one shelf
-/// (Home's recently and most played, or an artist's albums pushed over Home), and a zoom from a tile the user didn't
-/// touch would be wrong, as would two live sources sharing one id.
+/// Which of several tiles showing one item is the zoom source for its screen. An item can be in more than one Home
+/// section (or an artist's albums pushed over Home), and a zoom from a tile the user didn't touch would be wrong, as
+/// would two live sources sharing one id.
 enum ZoomTile {
     /// `id` for the tile last tapped (`activeKey`); otherwise an id of the tile's own, which no screen zooms to.
     static func sourceID(_ id: String, tileKey: String, activeKey: String?) -> String {

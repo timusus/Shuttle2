@@ -35,13 +35,23 @@ struct SectionHeader: View {
         seeAll = .action(action)
     }
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Spacing.small) {
+        // At the accessibility sizes See All goes under the title, as in Podcasts: side by side, a long title
+        // hyphenates into fragments beside it.
+        let stacked = dynamicTypeSize.isAccessibilitySize && seeAll != nil
+        let layout = stacked
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.xsmall))
+            : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: Spacing.small))
+        layout {
             Text(title)
                 .font(.s2SectionTitle)
                 .foregroundStyle(.primary)
                 .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: Spacing.small)
+            if !stacked {
+                Spacer(minLength: Spacing.small)
+            }
             switch seeAll {
             case .route(let route):
                 NavigationLink(value: route) { seeAllLabel }
