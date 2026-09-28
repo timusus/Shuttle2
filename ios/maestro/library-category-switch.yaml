@@ -1,0 +1,51 @@
+# The Library's chip rail stays visible and tappable with a category chosen, at rest and scrolled (#624): on iOS 26
+# the rail once vanished under the navigation bar's scroll edge effect, leaving no way to switch category. iPhone
+# only (an iPad shows the categories in the sidebar). Signed in already: run sign-in-jellyfin.yaml first.
+#
+#   OUT=/tmp/s2-polish-libfix/switch ios/scripts/maestro-sim.sh library-category-switch.yaml
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+- tapOn: "Library"
+- tapOn:
+    id: "libraryChip.all"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "libraryCategory.albumArtists"
+    timeout: 60000
+- takeScreenshot: 1-categories
+- tapOn:
+    id: "libraryCategory.albumArtists"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible:
+    id: "libraryChip.all"
+- assertVisible:
+    id: "libraryChip.genres"
+- takeScreenshot: 2-artists-at-rest
+- scroll
+- scroll
+- waitForAnimationToEnd:
+    timeout: 3000
+- assertVisible:
+    id: "libraryChip.genres"
+- takeScreenshot: 3-artists-scrolled
+# Switch category straight from the scrolled list (the leading chips: the rail scrolls, and a user's order varies).
+- tapOn:
+    id: "libraryChip.albums"
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible:
+    id: "libraryChip.all"
+- takeScreenshot: 4-albums
+- scroll
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn:
+    id: "libraryChip.all"
+- extendedWaitUntil:
+    visible:
+      id: "libraryCategory.albums"
+    timeout: 10000
+- takeScreenshot: 5-back-to-categories

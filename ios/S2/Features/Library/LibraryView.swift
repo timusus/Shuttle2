@@ -33,6 +33,7 @@ struct LibraryView: View {
         }
         .refreshable { LibraryImport.refresh() }
         .navigationTitle(AppTab.library.title)
+        .inlineTitleUnderEdgeEffect()
     }
 
     private var selection: Binding<LibraryCategory?> {
@@ -177,10 +178,15 @@ struct LibraryRootContent<CategoryContent: View>: View {
                 }
             }
         }
-        .safeAreaInset(edge: .top, spacing: 0) {
-            if availability == .hasMusic, !categories.isEmpty {
-                LibraryCategoryChips(categories: categories, selection: shownCategory, onSelect: select)
-            }
+        .pinnedTopBar { categoryRail }
+    }
+
+    /// The chip rail pinned over the content while there's music. Its own property so tests can reach it: they can't
+    /// see into iOS 26's `safeAreaBar`.
+    @ViewBuilder
+    var categoryRail: some View {
+        if availability == .hasMusic, !categories.isEmpty {
+            LibraryCategoryChips(categories: categories, selection: shownCategory, onSelect: select)
         }
     }
 
@@ -211,36 +217,94 @@ struct LibraryCategoryChips: View {
     let onSelect: (LibraryCategory?) -> Void
 
     @Environment(\.layoutTier) private var layoutTier
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Spacing.small) {
-                if selection != nil {
-                    Button { onSelect(nil) } label: {
-                        Image(systemName: "xmark")
-                            .fontWeight(.semibold)
-                            .padding(Spacing.small)
-                            .background(Circle().fill(Color(.tertiarySystemFill)))
-                    }
-                    .buttonStyle(.pressScale)
-                    .foregroundStyle(.primary)
-                    .accessibilityLabel("All Categories")
-                    .accessibilityIdentifier("libraryChip.all")
-                    .transition(.scale.combined(with: .opacity))
-                }
-                ForEach(categories, id: \.self) { category in
-                    LibraryCategoryChip(category: category, isSelected: category == selection) {
-                        onSelect(category == selection ? nil : category)
-                    }
-                }
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                chips
             }
-            .font(.subheadline.weight(.semibold))
-            .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
-            .padding(.vertical, Spacing.small)
+            // The chosen chip in view, as a category opens (from a card, or restored) with its chip past the edge.
+            .onAppear { reveal(selection, proxy) }
+            .onChange(of: selection) { _, chosen in reveal(chosen, proxy) }
         }
-        .background(.bar)
+        // Outside the scroll view, so it doesn't reach the navigation bar: a scroll view touching the top safe area
+        // extends under the bar, and on iOS 26 the bar's scroll edge effect then covers its whole content.
+        .padding(.vertical, Spacing.small)
+        .pinnedBarBackground()
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Categories")
+    }
+
+    private func reveal(_ category: LibraryCategory?, _ proxy: ScrollViewProxy) {
+        guard let category else { return }
+        withAnimation(Motion.press.reduced(reduceMotion)) { proxy.scrollTo(category) }
+    }
+
+    private var chips: some View {
+        HStack(spacing: Spacing.small) {
+            if selection != nil {
+                Button { onSelect(nil) } label: {
+                    Image(systemName: "xmark")
+                        .fontWeight(.semibold)
+                        .padding(Spacing.small)
+                        .background(Circle().fill(Color(.tertiarySystemFill)))
+                }
+                .buttonStyle(.pressScale)
+                .foregroundStyle(.primary)
+                .accessibilityLabel("All Categories")
+                .accessibilityIdentifier("libraryChip.all")
+                .transition(.scale.combined(with: .opacity))
+            }
+            ForEach(categories, id: \.self) { category in
+                LibraryCategoryChip(category: category, isSelected: category == selection) {
+                    onSelect(category == selection ? nil : category)
+                }
+            }
+        }
+        .font(.subheadline.weight(.semibold))
+        .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
+    }
+}
+
+extension View {
+    /// Pins `bar` along the top of this screen, under the navigation bar, with the content scrolling beneath it.
+    /// iOS 26 needs `safeAreaBar`: the content's scroll edge effect covers the scroll view's whole top inset, so a
+    /// `safeAreaInset` bar sits in a blurred band (#624), where a `safeAreaBar` extends the effect under itself and
+    /// draws on top of it. The effect is the hard style, as for any pinned header of controls: the soft one lets
+    /// artwork show through the bar, washing out its chips. Earlier releases have no edge effect.
+    @ViewBuilder
+    func pinnedTopBar<Bar: View>(@ViewBuilder _ bar: () -> Bar) -> some View {
+        if #available(iOS 26, *) {
+            scrollEdgeEffectStyle(.hard, for: .top)
+                .safeAreaBar(edge: .top, spacing: 0, content: bar)
+        } else {
+            safeAreaInset(edge: .top, spacing: 0, content: bar)
+        }
+    }
+
+    /// An inline navigation title on iOS 26. There, a large title over a screen whose scroll view is swapped in place
+    /// (the Library's categories, and their grid and list) is left behind the content's scroll edge effect, a ghost
+    /// of itself above the pinned bar; an inline title sits in the navigation bar, clear of the effect, at any scroll
+    /// position. Earlier releases keep the large title.
+    @ViewBuilder
+    func inlineTitleUnderEdgeEffect() -> some View {
+        if #available(iOS 26, *) {
+            toolbarTitleDisplayMode(.inline)
+        } else {
+            self
+        }
+    }
+
+    /// A `pinnedTopBar`'s background: the bar material before iOS 26; none on iOS 26, where the content's scroll edge
+    /// effect, extended under the bar, separates the two.
+    @ViewBuilder
+    func pinnedBarBackground() -> some View {
+        if #available(iOS 26, *) {
+            self
+        } else {
+            background(.bar)
+        }
     }
 }
 

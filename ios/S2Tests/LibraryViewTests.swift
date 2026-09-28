@@ -85,10 +85,10 @@ struct LibraryViewTests {
         let sut = LibraryRootContent(categories: [.albums, .albumArtists], availability: .hasMusic, importStatus: .idle)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "libraryCategory.albums")) != nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "libraryCategory.albumArtists")) != nil)
-        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.albums")) != nil)
+        #expect((try? sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.albums")) != nil)
         // The chip's short title fits the rail.
-        #expect((try? sut.inspect().find(text: "Artists")) != nil)
-        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.all")) == nil)
+        #expect((try? sut.categoryRail.inspect().find(text: "Artists")) != nil)
+        #expect((try? sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.all")) == nil)
     }
 
     @Test func aCardOrChipShowsItsCategoryInPlace() throws {
@@ -99,7 +99,7 @@ struct LibraryViewTests {
         }
         try sut.inspect().find(viewWithAccessibilityIdentifier: "libraryCategory.songs").button().tap()
         #expect(selection == .songs)
-        try sut.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.albums").button().tap()
+        try sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.albums").button().tap()
         #expect(selection == .albums)
     }
 
@@ -111,10 +111,10 @@ struct LibraryViewTests {
         }
         #expect((try? sut.inspect().find(text: "Showing Songs")) != nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "libraryCategory.albums")) == nil)
-        try sut.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.songs").button().tap()
+        try sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.songs").button().tap()
         #expect(selection == nil)
         selection = .albums
-        try sut.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.all").button().tap()
+        try sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.all").button().tap()
         #expect(selection == nil)
     }
 
