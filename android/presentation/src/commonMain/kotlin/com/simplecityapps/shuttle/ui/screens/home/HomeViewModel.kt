@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
@@ -16,10 +17,14 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 
 sealed interface HomeUiState {
@@ -35,6 +40,8 @@ sealed interface HomeUiState {
         /** The queue to pick up from, or null with none (#490). */
         val resume: ResumeQueue? = null,
         val events: List<PendingEvent<HomeEvent>> = emptyList(),
+        /** Each playlist and genre item's mosaic covers by [HomeItem.key], once loaded; absent for one with none (#646). */
+        val covers: Map<String, List<Song>> = emptyMap(),
     ) : HomeUiState
 }
 
@@ -54,6 +61,7 @@ class HomeViewModel @Inject constructor(
     private val saveSetting: SaveSetting,
     observeResumeQueue: ObserveResumeQueue,
     private val togglePlayback: TogglePlayback,
+    loadHomeCovers: LoadHomeCovers,
 ) : ViewModel() {
     private val whatsNewPending = MutableStateFlow(isWhatsNewPending())
     private val events = PendingEvents<HomeEvent>()
@@ -65,7 +73,13 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    val uiState: StateFlow<HomeUiState> = combine(observeHomeSections(), observeResumeQueue(), whatsNewPending, events.flow) { sections, resume, whatsNew, pendingEvents ->
+    /** The sections with their mosaics' covers; the sections show first and the covers follow as they load. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val sectionsWithCovers = observeHomeSections().flatMapLatest { sections ->
+        flow { emit(sections to sections?.let { loadHomeCovers(it) }.orEmpty()) }.onStart { emit(sections to emptyMap()) }
+    }
+
+    val uiState: StateFlow<HomeUiState> = combine(sectionsWithCovers, observeResumeQueue(), whatsNewPending, events.flow) { (sections, covers), resume, whatsNew, pendingEvents ->
         if (sections == null) {
             HomeUiState.Empty
         } else {
@@ -74,6 +88,7 @@ class HomeViewModel @Inject constructor(
                 sections = sections,
                 resume = resume,
                 events = pendingEvents,
+                covers = covers,
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)

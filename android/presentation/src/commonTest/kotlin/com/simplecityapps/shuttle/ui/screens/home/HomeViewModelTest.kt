@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.home
 
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlayHistoryRepository
 import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
@@ -121,6 +122,7 @@ class HomeViewModelTest {
             SaveSetting(settingsStore),
             ObserveResumeQueue(queue, playback),
             TogglePlayback(playback),
+            LoadHomeCovers(FakePlaylistRepository(), FakeGenreRepository()),
         ).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
             runCurrent()
