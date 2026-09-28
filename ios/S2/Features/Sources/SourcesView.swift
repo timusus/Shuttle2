@@ -195,6 +195,9 @@ struct SourcesContent: View {
     var onRemove: (MediaProviderType) -> Void = { _ in }
     var onRescan: () -> Void = {}
 
+    /// The server a swipe's Remove is asking about.
+    @State private var removing: MediaProviderType?
+
     var body: some View {
         List {
             Section {
@@ -204,7 +207,7 @@ struct SourcesContent: View {
                     }
                     .accessibilityIdentifier("sources.server.\(type.name)")
                     .swipeActions {
-                        Button("Remove", role: .destructive) { onRemove(type) }
+                        Button("Remove", role: .destructive) { removing = type }
                     }
                 }
                 Button(action: onAddServer) {
@@ -223,6 +226,7 @@ struct SourcesContent: View {
             }
         }
         .listStyle(.insetGrouped)
+        .confirmingServerRemoval($removing, onRemove: onRemove)
     }
 }
 

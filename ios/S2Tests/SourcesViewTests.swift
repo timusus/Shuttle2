@@ -56,6 +56,15 @@ struct SourcesViewTests {
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "sources.addServer").button()) != nil)
     }
 
+    /// #645: a swipe's Remove asks first, as the detail's does, rather than removing the server outright.
+    @Test func aSwipesRemoveAsksBeforeRemoving() throws {
+        var removed: MediaProviderType?
+        let sut = SourcesContent(state: SourcesState(servers: [.emby]), onRemove: { removed = $0 })
+        let remove = try sut.inspect().find(button: "Remove")
+        try remove.tap()
+        #expect(removed == nil)
+    }
+
     @Test func aServerRowPushesItsDetail() throws {
         let sut = SourcesContent(state: SourcesState(servers: [.emby]))
         let link = try sut.inspect().find(viewWithAccessibilityIdentifier: "sources.server.Emby").navigationLink()

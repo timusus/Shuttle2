@@ -56,7 +56,7 @@ struct ServerDetailContent: View {
     var onSignIn: () -> Void = {}
     var onRemove: () -> Void = {}
 
-    @State private var confirmingRemove = false
+    @State private var removing: MediaProviderType?
 
     var body: some View {
         List {
@@ -103,16 +103,29 @@ struct ServerDetailContent: View {
                 Text("Sign in again if \(type.title) says your session has expired, or to use another account.")
             }
             Section {
-                Button("Remove Server", role: .destructive) { confirmingRemove = true }
+                Button("Remove Server", role: .destructive) { removing = type }
                     .accessibilityIdentifier("serverDetail.remove")
             }
         }
         .listStyle(.insetGrouped)
-        .confirmationDialog("Remove \(type.title)?", isPresented: $confirmingRemove, titleVisibility: .visible) {
-            Button("Remove", role: .destructive, action: onRemove)
+        .confirmingServerRemoval($removing) { _ in onRemove() }
+    }
+}
+
+extension View {
+    /// Asks before removing the server in `removing`, wherever a Remove starts (a server's detail, a swipe in
+    /// Sources): its songs and playlists leave the library and its sign-in is forgotten.
+    func confirmingServerRemoval(_ removing: Binding<MediaProviderType?>, onRemove: @escaping (MediaProviderType) -> Void) -> some View {
+        confirmationDialog(
+            "Remove \(removing.wrappedValue?.title ?? "Server")?",
+            isPresented: Binding(get: { removing.wrappedValue != nil }, set: { if !$0 { removing.wrappedValue = nil } }),
+            titleVisibility: .visible,
+            presenting: removing.wrappedValue
+        ) { type in
+            Button("Remove", role: .destructive) { onRemove(type) }
             Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Its songs and playlists leave your library. You can connect it again later.")
+        } message: { _ in
+            Text("Its songs and playlists leave your library, and you'll need to sign in to connect it again.")
         }
     }
 }
