@@ -79,8 +79,9 @@ struct LetterIndexedList<Item, ID: Hashable, Row: View>: View {
 
 /// A Library list row that pushes `route`, without the disclosure chevron, as Music and Contacts do, so nothing
 /// competes with the letter index down the same edge. The whole row taps through and VoiceOver reads it as a button.
-/// iOS 26 hides the chevron itself; before it the link sits invisibly behind the label, which the row's tap still
-/// reaches. Settings-style lists keep plain `NavigationLink`s and their chevrons.
+/// iOS 26 hides the chevron itself; before it an invisible link fills the row behind the label, so a tap anywhere
+/// on the row reaches it, and the row is one element with the one button trait (the hidden link adds none).
+/// Settings-style lists keep plain `NavigationLink`s and their chevrons.
 struct LibraryRowLink<Label: View>: View {
     let route: Route
     @ViewBuilder let label: () -> Label
@@ -90,13 +91,18 @@ struct LibraryRowLink<Label: View>: View {
             NavigationLink(value: route, label: label)
                 .navigationLinkIndicatorVisibility(.hidden)
         } else {
-            ZStack {
-                NavigationLink(value: route) { EmptyView() }
-                    .opacity(0)
-                label()
-            }
-            .accessibilityElement(children: .combine)
-            .accessibilityAddTraits(.isButton)
+            label()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .background {
+                    NavigationLink(value: route) { Color.clear }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .contentShape(Rectangle())
+                        .opacity(0)
+                        .accessibilityHidden(true)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isButton)
         }
     }
 }
