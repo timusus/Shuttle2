@@ -61,7 +61,7 @@ object LibraryBackupMatcher {
         val backupLastCompleted = backup.lastCompleted?.let(Instant::fromEpochMilliseconds)
         val backupFavourite = backup.favouritedAt?.let(Instant::fromEpochMilliseconds)
         val backupAdded = backup.dateAdded?.let(Instant::fromEpochMilliseconds)
-        val latestPlayed = maxOf(current.lastPlayed, backupLastPlayed)
+        val latestPlayed = latestOf(current.lastPlayed, backupLastPlayed)
         val position = when {
             backupLastPlayed != null && backupLastPlayed >= (current.lastPlayed ?: Instant.DISTANT_PAST) -> backup.playbackPosition
             else -> current.playbackPosition
@@ -69,11 +69,11 @@ object LibraryBackupMatcher {
         return MergedStats(
             playCount = maxOf(current.playCount, backup.playCount),
             lastPlayed = latestPlayed,
-            lastCompleted = maxOf(current.lastCompleted, backupLastCompleted),
+            lastCompleted = latestOf(current.lastCompleted, backupLastCompleted),
             playbackPosition = position,
             excluded = current.blacklisted || backup.excluded,
-            favouritedAt = minOf(current.favouritedAt, backupFavourite),
-            dateAdded = minOf(current.dateAdded, backupAdded) ?: current.dateAdded
+            favouritedAt = earliestOf(current.favouritedAt, backupFavourite),
+            dateAdded = earliestOf(current.dateAdded, backupAdded) ?: current.dateAdded
         )
     }
 
@@ -84,27 +84,24 @@ object LibraryBackupMatcher {
             current.playbackPosition == merged.playbackPosition &&
             current.dateAdded == merged.dateAdded
 
-    /** Strips a `/storage/<volume>/` prefix so SD-card volume id changes don't break matching. */
+    /** Strips a `/storage/<volume>/` prefix so volume id changes don't break matching. Handles both
+     * physical volumes (`/storage/ABCD-1234/…`) and emulated storage (`/storage/emulated/0/…`). */
     internal fun relativePath(path: String): String {
         val lower = path.lowercase()
-        val storagePrefix = Regex("^/storage/[^/]+/")
+        val storagePrefix = Regex("^/storage/(emulated/\\d+/)?[^/]+/")
         return storagePrefix.replace(lower, "")
     }
 
     private fun fingerprintKey(title: String?, album: String?, artist: String?): String =
         listOf(title, album, artist).joinToString("\u0001") { it?.trim()?.lowercase() ?: "" }
 
-    private fun maxOf(a: Instant?, b: Instant?): Instant? = when {
-        a == null -> b
-        b == null -> a
-        else -> maxOf(a, b)
-    }
+    // Named latest/earliest (not max/min) so overload resolution can never mistake these
+    // for kotlin.comparisons.maxOf/minOf and recurse.
+    private fun latestOf(a: Instant?, b: Instant?): Instant? =
+        if (a == null) b else if (b == null) a else if (a >= b) a else b
 
-    private fun minOf(a: Instant?, b: Instant?): Instant? = when {
-        a == null -> b
-        b == null -> a
-        else -> minOf(a, b)
-    }
+    private fun earliestOf(a: Instant?, b: Instant?): Instant? =
+        if (a == null) b else if (b == null) a else if (a <= b) a else b
 
     private const val DURATION_TOLERANCE_S = 2
 }

@@ -92,7 +92,7 @@ class LibraryBackupMatcherTest {
     }
 
     @Test
-    fun `remote items match by external id`() {
+    fun `remote items match by external id when paths differ`() {
         val library = listOf(
             song(
                 provider = MediaProviderType.Jellyfin,
@@ -102,7 +102,7 @@ class LibraryBackupMatcherTest {
             )
         )
         val identity = identityOf(
-            song(provider = MediaProviderType.Jellyfin, path = "jellyfin://item/aaa", externalId = "aaa", name = "Original")
+            song(provider = MediaProviderType.Jellyfin, path = "jellyfin://item/changed", externalId = "aaa", name = "Original")
         )
         val match = LibraryBackupMatcher.matchAll(listOf(identity), library)[identity]
         match.shouldNotBeNull()
