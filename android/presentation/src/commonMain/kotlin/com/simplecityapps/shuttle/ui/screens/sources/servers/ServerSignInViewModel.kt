@@ -230,12 +230,30 @@ class ServerSignInViewModel @AssistedInject constructor(
 
 /**
  * The server address [typed] as the sign-in uses it: trimmed, `http://` added when it has no scheme, and without
- * trailing slashes. Null when there's no host to connect to (empty, only a scheme, or with a space in it).
+ * trailing slashes. An IPv6 host may come bracketed (`[fe80::1]:8096`) or bare (`fe80::1`, wrapped in brackets here,
+ * so it can't carry a port). Null when there's no host to connect to (empty, only a scheme, an unclosed bracket or
+ * with a space in it).
  */
 fun serverAddress(typed: String): String? {
     val trimmed = typed.trim()
-    val withScheme = if ("://" in trimmed) trimmed else "http://" + trimmed
-    val address = withScheme.trimEnd('/')
-    val host = withScheme.substringAfter("://").substringBefore('/').substringBefore(':')
-    return address.takeIf { host.isNotBlank() && address.none(Char::isWhitespace) }
+    if (trimmed.any(Char::isWhitespace)) return null
+    val scheme = if ("://" in trimmed) trimmed.substringBefore("://") else "http"
+    val rest = trimmed.substringAfter("://").trimEnd('/')
+    val authority = rest.substringBefore('/')
+    val path = rest.removePrefix(authority)
+    val hostAndPort =
+        when {
+            // Bracketed IPv6, then an optional port
+            authority.startsWith('[') -> {
+                val host = authority.substringBefore(']', missingDelimiterValue = "").removePrefix("[")
+                val afterHost = authority.substringAfter(']', missingDelimiterValue = "")
+                authority.takeIf { host.isNotEmpty() && (afterHost.isEmpty() || afterHost.startsWith(':')) }
+            }
+
+            // Bare IPv6: no room for a port, so all of it is the host
+            authority.count { it == ':' } >= 2 -> "[$authority]"
+
+            else -> authority.takeIf { authority.substringBefore(':').isNotEmpty() }
+        }
+    return hostAndPort?.let { "$scheme://$it$path" }
 }
