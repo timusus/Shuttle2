@@ -17,9 +17,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
+/** How prominent a [SectionHeader] is. */
+enum class SectionHeaderStyle {
+    /** `titleSmall` on `primary`: a list's subheading, or a sticky letter. */
+    Label,
+
+    /** `titleLarge` on `onSurface`: a screen's own sections, such as Home's shelves. */
+    Title,
+}
+
 /**
- * A section heading in `titleSmall` on `primary`, with an optional trailing [action] ("See all").
- * It sits on an opaque [containerColor] (`surface`), so it also works as a sticky letter header;
+ * A section heading, a [SectionHeaderStyle.Label] unless [style] says otherwise, with an optional trailing [action]
+ * ("See all"). It sits on an opaque [containerColor] (`surface`), so it also works as a sticky letter header;
  * pass the container's colour when it heads a list on another surface, such as the search view.
  */
 @Composable
@@ -29,6 +38,7 @@ fun SectionHeader(
     action: String? = null,
     onAction: () -> Unit = {},
     containerColor: Color = MaterialTheme.colorScheme.surface,
+    style: SectionHeaderStyle = SectionHeaderStyle.Label,
 ) {
     Row(
         modifier = modifier
@@ -40,8 +50,14 @@ fun SectionHeader(
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary,
+            style = when (style) {
+                SectionHeaderStyle.Label -> MaterialTheme.typography.titleSmall
+                SectionHeaderStyle.Title -> MaterialTheme.typography.titleLarge
+            },
+            color = when (style) {
+                SectionHeaderStyle.Label -> MaterialTheme.colorScheme.primary
+                SectionHeaderStyle.Title -> MaterialTheme.colorScheme.onSurface
+            },
             modifier = Modifier
                 .weight(1f)
                 .semantics { heading() },

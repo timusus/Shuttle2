@@ -127,7 +127,7 @@ fun Artwork(
 }
 
 /**
- * The [placeholder]'s glyph as [Artwork] draws it: the media type's icon in its `MaterialShapes` container. For an
+ * The [placeholder]'s glyph as [Artwork] draws it: the media type's icon in its `MaterialShapes` container, in neutral greys (#646). For an
  * [Artwork] `image` slot to draw under an image that loads asynchronously, so art that never loads keeps the glyph.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -137,13 +137,13 @@ fun ArtworkPlaceholderGlyph(placeholder: ArtworkPlaceholder, size: ArtworkSize) 
         modifier = Modifier
             .size(size.dp * 0.7f)
             .clip(placeholder.polygon.toShape())
-            .background(MaterialTheme.colorScheme.secondaryContainer),
+            .background(MaterialTheme.colorScheme.surfaceContainerLow),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = placeholder.icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(size.dp * 0.35f),
         )
     }
@@ -152,7 +152,7 @@ fun ArtworkPlaceholderGlyph(placeholder: ArtworkPlaceholder, size: ArtworkSize) 
 /** Row artwork gets the small corner, tiles the large, the hero the Expressive large-increased. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun artworkShape(shape: ArtworkShape, size: ArtworkSize): Shape = when (shape) {
+internal fun artworkShape(shape: ArtworkShape, size: ArtworkSize): Shape = when (shape) {
     ArtworkShape.Circle -> CircleShape
 
     ArtworkShape.Scalloped -> MaterialShapes.Cookie12Sided.toShape()

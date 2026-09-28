@@ -1,14 +1,21 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.annotation.PluralsRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
@@ -85,3 +92,35 @@ fun pluralString(@PluralsRes id: Int, count: Int): String = pluralStringResource
 /** "Artist · Album", the second line of a song row outside its album. */
 val Song.rowSubtitle: String
     get() = listOfNotNull(friendlyArtistName, album).filter { it.isNotBlank() }.joinToString(" · ")
+
+/** The gap between a mosaic's covers. */
+private val MosaicGap = 2.dp
+
+/**
+ * Artwork from [covers] (#491, #646): a 2x2 mosaic of four albums' covers, the one cover when there are fewer, or
+ * [placeholder] with none. [size] is the whole mosaic's; the caller's [modifier] may override it, as for [Artwork].
+ */
+@Composable
+fun CoverMosaic(
+    covers: List<Song>,
+    placeholder: ArtworkPlaceholder,
+    modifier: Modifier = Modifier,
+    size: ArtworkSize = ArtworkSize.Medium,
+) {
+    if (covers.size < MOSAIC_COVERS) {
+        LibraryArtwork(covers.firstOrNull(), placeholder, modifier, size = size)
+        return
+    }
+    val cellSize = if (size == ArtworkSize.Grid || size == ArtworkSize.Hero) ArtworkSize.Medium else ArtworkSize.Small
+    Column(modifier.size(size.dp), verticalArrangement = Arrangement.spacedBy(MosaicGap)) {
+        covers.take(MOSAIC_COVERS).chunked(2).forEach { pair ->
+            Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MosaicGap)) {
+                pair.forEach { song ->
+                    LibraryArtwork(song, ArtworkPlaceholder.Album, Modifier.weight(1f).fillMaxHeight(), size = cellSize)
+                }
+            }
+        }
+    }
+}
+
+private const val MOSAIC_COVERS = 4
