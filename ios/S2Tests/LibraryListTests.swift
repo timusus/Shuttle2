@@ -105,6 +105,42 @@ struct LibraryListTests {
         #expect((try? sut.inspect().find(ViewType.List.self)) == nil)
     }
 
+    /// Albums and Artists open with the same Shuffle row as Songs, in list and grid alike, and not in the toolbar (#643).
+    @Test func albumsOpenWithAShuffleRowInListAndGrid() throws {
+        let albums = [album("OK Computer", artist: "Radiohead", songs: 12, year: 1997), album("Post", artist: "Björk", songs: 1, year: nil)]
+        for viewMode in [ViewMode.list, .grid] {
+            var shuffled = false
+            let sut = AlbumListContent(state: albumState(albums, .ready, viewMode: viewMode), onShuffle: { shuffled = true })
+            let row = try sut.inspect().find(viewWithAccessibilityIdentifier: "albums.shuffle")
+            #expect((try? row.find(text: "2 albums")) != nil, "\(viewMode)")
+            try row.find(ViewType.Button.self).tap()
+            #expect(shuffled, "\(viewMode)")
+            #expect((try? sut.inspect().find(ViewType.Toolbar.self).find(button: "Shuffle")) == nil)
+        }
+        #expect((try? AlbumListContent(state: albumState([], .loading)).inspect().find(viewWithAccessibilityIdentifier: "albums.shuffle")) == nil)
+    }
+
+    @Test func artistsOpenWithAShuffleRowInListAndGrid() throws {
+        let artists = ["Air", "Björk", "Radiohead"].map { name in
+            AlbumArtist(
+                name: name, artists: [name], albumCount: 1, songCount: 1, playCount: 0,
+                groupKey: AlbumArtistGroupKey(key: name.lowercased()), mediaProviders: [.jellyfin], artworkVersion: nil
+            )
+        }
+        for viewMode in [ViewMode.list, .grid] {
+            var shuffled = false
+            let state = AlbumArtistListUiState(
+                albumArtists: artists, selectedArtists: [], viewMode: viewMode, loadingState: .ready, scanProgress: nil,
+                letterIndex: LetterIndexKt.albumArtistLetterIndex(albumArtists: artists)
+            )
+            let row = try AlbumArtistListContent(state: state, onShuffle: { shuffled = true }).inspect()
+                .find(viewWithAccessibilityIdentifier: "albumArtists.shuffle")
+            #expect((try? row.find(text: "3 artists")) != nil, "\(viewMode)")
+            try row.find(ViewType.Button.self).tap()
+            #expect(shuffled, "\(viewMode)")
+        }
+    }
+
     @Test func theToolbarTogglesTheViewModeThroughTheViewModel() throws {
         var chosen: ViewMode?
         let toggle = ViewModeToggle(mode: .grid) { chosen = $0 }

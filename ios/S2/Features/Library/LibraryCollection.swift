@@ -21,10 +21,18 @@ struct ViewModeToggle: View {
 
 /// Adaptive columns of tiles, at least `minimumTile` wide, within the readable content width: two on every iPhone
 /// in portrait (beside the letter index), more in landscape, more again on an iPad. With an `index`, the letter strip
-/// down the trailing edge scrolls to each section's first tile, by the tile's id.
-struct LibraryGrid<Content: View>: View {
+/// down the trailing edge scrolls to each section's first tile, by the tile's id. `header` (a list's Shuffle) spans the
+/// width above the tiles.
+struct LibraryGrid<Header: View, Content: View>: View {
     var index: [LetterIndexSection]?
+    @ViewBuilder let header: () -> Header
     @ViewBuilder let content: () -> Content
+
+    init(index: [LetterIndexSection]? = nil, @ViewBuilder header: @escaping () -> Header, @ViewBuilder content: @escaping () -> Content) {
+        self.index = index
+        self.header = header
+        self.content = content
+    }
 
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -55,8 +63,11 @@ struct LibraryGrid<Content: View>: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVGrid(columns: columns, spacing: Spacing.large) {
-                    content()
+                VStack(alignment: .leading, spacing: Spacing.medium) {
+                    header()
+                    LazyVGrid(columns: columns, spacing: Spacing.large) {
+                        content()
+                    }
                 }
                 .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
                 .padding(.vertical, Spacing.medium)
@@ -122,7 +133,13 @@ struct LibraryTile: View {
     }
 }
 
-/// A list's Shuffle, as the row heading it (Songs, #643): the tinted glyph and title, with how many it shuffles.
+extension LibraryGrid where Header == EmptyView {
+    init(index: [LetterIndexSection]? = nil, @ViewBuilder content: @escaping () -> Content) {
+        self.init(index: index, header: { EmptyView() }, content: content)
+    }
+}
+
+/// A list's Shuffle, as the row heading it (Songs, Albums, Artists, #643): the tinted glyph and title, with how many it shuffles.
 struct ShuffleRow: View {
     let count: Int
     /// What's counted, singular: "song".

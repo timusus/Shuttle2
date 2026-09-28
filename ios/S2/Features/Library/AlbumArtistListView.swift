@@ -4,7 +4,8 @@ import SwiftUI
 /// Library > Album Artists (P5-6b): `AlbumArtistListViewModel`'s artists as a list (the default) or a grid of their
 /// pictures, switched from the toolbar and kept by the ViewModel (`setViewMode`). A row or tile pushes the artist's
 /// detail route and shows its artwork via `ArtworkUrls.requests(albumArtist:)`. Context menu plays or queues through the
-/// shared `MediaAction`s. The playing artist is marked.
+/// shared `MediaAction`s. Shuffle heads the list or grid; there's no per-artist shuffle on the ViewModel, so it dispatches
+/// `MediaActionShuffle` over every artist, as over a multi-selection. The playing artist is marked.
 struct AlbumArtistListView: View {
     var body: some View {
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.albumArtists).cacheKey) {
@@ -23,6 +24,9 @@ struct AlbumArtistListView: View {
                     },
                     onAddToQueue: { artist in
                         models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbumArtists(albumArtist: artist)))
+                    },
+                    onShuffle: {
+                        models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionAlbumArtists(albumArtists: state.albumArtists)))
                     },
                     onViewMode: { models.albumArtists.setViewMode(mode: $0) }
                 )
@@ -61,6 +65,7 @@ struct AlbumArtistListContent: View {
     var onPlay: (AlbumArtist) -> Void = { _ in }
     var onPlayNext: (AlbumArtist) -> Void = { _ in }
     var onAddToQueue: (AlbumArtist) -> Void = { _ in }
+    var onShuffle: () -> Void = {}
     var onViewMode: (ViewMode) -> Void = { _ in }
 
     var body: some View {
@@ -84,7 +89,7 @@ struct AlbumArtistListContent: View {
         case .ready, .scanning:
             let index = LetterIndex.sections(state.letterIndex, items: state.albumArtists, id: \.stableId)
             if state.viewMode == .grid {
-                LibraryGrid(index: index) {
+                LibraryGrid(index: index, header: { shuffle }) {
                     ForEach(state.albumArtists, id: \.stableId) { artist in
                         NavigationLink(value: Route.albumArtist(artist)) {
                             LibraryTile(
@@ -100,7 +105,7 @@ struct AlbumArtistListContent: View {
                     }
                 }
             } else {
-                LetterIndexedList(items: state.albumArtists, id: \.stableId, sections: index) { _, artist in
+                LetterIndexedList(items: state.albumArtists, id: \.stableId, sections: index, header: { shuffle }) { _, artist in
                     let playback = nowPlaying.playback(albumArtist: artist)
                     LibraryRowLink(route: Route.albumArtist(artist)) { AlbumArtistRow(albumArtist: artist, playback: playback) }
                         .contextMenu { menu(artist) }
@@ -108,6 +113,11 @@ struct AlbumArtistListContent: View {
                 }
             }
         }
+    }
+
+    private var shuffle: some View {
+        ShuffleRow(count: state.albumArtists.count, noun: "artist", action: onShuffle)
+            .accessibilityIdentifier("albumArtists.shuffle")
     }
 
     @ViewBuilder
