@@ -2,7 +2,6 @@ package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SuggestionsDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
-import com.simplecityapps.localmediaprovider.local.data.room.entity.albumIdentities
 import com.simplecityapps.mediaprovider.repository.suggestions.ImportDays
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.shuttle.model.Album
@@ -10,6 +9,8 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentity
+import com.simplecityapps.shuttle.model.AlbumIndex
+import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.withAlbumIdentities
@@ -22,14 +23,15 @@ import kotlinx.coroutines.flow.Flow
  * repositories have; a lookup then reads only the songs of the few albums or artists it names.
  */
 class LocalSuggestionsRepository(
-    private val suggestionsDao: SuggestionsDao
+    private val suggestionsDao: SuggestionsDao,
+    private val albumIndex: AlbumIndexProvider
 ) : SuggestionsRepository {
     override fun songCount(): Flow<Int> = suggestionsDao.songCount()
 
     override suspend fun albums(keys: List<AlbumGroupKey>): List<Album> {
         val wanted = keys.filter { it.key != null }.toSet()
         if (wanted.isEmpty()) return emptyList()
-        val albums = songsWhere { identity -> identity.groupKey in wanted }
+        val albums = songsOf { index -> wanted.flatMap(index::songIds) }
             .groupBy { it.albumGroupKey }
             .mapValues { (key, songs) -> songs.toAlbum(key) }
         return keys.mapNotNull { albums[it] }.distinct()
@@ -38,7 +40,7 @@ class LocalSuggestionsRepository(
     override suspend fun albumArtists(keys: List<AlbumArtistGroupKey>): List<AlbumArtist> {
         val wanted = keys.toSet()
         if (wanted.isEmpty()) return emptyList()
-        val albumArtists = songsWhere { identity -> identity.albumArtistGroupKey in wanted }
+        val albumArtists = songsOf { index -> wanted.flatMap(index::songIds) }
             .groupBy { it.albumArtistGroupKey }
             .mapValues { (key, songs) -> songs.toAlbumArtist(key) }
         return keys.mapNotNull { albumArtists[it] }.distinct()
@@ -86,13 +88,13 @@ class LocalSuggestionsRepository(
 
     override suspend fun importDays(): ImportDays = ImportDays(songs = suggestionsDao.countSongs(), largestDay = suggestionsDao.largestImportDay() ?: 0)
 
-    private suspend fun identities(): Map<Long, AlbumIdentity> = suggestionsDao.identityData().albumIdentities()
+    private suspend fun identities(): Map<Long, AlbumIdentity> = albumIndex.albumIndex().identities
 
-    /** The songs (not excluded) whose album identity matches, read by id, each holding its identity. */
-    private suspend fun songsWhere(matches: (AlbumIdentity) -> Boolean): List<Song> {
-        val identities = identities()
-        val ids = identities.filterValues(matches).keys.toList()
-        return ids.chunked(MAX_BOUND_VARIABLES)
+    /** The songs (not excluded) with the ids [ids] finds in the library's index, read by id, each holding its identity. */
+    private suspend fun songsOf(ids: (AlbumIndex) -> List<Long>): List<Song> {
+        val index = albumIndex.albumIndex()
+        val identities = index.identities
+        return ids(index).distinct().chunked(MAX_BOUND_VARIABLES)
             .flatMap { chunk -> suggestionsDao.songsWithIds(chunk) }
             .map { it.toSong() }
             .withAlbumIdentities(identities)

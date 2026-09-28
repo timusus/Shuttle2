@@ -13,7 +13,6 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTIT
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
-import com.simplecityapps.localmediaprovider.local.data.room.entity.albumIdentities
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -60,9 +59,6 @@ abstract class SongDataDao {
 
     /** Every song's album identity columns, for resolving the library's album identities without reading every song whole. */
     @Query(SONG_IDENTITY_QUERY)
-    abstract fun getIdentityData(): Flow<List<SongIdentityData>>
-
-    @Query(SONG_IDENTITY_QUERY)
     abstract suspend fun identityData(): List<SongIdentityData>
 
     @Transaction
@@ -71,15 +67,21 @@ abstract class SongDataDao {
 
     /**
      * The songs with [ids] (each once, however often it's listed, in no particular order), read by id rather than from
-     * the whole library, each holding its album identity in the library.
+     * the whole library. They don't hold their album identities: the caller adds them from the library's index.
      * Queried in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a statement.
      */
     fun getByIds(ids: List<Long>): Flow<List<Song>> {
         val chunks = ids.distinct().chunked(MAX_BOUND_VARIABLES)
         if (chunks.isEmpty()) return flowOf(emptyList())
-        val songs = combine(chunks.map(::getSongDataByIds)) { lists -> lists.flatMap { list -> list.map { songData -> songData.toSong() } } }
-        return combine(songs, getIdentityData()) { found, identities -> found.withAlbumIdentities(identities.albumIdentities()) }
+        return combine(chunks.map(::getSongDataByIds)) { lists -> lists.flatMap { list -> list.map { songData -> songData.toSong() } } }
     }
+
+    @Transaction
+    @Query("SELECT * FROM songs WHERE id IN (:ids)")
+    abstract suspend fun songDataByIds(ids: List<Long>): List<SongData>
+
+    /** [getByIds], read once. */
+    suspend fun loadByIds(ids: List<Long>): List<Song> = ids.distinct().chunked(MAX_BOUND_VARIABLES).flatMap { chunk -> songDataByIds(chunk).map { songData -> songData.toSong() } }
 
     @Insert(onConflict = IGNORE)
     abstract suspend fun insert(songData: List<SongData>): List<Long>

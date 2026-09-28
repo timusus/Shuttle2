@@ -28,6 +28,7 @@ import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -81,8 +82,9 @@ class PlaybackModule {
         playlistRepository: PlaylistRepository,
         artistRepository: AlbumArtistRepository,
         albumRepository: AlbumRepository,
-        songRepository: SongRepository
-    ): MediaIdHelper = MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository)
+        songRepository: SongRepository,
+        albumIndex: AlbumIndexProvider
+    ): MediaIdHelper = MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository, albumIndex)
 
     @Provides
     fun provideUriSongResolver(

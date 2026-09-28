@@ -2,8 +2,6 @@ package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlayEventDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
-import com.simplecityapps.localmediaprovider.local.data.room.entity.albumIdentities
-import com.simplecityapps.localmediaprovider.local.data.room.entity.albumKeyRekey
 import com.simplecityapps.mediaprovider.repository.playhistory.AlbumArtistCompletions
 import com.simplecityapps.mediaprovider.repository.playhistory.AlbumCompletions
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
@@ -11,6 +9,7 @@ import com.simplecityapps.mediaprovider.repository.playhistory.GenrePlays
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
 import com.simplecityapps.shuttle.model.AlbumIdentity
+import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import kotlin.math.pow
@@ -31,6 +30,7 @@ import kotlinx.datetime.toLocalDateTime
  */
 class LocalPlayHistoryRepository(
     private val playEventDao: PlayEventDao,
+    private val albumIndex: AlbumIndexProvider,
     private val clock: Clock = Clock.System,
     private val timeZone: () -> TimeZone = TimeZone::currentSystemDefault
 ) : PlayHistoryRepository {
@@ -68,7 +68,7 @@ class LocalPlayHistoryRepository(
      */
     private suspend fun current(context: PlayContext): PlayContext {
         if (context !is PlayContext.Album && context !is PlayContext.AlbumArtist) return context
-        return playEventDao.identityData().albumKeyRekey().context(context) ?: context
+        return albumIndex.albumIndex().rekey.context(context) ?: context
     }
 
     private suspend fun pruneIfDue() {
@@ -158,7 +158,7 @@ class LocalPlayHistoryRepository(
         val today = clock.now().toEpochMilliseconds() / DAY_MS
         val rows = playEventDao.completionsBySongAndDay(since, MAX_DAY_ROWS)
         if (rows.isEmpty()) return emptyList()
-        val identities = playEventDao.identityData().albumIdentities()
+        val identities = albumIndex.albumIndex().identities
         return rows
             .mapNotNull { row -> identities[row.songId]?.let { identity -> key(identity) to row } }
             .groupBy({ it.first }, { it.second })

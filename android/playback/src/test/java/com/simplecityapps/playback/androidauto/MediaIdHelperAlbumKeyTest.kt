@@ -8,7 +8,10 @@ import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.AlbumIndex
+import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.identityTags
 import com.simplecityapps.shuttle.model.withAlbumIdentities
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
@@ -41,7 +44,7 @@ class MediaIdHelperAlbumKeyTest {
         mediaProviders = listOf(MediaProviderType.Shuttle)
     )
 
-    private val helper = MediaIdHelper(FakePlaylistRepository(), FakeAlbumArtistRepository(), FakeAlbumRepository(listOf(album)), FakeSongRepository(songs))
+    private val helper = MediaIdHelper(FakePlaylistRepository(), FakeAlbumArtistRepository(), FakeAlbumRepository(listOf(album)), FakeSongRepository(songs), AlbumIndexProvider { AlbumIndex(songs.map { it.identityTags }) })
 
     @Test
     fun `an album's id holds its identity, and names its songs`(): Unit = runBlocking {

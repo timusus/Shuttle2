@@ -1,10 +1,13 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
+import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
+import com.simplecityapps.shuttle.model.AlbumIndex
+import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +40,9 @@ internal fun createSongData(
     playCount = playCount
 )
 
+/** An index built fresh from [database] each time it's asked for, for tests that don't exercise its caching. */
+internal fun freshAlbumIndex(database: MediaDatabase) = AlbumIndexProvider { AlbumIndex(database.songDataDao().identityData().map { it.toTags() }) }
+
 /** Serves [songs] as the library; anything else throws. */
 internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDataDao() {
     override fun getAllSongData(): Flow<List<SongData>> = songs
@@ -45,11 +51,11 @@ internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDa
 
     override fun getCoverSongDataForGenre(genre: String, limit: Int): Flow<List<SongData>> = throw NotImplementedError()
 
-    override fun getIdentityData(): Flow<List<SongIdentityData>> = throw NotImplementedError()
-
     override suspend fun identityData(): List<SongIdentityData> = throw NotImplementedError()
 
     override suspend fun get(): List<SongData> = throw NotImplementedError()
+
+    override suspend fun songDataByIds(ids: List<Long>): List<SongData> = throw NotImplementedError()
 
     override suspend fun insert(songData: List<SongData>): List<Long> = throw NotImplementedError()
 

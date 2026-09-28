@@ -44,7 +44,7 @@ class LocalPlayHistoryRepositoryTest {
     private val clock = object : Clock {
         override fun now(): Instant = now
     }
-    private val repository = LocalPlayHistoryRepository(eventDao, clock) { TimeZone.UTC }
+    private val repository = LocalPlayHistoryRepository(eventDao, freshAlbumIndex(database), clock) { TimeZone.UTC }
 
     private val albumContext = PlayContext.Album(AlbumGroupKey("blue", AlbumArtistGroupKey("joni mitchell")))
     private val playlistContext = PlayContext.Playlist(7)

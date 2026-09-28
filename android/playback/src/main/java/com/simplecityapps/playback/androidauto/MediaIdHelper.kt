@@ -15,10 +15,9 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
-import com.simplecityapps.shuttle.model.AlbumKeyRekey
+import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.albumKeyRekey
 import com.simplecityapps.shuttle.query.SongQuery
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +31,8 @@ constructor(
     private val playlistRepository: PlaylistRepository,
     private val artistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val albumIndex: AlbumIndexProvider
 ) {
     /** The children of the browsable item [mediaId]: empty for an id that isn't one. */
     suspend fun getChildren(mediaId: String): List<MediaItem> = withContext(Dispatchers.IO) {
@@ -49,7 +49,7 @@ constructor(
 
             is MediaIdWrapper.Directory.Albums.Artist -> {
                 val key = AlbumArtistGroupKey(mediaIdWrapper.albumArtistGroupKey)
-                albumsBy(key).ifEmpty { albumKeyRekey().albumArtist(key)?.takeIf { it != key }?.let { albumsBy(it) }.orEmpty() }
+                albumsBy(key).ifEmpty { albumIndex.albumIndex().rekey.albumArtist(key)?.takeIf { it != key }?.let { albumsBy(it) }.orEmpty() }
                     .map { it.toMediaItem(mediaId) }
             }
 
@@ -110,16 +110,13 @@ constructor(
      */
     private suspend fun songsForAlbum(directory: MediaIdWrapper.Directory.Songs.Album): List<Song> {
         val key = AlbumGroupKey(key = directory.albumGroupKey, albumArtistGroupKey = AlbumArtistGroupKey(directory.albumArtistGroupKey), identity = directory.identity)
-        return songsIn(key).ifEmpty { albumKeyRekey().album(key)?.takeIf { it != key }?.let { songsIn(it) }.orEmpty() }
+        return songsIn(key).ifEmpty { albumIndex.albumIndex().rekey.album(key)?.takeIf { it != key }?.let { songsIn(it) }.orEmpty() }
     }
 
     private suspend fun songsIn(key: AlbumGroupKey): List<Song> = songRepository
         .getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key))))
         .firstOrNull()
         .orEmpty()
-
-    /** For ids from before the album identity rule (#637); to be deleted with [AlbumKeyRekey]. */
-    private suspend fun albumKeyRekey(): AlbumKeyRekey = songRepository.getSongs(SongQuery.All(includeExcluded = true)).firstOrNull().orEmpty().albumKeyRekey()
 
     private suspend fun songsForPlaylist(directory: MediaIdWrapper.Directory.Songs.Playlist): List<Song> = playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(directory.playlistId)).firstOrNull()?.firstOrNull()?.let { playlist ->
         playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song }

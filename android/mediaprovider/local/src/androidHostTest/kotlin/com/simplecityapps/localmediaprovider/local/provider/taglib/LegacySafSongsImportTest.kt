@@ -13,6 +13,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.migrations.ALL_MIGR
 import com.simplecityapps.localmediaprovider.local.repository.LocalPlaylistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepository
 import com.simplecityapps.localmediaprovider.local.repository.SafPlaylistFileSync
+import com.simplecityapps.localmediaprovider.local.repository.libraryAlbumIndex
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
@@ -176,7 +177,7 @@ class LegacySafSongsImportTest {
                 SongPathRemap(songId = 4, path = "$MUSIC_TREE/document/primary%3AMusic%2FAlbum%2FPrimary.mp3")
             )
 
-        LocalSongRepository(scope, database.songDataDao()).remapPaths(remaps, MediaProviderType.Shuttle) shouldBe listOf(remaps[0], remaps[1])
+        LocalSongRepository(scope, database.songDataDao(), database.libraryAlbumIndex(scope)).remapPaths(remaps, MediaProviderType.Shuttle) shouldBe listOf(remaps[0], remaps[1])
 
         database.songDataDao().get().single { song -> song.id == 2L }.path shouldBe "/storage/emulated/0/Music/Other.mp3"
         database.songDataDao().get().single { song -> song.id == 4L }.path shouldBe "$MUSIC_TREE/document/primary%3AMusic%2FDeleted.mp3"
@@ -186,8 +187,8 @@ class LegacySafSongsImportTest {
         val importer =
             MediaImporter(
                 strings = ResourceMediaImportStrings(context),
-                songRepository = LocalSongRepository(scope, database.songDataDao()),
-                playlistStore = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao())),
+                songRepository = LocalSongRepository(scope, database.songDataDao(), database.libraryAlbumIndex(scope)),
+                playlistStore = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex(scope)),
                 preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore()),
                 afterImport = {}
             )

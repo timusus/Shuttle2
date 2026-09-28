@@ -2,6 +2,7 @@ package com.simplecityapps.localmediaprovider.local.di
 
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.repository.AlbumKeyMigration
+import com.simplecityapps.localmediaprovider.local.repository.LibraryAlbumIndex
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumArtistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalGenreRepository
@@ -11,6 +12,7 @@ import com.simplecityapps.localmediaprovider.local.repository.LocalSmartPlaylist
 import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSuggestionsRepository
 import com.simplecityapps.localmediaprovider.local.repository.PlaylistFileSync
+import com.simplecityapps.localmediaprovider.local.repository.libraryAlbumIndex
 import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImportStrings
 import com.simplecityapps.mediaprovider.MediaImporter
@@ -24,6 +26,7 @@ import com.simplecityapps.mediaprovider.repository.smartplaylists.SmartPlaylistR
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.shuttle.di.AppCoroutineScope
+import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -43,13 +46,25 @@ abstract class LibraryModule {
     @Binds
     abstract fun bindSongImportStateProvider(impl: MediaImporter): SongImportStateProvider
 
+    @Binds
+    abstract fun bindAlbumIndexProvider(impl: LibraryAlbumIndex): AlbumIndexProvider
+
     companion object {
+        /** The library's one album index, rebuilt only when Room says the songs table changed. */
+        @Provides
+        @SingleIn(AppScope::class)
+        fun provideLibraryAlbumIndex(
+            database: MediaDatabase,
+            @AppCoroutineScope appCoroutineScope: CoroutineScope
+        ): LibraryAlbumIndex = database.libraryAlbumIndex(appCoroutineScope)
+
         @Provides
         @SingleIn(AppScope::class)
         fun provideSongRepository(
             database: MediaDatabase,
-            @AppCoroutineScope appCoroutineScope: CoroutineScope
-        ): SongRepository = LocalSongRepository(appCoroutineScope, database.songDataDao())
+            @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            albumIndex: LibraryAlbumIndex
+        ): SongRepository = LocalSongRepository(appCoroutineScope, database.songDataDao(), albumIndex)
 
         @Provides
         @SingleIn(AppScope::class)
@@ -60,7 +75,7 @@ abstract class LibraryModule {
             preferenceManager: GeneralPreferenceManager,
             database: MediaDatabase
         ): MediaImporter {
-            val albumKeyMigration = AlbumKeyMigration(database.playEventDao(), database.pinnedCollectionDao(), preferenceManager)
+            val albumKeyMigration = AlbumKeyMigration(database.songDataDao(), database.playEventDao(), database.pinnedCollectionDao(), preferenceManager)
             return MediaImporter(strings, songRepository, playlistStore, preferenceManager, albumKeyMigration::migrateIfDue)
         }
 
@@ -83,8 +98,9 @@ abstract class LibraryModule {
         fun provideLocalPlaylistRepository(
             database: MediaDatabase,
             fileSync: PlaylistFileSync,
-            @AppCoroutineScope appCoroutineScope: CoroutineScope
-        ): LocalPlaylistRepository = LocalPlaylistRepository(appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), fileSync)
+            @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            albumIndex: LibraryAlbumIndex
+        ): LocalPlaylistRepository = LocalPlaylistRepository(appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao(), fileSync, albumIndex)
 
         @Provides
         fun providePlaylistRepository(playlistRepository: LocalPlaylistRepository): PlaylistRepository = playlistRepository
@@ -98,11 +114,17 @@ abstract class LibraryModule {
 
         @Provides
         @SingleIn(AppScope::class)
-        fun providePlayHistoryRepository(database: MediaDatabase): PlayHistoryRepository = LocalPlayHistoryRepository(database.playEventDao())
+        fun providePlayHistoryRepository(
+            database: MediaDatabase,
+            albumIndex: LibraryAlbumIndex
+        ): PlayHistoryRepository = LocalPlayHistoryRepository(database.playEventDao(), albumIndex)
 
         @Provides
         @SingleIn(AppScope::class)
-        fun provideSuggestionsRepository(database: MediaDatabase): SuggestionsRepository = LocalSuggestionsRepository(database.suggestionsDao())
+        fun provideSuggestionsRepository(
+            database: MediaDatabase,
+            albumIndex: LibraryAlbumIndex
+        ): SuggestionsRepository = LocalSuggestionsRepository(database.suggestionsDao(), albumIndex)
 
         @Provides
         @SingleIn(AppScope::class)

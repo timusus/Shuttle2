@@ -3,26 +3,20 @@ package com.simplecityapps.localmediaprovider.local.data.room.dao
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
-import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTITY_QUERY
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
-import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
 import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 /**
  * The library aggregates behind Home's suggestions (#633). Albums and album artists are grouped by
- * [com.simplecityapps.shuttle.model.AlbumIdentityRule] over [identityData] (#637), so the album rows here are per song,
+ * [com.simplecityapps.shuttle.model.AlbumIdentityRule] over the library's album index (#637), so the album rows here are per song,
  * a few columns each, which a caller aggregates by album. Only the songs a section shows are read whole.
  */
 @Dao
 interface SuggestionsDao {
     @Query("SELECT COUNT(*) FROM songs WHERE blacklisted = 0")
     fun songCount(): Flow<Int>
-
-    /** Every song's album identity columns, excluded songs too: an album's identity is decided over all its songs. */
-    @Query(SONG_IDENTITY_QUERY)
-    suspend fun identityData(): List<SongIdentityData>
 
     @Transaction
     @Query("SELECT * FROM songs WHERE blacklisted = 0 AND id IN (:ids)")

@@ -50,6 +50,3 @@ class AlbumKeyRekey(songs: Collection<Pair<AlbumIdentityTags, AlbumIdentity>>) {
         )
     }
 }
-
-/** The rekey over these songs, a whole library's, each holding its identity ([withAlbumIdentities]). */
-fun Collection<Song>.albumKeyRekey(): AlbumKeyRekey = AlbumKeyRekey(map { song -> song.identityTags to AlbumIdentity(song.albumGroupKey, null) })

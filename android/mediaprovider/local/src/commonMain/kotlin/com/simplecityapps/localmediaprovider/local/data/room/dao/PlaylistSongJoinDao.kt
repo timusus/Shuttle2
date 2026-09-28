@@ -6,12 +6,9 @@ import androidx.room.Query
 import androidx.room.Update
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
-import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTITY_QUERY
-import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
-import com.simplecityapps.localmediaprovider.local.data.room.entity.albumIdentities
 import com.simplecityapps.shuttle.model.PlaylistSong
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 
 @Dao
 abstract class PlaylistSongJoinDao {
@@ -31,16 +28,8 @@ abstract class PlaylistSongJoinDao {
     )
     abstract fun getSongDataForPlaylist(playlistId: Long): Flow<List<PlaylistSongData>>
 
-    /** The playlist's songs, each holding its album identity in the library. */
-    fun getSongsForPlaylist(playlistId: Long): Flow<List<PlaylistSong>> = getSongDataForPlaylist(playlistId).withAlbumIdentities()
-
-    @Query(SONG_IDENTITY_QUERY)
-    abstract fun getIdentityData(): Flow<List<SongIdentityData>>
-
-    private fun Flow<List<PlaylistSongData>>.withAlbumIdentities(): Flow<List<PlaylistSong>> = combine(this, getIdentityData()) { list, identityData ->
-        val identities = identityData.albumIdentities()
-        list.map { data -> data.toPlaylistSong().let { entry -> identities[entry.song.id]?.let { entry.copy(song = entry.song.copy(albumIdentity = it)) } ?: entry } }
-    }
+    /** The playlist's songs; they don't hold their album identities, which the repository adds from the library's index. */
+    fun getSongsForPlaylist(playlistId: Long): Flow<List<PlaylistSong>> = getSongDataForPlaylist(playlistId).map { list -> list.map { it.toPlaylistSong() } }
 
     /**
      * One row per distinct album (case-insensitively, by [SongData.album]/[SongData.albumArtist]), the row with the
@@ -65,7 +54,7 @@ abstract class PlaylistSongJoinDao {
     )
     abstract fun getCoverSongData(playlistId: Long): Flow<List<PlaylistSongData>>
 
-    fun getCoverSongsForPlaylist(playlistId: Long): Flow<List<PlaylistSong>> = getCoverSongData(playlistId).withAlbumIdentities()
+    fun getCoverSongsForPlaylist(playlistId: Long): Flow<List<PlaylistSong>> = getCoverSongData(playlistId).map { list -> list.map { it.toPlaylistSong() } }
 
     @Query("DELETE FROM playlist_song_join WHERE playlistId = :playlistId and id IN (:playlistSongIds)")
     abstract suspend fun delete(

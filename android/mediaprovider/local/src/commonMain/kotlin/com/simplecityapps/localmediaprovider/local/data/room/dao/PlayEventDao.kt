@@ -4,8 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
-import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTITY_QUERY
-import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
@@ -59,10 +57,6 @@ interface PlayEventDao {
         since: Instant,
         limit: Int
     ): List<SongDayPlaysRow>
-
-    /** Every song's album identity columns, what [completionsBySongAndDay] is merged into albums by. */
-    @Query(SONG_IDENTITY_QUERY)
-    suspend fun identityData(): List<SongIdentityData>
 
     /** The ids the events of [contextType] were played from, each once. */
     @Query("SELECT DISTINCT contextId FROM play_events WHERE contextType = :contextType AND contextId IS NOT NULL")

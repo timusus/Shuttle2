@@ -21,6 +21,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
@@ -44,7 +45,8 @@ class LocalPlaylistRepository(
     private val scope: CoroutineScope,
     private val playlistDataDao: PlaylistDataDao,
     private val playlistSongJoinDao: PlaylistSongJoinDao,
-    private val fileSync: PlaylistFileSync
+    private val fileSync: PlaylistFileSync,
+    private val albumIndex: LibraryAlbumIndex
 ) : PlaylistRepository,
     ImportedPlaylistStore {
     private val playlistsRelay: StateFlow<List<Playlist>?> by lazy {
@@ -141,6 +143,7 @@ class LocalPlaylistRepository(
     }
 
     override fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>> = playlistSongJoinDao.getSongsForPlaylist(playlist.id)
+        .withAlbumIdentities()
         .map { playlistSongs -> playlistSongs.sortedForPlaylist(playlist) }
 
     /**
@@ -148,7 +151,13 @@ class LocalPlaylistRepository(
      * own sort is applied here, the same way [getSongsForPlaylist] applies it, before taking [limit].
      */
     override fun getPlaylistCoverSongs(playlist: Playlist, limit: Int): Flow<List<Song>> = playlistSongJoinDao.getCoverSongsForPlaylist(playlist.id)
+        .withAlbumIdentities()
         .map { playlistSongs -> playlistSongs.sortedForPlaylist(playlist).take(limit).map { it.song } }
+
+    /** Each song holding its album identity, from the library's index as it is when the songs are read. */
+    private fun Flow<List<PlaylistSong>>.withAlbumIdentities(): Flow<List<PlaylistSong>> = combine(this, albumIndex.updates) { entries, index ->
+        entries.map { entry -> index.identities[entry.song.id]?.let { entry.copy(song = entry.song.copy(albumIdentity = it)) } ?: entry }
+    }
 
     override suspend fun deletePlaylist(playlist: Playlist) = playlistDataDao.delete(playlist.id)
 

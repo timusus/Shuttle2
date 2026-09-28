@@ -14,6 +14,7 @@ import com.simplecityapps.playback.mediasession.SessionPlayer
 import com.simplecityapps.playback.mediasession.UriSongResolver
 import com.simplecityapps.playback.mediasession.VoiceSearchResolver
 import com.simplecityapps.shuttle.model.Album
+import com.simplecityapps.shuttle.model.AlbumIndex
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.CoroutineScope
@@ -56,7 +57,7 @@ class SessionHarness(
         val albumRepository = FakeAlbumRepository(albums)
         val artistRepository = FakeAlbumArtistRepository()
         val playlistRepository = FakePlaylistRepository(playlists)
-        val mediaIdHelper = MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository)
+        val mediaIdHelper = MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository) { AlbumIndex(emptyList()) }
         playRequests =
             PlayRequests(
                 context = context,

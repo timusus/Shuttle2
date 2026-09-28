@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.shuttle.logging.Logger
+import com.simplecityapps.shuttle.model.AlbumIndex
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.withAlbumIdentities
@@ -21,7 +22,9 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -29,7 +32,8 @@ import kotlinx.coroutines.withContext
 
 class LocalSongRepository(
     val scope: CoroutineScope,
-    private val songDataDao: SongDataDao
+    private val songDataDao: SongDataDao,
+    private val albumIndex: LibraryAlbumIndex
 ) : SongRepository {
     private val songsRelay: StateFlow<List<Song>?> by lazy {
         songDataDao
@@ -50,22 +54,38 @@ class LocalSongRepository(
      */
     override fun getSongs(query: SongQuery): Flow<List<Song>?> {
         val songs: Flow<List<Song>?> =
-            if (query is SongQuery.SongIds) {
-                songDataDao.getByIds(query.songIds).flowOn(Dispatchers.IO)
+            if (query is SongQuery.SongIds && query.songIds.isEmpty()) {
+                flowOf(emptyList())
+            } else if (query is SongQuery.SongIds) {
+                combine(songDataDao.getByIds(query.songIds), albumIndex.updates) { found, index -> found.withAlbumIdentities(index.identities) }.flowOn(Dispatchers.IO)
             } else {
                 songsRelay.map { songs -> songs?.filter(query.predicate)?.sortedWith(query.sortOrder.comparator) }
             }
         return songs.map { result -> result?.matching(query) }
     }
 
-    /** Reads the database directly rather than the shared song list, whose requery after a write can take a while for a large library. */
+    /**
+     * Reads the database directly rather than the shared song list, whose requery after a write can take a while for a
+     * large library. An album's or album artist's songs (an album's page, playing it) are found in the library's
+     * [LibraryAlbumIndex] and read by id, so the cost is the album's, not the library's; other queries read every song.
+     */
     override suspend fun loadSongs(query: SongQuery): List<Song> = withContext(Dispatchers.IO) {
-        songDataDao.get()
-            .map { songData -> songData.toSong() }
-            .withAlbumIdentities()
+        val index = albumIndex.albumIndex()
+        val songs = index.songIdsFor(query)?.let { ids -> songDataDao.loadByIds(ids) } ?: songDataDao.get().map { songData -> songData.toSong() }
+        songs
+            .withAlbumIdentities(index.identities)
             .filter(query.predicate)
             .sortedWith(query.sortOrder.comparator)
             .matching(query)
+    }
+
+    /** The ids of the songs [query] can match, when the index knows them: null to read every song. */
+    private fun AlbumIndex.songIdsFor(query: SongQuery): List<Long>? = when (query) {
+        is SongQuery.SongIds -> query.songIds
+        is SongQuery.AlbumGroupKey -> query.key?.let(::songIds).orEmpty()
+        is SongQuery.AlbumGroupKeys -> query.albumGroupKeys.flatMap { album -> album.key?.let(::songIds).orEmpty() }
+        is SongQuery.ArtistGroupKey -> query.key?.let(::songIds).orEmpty()
+        else -> null
     }
 
     private fun List<Song>.matching(query: SongQuery): List<Song> = this

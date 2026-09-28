@@ -34,7 +34,8 @@ class LocalPlaylistRepositoryM3uSyncTest {
         scope = CoroutineScope(Dispatchers.Unconfined),
         playlistDataDao = database.playlistDataDao(),
         playlistSongJoinDao = database.playlistSongJoinDataDao(),
-        fileSync = SafPlaylistFileSync(context, database.songDataDao())
+        fileSync = SafPlaylistFileSync(context, database.songDataDao()),
+        albumIndex = database.libraryAlbumIndex(CoroutineScope(Dispatchers.Unconfined))
     )
 
     @After

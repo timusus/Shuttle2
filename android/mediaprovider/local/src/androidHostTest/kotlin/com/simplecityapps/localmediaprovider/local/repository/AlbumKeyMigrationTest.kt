@@ -33,7 +33,7 @@ class AlbumKeyMigrationTest {
         .allowMainThreadQueries()
         .build()
     private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
-    private val migration = AlbumKeyMigration(database.playEventDao(), database.pinnedCollectionDao(), preferences)
+    private val migration = AlbumKeyMigration(database.songDataDao(), database.playEventDao(), database.pinnedCollectionDao(), preferences)
 
     private val drive = AlbumGroupKey("drive ost", AlbumArtistGroupKey("various artists"), "dir:/music/Drive")
     private val blue = AlbumGroupKey("blue", AlbumArtistGroupKey("joni mitchell"), "mb:b1")

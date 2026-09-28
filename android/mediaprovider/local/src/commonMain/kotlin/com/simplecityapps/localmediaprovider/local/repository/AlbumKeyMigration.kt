@@ -2,9 +2,10 @@ package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PinnedCollectionDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlayEventDao
+import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PinnedCollectionData
-import com.simplecityapps.localmediaprovider.local.data.room.entity.albumKeyRekey
 import com.simplecityapps.shuttle.logging.Logger
+import com.simplecityapps.shuttle.model.AlbumIndex
 import com.simplecityapps.shuttle.model.AlbumKeyRekey
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -18,6 +19,7 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
  * killed part way) just finishes on the next one. To be deleted with [AlbumKeyRekey].
  */
 class AlbumKeyMigration(
+    private val songDataDao: SongDataDao,
     private val playEventDao: PlayEventDao,
     private val pinnedCollectionDao: PinnedCollectionDao,
     private val preferenceManager: GeneralPreferenceManager
@@ -32,7 +34,9 @@ class AlbumKeyMigration(
     }
 
     internal suspend fun migrate() {
-        val rekey = playEventDao.identityData().albumKeyRekey()
+        // Read fresh, not from the shared index: the import that made this due wrote a moment ago, and Room may not have
+        // told the index yet
+        val rekey = AlbumIndex(songDataDao.identityData().map { it.toTags() }).rekey
         var moved = 0
         var kept = 0
         listOf(PlayContext.TYPE_ALBUM, PlayContext.TYPE_ALBUM_ARTIST).forEach { type ->
