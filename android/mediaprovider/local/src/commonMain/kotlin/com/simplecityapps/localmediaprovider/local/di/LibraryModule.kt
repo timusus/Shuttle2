@@ -4,6 +4,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatab
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumArtistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalGenreRepository
+import com.simplecityapps.localmediaprovider.local.repository.LocalPlayHistoryRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalPlaylistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSmartPlaylistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepository
@@ -15,6 +16,7 @@ import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
+import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.smartplaylists.SmartPlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
@@ -86,6 +88,10 @@ abstract class LibraryModule {
         @Provides
         @SingleIn(AppScope::class)
         fun provideSmartPlaylistRepository(database: MediaDatabase): SmartPlaylistRepository = LocalSmartPlaylistRepository(database.smartPlaylistDao())
+
+        @Provides
+        @SingleIn(AppScope::class)
+        fun providePlayHistoryRepository(database: MediaDatabase): PlayHistoryRepository = LocalPlayHistoryRepository(database.playEventDao())
 
         @Provides
         @SingleIn(AppScope::class)
