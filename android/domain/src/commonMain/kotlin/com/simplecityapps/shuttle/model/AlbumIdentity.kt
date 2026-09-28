@@ -1,6 +1,9 @@
 package com.simplecityapps.shuttle.model
 
-/** The tags [AlbumIdentityRule] reads from a song: a [Song]'s ([Song.identityTags]), or a database row's. */
+/**
+ * The tags [AlbumIdentityRule] and [ArtistCredits] read from a song: a [Song]'s ([Song.identityTags]), or a database
+ * row's. The artist tags and ids are [ArtistCredits]' alone.
+ */
 data class AlbumIdentityTags(
     val songId: Long,
     val album: String?,
@@ -11,7 +14,12 @@ data class AlbumIdentityTags(
     val mbAlbumId: String?,
     val serverAlbumId: String?,
     val mediaProvider: MediaProviderType,
-    val path: String
+    val path: String,
+    val artistsTag: List<String>? = null,
+    val mbArtistIds: List<String>? = null,
+    val mbAlbumArtistIds: List<String>? = null,
+    val serverArtistIds: List<String>? = null,
+    val serverAlbumArtistIds: List<String>? = null
 )
 
 /** The album a song belongs to ([groupKey]) and the album artist that album shows ([albumArtistName]). */
@@ -158,7 +166,12 @@ val Song.identityTags: AlbumIdentityTags
         mbAlbumId = mbAlbumId,
         serverAlbumId = serverAlbumId,
         mediaProvider = mediaProvider,
-        path = path
+        path = path,
+        artistsTag = artistsTag,
+        mbArtistIds = mbArtistIds,
+        mbAlbumArtistIds = mbAlbumArtistIds,
+        serverArtistIds = serverArtistIds,
+        serverAlbumArtistIds = serverAlbumArtistIds
     )
 
 /** These songs, each holding the album identity [AlbumIdentityRule] gives it among them: a whole library's songs. */

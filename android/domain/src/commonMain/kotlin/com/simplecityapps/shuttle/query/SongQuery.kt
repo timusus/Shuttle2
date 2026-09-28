@@ -4,6 +4,7 @@ import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.SongFolder
+import com.simplecityapps.shuttle.model.isByArtist
 import com.simplecityapps.shuttle.smartplaylist.SmartRules
 import com.simplecityapps.shuttle.smartplaylist.SmartRulesContext
 import com.simplecityapps.shuttle.smartplaylist.predicate
@@ -30,10 +31,11 @@ sealed class SongQuery(
         providerType = providerType
     )
 
+    /** The artist's songs: those of the albums they're the album artist of, and those crediting them (#637). */
     data class ArtistGroupKey(
         val key: AlbumArtistGroupKey?
     ) : SongQuery(
-        predicate = { song -> song.albumArtistGroupKey == key }
+        predicate = { song -> song.isByArtist(key) }
     )
 
     data class ArtistGroupKeys(

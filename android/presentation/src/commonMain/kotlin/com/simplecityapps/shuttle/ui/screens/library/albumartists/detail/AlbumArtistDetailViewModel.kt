@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
@@ -11,8 +10,8 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.ArtistSongComparator
 import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
-import com.simplecityapps.shuttle.ui.actions.ObserveAlbumArtists
-import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
+import com.simplecityapps.shuttle.ui.actions.ObserveArtists
+import com.simplecityapps.shuttle.ui.actions.ObserveArtistAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
@@ -40,14 +39,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * One album artist's albums and songs, loaded by [groupKey], the key its route carries. Song and album
+ * One artist's albums, the albums they appear on, and their songs (#637), loaded by [groupKey], the key its route carries. Song and album
  * actions go through the screen's MediaActionsHost; this derives state, sorts and sections the songs (the sort is
  * app-wide, in [SortPreferences]), unfolds albums and shuffles by album.
  */
 class AlbumArtistDetailViewModel @AssistedInject constructor(
     @Assisted private val groupKey: AlbumArtistGroupKey,
-    observeAlbumArtists: ObserveAlbumArtists,
-    observeAlbums: ObserveAlbums,
+    observeArtists: ObserveArtists,
+    observeArtistAlbums: ObserveArtistAlbums,
     observeSongs: ObserveSongs,
     observeCurrentSong: ObserveCurrentSong,
     observeArtworkSeed: ObserveArtworkSeed,
@@ -68,14 +67,15 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
     private val expandedAlbums = MutableStateFlow<Set<AlbumGroupKey>?>(null)
     private val events = PendingEvents<AlbumArtistDetailEvent>()
 
-    /** The artist's albums, newest first, and their songs in that order; the lead song's artwork seeds the tint. */
+    /** The artist's own albums, newest first, and their songs (theirs and those crediting them) in that order; the lead song's artwork seeds the tint. */
+    private val artistAlbums = observeArtistAlbums(groupKey).shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
+
     private val albumsAndSongs: Flow<Pair<List<Album>, List<Song>>> = combine(
-        observeAlbums(AlbumQuery.ArtistGroupKey(groupKey)),
+        artistAlbums.map { it.albums },
         observeSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = groupKey)))),
     ) { albums, songs ->
-        val sortedAlbums = albums.sortedWith(ArtistSongComparator.albumNewest)
-        val albumOrder = sortedAlbums.withIndex().associate { (index, album) -> album.groupKey to index }
-        sortedAlbums to songs.sortedWith(compareBy<Song> { albumOrder[it.albumGroupKey] ?: Int.MAX_VALUE }.then(ArtistSongComparator.trackOrder))
+        val albumOrder = albums.withIndex().associate { (index, album) -> album.groupKey to index }
+        albums to songs.sortedWith(compareBy<Song> { albumOrder[it.albumGroupKey] ?: Int.MAX_VALUE }.then(ArtistSongComparator.trackOrder))
     }.onEach { (albums, songs) ->
         if (albums.isNotEmpty() || songs.isNotEmpty()) expandedAlbums.compareAndSet(null, defaultExpansion(albums))
     }.shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
@@ -93,16 +93,17 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
     }
 
     val uiState: StateFlow<AlbumArtistDetailUiState> = combine(
-        observeAlbumArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = groupKey)),
-        combine(albumsAndSongs, songList, ::Pair),
+        observeArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = groupKey)),
+        combine(albumsAndSongs, songList, artistAlbums) { albumsAndSongs, songList, artistAlbums -> Triple(albumsAndSongs, songList, artistAlbums.appearsOn) },
         observeCurrentSong(),
         combine(expandedAlbums, events.flow, ::Pair),
         observeArtworkSeed(albumsAndSongs.map { (_, songs) -> songs.firstOrNull() }),
-    ) { artists, (albumsAndSongs, songList), currentSong, (expanded, events), seed ->
+    ) { artists, (albumsAndSongs, songList, appearsOn), currentSong, (expanded, events), seed ->
         val (albums, songs) = albumsAndSongs
         AlbumArtistDetailUiState(
             albumArtist = artists.firstOrNull(),
             albums = albums,
+            appearsOn = appearsOn,
             songs = songList.songs,
             sortOrder = songList.order,
             sections = songList.sections,

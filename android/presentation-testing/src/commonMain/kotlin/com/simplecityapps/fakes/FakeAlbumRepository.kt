@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.shuttle.model.Album
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 
 class FakeAlbumRepository : AlbumRepository {
     private val albums = MutableStateFlow<List<Album>>(emptyList())
@@ -13,5 +14,8 @@ class FakeAlbumRepository : AlbumRepository {
         albums.value = value
     }
 
-    override fun getAlbums(query: AlbumQuery): Flow<List<Album>> = albums
+    /** When true, [getAlbums] applies the query's predicate, like the real repository. Off by default: most tests ignore queries. */
+    var applyQueryPredicates: Boolean = false
+
+    override fun getAlbums(query: AlbumQuery): Flow<List<Album>> = if (applyQueryPredicates) albums.map { albums -> albums.filter(query.predicate) } else albums
 }

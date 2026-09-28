@@ -49,7 +49,8 @@ class LibrarySearchIndex @Inject constructor(
     @IoDispatcher dispatcher: CoroutineDispatcher,
 ) {
     val index: Flow<SearchIndex<Any>> = combine(
-        albumArtistRepository.getAlbumArtists(AlbumArtistQuery.All()),
+        // Every artist, album artist or only credited (featured, on compilations), each once (#637)
+        albumArtistRepository.getAlbumArtists(AlbumArtistQuery.Credited()),
         albumRepository.getAlbums(AlbumQuery.All()),
         songRepository.getSongs(SongQuery.All()),
         genreRepository.getGenres(GenreQuery.All()),

@@ -8,7 +8,7 @@ import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.sorting.LetterSection
 import com.simplecityapps.shuttle.sorting.albumArtistLetterIndex
-import com.simplecityapps.shuttle.ui.actions.ObserveAlbumArtists
+import com.simplecityapps.shuttle.ui.actions.ObserveArtists
 import com.simplecityapps.shuttle.ui.common.SelectionState
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
@@ -43,7 +43,7 @@ data class AlbumArtistListUiState(
 @ViewModelKey(AlbumArtistListViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class AlbumArtistListViewModel @Inject constructor(
-    observeAlbumArtists: ObserveAlbumArtists,
+    observeArtists: ObserveArtists,
     readSetting: ReadLibraryViewSetting,
     private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider,
@@ -54,7 +54,7 @@ class AlbumArtistListViewModel @Inject constructor(
     private val _viewMode = MutableStateFlow(readSetting(LibraryViewSetting.ArtistViewMode))
 
     // Indexed as the library changes, not on each import progress tick (#627).
-    private val indexedArtists = observeAlbumArtists().map { albumArtists -> albumArtists to albumArtistLetterIndex(albumArtists) }
+    private val indexedArtists = observeArtists().map { albumArtists -> albumArtists to albumArtistLetterIndex(albumArtists) }
 
     val uiState: StateFlow<AlbumArtistListUiState> = combine(
         indexedArtists,

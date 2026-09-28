@@ -29,11 +29,12 @@ fun createSong(
     mediaProvider: MediaProviderType = MediaProviderType.Shuttle,
     grouping: String? = null,
     path: String = "/path/to/song",
+    artists: List<String> = emptyList(),
 ) = Song(
     id = id,
     name = name,
     albumArtist = albumArtist,
-    artists = emptyList(),
+    artists = artists,
     album = album,
     track = track,
     disc = disc,
@@ -69,6 +70,7 @@ fun createAlbumArtist(
     playCount: Int = 0,
     groupKey: AlbumArtistGroupKey = AlbumArtistGroupKey(name),
     mediaProviders: List<MediaProviderType> = listOf(MediaProviderType.Shuttle),
+    appearsOnCount: Int = 0,
 ) = AlbumArtist(
     name = name,
     artists = artists,
@@ -77,6 +79,7 @@ fun createAlbumArtist(
     playCount = playCount,
     groupKey = groupKey,
     mediaProviders = mediaProviders,
+    appearsOnCount = appearsOnCount,
 )
 
 fun createAlbum(

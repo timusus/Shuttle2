@@ -20,11 +20,7 @@ class LocalAlbumArtistRepository(val scope: CoroutineScope, private val songData
     private val albumArtistsRelay: StateFlow<List<AlbumArtist>?> by lazy {
         songDataDao
             .getAll()
-            .map { songs ->
-                songs
-                    .groupBy { song -> song.albumArtistGroupKey }
-                    .map { (key, songs) -> songs.toAlbumArtist(key) }
-            }
+            .map { songs -> songs.toArtists() }
             .flowOn(Dispatchers.IO)
             .stateIn(scope, SharingStarted.Lazily, null)
     }

@@ -12,7 +12,10 @@ import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.model.Album
+import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
+import com.simplecityapps.shuttle.model.AlbumIdentityRule
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.withAlbumIdentities
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
@@ -76,7 +79,8 @@ class AlbumArtistDetailViewModelTest {
     private val shuffleQueueOperations = FakeQueueOperations()
     private val shufflePlaybackOperations = FakePlaybackOperations()
 
-    private val testArtist = createAlbumArtist(name = "The Tin Orchards", albumCount = 2, songCount = 2)
+    // Keyed as the identity rule keys the songs' album artist, so their albums are the artist's own, not Appears On
+    private val testArtist = createAlbumArtist(name = "The Tin Orchards", albumCount = 2, songCount = 2, groupKey = AlbumArtistGroupKey(AlbumIdentityRule.artistKey("The Tin Orchards")))
 
     @Test
     fun `shows loading when repository has not emitted`() = runTest {
@@ -97,6 +101,44 @@ class AlbumArtistDetailViewModelTest {
         advanceUntilIdle()
 
         viewModel.uiState.value.loadingState shouldBe AlbumArtistDetailUiState.LoadingState.Empty
+    }
+
+    @Test
+    fun `albums they only appear on follow in Appears On, and their songs there are in the song list`() = runTest {
+        fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
+        fakeSongRepository.applyQueryPredicates = true
+        fakeAlbumRepository.applyQueryPredicates = true
+        val songs = listOf(
+            createSong(id = 1, album = "Lantern Hours", albumArtist = "The Tin Orchards", artists = listOf("The Tin Orchards"), path = "/m/1.mp3"),
+            createSong(id = 2, album = "Harbour Lights", albumArtist = "Maya Reyes", artists = listOf("Maya Reyes feat. The Tin Orchards"), path = "/m/2.mp3"),
+            createSong(id = 3, album = "Summer Hits", albumArtist = "Various Artists", artists = listOf("The Tin Orchards"), path = "/m/3.mp3"),
+            createSong(id = 4, album = "Night Drive", albumArtist = "Maya Reyes", artists = listOf("Maya Reyes"), path = "/m/4.mp3"),
+        ).withAlbumIdentities()
+        fakeSongRepository.setSongs(songs)
+        fakeAlbumRepository.setAlbums(songs.map { song -> createAlbum(name = song.album!!, albumArtist = song.albumArtist, groupKey = song.albumGroupKey) })
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        state.albums.map { it.name } shouldBe listOf("Lantern Hours")
+        state.appearsOn.map { it.name } shouldBe listOf("Harbour Lights", "Summer Hits")
+        state.songs.map { it.id }.sorted() shouldBe listOf(1L, 2L, 3L)
+    }
+
+    @Test
+    fun `no Appears On for an artist credited only on their own albums`() = runTest {
+        fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
+        fakeSongRepository.applyQueryPredicates = true
+        fakeAlbumRepository.applyQueryPredicates = true
+        val songs = listOf(createSong(id = 1, album = "Lantern Hours", albumArtist = "The Tin Orchards", artists = listOf("The Tin Orchards"))).withAlbumIdentities()
+        fakeSongRepository.setSongs(songs)
+        fakeAlbumRepository.setAlbums(listOf(createAlbum(name = "Lantern Hours", albumArtist = "The Tin Orchards", groupKey = songs.single().albumGroupKey)))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.appearsOn shouldBe emptyList()
     }
 
     @Test
@@ -465,8 +507,8 @@ class AlbumArtistDetailViewModelTest {
         )
         return AlbumArtistDetailViewModel(
             groupKey = testArtist.groupKey,
-            observeAlbumArtists = testMediaActions.observeAlbumArtists,
-            observeAlbums = testMediaActions.observeAlbums,
+            observeArtists = testMediaActions.observeArtists,
+            observeArtistAlbums = testMediaActions.observeArtistAlbums,
             observeSongs = testMediaActions.observeSongs,
             observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
             observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),

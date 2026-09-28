@@ -19,7 +19,8 @@ import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
 import com.simplecityapps.shuttle.ui.actions.FavouriteSongs
 import com.simplecityapps.shuttle.ui.actions.FindGoToTarget
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
-import com.simplecityapps.shuttle.ui.actions.ObserveAlbumArtists
+import com.simplecityapps.shuttle.ui.actions.ObserveArtistAlbums
+import com.simplecityapps.shuttle.ui.actions.ObserveArtists
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
@@ -74,7 +75,8 @@ class TestMediaActions(
     val favouriteSongs = FavouriteSongs(songRepository, resolveSongs)
     val observeSongs = ObserveSongs(songRepository)
     val observeAlbums = ObserveAlbums(albumRepository)
-    val observeAlbumArtists = ObserveAlbumArtists(albumArtistRepository)
+    val observeArtists = ObserveArtists(albumArtistRepository)
+    val observeArtistAlbums = ObserveArtistAlbums(albumRepository, songRepository)
     val observeGenres = ObserveGenres(genreRepository)
     val observeSongsForGenre = ObserveSongsForGenre(genreRepository)
     val observePlaylists = ObservePlaylists(playlistRepository)

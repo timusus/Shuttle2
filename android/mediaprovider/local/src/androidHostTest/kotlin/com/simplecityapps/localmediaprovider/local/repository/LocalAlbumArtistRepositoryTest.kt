@@ -61,4 +61,33 @@ class LocalAlbumArtistRepositoryTest {
         artists.getAlbumArtists(AlbumArtistQuery.All()).first().associate { it.name to it.albumCount } shouldBe
             mapOf("Radiohead" to 1, "Queen" to 2, "Various Artists" to 1, "Frank Ocean" to 1)
     }
+
+    @Test
+    fun `the Artists list is the album artists, and featured and compilation artists are found as credited ones`() = runTest {
+        val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
+        val artists = LocalAlbumArtistRepository(scope = backgroundScope, songDataDao = FakeSongDataDao(songsFlow))
+
+        songsFlow.emit(
+            listOf(
+                createSongData(album = "Viva la Vida", albumArtist = "Coldplay", track = 1).copy(artists = listOf("Coldplay")),
+                createSongData(album = "Graduation", albumArtist = "Kanye West", track = 1).copy(artists = listOf("Kanye West feat. Chris Martin")),
+                createSongData(album = "Now 100", track = 1).copy(albumArtist = null, artists = listOf("Adele"), compilation = true),
+                createSongData(album = "Now 100", track = 2).copy(albumArtist = null, artists = listOf("Coldplay"), compilation = true),
+                createSongData(album = "Watch the Throne", track = 1).copy(albumArtist = null, albumArtists = listOf("Jay-Z", "Kanye West"), artistsTag = listOf("Jay-Z", "Kanye West", "Frank Ocean"))
+            )
+        )
+
+        artists.getAlbumArtists(AlbumArtistQuery.All()).first().map { it.name } shouldBe listOf("Coldplay", "Jay-Z, Kanye West", "Kanye West", "Various Artists")
+        artists.getAlbumArtists(AlbumArtistQuery.Credited()).first().associate { it.name to listOf(it.albumCount, it.appearsOnCount, it.songCount) } shouldBe mapOf(
+            "Adele" to listOf(0, 1, 1),
+            "Chris Martin" to listOf(0, 1, 1),
+            "Coldplay" to listOf(1, 1, 2),
+            "Frank Ocean" to listOf(0, 1, 1),
+            "Jay-Z" to listOf(0, 1, 1),
+            "Jay-Z, Kanye West" to listOf(1, 0, 1),
+            "Kanye West" to listOf(1, 1, 2),
+            "Various Artists" to listOf(1, 0, 2)
+        )
+        artists.getAlbumArtists(AlbumArtistQuery.Search("chris")).first().map { it.name } shouldBe listOf("Chris Martin")
+    }
 }

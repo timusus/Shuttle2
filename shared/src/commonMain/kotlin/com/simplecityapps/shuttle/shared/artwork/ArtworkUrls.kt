@@ -87,8 +87,9 @@ class ArtworkUrls(
         .orEmpty()
         .firstOrNull()
 
+    /** One of their own albums' songs, else one crediting them elsewhere (a credited-only artist's). */
     private suspend fun firstSongOf(albumArtist: AlbumArtist): Song? = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(albumArtist.groupKey))))
         .firstOrNull()
         .orEmpty()
-        .firstOrNull()
+        .let { songs -> songs.firstOrNull { song -> song.albumArtistGroupKey == albumArtist.groupKey } ?: songs.firstOrNull() }
 }

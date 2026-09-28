@@ -89,6 +89,9 @@ data class Song(
 
     val albumArtistGroupKey: AlbumArtistGroupKey get() = resolvedAlbumIdentity.albumArtistGroupKey
 
+    /** The artists this song credits, each as the artist page it belongs to ([ArtistCredits]). */
+    val artistCredits: List<ArtistCredit> by lazy { ArtistCredits.credits(identityTags, resolvedAlbumIdentity) }
+
     enum class Type {
         Audio,
         Audiobook,

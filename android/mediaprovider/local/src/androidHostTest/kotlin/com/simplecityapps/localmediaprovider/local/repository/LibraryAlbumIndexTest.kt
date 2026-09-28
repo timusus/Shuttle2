@@ -16,7 +16,7 @@ class LibraryAlbumIndexTest {
     private fun song(
         id: Long,
         album: String
-    ) = SongIdentityData(id, album, "Artist", null, listOf("Artist"), null, null, null, MediaProviderType.Shuttle, "/music/$album/$id.mp3")
+    ) = SongIdentityData(id, album, "Artist", null, listOf("Artist"), null, null, null, MediaProviderType.Shuttle, "/music/$album/$id.mp3", null, null, null, null, null)
 
     @Test
     fun `the index is rebuilt only when the songs table changes`() = runTest {

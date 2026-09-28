@@ -14,9 +14,13 @@ internal suspend fun SongRepository.songsOf(album: Album): List<Song> = getSongs
 
 internal suspend fun SongRepository.firstSongOf(album: Album): Song? = songsOf(album).firstOrNull()
 
-/** The artist's songs, which stand in for the artist when a source only knows how to find artwork for a song. */
+/**
+ * The artist's songs, which stand in for the artist when a source only knows how to find artwork for a song: those of
+ * their own albums first, then those crediting them elsewhere, so a credited-only artist has some too.
+ */
 internal suspend fun SongRepository.songsOf(albumArtist: AlbumArtist): List<Song> = getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(albumArtist.groupKey))))
     .firstOrNull()
     .orEmpty()
+    .sortedByDescending { song -> song.albumArtistGroupKey == albumArtist.groupKey }
 
 internal suspend fun SongRepository.firstSongOf(albumArtist: AlbumArtist): Song? = songsOf(albumArtist).firstOrNull()

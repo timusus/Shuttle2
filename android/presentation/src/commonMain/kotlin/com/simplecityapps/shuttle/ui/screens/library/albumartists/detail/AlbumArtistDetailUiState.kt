@@ -13,9 +13,11 @@ import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 
 data class AlbumArtistDetailUiState(
     val albumArtist: AlbumArtist? = null,
-    /** The artist's albums, newest first: the carousel's order, whatever [sortOrder] is. */
+    /** The artist's own albums (they're the album artist), newest first: the carousel's order, whatever [sortOrder] is. */
     val albums: List<Album> = emptyList(),
-    /** Every song in [sortOrder]'s visible order across all [sections], collapsed ones included: the play order. */
+    /** Other album artists' albums with songs crediting them, compilations included, newest first; the section's hidden when empty. */
+    val appearsOn: List<Album> = emptyList(),
+    /** Every song in [sortOrder]'s visible order (their own albums' and those crediting them) across all [sections], collapsed ones included: the play order. */
     val songs: List<Song> = emptyList(),
     val sortOrder: ArtistSongSortOrder = ArtistSongSortOrder.Default,
     /**
