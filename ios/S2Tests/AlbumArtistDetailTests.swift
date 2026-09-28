@@ -71,8 +71,8 @@ struct AlbumArtistDetailTests {
     }
 
     @Test func tappingASongPlaysFromItsIndex() throws {
-        var played: (songs: [Song], index: Int)?
-        let sut = AlbumArtistDetailContent(state: flat(), onPlay: { played = ($0, $1) })
+        var played: (songs: [Song], index: Int, context: PlayContext)?
+        let sut = AlbumArtistDetailContent(state: flat(), onPlay: { played = ($0, $1, $2) })
         try sut.inspect().find(button: "Teardrop").tap()
         #expect(played?.index == 2)
         #expect(played?.songs.map(\.id) == TestSongs.demo.map(\.id))
@@ -123,9 +123,9 @@ struct AlbumArtistDetailTests {
     }
 
     @Test func tappingASectionedSongPlaysTheVisibleOrderFromIt() throws {
-        var played: (songs: [Song], index: Int)?
+        var played: (songs: [Song], index: Int, context: PlayContext)?
         let state = sectioned(.albumNewest, expanded: ["OK Computer", "Kid A"])
-        let sut = AlbumArtistDetailContent(state: state, onPlay: { played = ($0, $1) })
+        let sut = AlbumArtistDetailContent(state: state, onPlay: { played = ($0, $1, $2) })
         try sut.inspect().find(button: "Paranoid Android").tap()
         #expect(played?.index == 2)
         #expect(played?.songs.map(\.id) == state.songs.map(\.id))
@@ -185,9 +185,9 @@ struct AlbumArtistDetailTests {
     }
 
     @Test func tappingATopSongPlaysTheTopSongs() throws {
-        var played: (songs: [Song], index: Int)?
+        var played: (songs: [Song], index: Int, context: PlayContext)?
         let top = [TestSongs.demo[3], TestSongs.demo[0]]
-        let sut = AlbumArtistDetailContent(state: sectioned(.albumNewest, topSongs: top), onPlay: { played = ($0, $1) })
+        let sut = AlbumArtistDetailContent(state: sectioned(.albumNewest, topSongs: top), onPlay: { played = ($0, $1, $2) })
         try sut.inspect().find(where: { (try? $0.accessibilityIdentifier()) == "artistDetail.topSong" }).button().tap()
         #expect(played?.index == 0)
         #expect(played?.songs.map(\.id) == top.map(\.id))
@@ -206,5 +206,44 @@ struct AlbumArtistDetailTests {
             events: [], seed: ArtworkSeedNone.shared
         )
         #expect((try? AlbumArtistDetailContent(state: notFound).inspect().find(text: "Artist Not Found")) != nil)
+    }
+
+    // MARK: - Play context (#633)
+
+    @Test func tappingASongPassesTheArtistsPlayContext() throws {
+        var context: PlayContext?
+        let sut = AlbumArtistDetailContent(state: flat(), onPlay: { _, _, playContext in context = playContext })
+        try sut.inspect().find(button: "Teardrop").tap()
+        #expect(context is PlayContextAlbumArtist)
+    }
+
+    @Test func heroAndTopSongsPassTheArtistsPlayContext() throws {
+        var heroContext: PlayContext?
+        var topSongContext: PlayContext?
+        let top = [TestSongs.demo[0]]
+        let sut = AlbumArtistDetailContent(
+            state: sectioned(.albumNewest, topSongs: top),
+            onPlay: { _, _, context in topSongContext = context },
+            onShuffle: { _, context in heroContext = context }
+        )
+        try sut.inspect().find(where: { (try? $0.accessibilityIdentifier()) == "artistDetail.topSong" }).button().tap()
+        #expect(topSongContext is PlayContextAlbumArtist)
+        try sut.inspect().find(button: "Shuffle").tap()
+        #expect(heroContext is PlayContextAlbumArtist)
+    }
+
+    @Test func albumHeaderPlayAndShufflePassTheAlbumsOwnContext() throws {
+        var playedContext: PlayContext?
+        var shuffledContext: PlayContext?
+        let sut = AlbumArtistDetailContent(
+            state: sectioned(.albumNewest, expanded: ["Kid A"]),
+            onPlay: { _, _, context in playedContext = context },
+            onShuffle: { _, context in shuffledContext = context }
+        )
+        let header = try sut.inspect().find(AlbumSectionHeader.self).actualView()
+        header.onPlay()
+        header.onShuffle()
+        #expect(playedContext is PlayContextAlbum)
+        #expect(shuffledContext is PlayContextAlbum)
     }
 }

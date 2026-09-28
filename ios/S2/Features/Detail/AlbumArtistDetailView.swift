@@ -21,11 +21,11 @@ struct AlbumArtistDetailView: View {
             AlbumArtistDetailContent(
                 state: state,
                 isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
-                onPlay: { songs, index in
-                    models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: songs), position: Int32(index)))
+                onPlay: { songs, index, context in
+                    models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: songs), position: Int32(index), context: context))
                 },
-                onShuffle: { songs in
-                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: songs)))
+                onShuffle: { songs, context in
+                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: songs), context: context))
                 },
                 onShuffleAlbums: { models.artist.onShuffleAlbums() },
                 onPlayNext: { songs in
@@ -65,8 +65,8 @@ final class AlbumArtistDetailModels: ViewModelGroup {
 struct AlbumArtistDetailContent: View {
     let state: AlbumArtistDetailUiState
     var isPlaying: Bool = false
-    var onPlay: ([Song], Int) -> Void = { _, _ in }
-    var onShuffle: ([Song]) -> Void = { _ in }
+    var onPlay: ([Song], Int, PlayContext) -> Void = { _, _, _ in }
+    var onShuffle: ([Song], PlayContext) -> Void = { _, _ in }
     var onShuffleAlbums: () -> Void = {}
     var onPlayNext: ([Song]) -> Void = { _ in }
     var onAddToQueue: ([Song]) -> Void = { _ in }
@@ -105,8 +105,8 @@ struct AlbumArtistDetailContent: View {
                     title: name,
                     subtitle: eyebrow(pluralized(state.albums.count, "album"), pluralized(state.songs.count, "song")),
                     layout: layout,
-                    onPlay: { onPlay(state.songs, 0) },
-                    onShuffle: { onShuffle(state.songs) }
+                    onPlay: { onPlay(state.songs, 0, state.playContext) },
+                    onShuffle: { onShuffle(state.songs, state.playContext) }
                 ) { points in
                     RemoteArtwork(.albumArtist(artist), points: points) {
                         ArtworkPlaceholder(symbol: "person.fill")
@@ -159,7 +159,7 @@ struct AlbumArtistDetailContent: View {
             }
             .listRowSeparator(.hidden)
             ForEach(Array(shown.enumerated()), id: \.element.id) { index, song in
-                Button { onPlay(state.topSongs, index) } label: {
+                Button { onPlay(state.topSongs, index, state.playContext) } label: {
                     DetailSongRow(song: song, playback: rowPlayback(song, current: state.currentSong, isPlaying: isPlaying))
                 }
                 .buttonStyle(.plain)
@@ -219,8 +219,8 @@ struct AlbumArtistDetailContent: View {
                 songCount: songs.count,
                 isExpanded: expanded,
                 onToggle: { onToggleAlbum(album) },
-                onPlay: { onPlay(songs, 0) },
-                onShuffle: { onShuffle(songs) },
+                onPlay: { onPlay(songs, 0, album.playContext) },
+                onShuffle: { onShuffle(songs, album.playContext) },
                 onPlayNext: { onPlayNext(songs) },
                 onAddToQueue: { onAddToQueue(songs) },
                 onOpenAlbum: { onAlbumTap(album) }
@@ -230,7 +230,7 @@ struct AlbumArtistDetailContent: View {
 
     private func songRows(_ songs: [Song], indexById: [Int64: Int], numbered: Bool) -> some View {
         ForEach(songs, id: \.id) { song in
-            Button { onPlay(state.songs, indexById[song.id] ?? 0) } label: {
+            Button { onPlay(state.songs, indexById[song.id] ?? 0, state.playContext) } label: {
                 let playback = rowPlayback(song, current: state.currentSong, isPlaying: isPlaying)
                 if numbered {
                     TrackRow(number: song.track.map { Int($0.intValue) }, title: song.name ?? "Unknown", durationMs: Int64(song.duration), playback: playback)
