@@ -8,6 +8,9 @@ import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.genres.comparator
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
+import com.simplecityapps.shuttle.sorting.LetterSection
+import com.simplecityapps.shuttle.sorting.genreLetterKey
+import com.simplecityapps.shuttle.sorting.letterSections
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
@@ -30,6 +33,9 @@ data class GenreListUiState(
 ) {
     /** [Scanning] while an import runs; the list still carries what's already imported, for a screen that keeps showing it. */
     enum class LoadingState { Loading, Scanning, Ready, Empty }
+
+    /** The genres' letter sections when sorted by name; null for any other sort. */
+    val letterIndex: List<LetterSection>? by lazy { genreLetterKey(sortOrder)?.let { key -> letterSections(genres, key) } }
 }
 
 @ViewModelKey(GenreListViewModel::class)

@@ -3,6 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.library.albums
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
+import com.simplecityapps.shuttle.sorting.LetterSection
+import com.simplecityapps.shuttle.sorting.albumLetterKey
+import com.simplecityapps.shuttle.sorting.letterSections
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 
@@ -19,6 +22,9 @@ data class AlbumListUiState(
     enum class LoadingState { Loading, Scanning, Ready, Empty }
 
     val isSelecting: Boolean get() = selectedAlbums.isNotEmpty()
+
+    /** The albums' letter sections for a name sort, the same key the sort compares; null for any other sort. */
+    val letterIndex: List<LetterSection>? by lazy { albumLetterKey(sortOrder)?.let { key -> letterSections(albums, key) } }
 }
 
 sealed interface AlbumListEvent {

@@ -9,7 +9,10 @@ import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.sorting.LetterSection
 import com.simplecityapps.shuttle.sorting.SongSortOrder
+import com.simplecityapps.shuttle.sorting.letterSections
+import com.simplecityapps.shuttle.sorting.songLetterKey
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.common.SelectionState
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
@@ -39,6 +42,9 @@ data class SongListUiState(
     enum class LoadingState { Loading, Scanning, Ready, Empty }
 
     val isSelecting: Boolean get() = selectedSongs.isNotEmpty()
+
+    /** The songs' letter sections for a name sort, the same key the sort compares; null for any other sort. */
+    val letterIndex: List<LetterSection>? by lazy { songLetterKey(sortOrder)?.let { key -> letterSections(songs, key) } }
 }
 
 @ViewModelKey(SongListViewModel::class)

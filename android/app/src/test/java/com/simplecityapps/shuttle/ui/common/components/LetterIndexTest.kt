@@ -1,46 +1,11 @@
 package com.simplecityapps.shuttle.ui.common.components
 
+import com.simplecityapps.shuttle.sorting.LetterSection
 import io.kotest.matchers.shouldBe
 import org.junit.Test
 
+// The sections' letters are tested with them in :android:domain (LetterIndexTest).
 class LetterIndexTest {
-
-    @Test
-    fun `a section starts wherever the first letter changes, in list order`() {
-        val keys = listOf("abba", "ace", "beatles", "blur", "cure")
-
-        letterSections(keys) { it } shouldBe listOf(
-            LetterSection("A", 0),
-            LetterSection("B", 2),
-            LetterSection("C", 4),
-        )
-    }
-
-    @Test
-    fun `digits, symbols, blanks and missing keys share the # section`() {
-        val keys = listOf("10cc", "!!!", "", null, "  ", "air")
-
-        letterSections(keys) { it } shouldBe listOf(LetterSection("#", 0), LetterSection("A", 5))
-    }
-
-    @Test
-    fun `accented letters fold into their base letter`() {
-        val keys = listOf("eels", "élan", "Émilie", "zz")
-
-        letterSections(keys) { it } shouldBe listOf(LetterSection("E", 0), LetterSection("Z", 3))
-    }
-
-    @Test
-    fun `scripts without a short alphabet go under #`() {
-        letterLabel("坂本龍一") shouldBe "#"
-        letterLabel("방탄소년단") shouldBe "#"
-        letterLabel("Россия") shouldBe "Р"
-    }
-
-    @Test
-    fun `leading spaces are skipped`() {
-        letterLabel("  moby") shouldBe "M"
-    }
 
     @Test
     fun `an item maps to the section it falls in`() {
@@ -61,15 +26,5 @@ class LetterIndexTest {
         sectionIndexAt(sectionCount = 5, fraction = 1f) shouldBe 4
         sectionIndexAt(sectionCount = 5, fraction = 1.4f) shouldBe 4
         sectionIndexAt(sectionCount = 1, fraction = 0.7f) shouldBe 0
-    }
-
-    @Test
-    fun `an 18k-song library indexes in one pass`() {
-        val keys = (0 until 18_000).map { ('a' + it * 26 / 18_000) + "song $it" }
-
-        val sections = letterSections(keys) { it }
-
-        sections.size shouldBe 26
-        sections.last() shouldBe LetterSection("Z", keys.indexOfFirst { it.startsWith("z") })
     }
 }

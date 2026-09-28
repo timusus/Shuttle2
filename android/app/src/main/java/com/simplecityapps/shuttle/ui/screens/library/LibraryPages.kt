@@ -54,15 +54,16 @@ import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.SongSortOrder
+import com.simplecityapps.shuttle.sorting.albumLetterKey
+import com.simplecityapps.shuttle.sorting.letterSections
+import com.simplecityapps.shuttle.sorting.songLetterKey
 import com.simplecityapps.shuttle.ui.common.components.AlphabetFastScroller
 import com.simplecityapps.shuttle.ui.common.components.FastScrollableState
 import com.simplecityapps.shuttle.ui.common.components.FastScroller
 import com.simplecityapps.shuttle.ui.common.components.NoPopup
-import com.simplecityapps.shuttle.ui.common.components.letterSections
 import com.simplecityapps.shuttle.ui.common.components.rememberFastScrollableState
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListUiState
-import com.simplecityapps.shuttle.ui.screens.library.albums.albumLetterKey
 import com.simplecityapps.shuttle.ui.screens.library.albums.albumThumbLabel
 import com.simplecityapps.shuttle.ui.screens.library.folders.Folder
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListUiState
@@ -71,7 +72,6 @@ import com.simplecityapps.shuttle.ui.screens.library.folders.displayPath
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListUiState
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
-import com.simplecityapps.shuttle.ui.screens.library.songs.songLetterKey
 import com.simplecityapps.shuttle.ui.screens.library.songs.songThumbLabel
 import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceKey
 
@@ -378,7 +378,7 @@ fun ArtistsPage(
     LibraryContent(content, stringResource(R.string.artist_list_empty), modifier, state.scanProgress) {
         val artists = state.albumArtists
         // Artists are always sorted by their group key, which drops a leading "The".
-        val sections = remember(artists) { letterSections(artists) { it.groupKey.key } }
+        val sections = state.letterIndex
         Box(modifier.fillMaxSize()) {
             if (state.viewMode == ViewMode.Grid) {
                 val gridState = rememberLazyGridState()

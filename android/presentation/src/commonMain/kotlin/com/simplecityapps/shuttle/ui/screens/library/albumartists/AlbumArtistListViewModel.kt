@@ -6,6 +6,9 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.sorting.LetterSection
+import com.simplecityapps.shuttle.sorting.albumArtistLetterKey
+import com.simplecityapps.shuttle.sorting.letterSections
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbumArtists
 import com.simplecityapps.shuttle.ui.common.SelectionState
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
@@ -33,6 +36,9 @@ data class AlbumArtistListUiState(
     enum class LoadingState { Loading, Scanning, Ready, Empty }
 
     val isSelecting: Boolean get() = selectedArtists.isNotEmpty()
+
+    /** The artists' letter sections: every artists sort compares the name first. */
+    val letterIndex: List<LetterSection> by lazy { letterSections(albumArtists, ::albumArtistLetterKey) }
 }
 
 @ViewModelKey(AlbumArtistListViewModel::class)
