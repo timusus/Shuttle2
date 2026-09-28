@@ -30,11 +30,11 @@ cwds=$(lsof -a -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')
 
 # path<TAB>branch<TAB>locked for each worktree
 list=$(git worktree list --porcelain | awk '
-  /^worktree /{p=substr($0,10); b=""; l=0}
+  /^worktree /{p=substr($0,10); b=""; l=0; printed=0}
   /^branch /{b=substr($0,8); sub("refs/heads/","",b)}
   /^locked/{l=1}
-  /^$/{print p "\t" b "\t" l}
-  END{if(p!="")print p "\t" b "\t" l}')
+  /^$/{print p "\t" b "\t" l; printed=1}
+  END{if(p!="" && !printed)print p "\t" b "\t" l}')
 
 wanted() {
   local p=$1 b=$2; shift 2
