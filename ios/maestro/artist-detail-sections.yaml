@@ -1,0 +1,65 @@
+# The artist detail's song sections (#631): opens an artist with many albums (The Mars Volta, 8 on the Jellyfin test
+# server) from Library > Album Artists, then shoots the hero, the collapsed album sections, the sections expanded, and
+# the sort menu open. Ends back on the default sort (Album, Newest First). iPhone only (the chip rail); signed in
+# already: run sign-in-jellyfin.yaml first. Run it again with the simulator in dark mode for the dark shots.
+#
+#   OUT=/tmp/s2-631/iphone-light ios/scripts/maestro-sim.sh artist-detail-sections.yaml
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+- tapOn: "Library"
+- tapOn:
+    id: "libraryChip.all"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "libraryCategory.albumArtists"
+    timeout: 120000
+- tapOn:
+    id: "libraryCategory.albumArtists"
+- waitForAnimationToEnd:
+    timeout: 5000
+# The view mode is remembered: the list, where names are rows.
+- runFlow:
+    when:
+      visible: "Show as List"
+    commands:
+      - tapOn:
+          id: "library.viewMode"
+      - waitForAnimationToEnd:
+          timeout: 5000
+- scrollUntilVisible:
+    element:
+      text: "The Mars Volta"
+    direction: DOWN
+    timeout: 180000
+- tapOn: "The Mars Volta"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 1-hero
+# The Songs header with the sort menu, and the album sections under it, collapsed by default past two albums.
+- scrollUntilVisible:
+    element:
+      id: "artistDetail.sortMenu"
+    direction: DOWN
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: 2-collapsed
+- runFlow:
+    when:
+      visible: "Expand All"
+    commands:
+      - tapOn: "Expand All"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: 3-expanded
+- tapOn:
+    id: "artistDetail.sortMenu"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: 4-sort-menu
+- tapOn: "Album, Newest First"
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn: "Collapse All"
