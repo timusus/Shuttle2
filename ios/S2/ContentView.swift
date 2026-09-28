@@ -284,8 +284,15 @@ extension View {
     }
 }
 
-private struct RootToolbar: ViewModifier {
+struct RootToolbar: ViewModifier {
     let navigator: Navigator
+
+    /// The import activity's Open Sources: pushes Sources onto the stack the button sits on (Home's, Library's or a
+    /// library category's), as the empty states' Add a Source does. It used to open the Settings sheet at Sources, but
+    /// that presented while the activity's popover was still dismissing, which UIKit refuses, so nothing opened (#645).
+    static func openSources(_ navigator: Navigator) {
+        navigator.open(.sources)
+    }
 
     func body(content: Content) -> some View {
         Observing(ImportActivity.state) { state in
@@ -301,10 +308,7 @@ private struct RootToolbar: ViewModifier {
                 }
                 if status != .idle {
                     ToolbarItem(placement: .topBarTrailing) {
-                        ImportActivityButton(status: status, onOpenSources: {
-                            navigator.showsSettings = true
-                            navigator.settingsPath = [.sources]
-                        })
+                        ImportActivityButton(status: status, onOpenSources: { Self.openSources(navigator) })
                     }
                 }
             }

@@ -111,4 +111,23 @@ struct SourcesViewTests {
         let sut = HomeContent(state: HomeUiStateEmpty.shared)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "homeEmpty.addSource")) != nil)
     }
+
+    /// #645: the import activity's Open Sources opened the Settings sheet at Sources while its popover was still
+    /// dismissing, which UIKit refuses, so nothing happened. It pushes Sources onto the stack it sits on instead.
+    @Test func theImportActivitysOpenSourcesPushesSourcesOntoTheCurrentStack() {
+        let navigator = Navigator(viewModelCache: ViewModelCache(), startTab: .library)
+        RootToolbar.openSources(navigator)
+        #expect(navigator.libraryPath == [.sources])
+        #expect(!navigator.showsSettings)
+
+        navigator.selectTab(.home)
+        RootToolbar.openSources(navigator)
+        #expect(navigator.homePath == [.sources])
+
+        // Regular and wide: a library category's own stack.
+        navigator.selectLibraryCategory(.albums)
+        RootToolbar.openSources(navigator)
+        #expect(navigator.path(for: LibraryCategory.albums) == [.sources])
+    }
+
 }
