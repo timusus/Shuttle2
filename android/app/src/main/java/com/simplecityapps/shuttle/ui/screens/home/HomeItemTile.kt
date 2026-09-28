@@ -242,19 +242,25 @@ fun HomeShelfTile(
         verticalArrangement = Arrangement.spacedBy(S2Spacing.tiny),
     ) {
         HomeItemArtwork(item, covers, ArtworkSize.Grid, Modifier.padding(bottom = S2Spacing.xsmall).fillMaxWidth().aspectRatio(1f))
-        Text(
-            text = item.title(),
-            style = MaterialTheme.typography.titleSmall,
-            maxLines = lines,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = item.subtitle(mixed),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = lines,
-            overflow = TextOverflow.Ellipsis,
-        )
+        // Inset from the tile's rounded corners, which clip the press ripple: flush, they'd shave the first glyph.
+        Column(
+            modifier = Modifier.padding(start = S2Spacing.small, end = S2Spacing.small, bottom = S2Spacing.small),
+            verticalArrangement = Arrangement.spacedBy(S2Spacing.tiny),
+        ) {
+            Text(
+                text = item.title(),
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = lines,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = item.subtitle(mixed),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = lines,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
