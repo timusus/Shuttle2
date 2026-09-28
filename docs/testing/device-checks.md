@@ -306,3 +306,4 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 - [ ] iPhone: Now Playing has four bottom buttons; Audio holds speed and the Equalizer; repeat off, all and one look different.
 - [ ] iPhone: tapping the artist or album line opens it; the heart is at the top; long-pressing the cover offers Add to Playlist, Go to and Exclude.
 - [ ] iPhone: the queue reads as one list with Now Playing, Up Next and Played headers.
+- [ ] iPhone: Search shows recent searches when empty; results group into Top result, Songs, Albums, Artists and more, with See all; type chips filter; tapping a song plays it and a result opens it.
