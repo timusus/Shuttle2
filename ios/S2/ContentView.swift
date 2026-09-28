@@ -128,15 +128,16 @@ struct AppShell: View {
             }
         }
         return Group {
-            if #available(iOS 26, *) {
-                // iOS 26: the mini player rides above the tab bar as its bottom accessory (inline beside the
-                // minimised bar on scroll), in place of each screen's floating inset.
+            if #available(iOS 26.1, *) {
+                // iOS 26.1: the mini player rides above the tab bar as its bottom accessory (inline beside the
+                // minimised bar on scroll), in place of each screen's floating inset, and only while a song is
+                // current. 26.0 can't disable the accessory, so there the screens keep the floating inset.
                 tabs
-                    .tabViewBottomAccessory {
-                        MiniPlayerView(showNowPlaying: $showNowPlaying, placement: .accessory)
-                    }
+                    .modifier(MiniPlayerAccessoryModifier(showNowPlaying: $showNowPlaying))
                     .tabBarMinimizeBehavior(.onScrollDown)
                     .environment(\.miniPlayerInAccessory, true)
+            } else if #available(iOS 26, *) {
+                tabs.tabBarMinimizeBehavior(.onScrollDown)
             } else {
                 tabs
             }

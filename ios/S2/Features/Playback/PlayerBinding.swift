@@ -209,6 +209,9 @@ final class PlayerBinding {
     @ObservationIgnored private nonisolated(unsafe) var songActionsObserver: Task<Void, Never>?
 
     private(set) var miniPlayer = MiniPlayerState()
+    /// Whether there is a current song, playing or paused: the mini player shows only then. Its own property, so the
+    /// hosts that attach or hide the bar re-render on this alone, not on every title or play/pause change.
+    private(set) var isMiniPlayerVisible = false
     private(set) var nowPlaying = NowPlayingState.idle
     /// The ViewModel's pending one-shot events; hand each id back through `eventHandled` once consumed.
     private(set) var events: [PendingEvent<any PlayerUiEvent>] = []
@@ -261,6 +264,7 @@ final class PlayerBinding {
             isPlaying: player.playing
         )
         if mini != miniPlayer { miniPlayer = mini }
+        if (current != nil) != isMiniPlayerVisible { isMiniPlayerVisible = current != nil }
 
         var next = nowPlaying
         if player !== lastPlayer {

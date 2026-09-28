@@ -9,15 +9,16 @@ import SwiftUI
 /// - iOS 26 on the phone's tab bar: the tab view's bottom accessory (`AppShell`), one bar in the Liquid Glass capsule
 ///   the system draws, laid out for its placement (`.expanded` above the tab bar, `.inline` beside the minimised one).
 ///   The per-screen insets then draw nothing (`\.miniPlayerInAccessory`).
-/// - Otherwise (iOS 17-18, and the iPad sidebar): a floating rounded card inset at the bottom of every screen
-///   (`miniPlayerInset`), `ArtworkCorner.tile` on `.thickMaterial` with a hairline edge and a soft shadow (glass on
-///   iOS 26), inset `Spacing.small`.
+/// - Otherwise (iOS 17-18, iOS 26.0, and the iPad sidebar): a floating rounded card inset at the bottom of every
+///   screen (`miniPlayerInset`), `ArtworkCorner.tile` on `.thickMaterial` with a hairline edge and a soft shadow
+///   (glass on iOS 26), inset `Spacing.small`.
+///
+/// Either way it shows only while there is a current song (`PlayerBinding.isMiniPlayerVisible`), sliding in and out
+/// with `Motion.miniPlayerVisibility`; with nothing queued there is no bar and no inset.
 struct MiniPlayerView: View {
     let binding: PlayerBinding
     let placement: MiniPlayerPlacement
     @Binding var showNowPlaying: Bool
-
-    @Environment(\.miniPlayerInAccessory) private var inAccessory
 
     /// `binding` defaults to the app's single `PlayerBinding`, built once in `IosAppDependencies`: a view
     /// struct like this one is re-initialised on every parent body, so a fresh binding per init
@@ -33,27 +34,22 @@ struct MiniPlayerView: View {
     }
 
     var body: some View {
-        if placement == .inset, inAccessory {
-            // The tab view's accessory draws the one mini player; this screen's inset stays empty.
-            EmptyView()
-        } else {
-            let state = binding.miniPlayer
-            let actions = binding.actions
-            let binding = binding
-            MiniPlayerBar(
-                title: state.title,
-                artist: state.artist,
-                artwork: state.artwork,
-                isPlaying: state.isPlaying,
-                style: placement == .accessory ? .accessory : .floating,
-                isCoverHidden: showNowPlaying,
-                progress: { binding.progressFraction },
-                onTap: { showNowPlaying = true },
-                onPlayPause: actions.playPause,
-                onNext: actions.next
-            )
-            .playerArtworkTint(binding)
-        }
+        let state = binding.miniPlayer
+        let actions = binding.actions
+        let binding = binding
+        MiniPlayerBar(
+            title: state.title,
+            artist: state.artist,
+            artwork: state.artwork,
+            isPlaying: state.isPlaying,
+            style: placement == .accessory ? .accessory : .floating,
+            isCoverHidden: showNowPlaying,
+            progress: { binding.progressFraction },
+            onTap: { showNowPlaying = true },
+            onPlayPause: actions.playPause,
+            onNext: actions.next
+        )
+        .playerArtworkTint(binding)
     }
 }
 
@@ -66,7 +62,7 @@ enum MiniPlayerPlacement {
 }
 
 extension EnvironmentValues {
-    /// Set by `AppShell` when the tab view's bottom accessory hosts the mini player (iOS 26, tab bar), so the
+    /// Set by `AppShell` when the tab view's bottom accessory hosts the mini player (iOS 26.1, tab bar), so the
     /// per-screen insets draw nothing.
     @Entry var miniPlayerInAccessory = false
 }
@@ -206,7 +202,9 @@ struct MiniPlayerBar: View {
                         if showsArtist, let artist {
                             Text(artist)
                                 .font(.footnote)
-                                .foregroundStyle(.s2SecondaryText)
+                                // In the accessory, the glass's own vibrant secondary, which follows the light or
+                                // dark appearance the glass takes over what scrolls under it.
+                                .foregroundStyle(style == .accessory ? AnyShapeStyle(.secondary) : AnyShapeStyle(.s2SecondaryText))
                                 .lineLimit(1)
                         }
                     }
@@ -325,9 +323,7 @@ extension View {
     /// draws but reserves no safe area and receives no touches. Where the iOS 26 tab view accessory hosts the mini
     /// player (`\.miniPlayerInAccessory`), the inset is empty.
     func miniPlayerInset(showNowPlaying: Binding<Bool>) -> some View {
-        dockedAtBottom {
-            MiniPlayerView(showNowPlaying: showNowPlaying)
-        }
+        modifier(MiniPlayerInsetModifier(showNowPlaying: showNowPlaying))
     }
 
     /// Insets `bar` at the bottom of this screen, stretching the screen to fill first: `safeAreaInset` sizes to the
@@ -337,6 +333,43 @@ extension View {
     func dockedAtBottom<Bar: View>(@ViewBuilder _ bar: () -> Bar) -> some View {
         frame(maxWidth: .infinity, maxHeight: .infinity)
             .safeAreaInset(edge: .bottom, spacing: 0, content: bar)
+    }
+}
+
+/// `miniPlayerInset`: the floating bar while there is a current song, sliding up from the bottom edge; otherwise, or
+/// when the accessory hosts it, nothing, and the inset collapses with it so lists keep no gap.
+private struct MiniPlayerInsetModifier: ViewModifier {
+    @Binding var showNowPlaying: Bool
+    var binding: PlayerBinding = AppGraph.dependencies.playerBinding
+
+    @Environment(\.miniPlayerInAccessory) private var inAccessory
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        let isShown = binding.isMiniPlayerVisible && !inAccessory
+        content
+            .dockedAtBottom {
+                if isShown {
+                    MiniPlayerView(showNowPlaying: $showNowPlaying, binding: binding)
+                        .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity).reduced(reduceMotion))
+                }
+            }
+            .animation(Motion.miniPlayerVisibility.reduced(reduceMotion), value: isShown)
+    }
+}
+
+/// The iOS 26.1 tab view bottom accessory hosting the mini player, enabled only while there is a current song, so
+/// no empty capsule sits over the tab bar. (26.0 has no `isEnabled`; there the screens' floating inset is used.)
+@available(iOS 26.1, *)
+struct MiniPlayerAccessoryModifier: ViewModifier {
+    @Binding var showNowPlaying: Bool
+    var binding: PlayerBinding = AppGraph.dependencies.playerBinding
+
+    // The system animates the accessory in and out itself; an `.animation` here would animate the whole tab view.
+    func body(content: Content) -> some View {
+        content.tabViewBottomAccessory(isEnabled: binding.isMiniPlayerVisible) {
+            MiniPlayerView(showNowPlaying: $showNowPlaying, placement: .accessory, binding: binding)
+        }
     }
 }
 

@@ -15,6 +15,8 @@ enum Motion {
     static let tintChange = Animation.easeInOut(duration: 0.5)
     /// `ArtworkBackground` cross-fading to a new cover.
     static let backdropChange = Animation.easeInOut(duration: 0.8)
+    /// The mini player arriving with the first queued song and leaving when the queue empties.
+    static let miniPlayerVisibility = Animation.spring(response: 0.35, dampingFraction: 0.85)
 
     /// How far `tapFeedback` scales a pressed view.
     static let pressedScale: CGFloat = 0.96

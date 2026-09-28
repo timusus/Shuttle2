@@ -31,6 +31,16 @@ struct PlayerBindingTests {
         #expect(graph.playerController.queueOperations.hasRestoredQueue)
         #expect(binding.nowPlaying == .idle)
         #expect(binding.miniPlayer == MiniPlayerState())
+        #expect(!binding.isMiniPlayerVisible)
+    }
+
+    @Test func theMiniPlayerShowsWhileASongIsCurrentEvenPaused() async throws {
+        let id = try await loadQueue()
+        #expect(await waitUntil { binding.isMiniPlayerVisible })
+
+        engine.emit(.state(.paused, trackId: id))
+        #expect(await waitUntil { !binding.miniPlayer.isPlaying })
+        #expect(binding.isMiniPlayerVisible)
     }
 
     @Test func queueChangeUpdatesTheCurrentSongAndQueue() async throws {
