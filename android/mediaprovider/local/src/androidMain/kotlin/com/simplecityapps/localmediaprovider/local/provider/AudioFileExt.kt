@@ -43,7 +43,16 @@ fun AudioFile.toSong(
     bitDepth = bitDepth,
     sampleRate = sampleRate,
     channelCount = channelCount,
-    artworkVersion = localArtworkVersion(lastModified, folderImages)
+    artworkVersion = localArtworkVersion(lastModified, folderImages),
+    albumArtists = albumArtists,
+    artistsTag = artistsTag,
+    artistDisplay = artistDisplay,
+    compilation = compilation,
+    mbTrackId = mbTrackId,
+    mbAlbumId = mbAlbumId,
+    mbReleaseGroupId = mbReleaseGroupId,
+    mbArtistIds = mbArtistIds,
+    mbAlbumArtistIds = mbAlbumArtistIds
 )
 
 fun KTagLib.getAudioFile(
@@ -79,7 +88,16 @@ fun KTagLib.getAudioFile(
         bitRate = metadata?.audioProperties?.bitrate,
         bitDepth = null,
         sampleRate = metadata?.audioProperties?.sampleRate,
-        channelCount = metadata?.audioProperties?.channelCount
+        channelCount = metadata?.audioProperties?.channelCount,
+        albumArtists = tags.albumArtists,
+        artistsTag = tags.artistsTag,
+        artistDisplay = tags.artistDisplay,
+        compilation = tags.compilation,
+        mbTrackId = tags.mbTrackId,
+        mbAlbumId = tags.mbAlbumId,
+        mbReleaseGroupId = tags.mbReleaseGroupId,
+        mbArtistIds = tags.mbArtistIds,
+        mbAlbumArtistIds = tags.mbAlbumArtistIds
     )
 }
 
@@ -101,7 +119,18 @@ data class FileTags(
     val replayGainTrack: Double?,
     val replayGainAlbum: Double?,
     val lyrics: String?,
-    val grouping: String?
+    val grouping: String?,
+    // The raw tags of #637, never split: the ALBUMARTISTS and ARTISTS multi-value tags as written, the ARTIST tag as one
+    // string (several values joined by "; "), COMPILATION, and the MusicBrainz ids.
+    val albumArtists: List<String> = emptyList(),
+    val artistsTag: List<String> = emptyList(),
+    val artistDisplay: String? = null,
+    val compilation: Boolean? = null,
+    val mbTrackId: String? = null,
+    val mbAlbumId: String? = null,
+    val mbReleaseGroupId: String? = null,
+    val mbArtistIds: List<String> = emptyList(),
+    val mbAlbumArtistIds: List<String> = emptyList()
 )
 
 /**
@@ -141,8 +170,48 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
         replayGainTrack = getCaseInsensitive(TagLibProperty.ReplayGainTrack.key)?.firstOrNull()?.parseReplayGain(),
         replayGainAlbum = getCaseInsensitive(TagLibProperty.ReplayGainAlbum.key)?.firstOrNull()?.parseReplayGain(),
         lyrics = first(TagLibProperty.Lyrics),
-        grouping = first(TagLibProperty.Grouping)
+        grouping = first(TagLibProperty.Grouping),
+        albumArtists = values(TagLibProperty.AlbumArtists.key),
+        artistsTag = values(TagLibProperty.Artists.key),
+        artistDisplay = values(TagLibProperty.Artist.key).joinToString("; ").ifEmpty { null },
+        compilation = first(TagLibProperty.Compilation)?.parseCompilation(),
+        mbTrackId = musicBrainzIds(TagLibProperty.MusicBrainzTrackId).firstOrNull(),
+        mbAlbumId = musicBrainzIds(TagLibProperty.MusicBrainzAlbumId).firstOrNull(),
+        mbReleaseGroupId = musicBrainzIds(TagLibProperty.MusicBrainzReleaseGroupId).firstOrNull(),
+        mbArtistIds = musicBrainzIds(TagLibProperty.MusicBrainzArtistId),
+        mbAlbumArtistIds = musicBrainzIds(TagLibProperty.MusicBrainzAlbumArtistId)
     )
+}
+
+/** The non-blank values of the tag [key], trimmed and otherwise as written: a multi-value tag keeps its values, none split. */
+private fun Map<String, List<String>>.values(key: String): List<String> = get(key).orEmpty().map { it.trim() }.filter { it.isNotEmpty() }
+
+/**
+ * The MusicBrainz ids tagged as [property], in order. ID3v2.3 joins several with '/' (Picard's default) and some taggers
+ * use ';', so each id is found by its UUID form rather than by splitting. TagLib names the ID3 TXXX frames it knows by
+ * [TagLibProperty.key], and passes any other through as its description upper-cased, so the TXXX spelling is read too.
+ */
+private fun Map<String, List<String>>.musicBrainzIds(property: TagLibProperty): List<String> {
+    val values = get(property.key) ?: MUSICBRAINZ_TXXX_NAMES[property]?.let { name -> get(name) }
+    return values.orEmpty().flatMap { value -> MUSICBRAINZ_ID.findAll(value).map { match -> match.value.lowercase() } }.distinct()
+}
+
+private val MUSICBRAINZ_TXXX_NAMES =
+    mapOf(
+        TagLibProperty.MusicBrainzTrackId to "MUSICBRAINZ TRACK ID",
+        TagLibProperty.MusicBrainzAlbumId to "MUSICBRAINZ ALBUM ID",
+        TagLibProperty.MusicBrainzReleaseGroupId to "MUSICBRAINZ RELEASE GROUP ID",
+        TagLibProperty.MusicBrainzArtistId to "MUSICBRAINZ ARTIST ID",
+        TagLibProperty.MusicBrainzAlbumArtistId to "MUSICBRAINZ ALBUM ARTIST ID"
+    )
+
+private val MUSICBRAINZ_ID = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+
+/** COMPILATION, TCMP and cpil hold "1" for a compilation ("0" for not); some taggers write "true". */
+private fun String.parseCompilation(): Boolean? = when (trim().lowercase()) {
+    "1", "true", "yes" -> true
+    "0", "false", "no" -> false
+    else -> null
 }
 
 /**

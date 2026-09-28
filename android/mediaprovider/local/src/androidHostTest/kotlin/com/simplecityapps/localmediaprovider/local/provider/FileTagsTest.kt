@@ -51,6 +51,74 @@ class FileTagsTest {
         tags.album shouldBe null
         tags.artists shouldBe emptyList()
         tags.track shouldBe null
+        tags.albumArtists shouldBe emptyList()
+        tags.artistsTag shouldBe emptyList()
+        tags.artistDisplay shouldBe null
+        tags.compilation shouldBe null
+        tags.mbTrackId shouldBe null
+        tags.mbArtistIds shouldBe emptyList()
+    }
+
+    @Test
+    fun `reads the multi-value artist tags, compilation and MusicBrainz ids of a Vorbis comment file, none split`() {
+        // A FLAC tagged by Picard: ARTIST is the display credit, ARTISTS and ALBUMARTISTS hold one value per artist
+        val tags =
+            mapOf(
+                "ARTIST" to listOf("Simon & Garfunkel feat. Someone; Else"),
+                "ARTISTS" to listOf("Simon & Garfunkel", "Someone; Else"),
+                "ALBUMARTIST" to listOf("Various Artists"),
+                "ALBUMARTISTS" to listOf("Various Artists"),
+                "COMPILATION" to listOf("1"),
+                "MUSICBRAINZ_TRACKID" to listOf("5B11F4CE-A62D-471E-81FC-A69A8278C7DA"),
+                "MUSICBRAINZ_ALBUMID" to listOf("a1b2c3d4-0000-4000-8000-000000000001"),
+                "MUSICBRAINZ_RELEASEGROUPID" to listOf("a1b2c3d4-0000-4000-8000-000000000002"),
+                "MUSICBRAINZ_ARTISTID" to listOf("a1b2c3d4-0000-4000-8000-000000000003", "a1b2c3d4-0000-4000-8000-000000000004"),
+                "MUSICBRAINZ_ALBUMARTISTID" to listOf("89ad4ac3-39f7-470e-963a-56509c546377")
+            ).toFileTags()
+
+        // The split ARTIST list is what it always was
+        tags.artists shouldBe listOf("Simon & Garfunkel feat. Someone", "Else")
+        tags.artistDisplay shouldBe "Simon & Garfunkel feat. Someone; Else"
+        tags.artistsTag shouldBe listOf("Simon & Garfunkel", "Someone; Else")
+        tags.albumArtists shouldBe listOf("Various Artists")
+        tags.compilation shouldBe true
+        tags.mbTrackId shouldBe "5b11f4ce-a62d-471e-81fc-a69a8278c7da"
+        tags.mbAlbumId shouldBe "a1b2c3d4-0000-4000-8000-000000000001"
+        tags.mbReleaseGroupId shouldBe "a1b2c3d4-0000-4000-8000-000000000002"
+        tags.mbArtistIds shouldBe listOf("a1b2c3d4-0000-4000-8000-000000000003", "a1b2c3d4-0000-4000-8000-000000000004")
+        tags.mbAlbumArtistIds shouldBe listOf("89ad4ac3-39f7-470e-963a-56509c546377")
+    }
+
+    @Test
+    fun `reads an ID3v2_3 file's joined MusicBrainz ids, its TXXX spellings and TCMP`() {
+        // TagLib maps TCMP to COMPILATION and the UFID frame to MUSICBRAINZ_TRACKID. ID3v2.3 has no multi-value frames,
+        // so Picard joins several ids with '/'; a TXXX frame TagLib doesn't know comes through as its description.
+        val tags =
+            mapOf(
+                "ARTIST" to listOf("A", "B"),
+                "COMPILATION" to listOf("0"),
+                "MUSICBRAINZ_TRACKID" to listOf("a1b2c3d4-0000-4000-8000-000000000001"),
+                "MUSICBRAINZ_ARTISTID" to listOf("a1b2c3d4-0000-4000-8000-000000000002/a1b2c3d4-0000-4000-8000-000000000003"),
+                "MUSICBRAINZ ALBUM ID" to listOf("a1b2c3d4-0000-4000-8000-000000000004")
+            ).toFileTags()
+
+        tags.artistDisplay shouldBe "A; B"
+        tags.compilation shouldBe false
+        tags.mbArtistIds shouldBe listOf("a1b2c3d4-0000-4000-8000-000000000002", "a1b2c3d4-0000-4000-8000-000000000003")
+        tags.mbAlbumId shouldBe "a1b2c3d4-0000-4000-8000-000000000004"
+    }
+
+    @Test
+    fun `an MP4 cpil read as true is a compilation, and a malformed id or flag reads as untagged`() {
+        val tags =
+            mapOf(
+                "COMPILATION" to listOf("true"),
+                "MUSICBRAINZ_ALBUMID" to listOf("not-an-id")
+            ).toFileTags()
+        tags.compilation shouldBe true
+        tags.mbAlbumId shouldBe null
+
+        mapOf("COMPILATION" to listOf("maybe")).toFileTags().compilation shouldBe null
     }
 
     @Test

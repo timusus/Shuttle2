@@ -73,7 +73,16 @@ internal fun List<Song>.withFileTags(
                 disc = existingSong.disc,
                 date = existingSong.date,
                 replayGainTrack = existingSong.replayGainTrack,
-                replayGainAlbum = existingSong.replayGainAlbum
+                replayGainAlbum = existingSong.replayGainAlbum,
+                albumArtists = existingSong.albumArtists,
+                artistsTag = existingSong.artistsTag,
+                artistDisplay = existingSong.artistDisplay,
+                compilation = existingSong.compilation,
+                mbTrackId = existingSong.mbTrackId,
+                mbAlbumId = existingSong.mbAlbumId,
+                mbReleaseGroupId = existingSong.mbReleaseGroupId,
+                mbArtistIds = existingSong.mbArtistIds,
+                mbAlbumArtistIds = existingSong.mbAlbumArtistIds
             )
         } else {
             song.withFileTags(reader)
@@ -106,5 +115,14 @@ internal fun Song.withFileTags(tags: FileTags): Song = copy(
     disc = tags.disc ?: disc,
     date = tags.year?.toIntOrNull()?.let { LocalDate(it, 1, 1) } ?: date,
     replayGainTrack = tags.replayGainTrack,
-    replayGainAlbum = tags.replayGainAlbum
+    replayGainAlbum = tags.replayGainAlbum,
+    albumArtists = tags.albumArtists,
+    artistsTag = tags.artistsTag,
+    artistDisplay = tags.artistDisplay ?: artistDisplay,
+    compilation = tags.compilation,
+    mbTrackId = tags.mbTrackId,
+    mbAlbumId = tags.mbAlbumId,
+    mbReleaseGroupId = tags.mbReleaseGroupId,
+    mbArtistIds = tags.mbArtistIds,
+    mbAlbumArtistIds = tags.mbAlbumArtistIds
 )

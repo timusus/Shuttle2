@@ -86,6 +86,8 @@ internal fun Song.edited(edits: Map<TagField, String>): Song {
     return copy(
         name = text(TagField.Title, name),
         artists = list(TagField.Artists, artists),
+        // The ARTIST tag as written, which a re-import reads back as the credit
+        artistDisplay = text(TagField.Artists, artistDisplay),
         album = text(TagField.Album, album),
         albumArtist = text(TagField.AlbumArtist, albumArtist),
         date = if (TagField.Year in edits) edits.getValue(TagField.Year).trim().toIntOrNull()?.let { LocalDate(it, 1, 1) } else date,

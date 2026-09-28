@@ -94,6 +94,50 @@ class MediaStoreFileTagsTest {
     }
 
     @Test
+    fun `an unchanged file keeps its stored raw artist tags and ids`() {
+        val reader = MediaStoreTagReader { _, _ -> error("an unchanged file isn't read") }
+        val existing =
+            createMediaStoreSong().copy(
+                albumArtists = listOf("Various Artists"),
+                artistsTag = listOf("A", "B"),
+                artistDisplay = "A & B",
+                compilation = true,
+                mbTrackId = "a1b2c3d4-0000-4000-8000-000000000001",
+                mbAlbumArtistIds = listOf("89ad4ac3-39f7-470e-963a-56509c546377")
+            )
+
+        val result = runBlocking { listOf(createMediaStoreSong()).withFileTags(listOf(existing), reader, readUnchanged = false).toList() }.single()
+
+        result.albumArtists shouldBe listOf("Various Artists")
+        result.artistsTag shouldBe listOf("A", "B")
+        result.artistDisplay shouldBe "A & B"
+        result.compilation shouldBe true
+        result.mbTrackId shouldBe "a1b2c3d4-0000-4000-8000-000000000001"
+        result.mbAlbumArtistIds shouldBe listOf("89ad4ac3-39f7-470e-963a-56509c546377")
+    }
+
+    @Test
+    fun `a read file's raw artist tags and ids replace MediaStore's, and an untagged ARTIST keeps MediaStore's credit`() {
+        val tags =
+            fileTags(replayGainTrack = null, replayGainAlbum = null).copy(
+                albumArtists = listOf("Various Artists"),
+                artistsTag = listOf("A", "B"),
+                compilation = true,
+                mbAlbumId = "a1b2c3d4-0000-4000-8000-000000000001"
+            )
+        val song = createMediaStoreSong().copy(artistDisplay = "MediaStore Artist")
+
+        val result = song.withFileTags(tags)
+
+        result.albumArtists shouldBe listOf("Various Artists")
+        result.artistsTag shouldBe listOf("A", "B")
+        result.artistDisplay shouldBe "MediaStore Artist"
+        result.compilation shouldBe true
+        result.mbAlbumId shouldBe "a1b2c3d4-0000-4000-8000-000000000001"
+        result.mbArtistIds shouldBe emptyList()
+    }
+
+    @Test
     fun `the backfill reads unchanged files too`() {
         val reader = MediaStoreTagReader { _, _ -> fileTags(replayGainTrack = -3.5, replayGainAlbum = -4.2) }
         val existing = createMediaStoreSong()

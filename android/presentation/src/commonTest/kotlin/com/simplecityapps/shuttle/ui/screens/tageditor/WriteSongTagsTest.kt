@@ -31,7 +31,8 @@ class WriteSongTagsTest {
             mapOf(TagField.Title to "New", TagField.Artists to "A, B ,", TagField.Year to "1999", TagField.Genres to "Rock, Pop", TagField.Track to "4"),
         )
 
-        val updated = song.copy(name = "New", artists = listOf("A", "B"), date = LocalDate(1999, 1, 1), genres = listOf("Rock", "Pop"), track = 4)
+        // The credit is the ARTIST tag as written, which a re-import reads back
+        val updated = song.copy(name = "New", artists = listOf("A", "B"), artistDisplay = "A, B ,", date = LocalDate(1999, 1, 1), genres = listOf("Rock", "Pop"), track = 4)
         result shouldBe TagWriteResult(updated = listOf(updated), failed = emptyList())
         songRepository.updatedSongs shouldBe listOf(updated)
     }
