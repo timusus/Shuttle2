@@ -1,7 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Library > Album Artists (P5-6b): `AlbumArtistListViewModel`'s artists as a list (the default) or a grid of their
+/// Library > Artists (P5-6b): `AlbumArtistListViewModel`'s artists as a list (the default) or a grid of their
 /// pictures, switched from the toolbar and kept by the ViewModel (`setViewMode`). A row or tile pushes the artist's
 /// detail route and shows its artwork via `ArtworkUrls.requests(albumArtist:)`. Context menu plays or queues through the
 /// shared `MediaAction`s. Shuffle heads the list or grid; there's no per-artist shuffle on the ViewModel, so it dispatches
@@ -38,7 +38,7 @@ struct AlbumArtistListView: View {
     }
 }
 
-/// The Album Artists screen's ViewModels, cached together under its route's key.
+/// The Artists screen's ViewModels, cached together under its route's key.
 final class AlbumArtistListModels: ViewModelGroup {
     let albumArtists: AlbumArtistListViewModel
     let actions: MediaActionsViewModel
@@ -58,7 +58,7 @@ extension Route {
     }
 }
 
-/// The Album Artists screen from an `AlbumArtistListUiState`: its view mode picks the list or the grid.
+/// The Artists screen from an `AlbumArtistListUiState`: its view mode picks the list or the grid.
 struct AlbumArtistListContent: View {
     let state: AlbumArtistListUiState
     var nowPlaying: LibraryNowPlaying = .none

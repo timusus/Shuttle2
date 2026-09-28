@@ -1,5 +1,5 @@
 # iPad companion to library-settings-screens.yaml (#624): an iPad's Library categories live in the sidebar, not
-# the chip rail, so this opens the sidebar and shoots the Albums and Album Artists screens. Signed in already.
+# the chip rail, so this opens the sidebar and shoots the Albums and Artists screens. Signed in already.
 #
 #   OUT=/tmp/s2-polish-wp4/ipad-light ios/scripts/maestro-sim.sh library-grid-ipad.yaml
 appId: com.simplecityapps.shuttle.dev
@@ -24,7 +24,7 @@ appId: com.simplecityapps.shuttle.dev
 - waitForAnimationToEnd:
     timeout: 3000
 - tapOn:
-    text: "Album Artists"
+    text: "Artists"
     index: 0
 - waitForAnimationToEnd:
     timeout: 5000

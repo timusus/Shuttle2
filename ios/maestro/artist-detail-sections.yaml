@@ -1,5 +1,5 @@
 # The artist detail's song sections (#631): opens an artist with many albums (The Mars Volta, 8 on the Jellyfin test
-# server) from Library > Album Artists, then shoots the hero, the collapsed album sections, the sections expanded, and
+# server) from Library > Artists, then shoots the hero, the collapsed album sections, the sections expanded, and
 # the sort menu open. Ends back on the default sort (Album, Newest First). iPhone only (the chip rail); signed in
 # already: run sign-in-jellyfin.yaml first. Run it again with the simulator in dark mode for the dark shots.
 #

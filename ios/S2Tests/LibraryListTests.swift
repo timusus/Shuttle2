@@ -139,7 +139,7 @@ struct LibraryListTests {
         let artists = ["Air", "Björk", "Radiohead"].map { name in
             AlbumArtist(
                 name: name, artists: [name], albumCount: 1, songCount: 1, playCount: 0,
-                groupKey: AlbumArtistGroupKey(key: name.lowercased()), mediaProviders: [.jellyfin], artworkVersion: nil
+                groupKey: AlbumArtistGroupKey(key: name.lowercased()), mediaProviders: [.jellyfin], artworkVersion: nil, appearsOnCount: 0
             )
         }
         for viewMode in [ViewMode.list, .grid] {

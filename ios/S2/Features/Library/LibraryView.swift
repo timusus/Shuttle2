@@ -115,11 +115,6 @@ extension LibraryCategory {
         case .folders: return nil
         }
     }
-
-    /// A chip's short title: "Artists" rather than the category's "Album Artists", so the rail fits a phone.
-    var chipTitle: String {
-        self == .albumArtists ? "Artists" : title
-    }
 }
 
 /// The Library root's content, from plain values. `categoryContent` draws a category's screen (by default its route's
@@ -319,7 +314,7 @@ private struct LibraryCategoryChip: View {
 
     var body: some View {
         Button(action: action) {
-            Text(category.chipTitle)
+            Text(category.title)
                 .lineLimit(1)
                 .padding(.horizontal, Spacing.smallMedium + Spacing.xsmall)
                 .padding(.vertical, Spacing.small)

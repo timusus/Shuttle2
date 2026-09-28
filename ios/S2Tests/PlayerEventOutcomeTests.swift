@@ -99,7 +99,7 @@ struct PlayerEventOutcomeTests {
         )
         let artist = AlbumArtist(
             name: "Radiohead", artists: ["Radiohead"], albumCount: 1, songCount: 1, playCount: 0,
-            groupKey: AlbumArtistGroupKey(key: "radiohead"), mediaProviders: [.shuttle], artworkVersion: nil
+            groupKey: AlbumArtistGroupKey(key: "radiohead"), mediaProviders: [.shuttle], artworkVersion: nil, appearsOnCount: 0
         )
         let toAlbum = resolve(PlayerUiEventMediaActionDone(result: MediaActionResultNavigate(target: NavigationTargetAlbum(album: album))))
         let toArtist = resolve(PlayerUiEventMediaActionDone(result: MediaActionResultNavigate(target: NavigationTargetAlbumArtist(albumArtist: artist))))

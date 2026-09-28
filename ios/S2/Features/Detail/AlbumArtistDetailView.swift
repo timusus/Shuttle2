@@ -3,7 +3,8 @@ import SwiftUI
 
 /// Album artist detail (P5-7, polished in #624, sectioned in #631): a hero tinted from the artist's picture (the
 /// artist's picture, name, albums · songs, Play/Shuffle, and Shuffle by Album in the toolbar's menu), the artist's
-/// most played songs, a shelf of the artist's album tiles (each zooming into `Route.album`), then the artist's songs
+/// most played songs, a shelf of the artist's album tiles (each zooming into `Route.album`), an Appears On shelf of
+/// others' albums crediting them (#637, hidden when empty; a long press on any tile plays or queues it), then the artist's songs
 /// in the chosen `ArtistSongSortOrder`: under one sticky, foldable header per album for the album orders, or as one
 /// flat list. Tapping a song plays every song in the visible order from it, folded albums included. Modeled on
 /// Android's `AlbumArtistDetailScreen.kt`.
@@ -38,7 +39,12 @@ struct AlbumArtistDetailView: View {
                 onToggleAlbum: { models.artist.onAlbumClick(album: $0) },
                 onSortOrderSelected: { models.artist.onSortOrderSelected(order: $0) },
                 onExpandAll: { models.artist.onExpandAll() },
-                onCollapseAll: { models.artist.onCollapseAll() }
+                onCollapseAll: { models.artist.onCollapseAll() },
+                albumActions: DetailAlbumActions(
+                    onPlay: { models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionAlbums(album: $0), position: 0)) },
+                    onPlayNext: { models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0))) },
+                    onAddToQueue: { models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0))) }
+                )
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
             .albumArtistDetailEvents(state.events, handled: { models.artist.onEventHandled(id: $0) })
@@ -75,6 +81,8 @@ struct AlbumArtistDetailContent: View {
     var onSortOrderSelected: (ArtistSongSortOrder) -> Void = { _ in }
     var onExpandAll: () -> Void = {}
     var onCollapseAll: () -> Void = {}
+    /// A shelf tile's long-press actions, on the whole album.
+    var albumActions = DetailAlbumActions()
 
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -103,7 +111,8 @@ struct AlbumArtistDetailContent: View {
             DetailScaffold(title: name, tintSource: .albumArtist(artist)) { layout in
                 DetailHero(
                     title: name,
-                    subtitle: eyebrow(pluralized(state.albums.count, "album"), pluralized(state.songs.count, "song")),
+                    // An artist only credited on others' albums (#637) has none of their own to count
+                    subtitle: eyebrow(state.albums.isEmpty ? nil : pluralized(state.albums.count, "album"), pluralized(state.songs.count, "song")),
                     layout: layout,
                     onPlay: { onPlay(state.songs, 0, state.playContext) },
                     onShuffle: { onShuffle(state.songs, state.playContext) }
@@ -123,7 +132,23 @@ struct AlbumArtistDetailContent: View {
                     }
                 }
                 if !state.albums.isEmpty {
-                    DetailAlbumShelf(title: "Albums", albums: state.albums, subtitle: { $0.year.map { String($0.intValue) } }, onAlbumTap: onAlbumTap)
+                    DetailAlbumShelf(
+                        title: "Albums",
+                        albums: state.albums,
+                        subtitle: { $0.year.map { String($0.intValue) } },
+                        onAlbumTap: onAlbumTap,
+                        albumActions: albumActions
+                    )
+                }
+                if !state.appearsOn.isEmpty {
+                    DetailAlbumShelf(
+                        title: "Appears On",
+                        albums: state.appearsOn,
+                        subtitle: { $0.friendlyArtistName },
+                        onAlbumTap: onAlbumTap,
+                        albumActions: albumActions,
+                        tileIdentifier: "detailTile.appearsOn"
+                    )
                 }
                 songs
             }
@@ -364,14 +389,25 @@ private struct AlbumArtistDetailEventsModifier: ViewModifier {
     }
 }
 
+/// A shelf tile's long-press actions on its whole album, as the Albums list offers them. Nil actions leave the tile
+/// without a menu.
+struct DetailAlbumActions {
+    var onPlay: ((Album) -> Void)?
+    var onPlayNext: ((Album) -> Void)?
+    var onAddToQueue: ((Album) -> Void)?
+}
+
 /// A detail screen's shelf of album tiles under a `SectionHeader`, as one `List` section: a tap opens the tile's
 /// album (`onAlbumTap`), and the tapped tile is the zoom source for it. Only the tapped one, as on Home
-/// (`ZoomTile`): the album can also be on a Home shelf still live under this screen in the stack.
+/// (`ZoomTile`): the album can also be on a Home shelf still live under this screen in the stack. A long press opens
+/// `albumActions`, when given.
 struct DetailAlbumShelf: View {
     let title: String
     let albums: [Album]
     let subtitle: (Album) -> String?
     let onAlbumTap: (Album) -> Void
+    var albumActions = DetailAlbumActions()
+    var tileIdentifier = "detailTile.album"
 
     @Environment(\.layoutTier) private var layoutTier
     @State private var zoomSourceKey: String?
@@ -393,7 +429,8 @@ struct DetailAlbumShelf: View {
                         }
                         .buttonStyle(.pressScale)
                         .zoomSource(id: Route.album(album).cacheKey, tileKey: tileKey, activeKey: zoomSourceKey)
-                        .accessibilityIdentifier("detailTile.album")
+                        .modifier(DetailAlbumMenu(album: album, actions: albumActions))
+                        .accessibilityIdentifier(tileIdentifier)
                     }
                 }
             }
@@ -402,6 +439,39 @@ struct DetailAlbumShelf: View {
             .listRowBackground(Color.clear)
         }
         .listRowSeparator(.hidden)
+    }
+}
+
+/// A shelf tile's context menu from its `DetailAlbumActions`: only the actions given, and none at all without any.
+private struct DetailAlbumMenu: ViewModifier {
+    let album: Album
+    let actions: DetailAlbumActions
+
+    func body(content: Content) -> some View {
+        if actions.onPlay == nil && actions.onPlayNext == nil && actions.onAddToQueue == nil {
+            content
+        } else {
+            content.contextMenu { DetailAlbumMenuItems(album: album, actions: actions) }
+        }
+    }
+}
+
+/// The items of a shelf tile's context menu, a view of its own so tests can inspect it (ViewInspector can't open a
+/// `.contextMenu`).
+struct DetailAlbumMenuItems: View {
+    let album: Album
+    let actions: DetailAlbumActions
+
+    var body: some View {
+        if let onPlay = actions.onPlay {
+            Button("Play", systemImage: "play") { onPlay(album) }
+        }
+        if let onPlayNext = actions.onPlayNext {
+            Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(album) }
+        }
+        if let onAddToQueue = actions.onAddToQueue {
+            Button("Add to Queue", systemImage: "text.append") { onAddToQueue(album) }
+        }
     }
 }
 

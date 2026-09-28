@@ -4,7 +4,7 @@ import Testing
 import ViewInspector
 @testable import S2
 
-/// Library > Album Artists from its UiState: the loading, importing and empty placeholders, the rows, and what a
+/// Library > Artists from its UiState: the loading, importing and empty placeholders, the rows, and what a
 /// tap's route resolves to.
 @MainActor
 struct AlbumArtistListTests {
@@ -18,7 +18,7 @@ struct AlbumArtistListTests {
     private func artist(_ name: String, albums: Int32, songs: Int32) -> AlbumArtist {
         AlbumArtist(
             name: name, artists: [name], albumCount: albums, songCount: songs, playCount: 0,
-            groupKey: AlbumArtistGroupKey(key: name.lowercased()), mediaProviders: [.jellyfin], artworkVersion: nil
+            groupKey: AlbumArtistGroupKey(key: name.lowercased()), mediaProviders: [.jellyfin], artworkVersion: nil, appearsOnCount: 0
         )
     }
 

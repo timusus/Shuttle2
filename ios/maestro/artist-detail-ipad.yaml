@@ -1,4 +1,4 @@
-# iPad companion to artist-detail-sections.yaml (#631): opens The Mars Volta from the sidebar's Album Artists and
+# iPad companion to artist-detail-sections.yaml (#631): opens The Mars Volta from the sidebar's Artists and
 # shoots the two-column detail with the album sections unfolded. Signed in already.
 #
 #   OUT=/tmp/s2-631/ipad S2_SIMULATOR_UDID=<iPad> ios/scripts/maestro-sim.sh artist-detail-ipad.yaml
@@ -11,7 +11,7 @@ appId: com.simplecityapps.shuttle.dev
 - waitForAnimationToEnd:
     timeout: 3000
 - tapOn:
-    text: "Album Artists"
+    text: "Artists"
     index: 0
 - waitForAnimationToEnd:
     timeout: 5000

@@ -20,7 +20,7 @@ struct HomeViewTests {
     private func artist(_ name: String, albumCount: Int32 = 3) -> AlbumArtist {
         AlbumArtist(
             name: name, artists: [name], albumCount: albumCount, songCount: 30, playCount: 0,
-            groupKey: AlbumArtistGroupKey(key: name.lowercased()), mediaProviders: [.jellyfin], artworkVersion: nil
+            groupKey: AlbumArtistGroupKey(key: name.lowercased()), mediaProviders: [.jellyfin], artworkVersion: nil, appearsOnCount: 0
         )
     }
 

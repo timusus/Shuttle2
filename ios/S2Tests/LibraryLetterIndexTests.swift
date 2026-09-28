@@ -105,7 +105,7 @@ struct LibraryLetterIndexTests {
         let artists = ["Air", "Björk"].map { name in
             AlbumArtist(
                 name: name, artists: [name], albumCount: 1, songCount: 1, playCount: 0,
-                groupKey: AlbumArtistGroupKey(key: name.lowercased()), mediaProviders: [.jellyfin], artworkVersion: nil
+                groupKey: AlbumArtistGroupKey(key: name.lowercased()), mediaProviders: [.jellyfin], artworkVersion: nil, appearsOnCount: 0
             )
         }
         let state = AlbumArtistListUiState(

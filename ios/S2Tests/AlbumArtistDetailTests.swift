@@ -8,11 +8,11 @@ import ViewInspector
 /// order with their folding headers, the sort menu, and what tapping a song plays.
 @MainActor
 struct AlbumArtistDetailTests {
-    private func album(_ name: String, year: Int32? = nil) -> Album {
+    private func album(_ name: String, year: Int32? = nil, albumArtist: String = "Radiohead") -> Album {
         Album(
-            name: name, albumArtist: "Radiohead", artists: ["Radiohead"], songCount: 1, duration: 0,
+            name: name, albumArtist: albumArtist, artists: [albumArtist], songCount: 1, duration: 0,
             year: year.map { KotlinInt(int: $0) }, playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
-            groupKey: AlbumGroupKey(key: name.lowercased(), albumArtistGroupKey: AlbumArtistGroupKey(key: "radiohead"), identity: nil),
+            groupKey: AlbumGroupKey(key: name.lowercased(), albumArtistGroupKey: AlbumArtistGroupKey(key: albumArtist.lowercased()), identity: nil),
             mediaProviders: [.jellyfin], artworkVersion: nil
         )
     }
@@ -20,14 +20,14 @@ struct AlbumArtistDetailTests {
     private func artist() -> AlbumArtist {
         AlbumArtist(
             name: "Radiohead", artists: ["Radiohead"], albumCount: 2, songCount: 2, playCount: 0,
-            groupKey: AlbumArtistGroupKey(key: "radiohead"), mediaProviders: [.jellyfin], artworkVersion: nil
+            groupKey: AlbumArtistGroupKey(key: "radiohead"), mediaProviders: [.jellyfin], artworkVersion: nil, appearsOnCount: 0
         )
     }
 
     /// The demo songs as one flat section, as the flat orders list them.
-    private func flat(albums: [Album] = []) -> AlbumArtistDetailUiState {
+    private func flat(albums: [Album] = [], appearsOn: [Album] = []) -> AlbumArtistDetailUiState {
         AlbumArtistDetailUiState(
-            albumArtist: artist(), albums: albums, songs: TestSongs.demo,
+            albumArtist: artist(), albums: albums, appearsOn: appearsOn, songs: TestSongs.demo,
             sortOrder: .songTitle, sections: [.init(album: nil, songs: TestSongs.demo)], topSongs: [],
             currentSong: nil, expandedAlbums: [], loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
         )
@@ -44,7 +44,7 @@ struct AlbumArtistDetailTests {
             : [.init(album: nil, songs: songs)]
         let expandedKeys = Set([ok, kidA].filter { expanded.contains($0.name ?? "") }.compactMap(\.groupKey))
         return AlbumArtistDetailUiState(
-            albumArtist: artist(), albums: [kidA, ok], songs: sections.flatMap(\.songs), sortOrder: order, sections: sections,
+            albumArtist: artist(), albums: [kidA, ok], appearsOn: [], songs: sections.flatMap(\.songs), sortOrder: order, sections: sections,
             topSongs: topSongs, currentSong: nil, expandedAlbums: expandedKeys, loadingState: .ready, events: [],
             seed: ArtworkSeedNone.shared
         )
@@ -195,13 +195,13 @@ struct AlbumArtistDetailTests {
 
     @Test func placeholders() throws {
         let loading = AlbumArtistDetailUiState(
-            albumArtist: nil, albums: [], songs: [], sortOrder: .albumNewest, sections: [], topSongs: [],
+            albumArtist: nil, albums: [], appearsOn: [], songs: [], sortOrder: .albumNewest, sections: [], topSongs: [],
             currentSong: nil, expandedAlbums: [], loadingState: .loading,
             events: [], seed: ArtworkSeedNone.shared
         )
         #expect((try? AlbumArtistDetailContent(state: loading).inspect().find(ViewType.ProgressView.self)) != nil)
         let notFound = AlbumArtistDetailUiState(
-            albumArtist: nil, albums: [], songs: [], sortOrder: .albumNewest, sections: [], topSongs: [],
+            albumArtist: nil, albums: [], appearsOn: [], songs: [], sortOrder: .albumNewest, sections: [], topSongs: [],
             currentSong: nil, expandedAlbums: [], loadingState: .empty,
             events: [], seed: ArtworkSeedNone.shared
         )
@@ -251,7 +251,7 @@ struct AlbumArtistDetailTests {
 
     @Test func expandAllHiddenWithNoAlbumSections() throws {
         let state = AlbumArtistDetailUiState(
-            albumArtist: artist(), albums: [], songs: TestSongs.demo, sortOrder: .albumNewest,
+            albumArtist: artist(), albums: [], appearsOn: [], songs: TestSongs.demo, sortOrder: .albumNewest,
             sections: [.init(album: nil, songs: TestSongs.demo)], topSongs: [], currentSong: nil,
             expandedAlbums: [], loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
         )
@@ -272,7 +272,7 @@ struct AlbumArtistDetailTests {
             .init(album: ok, songs: [TestSongs.demo[1], onOkComputer]),
         ]
         let state = AlbumArtistDetailUiState(
-            albumArtist: artist(), albums: [kidA, ok], songs: sections.flatMap(\.songs), sortOrder: .albumNewest,
+            albumArtist: artist(), albums: [kidA, ok], appearsOn: [], songs: sections.flatMap(\.songs), sortOrder: .albumNewest,
             sections: sections, topSongs: [], currentSong: nil,
             expandedAlbums: Set([kidA, ok].compactMap(\.groupKey)), loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
         )
@@ -281,5 +281,52 @@ struct AlbumArtistDetailTests {
         try sut.inspect().find(button: "Paranoid Android (OK Computer)").tap()
         #expect(played?.index == 3)
         #expect(played?.songs.map(\.id) == state.songs.map(\.id))
+    }
+
+    // MARK: - Appears On (#637)
+
+    private func appearsOnTiles(_ view: some View) throws -> Int {
+        try view.inspect().findAll(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "detailTile.appearsOn" }).count
+    }
+
+    @Test func appearsOnHiddenWhenNothingCreditsTheArtist() throws {
+        let sut = AlbumArtistDetailContent(state: flat(albums: [album("OK Computer")]))
+        #expect((try? sut.inspect().find(text: "Appears On")) == nil)
+        #expect(try appearsOnTiles(sut) == 0)
+    }
+
+    @Test func appearsOnShelfFollowsTheAlbumsAndOpensOthersAlbums() throws {
+        var opened: Album?
+        let compilation = album("Help: A Day in the Life", year: 2005, albumArtist: "Various Artists")
+        let sut = AlbumArtistDetailContent(state: flat(albums: [album("OK Computer")], appearsOn: [compilation]), onAlbumTap: { opened = $0 })
+        #expect((try? sut.inspect().find(text: "Appears On")) != nil)
+        #expect((try? sut.inspect().find(text: "Various Artists")) != nil)
+        #expect(try appearsOnTiles(sut) == 1)
+        try sut.inspect().find(button: "Help: A Day in the Life").tap()
+        #expect(opened?.name == "Help: A Day in the Life")
+    }
+
+    @Test func aShelfTilesMenuPlaysOrQueuesItsAlbum() throws {
+        var played: Album?
+        var next: Album?
+        var queued: Album?
+        let compilation = album("Help: A Day in the Life", albumArtist: "Various Artists")
+        let menu = DetailAlbumMenuItems(
+            album: compilation,
+            actions: DetailAlbumActions(onPlay: { played = $0 }, onPlayNext: { next = $0 }, onAddToQueue: { queued = $0 })
+        )
+        try menu.inspect().find(button: "Play").tap()
+        try menu.inspect().find(button: "Play Next").tap()
+        try menu.inspect().find(button: "Add to Queue").tap()
+        #expect([played, next, queued].map { $0?.name } == Array(repeating: "Help: A Day in the Life", count: 3))
+        // Without actions the menu has nothing to offer.
+        let none = DetailAlbumMenuItems(album: compilation, actions: DetailAlbumActions())
+        #expect((try? none.inspect().find(button: "Play")) == nil)
+    }
+
+    @Test func anArtistOnlyCreditedElsewhereCountsJustTheirSongs() throws {
+        let sut = AlbumArtistDetailContent(state: flat(appearsOn: [album("Graduation", albumArtist: "Kanye West")]))
+        #expect((try? sut.inspect().find(text: "5 songs")) != nil)
+        #expect((try? sut.inspect().find(text: "Albums")) == nil)
     }
 }

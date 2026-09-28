@@ -36,7 +36,7 @@ struct LibraryGridTests {
     @Test func anArtistTileHasAnAlbumTilesCorners() throws {
         let artist = AlbumArtist(
             name: "Radiohead", artists: ["Radiohead"], albumCount: 2, songCount: 2, playCount: 0,
-            groupKey: AlbumArtistGroupKey(key: "radiohead"), mediaProviders: [.jellyfin], artworkVersion: nil
+            groupKey: AlbumArtistGroupKey(key: "radiohead"), mediaProviders: [.jellyfin], artworkVersion: nil, appearsOnCount: 0
         )
         let tile = LibraryTile(title: "Radiohead", subtitle: nil, artwork: .albumArtist(artist), placeholderSymbol: "music.mic")
         let clip = try tile.inspect().find(ViewType.Color.self).clipShape(RoundedRectangle.self)

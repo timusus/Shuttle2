@@ -14,7 +14,7 @@ enum LibraryCategory: String, Hashable, Codable, CaseIterable {
         switch self {
         case .songs: "Songs"
         case .albums: "Albums"
-        case .albumArtists: "Album Artists"
+        case .albumArtists: "Artists"
         case .genres: "Genres"
         case .playlists: "Playlists"
         }
