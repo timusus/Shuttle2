@@ -132,7 +132,8 @@ fun AlbumArtistDetailScreen(
                         items(uiState.appearsOn, key = { "appears-on-${it.groupKey}" }) { album ->
                             GridTile(
                                 title = album.name ?: unknown,
-                                subtitle = album.friendlyArtistName,
+                                // Whose album it is: the album artist, not the track artists friendlyArtistName joins
+                                subtitle = album.albumArtist ?: album.friendlyArtistName,
                                 onClick = { onAppearsOnClick(album) },
                                 onLongClick = { onAlbumMore(album) },
                                 artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
