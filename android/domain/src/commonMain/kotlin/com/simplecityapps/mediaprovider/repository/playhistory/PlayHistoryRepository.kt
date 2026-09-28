@@ -44,7 +44,7 @@ interface PlayHistoryRepository {
     /**
      * Each album's plays through since [since], most [AlbumCompletions.score] first; at most [limit]. The score weighs each
      * play by its age, halving every [halfLife], so a week of plays outranks an old binge. Albums are grouped by
-     * [com.simplecityapps.shuttle.model.albumGroupKeyOf], as the album repository groups them.
+     * [com.simplecityapps.shuttle.model.AlbumIdentityRule], as the album repository groups them.
      */
     suspend fun albumCompletions(
         since: Instant,

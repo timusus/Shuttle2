@@ -10,9 +10,9 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * The library as Home's suggestions read it (#633): aggregates over the songs with a limit, and lookups of the few
- * albums, artists and genres a section shows, so nothing here loads the whole library. Excluded songs are left out
- * throughout. Albums and artists are grouped by [com.simplecityapps.shuttle.model.albumGroupKeyOf] and
- * [com.simplecityapps.shuttle.model.albumArtistGroupKeyOf], as the album and artist repositories group them.
+ * albums, artists and genres a section shows, so nothing here loads every song whole. Excluded songs are left out
+ * throughout. Albums and artists are grouped by [com.simplecityapps.shuttle.model.AlbumIdentityRule], as the album and
+ * artist repositories group them.
  */
 interface SuggestionsRepository {
     /** How many songs the library holds, re-emitted whenever the songs change. */

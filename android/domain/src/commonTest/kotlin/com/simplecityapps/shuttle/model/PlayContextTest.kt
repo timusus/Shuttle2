@@ -30,6 +30,19 @@ class PlayContextTest {
     }
 
     @Test
+    fun `an album keyed by an identity reads back with it`() {
+        val context = PlayContext.Album(AlbumGroupKey("blue", AlbumArtistGroupKey("various artists"), "dir:/music/Blue"))
+
+        PlayContext.decode(context.type, context.id) shouldBe context
+    }
+
+    @Test
+    fun `an album id stored before the identity rule reads back as a name-rule key`() {
+        // As #633 stored it: the artist key then the album key, each "=" and its value, joined by a unit separator
+        PlayContext.decode(PlayContext.TYPE_ALBUM, "=joni mitchell\u001F=blue") shouldBe PlayContext.Album(AlbumGroupKey("blue", AlbumArtistGroupKey("joni mitchell")))
+    }
+
+    @Test
     fun `an unknown type or a bad id reads back as none`() {
         PlayContext.decode("podcast", "1") shouldBe PlayContext.None
         PlayContext.decode(PlayContext.TYPE_PLAYLIST, "x") shouldBe PlayContext.None

@@ -14,12 +14,12 @@ sealed interface PlayContext {
 
     data class Album(val groupKey: AlbumGroupKey) : PlayContext {
         override val type: String get() = TYPE_ALBUM
-        override val id: String get() = encodeKeys(groupKey.albumArtistGroupKey?.key, groupKey.key)
+        override val id: String get() = groupKey.encode()
     }
 
     data class AlbumArtist(val groupKey: AlbumArtistGroupKey) : PlayContext {
         override val type: String get() = TYPE_ALBUM_ARTIST
-        override val id: String get() = encodeKeys(groupKey.key)
+        override val id: String get() = AlbumGroupKey.encodeParts(groupKey.key)
     }
 
     data class Playlist(val playlistId: Long) : PlayContext {
@@ -63,29 +63,14 @@ sealed interface PlayContext {
             type: String?,
             id: String?
         ): PlayContext = when (type) {
-            TYPE_ALBUM -> id?.let(::decodeKeys)?.takeIf { it.size == 2 }?.let { (artistKey, albumKey) ->
-                Album(AlbumGroupKey(albumKey, AlbumArtistGroupKey(artistKey)))
-            }
-
-            TYPE_ALBUM_ARTIST -> id?.let(::decodeKeys)?.takeIf { it.size == 1 }?.let { (artistKey) -> AlbumArtist(AlbumArtistGroupKey(artistKey)) }
-
+            TYPE_ALBUM -> id?.let(AlbumGroupKey::decode)?.let(::Album)
+            TYPE_ALBUM_ARTIST -> id?.let(AlbumGroupKey::decodeParts)?.takeIf { it.size == 1 }?.let { (artistKey) -> AlbumArtist(AlbumArtistGroupKey(artistKey)) }
             TYPE_PLAYLIST -> id?.toLongOrNull()?.let(::Playlist)
-
             TYPE_SMART_PLAYLIST -> id?.let(SmartPlaylistId::fromId)?.let(::SmartPlaylist)
-
             TYPE_USER_SMART_PLAYLIST -> id?.toLongOrNull()?.let(::UserSmartPlaylist)
-
             TYPE_GENRE -> id?.let(::Genre)
-
             else -> null
         } ?: None
-
-        // A group key's parts can be null, so each is written as "" for null or "=" and its value, joined by a unit separator.
-        private const val SEPARATOR = '\u001F'
-
-        private fun encodeKeys(vararg keys: String?): String = keys.joinToString(SEPARATOR.toString()) { key -> key?.let { "=$it" }.orEmpty() }
-
-        private fun decodeKeys(id: String): List<String?> = id.split(SEPARATOR).map { part -> if (part.startsWith("=")) part.substring(1) else null }
     }
 }
 

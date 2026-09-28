@@ -46,8 +46,7 @@ data class Song(
     val dateAdded: Instant? = null,
     // When the song was made a favourite (the player's heart, or "Add to Favorites"); null when it isn't one.
     val favouritedAt: Instant? = null,
-    // The tags as the song's source holds them (#637), stored for the album and artist identity rule to come; nothing
-    // groups or displays by them yet. Null where the source has no such value, and for a song not read since they were
+    // The tags as the song's source holds them (#637): [AlbumIdentityRule] groups albums by them. Null where the source has no such value, and for a song not read since they were
     // added (the one-off backfill after the migration to version 50 fills them).
     // The ALBUMARTISTS multi-value tag (a server's album artist list), as written: never split.
     val albumArtists: List<String>? = null,
@@ -66,7 +65,10 @@ data class Song(
     // A server's own ids for the song's album, artists and album artists (Jellyfin/Emby item ids, Plex rating keys).
     val serverAlbumId: String? = null,
     val serverArtistIds: List<String>? = null,
-    val serverAlbumArtistIds: List<String>? = null
+    val serverAlbumArtistIds: List<String>? = null,
+    // The album this song belongs to in its library, as [AlbumIdentityRule] decided it over the library's songs; null for
+    // a song read on its own (one being imported, or opened from another app), which is then its album's only song.
+    val albumIdentity: AlbumIdentity? = null
 ) {
     val isFavourite: Boolean
         get() = favouritedAt != null
@@ -80,9 +82,12 @@ data class Song(
             }
         }
 
-    val albumArtistGroupKey: AlbumArtistGroupKey by lazy { albumArtistGroupKeyOf(albumArtist, artists) }
+    /** [albumIdentity], or for a song read on its own, the identity it has as its album's only song. */
+    val resolvedAlbumIdentity: AlbumIdentity by lazy { albumIdentity ?: AlbumIdentityRule.resolve(listOf(identityTags)).getValue(id) }
 
-    val albumGroupKey by lazy { albumGroupKeyOf(album, albumArtist, artists) }
+    val albumGroupKey: AlbumGroupKey get() = resolvedAlbumIdentity.groupKey
+
+    val albumArtistGroupKey: AlbumArtistGroupKey get() = resolvedAlbumIdentity.albumArtistGroupKey
 
     enum class Type {
         Audio,
@@ -114,22 +119,3 @@ data class Song(
     val isInLibrary: Boolean
         get() = id >= 0
 }
-
-/**
- * The album artist group key of a song tagged [albumArtist] and [artists]: the one definition, which [Song] and anything
- * grouping raw song columns (a SQL aggregate's rows) share, so both name the same album artist.
- */
-fun albumArtistGroupKeyOf(
-    albumArtist: String?,
-    artists: List<String>
-): AlbumArtistGroupKey = AlbumArtistGroupKey(
-    albumArtist?.lowercase()?.removeArticles()
-        ?: artists.joinToString(", ") { it.lowercase().removeArticles() }.ifEmpty { null }
-)
-
-/** The album group key of a song tagged [album], [albumArtist] and [artists]; see [albumArtistGroupKeyOf]. */
-fun albumGroupKeyOf(
-    album: String?,
-    albumArtist: String?,
-    artists: List<String>
-): AlbumGroupKey = AlbumGroupKey(album?.lowercase()?.removeArticles(), albumArtistGroupKeyOf(albumArtist, artists))
