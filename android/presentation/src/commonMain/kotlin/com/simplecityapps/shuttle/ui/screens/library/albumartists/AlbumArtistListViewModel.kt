@@ -7,8 +7,7 @@ import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.sorting.LetterSection
-import com.simplecityapps.shuttle.sorting.albumArtistLetterKey
-import com.simplecityapps.shuttle.sorting.letterSections
+import com.simplecityapps.shuttle.sorting.albumArtistLetterIndex
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbumArtists
 import com.simplecityapps.shuttle.ui.common.SelectionState
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
@@ -23,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 data class AlbumArtistListUiState(
@@ -31,14 +31,13 @@ data class AlbumArtistListUiState(
     val viewMode: ViewMode = ViewMode.List,
     val loadingState: LoadingState = LoadingState.Loading,
     val scanProgress: Progress? = null,
+    /** The artists' letter sections ([albumArtistLetterIndex]): every artists sort compares the name first. */
+    val letterIndex: List<LetterSection> = emptyList(),
 ) {
     /** [Scanning] while an import runs; the list still carries what's already imported, for a screen that keeps showing it. */
     enum class LoadingState { Loading, Scanning, Ready, Empty }
 
     val isSelecting: Boolean get() = selectedArtists.isNotEmpty()
-
-    /** The artists' letter sections: every artists sort compares the name first. */
-    val letterIndex: List<LetterSection> by lazy { letterSections(albumArtists, ::albumArtistLetterKey) }
 }
 
 @ViewModelKey(AlbumArtistListViewModel::class)
@@ -54,14 +53,18 @@ class AlbumArtistListViewModel @Inject constructor(
 
     private val _viewMode = MutableStateFlow(readSetting(LibraryViewSetting.ArtistViewMode))
 
+    // Indexed as the library changes, not on each import progress tick (#627).
+    private val indexedArtists = observeAlbumArtists().map { albumArtists -> albumArtists to albumArtistLetterIndex(albumArtists) }
+
     val uiState: StateFlow<AlbumArtistListUiState> = combine(
-        observeAlbumArtists(),
+        indexedArtists,
         mediaImportObserver.songImportState,
         selectionState.selectedItems,
         _viewMode,
-    ) { albumArtists, songImportState, selectedArtists, viewMode ->
+    ) { (albumArtists, letterIndex), songImportState, selectedArtists, viewMode ->
         AlbumArtistListUiState(
             albumArtists = albumArtists,
+            letterIndex = letterIndex,
             selectedArtists = selectedArtists,
             viewMode = viewMode,
             loadingState = when {

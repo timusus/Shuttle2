@@ -11,10 +11,10 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.LetterSection
 import com.simplecityapps.shuttle.sorting.SongSortOrder
-import com.simplecityapps.shuttle.sorting.letterSections
-import com.simplecityapps.shuttle.sorting.songLetterKey
+import com.simplecityapps.shuttle.sorting.songLetterIndex
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.common.SelectionState
+import com.simplecityapps.shuttle.ui.screens.library.IndexedList
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
@@ -37,14 +37,13 @@ data class SongListUiState(
     val sortOrder: SongSortOrder = SongSortOrder.Default,
     val loadingState: LoadingState = LoadingState.Loading,
     val scanProgress: Progress? = null,
+    /** The songs' letter sections for a name sort ([songLetterIndex]); null for any other sort. */
+    val letterIndex: List<LetterSection>? = null,
 ) {
     /** [Scanning] while an import runs; the list still carries what's already imported, for a screen that keeps showing it. */
     enum class LoadingState { Loading, Scanning, Ready, Empty }
 
     val isSelecting: Boolean get() = selectedSongs.isNotEmpty()
-
-    /** The songs' letter sections for a name sort, the same key the sort compares; null for any other sort. */
-    val letterIndex: List<LetterSection>? by lazy { songLetterKey(sortOrder)?.let { key -> letterSections(songs, key) } }
 }
 
 @ViewModelKey(SongListViewModel::class)
@@ -64,18 +63,23 @@ class SongListViewModel @Inject constructor(
 
     private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.SongSort))
 
+    private val sortedSongs = combine(observeSongs(SongQuery.All(sortOrder = _sortOrder.value)), _sortOrder) { songs, sortOrder ->
+        val sorted = songs.sortedWith(sortOrder.comparator)
+        IndexedList(sorted, sortOrder, songLetterIndex(sorted, sortOrder))
+    }
+
     val uiState: StateFlow<SongListUiState> = combine(
-        observeSongs(SongQuery.All(sortOrder = _sortOrder.value)),
+        sortedSongs,
         mediaImportObserver.songImportState,
         selectionState.selectedItems,
-        _sortOrder,
-    ) { songs, songImportState, selectedSongIds, sortOrder ->
-        val selectedSongs = songs.filter { it.id in selectedSongIds }.toSet()
-        val sortedSongs = songs.sortedWith(sortOrder.comparator)
+    ) { sorted, songImportState, selectedSongIds ->
+        val sortedSongs = sorted.items
+        val selectedSongs = sortedSongs.filter { it.id in selectedSongIds }.toSet()
         SongListUiState(
             songs = sortedSongs,
             selectedSongs = selectedSongs,
-            sortOrder = sortOrder,
+            sortOrder = sorted.sortOrder,
+            letterIndex = sorted.letterIndex,
             loadingState = when {
                 songImportState is SongImportState.ImportProgress -> SongListUiState.LoadingState.Scanning
                 sortedSongs.isEmpty() -> SongListUiState.LoadingState.Empty

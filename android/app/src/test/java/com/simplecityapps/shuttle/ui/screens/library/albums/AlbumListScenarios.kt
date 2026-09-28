@@ -4,6 +4,7 @@ import com.simplecityapps.createAlbum
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
+import com.simplecityapps.shuttle.sorting.albumLetterIndex
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 
 fun readyAlbumList(
@@ -16,6 +17,7 @@ fun readyAlbumList(
     selectedAlbums = selectedAlbums,
     viewMode = viewMode,
     sortOrder = sortOrder,
+    letterIndex = albumLetterIndex(albums, sortOrder),
     loadingState = if (albums.isEmpty()) AlbumListUiState.LoadingState.Empty else AlbumListUiState.LoadingState.Ready,
 )
 

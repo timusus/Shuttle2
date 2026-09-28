@@ -9,7 +9,10 @@ import ViewInspector
 @MainActor
 struct LibraryListTests {
     private func songState(_ songs: [Song], _ loading: SongListUiState.LoadingState) -> SongListUiState {
-        SongListUiState(songs: songs, selectedSongs: [], sortOrder: .songName, loadingState: loading, scanProgress: nil)
+        SongListUiState(
+            songs: songs, selectedSongs: [], sortOrder: .songName, loadingState: loading, scanProgress: nil,
+            letterIndex: LetterIndexKt.songLetterIndex(songs: songs, sortOrder: .songName)
+        )
     }
 
     private func albumState(
@@ -20,7 +23,7 @@ struct LibraryListTests {
     ) -> AlbumListUiState {
         AlbumListUiState(
             albums: albums, selectedAlbums: [], viewMode: viewMode, sortOrder: .albumName, loadingState: loading,
-            scanProgress: nil, events: events
+            scanProgress: nil, events: events, letterIndex: LetterIndexKt.albumLetterIndex(albums: albums, sortOrder: .albumName)
         )
     }
 

@@ -53,8 +53,8 @@ import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.sorting.LetterSection
 import com.simplecityapps.shuttle.sorting.SongSortOrder
-import com.simplecityapps.shuttle.sorting.albumLetterKey
 import com.simplecityapps.shuttle.sorting.letterSections
 import com.simplecityapps.shuttle.sorting.songLetterKey
 import com.simplecityapps.shuttle.ui.common.components.AlphabetFastScroller
@@ -102,20 +102,18 @@ private fun PlayShuffleHeader(onPlay: () -> Unit, onShuffle: () -> Unit) {
 }
 
 /**
- * The fast scroller for a page of [items] sorted by [sortOrder]: by first letter of [letterKey] when the sort is by a
- * name (#491), else a plain thumb with [thumbLabel] in its popup, or none. [headerCount] items lead [items] in the list.
+ * The fast scroller for a page of [items]: by first letter over [sections] when the sort is by a name (#491), else a
+ * plain thumb with [thumbLabel] in its popup, or none. [headerCount] items lead [items] in the list.
  */
 @Composable
 private fun <T> LibraryFastScroller(
     items: List<T>,
-    sortOrder: Any,
-    letterKey: ((T) -> String?)?,
+    sections: List<LetterSection>?,
     scrollableState: FastScrollableState,
     headerCount: Int,
     thumbLabel: ((T) -> String?)? = null,
 ) {
-    if (letterKey != null) {
-        val sections = remember(items, sortOrder) { letterSections(items, letterKey) }
+    if (sections != null) {
         AlphabetFastScroller(sections, scrollableState, FastScrollerModifier, itemOffset = headerCount)
     } else {
         FastScroller(
@@ -201,10 +199,14 @@ fun SongsPage(
                     }
                 }
             }
+            // Indexed over the entries rather than state.letterIndex: the album headers of a by-album sort shift each
+            // song's position in the list.
+            val sections = remember(entries, state.sortOrder) {
+                songLetterKey(state.sortOrder)?.let { key -> letterSections(entries) { entry -> key(entry.song) } }
+            }
             LibraryFastScroller(
                 items = entries,
-                sortOrder = state.sortOrder,
-                letterKey = songLetterKey(state.sortOrder)?.let { key -> { entry: SongEntry -> key(entry.song) } },
+                sections = sections,
                 scrollableState = rememberFastScrollableState(listState),
                 headerCount = 1,
                 thumbLabel = songThumbLabel(state.sortOrder)?.let { label -> { entry: SongEntry -> label(entry.song) } },
@@ -311,7 +313,7 @@ fun AlbumsPage(
     LibraryContent(content, stringResource(R.string.album_list_empty), modifier, state.scanProgress) {
         val header: @Composable () -> Unit = { PlayShuffleHeader(onPlay, onShuffle) }
         val fastScroller: @Composable (FastScrollableState) -> Unit = { scrollableState ->
-            LibraryFastScroller(state.albums, state.sortOrder, albumLetterKey(state.sortOrder), scrollableState, headerCount = 1, thumbLabel = albumThumbLabel(state.sortOrder))
+            LibraryFastScroller(state.albums, state.letterIndex, scrollableState, headerCount = 1, thumbLabel = albumThumbLabel(state.sortOrder))
         }
         Box(modifier.fillMaxSize()) {
             if (state.viewMode == ViewMode.Grid) {

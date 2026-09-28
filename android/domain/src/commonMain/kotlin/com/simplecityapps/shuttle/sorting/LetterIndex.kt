@@ -49,16 +49,21 @@ fun <T> letterSections(items: List<T>, key: (T) -> String?): List<LetterSection>
  */
 fun songLetterKey(sortOrder: SongSortOrder): ((Song) -> String?)? = when (sortOrder) {
     SongSortOrder.SongName -> { song -> song.name }
+
     SongSortOrder.ArtistGroupKey -> { song -> song.albumArtistGroupKey.key }
+
     SongSortOrder.AlbumGroupKey, SongSortOrder.Default -> { song -> song.albumGroupKey.key }
-    else -> null
+
+    SongSortOrder.Year, SongSortOrder.Duration, SongSortOrder.Track, SongSortOrder.PlayCount, SongSortOrder.LastModified,
+    SongSortOrder.DateAdded, SongSortOrder.LastCompleted, SongSortOrder.Favourited,
+    -> null
 }
 
 /** The name the albums list indexes by first letter under [sortOrder]; null for a sort that isn't by name. */
 fun albumLetterKey(sortOrder: AlbumSortOrder): ((Album) -> String?)? = when (sortOrder) {
     AlbumSortOrder.AlbumName, AlbumSortOrder.Default -> { album -> album.groupKey?.key }
     AlbumSortOrder.ArtistGroupKey -> { album -> album.groupKey?.albumArtistGroupKey?.key }
-    else -> null
+    AlbumSortOrder.Year, AlbumSortOrder.PlayCount, AlbumSortOrder.RecentlyPlayed, AlbumSortOrder.Random -> null
 }
 
 /** The name the genres list indexes by first letter under [sortOrder]; null for a sort that isn't by name. */
@@ -72,6 +77,17 @@ fun genreLetterKey(sortOrder: GenreSortOrder): ((Genre) -> String?)? = when (sor
  * only breaks ties), so an artists list always has its index.
  */
 fun albumArtistLetterKey(albumArtist: AlbumArtist): String? = albumArtist.groupKey.key
+
+// Each list's index, for [songs] (and so on) already in [sortOrder]; null for a sort that isn't by name. One pass over
+// the list: the list screens compute it when the list or its sort changes, not on every state they publish.
+
+fun songLetterIndex(songs: List<Song>, sortOrder: SongSortOrder): List<LetterSection>? = songLetterKey(sortOrder)?.let { letterSections(songs, it) }
+
+fun albumLetterIndex(albums: List<Album>, sortOrder: AlbumSortOrder): List<LetterSection>? = albumLetterKey(sortOrder)?.let { letterSections(albums, it) }
+
+fun genreLetterIndex(genres: List<Genre>, sortOrder: GenreSortOrder): List<LetterSection>? = genreLetterKey(sortOrder)?.let { letterSections(genres, it) }
+
+fun albumArtistLetterIndex(albumArtists: List<AlbumArtist>): List<LetterSection> = letterSections(albumArtists, ::albumArtistLetterKey)
 
 /** [letter] with its accent or other diacritic dropped: the first character of its canonical decomposition. */
 internal expect fun baseLetter(letter: Char): Char

@@ -9,7 +9,10 @@ import ViewInspector
 @MainActor
 struct AlbumArtistListTests {
     private func state(_ albumArtists: [AlbumArtist], _ loading: AlbumArtistListUiState.LoadingState) -> AlbumArtistListUiState {
-        AlbumArtistListUiState(albumArtists: albumArtists, selectedArtists: [], viewMode: .list, loadingState: loading, scanProgress: nil)
+        AlbumArtistListUiState(
+            albumArtists: albumArtists, selectedArtists: [], viewMode: .list, loadingState: loading, scanProgress: nil,
+            letterIndex: LetterIndexKt.albumArtistLetterIndex(albumArtists: albumArtists)
+        )
     }
 
     private func artist(_ name: String, albums: Int32, songs: Int32) -> AlbumArtist {

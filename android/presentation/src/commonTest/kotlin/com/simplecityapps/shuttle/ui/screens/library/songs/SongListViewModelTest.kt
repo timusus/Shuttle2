@@ -14,10 +14,12 @@ import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.sorting.LetterSection
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -80,6 +82,39 @@ class SongListViewModelTest {
         viewModel.uiState.value.loadingState shouldBe SongListUiState.LoadingState.Scanning
         viewModel.uiState.value.scanProgress shouldBe Progress(1, 4)
         viewModel.uiState.value.songs shouldBe listOf(song)
+    }
+
+    // The letter index is one pass over the whole list: an import's progress ticks mustn't redo it (#627)
+    @Test
+    fun `a progress tick reuses the sorted songs and their letter index`() = runTest {
+        fakeSortPreferences.sortOrderSongList = SongSortOrder.SongName
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "beta"), createSong(id = 2, name = "alpha")))
+        fakeImportState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, Progress(1, 4)))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+        val before = viewModel.uiState.value
+
+        fakeImportState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, null, Progress(2, 4)))
+        advanceUntilIdle()
+
+        val after = viewModel.uiState.value
+        after.scanProgress shouldBe Progress(2, 4)
+        after.letterIndex shouldBe listOf(LetterSection("A", 0), LetterSection("B", 1))
+        after.letterIndex shouldBeSameInstanceAs before.letterIndex
+        after.songs shouldBeSameInstanceAs before.songs
+    }
+
+    @Test
+    fun `a sort that isn't by name, like Recently Added, has no letter index`() = runTest {
+        fakeSortPreferences.sortOrderSongList = SongSortOrder.DateAdded
+        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "beta")))
+        fakeImportState.setState(importComplete())
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.letterIndex shouldBe null
     }
 
     private fun createViewModel(): SongListViewModel {

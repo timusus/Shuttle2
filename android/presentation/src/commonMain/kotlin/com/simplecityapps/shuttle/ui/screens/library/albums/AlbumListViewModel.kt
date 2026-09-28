@@ -7,11 +7,13 @@ import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.albums.comparator
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
+import com.simplecityapps.shuttle.sorting.albumLetterIndex
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.common.SelectionState
+import com.simplecityapps.shuttle.ui.screens.library.IndexedList
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
@@ -52,19 +54,25 @@ class AlbumListViewModel @Inject constructor(
     // re-emissions (scans, play counts) while on this screen don't reshuffle the list.
     private val _randomSeed = MutableStateFlow(random.nextLong())
 
+    private val sortedAlbums = combine(observeAlbums(), _sortOrder, _randomSeed) { albums, sortOrder, randomSeed ->
+        val sorted = albums.sortedWith(sortOrder.comparator(randomSeed))
+        IndexedList(sorted, sortOrder, albumLetterIndex(sorted, sortOrder))
+    }
+
     val uiState: StateFlow<AlbumListUiState> = combine(
-        observeAlbums(),
+        sortedAlbums,
         mediaImportObserver.songImportState,
         selectionState.selectedItems,
-        _sortOrder,
-        combine(_viewMode, _randomSeed, events.flow, ::Triple),
-    ) { albums, songImportState, selectedAlbums, sortOrder, (viewMode, randomSeed, events) ->
-        val sortedAlbums = albums.sortedWith(sortOrder.comparator(randomSeed))
+        _viewMode,
+        events.flow,
+    ) { sorted, songImportState, selectedAlbums, viewMode, events ->
+        val sortedAlbums = sorted.items
         AlbumListUiState(
             albums = sortedAlbums,
             selectedAlbums = selectedAlbums,
             viewMode = viewMode,
-            sortOrder = sortOrder,
+            sortOrder = sorted.sortOrder,
+            letterIndex = sorted.letterIndex,
             loadingState = when {
                 songImportState is SongImportState.ImportProgress -> AlbumListUiState.LoadingState.Scanning
                 sortedAlbums.isEmpty() -> AlbumListUiState.LoadingState.Empty

@@ -9,9 +9,9 @@ import com.simplecityapps.mediaprovider.repository.genres.comparator
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.LetterSection
-import com.simplecityapps.shuttle.sorting.genreLetterKey
-import com.simplecityapps.shuttle.sorting.letterSections
+import com.simplecityapps.shuttle.sorting.genreLetterIndex
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
+import com.simplecityapps.shuttle.ui.screens.library.IndexedList
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
@@ -30,12 +30,11 @@ data class GenreListUiState(
     val loadingState: LoadingState = LoadingState.Loading,
     val scanProgress: Progress? = null,
     val sortOrder: GenreSortOrder = GenreSortOrder.Default,
+    /** The genres' letter sections when sorted by name ([genreLetterIndex]); null for any other sort. */
+    val letterIndex: List<LetterSection>? = null,
 ) {
     /** [Scanning] while an import runs; the list still carries what's already imported, for a screen that keeps showing it. */
     enum class LoadingState { Loading, Scanning, Ready, Empty }
-
-    /** The genres' letter sections when sorted by name; null for any other sort. */
-    val letterIndex: List<LetterSection>? by lazy { genreLetterKey(sortOrder)?.let { key -> letterSections(genres, key) } }
 }
 
 @ViewModelKey(GenreListViewModel::class)
@@ -49,15 +48,20 @@ class GenreListViewModel @Inject constructor(
 
     private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.GenreSort))
 
+    private val sortedGenres = combine(observeGenres(), _sortOrder) { genres, sortOrder ->
+        val sorted = genres.sortedWith(sortOrder.comparator)
+        IndexedList(sorted, sortOrder, genreLetterIndex(sorted, sortOrder))
+    }
+
     val uiState: StateFlow<GenreListUiState> = combine(
-        observeGenres(),
+        sortedGenres,
         mediaImportObserver.songImportState,
-        _sortOrder,
-    ) { genres, songImportState, sortOrder ->
-        val sortedGenres = genres.sortedWith(sortOrder.comparator)
+    ) { sorted, songImportState ->
+        val sortedGenres = sorted.items
         GenreListUiState(
             genres = sortedGenres,
-            sortOrder = sortOrder,
+            sortOrder = sorted.sortOrder,
+            letterIndex = sorted.letterIndex,
             loadingState = when {
                 songImportState is SongImportState.ImportProgress -> GenreListUiState.LoadingState.Scanning
                 sortedGenres.isEmpty() -> GenreListUiState.LoadingState.Empty

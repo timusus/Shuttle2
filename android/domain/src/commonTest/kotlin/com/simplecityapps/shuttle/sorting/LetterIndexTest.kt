@@ -108,6 +108,8 @@ class LetterIndexTest {
         songLetterKey(SongSortOrder.Year) shouldBe null
         songLetterKey(SongSortOrder.PlayCount) shouldBe null
         songLetterKey(SongSortOrder.LastModified) shouldBe null
+        songLetterKey(SongSortOrder.DateAdded) shouldBe null
+        songLetterIndex(listOf(song(name = "a")), SongSortOrder.DateAdded) shouldBe null
         albumLetterKey(AlbumSortOrder.Year) shouldBe null
         albumLetterKey(AlbumSortOrder.PlayCount) shouldBe null
         albumLetterKey(AlbumSortOrder.Random) shouldBe null

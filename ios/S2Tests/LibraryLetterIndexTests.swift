@@ -23,11 +23,24 @@ struct LibraryLetterIndexTests {
     }
 
     private func albumState(_ albums: [Album], sortOrder: AlbumSortOrder, viewMode: ViewMode) -> AlbumListUiState {
-        AlbumListUiState(albums: albums, selectedAlbums: [], viewMode: viewMode, sortOrder: sortOrder, loadingState: .ready, scanProgress: nil, events: [])
+        AlbumListUiState(
+            albums: albums, selectedAlbums: [], viewMode: viewMode, sortOrder: sortOrder, loadingState: .ready, scanProgress: nil, events: [],
+            letterIndex: LetterIndexKt.albumLetterIndex(albums: albums, sortOrder: sortOrder)
+        )
     }
 
     private func songState(_ songs: [Song], sortOrder: SongSortOrder) -> SongListUiState {
-        SongListUiState(songs: songs, selectedSongs: [], sortOrder: sortOrder, loadingState: .ready, scanProgress: nil)
+        SongListUiState(
+            songs: songs, selectedSongs: [], sortOrder: sortOrder, loadingState: .ready, scanProgress: nil,
+            letterIndex: LetterIndexKt.songLetterIndex(songs: songs, sortOrder: sortOrder)
+        )
+    }
+
+    private func genreState(_ genres: [Genre], sortOrder: GenreSortOrder) -> GenreListUiState {
+        GenreListUiState(
+            genres: genres, loadingState: .ready, scanProgress: nil, sortOrder: sortOrder,
+            letterIndex: LetterIndexKt.genreLetterIndex(genres: genres, sortOrder: sortOrder)
+        )
     }
 
     /// Rows already in the shared name order: digits under '#', accents under their base letter.
@@ -48,7 +61,8 @@ struct LibraryLetterIndexTests {
         #expect(LetterIndex.sections(songState(songs, sortOrder: .year).letterIndex, items: songs, id: \.id) == nil)
         #expect(LetterIndex.sections(songState(songs, sortOrder: .playCount).letterIndex, items: songs, id: \.id) == nil)
         #expect(albumState([album("Post")], sortOrder: .year, viewMode: .list).letterIndex == nil)
-        #expect(GenreListUiState(genres: [], loadingState: .ready, scanProgress: nil, sortOrder: .songCount).letterIndex == nil)
+        #expect(genreState([], sortOrder: .songCount).letterIndex == nil)
+        #expect(LetterIndex.sections(songState(songs, sortOrder: .dateAdded).letterIndex, items: songs, id: \.id) == nil)
     }
 
     /// A collation that splits a letter (ideographs' '#' after Z, digits' before A) indexes only its first run.
@@ -94,15 +108,18 @@ struct LibraryLetterIndexTests {
                 groupKey: AlbumArtistGroupKey(key: name.lowercased()), mediaProviders: [.jellyfin], artworkVersion: nil
             )
         }
-        let state = AlbumArtistListUiState(albumArtists: artists, selectedArtists: [], viewMode: .list, loadingState: .ready, scanProgress: nil)
+        let state = AlbumArtistListUiState(
+            albumArtists: artists, selectedArtists: [], viewMode: .list, loadingState: .ready, scanProgress: nil,
+            letterIndex: LetterIndexKt.albumArtistLetterIndex(albumArtists: artists)
+        )
         #expect(try AlbumArtistListContent(state: state).inspect().findAll(ViewType.Section.self).count == 2)
     }
 
     @Test func theGenresListIsIndexedByNameNotBySongCount() throws {
         let genres = [Genre(name: "Ambient", songCount: 1, duration: 0, mediaProviders: []), Genre(name: "Rock", songCount: 9, duration: 0, mediaProviders: [])]
-        let byName = GenreListContent(state: GenreListUiState(genres: genres, loadingState: .ready, scanProgress: nil, sortOrder: .default))
+        let byName = GenreListContent(state: genreState(genres, sortOrder: .default))
         #expect(try byName.inspect().findAll(ViewType.Section.self).count == 2)
-        let byCount = GenreListContent(state: GenreListUiState(genres: genres.reversed(), loadingState: .ready, scanProgress: nil, sortOrder: .songCount))
+        let byCount = GenreListContent(state: genreState(genres.reversed(), sortOrder: .songCount))
         #expect(try byCount.inspect().findAll(ViewType.Section.self).isEmpty)
     }
 

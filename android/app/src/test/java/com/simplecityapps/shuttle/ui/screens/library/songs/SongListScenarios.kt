@@ -4,6 +4,7 @@ import com.simplecityapps.createSong
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.SongSortOrder
+import com.simplecityapps.shuttle.sorting.songLetterIndex
 
 fun readySongList(
     songs: List<Song> = listOf(createSong()),
@@ -13,6 +14,7 @@ fun readySongList(
     songs = songs,
     selectedSongs = selectedSongs,
     sortOrder = sortOrder,
+    letterIndex = songLetterIndex(songs, sortOrder),
     loadingState = if (songs.isEmpty()) SongListUiState.LoadingState.Empty else SongListUiState.LoadingState.Ready,
 )
 
