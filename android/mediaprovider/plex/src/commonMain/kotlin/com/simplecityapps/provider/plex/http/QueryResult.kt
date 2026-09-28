@@ -43,7 +43,19 @@ data class Metadata(
     // Server-relative image paths, resolved against the server address and signed with its token
     @SerialName("thumb") val thumb: String? = null,
     @SerialName("parentThumb") val parentThumb: String? = null,
-    @SerialName("grandparentThumb") val grandparentThumb: String? = null
+    @SerialName("grandparentThumb") val grandparentThumb: String? = null,
+    // The track's own artist, when it differs from the album's (grandparentTitle)
+    @SerialName("originalTitle") val originalTitle: String? = null,
+    // The album's and the album artist's ids on the server
+    @SerialName("parentRatingKey") val parentRatingKey: String? = null,
+    @SerialName("grandparentRatingKey") val grandparentRatingKey: String? = null,
+    // Only with includeGuids: the track's external ids, such as "mbid://<recording id>"
+    @SerialName("Guid") val guids: List<Guid> = emptyList()
+)
+
+@Serializable
+data class Guid(
+    @SerialName("id") val id: String
 )
 
 @Serializable

@@ -146,6 +146,10 @@
   ],
   "fixes": [
     {
+      "text": "Plex songs by a guest artist, such as on a compilation, now show that artist rather than the album's",
+      "commits": []
+    },
+    {
       "text": "You can now sign in to a Jellyfin, Emby or Plex server by its IPv6 address",
       "commits": []
     },

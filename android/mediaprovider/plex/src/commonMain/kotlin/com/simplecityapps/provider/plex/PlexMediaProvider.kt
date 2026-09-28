@@ -18,6 +18,7 @@ import com.simplecityapps.provider.plex.http.QueryResult
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.musicBrainzIds
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
@@ -93,7 +94,8 @@ internal fun Metadata.toSong(type: MediaProviderType): Song = Song(
     id = guid.hashCode().toLong(),
     name = title,
     albumArtist = grandparentTitle,
-    artists = listOfNotNull(grandparentTitle),
+    // Plex sends the track's own artist as originalTitle only when it differs from the album artist's
+    artists = listOfNotNull(originalTitle ?: grandparentTitle),
     album = parentTitle,
     track = index ?: 0,
     disc = parentIndex ?: 0,
@@ -120,6 +122,21 @@ internal fun Metadata.toSong(type: MediaProviderType): Song = Song(
     channelCount = media.firstOrNull()?.audioChannels,
     audioCodec = media.firstOrNull()?.audioCodec,
     // When the song was added to the server, so a fresh sign-in or re-import doesn't make the whole library new
-    dateAdded = addedAt?.let { seconds -> Instant.fromEpochSeconds(seconds) }
+    dateAdded = addedAt?.let { seconds -> Instant.fromEpochSeconds(seconds) },
+    // Plex sends one artist string per track and one album artist, neither split into several, no COMPILATION, and no
+    // album or artist MusicBrainz ids on a track: only its recording id, in the Guid list
+    albumArtists = listOfNotNull(grandparentTitle),
+    artistsTag = listOfNotNull(originalTitle ?: grandparentTitle),
+    artistDisplay = originalTitle ?: grandparentTitle,
+    compilation = null,
+    mbTrackId = guids.firstNotNullOfOrNull { guid -> guid.id.takeIf { it.startsWith("mbid://") }?.let { musicBrainzIds(it).firstOrNull() } },
+    mbAlbumId = null,
+    mbReleaseGroupId = null,
+    mbArtistIds = emptyList(),
+    mbAlbumArtistIds = emptyList(),
+    serverAlbumId = parentRatingKey,
+    // The track's own artist (originalTitle) has no id of its own; without one, the track's artist is the album's
+    serverArtistIds = if (originalTitle == null) listOfNotNull(grandparentRatingKey) else emptyList(),
+    serverAlbumArtistIds = listOfNotNull(grandparentRatingKey)
     // No artworkVersion: Plex songs have no server artwork loader, only the S2 artwork API, whose cache is keyed by URL
 )

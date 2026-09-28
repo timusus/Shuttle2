@@ -24,6 +24,8 @@ class ItemsService(private val client: HttpClient) {
         parameter("includeCollections", 1)
         parameter("includeAdvanced", 1)
         parameter("includeMeta", 1)
+        // Adds each track's Guid list, which holds its MusicBrainz recording id
+        parameter("includeGuids", 1)
         parameter("X-Plex-Container-Start", offset)
         parameter("X-Plex-Container-Size", limit)
     }

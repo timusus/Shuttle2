@@ -9,6 +9,51 @@ import kotlin.time.Instant
 
 class MetadataToSongTest {
     @Test
+    fun `a track with its own artist credits it, with the album's artist and ids and its MusicBrainz recording`() {
+        // As a Plex Media Server sends a track fetched with includeGuids=1
+        val metadata =
+            S2Json.decodeFromString<Metadata>(
+                """
+                {"key": "/library/metadata/101", "guid": "plex://track/1", "ratingKey": "101",
+                 "title": "Song", "originalTitle": "A feat. B", "grandparentTitle": "Various Artists",
+                 "parentRatingKey": "100", "grandparentRatingKey": "99",
+                 "Guid": [{"id": "mbid://5B11F4CE-A62D-471E-81FC-A69A8278C7DA"}, {"id": "plex://track/1"}]}
+                """.trimIndent()
+            )
+
+        val song = metadata.toSong(MediaProviderType.Plex)
+
+        song.artists shouldBe listOf("A feat. B")
+        song.artistsTag shouldBe listOf("A feat. B")
+        song.artistDisplay shouldBe "A feat. B"
+        song.albumArtist shouldBe "Various Artists"
+        song.albumArtists shouldBe listOf("Various Artists")
+        song.serverAlbumId shouldBe "100"
+        song.serverArtistIds shouldBe emptyList()
+        song.serverAlbumArtistIds shouldBe listOf("99")
+        song.mbTrackId shouldBe "5b11f4ce-a62d-471e-81fc-a69a8278c7da"
+        song.mbAlbumId shouldBe null
+        song.compilation shouldBe null
+    }
+
+    @Test
+    fun `a track by its album's artist is credited to it, with the album artist's id`() {
+        val metadata =
+            S2Json.decodeFromString<Metadata>(
+                """{"key": "/library/metadata/101", "guid": "plex://track/1", "grandparentTitle": "Radiohead", "parentRatingKey": "100", "grandparentRatingKey": "99"}"""
+            )
+
+        val song = metadata.toSong(MediaProviderType.Plex)
+
+        song.artists shouldBe listOf("Radiohead")
+        song.artistDisplay shouldBe "Radiohead"
+        song.serverArtistIds shouldBe listOf("99")
+        song.serverAlbumArtistIds shouldBe listOf("99")
+        song.serverAlbumId shouldBe "100"
+        song.mbTrackId shouldBe null
+    }
+
+    @Test
     fun `the song's dates are when it was added to the server`() {
         val song = parse(addedAt = 1_700_000_000, updatedAt = 1_800_000_000).toSong(MediaProviderType.Plex)
 
