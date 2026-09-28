@@ -136,7 +136,14 @@ if [ $RC -eq 0 ]; then
     kc exec "$SEED" -n "$NS" -- sh -c "apk add --no-cache tar >/dev/null 2>&1 || true" >/dev/null
     mkdir -p "$OUT"
     kc cp "$NS/$SEED:/mnt/workspace/android/app/build/outputs" "$OUT-tmp" >/dev/null
-    if [ -d "$OUT-tmp" ]; then rm -rf "$OUT"; mv "$OUT-tmp" "$OUT"; fi
+    # Test-only runs produce no APK/AAB: never let an artifact-less fetch
+    # clobber a previous build's outputs.
+    if find "$OUT-tmp" -type f \( -name '*.apk' -o -name '*.aab' \) 2>/dev/null | grep -q .; then
+        rm -rf "$OUT"; mv "$OUT-tmp" "$OUT"
+    else
+        echo "warn: no apk/aab in fetched outputs; keeping previous $OUT"
+        rm -rf "$OUT-tmp"
+    fi
     kc delete pod "$SEED" -n "$NS" --wait=false >/dev/null
     rm -f "$CACHE_DIR/$SEED.yaml"
     find "$OUT" -type f \( -name '*.apk' -o -name '*.aab' \) 2>/dev/null | head -10
