@@ -1,25 +1,31 @@
 # Screenshots of the Library, Settings, Sources, sign-in and Equalizer screens (#624) against a real library.
 # Signed in already: run sign-in-jellyfin.yaml first (this flow doesn't clear state), then this, once per
-# appearance (xcrun simctl ui <udid> appearance dark|light). On an iPhone the Library root is the chip rail and
-# category cards; an iPad shows the categories in the sidebar instead, so its chip steps are optional.
+# appearance (xcrun simctl ui <udid> appearance dark|light). On an iPhone the Library root is the chip rail over the
+# last-used category (#643); an iPad shows the categories in the sidebar instead, so its chip steps are optional.
 #
 #   OUT=/tmp/s2-polish-wp4/iphone-light ios/scripts/maestro-sim.sh library-settings-screens.yaml
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp
 - tapOn: "Library"
-# Back to the cards, if a category was left chosen.
-- tapOn:
-    id: "libraryChip.all"
-    optional: true
 - extendedWaitUntil:
     visible:
-      id: "libraryCategory.songs"
+      id: "libraryChips"
     timeout: 60000
     optional: true
 - takeScreenshot: 1-library
+- runFlow:
+    when:
+      notVisible:
+        id: "libraryChip.songs"
+    commands:
+      - swipe:
+          from:
+            id: "libraryChips"
+          direction: LEFT
+          optional: true
 - tapOn:
-    id: "libraryCategory.songs"
+    id: "libraryChip.songs"
     optional: true
 - extendedWaitUntil:
     visible:
@@ -52,9 +58,6 @@ appId: com.simplecityapps.shuttle.dev
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 6-playlists
-- tapOn:
-    id: "libraryChip.all"
-    optional: true
 - tapOn:
     id: "settings.open"
 - waitForAnimationToEnd:

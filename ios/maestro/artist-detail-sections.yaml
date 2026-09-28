@@ -7,18 +7,10 @@
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp
-- tapOn: "Library"
-- tapOn:
-    id: "libraryChip.all"
-    optional: true
-- extendedWaitUntil:
-    visible:
-      id: "libraryCategory.albumArtists"
-    timeout: 120000
-- tapOn:
-    id: "libraryCategory.albumArtists"
-- waitForAnimationToEnd:
-    timeout: 5000
+- runFlow:
+    file: common/library-open.yaml
+    env:
+      CATEGORY: albumArtists
 # The view mode is remembered: the list, where names are rows.
 - runFlow:
     when:

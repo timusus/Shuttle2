@@ -4,15 +4,17 @@ import Testing
 import ViewInspector
 @testable import S2
 
-/// The Library tab's root: the enabled categories while there's music, the empty state otherwise, the import's
-/// progress under either.
+/// The Library tab's root: the chip rail over the chosen category while there's music, the empty state otherwise,
+/// the import's progress under either.
 @MainActor
 struct LibraryViewTests {
-    @Test func listsTheGivenCategoriesWhenThereIsMusic() throws {
-        let sut = LibraryRootContent(categories: [.albums, .songs], availability: .hasMusic, importStatus: .idle)
-        #expect((try? sut.inspect().find(text: LibraryCategory.albums.title)) != nil)
-        #expect((try? sut.inspect().find(text: LibraryCategory.songs.title)) != nil)
-        #expect((try? sut.inspect().find(text: LibraryCategory.genres.title)) == nil)
+    @Test func railsTheGivenCategoriesWhenThereIsMusic() throws {
+        let sut = LibraryRootContent(categories: [.albums, .songs], availability: .hasMusic, importStatus: .idle, selection: .constant(nil)) { category in
+            Text("Showing \(category.title)")
+        }
+        #expect((try? sut.categoryRail.inspect().find(text: LibraryCategory.albums.title)) != nil)
+        #expect((try? sut.categoryRail.inspect().find(text: LibraryCategory.songs.title)) != nil)
+        #expect((try? sut.categoryRail.inspect().find(text: LibraryCategory.genres.title)) == nil)
         #expect((try? sut.inspect().find(text: "No Music")) == nil)
     }
 
@@ -81,48 +83,75 @@ struct LibraryViewTests {
         #expect(try sut.inspect().find(LibraryRootContent<RouteDestinationView>.self) != nil)
     }
 
-    @Test func eachCategoryHasACardAndAChip() throws {
+    private func root(
+        _ categories: [LibraryCategory],
+        availability: LibraryRootAvailability = .hasMusic,
+        selection: Binding<LibraryCategory?>
+    ) -> LibraryRootContent<Text> {
+        LibraryRootContent(categories: categories, availability: availability, importStatus: .idle, selection: selection) { category in
+            Text("Showing \(category.title)")
+        }
+    }
+
+    @Test func eachCategoryHasAChipAndThereAreNoCards() throws {
         let sut = LibraryRootContent(categories: [.albums, .albumArtists], availability: .hasMusic, importStatus: .idle)
-        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "libraryCategory.albums")) != nil)
-        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "libraryCategory.albumArtists")) != nil)
         #expect((try? sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.albums")) != nil)
+        #expect((try? sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.albumArtists")) != nil)
         // The chip's short title fits the rail.
         #expect((try? sut.categoryRail.inspect().find(text: "Artists")) != nil)
+        // The root doesn't repeat the chips as cards, nor offer a way back to them (#643).
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "libraryCategory.albums")) == nil)
         #expect((try? sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.all")) == nil)
     }
 
-    @Test func aCardOrChipShowsItsCategoryInPlace() throws {
+    @Test func withNothingChosenItOpensOnTheFirstCategory() throws {
+        let sut = root([.genres, .songs], selection: .constant(nil))
+        #expect(sut.shownCategory == .genres)
+        #expect((try? sut.inspect().find(text: "Showing Genres")) != nil)
+    }
+
+    @Test func itOpensOnTheLastChosenCategory() throws {
+        let sut = root([.genres, .songs], selection: .constant(.songs))
+        #expect((try? sut.inspect().find(text: "Showing Songs")) != nil)
+        #expect((try? sut.inspect().find(text: "Showing Genres")) == nil)
+    }
+
+    @Test func aChipShowsItsCategoryInPlace() throws {
         var selection: LibraryCategory?
         let binding = Binding(get: { selection }, set: { selection = $0 })
-        let sut = LibraryRootContent(categories: [.albums, .songs], availability: .hasMusic, importStatus: .idle, selection: binding) { category in
-            Text("Showing \(category.title)")
-        }
-        try sut.inspect().find(viewWithAccessibilityIdentifier: "libraryCategory.songs").button().tap()
+        let sut = root([.albums, .songs], selection: binding)
+        try sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.songs").button().tap()
         #expect(selection == .songs)
-        try sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.albums").button().tap()
-        #expect(selection == .albums)
     }
 
-    @Test func theChosenCategoryReplacesTheCardsAndItsChipClearsIt() throws {
+    @Test func theChosenChipAgainKeepsItsCategory() throws {
         var selection: LibraryCategory? = .songs
         let binding = Binding(get: { selection }, set: { selection = $0 })
-        let sut = LibraryRootContent(categories: [.albums, .songs], availability: .hasMusic, importStatus: .idle, selection: binding) { category in
-            Text("Showing \(category.title)")
-        }
-        #expect((try? sut.inspect().find(text: "Showing Songs")) != nil)
-        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "libraryCategory.albums")) == nil)
+        let sut = root([.albums, .songs], selection: binding)
         try sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.songs").button().tap()
-        #expect(selection == nil)
-        selection = .albums
-        try sut.categoryRail.inspect().find(viewWithAccessibilityIdentifier: "libraryChip.all").button().tap()
-        #expect(selection == nil)
+        #expect(selection == .songs)
     }
 
-    @Test func aChosenCategoryTheUserNoLongerHasShowsTheCards() throws {
-        let sut = LibraryRootContent(categories: [.albums], availability: .hasMusic, importStatus: .idle, selection: .constant(.genres)) { category in
-            Text("Showing \(category.title)")
-        }
+    @Test func aChosenCategoryTheUserNoLongerHasFallsBackToTheFirst() throws {
+        let sut = root([.albums], selection: .constant(.genres))
         #expect((try? sut.inspect().find(text: "Showing Genres")) == nil)
-        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "libraryCategory.albums")) != nil)
+        #expect((try? sut.inspect().find(text: "Showing Albums")) != nil)
+    }
+
+    @Test func whileLoadingItShowsTheCategorysOwnScreenForItsSkeleton() throws {
+        // The category draws its own skeleton (its grid or its list), not a stand-in for the root.
+        let sut = root([.albums], availability: .loading, selection: .constant(nil))
+        #expect((try? sut.inspect().find(text: "Showing Albums")) != nil)
+        #expect((try? sut.inspect().find(LibraryListSkeleton.self)) == nil)
+    }
+
+    @Test func anImportRunningOverTheLibraryShowsUnderTheRail() throws {
+        let sut = LibraryRootContent(
+            categories: [.songs], availability: .hasMusic,
+            importStatus: .importing(provider: "Jellyfin", message: nil, fraction: nil),
+            selection: .constant(nil)
+        ) { category in Text("Showing \(category.title)") }
+        #expect((try? sut.categoryRail.inspect().find(text: "Importing from Jellyfin…")) != nil)
+        #expect((try? sut.inspect().find(text: "Showing Songs")) != nil)
     }
 }

@@ -1,20 +1,19 @@
 import Shared
 import SwiftUI
 
-/// The Library tab's root on compact: a pinned rail of category chips over a two-column grid of category cards.
-/// Choosing a card or a chip shows that category's own screen in place, under the rail, with the chip tinted, as
-/// Android's library tabs switch in place; choosing the selected chip again, or the rail's leading close button,
-/// goes back to the cards. Regular and wide show the same categories directly in the sidebar instead (`AppShell`),
-/// `docs/architecture/ios-port/phase-5-ios-app.md` section 2.
+/// The Library tab's root on compact: a pinned rail of category chips over the chosen category's own screen, shown in
+/// place with its chip tinted, as Android's library tabs switch in place (#643). It opens on the category last
+/// chosen, kept across launches, or the first enabled one. Regular and wide show the same categories directly in the
+/// sidebar instead (`AppShell`), `docs/architecture/ios-port/phase-5-ios-app.md` section 2.
 ///
 /// `LibraryViewModel`'s enabled tabs, in the user's order, pick the categories; `LibraryEmptyViewModel` swaps them
-/// for the empty state while there are no songs; the import's progress shows above the cards. Pull to refresh
-/// imports. The chosen category is kept per scene. A category's view model stays cached while shown here: every
+/// for the empty state while there are no songs; the import's progress shows under the rail. Each category's own
+/// list pulls to refresh; the rail doesn't. A category's view model stays cached while shown here: every
 /// `Route.libraryCategory` key is always live (`Navigator.retainViewModels`).
 struct LibraryView: View {
     let navigator: Navigator
 
-    @SceneStorage("library.category") private var storedCategory: String = ""
+    @AppStorage("library.category") private var storedCategory: String = ""
 
     var body: some View {
         let models = ViewModelCache.shared.viewModel(AppTab.library.cacheKey) { LibraryRootModels(graph: AppGraph.shared) }
@@ -31,7 +30,6 @@ struct LibraryView: View {
             // is always held; this also moves it past Loading.
             models.empty.onAccessChecked(granted: true, showRationale: false)
         }
-        .refreshable { LibraryImport.refresh() }
         .navigationTitle(AppTab.library.title)
         .inlineTitleUnderEdgeEffect()
     }
@@ -74,8 +72,8 @@ enum LibraryRootAvailability: Equatable {
     }
 }
 
-/// The library import, as a card above the root's categories: running (with the provider's latest message and how
-/// far through it is, if it knows), or failed. Idle, and a clean finish, show nothing.
+/// The library import, as a row under the root's chips: running (with the provider's latest message and how far
+/// through it is, if it knows), or failed. Idle, and a clean finish, show nothing.
 enum ImportStatus: Equatable {
     case idle
     case importing(provider: String, message: String?, fraction: Double?)
@@ -124,8 +122,8 @@ extension LibraryCategory {
     }
 }
 
-/// The Library root's content, from plain values. `categoryContent` draws a chosen category's screen (by default its
-/// route's destination, the same screen a push shows).
+/// The Library root's content, from plain values. `categoryContent` draws a category's screen (by default its route's
+/// destination, the same screen a push shows).
 struct LibraryRootContent<CategoryContent: View>: View {
     let categories: [LibraryCategory]
     let availability: LibraryRootAvailability
@@ -149,49 +147,61 @@ struct LibraryRootContent<CategoryContent: View>: View {
         self.categoryContent = categoryContent
     }
 
-    /// The chosen category, if the user still has it enabled.
-    private var shownCategory: LibraryCategory? {
-        guard availability == .hasMusic, let selection, categories.contains(selection) else { return nil }
-        return selection
+    /// The category shown: the one last chosen, if the user still has it enabled, else their first.
+    var shownCategory: LibraryCategory? {
+        if let selection, categories.contains(selection) { return selection }
+        return categories.first
     }
 
     var body: some View {
         Group {
             switch availability {
-            case .loading:
-                LibraryCategorySkeleton()
             case .empty where !importStatus.isImporting:
-                EmptyState("No Music", systemImage: "music.note.house", message: "Connect a Jellyfin or Emby server to stream your music.") {
-                    NavigationLink("Add a Source", value: Route.sources)
-                        .accessibilityIdentifier("libraryEmpty.addSource")
+                ScrollView {
+                    EmptyState("No Music", systemImage: "music.note.house", message: "Connect a Jellyfin or Emby server to stream your music.") {
+                        NavigationLink("Add a Source", value: Route.sources)
+                            .accessibilityIdentifier("libraryEmpty.addSource")
+                    }
+                    .containerRelativeFrame(.vertical)
                 }
+                .refreshable { LibraryImport.refresh() }
             case .empty:
-                LibraryCategoryGrid(categories: [], importStatus: importStatus, onSelect: select)
-            case .hasMusic:
+                // The first import: its progress, under the (empty) rail, until there's music to show.
+                Color.clear
+            case .loading, .hasMusic:
+                // While the library is still loading, the category's own screen shows its skeleton: the grid or list
+                // it's about to draw.
                 if let shownCategory {
                     categoryContent(shownCategory)
                         .id(shownCategory)
                         .transition(.opacity)
                 } else {
-                    LibraryCategoryGrid(categories: categories, importStatus: importStatus, onSelect: select)
-                        .transition(.opacity)
+                    LibraryListSkeleton()
                 }
             }
         }
         .pinnedTopBar { categoryRail }
     }
 
-    /// The chip rail pinned over the content while there's music. Its own property so tests can reach it: they can't
-    /// see into iOS 26's `safeAreaBar`.
-    @ViewBuilder
+    /// The chip rail pinned over the content, and the import's progress under it. Its own property so tests can
+    /// reach it: they can't see into iOS 26's `safeAreaBar`.
     var categoryRail: some View {
-        if availability == .hasMusic, !categories.isEmpty {
-            LibraryCategoryChips(categories: categories, selection: shownCategory, onSelect: select)
+        VStack(alignment: .leading, spacing: 0) {
+            if availability != .empty, !categories.isEmpty {
+                LibraryCategoryChips(categories: categories, selection: shownCategory, onSelect: select)
+            }
+            if importStatus != .idle {
+                ImportStatusRow(status: importStatus)
+                    .padding(.horizontal, Spacing.medium)
+                    .padding(.vertical, Spacing.small)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
+        .pinnedBarBackground()
     }
 
-    /// Shows `category`, or the cards for nil.
-    private func select(_ category: LibraryCategory?) {
+    private func select(_ category: LibraryCategory) {
+        guard category != shownCategory else { return }
         withAnimation(Motion.press.reduced(reduceMotion)) { selection = category }
     }
 }
@@ -209,12 +219,12 @@ extension LibraryRootContent where CategoryContent == RouteDestinationView {
     }
 }
 
-/// The pinned rail of category chips. The chosen one is filled with the tint; choosing it again, or the leading close
-/// button, clears the choice.
+/// The pinned rail of category chips, scrolling sideways only. The chosen one is filled with the tint and scrolled
+/// to the middle, so its neighbours are in reach.
 struct LibraryCategoryChips: View {
     let categories: [LibraryCategory]
     let selection: LibraryCategory?
-    let onSelect: (LibraryCategory?) -> Void
+    let onSelect: (LibraryCategory) -> Void
 
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -224,41 +234,30 @@ struct LibraryCategoryChips: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 chips
             }
-            // The chosen chip in view, as a category opens (from a card, or restored) with its chip past the edge.
-            .onAppear { reveal(selection, proxy) }
-            .onChange(of: selection) { _, chosen in reveal(chosen, proxy) }
+            // Sideways only: no bounce when the chips fit, and never a vertical drag.
+            .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
+            .onAppear { reveal(selection, proxy, animated: false) }
+            .onChange(of: selection) { _, chosen in reveal(chosen, proxy, animated: true) }
         }
         // Outside the scroll view, so it doesn't reach the navigation bar: a scroll view touching the top safe area
         // extends under the bar, and on iOS 26 the bar's scroll edge effect then covers its whole content.
         .padding(.vertical, Spacing.small)
-        .pinnedBarBackground()
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Categories")
+        .accessibilityIdentifier("libraryChips")
     }
 
-    private func reveal(_ category: LibraryCategory?, _ proxy: ScrollViewProxy) {
+    private func reveal(_ category: LibraryCategory?, _ proxy: ScrollViewProxy, animated: Bool) {
         guard let category else { return }
-        withAnimation(Motion.press.reduced(reduceMotion)) { proxy.scrollTo(category) }
+        withAnimation(animated ? Motion.press.reduced(reduceMotion) : nil) { proxy.scrollTo(category, anchor: .center) }
     }
 
     private var chips: some View {
         HStack(spacing: Spacing.small) {
-            if selection != nil {
-                Button { onSelect(nil) } label: {
-                    Image(systemName: "xmark")
-                        .fontWeight(.semibold)
-                        .padding(Spacing.small)
-                        .background(Circle().fill(Color(.tertiarySystemFill)))
-                }
-                .buttonStyle(.pressScale)
-                .foregroundStyle(.primary)
-                .accessibilityLabel("All Categories")
-                .accessibilityIdentifier("libraryChip.all")
-                .transition(.scale.combined(with: .opacity))
-            }
             ForEach(categories, id: \.self) { category in
                 LibraryCategoryChip(category: category, isSelected: category == selection) {
-                    onSelect(category == selection ? nil : category)
+                    onSelect(category)
                 }
             }
         }
@@ -286,11 +285,13 @@ extension View {
     /// An inline navigation title on iOS 26. There, a large title over a screen whose scroll view is swapped in place
     /// (the Library's categories, and their grid and list) is left behind the content's scroll edge effect, a ghost
     /// of itself above the pinned bar; an inline title sits in the navigation bar, clear of the effect, at any scroll
-    /// position. Earlier releases keep the large title.
+    /// position. `inlineLarge` keeps it leading on every screen, however many toolbar items it has (a plain inline
+    /// title centres itself when there's room, so Genres' sat apart from Songs', #643). Earlier releases keep the
+    /// large title.
     @ViewBuilder
     func inlineTitleUnderEdgeEffect() -> some View {
         if #available(iOS 26, *) {
-            toolbarTitleDisplayMode(.inline)
+            toolbarTitleDisplayMode(.inlineLarge)
         } else {
             self
         }
@@ -333,107 +334,8 @@ private struct LibraryCategoryChip: View {
     }
 }
 
-/// The two-column grid of category cards (one column at the accessibility text sizes), with the import's progress
-/// above it.
-private struct LibraryCategoryGrid: View {
-    let categories: [LibraryCategory]
-    let importStatus: ImportStatus
-    let onSelect: (LibraryCategory) -> Void
-
-    @Environment(\.layoutTier) private var layoutTier
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
-    private var columns: [GridItem] {
-        if dynamicTypeSize.isAccessibilitySize {
-            return [GridItem(.flexible())]
-        }
-        if layoutTier != .compact {
-            return [GridItem(.adaptive(minimum: ArtworkSize.gridMinimum), spacing: AdaptiveLayout.gridSpacing)]
-        }
-        return Array(repeating: GridItem(.flexible(), spacing: AdaptiveLayout.gridSpacing), count: 2)
-    }
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: Spacing.medium) {
-                if importStatus != .idle {
-                    ImportStatusRow(status: importStatus)
-                        .padding(Spacing.medium)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous)
-                                .fill(Color(.secondarySystemGroupedBackground))
-                        )
-                }
-                LazyVGrid(columns: columns, spacing: AdaptiveLayout.gridSpacing) {
-                    ForEach(categories, id: \.self) { category in
-                        LibraryCategoryCard(category: category) { onSelect(category) }
-                    }
-                }
-            }
-            .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
-            .padding(.vertical, Spacing.medium)
-            .frame(maxWidth: AdaptiveLayout.contentMaxWidth)
-            .frame(maxWidth: .infinity)
-        }
-        .background(Color(.systemGroupedBackground))
-    }
-}
-
-/// A category card: its symbol in a tinted rounded square over its title.
-private struct LibraryCategoryCard: View {
-    let category: LibraryCategory
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: Spacing.smallMedium) {
-                IconSquare(systemImage: category.systemImage, style: .tinted, size: .card)
-                Text(category.title)
-                    .font(.s2Headline)
-                    .foregroundStyle(.primary)
-                    .multilineTextAlignment(.leading)
-                    .lineLimit(2)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Spacing.medium)
-            .background(
-                RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
-            )
-            .contentShape(RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous))
-        }
-        .buttonStyle(.pressScale)
-        .accessibilityLabel(category.title)
-        .accessibilityIdentifier("libraryCategory.\(category.rawValue)")
-    }
-}
-
-/// The cards' skeleton while the library's availability is still loading.
-private struct LibraryCategorySkeleton: View {
-    @Environment(\.layoutTier) private var layoutTier
-    @ScaledMetric(relativeTo: .headline) private var cardHeight: CGFloat = 96
-
-    var body: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: AdaptiveLayout.gridSpacing), count: 2), spacing: AdaptiveLayout.gridSpacing) {
-            ForEach(LibraryCategory.allCases, id: \.self) { _ in
-                RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
-                    .frame(height: cardHeight)
-            }
-        }
-        .shimmer()
-        .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
-        .padding(.vertical, Spacing.medium)
-        .frame(maxHeight: .infinity, alignment: .top)
-        .background(Color(.systemGroupedBackground))
-        .accessibilityElement()
-        .accessibilityLabel("Loading")
-    }
-}
-
 /// An SF Symbol in a rounded square: `.filled` is iOS Settings' white glyph on a colour, `.tinted` a glyph in the
-/// colour on a wash of it (the Library's category cards). Both scale with Dynamic Type.
+/// colour on a wash of it. Both scale with Dynamic Type.
 struct IconSquare: View {
     enum Style {
         case filled(Color)
@@ -444,7 +346,7 @@ struct IconSquare: View {
     enum Size {
         /// iOS Settings' 29 pt square, radius 7.
         case settings
-        /// A Library category card's.
+        /// A source's, in onboarding.
         case card
         /// A server's, in Sources and at the top of its sign-in.
         case large

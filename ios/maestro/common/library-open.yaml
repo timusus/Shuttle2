@@ -1,0 +1,37 @@
+# Subflow: opens Library on the category ${CATEGORY} (a `LibraryCategory` raw value: songs, albums, albumArtists,
+# genres, playlists) by its chip (#643: the root is the last-used category, with no cards to pick from). The rail
+# scrolls sideways, so a chip past either edge is swiped into view first. iPhone only.
+#
+#   - runFlow:
+#       file: common/library-open.yaml
+#       env:
+#         CATEGORY: songs
+appId: com.simplecityapps.shuttle.dev
+---
+- tapOn: "Library"
+- extendedWaitUntil:
+    visible:
+      id: "libraryChips"
+    timeout: 120000
+- runFlow:
+    when:
+      notVisible:
+        id: "libraryChip.${CATEGORY}"
+    commands:
+      - swipe:
+          from:
+            id: "libraryChips"
+          direction: LEFT
+- runFlow:
+    when:
+      notVisible:
+        id: "libraryChip.${CATEGORY}"
+    commands:
+      - swipe:
+          from:
+            id: "libraryChips"
+          direction: RIGHT
+- tapOn:
+    id: "libraryChip.${CATEGORY}"
+- waitForAnimationToEnd:
+    timeout: 5000
