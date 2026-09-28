@@ -2,7 +2,9 @@ package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakePlayHistoryRepository
 import com.simplecityapps.fakes.FakePlaybackOperations
+import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
@@ -40,7 +42,14 @@ class PlaybackInitializerTest {
     private val initializer = PlaybackInitializer(
         context = application,
         playbackOperations = playbackOperations,
-        recordPlays = RecordPlays(playbackOperations, songRepository, appCoroutineScope, mainDispatcherRule.testDispatcher),
+        recordPlays = RecordPlays(
+            playbackOperations,
+            FakeQueueOperations(),
+            songRepository,
+            FakePlayHistoryRepository(),
+            appCoroutineScope,
+            mainDispatcherRule.testDispatcher
+        ),
         queueStore = queueStore,
         castStarter = lazy {
             startedComponents += "cast"
