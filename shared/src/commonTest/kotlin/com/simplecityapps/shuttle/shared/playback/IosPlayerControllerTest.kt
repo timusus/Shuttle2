@@ -5,6 +5,7 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
@@ -15,8 +16,10 @@ import kotlin.test.Test
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestResult
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -47,7 +50,15 @@ class IosPlayerControllerTest {
 
     private fun url(song: Song) = "song:${song.id}"
 
-    private fun test(block: suspend TestScope.(IosPlayerController) -> Unit): TestResult = runTest {
+    /**
+     * Runs [block] over a controller on an unconfined test dispatcher; or, if not [unconfined], on a queued one, which
+     * doesn't hold back the coroutines resumed while the controller works on main, as main doesn't.
+     */
+    private fun test(
+        unconfined: Boolean = true,
+        block: suspend TestScope.(IosPlayerController) -> Unit
+    ): TestResult = runTest {
+        val dispatcher = if (unconfined) UnconfinedTestDispatcher(testScheduler) else StandardTestDispatcher(testScheduler)
         val controller = IosPlayerController(
             player = engine,
             resolver = { song, startPositionMs ->
@@ -58,7 +69,7 @@ class IosPlayerControllerTest {
                     else -> IosStream(url(song), opensAtPosition = song.id in server)
                 }
             },
-            scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler)),
+            scope = CoroutineScope(dispatcher),
             random = Random(1)
         )
         block(controller)
@@ -285,6 +296,21 @@ class IosPlayerControllerTest {
         engine.current?.url shouldBe url(controller.queueOperations.getQueue()[0].song)
         engine.next?.url shouldBe url(controller.queueOperations.getQueue()[1].song)
         controller.playbackState() shouldBe PlaybackState.Paused
+    }
+
+    @Test
+    fun `a shuffle's context is set before its first song becomes current - as a listen reads it then`() = test(unconfined = false) { controller ->
+        controller.queueOperations.setQueue(listOf(a, b), context = PlayContext.Playlist(1))
+        val contexts = mutableListOf<PlayContext>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            controller.queueOperations.queueStateFlow.distinctUntilChangedBy { it.currentItem?.uid }.collect {
+                contexts += controller.queueOperations.playContext
+            }
+        }
+
+        controller.shuffle(listOf(c, d, e), PlayContext.Genre("Jazz")) { }
+
+        contexts shouldBe listOf(PlayContext.Playlist(1), PlayContext.Genre("Jazz"))
     }
 
     // Queue edits
