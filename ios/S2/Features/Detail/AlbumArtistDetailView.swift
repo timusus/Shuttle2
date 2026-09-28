@@ -144,7 +144,8 @@ struct AlbumArtistDetailContent: View {
                     DetailAlbumShelf(
                         title: "Appears On",
                         albums: state.appearsOn,
-                        subtitle: { $0.friendlyArtistName },
+                        // Whose album it is: the album artist, not the track artists friendlyArtistName joins
+                        subtitle: { $0.albumArtist ?? $0.friendlyArtistName },
                         onAlbumTap: onAlbumTap,
                         albumActions: albumActions,
                         tileIdentifier: "detailTile.appearsOn"
@@ -429,7 +430,7 @@ struct DetailAlbumShelf: View {
                         }
                         .buttonStyle(.pressScale)
                         .zoomSource(id: Route.album(album).cacheKey, tileKey: tileKey, activeKey: zoomSourceKey)
-                        .modifier(DetailAlbumMenu(album: album, actions: albumActions))
+                        .modifier(DetailAlbumMenu(album: album, subtitle: subtitle(album), actions: albumActions))
                         .accessibilityIdentifier(tileIdentifier)
                     }
                 }
@@ -445,13 +446,20 @@ struct DetailAlbumShelf: View {
 /// A shelf tile's context menu from its `DetailAlbumActions`: only the actions given, and none at all without any.
 private struct DetailAlbumMenu: ViewModifier {
     let album: Album
+    let subtitle: String?
     let actions: DetailAlbumActions
 
     func body(content: Content) -> some View {
         if actions.onPlay == nil && actions.onPlayNext == nil && actions.onAddToQueue == nil {
             content
         } else {
-            content.contextMenu { DetailAlbumMenuItems(album: album, actions: actions) }
+            // The tile itself as the preview: inside a List the default lifts the whole shelf row.
+            content.contextMenu {
+                DetailAlbumMenuItems(album: album, actions: actions)
+            } preview: {
+                AlbumTileLabel(album: album, subtitle: subtitle)
+                    .padding(Spacing.smallMedium)
+            }
         }
     }
 }
