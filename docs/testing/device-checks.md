@@ -282,3 +282,8 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 - [ ] iPhone (iOS 26): Library's title is inline and the chip rail stays visible and tappable under the glass bar; switching Artists back to another list works.
 - [ ] iPhone (iOS 18): Library's Genres and Playlists titles aren't faded at rest.
 - [ ] iPad: Now Playing, the mini player and Library lay out well in regular width, and in Split View.
+
+## iOS system Now Playing artwork and the Shuttle Music name (#640, #641)
+
+- [ ] iPhone: play a Jellyfin song, then lock the phone; the lock screen and Control Center show its cover, and skipping to the next song swaps the cover.
+- [ ] iPhone: the home-screen label reads "Shuttle Music"; Android's launcher label and the playback notification channel do too.
