@@ -117,61 +117,40 @@ extension View {
     }
 }
 
-/// An item's artwork at `size`: an album's cover or an artist's picture (same corners for both, the owner's call),
-/// and for a playlist, smart playlist or genre, which have no artwork of their own, `GeneratedArtwork`.
+/// An item's artwork at `size`: an album's cover or an artist's picture (same corners for both, the owner's call);
+/// for a playlist or genre, which have no artwork of their own, its `CoverMosaic` from Home's covers (#643); for a
+/// smart playlist, its `GeneratedArtwork`.
 struct HomeItemArtwork: View {
     let item: HomeItem
     let size: CGFloat
     let cornerRadius: CGFloat
 
-    var body: some View {
-        artwork.artworkTile(size, cornerRadius: cornerRadius)
-    }
+    @Environment(\.homeCovers) private var covers
 
-    @ViewBuilder
-    private var artwork: some View {
+    var body: some View {
         switch onEnum(of: item) {
         case .albumItem(let it):
             RemoteArtwork(.album(it.album), points: size) { ArtworkPlaceholder(symbol: "square.stack") }
+                .artworkTile(size, cornerRadius: cornerRadius)
         case .artistItem(let it):
             RemoteArtwork(.albumArtist(it.albumArtist), points: size) { ArtworkPlaceholder(symbol: "music.mic") }
+                .artworkTile(size, cornerRadius: cornerRadius)
         case .playlistItem(let it):
-            GeneratedArtwork(seed: it.playlist.name, symbol: GeneratedArtwork.playlistSymbol)
+            CoverMosaic.playlist(it.playlist.name, covers: covers[item.key] ?? [], cornerRadius: cornerRadius)
+                .frame(width: size, height: size)
         case .smartPlaylistItem(let it):
             GeneratedArtwork(seed: it.smartPlaylistId.id, symbol: it.smartPlaylistId.symbol)
+                .artworkTile(size, cornerRadius: cornerRadius)
         case .genreItem(let it):
-            GeneratedArtwork(seed: it.genre.name, symbol: GeneratedArtwork.genreSymbol)
+            CoverMosaic.genre(it.genre.name, covers: covers[item.key] ?? [], cornerRadius: cornerRadius)
+                .frame(width: size, height: size)
         }
     }
 }
 
-/// Artwork for an item that has none of its own (#646): one of a few muted tones, picked by the item's name so a
-/// genre or playlist keeps its tone from launch to launch, screen to screen and platform to platform (Android's
-/// `GeneratedArtwork`), under a small glyph for its kind. The title under the tile says which one it is.
-struct GeneratedArtwork: View {
-    let seed: String
-    let symbol: String
-
-    /// A genre's glyph; every genre shares it, as on Android.
-    static let genreSymbol = "music.quarternote.3"
-    /// A playlist's glyph.
-    static let playlistSymbol = "music.note.list"
-
-    var body: some View {
-        GeometryReader { proxy in
-            let glyph = min(proxy.size.width, proxy.size.height) * ArtworkPalette.generatedGlyphScale
-            ZStack {
-                ArtworkPalette.tone(seed)
-                Image(systemName: symbol)
-                    .resizable()
-                    .scaledToFit()
-                    .fontWeight(.medium)
-                    .frame(width: glyph, height: glyph)
-                    .foregroundStyle(ArtworkPalette.generatedGlyph)
-            }
-        }
-        .accessibilityHidden(true)
-    }
+extension EnvironmentValues {
+    /// Home's playlist and genre covers by `HomeItem.key` (`HomeUiState.covers`), for their mosaics.
+    @Entry var homeCovers: [String: [Song]] = [:]
 }
 
 /// A shelf tile: the item's artwork at `ArtworkSize.shelf(tier)` with the tile corner, its title and a subtitle.

@@ -2,7 +2,7 @@ import Shared
 import SwiftUI
 
 /// Library > Playlists (P5-6b): `PlaylistListViewModel`'s smart playlists (always shown) and user playlists (with
-/// their first cover song's artwork) as a list. Create and rename go through an `alert` with a `TextField`, per
+/// the `CoverMosaic` of their cover songs, #643) as a list. Create and rename go through an `alert` with a `TextField`, per
 /// the HIG; delete is a destructive swipe with a confirmation. Context menu plays or queues through the shared
 /// `MediaAction`s, same as the other library lists.
 struct PlaylistListView: View {
@@ -21,9 +21,6 @@ struct PlaylistListView: View {
                 },
                 onAddToQueue: { playlist in
                     models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionPlaylists(playlist: playlist)))
-                },
-                onShuffle: {
-                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionPlaylists(playlists: state.playlists)))
                 },
                 onCreate: { name in models.playlists.onCreatePlaylist(name: name) },
                 onRename: { playlist, name in models.playlists.onRename(playlist: playlist, name: name) },
@@ -93,7 +90,6 @@ struct PlaylistListContent: View {
     var onPlay: (Playlist) -> Void = { _ in }
     var onPlayNext: (Playlist) -> Void = { _ in }
     var onAddToQueue: (Playlist) -> Void = { _ in }
-    var onShuffle: () -> Void = {}
     var onCreate: (String) -> Void = { _ in }
     var onRename: (Playlist, String) -> Void = { _, _ in }
     var onDelete: (Playlist) -> Void = { _ in }
@@ -107,7 +103,7 @@ struct PlaylistListContent: View {
         case .ready, .scanning:
             PlaylistListReadyView(
                 state: state, onPlay: onPlay, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue,
-                onShuffle: onShuffle, onCreate: onCreate, onRename: onRename, onDelete: onDelete
+                onCreate: onCreate, onRename: onRename, onDelete: onDelete
             )
         }
     }
@@ -120,7 +116,6 @@ private struct PlaylistListReadyView: View {
     let onPlay: (Playlist) -> Void
     let onPlayNext: (Playlist) -> Void
     let onAddToQueue: (Playlist) -> Void
-    let onShuffle: () -> Void
     let onCreate: (String) -> Void
     let onRename: (Playlist, String) -> Void
     let onDelete: (Playlist) -> Void
@@ -149,7 +144,6 @@ private struct PlaylistListReadyView: View {
         }
         .listStyle(.plain)
         .toolbar {
-            Button("Shuffle", systemImage: "shuffle", action: onShuffle)
             Button("New Playlist", systemImage: "plus") {
                 newPlaylistName = ""
                 isCreating = true
@@ -190,10 +184,9 @@ private struct PlaylistListReadyView: View {
     }
 
     private func playlistRow(_ playlist: Playlist) -> PlaylistListRow {
-        let coverSong: Song? = state.covers[KotlinLong(value: playlist.id)]?.first
-        return PlaylistListRow(
+        PlaylistListRow(
             playlist: playlist,
-            coverSong: coverSong,
+            covers: state.covers[KotlinLong(value: playlist.id)] ?? [],
             onPlay: onPlay,
             onPlayNext: onPlayNext,
             onAddToQueue: onAddToQueue,
@@ -208,7 +201,7 @@ private struct SmartPlaylistRow: View {
 
     var body: some View {
         LibraryRowLink(route: Route.smartPlaylist(smartPlaylist)) {
-            MediaRow(smartPlaylist.id.title, placeholderSymbol: smartPlaylist.id.symbol)
+            MediaRow(smartPlaylist.id.title, mosaic: CoverMosaic(covers: [], seed: smartPlaylist.id.title, symbol: smartPlaylist.id.symbol))
         }
     }
 }
@@ -217,7 +210,7 @@ private struct SmartPlaylistRow: View {
 /// `PlaylistListContent`'s `List` so the type checker isn't asked to solve one giant view expression.
 private struct PlaylistListRow: View {
     let playlist: Playlist
-    let coverSong: Song?
+    let covers: [Song]
     let onPlay: (Playlist) -> Void
     let onPlayNext: (Playlist) -> Void
     let onAddToQueue: (Playlist) -> Void
@@ -226,7 +219,7 @@ private struct PlaylistListRow: View {
 
     var body: some View {
         LibraryRowLink(route: Route.playlist(playlist)) {
-            PlaylistRow(playlist: playlist, coverSong: coverSong)
+            PlaylistRow(playlist: playlist, covers: covers)
         }
         .contextMenu {
             Button("Play", systemImage: "play") { onPlay(playlist) }
@@ -245,14 +238,13 @@ private struct PlaylistListRow: View {
 
 struct PlaylistRow: View {
     let playlist: Playlist
-    let coverSong: Song?
+    var covers: [Song] = []
 
     var body: some View {
         MediaRow(
             playlist.name,
             subtitle: playlist.songCount == 1 ? "1 song" : "\(playlist.songCount) songs",
-            artwork: coverSong.map { .song($0) },
-            placeholderSymbol: "music.note.list"
+            mosaic: .playlist(playlist.name, covers: covers)
         )
     }
 }

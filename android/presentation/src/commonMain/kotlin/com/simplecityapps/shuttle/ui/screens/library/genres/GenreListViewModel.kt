@@ -7,9 +7,11 @@ import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.genres.comparator
 import com.simplecityapps.shuttle.model.Genre
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.LetterSection
 import com.simplecityapps.shuttle.sorting.genreLetterIndex
+import com.simplecityapps.shuttle.ui.actions.ObserveGenreCovers
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
 import com.simplecityapps.shuttle.ui.screens.library.IndexedList
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
@@ -19,10 +21,12 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 
 data class GenreListUiState(
@@ -37,10 +41,12 @@ data class GenreListUiState(
     enum class LoadingState { Loading, Scanning, Ready, Empty }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @ViewModelKey(GenreListViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class GenreListViewModel @Inject constructor(
     observeGenres: ObserveGenres,
+    observeGenreCovers: ObserveGenreCovers,
     readSetting: ReadLibraryViewSetting,
     private val saveSetting: SaveLibraryViewSetting,
     mediaImportObserver: SongImportStateProvider
@@ -74,6 +80,19 @@ class GenreListViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = GenreListUiState(),
     )
+
+    /**
+     * Each genre's mosaic covers by genre name (#643): up to four songs from different albums. Its own flow, apart
+     * from [uiState], so a screen that draws no genre artwork (Android's list) never runs the per-genre queries; the
+     * list shows first and a screen collecting this fills its artwork in as the covers load.
+     */
+    val covers: StateFlow<Map<String, List<Song>>> = observeGenres()
+        .flatMapLatest { genres -> observeGenreCovers(genres) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyMap(),
+        )
 
     fun setSortOrder(sortOrder: GenreSortOrder) {
         saveSetting(LibraryViewSetting.GenreSort, sortOrder)

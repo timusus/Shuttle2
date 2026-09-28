@@ -12,10 +12,11 @@ struct PlaylistListTests {
     private func state(
         _ playlists: [Playlist],
         smartPlaylists: [SmartPlaylist] = SmartPlaylistId.allCases.map { $0.smartPlaylist },
+        covers: [KotlinLong: [Song]] = [:],
         _ loading: PlaylistListUiState.LoadingState
     ) -> PlaylistListUiState {
         PlaylistListUiState(
-            playlists: playlists, smartPlaylists: smartPlaylists, covers: [:], sortOrder: .`default`, loadingState: loading, scanProgress: nil
+            playlists: playlists, smartPlaylists: smartPlaylists, covers: covers, sortOrder: .`default`, loadingState: loading, scanProgress: nil
         )
     }
 
@@ -46,6 +47,19 @@ struct PlaylistListTests {
         let sut = PlaylistListContent(state: state([], .ready))
         #expect((try? sut.inspect().find(text: "No playlists yet. Tap + to create one.")) != nil)
         #expect((try? sut.inspect().find(text: "Favourites")) != nil)
+    }
+
+    @Test func aPlaylistsArtworkIsAMosaicOfItsCoversAndASmartPlaylistsIsGenerated() throws {
+        let playlists = [playlist(1, "Road Trip", songs: 12), playlist(2, "Empty", songs: 0)]
+        let covers = [KotlinLong(value: 1): Array(TestSongs.demo.prefix(4))]
+        let sut = PlaylistListContent(state: state(playlists, smartPlaylists: [SmartPlaylistId.favourites.smartPlaylist], covers: covers, .ready))
+        let mosaics = try sut.inspect().findAll(CoverMosaic.self).map { try $0.actualView() }
+        #expect(mosaics.map(\.isMosaic) == [false, true, false])
+        #expect(mosaics.map(\.seed) == [SmartPlaylistId.favourites.title, "Road Trip", "Empty"])
+        #expect(mosaics.last?.symbol == GeneratedArtwork.playlistSymbol)
+        // Shuffle left the toolbar (#643); New Playlist stays.
+        #expect((try? sut.inspect().find(button: "Shuffle")) == nil)
+        #expect((try? sut.inspect().find(button: "New Playlist")) != nil)
     }
 
     @Test func placeholders() throws {

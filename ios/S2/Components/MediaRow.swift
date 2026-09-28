@@ -12,7 +12,7 @@ import SwiftUI
 ///
 /// - Artwork is drawn by `RemoteArtwork` at `artworkSize` (`ArtworkSize.row`, or `.albumRow` for albums),
 ///   rounded (`ArtworkCorner.row`, artists as albums), with the hairline and no shadow. A nil source draws
-///   the tinted `ArtworkPlaceholder` with `placeholderSymbol`.
+///   the tinted `ArtworkPlaceholder` with `placeholderSymbol`. A playlist or genre passes its `mosaic` instead.
 /// - `playback` other than `.none` tints the title with `\.artworkTint` and lays an equaliser glyph over the
 ///   artwork, animated while `.playing` (still under Reduce Motion, and while `.paused`).
 /// - The row is not a button: wrap it in the `Button` or `NavigationLink` that says what a tap does.
@@ -20,6 +20,8 @@ struct MediaRow<Trailing: View>: View {
     let title: String
     let subtitle: String?
     let artwork: ArtworkSource?
+    /// A playlist's or genre's artwork, in place of `artwork`.
+    let mosaic: CoverMosaic?
     let artworkSize: CGFloat
     let placeholderSymbol: String
     let playback: MediaRowPlayback
@@ -33,6 +35,7 @@ struct MediaRow<Trailing: View>: View {
         _ title: String,
         subtitle: String? = nil,
         artwork: ArtworkSource? = nil,
+        mosaic: CoverMosaic? = nil,
         artworkSize: CGFloat = ArtworkSize.row,
         placeholderSymbol: String = "music.note",
         playback: MediaRowPlayback = .none,
@@ -42,6 +45,7 @@ struct MediaRow<Trailing: View>: View {
         self.title = title
         self.subtitle = subtitle
         self.artwork = artwork
+        self.mosaic = mosaic
         self.artworkSize = artworkSize
         self.placeholderSymbol = placeholderSymbol
         self.playback = playback
@@ -74,7 +78,9 @@ struct MediaRow<Trailing: View>: View {
     @ViewBuilder
     private var artworkView: some View {
         let image = Group {
-            if let artwork {
+            if let mosaic {
+                mosaic
+            } else if let artwork {
                 RemoteArtwork(artwork, points: artworkSize) {
                     ArtworkPlaceholder(symbol: placeholderSymbol)
                 }
@@ -91,7 +97,12 @@ struct MediaRow<Trailing: View>: View {
             }
         }
 
-        image.artworkTile(artworkSize)
+        if mosaic != nil {
+            // The mosaic draws its own corners and hairline.
+            image.frame(width: artworkSize, height: artworkSize)
+        } else {
+            image.artworkTile(artworkSize)
+        }
     }
 }
 
@@ -100,13 +111,14 @@ extension MediaRow where Trailing == EmptyView {
         _ title: String,
         subtitle: String? = nil,
         artwork: ArtworkSource? = nil,
+        mosaic: CoverMosaic? = nil,
         artworkSize: CGFloat = ArtworkSize.row,
         placeholderSymbol: String = "music.note",
         playback: MediaRowPlayback = .none,
         titleIdentifier: String? = nil
     ) {
         self.init(
-            title, subtitle: subtitle, artwork: artwork, artworkSize: artworkSize,
+            title, subtitle: subtitle, artwork: artwork, mosaic: mosaic, artworkSize: artworkSize,
             placeholderSymbol: placeholderSymbol, playback: playback, titleIdentifier: titleIdentifier
         ) { EmptyView() }
     }

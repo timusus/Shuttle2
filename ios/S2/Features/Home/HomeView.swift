@@ -106,6 +106,7 @@ struct HomeContent: View {
                 .frame(maxWidth: AdaptiveLayout.contentMaxWidth)
                 .frame(maxWidth: .infinity)
             }
+            .environment(\.homeCovers, content.covers)
             .toolbar {
                 // Cold start has its own, larger Shuffle All.
                 if !coldStart {

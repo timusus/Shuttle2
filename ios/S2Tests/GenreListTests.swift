@@ -29,6 +29,25 @@ struct GenreListTests {
         #expect(Route.genre(genres[0]) == .genre(name: "Trip Hop"))
     }
 
+    @Test func aGenresArtworkIsAMosaicOfFourCoversElseOneElseItsGeneratedArt() throws {
+        let genres = [genre("Trip Hop", songs: 12), genre("Art Rock", songs: 2), genre("Ambient", songs: 1)]
+        let covers = [
+            "Trip Hop": Array(TestSongs.demo.prefix(4)),
+            "Art Rock": [TestSongs.demo[4]],
+        ]
+        let mosaics = try GenreListContent(state: state(genres, .ready), covers: covers).inspect()
+            .findAll(CoverMosaic.self).map { try $0.actualView() }
+        #expect(mosaics.map(\.covers.count) == [4, 1, 0])
+        #expect(mosaics.map(\.isMosaic) == [true, false, false])
+        #expect(mosaics.allSatisfy { $0.symbol == GeneratedArtwork.genreSymbol })
+        #expect(mosaics.map(\.seed) == ["Trip Hop", "Art Rock", "Ambient"])
+    }
+
+    @Test func theGenresListHasNoToolbarShuffle() throws {
+        let sut = GenreListContent(state: state([genre("Trip Hop", songs: 12)], .ready))
+        #expect((try? sut.inspect().find(button: "Shuffle")) == nil)
+    }
+
     @Test func anImportKeepsShowingTheGenresAlreadyImported() throws {
         let sut = GenreListContent(state: state([genre("Trip Hop", songs: 12)], .scanning))
         #expect((try? sut.inspect().find(text: "Trip Hop")) != nil)
