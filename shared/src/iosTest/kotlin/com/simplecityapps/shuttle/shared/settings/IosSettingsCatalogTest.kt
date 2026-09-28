@@ -37,7 +37,6 @@ class IosSettingsCatalogTest {
         catalog.settings.map { it.key } shouldContainExactly listOf(
             PlaybackSettings.RetainShuffleOnNewQueue.key,
             PlaybackSettings.ReplayGain.key,
-            PlaybackSettings.PreAmpGain.key,
             StreamingSettings.UnmeteredQuality.key,
             StreamingSettings.MeteredQuality.key,
             ArtworkSettings.LocalOnly.key,
@@ -58,6 +57,8 @@ class IosSettingsCatalogTest {
             AppearanceSettings.AccentColour.key,
             AppearanceSettings.WidgetBackgroundOpacity.key,
             PlaybackSettings.UsbDacDirectOutput.key,
+            // One Preamp, the Equalizer's (#645).
+            PlaybackSettings.PreAmpGain.key,
             ArtworkSettings.WifiOnly.key,
             ArtworkSettings.MediaSessionArtwork.key,
             PrivacySettings.CrashReporting.key,
@@ -67,9 +68,9 @@ class IosSettingsCatalogTest {
     }
 
     @Test
-    fun theOnlyLinkIsTheEqualizerAndTheOnlySliderTheReplayGainPreamp() {
+    fun theOnlyLinkIsTheEqualizerWhichHoldsTheOnlyPreamp() {
         catalog.items.filterIsInstance<SettingItem.Navigate>().map { it.target } shouldContainExactly listOf(SettingsLink.Equalizer)
-        catalog.items.filterIsInstance<SettingItem.Slider<*>>().map { it.setting } shouldContainExactly listOf(PlaybackSettings.PreAmpGain)
+        catalog.items.filterIsInstance<SettingItem.Slider<*>>() shouldBe emptyList()
     }
 
     @Test
@@ -77,13 +78,11 @@ class IosSettingsCatalogTest {
         val shuffle = catalog.playbackAndSound.items.filterIsInstance<SettingItem.Switch>().single()
         val metered = catalog.sources.items.filterIsInstance<SettingItem.Choice<*>>().single { it.setting == StreamingSettings.MeteredQuality }
         val replayGain = catalog.playbackAndSound.items.filterIsInstance<SettingItem.Choice<*>>().single()
-        val preamp = catalog.playbackAndSound.items.filterIsInstance<SettingItem.Slider<*>>().single()
         val state = SettingsUiState(
             values = mapOf(
                 shuffle.key to true,
                 metered.key to StreamingQuality.Kbps192,
-                replayGain.key to ReplayGainMode.Album,
-                preamp.key to -2.5f
+                replayGain.key to ReplayGainMode.Album
             )
         )
 
@@ -91,10 +90,6 @@ class IosSettingsCatalogTest {
         state.selectedIndex(metered) shouldBe 2
         state.isEnabled(metered, catalog) shouldBe true
         state.selectedIndex(replayGain) shouldBe 1
-        state.sliderValue(preamp) shouldBe -2.5f
-        preamp.minimum shouldBe -12f
-        preamp.maximum shouldBe 12f
         SettingsUiState().isOn(shuffle) shouldBe false
-        SettingsUiState().sliderValue(preamp) shouldBe 0f
     }
 }

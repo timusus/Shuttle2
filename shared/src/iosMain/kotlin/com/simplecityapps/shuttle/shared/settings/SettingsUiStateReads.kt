@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.shared.settings
 
-import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsUiState
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
@@ -19,18 +18,6 @@ fun SettingsUiState.selectedIndex(item: SettingItem.Choice<*>): Int {
     val current = value(item.setting)
     return item.options.indexOfFirst { it.value == current }
 }
-
-/** [item]'s stored value, as the slider's position. */
-fun SettingsUiState.sliderValue(item: SettingItem.Slider<*>): Float = value(item.setting).toFloat()
-
-/** The lowest position the slider takes. */
-val SettingItem.Slider<*>.minimum: Float get() = range.start
-
-/** The highest position the slider takes. */
-val SettingItem.Slider<*>.maximum: Float get() = range.endInclusive
-
-/** Whether the slider sets a gain, its value shown in decibels (Android's `sliderValueLabel`). */
-val SettingItem.Slider<*>.isDecibels: Boolean get() = setting == PlaybackSettings.PreAmpGain
 
 /**
  * False while the switch [item] depends on is off, or a switch that takes it over is on and shown in [catalog]

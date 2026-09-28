@@ -6,7 +6,7 @@ import ViewInspector
 @testable import S2
 
 /// Settings: `IosSettingsCatalog` and `SettingsUiState` mapped to the form's sections, the rows from plain values,
-/// the Sources and Equalizer rows pushing their screens, and the preamp slider.
+/// the Sources and Equalizer rows pushing their screens, and no preamp outside the Equalizer.
 @MainActor
 struct SettingsViewTests {
     private let catalog = IosSettingsCatalog.shared
@@ -22,15 +22,14 @@ struct SettingsViewTests {
         #expect(sections.map(\.title) == ["Playback & sound", nil, "Sources", "Streaming quality", "Library", "Artwork", "Appearance"])
     }
 
-    @Test func thePlaybackSectionLinksTheEqualizerAndHoldsReplayGainAndThePreamp() throws {
-        let preampKey = key(catalog.playbackAndSound, 3)
-        let state = SettingsUiState(values: [preampKey: KotlinFloat(float: -2.5)], lastScanDate: nil, events: [])
-        let sections = SettingsSection.sections(catalog: catalog, state: state)
+    @Test func thePlaybackSectionLinksTheEqualizerAndHoldsReplayGainButNoPreamp() throws {
+        let sections = SettingsSection.sections(catalog: catalog, state: SettingsUiState(values: [:], lastScanDate: nil, events: []))
         let rows = try #require(sections.dropFirst().first?.rows)
 
+        // One Preamp, the Equalizer's (#645): Settings links to it rather than showing a second slider.
+        #expect(rows.map(\.id) == ["settings.equalizer", key(catalog.playbackAndSound, 2)])
         #expect(rows.first == .link(id: "settings.equalizer", title: "Equalizer", systemImage: "slider.vertical.3", route: .equalizer))
-        #expect(rows.dropFirst().first?.id == key(catalog.playbackAndSound, 2))
-        #expect(rows.last == .slider(key: preampKey, title: "Preamp", value: -2.5, range: -12...12, valueLabel: "-2.5 dB", isEnabled: true))
+        #expect(!sections.flatMap(\.rows).map(\.id).contains("preamp_gain"))
     }
 
     @Test func theSourcesSectionLeadsWithTheRowThatPushesSources() {
@@ -116,21 +115,6 @@ struct SettingsViewTests {
         try sut.inspect().find(viewWithAccessibilityIdentifier: "settings.metered").picker().select(value: 1)
         #expect(chosen?.0 == "metered")
         #expect(chosen?.1 == 1)
-    }
-
-    @Test func slidingReportsTheKeyAndPosition() throws {
-        var slid: (String, Float)?
-        let sut = SettingsContent(
-            sections: [SettingsSection(id: "s", title: nil, rows: [
-                .slider(key: "preamp", title: "Preamp", value: 0, range: -12...12, valueLabel: "+0.0 dB", isEnabled: true)
-            ])],
-            onSlide: { slid = ($0, $1) }
-        )
-        let slider = try sut.inspect().find(viewWithAccessibilityIdentifier: "settings.preamp").slider()
-        try slider.setValue(0.625) // a fraction of the range: 3 dB
-        #expect(slid?.0 == "preamp")
-        #expect(slid?.1 == 3)
-        #expect((try? sut.inspect().find(text: "+0.0 dB")) != nil)
     }
 
     @Test func tappingAnActionWithoutConfirmationRunsIt() throws {
