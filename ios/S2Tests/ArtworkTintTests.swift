@@ -68,16 +68,6 @@ struct ArtworkTintTests {
         #expect(ContrastSafeTint.safeTint(for: sky, isDarkScheme: true) == sky)
     }
 
-    @Test(arguments: [false, true])
-    func theWashSafeTintClearsAAOnItsOwnWash(isDark: Bool) {
-        let ground = ContrastSafeTint.background(isDarkScheme: isDark)
-        for hex in Self.hardColours {
-            let safe = ContrastSafeTint.safeTint(for: RGB(hex: hex), againstWashOver: ground, washOpacity: 0.12, isDarkScheme: isDark)
-            let wash = ContrastSafeTint.wash(of: safe, over: ground, opacity: 0.12)
-            #expect(ContrastSafeTint.contrastRatio(safe, wash) >= ContrastSafeTint.minimumContrast, "\(String(hex, radix: 16))")
-        }
-    }
-
     @Test func theKnownRatiosMatchWCAG() {
         #expect(abs(ContrastSafeTint.contrastRatio(RGB(hex: 0xFF_FF_FF), RGB(hex: 0x00_00_00)) - 21) < 0.01)
         #expect(abs(ContrastSafeTint.contrastRatio(RGB(hex: 0x77_77_77), RGB(hex: 0xFF_FF_FF)) - 4.48) < 0.01)
@@ -107,19 +97,6 @@ struct ArtworkTintTests {
         let dark = ContrastSafeTint.rgb(from: TintedChromeInk.onAccent, isDarkScheme: true)
         #expect(Self.hex(light) == 0xFF_FF_FF)
         #expect(Self.hex(dark) == Self.hex(ContrastSafeTint.darkLabel))
-    }
-
-    @Test(arguments: [false, true])
-    func chromeInkFollowsIncreaseContrastAndTheTintedState(isDark: Bool) {
-        let navy = Color(red: 0x15 / 255, green: 0x34 / 255, blue: 0x6C / 255)
-        #expect(TintedChromeInk.foreground(tint: navy, isTinted: true, increasedContrast: true, isDarkScheme: isDark) == .primary)
-        // Navy on the dark ground fails, so the ink is a label colour, not the tint; on the light ground it passes.
-        let tinted = TintedChromeInk.foreground(tint: navy, isTinted: true, increasedContrast: false, isDarkScheme: isDark)
-        let rgb = ContrastSafeTint.rgb(from: tinted, isDarkScheme: isDark)
-        #expect(ContrastSafeTint.contrastRatio(rgb, ContrastSafeTint.background(isDarkScheme: isDark)) >= ContrastSafeTint.minimumContrast)
-        #expect((tinted == navy) == !isDark)
-        // The secondary token clears AA on the chrome ground in both schemes, so it is kept.
-        #expect(TintedChromeInk.secondaryInk(isDarkScheme: isDark) != .primary)
     }
 
     // MARK: Extractor cache

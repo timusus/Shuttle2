@@ -235,16 +235,6 @@ enum ContrastSafeTint {
         )
     }
 
-    /// The form of `rgb` that stays legible on a wash of itself over `ground` (a capsule tinted at 12% with its
-    /// label in the tint): the wash moves with the tint, so the search checks each tone against its own wash.
-    static func safeTint(for rgb: RGB, againstWashOver ground: RGB, washOpacity: Double, isDarkScheme: Bool) -> RGB {
-        func ownWash(_ tone: RGB) -> RGB { wash(of: tone, over: ground, opacity: washOpacity) }
-        guard contrastRatio(rgb, ownWash(rgb)) < minimumContrast else { return rgb }
-        return firstPassingTone(HSB(rgb), isDarkScheme: isDarkScheme) { tone in
-            contrastRatio(tone, ownWash(tone)) >= minimumContrast
-        }
-    }
-
     // MARK: Ink on a tint fill
 
     static let lightLabel = RGB(red: 1, green: 1, blue: 1)

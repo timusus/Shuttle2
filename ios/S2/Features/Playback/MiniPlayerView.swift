@@ -38,7 +38,7 @@ struct MiniPlayerView: View {
         let actions = binding.actions
         let binding = binding
         MiniPlayerBar(
-            title: state.title,
+            title: state.title ?? "",
             artist: state.artist,
             artwork: state.artwork,
             isPlaying: state.isPlaying,
@@ -96,7 +96,8 @@ private struct PlayerArtworkTintModifier: ViewModifier {
 
 /// The mini player's content: plain values in, so it previews and tests (ViewInspector) without Kotlin.
 struct MiniPlayerBar: View {
-    let title: String?
+    /// Only drawn while a song is current (`PlayerBinding.isMiniPlayerVisible`), so there is always one.
+    let title: String
     let artist: String?
     let artwork: ArtworkSource?
     let isPlaying: Bool
@@ -128,7 +129,7 @@ struct MiniPlayerBar: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(
-        title: String?,
+        title: String,
         artist: String?,
         artwork: ArtworkSource?,
         isPlaying: Bool,
@@ -194,9 +195,9 @@ struct MiniPlayerBar: View {
                         .nowPlayingMatchedGeometry(id: NowPlayingCover.matchedGeometryID, isSource: !isCoverHidden)
                         .opacity(isCoverHidden ? 0 : 1)
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(title ?? "Not Playing")
+                        Text(title)
                             .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(title == nil ? .secondary : .primary)
+                            .foregroundStyle(.primary)
                             .lineLimit(1)
                             .accessibilityIdentifier("miniPlayer.title")
                         if showsArtist, let artist {
@@ -214,7 +215,7 @@ struct MiniPlayerBar: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(accessibilityLabel)
-            .accessibilityValue(title == nil ? "" : (isPlaying ? "Playing" : "Paused"))
+            .accessibilityValue(isPlaying ? "Playing" : "Paused")
             .accessibilityHint("Opens Now Playing")
             .accessibilityIdentifier("miniPlayer.open")
 
@@ -223,11 +224,7 @@ struct MiniPlayerBar: View {
                     .font(.body.weight(.semibold))
                     .foregroundStyle(.primary)
                     .contentTransition(.symbolEffect(.replace))
-                    .background {
-                        if title != nil {
-                            MiniPlayerProgressRing(progress: progress)
-                        }
-                    }
+                    .background { MiniPlayerProgressRing(progress: progress) }
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
@@ -250,7 +247,7 @@ struct MiniPlayerBar: View {
         }
     }
 
-    /// The song's cover, or the placeholder tile when nothing is queued.
+    /// The song's cover, or the placeholder tile when the song has none.
     @ViewBuilder
     private var cover: some View {
         if let artwork {
@@ -261,7 +258,7 @@ struct MiniPlayerBar: View {
     }
 
     private var accessibilityLabel: String {
-        [title ?? "Not Playing", artist].compactMap { $0 }.joined(separator: ", ")
+        [title, artist].compactMap { $0 }.joined(separator: ", ")
     }
 }
 
@@ -381,8 +378,4 @@ struct MiniPlayerAccessoryModifier: ViewModifier {
             onTap: {}, onPlayPause: {}, onNext: {}
         )
     }
-}
-
-#Preview("Not playing") {
-    MiniPlayerBar(title: nil, artist: nil, artwork: nil, isPlaying: false, onTap: {}, onPlayPause: {}, onNext: {})
 }

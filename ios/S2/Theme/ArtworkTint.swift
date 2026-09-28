@@ -89,36 +89,8 @@ struct ArtworkTintValues {
 
 // MARK: - Tinted chrome ink
 
-/// The ink for text and glyphs on tinted chrome (the player's capsules, the mini player's labels), after
-/// Shuttle Podcasts. In order:
-///
-/// 1. Increase Contrast on: `.primary`, plainly.
-/// 2. Tinted (the control has state to report): the tint, if it clears AA on the chrome ground; else whichever
-///    of the light and dark labels does.
-/// 3. Neutral: the app's AA-safe secondary text (`.s2SecondaryText`), measured on the same ground.
+/// Ink for tinted chrome.
 enum TintedChromeInk {
-    static func foreground(tint: Color, isTinted: Bool, increasedContrast: Bool, isDarkScheme: Bool) -> Color {
-        if increasedContrast { return .primary }
-        guard isTinted else { return secondaryInk(isDarkScheme: isDarkScheme) }
-        return safeTintInk(tint: tint, isDarkScheme: isDarkScheme)
-    }
-
-    /// `.s2SecondaryText` if it clears AA on the chrome ground (it does in both schemes today), else `.primary`.
-    static func secondaryInk(isDarkScheme: Bool) -> Color {
-        let token = Color.s2SecondaryText
-        let rgb = ContrastSafeTint.rgb(from: token, isDarkScheme: isDarkScheme)
-        let ground = ContrastSafeTint.background(isDarkScheme: isDarkScheme)
-        return ContrastSafeTint.contrastRatio(rgb, ground) >= ContrastSafeTint.minimumContrast ? token : .primary
-    }
-
-    /// The tint if it clears AA on the scheme's chrome ground, else the label colour that does.
-    static func safeTintInk(tint: Color, isDarkScheme: Bool) -> Color {
-        let rgb = ContrastSafeTint.rgb(from: tint, isDarkScheme: isDarkScheme)
-        let ground = ContrastSafeTint.background(isDarkScheme: isDarkScheme)
-        if ContrastSafeTint.contrastRatio(rgb, ground) >= ContrastSafeTint.minimumContrast { return tint }
-        return ContrastSafeTint.color(ContrastSafeTint.labelColor(onFill: ground))
-    }
-
     /// The label on an accent fill, per scheme: white on the light-scheme `#006AD1`, near-black on the
     /// dark-scheme `#3D9DFF` (white there is 2.9:1).
     static let onAccent = Color(uiColor: UIColor { traits in
