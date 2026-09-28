@@ -26,4 +26,13 @@ class FakeGenreRepository : GenreRepository {
         val songs = genres.flatMap { songsForGenre[it].orEmpty() }
         return MutableStateFlow(songs)
     }
+
+    /** The requested limits, in order, so a test can check a caller asks for no more than it shows. */
+    val coverLimits = mutableListOf<Int>()
+
+    /** One song per distinct album of the genre's songs, up to [limit], as the real query does. */
+    override fun getGenreCoverSongs(genre: String, limit: Int): Flow<List<Song>> {
+        coverLimits += limit
+        return MutableStateFlow(songsForGenre[genre].orEmpty().filterNot { it.blacklisted }.distinctBy { it.albumGroupKey }.take(limit))
+    }
 }

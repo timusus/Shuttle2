@@ -17,4 +17,10 @@ interface GenreRepository {
         genre: String,
         songQuery: SongQuery
     ): Flow<List<Song>> = getSongsForGenres(listOf(genre), songQuery)
+
+    /** Up to [limit] songs tagged [genre], one per distinct album, excluded songs left out: for a cover mosaic (#633). */
+    fun getGenreCoverSongs(
+        genre: String,
+        limit: Int
+    ): Flow<List<Song>>
 }

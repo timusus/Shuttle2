@@ -42,6 +42,8 @@ internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDa
 
     override fun getSongDataByIds(ids: List<Long>): Flow<List<SongData>> = throw NotImplementedError()
 
+    override fun getCoverSongDataForGenre(genre: String, limit: Int): Flow<List<SongData>> = throw NotImplementedError()
+
     override suspend fun get(): List<SongData> = throw NotImplementedError()
 
     override suspend fun insert(songData: List<SongData>): List<Long> = throw NotImplementedError()

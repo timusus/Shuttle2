@@ -32,6 +32,25 @@ abstract class SongDataDao {
     @Query("SELECT * FROM songs ORDER BY albumArtist, album, track")
     abstract fun getAllSongData(): Flow<List<SongData>>
 
+    /**
+     * Up to [limit] songs tagged [genre], one per distinct album (case-insensitively, by album and album artist), in
+     * album-artist then album order: a genre tile's cover mosaic (#633), without loading the whole genre. [genre]
+     * matches a whole entry of the `;`-joined genres column, case-sensitively, as the genre list does. Excluded songs
+     * are left out. Like the playlist cover query, the grouping only approximates album identity; it's cosmetic.
+     */
+    @Query(
+        """
+            SELECT * FROM songs WHERE id IN (
+                SELECT MIN(id) FROM songs
+                WHERE blacklisted = 0 AND instr(';' || genres || ';', ';' || :genre || ';') > 0
+                GROUP BY LOWER(album), LOWER(albumArtist)
+            )
+            ORDER BY LOWER(albumArtist), LOWER(album)
+            LIMIT :limit
+            """
+    )
+    abstract fun getCoverSongDataForGenre(genre: String, limit: Int): Flow<List<SongData>>
+
     fun getAll(): Flow<List<Song>> = getAllSongData().map { list ->
         list.map { songData ->
             songData.toSong()

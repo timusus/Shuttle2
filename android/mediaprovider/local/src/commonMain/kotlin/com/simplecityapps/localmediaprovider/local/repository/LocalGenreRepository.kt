@@ -1,5 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
+import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
+import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.genres.comparator
@@ -21,7 +23,8 @@ import kotlinx.coroutines.flow.stateIn
 
 class LocalGenreRepository(
     private val scope: CoroutineScope,
-    val songRepository: SongRepository
+    val songRepository: SongRepository,
+    private val songDataDao: SongDataDao
 ) : GenreRepository {
     private val genreRelay: StateFlow<Map<String, List<Song>>?> by lazy {
         songRepository
@@ -77,4 +80,9 @@ class LocalGenreRepository(
                 .filter(songQuery.predicate)
                 .sortedWith(songQuery.sortOrder.comparator)
         }
+
+    /** Straight from the database, so a Home tile's mosaic doesn't wait on (or sort) the whole genre. */
+    override fun getGenreCoverSongs(genre: String, limit: Int): Flow<List<Song>> = songDataDao.getCoverSongDataForGenre(genre, limit)
+        .map { songs -> songs.map { it.toSong() } }
+        .flowOn(Dispatchers.IO)
 }
