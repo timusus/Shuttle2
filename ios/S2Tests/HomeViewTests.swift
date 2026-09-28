@@ -31,7 +31,7 @@ struct HomeViewTests {
     }
 
     private func content(_ sections: [HomeSection] = [], resume: ResumeQueue? = nil) -> HomeUiState {
-        HomeUiStateContent(showWhatsNew: false, sections: sections, resume: resume, events: [])
+        HomeUiStateContent(showWhatsNew: false, sections: sections, resume: resume, events: [], covers: [:])
     }
 
     private func same(_ lhs: MediaAction?, _ rhs: MediaAction) -> Bool {
@@ -134,6 +134,16 @@ struct HomeViewTests {
         ])]))
         #expect((try? sut.inspect().find(text: "Album · Massive Attack")) != nil)
         #expect((try? sut.inspect().find(text: "Artist · 12 albums")) != nil)
+    }
+
+    @Test func aSmartPlaylistTileHasItsOwnIdentifier() throws {
+        let sut = HomeContent(state: content([section(.rediscover, .rediscover, [
+            HomeItemAlbumItem(album: album("Mezzanine")),
+            HomeItemSmartPlaylistItem(smartPlaylistId: .favourites),
+        ])]))
+        let buttons = try sut.inspect().findAll(ViewType.Button.self)
+        let ids = buttons.compactMap { try? $0.accessibilityIdentifier() }.filter { $0.hasPrefix("homeTile.") }
+        #expect(ids == ["homeTile.album", "homeTile.smartPlaylist"])
     }
 
     @Test func tappingAShelfTileOpensItAndAGenrePickShufflesTheGenre() throws {

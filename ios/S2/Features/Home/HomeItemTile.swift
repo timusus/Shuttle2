@@ -24,6 +24,17 @@ extension HomeItem {
         }
     }
 
+    /// A shelf tile's accessibility identifier: its kind, with a smart playlist kept apart from a playlist (#633).
+    var tileIdentifier: String {
+        switch onEnum(of: self) {
+        case .albumItem: "homeTile.album"
+        case .artistItem: "homeTile.artist"
+        case .playlistItem: "homeTile.playlist"
+        case .smartPlaylistItem: "homeTile.smartPlaylist"
+        case .genreItem: "homeTile.genre"
+        }
+    }
+
     /// The line under a shelf tile's title: the album's artist, the artist's album count, a playlist's or genre's
     /// song count. Nil when there's nothing beyond the kind.
     var detail: String? {

@@ -198,7 +198,7 @@ struct HomeContent: View {
         }
         .buttonStyle(.pressScale)
         .zoomSource(for: item, tileKey: tileKey, activeKey: zoomSourceKey)
-        .accessibilityIdentifier("homeTile.\(item.typeLabel.lowercased())")
+        .accessibilityIdentifier(item.tileIdentifier)
         .homeItemActions(HomeItemActions(item: item, perform: onAction, open: open))
     }
 
