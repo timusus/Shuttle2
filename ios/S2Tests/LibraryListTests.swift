@@ -72,9 +72,16 @@ struct LibraryListTests {
     /// Launch imports only until an import has finished once; the saved library shows straight away after that (#623).
     @Test func launchImportsOnlyWhenNothingHasBeenImported() {
         var scans = 0
-        LibraryImport.atLaunch(hasScanned: true) { scans += 1 }
+        LibraryImport.atLaunch(hasScanned: true, songTagsOutdated: false) { scans += 1 }
         #expect(scans == 0)
-        LibraryImport.atLaunch(hasScanned: false) { scans += 1 }
+        LibraryImport.atLaunch(hasScanned: false, songTagsOutdated: true) { scans += 1 }
+        #expect(scans == 1)
+    }
+
+    /// A library imported before this build's tags imports once more at launch (#637).
+    @Test func launchImportsAgainWhenTheSongTagsAreOutdated() {
+        var scans = 0
+        LibraryImport.atLaunch(hasScanned: true, songTagsOutdated: true) { scans += 1 }
         #expect(scans == 1)
     }
 

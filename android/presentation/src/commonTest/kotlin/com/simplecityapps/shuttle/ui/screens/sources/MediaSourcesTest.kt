@@ -26,6 +26,26 @@ class MediaSourcesTest {
     }
 
     @Test
+    fun `a library imported before this build's tags imports again, once`() {
+        mediaSources.scan()
+        mediaSources.songTagsOutdated = true
+
+        mediaSources.rescanIfSongTagsOutdated()
+        mediaSources.rescanIfSongTagsOutdated()
+
+        mediaSources.scans shouldBe 2
+    }
+
+    @Test
+    fun `a library never imported isn't rescanned for its tags`() {
+        mediaSources.songTagsOutdated = true
+
+        mediaSources.rescanIfSongTagsOutdated()
+
+        mediaSources.scans shouldBe 0
+    }
+
+    @Test
     fun `no grant at startup doesn't scan`() {
         mediaSources.scanIfNeverScanned(musicPermissionGranted = false)
 

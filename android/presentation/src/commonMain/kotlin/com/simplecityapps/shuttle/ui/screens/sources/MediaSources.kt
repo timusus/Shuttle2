@@ -35,6 +35,17 @@ interface MediaSources {
     fun scanIfNeverScanned(musicPermissionGranted: Boolean) {
         if (musicPermissionGranted && !hasScanned) scanThisDevice()
     }
+
+    /** Whether the stored songs lack tags this build reads (`MediaImporter.songTagsOutdated`), until an import of every source succeeds. */
+    val songTagsOutdated: Boolean
+
+    /**
+     * Imports again if the library was imported before this build's tags: every source is read in full and its songs
+     * updated in place, keeping their ids, history and playlists. Asked once, at launch.
+     */
+    fun rescanIfSongTagsOutdated() {
+        if (hasScanned && songTagsOutdated) scan()
+    }
 }
 
 /** Songs on this device come from the S2 scanner, or the Android (MediaStore) provider for users who chose it before. */

@@ -18,6 +18,8 @@ class FakeMediaSources(vararg enabled: MediaProviderType) : MediaSources {
 
     override var hasScanned = false
 
+    override var songTagsOutdated = false
+
     override fun enable(type: MediaProviderType) {
         if (type !in _enabledTypes.value) _enabledTypes.value += type
     }
@@ -29,6 +31,7 @@ class FakeMediaSources(vararg enabled: MediaProviderType) : MediaSources {
     override fun scan() {
         scans++
         hasScanned = true
+        songTagsOutdated = false
     }
 }
 

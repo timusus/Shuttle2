@@ -8,6 +8,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
+import com.simplecityapps.mediaprovider.SongDiff
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
@@ -132,6 +133,45 @@ class LocalSongRepositoryTest {
         )
 
         repository.loadSongs(SongQuery.All()).map(Song::dateAdded) shouldBe listOf(serverDate, serverDate)
+    }
+
+    @Test
+    fun `a re-import fills the raw tags of songs stored before they were read, in place, keeping each id`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao())
+        val stored = insertSongs(listOf("First", "Second"))
+        stored.map(Song::albumArtists) shouldBe listOf(null, null)
+
+        val reread = stored.map { song ->
+            song.copy(
+                id = 0,
+                albumArtists = listOf("Various Artists"),
+                artistsTag = listOf("A", "B"),
+                artistDisplay = "A feat. B",
+                compilation = true,
+                mbTrackId = "0f4e3c5a-1111-4c1e-9c2b-000000000001",
+                mbArtistIds = listOf("0f4e3c5a-2222-4c1e-9c2b-000000000002"),
+                serverAlbumId = "album-1",
+                serverArtistIds = emptyList()
+            )
+        }
+        val diff = SongDiff(stored, reread).apply()
+        diff.inserts shouldBe emptyList()
+        repository.insertUpdateAndDelete(inserts = diff.inserts, updates = diff.updates, deletes = diff.deletes, mediaProviderType = MediaProviderType.Shuttle)
+
+        val updated = repository.loadSongs(SongQuery.All()).sortedBy(Song::id)
+        updated.map(Song::id) shouldBe stored.map(Song::id)
+        updated.forEach { song ->
+            song.albumArtists shouldBe listOf("Various Artists")
+            song.artistsTag shouldBe listOf("A", "B")
+            song.artistDisplay shouldBe "A feat. B"
+            song.compilation shouldBe true
+            song.mbTrackId shouldBe "0f4e3c5a-1111-4c1e-9c2b-000000000001"
+            song.mbArtistIds shouldBe listOf("0f4e3c5a-2222-4c1e-9c2b-000000000002")
+            song.serverAlbumId shouldBe "album-1"
+            // Read and untagged (empty) stays distinct from never read (null)
+            song.serverArtistIds shouldBe emptyList()
+            song.serverAlbumArtistIds shouldBe null
+        }
     }
 
     @Test

@@ -68,6 +68,8 @@ class DefaultMediaSources @Inject constructor(
 
     override val hasScanned: Boolean get() = generalPreferences.lastMediaImportDate != null
 
+    override val songTagsOutdated: Boolean get() = mediaImporter.songTagsOutdated
+
     override fun scan() {
         appCoroutineScope.launch { mediaImporter.import() }
     }

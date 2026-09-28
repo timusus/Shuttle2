@@ -10,12 +10,17 @@ import Shared
 @MainActor
 enum LibraryImport {
     static func atLaunch(graph: IosAppGraph = AppGraph.shared) {
-        atLaunch(hasScanned: graph.mediaSources.hasScanned, scan: graph.mediaSources.scan)
+        atLaunch(
+            hasScanned: graph.mediaSources.hasScanned,
+            songTagsOutdated: graph.mediaSources.songTagsOutdated,
+            scan: graph.mediaSources.scan
+        )
     }
 
-    /// Interrupted before it finished (the app killed mid-import), the first import runs again.
-    static func atLaunch(hasScanned: Bool, scan: () -> Void) {
-        if !hasScanned { scan() }
+    /// Interrupted before it finished (the app killed mid-import), the first import runs again. A library imported
+    /// before this build's tags (`MediaImporter.SONG_TAGS_VERSION`) imports once more, updating its songs in place.
+    static func atLaunch(hasScanned: Bool, songTagsOutdated: Bool, scan: () -> Void) {
+        if !hasScanned || songTagsOutdated { scan() }
     }
 
     static func refresh(graph: IosAppGraph = AppGraph.shared) {

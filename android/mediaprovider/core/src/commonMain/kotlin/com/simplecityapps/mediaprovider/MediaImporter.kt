@@ -53,6 +53,13 @@ class MediaImporter(
 
     var importCount: Int = 0
 
+    /**
+     * Whether the songs were imported before this build's [SONG_TAGS_VERSION], so they lack tags it reads, until an import
+     * of every source succeeds. Every provider but MediaStore re-reads each song on each import (MediaStore does while
+     * this is set), and an import updates songs in place by path, so a re-import fills them in without changing an id.
+     */
+    val songTagsOutdated: Boolean get() = preferenceManager.songTagsVersion < SONG_TAGS_VERSION
+
     suspend fun import() {
         if (mediaProviders.isEmpty()) {
             logger.debug { "Import failed, media providers empty" }
@@ -100,6 +107,7 @@ class MediaImporter(
             _songImportState.value = mediaProvider.importProgress(start)
         }
 
+        var songsImported = true
         withContext(Dispatchers.IO) {
             mediaProviders.map { mediaProvider ->
                 async {
@@ -114,6 +122,7 @@ class MediaImporter(
                             }
 
                             is FlowEvent.Failure -> {
+                                songsImported = false
                                 _songImportState.value = SongImportState.ImportComplete(mediaProvider.type, event.message)
                             }
                         }
@@ -131,6 +140,7 @@ class MediaImporter(
         }
 
         preferenceManager.lastMediaImportDate = Clock.System.now()
+        if (songsImported) preferenceManager.songTagsVersion = SONG_TAGS_VERSION
 
         importCount++
 
@@ -254,4 +264,12 @@ class MediaImporter(
         val songs: List<Song>,
         val externalId: String
     )
+
+    companion object {
+        /**
+         * Raised when the importer starts storing a tag it didn't before, so the songs stored already are read again once
+         * ([songTagsOutdated]). 1: the raw artist and album tags and ids of #637.
+         */
+        const val SONG_TAGS_VERSION = 1
+    }
 }

@@ -31,6 +31,7 @@ import kotlinx.coroutines.test.setMain
 @OptIn(ExperimentalCoroutinesApi::class)
 class MediaImporterTest {
     private val provider = GatedProvider()
+    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
     private val importer =
         MediaImporter(
             strings = FakeMediaImportStrings,
@@ -38,7 +39,7 @@ class MediaImporterTest {
             playlistStore = object : ImportedPlaylistStore {
                 override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
             },
-            preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
+            preferenceManager = preferences
         ).apply { mediaProviders += provider }
 
     @BeforeTest
@@ -176,6 +177,33 @@ class MediaImporterTest {
         import.join()
 
         importer.songImportState.value shouldBe SongImportState.ImportComplete(MediaProviderType.Shuttle, "Server unreachable")
+    }
+
+    @Test
+    fun `songs imported before the current tag version are outdated until an import of every source succeeds`() = runBlocking<Unit> {
+        preferences.songTagsVersion = MediaImporter.SONG_TAGS_VERSION - 1
+        importer.songTagsOutdated shouldBe true
+
+        provider.scanFailure = "Server unreachable"
+        provider.gate.trySend(Unit)
+        importer.import()
+        importer.songTagsOutdated shouldBe true
+
+        provider.scanFailure = null
+        provider.gate.trySend(Unit)
+        importer.import()
+        importer.songTagsOutdated shouldBe false
+        preferences.songTagsVersion shouldBe MediaImporter.SONG_TAGS_VERSION
+    }
+
+    @Test
+    fun `an import that throws leaves the songs outdated`() = runBlocking<Unit> {
+        provider.failNext.store(true)
+        provider.gate.trySend(Unit)
+
+        runCatching { importer.import() }
+
+        importer.songTagsOutdated shouldBe true
     }
 
     /**

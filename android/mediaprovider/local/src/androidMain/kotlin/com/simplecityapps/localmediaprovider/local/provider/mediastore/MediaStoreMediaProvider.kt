@@ -87,6 +87,11 @@ class MediaStoreMediaProvider(
                 val path = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
                 val lastModified = songCursor.getLong(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)) * 1000
 
+                // MediaStore has no column for the ARTISTS or ALBUMARTISTS multi-value tags or the MusicBrainz ids, its
+                // COMPILATION column exists only from API 30, and its ARTIST_ID and ALBUM_ID are its own row ids rather than
+                // identities, so none of them is taken from the cursor: withFileTags reads them from the file. A file TagLib
+                // can't read keeps only the ARTIST credit (artistDisplay), and the rest stay empty.
+                val artist = songCursor.getStringOrNull(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST))
                 val song =
                     Song(
                         id = 0,
@@ -96,12 +101,7 @@ class MediaStoreMediaProvider(
                                     MediaStore.Audio.Media.TITLE
                                 )
                             ),
-                        artists =
-                            songCursor.getStringOrNull(
-                                songCursor.getColumnIndexOrThrow(
-                                    MediaStore.Audio.Media.ARTIST
-                                )
-                            )?.let { listOf(it) } ?: emptyList(),
+                        artists = listOfNotNull(artist),
                         albumArtist = songCursor.getStringOrNull(songCursor.getColumnIndex("album_artist")),
                         album =
                             songCursor.getStringOrNull(
@@ -136,14 +136,17 @@ class MediaStoreMediaProvider(
                         bitDepth = null,
                         sampleRate = null,
                         channelCount = null,
-                        artworkVersion = localArtworkVersion(lastModified, folderImageReader.imagesNear(path))
+                        artworkVersion = localArtworkVersion(lastModified, folderImageReader.imagesNear(path)),
+                        artistDisplay = artist
                     )
                 rawSongs.add(song)
             }
         }
 
         var songs = mutableListOf<Song>()
-        val backfillFileTags = !preferenceManager.mediaStoreFileTagsBackfilled
+        // The importer records the new version once this import's result is stored, so one cancelled part way through
+        // reads every file again next time
+        val backfillFileTags = preferenceManager.songTagsVersion < MediaImporter.SONG_TAGS_VERSION
         rawSongs
             .withFileTags(existingSongs, tagReader, readUnchanged = backfillFileTags)
             .collectIndexed { index, song ->
@@ -200,10 +203,6 @@ class MediaStoreMediaProvider(
             }
         }
         emit(FlowEvent.Success(songs))
-        // Only once the importer has handled the result, so an import cancelled part way through backfills again next time
-        if (backfillFileTags) {
-            preferenceManager.mediaStoreFileTagsBackfilled = true
-        }
     }
 
     data class MediaStoreSong(

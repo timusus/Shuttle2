@@ -32,7 +32,7 @@ class GeneralPreferenceManagerTest {
         preferences.sleepTimerPlayToEnd shouldBe false
         preferences.allLibraryTabs shouldBe LibraryTab.entries
         preferences.enabledLibraryTabs shouldBe LibraryTab.entries - LibraryTab.Folders
-        preferences.mediaStoreFileTagsBackfilled shouldBe false
+        preferences.songTagsVersion shouldBe 0
         preferences.lastMediaImportDate.shouldBeNull()
     }
 
@@ -55,7 +55,7 @@ class GeneralPreferenceManagerTest {
         preferences.sleepTimerPlayToEnd = true
         preferences.allLibraryTabs = listOf(LibraryTab.Songs, LibraryTab.Albums)
         preferences.enabledLibraryTabs = listOf(LibraryTab.Songs)
-        preferences.mediaStoreFileTagsBackfilled = true
+        preferences.songTagsVersion = 1
         preferences.lastMediaImportDate = Instant.fromEpochMilliseconds(1_700_000_000_003)
 
         store.values shouldBe mapOf(
@@ -76,7 +76,7 @@ class GeneralPreferenceManagerTest {
             "sleep_timer_play_to_end" to true,
             "pref_library_tabs_all" to "Songs,Albums",
             "pref_library_tabs_enabled" to "Songs",
-            "media_store_file_tags_backfilled" to true,
+            "song_tags_version" to 1,
             "pref_media_last_rescan_date" to 1_700_000_000_003L
         )
     }

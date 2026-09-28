@@ -19,6 +19,7 @@ constructor(
     override fun init(application: Application) {
         mediaSources.attachEnabled()
         mediaSources.scanIfNeverScanned(MusicPermission.isGranted(context))
+        mediaSources.rescanIfSongTagsOutdated()
 
         MediaImportWorker.updateWork(
             context = context,

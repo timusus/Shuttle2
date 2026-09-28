@@ -164,15 +164,17 @@ class GeneralPreferenceManager @Inject constructor(
                 .orEmpty()
         }
 
-    // Songs imported via MediaStore before their tags were read from the file carry MediaStore's tag values (wrong for
-    // Matroska and some UTF-8 tags, no ReplayGain at all), and an unchanged file isn't read again, so the first MediaStore
-    // import after the upgrade reads every file once and then sets this
-    var mediaStoreFileTagsBackfilled: Boolean
+    /**
+     * The version of the tags the stored songs were imported with (`MediaImporter.SONG_TAGS_VERSION`), set when an import
+     * of every source succeeds. Behind the current version, the songs lack tags this build reads, so a re-import runs once
+     * at launch, and the MediaStore provider reads unchanged files again rather than keeping their stored values.
+     */
+    var songTagsVersion: Int
         set(value) {
-            store.putBoolean("media_store_file_tags_backfilled", value)
+            store.putInt("song_tags_version", value)
         }
         get() {
-            return store.getBoolean("media_store_file_tags_backfilled", false)
+            return store.getInt("song_tags_version", 0)
         }
 
     var lastMediaImportDate: Instant?
