@@ -33,7 +33,7 @@ struct AlbumArtistDetailView: View {
                 onAddToQueue: { song in
                     models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
                 },
-                onAlbumTap: { navigator?.open(.album($0)) }
+                onAlbumTap: { navigator.openAsserting(.album($0)) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }
@@ -141,6 +141,7 @@ struct DetailAlbumShelf: View {
                         }
                         .buttonStyle(.pressScale)
                         .zoomSource(id: Route.album(album).cacheKey, tileKey: tileKey, activeKey: zoomSourceKey)
+                        .accessibilityIdentifier("detailTile.album")
                     }
                 }
             }
@@ -149,5 +150,18 @@ struct DetailAlbumShelf: View {
             .listRowBackground(Color.clear)
         }
         .listRowSeparator(.hidden)
+    }
+}
+
+extension Optional where Wrapped == Navigator {
+    /// Opens `route` on the environment's `Navigator`. The app always provides one (`ContentView`), so a missing one
+    /// is a wiring bug: a debug build stops on it rather than a tap silently doing nothing.
+    @MainActor
+    func openAsserting(_ route: Route) {
+        guard let navigator = self else {
+            assertionFailure("No Navigator in the environment to open \(route)")
+            return
+        }
+        navigator.open(route)
     }
 }

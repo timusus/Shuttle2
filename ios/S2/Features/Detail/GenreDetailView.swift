@@ -29,7 +29,7 @@ struct GenreDetailView: View {
                 onAddToQueue: { song in
                     models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
                 },
-                onAlbumTap: { navigator?.open(.album($0)) }
+                onAlbumTap: { navigator.openAsserting(.album($0)) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }

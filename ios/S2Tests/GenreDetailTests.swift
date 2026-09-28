@@ -36,6 +36,18 @@ struct GenreDetailTests {
         #expect(played == 1)
     }
 
+    @Test func tappingAnAlbumTileOpensIt() throws {
+        var opened: Album?
+        let state = GenreDetailUiState(
+            genre: genre(), albums: [album("Mezzanine"), album("Dummy")], songs: TestSongs.demo, currentSong: nil, loading: false
+        )
+        let sut = GenreDetailContent(state: state, onAlbumTap: { opened = $0 })
+        try sut.inspect().find(viewWithAccessibilityIdentifier: "detailTile.album").button().tap()
+        #expect(opened?.name == "Mezzanine")
+        try sut.inspect().find(button: "Dummy").tap()
+        #expect(opened?.name == "Dummy")
+    }
+
     @Test func placeholders() throws {
         let loading = GenreDetailUiState(genre: nil, albums: [], songs: [], currentSong: nil, loading: true)
         #expect((try? GenreDetailContent(state: loading).inspect().find(ViewType.ProgressView.self)) != nil)
