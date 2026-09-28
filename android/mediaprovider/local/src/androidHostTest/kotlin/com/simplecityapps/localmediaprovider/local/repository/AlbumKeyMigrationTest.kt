@@ -125,6 +125,22 @@ class AlbumKeyMigrationTest {
     }
 
     @Test
+    fun `a move run twice, as after a run cut short, leaves one pin per album`() = runTest {
+        insertLibrary()
+        val pinned = database.pinnedCollectionDao()
+        // Two keys from before the rule that name one album now
+        pinned.insert(PinnedCollectionData(CollectionType.Album, oldAlbumId("kavinsky", "drive ost"), MediaProviderType.Shuttle))
+        pinned.insert(PinnedCollectionData(CollectionType.Album, oldAlbumId("college", "drive ost"), MediaProviderType.Shuttle))
+        insertEvent(PlayContext.TYPE_ALBUM, oldAlbumId("kavinsky", "drive ost"))
+
+        migration.migrate()
+        migration.migrate()
+
+        pinned.getAll().first().map { it.collectionId } shouldBe listOf(drive.encode())
+        storedContexts() shouldBe listOf(PlayContext.TYPE_ALBUM to drive.encode())
+    }
+
+    @Test
     fun `the move waits for current tags, then runs once`() = runTest {
         insertLibrary()
         insertEvent(PlayContext.TYPE_ALBUM, oldAlbumId("joni mitchell", "blue"))

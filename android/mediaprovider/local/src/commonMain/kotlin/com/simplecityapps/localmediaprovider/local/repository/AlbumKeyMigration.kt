@@ -14,7 +14,8 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
  * once: the play history's album and album artist contexts, and the pinned albums. It runs after the first import that
  * leaves every source's tags current (the MusicBrainz and server album ids the rule reads arrive with that import), and
  * each key moves through [AlbumKeyRekey]. A key it can't map (no song had it, or it doesn't read back) is kept as it is
- * and logged. To be deleted with [AlbumKeyRekey].
+ * and logged. Each key moves in one statement and a key already moved maps to itself, so a run cut short (the process
+ * killed part way) just finishes on the next one. To be deleted with [AlbumKeyRekey].
  */
 class AlbumKeyMigration(
     private val playEventDao: PlayEventDao,
@@ -61,8 +62,7 @@ class AlbumKeyMigration(
                 }
 
                 current.id != pinned.collectionId -> {
-                    pinnedCollectionDao.insert(pinned.copy(collectionId = current.id!!))
-                    pinnedCollectionDao.delete(pinned)
+                    pinnedCollectionDao.move(pinned.collectionType, pinned.collectionId, pinned.mediaProviderType, current.id!!)
                     moved++
                 }
             }
