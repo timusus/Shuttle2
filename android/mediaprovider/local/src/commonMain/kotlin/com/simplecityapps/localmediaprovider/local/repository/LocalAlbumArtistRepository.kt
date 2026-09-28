@@ -29,7 +29,8 @@ class LocalAlbumArtistRepository(val scope: CoroutineScope, private val songData
                             artists = songs.flatMap { it.artists }.distinct(),
                             albumCount = songs.distinctBy { it.album }.size,
                             songCount = songs.size,
-                            playCount = songs.minOfOrNull { it.playCount } ?: 0,
+                            // Every play of any of their songs counts, so never played means none of them ever was
+                            playCount = songs.sumOf { it.playCount },
                             groupKey = key,
                             mediaProviders = songs.map { it.mediaProvider }.distinct(),
                             artworkVersion = songs.combinedArtworkVersion()

@@ -5,6 +5,7 @@ data class AlbumArtist(
     val artists: List<String>,
     val albumCount: Int,
     val songCount: Int,
+    /** How many times their songs have been played through, all together. */
     val playCount: Int,
     val groupKey: AlbumArtistGroupKey,
     val mediaProviders: List<MediaProviderType>,

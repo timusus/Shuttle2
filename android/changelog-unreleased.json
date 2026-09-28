@@ -394,6 +394,10 @@
     {
       "text": "Home's Most Played now counts every play of an album's songs, so an album no longer stays off it because one of its songs was never played",
       "commits": []
+    },
+    {
+      "text": "Home's Something Different now suggests only artists you have never played, instead of any artist with one unplayed song",
+      "commits": []
     }
   ]
 }
