@@ -25,7 +25,7 @@
     <!-- Home: section of genre tiles; tapping one shuffles that genre -->
     <string name="home_genre_picks">Genre picks</string>
     <!-- Home: card title telling the user this version has release notes they haven't seen -->
-    <string name="home_whats_new_title">What\'s new in S2</string>
+    <string name="home_whats_new_title">What\'s new in Shuttle Music</string>
     <!-- Home: card message under the What's new title; %1$s is the app version -->
     <string name="home_whats_new_message">See what changed in version <xliff:g example="2026.09.25" id="version">%1$s</xliff:g></string>
     <!-- Home: button on the What's new card that opens the release notes -->
@@ -37,7 +37,7 @@
     <!-- Home: message of the empty state when the library has no songs -->
     <string name="home_empty_message">Music on this device and on servers you connect shows up here</string>
     <!-- Home: one-time snackbar telling an upgrader analytics is now on, since it never was before (#481) -->
-    <string name="home_analytics_notice_message">S2 now shares anonymous usage data to help improve the app. You can turn this off in Settings.</string>
+    <string name="home_analytics_notice_message">Shuttle Music now shares anonymous usage data to help improve the app. You can turn this off in Settings.</string>
     <!-- Home: action on the analytics notice snackbar, opens Settings > Privacy -->
     <string name="home_analytics_notice_action">Settings</string>
 </resources>

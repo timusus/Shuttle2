@@ -2,15 +2,15 @@
 <resources>
     <!-- Library empty state, before the app may read the device's music -->
     <string name="sources_access_title">Find the music on this device</string>
-    <string name="sources_access_message">S2 needs access to your music to build your library. You can also stream from your own server.</string>
-    <string name="sources_access_denied_message">Without access to your music, S2 can only play from a server.</string>
-    <string name="sources_access_permanently_denied_message">Access to music is turned off for S2. Turn on Music and audio in S2\'s app settings.</string>
+    <string name="sources_access_message">Shuttle Music needs access to your music to build your library. You can also stream from your own server.</string>
+    <string name="sources_access_denied_message">Without access to your music, Shuttle Music can only play from a server.</string>
+    <string name="sources_access_permanently_denied_message">Access to music is turned off for Shuttle Music. Turn on Music and audio in Shuttle Music\'s app settings.</string>
     <string name="sources_allow_access">Allow access to music</string>
     <string name="sources_open_app_settings">Open app settings</string>
     <string name="sources_connect_server">Connect a server</string>
     <string name="sources_scanning_title">Scanning your music</string>
     <string name="sources_no_music_title">No music found</string>
-    <string name="sources_no_music_message">S2 didn\'t find any music on this device. Add a folder in Sources, or connect a server.</string>
+    <string name="sources_no_music_message">Shuttle Music didn\'t find any music on this device. Add a folder in Sources, or connect a server.</string>
     <string name="sources_scan_again">Scan again</string>
 
     <!-- Settings > Sources -->
@@ -30,7 +30,7 @@
     <string name="sources_remove">Remove</string>
     <string name="sources_folder_access_removed_summary">Access removed. Tap to fix</string>
     <string name="sources_folder_access_removed_title">Access to this folder was removed</string>
-    <string name="sources_folder_access_removed_message">S2 no longer has access to %1$s. Its songs will leave your library on the next scan unless you grant access again.</string>
+    <string name="sources_folder_access_removed_message">Shuttle Music no longer has access to %1$s. Its songs will leave your library on the next scan unless you grant access again.</string>
     <string name="sources_grant_access">Grant access again</string>
     <string name="sources_folder_not_on_device">Pick a folder on this device\'s storage</string>
     <string name="sources_no_folder_picker">No app on this device can pick folders</string>

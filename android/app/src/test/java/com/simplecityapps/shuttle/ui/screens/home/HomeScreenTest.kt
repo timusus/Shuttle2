@@ -177,6 +177,6 @@ class HomeScreenTest {
     fun `the whats new card is hidden once seen`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.assertTextNotShown("What's new in S2")
+        robot.assertTextNotShown("What's new in Shuttle Music")
     }
 }

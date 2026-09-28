@@ -33,10 +33,10 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun `the root opens S2 Pro`() {
+    fun `the root opens Shuttle Music Pro`() {
         robot.setRootContent()
 
-        robot.tapText("S2 Pro")
+        robot.tapText("Shuttle Music Pro")
 
         robot.openedPro shouldBe true
     }

@@ -8,7 +8,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
-/** Characterisation tests for the S2 Pro paywall. */
+/** Characterisation tests for the Shuttle Music Pro paywall. */
 @RunWith(RobolectricTestRunner::class)
 class PaywallScreenTest {
     @get:Rule
@@ -36,7 +36,7 @@ class PaywallScreenTest {
     fun `a free user's main button starts the trial, and buying is the second button`() {
         robot.setContent(PaywallScenarios.free)
 
-        robot.assertNotShown("Get S2 Pro")
+        robot.assertNotShown("Get Shuttle Music Pro")
         robot.tapText("Start free trial")
         robot.tapText("Buy now")
 
@@ -50,7 +50,7 @@ class PaywallScreenTest {
 
         robot.assertDisplayed("9 days left in your free trial")
         robot.assertDisplayed(TRIAL_TERMS)
-        robot.assertEnabled("Get S2 Pro")
+        robot.assertEnabled("Get Shuttle Music Pro")
         robot.assertNotShown("Start free trial")
         robot.assertNotShown("Buy now")
     }
@@ -78,7 +78,7 @@ class PaywallScreenTest {
         robot.setContent(PaywallScenarios.trialEnded)
 
         robot.tapPlan("Yearly")
-        robot.tapText("Get S2 Pro")
+        robot.tapText("Get Shuttle Music Pro")
 
         robot.selectedPlans shouldBe listOf(PaywallPlan.Annual)
         robot.purchases shouldBe 1
@@ -112,7 +112,7 @@ class PaywallScreenTest {
 
         robot.assertDisplayed("Your free trial has ended. Upgrade to keep streaming from your servers.")
         robot.assertShownOnEveryPlan("Price unavailable")
-        robot.assertNotEnabled("Get S2 Pro")
+        robot.assertNotEnabled("Get Shuttle Music Pro")
         robot.tapText("Retry")
 
         robot.retries shouldBe 1
@@ -122,8 +122,8 @@ class PaywallScreenTest {
     fun `a Pro user sees their status and no plans`() {
         robot.setContent(PaywallScenarios.pro)
 
-        robot.assertDisplayed("You have S2 Pro. Thank you for supporting S2.")
-        robot.assertNotShown("Get S2 Pro")
+        robot.assertDisplayed("You have Shuttle Music Pro. Thank you for supporting Shuttle Music.")
+        robot.assertNotShown("Get Shuttle Music Pro")
         robot.assertNotShown("Manage subscription")
     }
 

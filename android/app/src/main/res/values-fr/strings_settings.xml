@@ -15,7 +15,7 @@
     <!-- Option to confirm downloading of artwork (album/artist images) -->
     <string name="settings_dialog_button_download_artwork">Télécharger</string>
     <!-- Settings option to copy debug logs to clipboard -->
-    <string name="settings_logging_clipboard_name">Journaux de la navette (S2)</string>
+    <string name="settings_logging_clipboard_name">Journaux de Shuttle Music</string>
     <!-- Shown when the debug logs have been copied to the clipboard -->
     <string name="settings_logging_clipboard_logs_copied">Journaux copiés dans le presse-papiers</string>
     <!-- Error message shown when copying debug logs failed, because the log file is too large -->

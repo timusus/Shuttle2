@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <!-- The name of the S2 Media Provider - the media provider which scans the device for songs and reads their tags (metadata)-->
-    <string name="media_provider_title_s2">S2メディアプロバイダー</string>
-    <!-- The description of the S2 Media Provider - scans user selected folders and files for metadata-->
+    <!-- The name of the Shuttle Music scanner - the media provider which scans the device for songs and reads their tags (metadata)-->
+    <string name="media_provider_title_s2">Shuttle Music メディアプロバイダー</string>
+    <!-- The description of the Shuttle Music scanner - scans user selected folders and files for metadata-->
     <string name="media_provider_description_s2">上級者向けです。カスタムのタグ読み込みを使用し、タグ編集、リプレイゲイン等の追加機能が使用できるようになります</string>
     <!-- The name of the 'Android Media Store' media provider. The 'Media Store' is an Android concept. Not sure if it would be translated.-->
     <string name="media_provider_title_media_store">Androidメディアストア</string>
@@ -38,15 +38,15 @@
     <string name="media_provider_type_local">ローカル</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_remote">リモート</string>
-    <!-- Button to add a media provider. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
+    <!-- Button to add a media provider. A media provider is a source of media, e.g. Android Media Store, Shuttle Music scanner, Jellyfin Media Server, etc. -->
     <string name="media_provider_add">メディアプロバイダーを追加</string>
-    <!-- Button to add a media provider, shown during onboarding. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
+    <!-- Button to add a media provider, shown during onboarding. A media provider is a source of media, e.g. Android Media Store, Shuttle Music scanner, Jellyfin Media Server, etc. -->
     <string name="media_providers_add_onboarding">メディアプロバイダーを追加します。これは後でも変更できます</string>
     <!-- Shown during onboarding, as the user is about to select their media providers, to discover/find their music-->
     <string name="media_provider_toolbar_title_onboarding">音楽ファイルを読み込めるようにしましょう</string>
-    <!-- Title of the screen where users can select their media providers. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
+    <!-- Title of the screen where users can select their media providers. A media provider is a source of media, e.g. Android Media Store, Shuttle Music scanner, Jellyfin Media Server, etc. -->
     <string name="media_provider_toolbar_title">メディアプロバイダー</string>
-    <!-- Button to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
+    <!-- Button to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, Shuttle Music scanner, Jellyfin Media Server, etc. -->
     <string name="media_provider_dialog_button_remove">削除</string>
     <!-- The address (url) of the user's Emby/Jellyfin/Plex media provider. -->
     <string name="media_provider_config_hint_address">アドレス</string>
@@ -70,8 +70,8 @@
     <string name="media_provider_address_missing">サーバーのアドレスが見つかりません</string>
     <!-- Shown when the media importer fails to import songs -->
     <string name="media_import_error">曲をインポートする際にエラーが発生しました</string>
-    <!-- Shown when the S2 Media Provider fails to find any folders to scan -->
+    <!-- Shown when the Shuttle Music scanner fails to find any folders to scan -->
     <string name="media_import_directories_empty">スキャン対象のディレクトリ/ファイルがありません</string>
-    <!-- Shown when the S2 Media Provider is searching an m3u playlist for songs -->
+    <!-- Shown when the Shuttle Music scanner is searching an m3u playlist for songs -->
     <string name="media_import_m3u_scan"><xliff:g example="playlist1.m3u" id="playlist_name">%1$s</xliff:g> 用の曲を探しています</string>
 </resources>

@@ -102,14 +102,14 @@ class ServerSignInTest {
     fun `a Free user sees the streaming disclosure before connecting`() {
         robot.setContent(serverSignInForm(showProDisclosure = true))
 
-        robot.assertTextDisplayed("Streaming from Jellyfin, Emby and Plex is part of S2 Pro. Free for 14 days.")
+        robot.assertTextDisplayed("Streaming from Jellyfin, Emby and Plex is part of Shuttle Music Pro. Free for 14 days.")
     }
 
     @Test
     fun `a Trial or Pro user doesn't see the disclosure`() {
         robot.setContent(serverSignInForm(showProDisclosure = false))
 
-        robot.assertTextNotDisplayed("Streaming from Jellyfin, Emby and Plex is part of S2 Pro. Free for 14 days.")
+        robot.assertTextNotDisplayed("Streaming from Jellyfin, Emby and Plex is part of Shuttle Music Pro. Free for 14 days.")
     }
 
     @Test
