@@ -208,6 +208,18 @@ object SettingsCatalog {
                             ChoiceOption(ImportFrequency.Weekly, R.string.pref_rescan_frequency_weekly)
                         )
                     ),
+                    SettingItem.Action(
+                        action = SettingsAction.ExportBackup,
+                        title = R.string.pref_backup_export_title,
+                        summary = R.string.pref_backup_export_summary,
+                        key = "pref_backup_export"
+                    ),
+                    SettingItem.Action(
+                        action = SettingsAction.ImportBackup,
+                        title = R.string.pref_backup_import_title,
+                        summary = R.string.pref_backup_import_summary,
+                        key = "pref_backup_import"
+                    ),
                     SettingItem.Navigate(
                         target = SettingsLink.ExcludedSongs,
                         title = R.string.pref_exclude_title,

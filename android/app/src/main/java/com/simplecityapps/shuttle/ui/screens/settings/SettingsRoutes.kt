@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -115,8 +117,26 @@ private fun SettingsDestinationEntry(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val context = LocalContext.current
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        uri?.let { viewModel.exportBackupTo(it.toString()) }
+    }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { viewModel.importBackupFrom(it.toString()) }
+    }
     ConsumeEvents(uiState.events, viewModel::onEventHandled) { event ->
-        snackbarHostState.showSnackbar(context.getString(event.message))
+        when (event) {
+            is SettingsUiEvent.BackupExportReady -> exportLauncher.launch(event.suggestedName)
+            is SettingsUiEvent.BackupImportPickerRequested -> importLauncher.launch(arrayOf("application/json"))
+            is SettingsUiEvent.BackupImported -> snackbarHostState.showSnackbar(
+                context.getString(
+                    R.string.settings_backup_import_done,
+                    event.songsMatched,
+                    event.playlistsRestored,
+                    event.songsUnmatched
+                )
+            )
+            else -> snackbarHostState.showSnackbar(context.getString(event.message))
+        }
     }
     LifecycleResumeEffect(viewModel) {
         viewModel.onResume()
@@ -141,6 +161,19 @@ private fun SettingsDestinationEntry(
 private val SettingsUiEvent.message: Int
     get() = when (this) {
         SettingsUiEvent.RescanStarted -> R.string.settings_rescan_started
+
+        SettingsUiEvent.BackupExportSaved -> R.string.settings_backup_export_saved
+
+        SettingsUiEvent.BackupExportFailed -> R.string.settings_backup_export_failed
+
+        SettingsUiEvent.BackupImportFailed -> R.string.settings_backup_import_failed
+
+        // Handled with launchers/report formatting above, never as plain snackbars.
+        is SettingsUiEvent.BackupExportReady -> R.string.settings_backup_export_saved
+
+        is SettingsUiEvent.BackupImportPickerRequested -> R.string.settings_backup_import_failed
+
+        is SettingsUiEvent.BackupImported -> R.string.settings_backup_import_done
 
         SettingsUiEvent.ArtworkCacheCleared -> R.string.settings_artwork_cache_cleared
 

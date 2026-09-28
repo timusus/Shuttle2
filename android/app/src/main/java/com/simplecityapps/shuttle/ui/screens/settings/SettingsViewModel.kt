@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
+import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackupManager
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
@@ -39,6 +40,20 @@ data class SettingsUiState(
 sealed interface SettingsUiEvent {
     data object RescanStarted : SettingsUiEvent
 
+    /** A freshly built backup is staged in the ViewModel; the UI should open a save picker. */
+    data class BackupExportReady(val suggestedName: String) : SettingsUiEvent
+
+    data object BackupExportSaved : SettingsUiEvent
+
+    data object BackupExportFailed : SettingsUiEvent
+
+    /** The UI should open a file picker for a backup to restore. */
+    data object BackupImportPickerRequested : SettingsUiEvent
+
+    data class BackupImported(val songsMatched: Int, val playlistsRestored: Int, val songsUnmatched: Int) : SettingsUiEvent
+
+    data object BackupImportFailed : SettingsUiEvent
+
     data object ArtworkCacheCleared : SettingsUiEvent
 
     data object ArtworkDownloadStarted : SettingsUiEvent
@@ -53,11 +68,15 @@ class SettingsViewModel @Inject constructor(
     observeSetting: ObserveSetting,
     private val readSetting: ReadSetting,
     private val saveSetting: SaveSetting,
-    private val effects: SettingsEffects
+    private val effects: SettingsEffects,
+    private val backupManager: LibraryBackupManager
 ) : ViewModel() {
     private val lastScanDate = MutableStateFlow(effects.lastScanDate())
 
     private val events = PendingEvents<SettingsUiEvent>()
+
+    /** The staged backup JSON between ExportBackup and the save-picker result. */
+    private var pendingBackupJson: String? = null
 
     val uiState: StateFlow<SettingsUiState> = combine(
         combine(catalogSettings.map { setting -> observeSetting(setting).map { setting.key to it } }) { it.toMap() },
@@ -114,6 +133,20 @@ class SettingsViewModel @Inject constructor(
                 events.post(SettingsUiEvent.RescanStarted)
             }
 
+            SettingsAction.ExportBackup -> viewModelScope.launch {
+                val json = runCatching { backupManager.buildBackupJson() }.getOrNull()
+                if (json == null) {
+                    events.post(SettingsUiEvent.BackupExportFailed)
+                } else {
+                    pendingBackupJson = json
+                    events.post(SettingsUiEvent.BackupExportReady(BACKUP_FILE_NAME))
+                }
+            }
+
+            SettingsAction.ImportBackup -> {
+                events.post(SettingsUiEvent.BackupImportPickerRequested)
+            }
+
             SettingsAction.ClearArtworkCache -> viewModelScope.launch {
                 effects.clearArtworkCache()
                 events.post(SettingsUiEvent.ArtworkCacheCleared)
@@ -131,6 +164,33 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onEventHandled(id: Long) = events.consume(id)
+
+    /** Writes the staged backup to the save-picker [destination]; call once per pick. */
+    fun exportBackupTo(destination: String) {
+        val json = pendingBackupJson
+        pendingBackupJson = null
+        if (json == null) {
+            events.post(SettingsUiEvent.BackupExportFailed)
+            return
+        }
+        viewModelScope.launch {
+            events.post(
+                if (backupManager.writeBackup(destination, json)) SettingsUiEvent.BackupExportSaved
+                else SettingsUiEvent.BackupExportFailed
+            )
+        }
+    }
+
+    /** Reads and merges the backup at the picker [source]. */
+    fun importBackupFrom(source: String) {
+        viewModelScope.launch {
+            val report = runCatching { backupManager.readAndRestore(source) }.getOrNull()
+            events.post(
+                if (report == null) SettingsUiEvent.BackupImportFailed
+                else SettingsUiEvent.BackupImported(report.songsMatched, report.playlistsRestored, report.songsUnmatched)
+            )
+        }
+    }
 
     /** Re-reads what isn't observable, such as the last scan date, when the screen comes back into view. */
     fun onResume() {
@@ -170,3 +230,5 @@ class SettingsViewModel @Inject constructor(
             .distinctBy { it.key }
     }
 }
+
+private const val BACKUP_FILE_NAME = "shuttle-library-backup.json"

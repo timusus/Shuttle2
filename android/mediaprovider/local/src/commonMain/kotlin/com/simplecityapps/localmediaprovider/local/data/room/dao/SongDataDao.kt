@@ -134,6 +134,20 @@ abstract class SongDataDao {
         lastPlayed: Instant = Clock.System.now()
     )
 
+    /**
+     * Writes a merged backup row (see LibraryBackupManager): every stat column at once. Used only by
+     * library-backup restore, never by the scanner, so rescan semantics are untouched.
+     */
+    @Query("UPDATE songs SET playCount = :playCount, lastPlayed = :lastPlayed, lastCompleted = :lastCompleted, playbackPosition = :playbackPosition, dateAdded = :dateAdded WHERE id = :id")
+    abstract suspend fun restoreStats(
+        id: Long,
+        playCount: Int,
+        lastPlayed: Instant?,
+        lastCompleted: Instant?,
+        playbackPosition: Int,
+        dateAdded: Instant?
+    )
+
     /** [updatePlaybackPosition] and incrementing the play count as one write, for a track playing through to its end. */
     @Query("UPDATE songs SET playbackPosition = :playbackPosition, lastPlayed = :now, playCount = (SELECT songs.playCount + 1), lastCompleted = :now WHERE id =:id")
     abstract suspend fun recordPlayedThrough(
