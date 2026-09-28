@@ -37,7 +37,8 @@ class LocalAlbumRepository(
                             songCount = songs.size,
                             duration = songs.sumOf { it.duration },
                             year = songs.mapNotNull { it.date?.year }.minOrNull(),
-                            playCount = songs.minOfOrNull { it.playCount } ?: 0,
+                            // Every play of any of its songs counts, so one skipped track doesn't keep an album out of Most Played
+                            playCount = songs.sumOf { it.playCount },
                             lastSongPlayed = songs.mapNotNull { it.lastPlayed }.maxOrNull(),
                             lastSongCompleted = songs.mapNotNull { it.lastCompleted }.maxOrNull(),
                             groupKey = key,

@@ -9,6 +9,7 @@ data class Album(
     val songCount: Int,
     val duration: Int,
     val year: Int?,
+    /** How many times its songs have been played through, all together. */
     val playCount: Int,
     val lastSongPlayed: Instant?,
     val lastSongCompleted: Instant?,

@@ -12,6 +12,7 @@ import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.yield
@@ -43,14 +44,34 @@ class LocalAlbumRepositoryTest {
         emissions[1].map { it.name } shouldBe listOf("Album B")
     }
 
-    private fun createSongData(album: String) = SongData(
+    @Test
+    fun `an album's play count is the sum of its songs' play counts`() = runTest {
+        val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
+        val repository = LocalAlbumRepository(scope = backgroundScope, songDataDao = FakeSongDataDao(songsFlow))
+
+        songsFlow.emit(
+            listOf(
+                createSongData(album = "Album A", track = 1, playCount = 3),
+                createSongData(album = "Album A", track = 2, playCount = 0),
+                createSongData(album = "Album A", track = 3, playCount = 2)
+            )
+        )
+
+        repository.getAlbums(AlbumQuery.All()).first().single().playCount shouldBe 5
+    }
+
+    private fun createSongData(
+        album: String,
+        track: Int = 1,
+        playCount: Int = 0
+    ) = SongData(
         name = "Song",
-        track = 1,
+        track = track,
         disc = 1,
         duration = 180_000,
         year = null,
         genres = emptyList(),
-        path = "/music/$album.mp3",
+        path = "/music/$album/$track.mp3",
         albumArtist = "Artist",
         artists = listOf("Artist"),
         album = album,
@@ -62,7 +83,8 @@ class LocalAlbumRepositoryTest {
         bitRate = null,
         bitDepth = null,
         sampleRate = null,
-        channelCount = null
+        channelCount = null,
+        playCount = playCount
     )
 
     private class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDataDao() {
