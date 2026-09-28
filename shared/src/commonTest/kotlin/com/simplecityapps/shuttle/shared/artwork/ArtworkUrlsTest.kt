@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.shared.artwork
 
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
+import com.simplecityapps.mediaprovider.S2ArtworkApi
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -13,7 +14,10 @@ import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
 
-/** Artwork urls delegate to the [RemoteArtworkProvider], standing an album or artist in with one of its songs. */
+/**
+ * Artwork requests try the [RemoteArtworkProvider] (standing an album or artist in with one of its songs), then the S2
+ * artwork API by name: Android's remote chain.
+ */
 class ArtworkUrlsTest {
     private val songRepository = FakeSongRepository().apply { applyQueryPredicates = true }
     private val remoteArtworkProvider = FakeRemoteArtworkProvider()
@@ -22,45 +26,80 @@ class ArtworkUrlsTest {
     private val artworkUrls = ArtworkUrls(artworkSettings, remoteArtworkProvider, songRepository)
 
     @Test
-    fun `song artwork is the remote provider's album artwork`() = runTest {
+    fun `song artwork is the remote provider's album artwork and then the S2 API's by album artist and album`() = runTest {
         val song = song("song-1")
 
-        artworkUrls.url(song) shouldBe "https://example.com/song-1/album"
+        artworkUrls.requests(song) shouldBe listOf(ArtworkRequest("https://example.com/song-1/album"), s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
         remoteArtworkProvider.albumArtworkRequests shouldBe listOf(song)
     }
 
     @Test
-    fun `album artwork is the album's first song's album artwork`() = runTest {
+    fun `album artwork is the album's first song's album artwork and then the S2 API's`() = runTest {
         val song = song("song-1")
         songRepository.setSongs(listOf(song))
 
-        artworkUrls.url(album(song)) shouldBe "https://example.com/song-1/album"
+        artworkUrls.requests(album(song)) shouldBe listOf(ArtworkRequest("https://example.com/song-1/album"), s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
         remoteArtworkProvider.albumArtworkRequests shouldBe listOf(song)
     }
 
     @Test
-    fun `album artist artwork is the artist's first song's artist artwork`() = runTest {
+    fun `album artist artwork is the artist's first song's artist artwork and then the S2 API's`() = runTest {
         val song = song("song-1")
         songRepository.setSongs(listOf(song))
 
-        artworkUrls.url(albumArtist(song)) shouldBe "https://example.com/song-1/artist"
+        artworkUrls.requests(albumArtist(song)) shouldBe listOf(ArtworkRequest("https://example.com/song-1/artist"), s2("$S2_URL?artist=The+Artist"))
         remoteArtworkProvider.artistArtworkRequests shouldBe listOf(song)
     }
 
     @Test
-    fun `an album with no songs in the library has no artwork`() = runTest {
+    fun `an item the server has no artwork for still has the S2 API's`() = runTest {
+        val song = song("song-1")
+        songRepository.setSongs(listOf(song))
+        remoteArtworkProvider.hasArtwork = false
+
+        artworkUrls.requests(song) shouldBe listOf(s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
+        artworkUrls.requests(album(song)) shouldBe listOf(s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
+        artworkUrls.requests(albumArtist(song)) shouldBe listOf(s2("$S2_URL?artist=The+Artist"))
+    }
+
+    @Test
+    fun `a failing server lookup falls through to the S2 API`() = runTest {
+        val song = song("song-1")
+        remoteArtworkProvider.failure = IllegalStateException("server unreachable")
+
+        artworkUrls.requests(song) shouldBe listOf(s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
+    }
+
+    @Test
+    fun `an album with no songs in the library has only the S2 API's artwork`() = runTest {
         val song = song("song-1")
 
-        artworkUrls.url(album(song)) shouldBe null
+        artworkUrls.requests(album(song)) shouldBe listOf(s2("$S2_URL?artist=The+Artist&album=Album+%26+Co"))
         remoteArtworkProvider.albumArtworkRequests shouldBe emptyList()
     }
 
     @Test
-    fun `an album artist with no songs in the library has no artwork`() = runTest {
+    fun `an album artist with no songs in the library has only the S2 API's artwork`() = runTest {
         val song = song("song-1")
 
-        artworkUrls.url(albumArtist(song)) shouldBe null
+        artworkUrls.requests(albumArtist(song)) shouldBe listOf(s2("$S2_URL?artist=The+Artist"))
         remoteArtworkProvider.artistArtworkRequests shouldBe emptyList()
+    }
+
+    @Test
+    fun `a song with no album is not looked up on the S2 API`() = runTest {
+        val song = song("song-1").copy(album = null)
+
+        artworkUrls.requests(song) shouldBe listOf(ArtworkRequest("https://example.com/song-1/album"))
+    }
+
+    @Test
+    fun `S2 API requests stay off metered networks while artwork is wifi-only as it is by default`() = runTest {
+        artworkUrls.requests(song("song-1")).map { it.unmeteredOnly } shouldBe listOf(false, true)
+
+        artworkSettings.wifiOnly.value = false
+
+        artworkUrls.requests(song("song-1")).map { it.unmeteredOnly } shouldBe listOf(false, false)
     }
 
     @Test
@@ -69,19 +108,21 @@ class ArtworkUrlsTest {
         songRepository.setSongs(listOf(song))
         artworkSettings.localOnly.value = true
 
-        artworkUrls.url(song) shouldBe null
-        artworkUrls.url(album(song)) shouldBe null
-        artworkUrls.url(albumArtist(song)) shouldBe null
+        artworkUrls.requests(song) shouldBe emptyList()
+        artworkUrls.requests(album(song)) shouldBe emptyList()
+        artworkUrls.requests(albumArtist(song)) shouldBe emptyList()
         remoteArtworkProvider.albumArtworkRequests shouldBe emptyList()
         remoteArtworkProvider.artistArtworkRequests shouldBe emptyList()
     }
 
+    private fun s2(url: String) = ArtworkRequest(url, authorization = S2ArtworkApi.authorization, unmeteredOnly = true)
+
     private fun song(externalId: String) = Song(
         id = 0,
         name = "Song",
-        albumArtist = "Artist",
-        artists = listOf("Artist"),
-        album = "Album",
+        albumArtist = "The Artist",
+        artists = listOf("The Artist"),
+        album = "Album & Co",
         track = null,
         disc = null,
         duration = 180_000,
@@ -134,17 +175,25 @@ class ArtworkUrlsTest {
     private class FakeRemoteArtworkProvider : RemoteArtworkProvider {
         val albumArtworkRequests = mutableListOf<Song>()
         val artistArtworkRequests = mutableListOf<Song>()
+        var hasArtwork = true
+        var failure: Exception? = null
 
         override fun handles(scheme: String?): Boolean = scheme == "jellyfin"
 
         override suspend fun getAlbumArtworkUrl(song: Song): String? {
             albumArtworkRequests += song
-            return "https://example.com/${song.externalId}/album"
+            failure?.let { throw it }
+            return "https://example.com/${song.externalId}/album".takeIf { hasArtwork }
         }
 
         override suspend fun getArtistArtworkUrl(song: Song): String? {
             artistArtworkRequests += song
-            return "https://example.com/${song.externalId}/artist"
+            failure?.let { throw it }
+            return "https://example.com/${song.externalId}/artist".takeIf { hasArtwork }
         }
+    }
+
+    private companion object {
+        const val S2_URL = "https://api.shuttlemusicplayer.app/v1/artwork"
     }
 }

@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Library > Album Artists (P5-6b): `AlbumArtistListViewModel`'s artists as a list (the default) or a grid of round
 /// pictures, switched from the toolbar and kept by the ViewModel (`setViewMode`). A row or tile pushes the artist's
-/// detail route and shows its artwork via `ArtworkUrls.url(albumArtist:)`. Context menu plays or queues through the
+/// detail route and shows its artwork via `ArtworkUrls.requests(albumArtist:)`. Context menu plays or queues through the
 /// shared `MediaAction`s; there's no per-artist shuffle on the ViewModel, so the toolbar shuffle dispatches
 /// `MediaActionShuffle` over every artist, same as it would over a multi-selection. The playing artist is marked.
 struct AlbumArtistListView: View {

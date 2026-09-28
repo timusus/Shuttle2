@@ -352,10 +352,3 @@ extension PlayerBinding {
     /// progress tick doesn't redraw the screen.
     var isPlaying: Bool { miniPlayer.isPlaying }
 }
-
-extension RemoteArtwork {
-    /// `source`'s artwork with a custom placeholder (a symbol that says what is missing: an artist, an album).
-    init(_ source: ArtworkSource, points: CGFloat, @ViewBuilder placeholder: @escaping () -> Placeholder) {
-        self.init(id: source.id, points: points, load: source.load, placeholder: placeholder)
-    }
-}

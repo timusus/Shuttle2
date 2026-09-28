@@ -78,7 +78,7 @@ struct MediaRow<Trailing: View>: View {
     private var artworkView: some View {
         let image = Group {
             if let artwork {
-                RemoteArtwork(id: artwork.id, points: artworkSize, load: artwork.load) {
+                RemoteArtwork(artwork, points: artworkSize) {
                     ArtworkPlaceholder(symbol: placeholderSymbol)
                 }
             } else {

@@ -34,6 +34,7 @@ import com.simplecityapps.imageloading.coil.source.S2SongArtworkSource
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
 import com.simplecityapps.mediaprovider.RemoteArtworkInterceptor
+import com.simplecityapps.mediaprovider.S2ArtworkApi
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.model.Album
@@ -156,17 +157,17 @@ object CoilModule {
             .newBuilder()
             .apply { remoteArtworkInterceptors.forEach(::addNetworkInterceptor) }
             .authenticator { route, response ->
-                if (route?.address?.url?.host == S2_ARTWORK_HOST && response.request.header("Authorization") == null) {
+                if (route?.address?.url?.host == S2ArtworkApi.HOST && response.request.header("Authorization") == null) {
                     response.request
                         .newBuilder()
-                        .header("Authorization", Credentials.basic("s2", "aEqRKgkCbqALjEm9Eg7e7Qi5"))
+                        .header("Authorization", Credentials.basic(S2ArtworkApi.USERNAME, S2ArtworkApi.PASSWORD))
                         .build()
                 } else {
                     null
                 }
             }
             .addNetworkInterceptor { chain ->
-                if (chain.request().url.host == S2_ARTWORK_HOST && artworkSettings.wifiOnly.value && connectivityManager?.isActiveNetworkMetered == true) {
+                if (chain.request().url.host == S2ArtworkApi.HOST && artworkSettings.wifiOnly.value && connectivityManager?.isActiveNetworkMetered == true) {
                     throw NoConnectivityException
                 }
                 chain.proceed(chain.request())
@@ -174,7 +175,6 @@ object CoilModule {
             .build()
     }
 
-    const val S2_ARTWORK_HOST = "api.shuttlemusicplayer.app"
     private const val MEMORY_CACHE_PERCENT = 0.25
     private const val DISK_CACHE_DIRECTORY = "artwork"
     private const val DISK_CACHE_BYTES = 250L * 1024 * 1024

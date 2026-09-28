@@ -93,7 +93,7 @@ struct LibraryTile: View {
         Color.clear
             .aspectRatio(1, contentMode: .fit)
             .overlay {
-                RemoteArtwork(id: artwork.id, points: ArtworkSize.gridMinimum * 1.5, load: artwork.load) {
+                RemoteArtwork(artwork, points: ArtworkSize.gridMinimum * 1.5) {
                     ArtworkPlaceholder(symbol: placeholderSymbol)
                 }
             }

@@ -323,11 +323,14 @@ Decision: **URLs from shared Kotlin, pixels in Swift.**
 
 **Done (P5-4, #587):** `ArtworkUrls` (`shared/.../artwork/ArtworkUrls.kt`) and `IosAppGraph.artworkUrls`
 on the Kotlin side; `ArtworkLoader` and `ArtworkImage` (`ios/S2/Artwork/`, tests in
-`ios/S2Tests/ArtworkLoaderTests.swift`) on the Swift side, simplified from Podcasts' loader since a song,
-album or album artist has exactly one fixed-size artwork URL — no CDN rewriting, no candidate list.
+`ios/S2Tests/ArtworkLoaderTests.swift`) on the Swift side, simplified from Podcasts' loader — no CDN
+rewriting. Since #624's artwork fix, `ArtworkUrls.requests(...)` returns Android's remote chain as a candidate
+list (the media server's image, then the S2 artwork API by name, with its Basic credential as a header and
+the wifi-only rule as `unmeteredOnly`), and `ArtworkLoader` tries each until one decodes: the Jellyfin test
+server has no image for some albums and answers 500 for about 8% of its tagged album images.
 
-**Wired (#587):** `RemoteArtwork` (`ios/S2/Components/RemoteArtwork.swift`) looks the url up and draws
-`ArtworkImage`; `ArtworkSource` (`.song`, `.album`, `.albumArtist`) is the item's identity plus that lookup, so
+**Wired (#587):** `RemoteArtwork` (`ios/S2/Components/RemoteArtwork.swift`) draws `ArtworkImage` for an
+`ArtworkSource` (`.song`, `.album`, `.albumArtist`): the item's identity plus its candidate lookup, so
 views taking plain values can be handed artwork. Drawn in `SongRow`, `AlbumRow`, the album artist rows, the
 Home shelves and resume hero, the detail heroes, the mini player, Now Playing and its queue.
 
