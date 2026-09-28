@@ -20,6 +20,7 @@ class FakeQuickConnectAuthentication : QuickConnectAuthentication {
     var pending: CompletableDeferred<Unit>? = null
     var initiatePending: CompletableDeferred<Unit>? = null
     var initiateCallCount = 0
+    var pollCount = 0
     val authenticated = mutableListOf<Pair<String, String>>()
 
     override suspend fun isEnabled(address: String): Boolean = enabledCheckThrows?.let { throw it } ?: enabled
@@ -31,6 +32,7 @@ class FakeQuickConnectAuthentication : QuickConnectAuthentication {
     }
 
     override suspend fun poll(address: String, secret: String): Result<QuickConnectPollState> {
+        pollCount++
         pending?.await()
         return pollFailure?.let { Result.failure(it) } ?: Result.success(pollState)
     }

@@ -212,6 +212,15 @@ class ServerSignInViewModel @AssistedInject constructor(
         step.value = ServerSignInStep.Form
     }
 
+    /**
+     * The sign-in has left the screen (iOS: its view disappeared, while the view model stays cached for the rest of the
+     * setup): a Quick Connect code nobody can see any more stops polling. A sign-in that has already connected is left
+     * to finish.
+     */
+    fun onLeave() {
+        if (step.value is ServerSignInStep.AwaitingCode) onCancelQuickConnect()
+    }
+
     fun onEventHandled(id: Long) = events.consume(id)
 
     private fun missingFields(form: ServerSignInForm): Set<ServerSignInField> = buildSet {

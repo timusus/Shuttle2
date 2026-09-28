@@ -24,6 +24,9 @@ struct ServerSignInView: View {
                     ServerSignInOutcome(onConnected: onConnected, onFinished: onFinished).handle(event)
                 }
         }
+        // The view model outlives this view (cached for the whole setup): a Quick Connect code left on screen when
+        // the user goes back stops polling here rather than when the setup closes.
+        .onDisappear { signIn.onLeave() }
         .navigationTitle(type.title)
         .navigationBarTitleDisplayMode(.inline)
     }

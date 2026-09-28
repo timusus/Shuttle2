@@ -287,4 +287,46 @@ class ServerSignInViewModelTest {
         viewModel.uiState.value.step shouldBe ServerSignInStep.Form
         quickConnect.authenticated shouldBe emptyList()
     }
+
+    @Test
+    fun `cancelling Quick Connect stops the polling`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onUseQuickConnect()
+        advanceTimeBy(10_001)
+        val polls = quickConnect.pollCount
+
+        viewModel.onCancelQuickConnect()
+        advanceTimeBy(60_000)
+
+        quickConnect.pollCount shouldBe polls
+    }
+
+    @Test
+    fun `leaving the sign-in while its code shows stops the polling and returns to the form`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onUseQuickConnect()
+        advanceTimeBy(10_001)
+        val polls = quickConnect.pollCount
+
+        viewModel.onLeave()
+        advanceTimeBy(60_000)
+
+        quickConnect.pollCount shouldBe polls
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Form
+    }
+
+    @Test
+    fun `leaving a connected sign-in lets it finish`() = runTest {
+        quickConnect.pollState = QuickConnectPollState.Authenticated
+        val viewModel = viewModel()
+        viewModel.onUseQuickConnect()
+        advanceTimeBy(5_001)
+        runCurrent()
+
+        viewModel.onLeave()
+        advanceTimeBy(1_001)
+
+        viewModel.uiState.value.step shouldBe ServerSignInStep.Connected
+        viewModel.events shouldBe listOf(ServerSignInEvent.Connected, ServerSignInEvent.Finished)
+    }
 }
