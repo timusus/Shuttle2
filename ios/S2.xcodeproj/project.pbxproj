@@ -28,6 +28,7 @@
 		2A319BAAFA3AE125057BF8AC /* SectionHeader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36538449409BD13651C085A2 /* SectionHeader.swift */; };
 		2C7B3FD103869E7BB31DC2A7 /* NavigatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10A6ADEACA55D27E692A2C22 /* NavigatorTests.swift */; };
 		2D1E96D1ECC97DF4A709C917 /* ViewModelGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 214D546417D1085A1C2B5F67 /* ViewModelGroup.swift */; };
+		2DA2E2E30509CFBEDD4130AD /* DetailSupportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBA8DC3CAF502AB452A47E5C /* DetailSupportTests.swift */; };
 		31622DC97DF270EF81190A43 /* PlayerPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6F13B4E6E24F493A2104D75 /* PlayerPresentation.swift */; };
 		3175D4D1DC6565C41E534C91 /* LibraryCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 205F2D98E447A246625BE4A5 /* LibraryCollection.swift */; };
 		3276AA0BF67F5F0A9B6E0D28 /* PlayerBindingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4508034A93DD7E7D4C59E362 /* PlayerBindingTests.swift */; };
@@ -232,6 +233,7 @@
 		F7647069B7F0DC85EE4B35DB /* EmptyState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyState.swift; sourceTree = "<group>"; };
 		F8D3127BEC11A3D89D92CAA2 /* RouteTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteTests.swift; sourceTree = "<group>"; };
 		F95725D349E6F5EBD720DD23 /* AudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioEngine.swift; sourceTree = "<group>"; };
+		FBA8DC3CAF502AB452A47E5C /* DetailSupportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailSupportTests.swift; sourceTree = "<group>"; };
 		FC548555BCD74CA0702CE7B3 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		FCBFC3688D06BC30635B00FA /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = wrapper.cfbundle; path = Settings.bundle; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -465,6 +467,7 @@
 				12C790AE3052665B98697F90 /* AudioSessionControllerTests.swift */,
 				5E1633C34A912D4852F34CC2 /* CombineFlowBridgeTests.swift */,
 				CA8F70031E091A9E05A0ABE8 /* DesignSystemTests.swift */,
+				FBA8DC3CAF502AB452A47E5C /* DetailSupportTests.swift */,
 				BA3C4C66EB5919CB2CD27F60 /* EngineAudioPlayerTests.swift */,
 				A8D3E5BE60A178860D1F22FA /* EqualizerViewTests.swift */,
 				BE0563753774CA8C18BFCA94 /* FakeAudioEngine.swift */,
@@ -712,6 +715,7 @@
 				E1955E56226D498BCA1865D2 /* AudioSessionControllerTests.swift in Sources */,
 				AD30CBCBD32BA3F24F6B355E /* CombineFlowBridgeTests.swift in Sources */,
 				36448DF63FDD4D6333FB9DD2 /* DesignSystemTests.swift in Sources */,
+				2DA2E2E30509CFBEDD4130AD /* DetailSupportTests.swift in Sources */,
 				102D87FC8E24D263D787ECA9 /* EngineAudioPlayerTests.swift in Sources */,
 				B853C3B025A218C9E08FA400 /* EqualizerViewTests.swift in Sources */,
 				6E5F162D0C7883B79420E471 /* FakeAudioEngine.swift in Sources */,
