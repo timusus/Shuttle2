@@ -82,7 +82,7 @@ struct AlbumArtistListContent: View {
     private var content: some View {
         switch state.loadingState {
         case .loading:
-            if state.viewMode == .grid { LibraryGridSkeleton(artworkShape: .artist) } else { LibraryListSkeleton() }
+            if state.viewMode == .grid { LibraryGridSkeleton() } else { LibraryListSkeleton() }
         case .scanning where state.albumArtists.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
@@ -97,7 +97,6 @@ struct AlbumArtistListContent: View {
                                 title: AlbumArtistRow.title(artist),
                                 subtitle: AlbumArtistRow.subtitle(artist),
                                 artwork: .albumArtist(artist),
-                                artworkShape: .artist,
                                 placeholderSymbol: "music.mic",
                                 playback: nowPlaying.playback(albumArtist: artist)
                             )
@@ -134,7 +133,6 @@ struct AlbumArtistRow: View {
             Self.title(albumArtist),
             subtitle: Self.subtitle(albumArtist),
             artwork: .albumArtist(albumArtist),
-            artworkShape: .artist,
             placeholderSymbol: "music.mic",
             playback: playback
         )

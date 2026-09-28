@@ -1,6 +1,6 @@
 # Screenshots of the Library's artist and album lists and grids (#624): the Album Artists list beside its A–Z index
 # (no row chevrons), the Album Artists and Albums grids (two columns on every iPhone), then an artist's detail hero.
-# Artist pictures are `ArtistArtworkShape` squircles throughout. iPhone only (the chip rail); signed in already: run
+# Artist pictures take albums' corners throughout. iPhone only (the chip rail); signed in already: run
 # sign-in-jellyfin.yaml first. Leaves both lists in grid mode.
 #
 #   OUT=/tmp/s2-libfb/ios26 ios/scripts/maestro-sim.sh library-artists-grid.yaml

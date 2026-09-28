@@ -90,19 +90,6 @@ extension View {
             .artworkStyle(cornerRadius: cornerRadius)
     }
 
-    /// Frames an artist's picture to a square of `points` and styles it (`artistArtworkStyle`).
-    func artistArtworkTile(_ points: CGFloat) -> some View {
-        frame(width: points, height: points)
-            .artistArtworkStyle()
-    }
-
-    /// Clips an artist's picture to `ArtistArtworkShape`, at whatever size it has, and draws the hairline over it:
-    /// every artist picture (rows, tiles, shelves, the detail hero, placeholders) takes this.
-    func artistArtworkStyle() -> some View {
-        clipShape(ArtistArtworkShape())
-            .overlay { ArtistArtworkShape().strokeBorder(ArtworkHairline.color, lineWidth: ArtworkHairline.width) }
-    }
-
     /// Clips artwork to S2's continuous corner and draws a 1 px hairline over it, after Shuttle Podcasts'
     /// `artworkStyle`. The hairline is what keeps a white-cornered cover from bleeding into a white list (and a
     /// black one into a dark list); `Color.primary` at 8% gives near-black in light mode and near-white in dark.
@@ -114,29 +101,10 @@ extension View {
     }
 }
 
-/// The artwork edge `artworkStyle` and `artistArtworkStyle` draw.
+/// The artwork edge `artworkStyle` draws.
 enum ArtworkHairline {
     static let color = Color.primary.opacity(0.08)
     static let width = Spacing.hairline
-}
-
-/// An artist's picture: a continuous-corner square whose radius is `ArtworkCorner.artistFraction` of its side, so
-/// it keeps the same proportions from a 48 pt row to the detail hero. Rounder than an album's corner, in the same
-/// family.
-struct ArtistArtworkShape: InsettableShape {
-    var insetAmount: CGFloat = 0
-
-    func path(in rect: CGRect) -> Path {
-        let inset = rect.insetBy(dx: insetAmount, dy: insetAmount)
-        let radius = max(min(rect.width, rect.height) * ArtworkCorner.artistFraction - insetAmount, 0)
-        return RoundedRectangle(cornerRadius: radius, style: .continuous).path(in: inset)
-    }
-
-    func inset(by amount: CGFloat) -> ArtistArtworkShape {
-        var shape = self
-        shape.insetAmount += amount
-        return shape
-    }
 }
 
 /// A stable identity for list rows and `RemoteArtwork`'s `id`: the group key Kotlin computed when

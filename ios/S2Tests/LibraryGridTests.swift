@@ -1,9 +1,12 @@
+import Shared
 import SwiftUI
 import Testing
+import ViewInspector
 @testable import S2
 
 /// The Library grid's columns (#624): two on every iPhone in portrait beside the letter index, three or more in
-/// landscape, more on an iPad; and the artist picture's shape.
+/// landscape, more on an iPad; and an artist tile's corners, the same as an album's.
+@MainActor
 struct LibraryGridTests {
     @Test(arguments: [320, 375, 393, 430] as [CGFloat])
     func everyIPhoneInPortraitHasTwoColumns(width: CGFloat) {
@@ -30,15 +33,13 @@ struct LibraryGridTests {
         #expect(LibraryGrid<EmptyView>.columnCount(width: 393, tier: .compact, accessibilitySize: true) == 1)
     }
 
-    @Test func theArtistShapeIsRounderThanAnAlbumTileButNotACircle() {
-        let side: CGFloat = 160
-        let radius = side * ArtworkCorner.artistFraction
-        #expect(radius > ArtworkCorner.tile)
-        #expect(radius < side / 2)
-        // A continuous-corner square: the midpoints of its edges are on it, its corners are cut.
-        let path = ArtistArtworkShape().path(in: CGRect(x: 0, y: 0, width: side, height: side))
-        #expect(path.contains(CGPoint(x: side / 2, y: 1)))
-        #expect(!path.contains(CGPoint(x: 1, y: 1)))
-        #expect(path.contains(CGPoint(x: side * 0.15, y: side * 0.15)))
+    @Test func anArtistTileHasAnAlbumTilesCorners() throws {
+        let artist = AlbumArtist(
+            name: "Radiohead", artists: ["Radiohead"], albumCount: 2, songCount: 2, playCount: 0,
+            groupKey: AlbumArtistGroupKey(key: "radiohead"), mediaProviders: [.jellyfin], artworkVersion: nil
+        )
+        let tile = LibraryTile(title: "Radiohead", subtitle: nil, artwork: .albumArtist(artist), placeholderSymbol: "music.mic")
+        let clip = try tile.inspect().find(ViewType.Color.self).clipShape(RoundedRectangle.self)
+        #expect(clip.cornerSize.width == ArtworkCorner.tile)
     }
 }

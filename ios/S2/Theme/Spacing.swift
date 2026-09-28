@@ -27,18 +27,14 @@ enum Spacing {
 /// everywhere: `artworkStyle(cornerRadius:)` clips and draws the hairline, `artworkTile` just clips.
 /// Controls (Play, Shuffle, the scrubber) are capsules, not a radius.
 enum ArtworkCorner {
-    /// Row artwork (48-56 pt): songs, albums, playlists, the queue, the mini player's cover.
+    /// Row artwork (48-56 pt): songs, albums, artists, playlists, the queue, the mini player's cover.
     static let row: CGFloat = 8
-    /// Shelf and grid tiles, the floating mini player, notices and other small cards.
+    /// Shelf and grid tiles (albums and artists alike), the floating mini player, notices and other small cards.
     static let tile: CGFloat = 16
     /// A detail screen's hero cover, and full-width cards (Home's resume card).
     static let hero: CGFloat = 20
     /// The Now Playing cover.
     static let player: CGFloat = 20
-    /// An artist's picture, at any size: its corner radius as a fraction of its side (`ArtistArtworkShape`). About
-    /// twice as round as an album's (8 on a 48 pt row, 16 on a 160 pt tile), so artists read as their own kind of
-    /// thing while staying in the same continuous-corner family.
-    static let artistFraction: CGFloat = 0.3
 }
 
 /// The artwork sizes rows, tiles and heroes draw at, in points (also the decode size `ArtworkImage` requests).

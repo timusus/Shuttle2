@@ -68,13 +68,12 @@ struct LibraryGrid<Content: View>: View {
     }
 }
 
-/// A grid tile: square artwork (an artist's in `ArtistArtworkShape`) filling the column, with the title and a secondary line
+/// A grid tile: square artwork (`ArtworkCorner.tile`, artists as albums) filling the column, with the title and a secondary line
 /// under it. The playing item's title takes the tint and its artwork the animated indicator.
 struct LibraryTile: View {
     let title: String
     let subtitle: String?
     let artwork: ArtworkSource
-    var artworkShape: MediaRowArtworkShape = .rounded
     var placeholderSymbol: String = "music.note"
     var playback: MediaRowPlayback = .none
 
@@ -119,20 +118,7 @@ struct LibraryTile: View {
                     ArtworkPlaceholder(symbol: placeholderSymbol)
                 }
             }
-            .modifier(TileShape(shape: artworkShape))
-    }
-}
-
-private struct TileShape: ViewModifier {
-    let shape: MediaRowArtworkShape
-
-    func body(content: Content) -> some View {
-        switch shape {
-        case .rounded:
-            content.artworkStyle(cornerRadius: ArtworkCorner.tile)
-        case .artist:
-            content.artistArtworkStyle()
-        }
+            .artworkStyle(cornerRadius: ArtworkCorner.tile)
     }
 }
 
@@ -176,7 +162,6 @@ private struct NowPlayingRowBackground: ViewModifier {
 
 /// Grid tiles' skeleton, while a grid's first page loads.
 struct LibraryGridSkeleton: View {
-    var artworkShape: MediaRowArtworkShape = .rounded
     var tiles = 8
 
     @ScaledMetric(relativeTo: .subheadline) private var titleHeight: CGFloat = 12
@@ -185,13 +170,8 @@ struct LibraryGridSkeleton: View {
         LibraryGrid {
             ForEach(0 ..< tiles, id: \.self) { _ in
                 VStack(alignment: .leading, spacing: Spacing.small) {
-                    Group {
-                        switch artworkShape {
-                        case .rounded: RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous).fill(Color(.systemGray5))
-                        case .artist: ArtistArtworkShape().fill(Color(.systemGray5))
-                        }
-                    }
-                    .aspectRatio(1, contentMode: .fit)
+                    RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous).fill(Color(.systemGray5))
+                        .aspectRatio(1, contentMode: .fit)
                     Capsule().fill(Color(.systemGray5)).frame(height: titleHeight).padding(.trailing, Spacing.large)
                     Capsule().fill(Color(.systemGray6)).frame(height: titleHeight).padding(.trailing, Spacing.xlarge * 2)
                 }

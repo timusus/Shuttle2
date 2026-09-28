@@ -11,7 +11,7 @@ import SwiftUI
 /// ```
 ///
 /// - Artwork is drawn by `RemoteArtwork` at `artworkSize` (`ArtworkSize.row`, or `.albumRow` for albums),
-///   rounded (`ArtworkCorner.row`) or, for an artist, `ArtistArtworkShape`, with the hairline and no shadow. A nil source draws
+///   rounded (`ArtworkCorner.row`, artists as albums), with the hairline and no shadow. A nil source draws
 ///   the tinted `ArtworkPlaceholder` with `placeholderSymbol`.
 /// - `playback` other than `.none` tints the title with `\.artworkTint` and lays an equaliser glyph over the
 ///   artwork, animated while `.playing` (still under Reduce Motion, and while `.paused`).
@@ -21,7 +21,6 @@ struct MediaRow<Trailing: View>: View {
     let subtitle: String?
     let artwork: ArtworkSource?
     let artworkSize: CGFloat
-    let artworkShape: MediaRowArtworkShape
     let placeholderSymbol: String
     let playback: MediaRowPlayback
     /// Set on the title `Text`, for Maestro flows (`songRow.title`).
@@ -35,7 +34,6 @@ struct MediaRow<Trailing: View>: View {
         subtitle: String? = nil,
         artwork: ArtworkSource? = nil,
         artworkSize: CGFloat = ArtworkSize.row,
-        artworkShape: MediaRowArtworkShape = .rounded,
         placeholderSymbol: String = "music.note",
         playback: MediaRowPlayback = .none,
         titleIdentifier: String? = nil,
@@ -45,7 +43,6 @@ struct MediaRow<Trailing: View>: View {
         self.subtitle = subtitle
         self.artwork = artwork
         self.artworkSize = artworkSize
-        self.artworkShape = artworkShape
         self.placeholderSymbol = placeholderSymbol
         self.playback = playback
         self.titleIdentifier = titleIdentifier
@@ -94,10 +91,7 @@ struct MediaRow<Trailing: View>: View {
             }
         }
 
-        switch artworkShape {
-        case .rounded: image.artworkTile(artworkSize)
-        case .artist: image.artistArtworkTile(artworkSize)
-        }
+        image.artworkTile(artworkSize)
     }
 }
 
@@ -107,23 +101,15 @@ extension MediaRow where Trailing == EmptyView {
         subtitle: String? = nil,
         artwork: ArtworkSource? = nil,
         artworkSize: CGFloat = ArtworkSize.row,
-        artworkShape: MediaRowArtworkShape = .rounded,
         placeholderSymbol: String = "music.note",
         playback: MediaRowPlayback = .none,
         titleIdentifier: String? = nil
     ) {
         self.init(
-            title, subtitle: subtitle, artwork: artwork, artworkSize: artworkSize, artworkShape: artworkShape,
+            title, subtitle: subtitle, artwork: artwork, artworkSize: artworkSize,
             placeholderSymbol: placeholderSymbol, playback: playback, titleIdentifier: titleIdentifier
         ) { EmptyView() }
     }
-}
-
-enum MediaRowArtworkShape {
-    /// Songs, albums, genres, playlists.
-    case rounded
-    /// Artists (`ArtistArtworkShape`).
-    case artist
 }
 
 /// Whether a row is the one playing.

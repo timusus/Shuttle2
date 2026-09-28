@@ -111,7 +111,7 @@ struct AlbumArtistDetailContent: View {
                     RemoteArtwork(.albumArtist(artist), points: points) {
                         ArtworkPlaceholder(symbol: "person.fill")
                     }
-                    .artistArtworkTile(points)
+                    .artworkTile(points, cornerRadius: ArtworkCorner.hero)
                 }
             } rows: {
                 if !state.topSongs.isEmpty {

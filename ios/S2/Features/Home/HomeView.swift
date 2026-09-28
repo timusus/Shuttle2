@@ -333,7 +333,7 @@ struct AlbumTileLabel: View {
     }
 }
 
-/// An artist tile's face: the artist's picture (`ArtistArtworkShape`) at `ArtworkSize.artistShelf` with the name and album count centred beneath.
+/// An artist tile's face: the artist's picture (`ArtworkCorner.tile`, as an album tile) at `ArtworkSize.artistShelf` with the name and album count centred beneath.
 struct ArtistTileLabel: View {
     let artist: AlbumArtist
 
@@ -342,7 +342,7 @@ struct ArtistTileLabel: View {
             RemoteArtwork(.albumArtist(artist), points: ArtworkSize.artistShelf) {
                 ArtworkPlaceholder(symbol: "person.fill")
             }
-            .artistArtworkTile(ArtworkSize.artistShelf)
+            .artworkTile(ArtworkSize.artistShelf, cornerRadius: ArtworkCorner.tile)
             .padding(.bottom, Spacing.xsmall)
             Text(artist.name ?? artist.friendlyArtistName ?? "Unknown")
                 .font(.subheadline.weight(.medium))
