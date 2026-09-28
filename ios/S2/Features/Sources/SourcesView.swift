@@ -107,7 +107,7 @@ extension MediaProviderType {
     /// The name Sources and the setup show (Android's `titleRes`).
     var title: String {
         switch self {
-        case .shuttle: "S2 scanner"
+        case .shuttle: "Shuttle Music scanner"
         case .mediaStore: "Android media store"
         case .emby: "Emby"
         case .jellyfin: "Jellyfin"

@@ -189,7 +189,7 @@ struct SourceSetupWelcome: View {
                                 .fill(LinearGradient(colors: [.purple, .indigo], startPoint: .topLeading, endPoint: .bottomTrailing))
                         )
                         .accessibilityHidden(true)
-                    Text("Welcome to S2")
+                    Text("Welcome to Shuttle Music")
                         .font(.s2Title)
                         .multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)

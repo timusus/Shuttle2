@@ -44,7 +44,7 @@ struct PlayerEventOutcomeTests {
 
     @Test func aSkippedServerSongSaysWhy() throws {
         let result = try notice(resolve(PlayerUiEventServerSongSkipped(songTitle: "Teardrop")))
-        #expect(result.message == "Skipped “Teardrop” — streaming needs S2 Pro")
+        #expect(result.message == "Skipped “Teardrop” — streaming needs Shuttle Music Pro")
         #expect(result.action == nil)
     }
 

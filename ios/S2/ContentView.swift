@@ -186,7 +186,7 @@ struct AppShell: View {
                 Label(AppTab.search.title, systemImage: AppTab.search.systemImage)
                     .tag(RootSelection.tab(.search))
             }
-            .navigationTitle("S2")
+            .navigationTitle("Shuttle Music")
         } detail: {
             detailStack
         }

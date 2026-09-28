@@ -26,7 +26,7 @@
 		<true/>
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>S2 uses your local network to find and connect to Jellyfin, Emby and Plex media servers on your Wi-Fi network.</string>
+	<string>Shuttle Music uses your local network to find and connect to Jellyfin, Emby and Plex media servers on your Wi-Fi network.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>

@@ -56,7 +56,7 @@ targets:
           NSAllowsArbitraryLoads: true
         # Local network access prompt (#608): the app discovers and connects to Jellyfin/Emby/Plex
         # servers on the user's LAN, not for any tracking or discovery purpose.
-        NSLocalNetworkUsageDescription: "S2 uses your local network to find and connect to Jellyfin, Emby and Plex media servers on your Wi-Fi network."
+        NSLocalNetworkUsageDescription: "Shuttle Music uses your local network to find and connect to Jellyfin, Emby and Plex media servers on your Wi-Fi network."
         # The app only uses standard HTTPS/TLS to reach user-configured media servers; no proprietary
         # or non-exempt encryption (#608).
         ITSAppUsesNonExemptEncryption: false
@@ -72,7 +72,7 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         # Assets.xcassets/AppIcon.appiconset, rendered from ios/design/*.svg by scripts/render-app-icon.sh.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        INFOPLIST_KEY_CFBundleDisplayName: S2
+        INFOPLIST_KEY_CFBundleDisplayName: "Shuttle Music"
         INFOPLIST_KEY_UILaunchScreen_Generation: true
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"

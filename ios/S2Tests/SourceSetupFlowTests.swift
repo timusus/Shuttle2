@@ -33,7 +33,7 @@ struct SourceSetupFlowTests {
     @Test func theWelcomeStartsOrSkips() throws {
         var calls: [String] = []
         let sut = SourceSetupWelcome(onStart: { calls.append("start") }, onSkip: { calls.append("skip") })
-        #expect((try? sut.inspect().find(text: "Welcome to S2")) != nil)
+        #expect((try? sut.inspect().find(text: "Welcome to Shuttle Music")) != nil)
         try sut.inspect().find(viewWithAccessibilityIdentifier: "onboarding.getStarted").button().tap()
         try sut.inspect().find(viewWithAccessibilityIdentifier: "onboarding.skip").button().tap()
         #expect(calls == ["start", "skip"])
