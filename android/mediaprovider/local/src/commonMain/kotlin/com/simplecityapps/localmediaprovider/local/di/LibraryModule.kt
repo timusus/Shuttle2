@@ -131,7 +131,8 @@ abstract class LibraryModule {
         fun provideGenreRepository(
             songRepository: SongRepository,
             database: MediaDatabase,
-            @AppCoroutineScope appCoroutineScope: CoroutineScope
-        ): GenreRepository = LocalGenreRepository(appCoroutineScope, songRepository, database.songDataDao())
+            @AppCoroutineScope appCoroutineScope: CoroutineScope,
+            albumIndex: LibraryAlbumIndex
+        ): GenreRepository = LocalGenreRepository(appCoroutineScope, songRepository, database.songDataDao(), albumIndex)
     }
 }

@@ -1,7 +1,6 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
-import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.genres.comparator
@@ -9,6 +8,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.withAlbumIdentities
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +16,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -24,7 +25,8 @@ import kotlinx.coroutines.flow.stateIn
 class LocalGenreRepository(
     private val scope: CoroutineScope,
     val songRepository: SongRepository,
-    private val songDataDao: SongDataDao
+    private val songDataDao: SongDataDao,
+    private val albumIndex: LibraryAlbumIndex
 ) : GenreRepository {
     private val genreRelay: StateFlow<Map<String, List<Song>>?> by lazy {
         songRepository
@@ -81,8 +83,16 @@ class LocalGenreRepository(
                 .sortedWith(songQuery.sortOrder.comparator)
         }
 
-    /** Straight from the database, so a Home tile's mosaic doesn't wait on (or sort) the whole genre. */
-    override fun getGenreCoverSongs(genre: String, limit: Int): Flow<List<Song>> = songDataDao.getCoverSongDataForGenre(genre, limit)
-        .map { songs -> songs.map { it.toSong() } }
-        .flowOn(Dispatchers.IO)
+    /**
+     * One song per album identity of the genre, by album artist then album, up to [limit]: the genre's song ids come
+     * from the database and the albums from the library's [albumIndex], so only the covers' songs are read whole.
+     */
+    override fun getGenreCoverSongs(genre: String, limit: Int): Flow<List<Song>> = combine(songDataDao.getSongIdsForGenre(genre), albumIndex.updates) { ids, index ->
+        val coverIds = ids
+            .sortedBy { id -> index.identities[id]?.albumArtistName?.lowercase().orEmpty() }
+            .distinctBy { id -> index.identities[id]?.groupKey ?: id }
+            .take(limit)
+        val songs = songDataDao.loadByIds(coverIds).associateBy { it.id }
+        coverIds.mapNotNull(songs::get).withAlbumIdentities(index.identities)
+    }.flowOn(Dispatchers.IO)
 }

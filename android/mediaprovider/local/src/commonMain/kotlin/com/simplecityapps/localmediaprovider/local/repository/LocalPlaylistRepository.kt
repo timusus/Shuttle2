@@ -148,11 +148,12 @@ class LocalPlaylistRepository(
 
     /**
      * The DAO's grouping query returns one representative song per album, in no useful order - so the playlist's
-     * own sort is applied here, the same way [getSongsForPlaylist] applies it, before taking [limit].
+     * own sort is applied here, the same way [getSongsForPlaylist] applies it, then one song per album identity is kept
+     * before taking [limit].
      */
     override fun getPlaylistCoverSongs(playlist: Playlist, limit: Int): Flow<List<Song>> = playlistSongJoinDao.getCoverSongsForPlaylist(playlist.id)
         .withAlbumIdentities()
-        .map { playlistSongs -> playlistSongs.sortedForPlaylist(playlist).take(limit).map { it.song } }
+        .map { playlistSongs -> playlistSongs.sortedForPlaylist(playlist).map { it.song }.distinctBy { it.resolvedAlbumIdentity.groupKey }.take(limit) }
 
     /** Each song holding its album identity, from the library's index as it is when the songs are read. */
     private fun Flow<List<PlaylistSong>>.withAlbumIdentities(): Flow<List<PlaylistSong>> = combine(this, albumIndex.updates) { entries, index ->

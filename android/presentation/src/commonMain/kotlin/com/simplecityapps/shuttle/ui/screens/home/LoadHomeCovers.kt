@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.first
 
 /**
  * The songs whose covers make up each playlist and genre tile's 2x2 mosaic on Home (#633, #646), by [HomeItem.key]:
- * up to [ObservePlaylistCovers.CoverCount] songs from different albums, in the playlist's order or, for a genre, by
- * album artist and album; both limited in the database. An item with none is left out, and draws its generated
- * artwork. Loaded once per set of sections: the sections reload as the library changes, and the covers with them.
+ * up to [ObservePlaylistCovers.CoverCount] songs from different albums (one per album identity), in the playlist's order
+ * or, for a genre, by album artist and album; only the covers' songs are read whole. An item with none is
+ * left out, and draws its generated artwork. Loaded once per set of sections: the sections reload as the library changes, and the covers with them.
  */
 class LoadHomeCovers @Inject constructor(
     private val playlistRepository: PlaylistRepository,
