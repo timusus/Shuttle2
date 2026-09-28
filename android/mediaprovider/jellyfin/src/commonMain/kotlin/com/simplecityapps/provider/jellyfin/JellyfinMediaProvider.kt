@@ -12,12 +12,14 @@ import com.simplecityapps.mediaprovider.server.withServerSession
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.map
 import com.simplecityapps.networking.userDescription
+import com.simplecityapps.provider.jellyfin.http.ArtistItem
 import com.simplecityapps.provider.jellyfin.http.Item
 import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.QueryResult
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.musicBrainzIds
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -194,7 +196,21 @@ internal fun Item.toSong(): Song = Song(
     // Artwork for songs and albums is the album's primary image
     artworkVersion = albumPrimaryImageTag,
     // When the song was added to the server, so a fresh sign-in or re-import doesn't make the whole library new
-    dateAdded = createdAt
+    dateAdded = createdAt,
+    // Jellyfin splits the file's ARTIST tag into Artists itself, so the raw credit string and COMPILATION aren't sent
+    albumArtists = albumArtists.mapNotNull { artist -> artist.name?.takeIf(String::isNotBlank) },
+    artistsTag = artists.filter { it.isNotEmpty() },
+    artistDisplay = null,
+    compilation = null,
+    // MusicBrainzTrack is the release track id; a file's MUSICBRAINZ_TRACKID is the recording
+    mbTrackId = musicBrainzIds(providerIds["MusicBrainzRecording"]).firstOrNull(),
+    mbAlbumId = musicBrainzIds(providerIds["MusicBrainzAlbum"]).firstOrNull(),
+    mbReleaseGroupId = musicBrainzIds(providerIds["MusicBrainzReleaseGroup"]).firstOrNull(),
+    mbArtistIds = musicBrainzIds(providerIds["MusicBrainzArtist"]),
+    mbAlbumArtistIds = musicBrainzIds(providerIds["MusicBrainzAlbumArtist"]),
+    serverAlbumId = albumId,
+    serverArtistIds = artistItems.mapNotNull(ArtistItem::id),
+    serverAlbumArtistIds = albumArtists.mapNotNull(ArtistItem::id)
 )
 
 private val Item.createdAt: Instant?

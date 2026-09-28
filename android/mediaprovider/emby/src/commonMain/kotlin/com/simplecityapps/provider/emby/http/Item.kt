@@ -22,6 +22,7 @@ data class Item(
     @SerialName("Artists") val artists: List<String> = emptyList(),
     @SerialName("ArtistItems") val artistItems: List<ArtistItem> = emptyList(),
     @SerialName("AlbumArtist") val albumArtist: String? = null,
+    @SerialName("AlbumArtists") val albumArtists: List<ArtistItem> = emptyList(),
     @SerialName("IndexNumber") val indexNumber: Int? = null,
     @SerialName("ParentIndexNumber") val parentIndexNumber: Int? = null,
     @SerialName("ProductionYear") val productionYear: Int? = null,
@@ -29,5 +30,9 @@ data class Item(
     // Changes whenever the album's image does
     @SerialName("AlbumPrimaryImageTag") val albumPrimaryImageTag: String? = null,
     // Only returned when requested in 'fields'
-    @SerialName("DateCreated") val dateCreated: String? = null
+    @SerialName("DateCreated") val dateCreated: String? = null,
+    // Only returned when requested in 'fields': the file's MusicBrainz tags, keyed "MusicBrainzTrack" (the recording,
+    // which is what a file's MUSICBRAINZ_TRACKID holds), "MusicBrainzAlbum", "MusicBrainzReleaseGroup",
+    // "MusicBrainzArtist" and "MusicBrainzAlbumArtist"
+    @SerialName("ProviderIds") val providerIds: Map<String, String> = emptyMap()
 )

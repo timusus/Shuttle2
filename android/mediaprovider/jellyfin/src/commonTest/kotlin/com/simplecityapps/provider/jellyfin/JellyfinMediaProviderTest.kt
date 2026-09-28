@@ -85,7 +85,7 @@ class JellyfinMediaProviderTest {
 
         val request = server.requestsTo(ITEMS).single()
         request.url.parameters["recursive"] shouldBe "true"
-        request.url.parameters["fields"] shouldBe "Genres,DateCreated"
+        request.url.parameters["fields"] shouldBe "Genres,DateCreated,ProviderIds"
         request.url.parameters["startIndex"] shouldBe "0"
         request.url.parameters["limit"] shouldBe "500"
         request.headers["Authorization"]!! shouldContain "Token=\"token-1\""

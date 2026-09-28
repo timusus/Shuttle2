@@ -4,6 +4,7 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.musicBrainzIds
 import java.nio.ByteBuffer
 import java.nio.charset.CharacterCodingException
 import java.nio.charset.CodingErrorAction
@@ -187,14 +188,10 @@ private fun Map<String, List<String>>.toFileTagsAsRead(): FileTags {
 private fun Map<String, List<String>>.values(key: String): List<String> = get(key).orEmpty().map { it.trim() }.filter { it.isNotEmpty() }
 
 /**
- * The MusicBrainz ids tagged as [property], in order. ID3v2.3 joins several with '/' (Picard's default) and some taggers
- * use ';', so each id is found by its UUID form rather than by splitting. TagLib names the ID3 TXXX frames it knows by
- * [TagLibProperty.key], and passes any other through as its description upper-cased, so the TXXX spelling is read too.
+ * The MusicBrainz ids tagged as [property], in order. TagLib names the ID3 TXXX frames it knows by [TagLibProperty.key],
+ * and passes any other through as its description upper-cased, so the TXXX spelling is read too.
  */
-private fun Map<String, List<String>>.musicBrainzIds(property: TagLibProperty): List<String> {
-    val values = get(property.key) ?: MUSICBRAINZ_TXXX_NAMES[property]?.let { name -> get(name) }
-    return values.orEmpty().flatMap { value -> MUSICBRAINZ_ID.findAll(value).map { match -> match.value.lowercase() } }.distinct()
-}
+private fun Map<String, List<String>>.musicBrainzIds(property: TagLibProperty): List<String> = musicBrainzIds(get(property.key) ?: MUSICBRAINZ_TXXX_NAMES[property]?.let { name -> get(name) }.orEmpty())
 
 private val MUSICBRAINZ_TXXX_NAMES =
     mapOf(
@@ -204,8 +201,6 @@ private val MUSICBRAINZ_TXXX_NAMES =
         TagLibProperty.MusicBrainzArtistId to "MUSICBRAINZ ARTIST ID",
         TagLibProperty.MusicBrainzAlbumArtistId to "MUSICBRAINZ ALBUM ARTIST ID"
     )
-
-private val MUSICBRAINZ_ID = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 
 /** COMPILATION, TCMP and cpil hold "1" for a compilation ("0" for not); some taggers write "true". */
 private fun String.parseCompilation(): Boolean? = when (trim().lowercase()) {

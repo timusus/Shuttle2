@@ -19,7 +19,7 @@ class ItemsService(private val client: HttpClient) {
         url = "$url/Users/$userId/Items",
         token = token,
         itemTypes = "Audio",
-        fields = "Genres,ProductionYear,DateCreated",
+        fields = "Genres,ProductionYear,DateCreated,ProviderIds",
         limit = limit,
         startIndex = startIndex
     )
