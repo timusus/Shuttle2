@@ -52,6 +52,13 @@ when it's set up; `$S2_SIM_HOLDER` leases as a different holder, for parallel wo
 runtime, so `test.sh`'s default when none is booted) `AppShellTests`' two TabView lookups fail;
 `iPhone 16` (iOS 18.5) passes everything.
 
+**Verification split:** a worker's own brief only needs the Swift package build/tests for the files it
+touched, and gives up on a simulator lease after ~5 minutes rather than wait on it. The one full iOS
+verify (framework rebuild + `test.sh` on the whole `S2` scheme) happens once, in
+`support/scripts/land.sh`, gated on the picked commits touching `ios/`, `shared/`, or
+`android/domain|presentation|core`; it leases the simulator as `S2_SIM_HOLDER=land` and releases it
+when done, so it never collides with a worker's own lease.
+
 ## Running on a device
 
 ```bash
