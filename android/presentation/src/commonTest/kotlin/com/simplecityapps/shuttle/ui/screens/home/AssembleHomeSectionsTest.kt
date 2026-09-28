@@ -61,9 +61,9 @@ class AssembleHomeSectionsTest {
             empty.copy(
                 jumpBackIn = JumpBackInCandidates(albums.take(2), emptyList()),
                 aroundThisTime = albums.subList(1, 5).map { around(it, days = 3) },
-                onRepeat = listOf(OnRepeatCandidate(albums[0], 6, 3.0), OnRepeatCandidate(albums[9], 6, 2.0)),
-                rediscover = listOf(albums[9], albums[10]),
-                recentlyAdded = empty.recentlyAdded.copy(items = listOf(albums[10], albums[11])),
+                onRepeat = listOf(OnRepeatCandidate(albums[0], 6, 3.0), OnRepeatCandidate(albums[9], 6, 2.0), OnRepeatCandidate(albums[12], 6, 1.0)),
+                rediscover = listOf(albums[9], albums[10], albums[13]),
+                recentlyAdded = empty.recentlyAdded.copy(items = listOf(albums[10], albums[11], albums[14])),
                 genrePicks = GenrePickCandidates(emptyList(), genres),
             ),
         )
@@ -77,10 +77,34 @@ class AssembleHomeSectionsTest {
             HomeSectionId.GenrePicks,
         )
         sections.section(HomeSectionId.AroundThisTime).items shouldBe albums.subList(2, 5)
-        sections.section(HomeSectionId.OnRepeat).items shouldBe listOf(albums[9])
-        sections.section(HomeSectionId.Rediscover).items shouldBe listOf(albums[10])
-        sections.section(HomeSectionId.RecentlyAdded).items shouldBe listOf(albums[11])
+        sections.section(HomeSectionId.OnRepeat).items shouldBe listOf(albums[9], albums[12])
+        sections.section(HomeSectionId.Rediscover).items.toSet() shouldBe setOf(albums[10], albums[13])
+        sections.section(HomeSectionId.RecentlyAdded).items shouldBe listOf(albums[11], albums[14])
         sections.flatMap { it.items }.map { it.key }.let { keys -> keys shouldBe keys.distinct() }
+    }
+
+    @Test
+    fun `an eligible around this time that overlaps jump back in still shows what's left`() {
+        val sections = assemble(
+            empty.copy(
+                jumpBackIn = JumpBackInCandidates(listOf(albums[0], albums[20]), emptyList()),
+                aroundThisTime = albums.take(3).map { around(it, days = 3) },
+            ),
+        )
+
+        sections.section(HomeSectionId.AroundThisTime).items shouldBe albums.subList(1, 3)
+    }
+
+    @Test
+    fun `a section left with one item after earlier sections claim theirs hides`() {
+        val sections = assemble(
+            empty.copy(
+                jumpBackIn = JumpBackInCandidates(albums.take(2), emptyList()),
+                aroundThisTime = albums.take(3).map { around(it, days = 3) },
+            ),
+        )
+
+        sections.map { it.id } shouldBe listOf(HomeSectionId.JumpBackIn)
     }
 
     @Test

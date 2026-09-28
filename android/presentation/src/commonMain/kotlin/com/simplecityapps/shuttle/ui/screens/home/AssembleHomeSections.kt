@@ -37,7 +37,8 @@ data class HomeCandidates(
 
 /**
  * Chooses Home's sections from [candidates] as of [clock]'s now in [timeZone] (#633). Sections come in [HomeSectionId]
- * order and an item shows once, in the earliest section that shows it; a hidden section claims nothing.
+ * order and an item shows once, in the earliest section that shows it; a hidden section claims nothing. Each section's
+ * thresholds are checked on its own candidates, and a section hides when fewer than [MIN_SHOWN_ITEMS] are left to show.
  * - Cold start (no history, nothing ever played through): Recently added, Genre picks by size, and Shuffle all.
  * - Jump back in: the last [JUMP_BACK_IN_SIZE] contexts played from; the albums last played through until there's history.
  * - Around this time: contexts by days played near this hour, days of today's kind (weekday or weekend) counting
@@ -59,7 +60,8 @@ fun assembleHomeSections(
     val coldStart = !candidates.hasHistory && candidates.jumpBackIn.lastCompleted.isEmpty()
     if (coldStart) {
         builder.add(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, recentlyAdded, SECTION_SIZE)
-        builder.add(HomeSectionId.GenrePicks, HomeSectionTitle.GenrePicks, candidates.genrePicks.largest, GENRE_PICKS_MAX, minItems = GENRE_PICKS_MIN)
+        val largest = candidates.genrePicks.largest
+        builder.add(HomeSectionId.GenrePicks, HomeSectionTitle.GenrePicks, largest, GENRE_PICKS_MAX, eligible = largest.size >= GENRE_PICKS_MIN)
         return builder.sections + HomeSection(HomeSectionId.ShuffleAll, HomeSectionTitle.ShuffleAll, emptyList())
     }
 
@@ -74,7 +76,7 @@ fun assembleHomeSections(
             sameKind * SAME_KIND_OF_DAY_WEIGHT + (candidate.days - sameKind)
         }
         .map { it.item }
-    builder.add(HomeSectionId.AroundThisTime, partOfDay(now.hour), aroundThisTime, SECTION_SIZE, minItems = AROUND_THIS_TIME_MIN_ITEMS)
+    builder.add(HomeSectionId.AroundThisTime, partOfDay(now.hour), aroundThisTime, SECTION_SIZE, eligible = aroundThisTime.size >= AROUND_THIS_TIME_MIN_ITEMS)
 
     val onRepeat = candidates.onRepeat.filter { it.completions >= ON_REPEAT_MIN_COMPLETIONS }.sortedByDescending { it.score }.map { it.item }
     builder.add(HomeSectionId.OnRepeat, HomeSectionTitle.OnRepeat, onRepeat, SECTION_SIZE)
@@ -85,7 +87,7 @@ fun assembleHomeSections(
     builder.add(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, recentlyAdded, SECTION_SIZE)
 
     val genrePicks = (candidates.genrePicks.played + candidates.genrePicks.largest).distinctBy { it.key }
-    builder.add(HomeSectionId.GenrePicks, HomeSectionTitle.GenrePicks, genrePicks, GENRE_PICKS_MAX, minItems = GENRE_PICKS_MIN)
+    builder.add(HomeSectionId.GenrePicks, HomeSectionTitle.GenrePicks, genrePicks, GENRE_PICKS_MAX, eligible = genrePicks.size >= GENRE_PICKS_MIN)
     return builder.sections
 }
 
@@ -98,7 +100,10 @@ internal fun partOfDay(hour: Int): HomeSectionTitle = when (hour) {
 
 private fun RecentlyAddedCandidates.isImportBurst(): Boolean = importDays.songs > 0 && importDays.largestDay > importDays.songs * IMPORT_BURST_SHARE
 
-/** Adds sections in order, leaving out items an earlier section shows. */
+/**
+ * Adds sections in order, leaving out items an earlier section shows. Whether a section qualifies ([eligible]) is decided
+ * on its own candidates, before that; afterwards it hides only when fewer than [MIN_SHOWN_ITEMS] items are left.
+ */
 private class SectionBuilder {
     private val shown = mutableSetOf<String>()
     val sections = mutableListOf<HomeSection>()
@@ -108,10 +113,11 @@ private class SectionBuilder {
         title: HomeSectionTitle,
         candidates: List<HomeItem>,
         size: Int,
-        minItems: Int = 1,
+        eligible: Boolean = candidates.isNotEmpty(),
     ) {
+        if (!eligible) return
         val items = candidates.filter { it.key !in shown }.distinctBy { it.key }.take(size)
-        if (items.size < minItems) return
+        if (items.size < MIN_SHOWN_ITEMS) return
         shown += items.map { it.key }
         sections += HomeSection(id, title, items)
     }
@@ -119,6 +125,9 @@ private class SectionBuilder {
 
 internal const val JUMP_BACK_IN_SIZE = 8
 internal const val SECTION_SIZE = 10
+
+/** The fewest items a section shows once earlier sections have claimed theirs; below it, the section hides. */
+internal const val MIN_SHOWN_ITEMS = 2
 internal const val AROUND_THIS_TIME_MIN_DAYS = 3
 internal const val AROUND_THIS_TIME_MIN_ITEMS = 3
 internal const val SAME_KIND_OF_DAY_WEIGHT = 1.5

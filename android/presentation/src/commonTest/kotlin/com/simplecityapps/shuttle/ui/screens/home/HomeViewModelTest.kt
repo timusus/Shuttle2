@@ -69,8 +69,10 @@ class HomeViewModelTest {
     private val saltMarsh = createAlbum("salt marsh", "juniper static")
 
     init {
-        suggestions.albums = listOf(phaseGarden)
+        suggestions.albums = listOf(phaseGarden, dustChoir)
     }
+
+    private val twoRecentContexts get() = listOf(RecentContext(phaseGarden.playContext, start), RecentContext(dustChoir.playContext, start))
 
     private val chlorophyllLoop = createSong(id = 1, name = "Chlorophyll Loop", albumArtist = "Juniper Static", album = "Phase Garden")
     private val tidalMoss = createSong(id = 2, name = "Tidal Moss", albumArtist = "Juniper Static", album = "Phase Garden", duration = 200_000).copy(playbackPosition = 30_000)
@@ -134,10 +136,10 @@ class HomeViewModelTest {
     fun `a library with history shows its sections`() = runTest(testDispatcher) {
         suggestions.songCount.value = 2
         playHistory.eventCount.value = 1
-        playHistory.recentContexts = listOf(RecentContext(phaseGarden.playContext, start))
+        playHistory.recentContexts = twoRecentContexts
 
         val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
-        content.sections shouldBe listOf(HomeSection(HomeSectionId.JumpBackIn, HomeSectionTitle.JumpBackIn, listOf(HomeItem.AlbumItem(phaseGarden))))
+        content.sections shouldBe listOf(HomeSection(HomeSectionId.JumpBackIn, HomeSectionTitle.JumpBackIn, listOf(HomeItem.AlbumItem(phaseGarden), HomeItem.AlbumItem(dustChoir))))
         content.showWhatsNew shouldBe false
     }
 
@@ -152,7 +154,7 @@ class HomeViewModelTest {
     fun `history changes reload the sections once they settle`() = runTest(testDispatcher) {
         suggestions.songCount.value = 2
         val viewModel = viewModel()
-        playHistory.recentContexts = listOf(RecentContext(phaseGarden.playContext, start))
+        playHistory.recentContexts = twoRecentContexts
 
         playHistory.eventCount.value = 1
         runCurrent()
