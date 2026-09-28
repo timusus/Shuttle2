@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  S2 iOS app icon, tinted appearance (iOS 18+). A greyscale mark on black:
+  iOS maps the luminance onto the user's tint colour, so the front note is
+  brightest and the fold darkest, as in the colour icons. No shadow.
+  Regenerate the PNGs with ios/scripts/render-app-icon.sh.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#000000"/>
+  <g transform="translate(211.82 190) scale(0.84266)">
+    <path id="back-note" fill="#C8C8C8" d="M712.97,601.85A157.66,157.66 0 1 1 574.08,445.56V189.81H416.67L356.48,50.92H685.19A27.78,27.78 0 0 1 712.97,78.70Z"/>
+    <path id="fold" fill="#7A7A7A" d="M416.67,189.81L393.52,138.89H486.11Z"/>
+    <path id="front-note" fill="#FFFFFF" d="M314.82,138.89V546.30A157.66,157.66 0 1 1 175.93,390.01V27.78A27.78,27.78 0 0 1 203.71,0H435.17L486.11,138.89Z"/>
+  </g>
+</svg>

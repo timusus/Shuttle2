@@ -70,8 +70,8 @@ targets:
         GENERATE_INFOPLIST_FILE: true
         # The app's tint: Assets.xcassets' AccentColor, S2's accent split light/dark for contrast (Theme/Typography.swift).
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
-        # No app icon yet; XcodeGen's application preset names one, which actool then fails to find.
-        ASSETCATALOG_COMPILER_APPICON_NAME: ""
+        # Assets.xcassets/AppIcon.appiconset, rendered from ios/design/*.svg by scripts/render-app-icon.sh.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_KEY_CFBundleDisplayName: S2
         INFOPLIST_KEY_UILaunchScreen_Generation: true
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true

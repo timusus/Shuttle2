@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  S2 iOS app icon (light / "any" appearance). Source of truth for
+  ios/S2/Assets.xcassets/AppIcon.appiconset; regenerate the PNGs with
+  ios/scripts/render-app-icon.sh.
+
+  The mark is the Android launcher foreground
+  (android/app/src/main/res/drawable/ic_launcher_foreground.xml) with its
+  coordinates cleaned up, recentred and scaled to about 62% of the canvas.
+  Full-bleed square: iOS applies the corner mask itself.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <!-- Light Blue 400 to 600 around the Android launcher background, #03A9F4 -->
+    <linearGradient id="background" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2FBBF8"/>
+      <stop offset="1" stop-color="#0493E0"/>
+    </linearGradient>
+    <!-- Softened version of the Android icon's hard 21% drop shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feOffset in="SourceAlpha" dy="18.52" result="offset"/>
+      <feGaussianBlur in="offset" stdDeviation="9" result="blur"/>
+      <feFlood flood-color="#01579B" flood-opacity="0.45"/>
+      <feComposite in2="blur" operator="in"/>
+    </filter>
+    <!-- Mark in the Android viewport's coordinates: x -0.5..713, y 0..759.5 -->
+    <g id="mark">
+      <path id="back-note" fill="#EEF5FA" d="M712.97,601.85A157.66,157.66 0 1 1 574.08,445.56V189.81H416.67L356.48,50.92H685.19A27.78,27.78 0 0 1 712.97,78.70Z"/>
+      <path id="fold" fill="#CFDEE8" d="M416.67,189.81L393.52,138.89H486.11Z"/>
+      <path id="front-note" fill="#FFFFFF" d="M314.82,138.89V546.30A157.66,157.66 0 1 1 175.93,390.01V27.78A27.78,27.78 0 0 1 203.71,0H435.17L486.11,138.89Z"/>
+    </g>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#background)"/>
+  <g transform="translate(211.82 190) scale(0.84266)">
+    <use xlink:href="#mark" filter="url(#shadow)"/>
+    <use xlink:href="#mark"/>
+  </g>
+</svg>
