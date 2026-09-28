@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.simplecityapps.createAlbum
+import com.simplecityapps.createAlbumArtist
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
@@ -77,6 +79,38 @@ class AlbumArtistDetailScreenTest {
         robot.clickShuffle()
 
         robot.shuffleClicked shouldBe true
+    }
+
+    @Test
+    fun `without albums crediting them elsewhere there is no Appears On section`() {
+        robot.setAlbumArtist(readyAlbumArtistDetail())
+
+        robot.assertTextNotDisplayed("Appears On")
+    }
+
+    @Test
+    fun `Appears On lists others' albums crediting the artist, a tap opens one and a long press opens its actions`() {
+        val compilation = createAlbum(name = "Low Tide Sessions, Vol. 2", albumArtist = "Various Artists", year = 2022)
+        robot.setAlbumArtist(readyAlbumArtistDetail(appearsOn = listOf(compilation)))
+
+        robot.scrollTo("Appears On")
+        robot.assertTextDisplayed("Appears On")
+        robot.clickText("Low Tide Sessions, Vol. 2")
+        robot.lastAppearsOnOpened shouldBe compilation
+
+        robot.longClickText("Low Tide Sessions, Vol. 2")
+        robot.lastMore shouldBe compilation
+    }
+
+    @Test
+    fun `an artist only credited on others' albums counts just their songs`() {
+        val feature = createAlbum(name = "Graduation", albumArtist = "Kanye West")
+        robot.setAlbumArtist(readyAlbumArtistDetail(artist = createAlbumArtist(name = "Chris Martin"), albums = emptyList(), appearsOn = listOf(feature)))
+
+        robot.assertTextDisplayed("3 songs")
+        robot.assertTextNotDisplayed("Albums")
+        robot.scrollTo("Appears On")
+        robot.assertTextDisplayed("Appears On")
     }
 
     @Test

@@ -1,5 +1,10 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Album
@@ -10,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
@@ -17,10 +23,12 @@ import com.simplecityapps.shuttle.designsystem.component.AlbumRow
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
+import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -38,8 +46,9 @@ import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 /**
- * Album artist detail (inventory §1): albums newest first, each expanding its tracks inline when tapped, then every
- * song. Play / Shuffle play all of them; the overflow holds the artist's actions plus Shuffle albums.
+ * Artist detail (inventory §1): their own albums newest first, each expanding its tracks inline when tapped, then Appears
+ * On (#637), a row of others' albums crediting them, each opening its album, then every song. Play / Shuffle play all of
+ * them; the overflow holds the artist's actions plus Shuffle albums.
  */
 @Composable
 fun AlbumArtistDetailScreen(
@@ -51,6 +60,7 @@ fun AlbumArtistDetailScreen(
     onAlbumClick: (Album) -> Unit,
     onAlbumMore: (Album) -> Unit,
     onSongMore: (Song) -> Unit,
+    onAppearsOnClick: (Album) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val artist = uiState.albumArtist
@@ -65,7 +75,13 @@ fun AlbumArtistDetailScreen(
         LibraryDetailScaffold(
             state = state,
             title = artist?.name ?: artist?.friendlyArtistName ?: unknown,
-            subtitle = artist?.let { listOf(pluralString(R.plurals.albumsPlural, uiState.albums.size), pluralString(R.plurals.songsPlural, uiState.songs.size)).joinToString(" · ") },
+            // An artist only credited on others' albums has none of their own to count.
+            subtitle = artist?.let {
+                listOfNotNull(
+                    uiState.albums.size.takeIf { it > 0 }?.let { pluralString(R.plurals.albumsPlural, it) },
+                    pluralString(R.plurals.songsPlural, uiState.songs.size),
+                ).joinToString(" · ")
+            },
             artwork = artist,
             placeholder = ArtworkPlaceholder.Artist,
             artworkShape = ArtworkShape.Circle,
@@ -105,6 +121,27 @@ fun AlbumArtistDetailScreen(
                     }
                 }
             }
+            if (uiState.appearsOn.isNotEmpty()) {
+                item(key = "appears-on-header", contentType = "header") { SectionHeader(title = stringResource(R.string.artist_detail_appears_on)) }
+                item(key = "appears-on", contentType = "appears-on") {
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = S2Spacing.medium),
+                        horizontalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium),
+                        modifier = Modifier.testTag("artist-appears-on"),
+                    ) {
+                        items(uiState.appearsOn, key = { "appears-on-${it.groupKey}" }) { album ->
+                            GridTile(
+                                title = album.name ?: unknown,
+                                subtitle = album.friendlyArtistName,
+                                onClick = { onAppearsOnClick(album) },
+                                onLongClick = { onAlbumMore(album) },
+                                artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
+                                modifier = Modifier.width(AppearsOnTileWidth),
+                            )
+                        }
+                    }
+                }
+            }
             if (uiState.songs.isNotEmpty()) {
                 item(key = "songs-header", contentType = "header") { SectionHeader(title = stringResource(R.string.artist_detail_songs)) }
             }
@@ -122,6 +159,9 @@ fun AlbumArtistDetailScreen(
         }
     }
 }
+
+/** An Appears On tile's width: Home's compact shelf tiles', so a phone shows two and a peek of the third. */
+private val AppearsOnTileWidth = 150.dp
 
 @Composable
 fun AlbumArtistDetailDestination(
@@ -172,6 +212,7 @@ fun AlbumArtistDetailDestination(
                 )
             },
             onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
+            onAppearsOnClick = { album -> onOpen(album.route) },
         )
     }
 }

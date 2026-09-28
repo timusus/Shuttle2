@@ -3,6 +3,8 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
@@ -47,6 +49,10 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         private set
     var lastAlbumClicked: Album? = null
         private set
+
+    /** The Appears On album tapped open on an artist's page. */
+    var lastAppearsOnOpened: Album? = null
+        private set
     var lastToggled: PlaylistSong? = null
         private set
     var selectionCleared = false
@@ -80,6 +86,7 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
             onAlbumClick = { lastAlbumClicked = it },
             onAlbumMore = ::more,
             onSongMore = ::more,
+            onAppearsOnClick = { lastAppearsOnOpened = it },
         )
     }
 
@@ -230,6 +237,7 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
     }
 
     fun scrollTo(text: String) {
-        rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(text))
+        // The screen's own list, not a row scrolling sideways within it (an artist's Appears On)
+        rule.onNode(hasScrollToNodeAction() and SemanticsMatcher.keyIsDefined(SemanticsProperties.VerticalScrollAxisRange)).performScrollToNode(hasText(text))
     }
 }

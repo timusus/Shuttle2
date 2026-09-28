@@ -74,6 +74,8 @@
     <string name="artist_detail_albums">Albums</string>
     <!-- Artist detail section over the artist's songs -->
     <string name="artist_detail_songs">Songs</string>
+    <!-- Artist detail: the section of other artists' albums crediting this artist (features, compilations) -->
+    <string name="artist_detail_appears_on">Appears On</string>
     <!-- Detail screen action: shuffle the artist's albums in album order -->
     <string name="detail_shuffle_albums">Shuffle albums</string>
     <!-- Snackbar shown when Shuffle albums couldn't start playback -->

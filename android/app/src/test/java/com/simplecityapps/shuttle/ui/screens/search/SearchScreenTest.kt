@@ -1,6 +1,9 @@
 package com.simplecityapps.shuttle.ui.screens.search
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.simplecityapps.createAlbumArtist
+import com.simplecityapps.mediaprovider.search.SearchHit
+import com.simplecityapps.mediaprovider.search.SearchQuery
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -82,6 +85,19 @@ class SearchScreenTest {
 
         robot.openedAlbums shouldBe listOf(SearchScenarios.weatherSystems)
         robot.openedPlaylists shouldBe listOf(SearchScenarios.playlist)
+    }
+
+    @Test
+    fun `an artist found only by their track credits counts their songs and opens their page`() {
+        val featured = createAlbumArtist(name = "Chris Martin", albumCount = 0, songCount = 2, appearsOnCount = 1)
+        robot.setContent(
+            SearchUiState(content = SearchContent.Results("chris", SearchResults(artists = listOf(SearchHit(featured, SearchQuery.parse("chris"))), top = SearchCategory.Artists))),
+        )
+
+        robot.assertTextDisplayed("2 songs")
+        robot.tapText("Chris Martin")
+
+        robot.openedArtists shouldBe listOf(featured)
     }
 
     @Test

@@ -19,9 +19,9 @@ import com.simplecityapps.shuttle.ui.actions.ExcludeSongs
 import com.simplecityapps.shuttle.ui.actions.FavouriteSongs
 import com.simplecityapps.shuttle.ui.actions.FindGoToTarget
 import com.simplecityapps.shuttle.ui.actions.MediaActionHandler
+import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveArtistAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveArtists
-import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveGenres
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists

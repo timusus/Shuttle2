@@ -160,6 +160,26 @@ class LibraryScreenshotTest {
         shot("phone-artist-detail")
     }
 
+    /** Juniper Static's albums, folded, then Appears On: the compilation carrying their live edit (#637). */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneArtistDetailAppearsOn() {
+        val artist = SampleLibrary.artist("Juniper Static")
+        val artistSongs = artist.albums.flatMap { album -> album.songs.map { it.toSong() } }
+        val artistAlbums = artist.albums.map { album -> albumOf(album.songs.map { it.toSong() }, year = album.year) }
+        val compilation = SampleLibrary.compilation
+        val credited = compilation.songs.filter { it.artist == artist.name }.map { it.toSong() }
+        detail.setAlbumArtist(
+            readyAlbumArtistDetail(
+                artist = artist.toAlbumArtist(),
+                songs = artistSongs + credited,
+                albums = artistAlbums,
+                appearsOn = listOf(albumOf(compilation.songs.map { it.toSong() }, year = compilation.year)),
+            ),
+        )
+        shot("phone-artist-detail-appears-on")
+    }
+
     @Test
     @Config(qualifiers = "w411dp-h891dp-xhdpi")
     fun phoneGenreDetail() {

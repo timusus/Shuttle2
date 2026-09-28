@@ -47,9 +47,11 @@ fun readyAlbumArtistDetail(
     albums: List<Album> = listOf(albumOf(songs)),
     expandedAlbums: Set<AlbumGroupKey> = emptySet(),
     currentSong: Song? = null,
+    appearsOn: List<Album> = emptyList(),
 ) = AlbumArtistDetailUiState(
     albumArtist = artist,
     albums = albums,
+    appearsOn = appearsOn,
     songs = songs,
     expandedAlbums = expandedAlbums,
     currentSong = currentSong,

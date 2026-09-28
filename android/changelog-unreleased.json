@@ -2,6 +2,10 @@
   "since": "v26092301",
   "features": [
     {
+      "text": "Artist pages now show the albums an artist appears on, like features and compilations, after their own albums, and search finds artists who only appear on other artists' songs",
+      "commits": []
+    },
+    {
       "text": "S2 has been redesigned: a new Home with a grid of what you played lately and shelves of albums, artists, playlists and genres to rediscover, plus a new Library, Search and Settings, with the player always a tap away. The layout now adapts to tablets and foldables, and the app turns to landscape",
       "commits": []
     },
