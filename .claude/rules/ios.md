@@ -37,16 +37,17 @@ ios/scripts/generate-strings.py
 cd ios && xcodebuild build -project S2.xcodeproj -scheme S2 \
   -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData -quiet
 
-# 4. Tests. The S2 scheme (swift-testing + ViewInspector) on an available iPhone simulator: a booted
-#    one, else the newest iOS runtime's; S2_SIMULATOR_UDID=<udid> picks one. Extra args go to
-#    xcodebuild (-only-testing:S2Tests/AppShellTests)
+# 4. Tests. The S2 scheme (swift-testing + ViewInspector) on this session's leased simulator (the
+#    shared ios-sim lease pool, if set up), else a booted iPhone, else the newest iOS runtime's;
+#    S2_SIMULATOR_UDID=<udid> picks one. Extra args go to xcodebuild (-only-testing:S2Tests/AppShellTests)
 ios/scripts/test.sh
 ios/scripts/test.sh --package                  # swift test in ios/Playback (the engine), on the Mac;
                                                # extra args go to swift test (--filter ...)
 ```
 
-`xcrun simctl list devices available` lists UDIDs. `test.sh` never picks the `·lease N` clones;
-Podcasts sessions lease them. The spike was verified on `iPhone 16` (iOS 18.5) and
+`xcrun simctl list devices available` lists UDIDs. `test.sh`, `run-sim-server.sh` and
+`maestro-sim.sh` all get their simulator from the shared ios-sim lease pool (`~/.claude/scripts/ios-sim/device.sh`)
+when it's set up; `$S2_SIM_HOLDER` leases as a different holder, for parallel workers. The spike was verified on `iPhone 16` (iOS 18.5) and
 `iPad Pro 11-inch (M5)` (iOS 27.2) with Xcode 27.2 beta. On an iPhone with iOS 27.2 (the newest
 runtime, so `test.sh`'s default when none is booted) `AppShellTests`' two TabView lookups fail;
 `iPhone 16` (iOS 18.5) passes everything.
@@ -84,7 +85,7 @@ launches import without signing in again.
 
 ```bash
 # Build, install and launch on the simulator. BUILD=0 skips the build; RESET=1 wipes the simulator keychain
-# (the saved session) first; S2_SIMULATOR_UDID picks the simulator (default the iPhone 16 Pro, iOS 18.5)
+# (the saved session) first; S2_SIMULATOR_UDID picks the simulator (default this session's leased device)
 ios/scripts/run-sim-server.sh
 
 # Device

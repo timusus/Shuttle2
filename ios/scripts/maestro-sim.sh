@@ -9,14 +9,52 @@
 # neither appears on maestro's command line (ps would show it there for the life of the run otherwise).
 #
 # env:
-#   S2_SIMULATOR_UDID  the simulator (default: the iPhone 16 Pro, iOS 18, this Mac's POC simulator)
+#   S2_SIMULATOR_UDID  the simulator: $S2_SIMULATOR_UDID if set, else the shared lease pool's device.sh
+#                      if present (set S2_SIM_HOLDER to lease as a different holder, e.g. for a
+#                      parallel worker), else a booted iPhone, or the iPhone on the newest iOS runtime
+#   S2_SIM_HOLDER      leases the pool device as this holder instead of the current session
 #   SERVER_USER        the Jellyfin user Quick Connect is approved for (default: shuttle-test)
 #   OUT                Maestro's output dir (default: /tmp/s2-ios-e2e/maestro); screenshots under <timestamp>/
 set -euo pipefail
 
 ios_dir="$(cd "$(dirname "$0")/.." && pwd)"
 flow="$ios_dir/maestro/${1:-poc-play.yaml}"
-udid="${S2_SIMULATOR_UDID:-1D21B9F2-6122-42C4-A7DA-B9BC99675CBF}"
+
+pick_simulator() {
+  xcrun simctl list devices available -j | python3 -c '
+import json, re, sys
+devices = json.load(sys.stdin)["devices"]
+def version(runtime):
+    m = re.search(r"iOS-(\d+)-(\d+)", runtime)
+    return (int(m.group(1)), int(m.group(2))) if m else None
+candidates = []
+for runtime, entries in devices.items():
+    v = version(runtime)
+    if v is None:
+        continue
+    for d in entries:
+        if d["name"].startswith("iPhone"):
+            candidates.append((d["state"] == "Booted", v, d["name"], d["udid"]))
+if not candidates:
+    sys.exit("no available iPhone simulator; create one in Xcode > Devices and Simulators")
+booted, v, name, udid = max(candidates)
+print(udid)
+state = ", booted" if booted else ""
+print(f"==> simulator: {name} (iOS {v[0]}.{v[1]}{state})", file=sys.stderr)
+'
+}
+
+lease_udid() {
+  local device_sh="$HOME/.claude/scripts/ios-sim/device.sh"
+  [ -x "$device_sh" ] || return 1
+  if [ -n "${S2_SIM_HOLDER:-}" ]; then
+    CLAUDE_CODE_SESSION_ID="$S2_SIM_HOLDER" "$device_sh"
+  else
+    "$device_sh"
+  fi
+}
+
+udid="${S2_SIMULATOR_UDID:-$(lease_udid || pick_simulator)}"
 [ -f "$flow" ] || { echo "maestro-sim: no flow at $flow" >&2; exit 2; }
 
 env_file="$HOME/.config/s2-test/jellyfin.env"

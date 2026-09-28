@@ -5,9 +5,11 @@
 #   ios/scripts/test.sh               # the S2 scheme (S2Tests) on an available iPhone simulator
 #   ios/scripts/test.sh --package     # `swift test` in ios/Playback, on the Mac (no simulator)
 #
-# The simulator is $S2_SIMULATOR_UDID if set, else a booted iPhone, else the iPhone on the newest
-# iOS runtime. Never a Podcasts `lease N` clone. Other arguments go to xcodebuild or `swift test`
-# (e.g. `-only-testing:S2Tests/NowPlayingControllerTests`, `--filter MusicPlaybackFormatsTests`).
+# The simulator is $S2_SIMULATOR_UDID if set; else, if the shared lease pool's device.sh exists, this
+# session's leased device (set $S2_SIM_HOLDER to lease as a different holder, e.g. for a parallel
+# worker); else a booted iPhone, or the iPhone on the newest iOS runtime. Other arguments go to
+# xcodebuild or `swift test` (e.g. `-only-testing:S2Tests/NowPlayingControllerTests`,
+# `--filter MusicPlaybackFormatsTests`).
 set -euo pipefail
 
 ios_dir="$(cd "$(dirname "$0")/.." && pwd)"
@@ -47,7 +49,7 @@ for runtime, entries in devices.items():
     if v is None:
         continue
     for d in entries:
-        if d["name"].startswith("iPhone") and "lease" not in d["name"]:
+        if d["name"].startswith("iPhone"):
             candidates.append((d["state"] == "Booted", v, d["name"], d["udid"]))
 if not candidates:
     sys.exit("no available iPhone simulator; create one in Xcode > Devices and Simulators")
@@ -58,7 +60,17 @@ print(f"==> simulator: {name} (iOS {v[0]}.{v[1]}{state})", file=sys.stderr)
 '
 }
 
-udid="${S2_SIMULATOR_UDID:-$(pick_simulator)}"
+lease_udid() {
+  local device_sh="$HOME/.claude/scripts/ios-sim/device.sh"
+  [ -x "$device_sh" ] || return 1
+  if [ -n "${S2_SIM_HOLDER:-}" ]; then
+    CLAUDE_CODE_SESSION_ID="$S2_SIM_HOLDER" "$device_sh"
+  else
+    "$device_sh"
+  fi
+}
+
+udid="${S2_SIMULATOR_UDID:-$(lease_udid || pick_simulator)}"
 cd "$ios_dir"
 echo "==> xcodebuild test -scheme S2 -destination id=$udid ${args[*]+"${args[*]}"}"
 xcodebuild test -project S2.xcodeproj -scheme S2 -destination "id=$udid" \

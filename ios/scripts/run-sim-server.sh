@@ -6,7 +6,10 @@
 # usage: ios/scripts/run-sim-server.sh
 #
 # env:
-#   S2_SIMULATOR_UDID  the simulator (default: the iPhone 16 Pro, iOS 18, this Mac's POC simulator)
+#   S2_SIMULATOR_UDID  the simulator: $S2_SIMULATOR_UDID if set, else the shared lease pool's
+#                      device.sh if present (set S2_SIM_HOLDER to lease as a different holder), else
+#                      this session has no simulator and the script fails
+#   S2_SIM_HOLDER      leases the pool device as this holder instead of the current session
 #   BUILD              1 (default) or 0 to install and launch the last build
 #   RESET              1 to erase the app's saved session first (the simulator keychain), so it starts
 #                      signed out
@@ -15,7 +18,21 @@ set -euo pipefail
 [ $# -eq 0 ] || { echo "usage: ios/scripts/run-sim-server.sh (sign in from the app's Sources screen)" >&2; exit 2; }
 
 ios_dir="$(cd "$(dirname "$0")/.." && pwd)"
-udid="${S2_SIMULATOR_UDID:-1D21B9F2-6122-42C4-A7DA-B9BC99675CBF}"
+lease_udid() {
+  local device_sh="$HOME/.claude/scripts/ios-sim/device.sh"
+  [ -x "$device_sh" ] || return 1
+  if [ -n "${S2_SIM_HOLDER:-}" ]; then
+    CLAUDE_CODE_SESSION_ID="$S2_SIM_HOLDER" "$device_sh"
+  else
+    "$device_sh"
+  fi
+}
+if [ -n "${S2_SIMULATOR_UDID:-}" ]; then
+  udid="$S2_SIMULATOR_UDID"
+elif ! udid="$(lease_udid)"; then
+  echo "run-sim-server: no leased simulator available; set \$S2_SIMULATOR_UDID" >&2
+  exit 1
+fi
 bundle_id="com.simplecityapps.shuttle.dev"
 app="$ios_dir/build/DerivedData/Build/Products/Debug-iphonesimulator/S2.app"
 
