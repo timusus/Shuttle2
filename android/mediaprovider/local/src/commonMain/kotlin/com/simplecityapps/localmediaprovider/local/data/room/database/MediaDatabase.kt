@@ -31,7 +31,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
         PendingFavouriteData::class,
         PlayEventData::class
     ],
-    version = 49,
+    version = 50,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

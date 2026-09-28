@@ -18,7 +18,10 @@ enum TestSongs {
             lastModified: nil, lastPlayed: nil, lastCompleted: nil, playCount: 0, playbackPosition: 0,
             blacklisted: false, externalId: nil, mediaProvider: .shuttle, replayGainTrack: nil,
             replayGainAlbum: nil, lyrics: nil, grouping: nil, bitRate: nil, bitDepth: nil, sampleRate: nil,
-            channelCount: nil, audioCodec: nil, artworkVersion: nil, dateAdded: nil, favouritedAt: nil
+            channelCount: nil, audioCodec: nil, artworkVersion: nil, dateAdded: nil, favouritedAt: nil,
+            albumArtists: nil, artistsTag: nil, artistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil,
+            mbReleaseGroupId: nil, mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
+            serverAlbumArtistIds: nil
         )
     }
 }

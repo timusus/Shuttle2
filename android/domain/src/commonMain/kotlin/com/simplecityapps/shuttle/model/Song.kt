@@ -45,7 +45,28 @@ data class Song(
     // from a provider that has no date for it.
     val dateAdded: Instant? = null,
     // When the song was made a favourite (the player's heart, or "Add to Favorites"); null when it isn't one.
-    val favouritedAt: Instant? = null
+    val favouritedAt: Instant? = null,
+    // The tags as the song's source holds them (#637), stored for the album and artist identity rule to come; nothing
+    // groups or displays by them yet. Null where the source has no such value, and for a song not read since they were
+    // added (the one-off backfill after the migration to version 50 fills them).
+    // The ALBUMARTISTS multi-value tag (a server's album artist list), as written: never split.
+    val albumArtists: List<String>? = null,
+    // The ARTISTS multi-value tag (a server's artist list), as written. [artists] stays the ARTIST tag split on ';'.
+    val artistsTag: List<String>? = null,
+    // The raw ARTIST tag, unsplit ("A feat. B"): what a song row will show.
+    val artistDisplay: String? = null,
+    // COMPILATION (Vorbis), TCMP (ID3) or cpil (MP4); null when untagged.
+    val compilation: Boolean? = null,
+    // MusicBrainz ids: the recording (MUSICBRAINZ_TRACKID), the release, the release group, and the artists.
+    val mbTrackId: String? = null,
+    val mbAlbumId: String? = null,
+    val mbReleaseGroupId: String? = null,
+    val mbArtistIds: List<String>? = null,
+    val mbAlbumArtistIds: List<String>? = null,
+    // A server's own ids for the song's album, artists and album artists (Jellyfin/Emby item ids, Plex rating keys).
+    val serverAlbumId: String? = null,
+    val serverArtistIds: List<String>? = null,
+    val serverAlbumArtistIds: List<String>? = null
 ) {
     val isFavourite: Boolean
         get() = favouritedAt != null

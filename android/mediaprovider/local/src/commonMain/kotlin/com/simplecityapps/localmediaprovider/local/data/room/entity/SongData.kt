@@ -53,7 +53,21 @@ data class SongData(
     @ColumnInfo(name = "dateAdded") var dateAdded: Instant? = null,
     // When the song was made a favourite; null when it isn't one. Left out of [SongDataUpdate], so a rescan or a remote
     // sync keeps it, and written only by [com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao.setFavourite].
-    @ColumnInfo(name = "favouritedAt") var favouritedAt: Instant? = null
+    @ColumnInfo(name = "favouritedAt") var favouritedAt: Instant? = null,
+    // The raw tags and ids of #637, as [Song] describes them. Added by the migration to version 50 without a default:
+    // null until the song is next read, and where the source has no value.
+    @ColumnInfo(name = "albumArtists") var albumArtists: List<String>? = null,
+    @ColumnInfo(name = "artistsTag") var artistsTag: List<String>? = null,
+    @ColumnInfo(name = "artistDisplay") var artistDisplay: String? = null,
+    @ColumnInfo(name = "compilation") var compilation: Boolean? = null,
+    @ColumnInfo(name = "mbTrackId") var mbTrackId: String? = null,
+    @ColumnInfo(name = "mbAlbumId") var mbAlbumId: String? = null,
+    @ColumnInfo(name = "mbReleaseGroupId") var mbReleaseGroupId: String? = null,
+    @ColumnInfo(name = "mbArtistIds") var mbArtistIds: List<String>? = null,
+    @ColumnInfo(name = "mbAlbumArtistIds") var mbAlbumArtistIds: List<String>? = null,
+    @ColumnInfo(name = "serverAlbumId") var serverAlbumId: String? = null,
+    @ColumnInfo(name = "serverArtistIds") var serverArtistIds: List<String>? = null,
+    @ColumnInfo(name = "serverAlbumArtistIds") var serverAlbumArtistIds: List<String>? = null
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -91,7 +105,19 @@ fun Song.toSongData(mediaProviderType: MediaProviderType): SongData = SongData(
     audioCodec = audioCodec,
     artworkVersion = artworkVersion,
     dateAdded = resolvedDateAdded(),
-    favouritedAt = favouritedAt
+    favouritedAt = favouritedAt,
+    albumArtists = albumArtists,
+    artistsTag = artistsTag,
+    artistDisplay = artistDisplay,
+    compilation = compilation,
+    mbTrackId = mbTrackId,
+    mbAlbumId = mbAlbumId,
+    mbReleaseGroupId = mbReleaseGroupId,
+    mbArtistIds = mbArtistIds,
+    mbAlbumArtistIds = mbAlbumArtistIds,
+    serverAlbumId = serverAlbumId,
+    serverArtistIds = serverArtistIds,
+    serverAlbumArtistIds = serverAlbumArtistIds
 ).apply {
     id = this@toSongData.id
 }

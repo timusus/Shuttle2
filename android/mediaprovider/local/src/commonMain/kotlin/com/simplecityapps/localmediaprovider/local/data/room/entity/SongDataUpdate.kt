@@ -28,7 +28,20 @@ data class SongDataUpdate(
     @ColumnInfo(name = "artworkVersion") var artworkVersion: String? = null,
     // Written on update too, so a remote song's server date replaces an older import stamp. The importer's diff carries
     // the stored value over when the provider has none, so a local rescan or tag edit leaves it where it was.
-    @ColumnInfo(name = "dateAdded") var dateAdded: Instant? = null
+    @ColumnInfo(name = "dateAdded") var dateAdded: Instant? = null,
+    // Written on every update, so a rescan or sync fills them in place for a song stored before they existed (#637)
+    @ColumnInfo(name = "albumArtists") var albumArtists: List<String>? = null,
+    @ColumnInfo(name = "artistsTag") var artistsTag: List<String>? = null,
+    @ColumnInfo(name = "artistDisplay") var artistDisplay: String? = null,
+    @ColumnInfo(name = "compilation") var compilation: Boolean? = null,
+    @ColumnInfo(name = "mbTrackId") var mbTrackId: String? = null,
+    @ColumnInfo(name = "mbAlbumId") var mbAlbumId: String? = null,
+    @ColumnInfo(name = "mbReleaseGroupId") var mbReleaseGroupId: String? = null,
+    @ColumnInfo(name = "mbArtistIds") var mbArtistIds: List<String>? = null,
+    @ColumnInfo(name = "mbAlbumArtistIds") var mbAlbumArtistIds: List<String>? = null,
+    @ColumnInfo(name = "serverAlbumId") var serverAlbumId: String? = null,
+    @ColumnInfo(name = "serverArtistIds") var serverArtistIds: List<String>? = null,
+    @ColumnInfo(name = "serverAlbumArtistIds") var serverAlbumArtistIds: List<String>? = null
 )
 
 fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
@@ -51,7 +64,19 @@ fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
     lyrics = lyrics,
     grouping = grouping,
     artworkVersion = artworkVersion,
-    dateAdded = dateAdded
+    dateAdded = dateAdded,
+    albumArtists = albumArtists,
+    artistsTag = artistsTag,
+    artistDisplay = artistDisplay,
+    compilation = compilation,
+    mbTrackId = mbTrackId,
+    mbAlbumId = mbAlbumId,
+    mbReleaseGroupId = mbReleaseGroupId,
+    mbArtistIds = mbArtistIds,
+    mbAlbumArtistIds = mbAlbumArtistIds,
+    serverAlbumId = serverAlbumId,
+    serverArtistIds = serverArtistIds,
+    serverAlbumArtistIds = serverAlbumArtistIds
 )
 
 fun Song.toSongDataUpdate(): SongDataUpdate = toSongData(MediaProviderType.Shuttle).toSongDataUpdate()
