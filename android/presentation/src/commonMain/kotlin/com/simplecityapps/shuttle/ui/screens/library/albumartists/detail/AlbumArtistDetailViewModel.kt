@@ -9,12 +9,16 @@ import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.sorting.ArtistSongComparator
+import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbumArtists
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.common.PendingEvents
+import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState.SongSection
 import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
@@ -29,6 +33,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -36,7 +41,8 @@ import kotlinx.coroutines.launch
 
 /**
  * One album artist's albums and songs, loaded by [groupKey], the key its route carries. Song and album
- * actions go through the screen's MediaActionsHost; this derives state, unfolds albums and shuffles by album.
+ * actions go through the screen's MediaActionsHost; this derives state, sorts and sections the songs (the sort is
+ * app-wide, in [SortPreferences]), unfolds albums and shuffles by album.
  */
 class AlbumArtistDetailViewModel @AssistedInject constructor(
     @Assisted private val groupKey: AlbumArtistGroupKey,
@@ -46,6 +52,7 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
     observeCurrentSong: ObserveCurrentSong,
     observeArtworkSeed: ObserveArtworkSeed,
     private val shuffleAlbums: ShuffleAlbums,
+    private val sortPreferences: SortPreferences,
 ) : ViewModel() {
 
     @AssistedFactory
@@ -55,7 +62,10 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
         fun create(groupKey: AlbumArtistGroupKey): AlbumArtistDetailViewModel
     }
 
-    private val expandedAlbums = MutableStateFlow<Set<AlbumGroupKey>>(emptySet())
+    private val sortOrder = MutableStateFlow(sortPreferences.sortOrderArtistDetail)
+
+    /** Null until the first load applies the default expansion, so a later rescan never reapplies it. */
+    private val expandedAlbums = MutableStateFlow<Set<AlbumGroupKey>?>(null)
     private val events = PendingEvents<AlbumArtistDetailEvent>()
 
     /** The artist's albums, newest first, and their songs in that order; the lead song's artwork seeds the tint. */
@@ -63,24 +73,42 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
         observeAlbums(AlbumQuery.ArtistGroupKey(groupKey)),
         observeSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = groupKey)))),
     ) { albums, songs ->
-        val sortedAlbums = albums.sortedByDescending { it.year ?: 0 }
+        val sortedAlbums = albums.sortedWith(ArtistSongComparator.albumNewest)
         val albumOrder = sortedAlbums.withIndex().associate { (index, album) -> album.groupKey to index }
-        sortedAlbums to songs.sortedWith(compareBy({ albumOrder[it.albumGroupKey] ?: Int.MAX_VALUE }, { it.disc }, { it.track }))
+        sortedAlbums to songs.sortedWith(compareBy<Song> { albumOrder[it.albumGroupKey] ?: Int.MAX_VALUE }.then(ArtistSongComparator.trackOrder))
+    }.onEach { (albums, songs) ->
+        if (albums.isNotEmpty() || songs.isNotEmpty()) expandedAlbums.compareAndSet(null, defaultExpansion(albums))
     }.shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
+
+    private val songList: Flow<SongList> = combine(albumsAndSongs, sortOrder) { (albums, songs), order ->
+        val sections = songSections(albums, songs, order)
+        SongList(
+            order = order,
+            sections = sections,
+            songs = sections.flatMap { it.songs },
+            topSongs = songs.filter { it.playCount >= TOP_SONG_MIN_PLAYS }
+                .sortedWith(ArtistSongSortOrder.MostPlayed.songComparator)
+                .take(AlbumArtistDetailUiState.TOP_SONGS_LIMIT),
+        )
+    }
 
     val uiState: StateFlow<AlbumArtistDetailUiState> = combine(
         observeAlbumArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = groupKey)),
-        albumsAndSongs,
+        combine(albumsAndSongs, songList, ::Pair),
         observeCurrentSong(),
         combine(expandedAlbums, events.flow, ::Pair),
         observeArtworkSeed(albumsAndSongs.map { (_, songs) -> songs.firstOrNull() }),
-    ) { artists, (albums, songs), currentSong, (expanded, events), seed ->
+    ) { artists, (albumsAndSongs, songList), currentSong, (expanded, events), seed ->
+        val (albums, songs) = albumsAndSongs
         AlbumArtistDetailUiState(
             albumArtist = artists.firstOrNull(),
             albums = albums,
-            songs = songs,
+            songs = songList.songs,
+            sortOrder = songList.order,
+            sections = songList.sections,
+            topSongs = songList.topSongs,
             currentSong = currentSong,
-            expandedAlbums = expanded.intersect(albums.mapNotNullTo(HashSet()) { it.groupKey }),
+            expandedAlbums = expanded.orEmpty().intersect(albums.mapNotNullTo(HashSet()) { it.groupKey }),
             loadingState = if (albums.isEmpty() && songs.isEmpty()) {
                 AlbumArtistDetailUiState.LoadingState.Empty
             } else {
@@ -95,14 +123,27 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
         initialValue = AlbumArtistDetailUiState(),
     )
 
+    fun onSortOrderSelected(order: ArtistSongSortOrder) {
+        sortOrder.value = order
+        sortPreferences.sortOrderArtistDetail = order
+    }
+
     fun onAlbumClick(album: Album) {
         val key = album.groupKey ?: return
         // Drop keys of albums a rescan removed, so they don't re-expand if the album comes back
         val present = uiState.value.albums.mapNotNullTo(HashSet()) { it.groupKey }
         expandedAlbums.update { expanded ->
-            val kept = expanded.intersect(present)
+            val kept = expanded.orEmpty().intersect(present)
             if (key in kept) kept - key else kept + key
         }
+    }
+
+    fun onExpandAll() {
+        expandedAlbums.value = uiState.value.albums.mapNotNullTo(HashSet()) { it.groupKey }
+    }
+
+    fun onCollapseAll() {
+        expandedAlbums.value = emptySet()
     }
 
     fun onShuffleAlbums() {
@@ -115,4 +156,36 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
     }
 
     fun onEventHandled(id: Long) = events.consume(id)
+
+    private data class SongList(val order: ArtistSongSortOrder, val sections: List<SongSection>, val songs: List<Song>, val topSongs: List<Song>)
+
+    private companion object {
+        /** A song needs this many plays to count as a top song. */
+        const val TOP_SONG_MIN_PLAYS = 2
+
+        /** At most this many albums start expanded; more start collapsed so the list stays scannable. */
+        const val MAX_ALBUMS_EXPANDED_BY_DEFAULT = 2
+
+        fun defaultExpansion(albums: List<Album>): Set<AlbumGroupKey> = if (albums.size <= MAX_ALBUMS_EXPANDED_BY_DEFAULT) {
+            albums.mapNotNullTo(HashSet()) { it.groupKey }
+        } else {
+            emptySet()
+        }
+
+        /**
+         * One section per album in [order] with its songs in track order, then the songs without one of [albums]
+         * by title; or a single flat section for the flat orders.
+         */
+        fun songSections(albums: List<Album>, songs: List<Song>, order: ArtistSongSortOrder): List<SongSection> {
+            if (songs.isEmpty()) return emptyList()
+            val albumComparator = order.albumComparator ?: return listOf(SongSection(album = null, songs = songs.sortedWith(order.songComparator)))
+            val songsByAlbum = songs.groupBy { it.albumGroupKey }
+            val albumSections = albums.sortedWith(albumComparator).mapNotNull { album ->
+                songsByAlbum[album.groupKey]?.let { SongSection(album, it.sortedWith(order.songComparator)) }
+            }
+            val albumKeys = albums.mapNotNullTo(HashSet()) { it.groupKey }
+            val otherSongs = songs.filter { it.albumGroupKey !in albumKeys }.sortedWith(ArtistSongSortOrder.SongTitle.songComparator)
+            return if (otherSongs.isEmpty()) albumSections else albumSections + SongSection(album = null, songs = otherSongs)
+        }
+    }
 }

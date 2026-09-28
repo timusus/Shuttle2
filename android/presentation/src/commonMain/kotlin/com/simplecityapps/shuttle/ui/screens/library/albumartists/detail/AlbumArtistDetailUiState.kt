@@ -4,13 +4,25 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.sorting.ArtistSongComparator
+import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 
 data class AlbumArtistDetailUiState(
     val albumArtist: AlbumArtist? = null,
+    /** The artist's albums, newest first: the carousel's order, whatever [sortOrder] is. */
     val albums: List<Album> = emptyList(),
+    /** Every song in [sortOrder]'s visible order across all [sections], collapsed ones included: the play order. */
     val songs: List<Song> = emptyList(),
+    val sortOrder: ArtistSongSortOrder = ArtistSongSortOrder.Default,
+    /**
+     * The song list as shown: one section per album for the album orders, then any songs without one of the
+     * artist's albums in a trailing section with no album; a single section with no album for the flat orders.
+     */
+    val sections: List<SongSection> = emptyList(),
+    /** Songs played at least twice, most played first; at most [TOP_SONGS_LIMIT]. */
+    val topSongs: List<Song> = emptyList(),
     val currentSong: Song? = null,
     /** Albums whose track list is unfolded in place, keyed the same way songs are grouped. */
     val expandedAlbums: Set<AlbumGroupKey> = emptySet(),
@@ -23,8 +35,15 @@ data class AlbumArtistDetailUiState(
 
     /** The artist's songs belonging to [album], in track order. */
     fun songsForAlbum(album: Album): List<Song> = album.groupKey?.let { key ->
-        songs.filter { it.albumGroupKey == key }
+        songs.filter { it.albumGroupKey == key }.sortedWith(ArtistSongComparator.trackOrder)
     }.orEmpty()
+
+    /** A run of the song list: [album]'s songs in track order, or, with no album, songs listed flat or without an album. */
+    data class SongSection(val album: Album?, val songs: List<Song>)
+
+    companion object {
+        const val TOP_SONGS_LIMIT = 10
+    }
 }
 
 sealed interface AlbumArtistDetailEvent {

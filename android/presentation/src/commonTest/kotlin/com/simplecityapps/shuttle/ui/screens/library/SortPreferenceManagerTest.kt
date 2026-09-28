@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
+import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import io.kotest.matchers.shouldBe
@@ -19,6 +20,7 @@ class SortPreferenceManagerTest {
         sortPreferences.sortOrderAlbumList shouldBe AlbumSortOrder.AlbumName
         sortPreferences.sortOrderPlaylistList shouldBe PlaylistSortOrder.Default
         sortPreferences.sortOrderGenreList shouldBe GenreSortOrder.Default
+        sortPreferences.sortOrderArtistDetail shouldBe ArtistSongSortOrder.AlbumNewest
     }
 
     @Test
@@ -27,12 +29,14 @@ class SortPreferenceManagerTest {
         sortPreferences.sortOrderAlbumList = AlbumSortOrder.entries.last()
         sortPreferences.sortOrderPlaylistList = PlaylistSortOrder.Name
         sortPreferences.sortOrderGenreList = GenreSortOrder.entries.last()
+        sortPreferences.sortOrderArtistDetail = ArtistSongSortOrder.MostPlayed
 
         store.values shouldBe mapOf(
             "sort_order_song_list" to SongSortOrder.entries.last().name,
             "sort_order_album_list" to AlbumSortOrder.entries.last().name,
             "sort_order_playlist_list" to "Name",
-            "sort_order_genre_list" to GenreSortOrder.entries.last().name
+            "sort_order_genre_list" to GenreSortOrder.entries.last().name,
+            "sort_order_artist_detail" to "MostPlayed"
         )
     }
 
@@ -43,7 +47,8 @@ class SortPreferenceManagerTest {
                 "sort_order_song_list" to "Gone",
                 "sort_order_album_list" to "Gone",
                 "sort_order_playlist_list" to "Gone",
-                "sort_order_genre_list" to "Gone"
+                "sort_order_genre_list" to "Gone",
+                "sort_order_artist_detail" to "Gone"
             )
         )
 
@@ -53,5 +58,6 @@ class SortPreferenceManagerTest {
         sortPreferences.sortOrderAlbumList shouldBe AlbumSortOrder.AlbumName
         sortPreferences.sortOrderPlaylistList shouldBe PlaylistSortOrder.Default
         sortPreferences.sortOrderGenreList shouldBe GenreSortOrder.Default
+        sortPreferences.sortOrderArtistDetail shouldBe ArtistSongSortOrder.AlbumNewest
     }
 }

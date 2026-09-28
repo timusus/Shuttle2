@@ -5,6 +5,7 @@ import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.persistence.putString
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
+import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import dev.zacsweers.metro.AppScope
@@ -61,6 +62,19 @@ class SortPreferenceManager @Inject constructor(private val store: KeyValueStore
             } catch (e: IllegalArgumentException) {
                 logger.error(e) { "Failed to retrieve sort order" }
                 GenreSortOrder.Default
+            }
+        }
+
+    override var sortOrderArtistDetail: ArtistSongSortOrder
+        set(value) {
+            store.putString("sort_order_artist_detail", value.name)
+        }
+        get() {
+            return try {
+                ArtistSongSortOrder.valueOf(store.getString("sort_order_artist_detail", ArtistSongSortOrder.Default.name)!!)
+            } catch (e: IllegalArgumentException) {
+                logger.error(e) { "Failed to retrieve sort order" }
+                ArtistSongSortOrder.Default
             }
         }
 
