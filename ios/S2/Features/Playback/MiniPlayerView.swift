@@ -319,8 +319,11 @@ extension View {
     /// and to every pushed one (`routeDestinations`): attached to the stack itself (Shuttle Podcasts found) the bar
     /// draws but reserves no safe area and receives no touches. Where the iOS 26 tab view accessory hosts the mini
     /// player (`\.miniPlayerInAccessory`), the inset is empty.
-    func miniPlayerInset(showNowPlaying: Binding<Bool>) -> some View {
-        modifier(MiniPlayerInsetModifier(showNowPlaying: showNowPlaying))
+    func miniPlayerInset(
+        showNowPlaying: Binding<Bool>,
+        binding: PlayerBinding = AppGraph.dependencies.playerBinding
+    ) -> some View {
+        modifier(MiniPlayerInsetModifier(showNowPlaying: showNowPlaying, binding: binding))
     }
 
     /// Insets `bar` at the bottom of this screen, stretching the screen to fill first: `safeAreaInset` sizes to the
@@ -337,7 +340,7 @@ extension View {
 /// when the accessory hosts it, nothing, and the inset collapses with it so lists keep no gap.
 private struct MiniPlayerInsetModifier: ViewModifier {
     @Binding var showNowPlaying: Bool
-    var binding: PlayerBinding = AppGraph.dependencies.playerBinding
+    let binding: PlayerBinding
 
     @Environment(\.miniPlayerInAccessory) private var inAccessory
     @Environment(\.accessibilityReduceMotion) private var reduceMotion

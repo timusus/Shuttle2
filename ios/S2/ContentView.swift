@@ -84,17 +84,21 @@ struct AppShell: View {
     let container: ShellContainer
     let navigator: Navigator
     @Binding var showNowPlaying: Bool
+    /// The player the mini player shows, and whose current song decides whether it shows at all.
+    let playerBinding: PlayerBinding
 
     init(
         tier: LayoutTier,
         container: ShellContainer? = nil,
         navigator: Navigator,
-        showNowPlaying: Binding<Bool>
+        showNowPlaying: Binding<Bool>,
+        playerBinding: PlayerBinding = AppGraph.dependencies.playerBinding
     ) {
         self.tier = tier
         self.container = container ?? .resolve(for: tier)
         self.navigator = navigator
         self._showNowPlaying = showNowPlaying
+        self.playerBinding = playerBinding
     }
 
     var body: some View {
@@ -133,7 +137,7 @@ struct AppShell: View {
                 // minimised bar on scroll), in place of each screen's floating inset, and only while a song is
                 // current. 26.0 can't disable the accessory, so there the screens keep the floating inset.
                 tabs
-                    .modifier(MiniPlayerAccessoryModifier(showNowPlaying: $showNowPlaying))
+                    .modifier(MiniPlayerAccessoryModifier(showNowPlaying: $showNowPlaying, binding: playerBinding))
                     .tabBarMinimizeBehavior(.onScrollDown)
                     .environment(\.miniPlayerInAccessory, true)
             } else if #available(iOS 26, *) {
@@ -218,20 +222,20 @@ struct AppShell: View {
             NavigationStack(path: $navigator.homePath) {
                 HomeView(navigator: navigator)
                     .settingsButton(navigator)
-                    .miniPlayerInset(showNowPlaying: $showNowPlaying)
+                    .miniPlayerInset(showNowPlaying: $showNowPlaying, binding: playerBinding)
                     .routeDestinations(showNowPlaying: $showNowPlaying)
             }
         case .library:
             NavigationStack(path: $navigator.libraryPath) {
                 LibraryView(navigator: navigator)
                     .settingsButton(navigator)
-                    .miniPlayerInset(showNowPlaying: $showNowPlaying)
+                    .miniPlayerInset(showNowPlaying: $showNowPlaying, binding: playerBinding)
                     .routeDestinations(showNowPlaying: $showNowPlaying)
             }
         case .search:
             NavigationStack(path: $navigator.searchPath) {
                 SearchView()
-                    .miniPlayerInset(showNowPlaying: $showNowPlaying)
+                    .miniPlayerInset(showNowPlaying: $showNowPlaying, binding: playerBinding)
                     .routeDestinations(showNowPlaying: $showNowPlaying)
             }
         }
@@ -243,7 +247,7 @@ struct AppShell: View {
         NavigationStack(path: navigator.binding(for: category)) {
             RouteDestinationView(route: .libraryCategory(category))
                 .settingsButton(navigator)
-                .miniPlayerInset(showNowPlaying: $showNowPlaying)
+                .miniPlayerInset(showNowPlaying: $showNowPlaying, binding: playerBinding)
                 .routeDestinations(showNowPlaying: $showNowPlaying)
         }
     }

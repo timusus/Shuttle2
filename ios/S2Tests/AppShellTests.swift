@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 import Testing
 import ViewInspector
@@ -6,8 +7,29 @@ import ViewInspector
 /// The shell draws the container its tier asks for.
 @MainActor
 struct AppShellTests {
+    /// A player of its own, over a fake engine, so a test decides whether a song is current.
+    private let engine = FakeAudioEngine()
+    private let graph: IosAppGraph
+    private let playerBinding: PlayerBinding
+
+    init() {
+        graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: engine))
+        playerBinding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph))
+    }
+
     private func makeShell(tier: LayoutTier, container: ShellContainer? = nil) -> AppShell {
-        AppShell(tier: tier, container: container, navigator: Navigator(), showNowPlaying: .constant(false))
+        AppShell(
+            tier: tier, container: container, navigator: Navigator(), showNowPlaying: .constant(false),
+            playerBinding: playerBinding
+        )
+    }
+
+    /// Queues the demo songs and loads the first, so a song is current.
+    private func queueASong() async throws {
+        let controller = graph.playerController
+        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0)
+        controller.load(seekPosition: nil, skipUnloadable: false) { _ in }
+        #expect(await waitUntil { playerBinding.isMiniPlayerVisible })
     }
 
     @Test func compactIsATabBarOfTheThreeTabs() throws {
@@ -44,9 +66,16 @@ struct AppShellTests {
         }
     }
 
-    @Test func everyTabRootHasTheMiniPlayer() throws {
+    @Test func everyTabRootHasTheMiniPlayerWhileASongIsCurrent() async throws {
+        try await queueASong()
         let sut = makeShell(tier: .compact)
         let miniPlayers = try sut.inspect().findAll(MiniPlayerView.self)
         #expect(miniPlayers.count == AppTab.allCases.count)
+    }
+
+    @Test func noTabRootHasTheMiniPlayerWithNothingQueued() throws {
+        let sut = makeShell(tier: .compact)
+        #expect(!playerBinding.isMiniPlayerVisible)
+        #expect(try sut.inspect().findAll(MiniPlayerView.self).isEmpty)
     }
 }
