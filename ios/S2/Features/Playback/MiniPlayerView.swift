@@ -1,16 +1,17 @@
 import Shared
 import SwiftUI
 
-/// The mini player: the song's cover, title and artist, play/pause and next, over a 2 pt progress line in the
-/// player's artwork tint; tapping opens Now Playing. Bound to the shared `PlayerViewModel` through `PlayerBinding`,
-/// reading only its `miniPlayer` state (the progress line reads the position in a view of its own).
+/// The mini player: the song's cover, title and artist, play/pause ringed by the song's progress in the player's
+/// artwork tint, and next; tapping opens Now Playing. Bound to the shared `PlayerViewModel` through `PlayerBinding`,
+/// reading only its `miniPlayer` state (the progress ring reads the position in a view of its own).
 ///
 /// Where it lives (#624, after Shuttle Podcasts' `MiniPlayerView`):
 /// - iOS 26 on the phone's tab bar: the tab view's bottom accessory (`AppShell`), one bar in the Liquid Glass capsule
 ///   the system draws, laid out for its placement (`.expanded` above the tab bar, `.inline` beside the minimised one).
 ///   The per-screen insets then draw nothing (`\.miniPlayerInAccessory`).
 /// - Otherwise (iOS 17-18, and the iPad sidebar): a floating rounded card inset at the bottom of every screen
-///   (`miniPlayerInset`), `ArtworkCorner.tile` on `.regularMaterial` (glass on iOS 26), inset `Spacing.small`.
+///   (`miniPlayerInset`), `ArtworkCorner.tile` on `.thickMaterial` with a hairline edge and a soft shadow (glass on
+///   iOS 26), inset `Spacing.small`.
 struct MiniPlayerView: View {
     let binding: PlayerBinding
     let placement: MiniPlayerPlacement
@@ -71,7 +72,7 @@ extension EnvironmentValues {
 }
 
 extension PlayerBinding {
-    /// How far through the current song the player is, 0...1: the mini player's progress line.
+    /// How far through the current song the player is, 0...1: the mini player's progress ring.
     var progressFraction: Double {
         let duration = nowPlaying.durationMs
         guard duration > 0 else { return 0 }
@@ -106,7 +107,7 @@ struct MiniPlayerBar: View {
     var style: Style = .floating
     /// True while Now Playing is up: the cover hands its place to Now Playing's (matched geometry).
     var isCoverHidden = false
-    /// The progress, 0...1, read inside the progress line's own body so a tick redraws only the line.
+    /// The progress, 0...1, read inside the progress ring's own body so a tick redraws only the ring.
     var progress: () -> Double = { 0 }
     let onTap: () -> Void
     let onPlayPause: () -> Void
@@ -121,10 +122,11 @@ struct MiniPlayerBar: View {
 
     /// The accessory's capsule is about 48 pt tall; its cover sits inside it with room to spare.
     static let accessoryCover: CGFloat = 32
-    /// The floating card's soft lift off the content.
-    static let floatingShadow = ArtworkShadow(opacity: 0.14, radius: 14, y: 4)
-    /// The progress line's thickness.
-    static let progressHeight: CGFloat = 2
+    /// The floating card's lift off the content.
+    static let floatingShadow = ArtworkShadow(opacity: 0.18, radius: 18, y: 6)
+    /// The progress ring's diameter and stroke, around the play/pause glyph inside its 44 pt target.
+    static let progressRingDiameter: CGFloat = 36
+    static let progressRingWidth: CGFloat = 2.5
 
     @Environment(\.artworkTint) private var tint
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -177,10 +179,6 @@ struct MiniPlayerBar: View {
             .padding(.leading, Spacing.small)
             .padding(.trailing, Spacing.xsmall)
             .padding(.vertical, Spacing.small)
-            .overlay(alignment: .bottom) {
-                MiniPlayerProgressLine(progress: progress)
-                    .padding(.horizontal, ArtworkCorner.tile)
-            }
             .modifier(FloatingCardBackground(shape: shape))
             .clipShape(shape)
             .artworkShadow(Self.floatingShadow)
@@ -224,9 +222,14 @@ struct MiniPlayerBar: View {
 
             Button(action: onPlayPause) {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                    .font(.title2)
+                    .font(.body.weight(.semibold))
                     .foregroundStyle(.primary)
                     .contentTransition(.symbolEffect(.replace))
+                    .background {
+                        if title != nil {
+                            MiniPlayerProgressRing(progress: progress)
+                        }
+                    }
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
@@ -237,7 +240,7 @@ struct MiniPlayerBar: View {
             if showsNext {
                 Button(action: onNext) {
                     Image(systemName: "forward.fill")
-                        .font(.title3)
+                        .font(.body.weight(.semibold))
                         .foregroundStyle(.primary)
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
@@ -276,14 +279,11 @@ private struct MiniPlayerAccessoryContent: View {
         bar.row(coverSize: MiniPlayerBar.accessoryCover, showsArtist: !isInline, showsNext: !isInline)
             .padding(.leading, Spacing.small)
             .padding(.trailing, Spacing.xsmall)
-            .overlay(alignment: .bottom) {
-                MiniPlayerProgressLine(progress: bar.progress)
-                    .padding(.horizontal, Spacing.large)
-            }
     }
 }
 
-/// The floating card's ground: Liquid Glass on iOS 26, `.regularMaterial` below.
+/// The floating card's ground: Liquid Glass on iOS 26; below, `.thickMaterial`, so the list scrolling behind reads
+/// as colour rather than as text, edged with a hairline.
 private struct FloatingCardBackground: ViewModifier {
     let shape: RoundedRectangle
 
@@ -291,29 +291,31 @@ private struct FloatingCardBackground: ViewModifier {
         if #available(iOS 26, *) {
             content.glassEffect(.regular, in: shape)
         } else {
-            content.background(.regularMaterial, in: shape)
+            content
+                .background(.thickMaterial, in: shape)
+                .overlay { shape.strokeBorder(Color.primary.opacity(0.08), lineWidth: Spacing.hairline) }
         }
     }
 }
 
-/// The 2 pt progress line along the bottom of the mini player, in the player's tint over a faint track. It reads
-/// the position itself (`progress`), so the bar around it isn't redrawn on every tick.
-struct MiniPlayerProgressLine: View {
+/// The song's progress as a ring around the mini player's play/pause glyph, in the player's tint over a faint track,
+/// starting at 12 o'clock. It reads the position itself (`progress`), so the bar around it isn't redrawn on every
+/// tick.
+struct MiniPlayerProgressRing: View {
     let progress: () -> Double
 
     var body: some View {
         let fraction = progress()
-        Capsule()
-            .fill(.tint.opacity(0.18))
-            .overlay(alignment: .leading) {
-                GeometryReader { proxy in
-                    Capsule()
-                        .fill(.tint)
-                        .frame(width: proxy.size.width * fraction)
-                }
-            }
-            .frame(height: MiniPlayerBar.progressHeight)
-            .accessibilityHidden(true)
+        ZStack {
+            Circle()
+                .stroke(.tint.opacity(0.2), lineWidth: MiniPlayerBar.progressRingWidth)
+            Circle()
+                .trim(from: 0, to: fraction)
+                .stroke(.tint, style: StrokeStyle(lineWidth: MiniPlayerBar.progressRingWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+        }
+        .frame(width: MiniPlayerBar.progressRingDiameter, height: MiniPlayerBar.progressRingDiameter)
+        .accessibilityHidden(true)
     }
 }
 
