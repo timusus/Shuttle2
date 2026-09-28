@@ -272,3 +272,13 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 - [ ] iPhone: heart the playing song; it shows in Favorites and stays hearted after relaunch.
 - [ ] iPhone: play a queue at 1.5x, shuffle on, repeat all; pause mid-song, kill and relaunch; the same queue, song, position, speed and modes come back, paused.
 - [ ] iPhone: Go to Album and Go to Artist from the Now Playing menu close the player and open that screen.
+
+## iOS UI polish (#624)
+
+- [ ] iPhone (iOS 26): minimise the tab bar by scrolling; the mini player's title and artist stay legible over light and dark artwork.
+- [ ] iPhone: the mini player is hidden on a fresh install with nothing queued, and appears as soon as a song plays.
+- [ ] iPhone: Now Playing's backdrop takes the artwork's colours; the transport controls and queue read clearly over it.
+- [ ] iPhone: "Dos mundos (final)" and other albums without server artwork show artwork (S2 API fallback).
+- [ ] iPhone (iOS 26): Library's title is inline and the chip rail stays visible and tappable under the glass bar; switching Artists back to another list works.
+- [ ] iPhone (iOS 18): Library's Genres and Playlists titles aren't faded at rest.
+- [ ] iPad: Now Playing, the mini player and Library lay out well in regular width, and in Split View.
