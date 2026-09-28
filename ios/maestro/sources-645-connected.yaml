@@ -1,0 +1,45 @@
+# Sources (#645) after sources-645.yaml has connected Jellyfin: relaunched, so Last Updated shows (SourcesUiState
+# reads lastMediaImportDate only when another input changes, and the importer writes it after its last state).
+# Settings > Sources, a server's detail, then the import activity's Open Sources while a scan runs, which must push
+# Sources onto the Library stack. Screenshots under the output dir's <timestamp>/.
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    stopApp: true
+- tapOn: "Library"
+- tapOn:
+    id: "settings.open"
+- tapOn:
+    id: "settings.sources"
+- extendedWaitUntil:
+    visible:
+      id: "sources.lastImport"
+    timeout: 10000
+- takeScreenshot: sources
+- tapOn:
+    id: "sources.server.Jellyfin"
+- extendedWaitUntil:
+    visible:
+      id: "serverDetail.signIn"
+    timeout: 10000
+- takeScreenshot: server-detail
+- tapOn: "Sources"
+- tapOn:
+    id: "sources.rescan"
+- tapOn: "Settings"
+- tapOn:
+    id: "settings.done"
+- extendedWaitUntil:
+    visible:
+      id: "importActivity"
+    timeout: 15000
+- tapOn:
+    id: "importActivity"
+- takeScreenshot: import-activity-popover
+- tapOn:
+    id: "importActivity.openSources"
+- extendedWaitUntil:
+    visible:
+      id: "sources.server.Jellyfin"
+    timeout: 10000
+- takeScreenshot: open-sources-pushed-sources

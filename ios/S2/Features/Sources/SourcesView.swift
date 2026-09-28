@@ -289,12 +289,25 @@ struct ScanSection: View {
             case .idle:
                 EmptyView()
             case .scanning(let message, let fraction):
-                VStack(alignment: .leading, spacing: Spacing.small) {
-                    if let fraction { ProgressView(value: fraction) } else { ProgressView().frame(maxWidth: .infinity, alignment: .leading) }
-                    Text(message ?? "Scanning your music").font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                let text = Text(message ?? "Scanning your music").font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                if let fraction {
+                    VStack(alignment: .leading, spacing: Spacing.small) {
+                        ProgressView(value: fraction)
+                        text
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityIdentifier("sources.scanProgress")
+                } else {
+                    // Indeterminate: the spinner leads the message on one line, as a row's icon would.
+                    HStack(spacing: Spacing.medium) {
+                        // A new identity each time the row shows: a List reusing the row's cell leaves an
+                        // indeterminate ProgressView blank.
+                        ProgressView().id(UUID())
+                        text
+                    }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityIdentifier("sources.scanProgress")
                 }
-                .accessibilityElement(children: .combine)
-                .accessibilityIdentifier("sources.scanProgress")
             case .failed(let error):
                 Label {
                     VStack(alignment: .leading, spacing: Spacing.tiny) {
