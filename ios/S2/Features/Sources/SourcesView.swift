@@ -245,7 +245,7 @@ struct ServerRow: View {
                 VStack(alignment: .leading, spacing: Spacing.tiny) {
                     Text(type.title)
                     if let host {
-                        Text(host).font(.subheadline).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                        Text(host).font(.subheadline).foregroundStyle(.s2SecondaryText).lineLimit(1).truncationMode(.middle)
                     }
                 }
             } icon: {
@@ -267,7 +267,7 @@ struct ServerStatusLabel: View {
             if case .failed = status {
                 Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red).accessibilityHidden(true)
             }
-            Text(status.text).foregroundStyle(.secondary)
+            Text(status.text).foregroundStyle(.s2SecondaryText)
         }
         .font(.subheadline)
     }
@@ -293,7 +293,7 @@ struct ScanSection: View {
             case .idle:
                 EmptyView()
             case .scanning(let message, let fraction):
-                let text = Text(message ?? "Scanning your music").font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                let text = Text(message ?? "Scanning your music").font(.subheadline).foregroundStyle(.s2SecondaryText).lineLimit(2)
                 if let fraction {
                     VStack(alignment: .leading, spacing: Spacing.small) {
                         ProgressView(value: fraction)
@@ -316,7 +316,7 @@ struct ScanSection: View {
                 Label {
                     VStack(alignment: .leading, spacing: Spacing.tiny) {
                         Text("Last Scan Failed")
-                        Text(error).font(.subheadline).foregroundStyle(.secondary)
+                        Text(error).font(.subheadline).foregroundStyle(.s2SecondaryText)
                     }
                 } icon: {
                     Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)

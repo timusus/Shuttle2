@@ -65,7 +65,7 @@ struct ServerDetailContent: View {
                     VStack(alignment: .leading, spacing: Spacing.tiny) {
                         Text(type.title).font(.s2Headline)
                         if let host = login.host {
-                            Text(host).font(.subheadline).foregroundStyle(.secondary)
+                            Text(host).font(.subheadline).foregroundStyle(.s2SecondaryText)
                         }
                     }
                 } icon: {
@@ -77,7 +77,7 @@ struct ServerDetailContent: View {
                 }
                 .accessibilityIdentifier("serverDetail.status")
                 if case .failed(let error) = status {
-                    Text(error).font(.subheadline).foregroundStyle(.secondary)
+                    Text(error).font(.subheadline).foregroundStyle(.s2SecondaryText)
                         .accessibilityIdentifier("serverDetail.error")
                 }
                 if let address = login.address {
