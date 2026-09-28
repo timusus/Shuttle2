@@ -164,15 +164,6 @@ private fun RecentSearches(
     }
 }
 
-/** How many hits each section shows before "See all", unless it's the only section with results. */
-private val SectionLimits = mapOf(
-    SearchCategory.Artists to 3,
-    SearchCategory.Albums to 3,
-    SearchCategory.Songs to 5,
-    SearchCategory.Genres to 3,
-    SearchCategory.Playlists to 3,
-)
-
 @Composable
 private fun SearchResultList(
     query: String,
@@ -180,9 +171,7 @@ private fun SearchResultList(
     callbacks: SearchCallbacks,
 ) {
     var expanded by rememberSaveable(query) { mutableStateOf<SearchCategory?>(null) }
-    val onlySection = listOf(results.artists, results.albums, results.songs, results.genres, results.playlists).count { it.isNotEmpty() } == 1
-    val limit = { category: SearchCategory -> if (onlySection || category == expanded) Int.MAX_VALUE else SectionLimits.getValue(category) }
-    val showAll = { category: SearchCategory -> expanded = category }
+    val sections = results.sections(expanded)
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 16.dp)) {
         // The best match of all leads, lifted out of its own section.
         results.top?.let { top ->
@@ -197,39 +186,38 @@ private fun SearchResultList(
                 }
             }
         }
-        section(SearchCategory.Artists, results.artists, results.top, limit, showAll, { it.groupKey }) { _, hit -> ArtistResult(hit, callbacks) }
-        section(SearchCategory.Albums, results.albums, results.top, limit, showAll, { it.groupKey ?: it.name }) { _, hit -> AlbumResult(hit, callbacks) }
-        section(SearchCategory.Songs, results.songs, results.top, limit, showAll, { it.id }) { index, hit -> SongResult(hit, index, callbacks) }
-        section(SearchCategory.Genres, results.genres, results.top, limit, showAll, { it.name }) { _, hit -> GenreResult(hit, callbacks) }
-        section(SearchCategory.Playlists, results.playlists, results.top, limit, showAll, { it.id }) { _, hit -> PlaylistResult(hit, callbacks) }
+        sections.forEach { section ->
+            val type = section.category.name
+            item(key = "header:$type", contentType = "header") {
+                SectionHeader(
+                    title = section.category.label(),
+                    action = if (section.hasMore) stringResource(R.string.search_see_all) else null,
+                    onAction = { expanded = section.category },
+                )
+            }
+            // Rows get the hit's index in the whole group, which a song plays from.
+            when (section.category) {
+                SearchCategory.Artists -> rows(section, results.artists, { it.groupKey }) { _, hit -> ArtistResult(hit, callbacks) }
+                SearchCategory.Albums -> rows(section, results.albums, { it.groupKey ?: it.name }) { _, hit -> AlbumResult(hit, callbacks) }
+                SearchCategory.Songs -> rows(section, results.songs, { it.id }) { index, hit -> SongResult(hit, index, callbacks) }
+                SearchCategory.Genres -> rows(section, results.genres, { it.name }) { _, hit -> GenreResult(hit, callbacks) }
+                SearchCategory.Playlists -> rows(section, results.playlists, { it.id }) { _, hit -> PlaylistResult(hit, callbacks) }
+            }
+        }
     }
 }
 
-/**
- * One result group: a header, then a row per hit, up to its [limit] with "See all" in the header past it. The group's
- * first hit is left out when it's the [top] result. Rows get the hit's index in the whole group.
- */
-private fun <T> LazyListScope.section(
-    category: SearchCategory,
+/** A [section]'s rows from its group's [hits]; each row gets the hit's index in the whole group. */
+private fun <T> LazyListScope.rows(
+    section: SearchSection,
     hits: List<SearchHit<T>>,
-    top: SearchCategory?,
-    limit: (SearchCategory) -> Int,
-    onShowAll: (SearchCategory) -> Unit,
     key: (T) -> Any?,
     row: @Composable (index: Int, hit: SearchHit<T>) -> Unit,
 ) {
-    val from = if (top == category) 1 else 0
-    if (hits.size <= from) return
-    val until = (from + limit(category).toLong()).coerceAtMost(hits.size.toLong()).toInt()
-    val type = category.name
-    item(key = "header:$type", contentType = "header") {
-        SectionHeader(
-            title = category.label(),
-            action = if (until < hits.size) stringResource(R.string.search_see_all) else null,
-            onAction = { onShowAll(category) },
-        )
+    val type = section.category.name
+    items(count = section.until - section.from, key = { "$type:${key(hits[section.from + it].item)}" }, contentType = { type }) { i ->
+        row(section.from + i, hits[section.from + i])
     }
-    items(count = until - from, key = { "$type:${key(hits[from + it].item)}" }, contentType = { type }) { i -> row(from + i, hits[from + i]) }
 }
 
 @Composable

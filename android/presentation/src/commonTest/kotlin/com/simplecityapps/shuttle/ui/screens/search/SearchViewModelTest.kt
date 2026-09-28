@@ -11,24 +11,25 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
-import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
+import kotlinx.coroutines.test.setMain
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SearchViewModelTest {
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
+    private val testDispatcher = StandardTestDispatcher()
 
     private lateinit var preferenceManager: GeneralPreferenceManager
     private val songs = FakeSongRepository()
@@ -37,15 +38,21 @@ class SearchViewModelTest {
     private val chlorophyllLoop = createSong(id = 1, name = "Chlorophyll Loop", albumArtist = "Juniper Static", album = "Phase Garden")
     private val petalArithmetic = createSong(id = 2, name = "Petal Arithmetic", albumArtist = "Juniper Static", album = "Phase Garden")
 
-    @Before
+    @BeforeTest
     fun setUp() {
+        Dispatchers.setMain(testDispatcher)
         preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
         songs.setSongs(listOf(chlorophyllLoop, petalArithmetic))
         albums.setAlbums(listOf(createAlbum("Phase Garden", "Juniper Static")))
     }
 
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
     private fun TestScope.viewModel(): SearchViewModel {
-        val dispatcher = mainDispatcherRule.testDispatcher
+        val dispatcher = testDispatcher
         val index = LibrarySearchIndex(FakeAlbumArtistRepository(), albums, songs, FakeGenreRepository(), FakePlaylistRepository(), backgroundScope, dispatcher)
         val searchLibrary = SearchLibrary(index, dispatcher)
         return SearchViewModel(searchLibrary, RecentSearches(preferenceManager), ReadSearchCategories(preferenceManager), SaveSearchCategories(preferenceManager)).also { viewModel ->
@@ -75,14 +82,14 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `an empty query shows the stored recent searches`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `an empty query shows the stored recent searches`() = runTest(testDispatcher) {
         preferenceManager.recentSearches = listOf("kestrel", "salt")
 
         viewModel().uiState.value.content shouldBe SearchContent.Recent(listOf("kestrel", "salt"))
     }
 
     @Test
-    fun `typing searches once the debounce has passed`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `typing searches once the debounce has passed`() = runTest(testDispatcher) {
         val viewModel = viewModel()
 
         viewModel.onQueryChange("chlorophyll")
@@ -98,7 +105,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `the first query shows the searching state until its results arrive`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `the first query shows the searching state until its results arrive`() = runTest(testDispatcher) {
         val viewModel = viewModel()
         val shown = recordContent(viewModel)
 
@@ -109,7 +116,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `the previous results stay up while the next query runs`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `the previous results stay up while the next query runs`() = runTest(testDispatcher) {
         val viewModel = viewModel()
         type(viewModel, "chlorophyll")
         val shown = recordContent(viewModel)
@@ -124,7 +131,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `a query that matches nothing says so`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `a query that matches nothing says so`() = runTest(testDispatcher) {
         val viewModel = viewModel()
 
         type(viewModel, "zzzzzz")
@@ -133,7 +140,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `clearing the query goes back to the recent searches`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `clearing the query goes back to the recent searches`() = runTest(testDispatcher) {
         val viewModel = viewModel()
         type(viewModel, "chlorophyll")
 
@@ -144,7 +151,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `a fresh search has All selected, with no type chips`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `a fresh search has All selected, with no type chips`() = runTest(testDispatcher) {
         val viewModel = viewModel()
         type(viewModel, "juniper")
 
@@ -155,7 +162,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `selecting a type deselects All and narrows the results to it`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `selecting a type deselects All and narrows the results to it`() = runTest(testDispatcher) {
         val viewModel = viewModel()
         type(viewModel, "juniper")
 
@@ -168,7 +175,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `deselecting the last type reselects All`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `deselecting the last type reselects All`() = runTest(testDispatcher) {
         val viewModel = viewModel()
         type(viewModel, "juniper")
 
@@ -180,7 +187,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `selecting All clears the type chips`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `selecting All clears the type chips`() = runTest(testDispatcher) {
         val viewModel = viewModel()
         toggle(viewModel, SearchCategory.Albums)
         toggle(viewModel, SearchCategory.Songs)
@@ -192,7 +199,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `selecting every type is the same as All`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `selecting every type is the same as All`() = runTest(testDispatcher) {
         val viewModel = viewModel()
 
         SearchCategory.entries.forEach { toggle(viewModel, it) }
@@ -201,7 +208,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `a new search starts with the types left selected last time`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `a new search starts with the types left selected last time`() = runTest(testDispatcher) {
         toggle(viewModel(), SearchCategory.Albums)
 
         val reopened = viewModel()
@@ -212,7 +219,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `a search left on All starts on All`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `a search left on All starts on All`() = runTest(testDispatcher) {
         val viewModel = viewModel()
         toggle(viewModel, SearchCategory.Albums)
         viewModel.onSelectAll()
@@ -222,7 +229,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `submitting a query records it as a recent search`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `submitting a query records it as a recent search`() = runTest(testDispatcher) {
         preferenceManager.recentSearches = listOf("salt")
         val viewModel = viewModel()
         type(viewModel, "Juniper")
@@ -236,7 +243,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `removing a recent search forgets it`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `removing a recent search forgets it`() = runTest(testDispatcher) {
         preferenceManager.recentSearches = listOf("kestrel", "salt")
         val viewModel = viewModel()
 
@@ -247,7 +254,7 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun `tapping a song plays every song result from that one`() = runTest(mainDispatcherRule.testDispatcher) {
+    fun `tapping a song plays every song result from that one`() = runTest(testDispatcher) {
         val viewModel = viewModel()
         type(viewModel, "juniper")
         val results = (viewModel.uiState.value.content as SearchContent.Results).results.songs.map { it.item }

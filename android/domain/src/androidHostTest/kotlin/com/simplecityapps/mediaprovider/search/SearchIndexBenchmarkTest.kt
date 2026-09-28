@@ -4,7 +4,7 @@ import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.longs.shouldBeLessThan
 import kotlin.random.Random
-import org.junit.Test
+import kotlin.test.Test
 
 /**
  * A 50k-song library: the index must build well inside a generous JVM bound and answer each keystroke of typical

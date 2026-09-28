@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
 import com.simplecityapps.shuttle.ui.screens.onboarding.SourceSetupViewModel
+import com.simplecityapps.shuttle.ui.screens.search.SearchViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewViewModel
@@ -95,6 +96,7 @@ interface IosAppGraph : ViewModelGraph {
     val sourceSetupViewModel: SourceSetupViewModel
     val settingsViewModel: SettingsViewModel
     val equalizerViewModel: EqualizerViewModel
+    val searchViewModel: SearchViewModel
 
     /** The rows `settingsViewModel` stores, for Swift's `SettingsView` to lay out. */
     val settingsCatalog: SettingsCatalog

@@ -1,5 +1,5 @@
-// What every media provider shares: the MediaProvider API, MediaImporter, m3u reading and writing, library search and
-// the streaming settings. Multiplatform for the iOS port (#584, docs/architecture/ios-port/phase-2-data.md): all of
+// What every media provider shares: the MediaProvider API, MediaImporter, m3u reading and writing, and the
+// streaming settings (library search lives in :android:domain). Multiplatform for the iOS port (#584, docs/architecture/ios-port/phase-2-data.md): all of
 // that is commonMain; the Android wiring (the WorkManager import worker, SAF playlist export, the Uri-typed
 // MediaInfoProvider, the provider titles and icons from resources, network metering, the client identity's
 // PackageManager and Build lookups) is androidMain.

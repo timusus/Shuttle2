@@ -27,7 +27,7 @@ platform subsystem: playback engine, billing, background services). Status:
 | Library empty state | `android/presentation/.../LibraryEmptyViewModel.kt` | S | 7 | shared-ready | |
 | Playlists — list | `android/app/.../ui/screens/library/playlists/PlaylistListViewModel.kt` (shared) | M | 7 | shared-ready | |
 | Playlists — smart/auto (recently added, most played, history) | `android/app/.../ui/screens/library/SmartPlaylistDetailViewModel.kt` | M | 7 | none | Not yet in `android/presentation` commonMain. |
-| Search (artists/albums/songs, fuzzy ranking, filter chips) | `android/app/.../ui/screens/search/SearchViewModel.kt` | M | 7 | partial | `ios/S2/Features/Search/SearchView.swift` exists; `SearchViewModel` still android-only, not yet in presentation module. |
+| Search (artists/albums/songs, fuzzy ranking, filter chips) | `android/presentation/.../ui/screens/search/SearchViewModel.kt` | M | 7 | done | `ios/S2/Features/Search/SearchView.swift` on the shared `SearchViewModel` (`:android:presentation`, #589). |
 | Mini player (progress, play/pause, skip) | `android/app/.../ui/shell/player/MiniPlayer.kt` | M | 6 | done | `ios/S2/Features/Playback/MiniPlayerView.swift`, `PlayerBinding.swift` (on the shared `PlayerViewModel`), `PlayerPresentation.swift`. |
 | Now Playing (shuffle, repeat x3, seek, favourite, clear queue) | `android/app/.../ui/shell/player/NowPlaying.kt` | M | 6 | partial | `ios/S2/Features/Playback/NowPlayingView.swift` on the shared `PlayerViewModel` (phase 4 wave 5) through `PlayerBinding`: shuffle, repeat, seek, speed, sleep timer. No favourite or clear-queue UI yet. |
 | Now Playing — lyrics panel | `android/app/.../ui/shell/player/NowPlayingPanels.kt` | S | 7 | none | Android gap #429 too. |

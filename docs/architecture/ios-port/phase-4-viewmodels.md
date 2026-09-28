@@ -149,10 +149,11 @@ and Equalizer ViewModel tests stay in `:android:app`'s JVM suite because they dr
 and the real `EqualizerAudioProcessor`. The Compose screens and their characterisation tests stay in app,
 unchanged.
 
-- **`SearchViewModel` stays in app.** Its state carries `SearchHit`, and `SearchLibrary`/`LibrarySearchIndex`
-  build on `SearchIndex`, `SearchQuery` and `SearchDocument`, all in `:android:mediaprovider:core`. Moving it
-  means moving those types to `:android:domain` first, an edit to the mediaprovider modules this wave could
-  not make. That move unblocks it; nothing else does.
+- **`SearchViewModel` moved in phase 7 (#589).** Its state carries `SearchHit`, and `SearchLibrary`/
+  `LibrarySearchIndex` build on `SearchIndex`, `SearchQuery` and `SearchDocument`, so those moved from
+  `:android:mediaprovider:core` to `:android:domain` first (same package), then the ViewModel, its use cases and
+  `RecentSearches` to `:android:presentation`. `SearchResults.sections(expanded)` lays out the result groups
+  (top result, per-type limits, "See all") for both platforms' screens.
 - **S1 `SettingsEffects`.** The interface and `CopyDebugLogsResult` moved as they were, minus
   `lastScanDate()`: a preference read, not an effect, so it became the `ReadLastScanDate` use case over
   `GeneralPreferenceManager`, and `SettingsUiState.lastScanDate` is an `Instant` (the screen converts it for

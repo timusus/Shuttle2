@@ -1,4 +1,4 @@
-// Domain layer (#443, docs/architecture/layering.md): plain Kotlin models, queries, sort orders, repository and
+// Domain layer (#443, docs/architecture/layering.md): plain Kotlin models, queries, sort orders, the library search index, repository and
 // playback operations interfaces, and the shared use cases, no Android. Multiplatform for the iOS port (#582).
 plugins {
     id("s2.kmp-library")
@@ -15,6 +15,8 @@ kotlin {
 
     compilerOptions {
         optIn.add("kotlin.time.ExperimentalTime")
+        // SearchIndex's token cache is an AtomicReference
+        optIn.add("kotlin.concurrent.atomics.ExperimentalAtomicApi")
     }
 
     sourceSets {

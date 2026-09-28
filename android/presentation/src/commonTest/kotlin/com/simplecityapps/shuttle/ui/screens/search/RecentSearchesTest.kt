@@ -1,24 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.search
 
-import android.content.Context
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.shouldBe
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
+import kotlin.test.Test
 
-@RunWith(RobolectricTestRunner::class)
 class RecentSearchesTest {
-    private lateinit var preferenceManager: GeneralPreferenceManager
-
-    @Before
-    fun setUp() {
-        val context: Context = RuntimeEnvironment.getApplication()
-        preferenceManager = GeneralPreferenceManager(SharedPreferencesKeyValueStore(context.getSharedPreferences("recent-searches-test", Context.MODE_PRIVATE).apply { edit().clear().commit() }))
-    }
+    private val preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
 
     @Test
     fun `adding puts the query first and drops an earlier copy of it`() {
