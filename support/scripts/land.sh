@@ -19,7 +19,8 @@
 # Sequence: refuse a dirty tree; `git fetch origin main`; hard-reset the current branch onto
 # origin/main; for each branch, cherry-pick $(git merge-base origin/main <branch>)..<branch>. A
 # branch whose cherry-pick conflicts is aborted and marked "conflict"; later branches still get
-# a chance. Verify runs once, under `machine-lock --name verify`, over everything landed so far:
+# a chance. Verify runs once, in a single `machine-lock --name verify` hold (land.sh re-invokes
+# itself with an internal --verify-only mode), over everything landed so far:
 # `unit-test --changed`, an assembleDebug, and — only if the picked commits touch ios/, shared/
 # or android/domain|presentation|core — the iOS framework build + tests (releasing its
 # simulator lease afterwards). If the verify fails and more than one branch landed, branches are
@@ -29,8 +30,31 @@
 # branch's worktree.
 set -uo pipefail
 
+SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 REPO_ROOT=$(git rev-parse --show-toplevel) || { echo "land.sh: not a git repo" >&2; exit 2; }
 cd "$REPO_ROOT" || exit 2
+
+# Internal mode: the Android and iOS verify phases, run by run_verify below under one
+# `machine-lock --name verify` hold. Not for direct use.
+#   land.sh --verify-only <origin-main-sha> <touches_ios 0|1>
+if [ "${1:-}" = "--verify-only" ]; then
+  base_sha=${2:?} touches_ios=${3:-0}
+  support/scripts/unit-test --changed --base "$base_sha" || { echo "verify: android unit tests failed"; exit 1; }
+  support/scripts/remote-build.sh --local -q :android:app:assembleDebug || { echo "verify: assembleDebug failed"; exit 1; }
+  if [ "$touches_ios" = 1 ]; then
+    rc=0
+    (
+      set -e
+      cd ios
+      xcodegen -q
+      scripts/build-framework.sh
+      S2_SIM_HOLDER=land scripts/test.sh
+    ) || rc=$?
+    CLAUDE_CODE_SESSION_ID=land "$HOME/.claude/scripts/ios-sim/sim-lease.sh" release || true
+    [ "$rc" -eq 0 ] || { echo "verify: ios step failed (rc=$rc)"; exit 1; }
+  fi
+  exit 0
+fi
 
 mkdir -p .claude/land-logs
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
@@ -50,7 +74,7 @@ while [ $# -gt 0 ]; do
       CLOSE_ISSUES+=("$2"); shift 2 ;;
     --no-push) NO_PUSH=1; shift ;;
     --dry-run) NO_PUSH=1; shift ;;
-    -h|--help) sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     -*) echo "land.sh: unknown option: $1" >&2; exit 2 ;;
     *) BRANCHES+=("$1"); shift ;;
   esac
@@ -73,6 +97,21 @@ if ! git fetch -q origin main >> "$LOG" 2>&1; then
 fi
 
 CUR_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Data-loss guard: the reset below discards anything on HEAD that origin/main lacks, and a
+# branch being landed must not be the checkout that gets reset.
+UNPUSHED=$(git rev-list origin/main..HEAD | wc -l | tr -d ' ')
+if [ "$UNPUSHED" -gt 0 ]; then
+  say "land.sh: refusing to reset $CUR_BRANCH: HEAD has $UNPUSHED commit(s) not on origin/main (land or push them first)"
+  exit 2
+fi
+for b in "${BRANCHES[@]}"; do
+  if [ "$b" = "$CUR_BRANCH" ]; then
+    say "land.sh: refusing to land $b from its own checkout; run from the primary checkout"
+    exit 2
+  fi
+done
+
 ORIGIN_MAIN_SHA=$(git rev-parse origin/main)
 log "hard-resetting $CUR_BRANCH ($(git rev-parse HEAD)) onto origin/main ($ORIGIN_MAIN_SHA)"
 if ! git reset --hard origin/main >> "$LOG" 2>&1; then
@@ -123,7 +162,7 @@ drop_branch() {  # $1 = index; resets HEAD back to before this branch's picks
   log "${BRANCHES[$i]}: dropped to isolate a verify failure"
 }
 
-# --- verify (once, under machine-lock) ------------------------------------------------------
+# --- verify (once, one machine-lock hold for both phases) ------------------------------------------------------
 run_verify() {
   if [ "${LAND_SKIP_VERIFY:-0}" = 1 ]; then
     log "verify: LAND_SKIP_VERIFY=1, skipping"
@@ -135,30 +174,9 @@ run_verify() {
   fi
   log "verify: touches_ios=$touches_ios"
 
-  if ! machine-lock --name verify -- bash -c '
-        set -e
-        support/scripts/unit-test --changed --base '"$ORIGIN_MAIN_SHA"'
-        support/scripts/remote-build.sh --local -q :android:app:assembleDebug
-      ' >> "$LOG" 2>&1; then
-    log "verify: android step failed"
+  if ! machine-lock --name verify -- "$SELF" --verify-only "$ORIGIN_MAIN_SHA" "$touches_ios" >> "$LOG" 2>&1; then
+    log "verify: failed (see above)"
     return 1
-  fi
-
-  if [ "$touches_ios" = 1 ]; then
-    local rc
-    machine-lock --name verify -- bash -c '
-        set -e
-        cd ios
-        xcodegen -q
-        scripts/build-framework.sh
-        S2_SIM_HOLDER=land scripts/test.sh
-      ' >> "$LOG" 2>&1
-    rc=$?
-    CLAUDE_CODE_SESSION_ID=land "$HOME/.claude/scripts/ios-sim/sim-lease.sh" release >> "$LOG" 2>&1 || true
-    if [ "$rc" -ne 0 ]; then
-      log "verify: ios step failed (rc=$rc)"
-      return 1
-    fi
   fi
   return 0
 }
