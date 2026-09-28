@@ -8,8 +8,8 @@ import SwiftUI
 ///   player's tint stays scoped to the player), and the Play/Shuffle capsules, the wash, the playing row and the
 ///   See All links follow it through `.tint`.
 /// - Compact, or a regular container narrower than `AdaptiveLayout.twoColumnMinWidth`: one `List`, the hero its
-///   first row (Android's "hero as list item", not a collapsing bar) with the wash as that row's background. The
-///   navigation bar takes over the title only once the hero has scrolled away.
+///   first row (Android's "hero as list item", not a collapsing bar) with the wash as that row's background, reaching
+///   up under the navigation bar. The bar takes over the title only once the hero's title has scrolled under it.
 /// - Regular and wide from `twoColumnMinWidth`: the hero is a fixed leading column (its own scroll view, the wash
 ///   filling it) beside the list, with the larger `ArtworkSize.heroRegular` cover; the bar never shows the title,
 ///   since the hero is always on screen.
@@ -40,6 +40,20 @@ enum DetailHeroLayout: Equatable {
     }
 }
 
+/// One column (the hero the list's first row) or two (the hero a fixed leading column beside the list).
+enum DetailColumns: Equatable {
+    case single
+    case two(heroColumnWidth: CGFloat)
+
+    /// Two columns in a regular or wide container at least `AdaptiveLayout.twoColumnMinWidth` wide, the hero column
+    /// a third of it but never narrower than the regular cover plus its margins; one otherwise.
+    static func resolve(tier: LayoutTier, containerWidth: CGFloat) -> DetailColumns {
+        guard tier != .compact, containerWidth >= AdaptiveLayout.twoColumnMinWidth else { return .single }
+        let inset = AdaptiveLayout.contentInset(tier)
+        return .two(heroColumnWidth: max(ArtworkSize.heroRegular + inset * 2, containerWidth / 3))
+    }
+}
+
 /// `DetailScaffold` inside its tint, so it can read `\.artworkTint`.
 private struct DetailScaffoldBody<Hero: View, Rows: View>: View {
     let title: String
@@ -49,6 +63,9 @@ private struct DetailScaffoldBody<Hero: View, Rows: View>: View {
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.artworkTint) private var tint
     @State private var heroVisible = true
+    /// Where the navigation bar ends, in global coordinates: the single-column list's top plus the safe area it
+    /// scrolls under. The hero's title hides under the bar above this line, and the wash reaches up past it.
+    @State private var barBottom: CGFloat = 0
 
     var body: some View {
         Group {
@@ -56,10 +73,9 @@ private struct DetailScaffoldBody<Hero: View, Rows: View>: View {
                 singleColumn
             } else {
                 GeometryReader { proxy in
-                    if proxy.size.width >= AdaptiveLayout.twoColumnMinWidth {
-                        twoColumn(containerWidth: proxy.size.width)
-                    } else {
-                        singleColumn
+                    switch DetailColumns.resolve(tier: layoutTier, containerWidth: proxy.size.width) {
+                    case .single: singleColumn
+                    case .two(let heroColumnWidth): twoColumn(columnWidth: heroColumnWidth)
                     }
                 }
             }
@@ -73,23 +89,28 @@ private struct DetailScaffoldBody<Hero: View, Rows: View>: View {
         List {
             Section {
                 hero(.stacked)
+                    .environment(\.detailTitleProbe, DetailTitleProbe(barBottom: barBottom) { isVisible in
+                        if heroVisible != isVisible { heroVisible = isVisible }
+                    })
                     .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
                     .padding(.top, Spacing.small)
                     .padding(.bottom, Spacing.large)
-                    .background(visibilityProbe)
                     .listRowInsets(EdgeInsets())
-                    .listRowBackground(DetailWash(style: .fading))
+                    // Up past the row's top under the navigation bar (and the status bar), so the bar sits on the
+                    // wash rather than on a plain band above it.
+                    .listRowBackground(DetailWash(style: .fading).padding(.top, -barBottom))
             }
             .listRowSeparator(.hidden)
             rows()
         }
         .listStyle(.plain)
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.frame(in: .global).minY + proxy.safeAreaInsets.top
+        } action: { barBottom = $0 }
     }
 
-    /// The hero column's width: a third of the container, never less than the regular cover plus its margins.
-    private func twoColumn(containerWidth: CGFloat) -> some View {
+    private func twoColumn(columnWidth: CGFloat) -> some View {
         let inset = AdaptiveLayout.contentInset(layoutTier)
-        let columnWidth = max(ArtworkSize.heroRegular + inset * 2, containerWidth / 3)
         return HStack(spacing: 0) {
             ScrollView {
                 hero(.column(width: columnWidth - inset * 2))
@@ -107,14 +128,37 @@ private struct DetailScaffoldBody<Hero: View, Rows: View>: View {
         .onAppear { heroVisible = true }
     }
 
-    /// Reports whether the hero is still on screen, so the navigation bar names the screen once it isn't.
-    /// `onScrollGeometryChange` is iOS 18; this works on 17 (Podcasts' `headerVisibilityProbe`).
-    private var visibilityProbe: some View {
-        GeometryReader { proxy in
-            let visible = proxy.frame(in: .scrollView).maxY > Spacing.large
-            Color.clear.onChange(of: visible, initial: true) { _, isVisible in
-                if heroVisible != isVisible { heroVisible = isVisible }
-            }
+}
+
+/// How the stacked hero's title tells `DetailScaffold` whether it's still below the navigation bar, so the bar names
+/// the screen only once the title has scrolled under it: whatever the hero's height, at every text size.
+/// `onScrollGeometryChange` is iOS 18; this works on 17.
+struct DetailTitleProbe {
+    /// The bar's bottom edge in global coordinates.
+    let barBottom: CGFloat
+    let report: (_ isVisible: Bool) -> Void
+
+    /// Whether a title whose bottom edge is at `titleMaxY` (global) still shows below the bar.
+    static func isVisible(titleMaxY: CGFloat, barBottom: CGFloat) -> Bool {
+        titleMaxY > barBottom
+    }
+}
+
+extension EnvironmentValues {
+    /// Set on the single-column hero only; the two-column hero is always on screen.
+    @Entry var detailTitleProbe: DetailTitleProbe?
+}
+
+private struct DetailTitleProbeModifier: ViewModifier {
+    @Environment(\.detailTitleProbe) private var probe
+
+    func body(content: Content) -> some View {
+        if let probe {
+            content.onGeometryChange(for: Bool.self) { proxy in
+                DetailTitleProbe.isVisible(titleMaxY: proxy.frame(in: .global).maxY, barBottom: probe.barBottom)
+            } action: { probe.report($0) }
+        } else {
+            content
         }
     }
 }
@@ -164,6 +208,7 @@ struct DetailHero<Artwork: View>: View {
                     .multilineTextAlignment(textAlignment)
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                     .accessibilityAddTraits(.isHeader)
+                    .modifier(DetailTitleProbeModifier())
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.s2Eyebrow)
