@@ -32,7 +32,8 @@ extension RemoteArtwork where Placeholder == ArtworkPlaceholder {
 /// `candidates` comes from :shared's `ArtworkUrls` (`IosAppGraph.artworkUrls`): the media server's image, then the
 /// S2 artwork API's, which `ArtworkLoader` tries in turn. `cacheKey` names the item in `ArtworkLoader`'s memory
 /// cache, so a tile seen before draws at once without asking the server again; it carries the item's kind, so an
-/// album and an artist that share a name don't share a cover.
+/// album and an artist that share a name don't share a cover, and the provider's artwork version, so a refreshed cover
+/// misses the cache rather than staying stale.
 struct ArtworkSource: Equatable {
     let id: AnyHashable
     let cacheKey: String
@@ -60,20 +61,28 @@ struct ArtworkSource: Equatable {
 
     static func == (lhs: ArtworkSource, rhs: ArtworkSource) -> Bool { lhs.id == rhs.id }
 
+    /// An item's cache key: its kind and identity, plus the provider's artwork version when there is one, so the
+    /// key changes exactly when the artwork does (Android's `artworkCacheKey`, `ArtworkKeys.kt`).
+    static func itemKey(_ kind: String, _ id: String, version: String?) -> String {
+        let key = "\(kind):\(id)"
+        guard let version else { return key }
+        return "\(key)_\(version)"
+    }
+
     static func song(_ song: Song) -> ArtworkSource {
-        ArtworkSource(id: song.id, cacheKey: "song:\(song.id)") {
+        ArtworkSource(id: song.id, cacheKey: itemKey("song", "\(song.id)", version: song.artworkVersion)) {
             try await AppGraph.shared.artworkUrls.requests(song: song).compactMap(ArtworkCandidate.init)
         }
     }
 
     static func album(_ album: Album) -> ArtworkSource {
-        ArtworkSource(id: album.stableId, cacheKey: "album:\(album.stableId)") {
+        ArtworkSource(id: album.stableId, cacheKey: itemKey("album", album.stableId, version: album.artworkVersion)) {
             try await AppGraph.shared.artworkUrls.requests(album: album).compactMap(ArtworkCandidate.init)
         }
     }
 
     static func albumArtist(_ albumArtist: AlbumArtist) -> ArtworkSource {
-        ArtworkSource(id: albumArtist.stableId, cacheKey: "artist:\(albumArtist.stableId)") {
+        ArtworkSource(id: albumArtist.stableId, cacheKey: itemKey("artist", albumArtist.stableId, version: albumArtist.artworkVersion)) {
             try await AppGraph.shared.artworkUrls.requests(albumArtist: albumArtist).compactMap(ArtworkCandidate.init)
         }
     }

@@ -92,6 +92,32 @@ struct ArtworkLoaderTests {
         #expect(lookups == 1)
     }
 
+    @Test func itemKeysCarryTheKindAndTheArtworkVersion() {
+        #expect(ArtworkSource.itemKey("album", "ok computer", version: nil) == "album:ok computer")
+        #expect(ArtworkSource.itemKey("album", "ok computer", version: "v2") == "album:ok computer_v2")
+        #expect(ArtworkSource.itemKey("artist", "x", version: nil) != ArtworkSource.itemKey("album", "x", version: nil))
+    }
+
+    @MainActor @Test func aChangedArtworkVersionMissesTheCacheAndLooksTheItemUpAgain() async {
+        let fetcher = StubFetcher(responses: [Self.s2: (200, Self.pngData(width: 40, height: 40))])
+        let loader = ArtworkLoader(fetch: fetcher.fetch)
+        let id = "versioned-\(UUID())"
+        var lookups = 0
+        func source(version: String) -> ArtworkSource {
+            ArtworkSource(id: id, cacheKey: ArtworkSource.itemKey("album", id, version: version)) {
+                lookups += 1
+                return [ArtworkCandidate(url: Self.s2)]
+            }
+        }
+
+        _ = await loader.image(for: source(version: "1"), maxPixelSize: 64)
+
+        #expect(loader.cached(source(version: "1"), maxPixelSize: 64) != nil)
+        #expect(loader.cached(source(version: "2"), maxPixelSize: 64) == nil)
+        #expect(await loader.image(for: source(version: "2"), maxPixelSize: 64) != nil)
+        #expect(lookups == 2)
+    }
+
     @MainActor @Test func anItemNoCandidateLoadsForIsNotCachedSoTheNextLookTriesAgain() async {
         let fetcher = StubFetcher(responses: [Self.server: (404, Data()), Self.s2: (200, Data([0x00, 0x01]))])
         let loader = ArtworkLoader(fetch: fetcher.fetch)
