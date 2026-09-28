@@ -1,5 +1,5 @@
 # iPad regression for #615: signs in to a Jellyfin test server on iPad through the Settings sheet
-# (Settings gear > Sources > Connect a Server > Jellyfin), rather than Home's empty state
+# (Settings gear > Sources > Add a Server > the Jellyfin card), rather than Home's empty state
 # (sign-in-jellyfin.yaml), since #589 moved Sources under Settings' own nav stack on every tier.
 #
 # Env (pass with -e, from ios/scripts/maestro-sim.sh; never commit or print them): SERVER_URL, API_KEY, and
@@ -9,6 +9,9 @@ appId: com.simplecityapps.shuttle.dev
 - launchApp:
     clearState: true
     clearKeychain: true
+# A fresh install opens the first-run setup (onboarding.yaml walks it); skip it, which also marks it done.
+- tapOn:
+    id: "onboarding.skip"
 - tapOn:
     id: "settings.open"
 - tapOn:
@@ -30,16 +33,23 @@ appId: com.simplecityapps.shuttle.dev
     id: "serverSignIn.username"
 - inputText: ${SERVER_USER}
 # Not hideKeyboard: on iOS it can press Return, which moves to the password field and then signs in with an empty
-# password. Dragging the form dismisses the keyboard instead.
+# password. Dragging the form by its header dismisses the keyboard instead; lower down, the drag can land on
+# Sign In with Quick Connect, so its tap below is conditional.
 - swipe:
-    start: 50%, 35%
-    end: 50%, 60%
+    start: 50%, 22%
+    end: 50%, 50%
 - extendedWaitUntil:
     visible:
       id: "serverSignIn.quickConnect"
     timeout: 15000
-- tapOn:
-    id: "serverSignIn.quickConnect"
+    optional: true
+- runFlow:
+    when:
+      notVisible:
+        id: "serverSignIn.quickConnectCode"
+    commands:
+      - tapOn:
+          id: "serverSignIn.quickConnect"
 - extendedWaitUntil:
     visible:
       id: "serverSignIn.quickConnectCode"
@@ -49,6 +59,13 @@ appId: com.simplecityapps.shuttle.dev
     id: "serverSignIn.quickConnectCode"
 - runScript:
     file: approve-quick-connect.js
+# Signed in: the setup follows the import; leave it running and continue to Sources.
+- extendedWaitUntil:
+    visible:
+      id: "onboarding.continue"
+    timeout: 30000
+- tapOn:
+    id: "onboarding.continue"
 - extendedWaitUntil:
     visible:
       id: "sources.server.Jellyfin"

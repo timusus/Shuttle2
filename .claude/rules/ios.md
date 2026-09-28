@@ -102,12 +102,13 @@ S2_SIMULATOR_UDID=<simulator> ios/scripts/maestro-sim.sh             # poc-play.
 ```
 
 `maestro-sim.sh` reads `~/.config/s2-test/jellyfin.env` (`URL=`, `API_KEY=`) and passes both with `-e`; they
-are never printed or committed. The env file has no password, so `sign-in-jellyfin.yaml` types the address and
-username (`shuttle-test`), taps Use Quick Connect and approves its own code with the API key
+are never printed or committed. A fresh install opens the first-run setup: `onboarding.yaml` walks it, and every
+other flow that clears state taps `onboarding.skip` first. The env file has no password, so `sign-in-jellyfin.yaml`
+types the address and username (`shuttle-test`), taps Sign In with Quick Connect and approves its own code with the API key
 (`approve-quick-connect.js`, `POST /QuickConnect/Authorize`), as a second Jellyfin app would. Emby has no Quick
 Connect, so no flow signs in to it without a password.
 
-The flows find views by `accessibilityIdentifier` (`serverSignIn.*`, `songRow.title`, `miniPlayer.title`,
+The flows find views by `accessibilityIdentifier` (`onboarding.*`, `serverTypePicker.*`, `serverSignIn.*`, `songRow.title`, `miniPlayer.title`,
 `miniPlayer.playPause`); an id on a container overrides its children's, so give each control its own.
 
 ## Layout

@@ -1,0 +1,100 @@
+# The first run end to end (#624): from a fresh install, the welcome > Get Started > the Jellyfin card > sign in
+# with Quick Connect (approved by approve-quick-connect.js, as in sign-in-jellyfin.yaml) > the import's progress
+# > Continue into the app, which no longer offers the setup. Screenshots at each step; run once per appearance
+# (xcrun simctl ui <udid> appearance dark|light) and on an iPad for the sized sheet:
+#
+#   OUT=/tmp/s2-polish-wp5/iphone-light ios/scripts/maestro-sim.sh onboarding.yaml
+#
+# Env (pass with -e, from ios/scripts/maestro-sim.sh; never commit or print them): SERVER_URL, API_KEY, and
+# SERVER_USER, the user the code is approved for.
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+- extendedWaitUntil:
+    visible:
+      id: "onboarding.getStarted"
+    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: 1-welcome
+- tapOn:
+    id: "onboarding.getStarted"
+- extendedWaitUntil:
+    visible:
+      id: "serverTypePicker.Jellyfin"
+    timeout: 10000
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: 2-server-cards
+- tapOn:
+    id: "serverTypePicker.Jellyfin"
+- extendedWaitUntil:
+    visible:
+      id: "serverSignIn.address"
+    timeout: 10000
+- tapOn:
+    id: "serverSignIn.address"
+- eraseText: 40
+- inputText: ${SERVER_URL}
+- tapOn:
+    id: "serverSignIn.username"
+- inputText: ${SERVER_USER}
+# Not hideKeyboard: on iOS it can press Return, which moves to the password field and then signs in with an empty
+# password. Dragging the form by its header dismisses the keyboard instead; lower down, the drag can land on
+# Sign In with Quick Connect, so its tap below is conditional.
+- swipe:
+    start: 50%, 22%
+    end: 50%, 50%
+- extendedWaitUntil:
+    visible:
+      id: "serverSignIn.quickConnect"
+    timeout: 15000
+    optional: true
+- takeScreenshot: 3-sign-in-form
+- runFlow:
+    when:
+      notVisible:
+        id: "serverSignIn.quickConnectCode"
+    commands:
+      - tapOn:
+          id: "serverSignIn.quickConnect"
+- extendedWaitUntil:
+    visible:
+      id: "serverSignIn.quickConnectCode"
+    timeout: 15000
+- takeScreenshot: 4-quick-connect-code
+- copyTextFrom:
+    id: "serverSignIn.quickConnectCode"
+- runScript:
+    file: approve-quick-connect.js
+- extendedWaitUntil:
+    visible:
+      id: "onboarding.importTitle"
+    timeout: 30000
+- takeScreenshot: 5-importing
+- extendedWaitUntil:
+    visible: "Your Library Is Ready"
+    timeout: 180000
+    optional: true
+- takeScreenshot: 6-import-finished
+- tapOn:
+    id: "onboarding.continue"
+- extendedWaitUntil:
+    notVisible:
+      id: "onboarding.importTitle"
+    timeout: 10000
+- tapOn: "Library"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 7-app
+# Setup done: a relaunch goes straight to the app.
+- launchApp:
+    stopApp: true
+- extendedWaitUntil:
+    notVisible:
+      id: "onboarding.welcome"
+    timeout: 5000
+- assertNotVisible:
+    id: "onboarding.getStarted"

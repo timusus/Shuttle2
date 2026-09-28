@@ -1,5 +1,5 @@
 # Signs in to a Jellyfin test server through the real sign-in screen (#587): from a signed-out launch, Home's
-# empty state > Add a Source > Connect a Server > Jellyfin, type the address and username, then Quick Connect. The
+# empty state > Add a Source > Add a Server > the Jellyfin card, type the address and username, then Quick Connect. The
 # test env files hold an API key, not a password, so the flow approves its own Quick Connect code with the key
 # (approve-quick-connect.js), as a second Jellyfin app would. Ends back on Sources with the server connected.
 #
@@ -12,6 +12,9 @@ appId: com.simplecityapps.shuttle.dev
     clearKeychain: true
 # Home's empty state, where the app opens: reachable in every tier, where Library's isn't on an iPad (the
 # regular tier opens Library on its Songs detail). Home first: the app restores the last selected tab.
+# A fresh install opens the first-run setup (onboarding.yaml walks it); skip it, which also marks it done.
+- tapOn:
+    id: "onboarding.skip"
 - tapOn: "Home"
 - tapOn:
     id: "homeEmpty.addSource"
@@ -31,17 +34,24 @@ appId: com.simplecityapps.shuttle.dev
     id: "serverSignIn.username"
 - inputText: ${SERVER_USER}
 # Not hideKeyboard: on iOS it can press Return, which moves to the password field and then signs in with an empty
-# password. Dragging the form dismisses the keyboard instead.
+# password. Dragging the form by its header dismisses the keyboard instead; lower down, the drag can land on
+# Sign In with Quick Connect, so its tap below is conditional.
 - swipe:
-    start: 50%, 35%
-    end: 50%, 60%
+    start: 50%, 22%
+    end: 50%, 50%
 - takeScreenshot: 1-sign-in-form
 - extendedWaitUntil:
     visible:
       id: "serverSignIn.quickConnect"
     timeout: 15000
-- tapOn:
-    id: "serverSignIn.quickConnect"
+    optional: true
+- runFlow:
+    when:
+      notVisible:
+        id: "serverSignIn.quickConnectCode"
+    commands:
+      - tapOn:
+          id: "serverSignIn.quickConnect"
 - extendedWaitUntil:
     visible:
       id: "serverSignIn.quickConnectCode"
@@ -51,6 +61,13 @@ appId: com.simplecityapps.shuttle.dev
     id: "serverSignIn.quickConnectCode"
 - runScript:
     file: approve-quick-connect.js
+# Signed in: the setup follows the import; leave it running and continue to Sources.
+- extendedWaitUntil:
+    visible:
+      id: "onboarding.continue"
+    timeout: 30000
+- tapOn:
+    id: "onboarding.continue"
 - extendedWaitUntil:
     visible:
       id: "sources.server.Jellyfin"
