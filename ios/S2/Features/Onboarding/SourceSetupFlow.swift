@@ -424,7 +424,7 @@ struct SourceSetupImportPage: View {
     private var detail: String {
         switch state {
         case .starting: "Connecting to \(serverName)…"
-        case .running(_, let message, _): message ?? "Reading your songs from \(serverName)…"
+        case .running(_, let message, _): message ?? "Fetching your library…"
         case .ready: "Your songs from \(serverName) are in. Playlists follow in a moment."
         case .failed(_, let error): error
         }

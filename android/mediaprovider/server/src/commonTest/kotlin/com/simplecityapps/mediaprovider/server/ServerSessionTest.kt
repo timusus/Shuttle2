@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider.server
 
 import com.simplecityapps.mediaprovider.FlowEvent
+import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MessageProgress
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
@@ -11,13 +12,12 @@ class ServerSessionTest {
     private val strings =
         object : ServerStrings {
             override val addressMissing = "No address"
-            override val queryingApi = "Querying"
             override val authenticationError = "Sign-in failed"
             override val unknownName = "Unknown"
         }
     private val authenticatedAt = mutableListOf<String>()
 
-    private val querying = Event.Progress(MessageProgress(strings.queryingApi, null))
+    private val querying = Event.Progress(MessageProgress(ImportPhase.Connecting, progress = null))
 
     private fun session(
         address: String?,

@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider.server
 
 import com.simplecityapps.mediaprovider.FlowEvent
+import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.networking.retrofit.NetworkResult
@@ -23,7 +24,7 @@ const val DEFAULT_PAGE_SIZE = 500
 
 /**
  * Every item of a paged server listing, fetched a page at a time with [fetchPage] (offset, limit) and emitted as one
- * [FlowEvent.Success], after a [FlowEvent.Progress] per page carrying [progressMessage]. A failed page ends the flow
+ * [FlowEvent.Success], after a [FlowEvent.Progress] per page with the items so far of the total. A failed page ends the flow
  * with a [FlowEvent.Failure].
  *
  * With a [Page.totalCount], each page starts [pageSize] on from the last, whatever it returned (offsets count the
@@ -32,7 +33,6 @@ const val DEFAULT_PAGE_SIZE = 500
  * than asked for isn't mistaken for the end of the listing.
  */
 fun <T> pagedFlow(
-    progressMessage: String,
     pageSize: Int = DEFAULT_PAGE_SIZE,
     fetchPage: suspend (offset: Int, limit: Int) -> NetworkResult<Page<T>>
 ): Flow<FlowEvent<List<T>, MessageProgress>> = flow {
@@ -45,7 +45,7 @@ fun <T> pagedFlow(
                 val page = result.body
                 val totalCount = page.totalCount
                 val end = if (totalCount != null) offset + limit else offset + page.items.size
-                emit(FlowEvent.Progress(MessageProgress(progressMessage, totalCount?.let { total -> Progress(end, total) })))
+                emit(FlowEvent.Progress(MessageProgress(ImportPhase.Fetching, totalCount?.let { total -> Progress(min(end, total), total) })))
                 items.addAll(page.items)
 
                 val hasMore = if (totalCount != null) end < totalCount else page.items.isNotEmpty()

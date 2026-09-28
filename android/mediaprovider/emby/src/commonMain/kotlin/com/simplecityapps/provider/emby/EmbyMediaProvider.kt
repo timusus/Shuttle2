@@ -98,7 +98,7 @@ class EmbyMediaProvider(
     private fun queryItems(
         address: String,
         credentials: AuthenticatedCredentials
-    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(strings.queryingApi) { offset, limit ->
+    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow { offset, limit ->
         authenticationManager.checkSession(
             credentials,
             itemsService.audioItems(
@@ -145,7 +145,7 @@ class EmbyMediaProvider(
         address: String,
         credentials: AuthenticatedCredentials,
         playlistId: String
-    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow(strings.queryingApi) { offset, limit ->
+    ): Flow<FlowEvent<List<Item>, MessageProgress>> = pagedFlow { offset, limit ->
         authenticationManager.checkSession(
             credentials,
             itemsService.playlistItems(

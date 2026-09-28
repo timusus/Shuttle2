@@ -73,7 +73,7 @@ class PlexMediaProvider(
         address: String,
         credentials: AuthenticatedCredentials,
         section: String
-    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow(strings.queryingApi) { offset, limit ->
+    ): Flow<FlowEvent<List<Metadata>, MessageProgress>> = pagedFlow { offset, limit ->
         authenticationManager.checkSession(
             credentials,
             itemsService.items(

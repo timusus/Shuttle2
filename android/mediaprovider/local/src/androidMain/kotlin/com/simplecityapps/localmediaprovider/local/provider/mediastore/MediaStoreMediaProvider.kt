@@ -8,6 +8,7 @@ import androidx.core.database.getStringOrNull
 import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
 import com.simplecityapps.localmediaprovider.local.provider.localArtworkVersion
 import com.simplecityapps.mediaprovider.FlowEvent
+import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
@@ -150,7 +151,8 @@ class MediaStoreMediaProvider(
                 emit(
                     FlowEvent.Progress(
                         MessageProgress(
-                            message =
+                            phase = ImportPhase.Fetching,
+                            detail =
                                 listOf(
                                     song.friendlyArtistName ?: song.albumArtist,
                                     song.name
@@ -245,7 +247,7 @@ class MediaStoreMediaProvider(
                         matchingSongs,
                         mediaStorePlaylist.id.toString()
                     )
-                emit(FlowEvent.Progress(MessageProgress("Found playlist", Progress(i, mediaStorePlaylists.size))))
+                emit(FlowEvent.Progress(MessageProgress(ImportPhase.Fetching, Progress(i, mediaStorePlaylists.size))))
                 updateData
             }
 

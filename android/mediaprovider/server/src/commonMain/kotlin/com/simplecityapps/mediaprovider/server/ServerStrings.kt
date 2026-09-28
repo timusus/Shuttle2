@@ -5,9 +5,6 @@ interface ServerStrings {
     /** No server address has been set. */
     val addressMissing: String
 
-    /** The sync is querying the server. */
-    val queryingApi: String
-
     /** Signing in to the server failed. */
     val authenticationError: String
 

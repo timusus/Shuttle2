@@ -9,6 +9,8 @@ interface SongImportStateProvider {
 
 sealed class SongImportState {
     data object Idle : SongImportState()
+
+    /** [providerType]'s import is running: what it's doing, in words to show the user, and how far through it is if it knows. */
     data class ImportProgress(
         val providerType: MediaProviderType,
         val message: String?,

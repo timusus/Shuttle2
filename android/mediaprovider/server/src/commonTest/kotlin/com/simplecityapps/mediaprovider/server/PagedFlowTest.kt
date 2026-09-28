@@ -1,5 +1,6 @@
 package com.simplecityapps.mediaprovider.server
 
+import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.networking.retrofit.NetworkResult
@@ -24,19 +25,19 @@ class PagedFlowTest {
     private fun progress(
         current: Int,
         total: Int
-    ) = Event.Progress(MessageProgress("Querying", Progress(current, total)))
+    ) = Event.Progress(MessageProgress(ImportPhase.Fetching, Progress(current, total)))
 
     @Test
     fun `a listing that fits one page is one request`() = runTest {
-        val events = pagedFlow("Querying", pageSize = 500, fetchPage = server(total = 3)).toList().described()
+        val events = pagedFlow(pageSize = 500, fetchPage = server(total = 3)).toList().described()
 
         requests shouldBe listOf(0 to 500)
-        events shouldBe listOf(progress(500, 3), Event.Success(listOf(0, 1, 2)))
+        events shouldBe listOf(progress(3, 3), Event.Success(listOf(0, 1, 2)))
     }
 
     @Test
     fun `pages through the total - asking for no more than is left`() = runTest {
-        val events = pagedFlow("Querying", pageSize = 4, fetchPage = server(total = 10)).toList().described()
+        val events = pagedFlow(pageSize = 4, fetchPage = server(total = 10)).toList().described()
 
         requests shouldBe listOf(0 to 4, 4 to 4, 8 to 2)
         events shouldBe listOf(
@@ -50,7 +51,7 @@ class PagedFlowTest {
     @Test
     fun `a short page doesn't end a listing with a total`() = runTest {
         // Jellyfin leaves some items out of a page, so offsets advance by the page size, not the items returned
-        val events = pagedFlow<Int>("Querying", pageSize = 4) { offset, limit ->
+        val events = pagedFlow<Int>(pageSize = 4) { offset, limit ->
             requests += offset to limit
             NetworkResult.Success(Page(if (offset == 0) listOf(0) else listOf(4, 5), totalCount = 6))
         }.toList().described()
@@ -61,16 +62,16 @@ class PagedFlowTest {
 
     @Test
     fun `without a total - pages until an empty page`() = runTest {
-        val events = pagedFlow("Querying", pageSize = 4, fetchPage = server(total = 6, reportsTotal = false)).toList().described()
+        val events = pagedFlow(pageSize = 4, fetchPage = server(total = 6, reportsTotal = false)).toList().described()
 
         requests shouldBe listOf(0 to 4, 4 to 4, 6 to 4)
         events.last() shouldBe Event.Success((0 until 6).toList())
-        events.dropLast(1).toSet() shouldBe setOf(Event.Progress(MessageProgress("Querying", null)))
+        events.dropLast(1).toSet() shouldBe setOf(Event.Progress(MessageProgress(ImportPhase.Fetching, null)))
     }
 
     @Test
     fun `a failed page fails the listing`() = runTest {
-        val events = pagedFlow<Int>("Querying", pageSize = 4) { offset, limit ->
+        val events = pagedFlow<Int>(pageSize = 4) { offset, limit ->
             requests += offset to limit
             if (offset == 0) NetworkResult.Success(Page(listOf(0, 1, 2, 3), totalCount = 10)) else NetworkResult.Failure(IllegalStateException("offline"))
         }.toList().described()

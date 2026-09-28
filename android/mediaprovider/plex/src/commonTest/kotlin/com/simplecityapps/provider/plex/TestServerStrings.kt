@@ -6,8 +6,6 @@ import com.simplecityapps.mediaprovider.server.ServerStrings
 object TestServerStrings : ServerStrings {
     override val addressMissing = "No server address"
 
-    override val queryingApi = "Querying the server"
-
     override val authenticationError = "Signing in failed"
 
     override val unknownName = "Unknown"

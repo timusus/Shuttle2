@@ -14,8 +14,6 @@ class ResourceServerStrings @Inject constructor(
 ) : ServerStrings {
     override val addressMissing: String get() = context.getString(R.string.media_provider_address_missing)
 
-    override val queryingApi: String get() = context.getString(R.string.media_provider_querying_api)
-
     override val authenticationError: String get() = context.getString(R.string.media_provider_authentication_error)
 
     override val unknownName: String get() = context.getString(com.simplecityapps.core.R.string.unknown)

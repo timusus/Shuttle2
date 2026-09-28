@@ -13,6 +13,9 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import platform.Foundation.NSBundle
+import platform.Foundation.NSNumber
+import platform.Foundation.NSNumberFormatter
+import platform.Foundation.NSNumberFormatterDecimalStyle
 import platform.Foundation.NSString
 import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.stringWithContentsOfFile
@@ -47,15 +50,32 @@ private fun localized(
 @ContributesBinding(AppScope::class)
 class BundleServerStrings @Inject constructor() : ServerStrings {
     override val addressMissing: String get() = localized("media_provider_address_missing", "Server address missing")
-    override val queryingApi: String get() = localized("media_provider_querying_api", "Querying API")
     override val authenticationError: String get() = localized("media_provider_authentication_error", "Failed to authenticate")
     override val unknownName: String get() = localized("unknown", "Unknown")
 }
 
 @ContributesBinding(AppScope::class)
 class BundleMediaImportStrings @Inject constructor() : MediaImportStrings {
-    override val retrievingSongs: String get() = localized("media_import_retrieving_songs", "Retrieving existing songs")
-    override val retrievingPlaylists: String get() = localized("media_import_retrieving_playlists", "Retrieving existing playlists")
-    override val updatingDatabase: String get() = localized("media_import_updating_database", "Updating database")
+    override fun connecting(provider: String): String = localized("media_import_connecting", "Connecting to %1\$@…").withArguments(provider)
+
+    override val fetching: String get() = localized("media_import_fetching", "Fetching your library…")
+
+    override fun fetchingSongs(
+        count: Int,
+        total: Int
+    ): String = localized("media_import_fetching_songs", "Fetching %1\$@ of %2\$@ songs").withArguments(count.formatted(), total.formatted())
+
+    // One English plural form until the catalogue carries Android's plurals (.stringsdict)
+    override fun saving(count: Int): String = if (count == 1) {
+        localized("media_import_saving_song", "Saving %1\$@ song…").withArguments(count.formatted())
+    } else {
+        localized("media_import_saving_songs", "Saving %1\$@ songs…").withArguments(count.formatted())
+    }
+
     override val importError: String get() = localized("media_import_error", "An error occurred importing songs")
+
+    private fun Int.formatted(): String = NSNumberFormatter().apply { numberStyle = NSNumberFormatterDecimalStyle }.stringFromNumber(NSNumber(int = this)) ?: toString()
 }
+
+/** This format with its `%1$@`, `%2$@`, ... placeholders filled with [arguments], in order. */
+private fun String.withArguments(vararg arguments: String): String = arguments.foldIndexed(this) { index, text, argument -> text.replace("%${index + 1}\$@", argument) }

@@ -11,6 +11,7 @@ import com.simplecityapps.localmediaprovider.local.provider.FolderImageReader
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.toSong
 import com.simplecityapps.mediaprovider.FlowEvent
+import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.M3uEntryMatcher
 import com.simplecityapps.mediaprovider.M3uParser
 import com.simplecityapps.mediaprovider.MediaImporter
@@ -78,7 +79,8 @@ class TaglibMediaProvider(
                 emit(
                     FlowEvent.Progress(
                         MessageProgress(
-                            message =
+                            phase = ImportPhase.Fetching,
+                            detail =
                                 listOf(
                                     song.friendlyArtistName ?: song.albumArtist,
                                     song.name
@@ -224,8 +226,9 @@ class TaglibMediaProvider(
                             emit(
                                 FlowEvent.Progress(
                                     MessageProgress(
-                                        context.getString(com.simplecityapps.mediaprovider.R.string.media_import_m3u_scan, m3uPlaylist.name),
-                                        Progress(index, m3uPlaylist.entries.size)
+                                        phase = ImportPhase.Fetching,
+                                        progress = Progress(index, m3uPlaylist.entries.size),
+                                        detail = context.getString(com.simplecityapps.mediaprovider.R.string.media_import_m3u_scan, m3uPlaylist.name)
                                     )
                                 )
                             )

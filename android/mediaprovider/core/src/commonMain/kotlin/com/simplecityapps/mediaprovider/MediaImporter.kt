@@ -96,7 +96,8 @@ class MediaImporter(
         val time = TimeSource.Monotonic.markNow()
 
         mediaProviders.forEach { mediaProvider ->
-            _songImportState.value = SongImportState.ImportProgress(mediaProvider.type, message = null, progress = null)
+            val start = MessageProgress(if (mediaProvider.type.remote) ImportPhase.Connecting else ImportPhase.Fetching, progress = null)
+            _songImportState.value = mediaProvider.importProgress(start)
         }
 
         withContext(Dispatchers.IO) {
@@ -105,7 +106,7 @@ class MediaImporter(
                     importSongs(mediaProvider).collect { event ->
                         when (event) {
                             is FlowEvent.Progress -> {
-                                _songImportState.value = SongImportState.ImportProgress(mediaProvider.type, event.data.message, event.data.progress)
+                                _songImportState.value = mediaProvider.importProgress(event.data)
                             }
 
                             is FlowEvent.Success -> {
@@ -136,6 +137,9 @@ class MediaImporter(
         logger.debug { "Import complete in ${time.elapsedNow().inWholeMilliseconds}ms)" }
     }
 
+    /** [progress] as the import state shows it: described in the user's words, with its count. */
+    private fun MediaProvider.importProgress(progress: MessageProgress) = SongImportState.ImportProgress(type, strings.describe(progress, provider = type.name), progress.progress)
+
     data class SongImportResult(
         val mediaProviderType: MediaProviderType,
         val inserts: Int,
@@ -144,8 +148,6 @@ class MediaImporter(
     )
 
     private fun importSongs(mediaProvider: MediaProvider): Flow<FlowEvent<SongImportResult, MessageProgress>> = flow {
-        emit(FlowEvent.Progress(MessageProgress(strings.retrievingSongs, null)))
-
         val storedSongs = songRepository.loadSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type))
 
         val existingSongs =
@@ -163,19 +165,12 @@ class MediaImporter(
         mediaProvider.findSongs(existingSongs).collect { event ->
             when (event) {
                 is FlowEvent.Progress -> {
-                    emit(
-                        FlowEvent.Progress<SongImportResult, MessageProgress>(
-                            MessageProgress(
-                                message = event.data.message,
-                                progress = event.data.progress
-                            )
-                        )
-                    )
+                    emit(FlowEvent.Progress<SongImportResult, MessageProgress>(event.data))
                 }
 
                 is FlowEvent.Success -> {
                     try {
-                        emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(strings.updatingDatabase, null)))
+                        emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(ImportPhase.Saving(event.result.size), null)))
                         val songDiff = SongDiff(existingSongs, event.result).apply()
                         val result =
                             songRepository.insertUpdateAndDelete(
@@ -227,8 +222,6 @@ class MediaImporter(
     )
 
     private fun importPlaylists(mediaProvider: MediaProvider): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> = flow {
-        emit(FlowEvent.Progress(MessageProgress(strings.retrievingPlaylists, null)))
-
         // Straight from the database: the songs this pass just stored (or the last pass did) may not be in the shared list yet
         val existingSongs = songRepository.loadSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type))
 
@@ -239,8 +232,7 @@ class MediaImporter(
                 }
 
                 is FlowEvent.Success -> {
-                    event.result.forEachIndexed { i, playlistUpdateData ->
-                        emit(FlowEvent.Progress(MessageProgress(strings.updatingDatabase, Progress(i, event.result.size))))
+                    event.result.forEach { playlistUpdateData ->
                         if (playlistUpdateData.songs.isNotEmpty()) {
                             playlistStore.storePlaylist(playlistUpdateData)
                         }

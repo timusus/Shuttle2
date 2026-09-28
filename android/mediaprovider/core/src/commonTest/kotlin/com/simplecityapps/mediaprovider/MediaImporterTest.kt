@@ -170,7 +170,7 @@ class MediaImporterTest {
         val import = launch(Dispatchers.Default) { importer.import() }
         provider.started.receive()
 
-        (importer.songImportState.value as SongImportState.ImportProgress).providerType shouldBe MediaProviderType.Shuttle
+        importer.songImportState.value shouldBe SongImportState.ImportProgress(MediaProviderType.Shuttle, "Fetching", progress = null)
 
         provider.gate.trySend(Unit)
         import.join()
@@ -209,9 +209,13 @@ class MediaImporterTest {
     }
 
     private object FakeMediaImportStrings : MediaImportStrings {
-        override val retrievingSongs = "Retrieving songs"
-        override val retrievingPlaylists = "Retrieving playlists"
-        override val updatingDatabase = "Updating database"
+        override fun connecting(provider: String) = "Connecting to $provider"
+        override val fetching = "Fetching"
+        override fun fetchingSongs(
+            count: Int,
+            total: Int
+        ) = "Fetching $count of $total"
+        override fun saving(count: Int) = "Saving $count"
         override val importError = "Import failed"
     }
 
