@@ -29,23 +29,7 @@ class LocalAlbumRepository(
             .map { songs ->
                 songs
                     .groupBy { it.albumGroupKey }
-                    .map { (key, songs) ->
-                        Album(
-                            name = songs.firstOrNull { it.album != null }?.album,
-                            albumArtist = songs.firstOrNull { it.albumArtist != null }?.albumArtist,
-                            artists = songs.flatMap { it.artists }.distinct(),
-                            songCount = songs.size,
-                            duration = songs.sumOf { it.duration },
-                            year = songs.mapNotNull { it.date?.year }.minOrNull(),
-                            // Every play of any of its songs counts, so one skipped track doesn't keep an album out of Most Played
-                            playCount = songs.sumOf { it.playCount },
-                            lastSongPlayed = songs.mapNotNull { it.lastPlayed }.maxOrNull(),
-                            lastSongCompleted = songs.mapNotNull { it.lastCompleted }.maxOrNull(),
-                            groupKey = key,
-                            mediaProviders = songs.map { it.mediaProvider }.distinct(),
-                            artworkVersion = songs.combinedArtworkVersion()
-                        )
-                    }
+                    .map { (key, songs) -> songs.toAlbum(key) }
             }
             .flowOn(Dispatchers.IO)
             .stateIn(scope, SharingStarted.Lazily, null)

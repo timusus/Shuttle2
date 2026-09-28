@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.Flow
 
 /** The listening history, `play_events` (#633). Every read is an aggregate with a limit; none loads the events. */
 @Dao
@@ -42,33 +43,34 @@ interface PlayEventDao {
     ): List<ContextDaysRow>
 
     /**
-     * Plays through since [since] by album, grouped on the case-folded album artist (or artists) and album. The album's
-     * group key also drops articles and punctuation, which SQL can't, so a caller merges the few groups that share one.
+     * Plays through since [since] by album tagging and (UTC) day, most first: the rows a caller weighs by age and merges
+     * into albums by group key (see [SuggestionsDao] for why SQL can't group on the key itself). [limit] caps the rows.
      */
     @Query(
-        "SELECT s.album AS album, s.albumArtist AS albumArtist, s.artists AS artists, COUNT(*) AS completions, MAX(e.startedAt) AS lastCompletedAt " +
+        "SELECT s.album AS album, s.albumArtist AS albumArtist, s.artists AS artists, e.startedAt / 86400000 AS day, " +
+            "COUNT(*) AS plays, MAX(e.startedAt) AS lastPlayedAt " +
             "FROM play_events e JOIN songs s ON s.path = e.songPath AND s.mediaProvider = e.mediaProvider " +
             "WHERE e.completed = 1 AND e.startedAt >= :since " +
-            "GROUP BY lower(COALESCE(s.albumArtist, s.artists)), lower(s.album) " +
-            "ORDER BY completions DESC, lastCompletedAt DESC LIMIT :limit"
+            "GROUP BY lower(s.album), lower(s.albumArtist), lower(s.artists), day " +
+            "ORDER BY plays DESC LIMIT :limit"
     )
-    suspend fun albumCompletions(
+    suspend fun completionsByAlbumAndDay(
         since: Instant,
         limit: Int
-    ): List<SongGroupCompletionsRow>
+    ): List<TaggingDayPlaysRow>
 
-    /** Plays through since [since] by album artist, grouped as [albumCompletions] groups them, without the album. */
+    /** Plays (through or not) since [since] by genre tagging and (UTC) day, as [completionsByAlbumAndDay] has them. */
     @Query(
-        "SELECT NULL AS album, s.albumArtist AS albumArtist, s.artists AS artists, COUNT(*) AS completions, MAX(e.startedAt) AS lastCompletedAt " +
+        "SELECT s.genres AS genres, e.startedAt / 86400000 AS day, COUNT(*) AS plays " +
             "FROM play_events e JOIN songs s ON s.path = e.songPath AND s.mediaProvider = e.mediaProvider " +
-            "WHERE e.completed = 1 AND e.startedAt >= :since " +
-            "GROUP BY lower(COALESCE(s.albumArtist, s.artists)) " +
-            "ORDER BY completions DESC, lastCompletedAt DESC LIMIT :limit"
+            "WHERE e.startedAt >= :since AND s.genres != '' " +
+            "GROUP BY s.genres, day " +
+            "ORDER BY plays DESC LIMIT :limit"
     )
-    suspend fun albumArtistCompletions(
+    suspend fun playsByGenresAndDay(
         since: Instant,
         limit: Int
-    ): List<SongGroupCompletionsRow>
+    ): List<GenresDayPlaysRow>
 
     /** Deletes the events before [before], then all but the latest [keep]. */
     @Query("DELETE FROM play_events WHERE startedAt < :before OR id NOT IN (SELECT id FROM play_events ORDER BY startedAt DESC, id DESC LIMIT :keep)")
@@ -82,6 +84,9 @@ interface PlayEventDao {
 
     @Query("SELECT COUNT(*) FROM play_events")
     suspend fun count(): Int
+
+    @Query("SELECT COUNT(*) FROM play_events")
+    fun observeCount(): Flow<Int>
 }
 
 data class ContextRow(
@@ -98,10 +103,17 @@ data class ContextDaysRow(
     val lastPlayedAt: Instant
 )
 
-data class SongGroupCompletionsRow(
+data class TaggingDayPlaysRow(
     val album: String?,
     val albumArtist: String?,
     val artists: List<String>,
-    val completions: Int,
-    val lastCompletedAt: Instant
+    val day: Long,
+    val plays: Int,
+    val lastPlayedAt: Instant
+)
+
+data class GenresDayPlaysRow(
+    val genres: List<String>,
+    val day: Long,
+    val plays: Int
 )

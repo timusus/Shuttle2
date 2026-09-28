@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.playContext
+import com.simplecityapps.shuttle.query.SongQuery
 
 /**
  * What a [MediaAction] acts on: one or more items of a single media type, from a row's actions or a multi-selection.
@@ -37,6 +38,12 @@ sealed interface MediaSelection {
     /** Local library folders, each identified by its [com.simplecityapps.shuttle.model.SongFolder] path. */
     data class Folders(val paths: List<List<String>>) : MediaSelection
 
+    /**
+     * The songs matching [query] when the action runs, in its sort order: the whole library for Shuffle all, a built-in
+     * smart playlist; resolved then, so nothing holds the song list before it's played (#633).
+     */
+    data class SongsMatching(val query: SongQuery) : MediaSelection
+
     /** The current play queue. */
     data object Queue : MediaSelection
 
@@ -48,7 +55,7 @@ sealed interface MediaSelection {
             is AlbumArtists -> albumArtists.flatMap { it.mediaProviders }.distinct()
             is Genres -> genres.flatMap { it.mediaProviders }.distinct()
             is Playlists -> playlists.map { it.mediaProvider }.distinct()
-            is Folders, is Queue -> null
+            is SongsMatching, is Folders, is Queue -> null
         }
 
     /**
@@ -61,7 +68,7 @@ sealed interface MediaSelection {
             is AlbumArtists -> albumArtists.singleOrNull()?.playContext
             is Genres -> genres.singleOrNull()?.playContext
             is Playlists -> playlists.singleOrNull()?.playContext
-            is Songs, is Folders, is Queue -> null
+            is Songs, is SongsMatching, is Folders, is Queue -> null
         } ?: PlayContext.None
 
     /** How many items the selection holds, for messages like "3 albums added to queue"; null for the queue. */
@@ -73,6 +80,6 @@ sealed interface MediaSelection {
             is Genres -> genres.size
             is Playlists -> playlists.size
             is Folders -> paths.size
-            is Queue -> null
+            is SongsMatching, is Queue -> null
         }
 }

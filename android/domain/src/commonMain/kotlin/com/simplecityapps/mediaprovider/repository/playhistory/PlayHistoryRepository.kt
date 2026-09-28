@@ -4,7 +4,9 @@ import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
+import kotlin.time.Duration
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.Flow
 
 /**
  * The listening history (#633): one event per song played through, or listened to for at least
@@ -39,17 +41,36 @@ interface PlayHistoryRepository {
         limit: Int
     ): List<ContextDays>
 
-    /** How many plays through each album has had since [since], most first; at most [limit]. */
+    /**
+     * Each album's plays through since [since], most [AlbumCompletions.score] first; at most [limit]. The score weighs each
+     * play by its age, halving every [halfLife], so a week of plays outranks an old binge. Albums are grouped by
+     * [com.simplecityapps.shuttle.model.albumGroupKeyOf], as the album repository groups them.
+     */
     suspend fun albumCompletions(
         since: Instant,
+        halfLife: Duration,
         limit: Int
     ): List<AlbumCompletions>
 
-    /** How many plays through each album artist's songs have had since [since], most first; at most [limit]. */
+    /** Each album artist's plays through since [since], scored and grouped as [albumCompletions] scores and groups them. */
     suspend fun albumArtistCompletions(
         since: Instant,
+        halfLife: Duration,
         limit: Int
     ): List<AlbumArtistCompletions>
+
+    /**
+     * Each genre's plays (through or not) since [since], most [GenrePlays.score] first, scored as [albumCompletions] scores
+     * them; a song in two genres counts for both. At most [limit].
+     */
+    suspend fun genrePlays(
+        since: Instant,
+        halfLife: Duration,
+        limit: Int
+    ): List<GenrePlays>
+
+    /** How many events the history holds, re-emitted whenever it changes. */
+    fun eventCount(): Flow<Int>
 
     /** Forgets the whole listening history. */
     suspend fun clearHistory()
@@ -76,14 +97,23 @@ data class ContextDays(
     val lastPlayedAt: Instant
 )
 
+/** [completions] plays through, weighed by age into [score]. */
 data class AlbumCompletions(
     val groupKey: AlbumGroupKey,
     val completions: Int,
+    val score: Double,
     val lastCompletedAt: Instant
 )
 
 data class AlbumArtistCompletions(
     val groupKey: AlbumArtistGroupKey,
     val completions: Int,
+    val score: Double,
     val lastCompletedAt: Instant
+)
+
+data class GenrePlays(
+    val genre: String,
+    val plays: Int,
+    val score: Double
 )

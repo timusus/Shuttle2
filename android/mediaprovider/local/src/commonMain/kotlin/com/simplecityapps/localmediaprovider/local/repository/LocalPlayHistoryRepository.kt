@@ -1,21 +1,25 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlayEventDao
-import com.simplecityapps.localmediaprovider.local.data.room.dao.SongGroupCompletionsRow
+import com.simplecityapps.localmediaprovider.local.data.room.dao.TaggingDayPlaysRow
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
 import com.simplecityapps.mediaprovider.repository.playhistory.AlbumArtistCompletions
 import com.simplecityapps.mediaprovider.repository.playhistory.AlbumCompletions
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
+import com.simplecityapps.mediaprovider.repository.playhistory.GenrePlays
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
-import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
-import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.removeArticles
+import com.simplecityapps.shuttle.model.albumArtistGroupKeyOf
+import com.simplecityapps.shuttle.model.albumGroupKeyOf
+import kotlin.math.pow
 import kotlin.time.Clock
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+import kotlin.time.DurationUnit
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.isoDayNumber
 import kotlinx.datetime.offsetAt
@@ -83,31 +87,87 @@ class LocalPlayHistoryRepository(
 
     override suspend fun albumCompletions(
         since: Instant,
+        halfLife: Duration,
         limit: Int
-    ): List<AlbumCompletions> = playEventDao.albumCompletions(since, limit)
-        .groupBy { row -> AlbumGroupKey(row.album?.lowercase()?.removeArticles(), row.albumArtistGroupKey()) }
-        .map { (groupKey, rows) -> AlbumCompletions(groupKey, rows.sumOf { it.completions }, rows.maxOf { it.lastCompletedAt }) }
-        .sortedWith(compareByDescending<AlbumCompletions> { it.completions }.thenByDescending { it.lastCompletedAt })
+    ): List<AlbumCompletions> = scoredCompletions(since, halfLife) { row -> albumGroupKeyOf(row.album, row.albumArtist, row.artists) }
+        .map { (key, total) -> AlbumCompletions(key, total.plays, total.score, total.lastPlayedAt) }
+        .sortedWith(compareByDescending<AlbumCompletions> { it.score }.thenByDescending { it.lastCompletedAt })
+        .take(limit)
 
     override suspend fun albumArtistCompletions(
         since: Instant,
+        halfLife: Duration,
         limit: Int
-    ): List<AlbumArtistCompletions> = playEventDao.albumArtistCompletions(since, limit)
-        .groupBy { row -> row.albumArtistGroupKey() }
-        .map { (groupKey, rows) -> AlbumArtistCompletions(groupKey, rows.sumOf { it.completions }, rows.maxOf { it.lastCompletedAt }) }
-        .sortedWith(compareByDescending<AlbumArtistCompletions> { it.completions }.thenByDescending { it.lastCompletedAt })
+    ): List<AlbumArtistCompletions> = scoredCompletions(since, halfLife) { row -> albumArtistGroupKeyOf(row.albumArtist, row.artists) }
+        .map { (key, total) -> AlbumArtistCompletions(key, total.plays, total.score, total.lastPlayedAt) }
+        .sortedWith(compareByDescending<AlbumArtistCompletions> { it.score }.thenByDescending { it.lastCompletedAt })
+        .take(limit)
+
+    override suspend fun genrePlays(
+        since: Instant,
+        halfLife: Duration,
+        limit: Int
+    ): List<GenrePlays> {
+        val today = clock.now().toEpochMilliseconds() / DAY_MS
+        val totals = mutableMapOf<String, Pair<Int, Double>>()
+        playEventDao.playsByGenresAndDay(since, MAX_DAY_ROWS).forEach { row ->
+            val weight = row.plays * decay(today - row.day, halfLife)
+            row.genres.filter { it.isNotBlank() }.distinct().forEach { genre ->
+                val (plays, score) = totals[genre] ?: (0 to 0.0)
+                totals[genre] = (plays + row.plays) to (score + weight)
+            }
+        }
+        return totals
+            .map { (genre, total) -> GenrePlays(genre, total.first, total.second) }
+            .sortedWith(compareByDescending<GenrePlays> { it.score }.thenBy { it.genre })
+            .take(limit)
+    }
+
+    override fun eventCount(): Flow<Int> = playEventDao.observeCount()
 
     override suspend fun clearHistory() {
         playEventDao.clear()
     }
 
-    /** As [Song.albumArtistGroupKey] has it. */
-    private fun SongGroupCompletionsRow.albumArtistGroupKey() = AlbumArtistGroupKey(
-        albumArtist?.lowercase()?.removeArticles()
-            ?: artists.joinToString(", ") { it.lowercase().removeArticles() }.ifEmpty { null }
+    private class ScoredTotal(
+        val plays: Int,
+        val score: Double,
+        val lastPlayedAt: Instant
     )
 
+    /**
+     * The plays through since [since], merged by [key] (the group key, computed as the album and artist repositories
+     * compute it, so each result names an album or artist they have), each day's plays weighed by their age.
+     */
+    private suspend fun <K> scoredCompletions(
+        since: Instant,
+        halfLife: Duration,
+        key: (TaggingDayPlaysRow) -> K
+    ): List<Pair<K, ScoredTotal>> {
+        val today = clock.now().toEpochMilliseconds() / DAY_MS
+        return playEventDao.completionsByAlbumAndDay(since, MAX_DAY_ROWS)
+            .groupBy(key)
+            .map { (groupKey, rows) ->
+                groupKey to ScoredTotal(
+                    plays = rows.sumOf { it.plays },
+                    score = rows.sumOf { it.plays * decay(today - it.day, halfLife) },
+                    lastPlayedAt = rows.maxOf { it.lastPlayedAt }
+                )
+            }
+    }
+
+    /** A play [ageDays] old's weight: 1 today, halving every [halfLife]. */
+    private fun decay(
+        ageDays: Long,
+        halfLife: Duration
+    ): Double = 2.0.pow(-ageDays.coerceAtLeast(0) / halfLife.toDouble(DurationUnit.DAYS))
+
     companion object {
+        private const val DAY_MS = 86_400_000L
+
+        /** A cap on the (tagging, day) rows an aggregate reads, far above a year of anyone's listening. */
+        private const val MAX_DAY_ROWS = 20_000
+
         /** The local hours (0 to 23) that the [windowMinutes] either side of [hour]:00 touch, wrapping round midnight. */
         internal fun hoursAround(
             hour: Int,

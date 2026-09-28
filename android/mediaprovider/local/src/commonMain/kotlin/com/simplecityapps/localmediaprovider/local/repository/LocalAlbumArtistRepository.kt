@@ -23,19 +23,7 @@ class LocalAlbumArtistRepository(val scope: CoroutineScope, private val songData
             .map { songs ->
                 songs
                     .groupBy { song -> song.albumArtistGroupKey }
-                    .map { (key, songs) ->
-                        AlbumArtist(
-                            name = songs.firstOrNull { it.albumArtist != null }?.albumArtist,
-                            artists = songs.flatMap { it.artists }.distinct(),
-                            albumCount = songs.distinctBy { it.album }.size,
-                            songCount = songs.size,
-                            // Every play of any of their songs counts, so never played means none of them ever was
-                            playCount = songs.sumOf { it.playCount },
-                            groupKey = key,
-                            mediaProviders = songs.map { it.mediaProvider }.distinct(),
-                            artworkVersion = songs.combinedArtworkVersion()
-                        )
-                    }
+                    .map { (key, songs) -> songs.toAlbumArtist(key) }
             }
             .flowOn(Dispatchers.IO)
             .stateIn(scope, SharingStarted.Lazily, null)

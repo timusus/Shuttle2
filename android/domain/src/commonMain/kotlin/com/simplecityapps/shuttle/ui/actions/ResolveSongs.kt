@@ -53,6 +53,8 @@ class ResolveSongs(
                 playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song }
             }
 
+        is MediaSelection.SongsMatching -> songRepository.loadSongs(selection.query).sortedWith(selection.query.sortOrder.comparator)
+
         is MediaSelection.Folders -> resolveFolderSongs(selection.paths)
 
         is MediaSelection.Queue -> queueOperations.getQueue().map { it.song }

@@ -8,6 +8,7 @@ import com.simplecityapps.localmediaprovider.local.repository.LocalPlayHistoryRe
 import com.simplecityapps.localmediaprovider.local.repository.LocalPlaylistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSmartPlaylistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepository
+import com.simplecityapps.localmediaprovider.local.repository.LocalSuggestionsRepository
 import com.simplecityapps.localmediaprovider.local.repository.PlaylistFileSync
 import com.simplecityapps.mediaprovider.ImportedPlaylistStore
 import com.simplecityapps.mediaprovider.MediaImportStrings
@@ -20,6 +21,7 @@ import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryReposi
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.smartplaylists.SmartPlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dev.zacsweers.metro.AppScope
@@ -92,6 +94,10 @@ abstract class LibraryModule {
         @Provides
         @SingleIn(AppScope::class)
         fun providePlayHistoryRepository(database: MediaDatabase): PlayHistoryRepository = LocalPlayHistoryRepository(database.playEventDao())
+
+        @Provides
+        @SingleIn(AppScope::class)
+        fun provideSuggestionsRepository(database: MediaDatabase): SuggestionsRepository = LocalSuggestionsRepository(database.suggestionsDao())
 
         @Provides
         @SingleIn(AppScope::class)

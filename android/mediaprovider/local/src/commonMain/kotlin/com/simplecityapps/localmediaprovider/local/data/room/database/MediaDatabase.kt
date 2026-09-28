@@ -12,6 +12,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistSongJoinDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SmartPlaylistDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
+import com.simplecityapps.localmediaprovider.local.data.room.dao.SuggestionsDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PinnedCollectionData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
@@ -47,6 +48,8 @@ abstract class MediaDatabase : RoomDatabase() {
     abstract fun smartPlaylistDao(): SmartPlaylistDao
 
     abstract fun playEventDao(): PlayEventDao
+
+    abstract fun suggestionsDao(): SuggestionsDao
 }
 
 // Room generates the actual for each target.

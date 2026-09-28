@@ -7,6 +7,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
+import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
+import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
@@ -21,6 +23,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.TimeZone
 import org.junit.After
@@ -127,14 +130,77 @@ class LocalPlayHistoryRepositoryTest {
         repository.recordPlay(kid, now - 4.days, 40_000, false, PlayContext.None)
         repository.recordPlay(kid, now - 40.days, 200_000, true, PlayContext.None)
 
-        val albums = repository.albumCompletions(since = now - 28.days, limit = 10)
+        val albums = repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 10)
         albums.map { it.groupKey.key to it.completions } shouldBe listOf("blue" to 3, "hejira" to 1, "kid a" to 1)
         albums.first().groupKey.albumArtistGroupKey shouldBe AlbumArtistGroupKey("joni mitchell")
         albums.first().lastCompletedAt shouldBe now - 1.days
-        repository.albumCompletions(since = now - 28.days, limit = 1).map { it.groupKey.key } shouldBe listOf("blue")
+        repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 1).map { it.groupKey.key } shouldBe listOf("blue")
 
-        repository.albumArtistCompletions(since = now - 28.days, limit = 10).map { it.groupKey.key to it.completions } shouldBe
+        repository.albumArtistCompletions(since = now - 28.days, halfLife = 14.days, limit = 10).map { it.groupKey.key to it.completions } shouldBe
             listOf("joni mitchell" to 4, "radiohead" to 1)
+    }
+
+    @Test
+    fun `completions are scored by age, halving every half-life`() = runTest {
+        val fresh = insertSong("Blue", "Joni Mitchell")
+        val old = insertSong("Kid A", "Radiohead")
+        repository.recordPlay(fresh, now, 200_000, true, PlayContext.None)
+        repository.recordPlay(old, now - 14.days, 200_000, true, PlayContext.None)
+        repository.recordPlay(old, now - 14.days, 200_000, true, PlayContext.None)
+        repository.recordPlay(old, now - 14.days, 200_000, true, PlayContext.None)
+
+        val albums = repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 10)
+
+        albums.map { it.groupKey.key to it.score } shouldBe listOf("kid a" to 1.5, "blue" to 1.0)
+        albums.map { it.completions } shouldBe listOf(3, 1)
+    }
+
+    @Test
+    fun `completions group albums and artists by the keys the album and artist repositories use`() = runTest {
+        // Tagged three ways SQL can't tell are one album: case, a leading article, punctuation
+        songDao.insert(
+            listOf(
+                createSongData(album = "OK Computer", albumArtist = "The Radiohead", track = 1),
+                createSongData(album = "ok computer", albumArtist = "Radiohead", track = 2),
+                createSongData(album = "OK Computer.", albumArtist = "radiohead", track = 3)
+            )
+        )
+        songDao.get().forEach { repository.recordPlay(it.toSong(), now - 1.days, 200_000, true, PlayContext.None) }
+
+        val albums = repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 10)
+        val artists = repository.albumArtistCompletions(since = now - 28.days, halfLife = 14.days, limit = 10)
+
+        val repositoryAlbums = LocalAlbumRepository(backgroundScope, songDao).getAlbums(AlbumQuery.All()).first()
+        val repositoryArtists = LocalAlbumArtistRepository(backgroundScope, songDao).getAlbumArtists(AlbumArtistQuery.All()).first()
+        albums.map { it.groupKey to it.completions } shouldBe listOf(repositoryAlbums.single().groupKey to 3)
+        artists.map { it.groupKey to it.completions } shouldBe listOf(repositoryArtists.single().groupKey to 3)
+    }
+
+    @Test
+    fun `genre plays count every play of each of a song's genres, scored by age`() = runTest {
+        songDao.insert(
+            listOf(
+                createSongData(album = "Blue", track = 1).copy(genres = listOf("Folk", "Pop")),
+                createSongData(album = "Kind of Blue", track = 1).copy(genres = listOf("Jazz"))
+            )
+        )
+        val (folk, jazz) = songDao.get().sortedBy { it.album }.map { it.toSong() }
+        repository.recordPlay(folk, now, 40_000, false, PlayContext.None)
+        repository.recordPlay(jazz, now - 14.days, 200_000, true, PlayContext.None)
+        repository.recordPlay(jazz, now - 100.days, 200_000, true, PlayContext.None)
+
+        repository.genrePlays(since = now - 90.days, halfLife = 14.days, limit = 10).map { Triple(it.genre, it.plays, it.score) } shouldBe
+            listOf(Triple("Folk", 1, 1.0), Triple("Pop", 1, 1.0), Triple("Jazz", 1, 0.5))
+    }
+
+    @Test
+    fun `the event count follows the history`() = runTest {
+        val song = insertSong("Blue", "Joni Mitchell")
+        repository.eventCount().first() shouldBe 0
+
+        repository.recordPlay(song, now, 200_000, true, albumContext)
+
+        repository.eventCount().first() shouldBe 1
     }
 
     @Test
@@ -144,7 +210,7 @@ class LocalPlayHistoryRepositoryTest {
         songDao.delete(songDao.get())
         insertSong("Blue", "Joni Mitchell")
 
-        repository.albumCompletions(since = now - 28.days, limit = 10).single().completions shouldBe 1
+        repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 10).single().completions shouldBe 1
     }
 
     @Test

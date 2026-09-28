@@ -59,14 +59,9 @@ data class Song(
             }
         }
 
-    val albumArtistGroupKey: AlbumArtistGroupKey by lazy {
-        AlbumArtistGroupKey(
-            albumArtist?.lowercase()?.removeArticles()
-                ?: artists.joinToString(", ") { it.lowercase().removeArticles() }.ifEmpty { null }
-        )
-    }
+    val albumArtistGroupKey: AlbumArtistGroupKey by lazy { albumArtistGroupKeyOf(albumArtist, artists) }
 
-    val albumGroupKey by lazy { AlbumGroupKey(album?.lowercase()?.removeArticles(), albumArtistGroupKey) }
+    val albumGroupKey by lazy { albumGroupKeyOf(album, albumArtist, artists) }
 
     enum class Type {
         Audio,
@@ -98,3 +93,22 @@ data class Song(
     val isInLibrary: Boolean
         get() = id >= 0
 }
+
+/**
+ * The album artist group key of a song tagged [albumArtist] and [artists]: the one definition, which [Song] and anything
+ * grouping raw song columns (a SQL aggregate's rows) share, so both name the same album artist.
+ */
+fun albumArtistGroupKeyOf(
+    albumArtist: String?,
+    artists: List<String>
+): AlbumArtistGroupKey = AlbumArtistGroupKey(
+    albumArtist?.lowercase()?.removeArticles()
+        ?: artists.joinToString(", ") { it.lowercase().removeArticles() }.ifEmpty { null }
+)
+
+/** The album group key of a song tagged [album], [albumArtist] and [artists]; see [albumArtistGroupKeyOf]. */
+fun albumGroupKeyOf(
+    album: String?,
+    albumArtist: String?,
+    artists: List<String>
+): AlbumGroupKey = AlbumGroupKey(album?.lowercase()?.removeArticles(), albumArtistGroupKeyOf(albumArtist, artists))
