@@ -33,7 +33,8 @@ struct NowPlayingViewTests {
     @Test func showsTitleArtistAndAlbum() throws {
         let sut = NowPlayingContent(state: state())
         #expect((try? sut.inspect().find(text: "Paranoid Android")) != nil)
-        #expect((try? sut.inspect().find(text: "Radiohead · OK Computer")) != nil)
+        #expect((try? sut.inspect().find(text: "Radiohead")) != nil)
+        #expect((try? sut.inspect().find(text: "OK Computer")) != nil)
     }
 
     @Test func showsElapsedAndRemainingTimes() throws {
@@ -82,19 +83,81 @@ struct NowPlayingViewTests {
         let sut = NowPlayingContent(state: state(shuffleOn: true, repeatMode: .one))
         let shuffle = try sut.inspect().find(viewWithAccessibilityLabel: "Shuffle")
         #expect(try shuffle.accessibilityValue().string() == "On")
-        let repeatButton = try sut.inspect().find(viewWithAccessibilityLabel: "Repeat")
-        #expect(try repeatButton.accessibilityValue().string() == "One")
+        let off = NowPlayingContent(state: state(shuffleOn: false))
+        #expect(try off.inspect().find(viewWithAccessibilityLabel: "Shuffle").accessibilityValue().string() == "Off")
     }
 
-    @Test func speedAndSleepTimerReportTheirState() throws {
+    @Test func repeatOffAllAndOneEachReadAndLookDistinct() throws {
+        let expected: [(NowPlayingRepeat, String, String)] = [(.off, "Off", "repeat"), (.all, "All", "repeat"), (.one, "One", "repeat.1")]
+        for (mode, value, symbol) in expected {
+            let sut = NowPlayingContent(state: state(repeatMode: mode))
+            let button = try sut.inspect().find(viewWithAccessibilityLabel: "Repeat")
+            #expect(try button.accessibilityValue().string() == value)
+            #expect(try button.find(ViewType.Image.self).actualImage().name() == symbol)
+        }
+        #expect(NowPlayingContent.repeatSymbol(.off) == "repeat")
+        #expect(NowPlayingContent.repeatSymbol(.all) == "repeat")
+        #expect(NowPlayingContent.repeatSymbol(.one) == "repeat.1")
+    }
+
+    @Test func theBottomBarHoldsAudioSleepTimerAirPlayAndQueue() throws {
+        let sut = NowPlayingContent(state: state())
+        let bar = try sut.inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.bottomBar")
+        let ids = bar.findAll(where: { view in
+            guard let id = try? view.accessibilityIdentifier() else { return false }
+            return id.hasPrefix("nowPlaying.") && id != "nowPlaying.bottomBar"
+        }).compactMap { try? $0.accessibilityIdentifier() }
+        #expect(ids == ["nowPlaying.audio", "nowPlaying.sleepTimer", "nowPlaying.airPlay", "nowPlaying.queue"])
+        #expect(ids.count <= 5)
+        // Superseded: the overflow menu and the speed menu.
+        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "More")) == nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "Playback Speed")) == nil)
+    }
+
+    @Test func audioAndSleepTimerReportTheirState() throws {
         var playing = state()
         playing.playbackSpeed = 1.5
         playing.sleepTimerActive = true
         let sut = NowPlayingContent(state: playing)
-        let speed = try sut.inspect().find(viewWithAccessibilityLabel: "Playback Speed")
-        #expect(try speed.accessibilityValue().string() == NowPlayingContent.speedText(1.5))
+        let audio = try sut.inspect().find(viewWithAccessibilityLabel: "Audio")
+        #expect(try audio.accessibilityValue().string() == "Speed " + NowPlayingContent.speedText(1.5))
+        #expect((try? audio.button()) != nil)
         let sleepTimer = try sut.inspect().find(viewWithAccessibilityLabel: "Sleep Timer")
         #expect(try sleepTimer.accessibilityValue().string() == "On")
+    }
+
+    @Test func theAudioSheetSetsTheSpeedAndOffersTheEqualizer() throws {
+        var set: [Float] = []
+        let sut = NowPlayingAudioSheet(speed: 1.25) { set.append($0) }
+        let selected = try sut.inspect().find(viewWithAccessibilityLabel: NowPlayingContent.speedText(1.25))
+        #expect(try selected.find(ViewType.Image.self).actualImage().name() == "checkmark")
+        let other = try sut.inspect().find(viewWithAccessibilityLabel: NowPlayingContent.speedText(2))
+        #expect((try? other.find(ViewType.Image.self)) == nil)
+        try other.button().tap()
+        #expect(set == [2])
+        #expect((try? sut.inspect().find(ViewType.NavigationLink.self)) != nil)
+        #expect((try? sut.inspect().find(text: "Equalizer")) != nil)
+    }
+
+    @Test func tappingTheArtistOrAlbumOpensIt() throws {
+        var sent: [NowPlayingSongAction] = []
+        var actions = PlayerActions()
+        actions.songAction = { sent.append($0) }
+        var playing = state()
+        playing.songActions = NowPlayingSongAction.allCases
+        let sut = NowPlayingContent(state: playing, actions: actions)
+        try sut.inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.artist").button().tap()
+        try sut.inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.album").button().tap()
+        #expect(sent == [.goToArtist, .goToAlbum])
+    }
+
+    @Test func theArtistAndAlbumAreTextWhenTheSongCannotOpenThem() throws {
+        var playing = state()
+        playing.songActions = [.addToPlaylist]
+        let sut = NowPlayingContent(state: playing)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.artist").button()) == nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.album").button()) == nil)
+        #expect((try? sut.inspect().find(text: "Radiohead")) != nil)
     }
 
     @Test func theFavouriteButtonReportsAndTogglesTheSong() throws {
@@ -116,32 +179,38 @@ struct NowPlayingViewTests {
     @Test func theSongMenuOffersTheSongsActionsAndForwardsThem() throws {
         var sent: [NowPlayingSongAction] = []
         var choices: [PlaylistChoice] = []
-        var actions = PlayerActions()
-        actions.songAction = { sent.append($0) }
-        actions.addToPlaylist = { choices.append($0) }
-        var playing = state()
-        playing.songActions = NowPlayingSongAction.allCases
-        playing.playlists = [.init(id: 7, name: "Road Trip")]
-        let sut = NowPlayingContent(state: playing, actions: actions)
-        let menu = try sut.inspect().find(viewWithAccessibilityLabel: "More")
+        var newPlaylist = 0
+        let menu = NowPlayingSongMenu(
+            songActions: NowPlayingSongAction.allCases,
+            playlists: [.init(id: 7, name: "Road Trip")],
+            onAction: { sent.append($0) },
+            onNewPlaylist: { newPlaylist += 1 },
+            onAddToPlaylist: { choices.append($0) }
+        )
 
-        try menu.find(button: "Go to Album").tap()
-        try menu.find(button: "Go to Artist").tap()
-        try menu.find(button: "Exclude").tap()
-        try menu.find(button: "Favorites").tap()
-        try menu.find(button: "Road Trip").tap()
+        try menu.inspect().find(button: "Go to Album").tap()
+        try menu.inspect().find(button: "Go to Artist").tap()
+        try menu.inspect().find(button: "Exclude").tap()
+        try menu.inspect().find(button: "Favorites").tap()
+        try menu.inspect().find(button: "Road Trip").tap()
+        try menu.inspect().find(button: "New Playlist…").tap()
         #expect(sent == [.goToAlbum, .goToArtist, .exclude])
         #expect(choices == [.favourites, .playlist(id: 7)])
-        #expect((try? menu.find(button: "New Playlist…")) != nil)
+        #expect(newPlaylist == 1)
     }
 
     @Test func theSongMenuLeavesOutWhatTheSongDoesNotOffer() throws {
-        var playing = state()
-        playing.songActions = [.addToPlaylist]
-        let sut = NowPlayingContent(state: playing)
-        let menu = try sut.inspect().find(viewWithAccessibilityLabel: "More")
-        #expect((try? menu.find(button: "Go to Album")) == nil)
-        #expect((try? menu.find(button: "Exclude")) == nil)
+        let menu = NowPlayingSongMenu(
+            songActions: [.addToPlaylist], playlists: [], onAction: { _ in }, onNewPlaylist: {}, onAddToPlaylist: { _ in }
+        )
+        #expect((try? menu.inspect().find(button: "Go to Album")) == nil)
+        #expect((try? menu.inspect().find(button: "Exclude")) == nil)
+        #expect((try? menu.inspect().find(button: "Favorites")) != nil)
+    }
+
+    @Test func theFavouriteSitsInTheTopBarAndIsGoneWhenNothingPlays() throws {
+        #expect((try? NowPlayingContent(state: state()).inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.favourite")) != nil)
+        #expect((try? NowPlayingContent(state: .idle).inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.favourite")) == nil)
     }
 
     @Test func showsTheAirPlayRoutePicker() throws {
@@ -167,6 +236,16 @@ struct NowPlayingViewTests {
         try sut.inspect().find(viewWithAccessibilityLabel: "Hyperballad").button().tap()
         #expect(selected == 2)
         #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "Paranoid Android, now playing")) != nil)
+    }
+
+    @Test func theQueueHeadsNowPlayingUpNextAndPlayedAlike() throws {
+        let withHistory = [NowPlayingQueueRow(id: 0, title: "Airbag", artist: "Radiohead", isCurrent: false)] + queue
+        let sut = NowPlayingQueueList(queue: withHistory, isPlaying: true)
+        let headers = try sut.inspect().findAll(SectionHeader.self).map { try $0.find(ViewType.Text.self).string() }
+        #expect(headers == ["Now Playing", "Up Next", "Played"])
+        // The playing song is a row like the rest, carrying the playing indicator.
+        let current = try sut.inspect().find(viewWithAccessibilityIdentifier: "queue.nowPlaying")
+        #expect((try? current.find(MediaRow<EmptyView>.self)) != nil)
     }
 
     @Test func swipingARowRemovesItByUid() throws {

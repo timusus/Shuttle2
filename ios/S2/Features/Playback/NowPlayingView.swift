@@ -1,12 +1,14 @@
 import SwiftUI
 
-/// Now Playing, after Shuttle Podcasts' player and Apple Music (#624): the cover over a ground in its own colour with a
-/// blurred copy of it glowing through the top (`ArtworkBackground`), the title and artist in `MarqueeText` with the
-/// favourite and the song's actions trailing, a capsule scrubber, previous / play-pause / next in the cover's tint,
-/// and shuffle, repeat, speed, the sleep timer, AirPlay and the queue in one glass capsule along the bottom. The
-/// cover's colour (`\.artworkTintSource`) comes from above (`playerArtworkTint`, in `ContentView`); the screen derives
+/// Now Playing, after Shuttle Podcasts' player and Apple Music (#624, #644): the cover over a ground in its own colour
+/// with a blurred copy of it glowing through the top (`ArtworkBackground`), close and the favourite heart along the
+/// top, the title with the artist and the album under it in `MarqueeText` (tapping either opens its screen; a long
+/// press of the cover or the title opens the song's menu), a capsule scrubber, previous / play-pause / next in the
+/// cover's tint between shuffle and repeat, and Audio (speed and the equalizer), the sleep timer, AirPlay and the
+/// queue in one glass capsule along the bottom. The cover's colour (`\.artworkTintSource`) comes from above
+/// (`playerArtworkTint`, in `ContentView`); the screen derives
 /// its ground, tint and captions from it (`PlayerPalette`), so they are measured on the ground they sit on. Presented by `nowPlayingPresentation` (a full-screen cover in
-/// `compact`, which a swipe down dismisses, a form sheet otherwise); the queue opens through `playerSheet` (a sheet
+/// `compact`, which a swipe down dismisses, a form sheet otherwise); the queue and Audio open through `playerSheet` (a sheet
 /// in `compact`, a popover otherwise). From `AdaptiveLayout.twoColumnMinWidth` (a phone on its side) the cover sits
 /// left of the controls. Bound to the shared `PlayerViewModel` through `PlayerBinding` only.
 ///
@@ -64,6 +66,9 @@ struct NowPlayingContent: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @State private var showQueue = false
+    @State private var showAudio = false
+    /// VoiceOver's Add to Playlist action asks where in a dialog; the context menu has its own submenu.
+    @State private var showPlaylistChoices = false
     @State private var showNewPlaylist = false
     @State private var newPlaylistName = ""
     @State private var isScrubbing = false
@@ -84,7 +89,7 @@ struct NowPlayingContent: View {
     var body: some View {
         let palette = self.palette
         VStack(spacing: 0) {
-            closeRow
+            topBar
             if state.title == nil {
                 EmptyState("Nothing Playing", systemImage: "play.circle", message: "Play a song from your library.")
                     .frame(maxHeight: .infinity)
@@ -128,22 +133,21 @@ struct NowPlayingContent: View {
 
     // MARK: - Layout
 
-    private var closeRow: some View {
+    /// Close on the leading edge and the favourite heart on the trailing one, each on a material disc: the backdrop's
+    /// top edge can be as dark as the cover, whatever the scheme.
+    private var topBar: some View {
         HStack {
             Button(action: onClose) {
-                // On a material disc: the backdrop's top edge can be as dark as the cover, whatever the scheme.
                 Image(systemName: "chevron.down")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 36, height: 36)
-                    .modifier(PlayerGlass(shape: Circle(), material: .regularMaterial))
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
+                    .topBarGlyph(.primary)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Close")
             .accessibilityIdentifier("nowPlaying.close")
             Spacer()
+            if state.title != nil {
+                favouriteButton
+            }
         }
         .padding(.horizontal, Spacing.small)
     }
@@ -177,18 +181,24 @@ struct NowPlayingContent: View {
 
     private func controls(spacing: CGFloat) -> some View {
         VStack(spacing: spacing) {
-            titleRow
+            titleBlock
             NowPlayingScrubber(
                 positionMs: state.positionMs, durationMs: state.durationMs, isScrubbing: $isScrubbing, timeInk: secondaryInk,
                 onSeek: actions.seek
             )
-            NowPlayingTransport(isPlaying: state.isPlaying, actions: actions)
+            HStack(spacing: 0) {
+                shuffleButton
+                    .frame(maxWidth: .infinity)
+                NowPlayingTransport(isPlaying: state.isPlaying, actions: actions)
+                repeatButton
+                    .frame(maxWidth: .infinity)
+            }
             bottomCapsule
         }
     }
 
     /// The cover: square, as large as the space left allows up to `ArtworkSize.playerMaximum`, easing back to
-    /// `Motion.pausedCoverScale` while paused.
+    /// `Motion.pausedCoverScale` while paused. A long press opens the song's menu.
     private var cover: some View {
         Group {
             if let source = state.artwork {
@@ -199,6 +209,7 @@ struct NowPlayingContent: View {
         }
         .aspectRatio(1, contentMode: .fit)
         .artworkStyle(cornerRadius: ArtworkCorner.player)
+        .contextMenu { songMenu }
         .artworkShadow(.player)
         .nowPlayingMatchedGeometry(id: NowPlayingCover.matchedGeometryID)
         .scaleEffect(state.isPlaying ? 1 : Motion.pausedCoverScale)
@@ -207,29 +218,75 @@ struct NowPlayingContent: View {
         .accessibilityHidden(true)
     }
 
-    private var titleRow: some View {
-        HStack(spacing: Spacing.xsmall) {
-            VStack(alignment: .leading, spacing: Spacing.tiny) {
-                MarqueeText(state.title ?? "")
-                    .font(.s2PlayerTitle)
-                    .foregroundStyle(.primary)
-                    .accessibilityAddTraits(.isHeader)
-                    .accessibilityIdentifier("nowPlaying.title")
-                if let subtitle {
-                    MarqueeText(subtitle)
-                        .font(.title3)
-                        .foregroundStyle(secondaryInk)
-                }
+    /// The title, then the artist and the album on lines of their own: tapping either opens its screen, when the
+    /// ViewModel offers that for the song. A long press opens the song's menu; VoiceOver has the same actions on the
+    /// title.
+    private var titleBlock: some View {
+        VStack(alignment: .leading, spacing: Spacing.tiny) {
+            MarqueeText(state.title ?? "")
+                .font(.s2PlayerTitle)
+                .foregroundStyle(.primary)
+                .accessibilityAddTraits(.isHeader)
+                .accessibilityActions { songAccessibilityActions }
+                .accessibilityIdentifier("nowPlaying.title")
+            if let artist = state.artist {
+                detailLine(artist, font: .title3, opens: .goToArtist, id: "nowPlaying.artist")
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            favouriteButton
-            songMenu
+            if let album = state.album {
+                detailLine(album, font: .body, opens: .goToAlbum, id: "nowPlaying.album")
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .contextMenu { songMenu }
+        .confirmationDialog("Add to Playlist", isPresented: $showPlaylistChoices, titleVisibility: .visible) {
+            NowPlayingPlaylistChoices(
+                playlists: state.playlists, onNewPlaylist: { showNewPlaylist = true }, onChoose: actions.addToPlaylist
+            )
         }
     }
 
-    private var subtitle: String? {
-        let parts = [state.artist, state.album].compactMap { $0 }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    /// An artist or album line: a button to its screen when the song offers `action`, plain text otherwise.
+    @ViewBuilder
+    private func detailLine(_ text: String, font: Font, opens action: NowPlayingSongAction, id: String) -> some View {
+        let line = MarqueeText(text)
+            .font(font)
+            .foregroundStyle(secondaryInk)
+        if state.songActions.contains(action) {
+            Button { actions.songAction(action) } label: {
+                line.contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(text)
+            .accessibilityHint(action == .goToArtist ? "Opens the artist" : "Opens the album")
+            .accessibilityIdentifier(id)
+        } else {
+            line
+                .accessibilityIdentifier(id)
+        }
+    }
+
+    /// The song's menu, on a long press of the cover or the title.
+    private var songMenu: some View {
+        NowPlayingSongMenu(
+            songActions: state.songActions,
+            playlists: state.playlists,
+            onAction: actions.songAction,
+            onNewPlaylist: { showNewPlaylist = true },
+            onAddToPlaylist: actions.addToPlaylist
+        )
+    }
+
+    /// The song's menu as VoiceOver actions on the title; Add to Playlist asks where.
+    @ViewBuilder
+    private var songAccessibilityActions: some View {
+        ForEach(state.songActions, id: \.self) { action in
+            if action == .addToPlaylist {
+                Button(action.title) { showPlaylistChoices = true }
+            } else {
+                Button(action.title) { actions.songAction(action) }
+            }
+        }
     }
 
     // MARK: - Ink
@@ -253,34 +310,66 @@ struct NowPlayingContent: View {
         return isOn ? playerTint : secondaryInk
     }
 
-    // MARK: - Bottom capsule
+    // MARK: - Shuffle and repeat
 
-    /// Shuffle, repeat, speed, the sleep timer, AirPlay and the queue in one capsule: Liquid Glass on iOS 26,
-    /// `.ultraThinMaterial` below. Neutral, each glyph taking the tint only while its mode is on.
-    private var bottomCapsule: some View {
-        HStack(spacing: 0) {
-            Button(action: actions.toggleShuffle) {
-                Image(systemName: "shuffle")
-                    .capsuleGlyph(chromeInk(isOn: state.shuffleOn))
-            }
-            .buttonStyle(.pressScale)
+    /// How strongly a mode that's on washes its button's disc with the tint.
+    static let modeWashOpacity = 0.18
+
+    /// The repeat glyph for each mode: `repeat.1` for one, `repeat` otherwise (all is told from off by its tint and disc).
+    static func repeatSymbol(_ mode: NowPlayingRepeat) -> String {
+        mode == .one ? "repeat.1" : "repeat"
+    }
+
+    private var shuffleButton: some View {
+        modeButton("shuffle", isOn: state.shuffleOn, action: actions.toggleShuffle)
             .accessibilityLabel("Shuffle")
             .accessibilityValue(state.shuffleOn ? "On" : "Off")
             .accessibilityIdentifier("nowPlaying.shuffle")
-            .frame(maxWidth: .infinity)
+    }
 
-            Button(action: actions.toggleRepeat) {
-                Image(systemName: state.repeatMode == .one ? "repeat.1" : "repeat")
-                    .capsuleGlyph(chromeInk(isOn: state.repeatMode != .off))
-                    .contentTransition(.symbolEffect(.replace))
-            }
-            .buttonStyle(.pressScale)
+    private var repeatButton: some View {
+        modeButton(Self.repeatSymbol(state.repeatMode), isOn: state.repeatMode != .off, action: actions.toggleRepeat)
             .accessibilityLabel("Repeat")
             .accessibilityValue(repeatValue)
             .accessibilityIdentifier("nowPlaying.repeat")
-            .frame(maxWidth: .infinity)
+    }
 
-            speedMenu
+    /// Shuffle or repeat either side of the transport: while on, the glyph takes the tint on a disc washed with it, so
+    /// the mode reads without colour too (Increase Contrast inks both states alike).
+    private func modeButton(_ systemImage: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.title3.weight(NowPlayingTransport.weight))
+                .foregroundStyle(chromeInk(isOn: isOn))
+                .contentTransition(.symbolEffect(.replace))
+                .frame(width: 44, height: 44)
+                .background {
+                    Circle()
+                        .fill(playerTint.opacity(isOn ? Self.modeWashOpacity : 0))
+                }
+                .contentShape(Circle())
+                .animation(Motion.press.reduced(reduceMotion), value: isOn)
+        }
+        .buttonStyle(.pressScale)
+        // Capped with the capsule: past the first accessibility size the glyph would outgrow its disc.
+        .dynamicTypeSize(...DynamicTypeSize.accessibility1)
+    }
+
+    private var repeatValue: String {
+        switch state.repeatMode {
+        case .off: "Off"
+        case .all: "All"
+        case .one: "One"
+        }
+    }
+
+    // MARK: - Bottom capsule
+
+    /// Audio (speed and the equalizer), the sleep timer, AirPlay and the queue in one capsule: Liquid Glass on
+    /// iOS 26, `.ultraThinMaterial` below. Neutral, each glyph taking the tint only while its mode is on.
+    private var bottomCapsule: some View {
+        HStack(spacing: 0) {
+            audioButton
                 .frame(maxWidth: .infinity)
 
             sleepTimerMenu
@@ -301,68 +390,46 @@ struct NowPlayingContent: View {
             .accessibilityIdentifier("nowPlaying.queue")
             .playerSheet(isPresented: $showQueue, tier: tier) {
                 NowPlayingQueueList(queue: state.queue, isPlaying: state.isPlaying, actions: actions, notice: notice)
-                    // A presentation sits outside this screen's environment: hand the player's tint on.
-                    .environment(\.artworkTint, artworkTint)
-                    .environment(\.artworkTintInk, artworkTintInk)
-                    .environment(\.isArtworkTinted, isArtworkTinted)
-                    .tint(artworkTint)
+                    .playerTinted(artworkTint, ink: artworkTintInk, isTinted: isArtworkTinted)
             }
             .frame(maxWidth: .infinity)
         }
         .padding(.horizontal, Spacing.small)
         .padding(.vertical, Spacing.xsmall)
         .modifier(PlayerGlass(shape: Capsule(), material: .ultraThinMaterial))
-        // Six 44 pt targets fit the narrowest phone; past the first accessibility size the glyphs would outgrow them.
+        // A container, so its own id doesn't override its controls'.
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("nowPlaying.bottomBar")
+        // Past the first accessibility size the glyphs would outgrow their 44 pt targets.
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
 
     private var favouriteButton: some View {
         Button(action: actions.toggleFavourite) {
             Image(systemName: state.isFavourite ? "heart.fill" : "heart")
-                .font(.title3)
-                .foregroundStyle(state.isFavourite ? chromeInk(isOn: true) : secondaryInk)
                 .contentTransition(.symbolEffect(.replace))
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
+                .topBarGlyph(state.isFavourite ? chromeInk(isOn: true) : .primary)
         }
         .buttonStyle(.pressScale)
-        .disabled(state.title == nil)
         .accessibilityLabel("Favorite")
         .accessibilityValue(state.isFavourite ? "On" : "Off")
         .accessibilityIdentifier("nowPlaying.favourite")
     }
 
-    /// The current song's actions, those the ViewModel offers that iOS has a screen for.
-    private var songMenu: some View {
-        Menu {
-            ForEach(state.songActions, id: \.self) { action in
-                switch action {
-                case .addToPlaylist:
-                    Menu {
-                        Button("New Playlist…", systemImage: "plus") { showNewPlaylist = true }
-                        Button("Favorites", systemImage: "heart") { actions.addToPlaylist(.favourites) }
-                        ForEach(state.playlists) { playlist in
-                            Button(playlist.name) { actions.addToPlaylist(.playlist(id: playlist.id)) }
-                        }
-                    } label: {
-                        Label(action.title, systemImage: action.systemImage)
-                    }
-                case .exclude:
-                    Button(action.title, systemImage: action.systemImage, role: .destructive) { actions.songAction(action) }
-                default:
-                    Button(action.title, systemImage: action.systemImage) { actions.songAction(action) }
-                }
-            }
-        } label: {
-            Image(systemName: "ellipsis.circle")
-                .font(.title3)
-                .foregroundStyle(secondaryInk)
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
+    /// Opens the Audio sheet: the playback speed and the equalizer. Tinted while the speed isn't normal.
+    private var audioButton: some View {
+        Button { showAudio = true } label: {
+            Image(systemName: "slider.vertical.3")
+                .capsuleGlyph(chromeInk(isOn: state.playbackSpeed != 1))
         }
-        .disabled(state.songActions.isEmpty)
-        .accessibilityLabel("More")
-        .accessibilityIdentifier("nowPlaying.more")
+        .buttonStyle(.pressScale)
+        .accessibilityLabel("Audio")
+        .accessibilityValue("Speed \(Self.speedText(state.playbackSpeed))")
+        .accessibilityIdentifier("nowPlaying.audio")
+        .playerSheet(isPresented: $showAudio, tier: tier) {
+            NowPlayingAudioSheet(speed: state.playbackSpeed, setSpeed: actions.setSpeed)
+                .playerTinted(artworkTint, ink: artworkTintInk, isTinted: isArtworkTinted)
+        }
     }
 
     /// The playback speeds offered, 1 being normal.
@@ -370,26 +437,6 @@ struct NowPlayingContent: View {
 
     /// The sleep timer's durations, in minutes.
     static let sleepTimerMinutes = [15, 30, 45, 60]
-
-    private var speedMenu: some View {
-        Menu {
-            ForEach(Self.speeds, id: \.self) { speed in
-                Button { actions.setSpeed(speed) } label: {
-                    if speed == state.playbackSpeed {
-                        Label(Self.speedText(speed), systemImage: "checkmark")
-                    } else {
-                        Text(Self.speedText(speed))
-                    }
-                }
-            }
-        } label: {
-            Image(systemName: "gauge.with.dots.needle.50percent")
-                .capsuleGlyph(chromeInk(isOn: state.playbackSpeed != 1))
-        }
-        .accessibilityLabel("Playback Speed")
-        .accessibilityValue(Self.speedText(state.playbackSpeed))
-        .accessibilityIdentifier("nowPlaying.speed")
-    }
 
     private var sleepTimerMenu: some View {
         Menu {
@@ -410,14 +457,6 @@ struct NowPlayingContent: View {
 
     static func speedText(_ speed: Float) -> String {
         speed.formatted(.number.precision(.fractionLength(0...2))) + "×"
-    }
-
-    private var repeatValue: String {
-        switch state.repeatMode {
-        case .off: "Off"
-        case .all: "All"
-        case .one: "One"
-        }
     }
 
     // MARK: - Swipe down to dismiss
@@ -456,13 +495,31 @@ struct NowPlayingContent: View {
     }
 }
 
-private extension Image {
+private extension View {
     /// A glyph in the bottom capsule, in a 44 pt target.
     func capsuleGlyph(_ ink: Color) -> some View {
         font(.title3)
             .foregroundStyle(ink)
             .frame(width: 44, height: 44)
             .contentShape(Rectangle())
+    }
+
+    /// A glyph in the top bar (close, favourite): on a material disc in a 44 pt target.
+    func topBarGlyph(_ ink: Color) -> some View {
+        font(.body.weight(.semibold))
+            .foregroundStyle(ink)
+            .frame(width: 36, height: 36)
+            .modifier(PlayerGlass(shape: Circle(), material: .regularMaterial))
+            .frame(width: 44, height: 44)
+            .contentShape(Rectangle())
+    }
+
+    /// Hands the player's tint on to a sheet it presents, which sits outside the screen's environment.
+    func playerTinted(_ tint: Color, ink: Color, isTinted: Bool) -> some View {
+        environment(\.artworkTint, tint)
+            .environment(\.artworkTintInk, ink)
+            .environment(\.isArtworkTinted, isTinted)
+            .tint(tint)
     }
 }
 
@@ -662,13 +719,13 @@ struct NowPlayingTransport: View {
 
 // MARK: - Queue
 
-/// The queue, from Now Playing's queue button, in the player's tint: the playing song as a card pinned under the
-/// navigation bar with "Up Next" under it (a top inset, so they sit right under Clear / Queue / Edit and stay put while
-/// the rest scrolls), the songs after it, and
-/// the songs already played below those. Tap a row to skip to it. Edit mode (the Edit/Done button) reorders Up
-/// Next by dragging; a swipe, or Remove from Queue in a row's context menu, takes an item out (with Undo); Play Next
-/// moves it after the current song; Clear empties the queue (with Undo). Moves and removals show at once and the
-/// player's queue replaces them when it catches up. Rows are keyed by the queue item's uid, never its position.
+/// The queue, from Now Playing's queue button, in the player's tint: one plain list in three sections under the same
+/// headers, as Apple Music lays out its queue: Now Playing (the playing song, its cover carrying the playing
+/// indicator), Up Next (the songs after it), and Played (those before it). Every song is the same `MediaRow`. Tap a row
+/// to skip to it. Edit mode (the Edit/Done button) reorders Up Next by dragging; a swipe, or Remove from Queue in a
+/// row's context menu, takes an item out (with Undo); Play Next moves it after the current song; Clear empties the
+/// queue (with Undo). Moves and removals show at once and the player's queue replaces them when it catches up. Rows
+/// are keyed by the queue item's uid, never its position.
 struct NowPlayingQueueList: View {
     let queue: [NowPlayingQueueRow]
     var isPlaying = false
@@ -677,7 +734,6 @@ struct NowPlayingQueueList: View {
 
     @State private var rows: [NowPlayingQueueRow]
     @State private var editMode: EditMode = .inactive
-    @Environment(\.artworkTint) private var tint
 
     init(
         queue: [NowPlayingQueueRow],
@@ -737,6 +793,15 @@ struct NowPlayingQueueList: View {
 
     private var list: some View {
         List {
+            if let currentIndex {
+                Section {
+                    row(rows[currentIndex])
+                        .deleteDisabled(true)
+                } header: {
+                    sectionHeader("Now Playing")
+                }
+            }
+
             Section {
                 if upNext.isEmpty {
                     Text("Nothing up next")
@@ -751,6 +816,8 @@ struct NowPlayingQueueList: View {
                         offsets.map { upNext[upNextStart + $0].id }.forEach(remove)
                     }
                 }
+            } header: {
+                sectionHeader("Up Next")
             }
 
             if !played.isEmpty {
@@ -762,67 +829,32 @@ struct NowPlayingQueueList: View {
                         offsets.map { played[$0].id }.forEach(remove)
                     }
                 } header: {
-                    SectionHeader("Played")
-                        .textCase(nil)
-                        .padding(.vertical, Spacing.small)
+                    sectionHeader("Played")
                 }
             }
         }
         .listStyle(.plain)
-        // The card and Up Next's header sit in a top inset rather than a pinned section header: a plain list pads
-        // above its first header, which left a dead band under Clear / Queue / Edit.
-        .contentMargins(.top, 0, for: .scrollContent)
-        .safeAreaInset(edge: .top, spacing: 0) {
-            VStack(alignment: .leading, spacing: Spacing.smallMedium) {
-                if let currentIndex {
-                    nowPlayingCard(rows[currentIndex])
-                }
-                SectionHeader("Up Next")
-            }
-            // In line with the rows' artwork: a plain list's row inset.
-            .padding(.horizontal, Spacing.medium + Spacing.xsmall)
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        SectionHeader(title)
+            .textCase(nil)
             .padding(.vertical, Spacing.xsmall)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(.systemBackground))
-        }
     }
 
-    /// The playing song, pinned above Up Next on a wash of the tint, its cover carrying the playing indicator.
-    private func nowPlayingCard(_ item: NowPlayingQueueRow) -> some View {
-        Button { actions.selectQueueItem(item.id) } label: {
-            VStack(alignment: .leading, spacing: Spacing.small) {
-                Text("Now Playing")
-                    .font(.s2Eyebrow)
-                    .foregroundStyle(.s2SecondaryText)
-                    .accessibilityHidden(true)
-                MediaRow(
-                    item.title,
-                    subtitle: item.artist,
-                    artwork: item.artwork,
-                    artworkSize: ArtworkSize.albumRow,
-                    playback: isPlaying ? .playing : .paused
-                )
-            }
-            .padding(Spacing.smallMedium)
-            .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous))
-            .contentShape(RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(item.title), now playing")
-        .accessibilityAddTraits(.isButton)
-        .accessibilityIdentifier("queue.nowPlaying")
-        .contextMenu {
-            NowPlayingQueueRowMenu(item: item, playNext: actions.playNext, remove: remove)
-        }
-    }
-
+    /// A queue row; the playing song's cover carries the playing indicator and VoiceOver says it's playing.
     private func row(_ item: NowPlayingQueueRow) -> some View {
         Button { actions.selectQueueItem(item.id) } label: {
-            MediaRow(item.title, subtitle: item.artist, artwork: item.artwork)
+            MediaRow(
+                item.title,
+                subtitle: item.artist,
+                artwork: item.artwork,
+                playback: item.isCurrent ? (isPlaying ? .playing : .paused) : .none
+            )
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(item.title)
+        .accessibilityLabel(item.isCurrent ? "\(item.title), now playing" : item.title)
+        .accessibilityIdentifier(item.isCurrent ? "queue.nowPlaying" : "queue.row")
         .contextMenu {
             NowPlayingQueueRowMenu(item: item, playNext: actions.playNext, remove: remove)
         }
@@ -874,6 +906,110 @@ struct NowPlayingQueueRowMenu: View {
     }
 }
 
+// MARK: - Song menu
+
+/// The playing song's menu, on a long press of Now Playing's cover or title: the actions the ViewModel offers it that
+/// iOS has a screen for, in its order, with Add to Playlist as a submenu and Exclude marked destructive.
+struct NowPlayingSongMenu: View {
+    let songActions: [NowPlayingSongAction]
+    let playlists: [PlaylistOption]
+    let onAction: (NowPlayingSongAction) -> Void
+    let onNewPlaylist: () -> Void
+    let onAddToPlaylist: (PlaylistChoice) -> Void
+
+    var body: some View {
+        ForEach(songActions, id: \.self) { action in
+            switch action {
+            case .addToPlaylist:
+                Menu {
+                    NowPlayingPlaylistChoices(playlists: playlists, onNewPlaylist: onNewPlaylist, onChoose: onAddToPlaylist)
+                } label: {
+                    Label(action.title, systemImage: action.systemImage)
+                }
+            case .exclude:
+                Button(action.title, systemImage: action.systemImage, role: .destructive) { onAction(action) }
+            default:
+                Button(action.title, systemImage: action.systemImage) { onAction(action) }
+            }
+        }
+    }
+}
+
+/// Where Add to Playlist can put the song: a new playlist, Favorites, or one of `playlists`.
+struct NowPlayingPlaylistChoices: View {
+    let playlists: [PlaylistOption]
+    let onNewPlaylist: () -> Void
+    let onChoose: (PlaylistChoice) -> Void
+
+    var body: some View {
+        Button("New Playlist…", systemImage: "plus", action: onNewPlaylist)
+        Button("Favorites", systemImage: "heart") { onChoose(.favourites) }
+        ForEach(playlists) { playlist in
+            Button(playlist.name) { onChoose(.playlist(id: playlist.id)) }
+        }
+    }
+}
+
+// MARK: - Audio
+
+/// The Audio sheet, from Now Playing's Audio button: the playback speed as a checked list, and the Equalizer, pushed
+/// inside the sheet (the same `EqualizerView` Settings pushes). One grouped form, as iOS lays out settings.
+struct NowPlayingAudioSheet: View {
+    let speed: Float
+    let setSpeed: (Float) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Playback Speed") {
+                    ForEach(NowPlayingContent.speeds, id: \.self) { option in
+                        speedRow(option)
+                    }
+                }
+                Section {
+                    NavigationLink {
+                        EqualizerView()
+                    } label: {
+                        Label("Equalizer", systemImage: "slider.vertical.3")
+                    }
+                    .accessibilityIdentifier("audio.equalizer")
+                }
+            }
+            .navigationTitle("Audio")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func speedRow(_ option: Float) -> some View {
+        let isSelected = option == speed
+        let text = NowPlayingContent.speedText(option)
+        return Button { setSpeed(option) } label: {
+            HStack {
+                // The label's own colour, not the tint a form gives a button's label: only the checkmark marks the choice.
+                Text(option == 1 ? "\(text) (Normal)" : text)
+                    .foregroundStyle(Color(uiColor: .label))
+                Spacer()
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.tint)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .accessibilityLabel(text)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityIdentifier("audio.speed.\(text)")
+    }
+}
+
 #Preview("Playing") {
     NowPlayingContent(
         state: NowPlayingState(
@@ -905,6 +1041,10 @@ struct NowPlayingQueueRowMenu: View {
         ],
         isPlaying: true
     )
+}
+
+#Preview("Audio") {
+    NowPlayingAudioSheet(speed: 1.25) { _ in }
 }
 
 #Preview("Empty queue") {

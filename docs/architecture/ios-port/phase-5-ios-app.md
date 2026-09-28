@@ -223,18 +223,23 @@ rows are rebuilt only when the VM's player state does. Because of this, the mini
 player catches up.
 
 `MiniPlayerBar`, `NowPlayingContent` and `NowPlayingQueueList` take only those values. Now Playing's bottom bar
-has a speed menu and a sleep timer menu (15 to 60 minutes, or off); both work on iOS through the VM. Speed isn't
+holds four controls (#644, at most five): Audio (a sheet with the playback speed and the Equalizer, pushed inside
+it), the sleep timer menu (15 to 60 minutes, or off), AirPlay and the queue. Shuffle and repeat flank the
+transport; repeat shows `repeat` or `repeat.1`, on a tint-washed disc while on, and reads Off, All or One. Speed isn't
 saved across launches, and ReplayGain isn't offered until the engine applies it (#604).
 
 Song actions and queue editing (#621). The binding also collects these:
 - The VM's `playlists()` and `songActions(song:)` for the current song.
 - `NowPlayingSongAction` keeps the actions iOS can run: Add to Playlist, Go to Album, Go to Artist and Exclude.
   Edit Tags and Song Info are left out until those screens exist.
-- The title row has a favourite toggle (`toggleFavourite`) and an ellipsis menu. Its Add to Playlist submenu
-  offers New Playlist… (an alert), Favorites and each playlist.
+- There is no overflow menu (#644). The favourite toggle (`toggleFavourite`) sits top right; tapping the artist
+  or album line runs Go to Artist or Go to Album; a long press of the cover or title opens `NowPlayingSongMenu`
+  (Add to Playlist, Go to Album, Go to Artist, Exclude), which VoiceOver gets as actions on the title. Add to
+  Playlist offers New Playlist… (an alert), Favorites and each playlist.
 - The actions go to `onMediaAction` with the current song as the selection.
 
-The queue list keys rows by queue uid:
+The queue list is one plain list in three sections under the same `SectionHeader`s: Now Playing (the playing song
+as an ordinary row with the playing indicator), Up Next and Played. It keys rows by queue uid:
 - Edit mode reorders them through `moveQueueItem(uid, afterUid)`; `NowPlayingQueueList.move` turns
   `.onMove`'s offsets into uids.
 - A swipe or the context menu removes a row; Play Next and Clear are also offered.
