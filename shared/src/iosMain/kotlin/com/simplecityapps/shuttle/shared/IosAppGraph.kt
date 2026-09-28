@@ -116,29 +116,34 @@ interface IosAppGraph : ViewModelGraph {
 
     @DependencyGraph.Factory
     fun interface Factory {
-        /** [audioPlayer]: the Swift adapter over the S2Playback engine; [preferencesSuite]: where preferences live. */
+        /** [audioPlayer]: the Swift adapter over the S2Playback engine; [storage]: where preferences and the library live. */
         fun create(
             @Provides audioPlayer: IosAudioPlayer,
-            @Provides preferencesSuite: IosPreferencesSuite
+            @Provides storage: IosStorage
         ): IosAppGraph
     }
 }
 
 /** Builds the graph: `IosAppGraphKt.createIosAppGraph(audioPlayer:)` from Swift, once per process. */
-fun createIosAppGraph(audioPlayer: IosAudioPlayer): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosPreferencesSuite(null))
+fun createIosAppGraph(audioPlayer: IosAudioPlayer): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(null))
 
 /**
- * A graph keeping its preferences in the NSUserDefaults suite [preferencesSuite] rather than the standard defaults, so
- * tests that build several graphs at once don't restore each other's saved queue and modes.
+ * A graph with storage of its own, for tests: preferences in the NSUserDefaults suite [isolatedStorage] rather than the
+ * standard defaults, and an empty in-memory library rather than the app's database. Tests build several graphs at
+ * once, which would otherwise restore each other's saved queue and modes, and query whatever library the simulator's
+ * app holds.
  */
 fun createIosAppGraph(
     audioPlayer: IosAudioPlayer,
-    preferencesSuite: String
-): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosPreferencesSuite(preferencesSuite))
+    isolatedStorage: String
+): IosAppGraph = createGraphFactory<IosAppGraph.Factory>().create(audioPlayer, IosStorage(isolatedStorage))
 
-/** The NSUserDefaults suite the graph keeps preferences in: [name], or the standard defaults when null. */
-class IosPreferencesSuite(
-    val name: String?
+/**
+ * Where the graph keeps its preferences and library. [isolatedName] null: the standard defaults and the app's
+ * database. Otherwise preferences in the NSUserDefaults suite of that name, and the library in memory.
+ */
+class IosStorage(
+    val isolatedName: String?
 )
 
 /**

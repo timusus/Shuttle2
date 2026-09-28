@@ -20,6 +20,11 @@ fun databaseBuilder(): RoomDatabase.Builder<MediaDatabase> = Room
     .databaseBuilder<MediaDatabase>(name = applicationSupportDirectory() + "/" + DATABASE_NAME)
     .setDriver(BundledSQLiteDriver())
 
+/** [MediaDatabase] in memory, on the bundled SQLite: empty each time, for tests that mustn't see the app's library. */
+fun inMemoryDatabaseBuilder(): RoomDatabase.Builder<MediaDatabase> = Room
+    .inMemoryDatabaseBuilder<MediaDatabase>()
+    .setDriver(BundledSQLiteDriver())
+
 /** Created on first launch: unlike Documents, iOS doesn't make Application Support until an app asks for it. */
 private fun applicationSupportDirectory(): String {
     val directory = NSFileManager.defaultManager.URLForDirectory(

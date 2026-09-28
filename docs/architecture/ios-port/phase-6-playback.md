@@ -326,9 +326,10 @@ the speed are saved and restored across launches, in Android's keys and format:
   and `NSUserDefaults` writes through on suspension, so nothing is added for `scenePhase == .background`.
 - Tests: `SavedQueueTest` and `PlaybackPreferenceManagerTest` (now commonTest, run on JVM and iOS) and
   `IosPlaybackStoreTest` (two "launches" over one prefs store). The app's Swift is unchanged; the Swift tests build
-  their graphs with `makeTestGraph`, which keeps each graph's preferences in its own NSUserDefaults suite
-  (`createIosAppGraph(audioPlayer:preferencesSuite:)`), since parallel graphs would otherwise restore each other's
-  saved queue and modes.
+  their graphs with `makeTestGraph`, which gives each graph storage of its own
+  (`createIosAppGraph(audioPlayer:isolatedStorage:)`): preferences in their own NSUserDefaults suite, since parallel
+  graphs would otherwise restore each other's saved queue and modes, and an empty in-memory library rather than the
+  simulator app's database, whose contents vary with whatever last ran on that simulator.
 
 ### Status of step 8 (ReplayGain and EQ, #604)
 

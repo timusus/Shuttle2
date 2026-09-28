@@ -79,8 +79,9 @@ func drainMainQueue() async {
     }
 }
 
-/// The app's graph over `audioPlayer`, keeping its preferences in a suite of its own: a graph restores the queue and
-/// modes the last one saved, so graphs sharing the standard defaults would restore each other's (tests run in parallel).
+/// The app's graph over `audioPlayer`, with storage of its own: preferences in their own suite (a graph restores the
+/// queue and modes the last one saved, so graphs sharing the standard defaults would restore each other's; tests run
+/// in parallel) and an empty in-memory library (not the simulator app's database, whose contents vary).
 func makeTestGraph(audioPlayer: IosAudioPlayer) -> IosAppGraph {
-    IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, preferencesSuite: "S2Tests.\(UUID().uuidString)")
+    IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer, isolatedStorage: "S2Tests.\(UUID().uuidString)")
 }
