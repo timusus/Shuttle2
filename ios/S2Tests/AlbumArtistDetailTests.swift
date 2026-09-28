@@ -27,6 +27,7 @@ struct AlbumArtistDetailTests {
     @Test func readyShowsHeroShelfAndSongs() throws {
         let state = AlbumArtistDetailUiState(
             albumArtist: artist(), albums: [album("OK Computer"), album("Kid A")], songs: TestSongs.demo,
+            sortOrder: .albumNewest, sections: [], topSongs: [],
             currentSong: nil, expandedAlbums: [], loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
         )
         let sut = AlbumArtistDetailContent(state: state)
@@ -41,6 +42,7 @@ struct AlbumArtistDetailTests {
         var opened: Album?
         let state = AlbumArtistDetailUiState(
             albumArtist: artist(), albums: [album("OK Computer"), album("Kid A")], songs: TestSongs.demo,
+            sortOrder: .albumNewest, sections: [], topSongs: [],
             currentSong: nil, expandedAlbums: [], loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
         )
         let sut = AlbumArtistDetailContent(state: state, onAlbumTap: { opened = $0 })
@@ -51,7 +53,8 @@ struct AlbumArtistDetailTests {
     @Test func tappingASongPlaysFromItsIndex() throws {
         var played: Int?
         let state = AlbumArtistDetailUiState(
-            albumArtist: artist(), albums: [], songs: TestSongs.demo, currentSong: nil, expandedAlbums: [],
+            albumArtist: artist(), albums: [], songs: TestSongs.demo,
+            sortOrder: .albumNewest, sections: [], topSongs: [], currentSong: nil, expandedAlbums: [],
             loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
         )
         let sut = AlbumArtistDetailContent(state: state, onPlay: { played = $0 })
@@ -61,12 +64,14 @@ struct AlbumArtistDetailTests {
 
     @Test func placeholders() throws {
         let loading = AlbumArtistDetailUiState(
-            albumArtist: nil, albums: [], songs: [], currentSong: nil, expandedAlbums: [], loadingState: .loading,
+            albumArtist: nil, albums: [], songs: [], sortOrder: .albumNewest, sections: [], topSongs: [],
+            currentSong: nil, expandedAlbums: [], loadingState: .loading,
             events: [], seed: ArtworkSeedNone.shared
         )
         #expect((try? AlbumArtistDetailContent(state: loading).inspect().find(ViewType.ProgressView.self)) != nil)
         let notFound = AlbumArtistDetailUiState(
-            albumArtist: nil, albums: [], songs: [], currentSong: nil, expandedAlbums: [], loadingState: .empty,
+            albumArtist: nil, albums: [], songs: [], sortOrder: .albumNewest, sections: [], topSongs: [],
+            currentSong: nil, expandedAlbums: [], loadingState: .empty,
             events: [], seed: ArtworkSeedNone.shared
         )
         #expect((try? AlbumArtistDetailContent(state: notFound).inspect().find(text: "Artist Not Found")) != nil)
