@@ -88,7 +88,7 @@ object LibraryBackupMatcher {
      * physical volumes (`/storage/ABCD-1234/…`) and emulated storage (`/storage/emulated/0/…`). */
     internal fun relativePath(path: String): String {
         val lower = path.lowercase()
-        val storagePrefix = Regex("^/storage/(emulated/\\d+/)?[^/]+/")
+        val storagePrefix = Regex("^/storage/(emulated/\\d+|[^/]+)/")
         return storagePrefix.replace(lower, "")
     }
 
