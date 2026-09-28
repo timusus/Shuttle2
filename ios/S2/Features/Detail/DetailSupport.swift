@@ -226,8 +226,6 @@ struct DetailHero<Artwork: View>: View {
 /// Play and Shuffle as two capsules sharing the width, in the tint in scope: glass on iOS 26, bordered below.
 /// Stacked at the accessibility sizes, where side by side they'd truncate.
 struct HeroActions: View {
-    var playTitle = "Play"
-    var playSymbol = "play.fill"
     let onPlay: () -> Void
     let onShuffle: () -> Void
 
@@ -239,10 +237,10 @@ struct HeroActions: View {
             : AnyLayout(HStackLayout(spacing: Spacing.smallMedium))
         layout {
             Button(action: onPlay) {
-                Label(playTitle, systemImage: playSymbol).frame(maxWidth: .infinity)
+                Label("Play", systemImage: "play.fill").frame(maxWidth: .infinity)
             }
             .capsuleButton(prominent: true)
-            .accessibilityLabel(playTitle)
+            .accessibilityLabel("Play")
             Button(action: onShuffle) {
                 Label("Shuffle", systemImage: "shuffle").frame(maxWidth: .infinity)
             }

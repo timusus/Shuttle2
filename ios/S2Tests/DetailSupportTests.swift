@@ -5,7 +5,7 @@ import ViewInspector
 @testable import S2
 
 /// The detail frame's decisions: one column or two, when the bar takes over the hero's title, the Play/Shuffle
-/// capsules (on a hero and on Home's resume card), and which tile is a zoom source.
+/// capsules on a hero, and which tile is a zoom source.
 @MainActor
 struct DetailSupportTests {
     private func album(_ name: String) -> Album {
@@ -66,31 +66,6 @@ struct DetailSupportTests {
         try sut.inspect().find(button: "Shuffle").tap()
         #expect(played)
         #expect(shuffled)
-    }
-
-    @Test func theResumeCardOffersPauseWhilePlayingAndPlayWhilePaused() throws {
-        func home(playing: Bool, onToggle: @escaping () -> Void = {}, onShuffleQueue: @escaping () -> Void = {}) -> HomeContent {
-            let resume = ResumeQueue(song: TestSongs.demo[0], songs: TestSongs.demo, timeLeftMs: 3_665_000, playing: playing)
-            let state = HomeUiStateContent(showWhatsNew: false, sections: [], resume: resume, events: [], covers: [:])
-            return HomeContent(state: state, onTogglePlayback: onToggle, onShuffleQueue: onShuffleQueue)
-        }
-        var toggled = false
-        var shuffledQueue = false
-        let playing = home(playing: true, onToggle: { toggled = true }, onShuffleQueue: { shuffledQueue = true })
-        #expect((try? playing.inspect().find(viewWithAccessibilityLabel: "Play")) == nil)
-        try playing.inspect().find(viewWithAccessibilityLabel: "Pause").button().tap()
-        // The card's Shuffle, whichever order the toolbar's Shuffle All comes in.
-        for button in try playing.inspect().findAll(ViewType.Button.self) where (try? button.find(text: "Shuffle")) != nil {
-            try button.tap()
-        }
-        #expect(toggled)
-        #expect(shuffledQueue)
-        // Over an hour left: hours, minutes and seconds.
-        #expect((try? playing.inspect().find(text: "1:01:05 left")) != nil)
-
-        let paused = home(playing: false)
-        #expect((try? paused.inspect().find(viewWithAccessibilityLabel: "Pause")) == nil)
-        #expect((try? paused.inspect().find(viewWithAccessibilityLabel: "Play")) != nil)
     }
 
     // MARK: - Zoom sources

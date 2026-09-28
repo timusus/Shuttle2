@@ -37,8 +37,6 @@ sealed interface HomeUiState {
         val showWhatsNew: Boolean,
         /** The suggestion sections, in order; empty ones are left out (#633). */
         val sections: List<HomeSection>,
-        /** The queue to pick up from, or null with none (#490). */
-        val resume: ResumeQueue? = null,
         val events: List<PendingEvent<HomeEvent>> = emptyList(),
         /** Each playlist and genre item's mosaic covers by [HomeItem.key], once loaded; absent for one with none (#646). */
         val covers: Map<String, List<Song>> = emptyMap(),
@@ -59,8 +57,6 @@ class HomeViewModel @Inject constructor(
     private val markChangelogViewed: MarkChangelogViewed,
     private val readSetting: ReadSetting,
     private val saveSetting: SaveSetting,
-    observeResumeQueue: ObserveResumeQueue,
-    private val togglePlayback: TogglePlayback,
     loadHomeCovers: LoadHomeCovers,
 ) : ViewModel() {
     private val whatsNewPending = MutableStateFlow(isWhatsNewPending())
@@ -79,14 +75,13 @@ class HomeViewModel @Inject constructor(
         flow { emit(sections to sections?.let { loadHomeCovers(it) }.orEmpty()) }.onStart { emit(sections to emptyMap()) }
     }
 
-    val uiState: StateFlow<HomeUiState> = combine(sectionsWithCovers, observeResumeQueue(), whatsNewPending, events.flow) { (sections, covers), resume, whatsNew, pendingEvents ->
+    val uiState: StateFlow<HomeUiState> = combine(sectionsWithCovers, whatsNewPending, events.flow) { (sections, covers), whatsNew, pendingEvents ->
         if (sections == null) {
             HomeUiState.Empty
         } else {
             HomeUiState.Content(
                 showWhatsNew = whatsNew,
                 sections = sections,
-                resume = resume,
                 events = pendingEvents,
                 covers = covers,
             )
@@ -95,11 +90,6 @@ class HomeViewModel @Inject constructor(
 
     /** Shuffles the whole library, resolved as it plays; null before the library has loaded or while it's empty. */
     fun shuffleAll(): MediaAction? = (uiState.value as? HomeUiState.Content)?.let { MediaAction.Shuffle(MediaSelection.SongsMatching(SongQuery.All())) }
-
-    /** Shuffles the queue the resume hero offers, or null with none. */
-    fun shuffleQueue(): MediaAction? = (uiState.value as? HomeUiState.Content)?.resume?.let { MediaAction.Shuffle(MediaSelection.Songs(it.songs)) }
-
-    fun onTogglePlayback() = togglePlayback()
 
     /** Opening the changelog or dismissing the card marks this version's notes as seen. */
     fun onWhatsNewHandled() {

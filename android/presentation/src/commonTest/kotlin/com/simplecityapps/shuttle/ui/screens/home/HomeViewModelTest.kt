@@ -1,20 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
 import com.simplecityapps.createAlbum
-import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlayHistoryRepository
-import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSuggestionsRepository
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
-import com.simplecityapps.playback.PlaybackProgress
-import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.queue.QueueState
-import com.simplecityapps.playback.queue.toQueueItem
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -60,8 +52,6 @@ class HomeViewModelTest {
     private lateinit var analyticsConsentSettings: AnalyticsConsentSettings
     private val suggestions = FakeSuggestionsRepository()
     private val playHistory = FakePlayHistoryRepository()
-    private val queue = FakeQueueOperations()
-    private val playback = FakePlaybackOperations()
     private val appVersion = AppVersion { VERSION_NAME }
 
     private val start = Instant.parse("2026-09-23T08:30:00Z")
@@ -74,15 +64,6 @@ class HomeViewModelTest {
     }
 
     private val twoRecentContexts get() = listOf(RecentContext(phaseGarden.playContext, start), RecentContext(dustChoir.playContext, start))
-
-    private val chlorophyllLoop = createSong(id = 1, name = "Chlorophyll Loop", albumArtist = "Juniper Static", album = "Phase Garden")
-    private val tidalMoss = createSong(id = 2, name = "Tidal Moss", albumArtist = "Juniper Static", album = "Phase Garden", duration = 200_000).copy(playbackPosition = 30_000)
-
-    /** Puts [songs] in the queue with the one at [current] playing. */
-    private fun queueOf(songs: List<Song>, current: Int) {
-        val items = songs.mapIndexed { index, song -> song.toQueueItem(isCurrent = index == current) }
-        queue.queueStateFlow.value = QueueState(items = items, currentItem = items[current], currentPosition = current, isRestored = true)
-    }
 
     @BeforeTest
     fun setUp() {
@@ -120,8 +101,6 @@ class HomeViewModelTest {
             MarkChangelogViewed(preferenceManager, appVersion),
             ReadSetting(settingsStore),
             SaveSetting(settingsStore),
-            ObserveResumeQueue(queue, playback),
-            TogglePlayback(playback),
             LoadHomeCovers(FakePlaylistRepository(), FakeGenreRepository()),
         ).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
@@ -251,52 +230,6 @@ class HomeViewModelTest {
 
         val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
         content.events.shouldBeEmpty()
-    }
-
-    @Test
-    fun `no queue - no resume hero`() = runTest(testDispatcher) {
-        suggestions.songCount.value = 1
-
-        viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>().resume.shouldBeNull()
-    }
-
-    @Test
-    fun `the resume hero offers the queue from its current song - with the time left in it`() = runTest(testDispatcher) {
-        suggestions.songCount.value = 1
-        queueOf(listOf(chlorophyllLoop, tidalMoss), current = 1)
-        playback.progressFlow.value = PlaybackProgress(position = 65_400, duration = 200_000)
-
-        viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>().resume shouldBe
-            ResumeQueue(song = tidalMoss, songs = listOf(chlorophyllLoop, tidalMoss), timeLeftMs = 134_000, playing = false)
-    }
-
-    @Test
-    fun `before any progress - the time left counts from where the song was left`() = runTest(testDispatcher) {
-        suggestions.songCount.value = 1
-        queueOf(listOf(tidalMoss), current = 0)
-
-        viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>().resume?.timeLeftMs shouldBe 170_000
-    }
-
-    @Test
-    fun `the resume hero follows playback and toggles it`() = runTest(testDispatcher) {
-        suggestions.songCount.value = 1
-        queueOf(listOf(tidalMoss), current = 0)
-        playback.playbackStateFlow.value = PlaybackState.Playing
-        val viewModel = viewModel()
-
-        viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>().resume?.playing shouldBe true
-        viewModel.onTogglePlayback()
-
-        playback.calls shouldBe listOf("togglePlayback()")
-    }
-
-    @Test
-    fun `shuffling the resume hero shuffles the queue's songs`() = runTest(testDispatcher) {
-        suggestions.songCount.value = 1
-        queueOf(listOf(chlorophyllLoop, tidalMoss), current = 0)
-
-        viewModel().shuffleQueue() shouldBe MediaAction.Shuffle(MediaSelection.Songs(listOf(chlorophyllLoop, tidalMoss)))
     }
 
     private companion object {

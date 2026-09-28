@@ -70,14 +70,6 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `home leaves the queue to the mini player, with no resume hero`() {
-        robot.setContent(HomeScenarios.content)
-
-        robot.assertTextNotShown("Continue listening")
-        robot.assertTextNotShown("Juniper Static · 2:14 left")
-    }
-
-    @Test
     fun `cold start shows recently added, genre picks, a prominent shuffle all and how home fills in`() {
         robot.setContent(HomeScenarios.unplayed)
 

@@ -4,7 +4,7 @@ import Testing
 import ViewInspector
 @testable import S2
 
-/// Home from its `HomeUiState` (#633): the resume hero, the Jump Back In grid and its columns per tier, the shelves'
+/// Home from its `HomeUiState` (#633): the Jump Back In grid and its columns per tier, the shelves'
 /// type labels, cold start, what a tap opens or plays (with the item's play context), and the empty/loading states.
 @MainActor
 struct HomeViewTests {
@@ -30,8 +30,8 @@ struct HomeViewTests {
         HomeSection(id: id, title: title, items: items)
     }
 
-    private func content(_ sections: [HomeSection] = [], resume: ResumeQueue? = nil) -> HomeUiState {
-        HomeUiStateContent(showWhatsNew: false, sections: sections, resume: resume, events: [], covers: [:])
+    private func content(_ sections: [HomeSection] = []) -> HomeUiState {
+        HomeUiStateContent(showWhatsNew: false, sections: sections, events: [], covers: [:])
     }
 
     private func same(_ lhs: MediaAction?, _ rhs: MediaAction) -> Bool {
@@ -215,21 +215,10 @@ struct HomeViewTests {
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "home.coldStartHint")) == nil)
     }
 
-    @Test func noSectionsOrResumeStillRendersTheScrollView() throws {
+    @Test func noSectionsStillRendersTheScrollView() throws {
         let sut = HomeContent(state: content())
         #expect((try? sut.inspect().find(ViewType.ScrollView.self)) != nil)
         #expect((try? sut.inspect().find(text: "Jump Back In")) == nil)
-    }
-
-    @Test func resumeHeroShowsTheSongAndTogglesPlayback() throws {
-        var toggled = false
-        let resume = ResumeQueue(song: TestSongs.demo[0], songs: TestSongs.demo, timeLeftMs: 90_000, playing: false)
-        let sut = HomeContent(state: content(resume: resume), onTogglePlayback: { toggled = true })
-        #expect((try? sut.inspect().find(text: "Paranoid Android")) != nil)
-        #expect((try? sut.inspect().find(text: "1:30 left")) != nil)
-        // An icon button now: found by its VoiceOver label.
-        try sut.inspect().find(viewWithAccessibilityLabel: "Play").button().tap()
-        #expect(toggled)
     }
 
     @Test func theToolbarShuffleTriggersTheCallback() throws {

@@ -26,13 +26,9 @@ object HomeScenarios {
     val roadTrip = SampleLibrary.playlist("Road Trip").toPlaylist(id = 1)
     val lateNight = SampleLibrary.playlist("Late Night").toPlaylist(id = 2)
     val genres = SampleLibrary.genres.map { it.toGenre() }.sortedByDescending { it.songCount }.take(4)
-    private val phaseGardenSongs = SampleLibrary.album("phase-garden").songs.map { it.toSong() }
 
     /** A song from each of four albums, for a playlist's or genre's mosaic. */
     private fun covers(vararg albums: String): List<Song> = albums.map { SampleLibrary.album(it).songs.first().toSong() }
-
-    /** Paused partway into Phase Garden: the view model still offers it, and Home leaves it to the mini player (#646). */
-    val resume = ResumeQueue(song = phaseGardenSongs.first(), songs = phaseGardenSongs, timeLeftMs = 134_000, playing = false)
 
     val loading = HomeUiState.Loading
 
@@ -71,7 +67,6 @@ object HomeScenarios {
             section(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, HomeItem.AlbumItem(nightBus), HomeItem.AlbumItem(blueHours)),
             genrePicks,
         ),
-        resume = resume,
         covers = mapOf(
             HomeItem.PlaylistItem(roadTrip).key to covers("night-bus-frequencies", "blue-hours", "smoke-rings", "undertow"),
             HomeItem.PlaylistItem(lateNight).key to covers("soft-focus", "slow-bloom", "lantern-hours", "weather-systems"),
@@ -83,7 +78,6 @@ object HomeScenarios {
 
     /** A library that's never been played (cold start): Recently added, Genre picks and Shuffle all. */
     val unplayed = content.copy(
-        resume = null,
         sections = listOf(
             section(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, HomeItem.AlbumItem(nightBus), HomeItem.AlbumItem(blueHours), HomeItem.AlbumItem(phaseGarden)),
             genrePicks,

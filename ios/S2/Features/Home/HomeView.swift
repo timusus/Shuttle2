@@ -1,8 +1,8 @@
 import Shared
 import SwiftUI
 
-/// Home (#587, polished in #624, sections from #633): a card to resume the queue, then the suggestion sections from
-/// the shared `HomeViewModel`. Jump Back In is a compact grid; the time of day, On Repeat, Rediscover, Recently Added
+/// Home (#587, polished in #624, sections from #633): the suggestion sections from the shared `HomeViewModel`, with
+/// no resume card: the mini player is that (#646). Jump Back In is a compact grid; the time of day, On Repeat, Rediscover, Recently Added
 /// and Genre Picks are shelves. A tap opens the album, artist or playlist (zooming from the tile on iOS 18+), or
 /// shuffles a Genre Picks tile; every tile's context menu and VoiceOver actions play, shuffle, queue or open it
 /// through the shared `MediaAction`s. Before anything has been played (cold start) Home offers Shuffle All and says it
@@ -21,10 +21,6 @@ struct HomeView: View {
                 importStatus: ImportStatus(importState),
                 onShuffleAll: {
                     if let action = models.home.shuffleAll() { models.actions.dispatch(action: action) }
-                },
-                onTogglePlayback: models.home.onTogglePlayback,
-                onShuffleQueue: {
-                    if let action = models.home.shuffleQueue() { models.actions.dispatch(action: action) }
                 },
                 onOpen: { item in navigator.open(Self.route(item)) },
                 onAction: { models.actions.dispatch(action: $0) }
@@ -66,14 +62,12 @@ final class HomeModels: ViewModelGroup {
 /// Home from a `HomeUiState`. `showWhatsNew`/`HomeEvent.AnalyticsNowOn` have no iOS surface yet (no
 /// changelog or analytics-consent screen until phase 7, #589), so their events are consumed and dropped.
 ///
-/// A `ScrollView` of a `LazyVStack`, not a `List`: the grid, the shelves and the resume card are full-bleed, and the
+/// A `ScrollView` of a `LazyVStack`, not a `List`: the grid and the shelves are full-bleed, and the
 /// content is capped at `AdaptiveLayout.contentMaxWidth` and centred on an iPad.
 struct HomeContent: View {
     let state: HomeUiState
     var importStatus: ImportStatus = .idle
     var onShuffleAll: () -> Void = {}
-    var onTogglePlayback: () -> Void = {}
-    var onShuffleQueue: () -> Void = {}
     /// Opens the item's screen.
     var onOpen: (HomeItem) -> Void = { _ in }
     /// Dispatches a play or queue action.
@@ -98,10 +92,6 @@ struct HomeContent: View {
             let coldStart = content.sections.contains { $0.id == .shuffleAll }
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: Spacing.large) {
-                    if let resume = content.resume {
-                        ResumeCard(resume: resume, onTogglePlayback: onTogglePlayback, onShuffleQueue: onShuffleQueue)
-                            .padding(.horizontal, inset)
-                    }
                     // Cold start's Shuffle All leads, above the shelves: the one sure thing to do with a new library.
                     if coldStart {
                         ColdStartCard(onShuffleAll: onShuffleAll)
@@ -238,98 +228,6 @@ private struct ColdStartCard: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("home.coldStartHint")
         }
-    }
-}
-
-/// The queue to pick up from, as a full-width card (Android's `ResumeHero`): its song's cover over a blurred wash
-/// of the same cover and its tint, a "Continue" eyebrow, the title, artist and time left, then Play/Pause and
-/// Shuffle Queue as capsules in the cover's tint.
-private struct ResumeCard: View {
-    let resume: ResumeQueue
-    let onTogglePlayback: () -> Void
-    let onShuffleQueue: () -> Void
-
-    var body: some View {
-        ResumeCardBody(resume: resume, onTogglePlayback: onTogglePlayback, onShuffleQueue: onShuffleQueue)
-            .artworkTint(from: .song(resume.song))
-    }
-}
-
-private struct ResumeCardBody: View {
-    let resume: ResumeQueue
-    let onTogglePlayback: () -> Void
-    let onShuffleQueue: () -> Void
-
-    @Environment(\.artworkTint) private var tint
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
-    var body: some View {
-        let shape = RoundedRectangle(cornerRadius: ArtworkCorner.hero, style: .continuous)
-        // At the accessibility sizes the text takes the card's full width under the cover, rather than a sliver beside it.
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.medium))
-            : AnyLayout(HStackLayout(alignment: .center, spacing: Spacing.medium))
-        VStack(alignment: .leading, spacing: Spacing.medium) {
-            layout {
-                RemoteArtwork(.song(resume.song), points: ArtworkSize.resumeCard)
-                    .artworkTile(ArtworkSize.resumeCard, cornerRadius: ArtworkCorner.tile)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: Spacing.xsmall) {
-                    Text(resume.playing ? "Now Playing" : "Continue")
-                        .font(.s2Eyebrow)
-                        .textCase(.uppercase)
-                        .foregroundStyle(tint)
-                    Text(resume.song.name ?? "Unknown")
-                        .font(.s2Headline)
-                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
-                    Text(resume.song.friendlyArtistName ?? resume.song.albumArtist ?? "Unknown")
-                        .font(.subheadline)
-                        .foregroundStyle(.s2SecondaryText)
-                        .lineLimit(1)
-                    Text(timeLeft)
-                        .font(.s2Time)
-                        .foregroundStyle(.s2SecondaryText)
-                }
-                .accessibilityElement(children: .combine)
-                Spacer(minLength: 0)
-            }
-            HeroActions(
-                playTitle: resume.playing ? "Pause" : "Play",
-                playSymbol: resume.playing ? "pause.fill" : "play.fill",
-                onPlay: onTogglePlayback,
-                onShuffle: onShuffleQueue
-            )
-            .tint(tint)
-        }
-        .padding(Spacing.medium)
-        .background {
-            ZStack {
-                Color(.secondarySystemBackground)
-                RemoteArtwork(.song(resume.song), points: ArtworkSize.resumeCard)
-                    .blur(radius: Spacing.xlarge)
-                    .scaleEffect(1.4)
-                    .opacity(0.55)
-                    .accessibilityHidden(true)
-                LinearGradient(
-                    colors: [tint.opacity(0.18), Color(.systemBackground).opacity(0.55)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            }
-        }
-        // The card, not the backdrop: the blurred cover lays out wider than the card and would spill past its edges.
-        .clipShape(shape)
-        .overlay { shape.strokeBorder(ArtworkHairline.color, lineWidth: ArtworkHairline.width) }
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("home.resume")
-    }
-
-    private var timeLeft: String {
-        let seconds = Int(resume.timeLeftMs / 1000)
-        if seconds >= 3600 {
-            return String(format: "%d:%02d:%02d left", seconds / 3600, seconds / 60 % 60, seconds % 60)
-        }
-        return String(format: "%d:%02d left", seconds / 60, seconds % 60)
     }
 }
 
