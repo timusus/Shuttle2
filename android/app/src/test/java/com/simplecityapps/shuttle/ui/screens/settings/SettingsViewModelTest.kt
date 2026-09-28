@@ -14,8 +14,10 @@ import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
+import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackupManager
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import io.mockk.mockk
 import java.util.Date
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -34,6 +36,7 @@ class SettingsViewModelTest {
 
     private val prefs = InMemoryKeyValueStore()
     private val effects = FakeSettingsEffects()
+    private val backupManager = mockk<LibraryBackupManager>(relaxed = true)
     private lateinit var store: SettingsStore
 
     @Before
@@ -41,7 +44,7 @@ class SettingsViewModelTest {
         store = SettingsStore(prefs)
     }
 
-    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects)
+    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), effects, backupManager)
 
     private inline fun <reified T : SettingItem> item(key: String): T = SettingsCatalog.items.filterIsInstance<T>().first { it.key == key }
 
