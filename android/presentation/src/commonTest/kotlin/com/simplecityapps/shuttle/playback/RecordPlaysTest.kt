@@ -83,54 +83,50 @@ class RecordPlaysTest {
     }
 
     @Test
-    fun `a track end writes a completed play, from when the song became current, in the queue's context`() {
+    fun `a play is written as it reaches half the song - before the next song starts - in the queue's context`() {
         queueOperations.playContext = album
         recordPlays.start()
         setCurrent(uid = 1, first)
         val startedAt = now
         now = startedAt + 5.minutes
-        play(0, 1_000, 2_000, 3_000)
-        // The queue's context changing later doesn't change the play's.
-        queueOperations.playContext = PlayContext.None
 
-        playbackOperations.trackEndedFlow.tryEmit(first)
-        setCurrent(uid = 2, second)
-        dispatcher.scheduler.advanceTimeBy(RecordPlays.TRACK_END_GRACE_MS * 2)
+        playTo(90_000)
+        playHistory.plays shouldBe emptyList()
+        playTo(100_000, from = 90_000)
 
-        playHistory.plays shouldBe listOf(FakePlayHistoryRepository.Play(1, startedAt, 3_000, true, album))
+        playHistory.plays shouldBe listOf(FakePlayHistoryRepository.Play(1, startedAt, 100_000, false, album))
     }
 
     @Test
-    fun `a track end after the queue has moved on still completes the song, rather than writing it unfinished`() {
+    fun `its track end marks the play completed - listened to in all - writing nothing more`() {
         recordPlays.start()
         setCurrent(uid = 1, first)
-        play(0, 10_000, 20_000, 30_000, 40_000)
+        playTo(200_000)
+
+        playbackOperations.trackEndedFlow.tryEmit(first)
+        setCurrent(uid = 2, second)
+        dispatcher.scheduler.advanceTimeBy(RecordPlays.TRACK_END_GRACE_MS * 2)
+
+        playHistory.plays.map { Triple(it.songId, it.listenedMs, it.completed) } shouldBe listOf(Triple(1L, 200_000L, true))
+    }
+
+    @Test
+    fun `a track end after the queue has moved on still completes the play`() {
+        recordPlays.start()
+        setCurrent(uid = 1, first)
+        playTo(200_000)
 
         setCurrent(uid = 2, second)
         playbackOperations.trackEndedFlow.tryEmit(first)
-        dispatcher.scheduler.advanceTimeBy(RecordPlays.TRACK_END_GRACE_MS * 2)
 
         playHistory.plays.map { it.songId to it.completed } shouldBe listOf(1L to true)
     }
 
     @Test
-    fun `moving off a song after 30 seconds writes a play that isn't completed, once the grace period passes`() {
+    fun `a skip before the threshold writes nothing`() {
         recordPlays.start()
         setCurrent(uid = 1, first)
-        play(0, 10_000, 20_000, 30_000, 31_000)
-
-        setCurrent(uid = 2, second)
-        playHistory.plays shouldBe emptyList()
-        dispatcher.scheduler.advanceTimeBy(RecordPlays.TRACK_END_GRACE_MS + 1)
-
-        playHistory.plays.map { Triple(it.songId, it.listenedMs, it.completed) } shouldBe listOf(Triple(1L, 31_000L, false))
-    }
-
-    @Test
-    fun `moving off a song before 30 seconds writes nothing`() {
-        recordPlays.start()
-        setCurrent(uid = 1, first)
-        play(0, 10_000, 20_000, 29_000)
+        playTo(90_000)
 
         setCurrent(uid = 2, second)
         dispatcher.scheduler.advanceTimeBy(RecordPlays.TRACK_END_GRACE_MS * 2)
@@ -139,30 +135,94 @@ class RecordPlaysTest {
     }
 
     @Test
-    fun `seeks and progress while paused aren't listening`() {
+    fun `a seek past the threshold writes the play once - and a seek isn't listening`() {
         recordPlays.start()
         setCurrent(uid = 1, first)
-        // A seek forward to 150s, then back to 20s, around 20s of playing.
-        play(0, 10_000, 150_000, 20_000, 30_000)
+        play(0, 10_000, 150_000, 160_000)
+        // Back before the threshold and past it again: the same play.
+        play(20_000, 30_000, 120_000, 130_000)
+
+        playHistory.plays.map { it.songId to it.listenedMs } shouldBe listOf(1L to 10_000L)
+    }
+
+    @Test
+    fun `reaching the threshold while paused doesn't count until playing - and a song resumed past it isn't counted again`() {
+        recordPlays.start()
+        setCurrent(uid = 1, first)
         playbackOperations.playbackStateFlow.value = PlaybackState.Paused
-        playbackOperations.progressFlow.value = PlaybackProgress(35_000, 200_000)
-
-        setCurrent(uid = 2, second)
-        dispatcher.scheduler.advanceTimeBy(RecordPlays.TRACK_END_GRACE_MS * 2)
-
+        playbackOperations.progressFlow.value = PlaybackProgress(10_000, 200_000)
+        playbackOperations.progressFlow.value = PlaybackProgress(150_000, 200_000)
         playHistory.plays shouldBe emptyList()
+        play(151_000)
+        playHistory.plays.size shouldBe 1
+
+        // After a restart, say: the next song picks up where it was left, past its threshold.
+        setCurrent(uid = 2, second)
+        play(150_000, 160_000, 200_000)
+
+        playHistory.plays.map { it.songId } shouldBe listOf(1L)
     }
 
     @Test
     fun `each time a song repeats is a play`() {
         recordPlays.start()
         setCurrent(uid = 1, first)
-        play(0, 5_000)
+        playTo(200_000)
         playbackOperations.trackEndedFlow.tryEmit(first)
-        play(0, 6_000)
+        playTo(200_000)
         playbackOperations.trackEndedFlow.tryEmit(first)
+        playTo(120_000)
 
-        playHistory.plays.map { it.listenedMs to it.completed } shouldBe listOf(5_000L to true, 6_000L to true)
+        playHistory.plays.map { it.listenedMs to it.completed } shouldBe listOf(200_000L to true, 200_000L to true, 100_000L to false)
+    }
+
+    @Test
+    fun `the last song in the queue is written - then completed when it plays out`() {
+        recordPlays.start()
+        setCurrent(uid = 1, first)
+        playTo(120_000)
+
+        playHistory.plays.map { it.completed } shouldBe listOf(false)
+
+        playTo(200_000, from = 120_000)
+        playbackOperations.trackEndedFlow.tryEmit(first)
+        playbackOperations.playbackStateFlow.value = PlaybackState.Paused
+
+        playHistory.plays.map { it.completed } shouldBe listOf(true)
+    }
+
+    @Test
+    fun `each play has the context its queue had when it became current`() {
+        queueOperations.playContext = album
+        recordPlays.start()
+        setCurrent(uid = 1, first)
+        // The queue's context changing later doesn't change the play's.
+        queueOperations.playContext = PlayContext.None
+        playTo(100_000)
+        val playlist = PlayContext.Playlist(7)
+        queueOperations.playContext = playlist
+        setCurrent(uid = 2, second)
+        playTo(100_000)
+
+        playHistory.plays.map { it.songId to it.context } shouldBe listOf(1L to album, 2L to playlist)
+    }
+
+    @Test
+    fun `a long song counts at 4 minutes and one under 30 seconds never counts`() {
+        val long = createSong(id = 3, duration = 600_000)
+        val short = createSong(id = 4, duration = 29_000)
+        recordPlays.start()
+        setCurrent(uid = 1, long)
+        playTo(230_000, durationMs = 600_000)
+        playHistory.plays shouldBe emptyList()
+        playTo(240_000, from = 230_000, durationMs = 600_000)
+        playHistory.plays.map { it.songId } shouldBe listOf(3L)
+
+        setCurrent(uid = 2, short)
+        playTo(29_000, step = 1_000, durationMs = 29_000)
+        playbackOperations.trackEndedFlow.tryEmit(short)
+
+        playHistory.plays.map { it.songId } shouldBe listOf(3L)
     }
 
     private fun setCurrent(
@@ -176,5 +236,16 @@ class RecordPlaysTest {
     private fun play(vararg positions: Int) {
         playbackOperations.playbackStateFlow.value = PlaybackState.Playing
         positions.forEach { position -> playbackOperations.progressFlow.value = PlaybackProgress(position, 200_000) }
+    }
+
+    /** Plays from [from] to [to] in ticks of [step]. */
+    private fun playTo(
+        to: Int,
+        from: Int = 0,
+        step: Int = 10_000,
+        durationMs: Int = 200_000
+    ) {
+        playbackOperations.playbackStateFlow.value = PlaybackState.Playing
+        (from..to step step).forEach { position -> playbackOperations.progressFlow.value = PlaybackProgress(position, durationMs) }
     }
 }

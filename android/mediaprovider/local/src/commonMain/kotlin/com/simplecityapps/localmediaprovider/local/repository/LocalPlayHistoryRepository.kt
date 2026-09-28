@@ -42,11 +42,11 @@ class LocalPlayHistoryRepository(
         listenedMs: Long,
         completed: Boolean,
         context: PlayContext
-    ) {
-        if (!song.isInLibrary) return
+    ): Long? {
+        if (!song.isInLibrary) return null
         val playedFrom = current(context)
         val local = startedAt.toLocalDateTime(timeZone())
-        playEventDao.insert(
+        val id = playEventDao.insert(
             PlayEventData(
                 mediaProvider = song.mediaProvider,
                 songPath = song.path,
@@ -60,6 +60,14 @@ class LocalPlayHistoryRepository(
             )
         )
         pruneIfDue()
+        return id
+    }
+
+    override suspend fun completePlay(
+        id: Long,
+        listenedMs: Long
+    ) {
+        playEventDao.complete(id, listenedMs)
     }
 
     /**

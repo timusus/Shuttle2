@@ -71,6 +71,18 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
+    fun `a play written at its threshold counts as played through once completed`() = runTest {
+        val song = insertSong("Blue", "Joni Mitchell")
+        val id = repository.recordPlay(song, now - 1.hours, 100_000, completed = false, albumContext)!!
+        repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 10) shouldBe emptyList()
+
+        repository.completePlay(id, 200_000)
+
+        repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 10).single().completions shouldBe 1
+        eventDao.count() shouldBe 1
+    }
+
+    @Test
     fun `recent contexts are distinct, most recent first, without none, and limited`() = runTest {
         val song = insertSong("Blue", "Joni Mitchell")
         repository.recordPlay(song, now - 3.hours, 200_000, true, albumContext)

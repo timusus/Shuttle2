@@ -13,7 +13,7 @@ import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** Keeps the plays recorded; the queries answer with what the test sets. */
+/** Keeps the plays recorded, each one's id its index; the queries answer with what the test sets. */
 class FakePlayHistoryRepository : PlayHistoryRepository {
     data class Play(
         val songId: Long,
@@ -41,8 +41,16 @@ class FakePlayHistoryRepository : PlayHistoryRepository {
         listenedMs: Long,
         completed: Boolean,
         context: PlayContext
-    ) {
+    ): Long {
         plays += Play(song.id, startedAt, listenedMs, completed, context)
+        return plays.lastIndex.toLong()
+    }
+
+    override suspend fun completePlay(
+        id: Long,
+        listenedMs: Long
+    ) {
+        plays[id.toInt()] = plays[id.toInt()].copy(listenedMs = listenedMs, completed = true)
     }
 
     override suspend fun recentContexts(limit: Int): List<RecentContext> = recentContexts.take(limit)

@@ -13,6 +13,12 @@ interface PlayEventDao {
     @Insert
     suspend fun insert(event: PlayEventData): Long
 
+    @Query("UPDATE play_events SET completed = 1, listenedMs = :listenedMs WHERE id = :id")
+    suspend fun complete(
+        id: Long,
+        listenedMs: Long
+    )
+
     @Query(
         "SELECT contextType, contextId, MAX(startedAt) AS lastPlayedAt FROM play_events " +
             "WHERE contextType != 'none' " +

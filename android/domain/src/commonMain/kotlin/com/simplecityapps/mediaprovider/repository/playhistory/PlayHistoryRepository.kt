@@ -9,14 +9,15 @@ import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 /**
- * The listening history (#633): one event per song played through, or listened to for at least
- * [MIN_LISTENED_MS] before playback moved off it, with the [PlayContext] its queue was started from. Home's suggestions
- * are aggregates over it. It keeps [RETENTION_DAYS] of history and at most [MAX_EVENTS] events.
+ * The listening history (#633): one event per play of a song that reached its [listenThresholdMs] (#651), marked
+ * completed if it then played through, with the [PlayContext] its queue was started from. Home's suggestions are
+ * aggregates over it. It keeps [RETENTION_DAYS] of history and at most [MAX_EVENTS] events.
  */
 interface PlayHistoryRepository {
     /**
      * Records that [song] started playing at [startedAt] and was listened to for [listenedMs], to its end if [completed],
-     * from a queue started from [context]. The hour and weekday are the device's local ones at [startedAt].
+     * from a queue started from [context]. The hour and weekday are the device's local ones at [startedAt]. Returns the
+     * event's id, for [completePlay], or null when nothing was recorded (a song not in the library).
      */
     suspend fun recordPlay(
         song: Song,
@@ -24,6 +25,12 @@ interface PlayHistoryRepository {
         listenedMs: Long,
         completed: Boolean,
         context: PlayContext
+    ): Long?
+
+    /** Marks the play [id] ([recordPlay]'s) as played through, listened to for [listenedMs] in all. */
+    suspend fun completePlay(
+        id: Long,
+        listenedMs: Long
     )
 
     /** The last [limit] distinct contexts played from, most recent first, leaving out [PlayContext.None]. */
@@ -76,8 +83,18 @@ interface PlayHistoryRepository {
     suspend fun clearHistory()
 
     companion object {
-        /** How long playback has to stay on a song for a play that doesn't reach its end to count. */
-        const val MIN_LISTENED_MS = 30_000L
+        /** The shortest song whose plays are recorded. */
+        const val MIN_TRACK_MS = 30_000L
+
+        /** The latest point in a song at which a play of it counts. */
+        const val MAX_THRESHOLD_MS = 240_000L
+
+        /**
+         * How far into a song of [durationMs] its playback has to reach for the play to count, the scrobbling convention:
+         * half its length or [MAX_THRESHOLD_MS], whichever comes first. Null for a song shorter than [MIN_TRACK_MS] (or
+         * of unknown length), whose plays aren't recorded.
+         */
+        fun listenThresholdMs(durationMs: Long): Long? = if (durationMs < MIN_TRACK_MS) null else minOf(durationMs / 2, MAX_THRESHOLD_MS)
 
         const val RETENTION_DAYS = 365
         const val MAX_EVENTS = 50_000
