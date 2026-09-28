@@ -5,6 +5,7 @@ import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.queue.QueueItem
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,7 +71,11 @@ class FakePlaybackOperations : PlaybackOperations {
         playedNext.addAll(songs)
     }
 
-    override suspend fun shuffle(songs: List<Song>, completion: (Result<Any?>) -> Unit) {
+    var lastShuffleContext: PlayContext? = null
+        private set
+
+    override suspend fun shuffle(songs: List<Song>, context: PlayContext, completion: (Result<Any?>) -> Unit) {
+        lastShuffleContext = context
         shuffled.addAll(songs)
         completion(shuffleResult)
     }

@@ -5,6 +5,7 @@ import com.simplecityapps.playback.equalizer.KeyValueEqualizerPresetStore
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.persistence.KeyValueStore
 import com.simplecityapps.shuttle.persistence.putBoolean
 import com.simplecityapps.shuttle.persistence.putInt
@@ -68,6 +69,14 @@ class PlaybackPreferenceManager(
             val playbackPosition = store.getInt("playback_position", -1)
             return if (playbackPosition == -1) null else playbackPosition
         }
+
+    /** What the saved queue was started from (#633); [PlayContext.None] when nothing is saved. */
+    var playContext: PlayContext
+        set(value) {
+            store.putString("play_context_type", value.type)
+            store.putString("play_context_id", value.id ?: "")
+        }
+        get() = PlayContext.decode(store.getString("play_context_type", null), store.getString("play_context_id", null))
 
     var shuffleMode: ShuffleMode
         set(value) {

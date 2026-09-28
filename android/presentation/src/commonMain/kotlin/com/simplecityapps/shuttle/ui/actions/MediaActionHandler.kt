@@ -86,7 +86,7 @@ class MediaActionHandler @Inject constructor(
     private suspend fun play(action: MediaAction.Play): MediaActionResult {
         val songs = resolveSongs(action.selection)
         if (songs.isEmpty()) return Message(MediaActionMessage.NoSongs)
-        return when (val result = playSongs(songs, action.position.coerceIn(0, songs.lastIndex))) {
+        return when (val result = playSongs(songs, action.position.coerceIn(0, songs.lastIndex), action.context)) {
             is PlaySongs.Result.Success -> MediaActionResult.None
             is PlaySongs.Result.Failure -> Message(MediaActionMessage.PlaybackFailed(result.message))
         }
@@ -95,7 +95,7 @@ class MediaActionHandler @Inject constructor(
     private suspend fun shuffle(action: MediaAction.Shuffle): MediaActionResult {
         val songs = resolveSongs(action.selection)
         if (songs.isEmpty()) return Message(MediaActionMessage.NoSongs)
-        return when (val result = shuffleSongs(songs)) {
+        return when (val result = shuffleSongs(songs, action.context)) {
             is ShuffleSongs.Result.Success -> MediaActionResult.None
             is ShuffleSongs.Result.Failure -> Message(MediaActionMessage.PlaybackFailed(result.message))
         }

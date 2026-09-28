@@ -1,5 +1,6 @@
 package com.simplecityapps.playback.queue
 
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.StateFlow
 
@@ -15,7 +16,18 @@ interface QueueOperations {
     val shuffleModeFlow: StateFlow<ShuffleMode>
     val repeatModeFlow: StateFlow<RepeatMode>
 
-    suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>? = null, position: Int = 0): Boolean
+    /**
+     * What the queue was started from (#633): the [context] of the last [setQueue], saved and restored with the queue.
+     * [PlayContext.None] once the queue is cleared, or set without one.
+     */
+    val playContext: PlayContext
+
+    suspend fun setQueue(
+        songs: List<Song>,
+        shuffleSongs: List<Song>? = null,
+        position: Int = 0,
+        context: PlayContext = PlayContext.None
+    ): Boolean
 
     fun getQueue(): List<QueueItem>
     fun getQueue(shuffleMode: ShuffleMode): List<QueueItem>

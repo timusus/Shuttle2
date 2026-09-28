@@ -3,9 +3,11 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.songs.comparator
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import dev.zacsweers.metro.AppScope
@@ -27,7 +29,10 @@ data class SmartPlaylistDetailUiState(
     val songs: List<Song> = emptyList(),
     val currentSong: Song? = null,
     val loading: Boolean = true,
-)
+) {
+    /** What playing this screen's songs starts the queue from (#633). */
+    val playContext: PlayContext get() = smartPlaylist?.playContext ?: PlayContext.None
+}
 
 /** One of the built-in smart playlists, resolved from its [SmartPlaylistId] slug; its songs in the playlist's own sort. */
 class SmartPlaylistDetailViewModel @AssistedInject constructor(

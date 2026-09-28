@@ -10,6 +10,7 @@ import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult.Message
 import io.kotest.matchers.shouldBe
@@ -43,6 +44,27 @@ class MediaActionHandlerTest {
 
         queueOperations.lastSetQueue shouldBe listOf(song, other)
         queueOperations.lastSetQueuePosition shouldBe 1
+    }
+
+    @Test
+    fun `play and shuffle start the queue from the action's context`() = runTest {
+        val genre = PlayContext.Genre("Ambient")
+
+        handler.handle(MediaAction.Play(songs, 0, genre))
+        queueOperations.playContext shouldBe genre
+
+        handler.handle(MediaAction.Shuffle(songs, genre))
+        playbackOperations.lastShuffleContext shouldBe genre
+    }
+
+    @Test
+    fun `an action's context is its selection's, when that's a single album, artist, genre or playlist`() {
+        val album = createAlbum(name = "Blue", albumArtist = "Joni Mitchell")
+
+        MediaAction.Play(MediaSelection.Albums(album)).context shouldBe PlayContext.Album(album.groupKey!!)
+        MediaAction.Shuffle(MediaSelection.Playlists(createPlaylist(id = 3))).context shouldBe PlayContext.Playlist(3)
+        MediaAction.Play(MediaSelection.Albums(listOf(album, createAlbum(name = "Hejira")))).context shouldBe PlayContext.None
+        MediaAction.Play(songs, 1).context shouldBe PlayContext.None
     }
 
     @Test

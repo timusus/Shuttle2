@@ -14,6 +14,7 @@ import com.simplecityapps.playback.spec.PlaybackHarness.Companion.longSong
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.song
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unreadableSong
 import com.simplecityapps.playback.spec.PlaybackHarness.Companion.unresolvableSong
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.persistence.KeyValueStore
@@ -404,6 +405,35 @@ class QueueStoreTest {
         harness.queueOperations.repeatModeFlow.value shouldBe RepeatMode.All
         harness.runUntil { harness.playbackOperations.playbackStateFlow.value == PlaybackState.Paused }
         harness.playbackOperations.getProgress() shouldBe 30_000
+    }
+
+    @Test
+    fun `what the queue was started from is saved with it, and cleared with it`() {
+        val harness = harness()
+        val genre = PlayContext.Genre("Jazz")
+
+        harness.run { harness.queueOperations.setQueue(library.take(2), context = genre) }
+        saved.playContext shouldBe genre
+
+        harness.setQueue(library.take(3))
+        saved.playContext shouldBe PlayContext.None
+
+        harness.run { harness.queueOperations.setQueue(library.take(2), context = genre) }
+        harness.run { harness.queueOperations.clear() }
+        harness.idle()
+        saved.playContext shouldBe PlayContext.None
+    }
+
+    @Test
+    fun `the saved queue is restored with what it was started from`() {
+        saved(queueIds = "1,2,3", queuePosition = 1, playbackPosition = 30_000)
+        saved.playContext = PlayContext.Playlist(9)
+        val harness = harness()
+
+        harness.restore()
+
+        harness.currentIds() shouldBe listOf(1L, 2L, 3L)
+        harness.queueOperations.playContext shouldBe PlayContext.Playlist(9)
     }
 
     @Test

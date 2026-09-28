@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.actions
 
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
@@ -47,10 +48,27 @@ enum class MediaActionType {
 sealed interface MediaAction {
     val selection: MediaSelection
 
-    /** Replaces the queue with the selection's songs and plays from [position]. */
-    data class Play(override val selection: MediaSelection, val position: Int = 0) : MediaAction
+    /**
+     * Replaces the queue with the selection's songs and plays from [position]. [context] is what the queue is started
+     * from (#633): the selection's own ([MediaSelection.playContext]) unless the screen says otherwise, as a detail
+     * screen playing its songs does.
+     */
+    data class Play(
+        override val selection: MediaSelection,
+        val position: Int = 0,
+        val context: PlayContext = selection.playContext
+    ) : MediaAction {
+        // Swift sees no default arguments.
+        constructor(selection: MediaSelection, position: Int) : this(selection, position, selection.playContext)
+    }
 
-    data class Shuffle(override val selection: MediaSelection) : MediaAction
+    /** Replaces the queue with the selection's songs, shuffled. [context] as for [Play]. */
+    data class Shuffle(
+        override val selection: MediaSelection,
+        val context: PlayContext = selection.playContext
+    ) : MediaAction {
+        constructor(selection: MediaSelection) : this(selection, selection.playContext)
+    }
 
     data class PlayNext(override val selection: MediaSelection) : MediaAction
 

@@ -8,6 +8,7 @@ import com.simplecityapps.playback.persistence.resumePosition
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.query.SongQuery
@@ -126,6 +127,19 @@ class IosPlaybackStoreTest {
         first.manager.playbackPosition shouldBe 1_200
         first.controller.seekTo(90_000)
         first.manager.playbackPosition shouldBe 90_000
+    }
+
+    @Test
+    fun `what the queue was started from is restored with it`() = runTest {
+        val first = launch()
+        first.controller.queueOperations.setQueue(listOf(a, b), null, 0, PlayContext.Genre("Jazz"))
+        first.manager.playContext shouldBe PlayContext.Genre("Jazz")
+
+        val second = launch()
+
+        second.controller.queueOperations.playContext shouldBe PlayContext.Genre("Jazz")
+        second.controller.queueOperations.clear()
+        second.manager.playContext shouldBe PlayContext.None
     }
 
     @Test

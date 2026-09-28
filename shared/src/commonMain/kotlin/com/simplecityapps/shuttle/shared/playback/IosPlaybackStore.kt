@@ -83,7 +83,7 @@ class IosPlaybackStore(
         val saved = queuePosition?.let { position -> readSavedQueue(shuffleMode, position) }
 
         if (saved != null) {
-            if (!controller.restoreQueue(initialContentVersion, saved.songs, saved.shuffleSongs, saved.position, shuffleMode)) return
+            if (!controller.restoreQueue(initialContentVersion, saved.songs, saved.shuffleSongs, saved.position, shuffleMode, playbackPreferenceManager.playContext)) return
         } else if (queueOperations.queueStateFlow.value.contentVersion != initialContentVersion) {
             return
         }
@@ -140,6 +140,8 @@ class IosPlaybackStore(
                 songs = queueOperations.getQueue(ShuffleMode.Off).map { item -> item.song },
                 shuffleSongs = queueOperations.getQueue(ShuffleMode.On).map { item -> item.song }
             )
+            // The queue's context changes only with the queue.
+            playbackPreferenceManager.playContext = queueOperations.playContext
         }
         writer.savePosition(current.items.map { item -> item.song }, current.currentPosition)
         // Another song became current (not the first of a queue set on an empty one, whose position is a restore's

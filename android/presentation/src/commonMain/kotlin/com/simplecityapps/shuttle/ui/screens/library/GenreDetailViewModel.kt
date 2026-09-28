@@ -6,7 +6,9 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Genre
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
@@ -35,7 +37,10 @@ data class GenreDetailUiState(
     val songs: List<Song> = emptyList(),
     val currentSong: Song? = null,
     val loading: Boolean = true,
-)
+) {
+    /** What playing this screen's songs starts the queue from (#633). */
+    val playContext: PlayContext get() = genre?.playContext ?: PlayContext.None
+}
 
 /** One genre's songs and the albums they come from, loaded by the genre's name. */
 @OptIn(ExperimentalCoroutinesApi::class)

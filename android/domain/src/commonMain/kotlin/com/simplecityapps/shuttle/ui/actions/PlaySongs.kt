@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.actions
 
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
 import kotlin.coroutines.resume
@@ -17,8 +18,9 @@ class PlaySongs(
         data class Failure(val message: String?) : Result
     }
 
-    suspend operator fun invoke(songs: List<Song>, position: Int = 0): Result {
-        if (!queueOperations.setQueue(songs, position = position)) {
+    /** Plays [songs] from [position], as a queue started from [context]. */
+    suspend operator fun invoke(songs: List<Song>, position: Int = 0, context: PlayContext = PlayContext.None): Result {
+        if (!queueOperations.setQueue(songs, position = position, context = context)) {
             return Result.Failure(null)
         }
         return suspendCancellableCoroutine { cont ->

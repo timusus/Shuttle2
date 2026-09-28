@@ -5,6 +5,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -14,6 +15,8 @@ class FakeQueueOperations : QueueOperations {
     override val repeatModeFlow = MutableStateFlow(RepeatMode.Off)
 
     override var hasRestoredQueue: Boolean = false
+
+    override var playContext: PlayContext = PlayContext.None
 
     var setQueueResult: Boolean = true
 
@@ -26,7 +29,8 @@ class FakeQueueOperations : QueueOperations {
 
     var nextItem: QueueItem? = null
 
-    override suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Boolean {
+    override suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int, context: PlayContext): Boolean {
+        playContext = context
         lastSetQueue = songs
         lastSetShuffleQueue = shuffleSongs
         lastSetQueuePosition = position
@@ -56,7 +60,9 @@ class FakeQueueOperations : QueueOperations {
         removedItems += items
     }
     override fun remove(song: Song) {}
-    override fun clear() {}
+    override fun clear() {
+        playContext = PlayContext.None
+    }
     override fun getShuffleMode(): ShuffleMode = shuffleModeFlow.value
     override suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {}
     override suspend fun toggleShuffleMode() {

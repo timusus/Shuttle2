@@ -3,7 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.sorting.ArtistSongComparator
 import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.ui.common.PendingEvent
@@ -31,6 +33,9 @@ data class AlbumArtistDetailUiState(
     /** The newest album's artwork seed, which tints the screen when Colour from artwork is on. */
     val seed: ArtworkSeed = ArtworkSeed.None,
 ) {
+    /** What playing this screen's songs starts the queue from (#633). */
+    val playContext: PlayContext get() = albumArtist?.playContext ?: PlayContext.None
+
     enum class LoadingState { Loading, Ready, Empty }
 
     /** The artist's songs belonging to [album], in track order. */

@@ -4,6 +4,7 @@ import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.ShuffleMode
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.Inject
 
@@ -16,6 +17,8 @@ data class QueueSnapshot(
     val position: Int,
     val seekPositionMs: Int?,
     val playing: Boolean,
+    /** What the queue was started from. */
+    val context: PlayContext = PlayContext.None,
 )
 
 /** Clears the queue, returning what it held, or null when it was already empty. */
@@ -32,6 +35,7 @@ class ClearQueue @Inject constructor(
             position = queueOperations.getCurrentPosition() ?: 0,
             seekPositionMs = playbackOperations.getProgress(),
             playing = playbackOperations.playbackState() == PlaybackState.Playing,
+            context = queueOperations.playContext,
         )
         playbackOperations.clearQueue()
         return snapshot
@@ -44,7 +48,7 @@ class RestoreQueue @Inject constructor(
     private val playbackOperations: PlaybackOperations,
 ) {
     suspend operator fun invoke(snapshot: QueueSnapshot) {
-        if (!queueOperations.setQueue(snapshot.songs, snapshot.shuffleSongs, snapshot.position)) return
+        if (!queueOperations.setQueue(snapshot.songs, snapshot.shuffleSongs, snapshot.position, snapshot.context)) return
         // A restored song that can't load stays where it was left, rather than the queue moving on (RS-56).
         playbackOperations.load(snapshot.seekPositionMs, skipUnloadable = false) { result ->
             if (snapshot.playing && result.isSuccess) playbackOperations.play()

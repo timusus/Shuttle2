@@ -14,6 +14,7 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.queueEntryOrNull
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.settings.Preference
 import kotlinx.coroutines.CoroutineScope
@@ -379,10 +380,11 @@ class PlaybackFacade(
 
     override suspend fun shuffle(
         songs: List<Song>,
+        context: PlayContext,
         completion: (Result<Any?>) -> Unit
     ) = withContext(Dispatchers.Main.immediate) {
         queueOperations.setShuffleMode(ShuffleMode.On, reshuffle = false)
-        queueOperations.setQueue(songs, songs.shuffled(), 0)
+        queueOperations.setQueue(songs, songs.shuffled(), 0, context)
         load(0, completion = completion)
     }
 

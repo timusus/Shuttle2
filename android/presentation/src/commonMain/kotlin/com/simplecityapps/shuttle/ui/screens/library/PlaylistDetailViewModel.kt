@@ -3,9 +3,11 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
@@ -52,6 +54,9 @@ data class PlaylistDetailUiState(
     val canReorder: Boolean get() = playlist != null && playlist.sortOrder == PlaylistSongSortOrder.Position && !playlist.sortDescending
 
     val selectedEntries: List<PlaylistSong> get() = songs.filter { it.id in selectedIds }
+
+    /** What playing this screen's songs starts the queue from (#633). */
+    val playContext: PlayContext get() = playlist?.playContext ?: PlayContext.None
 }
 
 sealed interface PlaylistDetailEvent {

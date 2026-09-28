@@ -212,7 +212,7 @@ struct EngineAudioPlayerTests {
 
     private func queueDemoSongs(on graph: IosAppGraph, skipUnloadable: Bool) async throws {
         let controller = graph.playerController
-        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0)
+        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
         controller.load(seekPosition: nil, skipUnloadable: skipUnloadable) { _ in }
     }
 

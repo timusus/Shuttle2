@@ -20,10 +20,10 @@ struct PlaylistDetailView: View {
                 state: state,
                 isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
                 onPlay: { index in
-                    models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), position: Int32(index)))
+                    models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), position: Int32(index), context: state.playContext))
                 },
                 onShuffle: {
-                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs.map(\.song))))
+                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), context: state.playContext))
                 },
                 onPlayNext: { song in
                     models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionSongs(song: song)))

@@ -87,7 +87,7 @@ class LargeQueueStartTimingTest {
 
                 Scenario.AddAll -> harness.run { playback.addToQueue(songs) }
 
-                Scenario.ShuffleAll -> harness.run { playback.shuffle(songs, playOnLoad) }
+                Scenario.ShuffleAll -> harness.run { playback.shuffle(songs, completion = playOnLoad) }
             }
             harness.runUntil {
                 queue.getSize() >= songs.size && playback.playbackState() == PlaybackState.Playing

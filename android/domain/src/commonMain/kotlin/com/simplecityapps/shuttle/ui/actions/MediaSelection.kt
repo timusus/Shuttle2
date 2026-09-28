@@ -4,8 +4,10 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.playContext
 
 /**
  * What a [MediaAction] acts on: one or more items of a single media type, from a row's actions or a multi-selection.
@@ -48,6 +50,19 @@ sealed interface MediaSelection {
             is Playlists -> playlists.map { it.mediaProvider }.distinct()
             is Folders, is Queue -> null
         }
+
+    /**
+     * What playing the selection starts a queue from: a single album, artist, genre or playlist is that context; songs,
+     * folders and several items are [PlayContext.None]. A screen playing the songs of one of those passes it itself.
+     */
+    val playContext: PlayContext
+        get() = when (this) {
+            is Albums -> albums.singleOrNull()?.playContext
+            is AlbumArtists -> albumArtists.singleOrNull()?.playContext
+            is Genres -> genres.singleOrNull()?.playContext
+            is Playlists -> playlists.singleOrNull()?.playContext
+            is Songs, is Folders, is Queue -> null
+        } ?: PlayContext.None
 
     /** How many items the selection holds, for messages like "3 albums added to queue"; null for the queue. */
     val size: Int?

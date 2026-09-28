@@ -259,8 +259,8 @@ fun PlaylistDetailDestination(
         PlaylistDetailScreen(
             uiState = uiState,
             onNavigateUp = onNavigateUp,
-            onPlay = { songs, index -> actions.dispatch(MediaAction.Play(MediaSelection.Songs(songs), index)) },
-            onShuffle = { actions.dispatch(MediaAction.Shuffle(MediaSelection.Songs(uiState.songs.map { it.song }))) },
+            onPlay = { songs, index -> actions.dispatch(MediaAction.Play(MediaSelection.Songs(songs), index, uiState.playContext)) },
+            onShuffle = { actions.dispatch(MediaAction.Shuffle(MediaSelection.Songs(uiState.songs.map { it.song }), uiState.playContext)) },
             onPlaylistMore = { playlist ->
                 actions.showActions(
                     MediaActionsTarget(

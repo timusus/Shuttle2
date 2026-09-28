@@ -6,6 +6,7 @@ import com.simplecityapps.playback.engine.PlayerThread
 import com.simplecityapps.playback.engine.S2ShuffleOrder
 import com.simplecityapps.playback.engine.SongUriResolver
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +51,11 @@ class QueueFacade(
 
     override val queueStateFlow: StateFlow<QueueState> = publisher.queueStateFlow
 
+    /** Set on the main thread, with the queue it goes with; read from any thread. */
+    @Volatile
+    override var playContext: PlayContext = PlayContext.None
+        private set
+
     override var hasRestoredQueue: Boolean
         get() = publisher.isRestored
         set(value) {
@@ -60,8 +66,12 @@ class QueueFacade(
     override suspend fun setQueue(
         songs: List<Song>,
         shuffleSongs: List<Song>?,
-        position: Int
-    ): Boolean = builder.buildThenApply({ PreparedQueue.build(songs, shuffleSongs, position) }) { queue -> editor.setQueue(queue) }
+        position: Int,
+        context: PlayContext
+    ): Boolean = builder.buildThenApply({ PreparedQueue.build(songs, shuffleSongs, position) }) { queue ->
+        playContext = context
+        editor.setQueue(queue)
+    }
 
     /** Builds a queue for [setQueueIfContentVersion], off the main thread: a long queue takes a while to build. */
     internal suspend fun buildQueue(
@@ -74,17 +84,20 @@ class QueueFacade(
      * Sets [queue] as [setQueue] does, only if the queue's [QueueState.contentVersion] is still [contentVersion], and
      * sets the shuffle mode to [shuffleMode] with it: the mode says which order [NewQueueOrder.position] is in, so it's
      * the caller's, not whatever the player's mode happens to be. Main thread only, so the check and the set are one
-     * step, which no other change can come between, and a caller can do more in that same step.
+     * step, which no other change can come between, and a caller can do more in that same step. The queue's
+     * [playContext] becomes [context].
      *
      * @return the content version the queue is left at, or null if it had changed and was left alone.
      */
     internal fun setQueueIfContentVersion(
         contentVersion: Long,
         queue: PreparedQueue,
-        shuffleMode: ShuffleMode
+        shuffleMode: ShuffleMode,
+        context: PlayContext = PlayContext.None
     ): Long? {
         check(playerThread.isCurrent) { "setQueueIfContentVersion is main thread only" }
         if (queueStateFlow.value.contentVersion != contentVersion) return null
+        playContext = context
         editor.setQueue(queue, shuffleMode)
         return queueStateFlow.value.contentVersion
     }
@@ -168,7 +181,10 @@ class QueueFacade(
 
     override fun clear() {
         Timber.v("clear()")
-        playerThread.run(editor::clear)
+        playerThread.run {
+            playContext = PlayContext.None
+            editor.clear()
+        }
     }
 
     override fun getShuffleMode(): ShuffleMode = shuffleModeFlow.value

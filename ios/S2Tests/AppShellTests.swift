@@ -27,7 +27,7 @@ struct AppShellTests {
     /// Queues the demo songs and loads the first, so a song is current.
     private func queueASong() async throws {
         let controller = graph.playerController
-        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0)
+        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
         controller.load(seekPosition: nil, skipUnloadable: false) { _ in }
         #expect(await waitUntil { playerBinding.isMiniPlayerVisible })
     }

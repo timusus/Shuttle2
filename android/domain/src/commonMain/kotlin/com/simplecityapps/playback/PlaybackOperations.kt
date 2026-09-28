@@ -1,6 +1,7 @@
 package com.simplecityapps.playback
 
 import com.simplecityapps.playback.queue.QueueItem
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,7 +51,11 @@ interface PlaybackOperations {
     fun skipTo(position: Int)
     suspend fun addToQueue(songs: List<Song>)
     suspend fun playNext(songs: List<Song>)
-    suspend fun shuffle(songs: List<Song>, completion: (Result<Any?>) -> Unit)
+    suspend fun shuffle(
+        songs: List<Song>,
+        context: PlayContext = PlayContext.None,
+        completion: (Result<Any?>) -> Unit
+    )
     fun seekTo(position: Int)
     fun playbackState(): PlaybackState
     fun getProgress(): Int?

@@ -145,8 +145,8 @@ fun AlbumArtistDetailDestination(
         AlbumArtistDetailScreen(
             uiState = uiState,
             onNavigateUp = onNavigateUp,
-            onPlay = { songs, index -> actions.dispatch(MediaAction.Play(MediaSelection.Songs(songs), index)) },
-            onShuffle = { actions.dispatch(MediaAction.Shuffle(MediaSelection.Songs(uiState.songs))) },
+            onPlay = { songs, index -> actions.dispatch(MediaAction.Play(MediaSelection.Songs(songs), index, uiState.playContext)) },
+            onShuffle = { actions.dispatch(MediaAction.Shuffle(MediaSelection.Songs(uiState.songs), uiState.playContext)) },
             onArtistMore = { artist ->
                 actions.showActions(
                     MediaActionsTarget(

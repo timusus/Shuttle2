@@ -79,8 +79,8 @@ fun SmartPlaylistDetailDestination(
         SmartPlaylistDetailScreen(
             uiState = uiState,
             onNavigateUp = onNavigateUp,
-            onPlay = { songs, index -> actions.dispatch(MediaAction.Play(MediaSelection.Songs(songs), index)) },
-            onShuffle = { actions.dispatch(MediaAction.Shuffle(MediaSelection.Songs(uiState.songs))) },
+            onPlay = { songs, index -> actions.dispatch(MediaAction.Play(MediaSelection.Songs(songs), index, uiState.playContext)) },
+            onShuffle = { actions.dispatch(MediaAction.Shuffle(MediaSelection.Songs(uiState.songs), uiState.playContext)) },
             // A smart playlist is a query, not a stored playlist, so its sheet acts on the songs it currently holds.
             onPlaylistMore = { actions.showActions(MediaActionsTarget(title, null, MediaSelection.Songs(uiState.songs), placeholder)) },
             onSongMore = { song ->

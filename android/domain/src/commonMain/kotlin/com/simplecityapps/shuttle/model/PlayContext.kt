@@ -88,3 +88,14 @@ sealed interface PlayContext {
         private fun decodeKeys(id: String): List<String?> = id.split(SEPARATOR).map { part -> if (part.startsWith("=")) part.substring(1) else null }
     }
 }
+
+/** Playing the album; [PlayContext.None] for one without a group key. */
+val Album.playContext: PlayContext get() = groupKey?.let { PlayContext.Album(it) } ?: PlayContext.None
+
+val AlbumArtist.playContext: PlayContext get() = PlayContext.AlbumArtist(groupKey)
+
+val Genre.playContext: PlayContext get() = PlayContext.Genre(name)
+
+val Playlist.playContext: PlayContext get() = PlayContext.Playlist(id)
+
+val SmartPlaylist.playContext: PlayContext get() = PlayContext.SmartPlaylist(id)

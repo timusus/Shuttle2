@@ -14,6 +14,7 @@ import com.simplecityapps.playback.queue.queueEntryOrNull
 import com.simplecityapps.playback.queue.shuffledIndices
 import com.simplecityapps.playback.queue.toRepeatMode
 import com.simplecityapps.playback.queue.toShuffleMode
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlin.coroutines.CoroutineContext
@@ -32,7 +33,8 @@ import timber.log.Timber
 /**
  * Keeps the queue and where playback is in it across restarts, in [playbackPreferenceManager]: saves them as the
  * players change them, and restores them when the app starts ([restore]). It's the only writer of the saved queue,
- * its position and song, the shuffle and repeat modes, and the position to resume from.
+ * its position and song, what it was started from ([QueueFacade.playContext]), the shuffle and repeat modes, and the
+ * position to resume from.
  *
  * The queue is [localPlayer]'s playlist, which holds the whole queue while casting too, so the queue, its position and
  * the modes are saved from its events: once per change, when the player reports the events of a change together
@@ -73,6 +75,9 @@ class QueueStore(
     /** The queue as the shuffle mode presents it, and the current position in it, as last saved (or at creation). */
     private var savedPresentation = Presentation.of(localPlayer, savedOrder)
 
+    /** What the queue was started from, as last saved (or at creation). */
+    private var savedContext = queue.playContext
+
     private val writer = SavedQueueWriter(playbackPreferenceManager)
 
     /** The uid of [player]'s current entry, as of the last item transition. */
@@ -110,6 +115,12 @@ class QueueStore(
             if (presentation != savedPresentation) {
                 savedPresentation = presentation
                 saveQueuePosition(presentation)
+            }
+            // The queue's context changes only with the queue.
+            val context = queue.playContext
+            if (context != savedContext) {
+                savedContext = context
+                playbackPreferenceManager.playContext = context
             }
         }
     }
@@ -203,6 +214,7 @@ class QueueStore(
         val repeatMode = playbackPreferenceManager.repeatMode
         val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
         val queuePosition = playbackPreferenceManager.queuePosition
+        val context = playbackPreferenceManager.playContext
         val initialContentVersion = queue.queueStateFlow.value.contentVersion
 
         // The restore doesn't rely on these: it sets the shuffle mode its saved position is in with the queue it sets.
@@ -213,7 +225,7 @@ class QueueStore(
 
         scope.launch(readContext) {
             try {
-                restoreQueue(shuffleMode, queuePosition, seekPosition, initialContentVersion, load)
+                restoreQueue(shuffleMode, queuePosition, seekPosition, context, initialContentVersion, load)
             } finally {
                 // Requests to play something else wait for it (see PlayRequests), so a restore that throws before its
                 // main thread step mustn't leave them waiting.
@@ -226,6 +238,7 @@ class QueueStore(
         shuffleMode: ShuffleMode,
         queuePosition: Int?,
         seekPosition: Int,
+        context: PlayContext,
         initialContentVersion: Long,
         load: (positionMs: Int) -> Unit
     ) {
@@ -242,7 +255,7 @@ class QueueStore(
         withContext(Dispatchers.Main) {
             timings.add("main wait", mainWait)
             try {
-                applyRestoredQueue(savedQueue, shuffleMode, initialContentVersion, seekPosition, restoredSeekPosition, load, timings)
+                applyRestoredQueue(savedQueue, shuffleMode, context, initialContentVersion, seekPosition, restoredSeekPosition, load, timings)
             } finally {
                 queue.hasRestoredQueue = true
             }
@@ -284,6 +297,7 @@ class QueueStore(
     private fun applyRestoredQueue(
         savedQueue: SavedQueue?,
         shuffleMode: ShuffleMode,
+        context: PlayContext,
         initialContentVersion: Long,
         seekPosition: Int,
         restoredSeekPosition: Int,
@@ -291,7 +305,7 @@ class QueueStore(
         timings: RestoreTimings
     ) {
         val changed = if (savedQueue != null) {
-            timings.measure("setQueue") { queue.setQueueIfContentVersion(initialContentVersion, savedQueue.queue, shuffleMode) } == null
+            timings.measure("setQueue") { queue.setQueueIfContentVersion(initialContentVersion, savedQueue.queue, shuffleMode, context) } == null
         } else {
             queue.queueStateFlow.value.contentVersion != initialContentVersion
         }

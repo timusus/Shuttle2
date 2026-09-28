@@ -5,6 +5,7 @@ import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -46,6 +47,17 @@ class PlaybackPreferenceManagerTest {
             "custom_preset_bands" to """[{"centerFrequency":32,"gain":1.5}]""",
             "now_playing" to MOSHI_SPARSE_SNAPSHOT
         )
+    }
+
+    @Test
+    fun `the queue's play context reads back as saved, and as none when nothing is`() {
+        manager.playContext shouldBe PlayContext.None
+
+        manager.playContext = PlayContext.Playlist(4)
+        manager.playContext shouldBe PlayContext.Playlist(4)
+
+        manager.playContext = PlayContext.None
+        manager.playContext shouldBe PlayContext.None
     }
 
     @Test

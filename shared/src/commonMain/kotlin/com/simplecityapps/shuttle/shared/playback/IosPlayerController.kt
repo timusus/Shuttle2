@@ -11,7 +11,9 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.RepeatMode
 import com.simplecityapps.playback.queue.ShuffleMode
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
+import kotlin.concurrent.Volatile
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.random.Random
@@ -682,10 +684,12 @@ class IosPlayerController(
 
     override suspend fun shuffle(
         songs: List<Song>,
+        context: PlayContext,
         completion: (Result<Any?>) -> Unit
     ) = withMain {
         queue.setShuffleMode(ShuffleMode.On, reshuffle = false)
         queue.setQueue(songs, songs.shuffled(random), 0, retainShuffle = retainShuffleOnNewQueue())
+        playContext = context
         sync()
         load(0, completion = completion)
     }
@@ -756,7 +760,8 @@ class IosPlayerController(
 
     /**
      * Sets a saved queue, with the [shuffleMode] its [position] is in, unless the queue's content has changed since it
-     * was at [contentVersion] (something was played meanwhile, which wins over the restore). Main thread only.
+     * was at [contentVersion] (something was played meanwhile, which wins over the restore), and what it was started
+     * from, [context]. Main thread only.
      *
      * @return false, leaving the queue alone, if it changed or the saved queue can't be set.
      */
@@ -765,11 +770,18 @@ class IosPlayerController(
         songs: List<Song>,
         shuffleSongs: List<Song>?,
         position: Int,
-        shuffleMode: ShuffleMode
+        shuffleMode: ShuffleMode,
+        context: PlayContext
     ): Boolean {
         if (queue.queueStateFlow.value.contentVersion != contentVersion) return false
+        playContext = context
         return queue.setQueue(songs, shuffleSongs, position, shuffleMode = shuffleMode).also { sync() }
     }
+
+    /** What the queue was started from ([QueueOperations.playContext]); set on the main thread with the queue. */
+    @Volatile
+    var playContext: PlayContext = PlayContext.None
+        private set
 
     /** [QueueOperations] over the same queue: changes made through it are handed on to the engine. */
     val queueOperations: QueueOperations = object : QueueOperations {
@@ -779,6 +791,8 @@ class IosPlayerController(
 
         override val repeatModeFlow: StateFlow<RepeatMode> = queue.repeatModeFlow
 
+        override val playContext: PlayContext get() = this@IosPlayerController.playContext
+
         override var hasRestoredQueue: Boolean
             get() = queue.queueStateFlow.value.isRestored
             set(value) = onMain { queue.isRestored = value }
@@ -786,8 +800,10 @@ class IosPlayerController(
         override suspend fun setQueue(
             songs: List<Song>,
             shuffleSongs: List<Song>?,
-            position: Int
+            position: Int,
+            context: PlayContext
         ): Boolean = withMain {
+            this@IosPlayerController.playContext = context
             queue.setQueue(songs, shuffleSongs, position, retainShuffle = retainShuffleOnNewQueue()).also { sync() }
         }
 
@@ -871,6 +887,7 @@ class IosPlayerController(
         }
 
         override fun clear() = onMain {
+            this@IosPlayerController.playContext = PlayContext.None
             queue.clear()
             sync()
         }
