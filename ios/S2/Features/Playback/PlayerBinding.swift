@@ -170,6 +170,8 @@ struct PlayerActions {
     var removeQueueItem: (Int64) -> Void = { _ in }
     /// Moves the queue row with this id to play after the current one.
     var playNext: (Int64) -> Void = { _ in }
+    /// Excludes the song of the queue row with this id from the library, which also takes it out of the queue.
+    var excludeQueueItem: (Int64) -> Void = { _ in }
     var clearQueue: () -> Void = {}
     var toggleFavourite: () -> Void = {}
     /// Runs a song action on the current song; Add to Playlist goes through `addToPlaylist`.
@@ -334,6 +336,7 @@ final class PlayerBinding {
             },
             removeQueueItem: { uid in viewModel.removeQueueItem(uid: uid) },
             playNext: { uid in viewModel.playNext(uid: uid) },
+            excludeQueueItem: { [weak self] uid in self?.excludeQueueItem(uid) },
             clearQueue: { viewModel.clearQueue() },
             toggleFavourite: { viewModel.toggleFavourite() },
             songAction: { [weak self] action in self?.perform(action) },
@@ -362,6 +365,13 @@ final class PlayerBinding {
         case .exclude: MediaActionExclude(selection: selection)
         }
         if let mediaAction { viewModel.onMediaAction(action: mediaAction) }
+    }
+
+    /// Excludes a queued song through the shared action, as the playing song's menu does; the song comes from the
+    /// player state the queue rows were built from, so the row needs no query of its own.
+    private func excludeQueueItem(_ uid: Int64) {
+        guard let song = lastPlayer?.items.first(where: { $0.uid == uid })?.song else { return }
+        viewModel.onMediaAction(action: MediaActionExclude(selection: MediaSelectionSongs(song: song)))
     }
 
     private func addToPlaylist(_ choice: PlaylistChoice) {

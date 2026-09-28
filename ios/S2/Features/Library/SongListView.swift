@@ -23,6 +23,9 @@ struct SongListView: View {
                     onAddToQueue: { song in
                         models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
                     },
+                    onExclude: { song in
+                        models.actions.dispatch(action: MediaActionExclude(selection: MediaSelectionSongs(song: song)))
+                    },
                     onShuffle: {
                         models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs)))
                     }
@@ -55,6 +58,7 @@ struct SongListContent: View {
     var onPlay: (Int) -> Void = { _ in }
     var onPlayNext: (Song) -> Void = { _ in }
     var onAddToQueue: (Song) -> Void = { _ in }
+    var onExclude: (Song) -> Void = { _ in }
     var onShuffle: () -> Void = {}
 
     var body: some View {
@@ -79,12 +83,27 @@ struct SongListContent: View {
                     .buttonStyle(.plain)
                     .tapFeedback()
                     .contextMenu {
-                        Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
-                        Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
+                        SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude)
                     }
                     .nowPlayingRowBackground(playback)
             }
         }
+    }
+}
+
+/// A song row's context menu in the Library's song lists: Play Next, Add to Queue, and Exclude (#650), marked
+/// destructive as in Now Playing's menu, which hides the song from the library through the shared action.
+struct SongRowMenu: View {
+    let song: Song
+    let onPlayNext: (Song) -> Void
+    let onAddToQueue: (Song) -> Void
+    let onExclude: (Song) -> Void
+
+    var body: some View {
+        Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
+        Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
+        let exclude = NowPlayingSongAction.exclude
+        Button(exclude.title, systemImage: exclude.systemImage, role: .destructive) { onExclude(song) }
     }
 }
 

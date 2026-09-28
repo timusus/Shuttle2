@@ -124,6 +124,8 @@ struct NowPlayingViewTests {
         #expect((try? audio.button()) != nil)
         let sleepTimer = try sut.inspect().find(viewWithAccessibilityLabel: "Sleep Timer")
         #expect(try sleepTimer.accessibilityValue().string() == "On")
+        // Its glyph is hidden, so it doesn't surface as a second "Snooze" element (#650).
+        #expect(try sleepTimer.find(ViewType.Image.self).accessibilityHidden())
     }
 
     @Test func theAudioSheetSetsTheSpeedAndOffersTheEqualizer() throws {
@@ -274,15 +276,23 @@ struct NowPlayingViewTests {
     @Test func theQueuesContextMenuPlaysNextAndRemoves() throws {
         var next: [Int64] = []
         var removed: [Int64] = []
-        let menu = NowPlayingQueueRowMenu(item: queue[1], playNext: { next.append($0) }, remove: { removed.append($0) })
+        var excluded: [Int64] = []
+        let menu = NowPlayingQueueRowMenu(
+            item: queue[1], playNext: { next.append($0) }, remove: { removed.append($0) }, exclude: { excluded.append($0) }
+        )
         try menu.inspect().find(button: "Play Next").tap()
         try menu.inspect().find(button: "Remove from Queue").tap()
+        try menu.inspect().find(button: "Exclude").tap()
         #expect(next == [2])
         #expect(removed == [2])
-        // The playing song can't be played next.
-        let current = NowPlayingQueueRowMenu(item: queue[0], playNext: { _ in }, remove: { _ in })
+        // Exclude (#650), destructive as in the song menu.
+        #expect(excluded == [2])
+        #expect(try menu.inspect().find(button: "Exclude").role() == .destructive)
+        // The playing song can't be played next, but can be excluded.
+        let current = NowPlayingQueueRowMenu(item: queue[0], playNext: { _ in }, remove: { _ in }, exclude: { _ in })
         #expect((try? current.inspect().find(button: "Play Next")) == nil)
         #expect((try? current.inspect().find(button: "Remove from Queue")) != nil)
+        #expect((try? current.inspect().find(button: "Exclude")) != nil)
     }
 
     @Test func anEmptyQueueSaysSo() throws {

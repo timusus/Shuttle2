@@ -52,6 +52,21 @@ struct LibraryListTests {
         #expect(played == 2)
     }
 
+    /// A song's context menu queues it or excludes it through the shared action (#650).
+    @Test func aSongsMenuPlaysNextQueuesAndExcludes() throws {
+        var next: Song?
+        var queued: Song?
+        var excluded: Song?
+        let menu = SongRowMenu(song: TestSongs.demo[1], onPlayNext: { next = $0 }, onAddToQueue: { queued = $0 }, onExclude: { excluded = $0 })
+        try menu.inspect().find(button: "Play Next").tap()
+        try menu.inspect().find(button: "Add to Queue").tap()
+        try menu.inspect().find(button: "Exclude").tap()
+        #expect(next?.id == TestSongs.demo[1].id)
+        #expect(queued?.id == TestSongs.demo[1].id)
+        #expect(excluded?.id == TestSongs.demo[1].id)
+        #expect(try menu.inspect().find(button: "Exclude").role() == .destructive)
+    }
+
     @Test func songsPlaceholders() throws {
         #expect((try? SongListContent(state: songState([], .empty)).inspect().find(text: "No Songs")) != nil)
         #expect((try? SongListContent(state: songState([], .scanning)).inspect().find(text: "Importing your library…")) != nil)

@@ -449,6 +449,8 @@ struct NowPlayingContent: View {
         } label: {
             Image(systemName: state.sleepTimerActive ? "moon.zzz.fill" : "moon.zzz")
                 .capsuleGlyph(chromeInk(isOn: state.sleepTimerActive))
+                // The menu is the one element; the symbol's own label ("Snooze") would surface beside it (#650).
+                .accessibilityHidden(true)
         }
         .accessibilityLabel("Sleep Timer")
         .accessibilityValue(state.sleepTimerActive ? "On" : "Off")
@@ -856,7 +858,7 @@ struct NowPlayingQueueList: View {
         .accessibilityLabel(item.isCurrent ? "\(item.title), now playing" : item.title)
         .accessibilityIdentifier(item.isCurrent ? "queue.nowPlaying" : "queue.row")
         .contextMenu {
-            NowPlayingQueueRowMenu(item: item, playNext: actions.playNext, remove: remove)
+            NowPlayingQueueRowMenu(item: item, playNext: actions.playNext, remove: remove, exclude: actions.excludeQueueItem)
         }
     }
 
@@ -892,17 +894,21 @@ struct NowPlayingQueueList: View {
     }
 }
 
-/// A queue row's context menu: Play Next (not for the playing song) and Remove from Queue.
+/// A queue row's context menu: Play Next (not for the playing song), Remove from Queue, and Exclude (#650), which hides
+/// the song from the library and so drops it from the queue, with Undo in the notice.
 struct NowPlayingQueueRowMenu: View {
     let item: NowPlayingQueueRow
     let playNext: (Int64) -> Void
     let remove: (Int64) -> Void
+    let exclude: (Int64) -> Void
 
     var body: some View {
         if !item.isCurrent {
             Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { playNext(item.id) }
         }
         Button("Remove from Queue", systemImage: "minus.circle", role: .destructive) { remove(item.id) }
+        let excludeAction = NowPlayingSongAction.exclude
+        Button(excludeAction.title, systemImage: excludeAction.systemImage, role: .destructive) { exclude(item.id) }
     }
 }
 
