@@ -299,7 +299,7 @@ plays each format through the controller: MP3, AAC and ALAC in MP4, FLAC, Opus, 
 
 Still open (#588): stream
 resolution is a placeholder (a song's path as its URL, so the demo library's `demo://` songs fail and
-are skipped); artwork waits for a shared image loader. Queue persistence is done (#621, below).
+are skipped). Now Playing's artwork goes through `ArtworkLoader`, as the in-app covers do (#640). Queue persistence is done (#621, below).
 
 ### Status of queue persistence (#621)
 

@@ -137,7 +137,8 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
             title: song.name ?? "",
             artist: song.friendlyArtistName,
             album: song.album,
-            duration: TimeInterval(song.duration) / 1000
+            duration: TimeInterval(song.duration) / 1000,
+            artwork: .song(song)
         )
         nowPlaying.setSkipMode(
             song.type == .audio ? .tracks : .interval(forward: Self.skipForwardSeconds, backward: Self.skipBackwardSeconds)

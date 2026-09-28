@@ -241,10 +241,44 @@ struct NowPlayingControllerTests {
         #expect(info.nowPlayingInfo?[MPMediaItemPropertyPlaybackDuration] == nil)
     }
 
-    private static func image() -> UIImage {
-        UIGraphicsImageRenderer(size: CGSize(width: 4, height: 4)).image { context in
+    /// Without an override, a new item's cover comes through `ArtworkLoader` (the in-app views' loader and its
+    /// server-then-S2-API chain), decoded at `artworkPixels`, and lands in the Now Playing info.
+    @Test func theSongsCoverIsLoadedThroughTheArtworkLoader() async throws {
+        let server = URL(string: "https://jellyfin.example/Items/1/Images/Primary")!
+        let s2 = URL(string: "https://api.shuttlemusicplayer.app/v1/artwork?artist=A&album=B")!
+        let cover = Self.image(side: 2000).pngData()!
+        let loader = ArtworkLoader { request in
+            let status = request.url == s2 ? 200 : 500
+            return (cover, HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!)
+        }
+        let controller = NowPlayingController(infoCenter: info, commandCenter: commands, artworkLoader: loader)
+        var item = song
+        item.artwork = ArtworkSource(id: "song-\(UUID())") { [ArtworkCandidate(url: server), ArtworkCandidate(url: s2)] }
+
+        controller.setItem(item, position: 0, isPlaying: true, speed: 1)
+        await controller.artworkTask?.value
+
+        let artwork = try #require(info.nowPlayingInfo?[MPMediaItemPropertyArtwork] as? MPMediaItemArtwork)
+        #expect(max(artwork.bounds.width, artwork.bounds.height) == CGFloat(NowPlayingController.artworkPixels))
+        #expect(artwork.image(at: artwork.bounds.size) != nil)
+    }
+
+    @Test func aSongWithoutArtworkPublishesNone() async {
+        let controller = NowPlayingController(
+            infoCenter: info,
+            commandCenter: commands,
+            artworkLoader: ArtworkLoader { _ in throw URLError(.cannotConnectToHost) }
+        )
+        controller.setItem(song, position: 0, isPlaying: true, speed: 1)
+        await controller.artworkTask?.value
+        #expect(info.value(MPMediaItemPropertyTitle) == "Teardrop")
+        #expect(info.nowPlayingInfo?[MPMediaItemPropertyArtwork] == nil)
+    }
+
+    private static func image(side: CGFloat = 4) -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: side, height: side)).image { context in
             UIColor.red.setFill()
-            context.fill(CGRect(x: 0, y: 0, width: 4, height: 4))
+            context.fill(CGRect(x: 0, y: 0, width: side, height: side))
         }
     }
 }

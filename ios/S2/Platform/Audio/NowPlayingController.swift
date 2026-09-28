@@ -10,6 +10,8 @@ struct NowPlayingItem: Equatable {
     var album: String?
     /// Seconds; 0 when unknown.
     var duration: TimeInterval
+    /// Where the song's cover may be, as the in-app artwork views have it; nil for none.
+    var artwork: ArtworkSource?
 }
 
 /// What the system's transport controls can ask the player for. Called on the main thread.
@@ -65,8 +67,6 @@ extension MPNowPlayingInfoCenter: NowPlayingInfoCenter {}
 ///
 /// `PlaybackSystemCoordinator` owns one, handles its commands with the Kotlin `IosPlayerController` and
 /// feeds it from the player's flows.
-///
-/// TODO(#588): `loadArtwork` goes through the shared image loader once one exists.
 @MainActor
 final class NowPlayingController {
     /// Whether the skip buttons move between songs or jump within one.
@@ -76,9 +76,13 @@ final class NowPlayingController {
     }
 
     /// Loads the artwork for an item. Called once per new item; the result is dropped if the item has
-    /// changed by the time it arrives.
-    var loadArtwork: (NowPlayingItem) async -> UIImage? = { _ in nil }
+    /// changed by the time it arrives. By default, the item's `artwork` through `ArtworkLoader`, the loader
+    /// every in-app cover uses, so the lock screen shares its caches and its server/S2-API fallback chain.
+    var loadArtwork: @MainActor (NowPlayingItem) async -> UIImage?
 
+    /// The longest side the system artwork is decoded at, in pixels: enough for the lock screen's
+    /// full-width cover without holding a full-size server image.
+    static let artworkPixels = 1000
     static let discontinuitySeconds: TimeInterval = 1
     static let driftGuardSeconds: TimeInterval = 10
 
@@ -96,11 +100,16 @@ final class NowPlayingController {
     init(
         infoCenter: NowPlayingInfoCenter = MPNowPlayingInfoCenter.default(),
         commandCenter: RemoteCommandCenter? = nil,
+        artworkLoader: ArtworkLoader = .shared,
         now: @escaping () -> Date = Date.init
     ) {
         self.infoCenter = infoCenter
         self.commandCenter = commandCenter ?? SystemRemoteCommandCenter()
         self.now = now
+        loadArtwork = { item in
+            guard let source = item.artwork else { return nil }
+            return await artworkLoader.image(for: source, maxPixelSize: Self.artworkPixels)
+        }
     }
 
     // MARK: - Commands
@@ -246,9 +255,14 @@ final class NowPlayingController {
 
     private func applyArtwork(_ image: UIImage, for id: String) {
         guard item?.id == id, var info else { return }
-        info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+        info[MPMediaItemPropertyArtwork] = Self.artwork(image)
         self.info = info
         infoCenter.nowPlayingInfo = info
+    }
+
+    /// Nonisolated: the system calls the request handler off the main thread.
+    private nonisolated static func artwork(_ image: UIImage) -> MPMediaItemArtwork {
+        MPMediaItemArtwork(boundsSize: image.size) { _ in image }
     }
 
     private func setPlaybackState(_ state: MPNowPlayingPlaybackState) {
