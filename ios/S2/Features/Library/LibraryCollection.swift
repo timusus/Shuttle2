@@ -122,21 +122,48 @@ struct LibraryTile: View {
     }
 }
 
-/// Rows of `MediaRowSkeleton` in place of a bare spinner, while a list's first page loads.
-struct LibraryListSkeleton: View {
-    var artworkSize: CGFloat = ArtworkSize.row
-    var rows = 10
+/// A list's Shuffle, as the row heading it (Songs, #643): the tinted glyph and title, with how many it shuffles.
+struct ShuffleRow: View {
+    let count: Int
+    /// What's counted, singular: "song".
+    let noun: String
+    let action: () -> Void
 
     var body: some View {
-        VStack(spacing: Spacing.smallMedium) {
+        Button(action: action) {
+            HStack(spacing: Spacing.smallMedium) {
+                Label("Shuffle", systemImage: "shuffle")
+                    .font(.s2Headline)
+                    .foregroundStyle(.tint)
+                Spacer(minLength: Spacing.small)
+                Text(count == 1 ? "1 \(noun)" : "\(count) \(noun)s")
+                    .font(.footnote)
+                    .foregroundStyle(.s2SecondaryText)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .tapFeedback()
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
+/// Rows of `MediaRowSkeleton` in place of a bare spinner, while a list's first page loads: a plain `List`, with the
+/// letter index's width kept clear, so each row sits where the loaded list's will (#643).
+struct LibraryListSkeleton: View {
+    var artworkSize: CGFloat = ArtworkSize.row
+    var rows = 12
+
+    var body: some View {
+        List {
             ForEach(0 ..< rows, id: \.self) { _ in
                 MediaRowSkeleton(artworkSize: artworkSize)
             }
         }
-        .padding(.horizontal, Spacing.medium)
-        .padding(.vertical, Spacing.small)
-        .frame(maxHeight: .infinity, alignment: .top)
-        .clipped()
+        .listStyle(.plain)
+        .scrollDisabled(true)
+        .safeAreaPadding(.trailing, LetterIndexStrip.baseWidth)
         .accessibilityElement()
         .accessibilityLabel("Loading")
         .accessibilityIdentifier("library.loading")
@@ -160,11 +187,15 @@ private struct NowPlayingRowBackground: ViewModifier {
     }
 }
 
-/// Grid tiles' skeleton, while a grid's first page loads.
+/// Grid tiles' skeleton, while a grid's first page loads: `LibraryGrid`'s columns, beside the letter index's width,
+/// and `LibraryTile`'s title and subtitle lines, so each tile sits where the loaded grid's will (#643).
 struct LibraryGridSkeleton: View {
-    var tiles = 8
+    var tiles = 12
 
     @ScaledMetric(relativeTo: .subheadline) private var titleHeight: CGFloat = 12
+    @ScaledMetric(relativeTo: .footnote) private var subtitleHeight: CGFloat = 10
+    @ScaledMetric(relativeTo: .subheadline) private var titleLine: CGFloat = 18
+    @ScaledMetric(relativeTo: .footnote) private var subtitleLine: CGFloat = 16
 
     var body: some View {
         LibraryGrid {
@@ -172,11 +203,16 @@ struct LibraryGridSkeleton: View {
                 VStack(alignment: .leading, spacing: Spacing.small) {
                     RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous).fill(Color(.systemGray5))
                         .aspectRatio(1, contentMode: .fit)
-                    Capsule().fill(Color(.systemGray5)).frame(height: titleHeight).padding(.trailing, Spacing.large)
-                    Capsule().fill(Color(.systemGray6)).frame(height: titleHeight).padding(.trailing, Spacing.xlarge * 2)
+                    VStack(alignment: .leading, spacing: Spacing.tiny) {
+                        Capsule().fill(Color(.systemGray5)).frame(height: titleHeight).padding(.trailing, Spacing.large)
+                            .frame(height: titleLine)
+                        Capsule().fill(Color(.systemGray6)).frame(height: subtitleHeight).padding(.trailing, Spacing.xlarge * 2)
+                            .frame(height: subtitleLine)
+                    }
                 }
             }
         }
+        .safeAreaPadding(.trailing, LetterIndexStrip.baseWidth)
         .shimmer()
         .scrollDisabled(true)
         .accessibilityElement()

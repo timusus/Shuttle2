@@ -4,8 +4,7 @@ import SwiftUI
 /// Library > Album Artists (P5-6b): `AlbumArtistListViewModel`'s artists as a list (the default) or a grid of their
 /// pictures, switched from the toolbar and kept by the ViewModel (`setViewMode`). A row or tile pushes the artist's
 /// detail route and shows its artwork via `ArtworkUrls.requests(albumArtist:)`. Context menu plays or queues through the
-/// shared `MediaAction`s; there's no per-artist shuffle on the ViewModel, so the toolbar shuffle dispatches
-/// `MediaActionShuffle` over every artist, same as it would over a multi-selection. The playing artist is marked.
+/// shared `MediaAction`s. The playing artist is marked.
 struct AlbumArtistListView: View {
     var body: some View {
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.albumArtists).cacheKey) {
@@ -24,9 +23,6 @@ struct AlbumArtistListView: View {
                     },
                     onAddToQueue: { artist in
                         models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbumArtists(albumArtist: artist)))
-                    },
-                    onShuffle: {
-                        models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionAlbumArtists(albumArtists: state.albumArtists)))
                     },
                     onViewMode: { models.albumArtists.setViewMode(mode: $0) }
                 )
@@ -65,7 +61,6 @@ struct AlbumArtistListContent: View {
     var onPlay: (AlbumArtist) -> Void = { _ in }
     var onPlayNext: (AlbumArtist) -> Void = { _ in }
     var onAddToQueue: (AlbumArtist) -> Void = { _ in }
-    var onShuffle: () -> Void = {}
     var onViewMode: (ViewMode) -> Void = { _ in }
 
     var body: some View {
@@ -73,7 +68,6 @@ struct AlbumArtistListContent: View {
             .toolbar {
                 if state.loadingState != .empty {
                     ViewModeToggle(mode: state.viewMode, onChange: onViewMode)
-                    Button("Shuffle", systemImage: "shuffle", action: onShuffle)
                 }
             }
     }

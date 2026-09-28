@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Library > Songs (P5-6a): `SongListViewModel`'s songs, in its sort order. A tap plays the list from that song
 /// through the shared `MediaAction.Play`, as Android's `MediaActionsHost` does; the context menu queues one song.
-/// Pull to refresh imports.
+/// A Shuffle row heads the list (#643), as on Android, rather than a toolbar button. Pull to refresh imports.
 struct SongListView: View {
     var body: some View {
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.songs).cacheKey) {
@@ -66,7 +66,14 @@ struct SongListContent: View {
         case .empty:
             EmptyState("No Songs", systemImage: "music.note", message: "Pull to refresh to import.")
         case .ready, .scanning:
-            LetterIndexedList(items: state.songs, id: \.id, sections: LetterIndex.sections(state.letterIndex, items: state.songs, id: \.id)) { index, song in
+            LetterIndexedList(
+                items: state.songs,
+                id: \.id,
+                sections: LetterIndex.sections(state.letterIndex, items: state.songs, id: \.id)
+            ) {
+                ShuffleRow(count: state.songs.count, noun: "song", action: onShuffle)
+                    .accessibilityIdentifier("songs.shuffle")
+            } row: { index, song in
                 let playback = nowPlaying.playback(song: song)
                 Button { onPlay(index) } label: { SongRow(song: song, playback: playback) }
                     .buttonStyle(.plain)
@@ -76,9 +83,6 @@ struct SongListContent: View {
                         Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
                     }
                     .nowPlayingRowBackground(playback)
-            }
-            .toolbar {
-                Button("Shuffle", systemImage: "shuffle", action: onShuffle)
             }
         }
     }

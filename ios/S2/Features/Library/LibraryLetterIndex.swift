@@ -6,8 +6,9 @@ import SwiftUI
 /// key the shared sort compares, so a name sort's letters run in order, with '#' for digits, symbols and scripts
 /// without a short alphabet. A sort that isn't by name has no `letterIndex`, and so no index.
 ///
-/// iOS 26 lists use the native index (`sectionIndexLabel`); iOS 17 and 18 lists, and grids on every version, use
-/// `LetterIndexStrip`, which scrolls to a section's first item.
+/// Lists and grids alike use `LetterIndexStrip`, which scrolls to a section's first item, so the letters sit at the
+/// same x in list and grid mode (#643): iOS 26's native list index (`sectionIndexLabel`) sits further out than any
+/// strip a grid can draw.
 
 /// A run of a list's rows under one letter.
 struct LetterIndexSection: Identifiable, Equatable {
@@ -43,31 +44,48 @@ enum LetterIndex {
 }
 
 /// A plain list of `items` in their letter `sections`, with the index down its trailing edge; without sections, the
-/// same rows unsectioned. `row` gets each item's position in `items`.
-struct LetterIndexedList<Item, ID: Hashable, Row: View>: View {
+/// same rows unsectioned. `header` rows (Songs' Shuffle) come first, outside any section. `row` gets each item's
+/// position in `items`.
+struct LetterIndexedList<Item, ID: Hashable, Header: View, Row: View>: View {
     let items: [Item]
     let id: KeyPath<Item, ID>
     let sections: [LetterIndexSection]?
+    @ViewBuilder let header: () -> Header
     @ViewBuilder let row: (Int, Item) -> Row
+
+    init(
+        items: [Item],
+        id: KeyPath<Item, ID>,
+        sections: [LetterIndexSection]?,
+        @ViewBuilder header: @escaping () -> Header,
+        @ViewBuilder row: @escaping (Int, Item) -> Row
+    ) {
+        self.items = items
+        self.id = id
+        self.sections = sections
+        self.header = header
+        self.row = row
+    }
 
     var body: some View {
         if let sections {
             ScrollViewReader { proxy in
                 List {
+                    header()
                     ForEach(sections) { section in
                         Section {
                             ForEach(section.rows.map { IndexedItem(index: $0, item: items[$0], id: items[$0][keyPath: id]) }, id: \.id) {
                                 row($0.index, $0.item)
                             }
                         }
-                        .letterIndexLabel(section)
                     }
                 }
                 .listStyle(.plain)
-                .letterIndex(sections, native: true) { proxy.scrollTo($0.anchor, anchor: .top) }
+                .letterIndex(sections) { proxy.scrollTo($0.anchor, anchor: .top) }
             }
         } else {
             List {
+                header()
                 ForEach(items.indices.map { IndexedItem(index: $0, item: items[$0], id: items[$0][keyPath: id]) }, id: \.id) {
                     row($0.index, $0.item)
                 }
@@ -107,6 +125,12 @@ struct LibraryRowLink<Label: View>: View {
     }
 }
 
+extension LetterIndexedList where Header == EmptyView {
+    init(items: [Item], id: KeyPath<Item, ID>, sections: [LetterIndexSection]?, @ViewBuilder row: @escaping (Int, Item) -> Row) {
+        self.init(items: items, id: id, sections: sections, header: { EmptyView() }, row: row)
+    }
+}
+
 private struct IndexedItem<Item, ID: Hashable> {
     let index: Int
     let item: Item
@@ -114,27 +138,13 @@ private struct IndexedItem<Item, ID: Hashable> {
 }
 
 extension View {
-    /// The section's entry in the native list index, from iOS 26.
+    /// The index for `sections` down the trailing edge, a `LetterIndexStrip`, which calls `scrollTo` with the section
+    /// picked. No index without sections.
     @ViewBuilder
-    fileprivate func letterIndexLabel(_ section: LetterIndexSection) -> some View {
-        if #available(iOS 26, *) {
-            sectionIndexLabel(section.isIndexed ? section.letter : nil)
-        } else {
-            self
-        }
-    }
-
-    /// The index for `sections` down the trailing edge: the native one on an iOS 26 list (`native`), else
-    /// `LetterIndexStrip`, which calls `scrollTo` with the section picked. No index without sections.
-    @ViewBuilder
-    func letterIndex(_ sections: [LetterIndexSection]?, native: Bool = false, scrollTo: @escaping (LetterIndexSection) -> Void) -> some View {
+    func letterIndex(_ sections: [LetterIndexSection]?, scrollTo: @escaping (LetterIndexSection) -> Void) -> some View {
         if let sections {
-            if #available(iOS 26, *), native {
-                listSectionIndexVisibility(.visible)
-            } else {
-                safeAreaInset(edge: .trailing, spacing: 0) {
-                    LetterIndexStrip(sections: sections.filter(\.isIndexed), onSelect: scrollTo)
-                }
+            safeAreaInset(edge: .trailing, spacing: 0) {
+                LetterIndexStrip(sections: sections.filter(\.isIndexed), onSelect: scrollTo)
             }
         } else {
             self
@@ -142,7 +152,7 @@ extension View {
     }
 }
 
-/// The right-edge letters where the native index isn't available: touch or drag along them to jump to a letter,
+/// The right-edge letters: touch or drag along them to jump to a letter,
 /// with a selection tick as each one passes. VoiceOver reads it as one adjustable control: swipe up or down to step
 /// through the letters.
 struct LetterIndexStrip: View {

@@ -78,7 +78,8 @@ struct LibraryLetterIndexTests {
         let songs = songs(sortedNames)
         let byName = try SongListContent(state: songState(songs, sortOrder: .songName)).inspect()
         #expect(byName.findAll(ViewType.Section.self).count == 5)
-        #expect(hasStrip(byName) == !usesNativeIndex)
+        // The strip on every version, as in the grids, so the letters sit at the same x in both (#643).
+        #expect(hasStrip(byName))
 
         let byYear = try SongListContent(state: songState(songs, sortOrder: .year)).inspect()
         #expect(byYear.findAll(ViewType.Section.self).isEmpty)
@@ -93,7 +94,6 @@ struct LibraryLetterIndexTests {
         #expect(played == 5)
     }
 
-    /// Grids have no native index on any version, so they always use the strip.
     @Test func theAlbumGridHasTheStripOnlyWhenSortedByName() throws {
         let albums = ["Abbey Road", "Blue Lines", "Post"].map(album)
         #expect(try hasStrip(AlbumListContent(state: albumState(albums, sortOrder: .albumName, viewMode: .grid)).inspect()))
@@ -123,15 +123,25 @@ struct LibraryLetterIndexTests {
         #expect(try byCount.inspect().findAll(ViewType.Section.self).isEmpty)
     }
 
+    @Test func theSongsListOpensWithItsShuffleRow() throws {
+        var shuffled = false
+        let songs = songs(sortedNames)
+        for sortOrder in [SongSortOrder.songName, .year] {
+            let sut = SongListContent(state: songState(songs, sortOrder: sortOrder), onShuffle: { shuffled = true })
+            let row = try sut.inspect().find(viewWithAccessibilityIdentifier: "songs.shuffle")
+            #expect((try? row.find(text: "7 songs")) != nil)
+            try row.find(ViewType.Button.self).tap()
+        }
+        #expect(shuffled)
+        // Not in the toolbar any more.
+        #expect(try SongListContent(state: songState(songs, sortOrder: .songName)).inspect().findAll(ViewType.Toolbar.self).isEmpty)
+    }
+
     @Test func theStripIsOneAdjustableControlForVoiceOver() throws {
         let sections = try #require(LetterIndex.sections([LetterSection(letter: "A", firstIndex: 0)], items: ["a"], id: \.self))
         let strip = try LetterIndexStrip(sections: sections, onSelect: { _ in }).inspect().vStack()
         #expect(try strip.accessibilityLabel().string() == "Section index")
         #expect(try strip.accessibilityIdentifier() == "library.sectionIndex")
-    }
-
-    private var usesNativeIndex: Bool {
-        if #available(iOS 26, *) { true } else { false }
     }
 
     private func hasStrip(_ view: InspectableView<ViewType.ClassifiedView>) -> Bool {

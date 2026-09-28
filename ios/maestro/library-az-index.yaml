@@ -1,24 +1,16 @@
 # The Library lists' A–Z index scrubs to a letter (#627): Library > Songs (indexed under any name sort, which the
-# default by-album order is), note the top song, jump to a letter, and the top song has scrolled away. iOS 17/18 use
-# the app's strip (`library.sectionIndex`; a tap on it picks the middle letter); iOS 26's native list index isn't in
-# the accessibility tree Maestro reads, so there it taps the index's 'S' by position (iPhone 16 Pro), which assumes a
-# library that runs from A to Z. iPhone only: an iPad opens Library on the Songs detail. Signed in already: run
-# sign-in-jellyfin.yaml first.
+# default by-album order is), note the top song, jump to a letter, and the top song has scrolled away. Every iOS
+# version uses the app's strip (`library.sectionIndex`, #643); a tap on it picks the middle letter. iPhone only: an
+# iPad opens Library on the Songs detail. Signed in already: run sign-in-jellyfin.yaml first.
 #
 #   OUT=/tmp/s2-az/maestro ios/scripts/maestro-sim.sh library-az-index.yaml
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp
-- tapOn: "Library"
-- tapOn:
-    id: "libraryChip.all"
-    optional: true
-- extendedWaitUntil:
-    visible:
-      id: "libraryCategory.songs"
-    timeout: 120000
-- tapOn:
-    id: "libraryCategory.songs"
+- runFlow:
+    file: common/library-open.yaml
+    env:
+      CATEGORY: songs
 - extendedWaitUntil:
     visible:
       id: "songRow.title"
@@ -28,20 +20,8 @@ appId: com.simplecityapps.shuttle.dev
 - copyTextFrom:
     id: "songRow.title"
 - takeScreenshot: 1-songs-top
-- runFlow:
-    when:
-      visible:
-        id: "library.sectionIndex"
-    commands:
-      - tapOn:
-          id: "library.sectionIndex"
-- runFlow:
-    when:
-      notVisible:
-        id: "library.sectionIndex"
-    commands:
-      - tapOn:
-          point: "98%,60%"
+- tapOn:
+    id: "library.sectionIndex"
 - waitForAnimationToEnd:
     timeout: 5000
 - assertNotVisible:

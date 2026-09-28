@@ -56,7 +56,8 @@ struct LibraryListTests {
         #expect((try? SongListContent(state: songState([], .empty)).inspect().find(text: "No Songs")) != nil)
         #expect((try? SongListContent(state: songState([], .scanning)).inspect().find(text: "Importing your library…")) != nil)
         #expect((try? SongListContent(state: songState([], .loading)).inspect().find(LibraryListSkeleton.self)) != nil)
-        #expect((try? SongListContent(state: songState([], .loading)).inspect().find(ViewType.List.self)) == nil)
+        // The skeleton, not the list: no Shuffle row until there are songs to shuffle.
+        #expect((try? SongListContent(state: songState([], .loading)).inspect().find(viewWithAccessibilityIdentifier: "songs.shuffle")) == nil)
     }
 
     /// A later import (pull to refresh) keeps showing what's already imported; only the first shows the placeholder (#623).
