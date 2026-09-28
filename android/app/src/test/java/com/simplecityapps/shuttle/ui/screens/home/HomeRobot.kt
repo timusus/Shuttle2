@@ -14,8 +14,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
-import com.simplecityapps.shuttle.model.Album
-import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
@@ -36,8 +34,7 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
         private set
     var whatsNewDismissed = 0
         private set
-    val openedAlbums = mutableListOf<Album>()
-    val openedArtists = mutableListOf<AlbumArtist>()
+    val clickedItems = mutableListOf<HomeItem>()
     val shownActions = mutableListOf<MediaActionsTarget>()
 
     fun setContent(
@@ -64,8 +61,7 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
         onShuffleQueue = { queueShuffles++ },
         onOpenWhatsNew = { whatsNewOpened++ },
         onDismissWhatsNew = { whatsNewDismissed++ },
-        onAlbumClick = { openedAlbums += it },
-        onArtistClick = { openedArtists += it },
+        onItemClick = { clickedItems += it },
         onShowActions = { shownActions += it },
     )
 

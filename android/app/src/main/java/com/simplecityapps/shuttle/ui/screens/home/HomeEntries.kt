@@ -19,6 +19,8 @@ import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyViewModel
+import com.simplecityapps.shuttle.ui.screens.library.PlaylistRoute
+import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistRoute
 import com.simplecityapps.shuttle.ui.screens.library.openTarget
 import com.simplecityapps.shuttle.ui.screens.library.rememberMusicAccessRequests
 import com.simplecityapps.shuttle.ui.screens.library.route
@@ -78,8 +80,15 @@ private fun HomeDestination(
                     onOpen(WhatsNewRoute)
                 },
                 onDismissWhatsNew = viewModel::onWhatsNewHandled,
-                onAlbumClick = { onOpen(it.route) },
-                onArtistClick = { onOpen(it.route) },
+                onItemClick = { item ->
+                    when (item) {
+                        is HomeItem.AlbumItem -> onOpen(item.album.route)
+                        is HomeItem.ArtistItem -> onOpen(item.albumArtist.route)
+                        is HomeItem.PlaylistItem -> onOpen(PlaylistRoute(item.playlist.id))
+                        is HomeItem.SmartPlaylistItem -> onOpen(SmartPlaylistRoute(item.smartPlaylistId.id))
+                        is HomeItem.GenreItem -> actions.dispatch(item.playAction())
+                    }
+                },
                 onShowActions = actions::showActions,
             ),
             emptyContent = (emptyState as? LibraryAvailability.Empty)?.let { empty ->

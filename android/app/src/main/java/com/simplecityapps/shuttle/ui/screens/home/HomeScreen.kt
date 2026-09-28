@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.NewReleases
@@ -56,12 +56,12 @@ import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.format.formatDuration
-import com.simplecityapps.shuttle.model.Album
-import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
+import com.simplecityapps.shuttle.ui.screens.library.nameKey
 import com.simplecityapps.shuttle.ui.screens.library.pluralString
+import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceKey
 
 class HomeCallbacks(
     val onOpenSettings: () -> Unit = {},
@@ -70,8 +70,8 @@ class HomeCallbacks(
     val onShuffleQueue: () -> Unit = {},
     val onOpenWhatsNew: () -> Unit = {},
     val onDismissWhatsNew: () -> Unit = {},
-    val onAlbumClick: (Album) -> Unit = {},
-    val onArtistClick: (AlbumArtist) -> Unit = {},
+    /** An album, artist or playlist tile opens it; a genre tile shuffles the genre. */
+    val onItemClick: (HomeItem) -> Unit = {},
     val onShowActions: (MediaActionsTarget) -> Unit = {},
 )
 
@@ -139,12 +139,35 @@ private fun HomeContent(
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks) }
         }
-        shelf(R.string.home_recently_played, "recently-played", content.recentlyPlayed) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
-        shelf(R.string.home_recently_added, "recently-added", content.recentlyAdded) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
-        shelf(R.string.home_most_played, "most-played", content.mostPlayed) { album -> AlbumTile(album, callbacks, showPlayCount = true) }
-        shelf(R.string.home_something_different, "something-different", content.somethingDifferent) { artist -> ArtistTile(artist, callbacks) }
+        content.sections.forEach { section ->
+            if (section.id == HomeSectionId.ShuffleAll) {
+                item(key = section.id.name) {
+                    S2Button(
+                        text = stringResource(R.string.home_shuffle_all),
+                        onClick = callbacks.onShuffleAll,
+                        icon = Icons.Rounded.Shuffle,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
+            } else {
+                shelf(section.title.stringRes, section.id.name, section.items) { item -> HomeItemTile(item, callbacks) }
+            }
+        }
     }
 }
+
+private val HomeSectionTitle.stringRes: Int
+    @StringRes get() = when (this) {
+        HomeSectionTitle.JumpBackIn -> R.string.home_jump_back_in
+        HomeSectionTitle.ThisMorning -> R.string.home_this_morning
+        HomeSectionTitle.ThisAfternoon -> R.string.home_this_afternoon
+        HomeSectionTitle.Tonight -> R.string.home_tonight
+        HomeSectionTitle.OnRepeat -> R.string.home_on_repeat
+        HomeSectionTitle.Rediscover -> R.string.home_rediscover
+        HomeSectionTitle.RecentlyAdded -> R.string.home_recently_added
+        HomeSectionTitle.GenrePicks -> R.string.home_genre_picks
+        HomeSectionTitle.ShuffleAll -> R.string.home_shuffle_all
+    }
 
 /** The current queue, to pick up where it was left: its song's album art and title, the artist and time left, Play and Shuffle. */
 @Composable
@@ -217,35 +240,66 @@ private fun WhatsNewCard(callbacks: HomeCallbacks) {
  * about two and a half fit a phone and the cut-off one says the row scrolls (#490); each title and artist sits below
  * its cover rather than over it, where they'd clash with text printed on the art (#404).
  */
-private fun <T> LazyListScope.shelf(
+private fun LazyListScope.shelf(
     @StringRes title: Int,
     key: String,
-    items: List<T>,
-    tile: @Composable (T) -> Unit,
+    items: List<HomeItem>,
+    tile: @Composable (HomeItem) -> Unit,
 ) {
     if (items.isEmpty()) return
     item(key = "$key:header") { SectionHeader(title = stringResource(title)) }
     item(key = key) {
         LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            itemsIndexed(items) { _, item -> Box(Modifier.width(ShelfTileWidth)) { tile(item) } }
+            items(items, key = { it.key }) { item -> Box(Modifier.width(ShelfTileWidth)) { tile(item) } }
         }
     }
 }
 
 @Composable
-private fun AlbumTile(
-    album: Album,
+private fun HomeItemTile(
+    item: HomeItem,
     callbacks: HomeCallbacks,
-    showPlayCount: Boolean,
 ) {
+    when (item) {
+        is HomeItem.AlbumItem -> AlbumTile(item, callbacks)
+
+        is HomeItem.ArtistItem -> ArtistTile(item, callbacks)
+
+        is HomeItem.PlaylistItem -> GridTile(
+            title = item.playlist.name,
+            subtitle = pluralString(R.plurals.songsPlural, item.playlist.songCount),
+            onClick = { callbacks.onItemClick(item) },
+            artwork = { LibraryArtwork(item.playlist, ArtworkPlaceholder.Playlist, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
+        )
+
+        is HomeItem.SmartPlaylistItem -> GridTile(
+            title = stringResourceKey(item.smartPlaylistId.nameKey),
+            onClick = { callbacks.onItemClick(item) },
+            artwork = { LibraryArtwork(null, ArtworkPlaceholder.SmartPlaylist, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
+        )
+
+        is HomeItem.GenreItem -> GridTile(
+            title = item.genre.name,
+            subtitle = pluralString(R.plurals.songsPlural, item.genre.songCount),
+            onClick = { callbacks.onItemClick(item) },
+            onLongClick = { callbacks.onShowActions(MediaActionsTarget(item.genre.name, null, MediaSelection.Genres(item.genre), ArtworkPlaceholder.Genre)) },
+            artwork = { LibraryArtwork(item.genre, ArtworkPlaceholder.Genre, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
+        )
+    }
+}
+
+@Composable
+private fun AlbumTile(
+    item: HomeItem.AlbumItem,
+    callbacks: HomeCallbacks,
+) {
+    val album = item.album
     val title = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown)
     val artist = album.albumArtist ?: album.friendlyArtistName ?: stringResource(com.simplecityapps.core.R.string.unknown)
-    // The play count leads, so a long artist name is what gets cut short.
-    val subtitle = if (showPlayCount) listOf(pluralString(R.plurals.home_play_count, album.playCount), artist).joinToString(" · ") else artist
     GridTile(
         title = title,
-        subtitle = subtitle,
-        onClick = { callbacks.onAlbumClick(album) },
+        subtitle = artist,
+        onClick = { callbacks.onItemClick(item) },
         onLongClick = { callbacks.onShowActions(MediaActionsTarget(title, artist, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
         artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
     )
@@ -253,15 +307,16 @@ private fun AlbumTile(
 
 @Composable
 private fun ArtistTile(
-    artist: AlbumArtist,
+    item: HomeItem.ArtistItem,
     callbacks: HomeCallbacks,
 ) {
+    val artist = item.albumArtist
     val name = artist.name ?: artist.friendlyArtistName ?: stringResource(com.simplecityapps.core.R.string.unknown)
     val albums = pluralStringResource(R.plurals.albumsPlural, artist.albumCount, artist.albumCount).replace("{count}", artist.albumCount.toString())
     GridTile(
         title = name,
         subtitle = albums,
-        onClick = { callbacks.onArtistClick(artist) },
+        onClick = { callbacks.onItemClick(item) },
         onLongClick = { callbacks.onShowActions(MediaActionsTarget(name, null, MediaSelection.AlbumArtists(artist), ArtworkPlaceholder.Artist)) },
         artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, Modifier.fillMaxSize(), size = ArtworkSize.Grid, shape = ArtworkShape.Circle) },
     )

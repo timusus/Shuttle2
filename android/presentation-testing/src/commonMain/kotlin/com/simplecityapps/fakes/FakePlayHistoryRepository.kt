@@ -32,6 +32,9 @@ class FakePlayHistoryRepository : PlayHistoryRepository {
     var genrePlays: List<GenrePlays> = emptyList()
     val eventCount = MutableStateFlow(0)
 
+    /** The windowed aggregates asked for, with their arguments. */
+    val queries = mutableListOf<String>()
+
     override suspend fun recordPlay(
         song: Song,
         startedAt: Instant,
@@ -49,13 +52,13 @@ class FakePlayHistoryRepository : PlayHistoryRepository {
         windowMinutes: Int,
         since: Instant,
         limit: Int
-    ): List<ContextDays> = contextsAroundHour.take(limit)
+    ): List<ContextDays> = contextsAroundHour.take(limit).also { queries += "contextsAroundHour($hour, $windowMinutes, $since)" }
 
     override suspend fun albumCompletions(
         since: Instant,
         halfLife: Duration,
         limit: Int
-    ): List<AlbumCompletions> = albumCompletions.take(limit)
+    ): List<AlbumCompletions> = albumCompletions.take(limit).also { queries += "albumCompletions($since, $halfLife)" }
 
     override suspend fun albumArtistCompletions(
         since: Instant,

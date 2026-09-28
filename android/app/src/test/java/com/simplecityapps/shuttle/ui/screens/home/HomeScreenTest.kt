@@ -57,14 +57,15 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `a library shows its shelves`() {
+    fun `a library shows its sections`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.assertTextDisplayed("Recently played")
-        robot.scrollTo("Recently added")
-        robot.scrollTo("Most played")
-        robot.scrollTo("Something different")
+        robot.assertTextDisplayed("Jump back in")
         robot.scrollTo("Saltmarsh Choir")
+        robot.scrollTo("On repeat")
+        robot.scrollTo("Recently added")
+        robot.scrollTo("Genre picks")
+        robot.scrollTo(HomeScenarios.genres.first().name)
     }
 
     @Test
@@ -106,32 +107,31 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `empty shelves are hidden`() {
+    fun `cold start shows recently added, genre picks and shuffle all`() {
         robot.setContent(HomeScenarios.unplayed)
 
-        robot.assertTextNotShown("Recently played")
-        robot.assertTextNotShown("Most played")
+        robot.assertTextNotShown("Jump back in")
         robot.assertTextDisplayed("Recently added")
+        robot.scrollTo("Genre picks")
+        robot.tapText("Shuffle all")
+
+        robot.shuffles shouldBe 1
     }
 
     @Test
-    fun `most played albums carry their play count, with its unit, in the subtitle`() {
+    fun `tapping a tile hands its item over`() {
         robot.setContent(HomeScenarios.content)
-
-        robot.scrollTo("Soft Focus")
-        robot.assertTextDisplayed("14 plays · ${HomeScenarios.softFocus.albumArtist}")
-        robot.assertTextNotShown("14")
-    }
-
-    @Test
-    fun `tapping an album or artist opens it`() {
-        robot.setContent(HomeScenarios.content)
+        val genre = HomeScenarios.genres.first()
 
         robot.tapText("Harbour Weather")
         robot.tapText("Saltmarsh Choir")
+        robot.tapText(genre.name)
 
-        robot.openedAlbums shouldContainExactly listOf(HomeScenarios.harbourWeather)
-        robot.openedArtists shouldContainExactly listOf(HomeScenarios.saltmarshChoir)
+        robot.clickedItems shouldContainExactly listOf(
+            HomeItem.AlbumItem(HomeScenarios.harbourWeather),
+            HomeItem.ArtistItem(HomeScenarios.saltmarshChoir),
+            HomeItem.GenreItem(genre),
+        )
     }
 
     @Test

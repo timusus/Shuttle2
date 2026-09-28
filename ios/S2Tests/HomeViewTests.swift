@@ -23,15 +23,14 @@ struct HomeViewTests {
         )
     }
 
-    private func content(
-        recentlyPlayed: [Album] = [], recentlyAdded: [Album] = [], mostPlayed: [Album] = [],
-        somethingDifferent: [AlbumArtist] = [], resume: ResumeQueue? = nil
-    ) -> HomeUiState {
-        HomeUiStateContent(
-            showWhatsNew: false, recentlyPlayed: recentlyPlayed, recentlyAdded: recentlyAdded,
-            mostPlayed: mostPlayed, somethingDifferent: somethingDifferent, songs: TestSongs.demo,
-            resume: resume, events: []
-        )
+    private func genre(_ name: String) -> Genre { Genre(name: name, songCount: 40, duration: 0, mediaProviders: [.jellyfin]) }
+
+    private func section(_ id: HomeSectionId, _ title: HomeSectionTitle, _ items: [HomeItem]) -> HomeSection {
+        HomeSection(id: id, title: title, items: items)
+    }
+
+    private func content(_ sections: [HomeSection] = [], resume: ResumeQueue? = nil) -> HomeUiState {
+        HomeUiStateContent(showWhatsNew: false, sections: sections, resume: resume, events: [])
     }
 
     @Test func loadingShowsAProgressView() throws {
@@ -43,46 +42,53 @@ struct HomeViewTests {
         #expect((try? HomeContent(state: HomeUiStateEmpty.shared).inspect().find(ViewType.List.self)) == nil)
     }
 
-    @Test func shelvesListTheirAlbumsAndHideWhenEmpty() throws {
-        let sut = HomeContent(state: content(
-            recentlyPlayed: [album("OK Computer")],
-            recentlyAdded: [album("Amnesiac")],
-            mostPlayed: [album("Post", artist: "Björk", playCount: 5)]
-        ))
-        #expect((try? sut.inspect().find(text: "Recently Played")) != nil)
+    @Test func sectionsListTheirItemsUnderTheirTitles() throws {
+        let sut = HomeContent(state: content([
+            section(.jumpBackIn, .jumpBackIn, [HomeItemAlbumItem(album: album("OK Computer")), HomeItemArtistItem(albumArtist: artist("Massive Attack"))]),
+            section(.aroundThisTime, .tonight, [HomeItemAlbumItem(album: album("Amnesiac"))]),
+            section(.genrePicks, .genrePicks, [HomeItemGenreItem(genre: genre("Trip Hop"))]),
+        ]))
+        #expect((try? sut.inspect().find(text: "Jump Back In")) != nil)
         #expect((try? sut.inspect().find(text: "OK Computer")) != nil)
-        #expect((try? sut.inspect().find(text: "Recently Added")) != nil)
-        #expect((try? sut.inspect().find(text: "Amnesiac")) != nil)
-        #expect((try? sut.inspect().find(text: "Most Played")) != nil)
-        #expect((try? sut.inspect().find(text: "5 plays · Björk")) != nil)
-        #expect((try? sut.inspect().find(text: "Something Different")) == nil)
-    }
-
-    @Test func somethingDifferentListsArtists() throws {
-        let sut = HomeContent(state: content(somethingDifferent: [artist("Massive Attack")]))
-        #expect((try? sut.inspect().find(text: "Something Different")) != nil)
         #expect((try? sut.inspect().find(text: "Massive Attack")) != nil)
         #expect((try? sut.inspect().find(text: "3 albums")) != nil)
+        #expect((try? sut.inspect().find(text: "Tonight")) != nil)
+        #expect((try? sut.inspect().find(text: "Amnesiac")) != nil)
+        #expect((try? sut.inspect().find(text: "Genre Picks")) != nil)
+        #expect((try? sut.inspect().find(text: "Trip Hop")) != nil)
+        #expect((try? sut.inspect().find(text: "On Repeat")) == nil)
     }
 
-    @Test func tappingAnAlbumOpensIt() throws {
-        var tapped: Album?
-        let sut = HomeContent(state: content(recentlyPlayed: [album("OK Computer")]), onAlbumTap: { tapped = $0 })
+    @Test func coldStartOffersShuffleAll() throws {
+        var shuffled = false
+        let sut = HomeContent(state: content([section(.shuffleAll, .shuffleAll, [])]), onShuffleAll: { shuffled = true })
+        try sut.inspect().find(button: "Shuffle All").tap()
+        #expect(shuffled)
+    }
+
+    @Test func tappingATileHandsItsItemOver() throws {
+        var tapped: [HomeItem] = []
+        let sut = HomeContent(
+            state: content([section(.jumpBackIn, .jumpBackIn, [
+                HomeItemAlbumItem(album: album("OK Computer")),
+                HomeItemArtistItem(albumArtist: artist("Massive Attack")),
+                HomeItemGenreItem(genre: genre("Trip Hop")),
+            ])]),
+            onItemTap: { tapped.append($0) }
+        )
         try sut.inspect().find(button: "OK Computer").tap()
-        #expect(tapped?.name == "OK Computer")
-    }
-
-    @Test func tappingAnArtistOpensIt() throws {
-        var tapped: AlbumArtist?
-        let sut = HomeContent(state: content(somethingDifferent: [artist("Massive Attack")]), onArtistTap: { tapped = $0 })
         try sut.inspect().find(button: "Massive Attack").tap()
-        #expect(tapped?.name == "Massive Attack")
+        try sut.inspect().find(button: "Trip Hop").tap()
+        #expect(tapped.count == 3)
+        #expect((tapped[0] as? HomeItemAlbumItem)?.album.name == "OK Computer")
+        #expect((tapped[1] as? HomeItemArtistItem)?.albumArtist.name == "Massive Attack")
+        #expect((tapped[2] as? HomeItemGenreItem)?.genre.name == "Trip Hop")
     }
 
-    @Test func noShelvesOrResumeStillRendersTheScrollView() throws {
+    @Test func noSectionsOrResumeStillRendersTheScrollView() throws {
         let sut = HomeContent(state: content())
         #expect((try? sut.inspect().find(ViewType.ScrollView.self)) != nil)
-        #expect((try? sut.inspect().find(text: "Recently Played")) == nil)
+        #expect((try? sut.inspect().find(text: "Jump Back In")) == nil)
     }
 
     @Test func resumeHeroShowsTheSongAndTogglesPlayback() throws {
@@ -98,7 +104,7 @@ struct HomeViewTests {
 
     @Test func shuffleAllTriggersTheCallback() throws {
         var shuffled = false
-        let sut = HomeContent(state: content(recentlyPlayed: [album("OK Computer")]), onShuffleAll: { shuffled = true })
+        let sut = HomeContent(state: content([section(.jumpBackIn, .jumpBackIn, [HomeItemAlbumItem(album: album("OK Computer"))])]), onShuffleAll: { shuffled = true })
         try sut.inspect().find(button: "Shuffle").tap()
         #expect(shuffled)
     }

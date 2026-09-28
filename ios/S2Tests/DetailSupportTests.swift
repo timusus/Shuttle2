@@ -71,10 +71,7 @@ struct DetailSupportTests {
     @Test func theResumeCardOffersPauseWhilePlayingAndPlayWhilePaused() throws {
         func home(playing: Bool, onToggle: @escaping () -> Void = {}, onShuffleQueue: @escaping () -> Void = {}) -> HomeContent {
             let resume = ResumeQueue(song: TestSongs.demo[0], songs: TestSongs.demo, timeLeftMs: 3_665_000, playing: playing)
-            let state = HomeUiStateContent(
-                showWhatsNew: false, recentlyPlayed: [], recentlyAdded: [], mostPlayed: [], somethingDifferent: [],
-                songs: TestSongs.demo, resume: resume, events: []
-            )
+            let state = HomeUiStateContent(showWhatsNew: false, sections: [], resume: resume, events: [])
             return HomeContent(state: state, onTogglePlayback: onToggle, onShuffleQueue: onShuffleQueue)
         }
         var toggled = false

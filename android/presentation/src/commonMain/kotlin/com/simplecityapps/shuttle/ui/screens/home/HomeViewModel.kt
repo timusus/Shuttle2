@@ -2,9 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.shuttle.model.Album
-import com.simplecityapps.shuttle.model.AlbumArtist
-import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.settings.AnalyticsConsentSettings
 import com.simplecityapps.shuttle.settings.ReadSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
@@ -32,11 +30,8 @@ sealed interface HomeUiState {
 
     data class Content(
         val showWhatsNew: Boolean,
-        val recentlyPlayed: List<Album>,
-        val recentlyAdded: List<Album>,
-        val mostPlayed: List<Album>,
-        val somethingDifferent: List<AlbumArtist>,
-        val songs: List<Song>,
+        /** The suggestion sections, in order; empty ones are left out (#633). */
+        val sections: List<HomeSection>,
         /** The queue to pick up from, or null with none (#490). */
         val resume: ResumeQueue? = null,
         val events: List<PendingEvent<HomeEvent>> = emptyList(),
@@ -52,7 +47,7 @@ enum class HomeEvent {
 @ViewModelKey(HomeViewModel::class)
 @ContributesIntoMap(AppScope::class)
 class HomeViewModel @Inject constructor(
-    homeSections: HomeSections,
+    observeHomeSections: ObserveHomeSections,
     private val isWhatsNewPending: IsWhatsNewPending,
     private val markChangelogViewed: MarkChangelogViewed,
     private val readSetting: ReadSetting,
@@ -70,25 +65,21 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    val uiState: StateFlow<HomeUiState> = combine(homeSections(), observeResumeQueue(), whatsNewPending, events.flow) { sections, resume, whatsNew, pendingEvents ->
-        if (sections.songs.isEmpty()) {
+    val uiState: StateFlow<HomeUiState> = combine(observeHomeSections(), observeResumeQueue(), whatsNewPending, events.flow) { sections, resume, whatsNew, pendingEvents ->
+        if (sections == null) {
             HomeUiState.Empty
         } else {
             HomeUiState.Content(
                 showWhatsNew = whatsNew,
-                recentlyPlayed = sections.recentlyPlayed,
-                recentlyAdded = sections.recentlyAdded,
-                mostPlayed = sections.mostPlayed,
-                somethingDifferent = sections.somethingDifferent,
-                songs = sections.songs,
+                sections = sections,
                 resume = resume,
                 events = pendingEvents,
             )
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState.Loading)
 
-    /** Shuffles the whole library, or null before it has loaded. */
-    fun shuffleAll(): MediaAction? = (uiState.value as? HomeUiState.Content)?.let { MediaAction.Shuffle(MediaSelection.Songs(it.songs)) }
+    /** Shuffles the whole library, resolved as it plays; null before the library has loaded or while it's empty. */
+    fun shuffleAll(): MediaAction? = (uiState.value as? HomeUiState.Content)?.let { MediaAction.Shuffle(MediaSelection.SongsMatching(SongQuery.All())) }
 
     /** Shuffles the queue the resume hero offers, or null with none. */
     fun shuffleQueue(): MediaAction? = (uiState.value as? HomeUiState.Content)?.resume?.let { MediaAction.Shuffle(MediaSelection.Songs(it.songs)) }

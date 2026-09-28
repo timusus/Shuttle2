@@ -8,19 +8,22 @@
     <string name="home_resume_title">Continue listening</string>
     <!-- Home: how much of the current song is still to play, after its artist on the resume hero; %1$s is a duration -->
     <string name="home_resume_time_left"><xliff:g example="2:14" id="time">%1$s</xliff:g> left</string>
-    <!-- Home: shelf of albums the user played most recently -->
-    <string name="home_recently_played">Recently played</string>
-    <!-- Home: shelf of albums most recently added to the library -->
+    <!-- Home: section of the albums, artists, playlists and genres the user last played from -->
+    <string name="home_jump_back_in">Jump back in</string>
+    <!-- Home: section of what the user tends to play around this hour, shown in the morning -->
+    <string name="home_this_morning">This morning</string>
+    <!-- Home: section of what the user tends to play around this hour, shown in the afternoon -->
+    <string name="home_this_afternoon">This afternoon</string>
+    <!-- Home: section of what the user tends to play around this hour, shown in the evening and at night -->
+    <string name="home_tonight">Tonight</string>
+    <!-- Home: section of the albums and artists the user has played through most in the last few weeks -->
+    <string name="home_on_repeat">On repeat</string>
+    <!-- Home: section of albums the user used to play a lot but hasn't for months -->
+    <string name="home_rediscover">Rediscover</string>
+    <!-- Home: section of albums most recently added to the library -->
     <string name="home_recently_added">Recently added</string>
-    <!-- Home: shelf of the user's most played albums -->
-    <string name="home_most_played">Most played</string>
-    <!-- Home: shelf of artists the user has never played -->
-    <string name="home_something_different">Something different</string>
-    <!-- Home: how many times a most played album has played, leading its subtitle -->
-    <plurals name="home_play_count">
-        <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> play</item>
-        <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g> plays</item>
-    </plurals>
+    <!-- Home: section of genre tiles; tapping one shuffles that genre -->
+    <string name="home_genre_picks">Genre picks</string>
     <!-- Home: card title telling the user this version has release notes they haven't seen -->
     <string name="home_whats_new_title">What\'s new in S2</string>
     <!-- Home: card message under the What's new title; %1$s is the app version -->
