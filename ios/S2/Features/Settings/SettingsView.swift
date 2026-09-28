@@ -5,7 +5,8 @@ import SwiftUI
 /// Presented as a sheet from the gear on the Home and Library roots (`AppShell`), with its own `NavigationStack`
 /// on `Navigator.settingsPath`, so the Sources row pushes Sources (and its sign-in) inside the sheet. The catalog
 /// holds only the rows iOS acts on; what it leaves out, and why, is on `IosSettingsCatalog`. The Equalizer row pushes
-/// `EqualizerView` the same way, and holds the app's one Preamp (#645).
+/// `EqualizerView` the same way. ReplayGain's pre-amp is its own section, labelled and explained apart from the
+/// Equalizer's Preamp (#645).
 struct SettingsView: View {
     var body: some View {
         let viewModel = ViewModelCache.shared.viewModel(Navigator.settingsCacheKey) { AppGraph.shared.settingsViewModel }
@@ -22,6 +23,11 @@ struct SettingsView: View {
                     onChoose: { key, index in
                         if let item = catalog.item(key: key) as? SettingItemChoice<AnyObject> {
                             viewModel.onChoiceSelect(item: item, optionIndex: Int32(index))
+                        }
+                    },
+                    onSlide: { key, position in
+                        if let item = catalog.item(key: key) as? SettingItemSlider<AnyObject> {
+                            viewModel.onSliderChange(item: item, position: position)
                         }
                     },
                     onAction: { key in
@@ -64,6 +70,7 @@ struct SettingsSection: Equatable, Identifiable {
     var id: String
     var title: String?
     var rows: [SettingsRow]
+    var footer: String?
 }
 
 /// One row, in plain values: what it draws and the key its callback carries back.
@@ -73,6 +80,8 @@ enum SettingsRow: Equatable, Identifiable {
     case toggle(key: String, title: String, summary: String?, isOn: Bool, isEnabled: Bool)
     case choice(key: String, title: String, options: [String], selected: Int, isEnabled: Bool)
     case action(key: String, title: String, summary: String?, confirmation: Confirmation?, isEnabled: Bool)
+    /// A continuous slider over `range`, its value shown by `valueLabel` (nil: not shown).
+    case slider(key: String, title: String, value: Float, range: ClosedRange<Float>, valueLabel: String?, isEnabled: Bool)
 
     struct Confirmation: Equatable {
         var title: String
@@ -83,7 +92,8 @@ enum SettingsRow: Equatable, Identifiable {
     var id: String {
         switch self {
         case .link(let id, _, _, _): id
-        case .toggle(let key, _, _, _, _), .choice(let key, _, _, _, _), .action(let key, _, _, _, _): key
+        case .toggle(let key, _, _, _, _), .choice(let key, _, _, _, _), .action(let key, _, _, _, _),
+             .slider(let key, _, _, _, _, _): key
         }
     }
 }
@@ -104,7 +114,8 @@ extension SettingsSection {
             for (index, group) in screen.groups.enumerated() {
                 let rows = group.items.compactMap { row(for: $0, catalog: catalog, state: state, rescanStarted: rescanStarted) }
                 if let title = group.title {
-                    sections.append(SettingsSection(id: "\(destination.name).\(index)", title: title.localized(), rows: rows))
+                    let footer = rows.contains { $0.id == replayGainPreampKey } ? replayGainPreampFooter : nil
+                    sections.append(SettingsSection(id: "\(destination.name).\(index)", title: title.localized(), rows: rows, footer: footer))
                 } else if index == 0 {
                     opening.rows.append(contentsOf: rows)
                 } else {
@@ -114,6 +125,13 @@ extension SettingsSection {
             return (opening.rows.isEmpty ? [] : [opening]) + sections
         }
     }
+
+    /// ReplayGain's pre-amp (`PlaybackSettings.PreAmpGain`): named for ReplayGain, so it doesn't read as a second
+    /// Equalizer Preamp, and explained beneath its section.
+    static let replayGainPreampKey = "preamp_gain"
+    static let replayGainPreampTitle = "Replay Gain Pre-amp"
+    static let replayGainPreampFooter =
+        "The pre-amp adjusts songs with Replay Gain tags, on top of their Replay Gain. It's separate from the Equalizer's Preamp, which applies to everything."
 
     private static func row(
         for item: any SettingItem,
@@ -147,6 +165,16 @@ extension SettingsSection {
                 },
                 isEnabled: enabled
             )
+        case let slider as SettingItemSlider<AnyObject>:
+            let value = state.sliderValue(item: slider)
+            return .slider(
+                key: slider.key,
+                title: slider.key == replayGainPreampKey ? replayGainPreampTitle : title,
+                value: value,
+                range: slider.minimum...slider.maximum,
+                valueLabel: slider.isDecibels ? String(format: "%+.1f dB", value) : nil,
+                isEnabled: enabled
+            )
         case let link as SettingItemNavigate where link.target == .equalizer:
             return .link(id: "settings.equalizer", title: title, systemImage: "slider.vertical.3", route: .equalizer)
         default:
@@ -160,6 +188,7 @@ struct SettingsContent: View {
     let sections: [SettingsSection]
     var onToggle: (String, Bool) -> Void = { _, _ in }
     var onChoose: (String, Int) -> Void = { _, _ in }
+    var onSlide: (String, Float) -> Void = { _, _ in }
     var onAction: (String) -> Void = { _ in }
 
     @Environment(\.openURL) private var openURL
@@ -176,6 +205,8 @@ struct SettingsContent: View {
                     }
                 } header: {
                     if let title = section.title { Text(title) }
+                } footer: {
+                    if let footer = section.footer { Text(footer) }
                 }
             }
             Section {
@@ -251,6 +282,20 @@ struct SettingsContent: View {
             .tint(.primary)
             .disabled(!isEnabled)
             .accessibilityIdentifier("settings.\(key)")
+        case .slider(let key, let title, let value, let range, let valueLabel, let isEnabled):
+            VStack(alignment: .leading, spacing: Spacing.small) {
+                LabeledContent {
+                    if let valueLabel { Text(valueLabel).monospacedDigit() }
+                } label: {
+                    Label { Text(title) } icon: { icon.square }
+                }
+                Slider(value: Binding(get: { value }, set: { onSlide(key, $0) }), in: range) {
+                    Text(title)
+                }
+                .accessibilityIdentifier("settings.\(key)")
+                .accessibilityValue(valueLabel ?? String(format: "%.1f", value))
+            }
+            .disabled(!isEnabled)
         }
     }
 
@@ -275,6 +320,7 @@ struct SettingsIcon: Equatable {
         case "settings.equalizer": ("slider.vertical.3", .pink)
         case "pref_retain_shuffle_on_new_queue": ("shuffle", .orange)
         case "replaygain_mode": ("waveform", .purple)
+        case "preamp_gain": ("speaker.wave.2.fill", .indigo)
         case "pref_streaming_quality_unmetered": ("wifi", .cyan)
         case "pref_streaming_quality_metered": ("antenna.radiowaves.left.and.right", .green)
         case "pref_media_rescan": ("arrow.clockwise", .teal)

@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.shared.settings
 
+import com.simplecityapps.playback.dsp.replaygain.MAX_REPLAY_GAIN_PREAMP_DB
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.shuttle.settings.AppearanceSettings
@@ -28,9 +29,9 @@ import dev.zacsweers.metro.Provides
  * - Appearance: theme, dynamic colour, accent, colour from artwork and pure black restyle Android's Material
  *   theme, which iOS doesn't draw; widget opacity has no widget. Show Home on launch stays: the shell starts on
  *   `ShellViewModel`'s start tab (on by default on iOS, [IosSettingDefaults]).
- * - Playback & sound: USB DAC direct output is Android's mixer. The equalizer and ReplayGain are Android's rows, run by
- *   the S2Playback engine (phase 6, #604). ReplayGain's own pre-amp slider is left out so the one Preamp is the
- *   Equalizer's (#645); streams still carry its stored value (0 dB unless set), through `SongStreamResolver`.
+ * - Playback & sound: USB DAC direct output is Android's mixer. The equalizer, ReplayGain and its pre-amp are Android's
+ *   rows, run by the S2Playback engine (phase 6, #604); ReplayGain and its pre-amp are a group of their own, apart
+ *   from the Equalizer's Preamp (#645).
  * - Sources: reporting playback to the server has no iOS reporter yet; download on Wi-Fi only, until downloads.
  * - Library: rescan frequency needs a background scheduler; excluded songs and folders wait for local files (phase
  *   8); artwork Wi-Fi only gates the S2 artwork service iOS doesn't use; media session artwork, clearing the
@@ -59,7 +60,13 @@ object IosSettingsCatalog : SettingsCatalog {
                     SettingItem.Navigate(
                         target = SettingsLink.Equalizer,
                         title = StringKey.DSP_EQUALIZER_TITLE
-                    ),
+                    )
+                )
+            ),
+            // ReplayGain and its own pre-amp, a group apart from the Equalizer's Preamp (#645).
+            SettingsGroup(
+                title = StringKey.DSP_REPLAY_GAIN_TITLE,
+                items = listOf(
                     SettingItem.Choice(
                         setting = PlaybackSettings.ReplayGain,
                         title = StringKey.DSP_REPLAY_GAIN_TITLE,
@@ -68,6 +75,13 @@ object IosSettingsCatalog : SettingsCatalog {
                             ChoiceOption(ReplayGainMode.Album, StringKey.DSP_REPLAY_GAIN_ALBUM),
                             ChoiceOption(ReplayGainMode.Off, StringKey.DSP_REPLAY_GAIN_OFF)
                         )
+                    ),
+                    SettingItem.Slider(
+                        setting = PlaybackSettings.PreAmpGain,
+                        title = StringKey.DSP_PREAMP,
+                        range = -MAX_REPLAY_GAIN_PREAMP_DB.toFloat()..MAX_REPLAY_GAIN_PREAMP_DB.toFloat(),
+                        steps = 0,
+                        fromFloat = { it }
                     )
                 )
             )
