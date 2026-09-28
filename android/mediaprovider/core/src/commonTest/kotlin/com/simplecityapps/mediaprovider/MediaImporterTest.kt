@@ -40,7 +40,8 @@ class MediaImporterTest {
             playlistStore = object : ImportedPlaylistStore {
                 override suspend fun storePlaylist(playlist: MediaImporter.PlaylistUpdateData) = error("ImportedPlaylistStore.storePlaylist isn't faked")
             },
-            preferenceManager = preferences
+            preferenceManager = preferences,
+            afterImport = {}
         ).apply { mediaProviders += provider }
 
     @BeforeTest

@@ -15,8 +15,10 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.AlbumKeyRekey
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.albumKeyRekey
 import com.simplecityapps.shuttle.query.SongQuery
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.Dispatchers
@@ -46,13 +48,8 @@ constructor(
             }
 
             is MediaIdWrapper.Directory.Albums.Artist -> {
-                albumRepository.getAlbums(
-                    AlbumQuery.ArtistGroupKey(
-                        AlbumArtistGroupKey(
-                            mediaIdWrapper.albumArtistGroupKey
-                        )
-                    )
-                ).firstOrNull().orEmpty()
+                val key = AlbumArtistGroupKey(mediaIdWrapper.albumArtistGroupKey)
+                albumsBy(key).ifEmpty { albumKeyRekey().albumArtist(key)?.takeIf { it != key }?.let { albumsBy(it) }.orEmpty() }
                     .map { it.toMediaItem(mediaId) }
             }
 
@@ -105,22 +102,24 @@ constructor(
         songRepository.getSongs(SongQuery.Search(query = query)).firstOrNull().orEmpty().map { it.toMediaItem(parentMediaId = "") }
     }
 
-    private suspend fun songsForAlbum(directory: MediaIdWrapper.Directory.Songs.Album): List<Song> = songRepository
-        .getSongs(
-            SongQuery.AlbumGroupKeys(
-                listOf(
-                    SongQuery.AlbumGroupKey(
-                        key =
-                            AlbumGroupKey(
-                                key = directory.albumGroupKey,
-                                albumArtistGroupKey = AlbumArtistGroupKey(directory.albumArtistGroupKey)
-                            )
-                    )
-                )
-            )
-        )
+    private suspend fun albumsBy(key: AlbumArtistGroupKey): List<Album> = albumRepository.getAlbums(AlbumQuery.ArtistGroupKey(key)).firstOrNull().orEmpty()
+
+    /**
+     * The album's songs. An id Auto kept from before the album identity rule (#637) names the album by its old key, with
+     * no identity: when that finds nothing, it's moved as the stored keys were.
+     */
+    private suspend fun songsForAlbum(directory: MediaIdWrapper.Directory.Songs.Album): List<Song> {
+        val key = AlbumGroupKey(key = directory.albumGroupKey, albumArtistGroupKey = AlbumArtistGroupKey(directory.albumArtistGroupKey), identity = directory.identity)
+        return songsIn(key).ifEmpty { albumKeyRekey().album(key)?.takeIf { it != key }?.let { songsIn(it) }.orEmpty() }
+    }
+
+    private suspend fun songsIn(key: AlbumGroupKey): List<Song> = songRepository
+        .getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key))))
         .firstOrNull()
         .orEmpty()
+
+    /** For ids from before the album identity rule (#637); to be deleted with [AlbumKeyRekey]. */
+    private suspend fun albumKeyRekey(): AlbumKeyRekey = songRepository.getSongs(SongQuery.All(includeExcluded = true)).firstOrNull().orEmpty().albumKeyRekey()
 
     private suspend fun songsForPlaylist(directory: MediaIdWrapper.Directory.Songs.Playlist): List<Song> = playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(directory.playlistId)).firstOrNull()?.firstOrNull()?.let { playlist ->
         playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song }
@@ -132,7 +131,11 @@ constructor(
 
     private fun Playlist.toMediaItem(parentMediaId: String): MediaItem = browsableItem("${parentMediaId}playlist/$id/songs/", name, MediaMetadata.MEDIA_TYPE_PLAYLIST)
 
-    private fun Album.toMediaItem(parentMediaId: String): MediaItem = browsableItem("${parentMediaId}artist/${groupKey?.albumArtistGroupKey?.key}/album/${groupKey?.key}/songs/", name, MediaMetadata.MEDIA_TYPE_ALBUM)
+    // An identity (#637) holds slashes (a folder), so it's encoded; ids from before it have no identity segment
+    private fun Album.toMediaItem(parentMediaId: String): MediaItem {
+        val identity = groupKey?.identity?.let { "$ALBUM_IDENTITY_SEGMENT/${Uri.encode(it)}/" }.orEmpty()
+        return browsableItem("${parentMediaId}artist/${groupKey?.albumArtistGroupKey?.key}/album/${groupKey?.key}/${identity}songs/", name, MediaMetadata.MEDIA_TYPE_ALBUM)
+    }
 
     private fun Song.toMediaItem(parentMediaId: String): MediaItem = MediaItem.Builder()
         .setMediaId("$parentMediaId$id")
@@ -154,7 +157,7 @@ constructor(
             object Playlists : Directory()
 
             sealed class Songs : Directory() {
-                class Album(val albumGroupKey: String, val albumArtistGroupKey: String) : Songs()
+                class Album(val albumGroupKey: String, val albumArtistGroupKey: String, val identity: String?) : Songs()
 
                 class Playlist(val playlistId: Long) : Songs()
 
@@ -203,7 +206,8 @@ constructor(
                 pathSegments.contains("album") -> {
                     MediaIdWrapper.Directory.Songs.Album(
                         albumGroupKey = pathSegments.getNextSegment("album")!!,
-                        albumArtistGroupKey = pathSegments.getNextSegment("artist")!!
+                        albumArtistGroupKey = pathSegments.getNextSegment("artist")!!,
+                        identity = pathSegments.getNextSegment(ALBUM_IDENTITY_SEGMENT)
                     )
                 }
 
@@ -281,6 +285,9 @@ constructor(
         const val ROOT_ID = "media:/root/"
         const val SHUFFLE_ALL_ID = "media:/shuffle_all"
         private const val FAVOURITES_SEGMENT = "favourites"
+
+        /** The segment before an album's identity (#637), URI-encoded, in its media id. */
+        private const val ALBUM_IDENTITY_SEGMENT = "album_id"
         const val FAVOURITES_ID = "media:/playlist_root/$FAVOURITES_SEGMENT/songs/"
 
         val root: MediaItem = browsableItem(ROOT_ID, title = null, mediaType = MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)

@@ -9,11 +9,15 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTITY_QUERY
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.albumIdentities
 import com.simplecityapps.mediaprovider.SongPathRemap
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.withAlbumIdentities
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -51,11 +55,15 @@ abstract class SongDataDao {
     )
     abstract fun getCoverSongDataForGenre(genre: String, limit: Int): Flow<List<SongData>>
 
-    fun getAll(): Flow<List<Song>> = getAllSongData().map { list ->
-        list.map { songData ->
-            songData.toSong()
-        }
-    }
+    /** The whole library, each song holding its album identity among the others. */
+    fun getAll(): Flow<List<Song>> = getAllSongData().map { list -> list.map { songData -> songData.toSong() }.withAlbumIdentities() }
+
+    /** Every song's album identity columns, for resolving the library's album identities without reading every song whole. */
+    @Query(SONG_IDENTITY_QUERY)
+    abstract fun getIdentityData(): Flow<List<SongIdentityData>>
+
+    @Query(SONG_IDENTITY_QUERY)
+    abstract suspend fun identityData(): List<SongIdentityData>
 
     @Transaction
     @Query("SELECT * FROM songs WHERE id IN (:ids)")
@@ -63,13 +71,14 @@ abstract class SongDataDao {
 
     /**
      * The songs with [ids] (each once, however often it's listed, in no particular order), read by id rather than from
-     * the whole library.
+     * the whole library, each holding its album identity in the library.
      * Queried in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a statement.
      */
     fun getByIds(ids: List<Long>): Flow<List<Song>> {
         val chunks = ids.distinct().chunked(MAX_BOUND_VARIABLES)
         if (chunks.isEmpty()) return flowOf(emptyList())
-        return combine(chunks.map(::getSongDataByIds)) { lists -> lists.flatMap { list -> list.map { songData -> songData.toSong() } } }
+        val songs = combine(chunks.map(::getSongDataByIds)) { lists -> lists.flatMap { list -> list.map { songData -> songData.toSong() } } }
+        return combine(songs, getIdentityData()) { found, identities -> found.withAlbumIdentities(identities.albumIdentities()) }
     }
 
     @Insert(onConflict = IGNORE)

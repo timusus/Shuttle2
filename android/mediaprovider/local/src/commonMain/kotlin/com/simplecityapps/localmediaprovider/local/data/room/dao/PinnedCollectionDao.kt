@@ -18,4 +18,7 @@ interface PinnedCollectionDao {
 
     @Delete
     suspend fun delete(pinnedCollection: PinnedCollectionData)
+
+    @Query("SELECT * FROM pinned_collections WHERE collectionType = :collectionType")
+    suspend fun ofType(collectionType: PinnedCollectionData.CollectionType): List<PinnedCollectionData>
 }

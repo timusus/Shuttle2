@@ -10,6 +10,7 @@ import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.withAlbumIdentities
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,6 +62,7 @@ class LocalSongRepository(
     override suspend fun loadSongs(query: SongQuery): List<Song> = withContext(Dispatchers.IO) {
         songDataDao.get()
             .map { songData -> songData.toSong() }
+            .withAlbumIdentities()
             .filter(query.predicate)
             .sortedWith(query.sortOrder.comparator)
             .matching(query)

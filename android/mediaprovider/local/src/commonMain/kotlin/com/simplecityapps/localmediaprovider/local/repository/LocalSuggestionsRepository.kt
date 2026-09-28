@@ -1,25 +1,25 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
-import com.simplecityapps.localmediaprovider.local.data.room.dao.AlbumTaggingRow
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SuggestionsDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
+import com.simplecityapps.localmediaprovider.local.data.room.entity.albumIdentities
 import com.simplecityapps.mediaprovider.repository.suggestions.ImportDays
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.AlbumIdentity
 import com.simplecityapps.shuttle.model.Genre
-import com.simplecityapps.shuttle.model.albumArtistGroupKeyOf
-import com.simplecityapps.shuttle.model.albumGroupKeyOf
-import com.simplecityapps.shuttle.model.removeArticles
+import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.withAlbumIdentities
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 /**
- * [SuggestionsRepository] over the songs table. A lookup by group key finds the tagged names that make the key (from
- * the distinct names, not the songs), then reads only those names' songs and groups them as the album and artist
- * repositories do, with the same key functions, so a key found here is one they have.
+ * [SuggestionsRepository] over the songs table. Albums and album artists are the library's album identities (#637),
+ * resolved from the identity columns rather than whole songs, so a key found here is one the album and artist
+ * repositories have; a lookup then reads only the songs of the few albums or artists it names.
  */
 class LocalSuggestionsRepository(
     private val suggestionsDao: SuggestionsDao
@@ -29,14 +29,8 @@ class LocalSuggestionsRepository(
     override suspend fun albums(keys: List<AlbumGroupKey>): List<Album> {
         val wanted = keys.filter { it.key != null }.toSet()
         if (wanted.isEmpty()) return emptyList()
-        val albumParts = wanted.mapNotNull { it.key }.toSet()
-        val names = suggestionsDao.albumNames().filter { name -> name.lowercase().removeArticles() in albumParts }
-        if (names.isEmpty()) return emptyList()
-        val albums = names.chunked(MAX_BOUND_VARIABLES)
-            .flatMap { chunk -> suggestionsDao.songsInAlbums(chunk) }
-            .map { it.toSong() }
+        val albums = songsWhere { identity -> identity.groupKey in wanted }
             .groupBy { it.albumGroupKey }
-            .filterKeys { it in wanted }
             .mapValues { (key, songs) -> songs.toAlbum(key) }
         return keys.mapNotNull { albums[it] }.distinct()
     }
@@ -44,17 +38,10 @@ class LocalSuggestionsRepository(
     override suspend fun albumArtists(keys: List<AlbumArtistGroupKey>): List<AlbumArtist> {
         val wanted = keys.toSet()
         if (wanted.isEmpty()) return emptyList()
-        val taggings = suggestionsDao.artistTaggings().filter { albumArtistGroupKeyOf(it.albumArtist, it.artists) in wanted }
-        if (taggings.isEmpty()) return emptyList()
-        val albumArtists = taggings.mapNotNull { it.albumArtist }.distinct()
-        // As stored: the artists column holds them joined by ';'
-        val artists = taggings.filter { it.albumArtist == null }.map { it.artists.joinToString(";") }.distinct()
-        val songs = suggestionsDao.songsByArtists(albumArtists.take(MAX_BOUND_VARIABLES / 2), artists.take(MAX_BOUND_VARIABLES / 2))
-            .map { it.toSong() }
+        val albumArtists = songsWhere { identity -> identity.albumArtistGroupKey in wanted }
             .groupBy { it.albumArtistGroupKey }
-            .filterKeys { it in wanted }
             .mapValues { (key, songs) -> songs.toAlbumArtist(key) }
-        return keys.mapNotNull { songs[it] }.distinct()
+        return keys.mapNotNull { albumArtists[it] }.distinct()
     }
 
     override suspend fun genres(names: List<String>): List<Genre> {
@@ -70,20 +57,62 @@ class LocalSuggestionsRepository(
         .sortedWith(compareByDescending<Genre> { it.songCount }.thenBy { it.name })
         .take(limit)
 
-    override suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumGroupKey> = suggestionsDao.recentlyCompletedAlbums(limit).albumKeys()
+    override suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumGroupKey> = latestAlbums(suggestionsDao.completedSongs().map { it.id to it.at }, limit)
 
     override suspend fun recentlyAddedAlbums(
         since: Instant,
         limit: Int
-    ): List<AlbumGroupKey> = suggestionsDao.recentlyAddedAlbums(since, limit).albumKeys()
+    ): List<AlbumGroupKey> = latestAlbums(suggestionsDao.songsAddedSince(since).map { it.id to it.at }, limit)
 
     override suspend fun albumsToRediscover(
         minPlays: Int,
         playedBefore: Instant,
         limit: Int
-    ): List<AlbumGroupKey> = suggestionsDao.albumsToRediscover(minPlays, playedBefore, limit).albumKeys()
+    ): List<AlbumGroupKey> {
+        val identities = identities()
+        return suggestionsDao.playedSongs()
+            .groupBy { row -> identities[row.id]?.groupKey?.takeIf { it.key != null } }
+            .filterKeys { it != null }
+            .filterValues { rows ->
+                val plays = rows.sumOf { it.playCount }
+                val lastPlayed = rows.mapNotNull { it.lastPlayed }.maxOrNull()
+                (plays >= minPlays || rows.any { it.favouritedAt != null }) && (lastPlayed == null || lastPlayed < playedBefore)
+            }
+            .entries
+            .sortedByDescending { (_, rows) -> rows.sumOf { it.playCount } }
+            .take(limit)
+            .mapNotNull { it.key }
+    }
 
     override suspend fun importDays(): ImportDays = ImportDays(songs = suggestionsDao.countSongs(), largestDay = suggestionsDao.largestImportDay() ?: 0)
+
+    private suspend fun identities(): Map<Long, AlbumIdentity> = suggestionsDao.identityData().albumIdentities()
+
+    /** The songs (not excluded) whose album identity matches, read by id, each holding its identity. */
+    private suspend fun songsWhere(matches: (AlbumIdentity) -> Boolean): List<Song> {
+        val identities = identities()
+        val ids = identities.filterValues(matches).keys.toList()
+        return ids.chunked(MAX_BOUND_VARIABLES)
+            .flatMap { chunk -> suggestionsDao.songsWithIds(chunk) }
+            .map { it.toSong() }
+            .withAlbumIdentities(identities)
+    }
+
+    /** The albums of these (song id, time) rows, latest first by their latest song, at most [limit]; songs without an album name left out. */
+    private suspend fun latestAlbums(
+        rows: List<Pair<Long, Instant>>,
+        limit: Int
+    ): List<AlbumGroupKey> {
+        val identities = identities()
+        return rows
+            .mapNotNull { (id, at) -> identities[id]?.groupKey?.takeIf { it.key != null }?.let { it to at } }
+            .groupBy({ it.first }, { it.second })
+            .mapValues { (_, times) -> times.max() }
+            .entries
+            .sortedByDescending { it.value }
+            .take(limit)
+            .map { it.key }
+    }
 
     /** Each genre's songs, summed over the genre taggings: a song tagged with several genres counts for each. */
     private suspend fun genreTotals(): Map<String, Genre> {
@@ -100,11 +129,6 @@ class LocalSuggestionsRepository(
         }
         return totals
     }
-
-    /** The rows' album group keys, in order, each once: rows that differ only in articles or punctuation share a key. */
-    private fun List<AlbumTaggingRow>.albumKeys(): List<AlbumGroupKey> = filter { it.album != null }
-        .map { albumGroupKeyOf(it.album, it.albumArtist, it.artists) }
-        .distinct()
 
     private companion object {
         // SQLite before 3.32 (below API 31) binds at most 999 variables a statement

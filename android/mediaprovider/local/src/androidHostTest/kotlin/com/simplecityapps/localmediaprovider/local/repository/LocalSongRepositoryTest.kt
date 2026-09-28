@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTITY_QUERY
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.mediaprovider.SongDiff
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -56,7 +57,8 @@ class LocalSongRepositoryTest {
 
         restored.orEmpty().map(Song::name) shouldContainExactlyInAnyOrder listOf("Song 2", "Song 4")
         songQueries.isNotEmpty() shouldBe true
-        songQueries.filterNot { sql -> sql.contains("WHERE id IN") } shouldBe emptyList()
+        // Besides the album identity columns (#637), which an album is decided over
+        songQueries.filterNot { sql -> sql.contains("WHERE id IN") || sql == SONG_IDENTITY_QUERY } shouldBe emptyList()
     }
 
     @Test

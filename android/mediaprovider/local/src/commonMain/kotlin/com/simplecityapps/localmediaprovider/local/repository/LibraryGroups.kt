@@ -9,7 +9,7 @@ import com.simplecityapps.shuttle.model.Song
 /** The album [key] names, made of its songs: the album and suggestions repositories both build albums with this. */
 internal fun List<Song>.toAlbum(key: AlbumGroupKey): Album = Album(
     name = firstOrNull { it.album != null }?.album,
-    albumArtist = firstOrNull { it.albumArtist != null }?.albumArtist,
+    albumArtist = albumArtistName(),
     artists = flatMap { it.artists }.distinct(),
     songCount = size,
     duration = sumOf { it.duration },
@@ -25,9 +25,9 @@ internal fun List<Song>.toAlbum(key: AlbumGroupKey): Album = Album(
 
 /** The album artist [key] names, made of their songs, as [toAlbum] makes an album. */
 internal fun List<Song>.toAlbumArtist(key: AlbumArtistGroupKey): AlbumArtist = AlbumArtist(
-    name = firstOrNull { it.albumArtist != null }?.albumArtist,
+    name = albumArtistName(),
     artists = flatMap { it.artists }.distinct(),
-    albumCount = distinctBy { it.album }.size,
+    albumCount = distinctBy { it.albumGroupKey }.size,
     songCount = size,
     // Every play of any of their songs counts, so never played means none of them ever was
     playCount = sumOf { it.playCount },
@@ -35,3 +35,9 @@ internal fun List<Song>.toAlbumArtist(key: AlbumArtistGroupKey): AlbumArtist = A
     mediaProviders = map { it.mediaProvider }.distinct(),
     artworkVersion = combinedArtworkVersion()
 )
+
+/**
+ * The album artist these songs' albums show ([com.simplecityapps.shuttle.model.AlbumIdentity.albumArtistName]): the
+ * album artist tag, "Various Artists", or the artist every song of an untagged album agrees on.
+ */
+private fun List<Song>.albumArtistName(): String? = firstNotNullOfOrNull { it.resolvedAlbumIdentity.albumArtistName }

@@ -54,7 +54,8 @@ class PlaylistImportTest {
             strings = ResourceMediaImportStrings(context),
             songRepository = songRepository,
             playlistStore = playlistRepository,
-            preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore())
+            preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore()),
+            afterImport = {}
         ).apply { mediaProviders += provider }
 
     @Before

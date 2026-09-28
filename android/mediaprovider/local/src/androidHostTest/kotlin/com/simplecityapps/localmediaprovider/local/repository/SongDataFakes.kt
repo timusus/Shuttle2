@@ -4,6 +4,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
 import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
@@ -43,6 +44,10 @@ internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDa
     override fun getSongDataByIds(ids: List<Long>): Flow<List<SongData>> = throw NotImplementedError()
 
     override fun getCoverSongDataForGenre(genre: String, limit: Int): Flow<List<SongData>> = throw NotImplementedError()
+
+    override fun getIdentityData(): Flow<List<SongIdentityData>> = throw NotImplementedError()
+
+    override suspend fun identityData(): List<SongIdentityData> = throw NotImplementedError()
 
     override suspend fun get(): List<SongData> = throw NotImplementedError()
 

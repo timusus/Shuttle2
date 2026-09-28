@@ -28,7 +28,12 @@ class MediaImporter(
     private val strings: MediaImportStrings,
     private val songRepository: SongRepository,
     private val playlistStore: ImportedPlaylistStore,
-    private val preferenceManager: GeneralPreferenceManager
+    private val preferenceManager: GeneralPreferenceManager,
+    /**
+     * Runs after each import, told whether every source's songs now hold every tag this build reads: what moving the
+     * stored album keys to the album identity rule (#637) waits for.
+     */
+    private val afterImport: suspend (songTagsCurrent: Boolean) -> Unit
 ) : SongImportStateProvider {
     private val logger = Logger.tagged("MediaImporter")
 
@@ -145,6 +150,8 @@ class MediaImporter(
 
         preferenceManager.lastMediaImportDate = Clock.System.now()
         importCount++
+
+        afterImport(mediaProviders.none { preferenceManager.songTagsOutdated(it.type) })
 
         logger.debug { "Import complete in ${time.elapsedNow().inWholeMilliseconds}ms)" }
     }

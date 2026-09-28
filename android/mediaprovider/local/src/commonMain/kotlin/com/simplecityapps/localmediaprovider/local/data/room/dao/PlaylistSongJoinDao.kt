@@ -6,9 +6,12 @@ import androidx.room.Query
 import androidx.room.Update
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTITY_QUERY
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.albumIdentities
 import com.simplecityapps.shuttle.model.PlaylistSong
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 
 @Dao
 abstract class PlaylistSongJoinDao {
@@ -28,15 +31,24 @@ abstract class PlaylistSongJoinDao {
     )
     abstract fun getSongDataForPlaylist(playlistId: Long): Flow<List<PlaylistSongData>>
 
-    fun getSongsForPlaylist(playlistId: Long): Flow<List<PlaylistSong>> = getSongDataForPlaylist(playlistId).map { list -> list.map { it.toPlaylistSong() } }
+    /** The playlist's songs, each holding its album identity in the library. */
+    fun getSongsForPlaylist(playlistId: Long): Flow<List<PlaylistSong>> = getSongDataForPlaylist(playlistId).withAlbumIdentities()
+
+    @Query(SONG_IDENTITY_QUERY)
+    abstract fun getIdentityData(): Flow<List<SongIdentityData>>
+
+    private fun Flow<List<PlaylistSongData>>.withAlbumIdentities(): Flow<List<PlaylistSong>> = combine(this, getIdentityData()) { list, identityData ->
+        val identities = identityData.albumIdentities()
+        list.map { data -> data.toPlaylistSong().let { entry -> identities[entry.song.id]?.let { entry.copy(song = entry.song.copy(albumIdentity = it)) } ?: entry } }
+    }
 
     /**
      * One row per distinct album (case-insensitively, by [SongData.album]/[SongData.albumArtist]), the row with the
      * lowest [PlaylistSongJoin.sortOrder] in each group — SQLite's `MIN()` bare-column rule guarantees the other bare
      * columns (`playlist_song_join.id`, `songs.*`) come from that same row, not an arbitrary one in the group.
      *
-     * This grouping approximates [com.simplecityapps.shuttle.model.Song.albumGroupKey]: no article-stripping, no
-     * fallback to the artist alone. Deliberate — this is a cosmetic mosaic, not album identity.
+     * This grouping approximates [com.simplecityapps.shuttle.model.Song.albumGroupKey] by the album and album artist tags
+     * alone. Deliberate — this is a cosmetic mosaic, not album identity.
      *
      * Not limited or ordered for display here: the caller re-sorts by the playlist's own
      * [com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder] before taking a cover count, so this raw join
@@ -53,7 +65,7 @@ abstract class PlaylistSongJoinDao {
     )
     abstract fun getCoverSongData(playlistId: Long): Flow<List<PlaylistSongData>>
 
-    fun getCoverSongsForPlaylist(playlistId: Long): Flow<List<PlaylistSong>> = getCoverSongData(playlistId).map { list -> list.map { it.toPlaylistSong() } }
+    fun getCoverSongsForPlaylist(playlistId: Long): Flow<List<PlaylistSong>> = getCoverSongData(playlistId).withAlbumIdentities()
 
     @Query("DELETE FROM playlist_song_join WHERE playlistId = :playlistId and id IN (:playlistSongIds)")
     abstract suspend fun delete(

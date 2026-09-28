@@ -1,18 +1,18 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlayEventDao
-import com.simplecityapps.localmediaprovider.local.data.room.dao.TaggingDayPlaysRow
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.albumIdentities
+import com.simplecityapps.localmediaprovider.local.data.room.entity.albumKeyRekey
 import com.simplecityapps.mediaprovider.repository.playhistory.AlbumArtistCompletions
 import com.simplecityapps.mediaprovider.repository.playhistory.AlbumCompletions
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.GenrePlays
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
+import com.simplecityapps.shuttle.model.AlbumIdentity
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.model.albumArtistGroupKeyOf
-import com.simplecityapps.shuttle.model.albumGroupKeyOf
 import kotlin.math.pow
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -44,6 +44,7 @@ class LocalPlayHistoryRepository(
         context: PlayContext
     ) {
         if (!song.isInLibrary) return
+        val playedFrom = current(context)
         val local = startedAt.toLocalDateTime(timeZone())
         playEventDao.insert(
             PlayEventData(
@@ -54,11 +55,20 @@ class LocalPlayHistoryRepository(
                 completed = completed,
                 localHour = local.hour,
                 weekday = local.dayOfWeek.isoDayNumber,
-                contextType = context.type,
-                contextId = context.id
+                contextType = playedFrom.type,
+                contextId = playedFrom.id
             )
         )
         pruneIfDue()
+    }
+
+    /**
+     * [context] as it names its album or album artist now: a queue saved before the album identity rule (#637) still
+     * holds the old key, so it's moved as the stored history was ([AlbumKeyMigration]); kept as it is when no song has it.
+     */
+    private suspend fun current(context: PlayContext): PlayContext {
+        if (context !is PlayContext.Album && context !is PlayContext.AlbumArtist) return context
+        return playEventDao.identityData().albumKeyRekey().context(context) ?: context
     }
 
     private suspend fun pruneIfDue() {
@@ -89,7 +99,7 @@ class LocalPlayHistoryRepository(
         since: Instant,
         halfLife: Duration,
         limit: Int
-    ): List<AlbumCompletions> = scoredCompletions(since, halfLife) { row -> albumGroupKeyOf(row.album, row.albumArtist, row.artists) }
+    ): List<AlbumCompletions> = scoredCompletions(since, halfLife) { identity -> identity.groupKey }
         .map { (key, total) -> AlbumCompletions(key, total.plays, total.score, total.lastPlayedAt) }
         .sortedWith(compareByDescending<AlbumCompletions> { it.score }.thenByDescending { it.lastCompletedAt })
         .take(limit)
@@ -98,7 +108,7 @@ class LocalPlayHistoryRepository(
         since: Instant,
         halfLife: Duration,
         limit: Int
-    ): List<AlbumArtistCompletions> = scoredCompletions(since, halfLife) { row -> albumArtistGroupKeyOf(row.albumArtist, row.artists) }
+    ): List<AlbumArtistCompletions> = scoredCompletions(since, halfLife) { identity -> identity.albumArtistGroupKey }
         .map { (key, total) -> AlbumArtistCompletions(key, total.plays, total.score, total.lastPlayedAt) }
         .sortedWith(compareByDescending<AlbumArtistCompletions> { it.score }.thenByDescending { it.lastCompletedAt })
         .take(limit)
@@ -136,17 +146,22 @@ class LocalPlayHistoryRepository(
     )
 
     /**
-     * The plays through since [since], merged by [key] (the group key, computed as the album and artist repositories
-     * compute it, so each result names an album or artist they have), each day's plays weighed by their age.
+     * The plays through since [since], merged by [key] of each song's album identity (the library's, as the album and
+     * artist repositories group by it, so each result names an album or artist they have), each day's plays weighed by
+     * their age. A song whose identity isn't known (removed since) is left out.
      */
     private suspend fun <K> scoredCompletions(
         since: Instant,
         halfLife: Duration,
-        key: (TaggingDayPlaysRow) -> K
+        key: (AlbumIdentity) -> K
     ): List<Pair<K, ScoredTotal>> {
         val today = clock.now().toEpochMilliseconds() / DAY_MS
-        return playEventDao.completionsByAlbumAndDay(since, MAX_DAY_ROWS)
-            .groupBy(key)
+        val rows = playEventDao.completionsBySongAndDay(since, MAX_DAY_ROWS)
+        if (rows.isEmpty()) return emptyList()
+        val identities = playEventDao.identityData().albumIdentities()
+        return rows
+            .mapNotNull { row -> identities[row.songId]?.let { identity -> key(identity) to row } }
+            .groupBy({ it.first }, { it.second })
             .map { (groupKey, rows) ->
                 groupKey to ScoredTotal(
                     plays = rows.sumOf { it.plays },
@@ -165,7 +180,7 @@ class LocalPlayHistoryRepository(
     companion object {
         private const val DAY_MS = 86_400_000L
 
-        /** A cap on the (tagging, day) rows an aggregate reads, far above a year of anyone's listening. */
+        /** A cap on the (song, day) rows an aggregate reads, far above a year of anyone's listening. */
         private const val MAX_DAY_ROWS = 20_000
 
         /** The local hours (0 to 23) that the [windowMinutes] either side of [hour]:00 touch, wrapping round midnight. */

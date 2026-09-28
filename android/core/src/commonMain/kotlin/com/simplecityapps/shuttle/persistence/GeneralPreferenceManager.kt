@@ -178,6 +178,18 @@ class GeneralPreferenceManager @Inject constructor(
         store.putInt("song_tags_version_$source", version)
     }
 
+    /**
+     * The album key version the stored album keys (play history, pinned downloads) were last moved to (#637): 0 before
+     * the album identity rule, so they're moved once, after the first import that leaves every source's tags current.
+     */
+    var albumKeysVersion: Int
+        set(value) {
+            store.putInt("album_keys_version", value)
+        }
+        get() {
+            return store.getInt("album_keys_version", 0)
+        }
+
     /** The tags version the one launch re-import for outdated songs was last started for, so it starts once per version. */
     var songTagsRescanVersion: Int
         set(value) {

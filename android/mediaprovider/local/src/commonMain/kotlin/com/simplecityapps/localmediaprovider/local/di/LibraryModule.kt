@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.di
 
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.repository.AlbumKeyMigration
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumArtistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalGenreRepository
@@ -56,8 +57,12 @@ abstract class LibraryModule {
             strings: MediaImportStrings,
             songRepository: SongRepository,
             playlistStore: ImportedPlaylistStore,
-            preferenceManager: GeneralPreferenceManager
-        ): MediaImporter = MediaImporter(strings, songRepository, playlistStore, preferenceManager)
+            preferenceManager: GeneralPreferenceManager,
+            database: MediaDatabase
+        ): MediaImporter {
+            val albumKeyMigration = AlbumKeyMigration(database.playEventDao(), database.pinnedCollectionDao(), preferenceManager)
+            return MediaImporter(strings, songRepository, playlistStore, preferenceManager, albumKeyMigration::migrateIfDue)
+        }
 
         @Provides
         @SingleIn(AppScope::class)

@@ -3,39 +3,30 @@ package com.simplecityapps.localmediaprovider.local.data.room.dao
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Transaction
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTITY_QUERY
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.SongIdentityData
 import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
 /**
- * The library aggregates behind Home's suggestions (#633). Each reads a group of songs, or a few albums' songs, never
- * the whole table. Album rows are grouped on the case-folded album, album artist and artists: finer than an album's
- * group key, which also drops articles and punctuation, so a caller merges the rows that share a key.
+ * The library aggregates behind Home's suggestions (#633). Albums and album artists are grouped by
+ * [com.simplecityapps.shuttle.model.AlbumIdentityRule] over [identityData] (#637), so the album rows here are per song,
+ * a few columns each, which a caller aggregates by album. Only the songs a section shows are read whole.
  */
 @Dao
 interface SuggestionsDao {
     @Query("SELECT COUNT(*) FROM songs WHERE blacklisted = 0")
     fun songCount(): Flow<Int>
 
-    /** Every album name tagged, for finding the few albums with a group key. */
-    @Query("SELECT DISTINCT album FROM songs WHERE blacklisted = 0 AND album IS NOT NULL")
-    suspend fun albumNames(): List<String>
-
-    /** Every album artist and artists tagging, for finding the few artists with a group key. */
-    @Query("SELECT DISTINCT albumArtist, artists FROM songs WHERE blacklisted = 0")
-    suspend fun artistTaggings(): List<ArtistTaggingRow>
+    /** Every song's album identity columns, excluded songs too: an album's identity is decided over all its songs. */
+    @Query(SONG_IDENTITY_QUERY)
+    suspend fun identityData(): List<SongIdentityData>
 
     @Transaction
-    @Query("SELECT * FROM songs WHERE blacklisted = 0 AND album IN (:names)")
-    suspend fun songsInAlbums(names: List<String>): List<SongData>
-
-    @Transaction
-    @Query("SELECT * FROM songs WHERE blacklisted = 0 AND (albumArtist IN (:albumArtists) OR (albumArtist IS NULL AND artists IN (:artists)))")
-    suspend fun songsByArtists(
-        albumArtists: List<String>,
-        artists: List<String>
-    ): List<SongData>
+    @Query("SELECT * FROM songs WHERE blacklisted = 0 AND id IN (:ids)")
+    suspend fun songsWithIds(ids: List<Long>): List<SongData>
 
     /** Songs by genre tagging (a song's genres, as stored) and provider; a caller splits and sums them per genre. */
     @Query(
@@ -44,34 +35,18 @@ interface SuggestionsDao {
     )
     suspend fun genreTaggings(): List<GenreTaggingRow>
 
-    @Query(
-        "SELECT album, albumArtist, artists FROM songs WHERE blacklisted = 0 AND lastCompleted IS NOT NULL " +
-            "GROUP BY lower(album), lower(albumArtist), lower(artists) " +
-            "ORDER BY MAX(lastCompleted) DESC LIMIT :limit"
-    )
-    suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumTaggingRow>
+    @Query("SELECT id, lastCompleted AS at FROM songs WHERE blacklisted = 0 AND lastCompleted IS NOT NULL")
+    suspend fun completedSongs(): List<SongTimeRow>
 
     @Query(
-        "SELECT album, albumArtist, artists FROM songs WHERE blacklisted = 0 AND COALESCE(dateAdded, lastModified) >= :since " +
-            "GROUP BY lower(album), lower(albumArtist), lower(artists) " +
-            "ORDER BY MAX(COALESCE(dateAdded, lastModified)) DESC LIMIT :limit"
+        "SELECT id, COALESCE(dateAdded, lastModified) AS at FROM songs " +
+            "WHERE blacklisted = 0 AND COALESCE(dateAdded, lastModified) >= :since"
     )
-    suspend fun recentlyAddedAlbums(
-        since: Instant,
-        limit: Int
-    ): List<AlbumTaggingRow>
+    suspend fun songsAddedSince(since: Instant): List<SongTimeRow>
 
-    @Query(
-        "SELECT album, albumArtist, artists FROM songs WHERE blacklisted = 0 " +
-            "GROUP BY lower(album), lower(albumArtist), lower(artists) " +
-            "HAVING (SUM(playCount) >= :minPlays OR MAX(favouritedAt) IS NOT NULL) AND (MAX(lastPlayed) IS NULL OR MAX(lastPlayed) < :playedBefore) " +
-            "ORDER BY SUM(playCount) DESC LIMIT :limit"
-    )
-    suspend fun albumsToRediscover(
-        minPlays: Int,
-        playedBefore: Instant,
-        limit: Int
-    ): List<AlbumTaggingRow>
+    /** The songs played or favourited, with what an album to rediscover is judged by. */
+    @Query("SELECT id, playCount, lastPlayed, favouritedAt FROM songs WHERE blacklisted = 0 AND (playCount > 0 OR lastPlayed IS NOT NULL OR favouritedAt IS NOT NULL)")
+    suspend fun playedSongs(): List<SongPlaysRow>
 
     /** How many songs the busiest (UTC) day added. */
     @Query(
@@ -84,15 +59,16 @@ interface SuggestionsDao {
     suspend fun countSongs(): Int
 }
 
-data class ArtistTaggingRow(
-    val albumArtist: String?,
-    val artists: List<String>
+data class SongTimeRow(
+    val id: Long,
+    val at: Instant
 )
 
-data class AlbumTaggingRow(
-    val album: String?,
-    val albumArtist: String?,
-    val artists: List<String>
+data class SongPlaysRow(
+    val id: Long,
+    val playCount: Int,
+    val lastPlayed: Instant?,
+    val favouritedAt: Instant?
 )
 
 data class GenreTaggingRow(

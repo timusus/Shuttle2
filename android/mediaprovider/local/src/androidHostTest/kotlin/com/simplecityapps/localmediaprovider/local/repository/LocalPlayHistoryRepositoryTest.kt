@@ -259,6 +259,24 @@ class LocalPlayHistoryRepositoryTest {
         )
     }
 
+    @Test
+    fun `a play in an album context kept from before the identity rule is recorded under the album's key now`() = runTest {
+        songDao.insert(
+            listOf(
+                createSongData(album = "Drive OST", track = 1).copy(albumArtist = null, artists = listOf("Kavinsky"), path = "/music/Drive/1.mp3"),
+                createSongData(album = "Drive OST", track = 2).copy(albumArtist = null, artists = listOf("College"), path = "/music/Drive/2.mp3")
+            )
+        )
+        val song = songDao.get().first { it.track == 1 }.toSong()
+        // A queue saved before #637 names the album by its track artist
+        val legacy = PlayContext.decode(PlayContext.TYPE_ALBUM, "=kavinsky\u001F=drive ost")
+
+        repository.recordPlay(song, now, 200_000, true, legacy)
+
+        repository.recentContexts(10).map { it.context } shouldBe
+            listOf(PlayContext.Album(AlbumGroupKey("drive ost", AlbumArtistGroupKey("various artists"), "dir:/music/Drive")))
+    }
+
     private suspend fun insertSong(
         album: String,
         albumArtist: String,

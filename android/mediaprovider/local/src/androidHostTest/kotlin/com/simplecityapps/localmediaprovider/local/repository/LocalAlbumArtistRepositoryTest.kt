@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
+import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -25,5 +26,39 @@ class LocalAlbumArtistRepositoryTest {
 
         repository.getAlbumArtists(AlbumArtistQuery.All()).first().associate { it.name to it.playCount } shouldBe
             mapOf("Played" to 5, "Never played" to 0)
+    }
+
+    @Test
+    fun `a sample library groups into albums and album artists by the identity rule`() = runTest {
+        val songsFlow = MutableSharedFlow<List<SongData>>(replay = 1)
+        val albums = LocalAlbumRepository(scope = backgroundScope, songDataDao = FakeSongDataDao(songsFlow))
+        val artists = LocalAlbumArtistRepository(scope = backgroundScope, songDataDao = FakeSongDataDao(songsFlow))
+
+        songsFlow.emit(
+            listOf(
+                // Tagged: the album artist names it
+                createSongData(album = "OK Computer", albumArtist = "Radiohead", track = 1),
+                createSongData(album = "OK Computer", albumArtist = "Radiohead", track = 2),
+                // Two releases of one name, told apart by their MusicBrainz ids
+                createSongData(album = "Greatest Hits", albumArtist = "Queen", track = 1).copy(mbAlbumId = "gh1"),
+                createSongData(album = "Greatest Hits", albumArtist = "Queen", track = 2).copy(mbAlbumId = "gh2", path = "/music/Queen/GH2/1.mp3"),
+                // A compilation: Various Artists', not an album per track artist
+                createSongData(album = "Now 100", track = 1).copy(albumArtist = null, artists = listOf("Adele"), compilation = true),
+                createSongData(album = "Now 100", track = 2).copy(albumArtist = null, artists = listOf("Dua Lipa"), compilation = true),
+                // Untagged, one artist over two disc folders: theirs, and one album
+                createSongData(album = "Blonde", track = 1).copy(albumArtist = null, artists = listOf("Frank Ocean"), path = "/music/Blonde/CD1/1.mp3"),
+                createSongData(album = "Blonde", track = 2).copy(albumArtist = null, artists = listOf("Frank Ocean feat. André 3000"), path = "/music/Blonde/CD2/1.mp3")
+            )
+        )
+
+        albums.getAlbums(AlbumQuery.All()).first().map { it.name to it.albumArtist }.sortedBy { it.toString() } shouldBe listOf(
+            "Blonde" to "Frank Ocean",
+            "Greatest Hits" to "Queen",
+            "Greatest Hits" to "Queen",
+            "Now 100" to "Various Artists",
+            "OK Computer" to "Radiohead"
+        )
+        artists.getAlbumArtists(AlbumArtistQuery.All()).first().associate { it.name to it.albumCount } shouldBe
+            mapOf("Radiohead" to 1, "Queen" to 2, "Various Artists" to 1, "Frank Ocean" to 1)
     }
 }

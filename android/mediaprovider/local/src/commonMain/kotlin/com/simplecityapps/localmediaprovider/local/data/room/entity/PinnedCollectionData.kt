@@ -8,7 +8,9 @@ import com.simplecityapps.shuttle.model.MediaProviderType
  * An album or playlist the user downloaded as a whole. Pinned collections download their new songs
  * after each import.
  *
- * [collectionId] is the album's group key or the playlist's id, as a string.
+ * [collectionId] is the album's group key, as [com.simplecityapps.shuttle.model.AlbumGroupKey.encode] writes it (keys
+ * written before the album identity rule, #637, are moved once by [com.simplecityapps.localmediaprovider.local.repository.AlbumKeyMigration]),
+ * or the playlist's id, as a string.
  */
 @Entity(
     tableName = "pinned_collections",
