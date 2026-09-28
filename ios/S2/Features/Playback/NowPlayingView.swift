@@ -1,10 +1,11 @@
 import SwiftUI
 
-/// Now Playing, after Shuttle Podcasts' player (#624): the cover over a blurred copy of itself (`ArtworkBackground`),
-/// the title and artist in `MarqueeText` with the favourite and the song's actions trailing, a capsule scrubber and a
-/// tint-filled play circle in the cover's tint, and shuffle, repeat, speed, the sleep timer, AirPlay and the queue in
-/// one glass capsule along the bottom. The artwork tint (`\.artworkTint`) comes from above (`playerArtworkTint`, in
-/// `ContentView`) and is the screen's `.tint`. Presented by `nowPlayingPresentation` (a full-screen cover in
+/// Now Playing, after Shuttle Podcasts' player and Apple Music (#624): the cover over a ground in its own colour with a
+/// blurred copy of it glowing through the top (`ArtworkBackground`), the title and artist in `MarqueeText` with the
+/// favourite and the song's actions trailing, a capsule scrubber, previous / play-pause / next in the cover's tint,
+/// and shuffle, repeat, speed, the sleep timer, AirPlay and the queue in one glass capsule along the bottom. The
+/// cover's colour (`\.artworkTintSource`) comes from above (`playerArtworkTint`, in `ContentView`); the screen derives
+/// its ground, tint and captions from it (`PlayerPalette`), so they are measured on the ground they sit on. Presented by `nowPlayingPresentation` (a full-screen cover in
 /// `compact`, which a swipe down dismisses, a form sheet otherwise); the queue opens through `playerSheet` (a sheet
 /// in `compact`, a popover otherwise). From `AdaptiveLayout.twoColumnMinWidth` (a phone on its side) the cover sits
 /// left of the controls. Bound to the shared `PlayerViewModel` through `PlayerBinding` only.
@@ -56,6 +57,7 @@ struct NowPlayingContent: View {
     @Environment(\.artworkTint) private var artworkTint
     @Environment(\.artworkTintInk) private var artworkTintInk
     @Environment(\.isArtworkTinted) private var isArtworkTinted
+    @Environment(\.artworkTintSource) private var artworkTintSource
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -80,6 +82,7 @@ struct NowPlayingContent: View {
     static let draggingScale: CGFloat = 0.95
 
     var body: some View {
+        let palette = self.palette
         VStack(spacing: 0) {
             closeRow
             if state.title == nil {
@@ -89,10 +92,15 @@ struct NowPlayingContent: View {
                 player
             }
         }
+        // The player's own tint for everything inside: measured on its ground, not the scheme's.
+        .environment(\.artworkTint, ContrastSafeTint.color(palette.tint))
+        .environment(\.artworkTintInk, ContrastSafeTint.color(palette.onTint))
         .background {
             // In a clear overlay so the backdrop's fill-scaled image can't widen the layout (Podcasts' fix).
             Color.clear
-                .overlay { ArtworkBackground(source: state.artwork) }
+                .overlay {
+                    ArtworkBackground(source: state.artwork, palette: palette, layout: isTwoColumn ? .sideBySide : .stacked)
+                }
                 .ignoresSafeArea()
         }
         .onGeometryChange(for: CGFloat.self) { proxy in
@@ -105,7 +113,7 @@ struct NowPlayingContent: View {
         .animation(Motion.press.reduced(reduceMotion), value: isDragging)
         .simultaneousGesture(dismissDrag, including: dismissesByDragging ? .all : .subviews)
         // On a player surface the artwork tint is the accent.
-        .tint(artworkTint)
+        .tint(playerTint)
         .playerNotice(showQueue ? .constant(nil) : notice)
         .alert("New Playlist", isPresented: $showNewPlaylist) {
             TextField("Playlist Name", text: $newPlaylistName)
@@ -128,7 +136,7 @@ struct NowPlayingContent: View {
                     .font(.body.weight(.semibold))
                     .foregroundStyle(.primary)
                     .frame(width: 36, height: 36)
-                    .background(.ultraThinMaterial, in: Circle())
+                    .modifier(PlayerGlass(shape: Circle(), material: .regularMaterial))
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
@@ -171,7 +179,8 @@ struct NowPlayingContent: View {
         VStack(spacing: spacing) {
             titleRow
             NowPlayingScrubber(
-                positionMs: state.positionMs, durationMs: state.durationMs, isScrubbing: $isScrubbing, onSeek: actions.seek
+                positionMs: state.positionMs, durationMs: state.durationMs, isScrubbing: $isScrubbing, timeInk: secondaryInk,
+                onSeek: actions.seek
             )
             NowPlayingTransport(isPlaying: state.isPlaying, actions: actions)
             bottomCapsule
@@ -225,20 +234,23 @@ struct NowPlayingContent: View {
 
     // MARK: - Ink
 
-    /// Captions on the backdrop: the AA-safe grey, measured on the scrimmed ground; plain `.primary` under Increase
-    /// Contrast.
-    private var secondaryInk: Color {
-        colorSchemeContrast == .increased ? .primary : TintedChromeInk.secondaryInk(isDarkScheme: colorScheme == .dark)
+    /// The ground, tint and captions for this cover and scheme.
+    private var palette: PlayerPalette {
+        .resolve(extracted: artworkTintSource, isDarkScheme: colorScheme == .dark)
     }
 
-    /// A control's glyph: the tint while it has something to report (a mode on), neutral otherwise.
+    private var playerTint: Color { ContrastSafeTint.color(palette.tint) }
+
+    /// Captions on the backdrop: the label faded toward the ground as far as AA allows (`PlayerPalette`); plain
+    /// `.primary` under Increase Contrast.
+    private var secondaryInk: Color {
+        colorSchemeContrast == .increased ? .primary : ContrastSafeTint.color(palette.secondaryInk)
+    }
+
+    /// A control's glyph: the tint while it has something to report (a mode on), the caption ink otherwise.
     private func chromeInk(isOn: Bool) -> Color {
-        TintedChromeInk.foreground(
-            tint: artworkTint,
-            isTinted: isOn,
-            increasedContrast: colorSchemeContrast == .increased,
-            isDarkScheme: colorScheme == .dark
-        )
+        if colorSchemeContrast == .increased { return .primary }
+        return isOn ? playerTint : secondaryInk
     }
 
     // MARK: - Bottom capsule
@@ -274,7 +286,7 @@ struct NowPlayingContent: View {
             sleepTimerMenu
                 .frame(maxWidth: .infinity)
 
-            AirPlayButton(activeTint: artworkTint, inactiveTint: chromeInk(isOn: false))
+            AirPlayButton(activeTint: playerTint, inactiveTint: chromeInk(isOn: false))
                 .frame(width: 44, height: 44)
                 .accessibilityIdentifier("nowPlaying.airPlay")
                 .frame(maxWidth: .infinity)
@@ -299,7 +311,7 @@ struct NowPlayingContent: View {
         }
         .padding(.horizontal, Spacing.small)
         .padding(.vertical, Spacing.xsmall)
-        .modifier(GlassCapsule())
+        .modifier(PlayerGlass(shape: Capsule(), material: .ultraThinMaterial))
         // Six 44 pt targets fit the narrowest phone; past the first accessibility size the glyphs would outgrow them.
         .dynamicTypeSize(...DynamicTypeSize.accessibility1)
     }
@@ -454,13 +466,17 @@ private extension Image {
     }
 }
 
-/// The bottom controls' ground: a Liquid Glass capsule on iOS 26, `.ultraThinMaterial` below.
-private struct GlassCapsule: ViewModifier {
+/// A control's ground on the backdrop (the bottom capsule, the close disc): Liquid Glass on iOS 26, `material`
+/// below. Either only lifts the ground toward the scheme's background, so ink that clears AA on the ground still does.
+private struct PlayerGlass<S: Shape>: ViewModifier {
+    let shape: S
+    let material: Material
+
     func body(content: Content) -> some View {
         if #available(iOS 26, *) {
-            content.glassEffect(.regular, in: Capsule())
+            content.glassEffect(.regular, in: shape)
         } else {
-            content.background(.ultraThinMaterial, in: Capsule())
+            content.background(material, in: shape)
         }
     }
 }
@@ -476,11 +492,11 @@ struct NowPlayingScrubber: View {
     let durationMs: Int
     /// True while a finger is on the track: Now Playing's swipe-down dismiss stands aside.
     var isScrubbing: Binding<Bool> = .constant(false)
+    /// The elapsed and remaining times' colour: the player's caption ink.
+    var timeInk: Color = .secondary
     let onSeek: (Int) -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.colorSchemeContrast) private var colorSchemeContrast
     @State private var dragging = false
     @State private var scrubMs: Double = 0
 
@@ -488,10 +504,17 @@ struct NowPlayingScrubber: View {
     static let trackHeight: CGFloat = 6
     static let draggingTrackHeight: CGFloat = 10
 
-    init(positionMs: Int, durationMs: Int, isScrubbing: Binding<Bool> = .constant(false), onSeek: @escaping (Int) -> Void) {
+    init(
+        positionMs: Int,
+        durationMs: Int,
+        isScrubbing: Binding<Bool> = .constant(false),
+        timeInk: Color = .secondary,
+        onSeek: @escaping (Int) -> Void
+    ) {
         self.positionMs = positionMs
         self.durationMs = durationMs
         self.isScrubbing = isScrubbing
+        self.timeInk = timeInk
         self.onSeek = onSeek
     }
 
@@ -546,7 +569,7 @@ struct NowPlayingScrubber: View {
                 Text("-" + Self.formatted(ms: max(0, durationMs - current)))
             }
             .font(.s2Time)
-            .foregroundStyle(colorSchemeContrast == .increased ? .primary : TintedChromeInk.secondaryInk(isDarkScheme: colorScheme == .dark))
+            .foregroundStyle(timeInk)
             .accessibilityHidden(true)
         }
     }
@@ -571,8 +594,9 @@ struct NowPlayingScrubber: View {
 
 // MARK: - Transport
 
-/// Previous, play/pause and next: a 72 pt tint-filled play circle whose glyph swaps with a replace transition, 34 pt
-/// skip glyphs, all scaling with Dynamic Type up to a cap and pressing down on touch; targets never under 44 pt.
+/// Previous, play/pause and next as one family: a 72 pt tint-filled play circle whose glyph swaps with a replace
+/// transition, and previous and next as glyphs of the same weight in the same tint, each in a 60 pt target. All
+/// scale with Dynamic Type up to a cap and press down on touch.
 struct NowPlayingTransport: View {
     let isPlaying: Bool
     let actions: PlayerActions
@@ -580,17 +604,22 @@ struct NowPlayingTransport: View {
     @Environment(\.artworkTint) private var tint
     @Environment(\.artworkTintInk) private var tintInk
     @ScaledMetric(relativeTo: .largeTitle) private var playDiameter: CGFloat = 72
-    @ScaledMetric(relativeTo: .title) private var skipSize: CGFloat = 34
+    @ScaledMetric(relativeTo: .title) private var skipSize: CGFloat = 30
     @State private var playTrigger = false
     @State private var skipTrigger = false
 
     static let maxPlayDiameter: CGFloat = 88
-    static let maxSkipSize: CGFloat = 44
+    static let maxSkipSize: CGFloat = 38
+    /// The play glyph's size as a share of the circle, and the transport's weight.
+    static let playGlyphRatio: CGFloat = 0.4
+    static let weight: Font.Weight = .semibold
+    /// The skip buttons' target: larger than the 44 pt minimum, as the screen's primary controls.
+    static let skipTarget: CGFloat = 60
 
     var body: some View {
         let diameter = min(playDiameter, Self.maxPlayDiameter)
         let skip = min(skipSize, Self.maxSkipSize)
-        HStack(spacing: Spacing.xlarge) {
+        HStack(spacing: Spacing.large) {
             skipButton("backward.fill", size: skip, label: "Previous", action: actions.previous)
 
             Button {
@@ -598,7 +627,7 @@ struct NowPlayingTransport: View {
                 playTrigger.toggle()
             } label: {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: diameter * 0.4, weight: .semibold))
+                    .font(.system(size: diameter * Self.playGlyphRatio, weight: Self.weight))
                     .foregroundStyle(tintInk)
                     .contentTransition(.symbolEffect(.replace))
                     .frame(width: diameter, height: diameter)
@@ -621,9 +650,9 @@ struct NowPlayingTransport: View {
             skipTrigger.toggle()
         } label: {
             Image(systemName: systemImage)
-                .font(.system(size: size))
-                .foregroundStyle(.primary)
-                .frame(minWidth: 44, minHeight: 44)
+                .font(.system(size: size, weight: Self.weight))
+                .foregroundStyle(tint)
+                .frame(minWidth: Self.skipTarget, minHeight: Self.skipTarget)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.pressScale)
@@ -633,8 +662,9 @@ struct NowPlayingTransport: View {
 
 // MARK: - Queue
 
-/// The queue, from Now Playing's queue button, in the player's tint: the playing song as a card pinned at the top
-/// with "Up Next" under it (a plain list's section header stays put while the rest scrolls), the songs after it, and
+/// The queue, from Now Playing's queue button, in the player's tint: the playing song as a card pinned under the
+/// navigation bar with "Up Next" under it (a top inset, so they sit right under Clear / Queue / Edit and stay put while
+/// the rest scrolls), the songs after it, and
 /// the songs already played below those. Tap a row to skip to it. Edit mode (the Edit/Done button) reorders Up
 /// Next by dragging; a swipe, or Remove from Queue in a row's context menu, takes an item out (with Undo); Play Next
 /// moves it after the current song; Clear empties the queue (with Undo). Moves and removals show at once and the
@@ -721,15 +751,6 @@ struct NowPlayingQueueList: View {
                         offsets.map { upNext[upNextStart + $0].id }.forEach(remove)
                     }
                 }
-            } header: {
-                VStack(alignment: .leading, spacing: Spacing.smallMedium) {
-                    if let currentIndex {
-                        nowPlayingCard(rows[currentIndex])
-                    }
-                    SectionHeader("Up Next")
-                }
-                .textCase(nil)
-                .padding(.vertical, Spacing.small)
             }
 
             if !played.isEmpty {
@@ -748,6 +769,22 @@ struct NowPlayingQueueList: View {
             }
         }
         .listStyle(.plain)
+        // The card and Up Next's header sit in a top inset rather than a pinned section header: a plain list pads
+        // above its first header, which left a dead band under Clear / Queue / Edit.
+        .contentMargins(.top, 0, for: .scrollContent)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            VStack(alignment: .leading, spacing: Spacing.smallMedium) {
+                if let currentIndex {
+                    nowPlayingCard(rows[currentIndex])
+                }
+                SectionHeader("Up Next")
+            }
+            // In line with the rows' artwork: a plain list's row inset.
+            .padding(.horizontal, Spacing.medium + Spacing.xsmall)
+            .padding(.vertical, Spacing.xsmall)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.systemBackground))
+        }
     }
 
     /// The playing song, pinned above Up Next on a wash of the tint, its cover carrying the playing indicator.

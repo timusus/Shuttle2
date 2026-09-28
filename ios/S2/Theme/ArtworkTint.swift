@@ -11,10 +11,13 @@ import UIKit
 /// - `artworkTintInk`: the label ink for text or a glyph drawn *on* a tint fill (the play circle, a prominent
 ///   Play button): white or near-black, whichever clears AA on the fill.
 /// - `isArtworkTinted`: whether the tint came from artwork, rather than being the accent fallback.
+/// - `artworkTintSource`: the raw extracted colour, nil for the accent fallback. Never draw it; a surface that
+///   isn't the scheme's ground derives its own colours from it (Now Playing's `PlayerPalette`).
 extension EnvironmentValues {
     @Entry var artworkTint: Color = .accentColor
     @Entry var artworkTintInk: Color = TintedChromeInk.onAccent
     @Entry var isArtworkTinted: Bool = false
+    @Entry var artworkTintSource: ContrastSafeTint.RGB? = nil
 }
 
 // MARK: - Provider
@@ -49,6 +52,7 @@ struct ArtworkTintModifier: ViewModifier {
             .environment(\.artworkTint, tint.tint)
             .environment(\.artworkTintInk, tint.ink)
             .environment(\.isArtworkTinted, tint.isTinted)
+            .environment(\.artworkTintSource, extracted)
             .task(id: source?.id) {
                 // The old tint stays until the new one is known, so a skip doesn't flash the accent.
                 let found: ContrastSafeTint.RGB? = if let source { await (extractor ?? .shared).color(for: source) } else { nil }
