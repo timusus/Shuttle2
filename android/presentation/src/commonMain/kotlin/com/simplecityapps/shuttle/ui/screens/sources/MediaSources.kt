@@ -36,7 +36,10 @@ interface MediaSources {
         if (musicPermissionGranted && !hasScanned) scanThisDevice()
     }
 
-    /** Whether the stored songs lack tags this build reads (`MediaImporter.songTagsOutdated`), until an import of every source succeeds. */
+    /**
+     * Whether a source's songs lack tags this build reads and no import has run under it yet (`MediaImporter.songTagsOutdated`):
+     * cleared by the first import, so a source whose import fails catches up on its own next import.
+     */
     val songTagsOutdated: Boolean
 
     /**

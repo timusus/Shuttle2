@@ -10,6 +10,7 @@ import com.simplecityapps.localmediaprovider.local.provider.localArtworkVersion
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.ImportPhase
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.MediaImporter.Companion.songTagsOutdated
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.mediaprovider.Progress
@@ -145,8 +146,8 @@ class MediaStoreMediaProvider(
 
         var songs = mutableListOf<Song>()
         // The importer records the new version once this import's result is stored, so one cancelled part way through
-        // reads every file again next time
-        val backfillFileTags = preferenceManager.songTagsVersion < MediaImporter.SONG_TAGS_VERSION
+        // reads every file again next time. Only this source's version: another failing doesn't make it read them again
+        val backfillFileTags = preferenceManager.songTagsOutdated(type)
         rawSongs
             .withFileTags(existingSongs, tagReader, readUnchanged = backfillFileTags)
             .collectIndexed { index, song ->

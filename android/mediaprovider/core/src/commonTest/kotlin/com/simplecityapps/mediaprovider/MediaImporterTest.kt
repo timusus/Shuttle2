@@ -1,5 +1,6 @@
 package com.simplecityapps.mediaprovider
 
+import com.simplecityapps.mediaprovider.MediaImporter.Companion.songTagsOutdated
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -180,38 +181,45 @@ class MediaImporterTest {
     }
 
     @Test
-    fun `songs imported before the current tag version are outdated until an import of every source succeeds`() = runBlocking<Unit> {
-        preferences.songTagsVersion = MediaImporter.SONG_TAGS_VERSION - 1
+    fun `a source that fails stays outdated while the others are marked current, and the launch re-import runs once`() = runBlocking<Unit> {
+        val server = GatedProvider(MediaProviderType.Jellyfin).apply { scanFailure = "Server unreachable" }
+        importer.mediaProviders += server
         importer.songTagsOutdated shouldBe true
 
-        provider.scanFailure = "Server unreachable"
         provider.gate.trySend(Unit)
+        server.gate.trySend(Unit)
         importer.import()
-        importer.songTagsOutdated shouldBe true
 
-        provider.scanFailure = null
-        provider.gate.trySend(Unit)
-        importer.import()
+        preferences.songTagsOutdated(MediaProviderType.Shuttle) shouldBe false
+        preferences.songTagsOutdated(MediaProviderType.Jellyfin) shouldBe true
+        // The failing server catches up on its own next import, rather than every source importing again at each launch
         importer.songTagsOutdated shouldBe false
-        preferences.songTagsVersion shouldBe MediaImporter.SONG_TAGS_VERSION
+
+        provider.gate.trySend(Unit)
+        server.scanFailure = null
+        server.gate.trySend(Unit)
+        importer.import()
+
+        preferences.songTagsOutdated(MediaProviderType.Jellyfin) shouldBe false
     }
 
     @Test
-    fun `an import that throws leaves the songs outdated`() = runBlocking<Unit> {
+    fun `an import that throws leaves the source outdated`() = runBlocking<Unit> {
         provider.failNext.store(true)
         provider.gate.trySend(Unit)
 
         runCatching { importer.import() }
 
-        importer.songTagsOutdated shouldBe true
+        preferences.songTagsOutdated(MediaProviderType.Shuttle) shouldBe true
     }
 
     /**
      * Counts its scans, signals [started] as each one begins, holds it open until a [gate] send, then throws [failure] if [failNext]
-     * is set, or reports [scanFailure] if that's set.
+     * is set, reports [scanFailure] if that's set, or else finds no songs.
      */
-    private class GatedProvider : MediaProvider {
-        override val type = MediaProviderType.Shuttle
+    private class GatedProvider(
+        override val type: MediaProviderType = MediaProviderType.Shuttle
+    ) : MediaProvider {
 
         val scans = AtomicInt(0)
         val started = Channel<Unit>(Channel.UNLIMITED)
@@ -226,7 +234,7 @@ class MediaImporterTest {
             started.send(Unit)
             gate.receive()
             if (failNext.exchange(false)) throw failure
-            scanFailure?.let { message -> emit(FlowEvent.Failure(message)) }
+            emit(scanFailure?.let { message -> FlowEvent.Failure(message) } ?: FlowEvent.Success(emptyList()))
         }
 
         override fun findPlaylists(existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = emptyFlow()
@@ -268,7 +276,7 @@ class MediaImporterTest {
             updates: List<Song>,
             deletes: List<Song>,
             mediaProviderType: MediaProviderType
-        ): Triple<Int, Int, Int> = notFaked()
+        ): Triple<Int, Int, Int> = Triple(inserts.size, updates.size, deletes.size)
 
         override suspend fun remapPaths(remaps: List<SongPathRemap>, mediaProviderType: MediaProviderType): List<SongPathRemap> = notFaked()
 

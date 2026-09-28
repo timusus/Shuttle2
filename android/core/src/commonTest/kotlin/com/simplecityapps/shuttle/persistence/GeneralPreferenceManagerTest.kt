@@ -32,7 +32,8 @@ class GeneralPreferenceManagerTest {
         preferences.sleepTimerPlayToEnd shouldBe false
         preferences.allLibraryTabs shouldBe LibraryTab.entries
         preferences.enabledLibraryTabs shouldBe LibraryTab.entries - LibraryTab.Folders
-        preferences.songTagsVersion shouldBe 0
+        preferences.songTagsVersion("Jellyfin") shouldBe 0
+        preferences.songTagsRescanVersion shouldBe 0
         preferences.lastMediaImportDate.shouldBeNull()
     }
 
@@ -55,7 +56,8 @@ class GeneralPreferenceManagerTest {
         preferences.sleepTimerPlayToEnd = true
         preferences.allLibraryTabs = listOf(LibraryTab.Songs, LibraryTab.Albums)
         preferences.enabledLibraryTabs = listOf(LibraryTab.Songs)
-        preferences.songTagsVersion = 1
+        preferences.setSongTagsVersion("Jellyfin", 1)
+        preferences.songTagsRescanVersion = 1
         preferences.lastMediaImportDate = Instant.fromEpochMilliseconds(1_700_000_000_003)
 
         store.values shouldBe mapOf(
@@ -76,7 +78,8 @@ class GeneralPreferenceManagerTest {
             "sleep_timer_play_to_end" to true,
             "pref_library_tabs_all" to "Songs,Albums",
             "pref_library_tabs_enabled" to "Songs",
-            "song_tags_version" to 1,
+            "song_tags_version_Jellyfin" to 1,
+            "song_tags_rescan_version" to 1,
             "pref_media_last_rescan_date" to 1_700_000_000_003L
         )
     }

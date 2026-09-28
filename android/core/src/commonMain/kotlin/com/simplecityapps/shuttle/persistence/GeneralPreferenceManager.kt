@@ -165,16 +165,26 @@ class GeneralPreferenceManager @Inject constructor(
         }
 
     /**
-     * The version of the tags the stored songs were imported with (`MediaImporter.SONG_TAGS_VERSION`), set when an import
-     * of every source succeeds. Behind the current version, the songs lack tags this build reads, so a re-import runs once
-     * at launch, and the MediaStore provider reads unchanged files again rather than keeping their stored values.
+     * The version of the tags (`MediaImporter.SONG_TAGS_VERSION`) the songs of [source] (a media provider type's name) were
+     * last imported with, set when that source's import succeeds. Behind the current version its songs lack tags this
+     * build reads, so the MediaStore provider reads unchanged files again rather than keeping their stored values.
      */
-    var songTagsVersion: Int
+    fun songTagsVersion(source: String): Int = store.getInt("song_tags_version_$source", 0)
+
+    fun setSongTagsVersion(
+        source: String,
+        version: Int
+    ) {
+        store.putInt("song_tags_version_$source", version)
+    }
+
+    /** The tags version the one launch re-import for outdated songs was last started for, so it starts once per version. */
+    var songTagsRescanVersion: Int
         set(value) {
-            store.putInt("song_tags_version", value)
+            store.putInt("song_tags_rescan_version", value)
         }
         get() {
-            return store.getInt("song_tags_version", 0)
+            return store.getInt("song_tags_rescan_version", 0)
         }
 
     var lastMediaImportDate: Instant?
