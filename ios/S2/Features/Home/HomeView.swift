@@ -145,7 +145,7 @@ struct HomeContent: View {
                             AlbumTileLabel(album: album, subtitle: albumSubtitle(album, showPlayCount: showPlayCount))
                         }
                         .buttonStyle(.pressScale)
-                        .zoomSource(id: Route.album(album).cacheKey, tileKey: tileKey, active: zoomSourceKey == tileKey)
+                        .zoomSource(id: Route.album(album).cacheKey, tileKey: tileKey, activeKey: zoomSourceKey)
                         .accessibilityIdentifier("homeTile.album")
                         .contextMenu {
                             mediaActions(MediaSelectionAlbums(album: album))
@@ -172,7 +172,7 @@ struct HomeContent: View {
                             ArtistTileLabel(artist: artist)
                         }
                         .buttonStyle(.pressScale)
-                        .zoomSource(id: Route.albumArtist(albumArtistKey: artist.groupKey.key).cacheKey, tileKey: tileKey, active: zoomSourceKey == tileKey)
+                        .zoomSource(id: Route.albumArtist(albumArtistKey: artist.groupKey.key).cacheKey, tileKey: tileKey, activeKey: zoomSourceKey)
                         .accessibilityIdentifier("homeTile.artist")
                         .contextMenu {
                             mediaActions(MediaSelectionAlbumArtists(albumArtist: artist))
@@ -359,11 +359,21 @@ struct ArtistTileLabel: View {
     }
 }
 
+/// Which of several tiles showing one item is the zoom source for its screen. An item can be on more than one shelf
+/// (Home's recently and most played, or an artist's albums pushed over Home), and a zoom from a tile the user didn't
+/// touch would be wrong, as would two live sources sharing one id.
+enum ZoomTile {
+    /// `id` for the tile last tapped (`activeKey`); otherwise an id of the tile's own, which no screen zooms to.
+    static func sourceID(_ id: String, tileKey: String, activeKey: String?) -> String {
+        activeKey == tileKey ? id : "tile|\(tileKey)"
+    }
+}
+
 extension View {
-    /// The zoom source for `id` while `active`, otherwise a source under the tile's own `tileKey`, which no screen
-    /// zooms to: of several tiles showing one item, only the tapped one is the source. The id changes rather than
-    /// the modifier coming and going, so the tile keeps its identity (and its loaded cover) when it's tapped.
-    func zoomSource(id: String, tileKey: String, active: Bool) -> some View {
-        zoomSource(id: active ? id : "tile|\(tileKey)")
+    /// The zoom source for `id` while this tile (`tileKey`) is the last one tapped (`activeKey`), per
+    /// `ZoomTile.sourceID`. The id changes rather than the modifier coming and going, so the tile keeps its identity
+    /// (and its loaded cover) when it's tapped.
+    func zoomSource(id: String, tileKey: String, activeKey: String?) -> some View {
+        zoomSource(id: ZoomTile.sourceID(id, tileKey: tileKey, activeKey: activeKey))
     }
 }

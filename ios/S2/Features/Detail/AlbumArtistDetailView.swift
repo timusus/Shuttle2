@@ -10,6 +10,8 @@ import SwiftUI
 struct AlbumArtistDetailView: View {
     let albumArtistKey: String?
 
+    @Environment(Navigator.self) private var navigator: Navigator?
+
     var body: some View {
         let route = Route.albumArtist(albumArtistKey: albumArtistKey)
         let models = ViewModelCache.shared.viewModel(route.cacheKey) {
@@ -30,7 +32,8 @@ struct AlbumArtistDetailView: View {
                 },
                 onAddToQueue: { song in
                     models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
-                }
+                },
+                onAlbumTap: { navigator?.open(.album($0)) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }
@@ -59,6 +62,7 @@ struct AlbumArtistDetailContent: View {
     var onShuffle: () -> Void = {}
     var onPlayNext: (Song) -> Void = { _ in }
     var onAddToQueue: (Song) -> Void = { _ in }
+    var onAlbumTap: (Album) -> Void = { _ in }
 
     var body: some View {
         switch state.loadingState {
@@ -84,7 +88,7 @@ struct AlbumArtistDetailContent: View {
                     }
                 } rows: {
                     if !state.albums.isEmpty {
-                        DetailAlbumShelf(title: "Albums", albums: state.albums, subtitle: { $0.year.map { String($0.intValue) } })
+                        DetailAlbumShelf(title: "Albums", albums: state.albums, subtitle: { $0.year.map { String($0.intValue) } }, onAlbumTap: onAlbumTap)
                     }
                     Section {
                         SectionHeader("Songs")
@@ -108,14 +112,17 @@ struct AlbumArtistDetailContent: View {
     }
 }
 
-/// A detail screen's shelf of album tiles under a `SectionHeader`, as one `List` section: each tile pushes its album
-/// and is the zoom source for it.
+/// A detail screen's shelf of album tiles under a `SectionHeader`, as one `List` section: a tap opens the tile's
+/// album (`onAlbumTap`), and the tapped tile is the zoom source for it. Only the tapped one, as on Home
+/// (`ZoomTile`): the album can also be on a Home shelf still live under this screen in the stack.
 struct DetailAlbumShelf: View {
     let title: String
     let albums: [Album]
     let subtitle: (Album) -> String?
+    let onAlbumTap: (Album) -> Void
 
     @Environment(\.layoutTier) private var layoutTier
+    @State private var zoomSourceKey: String?
 
     var body: some View {
         let inset = AdaptiveLayout.contentInset(layoutTier)
@@ -125,12 +132,15 @@ struct DetailAlbumShelf: View {
                     .padding(.horizontal, inset)
                 Shelf(inset: inset) {
                     ForEach(albums, id: \.stableId) { album in
-                        let route = Route.album(album)
-                        NavigationLink(value: route) {
+                        let tileKey = "detailShelf|\(album.stableId)"
+                        Button {
+                            zoomSourceKey = tileKey
+                            onAlbumTap(album)
+                        } label: {
                             AlbumTileLabel(album: album, subtitle: subtitle(album))
                         }
                         .buttonStyle(.pressScale)
-                        .zoomSource(id: route.cacheKey)
+                        .zoomSource(id: Route.album(album).cacheKey, tileKey: tileKey, activeKey: zoomSourceKey)
                     }
                 }
             }

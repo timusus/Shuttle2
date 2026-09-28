@@ -35,7 +35,17 @@ struct AlbumArtistDetailTests {
         #expect((try? sut.inspect().find(text: "OK Computer")) != nil)
         #expect((try? sut.inspect().find(text: "Kid A")) != nil)
         #expect((try? sut.inspect().find(text: "Paranoid Android")) != nil)
-        #expect(try sut.inspect().findAll(ViewType.NavigationLink.self).count == 2)
+    }
+
+    @Test func tappingAnAlbumTileOpensIt() throws {
+        var opened: Album?
+        let state = AlbumArtistDetailUiState(
+            albumArtist: artist(), albums: [album("OK Computer"), album("Kid A")], songs: TestSongs.demo,
+            currentSong: nil, expandedAlbums: [], loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
+        )
+        let sut = AlbumArtistDetailContent(state: state, onAlbumTap: { opened = $0 })
+        try sut.inspect().find(button: "OK Computer").tap()
+        #expect(opened?.name == "OK Computer")
     }
 
     @Test func tappingASongPlaysFromItsIndex() throws {

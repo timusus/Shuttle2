@@ -6,6 +6,8 @@ import SwiftUI
 struct GenreDetailView: View {
     let name: String
 
+    @Environment(Navigator.self) private var navigator: Navigator?
+
     var body: some View {
         let route = Route.genre(name: name)
         let models = ViewModelCache.shared.viewModel(route.cacheKey) {
@@ -26,7 +28,8 @@ struct GenreDetailView: View {
                 },
                 onAddToQueue: { song in
                     models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
-                }
+                },
+                onAlbumTap: { navigator?.open(.album($0)) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }
@@ -55,6 +58,7 @@ struct GenreDetailContent: View {
     var onShuffle: () -> Void = {}
     var onPlayNext: (Song) -> Void = { _ in }
     var onAddToQueue: (Song) -> Void = { _ in }
+    var onAlbumTap: (Album) -> Void = { _ in }
 
     var body: some View {
         if state.loading {
@@ -72,7 +76,7 @@ struct GenreDetailContent: View {
                 }
             } rows: {
                 if !state.albums.isEmpty {
-                    DetailAlbumShelf(title: "Albums", albums: state.albums, subtitle: { $0.albumArtist })
+                    DetailAlbumShelf(title: "Albums", albums: state.albums, subtitle: { $0.albumArtist }, onAlbumTap: onAlbumTap)
                 }
                 Section {
                     SectionHeader("Songs")
