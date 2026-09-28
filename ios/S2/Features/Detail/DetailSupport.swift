@@ -281,18 +281,6 @@ private struct CapsuleButtonModifier: ViewModifier {
     }
 }
 
-/// The hero cover for screens without artwork of their own (genre, smart playlist, an empty playlist): the
-/// tinted `ArtworkPlaceholder` at hero size with the hero corner.
-struct DetailPlaceholderArtwork: View {
-    let systemImage: String
-    let points: CGFloat
-
-    var body: some View {
-        ArtworkPlaceholder(symbol: systemImage)
-            .artworkTile(points, cornerRadius: ArtworkCorner.hero)
-    }
-}
-
 /// A numbered track: the track number in `.s2Time` (the playing indicator in its place while it's the current
 /// song), the title and an optional subtitle, the duration trailing. The album screen's row, where every track
 /// shares the cover so a thumbnail would say nothing.

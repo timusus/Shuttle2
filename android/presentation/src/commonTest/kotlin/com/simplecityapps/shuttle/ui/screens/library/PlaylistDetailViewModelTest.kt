@@ -11,6 +11,7 @@ import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.ExportPlaylist
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylistCovers
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.PlaylistFileWriter
@@ -63,6 +64,7 @@ class PlaylistDetailViewModelTest {
         DeletePlaylist(playlistRepository),
         exportPlaylist,
         ObserveCurrentSong(FakeQueueOperations()),
+        ObservePlaylistCovers(playlistRepository),
     )
 
     private fun viewModel(playlist: Playlist = createPlaylist(id = 7)): PlaylistDetailViewModel {
@@ -87,6 +89,21 @@ class PlaylistDetailViewModelTest {
         state.playlist?.id shouldBe 7
         state.songs.map { it.song.name } shouldBe listOf("One", "Two", "Three")
         state.canReorder shouldBe true
+    }
+
+    @Test
+    fun `covers are its first songs from different albums - as its Library row draws`() = runTest {
+        val playlist = createPlaylist(id = 7)
+        playlistRepository.setPlaylists(listOf(playlist))
+        playlistRepository.setSongsForPlaylist(
+            playlist,
+            listOf(createSong(id = 1, album = "A"), createSong(id = 2, album = "A"), createSong(id = 3, album = "B")),
+        )
+        val viewModel = createViewModel(playlist.id)
+        backgroundScope.launch { viewModel.covers.collect {} }
+        advanceUntilIdle()
+
+        viewModel.covers.value.map { it.id } shouldBe listOf(1L, 3L)
     }
 
     @Test

@@ -1,7 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Genre detail (P5-7): hero (icon placeholder — a genre has no artwork of its own), Play/Shuffle, the albums its
+/// Genre detail (P5-7): hero (a genre has no artwork of its own, so the same `CoverMosaic` its Library row draws, #652), Play/Shuffle, the albums its
 /// songs come from as a shelf, then every one of its songs. Modeled on Android's `GenreDetailScreen.kt`.
 struct GenreDetailView: View {
     let name: String
@@ -13,9 +13,10 @@ struct GenreDetailView: View {
         let models = ViewModelCache.shared.viewModel(route.cacheKey) {
             GenreDetailModels(graph: AppGraph.shared, genreName: name)
         }
-        Observing(models.genre.uiState, models.actions.uiState) { state, actions in
+        Observing(models.genre.uiState, models.genre.covers, models.actions.uiState) { state, covers, actions in
             GenreDetailContent(
                 state: state,
+                covers: covers,
                 isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
                 onPlay: { index in
                     models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index), context: state.playContext))
@@ -28,6 +29,9 @@ struct GenreDetailView: View {
                 },
                 onAddToQueue: { song in
                     models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
+                },
+                onExclude: { song in
+                    models.actions.dispatch(action: MediaActionExclude(selection: MediaSelectionSongs(song: song)))
                 },
                 onAlbumTap: { navigator.openAsserting(.album($0)) }
             )
@@ -53,11 +57,14 @@ final class GenreDetailModels: ViewModelGroup {
 /// cover to tint from).
 struct GenreDetailContent: View {
     let state: GenreDetailUiState
+    /// The songs whose covers make up its mosaic, as its Library row draws (`GenreDetailViewModel.covers`).
+    var covers: [Song] = []
     var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }
     var onShuffle: () -> Void = {}
     var onPlayNext: (Song) -> Void = { _ in }
     var onAddToQueue: (Song) -> Void = { _ in }
+    var onExclude: (Song) -> Void = { _ in }
     var onAlbumTap: (Album) -> Void = { _ in }
 
     var body: some View {
@@ -72,7 +79,8 @@ struct GenreDetailContent: View {
                     onPlay: { onPlay(0) },
                     onShuffle: onShuffle
                 ) { points in
-                    DetailPlaceholderArtwork(systemImage: "guitars", points: points)
+                    CoverMosaic.genre(genre.name, covers: covers, cornerRadius: ArtworkCorner.hero)
+                        .frame(width: points, height: points)
                 }
             } rows: {
                 if !state.albums.isEmpty {
@@ -87,8 +95,7 @@ struct GenreDetailContent: View {
                         }
                         .buttonStyle(.plain)
                         .contextMenu {
-                            Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
-                            Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
+                            SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude)
                         }
                     }
                 }

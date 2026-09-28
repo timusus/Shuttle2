@@ -1,7 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Playlist detail (P5-7): hero (cover from its first song, name), Play/Shuffle, then its songs in the
+/// Playlist detail (P5-7): hero (the same `CoverMosaic` its Library row draws, #652, and its name), Play/Shuffle, then its songs in the
 /// playlist's own order. In `EditMode`, rows reorder with `.onMove` when the playlist is sorted by position
 /// (`canReorder`) — the HIG's native affordance for a manual order, replacing Android's `sh.calvin.reorderable`
 /// drag handle. Rename and delete are an alert/confirmationDialog, the same pattern `PlaylistListView` uses.
@@ -15,9 +15,10 @@ struct PlaylistDetailView: View {
         let models = ViewModelCache.shared.viewModel(route.cacheKey) {
             PlaylistDetailModels(graph: AppGraph.shared, playlistId: id)
         }
-        Observing(models.playlist.uiState, models.actions.uiState) { state, actions in
+        Observing(models.playlist.uiState, models.playlist.covers, models.actions.uiState) { state, covers, actions in
             PlaylistDetailContent(
                 state: state,
+                covers: covers,
                 isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
                 onPlay: { index in
                     models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), position: Int32(index), context: state.playContext))
@@ -30,6 +31,9 @@ struct PlaylistDetailView: View {
                 },
                 onAddToQueue: { song in
                     models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
+                },
+                onExclude: { song in
+                    models.actions.dispatch(action: MediaActionExclude(selection: MediaSelectionSongs(song: song)))
                 },
                 onMove: { from, to in models.playlist.onMove(fromId: from, toId: to) },
                 onMoveFinished: { models.playlist.onMoveFinished() },
@@ -64,11 +68,14 @@ final class PlaylistDetailModels: ViewModelGroup {
 /// The Playlist detail screen from a `PlaylistDetailUiState`, in a `DetailScaffold` tinted from its first song's cover.
 struct PlaylistDetailContent: View {
     let state: PlaylistDetailUiState
+    /// The songs whose covers make up its mosaic, as its Library row draws (`PlaylistDetailViewModel.covers`).
+    var covers: [Song] = []
     var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }
     var onShuffle: () -> Void = {}
     var onPlayNext: (Song) -> Void = { _ in }
     var onAddToQueue: (Song) -> Void = { _ in }
+    var onExclude: (Song) -> Void = { _ in }
     var onMove: (Int64, Int64) -> Void = { _, _ in }
     var onMoveFinished: () -> Void = {}
     var onRemove: (PlaylistSong) -> Void = { _ in }
@@ -93,12 +100,8 @@ struct PlaylistDetailContent: View {
                     onPlay: { onPlay(0) },
                     onShuffle: onShuffle
                 ) { points in
-                    if let cover {
-                        RemoteArtwork(cover, points: points)
-                            .artworkTile(points, cornerRadius: ArtworkCorner.hero)
-                    } else {
-                        DetailPlaceholderArtwork(systemImage: "music.note.list", points: points)
-                    }
+                    CoverMosaic.playlist(playlist.name, covers: covers, cornerRadius: ArtworkCorner.hero)
+                        .frame(width: points, height: points)
                 }
             } rows: {
                 Section {
@@ -110,8 +113,7 @@ struct PlaylistDetailContent: View {
                         }
                         .buttonStyle(.plain)
                         .contextMenu {
-                            Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(entry.song) }
-                            Button("Add to Queue", systemImage: "text.append") { onAddToQueue(entry.song) }
+                            SongRowMenu(song: entry.song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude)
                             Button("Remove from Playlist", systemImage: "minus.circle", role: .destructive) { onRemove(entry) }
                         }
                         .swipeActions(edge: .trailing) {

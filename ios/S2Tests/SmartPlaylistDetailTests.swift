@@ -24,6 +24,16 @@ struct SmartPlaylistDetailTests {
         #expect(played == 3)
     }
 
+    /// The hero draws the generated artwork its Library row draws: a smart playlist has no cover songs (#652).
+    @Test func theHeroIsItsGeneratedArtwork() throws {
+        let playlist = SmartPlaylistId.favourites.smartPlaylist
+        let state = SmartPlaylistDetailUiState(smartPlaylist: playlist, songs: TestSongs.demo, currentSong: nil, loading: false)
+        let mosaic = try SmartPlaylistDetailContent(state: state).inspect().find(CoverMosaic.self).actualView()
+        #expect(mosaic.covers.isEmpty)
+        #expect(mosaic.seed == playlist.id.title)
+        #expect(mosaic.symbol == playlist.id.symbol)
+    }
+
     @Test func placeholders() throws {
         let loading = SmartPlaylistDetailUiState(smartPlaylist: nil, songs: [], currentSong: nil, loading: true)
         #expect((try? SmartPlaylistDetailContent(state: loading).inspect().find(ViewType.ProgressView.self)) != nil)

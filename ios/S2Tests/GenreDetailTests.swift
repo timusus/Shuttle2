@@ -4,7 +4,7 @@ import Testing
 import ViewInspector
 @testable import S2
 
-/// Genre detail from its UiState: the hero (icon placeholder, no artwork), the album shelf, the song list, and
+/// Genre detail from its UiState: the hero (its cover mosaic, as its Library row draws), the album shelf, the song list, and
 /// what tapping a song plays.
 @MainActor
 struct GenreDetailTests {
@@ -46,6 +46,17 @@ struct GenreDetailTests {
         #expect(opened?.name == "Mezzanine")
         try sut.inspect().find(button: "Dummy").tap()
         #expect(opened?.name == "Dummy")
+    }
+
+    /// The hero draws the genre's cover mosaic from the ViewModel's covers, generated artwork without them (#652).
+    @Test func theHeroIsTheGenresCoverMosaic() throws {
+        let state = GenreDetailUiState(genre: genre(), albums: [], songs: TestSongs.demo, currentSong: nil, loading: false)
+        let mosaic = try GenreDetailContent(state: state, covers: Array(TestSongs.demo.prefix(4))).inspect().find(CoverMosaic.self).actualView()
+        #expect(mosaic.isMosaic)
+        #expect(mosaic.seed == "Trip Hop")
+        let generated = try GenreDetailContent(state: state).inspect().find(CoverMosaic.self).actualView()
+        #expect(generated.covers.isEmpty)
+        #expect(generated.symbol == GeneratedArtwork.genreSymbol)
     }
 
     @Test func placeholders() throws {

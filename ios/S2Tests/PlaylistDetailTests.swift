@@ -37,6 +37,20 @@ struct PlaylistDetailTests {
         #expect(played == 1)
     }
 
+    /// The hero draws the playlist's cover mosaic from the ViewModel's covers, generated artwork without them (#652).
+    @Test func theHeroIsThePlaylistsCoverMosaic() throws {
+        let songs = [entry(10, TestSongs.demo[0], sortOrder: 0), entry(11, TestSongs.demo[1], sortOrder: 1)]
+        let state = PlaylistDetailUiState(playlist: playlist(), songs: songs, selectedIds: [], currentSong: nil, loading: false, events: [])
+        let mosaic = try PlaylistDetailContent(state: state, covers: Array(TestSongs.demo.prefix(4))).inspect().find(CoverMosaic.self).actualView()
+        #expect(mosaic.isMosaic)
+        let one = try PlaylistDetailContent(state: state, covers: [TestSongs.demo[0]]).inspect().find(CoverMosaic.self).actualView()
+        #expect(!one.isMosaic)
+        #expect(one.covers.count == 1)
+        let generated = try PlaylistDetailContent(state: state).inspect().find(CoverMosaic.self).actualView()
+        #expect(generated.covers.isEmpty)
+        #expect(generated.symbol == GeneratedArtwork.playlistSymbol)
+    }
+
     @Test func placeholders() throws {
         let loading = PlaylistDetailUiState(playlist: nil, songs: [], selectedIds: [], currentSong: nil, loading: true, events: [])
         #expect((try? PlaylistDetailContent(state: loading).inspect().find(ViewType.ProgressView.self)) != nil)

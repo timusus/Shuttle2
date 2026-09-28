@@ -1,7 +1,7 @@
 import Shared
 import SwiftUI
 
-/// Smart playlist detail (P5-7): hero (icon placeholder, titled from its slug) and its songs in the smart
+/// Smart playlist detail (P5-7): hero (the generated artwork its Library row draws, titled from its slug) and its songs in the smart
 /// playlist's own sort. Modeled on Android's `SmartPlaylistDetailScreen.kt`, the simplest of the five screens.
 struct SmartPlaylistDetailView: View {
     let id: String
@@ -26,6 +26,9 @@ struct SmartPlaylistDetailView: View {
                 },
                 onAddToQueue: { song in
                     models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
+                },
+                onExclude: { song in
+                    models.actions.dispatch(action: MediaActionExclude(selection: MediaSelectionSongs(song: song)))
                 }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
@@ -54,6 +57,7 @@ struct SmartPlaylistDetailContent: View {
     var onShuffle: () -> Void = {}
     var onPlayNext: (Song) -> Void = { _ in }
     var onAddToQueue: (Song) -> Void = { _ in }
+    var onExclude: (Song) -> Void = { _ in }
 
     var body: some View {
         if state.loading {
@@ -67,7 +71,9 @@ struct SmartPlaylistDetailContent: View {
                     onPlay: { onPlay(0) },
                     onShuffle: onShuffle
                 ) { points in
-                    DetailPlaceholderArtwork(systemImage: "star", points: points)
+                    // The generated artwork its Library row draws (#652): a smart playlist has no cover songs.
+                    CoverMosaic(covers: [], seed: smartPlaylist.id.title, symbol: smartPlaylist.id.symbol, cornerRadius: ArtworkCorner.hero)
+                        .frame(width: points, height: points)
                 }
             } rows: {
                 ForEach(Array(state.songs.enumerated()), id: \.element.id) { index, song in
@@ -76,8 +82,7 @@ struct SmartPlaylistDetailContent: View {
                     }
                     .buttonStyle(.plain)
                     .contextMenu {
-                        Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
-                        Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
+                        SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude)
                     }
                 }
             }

@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.ui.actions.ClearPlaylist
 import com.simplecityapps.shuttle.ui.actions.DeletePlaylist
 import com.simplecityapps.shuttle.ui.actions.ExportPlaylist
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
+import com.simplecityapps.shuttle.ui.actions.ObservePlaylistCovers
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ObservePlaylists
 import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
@@ -89,6 +90,7 @@ class PlaylistDetailViewModel @AssistedInject constructor(
     private val deletePlaylist: DeletePlaylist,
     private val exportPlaylist: ExportPlaylist,
     observeCurrentSong: ObserveCurrentSong,
+    observePlaylistCovers: ObservePlaylistCovers,
 ) : ViewModel() {
     @AssistedFactory
     @ManualViewModelAssistedFactoryKey(Factory::class)
@@ -110,6 +112,18 @@ class PlaylistDetailViewModel @AssistedInject constructor(
         .distinctUntilChanged { old, new -> old?.id == new?.id && old?.sortOrder == new?.sortOrder && old?.sortDescending == new?.sortDescending }
         .flatMapLatest { playlist -> playlist?.let { observePlaylistSongs(it) } ?: flowOf(emptyList()) }
         .onEach { draggedOrder.value = null }
+
+    /**
+     * The songs whose covers make up the playlist's mosaic (#652), the same ones its Library row draws: its first four
+     * from different albums, in the playlist's order. Its own flow, apart from [uiState], so a screen that draws no
+     * mosaic never runs the query.
+     */
+    val covers: StateFlow<List<Song>> = playlist
+        .distinctUntilChanged { old, new -> old?.id == new?.id }
+        .flatMapLatest { playlist ->
+            if (playlist == null) flowOf(emptyList()) else observePlaylistCovers(listOf(playlist)).map { it[playlist.id].orEmpty() }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val uiState: StateFlow<PlaylistDetailUiState> = combine(
         playlist,
