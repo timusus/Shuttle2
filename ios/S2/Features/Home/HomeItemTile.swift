@@ -153,7 +153,7 @@ struct GeneratedArtwork: View {
     let symbol: String
 
     /// A genre's glyph; every genre shares it, as on Android.
-    static let genreSymbol = "music.note.square.stack"
+    static let genreSymbol = "music.quarternote.3"
     /// A playlist's glyph.
     static let playlistSymbol = "music.note.list"
 

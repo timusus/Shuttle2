@@ -90,7 +90,7 @@ appId: com.simplecityapps.shuttle.dev
     timeout: 35000
     optional: true
 # A listen is recorded when it ends: skip, then pause. On iOS 26 the mini player is the tab bar's accessory, which
-# collapses (no Next) once Home scrolls; the hero's Pause is always there.
+# collapses (no Next) once Home scrolls; back at the top it's full again, with its Pause.
 - tapOn:
     id: "miniPlayer.next"
     optional: true
@@ -102,8 +102,7 @@ appId: com.simplecityapps.shuttle.dev
     direction: UP
     timeout: 30000
 - tapOn:
-    text: "Pause"
-    index: 0
+    id: "miniPlayer.playPause"
     optional: true
 - scrollUntilVisible:
     element:
