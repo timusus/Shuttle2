@@ -19,7 +19,7 @@ struct AlbumDetailTests {
             artworkVersion: nil, dateAdded: nil, favouritedAt: nil, albumArtists: nil, artistsTag: nil,
             artistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil, mbReleaseGroupId: nil,
             mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
-            serverAlbumArtistIds: nil
+            serverAlbumArtistIds: nil, albumIdentity: nil
         )
     }
 
@@ -27,7 +27,7 @@ struct AlbumDetailTests {
         Album(
             name: "OK Computer", albumArtist: "Radiohead", artists: ["Radiohead"], songCount: songCount, duration: 0,
             year: year.map { KotlinInt(int: $0) }, playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
-            groupKey: AlbumGroupKey(key: "ok computer", albumArtistGroupKey: AlbumArtistGroupKey(key: "radiohead")),
+            groupKey: AlbumGroupKey(key: "ok computer", albumArtistGroupKey: AlbumArtistGroupKey(key: "radiohead"), identity: nil),
             mediaProviders: [.jellyfin], artworkVersion: nil
         )
     }

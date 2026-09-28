@@ -15,11 +15,12 @@ data object LibraryRoute : NavKey
 @Serializable
 data object SearchRoute : NavKey
 
-/** Mirrors AlbumGroupKey: two nullable strings. */
+/** Mirrors AlbumGroupKey: three nullable strings (a back stack saved before the identity, #637, restores without one). */
 @Serializable
 data class AlbumRoute(
     val albumKey: String?,
     val albumArtistKey: String?,
+    val albumIdentity: String? = null,
 ) : NavKey
 
 @Serializable

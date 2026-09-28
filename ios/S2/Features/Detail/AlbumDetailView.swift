@@ -8,13 +8,14 @@ import SwiftUI
 struct AlbumDetailView: View {
     let albumKey: String?
     let albumArtistKey: String?
+    var albumIdentity: String? = nil
 
     var body: some View {
-        let route = Route.album(albumKey: albumKey, albumArtistKey: albumArtistKey)
+        let route = Route.album(albumKey: albumKey, albumArtistKey: albumArtistKey, albumIdentity: albumIdentity)
         let models = ViewModelCache.shared.viewModel(route.cacheKey) {
             AlbumDetailModels(
                 graph: AppGraph.shared,
-                groupKey: AlbumGroupKey(key: albumKey, albumArtistGroupKey: albumArtistKey.map { AlbumArtistGroupKey(key: $0) })
+                groupKey: AlbumGroupKey(key: albumKey, albumArtistGroupKey: albumArtistKey.map { AlbumArtistGroupKey(key: $0) }, identity: albumIdentity)
             )
         }
         Observing(models.album.uiState, models.actions.uiState) { state, actions in

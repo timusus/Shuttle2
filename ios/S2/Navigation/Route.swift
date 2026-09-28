@@ -39,7 +39,7 @@ enum Route: Hashable, Codable {
     /// Compact only: the Library root pushes one of these. Regular and wide show a category directly as
     /// its own sidebar entry and stack instead (`AppShell`).
     case libraryCategory(LibraryCategory)
-    case album(albumKey: String?, albumArtistKey: String?)
+    case album(albumKey: String?, albumArtistKey: String?, albumIdentity: String? = nil)
     case albumArtist(albumArtistKey: String?)
     case genre(name: String)
     case playlist(id: Int64)
@@ -54,7 +54,7 @@ enum Route: Hashable, Codable {
     var cacheKey: String {
         switch self {
         case .libraryCategory(let category): "libraryCategory:\(category.rawValue)"
-        case .album(let albumKey, let albumArtistKey): "album:\(albumKey ?? "")|\(albumArtistKey ?? "")"
+        case .album(let albumKey, let albumArtistKey, let albumIdentity): "album:\(albumKey ?? "")|\(albumArtistKey ?? "")" + (albumIdentity.map { "|\($0)" } ?? "")
         case .albumArtist(let albumArtistKey): "albumArtist:\(albumArtistKey ?? "")"
         case .genre(let name): "genre:\(name)"
         case .playlist(let id): "playlist:\(id)"

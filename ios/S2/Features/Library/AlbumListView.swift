@@ -52,7 +52,7 @@ final class AlbumListModels: ViewModelGroup {
 extension Route {
     /// The album's detail route, keyed as Android's `AlbumRoute`.
     static func album(_ album: Album) -> Route {
-        .album(albumKey: album.groupKey?.key, albumArtistKey: album.groupKey?.albumArtistGroupKey?.key)
+        .album(albumKey: album.groupKey?.key, albumArtistKey: album.groupKey?.albumArtistGroupKey?.key, albumIdentity: album.groupKey?.identity)
     }
 }
 

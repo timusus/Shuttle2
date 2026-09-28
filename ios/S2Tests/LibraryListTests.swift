@@ -31,7 +31,7 @@ struct LibraryListTests {
         Album(
             name: name, albumArtist: artist, artists: [artist], songCount: songs, duration: 0,
             year: year.map { KotlinInt(int: $0) }, playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
-            groupKey: AlbumGroupKey(key: name.lowercased(), albumArtistGroupKey: AlbumArtistGroupKey(key: artist.lowercased())),
+            groupKey: AlbumGroupKey(key: name.lowercased(), albumArtistGroupKey: AlbumArtistGroupKey(key: artist.lowercased()), identity: nil),
             mediaProviders: [.jellyfin], artworkVersion: nil
         )
     }

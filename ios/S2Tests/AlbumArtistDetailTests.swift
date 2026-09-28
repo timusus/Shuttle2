@@ -12,7 +12,7 @@ struct AlbumArtistDetailTests {
         Album(
             name: name, albumArtist: "Radiohead", artists: ["Radiohead"], songCount: 1, duration: 0,
             year: year.map { KotlinInt(int: $0) }, playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
-            groupKey: AlbumGroupKey(key: name.lowercased(), albumArtistGroupKey: AlbumArtistGroupKey(key: "radiohead")),
+            groupKey: AlbumGroupKey(key: name.lowercased(), albumArtistGroupKey: AlbumArtistGroupKey(key: "radiohead"), identity: nil),
             mediaProviders: [.jellyfin], artworkVersion: nil
         )
     }

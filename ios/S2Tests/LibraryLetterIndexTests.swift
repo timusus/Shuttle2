@@ -17,7 +17,7 @@ struct LibraryLetterIndexTests {
         return Album(
             name: name, albumArtist: "Artist", artists: ["Artist"], songCount: 1, duration: 0, year: nil, playCount: 0,
             lastSongPlayed: nil, lastSongCompleted: nil,
-            groupKey: AlbumGroupKey(key: key, albumArtistGroupKey: AlbumArtistGroupKey(key: "artist")),
+            groupKey: AlbumGroupKey(key: key, albumArtistGroupKey: AlbumArtistGroupKey(key: "artist"), identity: nil),
             mediaProviders: [.jellyfin], artworkVersion: nil
         )
     }

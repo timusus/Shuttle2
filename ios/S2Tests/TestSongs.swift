@@ -21,7 +21,7 @@ enum TestSongs {
             channelCount: nil, audioCodec: nil, artworkVersion: nil, dateAdded: nil, favouritedAt: nil,
             albumArtists: nil, artistsTag: nil, artistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil,
             mbReleaseGroupId: nil, mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
-            serverAlbumArtistIds: nil
+            serverAlbumArtistIds: nil, albumIdentity: nil
         )
     }
 }

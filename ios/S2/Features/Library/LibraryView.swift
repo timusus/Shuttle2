@@ -514,14 +514,16 @@ struct LibraryNowPlaying: Equatable {
     var songId: Int64?
     var albumKey: String?
     var albumArtistKey: String?
+    var albumIdentity: String?
     var isPlaying = false
 
     static let none = LibraryNowPlaying()
 
-    init(songId: Int64? = nil, albumKey: String? = nil, albumArtistKey: String? = nil, isPlaying: Bool = false) {
+    init(songId: Int64? = nil, albumKey: String? = nil, albumArtistKey: String? = nil, albumIdentity: String? = nil, isPlaying: Bool = false) {
         self.songId = songId
         self.albumKey = albumKey
         self.albumArtistKey = albumArtistKey
+        self.albumIdentity = albumIdentity
         self.isPlaying = isPlaying
     }
 
@@ -531,6 +533,7 @@ struct LibraryNowPlaying: Equatable {
             songId: song?.id,
             albumKey: song?.albumGroupKey.key,
             albumArtistKey: song?.albumArtistGroupKey.key,
+            albumIdentity: song?.albumGroupKey.identity,
             isPlaying: playback is PlaybackState.Playing
         )
     }
@@ -545,7 +548,7 @@ struct LibraryNowPlaying: Equatable {
     }
 
     func playback(album: Album) -> MediaRowPlayback {
-        state(albumKey != nil && album.groupKey?.key == albumKey && album.groupKey?.albumArtistGroupKey?.key == albumArtistKey)
+        state(albumKey != nil && album.groupKey?.key == albumKey && album.groupKey?.albumArtistGroupKey?.key == albumArtistKey && album.groupKey?.identity == albumIdentity)
     }
 
     func playback(albumArtist: AlbumArtist) -> MediaRowPlayback {

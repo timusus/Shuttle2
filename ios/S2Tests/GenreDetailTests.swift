@@ -12,7 +12,7 @@ struct GenreDetailTests {
         Album(
             name: name, albumArtist: "Massive Attack", artists: ["Massive Attack"], songCount: 1, duration: 0,
             year: nil, playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
-            groupKey: AlbumGroupKey(key: name.lowercased(), albumArtistGroupKey: AlbumArtistGroupKey(key: "massive attack")),
+            groupKey: AlbumGroupKey(key: name.lowercased(), albumArtistGroupKey: AlbumArtistGroupKey(key: "massive attack"), identity: nil),
             mediaProviders: [.jellyfin], artworkVersion: nil
         )
     }

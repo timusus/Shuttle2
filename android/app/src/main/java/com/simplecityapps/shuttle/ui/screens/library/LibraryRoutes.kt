@@ -50,9 +50,9 @@ val SmartPlaylistId.nameKey: StringKey
         SmartPlaylistId.History -> StringKey.PLAYLIST_TITLE_HISTORY
     }
 
-val Album.route: AlbumRoute get() = AlbumRoute(albumKey = groupKey?.key, albumArtistKey = groupKey?.albumArtistGroupKey?.key)
+val Album.route: AlbumRoute get() = AlbumRoute(albumKey = groupKey?.key, albumArtistKey = groupKey?.albumArtistGroupKey?.key, albumIdentity = groupKey?.identity)
 
-val AlbumRoute.groupKey: AlbumGroupKey get() = AlbumGroupKey(albumKey, AlbumArtistGroupKey(albumArtistKey))
+val AlbumRoute.groupKey: AlbumGroupKey get() = AlbumGroupKey(albumKey, AlbumArtistGroupKey(albumArtistKey), albumIdentity)
 
 val AlbumArtist.route: AlbumArtistRoute get() = AlbumArtistRoute(groupKey.key)
 

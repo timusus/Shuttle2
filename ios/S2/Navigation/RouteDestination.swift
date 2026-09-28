@@ -19,10 +19,10 @@ struct RouteDestinationView: View {
             GenreListView()
         case .libraryCategory(.playlists):
             PlaylistListView()
-        case .album(let albumKey, let albumArtistKey):
+        case .album(let albumKey, let albumArtistKey, let albumIdentity):
             // Album and artist tiles (Home's shelves, an artist's albums) zoom into their screen on iOS 18+; the
             // source's id is the same `cacheKey`.
-            AlbumDetailView(albumKey: albumKey, albumArtistKey: albumArtistKey)
+            AlbumDetailView(albumKey: albumKey, albumArtistKey: albumArtistKey, albumIdentity: albumIdentity)
                 .zoomDestination(id: route.cacheKey)
         case .albumArtist(let albumArtistKey):
             AlbumArtistDetailView(albumArtistKey: albumArtistKey)
