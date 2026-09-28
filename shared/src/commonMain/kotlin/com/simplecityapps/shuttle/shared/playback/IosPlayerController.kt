@@ -687,9 +687,11 @@ class IosPlayerController(
         context: PlayContext,
         completion: (Result<Any?>) -> Unit
     ) = withMain {
+        // Before the queue changes, as setQueue does: a listen starts, with the context as it stands, as the new
+        // queue's first item becomes current (RecordPlays), so a later set credits the old queue's context (#649)
+        playContext = context
         queue.setShuffleMode(ShuffleMode.On, reshuffle = false)
         queue.setQueue(songs, songs.shuffled(random), 0, retainShuffle = retainShuffleOnNewQueue())
-        playContext = context
         sync()
         load(0, completion = completion)
     }
