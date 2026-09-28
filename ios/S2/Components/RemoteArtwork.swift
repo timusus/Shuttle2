@@ -45,14 +45,6 @@ struct ArtworkSource: Equatable {
         self.candidates = candidates
     }
 
-    /// A source with at most one url.
-    init(id: AnyHashable, load: @escaping () async throws -> String?) {
-        self.init(id: id) {
-            guard let string = try await load(), let url = URL(string: string) else { return [] }
-            return [ArtworkCandidate(url: url)]
-        }
-    }
-
     static func == (lhs: ArtworkSource, rhs: ArtworkSource) -> Bool { lhs.id == rhs.id }
 
     /// An item's cache key: its kind and identity, plus the provider's artwork version when there is one, so the
