@@ -295,3 +295,14 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 - [ ] iPhone: removing a server (swipe or the detail's Remove Server) asks first; adding the same server again starts from an empty sign-in. Android: removing a server and adding it again also starts empty.
 - [ ] iPhone: Settings keeps the ReplayGain pre-amp; the Equalizer keeps its own Preamp.
 - [ ] iPhone: Home starts at Jump back in with no Continue card; genre tiles use calm tones that match Android for the same genre; missing artwork shows a neutral grey placeholder in light and dark.
+
+## iOS Library and Now Playing polish (#643, #644)
+
+- [ ] iPhone: Library opens on the category used last, even after relaunch; there are no category cards.
+- [ ] iPhone: dragging the category chips up or down doesn't move them or start a refresh; pulling the list below still refreshes.
+- [ ] iPhone: genres and playlists show a 2x2 cover mosaic; the A–Z strip is in the same place in list and grid; every category's title lines up.
+- [ ] iPhone: each Library list starts with a Shuffle row that shuffles that list; there's no Shuffle in the top bar.
+- [ ] iPhone: loading placeholders look like rows in list mode and tiles in grid mode.
+- [ ] iPhone: Now Playing has four bottom buttons; Audio holds speed and the Equalizer; repeat off, all and one look different.
+- [ ] iPhone: tapping the artist or album line opens it; the heart is at the top; long-pressing the cover offers Add to Playlist, Go to and Exclude.
+- [ ] iPhone: the queue reads as one list with Now Playing, Up Next and Played headers.
