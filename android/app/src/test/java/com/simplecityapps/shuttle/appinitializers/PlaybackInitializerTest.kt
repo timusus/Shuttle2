@@ -6,8 +6,8 @@ import com.simplecityapps.fakes.FakePlaybackOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.persistence.QueueStore
+import com.simplecityapps.shuttle.playback.RecordPlays
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -39,8 +39,8 @@ class PlaybackInitializerTest {
 
     private val initializer = PlaybackInitializer(
         context = application,
-        songRepository = songRepository,
         playbackOperations = playbackOperations,
+        recordPlays = RecordPlays(playbackOperations, songRepository, appCoroutineScope, mainDispatcherRule.testDispatcher),
         queueStore = queueStore,
         castStarter = lazy {
             startedComponents += "cast"
@@ -58,8 +58,7 @@ class PlaybackInitializerTest {
             startedComponents += "queue song refresher"
             mockk(relaxed = true)
         },
-        appCoroutineScope = appCoroutineScope,
-        ioDispatcher = mainDispatcherRule.testDispatcher
+        appCoroutineScope = appCoroutineScope
     )
 
     @After
@@ -85,26 +84,14 @@ class PlaybackInitializerTest {
         startedComponents shouldBe listOf("cast", "play requests", "bit-perfect", "queue song refresher")
     }
 
+    // What gets recorded is RecordPlaysTest's; this is only that init starts it
     @Test
-    fun `a track end records the song as played through`() {
+    fun `init starts recording plays`() {
         initializer.init(application)
-        val endedSong = createSong(id = 4, duration = 200_000)
 
-        playbackOperations.trackEndedFlow.tryEmit(endedSong)
+        playbackOperations.trackEndedFlow.tryEmit(createSong(id = 4, duration = 200_000))
 
         songRepository.playedThroughSongs.toList() shouldBe listOf(4L)
-        songRepository.playbackPositions.toList() shouldBe emptyList()
-    }
-
-    @Test
-    fun `a pause records the song's position`() {
-        initializer.init(application)
-        val pausedSong = createSong(id = 5, duration = 200_000)
-
-        playbackOperations.pausePositionFlow.tryEmit(SongPosition(pausedSong, 42_000))
-
-        songRepository.playbackPositions.toList() shouldBe listOf(5L to 42_000)
-        songRepository.playedThroughSongs.toList() shouldBe emptyList()
     }
 
     @Test

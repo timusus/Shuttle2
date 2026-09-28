@@ -20,12 +20,13 @@ enum AppGraph {
         dependencies.graph
     }
 
-    /// Builds the graph and starts the playback system. Call once, from `S2App.init`.
+    /// Builds the graph, starts the playback system and the recording of plays. Call once, from `S2App.init`.
     @MainActor
     static func initialize() {
         guard _dependencies == nil else { return }
         let dependencies = IosAppDependencies()
         dependencies.playbackSystem.start()
+        dependencies.graph.recordPlays.start()
         _dependencies = dependencies
     }
 }

@@ -6,57 +6,48 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.content.ContextCompat
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.BitPerfectOutput
 import com.simplecityapps.playback.CastStarter
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.SongPosition
 import com.simplecityapps.playback.mediasession.PlayRequests
 import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.playback.queue.QueueSongRefresher
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
-import com.simplecityapps.shuttle.di.IoDispatcher
-import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.playback.RecordPlays
 import dev.zacsweers.metro.Inject
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
  * Starts playback when the app is launched: the playback components that run for the life of the app (Cast, once the
  * app first comes to the foreground, the media session, bit-perfect USB output and the queue's library updates), and the restore of the saved queue
- * ([QueueStore], which saves it too). Starts [PlaybackService] when playback starts.
- *
- * Track ends and pauses are events, collected from [PlaybackOperations.trackEndedFlow] and
- * [PlaybackOperations.pausePositionFlow] to record each song's own position and play count.
+ * ([QueueStore], which saves it too), and the recording of each song's plays ([RecordPlays]). Starts [PlaybackService]
+ * when playback starts.
  */
 class PlaybackInitializer
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val songRepository: SongRepository,
     private val playbackOperations: PlaybackOperations,
+    private val recordPlays: RecordPlays,
     private val queueStore: QueueStore,
     private val castStarter: Lazy<CastStarter>,
     private val playRequests: Lazy<PlayRequests>,
     private val bitPerfectOutput: Lazy<BitPerfectOutput>,
     private val queueSongRefresher: Lazy<QueueSongRefresher>,
-    @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : AppInitializer {
     override fun init(application: Application) {
         Timber.v("PlaybackInitializer.init()")
 
         startPlaybackComponents(application)
         collectPlaybackState()
-        collectSongPositions()
+        recordPlays.start()
 
         // A saved song that can't load (a server out of reach, a file not there yet) stays where it was left.
         queueStore.restore { positionMs -> playbackOperations.load(positionMs, skipUnloadable = false) {} }
@@ -80,15 +71,6 @@ constructor(
         }
     }
 
-    private fun collectSongPositions() {
-        appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.trackEndedFlow.collect { song -> recordPlayedThrough(song) }
-        }
-        appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackOperations.pausePositionFlow.collect { songPosition -> saveSongPosition(songPosition) }
-        }
-    }
-
     private fun startPlaybackService() {
         try {
             ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java).setAction(PlaybackService.ACTION_START))
@@ -97,22 +79,6 @@ constructor(
                 Timber.w(e, "Cannot start foreground service from background - likely audio focus regained while app in background")
             } else {
                 throw e
-            }
-        }
-    }
-
-    private fun saveSongPosition(songPosition: SongPosition) {
-        appCoroutineScope.launch {
-            withContext(ioDispatcher) {
-                songRepository.setPlaybackPosition(songPosition.song, songPosition.positionMs)
-            }
-        }
-    }
-
-    private fun recordPlayedThrough(song: Song) {
-        appCoroutineScope.launch {
-            withContext(ioDispatcher) {
-                songRepository.recordPlayedThrough(song)
             }
         }
     }

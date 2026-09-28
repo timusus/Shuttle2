@@ -72,6 +72,7 @@ class IosAppGraphTest {
         graph.mediaSources
         graph.songImportStateProvider
         graph.artworkUrls
+        graph.recordPlays
     }
 
     @Test

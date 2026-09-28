@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.shared
 
 import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.shuttle.playback.RecordPlays
 import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
@@ -63,6 +64,9 @@ import dev.zacsweers.metrox.viewmodel.ViewModelGraph
 interface IosAppGraph : ViewModelGraph {
     /** Playback: `PlaybackOperations`, and the queue through its `queueOperations`. One for the graph, on main. */
     val playerController: IosPlayerController
+
+    /** Records each song's plays and pause positions from [playerController]'s events; Swift starts it once, at launch. */
+    val recordPlays: RecordPlays
 
     /** The library's providers and the import that fills it: the Library's pull-to-refresh and launch import. */
     val mediaSources: MediaSources
