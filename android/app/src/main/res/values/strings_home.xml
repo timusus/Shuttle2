@@ -4,10 +4,32 @@
     <string name="btn_shuffle">Shuffle</string>
     <!-- Home: content description for the top bar button that shuffles every song in the library -->
     <string name="home_shuffle_all">Shuffle all</string>
-    <!-- Home: label over the hero card that offers to pick up the current queue where it was left -->
-    <string name="home_resume_title">Continue listening</string>
-    <!-- Home: how much of the current song is still to play, after its artist on the resume hero; %1$s is a duration -->
-    <string name="home_resume_time_left"><xliff:g example="2:14" id="time">%1$s</xliff:g> left</string>
+    <!-- Home: the kind of item a tile shows, under its title in Jump back in and before its detail on a mixed shelf -->
+    <string name="home_type_album">Album</string>
+    <!-- Home: the kind of item a tile shows (an artist) -->
+    <string name="home_type_artist">Artist</string>
+    <!-- Home: the kind of item a tile shows (a playlist, including the built-in smart playlists) -->
+    <string name="home_type_playlist">Playlist</string>
+    <!-- Home: the kind of item a tile shows (a genre) -->
+    <string name="home_type_genre">Genre</string>
+    <!-- Home: a mixed shelf tile's subtitle, the kind of item then its detail; %1$s is e.g. "Artist", %2$s e.g. "12 albums" -->
+    <string name="home_tile_subtitle"><xliff:g example="Artist" id="type">%1$s</xliff:g> · <xliff:g example="12 albums" id="detail">%2$s</xliff:g></string>
+    <!-- Home: content description of the play button at the end of a Jump back in cell; %1$s is the album, artist or playlist -->
+    <string name="home_play_item">Play <xliff:g example="OK Computer" id="name">%1$s</xliff:g></string>
+    <!-- Home: content description of the shuffle button at the end of a Jump back in genre cell; %1$s is the genre -->
+    <string name="home_shuffle_item">Shuffle <xliff:g example="Jazz" id="name">%1$s</xliff:g></string>
+    <!-- Home: long-press menu and TalkBack action that opens the album a tile shows -->
+    <string name="home_go_to_album">Go to album</string>
+    <!-- Home: long-press menu and TalkBack action that opens the artist a tile shows -->
+    <string name="home_go_to_artist">Go to artist</string>
+    <!-- Home: long-press menu and TalkBack action that opens the playlist a tile shows -->
+    <string name="home_go_to_playlist">Go to playlist</string>
+    <!-- Home: long-press menu and TalkBack action that opens the genre a tile shows -->
+    <string name="home_go_to_genre">Go to genre</string>
+    <!-- Home: button at the end of a section header that opens the whole list the section samples -->
+    <string name="home_see_all">See all</string>
+    <!-- Home: hint under Shuffle all before anything has been played, saying the sections fill in with listening -->
+    <string name="home_cold_start_hint">Home learns from what you play: your albums, artists and genres show up here as you listen.</string>
     <!-- Home: section of the albums, artists, playlists and genres the user last played from -->
     <string name="home_jump_back_in">Jump back in</string>
     <!-- Home: section of what the user tends to play around this hour, shown in the morning -->

@@ -22,7 +22,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Records the Home screen at phone size into `docs/design/home/` for review (#377). A no-op under plain
+ * Records the Home screen at phone size (and a tablet's, and at 200% font) into `docs/design/home/` for review (#377). A no-op under plain
  * `testDebugUnitTest`; record with `./gradlew :android:app:recordRoborazziDebug --tests '*HomeScreenshotTest*'`. The
  * shelves show the sample library with its generated covers ([SampleArtworkCoil]).
  */
@@ -66,7 +66,18 @@ class HomeScreenshotTest {
     fun whatsNew() = shot("whats-new", HomeScenarios.whatsNew)
 
     @Test
+    @Config(qualifiers = "w1024dp-h768dp-xhdpi")
+    fun expanded() = shot("expanded", HomeScenarios.content)
+
+    @Test
+    @Config(fontScale = 2f)
+    fun largeFont() = shot("large-font", HomeScenarios.content)
+
+    @Test
     fun unplayed() = shot("unplayed", HomeScenarios.unplayed)
+
+    @Test
+    fun unplayedDark() = shot("unplayed-dark", HomeScenarios.unplayed, ThemeMode.Dark)
 
     @Test
     fun empty() = shot("empty", HomeScenarios.empty)

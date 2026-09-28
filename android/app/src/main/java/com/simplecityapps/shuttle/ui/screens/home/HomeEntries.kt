@@ -13,9 +13,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.common.ConsumeEvents
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost
+import com.simplecityapps.shuttle.ui.screens.library.GenreRoute
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyViewModel
@@ -73,23 +75,26 @@ private fun HomeDestination(
             callbacks = HomeCallbacks(
                 onOpenSettings = { onOpen(SettingsRoute) },
                 onShuffleAll = { viewModel.shuffleAll()?.let(actions::dispatch) },
-                onTogglePlayback = viewModel::onTogglePlayback,
-                onShuffleQueue = { viewModel.shuffleQueue()?.let(actions::dispatch) },
                 onOpenWhatsNew = {
                     viewModel.onWhatsNewHandled()
                     onOpen(WhatsNewRoute)
                 },
                 onDismissWhatsNew = viewModel::onWhatsNewHandled,
-                onItemClick = { item ->
+                onOpenItem = { item ->
                     when (item) {
                         is HomeItem.AlbumItem -> onOpen(item.album.route)
                         is HomeItem.ArtistItem -> onOpen(item.albumArtist.route)
                         is HomeItem.PlaylistItem -> onOpen(PlaylistRoute(item.playlist.id))
                         is HomeItem.SmartPlaylistItem -> onOpen(SmartPlaylistRoute(item.smartPlaylistId.id))
-                        is HomeItem.GenreItem -> actions.dispatch(item.playAction())
+                        is HomeItem.GenreItem -> onOpen(GenreRoute(item.genre.name))
                     }
                 },
+                onAction = actions::dispatch,
                 onShowActions = actions::showActions,
+                onSeeAll = { section ->
+                    // Only Recently added has a See all (HomeSectionId.hasSeeAll): the smart playlist of the same name.
+                    if (section == HomeSectionId.RecentlyAdded) onOpen(SmartPlaylistRoute(SmartPlaylistId.RecentlyAdded.id))
+                },
             ),
             emptyContent = (emptyState as? LibraryAvailability.Empty)?.let { empty ->
                 @Composable { modifier: Modifier ->

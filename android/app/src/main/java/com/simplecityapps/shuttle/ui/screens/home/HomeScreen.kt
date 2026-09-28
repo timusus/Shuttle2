@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.home
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,20 +9,16 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.NewReleases
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
-import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,54 +26,52 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.window.core.layout.WindowSizeClass
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.designsystem.R as DesignR
-import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
-import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
-import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
-import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.S2Button
-import com.simplecityapps.shuttle.designsystem.component.S2ButtonGroup
+import com.simplecityapps.shuttle.designsystem.component.S2ButtonSize
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
-import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
-import com.simplecityapps.shuttle.format.formatDuration
-import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
-import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
-import com.simplecityapps.shuttle.ui.screens.library.nameKey
-import com.simplecityapps.shuttle.ui.screens.library.pluralString
-import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceKey
 
 class HomeCallbacks(
     val onOpenSettings: () -> Unit = {},
     val onShuffleAll: () -> Unit = {},
-    val onTogglePlayback: () -> Unit = {},
-    val onShuffleQueue: () -> Unit = {},
     val onOpenWhatsNew: () -> Unit = {},
     val onDismissWhatsNew: () -> Unit = {},
-    /** An album, artist or playlist tile opens it; a genre tile shuffles the genre. */
-    val onItemClick: (HomeItem) -> Unit = {},
+    /** Opens an item's detail: an album, artist, playlist or genre. */
+    val onOpenItem: (HomeItem) -> Unit = {},
+    /** Plays, shuffles or queues an item: a play button, a genre tile's tap, or a TalkBack action. */
+    val onAction: (MediaAction) -> Unit = {},
     val onShowActions: (MediaActionsTarget) -> Unit = {},
+    /** A section's "See all", shown only for a section with somewhere to go ([HomeSectionId.hasSeeAll]). */
+    val onSeeAll: (HomeSectionId) -> Unit = {},
 )
 
 /**
- * Home: a hero to resume the queue over the library's shelves, or the empty state when there's no music yet. There's
- * no page title (#490): the bar holds only Shuffle all and the Settings gear, so the first screen is music. Search is
- * its own tab.
+ * Home (#633): Jump back in as a grid, then the library's shelves; at cold start, Shuffle all and a line on how Home
+ * fills in; or the empty state when there's no music yet. There's no resume hero: the mini player is that (#646).
+ * There's no page title (#490): the bar holds only Shuffle all and the Settings gear, so the first screen is music.
+ * Search is its own tab.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,7 +91,8 @@ fun HomeScreen(
             S2TopBar(
                 title = "",
                 actions = {
-                    if (uiState is HomeUiState.Content) {
+                    // Cold start has its own, larger Shuffle all.
+                    if (uiState is HomeUiState.Content && !uiState.coldStart) {
                         S2IconButton(icon = Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.home_shuffle_all), onClick = callbacks.onShuffleAll)
                     }
                     S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = callbacks.onOpenSettings)
@@ -126,31 +120,95 @@ fun HomeScreen(
     }
 }
 
+/** Cold start: nothing played yet, so Home shows Recently added, Genre picks and a prominent Shuffle all. */
+val HomeUiState.Content.coldStart: Boolean
+    get() = sections.any { it.id == HomeSectionId.ShuffleAll }
+
+/** Whether a section's header offers "See all": only where there's a page of the whole list to open. */
+val HomeSectionId.hasSeeAll: Boolean
+    get() = this == HomeSectionId.RecentlyAdded
+
+/** At this font scale and above, text needs the width: the grid is one column and tiles wrap their titles. */
+private const val LARGE_TEXT_FONT_SCALE = 1.5f
+
+/** Shelf tiles: about two and a half fit a phone, so the cut-off one says the row scrolls (#490); larger when wider. */
+private val ShelfTileWidthCompact = 150.dp
+private val ShelfTileWidthWide = 180.dp
+
 @Composable
 private fun HomeContent(
     content: HomeUiState.Content,
     callbacks: HomeCallbacks,
     modifier: Modifier,
 ) {
-    LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = 16.dp)) {
-        content.resume?.let { resume ->
-            item(key = "resume") { ResumeHero(resume, callbacks) }
-        }
+    val wide = currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
+    val largeText = LocalDensity.current.fontScale >= LARGE_TEXT_FONT_SCALE
+    val columns = jumpBackInColumns(widthAtLeastMedium = wide, largeText = largeText)
+    val shelfTileWidth = if (wide) ShelfTileWidthWide else ShelfTileWidthCompact
+    LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = S2Spacing.large)) {
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks) }
         }
+        // Cold start's Shuffle all leads, above the shelves: the one sure thing to do with a new library.
+        if (content.coldStart) {
+            item(key = HomeSectionId.ShuffleAll.name) { ColdStartCard(callbacks) }
+        }
         content.sections.forEach { section ->
-            if (section.id == HomeSectionId.ShuffleAll) {
-                item(key = section.id.name) {
-                    S2Button(
-                        text = stringResource(R.string.home_shuffle_all),
-                        onClick = callbacks.onShuffleAll,
-                        icon = Icons.Rounded.Shuffle,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    )
+            when {
+                section.id == HomeSectionId.ShuffleAll || section.items.isEmpty() -> Unit
+
+                section.id == HomeSectionId.JumpBackIn -> {
+                    header(section, callbacks)
+                    item(key = section.id.name) {
+                        JumpBackInGrid(
+                            items = section.items,
+                            covers = content.covers,
+                            columns = columns,
+                            largeText = largeText,
+                            callbacks = callbacks,
+                            modifier = Modifier.padding(horizontal = S2Spacing.medium),
+                        )
+                    }
                 }
-            } else {
-                shelf(section.title.stringRes, section.id.name, section.items) { item -> HomeItemTile(item, callbacks) }
+
+                else -> shelf(section, content.covers, shelfTileWidth, largeText, callbacks)
+            }
+        }
+    }
+}
+
+private fun LazyListScope.header(
+    section: HomeSection,
+    callbacks: HomeCallbacks,
+) {
+    item(key = "${section.id.name}:header") {
+        SectionHeader(
+            title = stringResource(section.title.stringRes),
+            style = SectionHeaderStyle.Title,
+            action = if (section.id.hasSeeAll) stringResource(R.string.home_see_all) else null,
+            onAction = { callbacks.onSeeAll(section.id) },
+            modifier = Modifier.padding(top = S2Spacing.small),
+        )
+    }
+}
+
+/**
+ * A horizontally scrolling row of [HomeShelfTile]s, each title and subtitle below its cover rather than over it, where
+ * they'd clash with text printed on the art (#404). A shelf of more than one kind of item says which each is.
+ */
+private fun LazyListScope.shelf(
+    section: HomeSection,
+    covers: Map<String, List<Song>>,
+    tileWidth: Dp,
+    largeText: Boolean,
+    callbacks: HomeCallbacks,
+) {
+    header(section, callbacks)
+    val mixed = section.items.map { it.kind }.distinct().size > 1
+    item(key = section.id.name) {
+        LazyRow(contentPadding = PaddingValues(horizontal = S2Spacing.medium), horizontalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium)) {
+            items(section.items, key = { it.key }) { item ->
+                HomeShelfTile(item = item, covers = covers[item.key].orEmpty(), mixed = mixed, width = tileWidth, largeText = largeText, callbacks = callbacks)
             }
         }
     }
@@ -169,54 +227,44 @@ private val HomeSectionTitle.stringRes: Int
         HomeSectionTitle.ShuffleAll -> R.string.home_shuffle_all
     }
 
-/** The current queue, to pick up where it was left: its song's album art and title, the artist and time left, Play and Shuffle. */
+/** Cold start: nothing played yet, so nothing to suggest from. A full-width Shuffle all and a line on how Home fills in. */
 @Composable
-private fun ResumeHero(
-    resume: ResumeQueue,
-    callbacks: HomeCallbacks,
-) {
-    val song = resume.song
-    val unknown = stringResource(com.simplecityapps.core.R.string.unknown)
-    val timeLeft = stringResource(R.string.home_resume_time_left, formatDuration(resume.timeLeftMs))
-    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            LibraryArtwork(song, ArtworkPlaceholder.Album, Modifier.size(ResumeArtworkSize), size = ArtworkSize.Grid)
-            Column(modifier = Modifier.weight(1f).padding(start = 16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(stringResource(R.string.home_resume_title), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                Text(song.album ?: unknown, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    text = listOf(song.albumArtist ?: song.friendlyArtistName ?: unknown, timeLeft).joinToString(" · "),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Box(Modifier.padding(top = 8.dp)) {
-                    S2ButtonGroup(
-                        primary = if (resume.playing) {
-                            S2GroupAction(stringResource(DesignR.string.ds_pause), callbacks.onTogglePlayback, Icons.Rounded.Pause)
-                        } else {
-                            S2GroupAction(stringResource(R.string.menu_title_play), callbacks.onTogglePlayback, Icons.Rounded.PlayArrow)
-                        },
-                        secondary = listOf(S2GroupAction(stringResource(R.string.menu_title_shuffle), callbacks.onShuffleQueue, Icons.Rounded.Shuffle)),
-                    )
-                }
-            }
+private fun ColdStartCard(callbacks: HomeCallbacks) {
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+        verticalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium),
+    ) {
+        S2Button(
+            text = stringResource(R.string.home_shuffle_all),
+            onClick = callbacks.onShuffleAll,
+            icon = Icons.Rounded.Shuffle,
+            size = S2ButtonSize.Medium,
+            modifier = Modifier.fillMaxWidth().testTag(HOME_SHUFFLE_ALL_TAG),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
+            Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                text = stringResource(R.string.home_cold_start_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.testTag(HOME_COLD_START_HINT_TAG),
+            )
         }
     }
 }
 
-private val ResumeArtworkSize = 112.dp
+const val HOME_SHUFFLE_ALL_TAG = "home.shuffleAll"
+const val HOME_COLD_START_HINT_TAG = "home.coldStartHint"
 
 @Composable
 private fun WhatsNewCard(callbacks: HomeCallbacks) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Row(modifier = Modifier.padding(start = 16.dp, top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)) {
+        Row(modifier = Modifier.padding(start = S2Spacing.medium, top = S2Spacing.smallMedium), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.NewReleases, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Text(
                 text = stringResource(R.string.home_whats_new_title),
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+                modifier = Modifier.weight(1f).padding(horizontal = S2Spacing.smallMedium),
             )
             S2IconButton(icon = Icons.Rounded.Close, contentDescription = stringResource(R.string.home_whats_new_dismiss), onClick = callbacks.onDismissWhatsNew)
         }
@@ -224,102 +272,13 @@ private fun WhatsNewCard(callbacks: HomeCallbacks) {
             text = stringResource(R.string.home_whats_new_message, BuildConfig.VERSION_NAME),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier.padding(horizontal = S2Spacing.medium),
         )
         S2Button(
             text = stringResource(R.string.home_whats_new_open),
             onClick = callbacks.onOpenWhatsNew,
             style = S2ButtonStyle.Text,
-            modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+            modifier = Modifier.padding(S2Spacing.xsmall),
         )
     }
 }
-
-/**
- * A plain horizontally scrolling row of [GridTile]s, hidden when there are none. The tiles are [ShelfTileWidth] wide so
- * about two and a half fit a phone and the cut-off one says the row scrolls (#490); each title and artist sits below
- * its cover rather than over it, where they'd clash with text printed on the art (#404).
- */
-private fun LazyListScope.shelf(
-    @StringRes title: Int,
-    key: String,
-    items: List<HomeItem>,
-    tile: @Composable (HomeItem) -> Unit,
-) {
-    if (items.isEmpty()) return
-    item(key = "$key:header") { SectionHeader(title = stringResource(title)) }
-    item(key = key) {
-        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(items, key = { it.key }) { item -> Box(Modifier.width(ShelfTileWidth)) { tile(item) } }
-        }
-    }
-}
-
-@Composable
-private fun HomeItemTile(
-    item: HomeItem,
-    callbacks: HomeCallbacks,
-) {
-    when (item) {
-        is HomeItem.AlbumItem -> AlbumTile(item, callbacks)
-
-        is HomeItem.ArtistItem -> ArtistTile(item, callbacks)
-
-        is HomeItem.PlaylistItem -> GridTile(
-            title = item.playlist.name,
-            subtitle = pluralString(R.plurals.songsPlural, item.playlist.songCount),
-            onClick = { callbacks.onItemClick(item) },
-            artwork = { LibraryArtwork(item.playlist, ArtworkPlaceholder.Playlist, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
-        )
-
-        is HomeItem.SmartPlaylistItem -> GridTile(
-            title = stringResourceKey(item.smartPlaylistId.nameKey),
-            onClick = { callbacks.onItemClick(item) },
-            artwork = { LibraryArtwork(null, ArtworkPlaceholder.SmartPlaylist, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
-        )
-
-        is HomeItem.GenreItem -> GridTile(
-            title = item.genre.name,
-            subtitle = pluralString(R.plurals.songsPlural, item.genre.songCount),
-            onClick = { callbacks.onItemClick(item) },
-            onLongClick = { callbacks.onShowActions(MediaActionsTarget(item.genre.name, null, MediaSelection.Genres(item.genre), ArtworkPlaceholder.Genre)) },
-            artwork = { LibraryArtwork(item.genre, ArtworkPlaceholder.Genre, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
-        )
-    }
-}
-
-@Composable
-private fun AlbumTile(
-    item: HomeItem.AlbumItem,
-    callbacks: HomeCallbacks,
-) {
-    val album = item.album
-    val title = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown)
-    val artist = album.albumArtist ?: album.friendlyArtistName ?: stringResource(com.simplecityapps.core.R.string.unknown)
-    GridTile(
-        title = title,
-        subtitle = artist,
-        onClick = { callbacks.onItemClick(item) },
-        onLongClick = { callbacks.onShowActions(MediaActionsTarget(title, artist, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
-        artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
-    )
-}
-
-@Composable
-private fun ArtistTile(
-    item: HomeItem.ArtistItem,
-    callbacks: HomeCallbacks,
-) {
-    val artist = item.albumArtist
-    val name = artist.name ?: artist.friendlyArtistName ?: stringResource(com.simplecityapps.core.R.string.unknown)
-    val albums = pluralStringResource(R.plurals.albumsPlural, artist.albumCount, artist.albumCount).replace("{count}", artist.albumCount.toString())
-    GridTile(
-        title = name,
-        subtitle = albums,
-        onClick = { callbacks.onItemClick(item) },
-        onLongClick = { callbacks.onShowActions(MediaActionsTarget(name, null, MediaSelection.AlbumArtists(artist), ArtworkPlaceholder.Artist)) },
-        artwork = { LibraryArtwork(artist, ArtworkPlaceholder.Artist, Modifier.fillMaxSize(), size = ArtworkSize.Grid, shape = ArtworkShape.Circle) },
-    )
-}
-
-private val ShelfTileWidth = 140.dp

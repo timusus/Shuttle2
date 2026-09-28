@@ -1,9 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
+import com.simplecityapps.shuttle.model.SmartPlaylistId
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.preview.toAlbum
 import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
 import com.simplecityapps.shuttle.ui.preview.toGenre
+import com.simplecityapps.shuttle.ui.preview.toPlaylist
 import com.simplecityapps.shuttle.ui.preview.toSong
 
 /** Home over the sample library, so its tiles load the generated covers under `SampleArtworkCoil`. */
@@ -11,14 +14,24 @@ object HomeScenarios {
     val phaseGarden = SampleLibrary.album("phase-garden").toAlbum()
     val nightBus = SampleLibrary.album("night-bus-frequencies").toAlbum()
     val harbourWeather = SampleLibrary.album("harbour-weather").toAlbum()
+    val lighthouseFerry = SampleLibrary.album("lighthouse-ferry").toAlbum()
+    val cassetteSummer = SampleLibrary.album("cassette-summer").toAlbum()
     val blueHours = SampleLibrary.album("blue-hours").toAlbum()
     val softFocus = SampleLibrary.album("soft-focus").toAlbum()
     val signalRoom = SampleLibrary.album("signal-room").toAlbum()
+    val estuary = SampleLibrary.album("estuary").toAlbum()
     val saltmarshChoir = SampleLibrary.artist("Saltmarsh Choir").toAlbumArtist()
+    val marlowVane = SampleLibrary.artist("Marlow Vane").toAlbumArtist()
+    val paleMeridian = SampleLibrary.artist("Pale Meridian").toAlbumArtist()
+    val roadTrip = SampleLibrary.playlist("Road Trip").toPlaylist(id = 1)
+    val lateNight = SampleLibrary.playlist("Late Night").toPlaylist(id = 2)
     val genres = SampleLibrary.genres.map { it.toGenre() }.sortedByDescending { it.songCount }.take(4)
     private val phaseGardenSongs = SampleLibrary.album("phase-garden").songs.map { it.toSong() }
 
-    /** Paused partway into Phase Garden, 2:14 from the end of its first song. */
+    /** A song from each of four albums, for a playlist's or genre's mosaic. */
+    private fun covers(vararg albums: String): List<Song> = albums.map { SampleLibrary.album(it).songs.first().toSong() }
+
+    /** Paused partway into Phase Garden: the view model still offers it, and Home leaves it to the mini player (#646). */
     val resume = ResumeQueue(song = phaseGardenSongs.first(), songs = phaseGardenSongs, timeLeftMs = 134_000, playing = false)
 
     val loading = HomeUiState.Loading
@@ -33,28 +46,42 @@ object HomeScenarios {
 
     private val genrePicks = section(HomeSectionId.GenrePicks, HomeSectionTitle.GenrePicks, *genres.map { HomeItem.GenreItem(it) }.toTypedArray())
 
+    val smartPlaylist = HomeItem.SmartPlaylistItem(SmartPlaylistId.Favourites)
+
+    /** Eight things played lately, of every kind: two full rows of the grid at any width. */
+    val jumpBackIn = section(
+        HomeSectionId.JumpBackIn,
+        HomeSectionTitle.JumpBackIn,
+        HomeItem.AlbumItem(phaseGarden),
+        HomeItem.ArtistItem(saltmarshChoir),
+        HomeItem.AlbumItem(harbourWeather),
+        HomeItem.PlaylistItem(roadTrip),
+        HomeItem.ArtistItem(paleMeridian),
+        HomeItem.AlbumItem(lighthouseFerry),
+        HomeItem.AlbumItem(cassetteSummer),
+        HomeItem.ArtistItem(marlowVane),
+    )
+
     val content = HomeUiState.Content(
         showWhatsNew = false,
         sections = listOf(
-            section(
-                HomeSectionId.JumpBackIn,
-                HomeSectionTitle.JumpBackIn,
-                HomeItem.AlbumItem(phaseGarden),
-                HomeItem.ArtistItem(saltmarshChoir),
-                HomeItem.AlbumItem(harbourWeather),
-            ),
+            jumpBackIn,
             section(HomeSectionId.OnRepeat, HomeSectionTitle.OnRepeat, HomeItem.AlbumItem(softFocus), HomeItem.AlbumItem(signalRoom)),
+            section(HomeSectionId.Rediscover, HomeSectionTitle.Rediscover, HomeItem.AlbumItem(estuary), smartPlaylist, HomeItem.PlaylistItem(lateNight)),
             section(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, HomeItem.AlbumItem(nightBus), HomeItem.AlbumItem(blueHours)),
             genrePicks,
         ),
         resume = resume,
+        covers = mapOf(
+            HomeItem.PlaylistItem(roadTrip).key to covers("night-bus-frequencies", "blue-hours", "smoke-rings", "undertow"),
+            HomeItem.PlaylistItem(lateNight).key to covers("soft-focus", "slow-bloom", "lantern-hours", "weather-systems"),
+            HomeItem.GenreItem(genres.first()).key to covers("estuary", "loose-change", "low-tide-sessions", "signal-room"),
+        ),
     )
-
-    val playing = content.copy(resume = resume.copy(playing = true))
 
     val whatsNew = content.copy(showWhatsNew = true)
 
-    /** A library that's never been played (cold start): no queue to resume; Recently added, Genre picks and Shuffle all. */
+    /** A library that's never been played (cold start): Recently added, Genre picks and Shuffle all. */
     val unplayed = content.copy(
         resume = null,
         sections = listOf(

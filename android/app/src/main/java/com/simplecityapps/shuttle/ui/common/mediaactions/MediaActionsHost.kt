@@ -44,6 +44,7 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2ActionsSheet
 import com.simplecityapps.shuttle.designsystem.component.S2Dialog
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaActionResult
@@ -66,6 +67,11 @@ data class MediaActionsTarget(
     val placeholder: ArtworkPlaceholder,
     /** Actions only this screen offers (remove from playlist, rename), listed after the shared ones. */
     val extraActions: List<S2Action> = emptyList(),
+    /**
+     * What Play and Shuffle start the queue from, when it isn't the selection's own ([MediaSelection.playContext]):
+     * a Home smart-playlist tile plays a song query, but the history should record the smart playlist (#633).
+     */
+    val playContext: PlayContext? = null,
 )
 
 /**
@@ -89,9 +95,20 @@ class MediaActionsState internal constructor(
 
     fun dispatch(action: MediaAction) = onDispatch(action)
 
-    /** Runs [type] on [selection]. Add to playlist has no action until a playlist is picked, so it opens the picker. */
-    fun perform(type: MediaActionType, selection: MediaSelection) {
-        val action = type.actionFor(selection)
+    /**
+     * Runs [type] on [selection], playing or shuffling from [playContext] when given. Add to playlist has no action
+     * until a playlist is picked, so it opens the picker.
+     */
+    fun perform(
+        type: MediaActionType,
+        selection: MediaSelection,
+        playContext: PlayContext? = null,
+    ) {
+        val action = when {
+            playContext != null && type == MediaActionType.Play -> MediaAction.Play(selection, context = playContext)
+            playContext != null && type == MediaActionType.Shuffle -> MediaAction.Shuffle(selection, playContext)
+            else -> type.actionFor(selection)
+        }
         if (action != null) {
             onDispatch(action)
         } else if (type == MediaActionType.AddToPlaylist) {
@@ -154,7 +171,7 @@ fun MediaActionsHost(
                     label = type.label(),
                     icon = type.icon,
                     destructive = type == MediaActionType.Delete,
-                    onClick = { state.perform(type, target.selection) },
+                    onClick = { state.perform(type, target.selection, target.playContext) },
                 )
             } + target.extraActions,
             onDismissRequest = { state.sheet = null },

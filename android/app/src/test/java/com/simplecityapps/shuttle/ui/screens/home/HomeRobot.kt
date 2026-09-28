@@ -2,12 +2,14 @@ package com.simplecityapps.shuttle.ui.screens.home
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -15,6 +17,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import com.simplecityapps.shuttle.settings.ThemeMode
+import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.theme.AppThemeState
 import com.simplecityapps.shuttle.ui.theme.S2AppTheme
@@ -26,16 +29,14 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
         private set
     var shuffles = 0
         private set
-    var playbackToggles = 0
-        private set
-    var queueShuffles = 0
-        private set
     var whatsNewOpened = 0
         private set
     var whatsNewDismissed = 0
         private set
-    val clickedItems = mutableListOf<HomeItem>()
+    val openedItems = mutableListOf<HomeItem>()
+    val actions = mutableListOf<MediaAction>()
     val shownActions = mutableListOf<MediaActionsTarget>()
+    val seeAlls = mutableListOf<HomeSectionId>()
 
     fun setContent(
         uiState: HomeUiState,
@@ -57,12 +58,12 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     private fun callbacks() = HomeCallbacks(
         onOpenSettings = { settingsOpened++ },
         onShuffleAll = { shuffles++ },
-        onTogglePlayback = { playbackToggles++ },
-        onShuffleQueue = { queueShuffles++ },
         onOpenWhatsNew = { whatsNewOpened++ },
         onDismissWhatsNew = { whatsNewDismissed++ },
-        onItemClick = { clickedItems += it },
+        onOpenItem = { openedItems += it },
+        onAction = { actions += it },
         onShowActions = { shownActions += it },
+        onSeeAll = { seeAlls += it },
     )
 
     fun scrollTo(text: String) {
@@ -87,6 +88,36 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
 
     fun tapDescription(description: String) {
         rule.onNodeWithContentDescription(description).performClick()
+    }
+
+    /** How many Jump back in cells share the first cell's row. */
+    fun gridColumns(): Int {
+        val tops = rule.onAllNodesWithTag(JUMP_BACK_IN_CELL_TAG).fetchSemanticsNodes().map { it.boundsInRoot.top }
+        return tops.count { it == tops.first() }
+    }
+
+    fun gridCellCount(): Int = rule.onAllNodesWithTag(JUMP_BACK_IN_CELL_TAG).fetchSemanticsNodes().size
+
+    /** The TalkBack custom actions on the tile or cell titled [text]. */
+    fun customActionLabels(text: String): List<String> {
+        scrollTo(text)
+        return rule.onAllNodesWithText(text)[0].fetchSemanticsNode().config[SemanticsActions.CustomActions].map { it.label }
+    }
+
+    fun performCustomAction(
+        text: String,
+        label: String,
+    ) {
+        scrollTo(text)
+        val action = rule.onAllNodesWithText(text)[0].fetchSemanticsNode().config[SemanticsActions.CustomActions].first { it.label == label }
+        rule.runOnIdle { action.action() }
+    }
+
+    fun assertTagCount(
+        tag: String,
+        count: Int,
+    ) {
+        rule.onAllNodesWithTag(tag).fetchSemanticsNodes().size shouldBe count
     }
 
     fun assertTextDisplayed(text: String) {
