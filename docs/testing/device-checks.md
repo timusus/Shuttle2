@@ -287,3 +287,11 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 
 - [ ] iPhone: play a Jellyfin song, then lock the phone; the lock screen and Control Center show its cover, and skipping to the next song swaps the cover.
 - [ ] iPhone: the home-screen label reads "Shuttle Music"; Android's launcher label and the playback notification channel do too.
+
+## iOS Sources, Settings and Home (#645, #646)
+
+- [ ] iPhone and iPad: during an import, the activity's "Open Sources" opens Sources (from Library and from Home).
+- [ ] iPhone: Sources reads clearly in light and dark; tapping a server opens its detail with status, address and user, and Scan and Sign In Again work.
+- [ ] iPhone: removing a server (swipe or the detail's Remove Server) asks first; adding the same server again starts from an empty sign-in. Android: removing a server and adding it again also starts empty.
+- [ ] iPhone: Settings keeps the ReplayGain pre-amp; the Equalizer keeps its own Preamp.
+- [ ] iPhone: Home starts at Jump back in with no Continue card; genre tiles use calm tones that match Android for the same genre; missing artwork shows a neutral grey placeholder in light and dark.
