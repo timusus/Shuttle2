@@ -1,34 +1,36 @@
 import Shared
 import SwiftUI
 
-/// Sources (#587, #624, phase 7 in `docs/architecture/ios-port/phase-5-ios-app.md`): the media servers the library
-/// imports from, on the shared `SourcesViewModel`, each with its import's status, and a rescan. Add a Server and a
-/// server's Sign In Again open the source setup (`SourceSetupFlow`) in a sheet, the same cards, sign-in and import
-/// progress the first run shows. A connected server's row offers what Android's server dialog does: sign in again, or
-/// remove it. This device's folders are phase 8 (local files), so Android's "This device" and folder groups have no
-/// iOS rows yet.
+/// Sources (#587, #624, #645; phase 7 in `docs/architecture/ios-port/phase-5-ios-app.md`): the media servers the library
+/// imports from, on the shared `SourcesViewModel`, as an inset-grouped list in the Settings style. Each server row
+/// shows its host and its import's status and pushes its detail (`ServerDetailView`); Add Server opens the source
+/// setup (`SourceSetupFlow`) in a sheet, the same cards, sign-in and import progress the first run shows. Scanning is
+/// its own section. This device's music is phase 8 (local files), so there is no "On this iPhone" section until iOS
+/// has a local provider to show in it.
 struct SourcesView: View {
     /// Absent only outside the shell (previews); every stack in `AppShell` has it.
     @Environment(Navigator.self) private var navigator: Navigator?
     /// Where the setup sheet opens, while it's up.
     @State private var setup: SourceSetupStart?
+    /// Each server's saved address and user, read when the screen shows and after the setup closes.
+    @State private var logins: [MediaProviderType: ServerLogin] = [:]
 
     var body: some View {
-        let models = ViewModelCache.shared.viewModel(Route.sources.cacheKey) { SourcesModels(graph: AppGraph.shared) }
+        let models = SourcesModels.cached()
         Observing(models.sources.uiState, models.importState) { state, importState in
             SourcesContent(
-                state: SourcesState(state, importStatus: ImportStatus(importState)),
+                state: SourcesState(state, importStatus: ImportStatus(importState), logins: logins),
                 onAddServer: { setup = .chooseSource },
-                onSignIn: { setup = .signIn($0) },
                 onRemove: { models.sources.onRemoveServer(type: $0) },
                 onRescan: { models.sources.onRescan() }
             )
             // The only event is an exclude folder off this device's storage, which iOS has no folders to raise.
             .consumeEvents(state.events, handled: { models.sources.onEventHandled(id: $0) }) { _ in }
         }
-        .sheet(item: $setup) { start in
+        .sheet(item: $setup, onDismiss: { logins = ServerLogin.readAll() }) { start in
             SourceSetupFlow(start: start, navigator: navigator, onClose: { setup = nil })
         }
+        .onAppear { logins = ServerLogin.readAll() }
         .navigationTitle("Sources")
     }
 }
@@ -44,15 +46,44 @@ final class SourcesModels: ViewModelGroup {
     }
 
     var members: [Lifecycle_viewmodelViewModel] { [sources] }
+
+    /// Sources' group, shared with a server's detail pushed on top of it.
+    @MainActor
+    static func cached() -> SourcesModels {
+        ViewModelCache.shared.viewModel(Route.sources.cacheKey) { SourcesModels(graph: AppGraph.shared) }
+    }
 }
 
-/// `SourcesUiState` as iOS shows it: the connected servers, each one's import, the scan, and when the library last
-/// finished importing.
+/// A server's saved sign-in, as Sources shows it: never the password.
+struct ServerLogin: Equatable {
+    var address: String?
+    var username: String?
+
+    /// The address without its scheme or path ("music.example.com:8096"), for a server's row.
+    var host: String? {
+        guard let address else { return nil }
+        guard let url = URL(string: address), let host = url.host(percentEncoded: false), !host.isEmpty else { return address }
+        return url.port.map { "\(host):\($0)" } ?? host
+    }
+
+    /// Every server type iOS signs in to, read from the Keychain (`ReadServerLogin`).
+    @MainActor
+    static func readAll(graph: IosAppGraph = AppGraph.shared) -> [MediaProviderType: ServerLogin] {
+        Dictionary(uniqueKeysWithValues: MediaProviderType.signInTypes.map { type in
+            let saved = graph.readServerLogin.invoke(type: type)
+            return (type, ServerLogin(address: saved.address, username: saved.username))
+        })
+    }
+}
+
+/// `SourcesUiState` as iOS shows it: the connected servers with their saved sign-ins, each one's import, the scan,
+/// and when the library last finished importing.
 struct SourcesState: Equatable {
     var servers: [MediaProviderType]
     var scan: Scan
     var importStatus: ImportStatus
     var lastImport: Date?
+    var logins: [MediaProviderType: ServerLogin]
 
     enum Scan: Equatable {
         case idle
@@ -65,16 +96,33 @@ struct SourcesState: Equatable {
         case connected
         case importing(fraction: Double?)
         case failed(String)
+
+        /// What the row says, and VoiceOver reads as its value.
+        var text: String {
+            switch self {
+            case .connected: "Connected"
+            case .importing(let fraction?): "Importing \(fraction.formatted(.percent.precision(.fractionLength(0))))"
+            case .importing: "Importing"
+            case .failed: "Import Failed"
+            }
+        }
     }
 
-    init(servers: [MediaProviderType], scan: Scan = .idle, importStatus: ImportStatus = .idle, lastImport: Date? = nil) {
+    init(
+        servers: [MediaProviderType],
+        scan: Scan = .idle,
+        importStatus: ImportStatus = .idle,
+        lastImport: Date? = nil,
+        logins: [MediaProviderType: ServerLogin] = [:]
+    ) {
         self.servers = servers
         self.scan = scan
         self.importStatus = importStatus
         self.lastImport = lastImport
+        self.logins = logins
     }
 
-    init(_ state: SourcesUiState, importStatus: ImportStatus = .idle) {
+    init(_ state: SourcesUiState, importStatus: ImportStatus = .idle, logins: [MediaProviderType: ServerLogin] = [:]) {
         servers = state.servers.filter(\.connected).map(\.type)
         if let progress = state.scan {
             scan = .scanning(message: progress.message, fraction: progress.fraction.map { Double($0.floatValue) })
@@ -85,6 +133,7 @@ struct SourcesState: Equatable {
         }
         self.importStatus = importStatus
         lastImport = state.lastImport.map { Date(timeIntervalSince1970: TimeInterval($0.toEpochMilliseconds()) / 1000) }
+        self.logins = logins
     }
 
     /// `type`'s import running or failed, else plain connected: the importer reports one provider at a time.
@@ -102,6 +151,11 @@ extension MediaProviderType {
     /// `:shared` yet, so its sign-in has no authentication to run.
     static var signInTypes: [MediaProviderType] {
         SourcesViewModelKt.ServerTypes.filter { $0 != .plex }
+    }
+
+    /// The server type a `Route.server` names, if it is one.
+    static func server(named name: String) -> MediaProviderType? {
+        SourcesViewModelKt.ServerTypes.first { $0.name == name }
     }
 
     /// The name Sources and the setup show (Android's `titleRes`).
@@ -134,158 +188,136 @@ extension MediaProviderType {
     }
 }
 
-/// Sources from plain values.
+/// Sources from plain values: Media Servers (each server, then Add Server) and, once there is a server, Scan.
 struct SourcesContent: View {
     let state: SourcesState
     var onAddServer: () -> Void = {}
-    var onSignIn: (MediaProviderType) -> Void = { _ in }
     var onRemove: (MediaProviderType) -> Void = { _ in }
     var onRescan: () -> Void = {}
 
-    /// The connected server whose options are showing.
-    @State private var confirming: MediaProviderType?
-
     var body: some View {
-        if state.servers.isEmpty {
-            EmptyState(
-                "No Servers Yet",
-                systemImage: "server.rack",
-                message: "Connect a Jellyfin or Emby server to stream your music library from it."
-            ) {
-                Button("Add a Server", systemImage: "plus", action: onAddServer)
-                    .accessibilityIdentifier("sources.addServer")
-            }
-        } else {
-            serverList
-        }
-    }
-
-    private var serverList: some View {
         List {
             Section {
                 ForEach(state.servers, id: \.self) { type in
-                    Button { confirming = type } label: {
-                        ServerRow(type: type, status: state.status(of: type))
+                    NavigationLink(value: Route.server(type: type.name)) {
+                        ServerRow(type: type, host: state.logins[type]?.host, status: state.status(of: type))
                     }
-                    .tint(.primary)
                     .accessibilityIdentifier("sources.server.\(type.name)")
                     .swipeActions {
                         Button("Remove", role: .destructive) { onRemove(type) }
                     }
                 }
-                Button("Add a Server", systemImage: "plus", action: onAddServer)
-                    .accessibilityIdentifier("sources.addServer")
+                Button(action: onAddServer) {
+                    Label("Add Server", systemImage: "plus")
+                }
+                .accessibilityIdentifier("sources.addServer")
             } header: {
-                Text("Servers")
+                Text("Media Servers")
+            } footer: {
+                if state.servers.isEmpty {
+                    Text("Connect a Jellyfin or Emby server to stream your music library from it.")
+                }
             }
-            Section {
-                ScanRow(scan: state.scan, lastImport: state.lastImport, onRescan: onRescan)
+            if !state.servers.isEmpty {
+                ScanSection(scan: state.scan, lastImport: state.lastImport, onRescan: onRescan)
             }
         }
-        .confirmationDialog(
-            confirming.map { "Remove \($0.title)?" } ?? "",
-            isPresented: Binding(get: { confirming != nil }, set: { if !$0 { confirming = nil } }),
-            titleVisibility: .visible,
-            presenting: confirming
-        ) { type in
-            Button("Remove", role: .destructive) { onRemove(type) }
-            Button("Sign In Again") { onSignIn(type) }
-            Button("Cancel", role: .cancel) {}
-        } message: { _ in
-            Text("Its songs and playlists leave your library. You can connect it again later.")
-        }
+        .listStyle(.insetGrouped)
     }
 }
 
-/// A connected server: its glyph large, its name, what its import is doing, and a status capsule.
-private struct ServerRow: View {
+/// A connected server: its glyph, its name over its host, and its status as the row's value in the secondary label
+/// colour, which VoiceOver reads as the row's value.
+struct ServerRow: View {
     let type: MediaProviderType
+    let host: String?
     let status: SourcesState.ServerStatus
 
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
     var body: some View {
-        let layout = dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Spacing.small))
-            : AnyLayout(HStackLayout(spacing: Spacing.smallMedium))
-        layout {
-            IconSquare(systemImage: type.symbol, style: .filled(type.color), size: .large)
-            VStack(alignment: .leading, spacing: Spacing.tiny) {
-                Text(type.title).font(.s2Headline)
-                detail.font(.subheadline).foregroundStyle(.s2SecondaryText).lineLimit(2)
+        LabeledContent {
+            ServerStatusLabel(status: status)
+        } label: {
+            Label {
+                VStack(alignment: .leading, spacing: Spacing.tiny) {
+                    Text(type.title)
+                    if let host {
+                        Text(host).font(.subheadline).foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                    }
+                }
+            } icon: {
+                IconSquare(systemImage: type.symbol, style: .filled(type.color))
             }
-            if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: Spacing.small) }
-            capsule
         }
-        .padding(.vertical, Spacing.xsmall)
-        .accessibilityElement(children: .combine)
-    }
-
-    @ViewBuilder private var detail: some View {
-        switch status {
-        case .connected: Text("Media server")
-        case .importing(let fraction):
-            if let fraction { Text("Importing, \(fraction, format: .percent.precision(.fractionLength(0)))") } else { Text("Importing…") }
-        case .failed(let error): Text(error)
-        }
-    }
-
-    private var capsule: StatusCapsule {
-        switch status {
-        case .connected: StatusCapsule(text: "Connected", color: .green)
-        case .importing: StatusCapsule(text: "Importing", color: .blue)
-        case .failed: StatusCapsule(text: "Import Failed", color: .red)
-        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel([type.title, host].compactMap { $0 }.joined(separator: ", "))
+        .accessibilityValue(status.text)
     }
 }
 
-/// A short status in a tinted capsule, with a dot of its colour.
-struct StatusCapsule: View {
-    let text: String
-    let color: Color
+/// A server's status in the secondary label colour; a failure leads with a red warning glyph.
+struct ServerStatusLabel: View {
+    let status: SourcesState.ServerStatus
 
     var body: some View {
         HStack(spacing: Spacing.xsmall) {
-            Circle().fill(color).frame(width: Spacing.small, height: Spacing.small)
-            Text(text)
+            if case .failed = status {
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red).accessibilityHidden(true)
+            }
+            Text(status.text).foregroundStyle(.secondary)
         }
-        .font(.caption.weight(.semibold))
-        .foregroundStyle(color)
-        .padding(.horizontal, Spacing.small)
-        .padding(.vertical, Spacing.xsmall)
-        .background(Capsule().fill(color.opacity(0.15)))
+        .font(.subheadline)
     }
 }
 
-/// "Scan Now", with the running scan's progress, the last one's failure, or when the library last finished importing
-/// (Android's rescan row).
-private struct ScanRow: View {
+/// Scan: "Scan Now" as a button row (disabled while a scan runs, with its progress beneath), the last scan's failure,
+/// and when the library last finished importing, in the standard label colours.
+struct ScanSection: View {
     let scan: SourcesState.Scan
     let lastImport: Date?
     let onRescan: () -> Void
+    var footer = "Looks for new and changed music on your servers."
 
     var body: some View {
-        Button(action: onRescan) {
-            VStack(alignment: .leading, spacing: Spacing.small) {
+        Section {
+            Button(action: onRescan) {
                 Label { Text("Scan Now") } icon: { IconSquare(systemImage: "arrow.clockwise", style: .filled(.teal)) }
-                switch scan {
-                case .idle:
-                    Text("Look for new and changed music").font(.caption).foregroundStyle(.secondary)
-                    if let lastImport {
-                        Text("Library updated \(lastImport, format: .relative(presentation: .named))")
-                            .font(.caption).foregroundStyle(.secondary)
-                            .accessibilityIdentifier("sources.lastImport")
-                    }
-                case .scanning(let message, let fraction):
-                    if let fraction { ProgressView(value: fraction) } else { ProgressView().frame(maxWidth: .infinity, alignment: .leading) }
-                    Text(message ?? "Scanning your music").font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                case .failed(let error):
-                    Text("Scan failed: \(error). Tap to try again").font(.caption).foregroundStyle(.secondary)
-                }
             }
+            .tint(.primary)
+            .disabled(scan.isScanning)
+            .accessibilityIdentifier("sources.rescan")
+            switch scan {
+            case .idle:
+                EmptyView()
+            case .scanning(let message, let fraction):
+                VStack(alignment: .leading, spacing: Spacing.small) {
+                    if let fraction { ProgressView(value: fraction) } else { ProgressView().frame(maxWidth: .infinity, alignment: .leading) }
+                    Text(message ?? "Scanning your music").font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("sources.scanProgress")
+            case .failed(let error):
+                Label {
+                    VStack(alignment: .leading, spacing: Spacing.tiny) {
+                        Text("Last Scan Failed")
+                        Text(error).font(.subheadline).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("sources.scanFailed")
+            }
+            if let lastImport {
+                LabeledContent("Last Updated") {
+                    Text(lastImport, format: .relative(presentation: .named))
+                }
+                .accessibilityIdentifier("sources.lastImport")
+            }
+        } header: {
+            Text("Scan")
+        } footer: {
+            Text(footer)
         }
-        .disabled(scan.isScanning)
-        .accessibilityIdentifier("sources.rescan")
     }
 }
 

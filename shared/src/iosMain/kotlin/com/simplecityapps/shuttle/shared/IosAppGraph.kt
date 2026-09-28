@@ -30,6 +30,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel
+import com.simplecityapps.shuttle.ui.screens.sources.servers.ReadServerLogin
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInViewModel
 import com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorViewModel
 import com.simplecityapps.shuttle.ui.shell.ShellViewModel
@@ -107,6 +108,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** A Jellyfin or Emby server's sign-in form, including Jellyfin Quick Connect. Plex joins with its provider. */
     val serverSignInViewModelFactory: ServerSignInViewModel.Factory
+
+    /** A signed-in Jellyfin or Emby server's saved address and user, for its row and detail in Sources. */
+    val readServerLogin: ReadServerLogin
 
     /**
      * The mini player and Now Playing's ViewModel. Swift builds one through [createPlayerViewModel], which hands it the

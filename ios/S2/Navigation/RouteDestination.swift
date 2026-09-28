@@ -13,6 +13,8 @@ struct RouteDestinationView: View {
             AlbumListView()
         case .sources:
             SourcesView()
+        case .server(let type):
+            ServerDetailView(typeName: type)
         case .libraryCategory(.albumArtists):
             AlbumArtistListView()
         case .libraryCategory(.genres):
