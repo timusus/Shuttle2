@@ -4,8 +4,9 @@
 #
 # usage: ios/scripts/maestro-sim.sh [FLOW]      FLOW defaults to poc-play.yaml, relative to ios/maestro
 #
-# Reads ~/.config/s2-test/jellyfin.env (URL=, API_KEY=) and hands both to Maestro with -e. Neither is printed;
-# the key is on maestro's command line while it runs, as devicectl's environment was.
+# Reads ~/.config/s2-test/jellyfin.env (URL=, API_KEY=) and exports them as MAESTRO_-prefixed environment
+# variables, which Maestro picks up itself and exposes to flows as ${MAESTRO_...}; neither is printed, and
+# neither appears on maestro's command line (ps would show it there for the life of the run otherwise).
 #
 # env:
 #   S2_SIMULATOR_UDID  the simulator (default: the iPhone 16 Pro, iOS 18, this Mac's POC simulator)
@@ -26,5 +27,7 @@ URL="" API_KEY=""
 [ -n "$URL" ] && [ -n "$API_KEY" ] || { echo "maestro-sim: $env_file must set URL and API_KEY" >&2; exit 1; }
 
 echo "==> Running $(basename "$flow") on $udid against the Jellyfin test server"
-maestro --udid "$udid" test --test-output-dir "${OUT:-/tmp/s2-ios-e2e/maestro}" \
-  -e SERVER_URL="${URL%/}" -e API_KEY="$API_KEY" -e SERVER_USER="${SERVER_USER:-shuttle-test}" "$flow"
+export MAESTRO_SERVER_URL="${URL%/}"
+export MAESTRO_API_KEY="$API_KEY"
+export MAESTRO_SERVER_USER="${SERVER_USER:-shuttle-test}"
+maestro --udid "$udid" test --test-output-dir "${OUT:-/tmp/s2-ios-e2e/maestro}" "$flow"

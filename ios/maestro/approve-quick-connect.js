@@ -1,8 +1,8 @@
-// Approves the Quick Connect code the sign-in screen shows (maestro.copiedText) for SERVER_USER, with the server's
-// API key, as another Jellyfin app would. Never logs the key or the address.
-var auth = { headers: { Authorization: 'MediaBrowser Token="' + API_KEY + '"' } }
-var base = SERVER_URL.replace(/\/+$/, '')
-var name = typeof SERVER_USER !== 'undefined' && SERVER_USER ? SERVER_USER : 'shuttle-test'
+// Approves the Quick Connect code the sign-in screen shows (maestro.copiedText) for MAESTRO_SERVER_USER, with the
+// server's API key, as another Jellyfin app would. Never logs the key or the address.
+var auth = { headers: { Authorization: 'MediaBrowser Token="' + MAESTRO_API_KEY + '"' } }
+var base = MAESTRO_SERVER_URL.replace(/\/+$/, '')
+var name = typeof MAESTRO_SERVER_USER !== 'undefined' && MAESTRO_SERVER_USER ? MAESTRO_SERVER_USER : 'shuttle-test'
 
 var users = json(http.get(base + '/Users', auth).body)
 var user = users.filter(function (u) { return u.Name === name })[0]

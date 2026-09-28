@@ -2,8 +2,8 @@
 # (Settings gear > Sources > Add a Server > the Jellyfin card), rather than Home's empty state
 # (sign-in-jellyfin.yaml), since #589 moved Sources under Settings' own nav stack on every tier.
 #
-# Env (pass with -e, from ios/scripts/maestro-sim.sh; never commit or print them): SERVER_URL, API_KEY, and
-# SERVER_USER, the user the code is approved for.
+# Env (exported MAESTRO_-prefixed by ios/scripts/maestro-sim.sh; never commit or print them): MAESTRO_SERVER_URL, MAESTRO_API_KEY, and
+# MAESTRO_SERVER_USER, the user the code is approved for.
 appId: com.simplecityapps.shuttle.dev
 ---
 - launchApp:
@@ -28,10 +28,10 @@ appId: com.simplecityapps.shuttle.dev
 - tapOn:
     id: "serverSignIn.address"
 - eraseText: 40
-- inputText: ${SERVER_URL}
+- inputText: ${MAESTRO_SERVER_URL}
 - tapOn:
     id: "serverSignIn.username"
-- inputText: ${SERVER_USER}
+- inputText: ${MAESTRO_SERVER_USER}
 # Not hideKeyboard: on iOS it can press Return, which moves to the password field and then signs in with an empty
 # password. Dragging the form by its header dismisses the keyboard instead; lower down, the drag can land on
 # Sign In with Quick Connect, so its tap below is conditional.
