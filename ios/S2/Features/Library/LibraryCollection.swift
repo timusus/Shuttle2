@@ -19,8 +19,10 @@ struct ViewModeToggle: View {
     }
 }
 
-/// Adaptive columns of tiles, at least `ArtworkSize.gridMinimum` wide, within the readable content width.
+/// Adaptive columns of tiles, at least `ArtworkSize.gridMinimum` wide, within the readable content width. With an
+/// `index`, the letter strip down the trailing edge scrolls to each section's first tile, by the tile's id.
 struct LibraryGrid<Content: View>: View {
+    var index: [LetterIndexSection]?
     @ViewBuilder let content: () -> Content
 
     @Environment(\.layoutTier) private var layoutTier
@@ -33,14 +35,17 @@ struct LibraryGrid<Content: View>: View {
     }
 
     var body: some View {
-        ScrollView {
-            LazyVGrid(columns: columns, spacing: Spacing.large) {
-                content()
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: Spacing.large) {
+                    content()
+                }
+                .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
+                .padding(.vertical, Spacing.medium)
+                .frame(maxWidth: AdaptiveLayout.contentMaxWidth)
+                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
-            .padding(.vertical, Spacing.medium)
-            .frame(maxWidth: AdaptiveLayout.contentMaxWidth)
-            .frame(maxWidth: .infinity)
+            .letterIndex(index) { proxy.scrollTo($0.anchor, anchor: .top) }
         }
     }
 }

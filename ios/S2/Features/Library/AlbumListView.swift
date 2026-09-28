@@ -86,8 +86,9 @@ struct AlbumListContent: View {
         case .empty:
             EmptyState("No Albums", systemImage: "square.stack", message: "Pull to refresh to import.")
         case .ready, .scanning:
+            let index = LetterIndex.sections(state.letterIndex, items: state.albums, id: \.stableId)
             if state.viewMode == .grid {
-                LibraryGrid {
+                LibraryGrid(index: index) {
                     ForEach(state.albums, id: \.stableId) { album in
                         NavigationLink(value: Route.album(album)) {
                             LibraryTile(
@@ -103,15 +104,12 @@ struct AlbumListContent: View {
                     }
                 }
             } else {
-                List {
-                    ForEach(state.albums, id: \.stableId) { album in
-                        let playback = nowPlaying.playback(album: album)
-                        NavigationLink(value: Route.album(album)) { AlbumRow(album: album, playback: playback) }
-                            .contextMenu { menu(album) }
-                            .nowPlayingRowBackground(playback)
-                    }
+                LetterIndexedList(items: state.albums, id: \.stableId, sections: index) { _, album in
+                    let playback = nowPlaying.playback(album: album)
+                    NavigationLink(value: Route.album(album)) { AlbumRow(album: album, playback: playback) }
+                        .contextMenu { menu(album) }
+                        .nowPlayingRowBackground(playback)
                 }
-                .listStyle(.plain)
             }
         }
     }

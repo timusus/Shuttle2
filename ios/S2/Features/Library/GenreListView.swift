@@ -69,17 +69,14 @@ struct GenreListContent: View {
         case .empty:
             EmptyState("No Genres", systemImage: "guitars", message: "Pull to refresh to import.")
         case .ready, .scanning:
-            List {
-                ForEach(state.genres, id: \.name) { genre in
-                    NavigationLink(value: Route.genre(genre)) { GenreRow(genre: genre) }
-                        .contextMenu {
-                            Button("Play", systemImage: "play") { onPlay(genre) }
-                            Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(genre) }
-                            Button("Add to Queue", systemImage: "text.append") { onAddToQueue(genre) }
-                        }
-                }
+            LetterIndexedList(items: state.genres, id: \.name, sections: LetterIndex.sections(state.letterIndex, items: state.genres, id: \.name)) { _, genre in
+                NavigationLink(value: Route.genre(genre)) { GenreRow(genre: genre) }
+                    .contextMenu {
+                        Button("Play", systemImage: "play") { onPlay(genre) }
+                        Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(genre) }
+                        Button("Add to Queue", systemImage: "text.append") { onAddToQueue(genre) }
+                    }
             }
-            .listStyle(.plain)
             .toolbar {
                 Button("Shuffle", systemImage: "shuffle", action: onShuffle)
             }

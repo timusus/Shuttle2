@@ -66,20 +66,17 @@ struct SongListContent: View {
         case .empty:
             EmptyState("No Songs", systemImage: "music.note", message: "Pull to refresh to import.")
         case .ready, .scanning:
-            List {
-                ForEach(Array(state.songs.enumerated()), id: \.element.id) { index, song in
-                    let playback = nowPlaying.playback(song: song)
-                    Button { onPlay(index) } label: { SongRow(song: song, playback: playback) }
-                        .buttonStyle(.plain)
-                        .tapFeedback()
-                        .contextMenu {
-                            Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
-                            Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
-                        }
-                        .nowPlayingRowBackground(playback)
-                }
+            LetterIndexedList(items: state.songs, id: \.id, sections: LetterIndex.sections(state.letterIndex, items: state.songs, id: \.id)) { index, song in
+                let playback = nowPlaying.playback(song: song)
+                Button { onPlay(index) } label: { SongRow(song: song, playback: playback) }
+                    .buttonStyle(.plain)
+                    .tapFeedback()
+                    .contextMenu {
+                        Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
+                        Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
+                    }
+                    .nowPlayingRowBackground(playback)
             }
-            .listStyle(.plain)
             .toolbar {
                 Button("Shuffle", systemImage: "shuffle", action: onShuffle)
             }
