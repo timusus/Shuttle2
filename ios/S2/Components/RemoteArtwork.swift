@@ -53,12 +53,6 @@ struct ArtworkSource: Equatable {
         }
     }
 
-    /// The first candidate's url only, with no fallback: for the player backdrop and the tint, which load a url
-    /// themselves. Prefer `ArtworkLoader.image(for: source, ...)`, which walks the whole chain.
-    func load() async throws -> String? {
-        try await candidates().first?.url.absoluteString
-    }
-
     static func == (lhs: ArtworkSource, rhs: ArtworkSource) -> Bool { lhs.id == rhs.id }
 
     /// An item's cache key: its kind and identity, plus the provider's artwork version when there is one, so the

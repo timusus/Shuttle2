@@ -134,6 +134,52 @@ struct ArtworkLoaderTests {
         #expect(try await ArtworkSource(id: 1) { nil }.candidates().isEmpty)
     }
 
+    // MARK: - Callers that draw a source's cover
+
+    /// Now Playing's tint and backdrop go through the same chain as the thumbnail, so a song whose cover only the S2
+    /// artwork API has is tinted and backed by it too, not left on the accent and a bare gradient.
+    @MainActor @Test func theTintIsReadFromTheFallbackWhenTheServerImageFails() async {
+        let fetcher = StubFetcher(responses: [
+            Self.server: (500, Data()),
+            Self.s2: (200, Self.pngData(width: 40, height: 40)),
+        ])
+        let loader = ArtworkLoader(fetch: fetcher.fetch)
+        let extractor = ArtworkColorExtractor { source, pixels in await loader.image(for: source, maxPixelSize: pixels) }
+
+        let color = await extractor.color(for: Self.source([ArtworkCandidate(url: Self.server), ArtworkCandidate(url: Self.s2)]))
+
+        #expect(color != nil)
+        #expect(await fetcher.requests.map(\.url) == [Self.server, Self.s2])
+    }
+
+    @MainActor @Test func theBackdropIsDrawnFromTheFallbackWhenTheServerImageFails() async throws {
+        let fetcher = StubFetcher(responses: [
+            Self.server: (404, Data()),
+            Self.s2: (200, Self.pngData(width: 400, height: 400)),
+        ])
+        let loader = ArtworkLoader(fetch: fetcher.fetch)
+
+        let image = await ArtworkBackground.image(
+            for: Self.source([ArtworkCandidate(url: Self.server), ArtworkCandidate(url: Self.s2)]),
+            loader: loader
+        )
+
+        let loaded = try #require(image)
+        #expect(max(loaded.size.width, loaded.size.height) == CGFloat(ArtworkBackground.pixels))
+        #expect(await fetcher.requests.map(\.url) == [Self.server, Self.s2])
+    }
+
+    @MainActor @Test func noSourceOrNoCandidatesDrawsNoBackdropAndNoTint() async {
+        let fetcher = StubFetcher(responses: [:])
+        let loader = ArtworkLoader(fetch: fetcher.fetch)
+        let extractor = ArtworkColorExtractor { source, pixels in await loader.image(for: source, maxPixelSize: pixels) }
+
+        #expect(await ArtworkBackground.image(for: nil, loader: loader) == nil)
+        #expect(await ArtworkBackground.image(for: Self.source([]), loader: loader) == nil)
+        #expect(await extractor.color(for: ArtworkSource(id: "none", load: { nil })) == nil)
+        #expect(await fetcher.requests.isEmpty)
+    }
+
     private static let server = URL(string: "https://jellyfin.example/Items/album/Images/Primary")!
     private static let s2 = URL(string: "https://api.shuttlemusicplayer.app/v1/artwork?artist=A&album=B")!
 

@@ -16,6 +16,8 @@ struct ArtworkBackground: View {
     /// Where the controls sit: under the cover, or beside it (from `AdaptiveLayout.twoColumnMinWidth`), where they
     /// run up into the top half and the cover can only show faintly anywhere.
     var layout: Layout = .stacked
+    /// Where the cover comes from; tests hand in one with a stubbed network.
+    var loader: ArtworkLoader = .shared
 
     enum Layout {
         case stacked
@@ -63,15 +65,19 @@ struct ArtworkBackground: View {
         .animation(Motion.backdropChange.reduced(reduceMotion), value: image)
         .animation(Motion.tintChange.reduced(reduceMotion), value: palette)
         .task(id: source?.id) {
-            guard let source, let string = try? await source.load(), let url = URL(string: string) else {
-                image = nil
-                return
-            }
-            let loaded = await ArtworkLoader.shared.image(for: url, maxPixelSize: Self.pixels)
+            let loaded = await Self.image(for: source, loader: loader)
             if !Task.isCancelled { image = loaded }
         }
         // A blur of the cover already on screen: nothing for VoiceOver to say.
         .accessibilityHidden(true)
+    }
+
+    /// The cover to blur: the first of `source`'s candidates that loads (the media server's image, else the S2
+    /// artwork API's), from `loader`'s cache when it is there, decoded at `pixels`. Nil with no source or no cover.
+    @MainActor
+    static func image(for source: ArtworkSource?, loader: ArtworkLoader) async -> UIImage? {
+        guard let source else { return nil }
+        return await loader.image(for: source, maxPixelSize: pixels)
     }
 
     /// The blurred cover's strength down the screen: rich behind the cover, faint by the controls.

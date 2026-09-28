@@ -107,9 +107,9 @@ struct ArtworkTintTests {
             loads.append(pixels)
             return Self.image([.init(0x20_80_40)])
         }
-        let url = URL(string: "https://example.com/a.jpg")!
-        let first = await extractor.color(for: url)
-        let second = await extractor.color(for: url)
+        let source = Self.source("a")
+        let first = await extractor.color(for: source)
+        let second = await extractor.color(for: source)
         #expect(first != nil)
         #expect(first == second)
         #expect(loads == [ArtworkColorExtractor.seedPixels])
@@ -121,24 +121,34 @@ struct ArtworkTintTests {
             loads += 1
             return Self.image([.init(0x80_80_80)])
         }
-        let url = URL(string: "https://example.com/grey.jpg")!
-        #expect(await extractor.color(for: url) == nil)
-        #expect(await extractor.color(for: url) == nil)
+        let source = Self.source("grey")
+        #expect(await extractor.color(for: source) == nil)
+        #expect(await extractor.color(for: source) == nil)
         #expect(loads == 1)
     }
 
     @Test func theCacheEvictsTheOldestCover() async {
         let extractor = ArtworkColorExtractor(maxCacheSize: 2) { _, _ in Self.image([.init(0x20_80_40)]) }
-        let urls = (0..<3).map { URL(string: "https://example.com/\($0).jpg")! }
-        for url in urls { _ = await extractor.color(for: url) }
-        #expect(!extractor.isCached(urls[0]))
-        #expect(extractor.isCached(urls[1]))
-        #expect(extractor.isCached(urls[2]))
+        let sources = (0..<3).map { Self.source("\($0)") }
+        for source in sources { _ = await extractor.color(for: source) }
+        #expect(!extractor.isCached(sources[0]))
+        #expect(extractor.isCached(sources[1]))
+        #expect(extractor.isCached(sources[2]))
     }
 
-    @Test func aSourceWithNoURLHasNoColour() async {
-        let extractor = ArtworkColorExtractor { _, _ in Issue.record("should not load"); return nil }
-        #expect(await extractor.color(for: ArtworkSource(id: "none", load: { nil })) == nil)
+    @Test func aNewArtworkVersionIsReadAgain() async {
+        var loads = 0
+        let extractor = ArtworkColorExtractor { _, _ in
+            loads += 1
+            return Self.image([.init(0x20_80_40)])
+        }
+        _ = await extractor.color(for: ArtworkSource(id: "a", cacheKey: ArtworkSource.itemKey("album", "a", version: "1")) { [] })
+        _ = await extractor.color(for: ArtworkSource(id: "a", cacheKey: ArtworkSource.itemKey("album", "a", version: "2")) { [] })
+        #expect(loads == 2)
+    }
+
+    static func source(_ id: String) -> ArtworkSource {
+        ArtworkSource(id: id) { [ArtworkCandidate(url: URL(string: "https://example.com/\(id).jpg")!)] }
     }
 
     // MARK: Helpers

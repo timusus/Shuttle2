@@ -3,7 +3,7 @@ import UIKit
 
 /// Finds the colour a cover is "about": the saturation-weighted average of its pixels, skipping near-black,
 /// near-white and grey ones, so the result is a vibrant, representative hue. Ported from Shuttle Podcasts'
-/// `Theme/ArtworkColorExtractor.swift`; S2 feeds it a `UIImage` from `ArtworkLoader` rather than downloading.
+/// `Theme/ArtworkColorExtractor.swift`; S2 feeds it a `UIImage` from `ArtworkLoader`'s candidate walk rather than downloading.
 ///
 /// The colour is raw: never draw it as-is. `ArtworkTintModifier` (`.artworkTint(from:)`) turns it into a
 /// scheme-safe tint with `ContrastSafeTint`.
@@ -14,47 +14,44 @@ final class ArtworkColorExtractor {
     /// The colour is averaged over a 64 px thumbnail, so that is all the loader is asked to decode.
     static let seedPixels = 64
 
-    typealias ImageLoader = (URL, Int) async -> UIImage?
+    /// Loads a source's cover at a pixel size: `ArtworkLoader`'s candidate walk by default, a stub in tests.
+    typealias ImageLoader = (ArtworkSource, Int) async -> UIImage?
 
     private let loadImage: ImageLoader
     private let maxCacheSize: Int
-    /// Keyed by url, including covers with no dominant hue (a nil entry), so a grey cover isn't re-read.
-    private var cache: [URL: ContrastSafeTint.RGB?] = [:]
+    /// Keyed by the source's `cacheKey` (its item and artwork version), including covers with no dominant hue
+    /// (a nil entry), so a grey cover isn't re-read.
+    private var cache: [String: ContrastSafeTint.RGB?] = [:]
     /// Oldest first, for eviction.
-    private var order: [URL] = []
+    private var order: [String] = []
 
-    init(maxCacheSize: Int = 50, loadImage: @escaping ImageLoader = { url, pixels in
-        await ArtworkLoader.shared.image(for: url, maxPixelSize: pixels)
+    init(maxCacheSize: Int = 50, loadImage: @escaping ImageLoader = { source, pixels in
+        await ArtworkLoader.shared.image(for: source, maxPixelSize: pixels)
     }) {
         self.maxCacheSize = maxCacheSize
         self.loadImage = loadImage
     }
 
-    /// The dominant colour of `source`'s artwork, or nil when it has none, it failed to load, or it has no
-    /// dominant hue (a greyscale cover).
+    /// The dominant colour of `source`'s artwork, from the first of its candidates that loads, or nil when none
+    /// does or the cover has no dominant hue (a greyscale cover).
     func color(for source: ArtworkSource) async -> ContrastSafeTint.RGB? {
-        guard let string = try? await source.load(), let url = URL(string: string) else { return nil }
-        return await color(for: url)
-    }
-
-    /// The dominant colour of the cover at `url`.
-    func color(for url: URL) async -> ContrastSafeTint.RGB? {
-        if let hit = cache[url] { return hit }
-        guard let image = await loadImage(url, Self.seedPixels) else { return nil }
+        let key = source.cacheKey
+        if let hit = cache[key] { return hit }
+        guard let image = await loadImage(source, Self.seedPixels) else { return nil }
         let color = await Task.detached(priority: .utility) { Self.dominantColor(from: image) }.value
-        store(color, for: url)
+        store(color, for: key)
         return color
     }
 
-    /// Whether `url`'s colour is cached (nil or not). For tests.
-    func isCached(_ url: URL) -> Bool { cache[url] != nil }
+    /// Whether `source`'s colour is cached (nil or not). For tests.
+    func isCached(_ source: ArtworkSource) -> Bool { cache[source.cacheKey] != nil }
 
-    private func store(_ color: ContrastSafeTint.RGB?, for url: URL) {
-        if cache[url] == nil, order.count >= maxCacheSize {
+    private func store(_ color: ContrastSafeTint.RGB?, for key: String) {
+        if cache[key] == nil, order.count >= maxCacheSize {
             cache.removeValue(forKey: order.removeFirst())
         }
-        if cache[url] == nil { order.append(url) }
-        cache[url] = .some(color)
+        if cache[key] == nil { order.append(key) }
+        cache[key] = .some(color)
     }
 
     // MARK: - Pixel analysis

@@ -94,11 +94,6 @@ actor ArtworkLoader {
         return nil
     }
 
-    /// The image at `url`, downsampled so its longest side is `maxPixelSize` pixels.
-    func image(for url: URL, maxPixelSize: Int) async -> UIImage? {
-        await image(for: ArtworkCandidate(url: url), maxPixelSize: maxPixelSize)
-    }
-
     /// The image `candidate` points at, downsampled so its longest side is `maxPixelSize` pixels.
     ///
     /// Returns nil for anything that did not arrive as a decodable image, including a non-2xx response.
