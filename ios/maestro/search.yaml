@@ -1,0 +1,60 @@
+# Search (#589) on the Jellyfin test server: searches an album artist (Hans Zimmer) and opens him from the results,
+# then a track-only artist (Angela Lansbury, credited on Beauty and the Beast but on no album of her own, #637), whose
+# result counts her songs, and opens her; then a query with no results. Shoots the results and no results. Signed in
+# already: run sign-in-jellyfin.yaml first. For dark screenshots, set the simulator's appearance and run it again.
+#
+#   OUT=/tmp/s2-589 ios/scripts/maestro-sim.sh search.yaml
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+- tapOn: "Search"
+# The field is focused on arrival, so typing goes straight in.
+- inputText: "Hans Zimmer"
+# Results come from the imported library, which a fresh sign-in may still be filling.
+- extendedWaitUntil:
+    visible:
+      id: "search.result.artist"
+    timeout: 180000
+- assertVisible: "Top Result"
+- pressKey: Enter
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: results
+- tapOn:
+    id: "search.result.artist"
+    index: 0
+- extendedWaitUntil:
+    visible: "\\d+ albums · \\d+ songs"
+    timeout: 10000
+# Back to the results, then clear the field: the opened result's query is now a recent search.
+- tapOn: "Search"
+- tapOn: "Hans Zimmer"
+- eraseText: 20
+- extendedWaitUntil:
+    visible:
+      id: "search.recent"
+    timeout: 5000
+- inputText: "Angela Lansbury"
+- extendedWaitUntil:
+    visible:
+      id: "search.result.artist"
+    timeout: 10000
+- assertVisible: "\\d+ songs?"
+- tapOn:
+    id: "search.result.artist"
+    index: 0
+- extendedWaitUntil:
+    visible: "Appears On"
+    timeout: 10000
+- tapOn: "Search"
+- tapOn: "Angela Lansbury"
+- eraseText: 20
+- inputText: "Zzqxj Vrrk"
+- extendedWaitUntil:
+    visible:
+      id: "search.noResults"
+    timeout: 10000
+- pressKey: Enter
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: no-results

@@ -251,7 +251,7 @@ struct LibraryCategoryChips: View {
     private var chips: some View {
         HStack(spacing: Spacing.small) {
             ForEach(categories, id: \.self) { category in
-                LibraryCategoryChip(category: category, isSelected: category == selection) {
+                FilterChip(title: category.title, isSelected: category == selection, identifier: "libraryChip.\(category.rawValue)") {
                     onSelect(category)
                 }
             }
@@ -301,31 +301,6 @@ extension View {
         } else {
             background(.bar)
         }
-    }
-}
-
-private struct LibraryCategoryChip: View {
-    let category: LibraryCategory
-    let isSelected: Bool
-    let action: () -> Void
-
-    @Environment(\.artworkTint) private var tint
-    @Environment(\.artworkTintInk) private var ink
-
-    var body: some View {
-        Button(action: action) {
-            Text(category.title)
-                .lineLimit(1)
-                .padding(.horizontal, Spacing.smallMedium + Spacing.xsmall)
-                .padding(.vertical, Spacing.small)
-                .foregroundStyle(isSelected ? ink : .primary)
-                .background(Capsule().fill(isSelected ? AnyShapeStyle(tint) : AnyShapeStyle(Color(.tertiarySystemFill))))
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.pressScale)
-        .accessibilityLabel(category.title)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityIdentifier("libraryChip.\(category.rawValue)")
     }
 }
 

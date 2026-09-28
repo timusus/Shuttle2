@@ -1,9 +1,320 @@
+import Shared
 import SwiftUI
 
-/// Placeholder until the Search screen lands (#589).
+/// Search (#589): the shared `SearchViewModel` behind the system search field, focused when the tab opens with
+/// nothing typed. Empty, it lists the recent searches (tap to search again, swipe to forget); typing shows the
+/// results as Android's screen does: the top result, then Artists, Albums, Songs, Genres and Playlists, each capped
+/// with a See All that expands it in place (`SearchResults.sections`). The type chips narrow the search and are kept
+/// by the ViewModel. A tap opens the artist, album, genre or playlist, or plays every song result from the tapped
+/// one (`SearchViewModel.playSong`); either keeps the query as a recent search. Long press plays or queues through
+/// the shared `MediaAction`s.
 struct SearchView: View {
+    let navigator: Navigator
+
+    @State private var query = ""
+    @State private var isSearchPresented = false
+
     var body: some View {
-        EmptyState("Search", systemImage: AppTab.search.systemImage, message: "Coming soon.")
-            .navigationTitle(AppTab.search.title)
+        let models = ViewModelCache.shared.viewModel(AppTab.search.cacheKey) {
+            SearchModels(graph: AppGraph.shared)
+        }
+        LibraryNowPlayingReader { nowPlaying in
+            Observing(models.search.uiState, models.actions.uiState) { state, actions in
+                SearchContentView(
+                    state: state,
+                    nowPlaying: nowPlaying,
+                    onSelectRecent: { query = $0 },
+                    onRemoveRecent: { models.search.onRemoveRecentSearch(query: $0) },
+                    onSelectAll: { models.search.onSelectAll() },
+                    onToggleCategory: { models.search.onToggleCategory(category: $0) },
+                    onOpen: { route in
+                        models.search.onResultChosen()
+                        navigator.open(route)
+                    },
+                    onPlaySong: { index in
+                        if let action = models.search.playSong(index: Int32(index)) { models.actions.dispatch(action: action) }
+                    },
+                    onAction: { models.actions.dispatch(action: $0) }
+                )
+                .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.dispatch(action: $0) })
+            }
+        }
+        .navigationTitle(AppTab.search.title)
+        .searchable(text: $query, isPresented: $isSearchPresented, placement: .navigationBarDrawer(displayMode: .always), prompt: "Artists, Albums, Songs")
+        .onSubmit(of: .search) { models.search.onSearch() }
+        .onChange(of: query) { _, new in models.search.onQueryChange(query: new) }
+        .onAppear {
+            // The field and the ViewModel agree on the query, whichever outlived the other.
+            models.search.onQueryChange(query: query)
+            // Arriving with nothing typed means the user wants to type.
+            if query.isEmpty { isSearchPresented = true }
+        }
+    }
+}
+
+/// The Search screen's ViewModels, cached together under its tab's key.
+final class SearchModels: ViewModelGroup {
+    let search: SearchViewModel
+    let actions: MediaActionsViewModel
+
+    init(graph: IosAppGraph) {
+        search = graph.searchViewModel
+        actions = graph.mediaActionsViewModel
+    }
+
+    var members: [Lifecycle_viewmodelViewModel] { [search, actions] }
+}
+
+/// Search from a `SearchUiState`: the type chips over the recent searches, the searching state, no results, or the
+/// results.
+struct SearchContentView: View {
+    let state: SearchUiState
+    var nowPlaying: LibraryNowPlaying = .none
+    var onSelectRecent: (String) -> Void = { _ in }
+    var onRemoveRecent: (String) -> Void = { _ in }
+    var onSelectAll: () -> Void = {}
+    var onToggleCategory: (SearchCategory) -> Void = { _ in }
+    /// Opens a result's screen.
+    var onOpen: (Route) -> Void = { _ in }
+    /// Plays the song results from this index.
+    var onPlaySong: (Int) -> Void = { _ in }
+    /// Dispatches a long-press play or queue action.
+    var onAction: (MediaAction) -> Void = { _ in }
+
+    var body: some View {
+        content
+            .pinnedTopBar {
+                if showsChips {
+                    SearchCategoryChips(selected: state.categories, onSelectAll: onSelectAll, onToggle: onToggleCategory)
+                        .pinnedBarBackground()
+                }
+            }
+    }
+
+    /// The type chips narrow a query, so they're shown once there is one.
+    private var showsChips: Bool {
+        !(state.content is SearchContentRecent)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch onEnum(of: state.content) {
+        case .recent(let recent):
+            if recent.searches.isEmpty {
+                EmptyState("Search Your Library", systemImage: "magnifyingglass", message: "Find artists, albums, songs, genres and playlists.")
+            } else {
+                SearchRecentList(searches: recent.searches, onSelect: onSelectRecent, onRemove: onRemoveRecent)
+            }
+        case .searching:
+            ProgressView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .accessibilityIdentifier("search.searching")
+        case .noResults(let noResults):
+            ContentUnavailableView.search(text: noResults.query)
+                .accessibilityIdentifier("search.noResults")
+        case .results(let results):
+            SearchResultList(
+                query: results.query,
+                results: results.results,
+                nowPlaying: nowPlaying,
+                onOpen: onOpen,
+                onPlaySong: onPlaySong,
+                onAction: onAction
+            )
+        }
+    }
+}
+
+/// The recent searches, newest first: a tap searches again, a swipe forgets one.
+struct SearchRecentList: View {
+    let searches: [String]
+    let onSelect: (String) -> Void
+    let onRemove: (String) -> Void
+
+    var body: some View {
+        List {
+            Section {
+                ForEach(searches, id: \.self) { search in
+                    Button { onSelect(search) } label: {
+                        Label(search, systemImage: "clock.arrow.circlepath")
+                            .foregroundStyle(.primary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("search.recent")
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) { onRemove(search) } label: {
+                            Label("Remove", systemImage: "trash")
+                        }
+                    }
+                }
+            } header: {
+                SectionHeader("Recent Searches")
+                    .textCase(nil)
+            }
+        }
+        .listStyle(.plain)
+    }
+}
+
+/// The All chip, then one per type; All is on when no type is.
+struct SearchCategoryChips: View {
+    let selected: Set<SearchCategory>
+    let onSelectAll: () -> Void
+    let onToggle: (SearchCategory) -> Void
+
+    @Environment(\.layoutTier) private var layoutTier
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: Spacing.small) {
+                FilterChip(title: "All", isSelected: selected.isEmpty, identifier: "searchChip.all", action: onSelectAll)
+                ForEach(SearchCategory.allCases, id: \.self) { category in
+                    FilterChip(title: category.title, isSelected: selected.contains(category), identifier: "searchChip.\(category.title.lowercased())") {
+                        onToggle(category)
+                    }
+                }
+            }
+            .font(.subheadline.weight(.semibold))
+            .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
+        }
+        .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
+        .padding(.vertical, Spacing.small)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Result Types")
+    }
+}
+
+extension SearchCategory {
+    var title: String {
+        switch self {
+        case .artists: "Artists"
+        case .albums: "Albums"
+        case .songs: "Songs"
+        case .genres: "Genres"
+        case .playlists: "Playlists"
+        }
+    }
+}
+
+/// The results: the best match of all first, lifted out of its group, then each group as `SearchResults.sections`
+/// lays it out. See All expands a group in place, until the query changes.
+struct SearchResultList: View {
+    let query: String
+    let results: SearchResults
+    var nowPlaying: LibraryNowPlaying = .none
+    let onOpen: (Route) -> Void
+    let onPlaySong: (Int) -> Void
+    let onAction: (MediaAction) -> Void
+
+    @State private var expanded: SearchCategory?
+
+    var body: some View {
+        List {
+            if let top = results.top {
+                Section {
+                    row(top, index: 0)
+                } header: {
+                    SectionHeader("Top Result").textCase(nil)
+                }
+            }
+            ForEach(results.sections(expanded: expanded), id: \.category) { section in
+                Section {
+                    ForEach(Int(section.from)..<Int(section.until), id: \.self) { index in
+                        row(section.category, index: index)
+                    }
+                } header: {
+                    header(section).textCase(nil)
+                }
+            }
+        }
+        .listStyle(.plain)
+        .onChange(of: query) { expanded = nil }
+        .accessibilityIdentifier("search.results")
+    }
+
+    @ViewBuilder
+    private func header(_ section: SearchSection) -> some View {
+        if section.hasMore {
+            SectionHeader(section.category.title) { expanded = section.category }
+        } else {
+            SectionHeader(section.category.title)
+        }
+    }
+
+    /// The `index`th hit of `category`'s group. Ids are the category and index, stable for a given result set.
+    @ViewBuilder
+    private func row(_ category: SearchCategory, index: Int) -> some View {
+        switch category {
+        case .artists:
+            let artist = results.artists[index].item!
+            resultLink(.albumArtist(artist), identifier: "search.result.artist") {
+                MediaRow(
+                    AlbumArtistRow.title(artist),
+                    subtitle: SearchResultText.subtitle(artist),
+                    artwork: .albumArtist(artist),
+                    placeholderSymbol: "music.mic",
+                    playback: nowPlaying.playback(albumArtist: artist)
+                )
+            }
+            .contextMenu { menu(MediaSelectionAlbumArtists(albumArtist: artist)) }
+        case .albums:
+            let album = results.albums[index].item!
+            resultLink(.album(album), identifier: "search.result.album") { AlbumRow(album: album, playback: nowPlaying.playback(album: album)) }
+                .contextMenu { menu(MediaSelectionAlbums(album: album)) }
+        case .songs:
+            let song = results.songs[index].item!
+            Button { onPlaySong(index) } label: { SongRow(song: song, playback: nowPlaying.playback(song: song)) }
+                .buttonStyle(.plain)
+                .tapFeedback()
+                .accessibilityIdentifier("search.result.song")
+                .contextMenu {
+                    SongRowMenu(
+                        song: song,
+                        onPlayNext: { onAction(MediaActionPlayNext(selection: MediaSelectionSongs(song: $0))) },
+                        onAddToQueue: { onAction(MediaActionAddToQueue(selection: MediaSelectionSongs(song: $0))) },
+                        onExclude: { onAction(MediaActionExclude(selection: MediaSelectionSongs(song: $0))) }
+                    )
+                }
+        case .genres:
+            let genre = results.genres[index].item!
+            resultLink(.genre(genre), identifier: "search.result.genre") { GenreRow(genre: genre) }
+                .contextMenu { menu(MediaSelectionGenres(genre: genre)) }
+        case .playlists:
+            let playlist = results.playlists[index].item!
+            resultLink(.playlist(playlist), identifier: "search.result.playlist") { PlaylistRow(playlist: playlist) }
+                .contextMenu { menu(MediaSelectionPlaylists(playlist: playlist)) }
+        }
+    }
+
+    /// A row that opens `route` through `onOpen`, so the query is kept as a recent search before the push.
+    private func resultLink<Label: View>(_ route: Route, identifier: String, @ViewBuilder label: () -> Label) -> some View {
+        Button { onOpen(route) } label: {
+            label()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .tapFeedback()
+        .accessibilityIdentifier(identifier)
+    }
+
+    @ViewBuilder
+    private func menu(_ selection: MediaSelection) -> some View {
+        Button("Play", systemImage: "play") { onAction(MediaActionPlay(selection: selection, position: 0)) }
+        Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onAction(MediaActionPlayNext(selection: selection)) }
+        Button("Add to Queue", systemImage: "text.append") { onAction(MediaActionAddToQueue(selection: selection)) }
+    }
+}
+
+enum SearchResultText {
+    /// An album artist's album count; a track artist found by their credits (#637) has no albums of their own, so
+    /// their song count.
+    static func subtitle(_ artist: AlbumArtist) -> String {
+        if artist.isAlbumArtist {
+            return artist.albumCount == 1 ? "1 album" : "\(artist.albumCount) albums"
+        }
+        return artist.songCount == 1 ? "1 song" : "\(artist.songCount) songs"
     }
 }

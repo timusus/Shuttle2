@@ -234,7 +234,7 @@ struct AppShell: View {
             }
         case .search:
             NavigationStack(path: $navigator.searchPath) {
-                SearchView()
+                SearchView(navigator: navigator)
                     .miniPlayerInset(showNowPlaying: $showNowPlaying, binding: playerBinding)
                     .routeDestinations(showNowPlaying: $showNowPlaying)
             }
