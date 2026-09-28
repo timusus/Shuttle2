@@ -114,6 +114,27 @@ class LocalSongRepositoryTest {
     }
 
     @Test
+    fun `a remote song's server date is kept on insert and replaces an older import stamp on update`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao())
+        val importStamp = Instant.fromEpochMilliseconds(1_750_000_000_000)
+        val serverDate = Instant.fromEpochMilliseconds(1_600_000_000_000)
+        val template = songData("Template").toSong()
+        repository.insert(listOf(template.copy(path = "jellyfin://item/1", dateAdded = serverDate)), MediaProviderType.Jellyfin)
+        repository.insert(listOf(template.copy(path = "jellyfin://item/2", dateAdded = importStamp)), MediaProviderType.Jellyfin)
+        val (kept, stale) = repository.loadSongs(SongQuery.All()).sortedBy(Song::path)
+        kept.dateAdded shouldBe serverDate
+
+        repository.insertUpdateAndDelete(
+            inserts = emptyList(),
+            updates = listOf(stale.copy(dateAdded = serverDate)),
+            deletes = emptyList(),
+            mediaProviderType = MediaProviderType.Jellyfin
+        )
+
+        repository.loadSongs(SongQuery.All()).map(Song::dateAdded) shouldBe listOf(serverDate, serverDate)
+    }
+
+    @Test
     fun `a track played through updates its position and play count in one write`() = runTest {
         val repository = LocalSongRepository(backgroundScope, database.songDataDao())
         val song = insertSongs(listOf("Song")).single()

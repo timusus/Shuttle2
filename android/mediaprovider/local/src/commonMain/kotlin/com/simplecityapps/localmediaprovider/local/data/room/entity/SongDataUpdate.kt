@@ -25,7 +25,10 @@ data class SongDataUpdate(
     @ColumnInfo(name = "replayGainAlbum") var replayGainAlbum: Double? = null,
     @ColumnInfo(name = "lyrics") var lyrics: String? = null,
     @ColumnInfo(name = "grouping") var grouping: String? = null,
-    @ColumnInfo(name = "artworkVersion") var artworkVersion: String? = null
+    @ColumnInfo(name = "artworkVersion") var artworkVersion: String? = null,
+    // Written on update too, so a remote song's server date replaces an older import stamp. The importer's diff carries
+    // the stored value over when the provider has none, so a local rescan or tag edit leaves it where it was.
+    @ColumnInfo(name = "dateAdded") var dateAdded: Instant? = null
 )
 
 fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
@@ -47,7 +50,8 @@ fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
     replayGainAlbum = replayGainAlbum,
     lyrics = lyrics,
     grouping = grouping,
-    artworkVersion = artworkVersion
+    artworkVersion = artworkVersion,
+    dateAdded = dateAdded
 )
 
 fun Song.toSongDataUpdate(): SongDataUpdate = toSongData(MediaProviderType.Shuttle).toSongDataUpdate()

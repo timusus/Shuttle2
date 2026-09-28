@@ -176,8 +176,9 @@ internal fun Item.toSong(): Song = Song(
     path = "emby://item/$id",
     size = 0,
     mimeType = "Audio/*",
-    // The server has no modified date for items; DateCreated (when the song was added) is the closest
-    lastModified = dateCreated?.let { date -> runCatching { Instant.parse(date) }.getOrNull() },
+    // The server has no modified date for items; DateCreated (when the song was added) is the closest, and keeps the
+    // Last Modified sort meaningful rather than falling back to our own import time
+    lastModified = createdAt,
     lastPlayed = null,
     lastCompleted = null,
     playCount = 0,
@@ -192,5 +193,10 @@ internal fun Item.toSong(): Song = Song(
     sampleRate = null,
     channelCount = null,
     // Artwork for songs and albums is the album's primary image
-    artworkVersion = albumPrimaryImageTag
+    artworkVersion = albumPrimaryImageTag,
+    // When the song was added to the server, so a fresh sign-in or re-import doesn't make the whole library new
+    dateAdded = createdAt
 )
+
+private val Item.createdAt: Instant?
+    get() = dateCreated?.let { date -> runCatching { Instant.parse(date) }.getOrNull() }

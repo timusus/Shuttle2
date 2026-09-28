@@ -5,6 +5,7 @@ import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlin.time.Instant
+import kotlinx.coroutines.test.runTest
 
 class SongDiffTest {
     private val firstImport = Instant.fromEpochSeconds(1_700_000_000)
@@ -25,10 +26,42 @@ class SongDiffTest {
         SongDiff(listOf(existing), listOf(new)).update(existing, new).lastModified shouldBe firstImport
     }
 
+    @Test
+    fun `a remote song's server date replaces the stamp from an older import`() {
+        val serverDate = Instant.fromEpochSeconds(1_600_000_000)
+        val existing = createSong(id = 7, lastModified = serverDate, dateAdded = firstImport)
+        val new = createSong(id = 0, lastModified = serverDate, dateAdded = serverDate)
+
+        SongDiff(listOf(existing), listOf(new)).update(existing, new).dateAdded shouldBe serverDate
+    }
+
+    @Test
+    fun `a remote song keeps its server date across re-imports`() = runTest {
+        val serverDate = Instant.fromEpochSeconds(1_600_000_000)
+        val imported = SongDiff(emptyList(), listOf(createSong(id = 0, lastModified = serverDate, dateAdded = serverDate))).apply()
+            .inserts.single().copy(id = 7)
+
+        val reimported = SongDiff(listOf(imported), listOf(createSong(id = 0, lastModified = serverDate, dateAdded = serverDate))).apply()
+
+        reimported.updates.single().run {
+            id shouldBe 7
+            dateAdded shouldBe serverDate
+        }
+    }
+
+    @Test
+    fun `a song from a provider with no date added keeps the one stamped when it first reached the library`() {
+        val existing = createSong(id = 7, lastModified = firstImport, dateAdded = firstImport)
+        val retagged = createSong(id = 0, lastModified = Instant.fromEpochSeconds(1_800_000_000), dateAdded = null)
+
+        SongDiff(listOf(existing), listOf(retagged)).update(existing, retagged).dateAdded shouldBe firstImport
+    }
+
     private fun createSong(
         id: Long,
         lastModified: Instant?,
-        artworkVersion: String? = null
+        artworkVersion: String? = null,
+        dateAdded: Instant? = null
     ) = Song(
         id = id,
         name = "Song",
@@ -56,6 +89,7 @@ class SongDiffTest {
         bitDepth = null,
         sampleRate = null,
         channelCount = null,
-        artworkVersion = artworkVersion
+        artworkVersion = artworkVersion,
+        dateAdded = dateAdded
     )
 }

@@ -118,6 +118,8 @@ internal fun Metadata.toSong(type: MediaProviderType): Song = Song(
     bitDepth = null,
     sampleRate = null,
     channelCount = media.firstOrNull()?.audioChannels,
-    audioCodec = media.firstOrNull()?.audioCodec
+    audioCodec = media.firstOrNull()?.audioCodec,
+    // When the song was added to the server, so a fresh sign-in or re-import doesn't make the whole library new
+    dateAdded = addedAt?.let { seconds -> Instant.fromEpochSeconds(seconds) }
     // No artworkVersion: Plex songs have no server artwork loader, only the S2 artwork API, whose cache is keyed by URL
 )

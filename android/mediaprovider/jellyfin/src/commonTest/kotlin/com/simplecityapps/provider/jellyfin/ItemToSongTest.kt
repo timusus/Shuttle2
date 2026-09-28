@@ -25,14 +25,17 @@ class ItemToSongTest {
     }
 
     @Test
-    fun `the song's date is when it was added to the server`() {
-        parse(dateCreated = "2024-03-01T12:34:56.1234567Z").toSong().lastModified shouldBe Instant.parse("2024-03-01T12:34:56.1234567Z")
+    fun `the song's dates are when it was added to the server`() {
+        val song = parse(dateCreated = "2024-03-01T12:34:56.1234567Z").toSong()
+
+        song.dateAdded shouldBe Instant.parse("2024-03-01T12:34:56.1234567Z")
+        song.lastModified shouldBe Instant.parse("2024-03-01T12:34:56.1234567Z")
     }
 
     @Test
     fun `a missing or unreadable date is left for the importer to fill in`() {
-        parse(dateCreated = null).toSong().lastModified shouldBe null
-        parse(dateCreated = "not a date").toSong().lastModified shouldBe null
+        parse(dateCreated = null).toSong().run { lastModified to dateAdded } shouldBe (null to null)
+        parse(dateCreated = "not a date").toSong().run { lastModified to dateAdded } shouldBe (null to null)
     }
 
     private fun parse(

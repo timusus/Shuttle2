@@ -47,8 +47,9 @@ data class SongData(
     // The source audio codec, when the provider's metadata carries one. See [Song.audioCodec].
     @ColumnInfo(name = "audioCodec") var audioCodec: String? = null,
     @ColumnInfo(name = "artworkVersion") var artworkVersion: String? = null,
-    // Written only on insert ([SongDataUpdate] leaves it out), so it survives rescans and tag edits. Nullable only so
-    // the migration to version 45 could add it without a default: every row has one, backfilled from lastModified.
+    // The server's date for a remote song; for a local one, stamped on first import and carried through rescans and tag
+    // edits by the importer's diff. Nullable only so the migration to version 45 could add it without a default: every
+    // row has one, backfilled from lastModified.
     @ColumnInfo(name = "dateAdded") var dateAdded: Instant? = null,
     // When the song was made a favourite; null when it isn't one. Left out of [SongDataUpdate], so a rescan or a remote
     // sync keeps it, and written only by [com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao.setFavourite].
@@ -89,18 +90,18 @@ fun Song.toSongData(mediaProviderType: MediaProviderType): SongData = SongData(
     channelCount = channelCount,
     audioCodec = audioCodec,
     artworkVersion = artworkVersion,
-    dateAdded = dateAddedOnInsert(),
+    dateAdded = resolvedDateAdded(),
     favouritedAt = favouritedAt
 ).apply {
     id = this@toSongData.id
 }
 
 /**
- * When a song first reaches the library: the file's modification time, as the migration to version 45 backfilled for
- * the songs already there, so a first scan doesn't make the whole library "recently added". A modification time in the
- * future (a wrong clock) counts as now.
+ * When the song was added: the provider's date (a remote server's) when it has one. Otherwise, when a song first reaches
+ * the library, the file's modification time, as the migration to version 45 backfilled for the songs already there, so
+ * a first scan doesn't make the whole library "recently added". A date in the future (a wrong clock) counts as now.
  */
-private fun Song.dateAddedOnInsert(): Instant {
+private fun Song.resolvedDateAdded(): Instant {
     val now = Clock.System.now()
     val added = dateAdded ?: lastModified ?: return now
     return if (added > now) now else added
