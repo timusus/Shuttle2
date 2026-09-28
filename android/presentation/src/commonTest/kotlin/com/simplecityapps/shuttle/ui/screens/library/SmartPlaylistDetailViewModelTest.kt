@@ -81,9 +81,9 @@ class SmartPlaylistDetailViewModelTest {
         val now = Clock.System.now()
         songRepository.setSongs(
             listOf(
-                createSong(id = 1, name = "Last week").copy(lastModified = now - 7.days),
-                createSong(id = 2, name = "Last month").copy(lastModified = now - 30.days),
-                createSong(id = 3, name = "Today").copy(lastModified = now - 1.hours),
+                createSong(id = 1, name = "Last week").copy(dateAdded = now - 7.days),
+                createSong(id = 2, name = "Last month").copy(dateAdded = now - 30.days),
+                createSong(id = 3, name = "Today").copy(dateAdded = now - 1.hours),
             )
         )
 

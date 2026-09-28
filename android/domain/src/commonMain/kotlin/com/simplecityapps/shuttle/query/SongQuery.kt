@@ -115,12 +115,11 @@ sealed class SongQuery(
         predicate = rules.predicate(context)
     )
 
-    // Todo: This isn't really 'recently added', any songs which have had their contents modified will show up here.
-    //   Best to add a 'dateAdded' column.
+    /** The songs added in the last [days] days, most recent first. A tag edit doesn't count: it moves lastModified, not dateAdded. */
     @OptIn(ExperimentalTime::class)
     data class RecentlyAdded(val days: Int = 14) :
         SongQuery(
-            predicate = { song -> song.lastModified?.let { it > Clock.System.now().minus(days.days) } ?: false },
-            sortOrder = SongSortOrder.LastModified
-        ) // 2 weeks
+            predicate = { song -> song.dateAdded?.let { it > Clock.System.now().minus(days.days) } ?: false },
+            sortOrder = SongSortOrder.DateAdded
+        )
 }

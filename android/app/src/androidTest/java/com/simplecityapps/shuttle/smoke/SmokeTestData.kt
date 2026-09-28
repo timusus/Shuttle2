@@ -79,6 +79,8 @@ object SmokeTestData {
         bitRate = 320,
         bitDepth = 16,
         sampleRate = 44100,
-        channelCount = 2
+        channelCount = 2,
+        // As the importer would stamp it for a new local song, so Home's Recently Added has albums
+        dateAdded = lastModified
     )
 }

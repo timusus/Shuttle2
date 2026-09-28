@@ -37,12 +37,26 @@ class HomeSectionsTest {
 
     @Test
     fun `recently added orders albums by their newest song`() = runTest {
-        val phaseGardenSong = createSong(id = 1, album = "Phase Garden", albumArtist = "Juniper Static").copy(lastModified = now - 3.days)
-        val nightBusSong = createSong(id = 2, album = "Night Bus Frequencies", albumArtist = "Juniper Static").copy(lastModified = now - 5.days)
-        val nightBusNewSong = createSong(id = 3, album = "Night Bus Frequencies", albumArtist = "Juniper Static").copy(lastModified = now - 1.days)
+        val phaseGardenSong = createSong(id = 1, album = "Phase Garden", albumArtist = "Juniper Static").copy(dateAdded = now - 3.days)
+        val nightBusSong = createSong(id = 2, album = "Night Bus Frequencies", albumArtist = "Juniper Static").copy(dateAdded = now - 5.days)
+        val nightBusNewSong = createSong(id = 3, album = "Night Bus Frequencies", albumArtist = "Juniper Static").copy(dateAdded = now - 1.days)
         val phaseGarden = createAlbum("Phase Garden", "Juniper Static", groupKey = phaseGardenSong.albumGroupKey)
         val nightBus = createAlbum("Night Bus Frequencies", "Juniper Static", groupKey = nightBusSong.albumGroupKey)
         songs.setSongs(listOf(phaseGardenSong, nightBusSong, nightBusNewSong))
+        albums.setAlbums(listOf(phaseGarden, nightBus))
+
+        homeSections()().first().recentlyAdded shouldContainExactly listOf(nightBus, phaseGarden)
+    }
+
+    @Test
+    fun `recently added goes by when songs were added - not when their tags were last edited`() = runTest {
+        val addedLongAgoSong = createSong(id = 1, album = "Phase Garden", albumArtist = "Juniper Static")
+            .copy(dateAdded = now - 300.days, lastModified = now - 1.days)
+        val addedRecentlySong = createSong(id = 2, album = "Night Bus Frequencies", albumArtist = "Juniper Static")
+            .copy(dateAdded = now - 2.days, lastModified = now - 200.days)
+        val phaseGarden = createAlbum("Phase Garden", "Juniper Static", groupKey = addedLongAgoSong.albumGroupKey)
+        val nightBus = createAlbum("Night Bus Frequencies", "Juniper Static", groupKey = addedRecentlySong.albumGroupKey)
+        songs.setSongs(listOf(addedLongAgoSong, addedRecentlySong))
         albums.setAlbums(listOf(phaseGarden, nightBus))
 
         homeSections()().first().recentlyAdded shouldContainExactly listOf(nightBus, phaseGarden)

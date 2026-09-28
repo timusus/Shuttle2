@@ -18,6 +18,7 @@ val SongSortOrder.comparator: Comparator<Song>
             SongSortOrder.Track -> SongComparator.trackComparator
             SongSortOrder.PlayCount -> SongComparator.playCountComparator
             SongSortOrder.LastModified -> SongComparator.lastModifiedComparator
+            SongSortOrder.DateAdded -> SongComparator.dateAddedComparator
             SongSortOrder.LastCompleted -> SongComparator.lastCompletedComparator
             SongSortOrder.Favourited -> SongComparator.favouritedComparator
         }
@@ -73,6 +74,11 @@ object SongComparator {
 
     val lastModifiedComparator: Comparator<Song> by lazy {
         compareByDescending<Song> { song -> song.lastModified?.epochSeconds ?: 0 / 60 } // Round to the nearest minute
+            .then(defaultComparator)
+    }
+
+    val dateAddedComparator: Comparator<Song> by lazy {
+        compareByDescending<Song> { song -> song.dateAdded }
             .then(defaultComparator)
     }
 

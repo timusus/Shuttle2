@@ -69,9 +69,9 @@ class HomeSections @Inject constructor(
     private fun recentlyAdded(albums: List<Album>, songs: List<Song>): List<Album> {
         val albumsByKey = albums.filter { it.groupKey != null }.associateBy { it.groupKey }
         return songs
-            .filter { it.lastModified != null }
+            .filter { it.dateAdded != null }
             .groupBy { it.albumGroupKey }
-            .mapValues { (_, albumSongs) -> albumSongs.maxOf { it.lastModified!! } }
+            .mapValues { (_, albumSongs) -> albumSongs.maxOf { it.dateAdded!! } }
             .entries
             .sortedByDescending { it.value }
             .mapNotNull { albumsByKey[it.key] }
