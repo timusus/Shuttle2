@@ -246,4 +246,40 @@ struct AlbumArtistDetailTests {
         #expect(playedContext is PlayContextAlbum)
         #expect(shuffledContext is PlayContextAlbum)
     }
+
+    // MARK: - Issue #636
+
+    @Test func expandAllHiddenWithNoAlbumSections() throws {
+        let state = AlbumArtistDetailUiState(
+            albumArtist: artist(), albums: [], songs: TestSongs.demo, sortOrder: .albumNewest,
+            sections: [.init(album: nil, songs: TestSongs.demo)], topSongs: [], currentSong: nil,
+            expandedAlbums: [], loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
+        )
+        let sut = AlbumArtistDetailContent(state: state)
+        #expect((try? sut.inspect().find(button: "Expand All")) == nil)
+        #expect((try? sut.inspect().find(button: "Collapse All")) == nil)
+    }
+
+    @Test func tappingADuplicateIdSongPlaysFromItsOwnPosition() throws {
+        let ok = album("OK Computer", year: 1997)
+        let kidA = album("Kid A", year: 2000)
+        // The same song id, on two albums (a bug source, #636): the second listing's row must play from its own
+        // position, not the first listing's.
+        let onKidA = TestSongs.song(1, "Paranoid Android (Kid A)", artist: "Radiohead", album: "Kid A", durationMs: 386_000)
+        let onOkComputer = TestSongs.song(1, "Paranoid Android (OK Computer)", artist: "Radiohead", album: "OK Computer", durationMs: 386_000)
+        let sections: [AlbumArtistDetailUiState.SongSection] = [
+            .init(album: kidA, songs: [onKidA, TestSongs.demo[2]]),
+            .init(album: ok, songs: [TestSongs.demo[1], onOkComputer]),
+        ]
+        let state = AlbumArtistDetailUiState(
+            albumArtist: artist(), albums: [kidA, ok], songs: sections.flatMap(\.songs), sortOrder: .albumNewest,
+            sections: sections, topSongs: [], currentSong: nil,
+            expandedAlbums: Set([kidA, ok].compactMap(\.groupKey)), loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
+        )
+        var played: (songs: [Song], index: Int)?
+        let sut = AlbumArtistDetailContent(state: state, onPlay: { songs, index, _ in played = (songs, index) })
+        try sut.inspect().find(button: "Paranoid Android (OK Computer)").tap()
+        #expect(played?.index == 3)
+        #expect(played?.songs.map(\.id) == state.songs.map(\.id))
+    }
 }

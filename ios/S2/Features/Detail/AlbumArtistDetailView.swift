@@ -172,11 +172,11 @@ struct AlbumArtistDetailContent: View {
     // MARK: - Songs
 
     @ViewBuilder private var songs: some View {
-        let indexById = Dictionary(state.songs.enumerated().map { ($0.element.id, $0.offset) }, uniquingKeysWith: { first, _ in first })
         Section {
             SongsHeader(
                 sortOrder: state.sortOrder,
                 allExpanded: allExpanded,
+                hasAlbumSections: hasAlbumSections,
                 onSortOrderSelected: onSortOrderSelected,
                 onExpandAll: onExpandAll,
                 onCollapseAll: onCollapseAll
@@ -185,12 +185,13 @@ struct AlbumArtistDetailContent: View {
             .id(Self.songsHeaderId)
         }
         if state.sortOrder.groupsByAlbum {
-            ForEach(state.sections, id: \.sectionId) { section in
+            ForEach(indexedSections) { indexed in
+                let section = indexed.section
                 if let album = section.album {
-                    albumSection(album, songs: section.songs, indexById: indexById)
+                    albumSection(album, songs: section.songs, startIndex: indexed.startIndex)
                 } else {
                     Section {
-                        songRows(section.songs, indexById: indexById, numbered: false)
+                        songRows(section.songs, startIndex: indexed.startIndex, numbered: false)
                     } header: {
                         Text("Other Songs")
                             .font(.headline)
@@ -202,16 +203,33 @@ struct AlbumArtistDetailContent: View {
             }
         } else {
             Section {
-                songRows(state.songs, indexById: indexById, numbered: false)
+                songRows(state.songs, startIndex: 0, numbered: false)
             }
         }
     }
 
-    private func albumSection(_ album: Album, songs: [Song], indexById: [Int64: Int]) -> some View {
+    /// [state.sections] paired with each section's starting offset in [state.songs] (sections flatten to it in
+    /// order), so a tap plays from the tapped row's own position rather than a duplicate id's first occurrence.
+    private struct IndexedSection: Identifiable {
+        let section: AlbumArtistDetailUiState.SongSection
+        let startIndex: Int
+        var id: String { section.sectionId }
+    }
+
+    private var indexedSections: [IndexedSection] {
+        var offset = 0
+        return state.sections.map { section in
+            let indexed = IndexedSection(section: section, startIndex: offset)
+            offset += section.songs.count
+            return indexed
+        }
+    }
+
+    private func albumSection(_ album: Album, songs: [Song], startIndex: Int) -> some View {
         let expanded = isExpanded(album)
         return Section {
             if expanded {
-                songRows(songs, indexById: indexById, numbered: true)
+                songRows(songs, startIndex: startIndex, numbered: true)
             }
         } header: {
             AlbumSectionHeader(
@@ -228,9 +246,11 @@ struct AlbumArtistDetailContent: View {
         }
     }
 
-    private func songRows(_ songs: [Song], indexById: [Int64: Int], numbered: Bool) -> some View {
-        ForEach(songs, id: \.id) { song in
-            Button { onPlay(state.songs, indexById[song.id] ?? 0, state.playContext) } label: {
+    /// [startIndex] is where [songs] begins in [state.songs] (its home section's offset), so tapping a row plays
+    /// from that row's own position, not from the first song sharing its id.
+    private func songRows(_ songs: [Song], startIndex: Int, numbered: Bool) -> some View {
+        ForEach(Array(songs.enumerated()), id: \.element.id) { offset, song in
+            Button { onPlay(state.songs, startIndex + offset, state.playContext) } label: {
                 let playback = rowPlayback(song, current: state.currentSong, isPlaying: isPlaying)
                 if numbered {
                     TrackRow(number: song.track.map { Int($0.intValue) }, title: song.name ?? "Unknown", durationMs: Int64(song.duration), playback: playback)
@@ -247,6 +267,12 @@ struct AlbumArtistDetailContent: View {
         album.groupKey.map { state.expandedAlbums.contains($0) } ?? false
     }
 
+    /// Whether the song list has any collapsible album section, which the Songs header needs before it offers
+    /// Expand All / Collapse All (#636): an album order can still resolve to nothing but "Other Songs".
+    private var hasAlbumSections: Bool {
+        !state.sections.compactMap(\.album).isEmpty
+    }
+
     /// Whether every album section is unfolded, which turns the header's Expand All into Collapse All.
     private var allExpanded: Bool {
         let albums = state.sections.compactMap(\.album)
@@ -259,6 +285,9 @@ struct AlbumArtistDetailContent: View {
 struct SongsHeader: View {
     let sortOrder: ArtistSongSortOrder
     let allExpanded: Bool
+    /// Whether the song list has at least one collapsible album section (#636): an album order with none, only
+    /// "Other Songs", hides Expand All / Collapse All rather than showing a toggle with nothing to do.
+    var hasAlbumSections: Bool = true
     var onSortOrderSelected: (ArtistSongSortOrder) -> Void = { _ in }
     var onExpandAll: () -> Void = {}
     var onCollapseAll: () -> Void = {}
@@ -269,7 +298,7 @@ struct SongsHeader: View {
                 .font(.s2SectionTitle)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: Spacing.small)
-            if sortOrder.groupsByAlbum {
+            if sortOrder.groupsByAlbum && hasAlbumSections {
                 Button(allExpanded ? "Collapse All" : "Expand All", action: allExpanded ? onCollapseAll : onExpandAll)
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.tint)
