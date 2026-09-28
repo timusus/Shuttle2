@@ -5,14 +5,14 @@ import Testing
 import ViewInspector
 @testable import S2
 
-/// Sources: `SourcesUiState` mapped to what iOS shows, the rows from plain values, the type picker, and choosing a
-/// type pushing the sign-in route.
+/// Sources: `SourcesUiState` and the import mapped to what iOS shows, the rows and the empty state from plain values.
 @MainActor
 struct SourcesViewTests {
     private func uiState(
         connected: [MediaProviderType] = [],
         scan: ScanProgress? = nil,
-        scanError: String? = nil
+        scanError: String? = nil,
+        lastImport: KotlinInstant? = nil
     ) -> SourcesUiState {
         SourcesUiState(
             thisDevice: false,
@@ -21,6 +21,7 @@ struct SourcesViewTests {
             scan: scan,
             scanError: scanError,
             servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0)) },
+            lastImport: lastImport,
             events: []
         )
     }
@@ -52,10 +53,29 @@ struct SourcesViewTests {
         #expect((try? sut.inspect().find(text: "Scan Now")) != nil)
     }
 
-    @Test func noServersExplainsWhatToConnectAndHidesTheScan() throws {
+    @Test func noServersIsAnEmptyStateInvitingOneWithNoScan() throws {
         let sut = SourcesContent(state: SourcesState(servers: []))
-        #expect((try? sut.inspect().find(text: "Stream your library from a Jellyfin or Emby server.")) != nil)
+        #expect((try? sut.inspect().find(text: "No Servers Yet")) != nil)
         #expect((try? sut.inspect().find(text: "Scan Now")) == nil)
+    }
+
+    @Test func mapsTheLastImport() {
+        let state = SourcesState(uiState(connected: [.jellyfin], lastImport: KotlinInstant.companion.fromEpochMilliseconds(epochMilliseconds: 1_700_000_000_000)))
+        #expect(state.lastImport == Date(timeIntervalSince1970: 1_700_000_000))
+        #expect(SourcesState(uiState()).lastImport == nil)
+    }
+
+    @Test func aServersStatusFollowsItsOwnImportOnly() {
+        let importing = SourcesState(servers: [.jellyfin, .emby], importStatus: .importing(provider: "Jellyfin", message: nil, fraction: 0.4))
+        #expect(importing.status(of: .jellyfin) == .importing(fraction: 0.4))
+        #expect(importing.status(of: .emby) == .connected)
+        let failed = SourcesState(servers: [.emby], importStatus: .failed(provider: "Emby", error: "HTTP 500"))
+        #expect(failed.status(of: .emby) == .failed("HTTP 500"))
+    }
+
+    @Test func rowsShowTheirImport() throws {
+        let sut = SourcesContent(state: SourcesState(servers: [.jellyfin], importStatus: .importing(provider: "Jellyfin", message: nil, fraction: 0.5)))
+        #expect((try? sut.inspect().find(text: "Importing")) != nil)
     }
 
     @Test func connectAServerAsksForThePicker() throws {
@@ -73,47 +93,11 @@ struct SourcesViewTests {
         #expect(rescanned)
     }
 
-    // MARK: Picker -> sign-in route
-
-    @Test func pickerListsTheTypesIOSCanSignInTo() throws {
-        #expect(MediaProviderType.signInTypes == [.jellyfin, .emby])
-        let sut = ServerTypePicker(types: MediaProviderType.signInTypes, onSelect: { _ in })
-        for title in ["Jellyfin", "Emby"] {
-            #expect((try? sut.inspect().find(text: title)) != nil)
-        }
-        #expect((try? sut.inspect().find(text: "Plex")) == nil)
-    }
-
-    @Test func choosingATypeInThePickerReportsIt() throws {
-        var chosen: MediaProviderType?
-        let sut = ServerTypePicker(types: MediaProviderType.signInTypes, onSelect: { chosen = $0 })
-        try sut.inspect().find(viewWithAccessibilityIdentifier: "serverTypePicker.Emby").button().tap()
-        #expect(chosen == .emby)
-    }
-
-    @Test func aChosenTypePushesItsSignInRouteOntoTheCurrentStack() {
-        let navigator = Navigator(viewModelCache: ViewModelCache())
-        navigator.selectTab(.library)
-        navigator.open(.sources)
-        let choice = ServerTypeChoice(tryAddServer: { true }, choose: { navigator.open(.serverSignIn($0)) })
-        choice.select(.jellyfin)
-        #expect(navigator.libraryPath == [.sources, .serverSignIn(type: "Jellyfin")])
-    }
-
-    @Test func theEntitlementGateStopsTheSignIn() {
-        var chosen: MediaProviderType?
-        ServerTypeChoice(tryAddServer: { false }, choose: { chosen = $0 }).select(.plex)
-        #expect(chosen == nil)
-    }
-
-    @Test func sourcesRoutesHaveKeysAndSurviveAStoredPath() throws {
+    @Test func sourcesRouteHasAKeyAndSurvivesAStoredPath() throws {
         #expect(Route.sources.cacheKey == "sources")
-        #expect(Route.serverSignIn(.plex).cacheKey == "serverSignIn:Plex")
-        let routes: [Route] = [.sources, .serverSignIn(.emby)]
+        let routes: [Route] = [.sources, .equalizer]
         let decoded = try JSONDecoder().decode([Route].self, from: JSONEncoder().encode(routes))
         #expect(decoded == routes)
-        #expect(Route.serverType(named: "Emby") == .emby)
-        #expect(Route.serverType(named: "Gopher") == nil)
     }
 
     // MARK: Reachability

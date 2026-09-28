@@ -47,8 +47,6 @@ enum Route: Hashable, Codable {
     /// Sources (Android's `SourcesRoute`): the media servers, pushed from Settings' Sources row and the Library's
     /// empty state.
     case sources
-    /// A server's sign-in, keyed by the `MediaProviderType`'s name (`Route.serverSignIn(_:)`).
-    case serverSignIn(type: String)
     /// The equalizer (Android's `EqualizerRoute`), pushed from Settings' Equalizer row.
     case equalizer
 
@@ -62,7 +60,6 @@ enum Route: Hashable, Codable {
         case .playlist(let id): "playlist:\(id)"
         case .smartPlaylist(let id): "smartPlaylist:\(id)"
         case .sources: "sources"
-        case .serverSignIn(let type): "serverSignIn:\(type)"
         case .equalizer: "equalizer"
         }
     }

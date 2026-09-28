@@ -5,7 +5,7 @@ import ViewInspector
 @testable import S2
 
 /// The server sign-in: `ServerSignInUiState` mapped to what iOS shows, the form for each step from plain values, Quick
-/// Connect's code, and the events that connect the server and go back to Sources.
+/// Connect's code, and the events that connect the server and move the setup on.
 @MainActor
 struct ServerSignInViewTests {
     private func uiState(
@@ -144,21 +144,36 @@ struct ServerSignInViewTests {
         #expect(calls == ["connected", "finished"])
     }
 
-    @Test func finishedPopsTheSignInBackToSourcesEvenFromAnotherTab() {
-        let navigator = Navigator(viewModelCache: ViewModelCache())
-        navigator.selectTab(.library)
-        navigator.open(.sources)
-        navigator.open(.serverSignIn(.jellyfin))
-        navigator.selectTab(.home)
-        navigator.open(.sources)
-        let outcome = ServerSignInOutcome(onConnected: {}, onFinished: { navigator.pop(.serverSignIn(.jellyfin)) })
-        outcome.handle(ServerSignInEventFinished.shared)
-        #expect(navigator.libraryPath == [.sources])
-        #expect(navigator.homePath == [.sources])
+    // MARK: Address guidance
+
+    @Test func theFooterShowsTheAddressTheSignInWillUse() throws {
+        var state = state(.form)
+        state.address = "192.168.1.20:8096/"
+        let sut = ServerSignInContent(state: state)
+        #expect((try? sut.inspect().find(text: "Connects to http://192.168.1.20:8096")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.addressInvalid")) == nil)
     }
 
-    @Test func signInRoutesResolveToTheForm() throws {
-        let sut = RouteDestinationView(route: .serverSignIn(.jellyfin))
-        #expect((try? sut.inspect().find(ServerSignInView.self)) != nil)
+    @Test func anAddressWithASpaceIsFlaggedButThePrefilledSchemeIsNot() throws {
+        var invalid = state(.form)
+        invalid.address = "http://my server"
+        #expect((try? ServerSignInContent(state: invalid).inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.addressInvalid")) != nil)
+        var prefilled = state(.form)
+        prefilled.address = "http://"
+        #expect((try? ServerSignInContent(state: prefilled).inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.addressInvalid")) == nil)
+    }
+
+    // MARK: Outcome
+
+    @Test func aFailureExplainsItself() throws {
+        let sut = ServerSignInContent(state: state(.failed("HTTP 401")))
+        #expect((try? sut.inspect().find(text: "Couldn't Sign In")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.error")) != nil)
+    }
+
+    @Test func connectedShowsTheSuccessInPlaceOfTheForm() throws {
+        let sut = ServerSignInContent(state: state(.connected))
+        #expect((try? sut.inspect().find(text: "Signed in to Jellyfin")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "serverSignIn.address")) == nil)
     }
 }

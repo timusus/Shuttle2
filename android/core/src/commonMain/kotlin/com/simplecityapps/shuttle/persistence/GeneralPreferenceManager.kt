@@ -182,6 +182,15 @@ class GeneralPreferenceManager @Inject constructor(
         get() {
             return store.getInstant("pref_media_last_rescan_date")
         }
+
+    /** The first-run source setup (iOS) was finished or skipped, so it never opens by itself again. */
+    var sourceSetupCompleted: Boolean
+        set(value) {
+            store.putBoolean("source_setup_completed", value)
+        }
+        get() {
+            return store.getBoolean("source_setup_completed", false)
+        }
 }
 
 enum class LibraryTab {

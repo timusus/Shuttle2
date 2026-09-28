@@ -120,7 +120,7 @@ class ServerSignInViewModel @AssistedInject constructor(
         .map { it.address }
         .distinctUntilChanged()
         .debounce(QUICK_CONNECT_CHECK_DEBOUNCE_MILLIS)
-        .mapLatest { address -> checkQuickConnectAvailable(type, address) }
+        .mapLatest { address -> serverAddress(address)?.let { checkQuickConnectAvailable(type, it) } ?: false }
         .onStart { emit(false) }
     private var quickConnectJob: Job? = null
 
@@ -158,7 +158,7 @@ class ServerSignInViewModel @AssistedInject constructor(
             return
         }
         step.value = ServerSignInStep.Authenticating
-        val login = ServerLogin(form.address, form.username, form.password, form.authCode.takeIf { uiState.value.asksForAuthCode })
+        val login = ServerLogin(serverAddress(form.address)!!, form.username, form.password, form.authCode.takeIf { uiState.value.asksForAuthCode })
         viewModelScope.launch {
             when (val result = signInToServer(type, login, form.rememberPassword)) {
                 SignInToServer.Result.Success -> {
@@ -181,7 +181,10 @@ class ServerSignInViewModel @AssistedInject constructor(
     fun onUseQuickConnect() {
         if (step.value != ServerSignInStep.Form) return
         if (quickConnectJob?.isActive == true) return
-        val address = form.value.address
+        val address = serverAddress(form.value.address) ?: run {
+            form.update { it.copy(missing = it.missing + ServerSignInField.Address) }
+            return
+        }
         quickConnectJob = viewModelScope.launch {
             signInWithQuickConnect(type, address).collect { state ->
                 when (state) {
@@ -212,7 +215,7 @@ class ServerSignInViewModel @AssistedInject constructor(
     fun onEventHandled(id: Long) = events.consume(id)
 
     private fun missingFields(form: ServerSignInForm): Set<ServerSignInField> = buildSet {
-        if (form.address.isEmpty()) add(ServerSignInField.Address)
+        if (serverAddress(form.address) == null) add(ServerSignInField.Address)
         if (form.username.isEmpty()) add(ServerSignInField.Username)
         if (type == MediaProviderType.Plex && form.password.isEmpty()) add(ServerSignInField.Password)
     }
@@ -223,4 +226,16 @@ class ServerSignInViewModel @AssistedInject constructor(
         const val QUICK_CONNECT_CHECK_DEBOUNCE_MILLIS = 500L
         const val QUICK_CONNECT_EXPIRED_MESSAGE = "The code expired before it was approved."
     }
+}
+
+/**
+ * The server address [typed] as the sign-in uses it: trimmed, `http://` added when it has no scheme, and without
+ * trailing slashes. Null when there's no host to connect to (empty, only a scheme, or with a space in it).
+ */
+fun serverAddress(typed: String): String? {
+    val trimmed = typed.trim()
+    val withScheme = if ("://" in trimmed) trimmed else "http://" + trimmed
+    val address = withScheme.trimEnd('/')
+    val host = withScheme.substringAfter("://").substringBefore('/').substringBefore(':')
+    return address.takeIf { host.isNotBlank() && address.none(Char::isWhitespace) }
 }

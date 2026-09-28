@@ -59,7 +59,7 @@ enum RootSelection: Hashable {
 /// - Re-selecting the current root pops its path to root; there is no "back to the start tab" on iOS,
 ///   since the system back gesture is per stack.
 /// - `open(_:)` pushes onto whichever path is currently selected, or onto Settings' own path while the
-///   Settings sheet is up (so Sources, pushed from Settings, opens its sign-in inside the sheet).
+///   Settings sheet is up (so a screen pushed from Settings, such as Sources or the Equalizer, stays inside the sheet).
 /// - Every path change retains only the view models for routes still on some path
 ///   (`ViewModelCache.retainOnly`), clearing the rest.
 @MainActor
@@ -85,11 +85,24 @@ final class Navigator {
         }
     }
 
-    /// The Settings sheet's own `NavigationStack` path (Sources, then a server sign-in).
+    /// The Settings sheet's own `NavigationStack` path (Sources, the Equalizer).
     var settingsPath: [Route] = [] { didSet { retainViewModels() } }
 
     /// The `ViewModelCache` key for the Settings screen, retained while its sheet is up.
     static let settingsCacheKey = "settings"
+
+    /// Whether the source setup (`SourceSetupFlow`) is up, first run or Add a Server: its sign-ins' view models stay
+    /// cached while it is, and clear (cancelling a Quick Connect poll) once it closes.
+    var sourceSetupLive = false { didSet { retainViewModels() } }
+
+    /// The `ViewModelCache` key for the source setup's view model: always live, since `ContentView` asks it at launch
+    /// whether to open the first run, and the setup follows the import after its sign-in has gone.
+    static let sourceSetupCacheKey = "sourceSetup"
+
+    /// The `ViewModelCache` key for `type`'s sign-in inside the source setup.
+    static func sourceSetupSignInCacheKey(_ type: MediaProviderType) -> String {
+        "sourceSetup.signIn:\(type.name)"
+    }
 
     /// `startTab` is where the app opens: `ShellViewModel`'s start tab, from Show Home on launch (#617).
     init(viewModelCache: ViewModelCache = .shared, startTab: AppTab = .home) {
@@ -146,20 +159,6 @@ final class Navigator {
         }
     }
 
-    /// Pops `route` off whichever path it tops, selected or not: a screen that closes itself (a finished sign-in)
-    /// may finish after the user has switched tabs. A path it doesn't top is left alone.
-    func pop(_ route: Route) {
-        if settingsPath.last == route {
-            settingsPath.removeLast()
-        }
-        for tab in AppTab.allCases where path(for: tab).last == route {
-            setPath(Array(path(for: tab).dropLast()), for: tab)
-        }
-        for (category, path) in libraryCategoryPaths where path.last == route {
-            libraryCategoryPaths[category] = Array(path.dropLast())
-        }
-    }
-
     func path(for tab: AppTab) -> [Route] {
         switch tab {
         case .home: homePath
@@ -201,6 +200,10 @@ final class Navigator {
         if showsSettings {
             liveKeys.insert(Self.settingsCacheKey)
             liveKeys.formUnion(settingsPath.map(\.cacheKey))
+        }
+        liveKeys.insert(Self.sourceSetupCacheKey)
+        if sourceSetupLive {
+            liveKeys.formUnion(MediaProviderType.signInTypes.map(Self.sourceSetupSignInCacheKey))
         }
         viewModelCache.retainOnly(liveKeys)
     }

@@ -41,7 +41,11 @@ class ServerSignInViewModelTest {
     private val connected = mutableListOf<MediaProviderType>()
     private val needsPro = MutableStateFlow(false)
 
-    private fun TestScope.viewModel(type: MediaProviderType = MediaProviderType.Jellyfin): ServerSignInViewModel {
+    /** [address] is typed over the saved or default one, unless it's null. */
+    private fun TestScope.viewModel(
+        type: MediaProviderType = MediaProviderType.Jellyfin,
+        address: String? = "http://server:8096",
+    ): ServerSignInViewModel {
         val servers = mapOf(type to server)
         val quickConnects = mapOf(MediaProviderType.Jellyfin to quickConnect)
         val analytics = ServerSignInAnalytics { connected += it }
@@ -55,6 +59,7 @@ class ServerSignInViewModelTest {
             SignInWithQuickConnect(quickConnects, analytics),
         ).also { viewModel ->
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
+            address?.let(viewModel::onAddressChange)
         }
     }
 
@@ -73,7 +78,7 @@ class ServerSignInViewModelTest {
 
     @Test
     fun `with nothing saved - the address starts as http and the password can be revealed`() = runTest {
-        viewModel().form shouldBe ServerSignInForm(address = "http://")
+        viewModel(address = null).form shouldBe ServerSignInForm(address = "http://")
     }
 
     @Test
@@ -166,7 +171,7 @@ class ServerSignInViewModelTest {
         viewModel.onAuthenticate()
         runCurrent()
 
-        server.authenticated shouldBe listOf(ServerLogin("http://", "sam", "", null))
+        server.authenticated shouldBe listOf(ServerLogin("http://server:8096", "sam", "", null))
     }
 
     @Test

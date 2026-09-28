@@ -1,28 +1,27 @@
 import Shared
 import SwiftUI
 
-/// A Jellyfin or Emby server's sign-in (#587, phase 7), on the shared `ServerSignInViewModel`: Android's
-/// `ServerSignInRoute`/`ServerSignInDialog` as a pushed HIG form. It starts from the saved login; once the server is
-/// signed in it tells `ServerTypePickerViewModel` (`onServerConnected`, which enables the provider and imports), then
-/// pops back to Sources when the view model says the success message has shown for long enough. Plex, and its 2FA code
-/// field, join with the Plex provider in `:shared`; until then the picker doesn't offer it (`MediaProviderType.signInTypes`).
+/// A Jellyfin or Emby server's sign-in (#587, #624), on the shared `ServerSignInViewModel`: Android's
+/// `ServerSignInRoute`/`ServerSignInDialog` as a HIG form, a step of the source setup (`SourceSetupFlow`), which is
+/// the one place it opens from: the first run, Sources' Add a Server and Sign In Again. It starts from the saved
+/// login; once the server is signed in it calls `onConnected` (the setup enables the provider and imports), then
+/// `onFinished` when the view model says the success state has shown for long enough. Plex, and its 2FA code field,
+/// join with the Plex provider in `:shared`; until then the setup doesn't offer it (`MediaProviderType.signInTypes`).
 struct ServerSignInView: View {
     let type: MediaProviderType
-    /// Absent only outside the shell (previews), where finishing dismisses instead.
-    @Environment(Navigator.self) private var navigator: Navigator?
-    @Environment(\.dismiss) private var dismiss
+    /// The view model's `ViewModelCache` key, kept live by whoever shows the form (`Navigator.sourceSetupLive`).
+    let cacheKey: String
+    let onConnected: () -> Void
+    let onFinished: () -> Void
 
     var body: some View {
-        let models = ViewModelCache.shared.viewModel(Route.serverSignIn(type).cacheKey) {
-            ServerSignInModels(graph: AppGraph.shared, type: type)
+        let signIn = ViewModelCache.shared.viewModel(cacheKey) {
+            AppGraph.shared.serverSignInViewModelFactory.create(type: type)
         }
-        Observing(models.signIn.uiState) { state in
-            ServerSignInContent(state: ServerSignInState(state), actions: ServerSignInActions(models.signIn))
-                .consumeEvents(state.events, handled: { models.signIn.onEventHandled(id: $0) }) { event in
-                    ServerSignInOutcome(
-                        onConnected: { models.picker.onServerConnected(type: type) },
-                        onFinished: { if let navigator { navigator.pop(.serverSignIn(type)) } else { dismiss() } }
-                    ).handle(event)
+        Observing(signIn.uiState) { state in
+            ServerSignInContent(state: ServerSignInState(state), actions: ServerSignInActions(signIn))
+                .consumeEvents(state.events, handled: { signIn.onEventHandled(id: $0) }) { event in
+                    ServerSignInOutcome(onConnected: onConnected, onFinished: onFinished).handle(event)
                 }
         }
         .navigationTitle(type.title)
@@ -30,21 +29,7 @@ struct ServerSignInView: View {
     }
 }
 
-/// The sign-in's ViewModels, cached together under its route's key: the form's, and the picker's, which connects the
-/// server once it's signed in (Android's `ServerTypePickerRoute` passes `onServerConnected` the same way).
-final class ServerSignInModels: ViewModelGroup {
-    let signIn: ServerSignInViewModel
-    let picker: ServerTypePickerViewModel
-
-    init(graph: IosAppGraph, type: MediaProviderType) {
-        signIn = graph.serverSignInViewModelFactory.create(type: type)
-        picker = graph.serverTypePickerViewModel
-    }
-
-    var members: [Lifecycle_viewmodelViewModel] { [signIn, picker] }
-}
-
-/// What the sign-in's one-shot events do: `Connected` starts the import, `Finished` goes back to Sources.
+/// What the sign-in's one-shot events do: `Connected` starts the import, `Finished` moves on to its progress.
 struct ServerSignInOutcome {
     let onConnected: () -> Void
     let onFinished: () -> Void
@@ -173,13 +158,26 @@ struct ServerSignInContent: View {
     var body: some View {
         Form {
             SignInHeader(type: state.type)
-            if case .awaitingCode(let code) = state.step {
+            switch state.step {
+            case .awaitingCode(let code):
                 QuickConnectSection(code: code, onCancel: actions.onCancelQuickConnect)
-            } else {
-                fields
+            case .connected:
+                SignedInSection(type: state.type)
+                submission
+            case .form, .authenticating, .failed:
+                addressSection
+                if state.quickConnectEnabled, editable {
+                    quickConnectOffer
+                }
+                accountSection
+                if case .failed(let message) = state.step {
+                    SignInErrorSection(message: message)
+                }
                 submission
             }
         }
+        .sensoryFeedback(.success, trigger: state.step == .connected) { _, connected in connected }
+        .sensoryFeedback(.error, trigger: state.step.isFailure) { _, failed in failed }
         // Dragging the form puts the keyboard away, so Sign In and Quick Connect are reachable without Return,
         // which on the password field signs in.
         .scrollDismissesKeyboard(.immediately)
@@ -199,9 +197,20 @@ struct ServerSignInContent: View {
         }
     }
 
-    @ViewBuilder private var fields: some View {
+    /// The address as the sign-in will use it (`serverAddress`: scheme added, trailing slashes dropped), or nil.
+    private var resolvedAddress: String? {
+        ServerSignInViewModelKt.serverAddress(typed: address)
+    }
+
+    /// The address box holds more than the prefilled scheme, yet no host the sign-in can use.
+    private var addressLooksInvalid: Bool {
+        let typed = address.trimmingCharacters(in: .whitespaces)
+        return resolvedAddress == nil && !typed.isEmpty && !typed.hasSuffix("://")
+    }
+
+    private var addressSection: some View {
         Section {
-            TextField("Address", text: $address, prompt: Text("http://my.server.com:8080"))
+            TextField("Address", text: $address, prompt: Text("192.168.1.20:8096"))
                 .keyboardType(.URL)
                 .textContentType(.URL)
                 .textInputAutocapitalization(.never)
@@ -215,10 +224,35 @@ struct ServerSignInContent: View {
         } footer: {
             if state.missing.contains(.address) {
                 RequiredNote(field: "address")
+            } else if addressLooksInvalid {
+                Label("That isn't a server address. Try one like 192.168.1.20:8096.", systemImage: "exclamationmark.circle")
+                    .foregroundStyle(.red)
+                    .accessibilityIdentifier("serverSignIn.addressInvalid")
+            } else if let resolvedAddress {
+                Text("Connects to \(resolvedAddress)")
+                    .accessibilityIdentifier("serverSignIn.resolvedAddress")
             } else {
-                Text("The server's address, with http:// or https:// and its port.")
+                Text("An IP address or host name, with its port. https:// if your server uses it; http:// is added if you leave it out.")
             }
         }
+        .disabled(!editable)
+    }
+
+    /// Quick Connect, offered first when the server supports it: no password to type.
+    private var quickConnectOffer: some View {
+        Section {
+            Button(action: actions.onUseQuickConnect) {
+                Label("Sign In with Quick Connect", systemImage: "qrcode")
+                    .font(.s2Headline)
+                    .frame(maxWidth: .infinity)
+            }
+            .accessibilityIdentifier("serverSignIn.quickConnect")
+        } footer: {
+            Text("Approve a code from another \(state.type.title) app you're signed in to. No password needed.")
+        }
+    }
+
+    private var accountSection: some View {
         Section {
             TextField("Username", text: $username)
                 .textContentType(.username)
@@ -237,7 +271,7 @@ struct ServerSignInContent: View {
             Toggle("Remember Password", isOn: $rememberPassword)
                 .accessibilityIdentifier("serverSignIn.rememberPassword")
         } header: {
-            Text("Account")
+            Text(state.quickConnectEnabled ? "Or With a Password" : "Account")
         } footer: {
             if state.missing.contains(.username) {
                 RequiredNote(field: "username")
@@ -246,16 +280,9 @@ struct ServerSignInContent: View {
             }
         }
         .disabled(!editable)
-        if case .failed(let message) = state.step {
-            Section {
-                Label(message, systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.red)
-                    .accessibilityIdentifier("serverSignIn.error")
-            }
-        }
     }
 
-    @ViewBuilder private var submission: some View {
+    private var submission: some View {
         Section {
             Button(action: signIn) {
                 HStack(spacing: Spacing.small) {
@@ -271,15 +298,11 @@ struct ServerSignInContent: View {
                         Text("Sign In")
                     }
                 }
+                .font(.s2Headline)
                 .frame(maxWidth: .infinity)
             }
             .disabled(!editable)
             .accessibilityIdentifier("serverSignIn.signIn")
-            if state.quickConnectEnabled, editable {
-                Button("Use Quick Connect", action: actions.onUseQuickConnect)
-                    .frame(maxWidth: .infinity)
-                    .accessibilityIdentifier("serverSignIn.quickConnect")
-            }
         } footer: {
             if state.showProDisclosure {
                 Text("Streaming from Jellyfin, Emby and Plex is part of S2 Pro. Free for 14 days.")
@@ -317,6 +340,10 @@ private struct SignInHeader: View {
                     .font(.s2Title3)
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
+                Text("Your server's address, then your \(type.title) account.")
+                    .font(.subheadline)
+                    .foregroundStyle(.s2SecondaryText)
+                    .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
             .listRowBackground(Color.clear)
@@ -334,29 +361,86 @@ private struct RequiredNote: View {
     }
 }
 
-/// Jellyfin Quick Connect's code, large and selectable, while another Jellyfin app approves it.
+/// Why the sign-in failed, the server's own words under a plain heading, and what usually fixes it.
+private struct SignInErrorSection: View {
+    let message: String
+
+    var body: some View {
+        Section {
+            VStack(alignment: .leading, spacing: Spacing.xsmall) {
+                Label("Couldn't Sign In", systemImage: "exclamationmark.triangle.fill")
+                    .font(.s2Headline)
+                    .foregroundStyle(.red)
+                Text(message)
+                Text("Check the address and your account, and that the server is running, then try again.")
+                    .font(.footnote)
+                    .foregroundStyle(.s2SecondaryText)
+            }
+            .padding(.vertical, Spacing.xsmall)
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("serverSignIn.error")
+        }
+    }
+}
+
+/// The sign-in succeeded: a moment of confirmation before the setup moves on to the import.
+private struct SignedInSection: View {
+    let type: MediaProviderType
+
+    var body: some View {
+        Section {
+            Label("Signed in to \(type.title)", systemImage: "checkmark.seal.fill")
+                .font(.s2Headline)
+                .foregroundStyle(.green)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, Spacing.small)
+                .accessibilityIdentifier("serverSignIn.connected")
+        }
+    }
+}
+
+/// Jellyfin Quick Connect's code, large and selectable (and copyable), while another Jellyfin app approves it.
 private struct QuickConnectSection: View {
     let code: String
     let onCancel: () -> Void
 
     var body: some View {
         Section {
-            VStack(spacing: Spacing.smallMedium) {
+            VStack(spacing: Spacing.medium) {
                 Text("Enter this code in another Jellyfin app to sign in.")
+                    .font(.s2Headline)
                     .multilineTextAlignment(.center)
                 Text(code)
-                    .font(.system(.largeTitle, design: .monospaced).weight(.semibold))
+                    .font(.system(.largeTitle, design: .monospaced).weight(.bold))
+                    .tracking(Spacing.xsmall)
                     .textSelection(.enabled)
+                    // No spelled-out label: Maestro's sign-in flows copy the code from this element's text.
                     .accessibilityIdentifier("serverSignIn.quickConnectCode")
-                ProgressView()
+                Button("Copy Code", systemImage: "doc.on.doc") { UIPasteboard.general.string = code }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
+                    .accessibilityIdentifier("serverSignIn.copyQuickConnectCode")
+                HStack(spacing: Spacing.small) {
+                    ProgressView()
+                    Text("Waiting for approval…").foregroundStyle(.s2SecondaryText)
+                }
+                .font(.subheadline)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, Spacing.small)
+            .padding(.vertical, Spacing.medium)
             Button("Cancel", role: .cancel, action: onCancel)
                 .frame(maxWidth: .infinity)
                 .accessibilityIdentifier("serverSignIn.cancelQuickConnect")
         } header: {
             Text("Quick Connect")
+        } footer: {
+            Text("In Jellyfin's web app or another client, open your profile, then Quick Connect, and enter the code.")
         }
+    }
+}
+
+extension ServerSignInState.Step {
+    var isFailure: Bool {
+        if case .failed = self { true } else { false }
     }
 }

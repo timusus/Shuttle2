@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.PendingEvent
 import com.simplecityapps.shuttle.ui.common.PendingEvents
 import com.simplecityapps.shuttle.ui.screens.library.ScanProgress
@@ -13,6 +14,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -31,6 +33,8 @@ data class SourcesUiState(
     /** The last scan's failure message, cleared as soon as another scan starts. */
     val scanError: String? = null,
     val servers: List<ServerSource> = ServerTypes.map { ServerSource(it, connected = false) },
+    /** When an import last finished, if one ever has. */
+    val lastImport: Instant? = null,
     val events: List<PendingEvent<SourcesEvent>> = emptyList(),
 )
 
@@ -56,6 +60,7 @@ class SourcesViewModel @Inject constructor(
     importState: SongImportStateProvider,
     private val tryAddServer: TryAddServer,
     private val connectServer: ConnectServer,
+    private val preferences: GeneralPreferenceManager,
 ) : ViewModel() {
     private val events = PendingEvents<SourcesEvent>()
 
@@ -68,6 +73,7 @@ class SourcesViewModel @Inject constructor(
                 scan = (import as? SongImportState.ImportProgress)?.let { ScanProgress(it.message, it.progress?.asFloat()) },
                 scanError = (import as? SongImportState.ImportComplete)?.error,
                 servers = ServerTypes.map { ServerSource(it, connected = it in types) },
+                lastImport = preferences.lastMediaImportDate,
                 events = events,
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SourcesUiState())

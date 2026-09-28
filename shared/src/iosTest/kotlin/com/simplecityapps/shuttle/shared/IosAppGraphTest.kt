@@ -58,7 +58,7 @@ class IosAppGraphTest {
         graph.licencesViewModel
         graph.whatsNewViewModel
         graph.sourcesViewModel
-        graph.serverTypePickerViewModel
+        graph.sourceSetupViewModel
         graph.settingsViewModel
         graph.equalizerViewModel
         graph.albumDetailViewModelFactory

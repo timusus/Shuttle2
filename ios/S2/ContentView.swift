@@ -1,3 +1,4 @@
+import Shared
 import SwiftUI
 
 /// The root: measures the window, resolves the `LayoutTier` and hands it to `AppShell`. Owns the Now
@@ -14,6 +15,10 @@ struct ContentView: View {
     /// Measured here, never read from `UIScreen`: Split View and Stage Manager resize the window
     /// without touching the screen.
     @State private var containerWidth: CGFloat = 0
+    /// The first run's source setup is up (`openFirstRunIfNeeded`).
+    @State private var showsFirstRun = false
+    /// Whether it covers the screen (compact) or sits in a form sheet (regular and wide), fixed when it opens.
+    @State private var firstRunFullScreen = true
 
     @SceneStorage("nav.home") private var homeStorage = Navigator.StoredPath()
     @SceneStorage("nav.library") private var libraryStorage = Navigator.StoredPath()
@@ -40,6 +45,7 @@ struct ContentView: View {
             .sheet(isPresented: $navigator.showsSettings) {
                 SettingsSheet(navigator: navigator, showNowPlaying: $showNowPlaying)
             }
+            .sourceSetupPresentation(isPresented: $showsFirstRun, fullScreen: firstRunFullScreen, navigator: navigator)
             .onGeometryChange(for: CGFloat.self) { proxy in
                 proxy.size.width
             } action: { width in
@@ -50,11 +56,22 @@ struct ContentView: View {
             }
             .onAppear {
                 navigator.restore(home: homeStorage, library: libraryStorage, search: searchStorage, categories: categoryStorage)
+                openFirstRunIfNeeded(tier: tier)
             }
             .onChange(of: navigator.homePath) { _, new in homeStorage = Navigator.StoredPath(new) }
             .onChange(of: navigator.libraryPath) { _, new in libraryStorage = Navigator.StoredPath(new) }
             .onChange(of: navigator.searchPath) { _, new in searchStorage = Navigator.StoredPath(new) }
             .onChange(of: navigator.categoryPathsSnapshot) { _, new in categoryStorage = new }
+    }
+
+    /// Opens the source setup's welcome, already in place rather than sliding up over the shell, when there's no
+    /// server and the setup was never finished or skipped (`SourceSetupUiState.firstRun`, #624).
+    private func openFirstRunIfNeeded(tier: LayoutTier) {
+        guard SourceSetupModels.cached().setup.uiState.value.firstRun else { return }
+        firstRunFullScreen = tier == .compact
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) { showsFirstRun = true }
     }
 }
 
@@ -255,16 +272,36 @@ struct SettingsSheet: View {
 
 extension View {
     /// The gear that opens Settings, on the Home and Library roots (every library category's root on regular and
-    /// wide), so Settings is reachable at every width (#612).
+    /// wide), so Settings is reachable at every width (#612); beside it, while the library imports or after an import
+    /// failed, the import's activity (`ImportActivityButton`, #624).
     func settingsButton(_ navigator: Navigator) -> some View {
-        toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    navigator.showsSettings = true
-                } label: {
-                    Label("Settings", systemImage: "gearshape")
+        modifier(RootToolbar(navigator: navigator))
+    }
+}
+
+private struct RootToolbar: ViewModifier {
+    let navigator: Navigator
+
+    func body(content: Content) -> some View {
+        Observing(ImportActivity.state) { state in
+            let status = ImportStatus(state)
+            content.toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        navigator.showsSettings = true
+                    } label: {
+                        Label("Settings", systemImage: "gearshape")
+                    }
+                    .accessibilityIdentifier("settings.open")
                 }
-                .accessibilityIdentifier("settings.open")
+                if status != .idle {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        ImportActivityButton(status: status, onOpenSources: {
+                            navigator.showsSettings = true
+                            navigator.settingsPath = [.sources]
+                        })
+                    }
+                }
             }
         }
     }

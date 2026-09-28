@@ -1,0 +1,122 @@
+package com.simplecityapps.shuttle.ui.screens.onboarding
+
+import com.simplecityapps.fakes.FakeMediaSources
+import com.simplecityapps.fakes.FakeSongImportStateProvider
+import com.simplecityapps.mediaprovider.Progress
+import com.simplecityapps.mediaprovider.SongImportState
+import com.simplecityapps.shuttle.entitlement.TryAddServer
+import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
+import com.simplecityapps.shuttle.ui.screens.sources.ConnectServer
+import io.kotest.matchers.shouldBe
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class SourceSetupViewModelTest {
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val importState = FakeSongImportStateProvider()
+    private var serverAllowed = true
+
+    private fun TestScope.viewModel(mediaSources: FakeMediaSources = FakeMediaSources()) = SourceSetupViewModel(
+        mediaSources,
+        preferences,
+        importState,
+        TryAddServer { serverAllowed },
+        ConnectServer(mediaSources),
+    ).also { viewModel ->
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
+    }
+
+    @Test
+    fun `a fresh install with no server is a first run`() = runTest {
+        viewModel().uiState.value.firstRun shouldBe true
+    }
+
+    @Test
+    fun `a connected server is not a first run - and removing it later doesn't make one`() = runTest {
+        val mediaSources = FakeMediaSources(MediaProviderType.Jellyfin)
+        viewModel(mediaSources).uiState.value.firstRun shouldBe false
+
+        mediaSources.disable(MediaProviderType.Jellyfin)
+
+        viewModel(mediaSources).uiState.value.firstRun shouldBe false
+    }
+
+    @Test
+    fun `skipping ends the first run for good`() = runTest {
+        viewModel().onFinish()
+
+        viewModel().uiState.value.firstRun shouldBe false
+    }
+
+    @Test
+    fun `choosing a type asks the paywall gate`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onChooseType() shouldBe true
+
+        serverAllowed = false
+        viewModel.onChooseType() shouldBe false
+    }
+
+    @Test
+    fun `a connected server imports - and its progress and result follow`() = runTest {
+        val mediaSources = FakeMediaSources()
+        val viewModel = viewModel(mediaSources)
+        viewModel.uiState.value.serverImport shouldBe SourceSetupImport.NotStarted
+
+        viewModel.onServerConnected(MediaProviderType.Jellyfin)
+        mediaSources.enabledTypes.value shouldBe listOf(MediaProviderType.Jellyfin)
+        mediaSources.scans shouldBe 1
+        viewModel.uiState.value.serverImport shouldBe SourceSetupImport.Starting(MediaProviderType.Jellyfin)
+
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Jellyfin, "Artist • Song", Progress(1, 4)))
+        viewModel.uiState.value.serverImport shouldBe SourceSetupImport.Running(MediaProviderType.Jellyfin, "Artist • Song", 0.25f)
+
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Jellyfin, error = null))
+        viewModel.uiState.value.serverImport shouldBe SourceSetupImport.Finished(MediaProviderType.Jellyfin, error = null)
+    }
+
+    @Test
+    fun `another provider's import or an earlier result doesn't move it`() = runTest {
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Jellyfin, error = "stale"))
+        val viewModel = viewModel()
+        viewModel.onServerConnected(MediaProviderType.Jellyfin)
+
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Emby, null, null))
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Jellyfin, error = "stale"))
+
+        viewModel.uiState.value.serverImport shouldBe SourceSetupImport.Starting(MediaProviderType.Jellyfin)
+    }
+
+    @Test
+    fun `a failed import says why`() = runTest {
+        val viewModel = viewModel()
+        viewModel.onServerConnected(MediaProviderType.Emby)
+
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Emby, null, null))
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Emby, error = "Unreachable"))
+
+        viewModel.uiState.value.serverImport shouldBe SourceSetupImport.Finished(MediaProviderType.Emby, error = "Unreachable")
+    }
+}

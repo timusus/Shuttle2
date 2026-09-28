@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailVi
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
+import com.simplecityapps.shuttle.ui.screens.onboarding.SourceSetupViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewViewModel
@@ -27,7 +28,6 @@ import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsView
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
-import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.SourcesViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInViewModel
 import com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorViewModel
@@ -87,7 +87,7 @@ interface IosAppGraph : ViewModelGraph {
     val licencesViewModel: LicencesViewModel
     val whatsNewViewModel: WhatsNewViewModel
     val sourcesViewModel: SourcesViewModel
-    val serverTypePickerViewModel: ServerTypePickerViewModel
+    val sourceSetupViewModel: SourceSetupViewModel
     val settingsViewModel: SettingsViewModel
     val equalizerViewModel: EqualizerViewModel
 

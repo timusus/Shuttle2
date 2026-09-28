@@ -245,18 +245,9 @@ struct NavigatorTests {
         let navigator = Navigator()
         navigator.showsSettings = true
         navigator.open(.sources)
-        navigator.open(.serverSignIn(type: "jellyfin"))
-        #expect(navigator.settingsPath == [.sources, .serverSignIn(type: "jellyfin")])
+        navigator.open(.equalizer)
+        #expect(navigator.settingsPath == [.sources, .equalizer])
         #expect(navigator.libraryPath.isEmpty, "the tab under the sheet keeps its path")
-    }
-
-    @Test func popClosesASignInPushedInsideTheSettingsSheet() {
-        let navigator = Navigator()
-        navigator.showsSettings = true
-        navigator.open(.sources)
-        navigator.open(.serverSignIn(type: "jellyfin"))
-        navigator.pop(.serverSignIn(type: "jellyfin"))
-        #expect(navigator.settingsPath == [.sources])
     }
 
     @Test func closingSettingsDropsItsPathAndItsViewModels() {
@@ -279,9 +270,9 @@ struct NavigatorTests {
 
     // MARK: - #615: Sources reached outside the Settings sheet (Home's own "Add a Source")
 
-    /// Regression for #615: on iPad, choosing a server type from Sources reached through Home's empty
-    /// state (a plain `NavigationLink` onto `homePath`, not through Settings) must push the sign-in onto
-    /// that same `homePath` — not onto whatever `libraryPath`/library category the shell happens to be
+    /// Regression for #615 (then about the sign-in, a pushed route until the source setup took it over, #624): on
+    /// iPad, a screen opened on top of Sources reached through Home's empty state (a plain `NavigationLink` onto
+    /// `homePath`, not through Settings) must push onto that same `homePath` — not onto whatever `libraryPath`/library category the shell happens to be
     /// showing underneath, which the fix's suspects called "a path the regular-tier shell isn't showing".
     @Test func openAfterSourcesIsReachedFromHomeStaysOnHomesPath() {
         let navigator = Navigator()
@@ -290,25 +281,43 @@ struct NavigatorTests {
         navigator.selectTab(.home)
         navigator.homePath = [.sources]
 
-        navigator.open(.serverSignIn(type: "jellyfin"))
+        navigator.open(.equalizer)
 
-        #expect(navigator.homePath == [.sources, .serverSignIn(type: "jellyfin")])
+        #expect(navigator.homePath == [.sources, .equalizer])
         #expect(navigator.libraryPath.isEmpty)
         #expect(navigator.settingsPath.isEmpty)
     }
 
     /// Same as above, but with a library category promoted into the sidebar (regular/wide): Sources is
     /// never pushed onto a category's own path directly, so `open` while a category is selected must not
-    /// strand the sign-in there instead of wherever Sources actually is (Settings, in practice).
+    /// strand the next screen there instead of wherever Sources actually is (Settings, in practice).
     @Test func openWhileALibraryCategoryIsSelectedNeverStrandsASettingsSheetPushOnTheCategory() {
         let navigator = Navigator()
         navigator.selectLibraryCategory(.songs)
         navigator.showsSettings = true
 
         navigator.open(.sources)
-        navigator.open(.serverSignIn(type: "jellyfin"))
+        navigator.open(.equalizer)
 
-        #expect(navigator.settingsPath == [.sources, .serverSignIn(type: "jellyfin")])
+        #expect(navigator.settingsPath == [.sources, .equalizer])
         #expect(navigator.path(for: .songs).isEmpty, "the visible category root must be untouched by the sheet's own push")
+    }
+
+    // MARK: - Source setup (#624)
+
+    @Test func theSourceSetupsViewModelIsAlwaysLiveAndItsSignInsOnlyWhileItIsUp() {
+        let cache = ViewModelCache()
+        let navigator = Navigator(viewModelCache: cache)
+        let setupVM = cache.viewModel(Navigator.sourceSetupCacheKey) { FakeViewModel() }
+        navigator.sourceSetupLive = true
+        let signInVM = cache.viewModel(Navigator.sourceSetupSignInCacheKey(.jellyfin)) { FakeViewModel() }
+
+        navigator.open(.genre(name: "Jazz"))
+        #expect(signInVM.clearCount == 0, "a path change while the setup is up keeps its sign-in")
+
+        navigator.sourceSetupLive = false
+        #expect(signInVM.clearCount == 1)
+        #expect(setupVM.clearCount == 0)
+        #expect(Navigator.sourceSetupSignInCacheKey(.emby) == "sourceSetup.signIn:Emby")
     }
 }

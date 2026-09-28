@@ -6,6 +6,8 @@ import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.entitlement.TryAddServer
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -46,6 +48,7 @@ class SourcesViewModelTest {
         importState,
         TryAddServer { serverAllowed },
         ConnectServer(mediaSources),
+        GeneralPreferenceManager(InMemoryKeyValueStore()),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
     }
