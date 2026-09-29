@@ -126,23 +126,43 @@ class LibraryBackupMatcherTest {
     }
 
     @Test
-    fun `merge keeps max counts, latest times, earliest favourite`() {
-        val playedAt = Instant.fromEpochMilliseconds(1_000_000)
+    fun `restore overwrites with backup snapshot`() {
         val playedLater = Instant.fromEpochMilliseconds(2_000_000)
-        val current = song(playCount = 3, lastPlayed = playedLater, playbackPosition = 10)
+        val current = song(playCount = 3, lastPlayed = playedLater, playbackPosition = 10, blacklisted = false)
         val backup = BackedUpSong(
             identity = identityOf(current),
-            playCount = 10,
+            playCount = 1,
             lastPlayed = 1_000_000,
             playbackPosition = 99,
+            excluded = true,
             favouritedAt = 500_000
         )
         val merged = LibraryBackupMatcher.mergeStats(current, backup)
-        merged.playCount shouldBe 10
-        merged.lastPlayed shouldBe playedLater
-        // Position follows whichever side was played last: the device.
-        merged.playbackPosition shouldBe 10
+        // Backup wins even when the device has played more since: 1 overwrites 2.
+        merged.playCount shouldBe 1
+        merged.lastPlayed shouldBe Instant.fromEpochMilliseconds(1_000_000)
+        merged.playbackPosition shouldBe 99
+        merged.excluded shouldBe true
         merged.favouritedAt shouldBe Instant.fromEpochMilliseconds(500_000)
+    }
+
+    @Test
+    fun `restore clears values missing from backup`() {
+        val current = song(
+            playCount = 2,
+            lastPlayed = Instant.fromEpochMilliseconds(2_000_000),
+            playbackPosition = 10,
+            blacklisted = true,
+            favouritedAt = Instant.fromEpochMilliseconds(2_000_000)
+        )
+        val backup = BackedUpSong(identity = identityOf(current), playCount = 0)
+        val merged = LibraryBackupMatcher.mergeStats(current, backup)
+        merged.playCount shouldBe 0
+        merged.lastPlayed.shouldBeNull()
+        merged.playbackPosition shouldBe 0
+        merged.excluded shouldBe false
+        merged.favouritedAt.shouldBeNull()
+        LibraryBackupMatcher.statsEqual(current, merged) shouldBe false
     }
 
     @Test

@@ -181,6 +181,14 @@ abstract class SongDataDao {
     abstract suspend fun unfavourite(ids: List<Long>): Int
 
     /**
+     * Sets [id]'s favourite time to exactly [favouritedAt] (null clears it). Used only by
+     * library-backup restore, which overwrites the backup's snapshot; normal favourite flows keep
+     * their NULL-guarded queries and `pending_favourites` handling.
+     */
+    @Query("UPDATE songs SET favouritedAt = :favouritedAt WHERE id = :id")
+    abstract suspend fun setFavouritedAt(id: Long, favouritedAt: Instant?)
+
+    /**
      * [favourite] or [unfavourite] [songs], in chunks, as SQLite before 3.32 (below API 31) binds at most 999 variables a
      * statement. A song that already carries a [Song.favouritedAt] (an Undo restoring one just removed) is set to that
      * exact time rather than now, so it keeps its original place in the list (#564). Every remote-provider song among

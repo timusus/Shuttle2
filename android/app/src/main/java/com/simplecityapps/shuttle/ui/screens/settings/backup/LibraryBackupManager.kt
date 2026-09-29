@@ -32,8 +32,8 @@ data class RestoreReport(
 
 /**
  * Library backup export/import (Settings -> Library). Backs up per-song stats (play counts,
- * positions, favourites, exclusions, dates) plus playlists; restore merges field-by-field so
- * neither the backup nor newer on-device activity is lost.
+ * positions, favourites, exclusions, dates) plus playlists; restore overwrites each matched song
+ * with the backup's snapshot.
  *
  * Never backed up: Room ids, credentials/tokens, SAF grant URIs, transient queue/session state,
  * artwork caches and aggregates. Restoring favourites writes the DAO directly (no
@@ -130,13 +130,13 @@ class LibraryBackupManager @Inject constructor(
                     playbackPosition = merged.playbackPosition,
                     dateAdded = merged.dateAdded
                 )
+                if (merged.excluded != current.blacklisted) {
+                    songDataDao.setExcluded(listOf(current.id), merged.excluded)
+                }
+                if (current.favouritedAt != merged.favouritedAt) {
+                    songDataDao.setFavouritedAt(current.id, merged.favouritedAt)
+                }
                 statsWritten++
-            }
-            if (merged.excluded && !current.blacklisted) {
-                songDataDao.setExcluded(listOf(current.id), true)
-            }
-            merged.favouritedAt?.let { at ->
-                if (current.favouritedAt == null) songDataDao.favourite(current.id, at)
             }
         }
 
