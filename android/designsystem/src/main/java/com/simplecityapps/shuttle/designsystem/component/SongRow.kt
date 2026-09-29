@@ -117,7 +117,7 @@ fun SongRow(
 
 @Composable
 private fun TrackNumber(trackNumber: Int, playing: Boolean) {
-    Box(Modifier.size(ArtworkSize.Small.dp), contentAlignment = Alignment.Center) {
+    Box(Modifier.size(ArtworkSize.Small.resolvedDp()), contentAlignment = Alignment.Center) {
         Text(
             text = trackNumber.toString(),
             style = MaterialTheme.typography.labelLarge,

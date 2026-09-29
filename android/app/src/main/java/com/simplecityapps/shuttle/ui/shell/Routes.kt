@@ -31,4 +31,5 @@ val ShellTab.root: NavKey
         ShellTab.Home -> HomeRoute
         ShellTab.Library -> LibraryRoute
         ShellTab.Search -> SearchRoute
+        ShellTab.Settings -> SettingsRoute
     }

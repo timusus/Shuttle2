@@ -13,7 +13,7 @@ import androidx.compose.material.icons.rounded.FolderOff
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Smartphone
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -101,7 +101,7 @@ fun LazyListScope.sourcesContent(uiState: SourcesUiState, actions: SourcesAction
             uiState.scan?.let { scan ->
                 val modifier = Modifier.fillMaxWidth().padding(top = 8.dp).testTag("sources-scan-progress")
                 val fraction = scan.fraction
-                if (fraction != null) LinearWavyProgressIndicator(progress = { fraction }, modifier = modifier) else LinearWavyProgressIndicator(modifier = modifier)
+                if (fraction != null) LinearProgressIndicator(progress = { fraction }, modifier = modifier) else LinearProgressIndicator(modifier = modifier)
             }
         }
     }

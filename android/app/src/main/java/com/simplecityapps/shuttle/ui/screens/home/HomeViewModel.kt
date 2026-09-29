@@ -93,6 +93,12 @@ class HomeViewModel @Inject constructor(
     /** Shuffles the queue the resume hero offers, or null with none. */
     fun shuffleQueue(): MediaAction? = (uiState.value as? HomeUiState.Content)?.resume?.let { MediaAction.Shuffle(MediaSelection.Songs(it.songs)) }
 
+    /** Plays every song of [albums] in order: a shelf (recently added, most played) as its queue. */
+    fun playAlbums(albums: List<Album>): MediaAction = MediaAction.Play(MediaSelection.Albums(albums))
+
+    /** Plays every song of [artists] in order. */
+    fun playArtists(artists: List<AlbumArtist>): MediaAction = MediaAction.Play(MediaSelection.AlbumArtists(artists))
+
     fun onTogglePlayback() = togglePlayback()
 
     /** Opening the changelog or dismissing the card marks this version's notes as seen. */

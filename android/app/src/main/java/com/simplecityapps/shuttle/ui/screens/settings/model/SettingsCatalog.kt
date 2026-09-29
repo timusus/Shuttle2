@@ -77,6 +77,11 @@ object SettingsCatalog {
                         setting = AppearanceSettings.PureBlack,
                         title = R.string.pref_pure_black_title,
                         summary = R.string.pref_pure_black_summary
+                    ),
+                    SettingItem.Switch(
+                        setting = AppearanceSettings.CompactMode,
+                        title = R.string.pref_compact_mode_title,
+                        summary = R.string.pref_compact_mode_summary
                     )
                 )
             ),

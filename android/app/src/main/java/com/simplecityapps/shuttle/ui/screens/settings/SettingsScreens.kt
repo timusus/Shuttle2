@@ -48,6 +48,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2SnackbarHost
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.SliderSetting
+import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.designsystem.component.SwitchSetting
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
@@ -74,16 +75,19 @@ internal fun SettingsScaffold(
     snackbarHostState: SnackbarHostState? = null,
     actions: @Composable RowScope.() -> Unit = {},
     contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(16.dp),
+    verticalArrangement: Arrangement.Vertical? = null,
     content: LazyListScope.() -> Unit
 ) {
-    val scrollBehavior = if (root) TopAppBarDefaults.exitUntilCollapsedScrollBehavior() else TopAppBarDefaults.pinnedScrollBehavior()
+    val compact = LocalCompactMode.current
+    val gaps = verticalArrangement ?: Arrangement.spacedBy(if (compact) 4.dp else 16.dp)
+    val scrollBehavior = if (compact || !root) TopAppBarDefaults.pinnedScrollBehavior() else TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
         topBar = {
-            if (root) {
+            // Compact skips the large collapsing bar: one pinned row, like every sub-page.
+            if (root && !compact) {
                 S2LargeTopBar(title = title, onBack = onNavigateUp, actions = actions, scrollBehavior = scrollBehavior)
             } else {
                 S2TopBar(title = title, onBack = onNavigateUp, actions = actions, scrollBehavior = scrollBehavior)
@@ -93,8 +97,8 @@ internal fun SettingsScaffold(
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = contentPadding,
-            verticalArrangement = verticalArrangement,
+            contentPadding = if (compact) PaddingValues(horizontal = 12.dp, vertical = 4.dp) else contentPadding,
+            verticalArrangement = gaps,
             content = content
         )
     }

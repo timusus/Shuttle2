@@ -36,8 +36,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.graphics.shapes.RoundedPolygon
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /** The artwork sizes S2 lays out: list rows, the grid tile, and the detail/player hero. */
@@ -49,6 +49,20 @@ enum class ArtworkSize(val dp: Dp) {
 }
 
 /**
+ * [ArtworkSize.dp], with row sizes shrunk in compact mode. Grid and Hero stay full-size: detail
+ * and player screens keep their presence.
+ */
+@Composable
+fun ArtworkSize.resolvedDp(): Dp {
+    if (!LocalCompactMode.current) return dp
+    return when (this) {
+        ArtworkSize.Small -> 32.dp
+        ArtworkSize.Medium -> 44.dp
+        ArtworkSize.Grid, ArtworkSize.Hero -> dp
+    }
+}
+
+/**
  * Album and song art is a rounded rectangle; artist images are circles. [Scalloped] is the one
  * `MaterialShapes` mask, an option for playlist art only (a user image or a mosaic, never an album
  * cover).
@@ -56,22 +70,23 @@ enum class ArtworkSize(val dp: Dp) {
 enum class ArtworkShape { Rounded, Circle, Scalloped }
 
 /**
- * What an artwork stands for, which picks the placeholder shown when there's no image. The smart playlists each have
- * their own ([Favorites], [RecentlyAdded], [MostPlayed], [History]); [SmartPlaylist] is the generic one.
+ * What an artwork stands for, which picks the placeholder icon shown when there's no image. The
+ * smart playlists each have their own ([Favorites], [RecentlyAdded], [MostPlayed], [History]);
+ * [SmartPlaylist] is the generic one. The glyph is flat — a bare icon on the tile — never a
+ * novelty shape.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-enum class ArtworkPlaceholder(internal val icon: ImageVector, internal val polygon: RoundedPolygon) {
-    Song(Icons.Rounded.MusicNote, MaterialShapes.Cookie9Sided),
-    Album(Icons.Rounded.Album, MaterialShapes.Cookie12Sided),
-    Artist(Icons.Rounded.Person, MaterialShapes.Flower),
-    Playlist(Icons.AutoMirrored.Rounded.QueueMusic, MaterialShapes.Clover4Leaf),
-    SmartPlaylist(Icons.Rounded.AutoAwesome, MaterialShapes.Sunny),
-    Favorites(Icons.Rounded.Favorite, MaterialShapes.Heart),
-    RecentlyAdded(Icons.Rounded.LibraryAdd, MaterialShapes.Sunny),
-    MostPlayed(Icons.AutoMirrored.Rounded.TrendingUp, MaterialShapes.SoftBurst),
-    History(Icons.Rounded.History, MaterialShapes.Cookie6Sided),
-    Genre(Icons.Rounded.LibraryMusic, MaterialShapes.Pentagon),
-    Folder(Icons.Rounded.Folder, MaterialShapes.Square),
+enum class ArtworkPlaceholder(internal val icon: ImageVector) {
+    Song(Icons.Rounded.MusicNote),
+    Album(Icons.Rounded.Album),
+    Artist(Icons.Rounded.Person),
+    Playlist(Icons.AutoMirrored.Rounded.QueueMusic),
+    SmartPlaylist(Icons.Rounded.AutoAwesome),
+    Favorites(Icons.Rounded.Favorite),
+    RecentlyAdded(Icons.Rounded.LibraryAdd),
+    MostPlayed(Icons.AutoMirrored.Rounded.TrendingUp),
+    History(Icons.Rounded.History),
+    Genre(Icons.Rounded.LibraryMusic),
+    Folder(Icons.Rounded.Folder),
 }
 
 /**
@@ -110,9 +125,10 @@ fun Artwork(
 ) {
     val clip = artworkShape(shape, size)
     val preview = previewArtwork(model)
+    val resolved = size.resolvedDp()
     Box(
         modifier = modifier
-            .size(size.dp)
+            .size(resolved)
             .clip(clip)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest),
         contentAlignment = Alignment.Center,
@@ -127,26 +143,18 @@ fun Artwork(
 }
 
 /**
- * The [placeholder]'s glyph as [Artwork] draws it: the media type's icon in its `MaterialShapes` container. For an
- * [Artwork] `image` slot to draw under an image that loads asynchronously, so art that never loads keeps the glyph.
+ * The [placeholder]'s glyph as [Artwork] draws it: the media type's bare icon, centred on the
+ * tile's own container. For an [Artwork] `image` slot to draw under an image that loads
+ * asynchronously, so art that never loads keeps the glyph.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ArtworkPlaceholderGlyph(placeholder: ArtworkPlaceholder, size: ArtworkSize) {
-    Box(
-        modifier = Modifier
-            .size(size.dp * 0.7f)
-            .clip(placeholder.polygon.toShape())
-            .background(MaterialTheme.colorScheme.secondaryContainer),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = placeholder.icon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.size(size.dp * 0.35f),
-        )
-    }
+    Icon(
+        imageVector = placeholder.icon,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(size.resolvedDp() * 0.5f),
+    )
 }
 
 /** Row artwork gets the small corner, tiles the large, the hero the Expressive large-increased. */

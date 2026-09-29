@@ -80,6 +80,8 @@ private fun HomeDestination(
                 onDismissWhatsNew = viewModel::onWhatsNewHandled,
                 onAlbumClick = { onOpen(it.route) },
                 onArtistClick = { onOpen(it.route) },
+                onPlayAlbums = { actions.dispatch(viewModel.playAlbums(it)) },
+                onPlayArtists = { actions.dispatch(viewModel.playArtists(it)) },
                 onShowActions = actions::showActions,
             ),
             emptyContent = (emptyState as? LibraryAvailability.Empty)?.let { empty ->

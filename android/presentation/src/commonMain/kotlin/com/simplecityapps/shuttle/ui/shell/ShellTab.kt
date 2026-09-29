@@ -5,4 +5,5 @@ enum class ShellTab {
     Home,
     Library,
     Search,
+    Settings,
 }

@@ -38,6 +38,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
@@ -55,6 +56,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
+import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -72,6 +74,8 @@ class HomeCallbacks(
     val onDismissWhatsNew: () -> Unit = {},
     val onAlbumClick: (Album) -> Unit = {},
     val onArtistClick: (AlbumArtist) -> Unit = {},
+    val onPlayAlbums: (List<Album>) -> Unit = {},
+    val onPlayArtists: (List<AlbumArtist>) -> Unit = {},
     val onShowActions: (MediaActionsTarget) -> Unit = {},
 )
 
@@ -132,17 +136,17 @@ private fun HomeContent(
     callbacks: HomeCallbacks,
     modifier: Modifier,
 ) {
-    LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = 16.dp)) {
+    LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = if (LocalCompactMode.current) 8.dp else 16.dp)) {
         content.resume?.let { resume ->
             item(key = "resume") { ResumeHero(resume, callbacks) }
         }
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks) }
         }
-        shelf(R.string.home_recently_played, "recently-played", content.recentlyPlayed) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
-        shelf(R.string.home_recently_added, "recently-added", content.recentlyAdded) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
-        shelf(R.string.home_most_played, "most-played", content.mostPlayed) { album -> AlbumTile(album, callbacks, showPlayCount = true) }
-        shelf(R.string.home_something_different, "something-different", content.somethingDifferent) { artist -> ArtistTile(artist, callbacks) }
+        shelf(R.string.home_recently_played, "recently-played", content.recentlyPlayed, onPlay = { callbacks.onPlayAlbums(content.recentlyPlayed) }) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
+        shelf(R.string.home_recently_added, "recently-added", content.recentlyAdded, onPlay = { callbacks.onPlayAlbums(content.recentlyAdded) }) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
+        shelf(R.string.home_most_played, "most-played", content.mostPlayed, onPlay = { callbacks.onPlayAlbums(content.mostPlayed) }) { album -> AlbumTile(album, callbacks, showPlayCount = true) }
+        shelf(R.string.home_something_different, "something-different", content.somethingDifferent, onPlay = { callbacks.onPlayArtists(content.somethingDifferent) }) { artist -> ArtistTile(artist, callbacks) }
     }
 }
 
@@ -155,12 +159,17 @@ private fun ResumeHero(
     val song = resume.song
     val unknown = stringResource(com.simplecityapps.core.R.string.unknown)
     val timeLeft = stringResource(R.string.home_resume_time_left, formatDuration(resume.timeLeftMs))
-    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-        Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            LibraryArtwork(song, ArtworkPlaceholder.Album, Modifier.size(ResumeArtworkSize), size = ArtworkSize.Grid)
-            Column(modifier = Modifier.weight(1f).padding(start = 16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    val compact = LocalCompactMode.current
+    // The artwork slot is a fixed box the art fills: Artwork's own size would override a bare
+    // size modifier, so the compact value would never apply.
+    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = if (compact) 12.dp else 16.dp, vertical = if (compact) 4.dp else 8.dp)) {
+        Row(modifier = Modifier.padding(if (compact) 8.dp else 10.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(ResumeArtworkSize)) {
+                LibraryArtwork(song, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid)
+            }
+            Column(modifier = Modifier.weight(1f).padding(start = if (compact) 8.dp else 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(R.string.home_resume_title), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                Text(song.album ?: unknown, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(song.album ?: unknown, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
                     text = listOf(song.albumArtist ?: song.friendlyArtistName ?: unknown, timeLeft).joinToString(" · "),
                     style = MaterialTheme.typography.bodyMedium,
@@ -168,7 +177,7 @@ private fun ResumeHero(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Box(Modifier.padding(top = 8.dp)) {
+                Box(Modifier.padding(top = if (LocalCompactMode.current) 2.dp else 4.dp)) {
                     S2ButtonGroup(
                         primary = if (resume.playing) {
                             S2GroupAction(stringResource(DesignR.string.ds_pause), callbacks.onTogglePlayback, Icons.Rounded.Pause)
@@ -183,7 +192,8 @@ private fun ResumeHero(
     }
 }
 
-private val ResumeArtworkSize = 112.dp
+private val ResumeArtworkSize: Dp
+    @Composable get() = if (LocalCompactMode.current) 40.dp else 64.dp
 
 @Composable
 private fun WhatsNewCard(callbacks: HomeCallbacks) {
@@ -214,19 +224,32 @@ private fun WhatsNewCard(callbacks: HomeCallbacks) {
 
 /**
  * A plain horizontally scrolling row of [GridTile]s, hidden when there are none. The tiles are [ShelfTileWidth] wide so
- * about two and a half fit a phone and the cut-off one says the row scrolls (#490); each title and artist sits below
+ * about three fit a phone (four in compact mode) and the cut-off one says the row scrolls (#490); each title and artist sits below
  * its cover rather than over it, where they'd clash with text printed on the art (#404).
  */
 private fun <T> LazyListScope.shelf(
     @StringRes title: Int,
     key: String,
     items: List<T>,
+    onPlay: (() -> Unit)? = null,
     tile: @Composable (T) -> Unit,
 ) {
     if (items.isEmpty()) return
-    item(key = "$key:header") { SectionHeader(title = stringResource(title)) }
+    item(key = "$key:header") {
+        val shelfTitle = stringResource(title)
+        SectionHeader(
+            title = shelfTitle,
+            iconAction = onPlay?.let { Icons.Rounded.PlayArrow },
+            iconActionContentDescription = onPlay?.let { stringResource(R.string.home_play_shelf, shelfTitle) },
+            onIconAction = { onPlay?.invoke() },
+        )
+    }
     item(key = key) {
-        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        val compact = LocalCompactMode.current
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = if (compact) 12.dp else 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
+        ) {
             itemsIndexed(items) { _, item -> Box(Modifier.width(ShelfTileWidth)) { tile(item) } }
         }
     }
@@ -267,4 +290,5 @@ private fun ArtistTile(
     )
 }
 
-private val ShelfTileWidth = 140.dp
+private val ShelfTileWidth: Dp
+    @Composable get() = if (LocalCompactMode.current) 96.dp else 120.dp

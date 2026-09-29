@@ -1,21 +1,17 @@
 package com.simplecityapps.shuttle.designsystem.component
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LinearWavyProgressIndicator
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /**
- * Playback or download progress as a `LinearWavyProgressIndicator`: wavy while [playing], flattening
- * to a straight line when paused. A null [progress] is indeterminate (loading, buffering).
+ * Playback or download progress as a flat `LinearProgressIndicator`.
+ * A null [progress] is indeterminate (loading, buffering). [playing] is kept for call-site
+ * compatibility and has no visual effect.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun S2PlaybackProgress(
     progress: (() -> Float)?,
@@ -23,12 +19,10 @@ fun S2PlaybackProgress(
     modifier: Modifier = Modifier,
 ) {
     if (progress == null) {
-        LinearWavyProgressIndicator(modifier = modifier)
+        LinearProgressIndicator(modifier = modifier)
         return
     }
-    // The wave's height is a colour-like effect, not a position, so it eases without overshoot.
-    val amplitude by animateFloatAsState(if (playing) 1f else 0f, MaterialTheme.motionScheme.defaultEffectsSpec(), label = "amplitude")
-    LinearWavyProgressIndicator(progress = progress, modifier = modifier, amplitude = { amplitude })
+    LinearProgressIndicator(progress = progress, modifier = modifier)
 }
 
 @Preview

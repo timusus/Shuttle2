@@ -37,6 +37,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /**
@@ -82,7 +83,7 @@ fun GridTile(
     ) {
         Box(
             Modifier
-                .padding(8.dp)
+                .padding(if (LocalCompactMode.current) 6.dp else 8.dp)
                 .fillMaxWidth()
                 .aspectRatio(1f),
         ) {
@@ -92,7 +93,7 @@ fun GridTile(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 12.dp, end = 12.dp, bottom = 12.dp),
+                .padding(start = 12.dp, end = 12.dp, bottom = if (LocalCompactMode.current) 8.dp else 12.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

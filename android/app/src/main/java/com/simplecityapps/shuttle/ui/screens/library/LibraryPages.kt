@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.AlbumRow
@@ -41,10 +42,12 @@ import com.simplecityapps.shuttle.designsystem.component.FolderRow
 import com.simplecityapps.shuttle.designsystem.component.GenreRow
 import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
+import com.simplecityapps.shuttle.designsystem.component.resolvedDp
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonGroup
 import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
@@ -79,13 +82,15 @@ import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceKey
 // tab ViewModels; LibraryScreen wires them.
 
 /** The Play / Shuffle row leading the Songs and Albums pages: the button group's 40dp and its padding. */
-private val PlayShuffleHeaderHeight = 40.dp + 16.dp
+private val PlayShuffleHeaderHeight: Dp
+    @Composable get() = 40.dp + if (LocalCompactMode.current) 8.dp else 16.dp
 
 /**
  * Fills the page so the scroller's track sits at its end edge, as the legacy lists have it. The track starts below the
  * pages' leading header, so the thumb never covers the header's action, such as Shuffle (#396).
  */
-private val FastScrollerModifier = Modifier.fillMaxSize().padding(top = PlayShuffleHeaderHeight + 8.dp, bottom = 8.dp).testTag("library-fast-scroller")
+private val FastScrollerModifier: Modifier
+    @Composable get() = Modifier.fillMaxSize().padding(top = PlayShuffleHeaderHeight + 8.dp, bottom = 8.dp).testTag("library-fast-scroller")
 
 /**
  * Play and Shuffle for a whole tab, styled like a detail screen's (#491). The count lives in the top bar's subtitle, so
@@ -93,7 +98,10 @@ private val FastScrollerModifier = Modifier.fillMaxSize().padding(top = PlayShuf
  */
 @Composable
 private fun PlayShuffleHeader(onPlay: () -> Unit, onShuffle: () -> Unit) {
-    Box(Modifier.fillMaxWidth().height(PlayShuffleHeaderHeight).padding(horizontal = 16.dp, vertical = 8.dp)) {
+    val compact = LocalCompactMode.current
+    Box(
+        Modifier.fillMaxWidth().height(PlayShuffleHeaderHeight).padding(horizontal = if (compact) 12.dp else 16.dp, vertical = if (compact) 4.dp else 8.dp)
+    ) {
         S2ButtonGroup(
             primary = S2GroupAction(stringResource(R.string.menu_title_play), onPlay, Icons.Rounded.PlayArrow),
             secondary = listOf(S2GroupAction(stringResource(R.string.menu_title_shuffle), onShuffle, Icons.Rounded.Shuffle)),
@@ -149,8 +157,9 @@ private fun PlaylistMosaic(covers: List<Song>) {
         LibraryArtwork(covers.firstOrNull(), ArtworkPlaceholder.Playlist)
         return
     }
-    val cell = (ArtworkSize.Medium.dp - MosaicGap) / 2
-    Column(Modifier.size(ArtworkSize.Medium.dp), verticalArrangement = Arrangement.spacedBy(MosaicGap)) {
+    val medium = ArtworkSize.Medium.resolvedDp()
+    val cell = (medium - MosaicGap) / 2
+    Column(Modifier.size(medium), verticalArrangement = Arrangement.spacedBy(MosaicGap)) {
         covers.take(4).chunked(2).forEach { pair ->
             Row(horizontalArrangement = Arrangement.spacedBy(MosaicGap)) {
                 pair.forEach { song -> LibraryArtwork(song, ArtworkPlaceholder.Album, Modifier.size(cell), size = ArtworkSize.Small) }
@@ -246,10 +255,11 @@ private fun songEntries(songs: List<Song>, byAlbum: Boolean): List<SongEntry> = 
 /** The cover, name and album artist of the album the rows under it belong to. */
 @Composable
 private fun SongAlbumHeader(song: Song) {
+    val compact = LocalCompactMode.current
     Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = if (compact) 12.dp else 16.dp, end = if (compact) 12.dp else 16.dp, top = if (compact) 8.dp else 16.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 16.dp),
     ) {
         LibraryArtwork(song, ArtworkPlaceholder.Album, size = ArtworkSize.Medium)
         Column(Modifier.weight(1f)) {
@@ -319,9 +329,9 @@ fun AlbumsPage(
                 LazyVerticalGrid(
                     columns = LibraryGridColumns,
                     state = gridState,
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = if (LocalCompactMode.current) PaddingValues(start = 12.dp, end = 12.dp, bottom = 12.dp) else PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(if (LocalCompactMode.current) 6.dp else 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (LocalCompactMode.current) 6.dp else 8.dp),
                     modifier = Modifier.fillMaxSize().testTag("library-albums"),
                 ) {
                     item(key = "header", span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { header() }
@@ -385,9 +395,9 @@ fun ArtistsPage(
                 LazyVerticalGrid(
                     columns = LibraryGridColumns,
                     state = gridState,
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(if (LocalCompactMode.current) 12.dp else 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(if (LocalCompactMode.current) 6.dp else 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(if (LocalCompactMode.current) 6.dp else 8.dp),
                     modifier = Modifier.fillMaxSize().testTag("library-artists"),
                 ) {
                     items(artists, key = { it.groupKey.toString() }) { artist ->

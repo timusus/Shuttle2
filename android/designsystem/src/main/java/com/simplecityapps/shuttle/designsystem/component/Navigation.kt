@@ -11,8 +11,8 @@ import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ShortNavigationBar
-import androidx.compose.material3.ShortNavigationBarItem
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.WideNavigationRail
 import androidx.compose.material3.WideNavigationRailItem
@@ -42,7 +42,7 @@ data class S2NavItem(
     val badge: String? = null,
 )
 
-/** The compact-width bottom navigation: a `ShortNavigationBar` of [items], [selectedIndex] selected. */
+/** The compact-width bottom navigation: a standard `NavigationBar` of [items], [selectedIndex] selected. */
 @Composable
 fun S2NavigationBar(
     items: List<S2NavItem>,
@@ -50,10 +50,10 @@ fun S2NavigationBar(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ShortNavigationBar(modifier = modifier) {
+    NavigationBar(modifier = modifier) {
         items.forEachIndexed { index, item ->
             val selected = index == selectedIndex
-            ShortNavigationBarItem(
+            NavigationBarItem(
                 selected = selected,
                 onClick = { onSelect(index) },
                 icon = { NavIcon(item, selected) },

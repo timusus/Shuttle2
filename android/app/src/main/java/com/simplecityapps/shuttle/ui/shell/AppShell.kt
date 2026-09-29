@@ -21,9 +21,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LibraryMusic
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -421,6 +423,7 @@ private val ShellTab.label: Int
         ShellTab.Home -> R.string.shell_tab_home
         ShellTab.Library -> R.string.title_library
         ShellTab.Search -> R.string.shell_tab_search
+        ShellTab.Settings -> R.string.settings_menu_settings
     }
 
 @Composable
@@ -430,6 +433,7 @@ private fun ShellTab.navItem(): S2NavItem {
         ShellTab.Home -> S2NavItem(label, Icons.Outlined.Home, Icons.Rounded.Home)
         ShellTab.Library -> S2NavItem(label, Icons.Outlined.LibraryMusic, Icons.Rounded.LibraryMusic)
         ShellTab.Search -> S2NavItem(label, Icons.Outlined.Search, Icons.Rounded.Search)
+        ShellTab.Settings -> S2NavItem(label, Icons.Outlined.Settings, Icons.Rounded.Settings)
     }
 }
 

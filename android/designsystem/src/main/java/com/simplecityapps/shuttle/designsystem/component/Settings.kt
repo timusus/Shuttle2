@@ -30,10 +30,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 
 /*
  * Settings rows are `SegmentedListItem`s. A [SettingsGroup] stacks them with the segmented gap and
@@ -42,20 +44,21 @@ import com.simplecityapps.shuttle.designsystem.preview.S2Preview
  */
 
 /**
- * How a settings row draws its leading icon. [Tonal] sets it in a tonal cookie-shaped container and is
- * for top-level rows; [Plain] is the bare icon, for the rows under them, so the containers mark the
- * hierarchy instead of flattening it (#496).
+ * How a settings row draws its leading icon. [Plain] is the bare icon and the default everywhere,
+ * keeping rows slim; [Tonal] sets it in a tonal cookie-shaped container for the odd row that needs
+ * extra weight.
  */
 enum class SettingIconStyle { Tonal, Plain }
 
 /** The title over a [SettingsGroup]. */
 @Composable
 fun SettingsHeader(title: String, modifier: Modifier = Modifier) {
+    val compact = LocalCompactMode.current
     Text(
         text = title,
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 8.dp),
+        modifier = modifier.padding(start = 16.dp, top = if (compact) 8.dp else 16.dp, end = 16.dp, bottom = if (compact) 2.dp else 8.dp),
     )
 }
 
@@ -84,7 +87,7 @@ fun LinkSetting(
     modifier: Modifier = Modifier,
     summary: String? = null,
     icon: ImageVector? = null,
-    iconStyle: SettingIconStyle = SettingIconStyle.Tonal,
+    iconStyle: SettingIconStyle = SettingIconStyle.Plain,
     enabled: Boolean = true,
     shapes: ListItemShapes = ListItemDefaults.shapes(),
 ) {
@@ -120,7 +123,7 @@ fun SwitchSetting(
         modifier = modifier,
         colors = settingColors(),
         enabled = enabled,
-        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled) } },
+        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Plain, enabled) } },
         trailingContent = { Switch(checked = checked, onCheckedChange = null, enabled = enabled) },
         supportingContent = summary?.let { { Text(it) } },
     ) { Text(title) }
@@ -180,7 +183,7 @@ fun ChoiceSetting(
         modifier = modifier,
         colors = settingColors(),
         enabled = enabled,
-        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled) } },
+        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Plain, enabled) } },
         supportingContent = { Text(value) },
     ) { Text(title) }
 }
@@ -205,7 +208,7 @@ fun SliderSetting(
         modifier = modifier,
         colors = settingColors(),
         enabled = enabled,
-        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled) } },
+        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Plain, enabled) } },
         trailingContent = valueLabel?.let {
             {
                 Text(
@@ -235,22 +238,23 @@ fun InfoSetting(
         shapes = shapes,
         modifier = modifier,
         colors = settingColors(),
-        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled = true) } },
+        leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Plain, enabled = true) } },
         supportingContent = { Text(summary) },
     ) { Text(title) }
 }
 
 /**
- * Rows sit in `surfaceContainer` so a group reads as one container on the `surface` screen. A
- * checked switch row keeps the same colours: the `Switch` shows the state, not the row.
+ * Rows are transparent on the `surface` screen, so a group reads as plain rows rather than a
+ * tonal container. A checked switch row keeps the same colours: the `Switch` shows the state,
+ * not the row.
  */
 @Composable
 private fun settingColors(): ListItemColors {
     val colors = MaterialTheme.colorScheme
     return ListItemDefaults.segmentedColors(
-        containerColor = colors.surfaceContainer,
-        disabledContainerColor = colors.surfaceContainer,
-        selectedContainerColor = colors.surfaceContainer,
+        containerColor = Color.Transparent,
+        disabledContainerColor = Color.Transparent,
+        selectedContainerColor = Color.Transparent,
         selectedContentColor = colors.onSurface,
         selectedLeadingContentColor = colors.onSurfaceVariant,
         selectedTrailingContentColor = colors.onSurfaceVariant,

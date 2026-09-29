@@ -30,6 +30,7 @@ import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonGroup
 import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
+import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 
 // The pieces every library detail screen shares, on DetailScaffold (app-shell.md, section 3): a centred hero,
@@ -76,8 +77,13 @@ fun LibraryDetailScaffold(
             modifier = modifier,
             listState = listState,
             hero = {
-                Box(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 16.dp), contentAlignment = Alignment.Center) {
-                    LibraryArtwork(model = artwork, placeholder = placeholder, size = ArtworkSize.Hero, shape = artworkShape)
+                val compact = LocalCompactMode.current
+                Box(
+                    Modifier.fillMaxWidth().padding(top = if (compact) 4.dp else 8.dp, bottom = if (compact) 8.dp else 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Compact keeps a smaller hero: the detail still leads with art, just less of it.
+                    LibraryArtwork(model = artwork, placeholder = placeholder, size = if (compact) ArtworkSize.Grid else ArtworkSize.Hero, shape = artworkShape)
                 }
             },
             actions = {
@@ -107,12 +113,22 @@ private fun DetailHeader(
     onShuffle: () -> Unit,
     extra: @Composable () -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(title, style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
+    Column(
+        Modifier.fillMaxWidth().padding(
+            horizontal = if (LocalCompactMode.current) 12.dp else 16.dp,
+            vertical = if (LocalCompactMode.current) 4.dp else 8.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            title,
+            style = if (LocalCompactMode.current) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface
+        )
         if (subtitle != null) {
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Box(Modifier.padding(top = 12.dp)) {
+        Box(Modifier.padding(top = if (LocalCompactMode.current) 8.dp else 12.dp)) {
             S2ButtonGroup(
                 primary = S2GroupAction(stringResource(R.string.menu_title_play), onPlay, Icons.Rounded.PlayArrow),
                 secondary = listOf(S2GroupAction(stringResource(R.string.menu_title_shuffle), onShuffle, Icons.Rounded.Shuffle)),

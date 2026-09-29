@@ -89,8 +89,8 @@ fun SeekBarBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("Playing (wavy)") { S2SeekBar(positionMs = 83_000, durationMs = 383_000, onSeek = {}, playing = true) },
-            BoardSection("Paused (flat)") { S2SeekBar(positionMs = 83_000, durationMs = 383_000, onSeek = {}, playing = false) },
+            BoardSection("Playing") { S2SeekBar(positionMs = 83_000, durationMs = 383_000, onSeek = {}, playing = true) },
+            BoardSection("Paused") { S2SeekBar(positionMs = 83_000, durationMs = 383_000, onSeek = {}, playing = false) },
             BoardSection("Dragging") {
                 S2SeekBar(
                     positionMs = 250_000,
@@ -110,8 +110,8 @@ fun ProgressBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("Playing (wavy)") { S2PlaybackProgress(progress = { 0.4f }, playing = true, modifier = Modifier.fillMaxWidth()) },
-            BoardSection("Paused (flat)") { S2PlaybackProgress(progress = { 0.4f }, playing = false, modifier = Modifier.fillMaxWidth()) },
+            BoardSection("Playing") { S2PlaybackProgress(progress = { 0.4f }, playing = true, modifier = Modifier.fillMaxWidth()) },
+            BoardSection("Paused") { S2PlaybackProgress(progress = { 0.4f }, playing = false, modifier = Modifier.fillMaxWidth()) },
             BoardSection("Indeterminate (loading)") { S2PlaybackProgress(progress = null, playing = true, modifier = Modifier.fillMaxWidth()) },
         ),
     )

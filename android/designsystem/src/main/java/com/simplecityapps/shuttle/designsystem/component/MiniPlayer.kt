@@ -20,13 +20,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 /**
  * The collapsed player above the nav bar (compact) or docked under the content (expanded): the
  * song's [artwork], [title] and [subtitle] ("artist • album"), a small morphing
- * [S2PlayPauseButton], skip next, and the [S2PlaybackProgress] wave along the bottom edge.
- * [buffering] shows the play button's `LoadingIndicator` and an indeterminate wave. Tapping the
+ * [S2PlayPauseButton], skip next, and the [S2PlaybackProgress] line along the bottom edge.
+ * [buffering] shows the play button's `LoadingIndicator` and an indeterminate line. Tapping the
  * rest of the bar ([onClick]) expands the player.
  */
 @Composable
@@ -47,12 +48,13 @@ fun S2MiniPlayer(
     onNextHold: (() -> Unit)? = null,
 ) {
     Surface(onClick = onClick, modifier = modifier, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+        val compact = LocalCompactMode.current
         Column {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 12.dp, end = 8.dp, top = 8.dp, bottom = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(start = if (compact) 8.dp else 12.dp, end = 8.dp, top = if (compact) 6.dp else 8.dp, bottom = if (compact) 4.dp else 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 artwork?.invoke()
@@ -66,7 +68,7 @@ fun S2MiniPlayer(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                S2PlayPauseButton(playing, onPlayPause, buffering = buffering, size = 44.dp)
+                S2PlayPauseButton(playing, onPlayPause, buffering = buffering, size = if (compact) 32.dp else 36.dp)
                 S2TransportButton(nextIcon, nextContentDescription, onNext, onHold = onNextHold)
             }
             S2PlaybackProgress(
@@ -75,7 +77,7 @@ fun S2MiniPlayer(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 12.dp)
-                    .padding(bottom = 6.dp),
+                    .padding(bottom = if (compact) 2.dp else 6.dp),
             )
         }
     }

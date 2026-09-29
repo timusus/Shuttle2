@@ -32,7 +32,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
-import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.theme.LocalS2ThemeSettings
 import com.simplecityapps.shuttle.designsystem.theme.S2Accent
 import com.simplecityapps.shuttle.designsystem.theme.S2Contrast
@@ -213,12 +212,11 @@ fun ThemeShapeBoard(width: BoardWidth) {
             },
             BoardSection("MaterialShapes S2 uses (non-content only)") {
                 ShapeSamples(
-                    ArtworkPlaceholder.entries.map { it.name to it.polygon.toShape() } +
-                        listOf(
-                            "Playlist mask" to MaterialShapes.Cookie12Sided.toShape(),
-                            "Empty" to MaterialShapes.Cookie9Sided.toShape(),
-                            "Error" to MaterialShapes.Burst.toShape(),
-                        ),
+                    listOf(
+                        "Playlist mask" to MaterialShapes.Cookie12Sided.toShape(),
+                        "Empty" to MaterialShapes.Cookie9Sided.toShape(),
+                        "Error" to MaterialShapes.Burst.toShape(),
+                    ),
                 )
             },
             BoardSection("Morphs: start, mid, end") {

@@ -29,6 +29,7 @@ import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -60,6 +61,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
 import com.simplecityapps.shuttle.designsystem.component.S2Sheet
 import com.simplecityapps.shuttle.designsystem.component.SettingsGroup
 import com.simplecityapps.shuttle.designsystem.component.StateAction
+import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
@@ -117,7 +119,10 @@ fun LibraryScreen(
 ) {
     val tabs = uiState.tabs
     var editingTabs by rememberSaveable { mutableStateOf(false) }
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    // Compact skips the large collapsing bar for a pinned one-row bar; the tab count subtitle
+    // goes with it, staying visible in the default bar.
+    val compact = LocalCompactMode.current
+    val scrollBehavior = if (compact) TopAppBarDefaults.pinnedScrollBehavior() else TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     BackHandler(enabled = chrome.selectedCount > 0, onBack = chrome.onClearSelection)
 
     Scaffold(
@@ -150,6 +155,26 @@ fun LibraryScreen(
                             ),
                         )
                     }
+                } else if (compact) {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.title_library)) },
+                        actions = {
+                            var menuOpen by remember { mutableStateOf(false) }
+                            S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
+                            S2IconButton(
+                                icon = Icons.Rounded.MoreVert,
+                                contentDescription = stringResource(R.string.library_more_options),
+                                onClick = { menuOpen = true },
+                                modifier = Modifier.testTag("library-more"),
+                            )
+                            S2Menu(
+                                expanded = menuOpen,
+                                onDismissRequest = { menuOpen = false },
+                                groups = chrome.menu + listOf(listOf(S2Action(stringResource(R.string.library_edit_tabs), { editingTabs = true }))),
+                            )
+                        },
+                        scrollBehavior = scrollBehavior,
+                    )
                 } else {
                     LargeFlexibleTopAppBar(
                         title = { Text(stringResource(R.string.title_library)) },
@@ -212,7 +237,11 @@ private fun LibraryPager(
         snapshotFlow { pagerState.settledPage }.collect { index -> tabs.getOrNull(index)?.let(onTabSelected) }
     }
     Column(modifier.fillMaxSize()) {
-        PrimaryScrollableTabRow(selectedTabIndex = pagerState.currentPage.coerceIn(0, tabs.lastIndex), modifier = Modifier.testTag("library-tabs")) {
+        PrimaryScrollableTabRow(
+            selectedTabIndex = pagerState.currentPage.coerceIn(0, tabs.lastIndex),
+            modifier = Modifier.testTag("library-tabs"),
+            edgePadding = if (LocalCompactMode.current) 8.dp else 16.dp,
+        ) {
             tabs.forEachIndexed { index, tab ->
                 Tab(
                     selected = pagerState.currentPage == index,

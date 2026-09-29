@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -141,6 +142,20 @@ class HomeScreenTest {
         robot.longPressText("Soft Focus")
 
         robot.shownActions.single().selection shouldBe MediaSelection.Albums(HomeScenarios.softFocus)
+    }
+
+    @Test
+    fun `a shelf header plays its whole shelf, not just one tile`() {
+        robot.setContent(HomeScenarios.content)
+
+        robot.scrollTo("Recently added")
+        robot.tapDescription("Play Recently added")
+        robot.scrollTo("Something different")
+        robot.tapDescription("Play Something different")
+
+        robot.playedAlbums shouldContainExactly listOf(HomeScenarios.content.recentlyAdded)
+        robot.playedArtists shouldContainExactly listOf(HomeScenarios.content.somethingDifferent)
+        robot.openedAlbums.shouldBeEmpty()
     }
 
     @Test

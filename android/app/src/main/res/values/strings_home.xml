@@ -21,6 +21,8 @@
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> play</item>
         <item quantity="other"><xliff:g example="12" id="count">%1$d</xliff:g> plays</item>
     </plurals>
+    <!-- Home: content description for a shelf header's play button; %1$s is the shelf title -->
+    <string name="home_play_shelf">Play <xliff:g example="Recently added" id="shelf">%1$s</xliff:g></string>
     <!-- Home: card title telling the user this version has release notes they haven't seen -->
     <string name="home_whats_new_title">What\'s new in S2</string>
     <!-- Home: card message under the What's new title; %1$s is the app version -->

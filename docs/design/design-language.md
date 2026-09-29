@@ -75,8 +75,9 @@ screens never see it.
 - **Shape scale** from `Shapes` with the Expressive tokens (`largeIncreased`, `extraLargeIncreased`,
   `extraExtraLarge`). Components take their default shape; overrides go through `S2Theme.shapes`,
   not inline `RoundedCornerShape`s.
-- **`MaterialShapes` (the 35 polygon shapes) are for non-content only**: artwork placeholders,
-  icon containers (settings, empty states), the loading indicator, the favourite toggle. Album
+- **`MaterialShapes` (the 35 polygon shapes) are for non-content only**: icon containers
+  (settings, empty states), the loading indicator, the favourite toggle. Artwork placeholders are
+  flat — the media type's bare icon on the tile, no novelty container. Album
   artwork is always a rounded rectangle and artist images a circle: art is square and a novelty mask
   crops it. The one exception is an option for playlist art (a user image or a mosaic, never an
   album cover): `ArtworkShape.Scalloped`, a `Cookie12Sided` mask. Text never sits in a novelty shape.

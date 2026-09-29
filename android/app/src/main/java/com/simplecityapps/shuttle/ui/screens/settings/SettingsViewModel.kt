@@ -181,7 +181,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    /** Reads and merges the backup at the picker [source]. */
+    /** Reads and restores the backup at the picker [source]. */
     fun importBackupFrom(source: String) {
         viewModelScope.launch {
             val report = runCatching { backupManager.readAndRestore(source) }.getOrNull()

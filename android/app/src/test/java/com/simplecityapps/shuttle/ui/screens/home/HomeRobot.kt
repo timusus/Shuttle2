@@ -38,6 +38,8 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
         private set
     val openedAlbums = mutableListOf<Album>()
     val openedArtists = mutableListOf<AlbumArtist>()
+    val playedAlbums = mutableListOf<List<Album>>()
+    val playedArtists = mutableListOf<List<AlbumArtist>>()
     val shownActions = mutableListOf<MediaActionsTarget>()
 
     fun setContent(
@@ -66,6 +68,8 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
         onDismissWhatsNew = { whatsNewDismissed++ },
         onAlbumClick = { openedAlbums += it },
         onArtistClick = { openedArtists += it },
+        onPlayAlbums = { playedAlbums += it },
+        onPlayArtists = { playedArtists += it },
         onShowActions = { shownActions += it },
     )
 

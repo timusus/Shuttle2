@@ -214,4 +214,12 @@ class HomeViewModelTest {
 
         viewModel().shuffleQueue() shouldBe MediaAction.Shuffle(MediaSelection.Songs(listOf(chlorophyllLoop, tidalMoss)))
     }
+
+    @Test
+    fun `playing a shelf plays every album in it, in order`() = runTest(mainDispatcherRule.testDispatcher) {
+        val often = createAlbum("Phase Garden", "Juniper Static", playCount = 5)
+        val rare = createAlbum("Night Bus", "Juniper Static")
+
+        viewModel().playAlbums(listOf(often, rare)) shouldBe MediaAction.Play(MediaSelection.Albums(listOf(often, rare)))
+    }
 }

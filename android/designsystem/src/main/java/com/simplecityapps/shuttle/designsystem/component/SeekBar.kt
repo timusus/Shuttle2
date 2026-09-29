@@ -29,7 +29,7 @@ import com.simplecityapps.shuttle.format.formatDuration
 
 /**
  * The now-playing seek bar: an M3 `Slider` (thumb, drag, semantics) whose track is the
- * [S2PlaybackProgress] wave, wavy while [playing] and flat when paused or while dragging. The
+ * [S2PlaybackProgress] flat progress line. The
  * elapsed and total times sit underneath; while dragging, the elapsed time follows the thumb in
  * `primary`. [onSeek] runs once, when the drag ends.
  */

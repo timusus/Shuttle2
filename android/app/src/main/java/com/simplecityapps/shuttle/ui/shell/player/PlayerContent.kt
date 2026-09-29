@@ -66,7 +66,7 @@ import com.simplecityapps.shuttle.designsystem.component.SongRow
 import kotlin.math.roundToInt
 
 /** Height of the mini player row; the sheet's Mini anchor sits this far above the nav bar. */
-val MiniPlayerHeight = 72.dp
+val MiniPlayerHeight = 64.dp
 
 /** Height of the seek bar: the slider over its times. */
 internal val SeekBarHeight = 60.dp
