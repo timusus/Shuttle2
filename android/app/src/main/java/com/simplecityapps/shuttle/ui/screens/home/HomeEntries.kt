@@ -26,10 +26,11 @@ import com.simplecityapps.shuttle.ui.screens.settings.SettingsDestinationRoute
 import com.simplecityapps.shuttle.ui.screens.settings.WhatsNewRoute
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerRoute
+import com.simplecityapps.shuttle.model.SmartPlaylistId
+import com.simplecityapps.shuttle.ui.screens.library.SmartPlaylistRoute
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.HomeRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
-import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 fun EntryProviderScope<NavKey>.homeEntries(navigator: AppNavigator) {
@@ -69,8 +70,10 @@ private fun HomeDestination(
         HomeScreen(
             uiState = uiState,
             callbacks = HomeCallbacks(
-                onOpenSettings = { onOpen(SettingsRoute) },
                 onShuffleAll = { viewModel.shuffleAll()?.let(actions::dispatch) },
+                onOpenHistory = { onOpen(SmartPlaylistRoute(SmartPlaylistId.History.id)) },
+                onOpenRecentlyAdded = { onOpen(SmartPlaylistRoute(SmartPlaylistId.RecentlyAdded.id)) },
+                onOpenFavourites = { onOpen(SmartPlaylistRoute(SmartPlaylistId.Favourites.id)) },
                 onTogglePlayback = viewModel::onTogglePlayback,
                 onShuffleQueue = { viewModel.shuffleQueue()?.let(actions::dispatch) },
                 onOpenWhatsNew = {

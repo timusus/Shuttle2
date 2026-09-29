@@ -39,6 +39,7 @@ import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListUiState
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListUiState
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
+import io.kotest.matchers.shouldBe
 
 /** The page states [LibraryScreenRobot] renders under each tab; a tab without one shows a stand-in label. */
 data class LibraryPageStates(
@@ -88,8 +89,6 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         private set
     var shuffleClicked = false
         private set
-    var settingsOpened = false
-        private set
     var newPlaylistClicked = false
         private set
 
@@ -121,7 +120,6 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
                     onTabSelected = { lastTabSelected = it },
                     onTabsChanged = { order, enabled -> lastTabsChanged = order to enabled },
                     onSelectionAction = { lastSelectionAction = it },
-                    onOpenSettings = { settingsOpened = true },
                 ) { tab -> Page(tab, pages) }
             }
         }
@@ -228,14 +226,13 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         rule.waitForIdle()
     }
 
-    fun openSettings() {
-        rule.onNodeWithContentDescription("Settings").performClick()
-        rule.waitForIdle()
-    }
-
     fun openOverflow() {
         rule.onNodeWithTag("library-more").performClick()
         rule.waitForIdle()
+    }
+
+    fun assertDescriptionNotShown(description: String) {
+        rule.onAllNodesWithContentDescription(description).fetchSemanticsNodes().size shouldBe 0
     }
 
     fun clickSelectionAction(label: String) {

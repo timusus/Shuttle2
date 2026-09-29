@@ -48,6 +48,8 @@ import com.simplecityapps.shuttle.fixtures.SampleLibrary
  *
  * [selected] moves the card to `secondaryContainer` and badges the artwork with a check;
  * [playing] marks the album or artist the current song belongs to, like [SongRow] does.
+ * [badge] pins a small count to the artwork's top end (a most-played tile's play count); the
+ * selected check takes its place while selected.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -59,6 +61,7 @@ fun GridTile(
     subtitle: String? = null,
     selected: Boolean = false,
     playing: Boolean = false,
+    badge: String? = null,
     onLongClick: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
 ) {
@@ -94,7 +97,11 @@ fun GridTile(
                 .aspectRatio(1f),
         ) {
             artwork()
-            if (selected) SelectedBadge(Modifier.align(Alignment.TopEnd).padding(6.dp))
+            if (selected) {
+                SelectedBadge(Modifier.align(Alignment.TopEnd).padding(6.dp))
+            } else if (badge != null) {
+                CountBadge(badge, Modifier.align(Alignment.TopEnd).padding(6.dp))
+            }
         }
         Column(
             modifier = Modifier
@@ -148,6 +155,19 @@ private fun SelectedBadge(modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(16.dp))
+    }
+}
+
+@Composable
+private fun CountBadge(count: String, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(24.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primary),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(count, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary, maxLines = 1)
     }
 }
 

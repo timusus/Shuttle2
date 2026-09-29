@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,12 +19,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedCard
@@ -35,9 +40,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -61,14 +70,18 @@ import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.format.formatDuration
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
-import com.simplecityapps.shuttle.ui.screens.library.pluralString
+import com.simplecityapps.shuttle.ui.screens.library.nameKey
+import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceKey
 
 class HomeCallbacks(
-    val onOpenSettings: () -> Unit = {},
     val onShuffleAll: () -> Unit = {},
+    val onOpenHistory: () -> Unit = {},
+    val onOpenRecentlyAdded: () -> Unit = {},
+    val onOpenFavourites: () -> Unit = {},
     val onTogglePlayback: () -> Unit = {},
     val onShuffleQueue: () -> Unit = {},
     val onOpenWhatsNew: () -> Unit = {},
@@ -106,7 +119,6 @@ fun HomeScreen(
                     if (uiState is HomeUiState.Content) {
                         S2IconButton(icon = Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.home_shuffle_all), onClick = callbacks.onShuffleAll)
                     }
-                    S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = callbacks.onOpenSettings)
                 },
                 scrollBehavior = scrollBehavior,
             )
@@ -138,16 +150,84 @@ private fun HomeContent(
     modifier: Modifier,
 ) {
     LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = if (LocalCompactMode.current) 8.dp else 16.dp)) {
+        item(key = "shortcuts") { SmartShortcuts(callbacks) }
         content.resume?.let { resume ->
             item(key = "resume") { ResumeHero(resume, callbacks) }
         }
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks) }
         }
-        shelf(R.string.home_recently_played, "recently-played", content.recentlyPlayed, onPlay = { callbacks.onPlayAlbums(content.recentlyPlayed) }) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
-        shelf(R.string.home_recently_added, "recently-added", content.recentlyAdded, onPlay = { callbacks.onPlayAlbums(content.recentlyAdded) }) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
-        shelf(R.string.home_most_played, "most-played", content.mostPlayed, onPlay = { callbacks.onPlayAlbums(content.mostPlayed) }) { album -> AlbumTile(album, callbacks, showPlayCount = true) }
-        shelf(R.string.home_something_different, "something-different", content.somethingDifferent, onPlay = { callbacks.onPlayArtists(content.somethingDifferent) }) { artist -> ArtistTile(artist, callbacks) }
+        shelf(R.string.home_recently_played, R.string.home_recently_played_subtitle, "recently-played", content.recentlyPlayed, onPlay = { callbacks.onPlayAlbums(content.recentlyPlayed) }) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
+        shelf(R.string.home_recently_added, R.string.home_recently_added_subtitle, "recently-added", content.recentlyAdded, onPlay = { callbacks.onPlayAlbums(content.recentlyAdded) }) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
+        shelf(R.string.home_most_played, R.string.home_most_played_subtitle, "most-played", content.mostPlayed, onPlay = { callbacks.onPlayAlbums(content.mostPlayed) }) { album -> AlbumTile(album, callbacks, showPlayCount = true) }
+        shelf(R.string.home_something_different, R.string.home_something_different_subtitle, "something-different", content.somethingDifferent, onPlay = { callbacks.onPlayArtists(content.somethingDifferent) }) { artist -> ArtistTile(artist, callbacks) }
+    }
+}
+
+/**
+ * The old home's shortcut row: the three smart playlists plus Shuffle all, as tonal circles over
+ * labels. The playlists open their detail screens; the names match the Playlists tab's rows.
+ */
+@Composable
+private fun SmartShortcuts(callbacks: HomeCallbacks) {
+    val compact = LocalCompactMode.current
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = if (compact) 12.dp else 16.dp, vertical = if (compact) 4.dp else 8.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+        Shortcut(
+            icon = Icons.Rounded.History,
+            label = stringResourceKey(SmartPlaylistId.History.nameKey),
+            onClick = callbacks.onOpenHistory,
+        )
+        Shortcut(
+            icon = Icons.Rounded.LibraryAdd,
+            label = stringResourceKey(SmartPlaylistId.RecentlyAdded.nameKey),
+            onClick = callbacks.onOpenRecentlyAdded,
+        )
+        Shortcut(
+            icon = Icons.Rounded.Favorite,
+            label = stringResourceKey(SmartPlaylistId.Favourites.nameKey),
+            onClick = callbacks.onOpenFavourites,
+        )
+        Shortcut(
+            icon = Icons.Rounded.Shuffle,
+            label = stringResource(R.string.btn_shuffle),
+            onClick = callbacks.onShuffleAll,
+        )
+    }
+}
+
+@Composable
+private fun RowScope.Shortcut(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .clickable(onClick = onClick, onClickLabel = label, role = Role.Button)
+            .padding(vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.secondaryContainer),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(28.dp))
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -161,13 +241,13 @@ private fun ResumeHero(
     if (compact) {
         // Classic has no hero card: a flat row like any other list item.
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp).testTag("resume-hero"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ResumeHeroContent(resume, callbacks)
         }
     } else {
-        Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+        Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).testTag("resume-hero")) {
             Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 ResumeHeroContent(resume, callbacks)
             }
@@ -249,6 +329,7 @@ private fun WhatsNewCard(callbacks: HomeCallbacks) {
  */
 private fun <T> LazyListScope.shelf(
     @StringRes title: Int,
+    @StringRes subtitle: Int,
     key: String,
     items: List<T>,
     onPlay: (() -> Unit)? = null,
@@ -259,6 +340,7 @@ private fun <T> LazyListScope.shelf(
         val shelfTitle = stringResource(title)
         SectionHeader(
             title = shelfTitle,
+            subtitle = stringResource(subtitle),
             iconAction = onPlay?.let { Icons.Rounded.PlayArrow },
             iconActionContentDescription = onPlay?.let { stringResource(R.string.home_play_shelf, shelfTitle) },
             onIconAction = { onPlay?.invoke() },
@@ -283,11 +365,10 @@ private fun AlbumTile(
 ) {
     val title = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown)
     val artist = album.albumArtist ?: album.friendlyArtistName ?: stringResource(com.simplecityapps.core.R.string.unknown)
-    // The play count leads, so a long artist name is what gets cut short.
-    val subtitle = if (showPlayCount) listOf(pluralString(R.plurals.home_play_count, album.playCount), artist).joinToString(" · ") else artist
     GridTile(
         title = title,
-        subtitle = subtitle,
+        subtitle = artist,
+        badge = if (showPlayCount) album.playCount.toString() else null,
         onClick = { callbacks.onAlbumClick(album) },
         onLongClick = { callbacks.onShowActions(MediaActionsTarget(title, artist, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
         artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },

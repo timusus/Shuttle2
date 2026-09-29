@@ -79,12 +79,12 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun `the settings action opens settings`() {
+    fun `no settings gear duplicates the bottom tab`() {
         robot.setContent(libraryState())
 
-        robot.openSettings()
-
-        robot.settingsOpened shouldBe true
+        robot.assertDescriptionNotShown("Settings")
+        robot.openOverflow()
+        robot.assertTextDisplayed("Edit tabs")
     }
 
     @Test

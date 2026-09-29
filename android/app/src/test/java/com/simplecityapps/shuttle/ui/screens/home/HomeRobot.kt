@@ -3,7 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.home
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollToIndexAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.longClick
@@ -24,9 +26,13 @@ import io.kotest.matchers.shouldBe
 
 /** Test robot for [HomeScreen]: records every callback so tests assert on what the screen asked for. */
 class HomeRobot(private val rule: ComposeContentTestRule) {
-    var settingsOpened = 0
-        private set
     var shuffles = 0
+        private set
+    var openedHistory = 0
+        private set
+    var openedRecentlyAdded = 0
+        private set
+    var openedFavourites = 0
         private set
     var playbackToggles = 0
         private set
@@ -60,8 +66,10 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     }
 
     private fun callbacks() = HomeCallbacks(
-        onOpenSettings = { settingsOpened++ },
         onShuffleAll = { shuffles++ },
+        onOpenHistory = { openedHistory++ },
+        onOpenRecentlyAdded = { openedRecentlyAdded++ },
+        onOpenFavourites = { openedFavourites++ },
         onTogglePlayback = { playbackToggles++ },
         onShuffleQueue = { queueShuffles++ },
         onOpenWhatsNew = { whatsNewOpened++ },
@@ -81,6 +89,12 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     fun tapText(text: String) {
         scrollTo(text)
         rule.onAllNodesWithText(text)[0].performClick()
+    }
+
+    /** Taps a Play/Shuffle/Pause button of the resume hero: the shortcuts row repeats some labels. */
+    fun tapHeroAction(label: String) {
+        scrollTo("Continue listening")
+        rule.onAllNodes(hasText(label) and hasAnyAncestor(hasTestTag("resume-hero")))[0].performClick()
     }
 
     /** Taps text outside Home's own scrolling list, such as content in the empty-state slot (#422). */

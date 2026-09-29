@@ -18,7 +18,6 @@ import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -85,7 +84,6 @@ import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewM
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
-import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 
@@ -111,7 +109,6 @@ fun LibraryScreen(
     onTabSelected: (LibraryTab) -> Unit,
     onTabsChanged: (order: List<LibraryTab>, enabled: Set<LibraryTab>) -> Unit,
     onSelectionAction: (MediaActionType) -> Unit,
-    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     /** Shown in place of the tabs while the library has no songs (#379). */
     emptyLibrary: (@Composable (Modifier) -> Unit)? = null,
@@ -160,7 +157,6 @@ fun LibraryScreen(
                         title = { Text(stringResource(R.string.title_library)) },
                         actions = {
                             var menuOpen by remember { mutableStateOf(false) }
-                            S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
                             S2IconButton(
                                 icon = Icons.Rounded.MoreVert,
                                 contentDescription = stringResource(R.string.library_more_options),
@@ -181,7 +177,6 @@ fun LibraryScreen(
                         subtitle = chrome.subtitle?.let { { Text(it) } },
                         actions = {
                             var menuOpen by remember { mutableStateOf(false) }
-                            S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
                             S2IconButton(
                                 icon = Icons.Rounded.MoreVert,
                                 contentDescription = stringResource(R.string.library_more_options),
@@ -347,7 +342,6 @@ fun LibraryDestination(
                 chrome.selection?.let { actions.perform(type, it) }
                 chrome.onClearSelection()
             },
-            onOpenSettings = { onOpen(SettingsRoute) },
             emptyLibrary = (content as? LibraryAvailability.Empty)?.let { empty ->
                 @Composable { modifier: Modifier ->
                     LibraryEmptyScreen(

@@ -10,12 +10,20 @@
     <string name="home_resume_time_left"><xliff:g example="2:14" id="time">%1$s</xliff:g> left</string>
     <!-- Home: shelf of albums the user played most recently -->
     <string name="home_recently_played">Recently played</string>
+    <!-- Home: subtitle of the recently played shelf -->
+    <string name="home_recently_played_subtitle">Recently played albums</string>
     <!-- Home: shelf of albums most recently added to the library -->
     <string name="home_recently_added">Recently added</string>
+    <!-- Home: subtitle of the recently added shelf -->
+    <string name="home_recently_added_subtitle">Recently added albums</string>
     <!-- Home: shelf of the user's most played albums -->
     <string name="home_most_played">Most played</string>
+    <!-- Home: subtitle of the most played shelf -->
+    <string name="home_most_played_subtitle">Your favourite albums</string>
     <!-- Home: shelf of artists the user has never played -->
     <string name="home_something_different">Something different</string>
+    <!-- Home: subtitle of the something different shelf -->
+    <string name="home_something_different_subtitle">Artists you haven\'t listened to in a while</string>
     <!-- Home: how many times a most played album has played, leading its subtitle -->
     <plurals name="home_play_count">
         <item quantity="one"><xliff:g example="1" id="count">%1$d</xliff:g> play</item>

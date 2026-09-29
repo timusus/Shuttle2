@@ -81,8 +81,8 @@ class HomeScreenTest {
     fun `the resume hero plays and shuffles the queue`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.tapText("Play")
-        robot.tapText("Shuffle")
+        robot.tapHeroAction("Play")
+        robot.tapHeroAction("Shuffle")
 
         robot.playbackToggles shouldBe 1
         robot.queueShuffles shouldBe 1
@@ -116,12 +116,12 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `most played albums carry their play count, with its unit, in the subtitle`() {
+    fun `most played tiles badge their play count instead of repeating it in the subtitle`() {
         robot.setContent(HomeScenarios.content)
 
         robot.scrollTo("Soft Focus")
-        robot.assertTextDisplayed("14 plays · ${HomeScenarios.softFocus.albumArtist}")
-        robot.assertTextNotShown("14")
+        robot.assertTextDisplayed("14")
+        robot.assertTextNotShown("14 plays")
     }
 
     @Test
@@ -159,14 +159,26 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `shuffle all and settings are wired from the top bar`() {
+    fun `shortcuts open their smart playlists`() {
+        robot.setContent(HomeScenarios.content)
+
+        robot.tapDescription("History")
+        robot.tapDescription("Recently Added")
+        robot.tapDescription("Favorites")
+
+        robot.openedHistory shouldBe 1
+        robot.openedRecentlyAdded shouldBe 1
+        robot.openedFavourites shouldBe 1
+    }
+
+    @Test
+    fun `shuffle all is wired from the top bar, with no settings gear duplicating the tab`() {
         robot.setContent(HomeScenarios.content)
 
         robot.tapDescription("Shuffle all")
-        robot.tapDescription("Settings")
 
         robot.shuffles shouldBe 1
-        robot.settingsOpened shouldBe 1
+        robot.assertDescriptionNotShown("Settings")
     }
 
     @Test
