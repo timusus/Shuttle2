@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -156,18 +157,39 @@ private fun ResumeHero(
     resume: ResumeQueue,
     callbacks: HomeCallbacks,
 ) {
+    val compact = LocalCompactMode.current
+    if (compact) {
+        // Classic has no hero card: a flat row like any other list item.
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ResumeHeroContent(resume, callbacks)
+        }
+    } else {
+        Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                ResumeHeroContent(resume, callbacks)
+            }
+        }
+    }
+}
+
+@Composable
+private fun RowScope.ResumeHeroContent(
+    resume: ResumeQueue,
+    callbacks: HomeCallbacks,
+) {
     val song = resume.song
     val unknown = stringResource(com.simplecityapps.core.R.string.unknown)
     val timeLeft = stringResource(R.string.home_resume_time_left, formatDuration(resume.timeLeftMs))
     val compact = LocalCompactMode.current
     // The artwork slot is a fixed box the art fills: Artwork's own size would override a bare
     // size modifier, so the compact value would never apply.
-    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = if (compact) 12.dp else 16.dp, vertical = if (compact) 4.dp else 8.dp)) {
-        Row(modifier = Modifier.padding(if (compact) 8.dp else 10.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(ResumeArtworkSize)) {
-                LibraryArtwork(song, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid)
-            }
-            Column(modifier = Modifier.weight(1f).padding(start = if (compact) 8.dp else 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Box(Modifier.size(ResumeArtworkSize)) {
+        LibraryArtwork(song, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid)
+    }
+    Column(modifier = Modifier.weight(1f).padding(start = if (compact) 8.dp else 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(R.string.home_resume_title), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 Text(song.album ?: unknown, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
@@ -187,8 +209,6 @@ private fun ResumeHero(
                         secondary = listOf(S2GroupAction(stringResource(R.string.menu_title_shuffle), callbacks.onShuffleQueue, Icons.Rounded.Shuffle)),
                     )
                 }
-            }
-        }
     }
 }
 

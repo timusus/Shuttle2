@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -61,11 +62,15 @@ fun GridTile(
     onLongClick: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
 ) {
+    val compact = LocalCompactMode.current
     val colors = if (selected) {
         CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
         )
+    } else if (compact) {
+        // Classic tiles are bare artwork + text: no tonal container, no shadow.
+        CardDefaults.cardColors(containerColor = Color.Transparent)
     } else {
         CardDefaults.cardColors()
     }
@@ -80,10 +85,11 @@ fun GridTile(
             )
             .semantics { this.selected = selected },
         colors = colors,
+        elevation = CardDefaults.cardElevation(defaultElevation = if (compact) 0.dp else 1.dp),
     ) {
         Box(
             Modifier
-                .padding(if (LocalCompactMode.current) 6.dp else 8.dp)
+                .padding(if (compact) 0.dp else 8.dp)
                 .fillMaxWidth()
                 .aspectRatio(1f),
         ) {
@@ -93,7 +99,12 @@ fun GridTile(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 12.dp, end = 12.dp, bottom = if (LocalCompactMode.current) 8.dp else 12.dp),
+                .padding(
+                    start = if (compact) 4.dp else 12.dp,
+                    end = if (compact) 4.dp else 12.dp,
+                    top = if (compact) 4.dp else 0.dp,
+                    bottom = if (compact) 4.dp else 12.dp
+                ),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {

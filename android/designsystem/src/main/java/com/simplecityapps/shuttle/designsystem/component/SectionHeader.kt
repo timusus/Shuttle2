@@ -41,7 +41,7 @@ fun SectionHeader(
         modifier = modifier
             .fillMaxWidth()
             .background(containerColor)
-            .heightIn(min = if (LocalCompactMode.current) 36.dp else 48.dp)
+            .heightIn(min = if (LocalCompactMode.current) 32.dp else 48.dp)
             .padding(start = if (LocalCompactMode.current) 12.dp else 16.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

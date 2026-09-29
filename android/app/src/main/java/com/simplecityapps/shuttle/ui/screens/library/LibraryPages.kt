@@ -168,8 +168,9 @@ private fun PlaylistMosaic(covers: List<Song>) {
     }
 }
 
-/** The catalogue's compact grid: two columns of tiles on a phone, more as the width allows. */
-private val LibraryGridColumns = GridCells.Adaptive(minSize = 160.dp)
+/** The catalogue's compact grid: two columns of tiles on a phone, more as the width allows (three in classic). */
+private val LibraryGridColumns: GridCells
+    @Composable get() = GridCells.Adaptive(minSize = if (LocalCompactMode.current) 120.dp else 160.dp)
 
 /** Songs: Play / Shuffle, then every song. Tap plays from that row; long-press selects. */
 @Composable

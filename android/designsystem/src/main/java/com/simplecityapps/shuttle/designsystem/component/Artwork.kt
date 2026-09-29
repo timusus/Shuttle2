@@ -56,8 +56,8 @@ enum class ArtworkSize(val dp: Dp) {
 fun ArtworkSize.resolvedDp(): Dp {
     if (!LocalCompactMode.current) return dp
     return when (this) {
-        ArtworkSize.Small -> 32.dp
-        ArtworkSize.Medium -> 44.dp
+        ArtworkSize.Small -> 28.dp
+        ArtworkSize.Medium -> 40.dp
         ArtworkSize.Grid, ArtworkSize.Hero -> dp
     }
 }

@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import kotlinx.coroutines.launch
 
 /**
@@ -51,6 +52,8 @@ fun S2NavigationBar(
     modifier: Modifier = Modifier,
 ) {
     NavigationBar(modifier = modifier) {
+        // Classic drops the labels: icons alone, like the old bar.
+        val showLabels = !LocalCompactMode.current
         items.forEachIndexed { index, item ->
             val selected = index == selectedIndex
             NavigationBarItem(
@@ -58,6 +61,7 @@ fun S2NavigationBar(
                 onClick = { onSelect(index) },
                 icon = { NavIcon(item, selected) },
                 label = { Text(item.label) },
+                alwaysShowLabel = showLabels,
             )
         }
     }

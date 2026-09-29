@@ -136,9 +136,9 @@
     <!-- Settings: Title of the Advanced group (debug logging) on the About screen -->
     <string name="settings_group_advanced">Advanced</string>
     <!-- Settings: Title of the switch that tightens lists, artwork and headers -->
-    <string name="pref_compact_mode_title">Compact mode</string>
+    <string name="pref_compact_mode_title">Classic mode</string>
     <!-- Settings: Summary of the compact mode switch -->
-    <string name="pref_compact_mode_summary">Smaller artwork, shorter headers and tighter lists</string>
+    <string name="pref_compact_mode_summary">Dense classic layout: small artwork, flat tiles, icon-only navigation</string>
     <!-- Settings: Title of the switch that makes dark theme backgrounds pure black -->
     <string name="pref_pure_black_title">Pure black</string>
     <!-- Settings: Summary of the pure black switch -->
