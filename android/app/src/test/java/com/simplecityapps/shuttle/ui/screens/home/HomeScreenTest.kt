@@ -159,6 +159,14 @@ class HomeScreenTest {
     }
 
     @Test
+    fun `home opens with the Shuttle brand over the shortcuts`() {
+        robot.setContent(HomeScenarios.content)
+
+        robot.assertTextDisplayed("Shuttle")
+        robot.scrollTo("Recently added")
+    }
+
+    @Test
     fun `shortcuts open their smart playlists`() {
         robot.setContent(HomeScenarios.content)
 

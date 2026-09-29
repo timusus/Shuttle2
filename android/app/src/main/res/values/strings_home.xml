@@ -4,6 +4,8 @@
     <string name="btn_shuffle">Shuffle</string>
     <!-- Home: content description for the top bar button that shuffles every song in the library -->
     <string name="home_shuffle_all">Shuffle all</string>
+    <!-- Home: brand name beside the logo at the top of Home -->
+    <string name="home_brand">Shuttle</string>
     <!-- Home: label over the hero card that offers to pick up the current queue where it was left -->
     <string name="home_resume_title">Continue listening</string>
     <!-- Home: how much of the current song is still to play, after its artist on the resume hero; %1$s is a duration -->

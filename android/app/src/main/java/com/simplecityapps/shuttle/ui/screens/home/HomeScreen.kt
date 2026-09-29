@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -38,8 +39,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -48,6 +51,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.core.R as CoreR
 import com.simplecityapps.shuttle.designsystem.R as DesignR
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
@@ -130,6 +134,7 @@ private fun HomeContent(
         modifier = modifier.statusBarsPadding(),
         contentPadding = PaddingValues(bottom = if (LocalCompactMode.current) 8.dp else 16.dp),
     ) {
+        item(key = "brand") { BrandHeader() }
         item(key = "shortcuts") { SmartShortcuts(callbacks) }
         content.resume?.let { resume ->
             item(key = "resume") { ResumeHero(resume, callbacks) }
@@ -145,8 +150,33 @@ private fun HomeContent(
 }
 
 /**
- * The old home's shortcut row: the three smart playlists plus Shuffle all, as tonal circles over
- * labels. The playlists open their detail screens; the names match the Playlists tab's rows.
+ * The old home's brand row: the Shuttle logo and name, like the classic toolbar title.
+ */
+@Composable
+private fun BrandHeader() {
+    val compact = LocalCompactMode.current
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = if (compact) 12.dp else 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Image(
+            painter = painterResource(CoreR.drawable.ic_shuttle_logo),
+            contentDescription = null,
+            modifier = Modifier.size(if (compact) 28.dp else 32.dp),
+        )
+        Text(
+            text = stringResource(R.string.home_brand),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+/**
+ * The old home's shortcut row: the three smart playlists plus Shuffle all, as solid-colour circles
+ * over labels, like the classic icons. The playlists open their detail screens; the names match
+ * the Playlists tab's rows.
  */
 @Composable
 private fun SmartShortcuts(callbacks: HomeCallbacks) {
@@ -161,21 +191,25 @@ private fun SmartShortcuts(callbacks: HomeCallbacks) {
             icon = Icons.Rounded.History,
             label = stringResourceKey(SmartPlaylistId.History.nameKey),
             onClick = callbacks.onOpenHistory,
+            containerColor = Color(0xFFEF6C00),
         )
         Shortcut(
             icon = Icons.Rounded.LibraryAdd,
             label = stringResourceKey(SmartPlaylistId.RecentlyAdded.nameKey),
             onClick = callbacks.onOpenRecentlyAdded,
+            containerColor = Color(0xFF43A047),
         )
         Shortcut(
             icon = Icons.Rounded.Favorite,
             label = stringResourceKey(SmartPlaylistId.Favourites.nameKey),
             onClick = callbacks.onOpenFavourites,
+            containerColor = Color(0xFFE53935),
         )
         Shortcut(
             icon = Icons.Rounded.Shuffle,
             label = stringResource(R.string.btn_shuffle),
             onClick = callbacks.onShuffleAll,
+            containerColor = Color(0xFF1E88E5),
         )
     }
 }
@@ -185,6 +219,7 @@ private fun RowScope.Shortcut(
     icon: ImageVector,
     label: String,
     onClick: () -> Unit,
+    containerColor: Color,
 ) {
     val compact = LocalCompactMode.current
     val circle = if (compact) 48.dp else 56.dp
@@ -200,10 +235,10 @@ private fun RowScope.Shortcut(
             modifier = Modifier
                 .size(circle)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
+                .background(containerColor),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(if (compact) 24.dp else 28.dp))
+            Icon(icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(if (compact) 24.dp else 28.dp))
         }
         Text(
             text = label,
@@ -380,4 +415,4 @@ private fun ArtistTile(
 }
 
 private val ShelfTileWidth: Dp
-    @Composable get() = if (LocalCompactMode.current) 96.dp else 120.dp
+    @Composable get() = if (LocalCompactMode.current) 128.dp else 144.dp
