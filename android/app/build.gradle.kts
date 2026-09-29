@@ -45,6 +45,10 @@ android {
         // Last.fm scrobbling (#503): the key and secret ship in the APK (owner decision, 2026-09-27).
         buildConfigField("String", "LASTFM_API_KEY", "\"${secret("LASTFM_API_KEY", "LASTFM_API_KEY").orEmpty()}\"")
         buildConfigField("String", "LASTFM_SHARED_SECRET", "\"${secret("LASTFM_SHARED_SECRET", "LASTFM_SHARED_SECRET").orEmpty()}\"")
+
+        // Short commit the APK was built from, shown in Settings > About so dev builds
+        // (which share one version name) are told apart. Forwarded by k8s/scripts/build-remote.sh.
+        buildConfigField("String", "GIT_SHA", "\"${findProperty("gitSha")?.toString()?.takeIf { it.isNotBlank() } ?: "unknown"}\"")
     }
 
     signingConfigs {

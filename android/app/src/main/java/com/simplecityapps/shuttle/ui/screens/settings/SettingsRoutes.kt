@@ -151,7 +151,8 @@ private fun SettingsDestinationEntry(
         onSliderChange = viewModel::onSliderChange,
         onAction = viewModel::onAction,
         onOpenLink = onOpenLink,
-        versionName = BuildConfig.VERSION_NAME,
+        // The code and sha disambiguate dev builds, which otherwise share one version name.
+        versionName = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}/${BuildConfig.GIT_SHA})",
         snackbarHostState = snackbarHostState,
         leadingContent = if (destination == SettingsDestination.Sources) sourcesRows(snackbarHostState) else ({})
     )

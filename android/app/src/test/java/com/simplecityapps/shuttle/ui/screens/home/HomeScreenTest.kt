@@ -117,7 +117,7 @@ class HomeScreenTest {
 
     @Test
     fun `most played tiles badge their play count instead of repeating it in the subtitle`() {
-        robot.setContent(HomeScenarios.content)
+        robot.setContent(HomeScenarios.content, compact = true)
 
         robot.scrollTo("Soft Focus")
         robot.assertTextDisplayed("14")
@@ -159,16 +159,24 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `home opens with the Shuttle brand over the shortcuts`() {
-        robot.setContent(HomeScenarios.content)
+    fun `classic home opens with the centered Shuttle brand over the shortcuts`() {
+        robot.setContent(HomeScenarios.content, compact = true)
 
         robot.assertTextDisplayed("Shuttle")
         robot.scrollTo("Recently added")
     }
 
     @Test
-    fun `shortcuts open their smart playlists`() {
+    fun `modern home has no brand row, the top bar covers shuffle`() {
         robot.setContent(HomeScenarios.content)
+
+        robot.assertTextNotShown("Shuttle")
+        robot.assertDescriptionNotShown("History")
+    }
+
+    @Test
+    fun `shortcuts open their smart playlists`() {
+        robot.setContent(HomeScenarios.content, compact = true)
 
         robot.tapDescription("History")
         robot.tapDescription("Recently Added")
@@ -180,13 +188,22 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `shuffle all is wired from the shortcut row, with no settings gear duplicating the tab`() {
-        robot.setContent(HomeScenarios.content)
+    fun `shuffle all is wired from the classic shortcut row, with no settings gear duplicating the tab`() {
+        robot.setContent(HomeScenarios.content, compact = true)
 
         robot.tapDescription("Shuffle")
 
         robot.shuffles shouldBe 1
         robot.assertDescriptionNotShown("Settings")
+    }
+
+    @Test
+    fun `shuffle all is wired from the modern top bar`() {
+        robot.setContent(HomeScenarios.content)
+
+        robot.tapDescription("Shuffle all")
+
+        robot.shuffles shouldBe 1
     }
 
     @Test

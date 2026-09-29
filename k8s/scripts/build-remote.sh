@@ -50,6 +50,14 @@ if [[ "$GRADLE_ARGS" != *versionCode* ]]; then
     GRADLE_ARGS="$GRADLE_ARGS -PversionCode=$VCODE -PversionName=$VNAME"
   fi
 fi
+# Forward the local commit sha the same way: Settings > About shows it, so dev
+# builds (one shared version name) are told apart on device.
+if [[ "$GRADLE_ARGS" != *gitSha* ]]; then
+  GSHA="$(git -C "$REPO_ROOT" rev-parse --short HEAD 2>/dev/null || true)"
+  if [ -n "$GSHA" ]; then
+    GRADLE_ARGS="$GRADLE_ARGS -PGitSha=$GSHA"
+  fi
+fi
 
 if [ -n "$KUBE_CONTEXT" ]; then CTX=(--context "$KUBE_CONTEXT"); else CTX=(); fi
 kc() { "$KUBECTL" "${CTX[@]}" "$@"; }

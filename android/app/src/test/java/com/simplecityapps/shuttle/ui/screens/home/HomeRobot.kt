@@ -51,10 +51,11 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     fun setContent(
         uiState: HomeUiState,
         theme: ThemeMode = ThemeMode.Light,
+        compact: Boolean = false,
         emptyContent: (@Composable (Modifier) -> Unit)? = null,
     ) {
         rule.setContent {
-            S2AppTheme(AppThemeState(theme = theme)) {
+            S2AppTheme(AppThemeState(theme = theme, compactMode = compact)) {
                 HomeScreen(
                     uiState = uiState,
                     callbacks = callbacks(),

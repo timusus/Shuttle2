@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -33,15 +34,19 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -65,6 +70,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonGroup
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
+import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.format.formatDuration
@@ -95,9 +101,12 @@ class HomeCallbacks(
 
 /**
  * Home: the shortcut row over the library's shelves, or the empty state when there's no music yet.
- * There's no top bar: the shortcuts hold Shuffle all, settings lives in its own tab and search in
- * its own, so the first screen is music.
+ *
+ * Classic mode restores the old home: a centered brand mark, the smart-playlist shortcut row and
+ * two-line shelf headers, with no top bar. Modern keeps the plain top bar (Shuffle all only;
+ * settings and search live in their own tabs) and single-line shelves.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
@@ -106,22 +115,53 @@ fun HomeScreen(
     /** Shown in place of the generic empty state while the library has no songs (#422), so it can offer access. */
     emptyContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
-    // No top bar: the shell pads the nav bar and player, and the status bar is consumed below.
-    val contentModifier = modifier.fillMaxSize()
+    if (LocalCompactMode.current) {
+        // Classic has no top bar: the shortcuts hold Shuffle all, and the list takes the status bar.
+        HomeBody(uiState, callbacks, modifier.fillMaxSize().statusBarsPadding(), emptyContent)
+    } else {
+        val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+        Scaffold(
+            modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
+            contentWindowInsets = WindowInsets(0),
+            topBar = {
+                S2TopBar(
+                    title = "",
+                    actions = {
+                        if (uiState is HomeUiState.Content) {
+                            S2IconButton(icon = Icons.Filled.Shuffle, contentDescription = stringResource(R.string.home_shuffle_all), onClick = callbacks.onShuffleAll)
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
+                )
+            },
+        ) { padding ->
+            HomeBody(uiState, callbacks, Modifier.fillMaxSize().padding(padding), emptyContent)
+        }
+    }
+}
+
+@Composable
+private fun HomeBody(
+    uiState: HomeUiState,
+    callbacks: HomeCallbacks,
+    modifier: Modifier,
+    emptyContent: (@Composable (Modifier) -> Unit)?,
+) {
     when (uiState) {
-        HomeUiState.Loading -> LoadingState(contentModifier)
+        HomeUiState.Loading -> LoadingState(modifier)
 
         HomeUiState.Empty -> if (emptyContent != null) {
-            emptyContent(contentModifier)
+            emptyContent(modifier)
         } else {
             EmptyState(
                 title = stringResource(R.string.home_empty_title),
                 message = stringResource(R.string.home_empty_message),
-                modifier = contentModifier,
+                modifier = modifier,
             )
         }
 
-        is HomeUiState.Content -> HomeContent(uiState, callbacks, contentModifier)
+        is HomeUiState.Content -> HomeContent(uiState, callbacks, modifier)
     }
 }
 
@@ -131,44 +171,47 @@ private fun HomeContent(
     callbacks: HomeCallbacks,
     modifier: Modifier,
 ) {
+    val compact = LocalCompactMode.current
     LazyColumn(
-        modifier = modifier.statusBarsPadding(),
-        contentPadding = PaddingValues(bottom = if (LocalCompactMode.current) 8.dp else 16.dp),
+        modifier = modifier,
+        contentPadding = PaddingValues(bottom = if (compact) 8.dp else 16.dp),
     ) {
-        item(key = "brand") { BrandHeader() }
-        item(key = "shortcuts") { SmartShortcuts(callbacks) }
+        if (compact) {
+            item(key = "brand") { BrandHeader() }
+            item(key = "shortcuts") { SmartShortcuts(callbacks) }
+        }
         content.resume?.let { resume ->
             item(key = "resume") { ResumeHero(resume, callbacks) }
         }
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks) }
         }
-        shelf(R.string.home_recently_played, R.string.home_recently_played_subtitle, "recently-played", content.recentlyPlayed, onPlay = { callbacks.onPlayAlbums(content.recentlyPlayed) }) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
-        shelf(R.string.home_recently_added, R.string.home_recently_added_subtitle, "recently-added", content.recentlyAdded, onPlay = { callbacks.onPlayAlbums(content.recentlyAdded) }) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
-        shelf(R.string.home_most_played, R.string.home_most_played_subtitle, "most-played", content.mostPlayed, onPlay = { callbacks.onPlayAlbums(content.mostPlayed) }) { album -> AlbumTile(album, callbacks, showPlayCount = true) }
-        shelf(R.string.home_something_different, R.string.home_something_different_subtitle, "something-different", content.somethingDifferent, onPlay = { callbacks.onPlayArtists(content.somethingDifferent) }) { artist -> ArtistTile(artist, callbacks) }
+        shelf(R.string.home_recently_played, if (compact) R.string.home_recently_played_subtitle else null, "recently-played", content.recentlyPlayed, onPlay = { callbacks.onPlayAlbums(content.recentlyPlayed) }) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
+        shelf(R.string.home_recently_added, if (compact) R.string.home_recently_added_subtitle else null, "recently-added", content.recentlyAdded, onPlay = { callbacks.onPlayAlbums(content.recentlyAdded) }) { album -> AlbumTile(album, callbacks, showPlayCount = false) }
+        shelf(R.string.home_most_played, if (compact) R.string.home_most_played_subtitle else null, "most-played", content.mostPlayed, onPlay = { callbacks.onPlayAlbums(content.mostPlayed) }) { album -> AlbumTile(album, callbacks, showPlayCount = compact) }
+        shelf(R.string.home_something_different, if (compact) R.string.home_something_different_subtitle else null, "something-different", content.somethingDifferent, onPlay = { callbacks.onPlayArtists(content.somethingDifferent) }) { artist -> ArtistTile(artist, callbacks) }
     }
 }
 
 /**
- * The old home's brand row: the Shuttle logo and name, like the classic toolbar title.
+ * The old home's centered brand mark: a large Shuttle logo over the name, like the classic home.
+ * Classic only; modern leads with the top bar instead.
  */
 @Composable
 private fun BrandHeader() {
-    val compact = LocalCompactMode.current
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = if (compact) 12.dp else 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Image(
             painter = painterResource(CoreR.drawable.ic_shuttle_logo),
             contentDescription = null,
-            modifier = Modifier.size(if (compact) 40.dp else 44.dp),
+            modifier = Modifier.size(64.dp),
         )
         Text(
             text = stringResource(R.string.home_brand),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
@@ -349,7 +392,7 @@ private fun WhatsNewCard(callbacks: HomeCallbacks) {
  */
 private fun <T> LazyListScope.shelf(
     @StringRes title: Int,
-    @StringRes subtitle: Int,
+    @StringRes subtitle: Int?,
     key: String,
     items: List<T>,
     onPlay: (() -> Unit)? = null,
@@ -362,7 +405,7 @@ private fun <T> LazyListScope.shelf(
         // The top gap separates shelves; the bottom gap keeps the header off the artwork.
         SectionHeader(
             title = shelfTitle,
-            subtitle = stringResource(subtitle),
+            subtitle = subtitle?.let { stringResource(it) },
             iconAction = onPlay?.let { Icons.Rounded.PlayArrow },
             iconActionContentDescription = onPlay?.let { stringResource(R.string.home_play_shelf, shelfTitle) },
             onIconAction = { onPlay?.invoke() },
