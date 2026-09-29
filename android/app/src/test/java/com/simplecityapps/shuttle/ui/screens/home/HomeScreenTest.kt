@@ -159,19 +159,20 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `classic home opens with the centered Shuttle brand over the shortcuts`() {
+    fun `classic home opens with the centered Shuttle Music Player brand over the shortcuts`() {
         robot.setContent(HomeScenarios.content, compact = true)
 
-        robot.assertTextDisplayed("Shuttle")
+        robot.assertTextDisplayed("Shuttle Music Player")
         robot.scrollTo("Recently added")
     }
 
     @Test
-    fun `modern home has no brand row, the top bar covers shuffle`() {
+    fun `modern home shows the small Shuttle brand and the shortcut row`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.assertTextNotShown("Shuttle")
-        robot.assertDescriptionNotShown("History")
+        robot.assertTextDisplayed("Shuttle")
+        robot.assertTextNotShown("Shuttle Music Player")
+        robot.assertDescriptionDisplayed("History")
     }
 
     @Test
@@ -188,8 +189,8 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `shuffle all is wired from the classic shortcut row, with no settings gear duplicating the tab`() {
-        robot.setContent(HomeScenarios.content, compact = true)
+    fun `shuffle all is wired from the shortcut row, with no settings gear duplicating the tab`() {
+        robot.setContent(HomeScenarios.content)
 
         robot.tapDescription("Shuffle")
 
@@ -198,19 +199,9 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `shuffle all is wired from the modern top bar`() {
+    fun `home has no search button, which the Search tab covers`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.tapDescription("Shuffle all")
-
-        robot.shuffles shouldBe 1
-    }
-
-    @Test
-    fun `home has no page title and no search button, which the Search tab covers`() {
-        robot.setContent(HomeScenarios.content)
-
-        robot.assertTextNotShown("Home")
         robot.assertDescriptionNotShown("Search")
     }
 

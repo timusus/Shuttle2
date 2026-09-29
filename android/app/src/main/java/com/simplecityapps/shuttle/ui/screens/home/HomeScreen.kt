@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -34,19 +33,16 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -70,7 +66,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonGroup
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
-import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.format.formatDuration
@@ -101,12 +96,13 @@ class HomeCallbacks(
 
 /**
  * Home: the shortcut row over the library's shelves, or the empty state when there's no music yet.
+ * There's no top bar: the shortcut row holds Shuffle all, and settings and search live in their
+ * own tabs, so the first screen is music.
  *
- * Classic mode restores the old home: a centered brand mark, the smart-playlist shortcut row and
- * two-line shelf headers, with no top bar. Modern keeps the plain top bar (Shuffle all only;
- * settings and search live in their own tabs) and single-line shelves.
+ * Classic restores the old home exactly: a centered logo over "Shuttle Music Player" and dark
+ * tinted shortcut circles with coloured outline glyphs. Modern keeps a small left-aligned brand
+ * row and solid bright circles with white glyphs.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
@@ -115,30 +111,8 @@ fun HomeScreen(
     /** Shown in place of the generic empty state while the library has no songs (#422), so it can offer access. */
     emptyContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
-    if (LocalCompactMode.current) {
-        // Classic has no top bar: the shortcuts hold Shuffle all, and the list takes the status bar.
-        HomeBody(uiState, callbacks, modifier.fillMaxSize().statusBarsPadding(), emptyContent)
-    } else {
-        val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-        Scaffold(
-            modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-            // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
-            contentWindowInsets = WindowInsets(0),
-            topBar = {
-                S2TopBar(
-                    title = "",
-                    actions = {
-                        if (uiState is HomeUiState.Content) {
-                            S2IconButton(icon = Icons.Filled.Shuffle, contentDescription = stringResource(R.string.home_shuffle_all), onClick = callbacks.onShuffleAll)
-                        }
-                    },
-                    scrollBehavior = scrollBehavior,
-                )
-            },
-        ) { padding ->
-            HomeBody(uiState, callbacks, Modifier.fillMaxSize().padding(padding), emptyContent)
-        }
-    }
+    // No top bar: the shell pads the nav bar and player, and the list takes the status bar.
+    HomeBody(uiState, callbacks, modifier.fillMaxSize().statusBarsPadding(), emptyContent)
 }
 
 @Composable
@@ -176,10 +150,8 @@ private fun HomeContent(
         modifier = modifier,
         contentPadding = PaddingValues(bottom = if (compact) 8.dp else 16.dp),
     ) {
-        if (compact) {
-            item(key = "brand") { BrandHeader() }
-            item(key = "shortcuts") { SmartShortcuts(callbacks) }
-        }
+        item(key = "brand") { BrandHeader() }
+        item(key = "shortcuts") { SmartShortcuts(callbacks) }
         content.resume?.let { resume ->
             item(key = "resume") { ResumeHero(resume, callbacks) }
         }
@@ -194,33 +166,53 @@ private fun HomeContent(
 }
 
 /**
- * The old home's centered brand mark: a large Shuttle logo over the name, like the classic home.
- * Classic only; modern leads with the top bar instead.
+ * The brand: classic centers a large logo over "Shuttle Music Player" like the old home; modern
+ * keeps a small left-aligned logo and name row.
  */
 @Composable
 private fun BrandHeader() {
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Image(
-            painter = painterResource(CoreR.drawable.ic_shuttle_logo),
-            contentDescription = null,
-            modifier = Modifier.size(64.dp),
-        )
-        Text(
-            text = stringResource(R.string.home_brand),
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
+    if (LocalCompactMode.current) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Image(
+                painter = painterResource(CoreR.drawable.ic_shuttle_logo),
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+            )
+            Text(
+                text = stringResource(R.string.home_brand_full),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+    } else {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Image(
+                painter = painterResource(CoreR.drawable.ic_shuttle_logo),
+                contentDescription = null,
+                modifier = Modifier.size(32.dp),
+            )
+            Text(
+                text = stringResource(R.string.home_brand),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
 }
 
 /**
- * The old home's shortcut row: the three smart playlists plus Shuffle all, as solid-colour circles
- * over labels, like the classic icons. The playlists open their detail screens; the names match
- * the Playlists tab's rows.
+ * The old home's shortcut row: the three smart playlists plus Shuffle all. Classic matches the
+ * reference exactly: dark tinted circles with coloured outline glyphs. Modern uses solid bright
+ * circles with white filled glyphs. The playlists open their detail screens; the names match the
+ * Playlists tab's rows.
  */
 @Composable
 private fun SmartShortcuts(callbacks: HomeCallbacks) {
@@ -231,39 +223,76 @@ private fun SmartShortcuts(callbacks: HomeCallbacks) {
         modifier = Modifier.fillMaxWidth().padding(start = if (compact) 12.dp else 16.dp, end = if (compact) 12.dp else 16.dp, top = if (compact) 12.dp else 16.dp, bottom = if (compact) 8.dp else 12.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
-        Shortcut(
-            icon = Icons.Filled.History,
-            label = stringResourceKey(SmartPlaylistId.History.nameKey),
-            onClick = callbacks.onOpenHistory,
-            containerColor = Color(0xFFEF6C00),
-        )
-        Shortcut(
-            icon = Icons.Filled.LibraryAdd,
-            label = stringResourceKey(SmartPlaylistId.RecentlyAdded.nameKey),
-            onClick = callbacks.onOpenRecentlyAdded,
-            containerColor = Color(0xFF43A047),
-        )
-        Shortcut(
-            icon = Icons.Filled.Favorite,
-            label = stringResourceKey(SmartPlaylistId.Favourites.nameKey),
-            onClick = callbacks.onOpenFavourites,
-            containerColor = Color(0xFFE53935),
-        )
-        Shortcut(
-            icon = Icons.Filled.Shuffle,
-            label = stringResource(R.string.btn_shuffle),
-            onClick = callbacks.onShuffleAll,
-            containerColor = Color(0xFF1E88E5),
-        )
+        if (compact) {
+            // The legacy glyphs, restored from the pre-rewrite resources.
+            Shortcut(
+                icon = painterResource(R.drawable.ic_history_black_24dp),
+                label = stringResourceKey(SmartPlaylistId.History.nameKey),
+                onClick = callbacks.onOpenHistory,
+                containerColor = Color(0xFF1E2E28),
+                glyphColor = Color(0xFF4DB6AC),
+            )
+            Shortcut(
+                icon = painterResource(R.drawable.ic_playlist_add_black_24dp),
+                label = stringResourceKey(SmartPlaylistId.RecentlyAdded.nameKey),
+                onClick = callbacks.onOpenRecentlyAdded,
+                containerColor = Color(0xFF2E2A18),
+                glyphColor = Color(0xFFFFB300),
+            )
+            Shortcut(
+                icon = painterResource(R.drawable.ic_favorite_border_black_24dp),
+                label = stringResourceKey(SmartPlaylistId.Favourites.nameKey),
+                onClick = callbacks.onOpenFavourites,
+                containerColor = Color(0xFF331B1E),
+                glyphColor = Color(0xFFE53935),
+            )
+            Shortcut(
+                icon = painterResource(R.drawable.ic_shuffle_black_24dp),
+                label = stringResource(R.string.btn_shuffle),
+                onClick = callbacks.onShuffleAll,
+                containerColor = Color(0xFF182430),
+                glyphColor = Color(0xFF42A5F5),
+            )
+        } else {
+            Shortcut(
+                icon = rememberVectorPainter(Icons.Filled.History),
+                label = stringResourceKey(SmartPlaylistId.History.nameKey),
+                onClick = callbacks.onOpenHistory,
+                containerColor = Color(0xFFEF6C00),
+                glyphColor = Color.White,
+            )
+            Shortcut(
+                icon = rememberVectorPainter(Icons.Filled.LibraryAdd),
+                label = stringResourceKey(SmartPlaylistId.RecentlyAdded.nameKey),
+                onClick = callbacks.onOpenRecentlyAdded,
+                containerColor = Color(0xFF43A047),
+                glyphColor = Color.White,
+            )
+            Shortcut(
+                icon = rememberVectorPainter(Icons.Filled.Favorite),
+                label = stringResourceKey(SmartPlaylistId.Favourites.nameKey),
+                onClick = callbacks.onOpenFavourites,
+                containerColor = Color(0xFFE53935),
+                glyphColor = Color.White,
+            )
+            Shortcut(
+                icon = rememberVectorPainter(Icons.Filled.Shuffle),
+                label = stringResource(R.string.btn_shuffle),
+                onClick = callbacks.onShuffleAll,
+                containerColor = Color(0xFF1E88E5),
+                glyphColor = Color.White,
+            )
+        }
     }
 }
 
 @Composable
 private fun RowScope.Shortcut(
-    icon: ImageVector,
+    icon: Painter,
     label: String,
     onClick: () -> Unit,
     containerColor: Color,
+    glyphColor: Color,
 ) {
     val compact = LocalCompactMode.current
     val circle = if (compact) 48.dp else 56.dp
@@ -282,7 +311,7 @@ private fun RowScope.Shortcut(
                 .background(containerColor),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(icon, contentDescription = label, tint = Color.White, modifier = Modifier.size(if (compact) 24.dp else 28.dp))
+            Icon(icon, contentDescription = label, tint = glyphColor, modifier = Modifier.size(if (compact) 24.dp else 28.dp))
         }
         Text(
             text = label,
