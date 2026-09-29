@@ -90,7 +90,16 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
+            // Play releases sign with the upload key (CI). Everywhere else the debug key
+            // signs release too, under the .dev id, so `assembleRelease` yields an
+            // installable, minified dev build instead of failing on a missing keystore.
+            // Same package and key as dev debug: the two swap in place, data intact.
+            if (isCiBuild() && isReleaseBuild()) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+                applicationIdSuffix = ".dev"
+            }
         }
     }
 

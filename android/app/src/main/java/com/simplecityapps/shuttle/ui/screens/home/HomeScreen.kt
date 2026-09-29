@@ -22,10 +22,11 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.LibraryAdd
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.History
-import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.NewReleases
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -158,16 +159,16 @@ private fun BrandHeader() {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = if (compact) 12.dp else 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Image(
             painter = painterResource(CoreR.drawable.ic_shuttle_logo),
             contentDescription = null,
-            modifier = Modifier.size(if (compact) 28.dp else 32.dp),
+            modifier = Modifier.size(if (compact) 40.dp else 44.dp),
         )
         Text(
             text = stringResource(R.string.home_brand),
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
     }
@@ -188,25 +189,25 @@ private fun SmartShortcuts(callbacks: HomeCallbacks) {
         horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
         Shortcut(
-            icon = Icons.Rounded.History,
+            icon = Icons.Filled.History,
             label = stringResourceKey(SmartPlaylistId.History.nameKey),
             onClick = callbacks.onOpenHistory,
             containerColor = Color(0xFFEF6C00),
         )
         Shortcut(
-            icon = Icons.Rounded.LibraryAdd,
+            icon = Icons.Filled.LibraryAdd,
             label = stringResourceKey(SmartPlaylistId.RecentlyAdded.nameKey),
             onClick = callbacks.onOpenRecentlyAdded,
             containerColor = Color(0xFF43A047),
         )
         Shortcut(
-            icon = Icons.Rounded.Favorite,
+            icon = Icons.Filled.Favorite,
             label = stringResourceKey(SmartPlaylistId.Favourites.nameKey),
             onClick = callbacks.onOpenFavourites,
             containerColor = Color(0xFFE53935),
         )
         Shortcut(
-            icon = Icons.Rounded.Shuffle,
+            icon = Icons.Filled.Shuffle,
             label = stringResource(R.string.btn_shuffle),
             onClick = callbacks.onShuffleAll,
             containerColor = Color(0xFF1E88E5),
