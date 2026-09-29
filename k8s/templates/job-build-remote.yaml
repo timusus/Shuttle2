@@ -22,6 +22,12 @@ spec:
             - |
               set -e
               export ANDROID_HOME=/mnt/sdk ANDROID_SDK_ROOT=/mnt/sdk GRADLE_USER_HOME=/mnt/gradle
+              # Pin HOME on the PVC so builder home-dir state (caches, tool prefs)
+              # survives one-shot pods. Debug signing does NOT rely on this: the
+              # debug build type signs with the checked-in android/app/debug.keystore,
+              # which is what keeps installs updating cleanly across builders.
+              export HOME=/mnt/home
+              mkdir -p "$HOME"
               export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
               if [ ! -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" ]; then
                 echo "==> bootstrapping Android SDK into PVC cache"

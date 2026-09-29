@@ -48,6 +48,15 @@ android {
     }
 
     signingConfigs {
+        // A checked-in debug key shared by every builder (local or cluster): without it each
+        // machine mints its own ~/.android key and new dev APKs refuse to install over old ones.
+        // Debug keys are not secrets; the release key stays out of the repo.
+        named("debug") {
+            storeFile = file("./debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
         create("release") {
             if (isCiBuild() && isReleaseBuild()) {
                 val keystore = file("./keystore.ks")
@@ -64,6 +73,7 @@ android {
 
     buildTypes {
         getByName("debug") {
+            signingConfig = signingConfigs.getByName("debug")
             applicationIdSuffix = ".dev"
             if (isCiBuild()) {
                 // We want proguard enabled on CI, so our instrumented tests run on obfuscated code
