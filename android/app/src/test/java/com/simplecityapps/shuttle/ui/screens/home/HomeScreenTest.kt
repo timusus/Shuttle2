@@ -172,10 +172,10 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `shuffle all is wired from the top bar, with no settings gear duplicating the tab`() {
+    fun `shuffle all is wired from the shortcut row, with no settings gear duplicating the tab`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.tapDescription("Shuffle all")
+        robot.tapDescription("Shuffle")
 
         robot.shuffles shouldBe 1
         robot.assertDescriptionNotShown("Settings")

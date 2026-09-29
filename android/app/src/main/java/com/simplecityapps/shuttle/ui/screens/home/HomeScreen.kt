@@ -9,11 +9,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -31,18 +31,14 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -64,7 +60,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonGroup
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
-import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.theme.LocalCompactMode
 import com.simplecityapps.shuttle.format.formatDuration
@@ -94,11 +89,10 @@ class HomeCallbacks(
 )
 
 /**
- * Home: a hero to resume the queue over the library's shelves, or the empty state when there's no music yet. There's
- * no page title (#490): the bar holds only Shuffle all and the Settings gear, so the first screen is music. Search is
- * its own tab.
+ * Home: the shortcut row over the library's shelves, or the empty state when there's no music yet.
+ * There's no top bar: the shortcuts hold Shuffle all, settings lives in its own tab and search in
+ * its own, so the first screen is music.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
@@ -107,39 +101,22 @@ fun HomeScreen(
     /** Shown in place of the generic empty state while the library has no songs (#422), so it can offer access. */
     emptyContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
-        contentWindowInsets = WindowInsets(0),
-        topBar = {
-            S2TopBar(
-                title = "",
-                actions = {
-                    if (uiState is HomeUiState.Content) {
-                        S2IconButton(icon = Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.home_shuffle_all), onClick = callbacks.onShuffleAll)
-                    }
-                },
-                scrollBehavior = scrollBehavior,
+    // No top bar: the shell pads the nav bar and player, and the status bar is consumed below.
+    val contentModifier = modifier.fillMaxSize()
+    when (uiState) {
+        HomeUiState.Loading -> LoadingState(contentModifier)
+
+        HomeUiState.Empty -> if (emptyContent != null) {
+            emptyContent(contentModifier)
+        } else {
+            EmptyState(
+                title = stringResource(R.string.home_empty_title),
+                message = stringResource(R.string.home_empty_message),
+                modifier = contentModifier,
             )
-        },
-    ) { padding ->
-        val contentModifier = Modifier.fillMaxSize().padding(padding)
-        when (uiState) {
-            HomeUiState.Loading -> LoadingState(contentModifier)
-
-            HomeUiState.Empty -> if (emptyContent != null) {
-                emptyContent(contentModifier)
-            } else {
-                EmptyState(
-                    title = stringResource(R.string.home_empty_title),
-                    message = stringResource(R.string.home_empty_message),
-                    modifier = contentModifier,
-                )
-            }
-
-            is HomeUiState.Content -> HomeContent(uiState, callbacks, contentModifier)
         }
+
+        is HomeUiState.Content -> HomeContent(uiState, callbacks, contentModifier)
     }
 }
 
@@ -149,7 +126,10 @@ private fun HomeContent(
     callbacks: HomeCallbacks,
     modifier: Modifier,
 ) {
-    LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = if (LocalCompactMode.current) 8.dp else 16.dp)) {
+    LazyColumn(
+        modifier = modifier.statusBarsPadding(),
+        contentPadding = PaddingValues(bottom = if (LocalCompactMode.current) 8.dp else 16.dp),
+    ) {
         item(key = "shortcuts") { SmartShortcuts(callbacks) }
         content.resume?.let { resume ->
             item(key = "resume") { ResumeHero(resume, callbacks) }
@@ -171,8 +151,10 @@ private fun HomeContent(
 @Composable
 private fun SmartShortcuts(callbacks: HomeCallbacks) {
     val compact = LocalCompactMode.current
+    // Classic circles are smaller (48dp) with a taller top gap under the status bar; breathing
+    // room under the labels separates them from the first shelf header.
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = if (compact) 12.dp else 16.dp, vertical = if (compact) 4.dp else 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = if (compact) 12.dp else 16.dp, end = if (compact) 12.dp else 16.dp, top = if (compact) 12.dp else 16.dp, bottom = if (compact) 8.dp else 12.dp),
         horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
         Shortcut(
@@ -204,6 +186,8 @@ private fun RowScope.Shortcut(
     label: String,
     onClick: () -> Unit,
 ) {
+    val compact = LocalCompactMode.current
+    val circle = if (compact) 48.dp else 56.dp
     Column(
         modifier = Modifier
             .weight(1f)
@@ -214,12 +198,12 @@ private fun RowScope.Shortcut(
     ) {
         Box(
             modifier = Modifier
-                .size(56.dp)
+                .size(circle)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.secondaryContainer),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(28.dp))
+            Icon(icon, contentDescription = label, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(if (compact) 24.dp else 28.dp))
         }
         Text(
             text = label,
@@ -338,19 +322,23 @@ private fun <T> LazyListScope.shelf(
     if (items.isEmpty()) return
     item(key = "$key:header") {
         val shelfTitle = stringResource(title)
+        val compactHeader = LocalCompactMode.current
+        // The top gap separates shelves; the bottom gap keeps the header off the artwork.
         SectionHeader(
             title = shelfTitle,
             subtitle = stringResource(subtitle),
             iconAction = onPlay?.let { Icons.Rounded.PlayArrow },
             iconActionContentDescription = onPlay?.let { stringResource(R.string.home_play_shelf, shelfTitle) },
             onIconAction = { onPlay?.invoke() },
+            modifier = Modifier.padding(top = if (compactHeader) 8.dp else 12.dp, bottom = 4.dp),
         )
     }
     item(key = key) {
         val compact = LocalCompactMode.current
         LazyRow(
             contentPadding = PaddingValues(horizontal = if (compact) 12.dp else 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp)
+            horizontalArrangement = Arrangement.spacedBy(if (compact) 6.dp else 8.dp),
+            modifier = Modifier.padding(bottom = if (compact) 12.dp else 16.dp),
         ) {
             itemsIndexed(items) { _, item -> Box(Modifier.width(ShelfTileWidth)) { tile(item) } }
         }
