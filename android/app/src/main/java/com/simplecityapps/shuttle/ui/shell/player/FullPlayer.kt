@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.shell.player
 
 import android.text.format.DateUtils
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -140,7 +141,8 @@ internal fun FullPlayer(
                 modifier = Modifier.weight(1f),
                 label = "panel",
             ) { panel ->
-                Column(Modifier.fillMaxSize()) {
+                // The outgoing state stays composed while it fades, so it leaves the semantics tree at once.
+                Column(Modifier.fillMaxSize().hiddenFromSemantics(transition.targetState != EnterExitState.Visible)) {
                     if (panel == null) {
                         NowPlayingSong(player, actions, gap = NowPlayingGap, fillHeight = true, modifier = Modifier.weight(1f))
                         Transport(player, progress, actions, gap = NowPlayingGap)

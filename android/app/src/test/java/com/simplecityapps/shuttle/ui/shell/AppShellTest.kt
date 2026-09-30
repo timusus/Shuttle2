@@ -537,6 +537,29 @@ class AppShellTest {
     }
 
     @Test
+    fun `a queue opened before its songs load scrolls to the current one once they do`() {
+        val queue = shellQueue(*Array(30) { "Song ${it + 1}" }, playing = 20)
+        robot.setContent(queue = queue.copy(items = emptyList()))
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+
+        robot.setQueue(queue.copy(panel = NowPlayingPanel.Queue))
+        robot.assertQueueRowDisplayed("Song 22", displayed = true)
+        robot.assertQueueRowDisplayed("Song 1", displayed = false)
+    }
+
+    @Test
+    fun `while the player fades to a panel only the panel is in the semantics tree`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.tapPanelButtonMidAnimation(NowPlayingPanel.Queue)
+        robot.assertNowPlayingArtwork(shown = false)
+        robot.assertNowPlayingHeader(shown = true)
+        robot.settle()
+    }
+
+    @Test
     fun `tapping a queue row skips to it`() {
         robot.setContent()
         robot.tapMiniPlayer()

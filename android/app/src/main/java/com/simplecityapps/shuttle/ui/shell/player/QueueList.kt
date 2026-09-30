@@ -214,7 +214,8 @@ internal fun QueueList(
     val queue = rememberQueueListState(listState, items)
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(listState) {
+    // Keyed on the items having loaded, so a queue that opens before they arrive still scrolls once they do.
+    LaunchedEffect(listState, items.isNotEmpty()) {
         val current = items.indexOfFirst { it.position == QueuePosition.Current }
         if (current > 0) listState.scrollToItem(current)
     }

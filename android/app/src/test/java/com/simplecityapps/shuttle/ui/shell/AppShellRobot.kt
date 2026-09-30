@@ -403,6 +403,16 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
+    /** Taps [panel]'s bar button and lets [frames] frames pass, leaving the fade to it part-way. */
+    fun tapPanelButtonMidAnimation(
+        panel: NowPlayingPanel,
+        frames: Int = 3,
+    ) {
+        rule.mainClock.autoAdvance = false
+        tapPanelButton(panel)
+        repeat(frames) { rule.mainClock.advanceTimeByFrame() }
+    }
+
     /** Opens [panel] from outside the player, as the view model would, leaving anything open in it open. */
     fun showPanel(panel: NowPlayingPanel?) {
         actions.showPanel(panel)
@@ -610,6 +620,10 @@ class AppShellRobot(
     fun assertNowPlayingHeader(shown: Boolean) {
         val node = rule.onNodeWithTag(PlayerTestTags.NowPlayingHeader)
         if (shown) node.assertIsDisplayed() else node.assertDoesNotExist()
+    }
+
+    fun assertNowPlayingArtwork(shown: Boolean) {
+        rule.onAllNodesWithTag(PlayerTestTags.NowPlayingArtwork).assertCountEquals(if (shown) 1 else 0)
     }
 
     fun assertPaneShown() {
