@@ -84,7 +84,8 @@
     <string name="artist_detail_albums_and_songs">Albums &amp; Songs</string>
     <!-- Artist detail: the section after the album groups, of the artist's songs on none of their own albums -->
     <string name="artist_detail_other_songs">Other Songs</string>
-    <string name="artist_detail_open_album">Open album</string>
+    <!-- Artist detail: opens the album named, from its thumbnail in the song list (spoken by screen readers) -->
+    <string name="artist_detail_open_album">Open <xliff:g example="Album name" id="album">%1$s</xliff:g></string>
     <!-- Artist detail: the section of other artists' albums crediting this artist (features, compilations) -->
     <string name="artist_detail_appears_on">Appears On</string>
     <!-- Detail screen action: shuffle the artist's albums in album order -->

@@ -44,15 +44,18 @@ class AlbumArtistDetailScreenTest {
 
     @Test
     fun `tapping an album's row folds it and tapping its thumbnail opens it`() {
-        val state = readyAlbumArtistDetail()
+        val nightSignals = listOf(createSong(id = 50, name = "Tape Hiss", albumArtist = "Juniper Static", album = "Night Signals", track = 1))
+        val albums = listOf(albumOf(phaseGardenSongs()), albumOf(nightSignals))
+        val state = readyAlbumArtistDetail(songs = phaseGardenSongs() + nightSignals, albums = albums)
         robot.setAlbumArtist(state)
 
         robot.clickText("Phase Garden")
         robot.lastAlbumToggled shouldBe state.albums[0]
         robot.lastAlbumClicked shouldBe null
 
-        robot.clickOpenAlbum()
-        robot.lastAlbumClicked shouldBe state.albums[0]
+        robot.clickOpenAlbum("Night Signals")
+        robot.lastAlbumClicked shouldBe state.albums[1]
+        robot.lastAlbumToggled shouldBe state.albums[0] // the thumbnail opens the album, it doesn't fold it
     }
 
     @Test

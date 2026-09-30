@@ -129,7 +129,7 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
         sortPreferences.sortOrderArtistDetail = order
     }
 
-    fun onAlbumClick(album: Album) {
+    fun onToggleAlbum(album: Album) {
         val key = album.groupKey ?: return
         // Drop keys of albums a rescan removed, so they don't re-expand if the album comes back
         val present = uiState.value.albums.mapNotNullTo(HashSet()) { it.groupKey }

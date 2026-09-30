@@ -214,8 +214,9 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         rule.waitForIdle()
     }
 
-    fun clickOpenAlbum() {
-        rule.onAllNodesWithContentDescription("Open album")[0].performClick()
+    /** Taps [albumTitle]'s thumbnail, which opens the album rather than folding its songs. */
+    fun clickOpenAlbum(albumTitle: String) {
+        rule.onNodeWithContentDescription("Open $albumTitle").performClick()
         rule.waitForIdle()
     }
 

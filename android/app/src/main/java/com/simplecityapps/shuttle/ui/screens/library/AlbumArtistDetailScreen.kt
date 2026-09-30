@@ -185,14 +185,15 @@ private fun LazyListScope.albumWithSongs(
             artist = listOfNotNull(album.year?.toString(), pluralString(R.plurals.songsPlural, songs.size)).joinToString(" · "),
             onClick = { onToggleAlbum(album) },
             artwork = {
-                val openAlbumLabel = stringResource(R.string.artist_detail_open_album)
-                // The thumbnail opens the album; the rest of the row folds it (#631)
+                val openAlbumLabel = stringResource(R.string.artist_detail_open_album, album.name ?: unknown)
+                // The thumbnail opens the album; the rest of the row folds it (#631). The description alone names
+                // the click, so it isn't announced twice.
                 LibraryArtwork(
                     album,
                     ArtworkPlaceholder.Album,
                     Modifier
                         .semantics { contentDescription = openAlbumLabel }
-                        .clickable(onClickLabel = openAlbumLabel) { onOpenAlbum(album) },
+                        .clickable { onOpenAlbum(album) },
                     size = ArtworkSize.Medium,
                 )
             },
@@ -254,7 +255,7 @@ fun AlbumArtistDetailDestination(
                     ),
                 )
             },
-            onToggleAlbum = viewModel::onAlbumClick,
+            onToggleAlbum = viewModel::onToggleAlbum,
             onOpenAlbum = { album -> onOpen(album.route) },
             onAlbumMore = { album ->
                 actions.showActions(

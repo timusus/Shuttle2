@@ -181,7 +181,7 @@ class AlbumArtistDetailViewModelTest {
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
-        viewModel.onAlbumClick(albumA)
+        viewModel.onToggleAlbum(albumA)
         advanceUntilIdle()
         viewModel.uiState.value.expandedAlbums shouldBe setOf(albumA.groupKey)
 
@@ -212,8 +212,8 @@ class AlbumArtistDetailViewModelTest {
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
-        viewModel.onAlbumClick(cassette)
-        viewModel.onAlbumClick(change)
+        viewModel.onToggleAlbum(cassette)
+        viewModel.onToggleAlbum(change)
         advanceUntilIdle()
 
         fakeAlbumRepository.setAlbums(listOf(change))
@@ -234,11 +234,11 @@ class AlbumArtistDetailViewModelTest {
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()
 
-        viewModel.onAlbumClick(cassette)
+        viewModel.onToggleAlbum(cassette)
         advanceUntilIdle()
         fakeAlbumRepository.setAlbums(listOf(change))
         advanceUntilIdle()
-        viewModel.onAlbumClick(change)
+        viewModel.onToggleAlbum(change)
         advanceUntilIdle()
 
         fakeAlbumRepository.setAlbums(listOf(cassette, change))
