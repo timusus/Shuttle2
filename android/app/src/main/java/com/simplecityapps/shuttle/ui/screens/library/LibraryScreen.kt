@@ -304,15 +304,20 @@ private fun LibrarySectionChips(
     val starts = remember(tabs) { IntArray(tabs.size) { -1 } }
     val ends = remember(tabs) { IntArray(tabs.size) { -1 } }
     var viewportWidth by remember { mutableIntStateOf(0) }
+    var placed by remember { mutableStateOf(false) }
     LaunchedEffect(tabs, selectedIndex, viewportWidth) {
         // After a frame, so the chips are laid out when the screen opens on a section past the row's edge.
         withFrameNanos {}
         val start = starts.getOrNull(selectedIndex)?.takeIf { it >= 0 } ?: return@LaunchedEffect
         val end = ends[selectedIndex]
-        when {
-            start - margin < scrollState.value -> scrollState.animateScrollTo(start - margin)
-            end + margin > scrollState.value + viewportWidth -> scrollState.animateScrollTo(end + margin - viewportWidth)
+        val target = when {
+            start - margin < scrollState.value -> start - margin
+            end + margin > scrollState.value + viewportWidth -> end + margin - viewportWidth
+            else -> null
         }
+        // The first placement snaps, so the row opens on the selected chip rather than sliding to it.
+        if (target != null) if (placed) scrollState.animateScrollTo(target) else scrollState.scrollTo(target)
+        if (viewportWidth > 0) placed = true
     }
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -329,7 +334,8 @@ private fun LibrarySectionChips(
                 selected = index == selectedIndex,
                 onClick = { onSelect(index) },
                 modifier = Modifier.onGloballyPositioned {
-                    starts[index] = it.positionInParent().x.roundToInt()
+                    // Relative to the row's content box, which the padding sits outside of.
+                    starts[index] = margin + it.positionInParent().x.roundToInt()
                     ends[index] = starts[index] + it.size.width
                 },
             )
