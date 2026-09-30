@@ -180,7 +180,10 @@ internal const val HEAVY_ROTATION_MIN_DAYS = 3
 internal const val GENRE_PICKS_MIN = 4
 internal const val GENRE_PICKS_MAX = 6
 
-/** Loads every section's candidates and assembles Home's sections from them. */
+/**
+ * Loads every section's candidates and assembles Home's sections from them, with where each Jump back in item's queue
+ * was left (#670): none for an item played through or never played from.
+ */
 class LoadHomeSections @Inject constructor(
     private val jumpBackIn: JumpBackIn,
     private val aroundThisTime: AroundThisTime,
@@ -188,6 +191,7 @@ class LoadHomeSections @Inject constructor(
     private val rediscover: Rediscover,
     private val recentlyAdded: RecentlyAdded,
     private val genrePicks: GenrePicks,
+    private val playHistoryRepository: PlayHistoryRepository,
     private val homeTime: HomeTime,
 ) {
     suspend operator fun invoke(hasHistory: Boolean): List<HomeSection> {
@@ -202,8 +206,16 @@ class LoadHomeSections @Inject constructor(
             recentlyAdded = recentlyAdded(),
             genrePicks = genrePicks(now),
         )
-        return assembleHomeSections(candidates, homeTime.clock, timeZone)
+        return assembleHomeSections(candidates, homeTime.clock, timeZone).map { section ->
+            if (section.id == HomeSectionId.JumpBackIn) section.copy(progress = progress(section.items)) else section
+        }
     }
+
+    private suspend fun progress(items: List<HomeItem>): Map<String, HomeItemProgress> = items.mapNotNull { item ->
+        playHistoryRepository.resumePoint(item.playContext)
+            ?.takeIf { !it.finished && it.trackCount > 0 }
+            ?.let { item.key to HomeItemProgress(it.track.coerceIn(0, it.trackCount - 1) + 1, it.trackCount) }
+    }.toMap()
 }
 
 /**

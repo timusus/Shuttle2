@@ -11,6 +11,9 @@ import com.simplecityapps.fakes.FakeSuggestionsRepository
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
+import com.simplecityapps.mediaprovider.repository.playhistory.ResumePoint
+import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -102,6 +105,7 @@ class HomeViewModelTest {
             Rediscover(suggestions, resolve),
             RecentlyAdded(suggestions, resolve),
             GenrePicks(playHistory, suggestions),
+            playHistory,
             homeTime,
         )
         return HomeViewModel(
@@ -132,6 +136,27 @@ class HomeViewModelTest {
         val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
         content.sections shouldBe listOf(HomeSection(HomeSectionId.JumpBackIn, HomeSectionTitle.JumpBackIn, StringKey.HOME_JUMP_BACK_IN_SUBTITLE, listOf(HomeItem.AlbumItem(phaseGarden), HomeItem.AlbumItem(dustChoir))))
         content.showWhatsNew shouldBe false
+    }
+
+    @Test
+    fun `jump back in says how far into each item its queue was left, unless it played through`() = runTest(testDispatcher) {
+        suggestions.songCount.value = 2
+        playHistory.eventCount.value = 1
+        playHistory.recentContexts = twoRecentContexts
+        playHistory.resumePoints[phaseGarden.playContext] = resumePoint(phaseGarden.playContext, track = 4, trackCount = 12)
+        playHistory.resumePoints[dustChoir.playContext] = resumePoint(dustChoir.playContext, track = 9, trackCount = 10, finished = true)
+
+        val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
+
+        val jumpBackIn = content.sections.single { it.id == HomeSectionId.JumpBackIn }
+        jumpBackIn.progress shouldBe mapOf(HomeItem.AlbumItem(phaseGarden).key to HomeItemProgress(track = 5, trackCount = 12))
+    }
+
+    @Test
+    fun `a jump back in item resumes, falling back to its play action`() {
+        val item = HomeItem.AlbumItem(phaseGarden)
+
+        item.resumeAction() shouldBe MediaAction.Resume(item.playAction(), phaseGarden.playContext)
     }
 
     @Test
@@ -334,4 +359,11 @@ class HomeViewModelTest {
     private companion object {
         const val VERSION_NAME = "2026.09.27"
     }
+
+    private fun resumePoint(
+        context: PlayContext,
+        track: Int,
+        trackCount: Int,
+        finished: Boolean = false
+    ) = ResumePoint(context, MediaProviderType.Shuttle, "/music/$track.flac", 30_000, track, trackCount, shuffled = false, finished = finished, updatedAt = start)
 }

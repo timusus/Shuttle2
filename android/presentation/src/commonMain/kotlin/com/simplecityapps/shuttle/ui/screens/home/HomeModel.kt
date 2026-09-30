@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.text.StringKey
+import com.simplecityapps.shuttle.ui.text.UiText
 
 /** One of Home's sections (#633), in the order Home shows them. */
 enum class HomeSectionId {
@@ -46,7 +47,17 @@ data class HomeSection(
     val title: HomeSectionTitle,
     val subtitle: StringKey?,
     val items: List<HomeItem>,
+    /** Where each item's queue was left, by [HomeItem.key]: Jump back in's items that can carry on (#670). */
+    val progress: Map<String, HomeItemProgress> = emptyMap(),
 )
+
+/** How far into an item its queue was left (#670): on [track] (from 1) of [trackCount], as "Track 5 of 12". */
+data class HomeItemProgress(
+    val track: Int,
+    val trackCount: Int,
+) {
+    val text: UiText get() = UiText.Resource(StringKey.HOME_ITEM_PROGRESS, listOf(track, trackCount))
+}
 
 /** Something a Home section suggests: what it shows, and what tapping play on it plays. */
 sealed interface HomeItem {
@@ -58,6 +69,9 @@ sealed interface HomeItem {
 
     /** Plays the item from its start, or for a genre, shuffles it. */
     fun playAction(): MediaAction
+
+    /** Carries on the item where its queue was left, as a Jump back in tile's play does (#670), else [playAction]. */
+    fun resumeAction(): MediaAction = MediaAction.Resume(playAction(), playContext)
 
     data class AlbumItem(val album: Album) : HomeItem {
         override val playContext: PlayContext get() = album.playContext

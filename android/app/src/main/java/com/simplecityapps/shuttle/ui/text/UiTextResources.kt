@@ -181,6 +181,7 @@ val StringKey.resId: Int
         StringKey.HOME_RECENTLY_ADDED_SUBTITLE -> R.string.home_recently_added_subtitle
         StringKey.HOME_GENRE_PICKS_SUBTITLE -> R.string.home_genre_picks_subtitle
         StringKey.HOME_GENRE_PICKS_LARGEST_SUBTITLE -> R.string.home_genre_picks_largest_subtitle
+        StringKey.HOME_ITEM_PROGRESS -> R.string.home_item_progress
     }
 
 /** The Android resource behind [this] key: `R.plurals.<key>`. */
