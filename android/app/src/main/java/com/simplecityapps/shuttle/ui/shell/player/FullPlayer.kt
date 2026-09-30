@@ -88,6 +88,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2IconButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2IconToggleButton
+import com.simplecityapps.shuttle.designsystem.component.S2PlayPauseButton
 import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import kotlinx.coroutines.launch
@@ -257,6 +258,9 @@ internal fun PanelSheet(
     }
 }
 
+/** The play/pause button in [NowPlayingHeader]. */
+private val HeaderPlayPauseSize = 48.dp
+
 /** The gap above [NowPlayingHeader], where the player's handle sits while no panel is open. */
 private val HeaderTopGap = 8.dp
 
@@ -327,12 +331,8 @@ internal fun NowPlayingHeader(
                 Text(text = artist, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        S2IconButton(
-            icon = if (player.playing) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-            contentDescription = stringResource(if (player.playing) DesignR.string.ds_pause else DesignR.string.ds_play),
-            onClick = actions::togglePlayback,
-            style = S2IconButtonStyle.Tonal,
-        )
+        // The full player's play button, scaled to the header.
+        S2PlayPauseButton(player.playing, actions::togglePlayback, buffering = player.buffering, size = HeaderPlayPauseSize)
     }
 }
 
