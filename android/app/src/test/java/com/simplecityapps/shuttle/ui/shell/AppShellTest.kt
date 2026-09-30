@@ -381,6 +381,19 @@ class AppShellTest {
     }
 
     @Test
+    @Config(qualifiers = "w1280dp-h900dp")
+    fun `back in the pane closes its open panel and leaves the pane open`() {
+        robot.setContent(window = PaneWindow)
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+
+        robot.pressBack()
+        robot.panel shouldBe null
+        robot.assertPanel(null)
+        robot.assertPaneShown()
+    }
+
+    @Test
     fun `now playing plays and pauses, skips and seeks`() {
         robot.setContent()
         robot.tapMiniPlayer()

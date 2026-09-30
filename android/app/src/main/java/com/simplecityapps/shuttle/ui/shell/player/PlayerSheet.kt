@@ -168,9 +168,9 @@ internal val PlayerLevel.description: String
 
 /**
  * Back closes an open panel first ([onClosePanel]), then collapses the sheet from Full to Mini,
- * following the gesture, then disables so the destinations pop. Keyed on the settled level so the
- * handler re-registers, and so outranks handlers registered by destinations, whenever the sheet
- * comes to rest at Full.
+ * following the gesture, then disables so the destinations pop. The pane only closes its panel:
+ * back never collapses it. Keyed on the settled level and the open panel so the handler
+ * re-registers, and so outranks handlers registered by destinations, whenever either changes.
  */
 @Composable
 internal fun PlayerBackHandler(
@@ -183,7 +183,7 @@ internal fun PlayerBackHandler(
     val sheet = state.mode != PlayerMode.Pane
     val closesPanel = panelOpen && from == PlayerLevel.Full
     key(from, closesPanel) {
-        BackHandler(enabled = sheet && closesPanel, onBack = onClosePanel)
+        BackHandler(enabled = closesPanel, onBack = onClosePanel)
         PredictiveBackHandler(enabled = sheet && !closesPanel && to != null) { progress ->
             val lower = to ?: return@PredictiveBackHandler
             val start = state.geometry.offsetOf(from)

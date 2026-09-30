@@ -20,7 +20,7 @@ fun playerPaneWidth(extraLarge: Boolean): Dp = if (extraLarge) 412.dp else 360.d
 /**
  * The trailing player pane from 1200 dp, shown at Full; Mini collapses it to the docked mini
  * player. It holds the compact sheet's [FullPlayer] without the sheet: no gesture drives it, and its
- * panels open from the bar in the same way.
+ * panels open from the bar in the same way. Back closes an open panel, as it does in the sheet.
  */
 @Composable
 internal fun PlayerPane(
@@ -48,4 +48,5 @@ internal fun PlayerPane(
             )
         }
     }
+    PlayerBackHandler(state, panelOpen = player.panel != null, onClosePanel = { actions.showPanel(null) })
 }
