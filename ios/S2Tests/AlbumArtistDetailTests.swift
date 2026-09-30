@@ -126,15 +126,24 @@ struct AlbumArtistDetailTests {
     @Test func tappingAHeaderTogglesItsAlbum() throws {
         var toggled: Album?
         let sut = AlbumArtistDetailContent(state: sectioned(.albumNewest), onToggleAlbum: { toggled = $0 })
-        try sut.inspect().find(AlbumSectionHeader.self).find(ViewType.Button.self).tap()
+        try sut.inspect().find(AlbumSectionHeader.self).find(ViewType.Button.self, where: { try $0.accessibilityIdentifier() == "artistDetail.albumHeader" }).tap()
         #expect(toggled?.name == "Kid A")
+    }
+
+    @Test func tappingAHeadersThumbnailOpensItsAlbum() throws {
+        var opened: Album?
+        var toggled: Album?
+        let sut = AlbumArtistDetailContent(state: sectioned(.albumNewest), onAlbumTap: { opened = $0 }, onToggleAlbum: { toggled = $0 })
+        try sut.inspect().find(AlbumSectionHeader.self).find(ViewType.Button.self, where: { try $0.accessibilityIdentifier() == "artistDetail.albumThumbnail" }).tap()
+        #expect(opened?.name == "Kid A")
+        #expect(toggled == nil)
     }
 
     @Test func headerTellsVoiceOverWhetherItIsExpanded() throws {
         let collapsed = AlbumSectionHeader(album: album("Kid A", year: 2000), songCount: 2, isExpanded: false)
-        #expect(try collapsed.inspect().find(ViewType.Button.self).accessibilityValue().string() == "Collapsed")
+        #expect(try collapsed.inspect().find(viewWithAccessibilityIdentifier: "artistDetail.albumHeader").accessibilityValue().string() == "Collapsed")
         let expanded = AlbumSectionHeader(album: album("Kid A", year: 2000), songCount: 2, isExpanded: true)
-        #expect(try expanded.inspect().find(ViewType.Button.self).accessibilityValue().string() == "Expanded")
+        #expect(try expanded.inspect().find(viewWithAccessibilityIdentifier: "artistDetail.albumHeader").accessibilityValue().string() == "Expanded")
     }
 
     @Test func tappingASectionedSongPlaysTheVisibleOrderFromIt() throws {

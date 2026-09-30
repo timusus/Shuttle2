@@ -2,8 +2,8 @@ import Shared
 import SwiftUI
 
 /// The artist screen's sticky header over one album's songs (#631): the album's small cover, its title, "year · N
-/// songs" and a chevron that turns as the section unfolds. The whole header is one button that folds and unfolds the
-/// section; a long press offers the album's own actions, which VoiceOver reads as named actions.
+/// songs" and a chevron that turns as the section unfolds. The thumbnail opens the album and the rest of the header folds and
+/// unfolds the section; a long press offers the album's own actions, which VoiceOver reads as named actions.
 struct AlbumSectionHeader: View {
     let album: Album
     let songCount: Int
@@ -22,42 +22,49 @@ struct AlbumSectionHeader: View {
     private var subtitle: String { eyebrow(album.year.map { String($0.intValue) }, pluralized(songCount, "song")) }
 
     var body: some View {
-        Button(action: onToggle) {
-            HStack(spacing: Spacing.smallMedium) {
+        HStack(spacing: Spacing.smallMedium) {
+            Button(action: onOpenAlbum) {
                 RemoteArtwork(.album(album), points: thumbSize)
                     .artworkTile(thumbSize)
-                VStack(alignment: .leading, spacing: Spacing.tiny) {
-                    Text(title)
-                        .font(.headline)
-                        .foregroundStyle(Color.primary)
-                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
-                    Text(subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(.s2SecondaryText)
-                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "chevron.right")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.tint)
-                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                    .accessibilityHidden(true)
             }
-            .textCase(nil)
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .accessibilityLabel("Open album")
+            .accessibilityIdentifier("artistDetail.albumThumbnail")
+            Button(action: onToggle) {
+                HStack(spacing: Spacing.smallMedium) {
+                    VStack(alignment: .leading, spacing: Spacing.tiny) {
+                        Text(title)
+                            .font(.headline)
+                            .foregroundStyle(Color.primary)
+                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                        Text(subtitle)
+                            .font(.subheadline)
+                            .foregroundStyle(.s2SecondaryText)
+                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.tint)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        .accessibilityHidden(true)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(title), \(subtitle)")
+            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+            .accessibilityHint(isExpanded ? "Hides the album's songs" : "Shows the album's songs")
+            .accessibilityAddTraits(.isHeader)
+            .accessibilityAction(named: "Play", onPlay)
+            .accessibilityAction(named: "Shuffle", onShuffle)
+            .accessibilityAction(named: "Play Next", onPlayNext)
+            .accessibilityAction(named: "Add to Queue", onAddToQueue)
+            .accessibilityAction(named: "Go to Album", onOpenAlbum)
+            .accessibilityIdentifier("artistDetail.albumHeader")
         }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title), \(subtitle)")
-        .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
-        .accessibilityHint(isExpanded ? "Hides the album's songs" : "Shows the album's songs")
-        .accessibilityAddTraits(.isHeader)
-        .accessibilityAction(named: "Play", onPlay)
-        .accessibilityAction(named: "Shuffle", onShuffle)
-        .accessibilityAction(named: "Play Next", onPlayNext)
-        .accessibilityAction(named: "Add to Queue", onAddToQueue)
-        .accessibilityAction(named: "Go to Album", onOpenAlbum)
-        .accessibilityIdentifier("artistDetail.albumHeader")
+        .textCase(nil)
         .contextMenu {
             Button("Play", systemImage: "play.fill", action: onPlay)
             Button("Shuffle", systemImage: "shuffle", action: onShuffle)

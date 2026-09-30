@@ -252,7 +252,8 @@ struct AlbumArtistDetailContent: View {
     }
 
     /// One album's section. Collapsed, it's only its header, so the headers stack as a run of compact rows (#678):
-    /// no spacing between sections, and the header's own insets rather than the plain list's taller default.
+    /// no spacing after the section, and the header's own insets rather than the plain list's taller default. Expanded,
+    /// the section keeps the list's normal gap before the next header.
     private func albumSection(_ album: Album, songs: [Song], startIndex: Int) -> some View {
         let expanded = isExpanded(album)
         let inset = AdaptiveLayout.contentInset(layoutTier)
@@ -274,7 +275,7 @@ struct AlbumArtistDetailContent: View {
             )
             .listRowInsets(EdgeInsets(top: Spacing.xsmall, leading: inset, bottom: Spacing.xsmall, trailing: inset))
         }
-        .listSectionSpacing(0)
+        .listSectionSpacing(expanded ? .default : .custom(0))
     }
 
     /// [startIndex] is where [songs] begins in [state.songs] (its home section's offset), so tapping a row plays
