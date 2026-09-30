@@ -88,6 +88,11 @@ object HomeScenarios {
 
     val whatsNew = content.copy(showWhatsNew = true)
 
+    /** Phase Garden's queue left at its fifth track of twelve (#670). */
+    val resuming = content.copy(
+        sections = listOf(jumpBackIn.copy(progress = mapOf(HomeItem.AlbumItem(phaseGarden).key to HomeItemProgress(track = 5, trackCount = 12)))) + content.sections.drop(1),
+    )
+
     /** A library that's never been played (cold start): Recently added, Genre picks and Shuffle all. */
     val unplayed = content.copy(
         sections = listOf(

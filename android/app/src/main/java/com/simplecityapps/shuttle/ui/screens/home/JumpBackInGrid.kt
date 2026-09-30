@@ -30,6 +30,7 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceText
 
 /**
  * Jump back in (#633): the last things played as a compact grid of cells rather than a shelf, after Apple Music's and
@@ -40,6 +41,7 @@ import com.simplecityapps.shuttle.model.Song
 @Composable
 fun JumpBackInGrid(
     items: List<HomeItem>,
+    progress: Map<String, HomeItemProgress>,
     covers: Map<String, List<Song>>,
     columns: Int,
     showPlayButton: Boolean,
@@ -53,7 +55,7 @@ fun JumpBackInGrid(
             Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
                 row.forEach { item ->
                     key(item.key) {
-                        JumpBackInCell(item, covers[item.key].orEmpty(), showPlayButton, callbacks, Modifier.weight(1f))
+                        JumpBackInCell(item, progress[item.key], covers[item.key].orEmpty(), showPlayButton, callbacks, Modifier.weight(1f))
                     }
                 }
                 // A short last row keeps its cells the width of the rows above.
@@ -78,19 +80,22 @@ fun jumpBackInColumns(
 
 /**
  * One cell, after Spotify's recents: the cover at the cell's leading edge, the title on up to two lines and the kind
- * of item as a one-line label under it, centred on a tonal container of a fixed height, with a play button at the end
- * (shuffle, for a genre) when [showPlayButton]. A compact cell has none, so titles keep the room (#660).
+ * of item as a one-line label under it, then how far into it its queue was left ([progress], #670), centred on a tonal
+ * container of a minimum height, with a play button at the end (shuffle, for a genre) when [showPlayButton]. A compact
+ * cell has none, so titles keep the room (#660). Its play, and Play in its long-press sheet, carry on where the queue
+ * was left; the sheet's Play from start starts over.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun JumpBackInCell(
     item: HomeItem,
+    progress: HomeItemProgress?,
     covers: List<Song>,
     showPlayButton: Boolean,
     callbacks: HomeCallbacks,
     modifier: Modifier = Modifier,
 ) {
-    val actions = homeItemActions(item, callbacks)
+    val actions = homeItemActions(item, callbacks, resumes = true)
     val title = item.title()
     val shuffles = item is HomeItem.GenreItem
     Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
@@ -115,20 +120,23 @@ private fun JumpBackInCell(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Text(
-                        text = stringResource(item.kind.label),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    // The kind, then how far into it its queue was left on a line of its own: a phone cell is too narrow for both.
+                    listOfNotNull(stringResource(item.kind.label), progress?.let { stringResourceText(it.text) }).forEach { label ->
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
             if (showPlayButton) {
                 S2IconButton(
                     icon = if (shuffles) Icons.Rounded.Shuffle else Icons.Rounded.PlayArrow,
                     contentDescription = stringResource(if (shuffles) R.string.home_shuffle_item else R.string.home_play_item, title),
-                    onClick = { callbacks.onAction(item.playAction()) },
+                    onClick = { callbacks.onAction(item.resumeAction()) },
                     modifier = Modifier.testTag(JUMP_BACK_IN_PLAY_TAG),
                 )
             }

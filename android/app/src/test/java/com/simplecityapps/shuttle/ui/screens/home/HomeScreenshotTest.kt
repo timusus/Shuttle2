@@ -63,6 +63,9 @@ class HomeScreenshotTest {
     fun contentDark() = shot("content-dark", HomeScenarios.content, ThemeMode.Dark)
 
     @Test
+    fun resuming() = shot("resuming", HomeScenarios.resuming)
+
+    @Test
     fun whatsNew() = shot("whats-new", HomeScenarios.whatsNew)
 
     @Test

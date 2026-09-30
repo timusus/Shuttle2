@@ -148,9 +148,52 @@ class HomeScreenTest {
 
         robot.tapDescription("Play Phase Garden")
 
-        robot.actions shouldContainExactly listOf(phaseGarden.playAction())
-        (robot.actions.single() as MediaAction.Play).context shouldBe phaseGarden.playContext
+        robot.actions shouldContainExactly listOf(phaseGarden.resumeAction())
+        (robot.actions.single() as MediaAction.Resume).context shouldBe phaseGarden.playContext
         robot.openedItems shouldBe emptyList()
+    }
+
+    @Test
+    fun `a jump back in cell says which track its queue was left at`() {
+        robot.setContent(HomeScenarios.resuming)
+
+        robot.assertTextDisplayed("Track 5 of 12")
+    }
+
+    @Test
+    fun `a jump back in cell's Play resumes, and Play from start plays it in order`() {
+        robot.setContent(HomeScenarios.content)
+        val phaseGarden = HomeItem.AlbumItem(HomeScenarios.phaseGarden)
+
+        robot.customActionLabels("Phase Garden") shouldContainExactly listOf("Play", "Play from start", "Shuffle", "Play Next", "Add to Queue", "Go to album")
+        robot.performCustomAction("Phase Garden", "Play")
+        robot.performCustomAction("Phase Garden", "Play from start")
+
+        robot.actions shouldContainExactly listOf(MediaAction.Resume(phaseGarden.playInOrderAction(), phaseGarden.playContext), phaseGarden.playInOrderAction())
+    }
+
+    @Test
+    fun `a jump back in cell's long-press actions resume on Play, with Play from start`() {
+        robot.setContent(HomeScenarios.content)
+        val phaseGarden = HomeItem.AlbumItem(HomeScenarios.phaseGarden)
+
+        robot.longPressText("Phase Garden")
+
+        val target = robot.shownActions.single()
+        target.playAction shouldBe MediaAction.Resume(phaseGarden.playInOrderAction(), phaseGarden.playContext)
+        target.playFromStart!!.label shouldBe "Play from start"
+        target.playFromStart!!.onClick()
+        robot.actions shouldContainExactly listOf(phaseGarden.playInOrderAction())
+    }
+
+    @Test
+    fun `other tiles play from the start, with no Play from start`() {
+        robot.setContent(HomeScenarios.content)
+
+        robot.longPressText("Soft Focus")
+
+        robot.shownActions.single().playAction shouldBe null
+        robot.shownActions.single().playFromStart shouldBe null
     }
 
     @Test

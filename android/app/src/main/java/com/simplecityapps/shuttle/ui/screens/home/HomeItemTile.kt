@@ -17,6 +17,7 @@ import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.LibraryMusic
+import androidx.compose.material.icons.rounded.Replay
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -166,6 +167,8 @@ private val SmartPlaylistId.icon: ImageVector
 /**
  * What every Home tile offers besides its tap: the long-press actions sheet (Play, Shuffle, Play next, Add to queue,
  * Add to playlist and the rest, then Go to …) and the same actions for TalkBack, all carrying the item's play context.
+ * A tile that [resumes] (Jump back in's, #670) plays on from where the item's queue was left, with Play from start
+ * after Play.
  */
 class HomeItemActions(
     val showMenu: () -> Unit,
@@ -176,6 +179,7 @@ class HomeItemActions(
 fun homeItemActions(
     item: HomeItem,
     callbacks: HomeCallbacks,
+    resumes: Boolean = false,
 ): HomeItemActions {
     val title = item.title()
     val detail = item.detail()
@@ -184,6 +188,8 @@ fun homeItemActions(
     val shuffle = stringResource(R.string.menu_title_shuffle)
     val playNext = stringResource(R.string.menu_title_play_next)
     val addToQueue = stringResource(R.string.menu_title_add_to_queue)
+    val playFromStart = stringResource(R.string.home_play_from_start)
+    val playAction = if (resumes) MediaAction.Resume(item.playInOrderAction(), item.playContext) else item.playInOrderAction()
     fun act(action: () -> Unit): () -> Boolean = {
         action()
         true
@@ -198,11 +204,14 @@ fun homeItemActions(
                     placeholder = item.placeholder,
                     extraActions = listOf(S2Action(goTo, { callbacks.onOpenItem(item) }, Icons.AutoMirrored.Rounded.ArrowForward)),
                     playContext = item.playContext,
+                    playAction = playAction.takeIf { resumes },
+                    playFromStart = if (resumes) S2Action(playFromStart, { callbacks.onAction(item.playInOrderAction()) }, Icons.Rounded.Replay) else null,
                 ),
             )
         },
-        accessibilityActions = listOf(
-            CustomAccessibilityAction(play, act { callbacks.onAction(item.playInOrderAction()) }),
+        accessibilityActions = listOfNotNull(
+            CustomAccessibilityAction(play, act { callbacks.onAction(playAction) }),
+            if (resumes) CustomAccessibilityAction(playFromStart, act { callbacks.onAction(item.playInOrderAction()) }) else null,
             CustomAccessibilityAction(shuffle, act { callbacks.onAction(item.shuffleAction()) }),
             CustomAccessibilityAction(playNext, act { callbacks.onAction(MediaAction.PlayNext(item.selection)) }),
             CustomAccessibilityAction(addToQueue, act { callbacks.onAction(MediaAction.AddToQueue(item.selection)) }),

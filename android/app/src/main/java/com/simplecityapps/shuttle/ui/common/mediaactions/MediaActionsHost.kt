@@ -72,6 +72,12 @@ data class MediaActionsTarget(
      * a Home smart-playlist tile plays a song query, but the history should record the smart playlist (#633).
      */
     val playContext: PlayContext? = null,
+    /**
+     * What Play sends instead of playing from the start, with [playFromStart] listed after it: a Jump back in tile
+     * carries on where its queue was left (#670).
+     */
+    val playAction: MediaAction? = null,
+    val playFromStart: S2Action? = null,
 )
 
 /**
@@ -166,13 +172,15 @@ fun MediaActionsHost(
             title = target.title,
             subtitle = target.subtitle,
             artwork = { Artwork(target.placeholder, size = ArtworkSize.Small) },
-            actions = types.map { type ->
-                S2Action(
+            actions = types.flatMap { type ->
+                val playAction = target.playAction?.takeIf { type == MediaActionType.Play }
+                val action = S2Action(
                     label = type.label(),
                     icon = type.icon,
                     destructive = type == MediaActionType.Delete,
-                    onClick = { state.perform(type, target.selection, target.playContext) },
+                    onClick = { if (playAction != null) state.dispatch(playAction) else state.perform(type, target.selection, target.playContext) },
                 )
+                listOfNotNull(action, target.playFromStart?.takeIf { type == MediaActionType.Play })
             } + target.extraActions,
             onDismissRequest = { state.sheet = null },
         )

@@ -175,6 +175,7 @@ private fun HomeContent(
                     item(key = section.id.name) {
                         JumpBackInGrid(
                             items = section.items,
+                            progress = section.progress,
                             covers = content.covers,
                             columns = columns,
                             showPlayButton = wide || largeText,
