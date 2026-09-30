@@ -45,7 +45,7 @@ import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonSize
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
-import com.simplecityapps.shuttle.designsystem.component.S2TopBar
+import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SectionHeaderStyle
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
@@ -70,8 +70,8 @@ class HomeCallbacks(
 /**
  * Home (#633): Jump back in as a grid, then the library's shelves; at cold start, Shuffle all and a line on how Home
  * fills in; or the empty state when there's no music yet. There's no resume hero: the mini player is that (#646).
- * There's no page title (#490): the bar holds only Shuffle all and the Settings gear, so the first screen is music.
- * Search is its own tab.
+ * The bar is Library's and Settings' large title bar, with Shuffle all and the Settings gear (#660). The first section
+ * leads with a headline; every shelf after it takes the one title header. Search is its own tab.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,14 +82,14 @@ fun HomeScreen(
     /** Shown in place of the generic empty state while the library has no songs (#422), so it can offer access. */
     emptyContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
         topBar = {
-            S2TopBar(
-                title = "",
+            S2LargeTopBar(
+                title = stringResource(R.string.shell_tab_home),
                 actions = {
                     // Cold start has its own, larger Shuffle all.
                     if (uiState is HomeUiState.Content && !uiState.coldStart) {
@@ -128,7 +128,7 @@ val HomeUiState.Content.coldStart: Boolean
 val HomeSectionId.hasSeeAll: Boolean
     get() = this == HomeSectionId.RecentlyAdded
 
-/** At this font scale and above, text needs the width: the grid is one column and tiles wrap their titles. */
+/** At this font scale and above, text needs the width: the grid is one column and shelf tiles wrap their titles. */
 private const val LARGE_TEXT_FONT_SCALE = 1.5f
 
 /** Shelf tiles: about two and a half fit a phone, so the cut-off one says the row scrolls (#490); larger when wider. */
@@ -145,6 +145,8 @@ private fun HomeContent(
     val largeText = LocalDensity.current.fontScale >= LARGE_TEXT_FONT_SCALE
     val columns = jumpBackInColumns(widthAtLeastMedium = wide, largeText = largeText)
     val shelfTileWidth = if (wide) ShelfTileWidthWide else ShelfTileWidthCompact
+    // The lead section's header is a headline; the rest are shelf titles, set apart by a wider gap.
+    val leadSection = content.sections.firstOrNull { it.id != HomeSectionId.ShuffleAll && it.items.isNotEmpty() }?.id
     LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = S2Spacing.large)) {
         if (content.showWhatsNew) {
             item(key = "whats-new") { WhatsNewCard(callbacks) }
@@ -158,20 +160,19 @@ private fun HomeContent(
                 section.id == HomeSectionId.ShuffleAll || section.items.isEmpty() -> Unit
 
                 section.id == HomeSectionId.JumpBackIn -> {
-                    header(section, callbacks)
+                    header(section, lead = section.id == leadSection, callbacks)
                     item(key = section.id.name) {
                         JumpBackInGrid(
                             items = section.items,
                             covers = content.covers,
                             columns = columns,
-                            largeText = largeText,
                             callbacks = callbacks,
                             modifier = Modifier.padding(horizontal = S2Spacing.medium),
                         )
                     }
                 }
 
-                else -> shelf(section, content.covers, shelfTileWidth, largeText, callbacks)
+                else -> shelf(section, lead = section.id == leadSection, content.covers, shelfTileWidth, largeText, callbacks)
             }
         }
     }
@@ -179,15 +180,16 @@ private fun HomeContent(
 
 private fun LazyListScope.header(
     section: HomeSection,
+    lead: Boolean,
     callbacks: HomeCallbacks,
 ) {
     item(key = "${section.id.name}:header") {
         SectionHeader(
             title = stringResource(section.title.stringRes),
-            style = SectionHeaderStyle.Title,
+            style = if (lead) SectionHeaderStyle.Headline else SectionHeaderStyle.Title,
             action = if (section.id.hasSeeAll) stringResource(R.string.home_see_all) else null,
             onAction = { callbacks.onSeeAll(section.id) },
-            modifier = Modifier.padding(top = S2Spacing.small),
+            modifier = Modifier.padding(top = if (lead) S2Spacing.xsmall else S2Spacing.medium),
         )
     }
 }
@@ -198,12 +200,13 @@ private fun LazyListScope.header(
  */
 private fun LazyListScope.shelf(
     section: HomeSection,
+    lead: Boolean,
     covers: Map<String, List<Song>>,
     tileWidth: Dp,
     largeText: Boolean,
     callbacks: HomeCallbacks,
 ) {
-    header(section, callbacks)
+    header(section, lead, callbacks)
     val mixed = section.items.map { it.kind }.distinct().size > 1
     item(key = section.id.name) {
         LazyRow(contentPadding = PaddingValues(horizontal = S2Spacing.medium), horizontalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium)) {

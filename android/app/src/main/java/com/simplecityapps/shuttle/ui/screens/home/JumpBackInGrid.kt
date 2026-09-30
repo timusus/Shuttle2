@@ -21,7 +21,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
@@ -39,7 +38,6 @@ fun JumpBackInGrid(
     items: List<HomeItem>,
     covers: Map<String, List<Song>>,
     columns: Int,
-    largeText: Boolean,
     callbacks: HomeCallbacks,
     modifier: Modifier = Modifier,
 ) {
@@ -47,7 +45,7 @@ fun JumpBackInGrid(
         items.take(JUMP_BACK_IN_MAXIMUM_ITEMS).chunked(columns).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
                 row.forEach { item ->
-                    JumpBackInCell(item, covers[item.key].orEmpty(), largeText, callbacks, Modifier.weight(1f))
+                    JumpBackInCell(item, covers[item.key].orEmpty(), callbacks, Modifier.weight(1f))
                 }
                 // A short last row keeps its cells the width of the rows above.
                 repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
@@ -70,17 +68,15 @@ fun jumpBackInColumns(
 }
 
 /**
- * One cell, after Spotify's recents: the cover flush with the cell's leading edge, the title over two lines and the
- * kind of item, on a tonal container, with a play button at the end (shuffle, for a genre). Every cell in a row is
- * the same height: the title always reserves its two lines, except at the largest font sizes (one column), where it
- * takes what it needs.
+ * One cell, after Spotify's recents: the cover flush with the cell's leading edge, the title on one line and the kind
+ * of item as a smaller label under it, on a tonal container, with a play button at the end (shuffle, for a genre).
+ * One line each keeps every cell the cover's height at any font size, rather than wrapping (#660).
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun JumpBackInCell(
     item: HomeItem,
     covers: List<Song>,
-    largeText: Boolean,
     callbacks: HomeCallbacks,
     modifier: Modifier = Modifier,
 ) {
@@ -96,25 +92,25 @@ private fun JumpBackInCell(
                     .combinedClickable(onClick = { callbacks.onOpenItem(item) }, onLongClick = actions.showMenu)
                     .semantics { customActions = actions.accessibilityActions }
                     .testTag(JUMP_BACK_IN_CELL_TAG),
-                verticalAlignment = Alignment.Top,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 HomeItemArtwork(item, covers, ArtworkSize.Medium)
                 Column(
-                    modifier = Modifier.weight(1f).padding(start = S2Spacing.small, top = S2Spacing.xsmall, bottom = S2Spacing.xsmall),
+                    modifier = Modifier.weight(1f).padding(horizontal = S2Spacing.small, vertical = S2Spacing.xsmall),
                     verticalArrangement = Arrangement.spacedBy(S2Spacing.tiny),
                 ) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-                        minLines = if (largeText) 1 else 2,
-                        maxLines = if (largeText) LARGE_TEXT_TILE_LINES * 2 else 2,
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         text = stringResource(item.kind.label),
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }

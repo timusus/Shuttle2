@@ -220,10 +220,10 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `home has no page title and no search button, which the Search tab covers`() {
+    fun `home has its title and no search button, which the Search tab covers`() {
         robot.setContent(HomeScenarios.content)
 
-        robot.assertTextNotShown("Home")
+        robot.assertTextDisplayed("Home")
         robot.assertDescriptionNotShown("Search")
     }
 

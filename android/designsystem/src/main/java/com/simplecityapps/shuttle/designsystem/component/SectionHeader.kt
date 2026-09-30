@@ -24,6 +24,9 @@ enum class SectionHeaderStyle {
 
     /** `titleLarge` on `onSurface`: a screen's own sections, such as Home's shelves. */
     Title,
+
+    /** `headlineSmall` on `onSurface`: the lead section of a screen, over its [Title] sections, such as Home's first. */
+    Headline,
 }
 
 /**
@@ -53,10 +56,11 @@ fun SectionHeader(
             style = when (style) {
                 SectionHeaderStyle.Label -> MaterialTheme.typography.titleSmall
                 SectionHeaderStyle.Title -> MaterialTheme.typography.titleLarge
+                SectionHeaderStyle.Headline -> MaterialTheme.typography.headlineSmall
             },
             color = when (style) {
                 SectionHeaderStyle.Label -> MaterialTheme.colorScheme.primary
-                SectionHeaderStyle.Title -> MaterialTheme.colorScheme.onSurface
+                SectionHeaderStyle.Title, SectionHeaderStyle.Headline -> MaterialTheme.colorScheme.onSurface
             },
             modifier = Modifier
                 .weight(1f)
