@@ -49,6 +49,8 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
         private set
     var lastAlbumClicked: Album? = null
         private set
+    var lastAlbumToggled: Album? = null
+        private set
 
     /** The Appears On album tapped open on an artist's page. */
     var lastAppearsOnOpened: Album? = null
@@ -83,7 +85,8 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
             onPlay = ::play,
             onShuffle = ::shuffle,
             onArtistMore = ::more,
-            onAlbumClick = { lastAlbumClicked = it },
+            onToggleAlbum = { lastAlbumToggled = it },
+            onOpenAlbum = { lastAlbumClicked = it },
             onAlbumMore = ::more,
             onSongMore = ::more,
             onAppearsOnClick = { lastAppearsOnOpened = it },
@@ -208,6 +211,11 @@ class LibraryDetailRobot(private val rule: ComposeContentTestRule) {
     fun clickText(text: String) {
         scrollTo(text)
         rule.onAllNodesWithText(text)[0].performClick()
+        rule.waitForIdle()
+    }
+
+    fun clickOpenAlbum() {
+        rule.onAllNodesWithContentDescription("Open album")[0].performClick()
         rule.waitForIdle()
     }
 

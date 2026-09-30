@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -49,7 +52,7 @@ import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 /**
  * Artist detail (inventory §1): Appears On (#637), a row of others' albums crediting them, each opening its album, then the
  * songs in the artist sort order. Grouped by album, the song list is the albums (#678): each album's row unfolds its tracks
- * inline when tapped, and songs on none of their albums trail as Other Songs. Flat, their own albums newest first come
+ * inline when tapped (its thumbnail opens the album), and songs on none of their albums trail as Other Songs. Flat, their own albums newest first come
  * first, unfolding the same way, and every song follows in one list. Play / Shuffle play all of them in that order; the
  * overflow holds the artist's actions plus Shuffle albums.
  */
@@ -60,7 +63,8 @@ fun AlbumArtistDetailScreen(
     onPlay: (songs: List<Song>, index: Int) -> Unit,
     onShuffle: () -> Unit,
     onArtistMore: (AlbumArtist) -> Unit,
-    onAlbumClick: (Album) -> Unit,
+    onToggleAlbum: (Album) -> Unit,
+    onOpenAlbum: (Album) -> Unit,
     onAlbumMore: (Album) -> Unit,
     onSongMore: (Song) -> Unit,
     onAppearsOnClick: (Album) -> Unit,
@@ -99,7 +103,7 @@ fun AlbumArtistDetailScreen(
                 item(key = "albums-header", contentType = "header") { SectionHeader(title = stringResource(R.string.artist_detail_albums)) }
                 uiState.albums.forEach { album ->
                     val albumSongs = uiState.songsForAlbum(album)
-                    albumWithSongs(uiState, album, albumSongs, unknown, onAlbumClick, onAlbumMore, onSongMore) { song -> onPlay(albumSongs, albumSongs.indexOf(song)) }
+                    albumWithSongs(uiState, album, albumSongs, unknown, onToggleAlbum, onOpenAlbum, onAlbumMore, onSongMore) { song -> onPlay(albumSongs, albumSongs.indexOf(song)) }
                 }
             }
             if (uiState.appearsOn.isNotEmpty()) {
@@ -135,7 +139,7 @@ fun AlbumArtistDetailScreen(
                 offset += section.songs.size
                 val album = section.album
                 if (album != null) {
-                    albumWithSongs(uiState, album, section.songs, unknown, onAlbumClick, onAlbumMore, onSongMore) { song ->
+                    albumWithSongs(uiState, album, section.songs, unknown, onToggleAlbum, onOpenAlbum, onAlbumMore, onSongMore) { song ->
                         onPlay(uiState.songs, startIndex + section.songs.indexOf(song))
                     }
                 } else {
@@ -168,7 +172,8 @@ private fun LazyListScope.albumWithSongs(
     album: Album,
     songs: List<Song>,
     unknown: String,
-    onAlbumClick: (Album) -> Unit,
+    onToggleAlbum: (Album) -> Unit,
+    onOpenAlbum: (Album) -> Unit,
     onAlbumMore: (Album) -> Unit,
     onSongMore: (Song) -> Unit,
     onPlaySong: (Song) -> Unit,
@@ -178,8 +183,19 @@ private fun LazyListScope.albumWithSongs(
         AlbumRow(
             title = album.name ?: unknown,
             artist = listOfNotNull(album.year?.toString(), pluralString(R.plurals.songsPlural, songs.size)).joinToString(" · "),
-            onClick = { onAlbumClick(album) },
-            artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, size = ArtworkSize.Medium) },
+            onClick = { onToggleAlbum(album) },
+            artwork = {
+                val openAlbumLabel = stringResource(R.string.artist_detail_open_album)
+                // The thumbnail opens the album; the rest of the row folds it (#631)
+                LibraryArtwork(
+                    album,
+                    ArtworkPlaceholder.Album,
+                    Modifier
+                        .semantics { contentDescription = openAlbumLabel }
+                        .clickable(onClickLabel = openAlbumLabel) { onOpenAlbum(album) },
+                    size = ArtworkSize.Medium,
+                )
+            },
             selected = expanded,
             onMore = { onAlbumMore(album) },
         )
@@ -238,7 +254,8 @@ fun AlbumArtistDetailDestination(
                     ),
                 )
             },
-            onAlbumClick = viewModel::onAlbumClick,
+            onToggleAlbum = viewModel::onAlbumClick,
+            onOpenAlbum = { album -> onOpen(album.route) },
             onAlbumMore = { album ->
                 actions.showActions(
                     MediaActionsTarget(

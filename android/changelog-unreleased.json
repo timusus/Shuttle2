@@ -442,6 +442,10 @@
     {
       "text": "Home's Something Different now suggests only artists you have never played, instead of any artist with one unplayed song",
       "commits": []
+    },
+    {
+      "text": "On an artist page, tapping an album's cover opens the album, while tapping the rest of its row unfolds its songs",
+      "commits": []
     }
   ]
 }

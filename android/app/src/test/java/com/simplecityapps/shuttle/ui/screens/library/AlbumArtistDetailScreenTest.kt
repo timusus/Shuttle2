@@ -43,12 +43,15 @@ class AlbumArtistDetailScreenTest {
     }
 
     @Test
-    fun `tapping an album reports it`() {
+    fun `tapping an album's row folds it and tapping its thumbnail opens it`() {
         val state = readyAlbumArtistDetail()
         robot.setAlbumArtist(state)
 
         robot.clickText("Phase Garden")
+        robot.lastAlbumToggled shouldBe state.albums[0]
+        robot.lastAlbumClicked shouldBe null
 
+        robot.clickOpenAlbum()
         robot.lastAlbumClicked shouldBe state.albums[0]
     }
 
