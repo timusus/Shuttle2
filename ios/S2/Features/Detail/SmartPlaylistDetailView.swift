@@ -72,7 +72,7 @@ struct SmartPlaylistDetailContent: View {
                     onShuffle: onShuffle
                 ) { points in
                     // The generated artwork its Library row draws (#652): a smart playlist has no cover songs.
-                    CoverMosaic(covers: [], seed: smartPlaylist.id.title, symbol: smartPlaylist.id.symbol, cornerRadius: ArtworkCorner.hero)
+                    CoverMosaic(covers: [], seed: smartPlaylist.id.title, symbol: smartPlaylist.id.symbol, shape: .artworkHero)
                         .frame(width: points, height: points)
                 }
             } rows: {

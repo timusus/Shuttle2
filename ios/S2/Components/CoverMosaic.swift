@@ -4,14 +4,14 @@ import SwiftUI
 /// A playlist's or genre's artwork, which has none of its own (#643, as Android's `CoverMosaic`): a 2x2 mosaic of
 /// four of its songs' album covers, each a rounded square `Spacing.tiny` from the next; the one cover when there are
 /// fewer than four; its `GeneratedArtwork` with none, or until they load. It fills the square it's given and draws
-/// its own corners and hairline (`cornerRadius` for the whole, half that for a mosaic's covers), so don't add
+/// its own corners and hairline (`shape` for the whole, half its radius for a mosaic's covers), so don't add
 /// `artworkStyle` around it.
 struct CoverMosaic: View {
     let covers: [ArtworkSource]
     /// The `GeneratedArtwork`'s seed and glyph: the item's name and kind.
     let seed: String
     let symbol: String
-    var cornerRadius: CGFloat = ArtworkCorner.row
+    var shape: S2Shape = .artworkRow
 
     /// How many covers make a mosaic (Android's `MOSAIC_COVERS`, the shared `ObservePlaylistCovers.CoverCount`).
     static let count = 4
@@ -37,31 +37,31 @@ struct CoverMosaic: View {
                     GridRow {
                         ForEach(covers[row * 2 ..< row * 2 + 2], id: \.id) { cover in
                             RemoteArtwork(cover, points: cell) { ArtworkPlaceholder(symbol: "square.stack") }
-                                .artworkTile(cell, cornerRadius: cornerRadius / 2)
+                                .artworkTile(cell, shape: S2Shape(.rounded((shape.cornerRadius ?? 0) / 2)))
                         }
                     }
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .clipShape(shape)
         } else if let cover = covers.first {
             RemoteArtwork(cover, points: side) { GeneratedArtwork(seed: seed, symbol: symbol) }
-                .artworkTile(side, cornerRadius: cornerRadius)
+                .artworkTile(side, shape: shape)
         } else {
             GeneratedArtwork(seed: seed, symbol: symbol)
-                .artworkTile(side, cornerRadius: cornerRadius)
+                .artworkTile(side, shape: shape)
         }
     }
 }
 
 extension CoverMosaic {
     /// A genre's artwork from its cover songs (`GenreListViewModel.covers`, `HomeUiState.covers`).
-    static func genre(_ name: String, covers: [Song], cornerRadius: CGFloat = ArtworkCorner.row) -> CoverMosaic {
-        CoverMosaic(covers: covers.map(ArtworkSource.song), seed: name, symbol: GeneratedArtwork.genreSymbol, cornerRadius: cornerRadius)
+    static func genre(_ name: String, covers: [Song], shape: S2Shape = .artworkRow) -> CoverMosaic {
+        CoverMosaic(covers: covers.map(ArtworkSource.song), seed: name, symbol: GeneratedArtwork.genreSymbol, shape: shape)
     }
 
     /// A playlist's artwork from its cover songs (`PlaylistListUiState.covers`, `HomeUiState.covers`).
-    static func playlist(_ name: String, covers: [Song], cornerRadius: CGFloat = ArtworkCorner.row) -> CoverMosaic {
-        CoverMosaic(covers: covers.map(ArtworkSource.song), seed: name, symbol: GeneratedArtwork.playlistSymbol, cornerRadius: cornerRadius)
+    static func playlist(_ name: String, covers: [Song], shape: S2Shape = .artworkRow) -> CoverMosaic {
+        CoverMosaic(covers: covers.map(ArtworkSource.song), seed: name, symbol: GeneratedArtwork.playlistSymbol, shape: shape)
     }
 }
 
@@ -98,7 +98,6 @@ struct GeneratedArtwork: View {
 /// rounded-square fill, the same in light and dark, in place of a tone-seeded `GeneratedArtwork`.
 struct AutoPlaylistArtwork: View {
     let symbol: String
-    var cornerRadius: CGFloat = ArtworkCorner.row
 
     var body: some View {
         GeometryReader { proxy in

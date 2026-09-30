@@ -100,7 +100,7 @@ struct PlaylistDetailContent: View {
                     onPlay: { onPlay(0) },
                     onShuffle: onShuffle
                 ) { points in
-                    CoverMosaic.playlist(playlist.name, covers: covers, cornerRadius: ArtworkCorner.hero)
+                    CoverMosaic.playlist(playlist.name, covers: covers, shape: .artworkHero)
                         .frame(width: points, height: points)
                 }
             } rows: {

@@ -73,7 +73,7 @@ struct LibraryGrid<Content: View>: View {
     }
 }
 
-/// A grid tile: square artwork (`ArtworkCorner.tile`, artists as albums) filling the column, with the title and a secondary line
+/// A grid tile: square artwork (`S2Shape.artworkTile`, an artist's a circle) filling the column, with the title and a secondary line
 /// under it. The playing item's title takes the tint and its artwork the animated indicator.
 struct LibraryTile: View {
     let title: String
@@ -103,7 +103,7 @@ struct LibraryTile: View {
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.footnote)
-                        .foregroundStyle(.s2SecondaryText)
+                        .foregroundStyle(.s2TextSecondary)
                         .lineLimit(1)
                 }
             }
@@ -123,7 +123,7 @@ struct LibraryTile: View {
                     ArtworkPlaceholder(symbol: placeholderSymbol)
                 }
             }
-            .artworkStyle(cornerRadius: ArtworkCorner.tile)
+            .artworkStyle(.artwork(.artworkTile, for: artwork))
     }
 }
 
@@ -142,12 +142,13 @@ struct ShuffleButton: View {
 /// letter index's width kept clear, so each row sits where the loaded list's will (#643).
 struct LibraryListSkeleton: View {
     var artworkSize: CGFloat = ArtworkSize.row
+    var artworkShape: S2Shape = .artworkRow
     var rows = 12
 
     var body: some View {
         List {
             ForEach(0 ..< rows, id: \.self) { _ in
-                MediaRowSkeleton(artworkSize: artworkSize)
+                MediaRowSkeleton(artworkSize: artworkSize, artworkShape: artworkShape)
             }
         }
         .listStyle(.plain)
@@ -179,6 +180,7 @@ private struct NowPlayingRowBackground: ViewModifier {
 /// Grid tiles' skeleton, while a grid's first page loads: `LibraryGrid`'s columns, beside the letter index's width,
 /// and `LibraryTile`'s title and subtitle lines, so each tile sits where the loaded grid's will (#643).
 struct LibraryGridSkeleton: View {
+    var artworkShape: S2Shape = .artworkTile
     var tiles = 12
 
     @ScaledMetric(relativeTo: .subheadline) private var titleHeight: CGFloat = 12
@@ -190,7 +192,7 @@ struct LibraryGridSkeleton: View {
         LibraryGrid {
             ForEach(0 ..< tiles, id: \.self) { _ in
                 VStack(alignment: .leading, spacing: Spacing.small) {
-                    RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous).fill(Color(.systemGray5))
+                    artworkShape.fill(.s2SurfaceFill)
                         .aspectRatio(1, contentMode: .fit)
                     VStack(alignment: .leading, spacing: Spacing.tiny) {
                         Capsule().fill(Color(.systemGray5)).frame(height: titleHeight).padding(.trailing, Spacing.large)

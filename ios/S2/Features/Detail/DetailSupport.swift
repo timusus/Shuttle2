@@ -204,7 +204,7 @@ struct DetailHero<Artwork: View>: View {
                 .padding(.bottom, Spacing.xsmall)
             VStack(alignment: alignment, spacing: Spacing.xsmall) {
                 Text(title)
-                    .font(.s2Title2)
+                    .font(.s2HeroTitle)
                     .multilineTextAlignment(textAlignment)
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                     .accessibilityAddTraits(.isHeader)
@@ -212,7 +212,7 @@ struct DetailHero<Artwork: View>: View {
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.s2Eyebrow)
-                        .foregroundStyle(.s2SecondaryText)
+                        .foregroundStyle(.s2TextSecondary)
                         .multilineTextAlignment(textAlignment)
                 }
             }
@@ -304,7 +304,7 @@ struct TrackRow: View {
                 } else if let number {
                     Text("\(number)")
                         .font(.s2Time)
-                        .foregroundStyle(.s2SecondaryText)
+                        .foregroundStyle(.s2TextSecondary)
                 }
             }
             .frame(width: numberWidth, alignment: .center)
@@ -316,7 +316,7 @@ struct TrackRow: View {
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.subheadline)
-                        .foregroundStyle(.s2SecondaryText)
+                        .foregroundStyle(.s2TextSecondary)
                         .lineLimit(1)
                 }
             }
@@ -333,8 +333,8 @@ struct SongDurationText: View {
 
     var body: some View {
         Text(Duration.milliseconds(durationMs).formatted(.time(pattern: .minuteSecond)))
-            .font(.s2RowTime)
-            .foregroundStyle(.s2SecondaryText)
+            .font(.s2RowMeta)
+            .foregroundStyle(.s2TextSecondary)
     }
 }
 

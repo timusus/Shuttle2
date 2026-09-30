@@ -126,8 +126,8 @@ struct SongRow: View {
             titleIdentifier: "songRow.title"
         ) {
             Text(Duration.milliseconds(Int64(song.duration)).formatted(.time(pattern: .minuteSecond)))
-                .font(.s2RowTime)
-                .foregroundStyle(.s2SecondaryText)
+                .font(.s2RowMeta)
+                .foregroundStyle(.s2TextSecondary)
         }
     }
 }

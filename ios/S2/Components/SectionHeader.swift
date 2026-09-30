@@ -58,7 +58,7 @@ struct SectionHeader: View {
                 if let subtitle {
                     Text(subtitle)
                         .font(.subheadline)
-                        .foregroundStyle(.s2SecondaryText)
+                        .foregroundStyle(.s2TextSecondary)
                         .lineLimit(1)
                 }
             }

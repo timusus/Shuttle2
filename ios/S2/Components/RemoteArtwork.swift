@@ -38,10 +38,13 @@ struct ArtworkSource: Equatable {
     let id: AnyHashable
     let cacheKey: String
     let candidates: () async throws -> [ArtworkCandidate]
+    /// An artist's picture, which is always a circle (`S2Shape.artwork(_:for:)`).
+    let isArtist: Bool
 
-    init(id: AnyHashable, cacheKey: String? = nil, candidates: @escaping () async throws -> [ArtworkCandidate]) {
+    init(id: AnyHashable, cacheKey: String? = nil, isArtist: Bool = false, candidates: @escaping () async throws -> [ArtworkCandidate]) {
         self.id = id
         self.cacheKey = cacheKey ?? "\(id)"
+        self.isArtist = isArtist
         self.candidates = candidates
     }
 
@@ -68,7 +71,7 @@ struct ArtworkSource: Equatable {
     }
 
     static func albumArtist(_ albumArtist: AlbumArtist) -> ArtworkSource {
-        ArtworkSource(id: albumArtist.stableId, cacheKey: itemKey("artist", albumArtist.stableId, version: albumArtist.artworkVersion)) {
+        ArtworkSource(id: albumArtist.stableId, cacheKey: itemKey("artist", albumArtist.stableId, version: albumArtist.artworkVersion), isArtist: true) {
             try await AppGraph.shared.artworkUrls.requests(albumArtist: albumArtist).compactMap(ArtworkCandidate.init)
         }
     }
@@ -83,20 +86,19 @@ extension ArtworkCandidate {
 }
 
 extension View {
-    /// Frames artwork to a square tile of `points` and styles it (`artworkStyle`): continuous corners of
-    /// `cornerRadius` (an `ArtworkCorner` token) and the hairline.
-    func artworkTile(_ points: CGFloat, cornerRadius: CGFloat = ArtworkCorner.row) -> some View {
+    /// Frames artwork to a square tile of `points` and styles it (`artworkStyle`): clipped to `shape` (an `S2Shape`
+    /// artwork role, `.artist` for an artist's picture) with the hairline.
+    func artworkTile(_ points: CGFloat, shape: S2Shape = .artworkRow) -> some View {
         frame(width: points, height: points)
-            .artworkStyle(cornerRadius: cornerRadius)
+            .artworkStyle(shape)
     }
 
-    /// Clips artwork to S2's continuous corner and draws a 1 px hairline over it, after Shuttle Podcasts'
+    /// Clips artwork to an `S2Shape` and draws a 1 px hairline over it, after Shuttle Podcasts'
     /// `artworkStyle`. The hairline is what keeps a white-cornered cover from bleeding into a white list (and a
     /// black one into a dark list); `Color.primary` at 8% gives near-black in light mode and near-white in dark.
     /// Rows and tiles take this and no shadow; heroes and the player add `artworkShadow` on top.
-    func artworkStyle(cornerRadius: CGFloat = ArtworkCorner.row) -> some View {
-        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        return clipShape(shape)
+    func artworkStyle(_ shape: S2Shape = .artworkRow) -> some View {
+        clipShape(shape)
             .overlay { shape.strokeBorder(ArtworkHairline.color, lineWidth: ArtworkHairline.width) }
     }
 }

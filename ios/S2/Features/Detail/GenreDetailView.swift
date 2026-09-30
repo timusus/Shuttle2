@@ -79,7 +79,7 @@ struct GenreDetailContent: View {
                     onPlay: { onPlay(0) },
                     onShuffle: onShuffle
                 ) { points in
-                    CoverMosaic.genre(genre.name, covers: covers, cornerRadius: ArtworkCorner.hero)
+                    CoverMosaic.genre(genre.name, covers: covers, shape: .artworkHero)
                         .frame(width: points, height: points)
                 }
             } rows: {

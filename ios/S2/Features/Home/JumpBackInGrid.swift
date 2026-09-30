@@ -60,12 +60,12 @@ private struct JumpBackInCell: View {
     private static let accessibilityTitleLines = 6
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: ArtworkCorner.row, style: .continuous)
+        let shape = S2Shape.artworkRow
         HStack(spacing: 0) {
             Button { open(item) } label: {
                 HStack(alignment: .center, spacing: Spacing.small) {
                     // Square corners: the cell's own shape rounds the cover's outer ones.
-                    HomeItemArtwork(item: item, size: ArtworkSize.albumRow, cornerRadius: 0)
+                    HomeItemArtwork(item: item, size: ArtworkSize.albumRow, shape: S2Shape(.rounded(0)))
                         .frame(maxHeight: .infinity, alignment: .top)
                     VStack(alignment: .leading, spacing: Spacing.tiny) {
                         Text(item.title)
@@ -77,12 +77,12 @@ private struct JumpBackInCell: View {
                             .fixedSize(horizontal: false, vertical: true)
                         Text(item.typeLabel)
                             .font(.caption2)
-                            .foregroundStyle(.s2SecondaryText)
+                            .foregroundStyle(.s2TextSecondary)
                             .lineLimit(1)
                         if let progress {
                             Text(progress.localized())
                                 .font(.caption2)
-                                .foregroundStyle(.s2SecondaryText)
+                                .foregroundStyle(.s2TextSecondary)
                                 .lineLimit(1)
                         }
                     }

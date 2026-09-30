@@ -23,11 +23,11 @@ struct EmptyState<Action: View>: View {
         ContentUnavailableView {
             VStack(spacing: Spacing.smallMedium) {
                 Image(systemName: systemImage)
-                    .font(.s2Glyph(size: 44, relativeTo: .largeTitle))
+                    .font(.s2Glyph(size: IconSize.hero, relativeTo: .largeTitle))
                     .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
                 Text(title)
-                    .font(.s2Title2)
+                    .font(.s2Title)
                     .accessibilityAddTraits(.isHeader)
             }
         } description: {
@@ -38,7 +38,8 @@ struct EmptyState<Action: View>: View {
             action()
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
-                .font(.headline)
+                .foregroundStyle(.s2OnAccent)
+                .font(.s2Button)
         }
     }
 }

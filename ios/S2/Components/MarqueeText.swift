@@ -2,7 +2,7 @@ import SwiftUI
 
 /// One line of text that scrolls itself once when it is too long for the space it is given. Ported
 /// from Shuttle Podcasts' `Components/MarqueeText.swift`. Style it from outside like `Text`
-/// (`.font(.s2PlayerTitle)`, `.foregroundStyle`); the pass restarts when the text changes.
+/// (`.font(.s2HeroTitle)`, `.foregroundStyle`); the pass restarts when the text changes.
 ///
 /// For places where the text is the SUBJECT — Now Playing's title and artist — and truncating it
 /// would hide the part that identifies it, but where a second line would cost height the layout

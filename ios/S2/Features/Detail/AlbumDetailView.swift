@@ -80,7 +80,7 @@ struct AlbumDetailContent: View {
                         onShuffle: onShuffle
                     ) { points in
                         RemoteArtwork(.album(album), points: points)
-                            .artworkTile(points, cornerRadius: ArtworkCorner.hero)
+                            .artworkTile(points, shape: .artworkHero)
                     }
                 } rows: {
                     ForEach(discs, id: \.disc) { group in
@@ -92,7 +92,7 @@ struct AlbumDetailContent: View {
                             if discs.count > 1 {
                                 Text("Disc \(group.disc)")
                                     .font(.s2GroupHeader)
-                                    .foregroundStyle(.s2SecondaryText)
+                                    .foregroundStyle(.s2TextSecondary)
                                     .textCase(.uppercase)
                             }
                         }

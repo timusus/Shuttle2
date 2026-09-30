@@ -40,14 +40,15 @@ extension View {
 /// A skeleton of a `MediaRow`, for a list whose first page hasn't arrived.
 struct MediaRowSkeleton: View {
     var artworkSize: CGFloat = ArtworkSize.row
+    var artworkShape: S2Shape = .artworkRow
 
     @ScaledMetric(relativeTo: .body) private var titleHeight: CGFloat = 14
     @ScaledMetric(relativeTo: .subheadline) private var subtitleHeight: CGFloat = 12
 
     var body: some View {
         HStack(spacing: Spacing.smallMedium) {
-            RoundedRectangle(cornerRadius: ArtworkCorner.row, style: .continuous)
-                .fill(Color(.systemGray5))
+            artworkShape
+                .fill(.s2SurfaceFill)
                 .frame(width: artworkSize, height: artworkSize)
             VStack(alignment: .leading, spacing: Spacing.small) {
                 Capsule().fill(Color(.systemGray5))

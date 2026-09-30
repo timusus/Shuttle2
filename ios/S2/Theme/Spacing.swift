@@ -23,18 +23,50 @@ enum Spacing {
     static let xlarge: CGFloat = 32
 }
 
-/// Corner radii for artwork, and for any card or surface of the same size class. Corners are continuous
-/// everywhere: `artworkStyle(cornerRadius:)` clips and draws the hairline, `artworkTile` just clips.
-/// Controls (Play, Shuffle, the scrubber) are capsules, not a radius.
-enum ArtworkCorner {
-    /// Row artwork (48-56 pt): songs, albums, artists, playlists, the queue, the mini player's cover.
-    static let row: CGFloat = 8
-    /// Shelf and grid tiles (albums and artists alike), the floating mini player, notices and other small cards.
-    static let tile: CGFloat = 16
-    /// A detail screen's hero cover, and full-width cards (Home's resume card).
-    static let hero: CGFloat = 20
-    /// The Now Playing cover.
-    static let player: CGFloat = 20
+/// Glyph sizes for SF Symbols that aren't a text style's size, as base points for `Font.s2Glyph(size:)` (which
+/// scales them with Dynamic Type). A glyph in running text or a row takes its text style instead.
+enum IconSize {
+    /// A glyph in a list icon container (Settings' squares) or beside a row title.
+    static let small: CGFloat = 17
+    /// A toolbar or card glyph: a source card's icon.
+    static let medium: CGFloat = 20
+    /// A prominent glyph in a large container: a server's icon in Sources.
+    static let large: CGFloat = 24
+    /// An empty state's or a first-run step's symbol.
+    static let hero: CGFloat = 44
+}
+
+/// Hit areas. Every tappable control is at least `minimum` square, whatever it draws: a smaller glyph or disc sits
+/// centred in the target (`touchTarget()`).
+enum TouchTarget {
+    /// The HIG minimum, 44 pt.
+    static let minimum: CGFloat = 44
+    /// A glyph's visible disc inside a minimum target: Now Playing's close and favourite.
+    static let disc: CGFloat = 36
+
+    /// The target for a control that draws `visible` points: never below `minimum`.
+    static func side(_ visible: CGFloat) -> CGFloat {
+        max(visible, minimum)
+    }
+}
+
+extension View {
+    /// Pads a control out to its touch target (`TouchTarget.side(visible)`, the 44 pt minimum by default) and
+    /// makes the whole square hittable.
+    func touchTarget(_ visible: CGFloat = TouchTarget.minimum) -> some View {
+        frame(width: TouchTarget.side(visible), height: TouchTarget.side(visible))
+            .contentShape(Rectangle())
+    }
+}
+
+/// Standard row heights, the minimum a row of each kind lays out at (it grows with Dynamic Type).
+enum RowHeight {
+    /// A text-only row: a tracklist song, a Settings item.
+    static let text: CGFloat = TouchTarget.minimum
+    /// A row with `ArtworkSize.row` artwork.
+    static let media: CGFloat = ArtworkSize.row + Spacing.medium
+    /// A row with `ArtworkSize.albumRow` artwork.
+    static let albumMedia: CGFloat = ArtworkSize.albumRow + Spacing.medium
 }
 
 /// The artwork sizes rows, tiles and heroes draw at, in points (also the decode size `ArtworkImage` requests).
