@@ -332,16 +332,16 @@ struct IconSquare: View {
         var cornerRadius: CGFloat {
             switch self {
             case .settings: 7
-            case .card: ArtworkCorner.row + Spacing.tiny
-            case .large: ArtworkCorner.row + Spacing.xsmall
+            case .card: S2Shape.control.cornerRadius ?? 0
+            case .large: (S2Shape.control.cornerRadius ?? 0) + Spacing.tiny
             }
         }
 
         var glyph: CGFloat {
             switch self {
-            case .settings: 17
-            case .card: 20
-            case .large: 24
+            case .settings: IconSize.small
+            case .card: IconSize.medium
+            case .large: IconSize.large
             }
         }
     }
@@ -359,7 +359,7 @@ struct IconSquare: View {
         let side = size.points * scale
         let shape = RoundedRectangle(cornerRadius: size.cornerRadius * scale, style: .continuous)
         Image(systemName: systemImage)
-            .font(.system(size: size.glyph * scale, weight: .medium))
+            .font(.s2ScaledGlyph(size.glyph * scale, weight: .medium))
             .foregroundStyle(foreground)
             .frame(width: side, height: side)
             .background(shape.fill(background))
@@ -456,7 +456,7 @@ struct ImportStatusRow: View {
                     ProgressView().frame(maxWidth: .infinity, alignment: .leading)
                 }
                 if let message {
-                    Text(message).font(.caption).foregroundStyle(.s2SecondaryText).lineLimit(1)
+                    Text(message).font(.caption).foregroundStyle(.s2TextSecondary).lineLimit(1)
                 }
             }
             .accessibilityElement(children: .combine)

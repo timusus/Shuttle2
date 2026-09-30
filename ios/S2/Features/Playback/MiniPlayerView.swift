@@ -10,7 +10,7 @@ import SwiftUI
 ///   the system draws, laid out for its placement (`.expanded` above the tab bar, `.inline` beside the minimised one).
 ///   The per-screen insets then draw nothing (`\.miniPlayerInAccessory`).
 /// - Otherwise (iOS 17-18, iOS 26.0, and the iPad sidebar): a floating rounded card inset at the bottom of every
-///   screen (`miniPlayerInset`), `ArtworkCorner.tile` on `.thickMaterial` with a hairline edge and a soft shadow
+///   screen (`miniPlayerInset`), `S2Shape.card` on `.thickMaterial` with a hairline edge and a soft shadow
 ///   (glass on iOS 26), inset `Spacing.small`.
 ///
 /// Either way it shows only while there is a current song (`PlayerBinding.isMiniPlayerVisible`), sliding in and out
@@ -125,7 +125,7 @@ struct MiniPlayerBar: View {
     /// The floating card's lift off the content.
     static let floatingShadow = ArtworkShadow(opacity: 0.18, radius: 18, y: 6)
     /// The progress ring's diameter and stroke, around the play/pause glyph inside its 44 pt target.
-    static let progressRingDiameter: CGFloat = 36
+    static let progressRingDiameter: CGFloat = TouchTarget.disc
     static let progressRingWidth: CGFloat = 2.5
 
     @Environment(\.artworkTint) private var tint
@@ -174,12 +174,12 @@ struct MiniPlayerBar: View {
     // MARK: - Floating card
 
     private var floatingCard: some View {
-        let shape = RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous)
+        let shape = S2Shape.card
         return row(coverSize: ArtworkSize.row, showsArtist: true, showsNext: true)
             .padding(.leading, Spacing.small)
             .padding(.trailing, Spacing.xsmall)
             .padding(.vertical, Spacing.small)
-            .modifier(FloatingCardBackground(shape: shape))
+            .glassSurface(in: shape, fallback: GlassFallback.card)
             .clipShape(shape)
             .artworkShadow(Self.floatingShadow)
             .padding(.horizontal, Spacing.small)
@@ -208,7 +208,7 @@ struct MiniPlayerBar: View {
                                 .font(.footnote)
                                 // In the accessory, the glass's own vibrant secondary, which follows the light or
                                 // dark appearance the glass takes over what scrolls under it.
-                                .foregroundStyle(style == .accessory ? AnyShapeStyle(.secondary) : AnyShapeStyle(.s2SecondaryText))
+                                .foregroundStyle(style == .accessory ? AnyShapeStyle(.secondary) : AnyShapeStyle(.s2TextSecondary))
                                 .lineLimit(1)
                         }
                     }
@@ -228,8 +228,7 @@ struct MiniPlayerBar: View {
                     .foregroundStyle(.primary)
                     .contentTransition(.symbolEffect(.replace))
                     .background { MiniPlayerProgressRing(progress: progress) }
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
+                    .touchTarget()
             }
             .buttonStyle(.pressScale)
             .accessibilityLabel(isPlaying ? "Pause" : "Play")
@@ -240,8 +239,7 @@ struct MiniPlayerBar: View {
                     Image(systemName: "forward.fill")
                         .font(.body.weight(.semibold))
                         .foregroundStyle(.primary)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
+                        .touchTarget()
                 }
                 .buttonStyle(.pressScale)
                 .accessibilityLabel("Next")
@@ -277,22 +275,6 @@ private struct MiniPlayerAccessoryContent: View {
         bar.row(coverSize: MiniPlayerBar.accessoryCover, showsArtist: !isInline, showsNext: !isInline)
             .padding(.leading, Spacing.small)
             .padding(.trailing, Spacing.xsmall)
-    }
-}
-
-/// The floating card's ground: Liquid Glass on iOS 26; below, `.thickMaterial`, so the list scrolling behind reads
-/// as colour rather than as text, edged with a hairline.
-private struct FloatingCardBackground: ViewModifier {
-    let shape: RoundedRectangle
-
-    func body(content: Content) -> some View {
-        if #available(iOS 26, *) {
-            content.glassEffect(.regular, in: shape)
-        } else {
-            content
-                .background(.thickMaterial, in: shape)
-                .overlay { shape.strokeBorder(Color.primary.opacity(0.08), lineWidth: Spacing.hairline) }
-        }
     }
 }
 

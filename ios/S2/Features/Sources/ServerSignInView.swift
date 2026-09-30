@@ -229,7 +229,7 @@ struct ServerSignInContent: View {
                 RequiredNote(field: "address")
             } else if addressLooksInvalid {
                 Label("That isn't a server address. Try one like 192.168.1.20:8096.", systemImage: "exclamationmark.circle")
-                    .foregroundStyle(.red)
+                    .foregroundStyle(.s2Error)
                     .accessibilityIdentifier("serverSignIn.addressInvalid")
             } else if let resolvedAddress {
                 Text("Connects to \(resolvedAddress)")
@@ -345,7 +345,7 @@ private struct SignInHeader: View {
                     .accessibilityAddTraits(.isHeader)
                 Text("Your server's address, then your \(type.title) account.")
                     .font(.subheadline)
-                    .foregroundStyle(.s2SecondaryText)
+                    .foregroundStyle(.s2TextSecondary)
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
@@ -360,7 +360,7 @@ private struct RequiredNote: View {
 
     var body: some View {
         Label("Enter the \(field).", systemImage: "exclamationmark.circle")
-            .foregroundStyle(.red)
+            .foregroundStyle(.s2Error)
     }
 }
 
@@ -373,11 +373,11 @@ private struct SignInErrorSection: View {
             VStack(alignment: .leading, spacing: Spacing.xsmall) {
                 Label("Couldn't Sign In", systemImage: "exclamationmark.triangle.fill")
                     .font(.s2Headline)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(.s2Error)
                 Text(message)
                 Text("Check the address and your account, and that the server is running, then try again.")
                     .font(.footnote)
-                    .foregroundStyle(.s2SecondaryText)
+                    .foregroundStyle(.s2TextSecondary)
             }
             .padding(.vertical, Spacing.xsmall)
             .accessibilityElement(children: .combine)
@@ -394,7 +394,7 @@ private struct SignedInSection: View {
         Section {
             Label("Signed in to \(type.title)", systemImage: "checkmark.seal.fill")
                 .font(.s2Headline)
-                .foregroundStyle(.green)
+                .foregroundStyle(.s2Success)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.small)
                 .accessibilityIdentifier("serverSignIn.connected")
@@ -425,7 +425,7 @@ private struct QuickConnectSection: View {
                     .accessibilityIdentifier("serverSignIn.copyQuickConnectCode")
                 HStack(spacing: Spacing.small) {
                     ProgressView()
-                    Text("Waiting for approval…").foregroundStyle(.s2SecondaryText)
+                    Text("Waiting for approval…").foregroundStyle(.s2TextSecondary)
                 }
                 .font(.subheadline)
             }

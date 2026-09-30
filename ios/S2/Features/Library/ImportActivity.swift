@@ -58,7 +58,7 @@ private struct ImportActivityGlyph: View {
         case .importing:
             ProgressView()
         case .failed:
-            Image(systemName: "exclamationmark.arrow.triangle.2.circlepath").foregroundStyle(.red)
+            Image(systemName: "exclamationmark.arrow.triangle.2.circlepath").foregroundStyle(.s2Error)
         case .idle:
             EmptyView()
         }

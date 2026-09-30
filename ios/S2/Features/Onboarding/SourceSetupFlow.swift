@@ -185,18 +185,18 @@ struct SourceSetupWelcome: View {
                         .foregroundStyle(.white)
                         .padding(Spacing.large)
                         .background(
-                            RoundedRectangle(cornerRadius: ArtworkCorner.hero, style: .continuous)
+                            S2Shape.artworkHero
                                 .fill(LinearGradient(colors: [.purple, .indigo], startPoint: .topLeading, endPoint: .bottomTrailing))
                         )
                         .accessibilityHidden(true)
                     Text("Welcome to Shuttle Music")
-                        .font(.s2Title)
+                        .font(.s2LargeTitle)
                         .multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)
                         .accessibilityIdentifier("onboarding.welcome")
                     Text("Your music library, streamed from your own server.")
                         .font(.s2Title3)
-                        .foregroundStyle(.s2SecondaryText)
+                        .foregroundStyle(.s2TextSecondary)
                         .multilineTextAlignment(.center)
                 }
                 VStack(alignment: .leading, spacing: Spacing.large) {
@@ -228,6 +228,7 @@ struct SourceSetupWelcome: View {
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
                 .controlSize(.large)
+                .foregroundStyle(.s2OnAccent)
                 .accessibilityIdentifier("onboarding.getStarted")
                 Button("Not Now", action: onSkip)
                     .controlSize(.large)
@@ -255,7 +256,7 @@ private struct FeatureRow: View {
             IconSquare(systemImage: symbol, style: .filled(color), size: .card)
             VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(title).font(.s2Headline)
-                Text(detail).font(.subheadline).foregroundStyle(.s2SecondaryText)
+                Text(detail).font(.subheadline).foregroundStyle(.s2TextSecondary)
             }
             .fixedSize(horizontal: false, vertical: true)
         }
@@ -275,10 +276,10 @@ struct SourceTypeCards: View {
             VStack(alignment: .leading, spacing: Spacing.medium) {
                 VStack(alignment: .leading, spacing: Spacing.xsmall) {
                     Text("Where's your music?")
-                        .font(.s2Title2)
+                        .font(.s2Title)
                         .accessibilityAddTraits(.isHeader)
                     Text("Choose the server your library lives on.")
-                        .foregroundStyle(.s2SecondaryText)
+                        .foregroundStyle(.s2TextSecondary)
                 }
                 .padding(.bottom, Spacing.small)
                 ForEach(types, id: \.self) { type in
@@ -309,7 +310,7 @@ private struct SourceTypeCard: View {
                 Text(type.title).font(.s2Headline)
                 Text(type.setupBlurb)
                     .font(.subheadline)
-                    .foregroundStyle(.s2SecondaryText)
+                    .foregroundStyle(.s2TextSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: Spacing.small)
@@ -322,10 +323,10 @@ private struct SourceTypeCard: View {
         .foregroundStyle(.primary)
         .padding(Spacing.medium)
         .background(
-            RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous)
+            S2Shape.card
                 .fill(Color(.secondarySystemGroupedBackground))
         )
-        .contentShape(RoundedRectangle(cornerRadius: ArtworkCorner.tile, style: .continuous))
+        .contentShape(S2Shape.card)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
     }
@@ -358,12 +359,12 @@ struct SourceSetupImportPage: View {
                 ImportRing(state: state)
                 VStack(spacing: Spacing.small) {
                     Text(title)
-                        .font(.s2Title2)
+                        .font(.s2Title)
                         .multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)
                         .accessibilityIdentifier("onboarding.importTitle")
                     Text(detail)
-                        .foregroundStyle(.s2SecondaryText)
+                        .foregroundStyle(.s2TextSecondary)
                         .multilineTextAlignment(.center)
                         .lineLimit(3)
                     if let percent {
@@ -376,7 +377,7 @@ struct SourceSetupImportPage: View {
                 if !state.isReady, !state.isFailed {
                     Label("You can start listening now. The import keeps going while you browse.", systemImage: "info.circle")
                         .font(.footnote)
-                        .foregroundStyle(.s2SecondaryText)
+                        .foregroundStyle(.s2TextSecondary)
                 }
             }
             .padding(.horizontal, Spacing.large)
@@ -393,6 +394,7 @@ struct SourceSetupImportPage: View {
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.capsule)
                 .controlSize(.large)
+                .foregroundStyle(.s2OnAccent)
                 .accessibilityIdentifier("onboarding.continue")
                 if state.isFailed {
                     Button("Try Again", action: onRetry)
@@ -443,7 +445,7 @@ private struct ImportRing: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        let color = state.isFailed ? Color.red : state.type?.color ?? .accentColor
+        let color = state.isFailed ? Color.s2Error : state.type?.color ?? .s2Accent
         ZStack {
             Circle().stroke(color.opacity(0.18), lineWidth: Spacing.small)
             Circle()
@@ -463,7 +465,7 @@ private struct ImportRing: View {
     @ViewBuilder private var center: some View {
         switch state {
         case .ready:
-            Image(systemName: "checkmark").font(.s2Glyph(size: 44, weight: .bold, relativeTo: .largeTitle))
+            Image(systemName: "checkmark").font(.s2Glyph(size: IconSize.hero, weight: .bold, relativeTo: .largeTitle))
         case .failed:
             Image(systemName: "exclamationmark.triangle.fill").font(.s2Glyph(size: 40, relativeTo: .largeTitle))
         case .running(_, _, .some(_)):

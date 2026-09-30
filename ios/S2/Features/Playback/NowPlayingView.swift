@@ -208,7 +208,7 @@ struct NowPlayingContent: View {
             }
         }
         .aspectRatio(1, contentMode: .fit)
-        .artworkStyle(cornerRadius: ArtworkCorner.player)
+        .artworkStyle(.artworkPlayer)
         .contextMenu { songMenu }
         .artworkShadow(.player)
         .nowPlayingMatchedGeometry(id: NowPlayingCover.matchedGeometryID)
@@ -224,7 +224,7 @@ struct NowPlayingContent: View {
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: Spacing.tiny) {
             MarqueeText(state.title ?? "")
-                .font(.s2PlayerTitle)
+                .font(.s2HeroTitle)
                 .foregroundStyle(.primary)
                 .accessibilityAddTraits(.isHeader)
                 .accessibilityActions { songAccessibilityActions }
@@ -342,7 +342,7 @@ struct NowPlayingContent: View {
                 .font(.title3.weight(NowPlayingTransport.weight))
                 .foregroundStyle(chromeInk(isOn: isOn))
                 .contentTransition(.symbolEffect(.replace))
-                .frame(width: 44, height: 44)
+                .frame(width: TouchTarget.minimum, height: TouchTarget.minimum)
                 .background {
                     Circle()
                         .fill(playerTint.opacity(isOn ? Self.modeWashOpacity : 0))
@@ -376,7 +376,7 @@ struct NowPlayingContent: View {
                 .frame(maxWidth: .infinity)
 
             AirPlayButton(activeTint: playerTint, inactiveTint: chromeInk(isOn: false))
-                .frame(width: 44, height: 44)
+                .touchTarget()
                 .accessibilityIdentifier("nowPlaying.airPlay")
                 .frame(maxWidth: .infinity)
 
@@ -396,7 +396,7 @@ struct NowPlayingContent: View {
         }
         .padding(.horizontal, Spacing.small)
         .padding(.vertical, Spacing.xsmall)
-        .modifier(PlayerGlass(shape: Capsule(), material: .ultraThinMaterial))
+        .glassSurface(in: S2Shape.capsule)
         // A container, so its own id doesn't override its controls'.
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("nowPlaying.bottomBar")
@@ -502,18 +502,16 @@ private extension View {
     func capsuleGlyph(_ ink: Color) -> some View {
         font(.title3)
             .foregroundStyle(ink)
-            .frame(width: 44, height: 44)
-            .contentShape(Rectangle())
+            .touchTarget()
     }
 
     /// A glyph in the top bar (close, favourite): on a material disc in a 44 pt target.
     func topBarGlyph(_ ink: Color) -> some View {
         font(.body.weight(.semibold))
             .foregroundStyle(ink)
-            .frame(width: 36, height: 36)
-            .modifier(PlayerGlass(shape: Circle(), material: .regularMaterial))
-            .frame(width: 44, height: 44)
-            .contentShape(Rectangle())
+            .frame(width: TouchTarget.disc, height: TouchTarget.disc)
+            .glassSurface(in: Circle())
+            .touchTarget()
     }
 
     /// Hands the player's tint on to a sheet it presents, which sits outside the screen's environment.
@@ -522,21 +520,6 @@ private extension View {
             .environment(\.artworkTintInk, ink)
             .environment(\.isArtworkTinted, isTinted)
             .tint(tint)
-    }
-}
-
-/// A control's ground on the backdrop (the bottom capsule, the close disc): Liquid Glass on iOS 26, `material`
-/// below. Either only lifts the ground toward the scheme's background, so ink that clears AA on the ground still does.
-private struct PlayerGlass<S: Shape>: ViewModifier {
-    let shape: S
-    let material: Material
-
-    func body(content: Content) -> some View {
-        if #available(iOS 26, *) {
-            content.glassEffect(.regular, in: shape)
-        } else {
-            content.background(material, in: shape)
-        }
     }
 }
 
@@ -610,7 +593,7 @@ struct NowPlayingScrubber: View {
                         }
                 )
             }
-            .frame(height: 44 / 2 + Self.draggingTrackHeight)
+            .frame(height: TouchTarget.minimum / 2 + Self.draggingTrackHeight)
             .animation(Motion.press.reduced(reduceMotion), value: dragging)
             .accessibilityElement()
             .accessibilityLabel("Playback position")
@@ -686,7 +669,7 @@ struct NowPlayingTransport: View {
                 playTrigger.toggle()
             } label: {
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: diameter * Self.playGlyphRatio, weight: Self.weight))
+                    .font(.s2ScaledGlyph(diameter * Self.playGlyphRatio, weight: Self.weight))
                     .foregroundStyle(tintInk)
                     .contentTransition(.symbolEffect(.replace))
                     .frame(width: diameter, height: diameter)
@@ -709,7 +692,7 @@ struct NowPlayingTransport: View {
             skipTrigger.toggle()
         } label: {
             Image(systemName: systemImage)
-                .font(.system(size: size, weight: Self.weight))
+                .font(.s2ScaledGlyph(size, weight: Self.weight))
                 .foregroundStyle(tint)
                 .frame(minWidth: Self.skipTarget, minHeight: Self.skipTarget)
                 .contentShape(Rectangle())
@@ -808,7 +791,7 @@ struct NowPlayingQueueList: View {
                 if upNext.isEmpty {
                     Text("Nothing up next")
                         .font(.subheadline)
-                        .foregroundStyle(.s2SecondaryText)
+                        .foregroundStyle(.s2TextSecondary)
                 } else {
                     ForEach(upNext) { item in
                         row(item)

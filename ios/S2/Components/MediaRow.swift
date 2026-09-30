@@ -6,12 +6,12 @@ import SwiftUI
 /// ```swift
 /// MediaRow(song.name ?? "Unknown", subtitle: "Radiohead · OK Computer", artwork: .song(song),
 ///          playback: isCurrent ? .playing : .none) {
-///     Text(duration).font(.s2RowTime).foregroundStyle(.s2SecondaryText)
+///     Text(duration).font(.s2RowMeta).foregroundStyle(.s2TextSecondary)
 /// }
 /// ```
 ///
 /// - Artwork is drawn by `RemoteArtwork` at `artworkSize` (`ArtworkSize.row`, or `.albumRow` for albums),
-///   rounded (`ArtworkCorner.row`, artists as albums), with the hairline and no shadow. A nil source draws
+///   in `S2Shape.artworkRow` (an artist's a circle), with the hairline and no shadow. A nil source draws
 ///   the tinted `ArtworkPlaceholder` with `placeholderSymbol`. A playlist or genre passes its `mosaic` instead.
 /// - `playback` other than `.none` tints the title with `\.artworkTint` and lays an equaliser glyph over the
 ///   artwork, animated while `.playing` (still under Reduce Motion, and while `.paused`).
@@ -62,14 +62,15 @@ struct MediaRow<Trailing: View>: View {
             artworkView
             VStack(alignment: .leading, spacing: Spacing.tiny) {
                 Text(title)
+                    .font(.s2RowTitle)
                     .lineLimit(1)
                     .foregroundStyle(playback == .none ? AnyShapeStyle(.primary) : AnyShapeStyle(tint))
                     .fontWeight(playback == .none ? nil : .semibold)
                     .accessibilityIdentifier(ifPresent: titleIdentifier)
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(.s2SecondaryText)
+                        .font(.s2RowSubtitle)
+                        .foregroundStyle(.s2TextSecondary)
                         .lineLimit(1)
                 }
             }
@@ -107,7 +108,7 @@ struct MediaRow<Trailing: View>: View {
             // The mosaic draws its own corners and hairline.
             image.frame(width: artworkSize, height: artworkSize)
         } else {
-            image.artworkTile(artworkSize)
+            image.artworkTile(artworkSize, shape: .artwork(.artworkRow, for: artwork))
         }
     }
 }
