@@ -86,15 +86,24 @@ extension HomeItem {
     }
 }
 
-/// Plays, shuffles, queues or opens an item; the context menu and the VoiceOver actions of every Home tile.
+/// Plays, shuffles, queues or opens an item; the context menu and the VoiceOver actions of every Home tile. A tile
+/// that `resumes` (Jump Back In's, #670) plays on from where the item's queue was left, with Play from Start after Play.
 struct HomeItemActions {
     let item: HomeItem
     let perform: (MediaAction) -> Void
     let open: (HomeItem) -> Void
+    var resumes = false
+
+    var playAction: MediaAction {
+        resumes ? MediaActionResume(fromStart: item.playInOrderAction(), context: item.playContext) : item.playInOrderAction()
+    }
 
     @ViewBuilder
     var menu: some View {
-        Button("Play", systemImage: "play") { perform(item.playInOrderAction()) }
+        Button("Play", systemImage: "play") { perform(playAction) }
+        if resumes {
+            Button("Play from Start", systemImage: "arrow.counterclockwise") { perform(item.playInOrderAction()) }
+        }
         Button("Shuffle", systemImage: "shuffle") { perform(item.shuffleAction()) }
         Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") {
             perform(MediaActionPlayNext(selection: item.selection))
@@ -109,7 +118,12 @@ extension View {
     /// The item's context menu and the same actions for VoiceOver's rotor.
     func homeItemActions(_ actions: HomeItemActions) -> some View {
         contextMenu { actions.menu }
-            .accessibilityAction(named: "Play") { actions.perform(actions.item.playInOrderAction()) }
+            .accessibilityAction(named: "Play") { actions.perform(actions.playAction) }
+            .accessibilityActions {
+                if actions.resumes {
+                    Button("Play from Start") { actions.perform(actions.item.playInOrderAction()) }
+                }
+            }
             .accessibilityAction(named: "Shuffle") { actions.perform(actions.item.shuffleAction()) }
             .accessibilityAction(named: "Play Next") { actions.perform(MediaActionPlayNext(selection: actions.item.selection)) }
             .accessibilityAction(named: "Add to Queue") { actions.perform(MediaActionAddToQueue(selection: actions.item.selection)) }

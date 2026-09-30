@@ -26,8 +26,14 @@ struct HomeViewTests {
 
     private func genre(_ name: String) -> Genre { Genre(name: name, songCount: 40, duration: 0, mediaProviders: [.jellyfin]) }
 
-    private func section(_ id: HomeSectionId, _ title: HomeSectionTitle, _ items: [HomeItem], subtitle: StringKey? = nil) -> HomeSection {
-        HomeSection(id: id, title: title, subtitle: subtitle, items: items)
+    private func section(
+        _ id: HomeSectionId,
+        _ title: HomeSectionTitle,
+        _ items: [HomeItem],
+        subtitle: StringKey? = nil,
+        progress: [String: HomeItemProgress] = [:]
+    ) -> HomeSection {
+        HomeSection(id: id, title: title, subtitle: subtitle, items: items, progress: progress)
     }
 
     private func content(_ sections: [HomeSection] = []) -> HomeUiState {
@@ -98,16 +104,44 @@ struct HomeViewTests {
         #expect(HomeView.route(opened[1]) == .genre(name: "Trip Hop"))
     }
 
-    @Test func aGridCellsPlayButtonDispatchesItsPlayActionWithItsContext() throws {
+    @Test func aGridCellsPlayButtonResumesItsItemWithItsContext() throws {
         var actions: [MediaAction] = []
         let item = HomeItemAlbumItem(album: album("OK Computer"))
         let sut = HomeContent(state: content([section(.jumpBackIn, .jumpBackIn, [item])]), onAction: { actions.append($0) })
         try sut.inspect().find(viewWithAccessibilityLabel: "Play OK Computer").button().tap()
         #expect(actions.count == 1)
-        #expect(same(actions.first, item.playAction()))
-        let play = try #require(actions.first as? MediaActionPlay)
-        #expect((play.context as AnyObject).isEqual(item.playContext as AnyObject))
-        #expect(play.context is PlayContextAlbum)
+        #expect(same(actions.first, item.resumeAction()))
+        let resume = try #require(actions.first as? MediaActionResume)
+        #expect((resume.context as AnyObject).isEqual(item.playContext as AnyObject))
+        #expect(resume.context is PlayContextAlbum)
+    }
+
+    @Test func aGridCellSaysWhichTrackItsQueueWasLeftAt() throws {
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        let other = HomeItemAlbumItem(album: album("Amnesiac"))
+        let sut = HomeContent(state: content([section(.jumpBackIn, .jumpBackIn, [item, other], progress: [
+            item.key: HomeItemProgress(track: 5, trackCount: 12),
+        ])]))
+        #expect((try? sut.inspect().find(text: "Track 5 of 12")) != nil)
+        #expect(try sut.inspect().findAll(ViewType.Text.self, where: { (try? $0.string())?.hasPrefix("Track") == true }).count == 1)
+    }
+
+    @Test func aGridCellsPlayResumesWhereOtherTilesPlayFromTheStart() {
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        let resuming = HomeItemActions(item: item, perform: { _ in }, open: { _ in }, resumes: true)
+        #expect(same(resuming.playAction, MediaActionResume(fromStart: item.playInOrderAction(), context: item.playContext)))
+        #expect(same(HomeItemActions(item: item, perform: { _ in }, open: { _ in }).playAction, item.playInOrderAction()))
+    }
+
+    @Test func aGridCellsMenuListsPlayFromStartAfterPlay() throws {
+        var actions: [MediaAction] = []
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        let menu = try HomeItemActions(item: item, perform: { actions.append($0) }, open: { _ in }, resumes: true).menu.inspect()
+        try menu.find(button: "Play from Start").tap()
+        #expect(actions.count == 1)
+        #expect(same(actions.first, item.playInOrderAction()))
+        let plain = try HomeItemActions(item: item, perform: { _ in }, open: { _ in }).menu.inspect()
+        #expect((try? plain.find(button: "Play from Start")) == nil)
     }
 
     // MARK: Shelves

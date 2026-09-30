@@ -167,6 +167,7 @@ struct HomeContent: View {
             if section.id == .jumpBackIn {
                 JumpBackInGrid(
                     items: section.items,
+                    progress: section.progress,
                     perform: onAction,
                     open: onOpen,
                     zoomSourceKey: zoomSourceKey,

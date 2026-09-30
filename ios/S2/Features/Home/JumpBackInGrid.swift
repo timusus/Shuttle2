@@ -3,9 +3,12 @@ import SwiftUI
 
 /// Jump Back In (#633): the last things played, as a compact grid of cells rather than a shelf, after Apple Music's
 /// and Spotify's recents. Two columns by four rows on an iPhone, four by two on an iPad; one full-width column at
-/// the accessibility text sizes. A cell opens its item; its trailing button plays it.
+/// the accessibility text sizes. A cell opens its item; its trailing button plays it on from where its queue was left
+/// (#670), and says how far in that was.
 struct JumpBackInGrid: View {
     let items: [HomeItem]
+    /// How far into each item, by key, its queue was left.
+    var progress: [String: HomeItemProgress] = [:]
     let perform: (MediaAction) -> Void
     let open: (HomeItem) -> Void
     /// The tile the last tap came from, so only it is the zoom source for the screen it opens.
@@ -30,6 +33,7 @@ struct JumpBackInGrid: View {
             ForEach(items.prefix(Self.maximumItems), id: \.key) { item in
                 JumpBackInCell(
                     item: item,
+                    progress: progress[item.key],
                     tileKey: "jumpBackIn|\(item.key)",
                     zoomSourceKey: zoomSourceKey,
                     perform: perform,
@@ -41,9 +45,11 @@ struct JumpBackInGrid: View {
 }
 
 /// One cell, after Spotify's recents: the cover flush with the cell's leading edge, the title over up to two lines and
-/// the kind of item, on a rounded fill, with a play button at the end. Long-press has the rest (Shuffle, queue, Go to).
+/// the kind of item, then how far into it its queue was left, on a rounded fill, with a play button at the end that
+/// carries on from there. Long-press has the rest (Play from Start, Shuffle, queue, Go to).
 private struct JumpBackInCell: View {
     let item: HomeItem
+    let progress: HomeItemProgress?
     let tileKey: String
     let zoomSourceKey: String?
     let perform: (MediaAction) -> Void
@@ -73,6 +79,12 @@ private struct JumpBackInCell: View {
                             .font(.caption2)
                             .foregroundStyle(.s2SecondaryText)
                             .lineLimit(1)
+                        if let progress {
+                            Text(progress.localized())
+                                .font(.caption2)
+                                .foregroundStyle(.s2SecondaryText)
+                                .lineLimit(1)
+                        }
                     }
                     .padding(.vertical, Spacing.xsmall)
                     Spacer(minLength: 0)
@@ -82,9 +94,9 @@ private struct JumpBackInCell: View {
             .buttonStyle(.pressScale)
             .accessibilityIdentifier("homeGrid.cell")
             .zoomSource(for: item, tileKey: tileKey, activeKey: zoomSourceKey)
-            .homeItemActions(HomeItemActions(item: item, perform: perform, open: open))
+            .homeItemActions(HomeItemActions(item: item, perform: perform, open: open, resumes: true))
 
-            Button { perform(item.playAction()) } label: {
+            Button { perform(item.resumeAction()) } label: {
                 Image(systemName: item is HomeItemGenreItem ? "shuffle" : "play.fill")
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.tint)
