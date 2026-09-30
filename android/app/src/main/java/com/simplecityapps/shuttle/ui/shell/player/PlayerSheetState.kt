@@ -152,13 +152,6 @@ class PlayerSheetState internal constructor(
         if (mode == PlayerMode.Pane) draggable.snapTo(level) else draggable.animateTo(level, animationSpec)
     }
 
-    /** Steps one level down for back. Returns false when back belongs to the destinations. */
-    suspend fun stepDown(): Boolean {
-        val lower = settledLevel.stepDown() ?: return false
-        moveTo(lower)
-        return true
-    }
-
     companion object {
         /**
          * Stand-in anchors before the first layout and in the pane, where no gesture drives the offset.

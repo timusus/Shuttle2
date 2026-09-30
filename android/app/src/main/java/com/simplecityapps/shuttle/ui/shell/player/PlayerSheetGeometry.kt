@@ -42,15 +42,6 @@ data class PlayerSheetGeometry(
     fun scrimAlpha(offset: Float): Float = MaxScrimAlpha * expand(offset)
 
     /**
-     * How far down the sheet its content starts: none while the sheet's edge is below the status bar
-     * ([statusBar] px), then as much as keeps the content under it as the edge rises into it.
-     */
-    fun contentTop(
-        offset: Float,
-        statusBar: Float,
-    ): Float = (statusBar - sheetTop(offset)).coerceAtLeast(0f)
-
-    /**
      * The radius of the sheet's top corners while it moves: none at Mini, rounding to [corner] px as
      * it rises, then flattening over the last [corner] px before the edge meets the status bar, so the
      * full player fills the screen square.

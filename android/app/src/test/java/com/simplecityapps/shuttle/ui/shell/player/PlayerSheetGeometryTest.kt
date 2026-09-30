@@ -51,13 +51,6 @@ class PlayerSheetGeometryTest {
     }
 
     @Test
-    fun `content starts under the status bar once the edge rises into it`() {
-        geometry.contentTop(850f, statusBar = 100f) shouldBe 0f
-        geometry.contentTop(40f, statusBar = 100f) shouldBe 60f
-        geometry.contentTop(0f, statusBar = 100f) shouldBe 100f
-    }
-
-    @Test
     fun `corners round while the sheet rises and flatten as the edge meets the status bar`() {
         geometry.cornerRadius(1700f, statusBar = 100f, corner = 50f) shouldBe 0f
         geometry.cornerRadius(850f, statusBar = 100f, corner = 50f) shouldBe 25f

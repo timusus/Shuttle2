@@ -378,7 +378,7 @@ Only two real offenders, both traced above:
   in `designsystem` (`component/QueueRow.kt`, `component/PlayerControls.kt`). *Done, ahead of wave 5:* both
   moved to `:android:presentation` commonMain (`ui/shell/player/QueuePosition.kt`, `S2RepeatMode.kt`, the
   same package `PlayerUiState`/`PlayerViewModel` already use in `:android:app`, so those two files and
-  `NowPlayingList.kt`/`QueueList.kt` need no import at all); `designsystem` now imports them from
+  `QueueList.kt` need no import at all); `designsystem` now imports them from
   `presentation`, which it already depended on for `ArtworkSeed`. `SongInfoViewModel`'s call to
   `designsystem`'s `formatDuration` is *done, ahead of wave 4* too: `formatDuration` moved to
   `:android:domain` commonMain (`format/DurationFormat.kt`, reachable from both `viewmodel` and
