@@ -47,7 +47,10 @@ ios/scripts/test.sh --package                  # swift test in ios/Playback (the
 
 `xcrun simctl list devices available` lists UDIDs. `test.sh`, `run-sim-server.sh` and
 `maestro-sim.sh` all get their simulator from the shared ios-sim lease pool (`~/.claude/scripts/ios-sim/device.sh`)
-when it's set up; `$S2_SIM_HOLDER` leases as a different holder, for parallel workers. The spike was verified on `iPhone 16` (iOS 18.5) and
+when it's set up; `$S2_SIM_HOLDER` leases as a different holder, for parallel workers. Set
+`S2_SIM_PROFILE=ios26` (wired through `ios/scripts/lease-sim.sh`) to lease from the `S2 iPhone iOS 26`
+(runtime 26.5) pool instead — iOS 26 tab-bar-minimise and bottom-accessory behaviour needs it; the default
+pool is iPhone 16 on iOS 18.5. The spike was verified on `iPhone 16` (iOS 18.5) and
 `iPad Pro 11-inch (M5)` (iOS 27.2) with Xcode 27.2 beta. On an iPhone with iOS 27.2 (the newest
 runtime, so `test.sh`'s default when none is booted) `AppShellTests`' two TabView lookups fail;
 `iPhone 16` (iOS 18.5) passes everything.

@@ -13,6 +13,7 @@
 #                      if present (set S2_SIM_HOLDER to lease as a different holder, e.g. for a
 #                      parallel worker), else a booted iPhone, or the iPhone on the newest iOS runtime
 #   S2_SIM_HOLDER      leases the pool device as this holder instead of the current session
+#   S2_SIM_PROFILE     ios26 leases from the iOS 26 pool instead (see ios/scripts/lease-sim.sh)
 #   SERVER_USER        the Jellyfin user Quick Connect is approved for (default: shuttle-test)
 #   OUT                Maestro's output dir (default: /tmp/s2-ios-e2e/maestro); screenshots under <timestamp>/
 set -euo pipefail
@@ -44,17 +45,7 @@ print(f"==> simulator: {name} (iOS {v[0]}.{v[1]}{state})", file=sys.stderr)
 '
 }
 
-lease_udid() {
-  local device_sh="$HOME/.claude/scripts/ios-sim/device.sh"
-  [ -x "$device_sh" ] || return 1
-  if [ -n "${S2_SIM_HOLDER:-}" ]; then
-    CLAUDE_CODE_SESSION_ID="$S2_SIM_HOLDER" "$device_sh"
-  else
-    "$device_sh"
-  fi
-}
-
-udid="${S2_SIMULATOR_UDID:-$(lease_udid || pick_simulator)}"
+udid="${S2_SIMULATOR_UDID:-$("$ios_dir/scripts/lease-sim.sh" || pick_simulator)}"
 [ -f "$flow" ] || { echo "maestro-sim: no flow at $flow" >&2; exit 2; }
 
 env_file="$HOME/.config/s2-test/jellyfin.env"
