@@ -1,7 +1,6 @@
 package com.simplecityapps.fakes
 
-import com.simplecityapps.mediaprovider.repository.playhistory.AlbumArtistCompletions
-import com.simplecityapps.mediaprovider.repository.playhistory.AlbumCompletions
+import com.simplecityapps.mediaprovider.repository.playhistory.AlbumDay
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.GenrePlays
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
@@ -27,8 +26,7 @@ class FakePlayHistoryRepository : PlayHistoryRepository {
 
     var recentContexts: List<RecentContext> = emptyList()
     var contextsAroundHour: List<ContextDays> = emptyList()
-    var albumCompletions: List<AlbumCompletions> = emptyList()
-    var albumArtistCompletions: List<AlbumArtistCompletions> = emptyList()
+    var albumDays: List<AlbumDay> = emptyList()
     var genrePlays: List<GenrePlays> = emptyList()
     val eventCount = MutableStateFlow(0)
 
@@ -62,17 +60,7 @@ class FakePlayHistoryRepository : PlayHistoryRepository {
         limit: Int
     ): List<ContextDays> = contextsAroundHour.take(limit).also { queries += "contextsAroundHour($hour, $windowMinutes, $since)" }
 
-    override suspend fun albumCompletions(
-        since: Instant,
-        halfLife: Duration,
-        limit: Int
-    ): List<AlbumCompletions> = albumCompletions.take(limit).also { queries += "albumCompletions($since, $halfLife)" }
-
-    override suspend fun albumArtistCompletions(
-        since: Instant,
-        halfLife: Duration,
-        limit: Int
-    ): List<AlbumArtistCompletions> = albumArtistCompletions.take(limit)
+    override suspend fun albumDays(since: Instant): List<AlbumDay> = albumDays.also { queries += "albumDays($since)" }
 
     override suspend fun genrePlays(
         since: Instant,

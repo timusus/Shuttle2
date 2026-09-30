@@ -9,12 +9,13 @@ import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
+import com.simplecityapps.shuttle.ui.text.StringKey
 
 /** One of Home's sections (#633), in the order Home shows them. */
 enum class HomeSectionId {
     JumpBackIn,
     AroundThisTime,
-    OnRepeat,
+    HeavyRotation,
     Rediscover,
     RecentlyAdded,
     GenrePicks,
@@ -29,16 +30,21 @@ enum class HomeSectionTitle {
     ThisMorning,
     ThisAfternoon,
     Tonight,
-    OnRepeat,
+    HeavyRotation,
     Rediscover,
     RecentlyAdded,
     GenrePicks,
     ShuffleAll,
 }
 
+/**
+ * A section of Home: its [title], a one-line [subtitle] under it saying why these items (#671), and its items. Titles
+ * are mapped per platform, for each one's casing; subtitles are shared strings, so both apps say the same.
+ */
 data class HomeSection(
     val id: HomeSectionId,
     val title: HomeSectionTitle,
+    val subtitle: StringKey?,
     val items: List<HomeItem>,
 )
 

@@ -74,11 +74,11 @@ class LocalPlayHistoryRepositoryTest {
     fun `a play written at its threshold counts as played through once completed`() = runTest {
         val song = insertSong("Blue", "Joni Mitchell")
         val id = repository.recordPlay(song, now - 1.hours, 100_000, completed = false, albumContext)!!
-        repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 10) shouldBe emptyList()
+        repository.albumDays(since = now - 28.days) shouldBe emptyList()
 
         repository.completePlay(id, 200_000)
 
-        repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 10).single().completions shouldBe 1
+        repository.albumDays(since = now - 28.days).single().songs shouldBe 1
         eventDao.count() shouldBe 1
     }
 
@@ -129,46 +129,41 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
-    fun `album and artist completions count plays through since a time`() = runTest {
+    fun `album days count the distinct songs played through each local day, with the album's track count`() = runTest {
         val blue1 = insertSong("Blue", "Joni Mitchell", track = 1)
         val blue2 = insertSong("Blue", "Joni Mitchell", track = 2)
-        val hejira = insertSong("Hejira", "Joni Mitchell")
+        insertSong("Blue", "Joni Mitchell", track = 3)
         val kid = insertSong("Kid A", "Radiohead")
         repository.recordPlay(blue1, now - 1.days, 200_000, true, albumContext)
+        repository.recordPlay(blue1, now - 1.days + 1.hours, 200_000, true, albumContext)
         repository.recordPlay(blue2, now - 1.days, 200_000, true, albumContext)
         repository.recordPlay(blue1, now - 2.days, 200_000, true, albumContext)
-        repository.recordPlay(hejira, now - 3.days, 200_000, true, PlayContext.None)
-        repository.recordPlay(kid, now - 4.days, 200_000, true, PlayContext.None)
         repository.recordPlay(kid, now - 4.days, 40_000, false, PlayContext.None)
         repository.recordPlay(kid, now - 40.days, 200_000, true, PlayContext.None)
 
-        val albums = repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 10)
-        albums.map { it.groupKey.key to it.completions } shouldBe listOf("blue" to 3, "hejira" to 1, "kid a" to 1)
-        albums.first().groupKey.albumArtistGroupKey shouldBe AlbumArtistGroupKey("joni mitchell")
-        albums.first().lastCompletedAt shouldBe now - 1.days
-        repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 1).map { it.groupKey.key } shouldBe listOf("blue")
+        val days = repository.albumDays(since = now - 28.days).sortedByDescending { it.day }
+        val today = now.toEpochMilliseconds() / 86_400_000
 
-        repository.albumArtistCompletions(since = now - 28.days, halfLife = 14.days, limit = 10).map { it.groupKey.key to it.completions } shouldBe
-            listOf("joni mitchell" to 4, "radiohead" to 1)
+        days.map { Triple(it.groupKey.key, today - it.day, it.songs) } shouldBe listOf(Triple("blue", 1L, 2), Triple("blue", 2L, 1))
+        days.map { it.trackCount } shouldBe listOf(3, 3)
+        days.first().lastCompletedAt shouldBe now - 1.days + 1.hours
+        days.first().albumArtistGroupKey shouldBe AlbumArtistGroupKey("joni mitchell")
     }
 
     @Test
-    fun `completions are scored by age, halving every half-life`() = runTest {
-        val fresh = insertSong("Blue", "Joni Mitchell")
-        val old = insertSong("Kid A", "Radiohead")
-        repository.recordPlay(fresh, now, 200_000, true, PlayContext.None)
-        repository.recordPlay(old, now - 14.days, 200_000, true, PlayContext.None)
-        repository.recordPlay(old, now - 14.days, 200_000, true, PlayContext.None)
-        repository.recordPlay(old, now - 14.days, 200_000, true, PlayContext.None)
+    fun `album days split at local midnight`() = runTest {
+        // 23:30 and 00:30 in Melbourne (UTC+10) are two days there, one in UTC
+        val melbourne = LocalPlayHistoryRepository(eventDao, freshAlbumIndex(database), clock) { TimeZone.of("Australia/Melbourne") }
+        val song = insertSong("Blue", "Joni Mitchell")
+        melbourne.recordPlay(song, Instant.parse("2026-09-21T13:30:00Z"), 200_000, true, albumContext)
+        melbourne.recordPlay(song, Instant.parse("2026-09-21T14:30:00Z"), 200_000, true, albumContext)
 
-        val albums = repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 10)
-
-        albums.map { it.groupKey.key to it.score } shouldBe listOf("kid a" to 1.5, "blue" to 1.0)
-        albums.map { it.completions } shouldBe listOf(3, 1)
+        melbourne.albumDays(since = now - 28.days).size shouldBe 2
+        repository.albumDays(since = now - 28.days).size shouldBe 1
     }
 
     @Test
-    fun `completions group albums and artists by the keys the album and artist repositories use`() = runTest {
+    fun `album days group albums by the keys the album repository uses`() = runTest {
         // Tagged three ways SQL can't tell are one album: case, a leading article, punctuation
         songDao.insert(
             listOf(
@@ -179,13 +174,12 @@ class LocalPlayHistoryRepositoryTest {
         )
         songDao.get().forEach { repository.recordPlay(it.toSong(), now - 1.days, 200_000, true, PlayContext.None) }
 
-        val albums = repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 10)
-        val artists = repository.albumArtistCompletions(since = now - 28.days, halfLife = 14.days, limit = 10)
+        val days = repository.albumDays(since = now - 28.days)
 
         val repositoryAlbums = LocalAlbumRepository(backgroundScope, songDao).getAlbums(AlbumQuery.All()).first()
         val repositoryArtists = LocalAlbumArtistRepository(backgroundScope, songDao).getAlbumArtists(AlbumArtistQuery.All()).first()
-        albums.map { it.groupKey to it.completions } shouldBe listOf(repositoryAlbums.single().groupKey to 3)
-        artists.map { it.groupKey to it.completions } shouldBe listOf(repositoryArtists.single().groupKey to 3)
+        days.map { Triple(it.groupKey, it.songs, it.trackCount) } shouldBe listOf(Triple(repositoryAlbums.single().groupKey, 3, 3))
+        days.single().albumArtistGroupKey shouldBe repositoryArtists.single().groupKey
     }
 
     @Test
@@ -222,7 +216,7 @@ class LocalPlayHistoryRepositoryTest {
         songDao.delete(songDao.get())
         insertSong("Blue", "Joni Mitchell")
 
-        repository.albumCompletions(since = now - 28.days, halfLife = 14.days, limit = 10).single().completions shouldBe 1
+        repository.albumDays(since = now - 28.days).single().songs shouldBe 1
     }
 
     @Test

@@ -38,14 +38,28 @@
     <string name="home_this_afternoon">This afternoon</string>
     <!-- Home: section of what the user tends to play around this hour, shown in the evening and at night -->
     <string name="home_tonight">Tonight</string>
-    <!-- Home: section of the albums and artists the user has played through most in the last few weeks -->
-    <string name="home_on_repeat">On repeat</string>
+    <!-- Home: section of the albums and artists the user has listened to on the most days in the last four weeks -->
+    <string name="home_heavy_rotation">Heavy rotation</string>
     <!-- Home: section of albums the user used to play a lot but hasn't for months -->
     <string name="home_rediscover">Rediscover</string>
     <!-- Home: section of albums most recently added to the library -->
     <string name="home_recently_added">Recently added</string>
     <!-- Home: section of genre tiles; tapping one shuffles that genre -->
     <string name="home_genre_picks">Genre picks</string>
+    <!-- Home: one line under the Jump back in header -->
+    <string name="home_jump_back_in_subtitle">Pick up where you left off</string>
+    <!-- Home: one line under the This morning / This afternoon / Tonight header -->
+    <string name="home_around_this_time_subtitle">What you often play at this time of day</string>
+    <!-- Home: one line under the Heavy rotation header -->
+    <string name="home_heavy_rotation_subtitle">What you\'ve played most in the last 4 weeks</string>
+    <!-- Home: one line under the Rediscover header -->
+    <string name="home_rediscover_subtitle">Albums you haven\'t played in a while</string>
+    <!-- Home: one line under the Recently added header -->
+    <string name="home_recently_added_subtitle">The newest additions to your library</string>
+    <!-- Home: one line under the Genre picks header when it shows genres the user has played -->
+    <string name="home_genre_picks_subtitle">Genres you\'ve been playing</string>
+    <!-- Home: one line under the Genre picks header when it shows the library's largest genres (nothing played yet) -->
+    <string name="home_genre_picks_largest_subtitle">The biggest genres in your library</string>
     <!-- Home: card title telling the user this version has release notes they haven't seen -->
     <string name="home_whats_new_title">What\'s new in Shuttle Music</string>
     <!-- Home: card message under the What's new title; %1$s is the app version -->

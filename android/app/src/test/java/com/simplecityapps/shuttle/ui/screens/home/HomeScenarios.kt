@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
 import com.simplecityapps.shuttle.ui.preview.toGenre
 import com.simplecityapps.shuttle.ui.preview.toPlaylist
 import com.simplecityapps.shuttle.ui.preview.toSong
+import com.simplecityapps.shuttle.ui.text.StringKey
 
 /** Home over the sample library, so its tiles load the generated covers under `SampleArtworkCoil`. */
 object HomeScenarios {
@@ -38,7 +39,18 @@ object HomeScenarios {
         id: HomeSectionId,
         title: HomeSectionTitle,
         vararg items: HomeItem,
-    ) = HomeSection(id, title, items.toList())
+    ) = HomeSection(id, title, subtitle(id), items.toList())
+
+    /** The subtitle the shared assembly gives a section with history (#671). */
+    private fun subtitle(id: HomeSectionId): StringKey? = when (id) {
+        HomeSectionId.JumpBackIn -> StringKey.HOME_JUMP_BACK_IN_SUBTITLE
+        HomeSectionId.AroundThisTime -> StringKey.HOME_AROUND_THIS_TIME_SUBTITLE
+        HomeSectionId.HeavyRotation -> StringKey.HOME_HEAVY_ROTATION_SUBTITLE
+        HomeSectionId.Rediscover -> StringKey.HOME_REDISCOVER_SUBTITLE
+        HomeSectionId.RecentlyAdded -> StringKey.HOME_RECENTLY_ADDED_SUBTITLE
+        HomeSectionId.GenrePicks -> StringKey.HOME_GENRE_PICKS_SUBTITLE
+        HomeSectionId.ShuffleAll -> null
+    }
 
     private val genrePicks = section(HomeSectionId.GenrePicks, HomeSectionTitle.GenrePicks, *genres.map { HomeItem.GenreItem(it) }.toTypedArray())
 
@@ -62,7 +74,7 @@ object HomeScenarios {
         showWhatsNew = false,
         sections = listOf(
             jumpBackIn,
-            section(HomeSectionId.OnRepeat, HomeSectionTitle.OnRepeat, HomeItem.AlbumItem(softFocus), HomeItem.AlbumItem(signalRoom)),
+            section(HomeSectionId.HeavyRotation, HomeSectionTitle.HeavyRotation, HomeItem.AlbumItem(softFocus), HomeItem.AlbumItem(signalRoom)),
             section(HomeSectionId.Rediscover, HomeSectionTitle.Rediscover, HomeItem.AlbumItem(estuary), smartPlaylist, HomeItem.PlaylistItem(lateNight)),
             section(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, HomeItem.AlbumItem(nightBus), HomeItem.AlbumItem(blueHours)),
             genrePicks,
@@ -80,7 +92,7 @@ object HomeScenarios {
     val unplayed = content.copy(
         sections = listOf(
             section(HomeSectionId.RecentlyAdded, HomeSectionTitle.RecentlyAdded, HomeItem.AlbumItem(nightBus), HomeItem.AlbumItem(blueHours), HomeItem.AlbumItem(phaseGarden)),
-            genrePicks,
+            genrePicks.copy(subtitle = StringKey.HOME_GENRE_PICKS_LARGEST_SUBTITLE),
             section(HomeSectionId.ShuffleAll, HomeSectionTitle.ShuffleAll),
         ),
     )

@@ -52,6 +52,7 @@ import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
+import com.simplecityapps.shuttle.ui.text.resId
 
 class HomeCallbacks(
     val onOpenSettings: () -> Unit = {},
@@ -149,11 +150,11 @@ private fun HomeContent(
     val leadSection = content.sections.firstOrNull { it.id != HomeSectionId.ShuffleAll && it.items.isNotEmpty() }?.id
     LazyColumn(modifier = modifier, contentPadding = PaddingValues(bottom = S2Spacing.large)) {
         if (content.showWhatsNew) {
-            item(key = "whats-new") { WhatsNewCard(callbacks) }
+            item(key = "whats-new") { WhatsNewCard(callbacks, Modifier.animateItem()) }
         }
         // Cold start's Shuffle all leads, above the shelves: the one sure thing to do with a new library.
         if (content.coldStart) {
-            item(key = HomeSectionId.ShuffleAll.name) { ColdStartCard(callbacks) }
+            item(key = HomeSectionId.ShuffleAll.name) { ColdStartCard(callbacks, Modifier.animateItem()) }
         }
         content.sections.forEach { section ->
             when {
@@ -168,7 +169,7 @@ private fun HomeContent(
                             columns = columns,
                             showPlayButton = wide || largeText,
                             callbacks = callbacks,
-                            modifier = Modifier.padding(horizontal = S2Spacing.medium),
+                            modifier = Modifier.animateItem().padding(horizontal = S2Spacing.medium),
                         )
                     }
                 }
@@ -187,10 +188,11 @@ private fun LazyListScope.header(
     item(key = "${section.id.name}:header") {
         SectionHeader(
             title = stringResource(section.title.stringRes),
+            subtitle = section.subtitle?.let { stringResource(it.resId) },
             style = if (lead) SectionHeaderStyle.Headline else SectionHeaderStyle.Title,
             action = if (section.id.hasSeeAll) stringResource(R.string.home_see_all) else null,
             onAction = { callbacks.onSeeAll(section.id) },
-            modifier = Modifier.padding(top = if (lead) S2Spacing.xsmall else S2Spacing.medium),
+            modifier = Modifier.animateItem().padding(top = if (lead) S2Spacing.xsmall else S2Spacing.medium),
         )
     }
 }
@@ -210,9 +212,21 @@ private fun LazyListScope.shelf(
     header(section, lead, callbacks)
     val mixed = section.items.map { it.kind }.distinct().size > 1
     item(key = section.id.name) {
-        LazyRow(contentPadding = PaddingValues(horizontal = S2Spacing.medium), horizontalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium)) {
+        LazyRow(
+            modifier = Modifier.animateItem(),
+            contentPadding = PaddingValues(horizontal = S2Spacing.medium),
+            horizontalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium),
+        ) {
             items(section.items, key = { it.key }) { item ->
-                HomeShelfTile(item = item, covers = covers[item.key].orEmpty(), mixed = mixed, width = tileWidth, largeText = largeText, callbacks = callbacks)
+                HomeShelfTile(
+                    item = item,
+                    covers = covers[item.key].orEmpty(),
+                    mixed = mixed,
+                    width = tileWidth,
+                    largeText = largeText,
+                    callbacks = callbacks,
+                    modifier = Modifier.animateItem(),
+                )
             }
         }
     }
@@ -224,7 +238,7 @@ private val HomeSectionTitle.stringRes: Int
         HomeSectionTitle.ThisMorning -> R.string.home_this_morning
         HomeSectionTitle.ThisAfternoon -> R.string.home_this_afternoon
         HomeSectionTitle.Tonight -> R.string.home_tonight
-        HomeSectionTitle.OnRepeat -> R.string.home_on_repeat
+        HomeSectionTitle.HeavyRotation -> R.string.home_heavy_rotation
         HomeSectionTitle.Rediscover -> R.string.home_rediscover
         HomeSectionTitle.RecentlyAdded -> R.string.home_recently_added
         HomeSectionTitle.GenrePicks -> R.string.home_genre_picks
@@ -233,9 +247,12 @@ private val HomeSectionTitle.stringRes: Int
 
 /** Cold start: nothing played yet, so nothing to suggest from. A full-width Shuffle all and a line on how Home fills in. */
 @Composable
-private fun ColdStartCard(callbacks: HomeCallbacks) {
+private fun ColdStartCard(
+    callbacks: HomeCallbacks,
+    modifier: Modifier = Modifier,
+) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
+        modifier = modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small),
         verticalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium),
     ) {
         S2Button(
@@ -261,8 +278,11 @@ const val HOME_SHUFFLE_ALL_TAG = "home.shuffleAll"
 const val HOME_COLD_START_HINT_TAG = "home.coldStartHint"
 
 @Composable
-private fun WhatsNewCard(callbacks: HomeCallbacks) {
-    ElevatedCard(modifier = Modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)) {
+private fun WhatsNewCard(
+    callbacks: HomeCallbacks,
+    modifier: Modifier = Modifier,
+) {
+    ElevatedCard(modifier = modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)) {
         Row(modifier = Modifier.padding(start = S2Spacing.medium, top = S2Spacing.smallMedium), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.NewReleases, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
             Text(

@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.home
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createGenre
+import com.simplecityapps.shuttle.ui.text.StringKey
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
 import kotlin.time.Clock
@@ -34,7 +35,7 @@ class AssembleHomeSectionsTest {
         hasHistory = true,
         jumpBackIn = JumpBackInCandidates(emptyList(), emptyList()),
         aroundThisTime = emptyList(),
-        onRepeat = emptyList(),
+        heavyRotation = emptyList(),
         rediscover = emptyList(),
         recentlyAdded = emptyList(),
         genrePicks = GenrePickCandidates(emptyList(), emptyList()),
@@ -53,13 +54,18 @@ class AssembleHomeSectionsTest {
         weekendDays: Int = 0,
     ) = AroundThisTimeCandidate(item, days, weekendDays)
 
+    private fun rotation(
+        item: HomeItem,
+        days: Int,
+    ) = HeavyRotationCandidate(item, days, lastPlayedAt = wednesdayMorning)
+
     @Test
     fun `sections come in order and an item shows only in the earliest`() {
         val sections = assemble(
             empty.copy(
                 jumpBackIn = JumpBackInCandidates(albums.take(2), emptyList()),
                 aroundThisTime = albums.subList(1, 5).map { around(it, days = 3) },
-                onRepeat = listOf(OnRepeatCandidate(albums[0], 6, 3.0), OnRepeatCandidate(albums[9], 6, 2.0), OnRepeatCandidate(albums[12], 6, 1.0)),
+                heavyRotation = listOf(rotation(albums[0], 6), rotation(albums[9], 5), rotation(albums[12], 4)),
                 rediscover = listOf(albums[9], albums[10], albums[13]),
                 recentlyAdded = listOf(albums[10], albums[11], albums[14]),
                 genrePicks = GenrePickCandidates(emptyList(), genres),
@@ -69,13 +75,13 @@ class AssembleHomeSectionsTest {
         sections.map { it.id } shouldBe listOf(
             HomeSectionId.JumpBackIn,
             HomeSectionId.AroundThisTime,
-            HomeSectionId.OnRepeat,
+            HomeSectionId.HeavyRotation,
             HomeSectionId.Rediscover,
             HomeSectionId.RecentlyAdded,
             HomeSectionId.GenrePicks,
         )
         sections.section(HomeSectionId.AroundThisTime).items shouldBe albums.subList(2, 5)
-        sections.section(HomeSectionId.OnRepeat).items shouldBe listOf(albums[9], albums[12])
+        sections.section(HomeSectionId.HeavyRotation).items shouldBe listOf(albums[9], albums[12])
         sections.section(HomeSectionId.Rediscover).items.toSet() shouldBe setOf(albums[10], albums[13])
         sections.section(HomeSectionId.RecentlyAdded).items shouldBe listOf(albums[11], albums[14])
         sections.flatMap { it.items }.map { it.key }.let { keys -> keys shouldBe keys.distinct() }
@@ -145,7 +151,8 @@ class AssembleHomeSectionsTest {
         val sections = assemble(candidates)
 
         sections.map { it.id } shouldBe listOf(HomeSectionId.RecentlyAdded, HomeSectionId.GenrePicks, HomeSectionId.ShuffleAll)
-        sections.section(HomeSectionId.GenrePicks).items shouldBe genres.take(6)
+        sections.section(HomeSectionId.GenrePicks).items.toSet() shouldBe genres.take(6).toSet()
+        sections.section(HomeSectionId.GenrePicks).subtitle shouldBe StringKey.HOME_GENRE_PICKS_LARGEST_SUBTITLE
         sections.section(HomeSectionId.ShuffleAll).items shouldBe emptyList()
     }
 
@@ -185,17 +192,38 @@ class AssembleHomeSectionsTest {
     }
 
     @Test
-    fun `on repeat needs five completions and ranks by score`() {
+    fun `heavy rotation needs three days and keeps the order it's given`() {
         val candidates = empty.copy(
-            onRepeat = listOf(
-                OnRepeatCandidate(albums[0], completions = 5, score = 1.0),
-                OnRepeatCandidate(artist("often"), completions = 9, score = 4.0),
-                OnRepeatCandidate(albums[1], completions = 4, score = 9.0),
+            heavyRotation = listOf(rotation(artist("often"), days = 9), rotation(albums[0], days = 3), rotation(albums[1], days = 2)),
+        )
+
+        assemble(candidates).section(HomeSectionId.HeavyRotation).items shouldBe listOf(artist("often"), albums[0])
+        assemble(empty.copy(heavyRotation = listOf(rotation(albums[0], 2), rotation(albums[1], 2)))).map { it.id } shouldBe emptyList()
+    }
+
+    @Test
+    fun `every section but shuffle all says what it is`() {
+        val sections = assemble(
+            empty.copy(
+                jumpBackIn = JumpBackInCandidates(albums.take(2), emptyList()),
+                aroundThisTime = albums.subList(2, 5).map { around(it, days = 3) },
+                heavyRotation = albums.subList(5, 7).map { rotation(it, days = 3) },
+                rediscover = albums.subList(7, 9),
+                recentlyAdded = albums.subList(9, 11),
+                genrePicks = GenrePickCandidates(listOf(genre("jazz")), genres),
             ),
         )
 
-        assemble(candidates).section(HomeSectionId.OnRepeat).items shouldBe listOf(artist("often"), albums[0])
-        assemble(empty.copy(onRepeat = listOf(OnRepeatCandidate(albums[1], 4, 9.0)))).map { it.id } shouldBe emptyList()
+        sections.map { it.subtitle } shouldBe listOf(
+            StringKey.HOME_JUMP_BACK_IN_SUBTITLE,
+            StringKey.HOME_AROUND_THIS_TIME_SUBTITLE,
+            StringKey.HOME_HEAVY_ROTATION_SUBTITLE,
+            StringKey.HOME_REDISCOVER_SUBTITLE,
+            StringKey.HOME_RECENTLY_ADDED_SUBTITLE,
+            StringKey.HOME_GENRE_PICKS_SUBTITLE,
+        )
+        assemble(empty.copy(hasHistory = false, recentlyAdded = albums.take(2))).map { it.subtitle } shouldBe
+            listOf(StringKey.HOME_RECENTLY_ADDED_SUBTITLE, null)
     }
 
     @Test
@@ -219,12 +247,32 @@ class AssembleHomeSectionsTest {
     }
 
     @Test
-    fun `genre picks put played genres first, fill with the largest, and need four`() {
+    fun `genre picks choose played genres first, fill with the largest, and need four`() {
         val played = listOf(genre("jazz"), genres[1])
 
-        assemble(empty.copy(genrePicks = GenrePickCandidates(played, genres))).section(HomeSectionId.GenrePicks).items shouldBe
-            listOf(genre("jazz"), genres[1], genres[0], genres[2], genres[3], genres[4])
+        val picks = assemble(empty.copy(genrePicks = GenrePickCandidates(played, genres))).section(HomeSectionId.GenrePicks)
+        picks.items.toSet() shouldBe setOf(genre("jazz"), genres[1], genres[0], genres[2], genres[3], genres[4])
+        picks.subtitle shouldBe StringKey.HOME_GENRE_PICKS_SUBTITLE
         assemble(empty.copy(genrePicks = GenrePickCandidates(played, genres.take(3)))).section(HomeSectionId.GenrePicks).items.size shouldBe 4
         assemble(empty.copy(genrePicks = GenrePickCandidates(played, genres.take(1)))).map { it.id } shouldBe emptyList()
+    }
+
+    @Test
+    fun `genre picks say they're the largest when no played genre is left to show`() {
+        val candidates = empty.copy(
+            jumpBackIn = JumpBackInCandidates(listOf(genre("jazz"), albums[0]), emptyList()),
+            genrePicks = GenrePickCandidates(listOf(genre("jazz")), genres),
+        )
+
+        assemble(candidates).section(HomeSectionId.GenrePicks).subtitle shouldBe StringKey.HOME_GENRE_PICKS_LARGEST_SUBTITLE
+    }
+
+    @Test
+    fun `genre picks hold their order through a day however the plays rank them (#672)`() {
+        val morning = assemble(empty.copy(genrePicks = GenrePickCandidates(listOf(genres[0], genres[1]), genres))).section(HomeSectionId.GenrePicks).items
+        val evening = assemble(empty.copy(genrePicks = GenrePickCandidates(listOf(genres[1], genres[0]), genres)), at = wednesdayMorning + 12.hours)
+            .section(HomeSectionId.GenrePicks).items
+
+        evening shouldBe morning
     }
 }

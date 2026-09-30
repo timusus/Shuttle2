@@ -7,8 +7,7 @@ import com.simplecityapps.createPlaylist
 import com.simplecityapps.fakes.FakePlayHistoryRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeSuggestionsRepository
-import com.simplecityapps.mediaprovider.repository.playhistory.AlbumArtistCompletions
-import com.simplecityapps.mediaprovider.repository.playhistory.AlbumCompletions
+import com.simplecityapps.mediaprovider.repository.playhistory.AlbumDay
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.GenrePlays
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
@@ -99,16 +98,64 @@ class HomeSuggestionsTest {
         playHistory.queries shouldBe listOf("contextsAroundHour(8, 90, ${now - 60.days})")
     }
 
-    @Test
-    fun `on repeat merges albums and artists by score over twenty eight days`() = runTest {
-        playHistory.albumCompletions = listOf(AlbumCompletions(blue.groupKey!!, completions = 6, score = 2.0, lastCompletedAt = now))
-        playHistory.albumArtistCompletions = listOf(AlbumArtistCompletions(joni.groupKey, completions = 8, score = 5.0, lastCompletedAt = now))
+    private val today = 20_000L
 
-        OnRepeat(playHistory, resolve)(now) shouldBe listOf(
-            OnRepeatCandidate(HomeItem.ArtistItem(joni), 8, 5.0),
-            OnRepeatCandidate(HomeItem.AlbumItem(blue), 6, 2.0),
+    private fun day(
+        album: AlbumGroupKey?,
+        day: Long,
+        songs: Int,
+        trackCount: Int = 10,
+    ) = AlbumDay(album!!, day, songs, trackCount, lastCompletedAt = now - (today - day).days)
+
+    @Test
+    fun `heavy rotation counts the days with three songs of an album, over twenty eight days`() = runTest {
+        playHistory.albumDays = listOf(day(blue.groupKey, today, 3), day(blue.groupKey, today - 1, 5), day(blue.groupKey, today - 9, 12), day(blue.groupKey, today - 2, 2))
+
+        HeavyRotation(playHistory, resolve)(now) shouldBe listOf(
+            HeavyRotationCandidate(HomeItem.AlbumItem(blue), days = 3, lastPlayedAt = now),
+            HeavyRotationCandidate(HomeItem.ArtistItem(joni), days = 3, lastPlayedAt = now),
         )
-        playHistory.queries shouldBe listOf("albumCompletions(${now - 28.days}, 14d)")
+        playHistory.queries shouldBe listOf("albumDays(${now - 28.days})")
+    }
+
+    @Test
+    fun `one listen through a ten track album is one day`() = runTest {
+        playHistory.albumDays = listOf(day(blue.groupKey, today, songs = 10))
+
+        HeavyRotation(playHistory, resolve)(now).map { it.days } shouldBe listOf(1, 1)
+    }
+
+    @Test
+    fun `a backfill of one completion per song spread over the days counts no day`() = runTest {
+        // Migration 48 to 49 left one completed event per song, at its last completion: at most a couple a day
+        playHistory.albumDays = (0L until 10L).map { day(blue.groupKey, today - it * 2, songs = 1) } + day(kidA.groupKey, today, songs = 2)
+
+        HeavyRotation(playHistory, resolve)(now) shouldBe emptyList()
+    }
+
+    @Test
+    fun `half of an album shorter than six tracks counts a day`() = runTest {
+        playHistory.albumDays = listOf(day(blue.groupKey, today, songs = 2, trackCount = 4), day(blue.groupKey, today - 1, songs = 2, trackCount = 5))
+
+        HeavyRotation(playHistory, resolve)(now).single { it.item is HomeItem.AlbumItem }.days shouldBe 1
+    }
+
+    @Test
+    fun `an artist's day counts three songs across their albums, ranked above fewer days`() = runTest {
+        val court = createAlbum("court and spark", "joni mitchell")
+        suggestions.albums = listOf(blue, kidA, court)
+        playHistory.albumDays = listOf(
+            day(blue.groupKey, today, 2),
+            day(court.groupKey, today, 1),
+            day(blue.groupKey, today - 3, 1),
+            day(court.groupKey, today - 3, 2),
+            day(kidA.groupKey, today - 5, 4),
+        )
+
+        HeavyRotation(playHistory, resolve)(now) shouldBe listOf(
+            HeavyRotationCandidate(HomeItem.ArtistItem(joni), days = 2, lastPlayedAt = now),
+            HeavyRotationCandidate(HomeItem.AlbumItem(kidA), days = 1, lastPlayedAt = now - 5.days),
+        )
     }
 
     @Test

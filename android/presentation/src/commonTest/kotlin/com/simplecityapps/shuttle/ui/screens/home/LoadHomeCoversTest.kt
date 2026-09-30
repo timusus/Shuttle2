@@ -19,7 +19,7 @@ class LoadHomeCoversTest {
     /** One song on each of [albums], ids from [firstId]. */
     private fun songsOn(firstId: Long, vararg albums: String): List<Song> = albums.mapIndexed { index, album -> createSong(id = firstId + index, name = album, album = album) }
 
-    private fun section(vararg items: HomeItem) = HomeSection(HomeSectionId.Rediscover, HomeSectionTitle.Rediscover, items.toList())
+    private fun section(vararg items: HomeItem) = HomeSection(HomeSectionId.Rediscover, HomeSectionTitle.Rediscover, subtitle = null, items.toList())
 
     @Test
     fun `a playlist's and a genre's covers are four songs from different albums, keyed by the item`() = runTest {

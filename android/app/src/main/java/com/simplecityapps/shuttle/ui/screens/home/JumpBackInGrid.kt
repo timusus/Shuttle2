@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -44,11 +46,15 @@ fun JumpBackInGrid(
     callbacks: HomeCallbacks,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
+    // Not lazy, so no animateItem: each cell is keyed by its item so it keeps its state as the grid changes, and the grid
+    // animates its height when a row comes or goes (#672).
+    Column(modifier = modifier.animateContentSize(), verticalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
         items.take(JUMP_BACK_IN_MAXIMUM_ITEMS).chunked(columns).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
                 row.forEach { item ->
-                    JumpBackInCell(item, covers[item.key].orEmpty(), showPlayButton, callbacks, Modifier.weight(1f))
+                    key(item.key) {
+                        JumpBackInCell(item, covers[item.key].orEmpty(), showPlayButton, callbacks, Modifier.weight(1f))
+                    }
                 }
                 // A short last row keeps its cells the width of the rows above.
                 repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }

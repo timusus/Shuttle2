@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
+import com.simplecityapps.mediaprovider.repository.playhistory.AlbumDay
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
@@ -109,32 +110,55 @@ class AroundThisTime @Inject constructor(
     }
 }
 
-/** An album or artist played through [completions] times in the window, weighed by age into [score]. */
-data class OnRepeatCandidate(
+/** An album or artist listened to on [days] distinct days in the window, the last time at [lastPlayedAt]. */
+data class HeavyRotationCandidate(
     val item: HomeItem,
-    val completions: Int,
-    val score: Double,
+    val days: Int,
+    val lastPlayedAt: Instant,
 )
 
-class OnRepeat @Inject constructor(
+/**
+ * The albums and artists listened to on the most distinct days in the last [WINDOW_DAYS] (#671), so one sitting with a
+ * long album counts once. A day counts for an album when [MIN_SONGS_A_DAY] of its songs were played through, or half of
+ * an album of fewer than [SHORT_ALBUM_TRACKS] tracks; for an artist, when that many of their songs were, or half of one
+ * of their short albums. Most days first, then the most recently played.
+ */
+class HeavyRotation @Inject constructor(
     private val playHistoryRepository: PlayHistoryRepository,
     private val resolveHomeItems: ResolveHomeItems,
 ) {
-    suspend operator fun invoke(now: Instant): List<OnRepeatCandidate> {
-        val since = now - WINDOW_DAYS.days
-        val albums = playHistoryRepository.albumCompletions(since, HALF_LIFE_DAYS.days, CANDIDATES)
-            .map { Triple(PlayContext.Album(it.groupKey), it.completions, it.score) }
-        val artists = playHistoryRepository.albumArtistCompletions(since, HALF_LIFE_DAYS.days, CANDIDATES)
-            .map { Triple(PlayContext.AlbumArtist(it.groupKey), it.completions, it.score) }
-        val scored = (albums + artists).sortedByDescending { it.third }
-        val items = resolveHomeItems(scored.map { it.first }).associateBy { it.playContext }
-        return scored.mapNotNull { (context, completions, score) -> items[context]?.let { OnRepeatCandidate(it, completions, score) } }
+    private class Tally(
+        val context: PlayContext,
+        val days: Int,
+        val lastPlayedAt: Instant,
+    )
+
+    suspend operator fun invoke(now: Instant): List<HeavyRotationCandidate> {
+        val albumDays = playHistoryRepository.albumDays(since = now - WINDOW_DAYS.days)
+        val albums = albumDays.groupBy { it.groupKey }.map { (key, days) ->
+            Tally(PlayContext.Album(key), days.count { it.counts }, days.maxOf { it.lastCompletedAt })
+        }
+        val artists = albumDays.groupBy { it.albumArtistGroupKey }.map { (key, albums) ->
+            val days = albums.groupBy { it.day }.values.count { day -> day.sumOf { it.songs } >= MIN_SONGS_A_DAY || day.any { it.counts } }
+            Tally(PlayContext.AlbumArtist(key), days, albums.maxOf { it.lastCompletedAt })
+        }
+        val tallies = (albums + artists)
+            .filter { it.days > 0 }
+            .sortedWith(compareByDescending<Tally> { it.days }.thenByDescending { it.lastPlayedAt })
+            .take(CANDIDATES)
+        val items = resolveHomeItems(tallies.map { it.context }).associateBy { it.playContext }
+        return tallies.mapNotNull { tally -> items[tally.context]?.let { HeavyRotationCandidate(it, tally.days, tally.lastPlayedAt) } }
     }
+
+    /** Whether this day's listening to the album counts as a day of it. */
+    private val AlbumDay.counts: Boolean
+        get() = songs >= MIN_SONGS_A_DAY || (trackCount < SHORT_ALBUM_TRACKS && songs * 2 >= trackCount)
 
     companion object {
         const val WINDOW_DAYS = 28
-        const val HALF_LIFE_DAYS = 14
-        private const val CANDIDATES = 20
+        const val MIN_SONGS_A_DAY = 3
+        const val SHORT_ALBUM_TRACKS = 6
+        private const val CANDIDATES = 40
     }
 }
 

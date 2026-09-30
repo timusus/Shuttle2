@@ -4,7 +4,9 @@ import com.simplecityapps.createAlbum
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlayHistoryRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
+import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSuggestionsRepository
+import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
 import com.simplecityapps.shuttle.model.playContext
@@ -20,6 +22,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.screens.settings.about.IsWhatsNewPending
 import com.simplecityapps.shuttle.ui.screens.settings.about.MarkChangelogViewed
+import com.simplecityapps.shuttle.ui.text.StringKey
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -52,6 +55,7 @@ class HomeViewModelTest {
     private lateinit var analyticsConsentSettings: AnalyticsConsentSettings
     private val suggestions = FakeSuggestionsRepository()
     private val playHistory = FakePlayHistoryRepository()
+    private val importState = FakeSongImportStateProvider()
     private val appVersion = AppVersion { VERSION_NAME }
 
     private val start = Instant.parse("2026-09-23T08:30:00Z")
@@ -79,7 +83,8 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun TestScope.viewModel(): HomeViewModel {
+    /** Home's view model, collected, and on screen unless [visible] is false. */
+    private fun TestScope.viewModel(visible: Boolean = true): HomeViewModel {
         // Wall time moves with the test's virtual time, from 8:30am
         val clock = object : Clock {
             override fun now(): Instant = start + testScheduler.currentTime.milliseconds
@@ -89,14 +94,14 @@ class HomeViewModelTest {
         val load = LoadHomeSections(
             JumpBackIn(playHistory, suggestions, resolve),
             AroundThisTime(playHistory, resolve),
-            OnRepeat(playHistory, resolve),
+            HeavyRotation(playHistory, resolve),
             Rediscover(suggestions, resolve),
             RecentlyAdded(suggestions, resolve),
             GenrePicks(playHistory, suggestions),
             homeTime,
         )
         return HomeViewModel(
-            ObserveHomeSections(suggestions, playHistory, load, homeTime, testDispatcher),
+            ObserveHomeSections(suggestions, playHistory, importState, load, homeTime, testDispatcher),
             IsWhatsNewPending(preferenceManager, appVersion),
             MarkChangelogViewed(preferenceManager, appVersion),
             ReadSetting(settingsStore),
@@ -104,6 +109,7 @@ class HomeViewModelTest {
             LoadHomeCovers(FakePlaylistRepository(), FakeGenreRepository()),
         ).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
+            viewModel.onVisibilityChanged(visible)
             runCurrent()
         }
     }
@@ -120,7 +126,7 @@ class HomeViewModelTest {
         playHistory.recentContexts = twoRecentContexts
 
         val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
-        content.sections shouldBe listOf(HomeSection(HomeSectionId.JumpBackIn, HomeSectionTitle.JumpBackIn, listOf(HomeItem.AlbumItem(phaseGarden), HomeItem.AlbumItem(dustChoir))))
+        content.sections shouldBe listOf(HomeSection(HomeSectionId.JumpBackIn, HomeSectionTitle.JumpBackIn, StringKey.HOME_JUMP_BACK_IN_SUBTITLE, listOf(HomeItem.AlbumItem(phaseGarden), HomeItem.AlbumItem(dustChoir))))
         content.showWhatsNew shouldBe false
     }
 
@@ -131,38 +137,102 @@ class HomeViewModelTest {
         viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>().sections.map { it.id } shouldBe listOf(HomeSectionId.ShuffleAll)
     }
 
-    @Test
-    fun `history changes reload the sections once they settle`() = runTest(testDispatcher) {
-        suggestions.songCount.value = 2
-        val viewModel = viewModel()
-        playHistory.recentContexts = twoRecentContexts
+    private val HomeViewModel.sectionIds get() = uiState.value.shouldBeInstanceOf<HomeUiState.Content>().sections.map { it.id }
 
+    /** A library played once, whose Jump back in appears only once Home reloads. */
+    private fun TestScope.playedLibrary(visible: Boolean = true): HomeViewModel {
+        suggestions.songCount.value = 2
+        val viewModel = viewModel(visible)
+        playHistory.recentContexts = twoRecentContexts
         playHistory.eventCount.value = 1
         runCurrent()
-        playHistory.eventCount.value = 2
-        advanceTimeBy(ObserveHomeSections.DEBOUNCE - 1.milliseconds)
-        runCurrent()
-        viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>().sections.map { it.id } shouldBe listOf(HomeSectionId.ShuffleAll)
-
-        advanceTimeBy(2.milliseconds)
-        runCurrent()
-        viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>().sections.map { it.id } shouldBe listOf(HomeSectionId.JumpBackIn)
+        return viewModel
     }
 
     @Test
-    fun `the hour turning reloads the sections`() = runTest(testDispatcher) {
+    fun `nothing loads until home is first on screen`() = runTest(testDispatcher) {
+        suggestions.songCount.value = 2
+        val viewModel = viewModel(visible = false)
+        viewModel.uiState.value shouldBe HomeUiState.Loading
+
+        viewModel.onVisibilityChanged(true)
+        runCurrent()
+
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.ShuffleAll)
+    }
+
+    @Test
+    fun `plays don't reload the sections while home is on screen (#672)`() = runTest(testDispatcher) {
+        val viewModel = playedLibrary()
+        advanceTimeBy(1.hours)
+        runCurrent()
+
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.ShuffleAll)
+    }
+
+    @Test
+    fun `returning to home reloads the sections`() = runTest(testDispatcher) {
+        val viewModel = playedLibrary()
+
+        viewModel.onVisibilityChanged(false)
+        runCurrent()
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.ShuffleAll)
+        viewModel.onVisibilityChanged(true)
+        runCurrent()
+
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.JumpBackIn)
+    }
+
+    @Test
+    fun `pull to refresh reloads the sections`() = runTest(testDispatcher) {
+        val viewModel = playedLibrary()
+
+        viewModel.refresh()
+        runCurrent()
+
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.JumpBackIn)
+    }
+
+    @Test
+    fun `an import completing reloads the sections while home is on screen`() = runTest(testDispatcher) {
+        val viewModel = playedLibrary()
+
+        importState.setState(importComplete())
+        runCurrent()
+
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.JumpBackIn)
+    }
+
+    @Test
+    fun `the library filling reloads home from its empty state`() = runTest(testDispatcher) {
+        val viewModel = viewModel()
+        viewModel.uiState.value shouldBe HomeUiState.Empty
+
+        suggestions.songCount.value = 2
+        runCurrent()
+
+        viewModel.sectionIds shouldBe listOf(HomeSectionId.ShuffleAll)
+    }
+
+    @Test
+    fun `the hour turning reloads the sections only while home is hidden`() = runTest(testDispatcher) {
         suggestions.songCount.value = 2
         playHistory.eventCount.value = 1
         playHistory.contextsAroundHour = listOf(phaseGarden, dustChoir, saltMarsh).map { ContextDays(it.playContext, days = 3, weekendDays = 0, lastPlayedAt = start) }
         suggestions.albums = listOf(phaseGarden, dustChoir, saltMarsh)
         val viewModel = viewModel()
-        viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>().sections.single().title shouldBe HomeSectionTitle.ThisMorning
+        val title = { viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>().sections.single().title }
+        title() shouldBe HomeSectionTitle.ThisMorning
 
-        // 8:30am to 12:00pm: the ticker turns at 9, 10, 11 and 12
-        advanceTimeBy(3.5.hours + ObserveHomeSections.DEBOUNCE)
+        // 8:30am to 12:00pm: the hour turns at 9, 10, 11 and 12, but Home is on screen
+        advanceTimeBy(3.5.hours)
         runCurrent()
+        title() shouldBe HomeSectionTitle.ThisMorning
 
-        viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>().sections.single().title shouldBe HomeSectionTitle.ThisAfternoon
+        viewModel.onVisibilityChanged(false)
+        advanceTimeBy(1.hours)
+        runCurrent()
+        title() shouldBe HomeSectionTitle.ThisAfternoon
     }
 
     @Test

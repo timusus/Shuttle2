@@ -49,11 +49,11 @@ interface PlayEventDao {
     ): List<ContextDaysRow>
 
     /**
-     * Plays through since [since] by song and (UTC) day, most first: the rows a caller weighs by age and merges into
-     * albums and album artists by their album identity (#637), which SQL can't compute. [limit] caps the rows.
+     * Plays through since [since] by song and local day (UTC shifted by [utcOffsetMs]), most first: the rows a caller
+     * merges into albums by their album identity (#637), which SQL can't compute. [limit] caps the rows.
      */
     @Query(
-        "SELECT s.id AS songId, e.startedAt / 86400000 AS day, COUNT(*) AS plays, MAX(e.startedAt) AS lastPlayedAt " +
+        "SELECT s.id AS songId, (e.startedAt + :utcOffsetMs) / 86400000 AS day, COUNT(*) AS plays, MAX(e.startedAt) AS lastPlayedAt " +
             "FROM play_events e JOIN songs s ON s.path = e.songPath AND s.mediaProvider = e.mediaProvider " +
             "WHERE e.completed = 1 AND e.startedAt >= :since " +
             "GROUP BY s.id, day " +
@@ -61,6 +61,7 @@ interface PlayEventDao {
     )
     suspend fun completionsBySongAndDay(
         since: Instant,
+        utcOffsetMs: Long,
         limit: Int
     ): List<SongDayPlaysRow>
 
@@ -75,7 +76,7 @@ interface PlayEventDao {
         to: String
     ): Int
 
-    /** Plays (through or not) since [since] by genre tagging and (UTC) day, as [completionsBySongAndDay] has them. */
+    /** Plays (through or not) since [since] by genre tagging and UTC day. */
     @Query(
         "SELECT s.genres AS genres, e.startedAt / 86400000 AS day, COUNT(*) AS plays " +
             "FROM play_events e JOIN songs s ON s.path = e.songPath AND s.mediaProvider = e.mediaProvider " +

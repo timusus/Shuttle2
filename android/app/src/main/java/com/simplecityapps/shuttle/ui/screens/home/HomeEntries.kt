@@ -9,6 +9,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -49,6 +50,11 @@ private fun HomeDestination(
     viewModel: HomeViewModel = metroViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    // Home reloads as it comes on screen, and while it's off screen only as the hour turns (#672)
+    LifecycleStartEffect(viewModel) {
+        viewModel.onVisibilityChanged(true)
+        onStopOrDispose { viewModel.onVisibilityChanged(false) }
+    }
     val emptyViewModel: LibraryEmptyViewModel = metroViewModel()
     val emptyState by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)

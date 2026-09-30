@@ -18,13 +18,16 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
 
 sealed interface HomeUiState {
@@ -61,6 +64,8 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
     private val whatsNewPending = MutableStateFlow(isWhatsNewPending())
     private val events = PendingEvents<HomeEvent>()
+    private val visible = MutableStateFlow(false)
+    private val refreshes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     init {
         if (!readSetting(AnalyticsConsentSettings.NoticeShown)) {
@@ -69,10 +74,16 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** The sections with their mosaics' covers; the sections show first and the covers follow as they load. */
+    /**
+     * The sections with their mosaics' covers; the sections show first and the covers follow as they load. A reload
+     * keeps the covers it already has for the items still shown, so their mosaics don't blank and refill.
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val sectionsWithCovers = observeHomeSections().flatMapLatest { sections ->
-        flow { emit(sections to sections?.let { loadHomeCovers(it) }.orEmpty()) }.onStart { emit(sections to emptyMap()) }
+    private val sectionsWithCovers = observeHomeSections(visible, refreshes).runningFold(null as SectionsWithCovers?) { previous, sections ->
+        val keys = sections.orEmpty().flatMap { section -> section.items.map { it.key } }.toSet()
+        SectionsWithCovers(sections, previous?.covers.orEmpty().filterKeys { it in keys })
+    }.filterNotNull().flatMapLatest { held ->
+        flow { emit(held.copy(covers = held.sections?.let { loadHomeCovers(it) }.orEmpty())) }.onStart { emit(held) }
     }
 
     val uiState: StateFlow<HomeUiState> = combine(sectionsWithCovers, whatsNewPending, events.flow) { (sections, covers), whatsNew, pendingEvents ->
@@ -98,4 +109,22 @@ class HomeViewModel @Inject constructor(
     }
 
     fun onEventHandled(id: Long) = events.consume(id)
+
+    /**
+     * Whether Home is on screen: its tab is showing and the app is in the foreground. Becoming visible reloads the
+     * sections; while hidden they reload only as the hour turns (#672).
+     */
+    fun onVisibilityChanged(visible: Boolean) {
+        this.visible.value = visible
+    }
+
+    /** Pull to refresh: reloads the sections now. */
+    fun refresh() {
+        refreshes.tryEmit(Unit)
+    }
+
+    private data class SectionsWithCovers(
+        val sections: List<HomeSection>?,
+        val covers: Map<String, List<Song>>,
+    )
 }

@@ -174,6 +174,13 @@ val StringKey.resId: Int
         StringKey.EQ_PRESET_BASS_REDUCE -> CoreR.string.eq_preset_bass_reduce
         StringKey.EQ_PRESET_VOCAL_BOOST -> CoreR.string.eq_preset_vocal_boost
         StringKey.EQ_PRESET_VOCAL_REDUCE -> CoreR.string.eq_preset_vocal_reduce
+        StringKey.HOME_JUMP_BACK_IN_SUBTITLE -> R.string.home_jump_back_in_subtitle
+        StringKey.HOME_AROUND_THIS_TIME_SUBTITLE -> R.string.home_around_this_time_subtitle
+        StringKey.HOME_HEAVY_ROTATION_SUBTITLE -> R.string.home_heavy_rotation_subtitle
+        StringKey.HOME_REDISCOVER_SUBTITLE -> R.string.home_rediscover_subtitle
+        StringKey.HOME_RECENTLY_ADDED_SUBTITLE -> R.string.home_recently_added_subtitle
+        StringKey.HOME_GENRE_PICKS_SUBTITLE -> R.string.home_genre_picks_subtitle
+        StringKey.HOME_GENRE_PICKS_LARGEST_SUBTITLE -> R.string.home_genre_picks_largest_subtitle
     }
 
 /** The Android resource behind [this] key: `R.plurals.<key>`. */

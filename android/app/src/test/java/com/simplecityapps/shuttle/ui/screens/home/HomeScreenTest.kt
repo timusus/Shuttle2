@@ -63,10 +63,14 @@ class HomeScreenTest {
         robot.setContent(HomeScenarios.content)
 
         robot.assertTextDisplayed("Jump back in")
+        robot.assertTextDisplayed("Pick up where you left off")
         robot.scrollTo("Saltmarsh Choir")
-        robot.scrollTo("On repeat")
+        robot.scrollTo("Heavy rotation")
+        robot.scrollTo("What you've played most in the last 4 weeks")
         robot.scrollTo("Recently added")
+        robot.scrollTo("The newest additions to your library")
         robot.scrollTo("Genre picks")
+        robot.scrollTo("Genres you've been playing")
         robot.scrollTo(HomeScenarios.genres.first().name)
     }
 
@@ -78,6 +82,7 @@ class HomeScreenTest {
         robot.assertTextDisplayed("Recently added")
         robot.assertTextDisplayed("Home learns from what you play: your albums, artists and genres show up here as you listen.")
         robot.scrollTo("Genre picks")
+        robot.scrollTo("The biggest genres in your library")
         // The card's Shuffle all replaces the top bar's.
         robot.assertDescriptionNotShown("Shuffle all")
         robot.tapText("Shuffle all")

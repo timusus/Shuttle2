@@ -2,13 +2,11 @@ package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlayEventDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
-import com.simplecityapps.mediaprovider.repository.playhistory.AlbumArtistCompletions
-import com.simplecityapps.mediaprovider.repository.playhistory.AlbumCompletions
+import com.simplecityapps.mediaprovider.repository.playhistory.AlbumDay
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.GenrePlays
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
-import com.simplecityapps.shuttle.model.AlbumIdentity
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
@@ -96,30 +94,22 @@ class LocalPlayHistoryRepository(
         windowMinutes: Int,
         since: Instant,
         limit: Int
-    ): List<ContextDays> {
-        val utcOffsetMs = timeZone().offsetAt(clock.now()).totalSeconds * 1000L
-        return playEventDao.contextsInHours(hoursAround(hour, windowMinutes), since, utcOffsetMs, limit).map { row ->
-            ContextDays(PlayContext.decode(row.contextType, row.contextId), row.days, row.weekendDays, row.lastPlayedAt)
-        }
+    ): List<ContextDays> = playEventDao.contextsInHours(hoursAround(hour, windowMinutes), since, utcOffsetMs(), limit).map { row ->
+        ContextDays(PlayContext.decode(row.contextType, row.contextId), row.days, row.weekendDays, row.lastPlayedAt)
     }
 
-    override suspend fun albumCompletions(
-        since: Instant,
-        halfLife: Duration,
-        limit: Int
-    ): List<AlbumCompletions> = scoredCompletions(since, halfLife) { identity -> identity.groupKey }
-        .map { (key, total) -> AlbumCompletions(key, total.plays, total.score, total.lastPlayedAt) }
-        .sortedWith(compareByDescending<AlbumCompletions> { it.score }.thenByDescending { it.lastCompletedAt })
-        .take(limit)
-
-    override suspend fun albumArtistCompletions(
-        since: Instant,
-        halfLife: Duration,
-        limit: Int
-    ): List<AlbumArtistCompletions> = scoredCompletions(since, halfLife) { identity -> identity.albumArtistGroupKey }
-        .map { (key, total) -> AlbumArtistCompletions(key, total.plays, total.score, total.lastPlayedAt) }
-        .sortedWith(compareByDescending<AlbumArtistCompletions> { it.score }.thenByDescending { it.lastCompletedAt })
-        .take(limit)
+    override suspend fun albumDays(since: Instant): List<AlbumDay> {
+        val rows = playEventDao.completionsBySongAndDay(since, utcOffsetMs(), MAX_DAY_ROWS)
+        if (rows.isEmpty()) return emptyList()
+        val index = albumIndex.albumIndex()
+        return rows
+            .mapNotNull { row -> index.identities[row.songId]?.let { identity -> identity.groupKey to row } }
+            .groupBy({ (groupKey, row) -> groupKey to row.day }, { (_, row) -> row })
+            .map { (albumDay, rows) ->
+                val (groupKey, day) = albumDay
+                AlbumDay(groupKey, day, songs = rows.size, trackCount = index.songIds(groupKey).size, lastCompletedAt = rows.maxOf { it.lastPlayedAt })
+            }
+    }
 
     override suspend fun genrePlays(
         since: Instant,
@@ -141,42 +131,13 @@ class LocalPlayHistoryRepository(
             .take(limit)
     }
 
+    /** The local time zone's offset from UTC now, which days and hours are counted in. */
+    private fun utcOffsetMs(): Long = timeZone().offsetAt(clock.now()).totalSeconds * 1000L
+
     override fun eventCount(): Flow<Int> = playEventDao.observeCount()
 
     override suspend fun clearHistory() {
         playEventDao.clear()
-    }
-
-    private class ScoredTotal(
-        val plays: Int,
-        val score: Double,
-        val lastPlayedAt: Instant
-    )
-
-    /**
-     * The plays through since [since], merged by [key] of each song's album identity (the library's, as the album and
-     * artist repositories group by it, so each result names an album or artist they have), each day's plays weighed by
-     * their age. A song whose identity isn't known (removed since) is left out.
-     */
-    private suspend fun <K> scoredCompletions(
-        since: Instant,
-        halfLife: Duration,
-        key: (AlbumIdentity) -> K
-    ): List<Pair<K, ScoredTotal>> {
-        val today = clock.now().toEpochMilliseconds() / DAY_MS
-        val rows = playEventDao.completionsBySongAndDay(since, MAX_DAY_ROWS)
-        if (rows.isEmpty()) return emptyList()
-        val identities = albumIndex.albumIndex().identities
-        return rows
-            .mapNotNull { row -> identities[row.songId]?.let { identity -> key(identity) to row } }
-            .groupBy({ it.first }, { it.second })
-            .map { (groupKey, rows) ->
-                groupKey to ScoredTotal(
-                    plays = rows.sumOf { it.plays },
-                    score = rows.sumOf { it.plays * decay(today - it.day, halfLife) },
-                    lastPlayedAt = rows.maxOf { it.lastPlayedAt }
-                )
-            }
     }
 
     /** A play [ageDays] old's weight: 1 today, halving every [halfLife]. */

@@ -49,26 +49,15 @@ interface PlayHistoryRepository {
     ): List<ContextDays>
 
     /**
-     * Each album's plays through since [since], most [AlbumCompletions.score] first; at most [limit]. The score weighs each
-     * play by its age, halving every [halfLife], so a week of plays outranks an old binge. Albums are grouped by
-     * [com.simplecityapps.shuttle.model.AlbumIdentityRule], as the album repository groups them.
+     * Each album's listening by local day since [since]: one [AlbumDay] per album and day any of its songs was played
+     * through, saying how many of them were. Albums are grouped by [com.simplecityapps.shuttle.model.AlbumIdentityRule],
+     * as the album repository groups them, so each names an album the album and artist screens can open.
      */
-    suspend fun albumCompletions(
-        since: Instant,
-        halfLife: Duration,
-        limit: Int
-    ): List<AlbumCompletions>
-
-    /** Each album artist's plays through since [since], scored and grouped as [albumCompletions] scores and groups them. */
-    suspend fun albumArtistCompletions(
-        since: Instant,
-        halfLife: Duration,
-        limit: Int
-    ): List<AlbumArtistCompletions>
+    suspend fun albumDays(since: Instant): List<AlbumDay>
 
     /**
-     * Each genre's plays (through or not) since [since], most [GenrePlays.score] first, scored as [albumCompletions] scores
-     * them; a song in two genres counts for both. At most [limit].
+     * Each genre's plays (through or not) since [since], most [GenrePlays.score] first, weighing each play by its
+     * age, halving every [halfLife]; a song in two genres counts for both. At most [limit].
      */
     suspend fun genrePlays(
         since: Instant,
@@ -114,20 +103,20 @@ data class ContextDays(
     val lastPlayedAt: Instant
 )
 
-/** [completions] plays through, weighed by age into [score]. */
-data class AlbumCompletions(
+/**
+ * [songs] distinct songs of the album [groupKey] names, of its [trackCount], played through on the local [day] (in days
+ * since the epoch), the last of them at [lastCompletedAt].
+ */
+data class AlbumDay(
     val groupKey: AlbumGroupKey,
-    val completions: Int,
-    val score: Double,
+    val day: Long,
+    val songs: Int,
+    val trackCount: Int,
     val lastCompletedAt: Instant
-)
-
-data class AlbumArtistCompletions(
-    val groupKey: AlbumArtistGroupKey,
-    val completions: Int,
-    val score: Double,
-    val lastCompletedAt: Instant
-)
+) {
+    /** The album's artist, as the album artist repository groups them. */
+    val albumArtistGroupKey: AlbumArtistGroupKey get() = groupKey.albumArtistGroupKey ?: AlbumArtistGroupKey(null)
+}
 
 data class GenrePlays(
     val genre: String,
