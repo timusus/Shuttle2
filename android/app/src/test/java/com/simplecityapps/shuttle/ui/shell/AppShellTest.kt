@@ -185,7 +185,7 @@ class AppShellTest {
         robot.setContent()
         robot.tapMiniPlayer()
         robot.tapPanelButton(NowPlayingPanel.SleepTimer)
-        robot.tapDescription("Collapse player")
+        robot.swipeDownNowPlayingHeader()
 
         robot.assertLevel(PlayerLevel.Mini)
         robot.panel shouldBe null
@@ -202,6 +202,8 @@ class AppShellTest {
 
         robot.tapPanelButton(NowPlayingPanel.Queue)
         robot.assertReachable("Second song", reachable = true)
+        // The panel sheet's grip is the one handle while a panel is open.
+        robot.assertReachable("Collapse player", reachable = false)
     }
 
     @Test

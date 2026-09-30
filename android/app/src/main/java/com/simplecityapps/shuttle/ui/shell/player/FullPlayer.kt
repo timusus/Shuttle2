@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -96,7 +97,8 @@ import kotlinx.coroutines.launch
  * the handle, the artwork, the title, the transport and the bar, fixed to the screen. Nothing in it
  * scrolls, so no gesture opens a panel; the bar's buttons do. With a panel open
  * ([PlayerUiState.panel]) the song shrinks to [NowPlayingHeader] and the panel fills a
- * [PanelSheet] below it, over the bar. On a [tabletopFold] the song sits above the fold, and the
+ * [PanelSheet] below it, over the bar, and the handle goes, leaving the sheet's grip the only one.
+ * On a [tabletopFold] the song sits above the fold, and the
  * transport, or the open panel, below it.
  */
 @Composable
@@ -132,8 +134,8 @@ internal fun FullPlayer(
                 },
             )
         } else {
-            DragHandle(onCollapse)
-            // Keyed on whether a panel is open, so switching panels swaps only the sheet's content.
+            // Keyed on whether a panel is open, so switching panels swaps only the sheet's content. The
+            // handle goes with the song: the panel sheet's own grip is the one handle while a panel is open.
             AnimatedContent(
                 targetState = player.panel,
                 contentKey = { it != null },
@@ -144,9 +146,11 @@ internal fun FullPlayer(
                 // The outgoing state stays composed while it fades, so it leaves the semantics tree at once.
                 Column(Modifier.fillMaxSize().hiddenFromSemantics(transition.targetState != EnterExitState.Visible)) {
                     if (panel == null) {
+                        DragHandle(onCollapse)
                         NowPlayingSong(player, actions, gap = NowPlayingGap, fillHeight = true, modifier = Modifier.weight(1f))
                         Transport(player, progress, actions, gap = NowPlayingGap)
                     } else {
+                        Spacer(Modifier.height(HeaderTopGap))
                         NowPlayingHeader(player, actions, onClick = closePanel)
                         PanelSheet(panel, player, actions, onOpenRoute, onClose = closePanel, modifier = Modifier.weight(1f))
                     }
@@ -252,6 +256,9 @@ internal fun PanelSheet(
         }
     }
 }
+
+/** The gap above [NowPlayingHeader], where the player's handle sits while no panel is open. */
+private val HeaderTopGap = 8.dp
 
 /** How fast a downward fling closes a [PanelSheet] however little it has moved, per second. */
 private val PanelCloseVelocity = 800.dp

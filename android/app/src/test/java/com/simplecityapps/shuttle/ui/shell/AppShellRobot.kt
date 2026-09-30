@@ -443,6 +443,12 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
+    /** Drags the full player down by the song header over an open panel, which collapses it. */
+    fun swipeDownNowPlayingHeader() {
+        rule.onNodeWithTag(PlayerTestTags.NowPlayingHeader).performTouchInput { swipeDown(startY = top + 1f, endY = bottom + 600f) }
+        rule.waitForIdle()
+    }
+
     /** Drags the open panel's sheet down by its grip, which closes it. */
     fun swipeDownPanel() {
         rule.onNodeWithTag(PlayerTestTags.PanelSheet).performTouchInput { swipeDown(startY = top + 8f, endY = bottom) }
