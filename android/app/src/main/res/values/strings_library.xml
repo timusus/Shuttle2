@@ -71,7 +71,7 @@
     <!-- Library tab label for folders -->
     <string name="library_tab_folders">Folders</string>
     <!-- Playlists tab: section over the built-in smart playlists -->
-    <string name="library_smart_playlists">Smart playlists</string>
+    <string name="library_smart_playlists">Auto playlists</string>
     <!-- Playlist detail: hint shown instead of drag handles when the playlist isn't in custom order -->
     <string name="playlist_detail_reorder_hint">Sorted by <xliff:g example="Song name" id="sort">%1$s</xliff:g>. Choose Custom to reorder.</string>
     <!-- Selection toolbar / playlist actions: remove the selected songs from this playlist (the files are kept) -->
