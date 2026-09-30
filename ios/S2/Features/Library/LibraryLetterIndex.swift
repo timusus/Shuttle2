@@ -140,11 +140,21 @@ private struct IndexedItem<Item, ID: Hashable> {
 extension View {
     /// The index for `sections` down the trailing edge, a `LetterIndexStrip`, which calls `scrollTo` with the section
     /// picked. No index without sections.
+    ///
+    /// The list gives up the strip's width with a clear inset, and the strip itself is an overlay that ignores the
+    /// bottom safe area and hangs from the top, so it doesn't move when scrolling minimises the tab bar and the
+    /// bottom accessory (the mini player) changes placement (#674). `LetterIndexStrip.bottomClearance` keeps its
+    /// lowest letter above the accessory in its tallest, expanded placement.
     @ViewBuilder
     func letterIndex(_ sections: [LetterIndexSection]?, scrollTo: @escaping (LetterIndexSection) -> Void) -> some View {
         if let sections {
             safeAreaInset(edge: .trailing, spacing: 0) {
+                Color.clear.frame(width: LetterIndexStrip.baseWidth).accessibilityHidden(true)
+            }
+            .overlay(alignment: .topTrailing) {
                 LetterIndexStrip(sections: sections.filter(\.isIndexed), onSelect: scrollTo)
+                    .padding(.bottom, LetterIndexStrip.bottomClearance)
+                    .ignoresSafeArea(.container, edges: .bottom)
             }
         } else {
             self
@@ -173,6 +183,9 @@ struct LetterIndexStrip: View {
     /// The whole strip's width at the default text size, the letters and their padding: the width it takes from
     /// the content beside it (`LibraryGrid.columnCount`).
     static let baseWidth = letterWidth + Spacing.xsmall * 2
+    /// Room kept below the letters for the tab bar and the mini player above it, which the strip no longer
+    /// takes from the bottom safe area.
+    static let bottomClearance: CGFloat = 140
 
     var body: some View {
         VStack(spacing: 0) {
@@ -189,8 +202,7 @@ struct LetterIndexStrip: View {
         .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.space)) } action: { lettersFrame = $0 }
         .padding(.horizontal, Spacing.xsmall)
         .padding(.vertical, Spacing.small)
-        .frame(maxHeight: .infinity)
-        // The whole trailing edge takes the drag, as in Contacts: above or below the letters picks the first or last.
+        // The padded strip takes the drag: just above or below the letters picks the first or last.
         .contentShape(Rectangle())
         .coordinateSpace(.named(Self.space))
         .gesture(
