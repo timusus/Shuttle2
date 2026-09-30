@@ -187,7 +187,8 @@ by tap.
 - Navigation recipes (tap-text only, no swipes):
   - Full player: `tap-text` the mini player's title text (dynamic — the currently playing track's
     title, e.g. a seeded track name from `seed-music`).
-  - Queue: open the full player, then `tap-text "Show queue" --desc` — never swipe up for this.
+  - Queue: open the full player, then `tap-text "Queue"` (the labelled button in its bottom row);
+    tap it again, or press back, to close the queue.
     `tap-text "Collapse player" --desc` closes the player.
   - Full player overflow menu: `tap-text "More options" --desc` (confirm with `dump-texts` first);
     it holds the sleep timer, speed, song info, edit tags and the rest.

@@ -25,7 +25,7 @@ appId: com.simplecityapps.shuttle.dev
 - tapOn:
     point: "30%, 86%"
 - extendedWaitUntil:
-    visible: "Up Next"
+    visible: "Queue"
     timeout: 10000
 - tapOn: "Favorite"
 - back

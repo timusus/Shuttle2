@@ -46,7 +46,7 @@
 #   support/scripts/remote-emu.sh install
 #   support/scripts/remote-emu.sh ui-prep
 #   adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.ui.MainActivity
-#   support/scripts/remote-emu.sh tap-text "Up Next"
+#   support/scripts/remote-emu.sh tap-text "Queue"
 #   support/scripts/remote-emu.sh stop
 #
 # UI automation is by text, never by screenshot coordinate: screenshots handed to a model are

@@ -7,7 +7,7 @@ appId: com.simplecityapps.shuttle.dev
 - tapOn:
     point: "30%, 86%"
 - extendedWaitUntil:
-    visible: "Up Next"
+    visible: "Queue"
     timeout: 10000
 - takeScreenshot: dc-381-now-playing-portrait
 - setOrientation: LANDSCAPE_LEFT
@@ -19,5 +19,5 @@ appId: com.simplecityapps.shuttle.dev
 - takeScreenshot: dc-381-now-playing-landscape
 - setOrientation: PORTRAIT
 - extendedWaitUntil:
-    visible: "Up Next"
+    visible: "Queue"
     timeout: 10000

@@ -22,7 +22,7 @@ appId: com.simplecityapps.shuttle.dev
     text: "Taglib One"
     waitToSettleTimeoutMs: 500
 - tapOn:
-    text: "Up Next"
+    text: "Queue"
     waitToSettleTimeoutMs: 500
 - longPressOn:
     text: "Taglib One"

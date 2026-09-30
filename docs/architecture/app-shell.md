@@ -55,93 +55,69 @@ weighed four shapes and built (D), the Shuttle Podcasts panel model described he
 
 ### Levels
 
-`enum class PlayerLevel { Hidden, Mini, NowPlaying, Expanded }`. One shell-owned
+`enum class PlayerLevel { Hidden, Mini, Full }`. One shell-owned
 `AnchoredDraggableState<PlayerLevel>` (`PlayerSheetState`) drives the sheet below 1200 dp
 (section 2). Its offset is the sheet's top edge in shell coordinates.
 
 ```
  offset (y of sheet top)       H = shell height, N = nav bar incl. inset,
-                               M = mini player height, P = rest offset
+                               M = mini player height
  Hidden      = H               sheet fully below the window, nav bar at rest
  Mini        = H - N - M       mini player sits on the nav bar
- NowPlaying  = P               the rest: as tall as handle, artwork, title, transport and bar need
- Expanded    = 0               full height; only where P > 0 (a partial rest)
+ Full        = 0               the full-screen player
 
  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐  ┌────────────────┐
- │                │  │  destination   │  │  destination   │  │ pinned song  ▶ │
- │  destination   │  │                │  ├──── handle ────┤  ├────────────────┤
- │                │  │                │  │  artwork       │  │ open panel     │
- │                │  ├────────────────┤  │  title       ♡ │  │ (queue rows,   │
- │                │  │ mini player    │  │  transport     │  │  sleep timer,  │
- ├────────────────┤  ├────────────────┤  ├────────────────┤  │  sound)        │
- │ nav bar        │  │ nav bar        │  │ bar (pinned)   │  │ bar (pinned)   │
+ │                │  │  destination   │  ├──── handle ────┤  ├──── handle ────┤
+ │  destination   │  │                │  │  artwork       │  │ header       ▶ │
+ │                │  │                │  │  title       ♡ │  ├── panel sheet ─┤
+ │                │  ├────────────────┤  │  seek bar      │  │ queue rows /   │
+ │                │  │ mini player    │  │  transport     │  │ sleep / sound  │
+ ├────────────────┤  ├────────────────┤  ├────────────────┤  ├────────────────┤
+ │ nav bar        │  │ nav bar        │  │ bar  [Queue]   │  │ bar  [Queue]   │
  └────────────────┘  └────────────────┘  └────────────────┘  └────────────────┘
-      Hidden               Mini              NowPlaying            Expanded
+      Hidden               Mini               Full           Full, queue open
 ```
 
-`nowPlayingRest` computes P from the window alone: the artwork takes the full width (up to
-`MaxArtworkSize`) and the sheet rises only as far as the chrome and artwork need, leaving the
-library above it. Where that would leave under 96 dp of library or under 240 dp of artwork (short
-phones, folded foldables) the sheet rests at full height (P = 0), there is no Expanded level, and
-the list below the transport shows more queue rows at rest.
+Mini and Full move by a tap (the mini player, the handle) or a drag (`anchoredDraggable` on the
+sheet). #662 dropped the content-sized NowPlaying rest and the Expanded level above it: the player
+is always full screen, and the queue is a destination of its own rather than something a scroll
+reveals.
 
 The sheet reads its offset only in layout and `graphicsLayer` lambdas, so a drag re-runs layout and
 draw, never composition. `PlayerSheetGeometry` is the pure maths (anchors, the reveal and expand
-fractions, nav bar and mini fades, the scrim, the corner radius that runs from 28 dp at rest to 0 at
-the status bar) with unit tests.
+fractions, nav bar and mini fades, the scrim, the corner radius that rounds while the sheet moves
+and flattens as its edge meets the status bar) with unit tests.
 
-### One list, a pinned bar
+### The full player
 
-Now Playing is one `LazyColumn` (`NowPlayingList`): handle, artwork, title (with the favourite),
-transport, then the open panel's items. The queue's rows are items of the same list, reordered by
-their handles with `rememberQueueListState(firstRowIndex = NowPlayingItems.FirstQueueRow)`. A filler
-after the panel lets any panel's head scroll to the top. The artwork scrolls off the top; it never
-shrinks.
-
-`NowPlayingBar` is pinned to the window's bottom edge wherever the sheet is, and the list scrolls
-between the status bar and it. It holds Playback & sound (the speed shows when it is not 1×), Sleep
-timer (the time left while a timer runs), Queue, Cast where it can start, and the overflow with the
-song actions and Clear queue.
-
-**Pinned row: built.** Once the transport scrolls under the list's top, `PinnedSong` (artwork,
-title, artist, play/pause) pins over the list; tapping it scrolls back to the title. Checked on the
-emulator: without it a long queue or the sleep panel leaves no way to see or pause what is playing
-short of scrolling back, and the queue opening at the next song (below) relies on it to show the
-current one.
+`FullPlayer` is a fixed column, not a scroll surface: handle, artwork, title (with the favourite),
+the M3 Expressive seek bar (`S2SeekBar`, a thick track that grows while scrubbing), transport, and
+`NowPlayingBar`. The bar holds Playback & sound (the speed shows when it is not 1×), Sleep timer
+(the time left while a timer runs), a labelled Queue button, Cast where it can start, and the
+overflow with the song actions and Clear queue. Scrolling or flinging the player never opens a
+panel; a drag down on it collapses the sheet to Mini.
 
 ### Panels
 
 The open panel is `PlayerUiState.panel` (`NowPlayingPanel.Queue | SleepTimer | PlaybackSound`, or
 null for none), held by `PlayerViewModel` in its `SavedStateHandle`, so it survives rotation,
-resizing and process death beside the saved level. With none open the list shows the queue.
+resizing and process death beside the saved level. With none open the player shows no panel.
 
-`NowPlayingPanels` opens and closes them. A bar button toggles its panel: opening raises the sheet
-to Expanded where there is one and scrolls the panel under the pinned row (the queue to the song
-after the current one, the others to the title so the transport heads them); closing scrolls back to
-the top and lowers the sheet to its rest. Sleep timer and Playback & sound are ported from Shuttle
-Podcasts and restyled to S2 (speed persistence is #408).
-
-### Nested scroll
-
-`PlayerSheetNestedScrollConnection`, M3's bottom sheet pattern:
-
-- `onPreScroll`, finger moving up: the sheet takes the delta until it reaches Expanded, then the
-  list scrolls.
-- `onPostScroll`, finger moving down: the list scrolls back to its top first, then the leftover
-  lowers the sheet to its rest and on to Mini.
-- `onPreFling` up while below Expanded, and `onPostFling`: fling the sheet to an anchor.
-
-Settling at Expanded with nothing open opens the queue, which is how a drag up opens it; settling at
-a partial rest or Mini closes the panel and scrolls back to the top (`PanelSettleEffect`). Queue
-reorder drags start on a row's handle, so they never reach the connection.
+A bar button toggles its panel (`PlayerActions.togglePanel`); an upward swipe on the bar also opens
+the queue. With a panel open the artwork and transport give way to `NowPlayingHeader` (small
+artwork, title, artist, play/pause) and the panel shows in `PanelSheet`, a rounded sheet within the
+player. The queue reuses `QueueList` unchanged (drag to reorder by a row's handle, swipe to remove).
+The panel closes by its button, by back, or by dragging the panel sheet down (its grip, or pulling
+past the top of the queue's list). Settling the player at Mini closes any open panel
+(`PanelResetEffect`). Sleep timer and Playback & sound are ported from Shuttle Podcasts and
+restyled to S2 (speed persistence is #408).
 
 ### Predictive back
 
-Open panel → rest → Mini, then the handler disables and `NavDisplay` pops. On a partial-rest sheet
-Expanded → NowPlaying is the panel step, lerped by `PredictiveBackHandler` (`anchoredDrag { dragTo(lerp(...)) }`)
-so the nav bar, mini fade and scrim follow the finger; commit animates to the lower anchor, cancel
-animates back. Where there is no Expanded level (full-height rest, Medium and Expanded widths) a
-plain `BackHandler` closes the panel first. Back never reaches Hidden. The handler is keyed on the
+Open panel → full player → Mini, then the handler disables and `NavDisplay` pops. With a panel open
+a plain `BackHandler` closes it. Otherwise Full → Mini is lerped by `PredictiveBackHandler`
+(`anchoredDrag { dragTo(lerp(...)) }`) so the nav bar, mini fade and scrim follow the finger; commit
+animates to Mini, cancel animates back. Back never reaches Hidden. The handler is keyed on the
 settled level, so it re-registers, and outranks destination handlers, whenever the sheet rests
 above Mini.
 
@@ -155,8 +131,8 @@ back stacks are `rememberNavBackStack`, saved through the `@Serializable` route 
 ### Hidden when nothing is queued
 
 `ShellViewModel` exposes `hasQueue` from `QueueOperations.queueStateFlow`. Empty queue: anchors
-`{Hidden}` only, padding drops to `N`, and no panel shows. Non-empty: `{Mini, NowPlaying}` plus
-Expanded on a partial rest, animating to Mini. Hidden is not user-reachable (decision 3). On cold
+`{Hidden}` only, padding drops to `N`, and no panel shows. Non-empty: `{Mini, Full}`, animating
+to Mini. Hidden is not user-reachable (decision 3). On cold
 start the saved level stands until the first queue emission, so a restoring queue never flashes the
 mini player.
 
@@ -180,8 +156,8 @@ a sheet on Compact; no two panes at compact height) and 1.3.0's `calculatePaneSc
 
 | Width | Navigation | Library | Player |
 |---|---|---|---|
-| Compact | `ShortNavigationBar` | one pane | sheet: Mini → NowPlaying → Expanded |
-| Medium | `WideNavigationRail`, collapsed | one pane | sheet; expanded, player and queue side by side |
+| Compact | `ShortNavigationBar` | one pane | sheet: Mini → Full; the queue behind its button |
+| Medium | `WideNavigationRail`, collapsed | one pane | sheet; full, the player alone, and the open panel beside it |
 | Expanded | `WideNavigationRail`, collapsed | list-detail, two panes at most | mini player docked at the bottom of the content area; expanded, the player takes the full window as two panes, artwork and controls beside the queue. No persistent player pane |
 | Large, Extra-large | `WideNavigationRail`, collapsed at Large, expanded at XL | list-detail | persistent now-playing/queue supporting pane on the trailing side, 360 dp (412 dp at XL), collapsible |
 
@@ -193,16 +169,16 @@ nor for a trailing pane; the shell lays out rail, `NavDisplay` and player itself
 
 ### The player by class
 
-**Below 1200 dp, one sheet** (section 1). A compact sheet's anchors are `{Mini, NowPlaying,
-Expanded}`, or `{Mini, NowPlaying}` where it rests at full height. On Medium and Expanded,
-Now Playing shows the player and its bar beside the open panel (the queue when none is), so the
-anchors are `{Mini, NowPlaying}` and a saved Expanded level opens NowPlaying with the panel kept.
+**Below 1200 dp, one sheet** (section 1), anchored at `{Mini, Full}`. On Medium and Expanded the
+full player is a centred column (at most 560 dp) with nothing open; a panel opens beside it
+(`SideBySidePlayer`), in the same `PanelSheet`, and closes the same ways as on a phone.
 On Medium the sheet covers the content pane and the rail stays live; on Expanded the mini player
 docks across the content area and the expanded player covers the whole window, rail included.
 
 **From 1200 dp, a pane**, to keep browsing context. `PlayerLevel` still holds the state; the pane
-renders Mini = collapsed (the docked mini player) and NowPlaying = the pane open on the same
-`NowPlayingList` and bar as the compact sheet, with no drag gestures. It sits beside `NavDisplay`,
+renders Mini = collapsed (the docked mini player) and Full = the pane open on the same
+`FullPlayer` and bar as the compact sheet, with no drag gestures; the queue and the other panels
+open in it from the bar, as on a phone. It sits beside `NavDisplay`,
 not in it as a `SupportingPaneSceneStrategy` scene: scenes are built from back stack entries, and
 the player is not a route (section 4).
 
@@ -248,9 +224,9 @@ and Expanded in landscape, so it gets the sheet, never the pane.
 
 - **Flat or book** (vertical fold): list and detail split at the fold (the directive excludes the
   hinge); the expanded player puts artwork and controls on one leaf, the queue on the other.
-- **Tabletop** (horizontal fold): the compact sheet rests at full height with the artwork and
-  title above the fold and the transport below it; the artwork's list item stretches to the fold,
-  and the list still scrolls to the panel. The level never changes.
+- **Tabletop** (horizontal fold): the full player puts the artwork and title above the fold and
+  the transport below it; an open panel takes the lower half in place of the transport. The level
+  never changes.
 
 ### Size or posture changes mid-drag or with the player open
 
@@ -261,7 +237,7 @@ flight and snaps to the level it was heading for. Crossing classes maps the leve
 |---|---|
 | sheet → pane (resize to ≥ 1200 dp) | any level above Hidden → pane open; the open panel stays |
 | pane → sheet (fold, resize below 1200 dp) | always Mini: folding never throws a full-window player over what the user was browsing |
-| Compact → Medium or Expanded | Expanded → NowPlaying with the panel kept; other levels unchanged |
+| Compact ↔ Medium or Expanded | level and open panel unchanged |
 | any posture change | level unchanged; only the now-playing layout changes |
 
 The saveable state sits above the class branch, so one instance survives the switch.

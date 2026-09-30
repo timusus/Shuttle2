@@ -171,8 +171,8 @@ setup_taglib_provider() {
 }
 
 # The open queue sheet's song titles, top to bottom, comma-separated. The dump also holds the
-# full player and library behind the sheet; the sheet's nodes come first, from "Up Next" to the
-# player's "Now Playing". Each row is title, then an "Artist • Album" subtitle, then a duration; a
+# player's header and bar and the library behind the sheet; the queue's nodes run from its "Up Next"
+# header to the bar's "Queue" button (or the older player's "Now Playing"). Each row is title, then an "Artist • Album" subtitle, then a duration; a
 # title is identified structurally (the text node right before a subtitle node), not by fixture
 # name, so this also matches the `taglib` fixture's titles and a tag edit's " (edited)" suffix.
 # A row's node dumped twice at the same bounds (seen once on API 37) is still one row.
@@ -184,7 +184,7 @@ titles, seen, inside, prev = [], set(), False, None
 for line in sys.stdin:
     if line.startswith("text=\"Up Next\""):
         inside = True
-    elif line.startswith("text=\"Now Playing\""):
+    elif line.startswith("text=\"Queue\"") or line.startswith("text=\"Now Playing\""):
         inside = False  # read on to the end: an early exit would SIGPIPE dump-texts
     elif inside:
         m = re.match(r"text=\"([^\"]*)\" bounds=(\S+)", line)
