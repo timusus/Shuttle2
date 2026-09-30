@@ -2,7 +2,7 @@
 
 [All components](index.md)
 
-States: shape scale with the Expressive tokens; MaterialShapes in use; morph strips.
+States: continuous shape scale with the Expressive tokens; continuous against circular corners.
 
 ## Compact, light
 
