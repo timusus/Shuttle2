@@ -97,6 +97,23 @@ class ResumeContextTest {
     }
 
     @Test
+    fun `a queue that fails leaves the shuffle mode as it was`() = runTest {
+        queueOperations.setQueueResult = false
+        queueOperations.shuffleModeFlow.value = ShuffleMode.On
+        playHistory.resumePoints[album] = point(track = 2)
+
+        resumeContext(selection, album) shouldBe ResumeContext.Result.Failure(null)
+        queueOperations.shuffleModeFlow.value shouldBe ShuffleMode.On
+
+        queueOperations.shuffleModeFlow.value = ShuffleMode.Off
+        playHistory.resumePoints[album] = point(track = 2, shuffled = true)
+
+        resumeContext(selection, album) shouldBe ResumeContext.Result.Failure(null)
+        queueOperations.shuffleModeFlow.value shouldBe ShuffleMode.Off
+        playbackOperations.loadedPositions shouldBe emptyList()
+    }
+
+    @Test
     fun `a load failure is reported`() = runTest {
         playHistory.resumePoints[album] = point(track = 1)
         playbackOperations.loadResult = Result.failure(Exception("codec error"))

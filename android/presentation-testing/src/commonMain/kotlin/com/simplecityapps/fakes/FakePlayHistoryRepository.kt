@@ -37,6 +37,9 @@ class FakePlayHistoryRepository : PlayHistoryRepository {
     /** Every resume point saved, in order. */
     val savedResumePoints = mutableListOf<ResumePoint>()
 
+    /** Whether saving a resume point throws, as a failed database write would. */
+    var failResumePointSaves = false
+
     /** The windowed aggregates asked for, with their arguments. */
     val queries = mutableListOf<String>()
 
@@ -76,6 +79,7 @@ class FakePlayHistoryRepository : PlayHistoryRepository {
     ): List<GenrePlays> = genrePlays.take(limit)
 
     override suspend fun saveResumePoint(point: ResumePoint) {
+        if (failResumePointSaves) throw IllegalStateException("disk I/O error")
         if (point.context == PlayContext.None) return
         resumePoints[point.context] = point
         savedResumePoints += point
