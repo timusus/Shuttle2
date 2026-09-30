@@ -100,8 +100,9 @@
     <string name="theme_entry_light">Light</string>
     <!-- Settings title for the dark theme option -->
     <string name="theme_entry_dark">Dark</string>
-    <!-- Settings title for blue theme option (called Shuttle blue, because it uses the particular shade of blue from the original Shuttle) -->
+    <!-- Settings title for the neutral (grey, low-colour) theme option, the default -->
     <string name="theme_accent_entry_neutral">Neutral</string>
+    <!-- Settings title for blue theme option (called Shuttle blue, because it uses the particular shade of blue from the original Shuttle) -->
     <string name="theme_accent_entry_blue">Shuttle blue</string>
     <!-- Settings title for the cyan theme option -->
     <string name="theme_accent_entry_cyan">Cyan</string>
