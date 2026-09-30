@@ -15,9 +15,18 @@ fun hiddenTabsLibrary() = libraryState(enabledTabs = emptySet())
 
 /** Chrome for a tab with [selectedCount] items selected. */
 fun selectingChrome(selectedCount: Int = 2, selection: MediaSelection? = null) = LibraryTabChrome(
-    subtitle = "$selectedCount selected",
     selection = selection,
     selectedCount = selectedCount,
 )
 
-fun chromeWithMenu(subtitle: String? = null, menu: List<List<S2Action>> = emptyList()) = LibraryTabChrome(subtitle = subtitle, menu = menu)
+/** Chrome for a tab's controls row; a non-null [onPlay] / [onShuffle] shows that button. */
+fun libraryChrome(
+    count: String? = null,
+    sortOptions: List<S2Action> = emptyList(),
+    viewMode: ViewMode? = null,
+    onPlay: (() -> Unit)? = null,
+    onShuffle: (() -> Unit)? = null,
+) = LibraryTabChrome(count = count, sortOptions = sortOptions, viewMode = viewMode, onPlay = onPlay, onShuffle = onShuffle)
+
+/** Sort options named [labels], [selected] the current one. */
+fun sorts(vararg labels: String, selected: String = labels.first()) = labels.map { S2Action(it, {}, selected = it == selected) }

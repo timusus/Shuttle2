@@ -70,10 +70,13 @@ class LibraryScreenshotTest {
         )
     }
 
-    private fun container(tab: LibraryTab, subtitle: String, albumViewMode: ViewMode = ViewMode.Grid) {
+    private fun container(tab: LibraryTab, count: String, albumViewMode: ViewMode = ViewMode.Grid) {
         library.setContent(
             libraryState(currentTab = tab),
-            chromeWithMenu(subtitle = subtitle),
+            when (tab) {
+                LibraryTab.Albums -> libraryChrome(count, sorts("Album Name", "Artist Name", "Year"), albumViewMode, onPlay = {}, onShuffle = {})
+                else -> libraryChrome(count, sorts("Album Name", "Song Name", "Artist Name"), onPlay = {}, onShuffle = {})
+            },
             LibraryPageStates(songs = readySongList(songs = songs), albums = readyAlbumList(albums = albums, viewMode = albumViewMode)),
         )
     }
@@ -119,7 +122,7 @@ class LibraryScreenshotTest {
         val playlists = SampleLibrary.playlists.mapIndexed { index, playlist -> playlist.toPlaylist(id = index + 1L) }
         library.setContent(
             libraryState(currentTab = LibraryTab.Playlists),
-            chromeWithMenu(subtitle = "${playlists.size} playlists"),
+            libraryChrome("${playlists.size} playlists", sorts("Name", "Date Created")),
             LibraryPageStates(
                 playlists = readyPlaylistList(
                     playlists,

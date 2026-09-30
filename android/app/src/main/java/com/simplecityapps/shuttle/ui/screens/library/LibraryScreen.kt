@@ -2,37 +2,43 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.automirrored.rounded.QueueMusic
+import androidx.compose.material.icons.automirrored.rounded.ViewList
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -44,12 +50,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -58,9 +67,13 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.S2Action
+import com.simplecityapps.shuttle.designsystem.component.S2ChoiceChip
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
+import com.simplecityapps.shuttle.designsystem.component.S2IconButtonStyle
+import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
+import com.simplecityapps.shuttle.designsystem.component.S2SortChip
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
@@ -78,10 +91,12 @@ import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
 import com.simplecityapps.shuttle.ui.common.mediaactions.label
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListEvent
+import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListUiState
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
+import com.simplecityapps.shuttle.ui.screens.library.songs.SongListUiState
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
 import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
@@ -89,21 +104,28 @@ import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 
-/** What the container's chrome shows for the current tab: its count, selection and overflow options. */
+/** What the container's chrome shows for the current tab: its selection, and the controls row's count, sort, view and play actions. */
 class LibraryTabChrome(
-    val subtitle: String? = null,
+    val count: String? = null,
     val selection: MediaSelection? = null,
     val selectedCount: Int = 0,
     val onClearSelection: () -> Unit = {},
-    /** Sort and view options, one group each, for the overflow above "Edit tabs". */
-    val menu: List<List<S2Action>> = emptyList(),
+    /** The tab's sorts, the current one selected; the sort chip names it and opens them as a menu. None for a tab without sorts. */
+    val sortOptions: List<S2Action> = emptyList(),
+    /** The layout, on a tab that offers a grid and a list; the toggle switches it through [onViewModeChange]. */
+    val viewMode: ViewMode? = null,
+    val onViewModeChange: (ViewMode) -> Unit = {},
+    /** Plays or shuffles the whole tab, on a tab that offers it and has something to play. */
+    val onPlay: (() -> Unit)? = null,
+    val onShuffle: (() -> Unit)? = null,
 )
 
 /**
- * The Library container (inventory §1): a collapsing large top bar with the current tab's count, a scrollable tab
- * row over a pager, and the selection toolbar swapped in while the current tab has a selection.
+ * The Library container (inventory §1, #661): a collapsing large top bar in Home's style, then, pinned while the page
+ * scrolls, a row of section chips and the current tab's controls (count, sort, grid/list, Shuffle, Play) over a pager.
+ * The selection toolbar replaces the top bar while the current tab has a selection.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     uiState: LibraryUiState,
@@ -153,9 +175,8 @@ fun LibraryScreen(
                         )
                     }
                 } else {
-                    LargeFlexibleTopAppBar(
-                        title = { Text(stringResource(R.string.title_library)) },
-                        subtitle = chrome.subtitle?.let { { Text(it) } },
+                    S2LargeTopBar(
+                        title = stringResource(R.string.title_library),
                         actions = {
                             var menuOpen by remember { mutableStateOf(false) }
                             S2IconButton(icon = Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings_menu_settings), onClick = onOpenSettings)
@@ -168,7 +189,7 @@ fun LibraryScreen(
                             S2Menu(
                                 expanded = menuOpen,
                                 onDismissRequest = { menuOpen = false },
-                                groups = chrome.menu + listOf(listOf(S2Action(stringResource(R.string.library_edit_tabs), { editingTabs = true }))),
+                                groups = listOf(listOf(S2Action(stringResource(R.string.library_edit_tabs), { editingTabs = true }))),
                             )
                         },
                         scrollBehavior = scrollBehavior,
@@ -187,7 +208,7 @@ fun LibraryScreen(
                 modifier = Modifier.padding(padding).fillMaxSize(),
             )
         } else {
-            LibraryPager(tabs, uiState.currentTab, onTabSelected, Modifier.padding(padding), page)
+            LibraryPager(tabs, uiState.currentTab, chrome, onTabSelected, Modifier.padding(padding), page)
         }
     }
 
@@ -199,11 +220,11 @@ fun LibraryScreen(
 @Composable
 internal fun selectionAction(type: MediaActionType, icon: ImageVector, onAction: (MediaActionType) -> Unit) = S2Action(type.label(), { onAction(type) }, icon)
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LibraryPager(
     tabs: List<LibraryTab>,
     currentTab: LibraryTab?,
+    chrome: LibraryTabChrome,
     onTabSelected: (LibraryTab) -> Unit,
     modifier: Modifier,
     page: @Composable (LibraryTab) -> Unit,
@@ -214,16 +235,90 @@ private fun LibraryPager(
         snapshotFlow { pagerState.settledPage }.collect { index -> tabs.getOrNull(index)?.let(onTabSelected) }
     }
     Column(modifier.fillMaxSize()) {
-        PrimaryScrollableTabRow(selectedTabIndex = pagerState.currentPage.coerceIn(0, tabs.lastIndex), modifier = Modifier.testTag("library-tabs")) {
-            tabs.forEachIndexed { index, tab ->
-                Tab(
-                    selected = pagerState.currentPage == index,
-                    onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
-                    text = { Text(tab.label()) },
+        // The target page, so a tap or a swipe marks its chip straight away rather than each page it passes.
+        LibrarySectionChips(
+            tabs = tabs,
+            selectedIndex = pagerState.targetPage.coerceIn(0, tabs.lastIndex),
+            onSelect = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
+        )
+        LibraryControls(chrome)
+        HorizontalPager(state = pagerState, key = { tabs[it] }, modifier = Modifier.fillMaxSize().testTag("library-pager")) { index -> page(tabs[index]) }
+    }
+}
+
+/** The sections as a scrolling row of single-select chips, in the user's order; the selected one scrolls into view. */
+@Composable
+private fun LibrarySectionChips(
+    tabs: List<LibraryTab>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
+) {
+    val requesters = remember(tabs) { tabs.map { BringIntoViewRequester() } }
+    LaunchedEffect(requesters, selectedIndex) {
+        // After a frame, so the chips are laid out when the screen opens on a section past the row's edge.
+        withFrameNanos {}
+        requesters.getOrNull(selectedIndex)?.bringIntoView()
+    }
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp)
+            .testTag("library-sections"),
+    ) {
+        tabs.forEachIndexed { index, tab ->
+            S2ChoiceChip(
+                label = tab.label(),
+                selected = index == selectedIndex,
+                onClick = { onSelect(index) },
+                modifier = Modifier.bringIntoViewRequester(requesters[index]),
+            )
+        }
+    }
+}
+
+/**
+ * The current tab's controls: its count and sort chip on the start side; the grid/list toggle, Shuffle and Play on the
+ * end side, each only where the tab offers it. Nothing at all for a tab with none of them (Folders).
+ */
+@Composable
+private fun LibraryControls(chrome: LibraryTabChrome) {
+    val hasSort = chrome.sortOptions.isNotEmpty()
+    if (chrome.count == null && !hasSort && chrome.viewMode == null && chrome.onPlay == null && chrome.onShuffle == null) return
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
+            .padding(start = 16.dp, end = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        chrome.count?.let { count ->
+            Text(count, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        if (hasSort) {
+            Box {
+                var sorting by remember { mutableStateOf(false) }
+                S2SortChip(
+                    field = chrome.sortOptions.firstOrNull { it.selected == true }?.label ?: stringResource(R.string.library_sort),
+                    onClick = { sorting = true },
+                    modifier = Modifier.testTag("library-sort"),
                 )
+                S2Menu(expanded = sorting, onDismissRequest = { sorting = false }, groups = listOf(chrome.sortOptions))
             }
         }
-        HorizontalPager(state = pagerState, key = { tabs[it] }, modifier = Modifier.fillMaxSize()) { index -> page(tabs[index]) }
+        Spacer(Modifier.weight(1f))
+        chrome.viewMode?.let { mode ->
+            val next = if (mode == ViewMode.Grid) ViewMode.List else ViewMode.Grid
+            S2IconButton(
+                icon = if (next == ViewMode.Grid) Icons.Rounded.GridView else Icons.AutoMirrored.Rounded.ViewList,
+                contentDescription = stringResource(if (next == ViewMode.Grid) R.string.library_show_as_grid else R.string.library_show_as_list),
+                onClick = { chrome.onViewModeChange(next) },
+            )
+        }
+        chrome.onShuffle?.let { S2IconButton(icon = Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.menu_title_shuffle), onClick = it) }
+        chrome.onPlay?.let { S2IconButton(icon = Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.menu_title_play), onClick = it, style = S2IconButtonStyle.Filled) }
     }
 }
 
@@ -323,7 +418,7 @@ fun LibraryDestination(
     LaunchedEffect(uiState.currentTab) { selectionCoordinator.onTabChanged(uiState.currentTab) }
 
     MediaActionsHost(onNavigate = onNavigate) { actions ->
-        val chrome = tabChrome(uiState.currentTab)
+        val chrome = tabChrome(uiState.currentTab, actions)
         LibraryScreen(
             uiState = uiState,
             chrome = chrome,
@@ -367,8 +462,6 @@ private fun LibraryPage(
                 },
                 onSongLongClick = viewModel::onSongLongClick,
                 onSongMore = { song -> actions.showActions(MediaActionsTarget(song.name.orEmpty(), song.rowSubtitle, MediaSelection.Songs(song), ArtworkPlaceholder.Song)) },
-                onPlay = { actions.dispatch(MediaAction.Play(MediaSelection.Songs(state.songs))) },
-                onShuffle = { actions.dispatch(MediaAction.Shuffle(MediaSelection.Songs(state.songs))) },
             )
         }
 
@@ -389,9 +482,6 @@ private fun LibraryPage(
                 onAlbumClick = { album -> if (state.isSelecting) viewModel.onAlbumClick(album) else onOpen(album.route) },
                 onAlbumLongClick = viewModel::onAlbumLongClick,
                 onAlbumMore = { album -> actions.showActions(MediaActionsTarget(album.name.orEmpty(), album.friendlyArtistName, MediaSelection.Albums(album), ArtworkPlaceholder.Album)) },
-                onPlay = { actions.dispatch(MediaAction.Play(MediaSelection.Albums(state.albums))) },
-                // Album-grouped shuffle has no MediaAction yet; the tab ViewModel keeps it.
-                onShuffle = viewModel::onShuffle,
             )
         }
 
@@ -469,53 +559,57 @@ private fun LibraryPage(
 
 /** The current tab's chrome, read from the same ViewModel instance its page uses. */
 @Composable
-private fun tabChrome(tab: LibraryTab?): LibraryTabChrome = when (tab) {
+private fun tabChrome(tab: LibraryTab?, actions: MediaActionsState): LibraryTabChrome = when (tab) {
     LibraryTab.Songs -> {
         val viewModel: SongListViewModel = metroViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
+        val songs = state.songs.takeIf { state.loadingState == SongListUiState.LoadingState.Ready && it.isNotEmpty() }
         LibraryTabChrome(
-            subtitle = pluralString(R.plurals.songsPlural, state.songs.size),
+            count = pluralString(R.plurals.songsPlural, state.songs.size),
             selection = MediaSelection.Songs(state.selectedSongs.toList()),
             selectedCount = state.selectedSongs.size,
             onClearSelection = viewModel::clearSelection,
-            menu = listOf(
-                sortOptions(
-                    state.sortOrder,
-                    listOf(
-                        SongSortOrder.SongName to R.string.menu_title_sort_song_name,
-                        SongSortOrder.ArtistGroupKey to R.string.menu_title_sort_artist_name,
-                        SongSortOrder.AlbumGroupKey to R.string.menu_title_sort_album_name,
-                        SongSortOrder.Year to R.string.menu_title_sort_year,
-                        SongSortOrder.Duration to R.string.menu_title_sort_duration,
-                        SongSortOrder.LastModified to R.string.menu_title_sort_date_modified,
-                    ),
-                    viewModel::setSortOrder,
+            sortOptions = sortOptions(
+                state.sortOrder,
+                listOf(
+                    SongSortOrder.SongName to R.string.menu_title_sort_song_name,
+                    SongSortOrder.ArtistGroupKey to R.string.menu_title_sort_artist_name,
+                    SongSortOrder.AlbumGroupKey to R.string.menu_title_sort_album_name,
+                    SongSortOrder.Year to R.string.menu_title_sort_year,
+                    SongSortOrder.Duration to R.string.menu_title_sort_duration,
+                    SongSortOrder.LastModified to R.string.menu_title_sort_date_modified,
                 ),
+                viewModel::setSortOrder,
             ),
+            onPlay = songs?.let { { actions.dispatch(MediaAction.Play(MediaSelection.Songs(it))) } },
+            onShuffle = songs?.let { { actions.dispatch(MediaAction.Shuffle(MediaSelection.Songs(it))) } },
         )
     }
 
     LibraryTab.Albums -> {
         val viewModel: AlbumListViewModel = metroViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
+        val albums = state.albums.takeIf { state.loadingState == AlbumListUiState.LoadingState.Ready && it.isNotEmpty() }
         LibraryTabChrome(
-            subtitle = pluralString(R.plurals.albumsPlural, state.albums.size),
+            count = pluralString(R.plurals.albumsPlural, state.albums.size),
             selection = MediaSelection.Albums(state.selectedAlbums.toList()),
             selectedCount = state.selectedAlbums.size,
             onClearSelection = viewModel::clearSelection,
-            menu = listOf(
-                sortOptions(
-                    state.sortOrder,
-                    listOf(
-                        AlbumSortOrder.AlbumName to R.string.menu_title_sort_album_name,
-                        AlbumSortOrder.ArtistGroupKey to R.string.menu_title_sort_artist_name,
-                        AlbumSortOrder.Year to R.string.menu_title_sort_year,
-                        AlbumSortOrder.Random to R.string.menu_title_sort_random,
-                    ),
-                    viewModel::setSortOrder,
+            sortOptions = sortOptions(
+                state.sortOrder,
+                listOf(
+                    AlbumSortOrder.AlbumName to R.string.menu_title_sort_album_name,
+                    AlbumSortOrder.ArtistGroupKey to R.string.menu_title_sort_artist_name,
+                    AlbumSortOrder.Year to R.string.menu_title_sort_year,
+                    AlbumSortOrder.Random to R.string.menu_title_sort_random,
                 ),
-                viewModeOptions(state.viewMode, viewModel::setViewMode),
+                viewModel::setSortOrder,
             ),
+            viewMode = state.viewMode,
+            onViewModeChange = viewModel::setViewMode,
+            onPlay = albums?.let { { actions.dispatch(MediaAction.Play(MediaSelection.Albums(it))) } },
+            // Album-grouped shuffle has no MediaAction yet; the tab ViewModel keeps it.
+            onShuffle = albums?.let { viewModel::onShuffle },
         )
     }
 
@@ -523,11 +617,12 @@ private fun tabChrome(tab: LibraryTab?): LibraryTabChrome = when (tab) {
         val viewModel: AlbumArtistListViewModel = metroViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         LibraryTabChrome(
-            subtitle = pluralString(R.plurals.library_count_artists, state.albumArtists.size),
+            count = pluralString(R.plurals.library_count_artists, state.albumArtists.size),
             selection = MediaSelection.AlbumArtists(state.selectedArtists.toList()),
             selectedCount = state.selectedArtists.size,
             onClearSelection = viewModel::clearSelection,
-            menu = listOf(viewModeOptions(state.viewMode, viewModel::setViewMode)),
+            viewMode = state.viewMode,
+            onViewModeChange = viewModel::setViewMode,
         )
     }
 
@@ -535,13 +630,11 @@ private fun tabChrome(tab: LibraryTab?): LibraryTabChrome = when (tab) {
         val viewModel: GenreListViewModel = metroViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         LibraryTabChrome(
-            subtitle = pluralString(R.plurals.library_count_genres, state.genres.size),
-            menu = listOf(
-                sortOptions(
-                    state.sortOrder,
-                    listOf(GenreSortOrder.Default to R.string.menu_title_sort_genre_name, GenreSortOrder.SongCount to R.string.menu_title_sort_song_count),
-                    viewModel::setSortOrder,
-                ),
+            count = pluralString(R.plurals.library_count_genres, state.genres.size),
+            sortOptions = sortOptions(
+                state.sortOrder,
+                listOf(GenreSortOrder.Default to R.string.menu_title_sort_genre_name, GenreSortOrder.SongCount to R.string.menu_title_sort_song_count),
+                viewModel::setSortOrder,
             ),
         )
     }
@@ -550,13 +643,11 @@ private fun tabChrome(tab: LibraryTab?): LibraryTabChrome = when (tab) {
         val viewModel: PlaylistListViewModel = metroViewModel()
         val state by viewModel.uiState.collectAsStateWithLifecycle()
         LibraryTabChrome(
-            subtitle = pluralString(R.plurals.library_count_playlists, state.playlists.size),
-            menu = listOf(
-                sortOptions(
-                    state.sortOrder,
-                    listOf(PlaylistSortOrder.Name to R.string.menu_title_sort_playlist_name, PlaylistSortOrder.Default to R.string.menu_title_sort_date_created),
-                    viewModel::setSortOrder,
-                ),
+            count = pluralString(R.plurals.library_count_playlists, state.playlists.size),
+            sortOptions = sortOptions(
+                state.sortOrder,
+                listOf(PlaylistSortOrder.Name to R.string.menu_title_sort_playlist_name, PlaylistSortOrder.Default to R.string.menu_title_sort_date_created),
+                viewModel::setSortOrder,
             ),
         )
     }
@@ -568,9 +659,3 @@ private fun tabChrome(tab: LibraryTab?): LibraryTabChrome = when (tab) {
 internal fun <T> sortOptions(current: T, options: List<Pair<T, Int>>, onSelect: (T) -> Unit): List<S2Action> = options.map { (order, label) ->
     S2Action(stringResource(label), { onSelect(order) }, selected = order == current)
 }
-
-@Composable
-private fun viewModeOptions(current: ViewMode, onSelect: (ViewMode) -> Unit): List<S2Action> = listOf(
-    S2Action(stringResource(R.string.menu_title_view_mode_list), { onSelect(ViewMode.List) }, selected = current == ViewMode.List),
-    S2Action(stringResource(R.string.menu_title_view_mode_grid), { onSelect(ViewMode.Grid) }, selected = current == ViewMode.Grid),
-)

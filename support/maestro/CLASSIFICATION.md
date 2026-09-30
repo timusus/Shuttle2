@@ -13,7 +13,7 @@ emulator suite only spends time on what a JVM test cannot see. A new UI check be
 
 | Flow | Wrapper | Covered by |
 |---|---|---|
-| `genres-sort-by-song-count` (#174) | `genres-sort-by-song-count.sh` | `GenreListIntegrationTest` "sorts genres by song count"; `LibraryScreenTest` "the overflow lists the tab's options above Edit tabs" |
+| `genres-sort-by-song-count` (#174) | `genres-sort-by-song-count.sh` | `GenreListIntegrationTest` "sorts genres by song count"; `LibraryScreenTest` "the sort chip names the current sort and opens the tab's sorts" |
 | `library-compose` (#377) | `library-compose.sh` | `LibraryScreenTest` (tabs, pages, selection toolbar); `GenreDetailScreenTest`, `AlbumArtistDetailScreenTest`, `AlbumDetailScreenTest`, `PlaylistDetailScreenTest` "a song plays from its position"; `NewPlaylistFormTest` |
 | `library-multiselect-back` (#225) | `library-multiselect-back.sh` | `LibraryScreenTest` "back with a selection clears it rather than leaving the Library", "without a selection back is left to the back stack" (see note 1) |
 | `open-queue-by-taps` | `open-queue-by-taps.sh` | `AppShellTest` "tapping the mini player opens Now Playing at rest, and the queue button raises the sheet on the queue" |

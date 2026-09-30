@@ -33,14 +33,15 @@ import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /**
  * The sort control above a list: an `AssistChip` naming the sort [field], with an arrow for the
- * order and a drop-down arrow. [onClick] opens the sort [S2Menu], anchored to the chip's parent.
+ * order when the sort has a direction ([ascending] non-null) and a drop-down arrow. [onClick] opens
+ * the sort [S2Menu], anchored to the chip's parent.
  */
 @Composable
 fun S2SortChip(
     field: String,
-    ascending: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    ascending: Boolean? = null,
     enabled: Boolean = true,
 ) {
     AssistChip(
@@ -48,12 +49,14 @@ fun S2SortChip(
         label = { Text(field) },
         modifier = modifier,
         enabled = enabled,
-        leadingIcon = {
-            Icon(
-                if (ascending) Icons.Rounded.ArrowUpward else Icons.Rounded.ArrowDownward,
-                contentDescription = stringResource(if (ascending) R.string.ds_sort_ascending else R.string.ds_sort_descending),
-                modifier = Modifier.size(AssistChipDefaults.IconSize),
-            )
+        leadingIcon = ascending?.let {
+            {
+                Icon(
+                    if (ascending) Icons.Rounded.ArrowUpward else Icons.Rounded.ArrowDownward,
+                    contentDescription = stringResource(if (ascending) R.string.ds_sort_ascending else R.string.ds_sort_descending),
+                    modifier = Modifier.size(AssistChipDefaults.IconSize),
+                )
+            }
         },
         trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null, modifier = Modifier.size(AssistChipDefaults.IconSize)) },
     )
@@ -79,6 +82,25 @@ fun S2FilterChip(
         } else {
             null
         },
+    )
+}
+
+/**
+ * One of a single-select row of choices (the Library's sections): a `FilterChip` without the
+ * check, so the row keeps its width as the selection moves and only the fill marks [selected].
+ */
+@Composable
+fun S2ChoiceChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(label) },
+        modifier = modifier,
     )
 }
 

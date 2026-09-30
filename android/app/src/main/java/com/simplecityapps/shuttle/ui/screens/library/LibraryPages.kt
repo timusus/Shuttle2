@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -17,9 +15,6 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,8 +36,6 @@ import com.simplecityapps.shuttle.designsystem.component.FolderRow
 import com.simplecityapps.shuttle.designsystem.component.GenreRow
 import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.PlaylistRow
-import com.simplecityapps.shuttle.designsystem.component.S2ButtonGroup
-import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
 import com.simplecityapps.shuttle.designsystem.component.SongRow
 import com.simplecityapps.shuttle.format.formatDuration
@@ -78,46 +71,28 @@ import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceKey
 // The library tabs' pages: state in, events out, restyled with catalogue rows. The ViewModels are the existing
 // tab ViewModels; LibraryScreen wires them.
 
-/** The Play / Shuffle row leading the Songs and Albums pages: the button group's 40dp and its padding. */
-private val PlayShuffleHeaderHeight = 40.dp + 16.dp
-
 /**
- * Fills the page so the scroller's track sits at its end edge, as the legacy lists have it. The track starts below the
- * pages' leading header, so the thumb never covers the header's action, such as Shuffle (#396).
+ * Fills the page so the scroller's track sits at its end edge, as the legacy lists have it. Play and Shuffle sit in the
+ * container's controls row above the page (#661), so the thumb has the page's whole height.
  */
-private val FastScrollerModifier = Modifier.fillMaxSize().padding(top = PlayShuffleHeaderHeight + 8.dp, bottom = 8.dp).testTag("library-fast-scroller")
-
-/**
- * Play and Shuffle for a whole tab, styled like a detail screen's (#491). The count lives in the top bar's subtitle, so
- * this row doesn't repeat it.
- */
-@Composable
-private fun PlayShuffleHeader(onPlay: () -> Unit, onShuffle: () -> Unit) {
-    Box(Modifier.fillMaxWidth().height(PlayShuffleHeaderHeight).padding(horizontal = 16.dp, vertical = 8.dp)) {
-        S2ButtonGroup(
-            primary = S2GroupAction(stringResource(R.string.menu_title_play), onPlay, Icons.Rounded.PlayArrow),
-            secondary = listOf(S2GroupAction(stringResource(R.string.menu_title_shuffle), onShuffle, Icons.Rounded.Shuffle)),
-        )
-    }
-}
+private val FastScrollerModifier = Modifier.fillMaxSize().padding(vertical = 8.dp).testTag("library-fast-scroller")
 
 /**
  * The fast scroller for a page of [items]: by first letter over [sections] when the sort is by a name (#491), else a
- * plain thumb with [thumbLabel] in its popup, or none. [headerCount] items lead [items] in the list.
+ * plain thumb with [thumbLabel] in its popup, or none.
  */
 @Composable
 private fun <T> LibraryFastScroller(
     items: List<T>,
     sections: List<LetterSection>?,
     scrollableState: FastScrollableState,
-    headerCount: Int,
     thumbLabel: ((T) -> String?)? = null,
 ) {
     if (sections != null) {
-        AlphabetFastScroller(sections, scrollableState, FastScrollerModifier, itemOffset = headerCount)
+        AlphabetFastScroller(sections, scrollableState, FastScrollerModifier)
     } else {
         FastScroller(
-            getPopupText = { index -> items.getOrNull(index - headerCount)?.let { thumbLabel?.invoke(it) } },
+            getPopupText = { index -> items.getOrNull(index)?.let { thumbLabel?.invoke(it) } },
             scrollableState = scrollableState,
             modifier = FastScrollerModifier,
             popup = if (thumbLabel == null) ::NoPopup else null,
@@ -137,15 +112,13 @@ internal val SmartPlaylist.placeholder: ArtworkPlaceholder
 /** The catalogue's compact grid: two columns of tiles on a phone, more as the width allows. */
 private val LibraryGridColumns = GridCells.Adaptive(minSize = 160.dp)
 
-/** Songs: Play / Shuffle, then every song. Tap plays from that row; long-press selects. */
+/** Songs: every song. Tap plays from that row; long-press selects. */
 @Composable
 fun SongsPage(
     state: SongListUiState,
     onSongClick: (Song) -> Unit,
     onSongLongClick: (Song) -> Unit,
     onSongMore: (Song) -> Unit,
-    onPlay: () -> Unit,
-    onShuffle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val content = when (state.loadingState) {
@@ -160,7 +133,6 @@ fun SongsPage(
         val entries = remember(state.songs, byAlbum) { songEntries(state.songs, byAlbum) }
         Box(modifier.fillMaxSize()) {
             LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-songs")) {
-                item(key = "header") { PlayShuffleHeader(onPlay, onShuffle) }
                 items(entries, key = SongEntry::key, contentType = { it::class }) { entry ->
                     when (entry) {
                         is SongEntry.AlbumHeader -> SongAlbumHeader(entry.song)
@@ -185,7 +157,6 @@ fun SongsPage(
                 items = entries,
                 sections = sections,
                 scrollableState = rememberFastScrollableState(listState),
-                headerCount = 1,
                 thumbLabel = songThumbLabel(state.sortOrder)?.let { label -> { entry: SongEntry -> label(entry.song) } },
             )
         }
@@ -270,15 +241,13 @@ fun LibrarySongRow(
     )
 }
 
-/** Albums: Play / Shuffle, then a grid by default (#491) or a list. */
+/** Albums: a grid by default (#491) or a list. */
 @Composable
 fun AlbumsPage(
     state: AlbumListUiState,
     onAlbumClick: (Album) -> Unit,
     onAlbumLongClick: (Album) -> Unit,
     onAlbumMore: (Album) -> Unit,
-    onPlay: () -> Unit,
-    onShuffle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val content = when (state.loadingState) {
@@ -288,9 +257,8 @@ fun AlbumsPage(
         AlbumListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
     LibraryContent(content, stringResource(R.string.album_list_empty), modifier, state.scanProgress) {
-        val header: @Composable () -> Unit = { PlayShuffleHeader(onPlay, onShuffle) }
         val fastScroller: @Composable (FastScrollableState) -> Unit = { scrollableState ->
-            LibraryFastScroller(state.albums, state.letterIndex, scrollableState, headerCount = 1, thumbLabel = albumThumbLabel(state.sortOrder))
+            LibraryFastScroller(state.albums, state.letterIndex, scrollableState, thumbLabel = albumThumbLabel(state.sortOrder))
         }
         Box(modifier.fillMaxSize()) {
             if (state.viewMode == ViewMode.Grid) {
@@ -298,12 +266,11 @@ fun AlbumsPage(
                 LazyVerticalGrid(
                     columns = LibraryGridColumns,
                     state = gridState,
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxSize().testTag("library-albums"),
                 ) {
-                    item(key = "header", span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { header() }
                     items(state.albums, key = { it.groupKey.toString() }) { album ->
                         GridTile(
                             title = album.name.orEmpty(),
@@ -319,7 +286,6 @@ fun AlbumsPage(
             } else {
                 val listState = rememberLazyListState()
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-albums")) {
-                    item(key = "header") { header() }
                     items(state.albums, key = { it.groupKey.toString() }) { album ->
                         AlbumRow(
                             title = album.name.orEmpty(),

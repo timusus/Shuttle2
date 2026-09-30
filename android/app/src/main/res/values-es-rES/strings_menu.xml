@@ -18,10 +18,6 @@
     <string name="menu_title_delete">Eliminar</string>
     <!-- Menu option to add an artist/album/song to the list of excluded (blacklisted) songs-->
     <string name="menu_title_exclude">Excluir</string>
-    <!-- Menu option to view the artist/album list as a list rather than a grid-->
-    <string name="menu_title_view_mode_list">Lista</string>
-    <!-- Menu option to view the artist/album list as a grid rather than a list-->
-    <string name="menu_title_view_mode_grid">Cuadrícula</string>
     <!-- Menu option to open the sorting submenu -->
     <string name="menu_title_sort_by">Ordenar por</string>
     <!-- Menu option to sort by album name -->

@@ -4,6 +4,10 @@ import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
@@ -22,6 +26,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.model.Album
@@ -92,6 +97,8 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         private set
     var newPlaylistClicked = false
         private set
+    var lastViewModeChange: ViewMode? = null
+        private set
 
     private var backDispatcher: OnBackPressedDispatcher? = null
 
@@ -102,41 +109,79 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         chrome: LibraryTabChrome = LibraryTabChrome(),
         pages: LibraryPageStates = LibraryPageStates(),
     ) {
-        val capturingChrome = LibraryTabChrome(
-            subtitle = chrome.subtitle,
-            selection = chrome.selection,
-            selectedCount = chrome.selectedCount,
-            onClearSelection = {
-                selectionCleared = true
-                chrome.onClearSelection()
-            },
-            menu = chrome.menu,
-        )
         rule.setContent {
             backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+            S2Theme { Screen(uiState, chrome, pages) }
+        }
+        rule.waitForIdle()
+    }
+
+    /**
+     * The Albums tab with its view toggle wired to the page, as the destination wires both to the tab ViewModel: the
+     * toggle switches the page between [ViewMode.Grid] and [ViewMode.List].
+     */
+    fun setAlbumsWithViewToggle(albums: AlbumListUiState) {
+        rule.setContent {
+            var viewMode by remember { mutableStateOf(albums.viewMode) }
             S2Theme {
-                LibraryScreen(
-                    uiState = uiState,
-                    chrome = capturingChrome,
-                    onTabSelected = { lastTabSelected = it },
-                    onTabsChanged = { order, enabled -> lastTabsChanged = order to enabled },
-                    onSelectionAction = { lastSelectionAction = it },
-                    onOpenSettings = { settingsOpened = true },
-                ) { tab -> Page(tab, pages) }
+                Screen(
+                    libraryState(currentTab = LibraryTab.Albums),
+                    LibraryTabChrome(viewMode = viewMode, onViewModeChange = { viewMode = it }),
+                    LibraryPageStates(albums = albums.copy(viewMode = viewMode)),
+                )
             }
         }
         rule.waitForIdle()
     }
 
     @Composable
+    private fun Screen(uiState: LibraryUiState, chrome: LibraryTabChrome, pages: LibraryPageStates) {
+        val capturingChrome = LibraryTabChrome(
+            count = chrome.count,
+            selection = chrome.selection,
+            selectedCount = chrome.selectedCount,
+            onClearSelection = {
+                selectionCleared = true
+                chrome.onClearSelection()
+            },
+            sortOptions = chrome.sortOptions,
+            viewMode = chrome.viewMode,
+            onViewModeChange = {
+                lastViewModeChange = it
+                chrome.onViewModeChange(it)
+            },
+            onPlay = chrome.onPlay?.let { play ->
+                {
+                    playClicked = true
+                    play()
+                }
+            },
+            onShuffle = chrome.onShuffle?.let { shuffle ->
+                {
+                    shuffleClicked = true
+                    shuffle()
+                }
+            },
+        )
+        LibraryScreen(
+            uiState = uiState,
+            chrome = capturingChrome,
+            onTabSelected = { lastTabSelected = it },
+            onTabsChanged = { order, enabled -> lastTabsChanged = order to enabled },
+            onSelectionAction = { lastSelectionAction = it },
+            onOpenSettings = { settingsOpened = true },
+        ) { tab -> Page(tab, pages) }
+    }
+
+    @Composable
     private fun Page(tab: LibraryTab, pages: LibraryPageStates) {
         when (tab) {
             LibraryTab.Songs -> pages.songs?.let {
-                SongsPage(it, onSongClick = { s -> lastSongClicked = s }, onSongLongClick = { s -> lastSongLongClicked = s }, onSongMore = { s -> lastMore = s }, onPlay = { playClicked = true }, onShuffle = { shuffleClicked = true })
+                SongsPage(it, onSongClick = { s -> lastSongClicked = s }, onSongLongClick = { s -> lastSongLongClicked = s }, onSongMore = { s -> lastMore = s })
             }
 
             LibraryTab.Albums -> pages.albums?.let {
-                AlbumsPage(it, onAlbumClick = { a -> lastAlbumClicked = a }, onAlbumLongClick = {}, onAlbumMore = { a -> lastMore = a }, onPlay = { playClicked = true }, onShuffle = { shuffleClicked = true })
+                AlbumsPage(it, onAlbumClick = { a -> lastAlbumClicked = a }, onAlbumLongClick = {}, onAlbumMore = { a -> lastMore = a })
             }
 
             LibraryTab.Artists -> pages.artists?.let {
@@ -190,8 +235,23 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         tab(label).assertIsSelected()
     }
 
-    /** The tab labels in the tab row, in order. */
-    fun tabLabels(): List<String> = rule.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("library-tabs")))
+    fun assertContentDescriptionDisplayed(description: String) {
+        rule.onNodeWithContentDescription(description).assertIsDisplayed()
+    }
+
+    fun assertContentDescriptionNotDisplayed(description: String) {
+        rule.onAllNodesWithContentDescription(description).fetchSemanticsNodes().isEmpty() || error("\"$description\" is shown")
+    }
+
+    /** Whether [first] and [second] sit side by side, as tiles of a grid do, rather than one above the other as rows. */
+    fun sideBySide(first: String, second: String): Boolean {
+        val a = rule.onNodeWithText(first).fetchSemanticsNode().boundsInRoot
+        val b = rule.onNodeWithText(second).fetchSemanticsNode().boundsInRoot
+        return a.top == b.top && a.left != b.left
+    }
+
+    /** The section chip labels, in order. */
+    fun tabLabels(): List<String> = rule.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("library-sections")))
         .fetchSemanticsNodes()
         .map { node -> node.config.getOrElseNullable(SemanticsProperties.Text) { null }.orEmpty().joinToString { it.text } }
 
@@ -199,6 +259,23 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
 
     fun clickTab(label: String) {
         tab(label).performClick()
+        rule.waitForIdle()
+    }
+
+    /** Swipes the pager one page towards the end, as a finger would. */
+    fun swipeToNextPage() {
+        rule.onNodeWithTag("library-pager").performTouchInput { swipeLeft() }
+        rule.waitForIdle()
+    }
+
+    /** Taps an icon button in the controls row (or anywhere) by its content description, such as "Play". */
+    fun clickContentDescription(description: String) {
+        rule.onNodeWithContentDescription(description).performClick()
+        rule.waitForIdle()
+    }
+
+    fun openSort() {
+        rule.onNodeWithTag("library-sort").performClick()
         rule.waitForIdle()
     }
 
@@ -259,5 +336,5 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         rule.waitForIdle()
     }
 
-    private fun tab(label: String) = rule.onNode(hasText(label) and hasClickAction() and hasAnyAncestor(hasTestTag("library-tabs")))
+    private fun tab(label: String) = rule.onNode(hasText(label) and hasClickAction() and hasAnyAncestor(hasTestTag("library-sections")))
 }

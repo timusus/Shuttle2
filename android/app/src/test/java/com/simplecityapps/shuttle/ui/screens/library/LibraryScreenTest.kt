@@ -36,8 +36,8 @@ class LibraryScreenTest {
     // -- Container chrome --
 
     @Test
-    fun `shows the title, the current tab's count and the enabled tabs in order`() {
-        robot.setContent(libraryState(), chromeWithMenu(subtitle = "12 songs"))
+    fun `shows the title, the enabled sections in order and the current tab's count`() {
+        robot.setContent(libraryState(), libraryChrome(count = "12 songs"))
 
         robot.assertTextDisplayed("Library")
         robot.assertTextDisplayed("12 songs")
@@ -45,7 +45,7 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun `hidden tabs stay out of the tab row and the order follows the saved order`() {
+    fun `hidden tabs stay out of the section chips and the order follows the saved order`() {
         robot.setContent(
             libraryState(
                 allTabs = listOf(LibraryTab.Songs, LibraryTab.Albums, LibraryTab.Genres, LibraryTab.Playlists, LibraryTab.Artists, LibraryTab.Folders),
@@ -57,14 +57,27 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun `opens on the saved tab and reports a tab tap`() {
+    fun `opens on the saved tab, and a chip tap moves the pager to its page`() {
         robot.setContent(libraryState(currentTab = LibraryTab.Albums))
 
         robot.assertTabSelected("Albums")
+        robot.assertTextDisplayed("page:Albums")
         robot.clickTab("Songs")
 
         robot.assertTabSelected("Songs")
+        robot.assertTextDisplayed("page:Songs")
         robot.lastTabSelected shouldBe LibraryTab.Songs
+    }
+
+    @Test
+    fun `swiping the pager selects the next section's chip`() {
+        robot.setContent(libraryState(currentTab = LibraryTab.Artists))
+
+        robot.swipeToNextPage()
+
+        robot.assertTabSelected("Albums")
+        robot.assertTextDisplayed("page:Albums")
+        robot.lastTabSelected shouldBe LibraryTab.Albums
     }
 
     @Test
@@ -88,15 +101,50 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun `the overflow lists the tab's options above Edit tabs`() {
-        var sorted = false
-        robot.setContent(libraryState(), chromeWithMenu(menu = listOf(listOf(S2Action("Song Name", { sorted = true }, selected = true)))))
+    fun `the overflow holds only Edit tabs`() {
+        robot.setContent(libraryState(), libraryChrome(sortOptions = sorts("Song Name", "Year")))
 
         robot.openOverflow()
-        robot.assertTextDisplayed("Edit tabs")
-        robot.clickText("Song Name")
 
-        sorted shouldBe true
+        robot.assertTextDisplayed("Edit tabs")
+        robot.countOfText("Year") shouldBe 0
+    }
+
+    @Test
+    fun `the sort chip names the current sort and opens the tab's sorts`() {
+        var sortedBy: String? = null
+        val options = listOf("Song Name", "Year").map { label -> S2Action(label, { sortedBy = label }, selected = label == "Song Name") }
+        robot.setContent(libraryState(currentTab = LibraryTab.Songs), libraryChrome(count = "2 songs", sortOptions = options))
+
+        robot.assertTextDisplayed("Song Name")
+        robot.openSort()
+        robot.clickText("Year")
+
+        sortedBy shouldBe "Year"
+    }
+
+    @Test
+    fun `a tab without sorts, views or play has no controls`() {
+        robot.setContent(libraryState(currentTab = LibraryTab.Albums), libraryChrome(count = "1 album"))
+
+        robot.assertTextDisplayed("1 album")
+        robot.assertContentDescriptionNotDisplayed("Show as list")
+        robot.assertContentDescriptionNotDisplayed("Play")
+        robot.assertContentDescriptionNotDisplayed("Shuffle")
+    }
+
+    @Test
+    fun `the view toggle switches the albums page between grid and list`() {
+        val albums = listOf(createAlbum(name = "Phase Garden", albumArtist = "Juniper Static"), createAlbum(name = "Salt Lines", albumArtist = "Harbour Owl"))
+        robot.setAlbumsWithViewToggle(readyAlbumList(albums, viewMode = ViewMode.Grid))
+        robot.sideBySide("Phase Garden", "Salt Lines") shouldBe true
+
+        robot.clickContentDescription("Show as list")
+
+        robot.lastViewModeChange shouldBe ViewMode.List
+        robot.sideBySide("Phase Garden", "Salt Lines") shouldBe false
+        robot.clickContentDescription("Show as grid")
+        robot.sideBySide("Phase Garden", "Salt Lines") shouldBe true
     }
 
     @Test
@@ -159,25 +207,29 @@ class LibraryScreenTest {
     // -- Pages --
 
     @Test
-    fun `songs page plays a tapped song, plays everything and shuffles`() {
+    fun `songs page plays a tapped song, and the controls play everything and shuffle`() {
         val song = createSong(id = 1, name = "Chlorophyll Loop")
-        robot.setContent(libraryState(currentTab = LibraryTab.Songs), pages = LibraryPageStates(songs = readySongList(listOf(song, createSong(id = 2, name = "Lucky")))))
+        robot.setContent(
+            libraryState(currentTab = LibraryTab.Songs),
+            libraryChrome(onPlay = {}, onShuffle = {}),
+            LibraryPageStates(songs = readySongList(listOf(song, createSong(id = 2, name = "Lucky")))),
+        )
 
         robot.clickText("Chlorophyll Loop")
         robot.lastSongClicked shouldBe song
 
-        robot.clickText("Play")
+        robot.clickContentDescription("Play")
         robot.playClicked shouldBe true
 
-        robot.clickText("Shuffle")
+        robot.clickContentDescription("Shuffle")
         robot.shuffleClicked shouldBe true
     }
 
     @Test
-    fun `the song count shows once, in the top bar (#491)`() {
+    fun `the song count shows once, in the controls row (#491)`() {
         robot.setContent(
             libraryState(currentTab = LibraryTab.Songs),
-            chromeWithMenu(subtitle = "2 songs"),
+            libraryChrome(count = "2 songs"),
             LibraryPageStates(songs = readySongList(listOf(createSong(id = 1, name = "Chlorophyll Loop"), createSong(id = 2, name = "Lucky")))),
         )
 
@@ -185,16 +237,21 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun `albums page plays and shuffles every album, with the count once in the top bar`() {
+    fun `albums controls play and shuffle every album, with the count once`() {
         val albums = listOf(createAlbum(name = "Phase Garden", albumArtist = "Juniper Static"))
-        robot.setContent(libraryState(currentTab = LibraryTab.Albums), chromeWithMenu(subtitle = "1 album"), LibraryPageStates(albums = readyAlbumList(albums)))
+        robot.setContent(
+            libraryState(currentTab = LibraryTab.Albums),
+            libraryChrome(count = "1 album", viewMode = ViewMode.Grid, onPlay = {}, onShuffle = {}),
+            LibraryPageStates(albums = readyAlbumList(albums)),
+        )
 
         robot.countOfText("1 album") shouldBe 1
+        robot.assertContentDescriptionDisplayed("Show as list")
 
-        robot.clickText("Play")
+        robot.clickContentDescription("Play")
         robot.playClicked shouldBe true
 
-        robot.clickText("Shuffle")
+        robot.clickContentDescription("Shuffle")
         robot.shuffleClicked shouldBe true
     }
 
