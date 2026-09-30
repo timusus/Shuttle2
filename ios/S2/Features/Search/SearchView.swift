@@ -266,8 +266,7 @@ struct SearchResultList: View {
         case .songs:
             let song = results.songs[index].item!
             Button { onPlaySong(index) } label: { SongRow(song: song, playback: nowPlaying.playback(song: song)) }
-                .buttonStyle(.plain)
-                .tapFeedback()
+                .buttonStyle(.pressScale)
                 .accessibilityIdentifier("search.result.song")
                 .contextMenu {
                     SongRowMenu(
@@ -295,8 +294,7 @@ struct SearchResultList: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .tapFeedback()
+        .buttonStyle(.pressScale)
         .accessibilityIdentifier(identifier)
     }
 

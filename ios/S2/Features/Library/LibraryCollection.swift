@@ -159,8 +159,7 @@ struct ShuffleRow: View {
             }
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
-        .tapFeedback()
+        .buttonStyle(.pressScale)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)
     }

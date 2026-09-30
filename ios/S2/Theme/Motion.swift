@@ -1,13 +1,13 @@
 import SwiftUI
 
 /// S2's motion: the named animations, press feedback, Reduce Motion, and the zoom and matched-geometry
-/// namespaces. After Shuttle Podcasts' `TapFeedbackModifier` and `ZoomNamespace`.
+/// namespaces. After Shuttle Podcasts' `ZoomNamespace`.
 ///
 /// The rule: every animation goes through `.reduced(reduceMotion)` (read the flag from
 /// `@Environment(\.accessibilityReduceMotion)`), so with Reduce Motion on the state still changes, in one
 /// frame, and slides become fades.
 enum Motion {
-    /// A press scaling down and back (`tapFeedback`, the player's buttons).
+    /// A press scaling down and back (`pressScale`, the player's buttons).
     static let press = Animation.spring(response: 0.2, dampingFraction: 0.8)
     /// The Now Playing cover shrinking on pause and growing on play.
     static let coverScale = Animation.spring(response: 0.45, dampingFraction: 0.75)
@@ -20,7 +20,7 @@ enum Motion {
     /// A section unfolding or folding its rows, and its chevron turning (the artist screen's album sections).
     static let disclosure = Animation.snappy(duration: 0.3)
 
-    /// How far `tapFeedback` scales a pressed view.
+    /// How far `pressScale` scales a pressed view.
     static let pressedScale: CGFloat = 0.96
     /// The Now Playing cover's scale while paused.
     static let pausedCoverScale: CGFloat = 0.88
@@ -43,26 +43,9 @@ extension AnyTransition {
 
 // MARK: - Press feedback
 
-/// Scales a view down slightly while it is pressed. A simultaneous gesture, so it composes with a
-/// `NavigationLink`'s or `Button`'s own tap and a scroll view's drag.
-struct TapFeedbackModifier: ViewModifier {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var isPressed = false
-
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(isPressed && !reduceMotion ? Motion.pressedScale : 1)
-            .animation(Motion.press.reduced(reduceMotion), value: isPressed)
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in if !isPressed { isPressed = true } }
-                    .onEnded { _ in isPressed = false }
-            )
-    }
-}
-
-/// A `ButtonStyle` that presses the same way, for buttons (the player's transport), where a style is better
-/// than a gesture: it sees the button's own pressed state, including a press that slides off.
+/// A `ButtonStyle` that scales a button down while it is pressed: the player's transport and list rows. It
+/// sees the button's own pressed state, including a press that slides off, and never competes with a scroll
+/// view's drag the way a `DragGesture(minimumDistance: 0)` would.
 struct PressScaleButtonStyle: ButtonStyle {
     var scale: CGFloat = Motion.pressedScale
 
@@ -86,13 +69,6 @@ struct PressScaleButtonStyle: ButtonStyle {
 extension ButtonStyle where Self == PressScaleButtonStyle {
     /// A plain button that scales down while pressed.
     static var pressScale: PressScaleButtonStyle { PressScaleButtonStyle() }
-}
-
-extension View {
-    /// A subtle press-down scale for tiles, cards and rows.
-    func tapFeedback() -> some View {
-        modifier(TapFeedbackModifier())
-    }
 }
 
 // MARK: - Zoom and matched-geometry namespaces

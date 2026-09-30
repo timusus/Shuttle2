@@ -80,8 +80,7 @@ struct SongListContent: View {
             } row: { index, song in
                 let playback = nowPlaying.playback(song: song)
                 Button { onPlay(index) } label: { SongRow(song: song, playback: playback) }
-                    .buttonStyle(.plain)
-                    .tapFeedback()
+                    .buttonStyle(.pressScale)
                     .contextMenu {
                         SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude)
                     }
