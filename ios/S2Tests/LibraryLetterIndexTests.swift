@@ -123,18 +123,17 @@ struct LibraryLetterIndexTests {
         #expect(try byCount.inspect().findAll(ViewType.Section.self).isEmpty)
     }
 
-    @Test func theSongsListOpensWithItsShuffleRow() throws {
+    @Test func theSongsListOpensWithAToolbarShuffleButton() throws {
         var shuffled = false
         let songs = songs(sortedNames)
         for sortOrder in [SongSortOrder.songName, .year] {
             let sut = SongListContent(state: songState(songs, sortOrder: sortOrder), onShuffle: { shuffled = true })
-            let row = try sut.inspect().find(viewWithAccessibilityIdentifier: "songs.shuffle")
-            #expect((try? row.find(text: "7 songs")) != nil)
-            try row.find(ViewType.Button.self).tap()
+            let button = try sut.inspect().find(ViewType.Toolbar.self).find(viewWithAccessibilityIdentifier: "songs.shuffle")
+            #expect((try? button.find(text: "7 songs")) == nil)
+            try button.find(ViewType.Button.self).tap()
         }
         #expect(shuffled)
-        // Not in the toolbar any more.
-        #expect(try SongListContent(state: songState(songs, sortOrder: .songName)).inspect().findAll(ViewType.Toolbar.self).isEmpty)
+        #expect((try? SongListContent(state: songState([], sortOrder: .songName)).inspect().find(viewWithAccessibilityIdentifier: "songs.shuffle")) == nil)
     }
 
     @Test func theStripIsOneAdjustableControlForVoiceOver() throws {

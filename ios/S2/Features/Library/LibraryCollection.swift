@@ -60,10 +60,8 @@ struct LibraryGrid<Content: View>: View {
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(alignment: .leading, spacing: Spacing.medium) {
-                    LazyVGrid(columns: columns, spacing: Spacing.large) {
-                        content()
-                    }
+                LazyVGrid(columns: columns, spacing: Spacing.large) {
+                    content()
                 }
                 .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
                 .padding(.vertical, Spacing.medium)

@@ -3,7 +3,7 @@ import SwiftUI
 
 /// Library > Songs (P5-6a): `SongListViewModel`'s songs, in its sort order. A tap plays the list from that song
 /// through the shared `MediaAction.Play`, as Android's `MediaActionsHost` does; the context menu queues one song.
-/// A Shuffle row heads the list (#643), as on Android, rather than a toolbar button. Pull to refresh imports.
+/// Shuffle is a toolbar button (#676). Pull to refresh imports.
 struct SongListView: View {
     var body: some View {
         let models = ViewModelCache.shared.viewModel(Route.libraryCategory(.songs).cacheKey) {

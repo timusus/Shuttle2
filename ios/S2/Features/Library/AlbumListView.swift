@@ -70,8 +70,10 @@ struct AlbumListContent: View {
     var body: some View {
         content
             .toolbar {
-                if state.loadingState != .empty {
+                if !state.albums.isEmpty {
                     ShuffleButton(identifier: "albums.shuffle", action: onShuffle)
+                }
+                if state.loadingState != .empty {
                     ViewModeToggle(mode: state.viewMode, onChange: onViewMode)
                 }
             }

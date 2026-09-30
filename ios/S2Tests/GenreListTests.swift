@@ -43,16 +43,16 @@ struct GenreListTests {
         #expect(mosaics.map(\.seed) == ["Trip Hop", "Art Rock", "Ambient"])
     }
 
-    /// Shuffle heads the list, as on every Library category, rather than sitting in the toolbar (#643).
-    @Test func theGenresListOpensWithItsShuffleRow() throws {
+    /// Shuffle is a toolbar button, as on every Library category (#676), while there are genres to shuffle.
+    @Test func theGenresListOpensWithAToolbarShuffleButton() throws {
         var shuffled = false
         let genres = [genre("Trip Hop", songs: 12), genre("Art Rock", songs: 1)]
         let sut = GenreListContent(state: state(genres, .ready), onShuffle: { shuffled = true })
-        let row = try sut.inspect().find(viewWithAccessibilityIdentifier: "genres.shuffle")
-        #expect((try? row.find(text: "2 genres")) != nil)
-        try row.find(ViewType.Button.self).tap()
+        let button = try sut.inspect().find(ViewType.Toolbar.self).find(viewWithAccessibilityIdentifier: "genres.shuffle")
+        #expect((try? button.find(text: "2 genres")) == nil)
+        try button.find(ViewType.Button.self).tap()
         #expect(shuffled)
-        #expect(try sut.inspect().findAll(ViewType.Toolbar.self).isEmpty)
+        #expect((try? GenreListContent(state: state([], .ready)).inspect().find(viewWithAccessibilityIdentifier: "genres.shuffle")) == nil)
         #expect((try? GenreListContent(state: state([], .loading)).inspect().find(viewWithAccessibilityIdentifier: "genres.shuffle")) == nil)
     }
 

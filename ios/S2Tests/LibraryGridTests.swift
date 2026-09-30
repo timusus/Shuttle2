@@ -10,27 +10,27 @@ import ViewInspector
 struct LibraryGridTests {
     @Test(arguments: [320, 375, 393, 430] as [CGFloat])
     func everyIPhoneInPortraitHasTwoColumns(width: CGFloat) {
-        #expect(LibraryGrid<EmptyView, EmptyView>.columnCount(width: width, tier: .compact) == 2)
+        #expect(LibraryGrid<EmptyView>.columnCount(width: width, tier: .compact) == 2)
     }
 
     @Test func aGridWithoutAnIndexStillHasTwoColumnsOnAnIPhone() {
-        #expect(LibraryGrid<EmptyView, EmptyView>.columnCount(width: 393, tier: .compact, indexWidth: 0) == 2)
+        #expect(LibraryGrid<EmptyView>.columnCount(width: 393, tier: .compact, indexWidth: 0) == 2)
     }
 
     /// iPhone 16 and 16 Pro Max in landscape: the width inside the notch's safe area.
     @Test(arguments: [(734, LayoutTier.compact), (814, LayoutTier.regular)] as [(CGFloat, LayoutTier)])
     func landscapeIPhonesHaveAtLeastThreeColumns(width: CGFloat, tier: LayoutTier) {
-        #expect(LibraryGrid<EmptyView, EmptyView>.columnCount(width: width, tier: tier) >= 3)
+        #expect(LibraryGrid<EmptyView>.columnCount(width: width, tier: tier) >= 3)
     }
 
     @Test func anIPadScalesUp() {
         // An 11-inch iPad in portrait, then landscape beside the sidebar.
-        #expect(LibraryGrid<EmptyView, EmptyView>.columnCount(width: 834, tier: .regular) == 4)
-        #expect(LibraryGrid<EmptyView, EmptyView>.columnCount(width: 890, tier: .wide) >= 4)
+        #expect(LibraryGrid<EmptyView>.columnCount(width: 834, tier: .regular) == 4)
+        #expect(LibraryGrid<EmptyView>.columnCount(width: 890, tier: .wide) >= 4)
     }
 
     @Test func accessibilityTextSizesTakeOneFullWidthColumnOnAnIPhone() {
-        #expect(LibraryGrid<EmptyView, EmptyView>.columnCount(width: 393, tier: .compact, accessibilitySize: true) == 1)
+        #expect(LibraryGrid<EmptyView>.columnCount(width: 393, tier: .compact, accessibilitySize: true) == 1)
     }
 
     @Test func anArtistTileHasAnAlbumTilesCorners() throws {

@@ -49,25 +49,27 @@ struct PlaylistListTests {
         #expect((try? sut.inspect().find(text: "Favourites")) != nil)
     }
 
-    @Test func aPlaylistsArtworkIsAMosaicOfItsCoversAndASmartPlaylistsIsGenerated() throws {
+    @Test func aPlaylistsArtworkIsAMosaicOfItsCoversAndAnAutoPlaylistsIsAGlyphTile() throws {
         let playlists = [playlist(1, "Road Trip", songs: 12), playlist(2, "Empty", songs: 0)]
         let covers = [KotlinLong(value: 1): Array(TestSongs.demo.prefix(4))]
         let sut = PlaylistListContent(state: state(playlists, smartPlaylists: [SmartPlaylistId.favourites.smartPlaylist], covers: covers, .ready))
         let mosaics = try sut.inspect().findAll(CoverMosaic.self).map { try $0.actualView() }
-        #expect(mosaics.map(\.isMosaic) == [false, true, false])
-        #expect(mosaics.map(\.seed) == [SmartPlaylistId.favourites.title, "Road Trip", "Empty"])
+        #expect(mosaics.map(\.isMosaic) == [true, false])
+        #expect(mosaics.map(\.seed) == ["Road Trip", "Empty"])
         #expect(mosaics.last?.symbol == GeneratedArtwork.playlistSymbol)
+        let autoTiles = try sut.inspect().findAll(AutoPlaylistArtwork.self).map { try $0.actualView() }
+        #expect(autoTiles.map(\.symbol) == [SmartPlaylistId.favourites.symbol])
         #expect((try? sut.inspect().find(button: "New Playlist")) != nil)
     }
 
-    /// Shuffle heads the list, as on every Library category (#643), while there are playlists of the user's to shuffle.
-    @Test func thePlaylistsListOpensWithItsShuffleRow() throws {
+    /// Shuffle is a toolbar button, as on every Library category (#676), while there are playlists of the user's to shuffle.
+    @Test func thePlaylistsListOpensWithAToolbarShuffleButton() throws {
         var shuffled = false
         let playlists = [playlist(1, "Road Trip", songs: 12), playlist(2, "Chill", songs: 1)]
         let sut = PlaylistListContent(state: state(playlists, .ready), onShuffle: { shuffled = true })
-        let row = try sut.inspect().find(viewWithAccessibilityIdentifier: "playlists.shuffle")
-        #expect((try? row.find(text: "2 playlists")) != nil)
-        try row.find(ViewType.Button.self).tap()
+        let button = try sut.inspect().find(ViewType.Toolbar.self).find(viewWithAccessibilityIdentifier: "playlists.shuffle")
+        #expect((try? button.find(text: "2 playlists")) == nil)
+        try button.find(ViewType.Button.self).tap()
         #expect(shuffled)
         #expect((try? PlaylistListContent(state: state([], .ready)).inspect().find(viewWithAccessibilityIdentifier: "playlists.shuffle")) == nil)
     }
