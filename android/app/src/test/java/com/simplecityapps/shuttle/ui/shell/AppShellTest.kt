@@ -13,7 +13,6 @@ import com.simplecityapps.shuttle.ui.actions.NavigationTarget
 import com.simplecityapps.shuttle.ui.actions.SnackbarAction
 import com.simplecityapps.shuttle.ui.preview.toAlbum
 import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
-import com.simplecityapps.shuttle.ui.shell.player.NowPlayingItems
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
@@ -76,7 +75,7 @@ class AppShellTest {
     fun `emptying the queue under the expanded sheet slides it away rather than cutting it`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.assertLevel(PlayerLevel.NowPlaying)
+        robot.assertLevel(PlayerLevel.Full)
 
         robot.setQueueMidAnimation(EmptyShellQueue)
         robot.assertSheetPresent()
@@ -86,70 +85,100 @@ class AppShellTest {
     }
 
     @Test
-    fun `tapping the mini player opens Now Playing at rest, and the queue button raises the sheet on the queue`() {
+    fun `tapping the mini player opens the full player, and dragging it down collapses it`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.assertLevel(PlayerLevel.NowPlaying)
-        robot.assertPinnedSong(shown = false)
+        robot.assertLevel(PlayerLevel.Full)
+        robot.assertPanel(null)
+        robot.assertNowPlayingHeader(shown = false)
 
-        robot.tapPanelButton(NowPlayingPanel.Queue)
-        robot.assertLevel(PlayerLevel.Expanded)
-        robot.panel shouldBe NowPlayingPanel.Queue
-        robot.assertPanel(NowPlayingPanel.Queue)
-        robot.assertPinnedSong(shown = true)
+        robot.swipeDownNowPlaying()
+        robot.assertLevel(PlayerLevel.Mini)
     }
 
     @Test
-    fun `each bar button opens its panel in the list, and tapping it again closes it`() {
+    fun `the queue button opens the queue under a compact now playing header`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+        robot.assertLevel(PlayerLevel.Full)
+        robot.panel shouldBe NowPlayingPanel.Queue
+        robot.assertPanel(NowPlayingPanel.Queue)
+        robot.assertNowPlayingHeader(shown = true)
+    }
+
+    @Test
+    fun `each bar button opens its panel, and tapping it again closes it`() {
         robot.setContent()
         robot.tapMiniPlayer()
         listOf(NowPlayingPanel.SleepTimer, NowPlayingPanel.PlaybackSound, NowPlayingPanel.Queue).forEach { panel ->
             robot.tapPanelButton(panel)
-            robot.assertLevel(PlayerLevel.Expanded)
+            robot.assertLevel(PlayerLevel.Full)
             robot.panel shouldBe panel
             robot.assertPanel(panel)
 
             robot.tapPanelButton(panel)
-            robot.assertLevel(PlayerLevel.NowPlaying)
+            robot.assertLevel(PlayerLevel.Full)
             robot.panel shouldBe null
+            robot.assertPanel(null)
         }
     }
 
     @Test
-    fun `dragging Now Playing up raises the sheet on the queue`() {
+    fun `swiping up on the full player opens no panel`() {
         robot.setContent()
         robot.tapMiniPlayer()
 
         robot.swipeUpNowPlaying()
-        robot.assertLevel(PlayerLevel.Expanded)
+        robot.assertLevel(PlayerLevel.Full)
+        robot.panel shouldBe null
+        robot.assertPanel(null)
+    }
+
+    @Test
+    fun `swiping up on the bar opens the queue`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.swipeUpBar()
+        robot.assertLevel(PlayerLevel.Full)
         robot.panel shouldBe NowPlayingPanel.Queue
     }
 
     @Test
-    fun `the pinned song stands in once the transport scrolls away, and tapping it scrolls back to the title`() {
-        robot.setContent(queue = shellQueue(*Array(30) { "Song ${it + 1}" }))
+    fun `dragging the queue down closes it and leaves the full player`() {
+        robot.setContent()
         robot.tapMiniPlayer()
-        robot.assertPinnedSong(shown = false)
-
         robot.tapPanelButton(NowPlayingPanel.Queue)
-        robot.scrollNowPlayingTo(12)
-        robot.assertPinnedSong(shown = true)
-        robot.tapPinnedSong()
-        robot.assertPinnedSong(shown = false)
-        robot.assertTextDisplayed("Juniper Static • Phase Garden")
+
+        robot.swipeDownPanel()
+        robot.panel shouldBe null
+        robot.assertLevel(PlayerLevel.Full)
     }
 
     @Test
-    fun `back closes the open panel with the sheet's full height, then steps down to Mini`() {
+    fun `back closes the open panel first, then collapses the player to Mini`() {
         robot.setContent()
         robot.tapMiniPlayer()
-        robot.tapPanelButton(NowPlayingPanel.SleepTimer)
+        robot.tapPanelButton(NowPlayingPanel.Queue)
 
         robot.pressBack()
-        robot.assertLevel(PlayerLevel.NowPlaying)
+        robot.assertLevel(PlayerLevel.Full)
         robot.panel shouldBe null
         robot.pressBack()
         robot.assertLevel(PlayerLevel.Mini)
+    }
+
+    @Test
+    fun `collapsing the player closes its panel`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+        robot.tapPanelButton(NowPlayingPanel.SleepTimer)
+        robot.tapDescription("Collapse player")
+
+        robot.assertLevel(PlayerLevel.Mini)
+        robot.panel shouldBe null
     }
 
     @Test
@@ -178,10 +207,10 @@ class AppShellTest {
 
     @Test
     @Config(qualifiers = "w840dp-h900dp")
-    fun `at Medium width the sheet has no Expanded level, so back goes straight to Mini`() {
+    fun `at Medium width back collapses the full player to Mini`() {
         robot.setContent(window = MediumWindow)
         robot.tapMiniPlayer()
-        robot.assertLevel(PlayerLevel.NowPlaying)
+        robot.assertLevel(PlayerLevel.Full)
 
         robot.pressBack()
         robot.assertLevel(PlayerLevel.Mini)
@@ -189,15 +218,16 @@ class AppShellTest {
 
     @Test
     @Config(qualifiers = "w840dp-h900dp")
-    fun `at Medium width a panel opens beside the player, and back closes it before the sheet`() {
+    fun `at Medium width a panel opens beside the player only on its button, and back closes it before the sheet`() {
         robot.setContent(window = MediumWindow)
         robot.tapMiniPlayer()
-        robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
-        robot.assertLevel(PlayerLevel.NowPlaying)
-        robot.assertPanel(NowPlayingPanel.PlaybackSound)
+        robot.assertPanel(null)
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+        robot.assertLevel(PlayerLevel.Full)
+        robot.assertPanel(NowPlayingPanel.Queue)
 
         robot.pressBack()
-        robot.assertLevel(PlayerLevel.NowPlaying)
+        robot.assertLevel(PlayerLevel.Full)
         robot.panel shouldBe null
         robot.pressBack()
         robot.assertLevel(PlayerLevel.Mini)
@@ -205,13 +235,13 @@ class AppShellTest {
 
     @Test
     @Config(qualifiers = "w840dp-h900dp")
-    fun `compact Expanded becomes Now Playing at Medium width, keeping the open panel`() {
+    fun `the compact full player keeps its open panel at Medium width`() {
         robot.setContent()
         robot.tapMiniPlayer()
         robot.tapPanelButton(NowPlayingPanel.SleepTimer)
 
         robot.setWindow(MediumWindow)
-        robot.assertLevel(PlayerLevel.NowPlaying)
+        robot.assertLevel(PlayerLevel.Full)
         robot.assertPanel(NowPlayingPanel.SleepTimer)
     }
 
@@ -280,7 +310,7 @@ class AppShellTest {
 
         restoration.emulateSavedInstanceStateRestore()
         composeTestRule.waitForIdle()
-        robot.assertLevel(PlayerLevel.Expanded)
+        robot.assertLevel(PlayerLevel.Full)
         robot.assertPanel(NowPlayingPanel.Queue)
     }
 
@@ -301,7 +331,7 @@ class AppShellTest {
 
     @Test
     @Config(qualifiers = "w1280dp-h900dp")
-    fun `compact Expanded opens the pane on the open panel`() {
+    fun `the compact full player opens the pane on the open panel`() {
         robot.setContent()
         robot.tapMiniPlayer()
         robot.tapPanelButton(NowPlayingPanel.SleepTimer)
@@ -313,16 +343,19 @@ class AppShellTest {
 
     @Test
     @Config(qualifiers = "w1280dp-h900dp")
-    fun `the pane's bar opens and closes each panel in its list`() {
+    fun `the pane's bar opens and closes each panel`() {
         robot.setContent(window = PaneWindow)
         robot.tapMiniPlayer()
-        robot.assertPanel(NowPlayingPanel.Queue)
+        robot.assertPaneShown()
+        robot.assertPanel(null)
 
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+        robot.assertPanel(NowPlayingPanel.Queue)
         robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
         robot.assertPanel(NowPlayingPanel.PlaybackSound)
         robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
         robot.panel shouldBe null
-        robot.assertPanel(NowPlayingPanel.Queue)
+        robot.assertPanel(null)
     }
 
     @Test
@@ -368,7 +401,7 @@ class AppShellTest {
         robot.swipeNowPlayingArtwork(towardsStart = false)
 
         robot.calls shouldBe listOf("skipToNext", "skipToPrevious")
-        robot.assertLevel(PlayerLevel.NowPlaying)
+        robot.assertLevel(PlayerLevel.Full)
     }
 
     @Test
@@ -493,7 +526,6 @@ class AppShellTest {
         robot.setContent()
         robot.tapMiniPlayer()
         robot.tapPanelButton(NowPlayingPanel.Queue)
-        robot.scrollNowPlayingTo(NowPlayingItems.Panel)
 
         robot.dragQueueRow("First song", rows = 2)
         robot.calls shouldBe listOf("moveQueueItem(0, after 2)")
@@ -504,7 +536,6 @@ class AppShellTest {
         robot.setContent(queue = shellQueue(*Array(30) { "Song ${it + 1}" }))
         robot.tapMiniPlayer()
         robot.tapPanelButton(NowPlayingPanel.Queue)
-        robot.scrollNowPlayingTo(NowPlayingItems.Panel)
 
         robot.holdFirstQueueRowAtBottom(holdMs = 10_000)
         robot.calls shouldBe listOf("moveQueueItem(0, after 29)")

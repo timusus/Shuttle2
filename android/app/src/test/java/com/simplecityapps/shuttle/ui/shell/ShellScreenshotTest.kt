@@ -12,7 +12,6 @@ import com.github.takahirom.roborazzi.captureScreenRoboImage
 import com.github.takahirom.roborazzi.roborazziSystemPropertyTaskType
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.SampleArtworkCoil
-import com.simplecityapps.shuttle.ui.shell.player.NowPlayingItems
 import com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerProgress
 import java.io.File
@@ -66,10 +65,13 @@ class ShellScreenshotTest {
         shot("$prefix-mini")
         robot.tapMiniPlayer()
         shot("$prefix-now-playing")
+        robot.tapPanelButton(NowPlayingPanel.Queue)
+        shot("$prefix-queue")
+        robot.tapPanelButton(NowPlayingPanel.Queue)
         robot.pressBack()
     }
 
-    /** A compact sheet: Mini, the rest, each panel open, and the list scrolled past the artwork. */
+    /** A compact sheet: Mini, the full player, and each panel open. */
     private fun sheetLevels(prefix: String) {
         shot("$prefix-mini")
         robot.tapMiniPlayer()
@@ -79,9 +81,6 @@ class ShellScreenshotTest {
             shot("$prefix-${panel.shotName}")
             robot.tapPanelButton(panel)
         }
-        robot.swipeUpNowPlaying()
-        robot.scrollNowPlayingTo(NowPlayingItems.Title)
-        shot("$prefix-artwork-scrolled")
         robot.backToMini()
     }
 

@@ -5,17 +5,14 @@ import org.junit.Test
 
 class PlayerSheetGeometryTest {
 
-    // H = 2000, N = 200, M = 100, R = 800: Hidden 2000, Mini 1700, NowPlaying 800, Expanded 0.
-    private val geometry = PlayerSheetGeometry(height = 2000f, navBarHeight = 200f, miniHeight = 100f, restOffset = 800f)
+    // H = 2000, N = 200, M = 100: Hidden 2000, Mini 1700, Full 0.
+    private val geometry = PlayerSheetGeometry(height = 2000f, navBarHeight = 200f, miniHeight = 100f)
 
     @Test
     fun `anchors follow the spec`() {
         geometry.offsetOf(PlayerLevel.Hidden) shouldBe 2000f
         geometry.offsetOf(PlayerLevel.Mini) shouldBe 1700f
-        geometry.offsetOf(PlayerLevel.NowPlaying) shouldBe 800f
-        geometry.offsetOf(PlayerLevel.Expanded) shouldBe 0f
-        geometry.partialRest shouldBe true
-        geometry.copy(restOffset = 0f).partialRest shouldBe false
+        geometry.offsetOf(PlayerLevel.Full) shouldBe 0f
     }
 
     @Test
@@ -24,7 +21,7 @@ class PlayerSheetGeometryTest {
         geometry.reveal(1850f) shouldBe 0.5f
         geometry.reveal(0f) shouldBe 1f
         geometry.expand(1700f) shouldBe 0f
-        geometry.expand(1250f) shouldBe 0.5f
+        geometry.expand(850f) shouldBe 0.5f
         geometry.expand(0f) shouldBe 1f
     }
 
@@ -37,13 +34,14 @@ class PlayerSheetGeometryTest {
     @Test
     fun `nav bar, mini player and scrim track expand`() {
         geometry.navBarTranslation(1700f) shouldBe 0f
-        geometry.navBarTranslation(800f) shouldBe 200f
+        geometry.navBarTranslation(850f) shouldBe 100f
+        geometry.navBarTranslation(0f) shouldBe 200f
         geometry.miniAlpha(1700f) shouldBe 1f
-        geometry.miniAlpha(800f) shouldBe 0f
+        geometry.miniAlpha(0f) shouldBe 0f
         geometry.scrimAlpha(1700f) shouldBe 0f
-        geometry.scrimAlpha(800f) shouldBe PlayerSheetGeometry.MaxScrimAlpha
+        geometry.scrimAlpha(0f) shouldBe PlayerSheetGeometry.MaxScrimAlpha
         geometry.nowPlayingAlpha(1700f) shouldBe 0f
-        geometry.nowPlayingAlpha(800f) shouldBe 1f
+        geometry.nowPlayingAlpha(0f) shouldBe 1f
     }
 
     @Test
@@ -54,18 +52,17 @@ class PlayerSheetGeometryTest {
 
     @Test
     fun `content starts under the status bar once the edge rises into it`() {
-        geometry.contentTop(800f, statusBar = 100f) shouldBe 0f
+        geometry.contentTop(850f, statusBar = 100f) shouldBe 0f
         geometry.contentTop(40f, statusBar = 100f) shouldBe 60f
         geometry.contentTop(0f, statusBar = 100f) shouldBe 100f
     }
 
     @Test
-    fun `corners round at rest and flatten as the edge meets the status bar`() {
+    fun `corners round while the sheet rises and flatten as the edge meets the status bar`() {
         geometry.cornerRadius(1700f, statusBar = 100f, corner = 50f) shouldBe 0f
-        geometry.cornerRadius(800f, statusBar = 100f, corner = 50f) shouldBe 50f
-        geometry.cornerRadius(125f, statusBar = 100f, corner = 50f) shouldBe 25f
+        geometry.cornerRadius(850f, statusBar = 100f, corner = 50f) shouldBe 25f
+        geometry.cornerRadius(125f, statusBar = 100f, corner = 50f) shouldBe 50f * geometry.expand(125f) * 0.5f
         geometry.cornerRadius(0f, statusBar = 100f, corner = 50f) shouldBe 0f
-        geometry.copy(restOffset = 0f).cornerRadius(0f, statusBar = 100f, corner = 50f) shouldBe 0f
     }
 
     @Test

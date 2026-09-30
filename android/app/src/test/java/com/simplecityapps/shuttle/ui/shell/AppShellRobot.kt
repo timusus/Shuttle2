@@ -40,9 +40,9 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
@@ -394,12 +394,36 @@ class AppShellRobot(
 
     /** Taps the Now Playing bar's button for [panel], which opens it or, if it is open, closes it. */
     fun tapPanelButton(panel: NowPlayingPanel) {
-        val description = when (panel) {
-            NowPlayingPanel.Queue -> "Show queue"
-            NowPlayingPanel.SleepTimer -> "Sleep timer"
-            NowPlayingPanel.PlaybackSound -> "Playback & sound"
+        val button = when (panel) {
+            NowPlayingPanel.Queue -> hasText("Queue")
+            NowPlayingPanel.SleepTimer -> hasContentDescription("Sleep timer", substring = true)
+            NowPlayingPanel.PlaybackSound -> hasContentDescription("Playback & sound", substring = true)
         }
-        rule.onNode(hasContentDescription(description, substring = true) and hasAnyAncestor(hasTestTag(PlayerTestTags.Bar))).performClick()
+        rule.onNode(button and hasAnyAncestor(hasTestTag(PlayerTestTags.Bar))).performClick()
+        rule.waitForIdle()
+    }
+
+    /** Swipes up on the Now Playing bar, which opens the queue. */
+    fun swipeUpBar() {
+        rule.onNodeWithTag(PlayerTestTags.Bar).performTouchInput { swipeUp(startY = bottom - 1f, endY = top - 200f) }
+        rule.waitForIdle()
+    }
+
+    /** Swipes up on the full player's artwork, as a finger trying to scroll it would. */
+    fun swipeUpNowPlaying() {
+        rule.onNodeWithTag(PlayerTestTags.NowPlayingArtwork).performTouchInput { swipeUp() }
+        rule.waitForIdle()
+    }
+
+    /** Drags the full player down by its artwork, which collapses it. */
+    fun swipeDownNowPlaying() {
+        rule.onNodeWithTag(PlayerTestTags.NowPlayingArtwork).performTouchInput { swipeDown(startY = top, endY = bottom + 600f) }
+        rule.waitForIdle()
+    }
+
+    /** Drags the open panel's sheet down by its grip, which closes it. */
+    fun swipeDownPanel() {
+        rule.onNodeWithTag(PlayerTestTags.PanelSheet).performTouchInput { swipeDown(startY = top + 8f, endY = bottom) }
         rule.waitForIdle()
     }
 
@@ -409,18 +433,6 @@ class AppShellRobot(
         index: Int,
     ) {
         rule.onNodeWithContentDescription(description).performSemanticsAction(SemanticsActions.SetProgress) { it(index.toFloat()) }
-        rule.waitForIdle()
-    }
-
-    /** Scrolls the Now Playing list to its item at [index] (see NowPlayingItems). */
-    fun scrollNowPlayingTo(index: Int) {
-        rule.onNodeWithTag(PlayerTestTags.NowPlayingList).performScrollToIndex(index)
-        rule.waitForIdle()
-    }
-
-    /** Swipes up on the Now Playing list, which raises a resting sheet before it scrolls. */
-    fun swipeUpNowPlaying() {
-        rule.onNodeWithTag(PlayerTestTags.NowPlayingList).performTouchInput { swipeUp(startY = centerY, endY = top) }
         rule.waitForIdle()
     }
 
@@ -510,7 +522,7 @@ class AppShellRobot(
 
     /** Drags the first visible row's handle to the bottom of the queue list and holds it there for [holdMs]. */
     fun holdFirstQueueRowAtBottom(holdMs: Long) {
-        val list = rule.onNode(hasTestTag(PlayerTestTags.QueueList) or hasTestTag(PlayerTestTags.NowPlayingList)).fetchSemanticsNode().boundsInRoot
+        val list = rule.onNodeWithTag(PlayerTestTags.QueueList).fetchSemanticsNode().boundsInRoot
         val handle = rule.onAllNodes(hasContentDescription("Reorder") and hasAnyAncestor(hasTestTag(PlayerTestTags.QueueRow)), useUnmergedTree = true)[0]
         val start = handle.fetchSemanticsNode().boundsInRoot.center.y
         handle.performTouchInput {
@@ -569,8 +581,8 @@ class AppShellRobot(
         rule.onNodeWithTag(PlayerTestTags.Sheet).assertExists()
     }
 
-    /** Which panel shows in the Now Playing list: [panel]'s content is there, and the other panels' are not. */
-    fun assertPanel(panel: NowPlayingPanel) {
+    /** Which panel shows in the player, if any: [panel]'s content is there, and the other panels' are not. */
+    fun assertPanel(panel: NowPlayingPanel?) {
         val tags = mapOf(
             NowPlayingPanel.Queue to PlayerTestTags.QueueRow,
             NowPlayingPanel.SleepTimer to PlayerTestTags.SleepTimerPanel,
@@ -582,15 +594,10 @@ class AppShellRobot(
         }
     }
 
-    /** The pinned song stands in for the title and transport once they scroll away. */
-    fun assertPinnedSong(shown: Boolean) {
-        val node = rule.onNodeWithTag(PlayerTestTags.PinnedSong)
+    /** The compact now-playing header stands in for the artwork and transport while a panel is open. */
+    fun assertNowPlayingHeader(shown: Boolean) {
+        val node = rule.onNodeWithTag(PlayerTestTags.NowPlayingHeader)
         if (shown) node.assertIsDisplayed() else node.assertDoesNotExist()
-    }
-
-    fun tapPinnedSong() {
-        rule.onNodeWithTag(PlayerTestTags.PinnedSong).performClick()
-        rule.waitForIdle()
     }
 
     fun assertPaneShown() {
