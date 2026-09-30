@@ -50,7 +50,9 @@ if [ "${1:-}" = "--verify-only" ]; then
       scripts/build-framework.sh
       S2_SIM_HOLDER=land scripts/test.sh
     ) || rc=$?
-    CLAUDE_CODE_SESSION_ID=land "$HOME/.claude/scripts/ios-sim/sim-lease.sh" release || true
+    # Release under the same holder lease-sim.sh leased as (suffixed when S2_SIM_PROFILE is set).
+    CLAUDE_CODE_SESSION_ID="$(S2_SIM_HOLDER=land ios/scripts/lease-sim.sh --holder)" \
+      "$HOME/.claude/scripts/ios-sim/sim-lease.sh" release || true
     [ "$rc" -eq 0 ] || { echo "verify: ios step failed (rc=$rc)"; exit 1; }
   fi
   exit 0

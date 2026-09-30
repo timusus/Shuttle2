@@ -7,8 +7,9 @@
 #
 # The simulator is $S2_SIMULATOR_UDID if set; else, if the shared lease pool's device.sh exists, this
 # session's leased device (set $S2_SIM_HOLDER to lease as a different holder, e.g. for a parallel
-# worker, or $S2_SIM_PROFILE=ios26 to lease from the iOS 26 pool — see ios/scripts/lease-sim.sh);
-# else a booted iPhone, or the iPhone on the newest iOS runtime. Other arguments go to
+# worker, or $S2_SIM_PROFILE=ios26 to lease from the iOS 26 pool — see ios/scripts/lease-sim.sh;
+# an unknown profile aborts with exit 2 before anything builds); else a booted iPhone, or the
+# iPhone on the newest iOS runtime. Other arguments go to
 # xcodebuild or `swift test` (e.g. `-only-testing:S2Tests/NowPlayingControllerTests`,
 # `--filter MusicPlaybackFormatsTests`).
 set -euo pipefail
@@ -19,14 +20,13 @@ args=()
 for arg in "$@"; do
   case "$arg" in
     --package) package=1 ;;
-    -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) args+=("$arg") ;;
   esac
 done
 
-"$ios_dir/scripts/build-ffmpeg.sh" >/dev/null
-
 if [[ "$package" == 1 ]]; then
+  "$ios_dir/scripts/build-ffmpeg.sh" >/dev/null
   cd "$ios_dir/Playback"
   echo "==> swift test ${args[*]+"${args[*]}"}"
   exec swift test ${args[@]+"${args[@]}"}
@@ -61,7 +61,18 @@ print(f"==> simulator: {name} (iOS {v[0]}.{v[1]}{state})", file=sys.stderr)
 '
 }
 
-udid="${S2_SIMULATOR_UDID:-$("$ios_dir/scripts/lease-sim.sh" || pick_simulator)}"
+lease_rc=0
+udid="${S2_SIMULATOR_UDID:-}"
+if [ -z "$udid" ]; then
+  udid="$("$ios_dir/scripts/lease-sim.sh")" || lease_rc=$?
+  if [ "$lease_rc" -eq 2 ]; then
+    exit 2 # unknown S2_SIM_PROFILE; lease-sim.sh already said why
+  elif [ "$lease_rc" -ne 0 ]; then
+    udid="$(pick_simulator)"
+  fi
+fi
+
+"$ios_dir/scripts/build-ffmpeg.sh" >/dev/null
 cd "$ios_dir"
 echo "==> xcodebuild test -scheme S2 -destination id=$udid ${args[*]+"${args[*]}"}"
 xcodebuild test -project S2.xcodeproj -scheme S2 -destination "id=$udid" \
