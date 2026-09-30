@@ -274,6 +274,20 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         rule.waitForIdle()
     }
 
+    /** The title shares its row with the settings action, rather than sitting under it. */
+    fun titleSharesRowWithSettings(): Boolean {
+        val title = rule.onNodeWithText("Library").fetchSemanticsNode().boundsInRoot
+        val settings = rule.onNodeWithContentDescription("Settings").fetchSemanticsNode().boundsInRoot
+        return title.top < settings.bottom && settings.top < title.bottom
+    }
+
+    /** The section chip is fully inside the chip row, neither clipped at its start nor at its end. */
+    fun sectionChipIsFullyVisible(label: String): Boolean {
+        val row = rule.onNodeWithTag("library-sections").fetchSemanticsNode().boundsInRoot
+        val chip = tab(label).fetchSemanticsNode().boundsInRoot
+        return chip.left >= row.left && chip.right <= row.right
+    }
+
     fun openSort() {
         rule.onNodeWithTag("library-sort").performClick()
         rule.waitForIdle()

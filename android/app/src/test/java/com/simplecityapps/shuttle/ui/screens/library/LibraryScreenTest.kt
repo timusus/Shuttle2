@@ -45,6 +45,23 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun `the title shares a row with the settings action`() {
+        robot.setContent(libraryState(), libraryChrome(count = "12 songs"))
+
+        robot.titleSharesRowWithSettings() shouldBe true
+    }
+
+    @Test
+    fun `the section row leaves the first chip fully visible and scrolls the last one into view`() {
+        robot.setContent(libraryState(currentTab = LibraryTab.Genres), libraryChrome(count = "1 genre"))
+        robot.sectionChipIsFullyVisible("Genres") shouldBe true
+
+        robot.clickTab("Songs")
+
+        robot.sectionChipIsFullyVisible("Songs") shouldBe true
+    }
+
+    @Test
     fun `hidden tabs stay out of the section chips and the order follows the saved order`() {
         robot.setContent(
             libraryState(
@@ -111,7 +128,7 @@ class LibraryScreenTest {
     }
 
     @Test
-    fun `the sort chip names the current sort and opens the tab's sorts`() {
+    fun `the sort button names the current sort and opens the tab's sorts`() {
         var sortedBy: String? = null
         val options = listOf("Song Name", "Year").map { label -> S2Action(label, { sortedBy = label }, selected = label == "Song Name") }
         robot.setContent(libraryState(currentTab = LibraryTab.Songs), libraryChrome(count = "2 songs", sortOptions = options))

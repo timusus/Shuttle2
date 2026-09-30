@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
@@ -33,6 +31,7 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Shuffle
 import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.material.icons.rounded.SwapVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +43,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -53,12 +54,22 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -67,13 +78,13 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
 import com.simplecityapps.shuttle.designsystem.component.S2Action
+import com.simplecityapps.shuttle.designsystem.component.S2Button
+import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2ChoiceChip
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
-import com.simplecityapps.shuttle.designsystem.component.S2IconButtonStyle
-import com.simplecityapps.shuttle.designsystem.component.S2LargeTopBar
 import com.simplecityapps.shuttle.designsystem.component.S2Menu
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
-import com.simplecityapps.shuttle.designsystem.component.S2SortChip
+import com.simplecityapps.shuttle.designsystem.component.S2TopBar
 import com.simplecityapps.shuttle.designsystem.component.StateAction
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
@@ -102,6 +113,7 @@ import com.simplecityapps.shuttle.ui.screens.sources.ServerTypePickerRoute
 import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 /** What the container's chrome shows for the current tab: its selection, and the controls row's count, sort, view and play actions. */
@@ -110,7 +122,7 @@ class LibraryTabChrome(
     val selection: MediaSelection? = null,
     val selectedCount: Int = 0,
     val onClearSelection: () -> Unit = {},
-    /** The tab's sorts, the current one selected; the sort chip names it and opens them as a menu. None for a tab without sorts. */
+    /** The tab's sorts, the current one selected; the sort button names it and opens them as a menu. None for a tab without sorts. */
     val sortOptions: List<S2Action> = emptyList(),
     /** The layout, on a tab that offers a grid and a list; the toggle switches it through [onViewModeChange]. */
     val viewMode: ViewMode? = null,
@@ -121,11 +133,10 @@ class LibraryTabChrome(
 )
 
 /**
- * The Library container (inventory §1, #661): a collapsing large top bar in Home's style, then, pinned while the page
- * scrolls, a row of section chips and the current tab's controls (count, sort, grid/list, Shuffle, Play) over a pager.
+ * The Library container (inventory §1, #661, #669): a one-row top bar, then a pinned row of section chips over a pager;
+ * the current tab's controls (count, sort, grid/list, Shuffle, Play) sit under the chips and scroll away with the page.
  * The selection toolbar replaces the top bar while the current tab has a selection.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     uiState: LibraryUiState,
@@ -141,11 +152,10 @@ fun LibraryScreen(
 ) {
     val tabs = uiState.tabs
     var editingTabs by rememberSaveable { mutableStateOf(false) }
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     BackHandler(enabled = chrome.selectedCount > 0, onBack = chrome.onClearSelection)
 
     Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier,
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
         topBar = {
@@ -175,7 +185,7 @@ fun LibraryScreen(
                         )
                     }
                 } else {
-                    S2LargeTopBar(
+                    S2TopBar(
                         title = stringResource(R.string.title_library),
                         actions = {
                             var menuOpen by remember { mutableStateOf(false) }
@@ -192,7 +202,6 @@ fun LibraryScreen(
                                 groups = listOf(listOf(S2Action(stringResource(R.string.library_edit_tabs), { editingTabs = true }))),
                             )
                         },
-                        scrollBehavior = scrollBehavior,
                     )
                 }
             }
@@ -234,6 +243,8 @@ private fun LibraryPager(
     LaunchedEffect(pagerState, tabs) {
         snapshotFlow { pagerState.settledPage }.collect { index -> tabs.getOrNull(index)?.let(onTabSelected) }
     }
+    val controlsState = remember { ControlsScrollState() }
+    LaunchedEffect(pagerState) { snapshotFlow { pagerState.settledPage }.collect { controlsState.reveal() } }
     Column(modifier.fillMaxSize()) {
         // The target page, so a tap or a swipe marks its chip straight away rather than each page it passes.
         LibrarySectionChips(
@@ -241,30 +252,75 @@ private fun LibraryPager(
             selectedIndex = pagerState.targetPage.coerceIn(0, tabs.lastIndex),
             onSelect = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
         )
-        LibraryControls(chrome)
-        HorizontalPager(state = pagerState, key = { tabs[it] }, modifier = Modifier.fillMaxSize().testTag("library-pager")) { index -> page(tabs[index]) }
+        Column(Modifier.fillMaxSize().nestedScroll(controlsState.connection)) {
+            Box(Modifier.collapsing(controlsState)) { LibraryControls(chrome) }
+            HorizontalPager(state = pagerState, key = { tabs[it] }, modifier = Modifier.fillMaxSize().testTag("library-pager")) { index -> page(tabs[index]) }
+        }
     }
 }
 
-/** The sections as a scrolling row of single-select chips, in the user's order; the selected one scrolls into view. */
+/**
+ * How far the controls row has scrolled off the top: the page's scroll takes it away first, and gives it back once the
+ * page is at its top again, like a top app bar's `exitUntilCollapsed`.
+ */
+private class ControlsScrollState {
+    var offset by mutableFloatStateOf(0f)
+    var height = 0
+
+    fun reveal() {
+        offset = 0f
+    }
+
+    private fun move(delta: Float): Float {
+        val new = (offset + delta).coerceIn(-height.toFloat(), 0f)
+        return (new - offset).also { offset = new }
+    }
+
+    val connection = object : NestedScrollConnection {
+        override fun onPreScroll(available: Offset, source: NestedScrollSource) = if (available.y < 0f) Offset(0f, move(available.y)) else Offset.Zero
+
+        override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource) = if (available.y > 0f) Offset(0f, move(available.y)) else Offset.Zero
+    }
+}
+
+private fun Modifier.collapsing(state: ControlsScrollState) = clipToBounds().layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
+    state.height = placeable.height
+    layout(placeable.width, (placeable.height + state.offset.roundToInt()).coerceAtLeast(0)) { placeable.place(0, state.offset.roundToInt()) }
+}
+
+/**
+ * The sections as a scrolling row of single-select chips, in the user's order. The row scrolls only when the selected
+ * chip is not fully in view, and then by the least that shows it (to the start for the first chips).
+ */
 @Composable
 private fun LibrarySectionChips(
     tabs: List<LibraryTab>,
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
 ) {
-    val requesters = remember(tabs) { tabs.map { BringIntoViewRequester() } }
-    LaunchedEffect(requesters, selectedIndex) {
+    val scrollState = rememberScrollState()
+    val margin = with(LocalDensity.current) { SectionChipsPadding.roundToPx() }
+    val starts = remember(tabs) { IntArray(tabs.size) { -1 } }
+    val ends = remember(tabs) { IntArray(tabs.size) { -1 } }
+    var viewportWidth by remember { mutableIntStateOf(0) }
+    LaunchedEffect(tabs, selectedIndex, viewportWidth) {
         // After a frame, so the chips are laid out when the screen opens on a section past the row's edge.
         withFrameNanos {}
-        requesters.getOrNull(selectedIndex)?.bringIntoView()
+        val start = starts.getOrNull(selectedIndex)?.takeIf { it >= 0 } ?: return@LaunchedEffect
+        val end = ends[selectedIndex]
+        when {
+            start - margin < scrollState.value -> scrollState.animateScrollTo(start - margin)
+            end + margin > scrollState.value + viewportWidth -> scrollState.animateScrollTo(end + margin - viewportWidth)
+        }
     }
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp)
+            .onSizeChanged { viewportWidth = it.width }
+            .horizontalScroll(scrollState)
+            .padding(horizontal = SectionChipsPadding)
             .testTag("library-sections"),
     ) {
         tabs.forEachIndexed { index, tab ->
@@ -272,14 +328,19 @@ private fun LibrarySectionChips(
                 label = tab.label(),
                 selected = index == selectedIndex,
                 onClick = { onSelect(index) },
-                modifier = Modifier.bringIntoViewRequester(requesters[index]),
+                modifier = Modifier.onGloballyPositioned {
+                    starts[index] = it.positionInParent().x.roundToInt()
+                    ends[index] = starts[index] + it.size.width
+                },
             )
         }
     }
 }
 
+private val SectionChipsPadding = 16.dp
+
 /**
- * The current tab's controls: its count and sort chip on the start side; the grid/list toggle, Shuffle and Play on the
+ * The current tab's controls: its count and sort button on the start side; the grid/list toggle, Shuffle and Play on the
  * end side, each only where the tab offers it. Nothing at all for a tab with none of them (Folders).
  */
 @Composable
@@ -300,9 +361,11 @@ private fun LibraryControls(chrome: LibraryTabChrome) {
         if (hasSort) {
             Box {
                 var sorting by remember { mutableStateOf(false) }
-                S2SortChip(
-                    field = chrome.sortOptions.firstOrNull { it.selected == true }?.label ?: stringResource(R.string.library_sort),
+                S2Button(
+                    text = chrome.sortOptions.firstOrNull { it.selected == true }?.label ?: stringResource(R.string.library_sort),
                     onClick = { sorting = true },
+                    style = S2ButtonStyle.Text,
+                    icon = Icons.Rounded.SwapVert,
                     modifier = Modifier.testTag("library-sort"),
                 )
                 S2Menu(expanded = sorting, onDismissRequest = { sorting = false }, groups = listOf(chrome.sortOptions))
@@ -318,7 +381,7 @@ private fun LibraryControls(chrome: LibraryTabChrome) {
             )
         }
         chrome.onShuffle?.let { S2IconButton(icon = Icons.Rounded.Shuffle, contentDescription = stringResource(R.string.menu_title_shuffle), onClick = it) }
-        chrome.onPlay?.let { S2IconButton(icon = Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.menu_title_play), onClick = it, style = S2IconButtonStyle.Filled) }
+        chrome.onPlay?.let { S2IconButton(icon = Icons.Rounded.PlayArrow, contentDescription = stringResource(R.string.menu_title_play), onClick = it) }
     }
 }
 

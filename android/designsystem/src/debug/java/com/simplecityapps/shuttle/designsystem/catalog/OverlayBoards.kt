@@ -48,7 +48,6 @@ import com.simplecityapps.shuttle.designsystem.component.S2MenuContent
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
 import com.simplecityapps.shuttle.designsystem.component.S2SelectionToolbar
 import com.simplecityapps.shuttle.designsystem.component.S2Snackbar
-import com.simplecityapps.shuttle.designsystem.component.S2SortChip
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 
 private val sheetSong = SampleLibrary.album("harbour-weather").songs[1]
@@ -64,12 +63,6 @@ fun ChipBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("Sort: field and order") {
-                Chips {
-                    S2SortChip("Title", ascending = true, onClick = {})
-                    S2SortChip("Date added", ascending = false, onClick = {})
-                }
-            },
             BoardSection("Filters: selected, unselected") {
                 Chips {
                     S2FilterChip("Downloaded", selected = true, onClick = {})
@@ -91,7 +84,6 @@ fun ChipBoard(width: BoardWidth) {
             },
             BoardSection("Disabled") {
                 Chips {
-                    S2SortChip("Title", ascending = true, onClick = {}, enabled = false)
                     S2FilterChip("Downloaded", selected = true, onClick = {}, enabled = false)
                     S2FilterChip("Favourites", selected = false, onClick = {}, enabled = false)
                 }

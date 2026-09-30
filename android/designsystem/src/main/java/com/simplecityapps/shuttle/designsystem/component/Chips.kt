@@ -4,13 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowDownward
-import androidx.compose.material.icons.rounded.ArrowDropDown
-import androidx.compose.material.icons.rounded.ArrowUpward
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -30,37 +25,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
-
-/**
- * The sort control above a list: an `AssistChip` naming the sort [field], with an arrow for the
- * order when the sort has a direction ([ascending] non-null) and a drop-down arrow. [onClick] opens
- * the sort [S2Menu], anchored to the chip's parent.
- */
-@Composable
-fun S2SortChip(
-    field: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    ascending: Boolean? = null,
-    enabled: Boolean = true,
-) {
-    AssistChip(
-        onClick = onClick,
-        label = { Text(field) },
-        modifier = modifier,
-        enabled = enabled,
-        leadingIcon = ascending?.let {
-            {
-                Icon(
-                    if (ascending) Icons.Rounded.ArrowUpward else Icons.Rounded.ArrowDownward,
-                    contentDescription = stringResource(if (ascending) R.string.ds_sort_ascending else R.string.ds_sort_descending),
-                    modifier = Modifier.size(AssistChipDefaults.IconSize),
-                )
-            }
-        },
-        trailingIcon = { Icon(Icons.Rounded.ArrowDropDown, contentDescription = null, modifier = Modifier.size(AssistChipDefaults.IconSize)) },
-    )
-}
 
 /** A toggleable list filter ("Downloaded", "Favourites"): a `FilterChip` that shows a check while [selected]. */
 @Composable
@@ -150,7 +114,6 @@ fun S2InfoChip(
 private fun ChipsPreview() {
     S2Preview {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            S2SortChip("Title", ascending = true, onClick = {})
             S2FilterChip("Downloaded", selected = true, onClick = {})
             S2InputChip("Jellyfin", onRemove = {})
             S2InfoChip("FLAC")
