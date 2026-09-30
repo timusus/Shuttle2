@@ -104,7 +104,8 @@ class SettingsScreenTest {
         robot.tapText("Accent")
         robot.tapDialogText("Orange")
 
-        robot.choiceSelections shouldBe listOf(AppearanceSettings.AccentColour.key to 1)
+        // The third option, after Neutral and Shuttle blue
+        robot.choiceSelections shouldBe listOf(AppearanceSettings.AccentColour.key to 2)
     }
 
     @Test

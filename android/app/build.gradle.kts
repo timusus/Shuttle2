@@ -300,6 +300,13 @@ kotlin {
     }
 }
 
+// Third-party assets no dependency declares, such as the Google Sans Flex font, listed on the licences screen
+aboutLibraries {
+    collect {
+        configPath.set(file("aboutlibraries"))
+    }
+}
+
 // Uploads the R8 mapping so release stack traces read, but only when CI provides the auth token
 sentry {
     val token = System.getenv("SENTRY_AUTH_TOKEN")

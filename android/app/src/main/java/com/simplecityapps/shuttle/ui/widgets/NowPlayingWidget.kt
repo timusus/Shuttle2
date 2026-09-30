@@ -88,11 +88,11 @@ class NowPlayingWidget : GlanceAppWidget() {
     }
 }
 
-/** The widget palette where dynamic colour isn't available: the app's Shuttle blue scheme. */
+/** The widget palette where dynamic colour isn't available: the app's default, neutral scheme. */
 private val fallbackColors =
     ColorProviders(
-        light = accentColorScheme(S2Accent.Default, isDark = false),
-        dark = accentColorScheme(S2Accent.Default, isDark = true)
+        light = accentColorScheme(S2Accent.Neutral, isDark = false),
+        dark = accentColorScheme(S2Accent.Neutral, isDark = true)
     )
 
 /** Visible to tests, which render it directly with a fixed [state] and [layout] instead of the live widget state. */

@@ -84,6 +84,10 @@
   ],
   "improvements": [
     {
+      "text": "A new typeface and calmer default colours; album art now sets the colour",
+      "commits": []
+    },
+    {
       "text": "Smoother, more consistent shapes across the app: softer corners on artwork, buttons and cards, and a simpler play button",
       "commits": []
     },

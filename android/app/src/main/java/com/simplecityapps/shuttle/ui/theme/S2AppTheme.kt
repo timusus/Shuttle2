@@ -97,8 +97,9 @@ fun S2AppTheme(
     }
 }
 
-private fun Accent.toS2Accent(): S2Accent = when (this) {
-    Accent.Default -> S2Accent.Default
+internal fun Accent.toS2Accent(): S2Accent = when (this) {
+    Accent.Default -> S2Accent.Neutral
+    Accent.Blue -> S2Accent.Blue
     Accent.Orange -> S2Accent.Orange
     Accent.Cyan -> S2Accent.Cyan
     Accent.Purple -> S2Accent.Purple

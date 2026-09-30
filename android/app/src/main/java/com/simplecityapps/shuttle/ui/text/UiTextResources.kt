@@ -85,6 +85,7 @@ val StringKey.resId: Int
         StringKey.PREF_DYNAMIC_COLOUR_TITLE -> R.string.pref_dynamic_colour_title
         StringKey.PREF_DYNAMIC_COLOUR_SUMMARY -> R.string.pref_dynamic_colour_summary
         StringKey.PREF_THEME_ACCENT_TITLE -> R.string.pref_theme_accent_title
+        StringKey.THEME_ACCENT_ENTRY_NEUTRAL -> R.string.theme_accent_entry_neutral
         StringKey.THEME_ACCENT_ENTRY_BLUE -> R.string.theme_accent_entry_blue
         StringKey.THEME_ACCENT_ENTRY_ORANGE -> R.string.theme_accent_entry_orange
         StringKey.THEME_ACCENT_ENTRY_CYAN -> R.string.theme_accent_entry_cyan

@@ -6,6 +6,7 @@ import com.materialkolor.ktx.contrastRatio
 import com.materialkolor.ktx.toHct
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.doubles.shouldBeGreaterThan
+import io.kotest.matchers.doubles.shouldBeLessThan
 import io.kotest.matchers.floats.shouldBeGreaterThan
 import io.kotest.matchers.floats.shouldBeLessThan
 import io.kotest.matchers.nulls.shouldBeNull
@@ -45,27 +46,40 @@ class ColorSchemesTest {
     }
 
     @Test
-    fun `the default accent is not the stock M3 purple`() {
-        accentColorScheme(S2Accent.Default, isDark = false).primary shouldNotBe Color(0xFF6750A4)
+    fun `the unset accent is neutral chrome, not the stock M3 purple`() {
+        for (isDark in listOf(false, true)) {
+            for (contrast in S2Contrast.entries) {
+                val scheme = accentColorScheme(S2Accent.Neutral, isDark, contrast)
+                scheme.primary shouldNotBe Color(0xFF6750A4)
+                // A colour accent's primary is chroma 45 and up; the neutral one stays a soft slate
+                scheme.primary.toHct().chroma shouldBeLessThan 16.0
+                scheme.primaryContainer.toHct().chroma shouldBeLessThan 16.0
+                scheme.secondaryContainer.toHct().chroma shouldBeLessThan 12.0
+                scheme.surfaceContainerHigh.toHct().chroma shouldBeLessThan 6.0
+            }
+        }
     }
 
     @Test
-    fun `the default accent is a lively blue, not a muted steel blue`() {
+    fun `shuttle blue is a lively blue, not a muted steel blue`() {
         // Tonal spot, the old accent style, holds primary to chroma 32 whatever the seed (#496)
-        accentColorScheme(S2Accent.Default, isDark = false).primary.toHct().chroma shouldBeGreaterThan 45.0
-        accentColorScheme(S2Accent.Default, isDark = true).primary.toHct().chroma shouldBeGreaterThan 32.0
-        accentColorScheme(S2Accent.Default, isDark = false).primaryContainer.toHct().chroma shouldBeGreaterThan 55.0
+        accentColorScheme(S2Accent.Blue, isDark = false).primary.toHct().chroma shouldBeGreaterThan 45.0
+        accentColorScheme(S2Accent.Blue, isDark = true).primary.toHct().chroma shouldBeGreaterThan 32.0
+        accentColorScheme(S2Accent.Blue, isDark = false).primaryContainer.toHct().chroma shouldBeGreaterThan 55.0
     }
 
     @Test
-    fun `every accent keeps accessible text contrast on its accent roles`() {
+    fun `every accent keeps accessible text contrast on its accent roles at every contrast level`() {
         for (accent in S2Accent.entries) {
             for (isDark in listOf(false, true)) {
-                val scheme = accentColorScheme(accent, isDark)
-                scheme.onPrimary.contrastRatio(scheme.primary) shouldBeGreaterThan 4.5
-                scheme.onPrimaryContainer.contrastRatio(scheme.primaryContainer) shouldBeGreaterThan 4.5
-                scheme.onSecondaryContainer.contrastRatio(scheme.secondaryContainer) shouldBeGreaterThan 4.5
-                scheme.primary.contrastRatio(scheme.surface) shouldBeGreaterThan 4.5
+                for (contrast in S2Contrast.entries) {
+                    val scheme = accentColorScheme(accent, isDark, contrast)
+                    scheme.onPrimary.contrastRatio(scheme.primary) shouldBeGreaterThan 4.5
+                    scheme.onPrimaryContainer.contrastRatio(scheme.primaryContainer) shouldBeGreaterThan 4.5
+                    scheme.onSecondaryContainer.contrastRatio(scheme.secondaryContainer) shouldBeGreaterThan 4.5
+                    scheme.primary.contrastRatio(scheme.surface) shouldBeGreaterThan 4.5
+                    scheme.onSurfaceVariant.contrastRatio(scheme.surface) shouldBeGreaterThan 4.5
+                }
             }
         }
     }

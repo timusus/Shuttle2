@@ -8,7 +8,6 @@ import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.Shapes
-import androidx.compose.material3.Typography
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
@@ -30,14 +29,11 @@ data class S2ThemeSettings(
 )
 
 val LocalS2ThemeSettings = staticCompositionLocalOf {
-    S2ThemeSettings(isDark = false, accent = S2Accent.Default, contrast = S2Contrast.Default)
+    S2ThemeSettings(isDark = false, accent = S2Accent.Neutral, contrast = S2Contrast.Default)
 }
 
 /** The root scheme [S2Theme] is heading to, before animation: the brand fallback for nested themes. */
 internal val LocalRootColorScheme = staticCompositionLocalOf<ColorScheme?> { null }
-
-/** The default M3 type scale, which carries the emphasized styles (`displayLargeEmphasized` etc.). */
-val S2Typography = Typography()
 
 /**
  * S2's shape scale: every token a [ContinuousRoundedCornerShape], on radii a step softer than
@@ -58,14 +54,14 @@ val S2Shapes = Shapes(
 
 /**
  * The app's root theme: the user's accent (or Material You dynamic colour on Android 12+) as a
- * 2025-spec scheme, expressive motion, and the M3 type and shape scales. Accent, dark and contrast
+ * 2025-spec scheme, expressive motion, [S2Typography] and [S2Shapes]. Accent, dark and contrast
  * changes crossfade per role.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun S2Theme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    accent: S2Accent = S2Accent.Default,
+    accent: S2Accent = S2Accent.Neutral,
     contrast: S2Contrast = rememberSystemContrast(),
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,

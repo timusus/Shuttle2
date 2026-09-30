@@ -55,7 +55,8 @@ object AndroidSettingsCatalog : SettingsCatalog {
                         setting = AppearanceSettings.AccentColour,
                         title = StringKey.PREF_THEME_ACCENT_TITLE,
                         options = listOf(
-                            ChoiceOption(Accent.Default, StringKey.THEME_ACCENT_ENTRY_BLUE),
+                            ChoiceOption(Accent.Default, StringKey.THEME_ACCENT_ENTRY_NEUTRAL),
+                            ChoiceOption(Accent.Blue, StringKey.THEME_ACCENT_ENTRY_BLUE),
                             ChoiceOption(Accent.Orange, StringKey.THEME_ACCENT_ENTRY_ORANGE),
                             ChoiceOption(Accent.Cyan, StringKey.THEME_ACCENT_ENTRY_CYAN),
                             ChoiceOption(Accent.Purple, StringKey.THEME_ACCENT_ENTRY_PURPLE),

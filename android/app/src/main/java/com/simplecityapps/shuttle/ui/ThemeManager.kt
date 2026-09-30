@@ -21,7 +21,7 @@ class ThemeManager(
             when (theme) {
                 ThemeMode.DayNight -> {
                     when (accent) {
-                        Accent.Default -> if (extraDark) R.style.AppTheme_DayNight_ExtraDark else R.style.AppTheme_DayNight
+                        Accent.Default, Accent.Blue -> if (extraDark) R.style.AppTheme_DayNight_ExtraDark else R.style.AppTheme_DayNight
                         Accent.Orange -> if (extraDark) R.style.AppTheme_DayNight_ExtraDark_Orange else R.style.AppTheme_DayNight_Orange
                         Accent.Cyan -> if (extraDark) R.style.AppTheme_DayNight_ExtraDark_Cyan else R.style.AppTheme_DayNight_Cyan
                         Accent.Purple -> if (extraDark) R.style.AppTheme_DayNight_ExtraDark_Purple else R.style.AppTheme_DayNight_Purple
@@ -32,7 +32,7 @@ class ThemeManager(
 
                 ThemeMode.Light -> {
                     when (accent) {
-                        Accent.Default -> R.style.AppTheme_Light
+                        Accent.Default, Accent.Blue -> R.style.AppTheme_Light
                         Accent.Orange -> R.style.AppTheme_Light_Orange
                         Accent.Cyan -> R.style.AppTheme_Light_Cyan
                         Accent.Purple -> R.style.AppTheme_Light_Purple
@@ -43,7 +43,7 @@ class ThemeManager(
 
                 ThemeMode.Dark -> {
                     when (accent) {
-                        Accent.Default -> if (extraDark) R.style.AppTheme_Dark_ExtraDark else R.style.AppTheme_Dark
+                        Accent.Default, Accent.Blue -> if (extraDark) R.style.AppTheme_Dark_ExtraDark else R.style.AppTheme_Dark
                         Accent.Orange -> if (extraDark) R.style.AppTheme_Dark_ExtraDark_Orange else R.style.AppTheme_Dark_Orange
                         Accent.Cyan -> if (extraDark) R.style.AppTheme_Dark_ExtraDark_Cyan else R.style.AppTheme_Dark_Cyan
                         Accent.Purple -> if (extraDark) R.style.AppTheme_Dark_ExtraDark_Purple else R.style.AppTheme_Dark_Purple

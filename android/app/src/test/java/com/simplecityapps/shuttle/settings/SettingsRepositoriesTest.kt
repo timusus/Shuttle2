@@ -8,8 +8,10 @@ import com.simplecityapps.mediaprovider.settings.LibrarySettings
 import com.simplecityapps.mediaprovider.worker.ImportFrequency
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.settings.PlaybackSettings
+import com.simplecityapps.shuttle.designsystem.theme.S2Accent
 import com.simplecityapps.shuttle.downloads.DownloadSettings
 import com.simplecityapps.shuttle.persistence.SharedPreferencesKeyValueStore
+import com.simplecityapps.shuttle.ui.theme.toS2Accent
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
@@ -143,6 +145,20 @@ class SettingsRepositoriesTest {
         AppearanceSettings(store).theme.value shouldBe ThemeMode.DayNight
         AppearanceSettings(store).accent.value shouldBe Accent.Default
         ArtworkSettings(store).wifiOnly.value shouldBe true
+    }
+
+    @Test
+    fun `a stored legacy default accent resolves to neutral chrome, and a picked accent keeps its colour`() {
+        // The legacy settings screen persisted 0 (then Shuttle blue) for anyone who opened it (#660)
+        prefs.edit(commit = true) { putString("pref_theme_accent", "0") }
+        AppearanceSettings(store).accent.value.toS2Accent() shouldBe S2Accent.Neutral
+
+        prefs.edit(commit = true) { putString("pref_theme_accent", "1") }
+        AppearanceSettings(store).accent.value.toS2Accent() shouldBe S2Accent.Orange
+
+        AppearanceSettings(store).accent.value = Accent.Blue
+        prefs.getString("pref_theme_accent", null) shouldBe "6"
+        AppearanceSettings(store).accent.value.toS2Accent() shouldBe S2Accent.Blue
     }
 
     @Test

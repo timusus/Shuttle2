@@ -54,6 +54,7 @@
 "pref_dynamic_colour_title" = "Dynamic colour";
 "pref_dynamic_colour_summary" = "Use colours from your wallpaper";
 "pref_theme_accent_title" = "Accent";
+"theme_accent_entry_neutral" = "Neutral";
 "theme_accent_entry_blue" = "Shuttle blue";
 "theme_accent_entry_orange" = "Orange";
 "theme_accent_entry_cyan" = "Cyan";

@@ -1,0 +1,16 @@
+{
+  "uniqueId": "com.google.fonts:google-sans-flex",
+  "artifactVersion": "4.005",
+  "name": "Google Sans Flex",
+  "description": "The app's typeface, cut down to its weight and optical size axes (android/designsystem/src/main/res/font).",
+  "website": "https://fonts.google.com/specimen/Google+Sans+Flex",
+  "developers": [
+    {
+      "name": "The Google Sans Flex Project Authors",
+      "organisationUrl": "https://github.com/googlefonts/googlesans-flex"
+    }
+  ],
+  "licenses": [
+    "OFL-1.1"
+  ]
+}

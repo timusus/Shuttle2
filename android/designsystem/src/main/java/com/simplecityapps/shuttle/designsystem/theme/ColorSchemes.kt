@@ -52,15 +52,16 @@ fun seedColorScheme(
 )
 
 /**
- * The root scheme for a user-picked [accent]. Fidelity keeps the seed's own chroma in the accent roles
- * (tonal spot holds primary to chroma 32 whatever the seed, which read muted, #496) and puts the seed
- * itself in `primaryContainer`, while the neutral surfaces stay near grey.
+ * The root scheme for [accent], in the accent's own style. A colour accent uses Fidelity, which keeps the seed's own
+ * chroma in the accent roles (tonal spot holds primary to chroma 32 whatever the seed, which read muted, #496) and
+ * puts the seed itself in `primaryContainer`, while the neutral surfaces stay near grey. [S2Accent.Neutral] keeps
+ * every role near grey.
  */
 fun accentColorScheme(
     accent: S2Accent,
     isDark: Boolean,
     contrast: S2Contrast = S2Contrast.Default,
-): ColorScheme = seedColorScheme(accent.seed, isDark, PaletteStyle.Fidelity, contrast)
+): ColorScheme = seedColorScheme(accent.seed, isDark, accent.style, contrast)
 
 /**
  * The scheme for an artwork [seed], or null when the seed is too grey to use and the caller

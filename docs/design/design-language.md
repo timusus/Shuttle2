@@ -49,10 +49,15 @@ screens never see it.
 - **Roles, never raw colours.** Every surface and text colour is a `ColorScheme` role. The pairing
   rule from the Compose M3 guide holds: `onX` on `X`, `onXContainer` on `XContainer`.
 - **Root scheme = the user's choice.** S2's existing base theme (day/night, light, dark) and accent
-  (Default, Orange, Cyan, Purple, Green, Amber) or Material You dynamic colour on Android 12+.
+  (Neutral, Shuttle blue, Orange, Cyan, Purple, Green, Amber) or Material You dynamic colour on Android 12+.
   Accent schemes are regenerated through MaterialKolor from each accent's seed with
-  `SpecVersion.SPEC_2025` and `PaletteStyle.TonalSpot`, so brand and artwork schemes have the same
-  role structure. A hand-tuned override is allowed per accent where generation distorts the brand
+  `SpecVersion.SPEC_2025`, `PaletteStyle.Fidelity` for a colour accent, so brand and artwork schemes have the same
+  role structure.
+- **Neutral by default (#660).** A user who never picked an accent gets `S2Accent.Neutral`: the Shuttle blue seed in
+  `PaletteStyle.Neutral`, so primary and its containers stay a soft slate (HCT chroma about 12) and surfaces near grey
+  (chroma under 3), readable at every contrast level. The chrome stays quiet and the album art on the player and
+  detail screens supplies the colour. The stored accent is an ordinal: 0, once Shuttle blue, now means Neutral,
+  because the legacy settings screen persisted 0 for anyone who opened it; Shuttle blue is 6. A hand-tuned override is allowed per accent where generation distorts the brand
   hue (Podcasts found the coral pushed to brick red at tone 40); the catalogue shows both.
 - **Artwork-seeded schemes are nested, not global** (app-shell §5): the player surface and artwork
   detail screens only. Seed = the MaterialKolor-scored swatches of a small bitmap (quantise, then
@@ -108,14 +113,25 @@ screens never see it.
 
 ### Typography
 
-- The M3 type scale plus its 15 **emphasized** styles, from `Typography` in 1.4.0. The default
-  typeface stays until the type board is approved; a brand face is a separate decision.
+- **Typeface: Google Sans Flex** (#660), from Google Fonts under the SIL Open Font License 1.1 (no Reserved Font
+  Name), bundled as one variable file, `designsystem/src/main/res/font/google_sans_flex.ttf`: the upstream file
+  instanced with fontTools to its weight (300 to 800) and optical size (16 to 36) axes, width, grade, roundness and
+  slant pinned at their defaults (4.1 MB to 400 KB, about 175 KB compressed). It covers Latin; other scripts fall
+  back to the system font. The licence is listed on the in-app licences screen
+  (`android/app/aboutlibraries/`). Below Android 8 the variations are ignored and every weight renders regular.
+- **Type scale** (`S2Typography.kt`): the M3 sizes and line heights, with more contrast. Display and headline sizes
+  (screen titles) use the display cut (optical size 36), weight 500 and 600, tracked 1 to 2 percent tighter; titles
+  are weight 500; body keeps 400 and labels 500 with open tracking, no size below M3's. Each of the 15
+  **emphasized** styles is its base style a step or two heavier (700, or 500 for body).
 - **One emphasized element per region**: the now-playing title (`headlineMediumEmphasized` at every size, over a `titleLarge` artist line,
   so a tall phone fills with type rather than gaps), detail screen titles, the flexible top bar title. Body
   text, rows and metadata are never emphasized.
 - **Row hierarchy**: title `bodyLarge` on `onSurface`; secondary line `bodyMedium` on
   `onSurfaceVariant`; trailing meta (duration, count) `labelMedium` on `onSurfaceVariant`. Section
   headers `titleSmall` on `primary`.
+- **Home hierarchy** (#660): the large title bar, as on Library and Settings; the lead section's header
+  `headlineSmall`, every shelf after it `titleLarge`; a Jump back in cell's title one line of `titleSmall`, its kind
+  `labelMedium`.
 
 ### Emphasis and containment
 
@@ -172,7 +188,7 @@ catalogue — #553).
 
 | ID | M3 basis | Variants | States |
 |---|---|---|---|
-| `theme-colour` | `ColorScheme` roles | root accents ×6, dynamic, 1 artwork seed | Default and High contrast; every role swatch with its `on` pair |
+| `theme-colour` | `ColorScheme` roles | root accents ×7, dynamic, 1 artwork seed | Default and High contrast; every role swatch with its `on` pair |
 | `theme-type` | `Typography` + emphasized | — | all 30 styles with sample text, at font scale 1.0 and 2.0 |
 | `theme-shape` | `Shapes`, `ContinuousRoundedCornerShape` | scale tokens; continuous against circular corners | static |
 | `theme-motion` | `MotionScheme` | 6 specs | curve plots; live in the catalogue screen only |
