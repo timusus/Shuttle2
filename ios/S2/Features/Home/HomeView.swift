@@ -252,10 +252,11 @@ private struct ColdStartCard: View {
             .buttonStyle(.borderedProminent)
             .buttonBorderShape(.capsule)
             .controlSize(.large)
+            .foregroundStyle(.s2OnAccent)
             .accessibilityIdentifier("home.shuffleAll")
             Label("Home learns from what you play: your albums, artists and genres show up here as you listen.", systemImage: "sparkles")
-                .font(.footnote)
-                .foregroundStyle(.s2SecondaryText)
+                .font(.s2Caption)
+                .foregroundStyle(.s2TextSecondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .accessibilityIdentifier("home.coldStartHint")
         }
@@ -293,7 +294,7 @@ struct AlbumTileLabel: View {
             RemoteArtwork(.album(album), points: size) {
                 ArtworkPlaceholder(symbol: "square.stack")
             }
-            .artworkTile(size, cornerRadius: ArtworkCorner.tile)
+            .artworkTile(size, shape: .artworkTile)
             .padding(.bottom, Spacing.xsmall)
             Text(album.name ?? "Unknown")
                 .font(.subheadline.weight(.medium))
@@ -302,7 +303,7 @@ struct AlbumTileLabel: View {
             if let subtitle {
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundStyle(.s2SecondaryText)
+                    .foregroundStyle(.s2TextSecondary)
                     .lineLimit(1)
             }
         }

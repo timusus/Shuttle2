@@ -89,14 +89,7 @@ struct ArtworkTintTests {
         let values = ArtworkTintValues(extracted: nil, isDarkScheme: true)
         #expect(!values.isTinted)
         #expect(values.safeRGB == nil)
-        #expect(values.tint == .accentColor)
-    }
-
-    @Test func theAccentInkIsWhiteInLightModeAndDarkInDarkMode() {
-        let light = ContrastSafeTint.rgb(from: TintedChromeInk.onAccent, isDarkScheme: false)
-        let dark = ContrastSafeTint.rgb(from: TintedChromeInk.onAccent, isDarkScheme: true)
-        #expect(Self.hex(light) == 0xFF_FF_FF)
-        #expect(Self.hex(dark) == Self.hex(ContrastSafeTint.darkLabel))
+        #expect(values.tint == .s2Accent)
     }
 
     // MARK: Extractor cache

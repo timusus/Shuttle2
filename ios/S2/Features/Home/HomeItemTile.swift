@@ -137,7 +137,8 @@ extension View {
 struct HomeItemArtwork: View {
     let item: HomeItem
     let size: CGFloat
-    let cornerRadius: CGFloat
+    /// The shape for everything but an artist, who is always `S2Shape.artist`.
+    let shape: S2Shape
 
     @Environment(\.homeCovers) private var covers
 
@@ -145,18 +146,18 @@ struct HomeItemArtwork: View {
         switch onEnum(of: item) {
         case .albumItem(let it):
             RemoteArtwork(.album(it.album), points: size) { ArtworkPlaceholder(symbol: "square.stack") }
-                .artworkTile(size, cornerRadius: cornerRadius)
+                .artworkTile(size, shape: shape)
         case .artistItem(let it):
             RemoteArtwork(.albumArtist(it.albumArtist), points: size) { ArtworkPlaceholder(symbol: "music.mic") }
-                .artworkTile(size, cornerRadius: cornerRadius)
+                .artworkTile(size, shape: .artist)
         case .playlistItem(let it):
-            CoverMosaic.playlist(it.playlist.name, covers: covers[item.key] ?? [], cornerRadius: cornerRadius)
+            CoverMosaic.playlist(it.playlist.name, covers: covers[item.key] ?? [], shape: shape)
                 .frame(width: size, height: size)
         case .smartPlaylistItem(let it):
             GeneratedArtwork(seed: it.smartPlaylistId.id, symbol: it.smartPlaylistId.symbol)
-                .artworkTile(size, cornerRadius: cornerRadius)
+                .artworkTile(size, shape: shape)
         case .genreItem(let it):
-            CoverMosaic.genre(it.genre.name, covers: covers[item.key] ?? [], cornerRadius: cornerRadius)
+            CoverMosaic.genre(it.genre.name, covers: covers[item.key] ?? [], shape: shape)
                 .frame(width: size, height: size)
         }
     }
@@ -167,8 +168,8 @@ extension EnvironmentValues {
     @Entry var homeCovers: [String: [Song]] = [:]
 }
 
-/// A shelf tile: the item's artwork at `ArtworkSize.shelf(tier)` with the tile corner, its title and a subtitle.
-/// Albums and artists alike, the owner's call (no round artist pictures).
+/// A shelf tile: the item's artwork at `ArtworkSize.shelf(tier)` with the tile corner (an artist's a circle), its
+/// title and a subtitle.
 struct HomeShelfTileLabel: View {
     let item: HomeItem
     let mixed: Bool
@@ -178,7 +179,7 @@ struct HomeShelfTileLabel: View {
     var body: some View {
         let size = ArtworkSize.shelf(layoutTier)
         VStack(alignment: .leading, spacing: Spacing.xsmall) {
-            HomeItemArtwork(item: item, size: size, cornerRadius: ArtworkCorner.tile)
+            HomeItemArtwork(item: item, size: size, shape: .artworkTile)
                 .padding(.bottom, Spacing.xsmall)
             Text(item.title)
                 .font(.subheadline.weight(.medium))
@@ -186,7 +187,7 @@ struct HomeShelfTileLabel: View {
                 .lineLimit(1)
             Text(item.subtitle(mixed: mixed))
                 .font(.caption)
-                .foregroundStyle(.s2SecondaryText)
+                .foregroundStyle(.s2TextSecondary)
                 .lineLimit(1)
         }
         .frame(width: size, alignment: .leading)

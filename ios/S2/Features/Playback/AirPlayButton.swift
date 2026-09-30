@@ -5,7 +5,7 @@ import SwiftUI
 /// the system's output picker (AirPlay speakers, Bluetooth, the phone), and the glyph takes `activeTint` while a
 /// route other than the device is active. After Shuttle Podcasts' `AirPlayButton`.
 struct AirPlayButton: UIViewRepresentable {
-    var activeTint: Color = .accentColor
+    var activeTint: Color = .s2Accent
     var inactiveTint: Color = .secondary
 
     func makeUIView(context: Context) -> AVRoutePickerView {

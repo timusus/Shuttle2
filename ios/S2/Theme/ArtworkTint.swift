@@ -14,8 +14,8 @@ import UIKit
 /// - `artworkTintSource`: the raw extracted colour, nil for the accent fallback. Never draw it; a surface that
 ///   isn't the scheme's ground derives its own colours from it (Now Playing's `PlayerPalette`).
 extension EnvironmentValues {
-    @Entry var artworkTint: Color = .accentColor
-    @Entry var artworkTintInk: Color = TintedChromeInk.onAccent
+    @Entry var artworkTint: Color = .s2Accent
+    @Entry var artworkTintInk: Color = .s2OnAccent
     @Entry var isArtworkTinted: Bool = false
     @Entry var artworkTintSource: ContrastSafeTint.RGB? = nil
 }
@@ -73,8 +73,8 @@ struct ArtworkTintValues {
 
     init(extracted: ContrastSafeTint.RGB?, isDarkScheme: Bool) {
         guard let extracted else {
-            tint = .accentColor
-            ink = TintedChromeInk.onAccent
+            tint = .s2Accent
+            ink = .s2OnAccent
             isTinted = false
             safeRGB = nil
             return
@@ -85,18 +85,4 @@ struct ArtworkTintValues {
         isTinted = true
         safeRGB = safe
     }
-}
-
-// MARK: - Tinted chrome ink
-
-/// Ink for tinted chrome.
-enum TintedChromeInk {
-    /// The label on an accent fill, per scheme: white on the light-scheme `#006AD1`, near-black on the
-    /// dark-scheme `#3D9DFF` (white there is 2.9:1).
-    static let onAccent = Color(uiColor: UIColor { traits in
-        let accent = UIColor(named: "AccentColor") ?? .systemBlue
-        let rgb = ContrastSafeTint.rgb(from: accent, isDarkScheme: traits.userInterfaceStyle == .dark)
-        let label = ContrastSafeTint.labelColor(onFill: rgb)
-        return UIColor(red: label.red, green: label.green, blue: label.blue, alpha: 1)
-    })
 }

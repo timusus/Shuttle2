@@ -8,12 +8,15 @@ struct S2App: App {
 
     init() {
         AppGraph.initialize()
+        NavigationBarType.apply()
+        AccentTint.apply()
         startTab = AppTab(AppGraph.shared.shellViewModel.uiState.value.startTab)
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView(startTab: startTab)
+                .tint(.s2Accent)
                 .task { LibraryImport.atLaunch() }
         }
     }

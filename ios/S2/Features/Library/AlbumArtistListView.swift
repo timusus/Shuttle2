@@ -84,7 +84,7 @@ struct AlbumArtistListContent: View {
     private var content: some View {
         switch state.loadingState {
         case .loading:
-            if state.viewMode == .grid { LibraryGridSkeleton() } else { LibraryListSkeleton() }
+            if state.viewMode == .grid { LibraryGridSkeleton(artworkShape: .artist) } else { LibraryListSkeleton(artworkShape: .artist) }
         case .scanning where state.albumArtists.isEmpty:
             LibraryScanningView(progress: state.scanProgress)
         case .empty:
