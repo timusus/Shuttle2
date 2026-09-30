@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
 import com.simplecityapps.createAlbum
+import com.simplecityapps.createGenre
+import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlayHistoryRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
@@ -33,6 +35,7 @@ import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -56,6 +59,7 @@ class HomeViewModelTest {
     private val suggestions = FakeSuggestionsRepository()
     private val playHistory = FakePlayHistoryRepository()
     private val importState = FakeSongImportStateProvider()
+    private val genres = FakeGenreRepository()
     private val appVersion = AppVersion { VERSION_NAME }
 
     private val start = Instant.parse("2026-09-23T08:30:00Z")
@@ -106,7 +110,7 @@ class HomeViewModelTest {
             MarkChangelogViewed(preferenceManager, appVersion),
             ReadSetting(settingsStore),
             SaveSetting(settingsStore),
-            LoadHomeCovers(FakePlaylistRepository(), FakeGenreRepository()),
+            LoadHomeCovers(FakePlaylistRepository(), genres),
         ).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
             viewModel.onVisibilityChanged(visible)
@@ -186,11 +190,36 @@ class HomeViewModelTest {
     @Test
     fun `pull to refresh reloads the sections`() = runTest(testDispatcher) {
         val viewModel = playedLibrary()
+        val refreshing = mutableListOf<Boolean>()
+        backgroundScope.launch { viewModel.uiState.collect { (it as? HomeUiState.Content)?.let { content -> refreshing += content.refreshing } } }
+        runCurrent()
 
         viewModel.refresh()
         runCurrent()
 
         viewModel.sectionIds shouldBe listOf(HomeSectionId.JumpBackIn)
+        // Refreshing from the pull until the reload is back
+        refreshing shouldBe listOf(false, true, false)
+    }
+
+    @Test
+    fun `a reload keeps the covers already loaded for the items still shown`() = runTest(testDispatcher) {
+        // A cold start library whose genre picks are its largest genres, each with a cover
+        suggestions.songCount.value = 2
+        suggestions.genres = (1..GENRE_PICKS_MIN).map { createGenre("genre $it", songCount = GenrePicks.MIN_SONGS) }
+        suggestions.genres.forEach { genres.setSongsForGenre(it.name, listOf(createSong(album = it.name))) }
+        genres.coverDelay = 100.milliseconds
+        val viewModel = viewModel()
+        advanceTimeBy(1.seconds)
+        runCurrent()
+        val covers = viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>().covers
+        covers.keys shouldBe suggestions.genres.map { HomeItem.GenreItem(it).key }.toSet()
+
+        viewModel.refresh()
+        runCurrent()
+
+        // Reloaded, with the covers still loading: the mosaics keep what they had
+        viewModel.uiState.value.shouldBeInstanceOf<HomeUiState.Content>().covers shouldBe covers
     }
 
     @Test

@@ -5,8 +5,11 @@ import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import kotlin.time.Duration
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 
 class FakeGenreRepository : GenreRepository {
     private val genres = MutableStateFlow<List<Genre>>(emptyList())
@@ -30,9 +33,16 @@ class FakeGenreRepository : GenreRepository {
     /** The requested limits, in order, so a test can check a caller asks for no more than it shows. */
     val coverLimits = mutableListOf<Int>()
 
+    /** How long a cover query takes to answer, so a test can see what shows while covers load. */
+    var coverDelay: Duration = Duration.ZERO
+
     /** One song per distinct album of the genre's songs, up to [limit], as the real query does. */
     override fun getGenreCoverSongs(genre: String, limit: Int): Flow<List<Song>> {
         coverLimits += limit
-        return MutableStateFlow(songsForGenre[genre].orEmpty().filterNot { it.blacklisted }.distinctBy { it.albumGroupKey }.take(limit))
+        val covers = songsForGenre[genre].orEmpty().filterNot { it.blacklisted }.distinctBy { it.albumGroupKey }.take(limit)
+        return flow {
+            delay(coverDelay)
+            emit(covers)
+        }
     }
 }
