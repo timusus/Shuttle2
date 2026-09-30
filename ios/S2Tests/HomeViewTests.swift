@@ -26,8 +26,8 @@ struct HomeViewTests {
 
     private func genre(_ name: String) -> Genre { Genre(name: name, songCount: 40, duration: 0, mediaProviders: [.jellyfin]) }
 
-    private func section(_ id: HomeSectionId, _ title: HomeSectionTitle, _ items: [HomeItem]) -> HomeSection {
-        HomeSection(id: id, title: title, items: items)
+    private func section(_ id: HomeSectionId, _ title: HomeSectionTitle, _ items: [HomeItem], subtitle: StringKey? = nil) -> HomeSection {
+        HomeSection(id: id, title: title, subtitle: subtitle, items: items)
     }
 
     private func content(_ sections: [HomeSection] = []) -> HomeUiState {
@@ -115,7 +115,7 @@ struct HomeViewTests {
     @Test func shelvesListTheirItemsUnderTheirTitles() throws {
         let sut = HomeContent(state: content([
             section(.aroundThisTime, .tonight, [HomeItemAlbumItem(album: album("Amnesiac"))]),
-            section(.onRepeat, .onRepeat, [HomeItemArtistItem(albumArtist: artist("Massive Attack"))]),
+            section(.heavyRotation, .heavyRotation, [HomeItemArtistItem(albumArtist: artist("Massive Attack"))]),
             section(.genrePicks, .genrePicks, [HomeItemGenreItem(genre: genre("Trip Hop"))]),
         ]))
         #expect((try? sut.inspect().find(text: "Tonight")) != nil)
@@ -127,8 +127,24 @@ struct HomeViewTests {
         #expect((try? sut.inspect().find(text: "Rediscover")) == nil)
     }
 
+    @Test func aSectionShowsItsSubtitleUnderItsTitle() throws {
+        let sut = HomeContent(state: content([
+            section(.heavyRotation, .heavyRotation, [HomeItemAlbumItem(album: album("Mezzanine"))], subtitle: .homeHeavyRotationSubtitle),
+        ]))
+        #expect((try? sut.inspect().find(text: "Heavy Rotation")) != nil)
+        #expect((try? sut.inspect().find(text: "What you've played most in the last 4 weeks")) != nil)
+    }
+
+    @Test func aReloadAnimatesBetweenSectionAndItemIds() {
+        let kidA = HomeItemAlbumItem(album: album("Kid A"))
+        let amnesiac = HomeItemAlbumItem(album: album("Amnesiac"))
+        let before = HomeContent.identity([section(.rediscover, .rediscover, [kidA, amnesiac])])
+        #expect(before == HomeContent.identity([section(.rediscover, .rediscover, [kidA, amnesiac])]))
+        #expect(before != HomeContent.identity([section(.rediscover, .rediscover, [amnesiac, kidA])]))
+    }
+
     @Test func aMixedShelfNamesEachTilesKind() throws {
-        let sut = HomeContent(state: content([section(.onRepeat, .onRepeat, [
+        let sut = HomeContent(state: content([section(.heavyRotation, .heavyRotation, [
             HomeItemAlbumItem(album: album("Mezzanine", artist: "Massive Attack")),
             HomeItemArtistItem(albumArtist: artist("Portishead", albumCount: 12)),
         ])]))
@@ -168,11 +184,11 @@ struct HomeViewTests {
 
     @Test func onlySectionsWithADestinationHaveSeeAll() throws {
         let sut = HomeContent(state: content([
-            section(.onRepeat, .onRepeat, [HomeItemAlbumItem(album: album("Kid A"))]),
+            section(.heavyRotation, .heavyRotation, [HomeItemAlbumItem(album: album("Kid A"))]),
             section(.recentlyAdded, .recentlyAdded, [HomeItemAlbumItem(album: album("Amnesiac"))]),
         ]))
         #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "See All Recently Added")) != nil)
-        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "See All On Repeat")) == nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "See All Heavy Rotation")) == nil)
     }
 
     @Test func menuActionsCarryTheItemsContext() {

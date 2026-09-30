@@ -2,14 +2,20 @@ import Shared
 import SwiftUI
 
 /// Home (#587, polished in #624, sections from #633): the suggestion sections from the shared `HomeViewModel`, with
-/// no resume card: the mini player is that (#646). Jump Back In is a compact grid; the time of day, On Repeat, Rediscover, Recently Added
-/// and Genre Picks are shelves. A tap opens the album, artist or playlist (zooming from the tile on iOS 18+), or
+/// no resume card: the mini player is that (#646). Jump Back In is a compact grid; the time of day, Heavy Rotation, Rediscover, Recently
+/// Added and Genre Picks are shelves, each under a subtitle saying what it holds (#671). A tap opens the album, artist or playlist (zooming from the tile on iOS 18+), or
 /// shuffles a Genre Picks tile; every tile's context menu and VoiceOver actions play, shuffle, queue or open it
 /// through the shared `MediaAction`s. Before anything has been played (cold start) Home offers Shuffle All and says it
 /// learns from listening. Before there's a library, the empty state, or the import's progress while one runs. Pull
-/// to refresh re-imports, in every state.
+/// to refresh re-imports and reloads Home, in every state.
+///
+/// Home reloads only as it comes on screen (it appears, or the app returns to the foreground), on pull to refresh or
+/// when an import completes, and on the hour while it's off screen (#672), so nothing moves while it's being looked at.
 struct HomeView: View {
     let navigator: Navigator
+
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var appeared = false
 
     var body: some View {
         let models = ViewModelCache.shared.viewModel(AppTab.home.cacheKey) {
@@ -28,7 +34,21 @@ struct HomeView: View {
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
             .consumeEvents((state as? HomeUiStateContent)?.events ?? [], handled: { models.home.onEventHandled(id: $0) }) { _ in }
         }
-        .refreshable { LibraryImport.refresh() }
+        .refreshable {
+            models.home.refresh()
+            LibraryImport.refresh()
+        }
+        .onAppear {
+            appeared = true
+            models.home.onVisibilityChanged(visible: scenePhase != .background)
+        }
+        .onDisappear {
+            appeared = false
+            models.home.onVisibilityChanged(visible: false)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            models.home.onVisibilityChanged(visible: appeared && phase != .background)
+        }
         .navigationTitle(AppTab.home.title)
     }
 
@@ -74,6 +94,7 @@ struct HomeContent: View {
     var onAction: (MediaAction) -> Void = { _ in }
 
     @Environment(\.layoutTier) private var layoutTier
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     /// The tile the last tap came from, the one zoom source for its route. An album can be in more than one section,
     /// and a zoom from a tile the user didn't touch would be wrong.
     @State private var zoomSourceKey: String?
@@ -103,6 +124,8 @@ struct HomeContent: View {
                 }
                 .padding(.top, Spacing.small)
                 .padding(.bottom, Spacing.large)
+                // A reload moves, adds and removes sections and tiles by their ids rather than replacing them (#672)
+                .animation(reduceMotion ? nil : .default, value: Self.identity(content.sections))
                 .frame(maxWidth: AdaptiveLayout.contentMaxWidth)
                 .frame(maxWidth: .infinity)
             }
@@ -165,11 +188,17 @@ struct HomeContent: View {
     @ViewBuilder
     private func header(_ section: HomeSection) -> some View {
         let title = Self.title(section.title)
+        let subtitle = section.subtitle?.localized()
         switch section.id {
-        case .recentlyAdded: SectionHeader(title, seeAll: .smartPlaylist(id: "recently-added"))
-        case .genrePicks: SectionHeader(title, seeAll: .libraryCategory(.genres))
-        default: SectionHeader(title)
+        case .recentlyAdded: SectionHeader(title, subtitle: subtitle, seeAll: .smartPlaylist(id: "recently-added"))
+        case .genrePicks: SectionHeader(title, subtitle: subtitle, seeAll: .libraryCategory(.genres))
+        default: SectionHeader(title, subtitle: subtitle)
         }
+    }
+
+    /// What a reload animates between: each section's id and its items' keys, in order.
+    static func identity(_ sections: [HomeSection]) -> [String] {
+        sections.map { section in "\(section.id)|" + section.items.map(\.key).joined(separator: ",") }
     }
 
     /// A shelf tile. A tap opens the item, or for a genre shuffles it (a Genre Pick is something to put on).
@@ -199,7 +228,7 @@ struct HomeContent: View {
         case .thisMorning: "This Morning"
         case .thisAfternoon: "This Afternoon"
         case .tonight: "Tonight"
-        case .onRepeat: "On Repeat"
+        case .heavyRotation: "Heavy Rotation"
         case .rediscover: "Rediscover"
         case .recentlyAdded: "Recently Added"
         case .genrePicks: "Genre Picks"
