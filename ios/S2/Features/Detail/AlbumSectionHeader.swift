@@ -22,15 +22,16 @@ struct AlbumSectionHeader: View {
     private var subtitle: String { eyebrow(album.year.map { String($0.intValue) }, pluralized(songCount, "song")) }
 
     var body: some View {
-        HStack(spacing: Spacing.smallMedium) {
+        HStack(spacing: 0) {
             Button(action: onOpenAlbum) {
                 RemoteArtwork(.album(album), points: thumbSize)
                     .artworkTile(thumbSize)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Open album")
+            .accessibilityLabel("Open \(title)")
             .accessibilityIdentifier("artistDetail.albumThumbnail")
             Button(action: onToggle) {
+                // The leading padding is part of the button, so the gap after the thumbnail toggles instead of being dead space
                 HStack(spacing: Spacing.smallMedium) {
                     VStack(alignment: .leading, spacing: Spacing.tiny) {
                         Text(title)
@@ -49,6 +50,7 @@ struct AlbumSectionHeader: View {
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                         .accessibilityHidden(true)
                 }
+                .padding(.leading, Spacing.smallMedium)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)

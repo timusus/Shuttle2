@@ -36,7 +36,7 @@ struct AlbumArtistDetailView: View {
                     models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(songs: songs)))
                 },
                 onAlbumTap: { navigator.openAsserting(.album($0)) },
-                onToggleAlbum: { models.artist.onAlbumClick(album: $0) },
+                onToggleAlbum: { models.artist.onToggleAlbum(album: $0) },
                 onSortOrderSelected: { models.artist.onSortOrderSelected(order: $0) },
                 onExpandAll: { models.artist.onExpandAll() },
                 onCollapseAll: { models.artist.onCollapseAll() },
