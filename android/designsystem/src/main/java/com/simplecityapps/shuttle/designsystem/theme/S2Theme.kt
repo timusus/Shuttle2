@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import com.materialkolor.ktx.animateColorScheme
 
 /** The root theme choices nested themes (see [ArtworkTheme]) need to generate matching schemes. */
@@ -38,8 +39,22 @@ internal val LocalRootColorScheme = staticCompositionLocalOf<ColorScheme?> { nul
 /** The default M3 type scale, which carries the emphasized styles (`displayLargeEmphasized` etc.). */
 val S2Typography = Typography()
 
-/** The default M3 shape scale; the Expressive tokens (`largeIncreased`, `extraLargeIncreased`, `extraExtraLarge`) come with it. */
-val S2Shapes = Shapes()
+/**
+ * S2's shape scale: every token a [ContinuousRoundedCornerShape], on radii a step softer than
+ * stock M3's at the small end, with the Expressive tokens (`largeIncreased`, `extraLargeIncreased`,
+ * `extraExtraLarge`). Surfaces that should read as S2 take their shape from here, not a literal.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+val S2Shapes = Shapes(
+    extraSmall = ContinuousRoundedCornerShape(6.dp),
+    small = ContinuousRoundedCornerShape(10.dp),
+    medium = ContinuousRoundedCornerShape(14.dp),
+    large = ContinuousRoundedCornerShape(20.dp),
+    extraLarge = ContinuousRoundedCornerShape(28.dp),
+    largeIncreased = ContinuousRoundedCornerShape(24.dp),
+    extraLargeIncreased = ContinuousRoundedCornerShape(32.dp),
+    extraExtraLarge = ContinuousRoundedCornerShape(48.dp),
+)
 
 /**
  * The app's root theme: the user's accent (or Material You dynamic colour on Android 12+) as a

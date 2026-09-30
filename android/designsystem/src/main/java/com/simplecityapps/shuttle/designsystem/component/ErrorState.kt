@@ -2,8 +2,6 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -12,7 +10,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 
 /** Something failed: what happened, and the [action] that recovers (Retry, Sign in). */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ErrorState(
     title: String,
@@ -25,7 +22,6 @@ fun ErrorState(
         title = title,
         message = message,
         icon = icon,
-        iconShape = MaterialShapes.Burst,
         iconContainerColor = MaterialTheme.colorScheme.errorContainer,
         iconColor = MaterialTheme.colorScheme.onErrorContainer,
         action = action,

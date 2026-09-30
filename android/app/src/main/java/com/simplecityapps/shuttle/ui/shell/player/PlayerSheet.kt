@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -51,6 +50,7 @@ import androidx.compose.ui.util.lerp
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
+import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
@@ -93,7 +93,7 @@ internal fun PlayerSheet(
                 .fillMaxSize()
                 .graphicsLayer {
                     val radius = state.geometry.cornerRadius(state.offset, statusBarTop, corner)
-                    shape = RoundedCornerShape(topStart = radius, topEnd = radius)
+                    shape = ContinuousRoundedCornerShape(topStart = radius, topEnd = radius)
                     clip = radius > 0f
                 }.testTag(PlayerTestTags.Sheet)
                 .semantics { stateDescription = levelDescription }

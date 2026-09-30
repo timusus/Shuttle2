@@ -63,12 +63,6 @@ fun ArtworkBoard(width: BoardWidth) {
             BoardSection("Circle (artist), loaded") { ArtworkRow(rowSizes, ArtworkShape.Circle) },
             BoardSection("Loading") { ArtworkRow(rowSizes, loading = true, loaded = false) },
             BoardSection("Hero") { ArtworkRow(listOf(ArtworkSize.Hero)) },
-            BoardSection("Scalloped (playlist mask option), loaded and placeholder") {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Bottom) {
-                    Artwork(ArtworkPlaceholder.Playlist, size = ArtworkSize.Grid, shape = ArtworkShape.Scalloped, image = { SampleArt(2) })
-                    Artwork(ArtworkPlaceholder.Playlist, size = ArtworkSize.Grid, shape = ArtworkShape.Scalloped)
-                }
-            },
             BoardSection("Placeholder per media type") {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ArtworkPlaceholder.entries.forEach { placeholder ->
@@ -197,8 +191,8 @@ fun PlaylistRowBoard(width: BoardWidth) {
             BoardSection("Smart playlist") { PlaylistRow("Recently added", {}, summary = "120 songs", artwork = { Artwork(ArtworkPlaceholder.SmartPlaylist) }, onMore = {}) },
             BoardSection("Empty") { PlaylistRow("New playlist", {}, summary = "No songs", artwork = { Artwork(ArtworkPlaceholder.Playlist) }, onMore = {}) },
             BoardSection("Selected") { PlaylistRow("Focus", {}, summary = songCount(SampleLibrary.playlist("Focus").songs.size), artwork = { Artwork(ArtworkPlaceholder.Playlist) }, selected = true, onMore = {}) },
-            BoardSection("Scalloped artwork (mask option)") {
-                PlaylistRow("Late Night", {}, summary = songCount(SampleLibrary.playlist("Late Night").songs.size), artwork = { Artwork(ArtworkPlaceholder.Playlist, shape = ArtworkShape.Scalloped, image = { SampleArt(2) }) }, onMore = {})
+            BoardSection("With artwork") {
+                PlaylistRow("Late Night", {}, summary = songCount(SampleLibrary.playlist("Late Night").songs.size), artwork = { Artwork(ArtworkPlaceholder.Playlist, image = { SampleArt(2) }) }, onMore = {})
             },
         ),
     )
@@ -310,7 +304,7 @@ fun GridTileBoard(width: BoardWidth) {
             BoardSection("Playlist (scalloped mask), playing") {
                 Tiles {
                     val playlist = SampleLibrary.playlist("Late Night")
-                    SampleTile(playlist.name, songCount(playlist.songs.size), ArtworkPlaceholder.Playlist, ArtworkShape.Scalloped, art = "lantern-hours")
+                    SampleTile(playlist.name, songCount(playlist.songs.size), ArtworkPlaceholder.Playlist, art = "lantern-hours")
                     AlbumTile(SampleLibrary.album("smoke-rings"), playing = true)
                 }
             },

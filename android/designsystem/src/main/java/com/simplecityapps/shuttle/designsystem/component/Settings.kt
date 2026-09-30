@@ -1,8 +1,6 @@
 package com.simplecityapps.shuttle.designsystem.component
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -15,18 +13,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ListItemShapes
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -220,26 +214,23 @@ private fun settingColors(): ListItemColors {
 }
 
 /**
- * The leading icon: for [SettingIconStyle.Tonal], in a `MaterialShapes.Cookie4Sided` container, as
- * design-language.md allows for settings; for [SettingIconStyle.Plain], bare, in the row's own colour.
+ * The leading icon: for [SettingIconStyle.Tonal], in a [TonalIconContainer]; for
+ * [SettingIconStyle.Plain], bare, in the row's own colour.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SettingIcon(icon: ImageVector, style: SettingIconStyle, enabled: Boolean) {
     if (style == SettingIconStyle.Plain) {
         Icon(icon, contentDescription = null, modifier = Modifier.size(24.dp))
         return
     }
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .alpha(if (enabled) 1f else 0.38f)
-            .clip(MaterialShapes.Cookie4Sided.toShape())
-            .background(MaterialTheme.colorScheme.secondaryContainer),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(24.dp))
-    }
+    TonalIconContainer(
+        icon = icon,
+        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        size = 40.dp,
+        iconSize = 24.dp,
+        modifier = Modifier.alpha(if (enabled) 1f else 0.38f),
+    )
 }
 
 @Preview

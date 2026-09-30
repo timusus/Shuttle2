@@ -84,6 +84,10 @@
   ],
   "improvements": [
     {
+      "text": "Smoother, more consistent shapes across the app: softer corners on artwork, buttons and cards, and a simpler play button",
+      "commits": []
+    },
+    {
       "text": "On Android 12 and later, S2 now takes its colours from your wallpaper, unless you have already picked an accent colour. To pick an accent colour instead, turn off Dynamic colour in Appearance settings",
       "commits": []
     },

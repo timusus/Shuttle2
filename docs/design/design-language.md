@@ -39,7 +39,7 @@ guidance from these pages:
 **Decided (2026-09-25): pin material3 1.5.0-alpha29** over the BOM in `:android:designsystem`
 (and the app). The BOM's 1.4.0 lacks most Expressive components. The release freeze means nothing
 ships on the alpha until the parity gate, and the pin moves to the first 1.5.0 beta/RC when it
-appears. The opt-in for `MaterialShapes` and `LoadingIndicator` stays inside `:android:designsystem`;
+appears. The opt-in for `LoadingIndicator` stays inside `:android:designsystem`;
 screens never see it.
 
 ## 1. Principles
@@ -72,17 +72,23 @@ screens never see it.
 
 ### Shape
 
-- **Shape scale** from `Shapes` with the Expressive tokens (`largeIncreased`, `extraLargeIncreased`,
-  `extraExtraLarge`). Components take their default shape; overrides go through `S2Theme.shapes`,
-  not inline `RoundedCornerShape`s.
-- **`MaterialShapes` (the 35 polygon shapes) are for non-content only**: artwork placeholders,
-  icon containers (settings, empty states), the loading indicator, the favourite toggle. Album
-  artwork is always a rounded rectangle and artist images a circle: art is square and a novelty mask
-  crops it. The one exception is an option for playlist art (a user image or a mosaic, never an
-  album cover): `ArtworkShape.Scalloped`, a `Cookie12Sided` mask. Text never sits in a novelty shape.
+- **Continuous corners.** Every token in `S2Shapes` is a `ContinuousRoundedCornerShape`
+  (`designsystem/theme`): Figma's corner smoothing at 0.6, so each corner eases out of its edge
+  (G2-style) instead of meeting a circular arc, the way Photos, Files and Android 16's Settings
+  draw them. The scale is extraSmall 6, small 10, medium 14, large 20, largeIncreased 24,
+  extraLarge 28, extraLargeIncreased 32, extraExtraLarge 48 dp. Components take their default
+  shape; overrides go through `MaterialTheme.shapes`, not an inline `RoundedCornerShape`. A shape
+  that has to be built in place (an animated radius) uses `ContinuousRoundedCornerShape` directly.
+- **No `MaterialShapes` on S2's own controls or content (#659).** The play/pause button is a
+  continuous rounded square; settings, empty and error icons sit in the same continuous tonal
+  container (`TonalIconContainer`); an artwork placeholder is the type icon centred on the
+  artwork's own shape. Album and playlist art is a continuous rounded rectangle from the scale;
+  artist images are circles. Text never sits in a novelty shape. The polygon shapes appear only
+  where M3 draws them itself (`LoadingIndicator`).
 - **Shape morphing where M3 builds it in**: pressed and checked states of `ButtonGroup`,
-  `ToggleButton` and `IconButton` shapes (round → square on press), play ⇄ pause, `LoadingIndicator`.
-  Not in lists (per-row animation on scroll), not on scroll position, not on artwork.
+  `ToggleButton` and `IconButton` shapes (round → square on press, lerped through the continuous
+  shape), `LoadingIndicator`. Play ⇄ pause animates its corner radius, not its outline. Not in
+  lists (per-row animation on scroll), not on scroll position, not on artwork.
 
 ### Motion
 
@@ -146,7 +152,7 @@ allowed only where M3 has nothing, and each one is listed here with its reason:
 |---|---|
 | `PlayerSheet` | M3 bottom sheets have two states and no nav bar tracking; S2 needs Hidden/Mini/NowPlaying/Queue on one drag with the nav bar and mini player following (app-shell §1) |
 | `AppShellLayout` | `NavigationSuiteScaffold` has no slot for a sheet between content and nav bar, nor a trailing player pane (app-shell §2) |
-| `Artwork` | M3 has no image component; S2 needs a shaped, placeholder-aware, crossfading image with the placeholder drawn from `MaterialShapes` |
+| `Artwork` | M3 has no image component; S2 needs a shaped, placeholder-aware, crossfading image with a type-icon placeholder |
 | `SeekBar` | M3 `Slider` supplies the thumb, semantics and drag; S2 only replaces its `track` slot with the wavy line that `LinearWavyProgressIndicator` draws, because a wavy *draggable* track does not exist |
 | `ReorderableQueue` modifier | `LazyColumn` has no drag-to-reorder; rows stay `ListItem`s with a drag-handle trailing slot |
 | `EqualizerCurve` | M3 has no charts; a frequency-response line over the band sliders |
@@ -168,7 +174,7 @@ catalogue — #553).
 |---|---|---|---|
 | `theme-colour` | `ColorScheme` roles | root accents ×6, dynamic, 1 artwork seed | Default and High contrast; every role swatch with its `on` pair |
 | `theme-type` | `Typography` + emphasized | — | all 30 styles with sample text, at font scale 1.0 and 2.0 |
-| `theme-shape` | `Shapes`, `MaterialShapes` | scale tokens; the shapes S2 uses | static, plus a morph strip (start, mid, end) |
+| `theme-shape` | `Shapes`, `ContinuousRoundedCornerShape` | scale tokens; continuous against circular corners | static |
 | `theme-motion` | `MotionScheme` | 6 specs | curve plots; live in the catalogue screen only |
 
 ### Actions
@@ -214,7 +220,7 @@ catalogue — #553).
 | `menu` | `DropdownMenu` (Expressive menu groups) | overflow, sort | items with icon, divider, checked |
 | `song-actions-sheet` | `ModalBottomSheet` + `ListItem`s | song, album, playlist targets | header with artwork, destructive item, long list scrolling |
 | `dialog` | `AlertDialog`, `BasicAlertDialog` for forms | confirm, destructive, text input (create playlist), choice list | enabled, confirm disabled, error |
-| `state-empty` | composite: `MaterialShapes` icon container + text + `Button` | per screen message | with and without action |
+| `state-empty` | composite: `TonalIconContainer` + text + `Button` | per screen message | with and without action |
 | `state-loading` | `LoadingIndicator`, `ContainedLoadingIndicator` | full screen, inline, pull to refresh | indeterminate; determinate (import progress) |
 | `state-error` | composite like `state-empty` | retry, provider sign-in | — |
 | `snackbar` | `Snackbar` in a `SnackbarHost` | message, with action (Undo) | above mini player, above nav bar |
@@ -224,7 +230,7 @@ catalogue — #553).
 | ID | M3 basis | Variants | States |
 |---|---|---|---|
 | `mini-player` | composite: `Artwork`, text, `IconButton`s, `LinearWavyProgressIndicator` | compact (over nav bar), docked (expanded, bottom of content) | playing, paused, buffering, casting |
-| `player-controls` | `ButtonGroup` with `ToggleButton` play/pause, `IconButton` prev/next, shuffle and repeat toggles | compact, expanded, tabletop half | playing, paused (morph), buffering, shuffle on, repeat one/all |
+| `player-controls` | `ButtonGroup` with `ToggleButton` play/pause, `IconButton` prev/next, shuffle and repeat toggles | compact, expanded, tabletop half | playing, paused (corner radius), buffering, shuffle on, repeat one/all |
 | `seek-bar` | custom `SeekBar` on `Slider` (§2) | wavy while playing, flat when paused | idle, dragging with time label, buffering |
 | `progress` | `LinearWavyProgressIndicator` | mini player, row downloading | playing (wave), paused (flat), indeterminate |
 | `player-sheet` | custom `PlayerSheet` (§2) | levels Mini, NowPlaying, Queue | each level; mid-drag frames at e = 0.5 and q = 0.5 |

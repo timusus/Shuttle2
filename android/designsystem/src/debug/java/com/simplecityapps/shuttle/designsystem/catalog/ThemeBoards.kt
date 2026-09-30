@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.designsystem.catalog
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,26 +12,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.toPath
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
-import androidx.graphics.shapes.Morph
-import androidx.graphics.shapes.RoundedPolygon
-import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
+import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
 import com.simplecityapps.shuttle.designsystem.theme.LocalS2ThemeSettings
 import com.simplecityapps.shuttle.designsystem.theme.S2Accent
 import com.simplecityapps.shuttle.designsystem.theme.S2Contrast
@@ -177,21 +170,6 @@ private fun ShapeSamples(shapes: List<Pair<String, Shape>>) {
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun MorphStrip(name: String, from: RoundedPolygon, to: RoundedPolygon) {
-    val morph = Morph(from, to)
-    val color = MaterialTheme.colorScheme.tertiary
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        listOf(0f, 0.5f, 1f).forEach { progress ->
-            Canvas(Modifier.size(48.dp)) {
-                scale(size.width, size.height, pivot = Offset.Zero) { drawPath(morph.toPath(progress), color) }
-            }
-        }
-        Caption(name, Modifier.width(120.dp))
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
 fun ThemeShapeBoard(width: BoardWidth) {
     val s = MaterialTheme.shapes
     Board(
@@ -211,21 +189,24 @@ fun ThemeShapeBoard(width: BoardWidth) {
                     ),
                 )
             },
-            BoardSection("MaterialShapes S2 uses (non-content only)") {
-                ShapeSamples(
-                    ArtworkPlaceholder.entries.map { it.name to it.polygon.toShape() } +
-                        listOf(
-                            "Playlist mask" to MaterialShapes.Cookie12Sided.toShape(),
-                            "Empty" to MaterialShapes.Cookie9Sided.toShape(),
-                            "Error" to MaterialShapes.Burst.toShape(),
-                        ),
-                )
-            },
-            BoardSection("Morphs: start, mid, end") {
+            BoardSection("Continuous (top) against circular corners") {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    MorphStrip("Press: circle → square", MaterialShapes.Circle, MaterialShapes.Square)
-                    MorphStrip("Play → pause", MaterialShapes.Cookie9Sided, MaterialShapes.Square)
-                    MorphStrip("Loading indicator", MaterialShapes.SoftBurst, MaterialShapes.Cookie9Sided)
+                    ShapeSamples(
+                        listOf(
+                            "16 dp" to ContinuousRoundedCornerShape(16.dp),
+                            "24 dp" to ContinuousRoundedCornerShape(24.dp),
+                            "Capsule" to ContinuousRoundedCornerShape(50),
+                            "Top only" to ContinuousRoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                        ),
+                    )
+                    ShapeSamples(
+                        listOf(
+                            "16 dp" to RoundedCornerShape(16.dp),
+                            "24 dp" to RoundedCornerShape(24.dp),
+                            "Capsule" to RoundedCornerShape(50),
+                            "Top only" to RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                        ),
+                    )
                 }
             },
         ),

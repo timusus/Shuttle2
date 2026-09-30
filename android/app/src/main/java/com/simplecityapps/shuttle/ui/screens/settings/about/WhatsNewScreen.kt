@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,7 +35,7 @@ fun WhatsNewScreen(
 
 @Composable
 private fun ChangesetCard(changeset: Changeset) {
-    Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = RoundedCornerShape(24.dp)) {
+    Surface(color = MaterialTheme.colorScheme.surfaceContainer, shape = MaterialTheme.shapes.largeIncreased) {
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
             Text(changeset.versionName, style = MaterialTheme.typography.titleLarge)
             Text(

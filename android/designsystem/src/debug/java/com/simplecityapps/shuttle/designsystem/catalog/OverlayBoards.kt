@@ -38,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.component.ActionsSheetContent
 import com.simplecityapps.shuttle.designsystem.component.Artwork
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
-import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2ChoiceList
 import com.simplecityapps.shuttle.designsystem.component.S2DialogContent
@@ -185,7 +184,7 @@ fun ActionsSheetBoard(width: BoardWidth) {
                     ActionsSheetContent(
                         title = "Songs for a long drive through the mountains at night",
                         subtitle = "48 songs",
-                        artwork = { Artwork(ArtworkPlaceholder.Playlist, shape = ArtworkShape.Scalloped, image = { SampleArt(1) }) },
+                        artwork = { Artwork(ArtworkPlaceholder.Playlist, image = { SampleArt(1) }) },
                         actions = listOf(
                             S2Action("Play", {}, Icons.Rounded.PlayArrow),
                             S2Action("Shuffle", {}, Icons.Rounded.Shuffle),

@@ -32,7 +32,7 @@ val CatalogEntries = listOf(
     CatalogEntry(
         "theme-shape",
         "Shape",
-        listOf("shape scale with the Expressive tokens", "MaterialShapes in use", "morph strips"),
+        listOf("continuous shape scale with the Expressive tokens", "continuous against circular corners"),
         schemeSensitive = false,
     ) { ThemeShapeBoard(it) },
     CatalogEntry(

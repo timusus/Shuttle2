@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -20,20 +21,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LoadingIndicator
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
-import androidx.compose.material3.toPath
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.center
-import androidx.compose.ui.graphics.Matrix
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -44,19 +38,17 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.graphics.shapes.Morph
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
+import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
 import com.simplecityapps.shuttle.ui.shell.player.S2RepeatMode
 import kotlin.math.roundToInt
 
 /**
  * The transport's scale. [Regular] fits the 360 dp pane; [Large] is the phone's Now Playing, with a
- * bigger play morph and hit targets. [width] is the natural width: the buttons plus the group's gaps.
+ * bigger play button and hit targets. [width] is the natural width: the buttons plus the group's gaps.
  */
 enum class S2PlayerControlsSize(
     internal val toggle: Dp,
@@ -72,25 +64,16 @@ enum class S2PlayerControlsSize(
     Large(toggle = 56.dp, toggleIcon = 28.dp, skip = S2IconButtonSize.Large, skipContainer = 64.dp, playPause = 96.dp, width = 384.dp),
 }
 
-/** A [Morph] between two `MaterialShapes` at [progress], scaled to fill the bounds. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-internal class MorphShape(private val morph: Morph, private val progress: Float) : Shape {
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val path = morph.toPath(progress)
-        path.transform(Matrix().apply { scale(x = size.width, y = size.height) })
-        path.translate(size.center - path.getBounds().center)
-        return Outline.Generic(path)
-    }
-}
-
-/** Paused (showing Play) is the scalloped cookie, playing (showing Pause) the rounded square. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-internal fun playPauseMorph() = Morph(MaterialShapes.Cookie9Sided, MaterialShapes.Square)
+/**
+ * The play/pause button's corner as a share of its side: softer while paused (showing Play), a
+ * firmer rounded square while playing (showing Pause).
+ */
+private const val PausedCornerFraction = 0.38f
+private const val PlayingCornerFraction = 0.28f
 
 /**
- * The play/pause button: a `primary` shape that morphs from `MaterialShapes.Cookie9Sided`
- * (paused) to `MaterialShapes.Square` (playing) on the fast spatial spring. [buffering] swaps the
- * icon for a `LoadingIndicator`, itself a `MaterialShapes` morph.
+ * The play/pause button: a `primary` continuous rounded square whose corners firm up from paused
+ * to playing on the fast spatial spring. [buffering] swaps the icon for a `LoadingIndicator`.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -102,14 +85,17 @@ fun S2PlayPauseButton(
     size: Dp = 80.dp,
     interactionSource: MutableInteractionSource? = null,
 ) {
-    val morph = remember { playPauseMorph() }
-    val progress by animateFloatAsState(if (playing) 1f else 0f, MaterialTheme.motionScheme.fastSpatialSpec(), label = "playPause")
+    val corner by animateFloatAsState(
+        if (playing) PlayingCornerFraction else PausedCornerFraction,
+        MaterialTheme.motionScheme.fastSpatialSpec(),
+        label = "playPauseCorner",
+    )
     val label = stringResource(if (playing) R.string.ds_pause else R.string.ds_play)
     Box(
         modifier = modifier
             .size(size)
             .graphicsLayer {
-                shape = MorphShape(morph, progress.coerceIn(0f, 1f))
+                shape = ContinuousRoundedCornerShape(CornerSize(this.size.minDimension * corner.coerceIn(0f, 0.5f)))
                 clip = true
             }
             .background(MaterialTheme.colorScheme.primary)
@@ -132,7 +118,7 @@ fun S2PlayPauseButton(
 
 /**
  * The now-playing transport as a `ButtonGroup`: shuffle and repeat toggles either side of
- * previous, the morphing [S2PlayPauseButton] and next. Pressing a button widens it and squeezes
+ * previous, the [S2PlayPauseButton] and next. Pressing a button widens it and squeezes
  * its neighbours; the toggles morph round to square when on.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
