@@ -2,7 +2,7 @@
 
 [All components](index.md)
 
-States: playing; paused; dragging; over an hour.
+States: resting; disabled; dragging; over an hour.
 
 ## Compact, light
 

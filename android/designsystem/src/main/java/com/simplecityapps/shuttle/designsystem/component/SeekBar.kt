@@ -1,15 +1,17 @@
 package com.simplecityapps.shuttle.designsystem.component
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,16 +24,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.R
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
 import com.simplecityapps.shuttle.format.formatDuration
 
 /**
- * The now-playing seek bar: an M3 `Slider` (thumb, drag, semantics) whose track is the
- * [S2PlaybackProgress] wave, wavy while [playing] and flat when paused or while dragging. The
- * elapsed and total times sit underneath; while dragging, the elapsed time follows the thumb in
- * `primary`. [onSeek] runs once, when the drag ends.
+ * The now-playing seek bar: an M3 Expressive `Slider` with a thick track, which grows thicker, its
+ * thumb with it, while it's dragged. The elapsed and total times sit underneath; while dragging, the
+ * elapsed time follows the thumb in `primary`. [onSeek] runs once, when the drag ends.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +41,6 @@ fun S2SeekBar(
     positionMs: Long,
     durationMs: Long,
     onSeek: (Long) -> Unit,
-    playing: Boolean,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
@@ -50,6 +51,7 @@ fun S2SeekBar(
     val state = remember { SliderState(fraction) }
     state.value = fraction
     val seekDescription = stringResource(R.string.ds_seek)
+    val trackHeight by animateDpAsState(if (dragging) SeekTrackDraggingHeight else SeekTrackHeight, label = "seekTrack")
     Column(modifier) {
         Slider(
             state = state,
@@ -61,12 +63,15 @@ fun S2SeekBar(
                 dragFraction = null
             },
             interactionSource = interactionSource,
-            track = { sliderState ->
-                S2PlaybackProgress(
-                    progress = { sliderState.coercedValueAsFraction },
-                    playing = playing && !dragging,
-                    modifier = Modifier.fillMaxWidth(),
+            thumb = {
+                SliderDefaults.Thumb(
+                    interactionSource = interactionSource,
+                    enabled = enabled,
+                    thumbSize = DpSize(SeekThumbWidth, trackHeight + SeekThumbOverhang),
                 )
+            },
+            track = { sliderState ->
+                SliderDefaults.Track(sliderState = sliderState, modifier = Modifier.height(trackHeight), enabled = enabled)
             },
         )
         Row(Modifier.padding(horizontal = 4.dp)) {
@@ -81,10 +86,18 @@ fun S2SeekBar(
     }
 }
 
+/** The track's thickness at rest, and while dragged. */
+private val SeekTrackHeight = 16.dp
+private val SeekTrackDraggingHeight = 24.dp
+
+/** The thumb is a bar this wide, standing this much taller than the track. */
+private val SeekThumbWidth = 4.dp
+private val SeekThumbOverhang = 20.dp
+
 @Preview
 @Composable
 private fun S2SeekBarPreview() {
     S2Preview {
-        S2SeekBar(positionMs = 83_000, durationMs = 245_000, onSeek = {}, playing = true)
+        S2SeekBar(positionMs = 83_000, durationMs = 245_000, onSeek = {})
     }
 }

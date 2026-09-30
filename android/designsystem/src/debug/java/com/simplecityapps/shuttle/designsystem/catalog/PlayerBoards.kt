@@ -89,18 +89,17 @@ fun SeekBarBoard(width: BoardWidth) {
     Board(
         width,
         listOf(
-            BoardSection("Playing (wavy)") { S2SeekBar(positionMs = 83_000, durationMs = 383_000, onSeek = {}, playing = true) },
-            BoardSection("Paused (flat)") { S2SeekBar(positionMs = 83_000, durationMs = 383_000, onSeek = {}, playing = false) },
+            BoardSection("Resting") { S2SeekBar(positionMs = 83_000, durationMs = 383_000, onSeek = {}) },
+            BoardSection("Disabled") { S2SeekBar(positionMs = 0, durationMs = 0, onSeek = {}, enabled = false) },
             BoardSection("Dragging") {
                 S2SeekBar(
                     positionMs = 250_000,
                     durationMs = 383_000,
                     onSeek = {},
-                    playing = true,
                     interactionSource = rememberHeldInteraction { DragInteraction.Start() },
                 )
             },
-            BoardSection("Over an hour") { S2SeekBar(positionMs = 1_830_000, durationMs = 5_025_000, onSeek = {}, playing = true) },
+            BoardSection("Over an hour") { S2SeekBar(positionMs = 1_830_000, durationMs = 5_025_000, onSeek = {}) },
         ),
     )
 }

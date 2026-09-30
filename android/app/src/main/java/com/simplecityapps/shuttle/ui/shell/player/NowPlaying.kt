@@ -147,9 +147,8 @@ internal fun NowPlayingSong(
 }
 
 /**
- * The seek bar over the transport controls, [gap] between and below them: which heads the open
- * panel once the artwork has scrolled away ([transportHeight]). The Large controls sit closer to the edges than
- * the seek bar, and scale down where even that doesn't fit.
+ * The seek bar over the transport controls, [gap] below them ([transportHeight]). The Large
+ * controls sit closer to the edges than the seek bar, and scale down where even that doesn't fit.
  */
 @Composable
 internal fun Transport(
@@ -216,7 +215,6 @@ private fun SeekBar(
         positionMs = current.positionMs,
         durationMs = current.durationMs,
         onSeek = actions::seekTo,
-        playing = player.playing,
         enabled = player.current != null,
         modifier = Modifier.fillMaxWidth().height(SeekBarHeight).padding(horizontal = NowPlayingMargin),
     )
