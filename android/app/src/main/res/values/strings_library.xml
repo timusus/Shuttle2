@@ -80,6 +80,10 @@
     <string name="artist_detail_albums">Albums</string>
     <!-- Artist detail section over the artist's songs -->
     <string name="artist_detail_songs">Songs</string>
+    <!-- Artist detail section over the artist's songs when they're grouped under their albums, which stand in for the Albums section -->
+    <string name="artist_detail_albums_and_songs">Albums &amp; Songs</string>
+    <!-- Artist detail: the section after the album groups, of the artist's songs on none of their own albums -->
+    <string name="artist_detail_other_songs">Other Songs</string>
     <!-- Artist detail: the section of other artists' albums crediting this artist (features, compilations) -->
     <string name="artist_detail_appears_on">Appears On</string>
     <!-- Detail screen action: shuffle the artist's albums in album order -->

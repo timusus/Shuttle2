@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -46,9 +47,11 @@ import com.simplecityapps.shuttle.ui.shell.LocalShellSnackbarHostState
 import dev.zacsweers.metrox.viewmodel.assistedMetroViewModel
 
 /**
- * Artist detail (inventory §1): their own albums newest first, each expanding its tracks inline when tapped, then Appears
- * On (#637), a row of others' albums crediting them, each opening its album, then every song. Play / Shuffle play all of
- * them; the overflow holds the artist's actions plus Shuffle albums.
+ * Artist detail (inventory §1): Appears On (#637), a row of others' albums crediting them, each opening its album, then the
+ * songs in the artist sort order. Grouped by album, the song list is the albums (#678): each album's row unfolds its tracks
+ * inline when tapped, and songs on none of their albums trail as Other Songs. Flat, their own albums newest first come
+ * first, unfolding the same way, and every song follows in one list. Play / Shuffle play all of them in that order; the
+ * overflow holds the artist's actions plus Shuffle albums.
  */
 @Composable
 fun AlbumArtistDetailScreen(
@@ -91,34 +94,12 @@ fun AlbumArtistDetailScreen(
             onMore = { artist?.let(onArtistMore) },
             modifier = modifier.testTag("artist-detail"),
         ) {
-            if (uiState.albums.isNotEmpty()) {
+            // Grouped by album, the song sections' album rows are the albums, so the Albums section above them goes (#678)
+            if (uiState.showAlbumsShelf) {
                 item(key = "albums-header", contentType = "header") { SectionHeader(title = stringResource(R.string.artist_detail_albums)) }
-            }
-            uiState.albums.forEach { album ->
-                val expanded = album.groupKey in uiState.expandedAlbums
-                item(key = "album-${album.groupKey}", contentType = "album") {
-                    AlbumRow(
-                        title = album.name ?: unknown,
-                        artist = listOfNotNull(album.year?.toString(), pluralString(R.plurals.songsPlural, album.songCount)).joinToString(" · "),
-                        onClick = { onAlbumClick(album) },
-                        artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, size = ArtworkSize.Medium) },
-                        selected = expanded,
-                        onMore = { onAlbumMore(album) },
-                    )
-                }
-                if (expanded) {
+                uiState.albums.forEach { album ->
                     val albumSongs = uiState.songsForAlbum(album)
-                    items(albumSongs, key = { "album-${album.groupKey}-song-${it.id}" }, contentType = { "song" }) { song ->
-                        SongRow(
-                            title = song.name ?: unknown,
-                            subtitle = song.friendlyArtistName.orEmpty(),
-                            onClick = { onPlay(albumSongs, albumSongs.indexOf(song)) },
-                            trackNumber = song.track,
-                            duration = formatDuration(song.duration.toLong()),
-                            playing = song.id == uiState.currentSong?.id,
-                            onMore = { onSongMore(song) },
-                        )
-                    }
+                    albumWithSongs(uiState, album, albumSongs, unknown, onAlbumClick, onAlbumMore, onSongMore) { song -> onPlay(albumSongs, albumSongs.indexOf(song)) }
                 }
             }
             if (uiState.appearsOn.isNotEmpty()) {
@@ -144,19 +125,76 @@ fun AlbumArtistDetailScreen(
                 }
             }
             if (uiState.songs.isNotEmpty()) {
-                item(key = "songs-header", contentType = "header") { SectionHeader(title = stringResource(R.string.artist_detail_songs)) }
+                val title = if (uiState.hasAlbumSections) R.string.artist_detail_albums_and_songs else R.string.artist_detail_songs
+                item(key = "songs-header", contentType = "header") { SectionHeader(title = stringResource(title)) }
             }
-            items(uiState.songs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
-                SongRow(
-                    title = song.name ?: unknown,
-                    subtitle = song.album.orEmpty(),
-                    onClick = { onPlay(uiState.songs, uiState.songs.indexOf(song)) },
-                    artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
-                    duration = formatDuration(song.duration.toLong()),
-                    playing = song.id == uiState.currentSong?.id,
-                    onMore = { onSongMore(song) },
-                )
+            // Each section's songs start at its offset in the play order, which runs across every section
+            var offset = 0
+            uiState.sections.forEach { section ->
+                val startIndex = offset
+                offset += section.songs.size
+                val album = section.album
+                if (album != null) {
+                    albumWithSongs(uiState, album, section.songs, unknown, onAlbumClick, onAlbumMore, onSongMore) { song ->
+                        onPlay(uiState.songs, startIndex + section.songs.indexOf(song))
+                    }
+                } else {
+                    if (uiState.hasAlbumSections) {
+                        item(key = "other-songs-header", contentType = "header") { SectionHeader(title = stringResource(R.string.artist_detail_other_songs)) }
+                    }
+                    items(section.songs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
+                        SongRow(
+                            title = song.name ?: unknown,
+                            subtitle = song.album.orEmpty(),
+                            onClick = { onPlay(uiState.songs, startIndex + section.songs.indexOf(song)) },
+                            artwork = { LibraryArtwork(song, ArtworkPlaceholder.Song, size = ArtworkSize.Small) },
+                            duration = formatDuration(song.duration.toLong()),
+                            playing = song.id == uiState.currentSong?.id,
+                            onMore = { onSongMore(song) },
+                        )
+                    }
+                }
             }
+        }
+    }
+}
+
+/**
+ * [album]'s row, which unfolds [songs] (in track order) under it when tapped; a song row's tap goes to [onPlaySong]. The Albums
+ * section and the song list's album sections share it, keyed apart by whether the Albums section shows.
+ */
+private fun LazyListScope.albumWithSongs(
+    uiState: AlbumArtistDetailUiState,
+    album: Album,
+    songs: List<Song>,
+    unknown: String,
+    onAlbumClick: (Album) -> Unit,
+    onAlbumMore: (Album) -> Unit,
+    onSongMore: (Song) -> Unit,
+    onPlaySong: (Song) -> Unit,
+) {
+    val expanded = album.groupKey in uiState.expandedAlbums
+    item(key = "album-${album.groupKey}", contentType = "album") {
+        AlbumRow(
+            title = album.name ?: unknown,
+            artist = listOfNotNull(album.year?.toString(), pluralString(R.plurals.songsPlural, songs.size)).joinToString(" · "),
+            onClick = { onAlbumClick(album) },
+            artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, size = ArtworkSize.Medium) },
+            selected = expanded,
+            onMore = { onAlbumMore(album) },
+        )
+    }
+    if (expanded) {
+        items(songs, key = { "album-${album.groupKey}-song-${it.id}" }, contentType = { "song" }) { song ->
+            SongRow(
+                title = song.name ?: unknown,
+                subtitle = song.friendlyArtistName.orEmpty(),
+                onClick = { onPlaySong(song) },
+                trackNumber = song.track,
+                duration = formatDuration(song.duration.toLong()),
+                playing = song.id == uiState.currentSong?.id,
+                onMore = { onSongMore(song) },
+            )
         }
     }
 }

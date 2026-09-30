@@ -39,7 +39,10 @@ data class AlbumArtistDetailUiState(
      * Whether the Albums shelf shows (#678): only while the song list has no album sections. Grouped by album, the
      * section headers are the albums (each opens its album), so a shelf above them would list them twice.
      */
-    val showAlbumsShelf: Boolean get() = albums.isNotEmpty() && sections.none { it.album != null }
+    val showAlbumsShelf: Boolean get() = albums.isNotEmpty() && !hasAlbumSections
+
+    /** Whether any section has an album: an album order can still resolve to nothing but the songs on none of them. */
+    val hasAlbumSections: Boolean get() = sections.any { it.album != null }
 
     /** What playing this screen's songs starts the queue from (#633). */
     val playContext: PlayContext get() = albumArtist?.playContext ?: PlayContext.None

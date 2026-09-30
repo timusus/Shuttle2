@@ -14,7 +14,10 @@ import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.sorting.ArtistSongComparator
+import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState.SongSection
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailUiState
 
 /** The album [songs] belong to, keyed the way the songs group, so it unfolds to them. */
@@ -41,22 +44,39 @@ val loadingAlbumDetail = AlbumDetailUiState(loadingState = AlbumDetailUiState.Lo
 
 val missingAlbumDetail = AlbumDetailUiState(album = null, loadingState = AlbumDetailUiState.LoadingState.Empty)
 
+/**
+ * An artist's detail as the ViewModel derives it: for an album [sortOrder] (the default), one section per album in
+ * [albums]' order with its songs in track order, then the songs on none of them; for a flat one, every song in one section.
+ */
 fun readyAlbumArtistDetail(
     artist: AlbumArtist = createAlbumArtist(name = "Juniper Static"),
     songs: List<Song> = phaseGardenSongs(),
     albums: List<Album> = listOf(albumOf(songs)),
+    sortOrder: ArtistSongSortOrder = ArtistSongSortOrder.Default,
     expandedAlbums: Set<AlbumGroupKey> = emptySet(),
     currentSong: Song? = null,
     appearsOn: List<Album> = emptyList(),
-) = AlbumArtistDetailUiState(
-    albumArtist = artist,
-    albums = albums,
-    appearsOn = appearsOn,
-    songs = songs,
-    expandedAlbums = expandedAlbums,
-    currentSong = currentSong,
-    loadingState = AlbumArtistDetailUiState.LoadingState.Ready,
-)
+): AlbumArtistDetailUiState {
+    val sections = if (sortOrder.groupsByAlbum) {
+        val albumKeys = albums.mapNotNullTo(HashSet()) { it.groupKey }
+        val others = songs.filter { it.albumGroupKey !in albumKeys }
+        albums.map { album -> SongSection(album, songs.filter { it.albumGroupKey == album.groupKey }.sortedWith(ArtistSongComparator.trackOrder)) }
+            .filter { it.songs.isNotEmpty() } + listOfNotNull(others.takeIf { it.isNotEmpty() }?.let { SongSection(null, it) })
+    } else {
+        listOf(SongSection(null, songs))
+    }
+    return AlbumArtistDetailUiState(
+        albumArtist = artist,
+        albums = albums,
+        appearsOn = appearsOn,
+        songs = sections.flatMap { it.songs },
+        sortOrder = sortOrder,
+        sections = sections,
+        expandedAlbums = expandedAlbums,
+        currentSong = currentSong,
+        loadingState = AlbumArtistDetailUiState.LoadingState.Ready,
+    )
+}
 
 val loadingAlbumArtistDetail = AlbumArtistDetailUiState(loadingState = AlbumArtistDetailUiState.LoadingState.Loading)
 
