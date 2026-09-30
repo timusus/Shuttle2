@@ -117,7 +117,7 @@ abstract class LibraryModule {
         fun providePlayHistoryRepository(
             database: MediaDatabase,
             albumIndex: LibraryAlbumIndex
-        ): PlayHistoryRepository = LocalPlayHistoryRepository(database.playEventDao(), albumIndex)
+        ): PlayHistoryRepository = LocalPlayHistoryRepository(database.playEventDao(), database.resumePointDao(), albumIndex)
 
         @Provides
         @SingleIn(AppScope::class)

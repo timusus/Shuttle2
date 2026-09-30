@@ -1,12 +1,15 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlayEventDao
+import com.simplecityapps.localmediaprovider.local.data.room.dao.ResumePointDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.ResumePointData
 import com.simplecityapps.mediaprovider.repository.playhistory.AlbumDay
 import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.GenrePlays
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
+import com.simplecityapps.mediaprovider.repository.playhistory.ResumePoint
 import com.simplecityapps.shuttle.model.AlbumIndexProvider
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
@@ -23,11 +26,12 @@ import kotlinx.datetime.offsetAt
 import kotlinx.datetime.toLocalDateTime
 
 /**
- * [PlayHistoryRepository] over `play_events`. Each recorded play prunes the history back to
+ * [PlayHistoryRepository] over `play_events`, and `resume_points` for where each context was left. Each recorded play prunes the history back to
  * [PlayHistoryRepository.RETENTION_DAYS] and [PlayHistoryRepository.MAX_EVENTS], at most once a day.
  */
 class LocalPlayHistoryRepository(
     private val playEventDao: PlayEventDao,
+    private val resumePointDao: ResumePointDao,
     private val albumIndex: AlbumIndexProvider,
     private val clock: Clock = Clock.System,
     private val timeZone: () -> TimeZone = TimeZone::currentSystemDefault
@@ -138,10 +142,48 @@ class LocalPlayHistoryRepository(
      */
     private fun utcOffsetMs(): Long = timeZone().offsetAt(clock.now()).totalSeconds * 1000L
 
+    override suspend fun saveResumePoint(point: ResumePoint) {
+        val context = current(point.context)
+        val contextId = context.id ?: return
+        resumePointDao.upsert(
+            ResumePointData(
+                contextType = context.type,
+                contextId = contextId,
+                mediaProvider = point.mediaProvider,
+                songPath = point.songPath,
+                positionMs = point.positionMs,
+                track = point.track,
+                trackCount = point.trackCount,
+                shuffled = point.shuffled,
+                finished = point.finished,
+                updatedAt = point.updatedAt
+            )
+        )
+    }
+
+    override suspend fun resumePoint(context: PlayContext): ResumePoint? {
+        val current = current(context)
+        val contextId = current.id ?: return null
+        return resumePointDao.get(current.type, contextId)?.let { row ->
+            ResumePoint(
+                context = context,
+                mediaProvider = row.mediaProvider,
+                songPath = row.songPath,
+                positionMs = row.positionMs,
+                track = row.track,
+                trackCount = row.trackCount,
+                shuffled = row.shuffled,
+                finished = row.finished,
+                updatedAt = row.updatedAt
+            )
+        }
+    }
+
     override fun eventCount(): Flow<Int> = playEventDao.observeCount()
 
     override suspend fun clearHistory() {
         playEventDao.clear()
+        resumePointDao.clear()
     }
 
     /** A play [ageDays] old's weight: 1 today, halving every [halfLife]. */

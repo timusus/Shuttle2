@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.repository.playhistory.ContextDays
 import com.simplecityapps.mediaprovider.repository.playhistory.GenrePlays
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.playhistory.RecentContext
+import com.simplecityapps.mediaprovider.repository.playhistory.ResumePoint
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import kotlin.time.Duration
@@ -29,6 +30,12 @@ class FakePlayHistoryRepository : PlayHistoryRepository {
     var albumDays: List<AlbumDay> = emptyList()
     var genrePlays: List<GenrePlays> = emptyList()
     val eventCount = MutableStateFlow(0)
+
+    /** Each context's resume point, as last saved. */
+    val resumePoints = mutableMapOf<PlayContext, ResumePoint>()
+
+    /** Every resume point saved, in order. */
+    val savedResumePoints = mutableListOf<ResumePoint>()
 
     /** The windowed aggregates asked for, with their arguments. */
     val queries = mutableListOf<String>()
@@ -68,9 +75,18 @@ class FakePlayHistoryRepository : PlayHistoryRepository {
         limit: Int
     ): List<GenrePlays> = genrePlays.take(limit)
 
+    override suspend fun saveResumePoint(point: ResumePoint) {
+        if (point.context == PlayContext.None) return
+        resumePoints[point.context] = point
+        savedResumePoints += point
+    }
+
+    override suspend fun resumePoint(context: PlayContext): ResumePoint? = resumePoints[context]
+
     override fun eventCount(): Flow<Int> = eventCount
 
     override suspend fun clearHistory() {
         plays.clear()
+        resumePoints.clear()
     }
 }

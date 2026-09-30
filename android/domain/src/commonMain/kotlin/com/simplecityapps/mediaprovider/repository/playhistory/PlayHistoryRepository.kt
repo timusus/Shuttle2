@@ -2,6 +2,7 @@ package com.simplecityapps.mediaprovider.repository.playhistory
 
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import kotlin.time.Duration
@@ -65,10 +66,16 @@ interface PlayHistoryRepository {
         limit: Int
     ): List<GenrePlays>
 
+    /** Saves where the queue started from [ResumePoint.context] was left (#670), replacing that context's last one. */
+    suspend fun saveResumePoint(point: ResumePoint)
+
+    /** Where the queue started from [context] was last left; null if it never was, or for [PlayContext.None]. */
+    suspend fun resumePoint(context: PlayContext): ResumePoint?
+
     /** How many events the history holds, re-emitted whenever it changes. */
     fun eventCount(): Flow<Int>
 
-    /** Forgets the whole listening history. */
+    /** Forgets the whole listening history, and where each context was left. */
     suspend fun clearHistory()
 
     companion object {
@@ -89,6 +96,23 @@ interface PlayHistoryRepository {
         const val MAX_EVENTS = 50_000
     }
 }
+
+/**
+ * Where the queue started from [context] was left (#670): its current song, found again by [mediaProvider] and
+ * [songPath], [positionMs] into it; the song's place in the queue as it played, [track] of [trackCount] from 0 (in the
+ * shuffled order when [shuffled]); and whether the queue [finished], its last song played through.
+ */
+data class ResumePoint(
+    val context: PlayContext,
+    val mediaProvider: MediaProviderType,
+    val songPath: String,
+    val positionMs: Long,
+    val track: Int,
+    val trackCount: Int,
+    val shuffled: Boolean,
+    val finished: Boolean,
+    val updatedAt: Instant
+)
 
 data class RecentContext(
     val context: PlayContext,

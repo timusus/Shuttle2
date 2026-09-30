@@ -10,6 +10,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.dao.PinnedCollectio
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlayEventDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistSongJoinDao
+import com.simplecityapps.localmediaprovider.local.data.room.dao.ResumePointDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SmartPlaylistDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SuggestionsDao
@@ -18,6 +19,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.PinnedCollec
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
+import com.simplecityapps.localmediaprovider.local.data.room.entity.ResumePointData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SmartPlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 
@@ -29,9 +31,10 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
         PinnedCollectionData::class,
         SmartPlaylistData::class,
         PendingFavouriteData::class,
-        PlayEventData::class
+        PlayEventData::class,
+        ResumePointData::class
     ],
-    version = 50,
+    version = 51,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -50,6 +53,8 @@ abstract class MediaDatabase : RoomDatabase() {
     abstract fun playEventDao(): PlayEventDao
 
     abstract fun suggestionsDao(): SuggestionsDao
+
+    abstract fun resumePointDao(): ResumePointDao
 }
 
 // Room generates the actual for each target.

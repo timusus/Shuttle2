@@ -10,12 +10,14 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventDat
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
+import com.simplecityapps.mediaprovider.repository.playhistory.ResumePoint
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -44,7 +46,7 @@ class LocalPlayHistoryRepositoryTest {
     private val clock = object : Clock {
         override fun now(): Instant = now
     }
-    private val repository = LocalPlayHistoryRepository(eventDao, freshAlbumIndex(database), clock) { TimeZone.UTC }
+    private val repository = LocalPlayHistoryRepository(eventDao, database.resumePointDao(), freshAlbumIndex(database), clock) { TimeZone.UTC }
 
     private val albumContext = PlayContext.Album(AlbumGroupKey("blue", AlbumArtistGroupKey("joni mitchell")))
     private val playlistContext = PlayContext.Playlist(7)
@@ -153,7 +155,7 @@ class LocalPlayHistoryRepositoryTest {
     @Test
     fun `album days split at local midnight`() = runTest {
         // 23:30 and 00:30 in Melbourne (UTC+10) are two days there, one in UTC
-        val melbourne = LocalPlayHistoryRepository(eventDao, freshAlbumIndex(database), clock) { TimeZone.of("Australia/Melbourne") }
+        val melbourne = LocalPlayHistoryRepository(eventDao, database.resumePointDao(), freshAlbumIndex(database), clock) { TimeZone.of("Australia/Melbourne") }
         val song = insertSong("Blue", "Joni Mitchell")
         melbourne.recordPlay(song, Instant.parse("2026-09-21T13:30:00Z"), 200_000, true, albumContext)
         melbourne.recordPlay(song, Instant.parse("2026-09-21T14:30:00Z"), 200_000, true, albumContext)
@@ -177,7 +179,7 @@ class LocalPlayHistoryRepositoryTest {
     @Test
     fun `genre plays are aged by local day`() = runTest {
         // 01:00 today in Melbourne (UTC+10) is still yesterday in UTC
-        val melbourne = LocalPlayHistoryRepository(eventDao, freshAlbumIndex(database), clock) { TimeZone.of("Australia/Melbourne") }
+        val melbourne = LocalPlayHistoryRepository(eventDao, database.resumePointDao(), freshAlbumIndex(database), clock) { TimeZone.of("Australia/Melbourne") }
         songDao.insert(listOf(createSongData(album = "Kind of Blue").copy(genres = listOf("Jazz"))))
         melbourne.recordPlay(songDao.get().single().toSong(), Instant.parse("2026-09-22T15:00:00Z"), 200_000, true, PlayContext.None)
 
@@ -242,15 +244,42 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
-    fun `clearing the history forgets every play`() = runTest {
+    fun `clearing the history forgets every play and where each context was left`() = runTest {
         val song = insertSong("Blue", "Joni Mitchell")
         repository.recordPlay(song, now, 200_000, true, albumContext)
+        repository.saveResumePoint(resumePoint(albumContext))
 
         repository.clearHistory()
 
         repository.recentContexts(10).shouldBeEmpty()
         eventDao.count() shouldBe 0
+        repository.resumePoint(albumContext).shouldBeNull()
     }
+
+    @Test
+    fun `a context's resume point is read back, and a later one replaces it`() = runTest {
+        repository.saveResumePoint(resumePoint(albumContext, track = 2))
+        repository.saveResumePoint(resumePoint(playlistContext, track = 1))
+
+        repository.saveResumePoint(resumePoint(albumContext, track = 4, finished = true))
+
+        repository.resumePoint(albumContext) shouldBe resumePoint(albumContext, track = 4, finished = true)
+        repository.resumePoint(playlistContext) shouldBe resumePoint(playlistContext, track = 1)
+        repository.resumePoint(genreContext).shouldBeNull()
+    }
+
+    @Test
+    fun `a queue from no context has no resume point`() = runTest {
+        repository.saveResumePoint(resumePoint(PlayContext.None))
+
+        repository.resumePoint(PlayContext.None).shouldBeNull()
+    }
+
+    private fun resumePoint(
+        context: PlayContext,
+        track: Int = 0,
+        finished: Boolean = false
+    ) = ResumePoint(context, MediaProviderType.Shuttle, "/music/$track.flac", 61_000, track, 12, shuffled = true, finished, now)
 
     @Test
     fun `recording prunes plays older than the retention period and beyond the cap, at most daily`() = runTest {
