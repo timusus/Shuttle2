@@ -62,6 +62,16 @@ struct SongListContent: View {
     var onShuffle: () -> Void = {}
 
     var body: some View {
+        content
+            .toolbar {
+                if !state.songs.isEmpty {
+                    ShuffleButton(identifier: "songs.shuffle", action: onShuffle)
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch state.loadingState {
         case .loading:
             LibraryListSkeleton()
@@ -74,10 +84,7 @@ struct SongListContent: View {
                 items: state.songs,
                 id: \.id,
                 sections: LetterIndex.sections(state.letterIndex, items: state.songs, id: \.id)
-            ) {
-                ShuffleRow(count: state.songs.count, noun: "song", action: onShuffle)
-                    .accessibilityIdentifier("songs.shuffle")
-            } row: { index, song in
+            ) { index, song in
                 let playback = nowPlaying.playback(song: song)
                 Button { onPlay(index) } label: { SongRow(song: song, playback: playback) }
                     .buttonStyle(.pressScale)

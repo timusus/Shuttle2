@@ -44,26 +44,23 @@ enum LetterIndex {
 }
 
 /// A plain list of `items` in their letter `sections`, with the index down its trailing edge; without sections, the
-/// same rows unsectioned. `header` rows (Songs' Shuffle) come first, outside any section. `row` gets each item's
+/// same rows unsectioned, without separators (spacing carries the grouping, #676). `row` gets each item's
 /// position in `items`.
-struct LetterIndexedList<Item, ID: Hashable, Header: View, Row: View>: View {
+struct LetterIndexedList<Item, ID: Hashable, Row: View>: View {
     let items: [Item]
     let id: KeyPath<Item, ID>
     let sections: [LetterIndexSection]?
-    @ViewBuilder let header: () -> Header
     @ViewBuilder let row: (Int, Item) -> Row
 
     init(
         items: [Item],
         id: KeyPath<Item, ID>,
         sections: [LetterIndexSection]?,
-        @ViewBuilder header: @escaping () -> Header,
         @ViewBuilder row: @escaping (Int, Item) -> Row
     ) {
         self.items = items
         self.id = id
         self.sections = sections
-        self.header = header
         self.row = row
     }
 
@@ -71,7 +68,6 @@ struct LetterIndexedList<Item, ID: Hashable, Header: View, Row: View>: View {
         if let sections {
             ScrollViewReader { proxy in
                 List {
-                    header()
                     ForEach(sections) { section in
                         Section {
                             ForEach(section.rows.map { IndexedItem(index: $0, item: items[$0], id: items[$0][keyPath: id]) }, id: \.id) {
@@ -81,16 +77,17 @@ struct LetterIndexedList<Item, ID: Hashable, Header: View, Row: View>: View {
                     }
                 }
                 .listStyle(.plain)
+                .listRowSeparator(.hidden)
                 .letterIndex(sections) { proxy.scrollTo($0.anchor, anchor: .top) }
             }
         } else {
             List {
-                header()
                 ForEach(items.indices.map { IndexedItem(index: $0, item: items[$0], id: items[$0][keyPath: id]) }, id: \.id) {
                     row($0.index, $0.item)
                 }
             }
             .listStyle(.plain)
+            .listRowSeparator(.hidden)
         }
     }
 }
@@ -122,12 +119,6 @@ struct LibraryRowLink<Label: View>: View {
                 .accessibilityElement(children: .combine)
                 .accessibilityAddTraits(.isButton)
         }
-    }
-}
-
-extension LetterIndexedList where Header == EmptyView {
-    init(items: [Item], id: KeyPath<Item, ID>, sections: [LetterIndexSection]?, @ViewBuilder row: @escaping (Int, Item) -> Row) {
-        self.init(items: items, id: id, sections: sections, header: { EmptyView() }, row: row)
     }
 }
 

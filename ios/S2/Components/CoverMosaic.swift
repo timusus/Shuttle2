@@ -93,3 +93,26 @@ struct GeneratedArtwork: View {
         .accessibilityHidden(true)
     }
 }
+
+/// A built-in auto playlist's tile (Favourites, Recently Added ...): the accent-tinted glyph on a subtle
+/// rounded-square fill, the same in light and dark, in place of a tone-seeded `GeneratedArtwork`.
+struct AutoPlaylistArtwork: View {
+    let symbol: String
+    var cornerRadius: CGFloat = ArtworkCorner.row
+
+    var body: some View {
+        GeometryReader { proxy in
+            let glyph = min(proxy.size.width, proxy.size.height) * ArtworkPalette.placeholderGlyphScale
+            ZStack {
+                Color(.secondarySystemFill)
+                Image(systemName: symbol)
+                    .resizable()
+                    .scaledToFit()
+                    .fontWeight(.medium)
+                    .frame(width: glyph, height: glyph)
+                    .foregroundStyle(.tint)
+            }
+        }
+        .accessibilityHidden(true)
+    }
+}

@@ -65,6 +65,16 @@ struct GenreListContent: View {
     var onShuffle: () -> Void = {}
 
     var body: some View {
+        content
+            .toolbar {
+                if !state.genres.isEmpty {
+                    ShuffleButton(identifier: "genres.shuffle", action: onShuffle)
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
         switch state.loadingState {
         case .loading:
             LibraryListSkeleton()
@@ -73,10 +83,7 @@ struct GenreListContent: View {
         case .empty:
             EmptyState("No Genres", systemImage: "guitars", message: "Pull to refresh to import.")
         case .ready, .scanning:
-            LetterIndexedList(items: state.genres, id: \.name, sections: LetterIndex.sections(state.letterIndex, items: state.genres, id: \.name), header: {
-                ShuffleRow(count: state.genres.count, noun: "genre", action: onShuffle)
-                    .accessibilityIdentifier("genres.shuffle")
-            }) { _, genre in
+            LetterIndexedList(items: state.genres, id: \.name, sections: LetterIndex.sections(state.letterIndex, items: state.genres, id: \.name)) { _, genre in
                 LibraryRowLink(route: Route.genre(genre)) { GenreRow(genre: genre, covers: covers[genre.name] ?? []) }
                     .contextMenu {
                         Button("Play", systemImage: "play") { onPlay(genre) }

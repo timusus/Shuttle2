@@ -22,6 +22,8 @@ struct MediaRow<Trailing: View>: View {
     let artwork: ArtworkSource?
     /// A playlist's or genre's artwork, in place of `artwork`.
     let mosaic: CoverMosaic?
+    /// An auto playlist's glyph, drawn as an `AutoPlaylistArtwork` tile in place of `artwork`.
+    let tintedGlyph: String?
     let artworkSize: CGFloat
     let placeholderSymbol: String
     let playback: MediaRowPlayback
@@ -36,6 +38,7 @@ struct MediaRow<Trailing: View>: View {
         subtitle: String? = nil,
         artwork: ArtworkSource? = nil,
         mosaic: CoverMosaic? = nil,
+        tintedGlyph: String? = nil,
         artworkSize: CGFloat = ArtworkSize.row,
         placeholderSymbol: String = "music.note",
         playback: MediaRowPlayback = .none,
@@ -46,6 +49,7 @@ struct MediaRow<Trailing: View>: View {
         self.subtitle = subtitle
         self.artwork = artwork
         self.mosaic = mosaic
+        self.tintedGlyph = tintedGlyph
         self.artworkSize = artworkSize
         self.placeholderSymbol = placeholderSymbol
         self.playback = playback
@@ -80,6 +84,8 @@ struct MediaRow<Trailing: View>: View {
         let image = Group {
             if let mosaic {
                 mosaic
+            } else if let tintedGlyph {
+                AutoPlaylistArtwork(symbol: tintedGlyph)
             } else if let artwork {
                 RemoteArtwork(artwork, points: artworkSize) {
                     ArtworkPlaceholder(symbol: placeholderSymbol)
@@ -112,13 +118,14 @@ extension MediaRow where Trailing == EmptyView {
         subtitle: String? = nil,
         artwork: ArtworkSource? = nil,
         mosaic: CoverMosaic? = nil,
+        tintedGlyph: String? = nil,
         artworkSize: CGFloat = ArtworkSize.row,
         placeholderSymbol: String = "music.note",
         playback: MediaRowPlayback = .none,
         titleIdentifier: String? = nil
     ) {
         self.init(
-            title, subtitle: subtitle, artwork: artwork, mosaic: mosaic, artworkSize: artworkSize,
+            title, subtitle: subtitle, artwork: artwork, mosaic: mosaic, tintedGlyph: tintedGlyph, artworkSize: artworkSize,
             placeholderSymbol: placeholderSymbol, playback: playback, titleIdentifier: titleIdentifier
         ) { EmptyView() }
     }

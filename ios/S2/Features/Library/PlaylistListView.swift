@@ -133,11 +133,7 @@ private struct PlaylistListReadyView: View {
 
     var body: some View {
         List {
-            if !state.playlists.isEmpty {
-                ShuffleRow(count: state.playlists.count, noun: "playlist", action: onShuffle)
-                    .accessibilityIdentifier("playlists.shuffle")
-            }
-            Section("Smart Playlists") {
+            Section("Auto Playlists") {
                 ForEach(state.smartPlaylists, id: \.id.id) { smartPlaylist in
                     SmartPlaylistRow(smartPlaylist: smartPlaylist)
                 }
@@ -152,7 +148,11 @@ private struct PlaylistListReadyView: View {
             }
         }
         .listStyle(.plain)
+        .listRowSeparator(.hidden)
         .toolbar {
+            if !state.playlists.isEmpty {
+                ShuffleButton(identifier: "playlists.shuffle", action: onShuffle)
+            }
             Button("New Playlist", systemImage: "plus") {
                 newPlaylistName = ""
                 isCreating = true
@@ -210,7 +210,7 @@ private struct SmartPlaylistRow: View {
 
     var body: some View {
         LibraryRowLink(route: Route.smartPlaylist(smartPlaylist)) {
-            MediaRow(smartPlaylist.id.title, mosaic: CoverMosaic(covers: [], seed: smartPlaylist.id.title, symbol: smartPlaylist.id.symbol))
+            MediaRow(smartPlaylist.id.title, tintedGlyph: smartPlaylist.id.symbol)
         }
     }
 }

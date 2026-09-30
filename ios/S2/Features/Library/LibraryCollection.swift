@@ -21,16 +21,13 @@ struct ViewModeToggle: View {
 
 /// Adaptive columns of tiles, at least `minimumTile` wide, within the readable content width: two on every iPhone
 /// in portrait (beside the letter index), more in landscape, more again on an iPad. With an `index`, the letter strip
-/// down the trailing edge scrolls to each section's first tile, by the tile's id. `header` (a list's Shuffle) spans the
-/// width above the tiles.
-struct LibraryGrid<Header: View, Content: View>: View {
+/// down the trailing edge scrolls to each section's first tile, by the tile's id.
+struct LibraryGrid<Content: View>: View {
     var index: [LetterIndexSection]?
-    @ViewBuilder let header: () -> Header
     @ViewBuilder let content: () -> Content
 
-    init(index: [LetterIndexSection]? = nil, @ViewBuilder header: @escaping () -> Header, @ViewBuilder content: @escaping () -> Content) {
+    init(index: [LetterIndexSection]? = nil, @ViewBuilder content: @escaping () -> Content) {
         self.index = index
-        self.header = header
         self.content = content
     }
 
@@ -64,7 +61,6 @@ struct LibraryGrid<Header: View, Content: View>: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.medium) {
-                    header()
                     LazyVGrid(columns: columns, spacing: Spacing.large) {
                         content()
                     }
@@ -133,35 +129,14 @@ struct LibraryTile: View {
     }
 }
 
-extension LibraryGrid where Header == EmptyView {
-    init(index: [LetterIndexSection]? = nil, @ViewBuilder content: @escaping () -> Content) {
-        self.init(index: index, header: { EmptyView() }, content: content)
-    }
-}
-
-/// A list's Shuffle, as the row heading it (Songs, Albums, Artists, #643): the tinted glyph and title, with how many it shuffles.
-struct ShuffleRow: View {
-    let count: Int
-    /// What's counted, singular: "song".
-    let noun: String
+/// A list's Shuffle, as a toolbar button next to the view-mode and settings items (#676).
+struct ShuffleButton: View {
+    let identifier: String
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            HStack(spacing: Spacing.smallMedium) {
-                Label("Shuffle", systemImage: "shuffle")
-                    .font(.s2Headline)
-                    .foregroundStyle(.tint)
-                Spacer(minLength: Spacing.small)
-                Text(count == 1 ? "1 \(noun)" : "\(count) \(noun)s")
-                    .font(.footnote)
-                    .foregroundStyle(.s2SecondaryText)
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.pressScale)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
+        Button("Shuffle", systemImage: "shuffle", action: action)
+            .accessibilityIdentifier(identifier)
     }
 }
 

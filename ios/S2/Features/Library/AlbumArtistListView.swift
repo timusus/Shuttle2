@@ -72,6 +72,7 @@ struct AlbumArtistListContent: View {
         content
             .toolbar {
                 if state.loadingState != .empty {
+                    ShuffleButton(identifier: "albumArtists.shuffle", action: onShuffle)
                     ViewModeToggle(mode: state.viewMode, onChange: onViewMode)
                 }
             }
@@ -89,7 +90,7 @@ struct AlbumArtistListContent: View {
         case .ready, .scanning:
             let index = LetterIndex.sections(state.letterIndex, items: state.albumArtists, id: \.stableId)
             if state.viewMode == .grid {
-                LibraryGrid(index: index, header: { shuffle }) {
+                LibraryGrid(index: index) {
                     ForEach(state.albumArtists, id: \.stableId) { artist in
                         NavigationLink(value: Route.albumArtist(artist)) {
                             LibraryTile(
@@ -105,7 +106,7 @@ struct AlbumArtistListContent: View {
                     }
                 }
             } else {
-                LetterIndexedList(items: state.albumArtists, id: \.stableId, sections: index, header: { shuffle }) { _, artist in
+                LetterIndexedList(items: state.albumArtists, id: \.stableId, sections: index) { _, artist in
                     let playback = nowPlaying.playback(albumArtist: artist)
                     LibraryRowLink(route: Route.albumArtist(artist)) { AlbumArtistRow(albumArtist: artist, playback: playback) }
                         .contextMenu { menu(artist) }
@@ -113,11 +114,6 @@ struct AlbumArtistListContent: View {
                 }
             }
         }
-    }
-
-    private var shuffle: some View {
-        ShuffleRow(count: state.albumArtists.count, noun: "artist", action: onShuffle)
-            .accessibilityIdentifier("albumArtists.shuffle")
     }
 
     @ViewBuilder
