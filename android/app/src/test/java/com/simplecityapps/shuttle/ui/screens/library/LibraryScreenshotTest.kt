@@ -9,6 +9,7 @@ import com.github.takahirom.roborazzi.roborazziSystemPropertyTaskType
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.persistence.LibraryTab
+import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.ui.DocsDesignRoborazziOptions
 import com.simplecityapps.shuttle.ui.SampleArtworkCoil
 import com.simplecityapps.shuttle.ui.preview.sampleSongs
@@ -161,6 +162,24 @@ class LibraryScreenshotTest {
             ),
         )
         shot("phone-artist-detail")
+    }
+
+    /** Juniper Static's songs listed flat by title, under the Albums section they bring back (#678). */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-xhdpi")
+    fun phoneArtistDetailFlat() {
+        val artist = SampleLibrary.artist("Juniper Static")
+        val artistSongs = artist.albums.flatMap { album -> album.songs.map { it.toSong() } }
+        val artistAlbums = artist.albums.map { album -> albumOf(album.songs.map { it.toSong() }, year = album.year) }
+        detail.setAlbumArtist(
+            readyAlbumArtistDetail(
+                artist = artist.toAlbumArtist(),
+                songs = artistSongs.sortedBy { it.name },
+                albums = artistAlbums,
+                sortOrder = ArtistSongSortOrder.SongTitle,
+            ),
+        )
+        shot("phone-artist-detail-flat")
     }
 
     /** Juniper Static's albums, folded, then Appears On: the compilation carrying their live edit (#637). */
