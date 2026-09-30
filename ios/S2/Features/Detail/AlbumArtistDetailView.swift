@@ -3,10 +3,10 @@ import SwiftUI
 
 /// Album artist detail (P5-7, polished in #624, sectioned in #631): a hero tinted from the artist's picture (the
 /// artist's picture, name, albums · songs, Play/Shuffle, and Shuffle by Album in the toolbar's menu), the artist's
-/// most played songs, a shelf of the artist's album tiles (each zooming into `Route.album`), an Appears On shelf of
-/// others' albums crediting them (#637, hidden when empty; a long press on any tile plays or queues it), then the artist's songs
-/// in the chosen `ArtistSongSortOrder`: under one sticky, foldable header per album for the album orders, or as one
-/// flat list. Tapping a song plays every song in the visible order from it, folded albums included. Modeled on
+/// most played songs, a shelf of the artist's album tiles (each zooming into `Route.album`) while the songs are flat, an
+/// Appears On shelf of others' albums crediting them (#637, hidden when empty; a long press on any tile plays or queues
+/// it), then the artist's songs in the chosen `ArtistSongSortOrder`: under one sticky, foldable header per album for the
+/// album orders, where the headers stand in for the album shelf (#678), or as one flat list. Tapping a song plays every song in the visible order from it, folded albums included. Modeled on
 /// Android's `AlbumArtistDetailScreen.kt`.
 struct AlbumArtistDetailView: View {
     let albumArtistKey: String?
@@ -131,7 +131,7 @@ struct AlbumArtistDetailContent: View {
                         }
                     }
                 }
-                if !state.albums.isEmpty {
+                if state.showAlbumsShelf {
                     DetailAlbumShelf(
                         title: "Albums",
                         albums: state.albums,
@@ -251,8 +251,11 @@ struct AlbumArtistDetailContent: View {
         }
     }
 
+    /// One album's section. Collapsed, it's only its header, so the headers stack as a run of compact rows (#678):
+    /// no spacing between sections, and the header's own insets rather than the plain list's taller default.
     private func albumSection(_ album: Album, songs: [Song], startIndex: Int) -> some View {
         let expanded = isExpanded(album)
+        let inset = AdaptiveLayout.contentInset(layoutTier)
         return Section {
             if expanded {
                 songRows(songs, startIndex: startIndex, numbered: true)
@@ -269,7 +272,9 @@ struct AlbumArtistDetailContent: View {
                 onAddToQueue: { onAddToQueue(songs) },
                 onOpenAlbum: { onAlbumTap(album) }
             )
+            .listRowInsets(EdgeInsets(top: Spacing.xsmall, leading: inset, bottom: Spacing.xsmall, trailing: inset))
         }
+        .listSectionSpacing(0)
     }
 
     /// [startIndex] is where [songs] begins in [state.songs] (its home section's offset), so tapping a row plays
@@ -307,7 +312,7 @@ struct AlbumArtistDetailContent: View {
 }
 
 /// The Songs header: the title, the sort menu (a checkmark on the current order) and, for the album orders, Expand
-/// All or Collapse All.
+/// All or Collapse All. It reads "Albums & Songs" while its album sections stand in for the hidden album shelf.
 struct SongsHeader: View {
     let sortOrder: ArtistSongSortOrder
     let allExpanded: Bool
@@ -320,7 +325,7 @@ struct SongsHeader: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: Spacing.medium) {
-            Text("Songs")
+            Text(sortOrder.groupsByAlbum && hasAlbumSections ? "Albums & Songs" : "Songs")
                 .font(.s2SectionTitle)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: Spacing.small)

@@ -1,6 +1,7 @@
 # The artist detail's song sections (#631): opens an artist with many albums (The Mars Volta, 8 on the Jellyfin test
-# server) from Library > Artists, then shoots the hero, the collapsed album sections, the sections expanded, and
-# the sort menu open. Ends back on the default sort (Album, Newest First). iPhone only (the chip rail); signed in
+# server) from Library > Artists, then shoots the hero, the collapsed album sections (no Albums shelf above them,
+# #678), the sections expanded, the sort menu open, and the flat Song Title order with the Albums shelf back. Ends
+# back on the default sort (Album, Newest First). iPhone only (the chip rail); signed in
 # already: run sign-in-jellyfin.yaml first. Run it again with the simulator in dark mode for the dark shots.
 #
 #   OUT=/tmp/s2-631/iphone-light ios/scripts/maestro-sim.sh artist-detail-sections.yaml
@@ -51,6 +52,21 @@ appId: com.simplecityapps.shuttle.dev
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 4-sort-menu
+- tapOn: "Song Title"
+- waitForAnimationToEnd:
+    timeout: 3000
+- scrollUntilVisible:
+    element:
+      text: "Albums"
+    direction: UP
+    centerElement: true
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: 5-flat
+- tapOn:
+    id: "artistDetail.sortMenu"
+- waitForAnimationToEnd:
+    timeout: 3000
 - tapOn: "Album, Newest First"
 - waitForAnimationToEnd:
     timeout: 3000
