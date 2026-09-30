@@ -71,7 +71,7 @@ val MiniPlayerHeight = 72.dp
 /** Height of the seek bar: the slider over its times. */
 internal val SeekBarHeight = 60.dp
 
-/** Height of the Large transport controls, whose play morph is the tallest button. */
+/** Height of the Large transport controls, whose play button is the tallest. */
 internal val ControlsHeight = 96.dp
 
 /** The step from the title block down to the seek bar, which belongs with it. */

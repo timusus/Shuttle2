@@ -97,7 +97,7 @@ val CatalogEntries = listOf(
     CatalogEntry(
         "grid-tile",
         "Grid tile",
-        listOf("album, artist, playlist with the scalloped mask", "playing", "selected", "long text", "placeholder"),
+        listOf("album, artist, playlist", "playing", "selected", "long text", "placeholder"),
     ) { GridTileBoard(it) },
     CatalogEntry("section-header", "Section header", listOf("with action", "plain", "sticky letter header")) { SectionHeaderBoard(it) },
     CatalogEntry("state-empty", "Empty state", listOf("with action", "without action")) { EmptyStateBoard(it) },

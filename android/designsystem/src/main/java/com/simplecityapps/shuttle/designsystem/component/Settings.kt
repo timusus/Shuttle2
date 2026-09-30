@@ -33,7 +33,7 @@ import com.simplecityapps.shuttle.designsystem.preview.S2Preview
  */
 
 /**
- * How a settings row draws its leading icon. [Tonal] sets it in a tonal cookie-shaped container and is
+ * How a settings row draws its leading icon. [Tonal] sets it in a tonal rounded-square container and is
  * for top-level rows; [Plain] is the bare icon, for the rows under them, so the containers mark the
  * hierarchy instead of flattening it (#496).
  */

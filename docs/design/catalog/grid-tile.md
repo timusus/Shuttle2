@@ -2,7 +2,7 @@
 
 [All components](index.md)
 
-States: album, artist, playlist with the scalloped mask; playing; selected; long text; placeholder.
+States: album, artist, playlist; playing; selected; long text; placeholder.
 
 ## Compact, light
 
