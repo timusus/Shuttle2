@@ -202,7 +202,7 @@ struct AlbumArtistDetailContent: View {
             SongsHeader(
                 sortOrder: state.sortOrder,
                 allExpanded: allExpanded,
-                hasAlbumSections: hasAlbumSections,
+                hasAlbumSections: state.hasAlbumSections,
                 onSortOrderSelected: onSortOrderSelected,
                 onExpandAll: onExpandAll,
                 onCollapseAll: onCollapseAll
@@ -296,12 +296,6 @@ struct AlbumArtistDetailContent: View {
 
     private func isExpanded(_ album: Album) -> Bool {
         album.groupKey.map { state.expandedAlbums.contains($0) } ?? false
-    }
-
-    /// Whether the song list has any collapsible album section, which the Songs header needs before it offers
-    /// Expand All / Collapse All (#636): an album order can still resolve to nothing but "Other Songs".
-    private var hasAlbumSections: Bool {
-        !state.sections.compactMap(\.album).isEmpty
     }
 
     /// Whether every album section is unfolded, which turns the header's Expand All into Collapse All.
