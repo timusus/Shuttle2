@@ -136,19 +136,21 @@ private struct PlaylistListReadyView: View {
             Section("Auto Playlists") {
                 ForEach(state.smartPlaylists, id: \.id.id) { smartPlaylist in
                     SmartPlaylistRow(smartPlaylist: smartPlaylist)
+                        .listRowSeparator(.hidden)
                 }
             }
             Section("Playlists") {
                 if state.playlists.isEmpty {
                     Text("No playlists yet. Tap + to create one.").foregroundStyle(.secondary)
+                        .listRowSeparator(.hidden)
                 }
                 ForEach(state.playlists, id: \.id) { playlist in
                     playlistRow(playlist)
+                        .listRowSeparator(.hidden)
                 }
             }
         }
         .listStyle(.plain)
-        .listRowSeparator(.hidden)
         .toolbar {
             if !state.playlists.isEmpty {
                 ShuffleButton(identifier: "playlists.shuffle", action: onShuffle)
