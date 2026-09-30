@@ -64,7 +64,9 @@ class FakeQueueOperations : QueueOperations {
         playContext = PlayContext.None
     }
     override fun getShuffleMode(): ShuffleMode = shuffleModeFlow.value
-    override suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {}
+    override suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {
+        shuffleModeFlow.value = shuffleMode
+    }
     override suspend fun toggleShuffleMode() {
         shuffleModeFlow.value = if (shuffleModeFlow.value == ShuffleMode.On) ShuffleMode.Off else ShuffleMode.On
     }

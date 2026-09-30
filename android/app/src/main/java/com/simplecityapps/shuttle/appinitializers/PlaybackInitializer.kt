@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.di.ApplicationContext
 import com.simplecityapps.shuttle.playback.RecordPlays
+import com.simplecityapps.shuttle.playback.RecordResumePoints
 import dev.zacsweers.metro.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,8 @@ import timber.log.Timber
 /**
  * Starts playback when the app is launched: the playback components that run for the life of the app (Cast, once the
  * app first comes to the foreground, the media session, bit-perfect USB output and the queue's library updates), and the restore of the saved queue
- * ([QueueStore], which saves it too), and the recording of each song's plays ([RecordPlays]). Starts [PlaybackService]
+ * ([QueueStore], which saves it too), the recording of each song's plays ([RecordPlays]) and of where each
+ * play context was left ([RecordResumePoints]). Starts [PlaybackService]
  * when playback starts.
  */
 class PlaybackInitializer
@@ -35,6 +37,7 @@ constructor(
     @ApplicationContext private val context: Context,
     private val playbackOperations: PlaybackOperations,
     private val recordPlays: RecordPlays,
+    private val recordResumePoints: RecordResumePoints,
     private val queueStore: QueueStore,
     private val castStarter: Lazy<CastStarter>,
     private val playRequests: Lazy<PlayRequests>,
@@ -48,6 +51,7 @@ constructor(
         startPlaybackComponents(application)
         collectPlaybackState()
         recordPlays.start()
+        recordResumePoints.start()
 
         // A saved song that can't load (a server out of reach, a file not there yet) stays where it was left.
         queueStore.restore { positionMs -> playbackOperations.load(positionMs, skipUnloadable = false) {} }

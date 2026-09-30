@@ -27,6 +27,7 @@ enum AppGraph {
         let dependencies = IosAppDependencies()
         dependencies.playbackSystem.start()
         dependencies.graph.recordPlays.start()
+        dependencies.graph.recordResumePoints.start()
         dependencies.graph.librarySearchIndex.warmUp()
         _dependencies = dependencies
     }

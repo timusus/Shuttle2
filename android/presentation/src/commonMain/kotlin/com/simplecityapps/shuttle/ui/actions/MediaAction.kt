@@ -70,6 +70,17 @@ sealed interface MediaAction {
         constructor(selection: MediaSelection) : this(selection, selection.playContext)
     }
 
+    /**
+     * Plays [context] from where it was left (#670), as a Jump back in tile's Play does ([ResumeContext]), or carries out
+     * [fromStart] when there's nothing to carry on from.
+     */
+    data class Resume(
+        val fromStart: MediaAction,
+        val context: PlayContext
+    ) : MediaAction {
+        override val selection: MediaSelection get() = fromStart.selection
+    }
+
     data class PlayNext(override val selection: MediaSelection) : MediaAction
 
     data class AddToQueue(override val selection: MediaSelection) : MediaAction

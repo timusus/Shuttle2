@@ -3,6 +3,7 @@ package com.simplecityapps.fakes
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
+import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
@@ -33,6 +34,7 @@ import com.simplecityapps.shuttle.ui.actions.RenamePlaylist
 import com.simplecityapps.shuttle.ui.actions.ReorderPlaylistSongs
 import com.simplecityapps.shuttle.ui.actions.ResolveSongs
 import com.simplecityapps.shuttle.ui.actions.RestorePlaylistSongs
+import com.simplecityapps.shuttle.ui.actions.ResumeContext
 import com.simplecityapps.shuttle.ui.actions.ShareSongs
 import com.simplecityapps.shuttle.ui.actions.ShuffleSongs
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
@@ -48,6 +50,7 @@ class TestMediaActions(
     playbackOperations: PlaybackOperations = FakePlaybackOperations(),
     albumRepository: AlbumRepository = FakeAlbumRepository(),
     albumArtistRepository: AlbumArtistRepository = FakeAlbumArtistRepository(),
+    playHistoryRepository: PlayHistoryRepository = FakePlayHistoryRepository(),
 ) {
     /** Whether a song's file deletes; every delete succeeds by default. */
     var fileDeleter: SongFileDeleter = SongFileDeleter { true }
@@ -55,6 +58,7 @@ class TestMediaActions(
     val resolveSongs = ResolveSongs(songRepository, genreRepository, playlistRepository, queueOperations, ResolveFolderSongs(songRepository))
     val playSongs = PlaySongs(queueOperations, playbackOperations)
     val shuffleSongs = ShuffleSongs(playbackOperations)
+    val resumeContext = ResumeContext(queueOperations, playbackOperations, playHistoryRepository, resolveSongs)
     val enqueueSongs = EnqueueSongs(playbackOperations, resolveSongs)
     val addToPlaylist = AddToPlaylist(playlistRepository, resolveSongs)
     val createPlaylist = CreatePlaylist(playlistRepository, resolveSongs)
@@ -87,6 +91,7 @@ class TestMediaActions(
         resolveSongs = resolveSongs,
         playSongs = playSongs,
         shuffleSongs = shuffleSongs,
+        resumeContext = resumeContext,
         enqueueSongs = enqueueSongs,
         addToPlaylist = addToPlaylist,
         favouriteSongs = favouriteSongs,

@@ -10,6 +10,7 @@ import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.persistence.QueueStore
 import com.simplecityapps.shuttle.playback.RecordPlays
+import com.simplecityapps.shuttle.playback.RecordResumePoints
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -46,6 +47,13 @@ class PlaybackInitializerTest {
             playbackOperations,
             FakeQueueOperations(),
             songRepository,
+            FakePlayHistoryRepository(),
+            appCoroutineScope,
+            mainDispatcherRule.testDispatcher
+        ),
+        recordResumePoints = RecordResumePoints(
+            playbackOperations,
+            FakeQueueOperations(),
             FakePlayHistoryRepository(),
             appCoroutineScope,
             mainDispatcherRule.testDispatcher

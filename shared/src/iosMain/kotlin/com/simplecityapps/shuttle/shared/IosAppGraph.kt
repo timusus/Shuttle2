@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.shared
 import androidx.lifecycle.SavedStateHandle
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.playback.RecordPlays
+import com.simplecityapps.shuttle.playback.RecordResumePoints
 import com.simplecityapps.shuttle.shared.artwork.ArtworkUrls
 import com.simplecityapps.shuttle.shared.playback.IosAudioPlayer
 import com.simplecityapps.shuttle.shared.playback.IosPlayerController
@@ -70,6 +71,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** Records each song's plays and pause positions from [playerController]'s events; Swift starts it once, at launch. */
     val recordPlays: RecordPlays
+
+    /** Keeps where each play context was left (#670) from [playerController]'s events; Swift starts it once, at launch. */
+    val recordResumePoints: RecordResumePoints
 
     /** The search index; Swift warms it once, at launch, so the first search doesn't wait for the build. */
     val librarySearchIndex: LibrarySearchIndex

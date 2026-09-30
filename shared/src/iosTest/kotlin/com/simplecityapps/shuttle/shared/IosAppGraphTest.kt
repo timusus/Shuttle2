@@ -73,6 +73,7 @@ class IosAppGraphTest {
         graph.songImportStateProvider
         graph.artworkUrls
         graph.recordPlays
+        graph.recordResumePoints
     }
 
     @Test

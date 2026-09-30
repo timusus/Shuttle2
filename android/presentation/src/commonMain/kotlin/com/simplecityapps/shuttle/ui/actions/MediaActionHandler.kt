@@ -19,6 +19,7 @@ class MediaActionHandler @Inject constructor(
     private val resolveSongs: ResolveSongs,
     private val playSongs: PlaySongs,
     private val shuffleSongs: ShuffleSongs,
+    private val resumeContext: ResumeContext,
     private val enqueueSongs: EnqueueSongs,
     private val addToPlaylist: AddToPlaylist,
     private val createPlaylist: CreatePlaylist,
@@ -35,6 +36,8 @@ class MediaActionHandler @Inject constructor(
         is MediaAction.Play -> play(action)
 
         is MediaAction.Shuffle -> shuffle(action)
+
+        is MediaAction.Resume -> resume(action)
 
         is MediaAction.PlayNext -> enqueue(action.selection, EnqueueSongs.Position.Next)
 
@@ -99,6 +102,12 @@ class MediaActionHandler @Inject constructor(
             is ShuffleSongs.Result.Success -> MediaActionResult.None
             is ShuffleSongs.Result.Failure -> Message(MediaActionMessage.PlaybackFailed(result.message))
         }
+    }
+
+    private suspend fun resume(action: MediaAction.Resume): MediaActionResult = when (val result = resumeContext(action.selection, action.context)) {
+        is ResumeContext.Result.Resumed -> MediaActionResult.None
+        is ResumeContext.Result.StartOver -> handle(action.fromStart)
+        is ResumeContext.Result.Failure -> Message(MediaActionMessage.PlaybackFailed(result.message))
     }
 
     private suspend fun enqueue(selection: MediaSelection, position: EnqueueSongs.Position): MediaActionResult {
