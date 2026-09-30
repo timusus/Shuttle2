@@ -29,14 +29,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 
 /**
  * The whole library as one [SearchIndex] of [AlbumArtist]s, [Album]s, [Song]s, [Playlist]s and [Genre]s, rebuilt off
- * the main thread whenever a repository emits. Shared by every search screen; it stops following the library a minute
- * after the last one goes, so reopening search soon after reuses the index.
+ * the main thread whenever the library's content changes. Playing a song moves play counts and last-played times in
+ * three repositories, which would rebuild the whole index mid-search (#677), so those changes alone don't: the play
+ * counts that weight the ranking catch up at the next content change. Shared by every search screen; it stops
+ * following the library a minute after the last one goes, so reopening search soon after reuses the index.
  */
 @SingleIn(AppScope::class)
 class LibrarySearchIndex @Inject constructor(
@@ -50,9 +53,14 @@ class LibrarySearchIndex @Inject constructor(
 ) {
     val index: Flow<SearchIndex<Any>> = combine(
         // Every artist, album artist or only credited (featured, on compilations), each once (#637)
-        albumArtistRepository.getAlbumArtists(AlbumArtistQuery.Credited()),
-        albumRepository.getAlbums(AlbumQuery.All()),
-        songRepository.getSongs(SongQuery.All()),
+        albumArtistRepository.getAlbumArtists(AlbumArtistQuery.Credited())
+            .distinctUntilChanged { old, new -> sameIgnoringPlays(old, new) { it.copy(playCount = 0) } },
+        albumRepository.getAlbums(AlbumQuery.All())
+            .distinctUntilChanged { old, new -> sameIgnoringPlays(old, new) { it.copy(playCount = 0, lastSongPlayed = null, lastSongCompleted = null) } },
+        songRepository.getSongs(SongQuery.All())
+            .distinctUntilChanged { old, new ->
+                sameIgnoringPlays(old, new) { it.copy(playCount = 0, lastPlayed = null, lastCompleted = null, playbackPosition = 0) }
+            },
         genreRepository.getGenres(GenreQuery.All()),
         playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
     ) { artists, albums, songs, genres, playlists ->
@@ -89,6 +97,10 @@ class LibrarySearchIndex @Inject constructor(
     private fun document(playlist: Playlist) = SearchDocument<Any>(playlist, fields(SearchField.Name to playlist.name))
 
     private fun document(genre: Genre) = SearchDocument<Any>(genre, fields(SearchField.Name to genre.name))
+
+    /** Whether [old] and [new] hold the same items once [withoutPlays] has cleared what playing them changes. */
+    private fun <T> sameIgnoringPlays(old: List<T>?, new: List<T>?, withoutPlays: (T) -> T): Boolean = old === new ||
+        (old != null && new != null && old.size == new.size && old.indices.all { withoutPlays(old[it]) == withoutPlays(new[it]) })
 
     private fun fields(vararg fields: Pair<SearchField, String?>): List<Pair<SearchField, String?>> = fields.toList()
 }

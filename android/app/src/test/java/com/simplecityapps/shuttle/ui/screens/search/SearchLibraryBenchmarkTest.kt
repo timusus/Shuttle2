@@ -15,6 +15,8 @@ import io.kotest.matchers.shouldBe
 import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -61,7 +63,23 @@ class SearchLibraryBenchmarkTest {
         keystrokes.forEach { results += search(it, categories).first().songs.size }
         val averageMicros = (System.nanoTime() - queryStart) / 1_000 / keystrokes.size
 
-        println("SearchLibrary benchmark: ${songList.size} songs indexed in $buildMs ms; ${keystrokes.size} keystrokes averaged $averageMicros µs")
+        // A song played through while searching: its play count moves in the song, album and artist lists (#677)
+        var builds = 0
+        backgroundScope.launch { index.index.collect { builds++ } }
+        runCurrent()
+        val played = songList.first()
+        val playStart = System.nanoTime()
+        songs.setSongs(listOf(played.copy(playCount = played.playCount + 1)) + songList.drop(1))
+        albums.setAlbums(albumNames.mapIndexed { i, (album, artist) -> createAlbum(album, artist, playCount = if (i == 0) 1 else 0) })
+        artists.setAlbumArtists(artistNames.mapIndexed { i, name -> createAlbumArtist(name, playCount = if (i == 0) 1 else 0) })
+        runCurrent()
+        val playMs = (System.nanoTime() - playStart) / 1_000_000
+        val rebuilds = builds - 1
+
+        println(
+            "SearchLibrary benchmark: ${songList.size} songs indexed in $buildMs ms; ${keystrokes.size} keystrokes averaged $averageMicros µs; " +
+                "a play-count change cost $rebuilds rebuilds in $playMs ms",
+        )
         results shouldBeGreaterThan 0
         search("a", categories).first().songs.shouldNotBeEmpty()
         search("the sun will rise", categories).first().songs.first().item.name shouldBe "The Sun Will Rise"
