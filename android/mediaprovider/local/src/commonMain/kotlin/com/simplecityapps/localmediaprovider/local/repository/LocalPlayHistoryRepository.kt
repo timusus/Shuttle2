@@ -99,7 +99,7 @@ class LocalPlayHistoryRepository(
     }
 
     override suspend fun albumDays(since: Instant): List<AlbumDay> {
-        val rows = playEventDao.completionsBySongAndDay(since, utcOffsetMs(), MAX_DAY_ROWS)
+        val rows = playEventDao.completedSongDays(since, utcOffsetMs())
         if (rows.isEmpty()) return emptyList()
         val index = albumIndex.albumIndex()
         return rows
@@ -116,9 +116,10 @@ class LocalPlayHistoryRepository(
         halfLife: Duration,
         limit: Int
     ): List<GenrePlays> {
-        val today = clock.now().toEpochMilliseconds() / DAY_MS
+        val utcOffsetMs = utcOffsetMs()
+        val today = (clock.now().toEpochMilliseconds() + utcOffsetMs) / DAY_MS
         val totals = mutableMapOf<String, Pair<Int, Double>>()
-        playEventDao.playsByGenresAndDay(since, MAX_DAY_ROWS).forEach { row ->
+        playEventDao.playsByGenresAndDay(since, utcOffsetMs).forEach { row ->
             val weight = row.plays * decay(today - row.day, halfLife)
             row.genres.filter { it.isNotBlank() }.distinct().forEach { genre ->
                 val (plays, score) = totals[genre] ?: (0 to 0.0)
@@ -131,7 +132,10 @@ class LocalPlayHistoryRepository(
             .take(limit)
     }
 
-    /** The local time zone's offset from UTC now, which days and hours are counted in. */
+    /**
+     * The local time zone's offset from UTC now, which days and hours are counted in. One offset for the whole window,
+     * so a play near midnight before a daylight saving change can land a day off; close enough for ranking.
+     */
     private fun utcOffsetMs(): Long = timeZone().offsetAt(clock.now()).totalSeconds * 1000L
 
     override fun eventCount(): Flow<Int> = playEventDao.observeCount()
@@ -148,9 +152,6 @@ class LocalPlayHistoryRepository(
 
     companion object {
         private const val DAY_MS = 86_400_000L
-
-        /** A cap on the (song, day) rows an aggregate reads, far above a year of anyone's listening. */
-        private const val MAX_DAY_ROWS = 20_000
 
         /** The local hours (0 to 23) that the [windowMinutes] either side of [hour]:00 touch, wrapping round midnight. */
         internal fun hoursAround(

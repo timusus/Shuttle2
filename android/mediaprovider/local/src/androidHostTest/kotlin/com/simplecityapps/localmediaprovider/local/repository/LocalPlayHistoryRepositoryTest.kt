@@ -163,6 +163,28 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
+    fun `album days count a day with a single play through, however much else was played`() = runTest {
+        val blue = insertSong("Blue", "Joni Mitchell")
+        val kid = insertSong("Kid A", "Radiohead")
+        repeat(50) { repository.recordPlay(blue, now - 1.days + it.minutes, 200_000, true, albumContext) }
+        (1..10).forEach { repository.recordPlay(kid, now - it.days, 200_000, true, PlayContext.None) }
+
+        val days = repository.albumDays(since = now - 28.days).groupBy { it.groupKey.key }
+
+        days.mapValues { (_, albumDays) -> albumDays.size } shouldBe mapOf("blue" to 1, "kid a" to 10)
+    }
+
+    @Test
+    fun `genre plays are aged by local day`() = runTest {
+        // 01:00 today in Melbourne (UTC+10) is still yesterday in UTC
+        val melbourne = LocalPlayHistoryRepository(eventDao, freshAlbumIndex(database), clock) { TimeZone.of("Australia/Melbourne") }
+        songDao.insert(listOf(createSongData(album = "Kind of Blue").copy(genres = listOf("Jazz"))))
+        melbourne.recordPlay(songDao.get().single().toSong(), Instant.parse("2026-09-22T15:00:00Z"), 200_000, true, PlayContext.None)
+
+        melbourne.genrePlays(since = now - 90.days, halfLife = 14.days, limit = 10).single().score shouldBe 1.0
+    }
+
+    @Test
     fun `album days group albums by the keys the album repository uses`() = runTest {
         // Tagged three ways SQL can't tell are one album: case, a leading article, punctuation
         songDao.insert(

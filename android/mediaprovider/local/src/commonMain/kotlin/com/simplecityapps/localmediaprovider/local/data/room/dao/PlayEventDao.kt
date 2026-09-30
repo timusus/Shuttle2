@@ -4,10 +4,15 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
+import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 
-/** The listening history, `play_events` (#633). Every read of the events is an aggregate with a limit; none loads them. */
+/**
+ * The listening history, `play_events` (#633). Every read of the events is an aggregate; none loads them. The by-day
+ * aggregates take no limit: they read one row per (song or genres, day) in their window, which the history's own cap
+ * ([PlayHistoryRepository.MAX_EVENTS]) bounds, and a limit would drop the least played rows a count of days needs.
+ */
 @Dao
 interface PlayEventDao {
     @Insert
@@ -49,21 +54,19 @@ interface PlayEventDao {
     ): List<ContextDaysRow>
 
     /**
-     * Plays through since [since] by song and local day (UTC shifted by [utcOffsetMs]), most first: the rows a caller
-     * merges into albums by their album identity (#637), which SQL can't compute. [limit] caps the rows.
+     * The songs played through since [since], each once per local day (UTC shifted by [utcOffsetMs]) it was: the rows a
+     * caller merges into albums by their album identity (#637), which SQL can't compute.
      */
     @Query(
-        "SELECT s.id AS songId, (e.startedAt + :utcOffsetMs) / 86400000 AS day, COUNT(*) AS plays, MAX(e.startedAt) AS lastPlayedAt " +
+        "SELECT s.id AS songId, (e.startedAt + :utcOffsetMs) / 86400000 AS day, MAX(e.startedAt) AS lastPlayedAt " +
             "FROM play_events e JOIN songs s ON s.path = e.songPath AND s.mediaProvider = e.mediaProvider " +
             "WHERE e.completed = 1 AND e.startedAt >= :since " +
-            "GROUP BY s.id, day " +
-            "ORDER BY plays DESC LIMIT :limit"
+            "GROUP BY s.id, day"
     )
-    suspend fun completionsBySongAndDay(
+    suspend fun completedSongDays(
         since: Instant,
-        utcOffsetMs: Long,
-        limit: Int
-    ): List<SongDayPlaysRow>
+        utcOffsetMs: Long
+    ): List<SongDayRow>
 
     /** The ids the events of [contextType] were played from, each once. */
     @Query("SELECT DISTINCT contextId FROM play_events WHERE contextType = :contextType AND contextId IS NOT NULL")
@@ -76,17 +79,16 @@ interface PlayEventDao {
         to: String
     ): Int
 
-    /** Plays (through or not) since [since] by genre tagging and UTC day. */
+    /** Plays (through or not) since [since] by genre tagging and local day (UTC shifted by [utcOffsetMs]). */
     @Query(
-        "SELECT s.genres AS genres, e.startedAt / 86400000 AS day, COUNT(*) AS plays " +
+        "SELECT s.genres AS genres, (e.startedAt + :utcOffsetMs) / 86400000 AS day, COUNT(*) AS plays " +
             "FROM play_events e JOIN songs s ON s.path = e.songPath AND s.mediaProvider = e.mediaProvider " +
             "WHERE e.startedAt >= :since AND s.genres != '' " +
-            "GROUP BY s.genres, day " +
-            "ORDER BY plays DESC LIMIT :limit"
+            "GROUP BY s.genres, day"
     )
     suspend fun playsByGenresAndDay(
         since: Instant,
-        limit: Int
+        utcOffsetMs: Long
     ): List<GenresDayPlaysRow>
 
     /** Deletes the events before [before], then all but the latest [keep]. */
@@ -120,10 +122,9 @@ data class ContextDaysRow(
     val lastPlayedAt: Instant
 )
 
-data class SongDayPlaysRow(
+data class SongDayRow(
     val songId: Long,
     val day: Long,
-    val plays: Int,
     val lastPlayedAt: Instant
 )
 
