@@ -20,7 +20,9 @@ struct SourcesViewTests {
             folders: FolderLists(includes: [], excludes: [], extras: []),
             scan: scan,
             scanError: scanError,
-            servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0)) },
+            deviceStatus: SourceStatusIdle.shared,
+            deviceSongs: nil,
+            servers: SourcesViewModelKt.ServerTypes.map { ServerSource(type: $0, connected: connected.contains($0), status: SourceStatusIdle.shared, songs: nil) },
             lastImport: lastImport,
             events: []
         )

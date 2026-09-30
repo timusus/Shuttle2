@@ -1,9 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.sources
 
+import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeMediaSources
 import com.simplecityapps.fakes.FakeScannerFolderStore
 import com.simplecityapps.fakes.FakeServerAuthentication
 import com.simplecityapps.fakes.FakeSongImportStateProvider
+import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.server.SavedServerLogin
 import com.simplecityapps.shuttle.entitlement.TryAddServer
@@ -41,6 +44,7 @@ class SourcesViewModelTest {
     private val folderStore = FakeScannerFolderStore()
     private val importState = FakeSongImportStateProvider()
     private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
+    private val songs = FakeSongRepository()
 
     /** The paywall gate's answer: whether another server may be added before Pro. */
     private var serverAllowed = true
@@ -58,6 +62,7 @@ class SourcesViewModelTest {
         ConnectServer(mediaSources),
         ObserveLastScanDate(preferences),
         ForgetServer(mapOf(MediaProviderType.Emby to emby)),
+        ObserveSongCounts(songs),
     ).also { viewModel ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.uiState.collect {} }
     }
@@ -205,5 +210,38 @@ class SourcesViewModelTest {
 
         serverAllowed = false
         viewModel.onAddServer() shouldBe false
+    }
+
+    @Test
+    fun `each source shows its own song count once the library loads`() = runTest {
+        val viewModel = viewModel(FakeMediaSources(MediaProviderType.Shuttle, MediaProviderType.Jellyfin))
+        viewModel.uiState.value.deviceSongs shouldBe null
+
+        songs.setSongs(
+            listOf(
+                createSong(id = 1),
+                createSong(id = 2),
+                createSong(id = 3, mediaProvider = MediaProviderType.Jellyfin),
+            ),
+        )
+
+        viewModel.uiState.value.deviceSongs shouldBe 2
+        viewModel.uiState.value.servers.associate { it.type to it.songs } shouldBe
+            mapOf(MediaProviderType.Jellyfin to 1, MediaProviderType.Emby to 0, MediaProviderType.Plex to 0)
+    }
+
+    @Test
+    fun `each source shows its own import - a server that fails while this device scans`() = runTest {
+        val viewModel = viewModel(FakeMediaSources(MediaProviderType.Shuttle, MediaProviderType.Plex))
+
+        importState.setState(SongImportState.ImportProgress(MediaProviderType.Shuttle, "Scanning", Progress(340, 1_000)))
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Plex, "Couldn't reach the server"))
+
+        viewModel.uiState.value.deviceStatus shouldBe SourceStatus.Importing(Progress(340, 1_000))
+        viewModel.uiState.value.servers.first { it.type == MediaProviderType.Plex }.status shouldBe SourceStatus.Failed("Couldn't reach the server")
+
+        importState.setState(SongImportState.ImportComplete(MediaProviderType.Shuttle, null))
+
+        viewModel.uiState.value.deviceStatus shouldBe SourceStatus.Idle
     }
 }

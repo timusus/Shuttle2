@@ -98,7 +98,7 @@ class SettingsScreenshotTest {
     @Test
     fun sources() = shot(
         "sources",
-        content = destination(SettingsDestination.Sources) { sourcesContent(SourcesScenarios.configured, SourcesScenarios.noActions) }
+        content = destination(SettingsDestination.Sources) { sourcesContent(SourcesScenarios.configured, SourcesScenarios.noActions, now = SourcesScenarios.now) }
     )
 
     /** The catalog's own Sources rows, below the source list the full screen leads with. */

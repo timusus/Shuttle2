@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,18 +25,67 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * Wires [sourcesContent] to [SourcesViewModel], the SAF folder picker and the servers' sign-in dialogs, and returns
- * the rows for Settings > Sources to show ahead of its catalog switches.
+ * Wires [sourcesContent] to [SourcesViewModel], the server type picker and the servers' sign-in dialogs, and returns
+ * the cards for Settings > Sources to show ahead of its catalog switches. [onOpenFolderRules] opens [FolderRulesEntry].
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun sourcesRows(snackbarHostState: SnackbarHostState): LazyListScope.() -> Unit {
+fun sourcesRows(onOpenFolderRules: () -> Unit): LazyListScope.() -> Unit {
+    val viewModel: SourcesViewModel = metroViewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var dialog by remember { mutableStateOf<SourcesDialog?>(null) }
+    var pickingServer by rememberSaveable { mutableStateOf(false) }
+    var signingIn by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
+
+    // Refreshes the folders' access, which the folder rules row flags
+    LifecycleResumeEffect(viewModel) {
+        viewModel.onResume()
+        onPauseOrDispose {}
+    }
+
+    SourcesDialogHost(
+        dialog = dialog,
+        onTurnOffThisDevice = { viewModel.onThisDeviceChange(false) },
+        onSignIn = { signingIn = it },
+        onRemoveServer = viewModel::onRemoveServer,
+        onDismiss = { dialog = null },
+    )
+    if (pickingServer) {
+        ServerTypePickerSheet(
+            onTypeSelected = { type ->
+                pickingServer = false
+                if (viewModel.onAddServer()) signingIn = type
+            },
+            onDismissRequest = { pickingServer = false },
+        )
+    }
+    signingIn?.let { type ->
+        ServerSignInRoute(type, onConnected = viewModel::onServerConnected, onDismiss = { signingIn = null })
+    }
+
+    val actions = remember(viewModel, onOpenFolderRules) {
+        SourcesActions(
+            onThisDeviceChange = viewModel::onThisDeviceChange,
+            onRescan = viewModel::onRescan,
+            onOpenFolderRules = onOpenFolderRules,
+            onServerClick = { server -> dialog = SourcesDialog.Server(server.type) },
+            onAddServer = { pickingServer = true },
+            onShowDialog = { dialog = it },
+        )
+    }
+    return { sourcesContent(uiState, actions) }
+}
+
+/** Settings > Sources > Folder rules: wires [FolderRulesScreen] to [SourcesViewModel] and the SAF folder picker. */
+@Composable
+fun FolderRulesEntry(onNavigateUp: () -> Unit) {
     val viewModel: SourcesViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var dialog by remember { mutableStateOf<SourcesDialog?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    var dialog by remember { mutableStateOf<FolderRulesDialog?>(null) }
     var pickingFolder by rememberSaveable { mutableStateOf<FolderKind?>(null) }
-    var signingIn by rememberSaveable { mutableStateOf<MediaProviderType?>(null) }
 
     val folderPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         pickingFolder?.let { kind -> viewModel.onFolderPicked(kind, uri?.toString()) }
@@ -63,33 +113,17 @@ fun sourcesRows(snackbarHostState: SnackbarHostState): LazyListScope.() -> Unit 
         onPauseOrDispose {}
     }
 
-    SourcesDialogHost(
+    FolderRulesDialogHost(
         dialog = dialog,
-        onTurnOffThisDevice = { viewModel.onThisDeviceChange(false) },
         onRemoveFolder = viewModel::onRemoveFolder,
         onGrantAccess = launchFolderPicker,
-        onSignIn = { signingIn = it },
-        onRemoveServer = viewModel::onRemoveServer,
         onDismiss = { dialog = null },
     )
-    signingIn?.let { type ->
-        ServerSignInRoute(type, onConnected = viewModel::onServerConnected, onDismiss = { signingIn = null })
-    }
-
-    val actions = remember(viewModel, launchFolderPicker) {
-        SourcesActions(
-            onThisDeviceChange = viewModel::onThisDeviceChange,
-            onAddFolder = launchFolderPicker,
-            onRescan = viewModel::onRescan,
-            onServerClick = { server ->
-                if (server.connected) {
-                    dialog = SourcesDialog.Server(server.type)
-                } else if (viewModel.onAddServer()) {
-                    signingIn = server.type
-                }
-            },
-            onShowDialog = { dialog = it },
-        )
-    }
-    return { sourcesContent(uiState, actions) }
+    FolderRulesScreen(
+        folders = uiState.folders,
+        onNavigateUp = onNavigateUp,
+        onAddFolder = launchFolderPicker,
+        onShowDialog = { dialog = it },
+        snackbarHostState = snackbarHostState,
+    )
 }

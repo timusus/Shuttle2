@@ -96,6 +96,10 @@
       "commits": []
     },
     {
+      "text": "Sources now shows song counts, scan progress and server status at a glance, and folder settings have moved to their own Folder rules page",
+      "commits": []
+    },
+    {
       "text": "On Android 12 and later, S2 now takes its colours from your wallpaper, unless you have already picked an accent colour. To pick an accent colour instead, turn off Dynamic colour in Appearance settings",
       "commits": []
     },

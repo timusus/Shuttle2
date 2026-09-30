@@ -1,18 +1,39 @@
 package com.simplecityapps.shuttle.ui.screens.sources
 
+import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.model.MediaProviderType
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Instant
 
-/** Settings > Sources states the screenshot tests render. */
+/** Settings > Sources states the tests and screenshots render. */
 object SourcesScenarios {
-    /** This device on with an excluded and an extra folder, and Jellyfin connected. */
+    /** "Now" for the status lines, so "Updated 2 hours ago" never moves. */
+    val now: Instant = Instant.parse("2026-09-30T12:00:00Z")
+
+    private fun servers(vararg connected: Pair<MediaProviderType, SourceStatus>) = ServerTypes.map { type -> connected.toMap()[type]?.let { ServerSource(type, connected = true, status = it, songs = 1_842) } ?: ServerSource(type, connected = false) }
+
+    /** This device on with an excluded and an extra folder, and Jellyfin connected; everything up to date. */
     val configured = SourcesUiState(
         thisDevice = true,
         folders = FolderLists(
             excludes = listOf(SourceFolder(uri = null, path = "/storage/emulated/0/Recordings", name = "Recordings")),
             extras = listOf(SourceFolder(uri = "content://tree/Audiobooks", path = "/storage/emulated/0/Audiobooks", name = "Audiobooks")),
         ),
-        servers = ServerTypes.map { ServerSource(it, connected = it == MediaProviderType.Jellyfin) },
+        deviceSongs = 1_234,
+        lastImport = now - 2.hours,
+        servers = servers(MediaProviderType.Jellyfin to SourceStatus.Idle),
     )
 
-    val noActions = SourcesActions(onThisDeviceChange = {}, onAddFolder = {}, onRescan = {}, onServerClick = {}, onShowDialog = {})
+    /** This device part-way through a scan while Jellyfin syncs. */
+    val scanning = configured.copy(
+        deviceStatus = SourceStatus.Importing(Progress(340, 1_234)),
+        servers = servers(MediaProviderType.Jellyfin to SourceStatus.Importing(Progress(600, 1_842))),
+    )
+
+    /** Plex's last import couldn't reach it, next to a connected Jellyfin. */
+    val serverUnreachable = configured.copy(
+        servers = servers(MediaProviderType.Jellyfin to SourceStatus.Idle, MediaProviderType.Plex to SourceStatus.Failed("Couldn't reach the server")),
+    )
+
+    val noActions = SourcesActions(onThisDeviceChange = {}, onRescan = {}, onOpenFolderRules = {}, onServerClick = {}, onAddServer = {}, onShowDialog = {})
 }

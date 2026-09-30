@@ -28,6 +28,7 @@ import com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsView
 import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsLink
+import com.simplecityapps.shuttle.ui.screens.sources.FolderRulesEntry
 import com.simplecityapps.shuttle.ui.screens.sources.sourcesRows
 import com.simplecityapps.shuttle.ui.shell.AppNavigator
 import com.simplecityapps.shuttle.ui.shell.SettingsRoute
@@ -65,6 +66,9 @@ data object LicencesRoute : NavKey
 @Serializable
 data object LiveLogRoute : NavKey
 
+@Serializable
+data object FolderRulesRoute : NavKey
+
 /** The Settings screens' entries, for the shell's entry provider. */
 fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
     val navigateUp = { navigator.back() }
@@ -84,7 +88,10 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
             onOpenPro = { navigator.open(PaywallRoute(PaywallSource.Settings)) }
         )
     }
-    entry<SettingsDestinationRoute> { route -> SettingsDestinationEntry(route.destination, onNavigateUp = { navigateUp() }, onOpenLink = openLink) }
+    entry<SettingsDestinationRoute> { route ->
+        SettingsDestinationEntry(route.destination, onNavigateUp = { navigateUp() }, onOpenLink = openLink, onOpenFolderRules = { navigator.open(FolderRulesRoute) })
+    }
+    entry<FolderRulesRoute> { FolderRulesEntry(onNavigateUp = { navigateUp() }) }
     entry<EqualizerRoute> { EqualizerEntry(onNavigateUp = { navigateUp() }) }
     entry<ExcludedSongsRoute> { ExcludedSongsEntry(onNavigateUp = { navigateUp() }) }
     entry<LiveLogRoute> { LiveLogEntry(onNavigateUp = { navigateUp() }) }
@@ -109,7 +116,8 @@ fun EntryProviderScope<NavKey>.settingsEntries(navigator: AppNavigator) {
 private fun SettingsDestinationEntry(
     destination: SettingsDestination,
     onNavigateUp: () -> Unit,
-    onOpenLink: (SettingsLink) -> Unit
+    onOpenLink: (SettingsLink) -> Unit,
+    onOpenFolderRules: () -> Unit
 ) {
     val viewModel: SettingsViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -129,7 +137,7 @@ private fun SettingsDestinationEntry(
         onOpenLink = onOpenLink,
         versionName = BuildConfig.VERSION_NAME,
         snackbarHostState = snackbarHostState,
-        leadingContent = if (destination == SettingsDestination.Sources) sourcesRows(snackbarHostState) else ({})
+        leadingContent = if (destination == SettingsDestination.Sources) sourcesRows(onOpenFolderRules) else ({})
     )
 }
 

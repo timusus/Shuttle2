@@ -33,7 +33,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Records first run and Settings > Sources at phone size into `docs/design/onboarding/` for review (#379). A no-op
+ * Records first run, Settings > Sources (idle, scanning, a server it can't reach) and its folder rules at phone size into `docs/design/onboarding/` for review (#379). A no-op
  * under plain `testDebugUnitTest`; record with
  * `./gradlew :android:app:recordRoborazziDebug --tests '*OnboardingScreenshotTest*'`.
  */
@@ -79,8 +79,7 @@ class OnboardingScreenshotTest {
     @Test
     fun scanning() = shot("empty-scanning", emptyState(LibraryAvailability.Empty(MusicAccess.Granted, ScanProgress("Juniper Static • Chlorophyll Loop", 0.4f))))
 
-    @Test
-    fun sources() = shot("sources") {
+    private fun sourcesShot(name: String, uiState: SourcesUiState) = shot(name) {
         SettingsDestinationScreen(
             screen = AndroidSettingsCatalog.screen(SettingsDestination.Sources),
             uiState = SettingsUiState(),
@@ -90,8 +89,22 @@ class OnboardingScreenshotTest {
             onSliderChange = { _, _ -> },
             onAction = {},
             onOpenLink = {},
-            leadingContent = { sourcesContent(SourcesScenarios.configured, SourcesScenarios.noActions) },
+            leadingContent = { sourcesContent(uiState, SourcesScenarios.noActions, now = SourcesScenarios.now) },
         )
+    }
+
+    @Test
+    fun sources() = sourcesShot("sources", SourcesScenarios.configured)
+
+    @Test
+    fun sourcesScanning() = sourcesShot("sources-scanning", SourcesScenarios.scanning)
+
+    @Test
+    fun sourcesServerUnreachable() = sourcesShot("sources-server-unreachable", SourcesScenarios.serverUnreachable)
+
+    @Test
+    fun folderRules() = shot("folder-rules") {
+        FolderRulesScreen(folders = SourcesScenarios.configured.folders, onNavigateUp = {}, onAddFolder = {}, onShowDialog = {})
     }
 
     companion object {

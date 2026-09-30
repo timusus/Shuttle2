@@ -16,13 +16,19 @@ import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlin.time.Instant
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
-/** A media server in Sources, [connected] when the library imports from it. */
-data class ServerSource(val type: MediaProviderType, val connected: Boolean)
+/** A media server in Sources, [connected] when the library imports from it, with its import's [status] and its [songs] once the library has loaded. */
+data class ServerSource(
+    val type: MediaProviderType,
+    val connected: Boolean,
+    val status: SourceStatus = SourceStatus.Idle,
+    val songs: Int? = null,
+)
 
 data class SourcesUiState(
     /** Whether the library imports this device's music. */
@@ -30,9 +36,14 @@ data class SourcesUiState(
     /** True for users who chose the Android (MediaStore) provider before #379: it ignores the folder lists. */
     val usesAndroidProvider: Boolean = false,
     val folders: FolderLists = FolderLists(),
+    /** Any source's import while one runs; iOS's scan row shows it. */
     val scan: ScanProgress? = null,
-    /** The last scan's failure message, cleared as soon as another scan starts. */
+    /** The last import's failure message, cleared as soon as another starts; iOS's scan row shows it. */
     val scanError: String? = null,
+    /** This device's own import, for its card: [scan] and [scanError] follow whichever source reported last. */
+    val deviceStatus: SourceStatus = SourceStatus.Idle,
+    /** Songs from this device, once the library has loaded. */
+    val deviceSongs: Int? = null,
     val servers: List<ServerSource> = ServerTypes.map { ServerSource(it, connected = false) },
     /** When an import last finished, if one ever has. */
     val lastImport: Instant? = null,
@@ -47,8 +58,9 @@ sealed interface SourcesEvent {
 val ServerTypes = listOf(MediaProviderType.Jellyfin, MediaProviderType.Emby, MediaProviderType.Plex)
 
 /**
- * Settings > Sources (#379): this device on or off, the S2 scanner's folders, a rescan, and the media servers. Folder
- * and source changes start a scan, so the library follows them straight away.
+ * Settings > Sources (#379): this device on or off, the S2 scanner's folders, a rescan, and the media servers, each
+ * source with its import status and song count (#663). Folder and source changes start a scan, so the library follows
+ * them straight away.
  */
 @ViewModelKey(SourcesViewModel::class)
 @ContributesIntoMap(AppScope::class)
@@ -63,18 +75,27 @@ class SourcesViewModel @Inject constructor(
     private val connectServer: ConnectServer,
     observeLastScanDate: ObserveLastScanDate,
     private val forgetServer: ForgetServer,
+    observeSongCounts: ObserveSongCounts,
 ) : ViewModel() {
     private val events = PendingEvents<SourcesEvent>()
 
+    private val imports: Flow<Imports> =
+        combine(importState.songImportState, importState.providerImportStates, observeSongCounts(), ::Imports)
+
     val uiState: StateFlow<SourcesUiState> =
-        combine(mediaSources.enabledTypes, observeScannerFolders(), importState.songImportState, observeLastScanDate(), events.flow) { types, folders, import, lastImport, events ->
+        combine(mediaSources.enabledTypes, observeScannerFolders(), imports, observeLastScanDate(), events.flow) { types, folders, imports, lastImport, events ->
+            val latest = imports.latest
             SourcesUiState(
                 thisDevice = types.any { it.isLocal },
                 usesAndroidProvider = MediaProviderType.MediaStore in types,
                 folders = folders,
-                scan = (import as? SongImportState.ImportProgress)?.let { ScanProgress(it.message, it.progress?.asFloat()) },
-                scanError = (import as? SongImportState.ImportComplete)?.error,
-                servers = ServerTypes.map { ServerSource(it, connected = it in types) },
+                scan = (latest as? SongImportState.ImportProgress)?.let { ScanProgress(it.message, it.progress?.asFloat()) },
+                scanError = (latest as? SongImportState.ImportComplete)?.error,
+                deviceStatus = sourceStatus(types.firstOrNull { it.isLocal }?.let(imports.byProvider::get)),
+                deviceSongs = imports.songCounts?.filterKeys { it.isLocal }?.values?.sum(),
+                servers = ServerTypes.map { type ->
+                    ServerSource(type, connected = type in types, status = sourceStatus(imports.byProvider[type]), songs = imports.songCounts?.let { it[type] ?: 0 })
+                },
                 lastImport = lastImport,
                 events = events,
             )
@@ -121,4 +142,11 @@ class SourcesViewModel @Inject constructor(
     }
 
     fun onEventHandled(id: Long) = events.consume(id)
+
+    /** The importer's latest state, each provider's own, and the library's songs per provider. */
+    private data class Imports(
+        val latest: SongImportState,
+        val byProvider: Map<MediaProviderType, SongImportState>,
+        val songCounts: Map<MediaProviderType, Int>?,
+    )
 }

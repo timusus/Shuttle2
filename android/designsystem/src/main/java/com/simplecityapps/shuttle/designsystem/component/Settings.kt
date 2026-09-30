@@ -2,6 +2,9 @@ package com.simplecityapps.shuttle.designsystem.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -10,6 +13,7 @@ import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ListItemShapes
@@ -19,9 +23,12 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.preview.S2Preview
@@ -77,6 +84,7 @@ fun LinkSetting(
     icon: ImageVector? = null,
     iconStyle: SettingIconStyle = SettingIconStyle.Tonal,
     enabled: Boolean = true,
+    progress: SettingProgress? = null,
     shapes: ListItemShapes = ListItemDefaults.shapes(),
 ) {
     SegmentedListItem(
@@ -87,7 +95,7 @@ fun LinkSetting(
         enabled = enabled,
         leadingContent = icon?.let { { SettingIcon(it, iconStyle, enabled) } },
         trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null) },
-        supportingContent = summary?.let { { Text(it) } },
+        supportingContent = settingSummary(summary, progress),
     ) { Text(title) }
 }
 
@@ -102,6 +110,7 @@ fun SwitchSetting(
     summary: String? = null,
     icon: ImageVector? = null,
     enabled: Boolean = true,
+    progress: SettingProgress? = null,
     shapes: ListItemShapes = ListItemDefaults.shapes(),
 ) {
     SegmentedListItem(
@@ -113,8 +122,33 @@ fun SwitchSetting(
         enabled = enabled,
         leadingContent = icon?.let { { SettingIcon(it, SettingIconStyle.Tonal, enabled) } },
         trailingContent = { Switch(checked = checked, onCheckedChange = null, enabled = enabled) },
-        supportingContent = summary?.let { { Text(it) } },
+        supportingContent = settingSummary(summary, progress),
     ) { Text(title) }
+}
+
+/**
+ * A group's actions, such as "Scan now": buttons that act in place, so unlike a [LinkSetting] the row has no
+ * chevron and isn't itself clickable. [content] lays out `S2Button`s, the primary one first, under an optional
+ * [summary] such as what an empty group means.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun ActionsSetting(
+    modifier: Modifier = Modifier,
+    summary: String? = null,
+    shapes: ListItemShapes = ListItemDefaults.shapes(),
+    content: @Composable RowScope.() -> Unit,
+) {
+    SegmentedListItem(
+        shapes = shapes,
+        modifier = modifier,
+        colors = settingColors(),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            summary?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, content = content)
+        }
+    }
 }
 
 /** A single-choice setting showing its current [value]; [onClick] opens the choice dialog. */
@@ -195,6 +229,24 @@ fun InfoSetting(
     ) { Text(title) }
 }
 
+/** Work a settings row is doing, drawn as a wavy progress bar under its summary: [fraction] done, or null while it can't tell. */
+@Immutable
+data class SettingProgress(val fraction: Float? = null)
+
+/** A row's supporting content: its [summary], with [progress]'s bar under it while there's work under way. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+private fun settingSummary(summary: String?, progress: SettingProgress?): (@Composable () -> Unit)? {
+    if (progress == null) return summary?.let { { Text(it) } }
+    return {
+        Column {
+            summary?.let { Text(it) }
+            val modifier = Modifier.fillMaxWidth().padding(top = 8.dp).testTag("setting-progress")
+            val fraction = progress.fraction
+            if (fraction != null) LinearWavyProgressIndicator(progress = { fraction }, modifier = modifier) else LinearWavyProgressIndicator(modifier = modifier)
+        }
+    }
+}
+
 /**
  * Rows sit in `surfaceContainer` so a group reads as one container on the `surface` screen. A
  * checked switch row keeps the same colours: the `Switch` shows the state, not the row.
@@ -243,6 +295,8 @@ private fun SettingsGroupPreview() {
                 { ChoiceSetting("Theme", "Follow system", {}, icon = Icons.Rounded.Palette, shapes = it) },
                 { SwitchSetting("Dynamic colour", checked = true, onCheckedChange = {}, shapes = it) },
                 { LinkSetting("Music", onClick = {}, summary = "/storage/emulated/0/Music", icon = Icons.Rounded.Folder, iconStyle = SettingIconStyle.Plain, shapes = it) },
+                { LinkSetting("Jellyfin", onClick = {}, summary = "Syncing… 340 of 1,000 songs", progress = SettingProgress(0.34f), shapes = it) },
+                { ActionsSetting(shapes = it) { S2Button("Scan now", onClick = {}, style = S2ButtonStyle.Tonal) } },
             ),
         )
     }
