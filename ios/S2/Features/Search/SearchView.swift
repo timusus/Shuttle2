@@ -1,3 +1,4 @@
+import os
 import Shared
 import SwiftUI
 
@@ -203,12 +204,31 @@ extension SearchCategory {
 struct SearchResultList: View {
     let query: String
     let results: SearchResults
-    var nowPlaying: LibraryNowPlaying = .none
+    var nowPlaying: LibraryNowPlaying
     let onOpen: (Route) -> Void
     let onPlaySong: (Int) -> Void
     let onAction: (MediaAction) -> Void
+    /// The rows' items, read across the bridge once for these results.
+    private let items: SearchResultItems
 
     @State private var expanded: SearchCategory?
+
+    init(
+        query: String,
+        results: SearchResults,
+        nowPlaying: LibraryNowPlaying = .none,
+        onOpen: @escaping (Route) -> Void,
+        onPlaySong: @escaping (Int) -> Void,
+        onAction: @escaping (MediaAction) -> Void
+    ) {
+        self.query = query
+        self.results = results
+        self.nowPlaying = nowPlaying
+        self.onOpen = onOpen
+        self.onPlaySong = onPlaySong
+        self.onAction = onAction
+        items = SearchResultItems(results)
+    }
 
     var body: some View {
         List {
@@ -248,7 +268,7 @@ struct SearchResultList: View {
     private func row(_ category: SearchCategory, index: Int) -> some View {
         switch category {
         case .artists:
-            let artist = results.artists[index].item!
+            let artist = items.artists[index]
             resultLink(.albumArtist(artist), identifier: "search.result.artist") {
                 MediaRow(
                     AlbumArtistRow.title(artist),
@@ -260,11 +280,11 @@ struct SearchResultList: View {
             }
             .contextMenu { menu(MediaSelectionAlbumArtists(albumArtist: artist)) }
         case .albums:
-            let album = results.albums[index].item!
+            let album = items.albums[index]
             resultLink(.album(album), identifier: "search.result.album") { AlbumRow(album: album, playback: nowPlaying.playback(album: album)) }
                 .contextMenu { menu(MediaSelectionAlbums(album: album)) }
         case .songs:
-            let song = results.songs[index].item!
+            let song = items.songs[index]
             Button { onPlaySong(index) } label: { SongRow(song: song, playback: nowPlaying.playback(song: song)) }
                 .buttonStyle(.pressScale)
                 .accessibilityIdentifier("search.result.song")
@@ -277,11 +297,11 @@ struct SearchResultList: View {
                     )
                 }
         case .genres:
-            let genre = results.genres[index].item!
+            let genre = items.genres[index]
             resultLink(.genre(genre), identifier: "search.result.genre") { GenreRow(genre: genre) }
                 .contextMenu { menu(MediaSelectionGenres(genre: genre)) }
         case .playlists:
-            let playlist = results.playlists[index].item!
+            let playlist = items.playlists[index]
             resultLink(.playlist(playlist), identifier: "search.result.playlist") { PlaylistRow(playlist: playlist) }
                 .contextMenu { menu(MediaSelectionPlaylists(playlist: playlist)) }
         }
@@ -303,6 +323,29 @@ struct SearchResultList: View {
         Button("Play", systemImage: "play") { onAction(MediaActionPlay(selection: selection, position: 0)) }
         Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onAction(MediaActionPlayNext(selection: selection)) }
         Button("Add to Queue", systemImage: "text.append") { onAction(MediaActionAddToQueue(selection: selection)) }
+    }
+}
+
+/// A `SearchResults`' hits as Swift arrays. Every read of one of its Kotlin lists from Swift copies the whole list, so
+/// reading them per row made laying out N rows cost N copies (#677); the rows read these instead, copied once. The
+/// "Search results" signpost interval times it in Instruments.
+struct SearchResultItems {
+    static let signposter = OSSignposter(subsystem: "com.simplecityapps.shuttle", category: "Search")
+
+    let artists: [AlbumArtist]
+    let albums: [Album]
+    let songs: [Song]
+    let genres: [Genre]
+    let playlists: [Playlist]
+
+    init(_ results: SearchResults) {
+        let interval = Self.signposter.beginInterval("Search results")
+        defer { Self.signposter.endInterval("Search results", interval) }
+        artists = results.artists.map { $0.item! }
+        albums = results.albums.map { $0.item! }
+        songs = results.songs.map { $0.item! }
+        genres = results.genres.map { $0.item! }
+        playlists = results.playlists.map { $0.item! }
     }
 }
 
