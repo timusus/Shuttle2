@@ -316,6 +316,10 @@ class AppShellRobot(
 
     val calls: List<String> get() = actions.calls
 
+    /** Each visibility Home has reported, in order. */
+    val homeVisibility = mutableListOf<Boolean>()
+    private val entryProvider = { navigator: AppNavigator -> fakeShellEntryProvider(navigator, homeVisibility::add) }
+
     /** The panel the player's state has open. */
     val panel: NowPlayingPanel? get() = queueState.value.panel
 
@@ -351,7 +355,7 @@ class AppShellRobot(
                         actions = actions,
                         snackbarHostState = snackbarHostState,
                         windowAdaptiveInfo = currentWindow,
-                        entryProvider = ::fakeShellEntryProvider,
+                        entryProvider = entryProvider,
                         navigationRequests = remember(targets) { targets.receiveAsFlow() },
                     )
                 }

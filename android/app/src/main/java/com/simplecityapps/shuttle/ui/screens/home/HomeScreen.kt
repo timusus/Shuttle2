@@ -27,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +60,8 @@ class HomeCallbacks(
     val onShuffleAll: () -> Unit = {},
     val onOpenWhatsNew: () -> Unit = {},
     val onDismissWhatsNew: () -> Unit = {},
+    /** Pull to refresh: reloads the sections. */
+    val onRefresh: () -> Unit = {},
     /** Opens an item's detail: an album, artist, playlist or genre. */
     val onOpenItem: (HomeItem) -> Unit = {},
     /** Plays, shuffles or queues an item: a play button, a genre tile's tap, or a TalkBack action. */
@@ -85,7 +88,7 @@ fun HomeScreen(
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier,
         // The shell pads destinations clear of the nav bar and player; the bar takes the status bar.
         contentWindowInsets = WindowInsets(0),
         topBar = {
@@ -102,7 +105,7 @@ fun HomeScreen(
             )
         },
     ) { padding ->
-        val contentModifier = Modifier.fillMaxSize().padding(padding)
+        val contentModifier = Modifier.fillMaxSize().padding(padding).nestedScroll(scrollBehavior.nestedScrollConnection)
         when (uiState) {
             HomeUiState.Loading -> LoadingState(contentModifier)
 
@@ -116,7 +119,14 @@ fun HomeScreen(
                 )
             }
 
-            is HomeUiState.Content -> HomeContent(uiState, callbacks, contentModifier)
+            // The bar's scroll behaviour sits inside the pull, so pulling down expands the bar before it refreshes.
+            is HomeUiState.Content -> PullToRefreshBox(
+                isRefreshing = uiState.refreshing,
+                onRefresh = callbacks.onRefresh,
+                modifier = Modifier.fillMaxSize().padding(padding),
+            ) {
+                HomeContent(uiState, callbacks, Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection))
+            }
         }
     }
 }

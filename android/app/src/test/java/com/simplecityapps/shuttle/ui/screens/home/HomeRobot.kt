@@ -16,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsTarget
@@ -32,6 +33,8 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     var whatsNewOpened = 0
         private set
     var whatsNewDismissed = 0
+        private set
+    var refreshes = 0
         private set
     val openedItems = mutableListOf<HomeItem>()
     val actions = mutableListOf<MediaAction>()
@@ -60,6 +63,7 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
         onShuffleAll = { shuffles++ },
         onOpenWhatsNew = { whatsNewOpened++ },
         onDismissWhatsNew = { whatsNewDismissed++ },
+        onRefresh = { refreshes++ },
         onOpenItem = { openedItems += it },
         onAction = { actions += it },
         onShowActions = { shownActions += it },
@@ -69,6 +73,12 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
     fun scrollTo(text: String) {
         // The first scrollable node is Home's own list; the shelves nest inside it.
         rule.onAllNodes(hasScrollToIndexAction())[0].performScrollToNode(hasText(text))
+    }
+
+    /** Pulls Home's list down from its top, past the pull-to-refresh threshold. */
+    fun pullToRefresh() {
+        rule.onAllNodes(hasScrollToIndexAction())[0].performTouchInput { swipeDown() }
+        rule.waitForIdle()
     }
 
     fun tapText(text: String) {

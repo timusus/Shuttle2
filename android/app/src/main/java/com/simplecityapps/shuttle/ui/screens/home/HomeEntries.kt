@@ -5,6 +5,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -51,10 +52,7 @@ private fun HomeDestination(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     // Home reloads as it comes on screen, and while it's off screen only as the hour turns (#672)
-    LifecycleStartEffect(viewModel) {
-        viewModel.onVisibilityChanged(true)
-        onStopOrDispose { viewModel.onVisibilityChanged(false) }
-    }
+    HomeVisibilityEffect(viewModel::onVisibilityChanged)
     val emptyViewModel: LibraryEmptyViewModel = metroViewModel()
     val emptyState by emptyViewModel.uiState.collectAsStateWithLifecycle()
     val accessRequests = rememberMusicAccessRequests(emptyViewModel)
@@ -95,6 +93,7 @@ private fun HomeDestination(
                         is HomeItem.GenreItem -> onOpen(GenreRoute(item.genre.name))
                     }
                 },
+                onRefresh = viewModel::refresh,
                 onAction = actions::dispatch,
                 onShowActions = actions::showActions,
                 onSeeAll = { section ->
@@ -115,5 +114,19 @@ private fun HomeDestination(
                 }
             },
         )
+    }
+}
+
+/**
+ * Tells [onVisibilityChanged] whether Home is on screen: shown while its entry is composed and the app is started. The
+ * shell's NavDisplay composes only the scene on show, so another tab, or a screen pushed over Home, disposes the entry
+ * and this reports it hidden; coming back composes it again (AppShellTest).
+ */
+@Composable
+internal fun HomeVisibilityEffect(onVisibilityChanged: (Boolean) -> Unit) {
+    val onChanged by rememberUpdatedState(onVisibilityChanged)
+    LifecycleStartEffect(Unit) {
+        onChanged(true)
+        onStopOrDispose { onChanged(false) }
     }
 }

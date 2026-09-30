@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.fixtures.SampleAlbum
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.ui.preview.toAlbum
 import com.simplecityapps.shuttle.ui.preview.toAlbumArtist
+import com.simplecityapps.shuttle.ui.screens.home.HomeVisibilityEffect
 import com.simplecityapps.shuttle.ui.screens.library.AlbumArtistRoute
 import com.simplecityapps.shuttle.ui.screens.library.DetailContentState
 import com.simplecityapps.shuttle.ui.screens.library.LibraryArtwork
@@ -34,9 +35,16 @@ import com.simplecityapps.shuttle.ui.screens.tageditor.SongInfoRoute
  * all of them; an album lists its tracks under the library's detail header; an artist lists its albums.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
-fun fakeShellEntryProvider(navigator: AppNavigator): (NavKey) -> NavEntry<NavKey> = entryProvider {
+fun fakeShellEntryProvider(
+    navigator: AppNavigator,
+    onHomeVisibilityChanged: (Boolean) -> Unit = {},
+): (NavKey) -> NavEntry<NavKey> = entryProvider {
     val openAlbum = { album: SampleAlbum -> navigator.open(album.toAlbum().route) }
-    entry<HomeRoute> { FakeList("Recently played", SampleLibrary.albums.take(8), openAlbum) }
+    entry<HomeRoute> {
+        // The real Home's visibility effect, so the shell's tests see when it reloads
+        HomeVisibilityEffect(onHomeVisibilityChanged)
+        FakeList("Recently played", SampleLibrary.albums.take(8), openAlbum)
+    }
     entry<LibraryRoute>(metadata = ListDetailSceneStrategy.listPane()) { FakeList("Albums", SampleLibrary.albums, openAlbum) }
     entry<SearchRoute> { FakeList("Search", emptyList(), openAlbum) }
     entry<AlbumRoute>(metadata = ListDetailSceneStrategy.detailPane()) { route ->

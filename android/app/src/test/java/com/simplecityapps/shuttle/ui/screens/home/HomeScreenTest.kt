@@ -235,6 +235,15 @@ class HomeScreenTest {
     }
 
     @Test
+    fun `pulling the list down refreshes home`() {
+        robot.setContent(HomeScenarios.content)
+
+        robot.pullToRefresh()
+
+        robot.refreshes shouldBe 1
+    }
+
+    @Test
     fun `home has its title and no search button, which the Search tab covers`() {
         robot.setContent(HomeScenarios.content)
 

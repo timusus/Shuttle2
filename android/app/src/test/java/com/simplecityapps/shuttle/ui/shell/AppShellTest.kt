@@ -207,6 +207,17 @@ class AppShellTest {
     }
 
     @Test
+    fun `home is hidden while another tab or a pushed screen covers it, and shown again on return (#672)`() {
+        robot.setContent()
+        robot.tapText("Library")
+        robot.tapText("Home")
+        robot.tapText("Phase Garden")
+        robot.pressBack()
+
+        robot.homeVisibility shouldBe listOf(true, false, true, false, true)
+    }
+
+    @Test
     fun `back at Mini pops the destination instead`() {
         robot.setContent()
         robot.tapText("Phase Garden")
