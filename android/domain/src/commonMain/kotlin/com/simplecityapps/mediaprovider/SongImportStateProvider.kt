@@ -4,7 +4,11 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlinx.coroutines.flow.StateFlow
 
 interface SongImportStateProvider {
+    /** Whichever provider reported last: providers import side by side, so this alone can't say how each one is doing. */
     val songImportState: StateFlow<SongImportState>
+
+    /** Each provider's own import: its progress while it runs, then how it ended, until its next import starts. Empty until one has run. */
+    val providerImportStates: StateFlow<Map<MediaProviderType, SongImportState>>
 }
 
 sealed class SongImportState {

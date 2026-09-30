@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 
@@ -53,6 +54,10 @@ class MediaImporter(
 
     /** The running import's progress, or how the last one ended, so a collector that arrives mid-import sees where it's at. */
     override val songImportState: StateFlow<SongImportState> = _songImportState.asStateFlow()
+
+    private val _providerImportStates = MutableStateFlow<Map<MediaProviderType, SongImportState>>(emptyMap())
+
+    override val providerImportStates: StateFlow<Map<MediaProviderType, SongImportState>> = _providerImportStates.asStateFlow()
 
     val mediaProviders: MutableSet<MediaProvider> = mutableSetOf()
 
@@ -112,7 +117,7 @@ class MediaImporter(
 
         mediaProviders.forEach { mediaProvider ->
             val start = MessageProgress(if (mediaProvider.type.remote) ImportPhase.Connecting else ImportPhase.Fetching, progress = null)
-            _songImportState.value = mediaProvider.importProgress(start)
+            publish(mediaProvider.type, mediaProvider.importProgress(start))
         }
 
         preferenceManager.songTagsRescanVersion = SONG_TAGS_VERSION
@@ -122,17 +127,17 @@ class MediaImporter(
                     importSongs(mediaProvider).collect { event ->
                         when (event) {
                             is FlowEvent.Progress -> {
-                                _songImportState.value = mediaProvider.importProgress(event.data)
+                                publish(mediaProvider.type, mediaProvider.importProgress(event.data))
                             }
 
                             is FlowEvent.Success -> {
                                 // Stored, so this source's songs hold every tag this build reads
                                 preferenceManager.setSongTagsVersion(mediaProvider.type.name, SONG_TAGS_VERSION)
-                                _songImportState.value = SongImportState.ImportComplete(mediaProvider.type, error = null)
+                                publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, error = null))
                             }
 
                             is FlowEvent.Failure -> {
-                                _songImportState.value = SongImportState.ImportComplete(mediaProvider.type, event.message)
+                                publish(mediaProvider.type, SongImportState.ImportComplete(mediaProvider.type, event.message))
                             }
                         }
                     }
@@ -154,6 +159,11 @@ class MediaImporter(
         afterImport(mediaProviders.none { preferenceManager.songTagsOutdated(it.type) })
 
         logger.debug { "Import complete in ${time.elapsedNow().inWholeMilliseconds}ms)" }
+    }
+
+    private fun publish(type: MediaProviderType, state: SongImportState) {
+        _songImportState.value = state
+        _providerImportStates.update { states -> states + (type to state) }
     }
 
     /** [progress] as the import state shows it: described in the user's words, with its count. */

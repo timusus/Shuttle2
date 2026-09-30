@@ -28,6 +28,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.yield
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MediaImporterTest {
@@ -179,6 +180,28 @@ class MediaImporterTest {
         import.join()
 
         importer.songImportState.value shouldBe SongImportState.ImportComplete(MediaProviderType.Shuttle, "Server unreachable")
+    }
+
+    @Test
+    fun `each provider keeps how its own import ended, whichever reported last`() = runBlocking<Unit> {
+        val server = GatedProvider(MediaProviderType.Jellyfin).apply { scanFailure = "Server unreachable" }
+        importer.mediaProviders += server
+        val import = launch(Dispatchers.Default) { importer.import() }
+        provider.started.receive()
+        server.started.receive()
+
+        server.gate.trySend(Unit)
+        while (importer.providerImportStates.value[MediaProviderType.Jellyfin] !is SongImportState.ImportComplete) yield()
+
+        importer.providerImportStates.value[MediaProviderType.Shuttle] shouldBe SongImportState.ImportProgress(MediaProviderType.Shuttle, "Fetching", progress = null)
+
+        provider.gate.trySend(Unit)
+        import.join()
+
+        importer.providerImportStates.value shouldBe mapOf(
+            MediaProviderType.Shuttle to SongImportState.ImportComplete(MediaProviderType.Shuttle, error = null),
+            MediaProviderType.Jellyfin to SongImportState.ImportComplete(MediaProviderType.Jellyfin, "Server unreachable"),
+        )
     }
 
     @Test
