@@ -31,7 +31,7 @@ struct HomeViewTests {
     }
 
     private func content(_ sections: [HomeSection] = []) -> HomeUiState {
-        HomeUiStateContent(showWhatsNew: false, sections: sections, events: [], covers: [:])
+        HomeUiStateContent(showWhatsNew: false, sections: sections, events: [], covers: [:], refreshing: false)
     }
 
     private func same(_ lhs: MediaAction?, _ rhs: MediaAction) -> Bool {
