@@ -7,30 +7,24 @@ package com.simplecityapps.shuttle.ui.shell.player
  *
  * - Hidden = [height], the sheet fully below the shell
  * - Mini = [height] - [navBarHeight] - [miniHeight], the mini player sitting on the nav bar
- * - NowPlaying = [restOffset], the sheet at rest: as tall as its content, or the full height (0)
- * - Expanded = 0, the sheet filling the shell
+ * - Full = 0, the sheet filling the shell
  */
 data class PlayerSheetGeometry(
     val height: Float,
     val navBarHeight: Float,
     val miniHeight: Float,
-    val restOffset: Float,
 ) {
-    /** Whether the sheet rests below full height, so it has an Expanded level above rest. */
-    val partialRest: Boolean get() = restOffset > 0f
-
     fun offsetOf(level: PlayerLevel): Float = when (level) {
         PlayerLevel.Hidden -> height
         PlayerLevel.Mini -> height - navBarHeight - miniHeight
-        PlayerLevel.NowPlaying -> restOffset
-        PlayerLevel.Expanded -> 0f
+        PlayerLevel.Full -> 0f
     }
 
     /** 0 hidden → 1 mini. */
     fun reveal(offset: Float): Float = fraction(offsetOf(PlayerLevel.Hidden), offsetOf(PlayerLevel.Mini), offset)
 
-    /** 0 mini → 1 now playing. */
-    fun expand(offset: Float): Float = fraction(offsetOf(PlayerLevel.Mini), offsetOf(PlayerLevel.NowPlaying), offset)
+    /** 0 mini → 1 full. */
+    fun expand(offset: Float): Float = fraction(offsetOf(PlayerLevel.Mini), offsetOf(PlayerLevel.Full), offset)
 
     /** Where the sheet itself sits: it never rises above the shell's top edge. */
     fun sheetTop(offset: Float): Float = offset.coerceAtLeast(0f)
@@ -57,15 +51,16 @@ data class PlayerSheetGeometry(
     ): Float = (statusBar - sheetTop(offset)).coerceAtLeast(0f)
 
     /**
-     * The radius of the sheet's top corners: none at Mini, [corner] px at rest, flattening over the
-     * last [corner] px before the edge meets the status bar, so an expanded sheet fills it square.
+     * The radius of the sheet's top corners while it moves: none at Mini, rounding to [corner] px as
+     * it rises, then flattening over the last [corner] px before the edge meets the status bar, so the
+     * full player fills the screen square.
      */
     fun cornerRadius(
         offset: Float,
         statusBar: Float,
         corner: Float,
     ): Float {
-        if (!partialRest || corner <= 0f) return 0f
+        if (corner <= 0f) return 0f
         val toStatusBar = ((sheetTop(offset) - statusBar) / corner).coerceIn(0f, 1f)
         return corner * expand(offset) * toStatusBar
     }

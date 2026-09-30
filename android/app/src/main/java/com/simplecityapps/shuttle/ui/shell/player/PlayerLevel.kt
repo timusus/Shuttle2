@@ -4,46 +4,30 @@ package com.simplecityapps.shuttle.ui.shell.player
  * How far the player is open. Shell state, not a route: it overlays every destination and never
  * pops with the back stack (docs/architecture/app-shell.md, section 1).
  *
- * [NowPlaying] is the sheet at rest, as tall as its artwork, title, transport and bar need, with the
- * library showing above it on a tall phone. [Expanded] is the sheet at full height, where the
- * Now Playing list scrolls its artwork away to show the open panel.
+ * [Mini] is the mini player on the nav bar and [Full] the full-screen player. The queue and the
+ * other panels are not levels: they open inside the full player, from their buttons
+ * ([PlayerUiState.panel]).
  */
-enum class PlayerLevel { Hidden, Mini, NowPlaying, Expanded }
+enum class PlayerLevel { Hidden, Mini, Full }
 
 /**
  * How the player is presented at the current window size (app-shell.md, section 2).
  *
- * - [CompactSheet]: below 600 dp, a sheet that rests at its content's height and expands to full height.
- * - [Sheet]: 600 to 1199 dp, a full-height sheet whose Now Playing shows the open panel beside the player.
+ * - [CompactSheet]: below 600 dp, a full-screen sheet over the destinations and nav bar.
+ * - [Sheet]: 600 to 1199 dp, a full-height sheet whose open panel sits beside the player.
  * - [Pane]: from 1200 dp, a persistent trailing pane beside the destinations.
  */
 enum class PlayerMode { CompactSheet, Sheet, Pane }
 
-/**
- * The levels the player can settle at. Hidden is only reachable, and the only level, with an empty
- * queue. Only a compact sheet that rests below full height ([partialRest]) has an Expanded level.
- */
-fun playerLevels(
-    mode: PlayerMode,
-    hasQueue: Boolean,
-    partialRest: Boolean = true,
-): Set<PlayerLevel> = when {
-    !hasQueue -> setOf(PlayerLevel.Hidden)
-    mode == PlayerMode.CompactSheet && partialRest -> setOf(PlayerLevel.Mini, PlayerLevel.NowPlaying, PlayerLevel.Expanded)
-    else -> setOf(PlayerLevel.Mini, PlayerLevel.NowPlaying)
-}
+/** The levels the player can settle at. Hidden is only reachable, and the only level, with an empty queue. */
+fun playerLevels(hasQueue: Boolean): Set<PlayerLevel> = if (hasQueue) setOf(PlayerLevel.Mini, PlayerLevel.Full) else setOf(PlayerLevel.Hidden)
 
 /** The level one back gesture steps down to, or null when back belongs to the destinations. Back never reaches Hidden. */
-fun PlayerLevel.stepDown(): PlayerLevel? = when (this) {
-    PlayerLevel.Expanded -> PlayerLevel.NowPlaying
-    PlayerLevel.NowPlaying -> PlayerLevel.Mini
-    PlayerLevel.Mini, PlayerLevel.Hidden -> null
-}
+fun PlayerLevel.stepDown(): PlayerLevel? = if (this == PlayerLevel.Full) PlayerLevel.Mini else null
 
 /**
  * Maps a level across a change of presentation (app-shell.md, "Size or posture changes"):
- * sheet to pane opens the pane, pane to sheet always drops to Mini, and only a compact sheet keeps
- * Expanded; elsewhere the open panel shows at Now Playing.
+ * sheet to pane opens the pane, pane to sheet always drops to Mini.
  */
 fun mapPlayerLevel(
     level: PlayerLevel,
@@ -51,9 +35,8 @@ fun mapPlayerLevel(
     to: PlayerMode,
 ): PlayerLevel = when {
     level == PlayerLevel.Hidden || from == to -> level
-    to == PlayerMode.Pane -> PlayerLevel.NowPlaying
+    to == PlayerMode.Pane -> PlayerLevel.Full
     from == PlayerMode.Pane -> PlayerLevel.Mini
-    level == PlayerLevel.Expanded -> PlayerLevel.NowPlaying
     else -> level
 }
 
@@ -67,6 +50,5 @@ fun resolvePlayerLevel(
 ): PlayerLevel = when {
     level in allowed -> level
     PlayerLevel.Hidden in allowed -> PlayerLevel.Hidden
-    level == PlayerLevel.Expanded -> PlayerLevel.NowPlaying
     else -> PlayerLevel.Mini
 }

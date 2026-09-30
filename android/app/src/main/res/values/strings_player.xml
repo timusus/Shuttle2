@@ -2,10 +2,10 @@
 <resources>
     <!-- Content description: collapses the full-screen player back to the mini player -->
     <string name="player_collapse">Collapse player</string>
-    <!-- Heading at the top of the full-screen player -->
+    <!-- Accessibility action on the song row that heads the full-screen player while the queue or another panel is open: closes the panel, back to the full player -->
     <string name="player_now_playing">Now playing</string>
-    <!-- Accessibility action on the queue peek: shows the queue -->
-    <string name="player_show_queue">Show queue</string>
+    <!-- Button in the full-screen player's bottom row that opens and closes the queue -->
+    <string name="player_queue">Queue</string>
     <!-- Snackbar shown after the queue is cleared -->
     <string name="player_queue_cleared">Queue cleared</string>
     <!-- Snackbar action that puts a cleared queue back -->

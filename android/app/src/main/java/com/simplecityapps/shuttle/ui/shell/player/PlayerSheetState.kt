@@ -3,8 +3,6 @@ package com.simplecityapps.shuttle.ui.shell.player
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
-import androidx.compose.foundation.gestures.FlingBehavior
-import androidx.compose.foundation.gestures.ScrollScope
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.gestures.snapTo
 import androidx.compose.material3.MaterialTheme
@@ -68,7 +66,7 @@ class PlayerSheetState internal constructor(
     val settledLevel: PlayerLevel get() = draggable.settledValue
 
     val allowedLevels: Set<PlayerLevel>
-        get() = playerLevels(mode, hasQueue ?: (draggable.currentValue != PlayerLevel.Hidden), geometry.partialRest)
+        get() = playerLevels(hasQueue ?: (draggable.currentValue != PlayerLevel.Hidden))
 
     /** The sheet's current offset, or its settled level's anchor before the first layout. */
     val offset: Float
@@ -101,7 +99,7 @@ class PlayerSheetState internal constructor(
         // A revealing sheet keeps Hidden as an anchor until it has animated up to Mini, and a collapsing one keeps
         // its levels until it has animated down to Hidden.
         val anchorLevels = when {
-            collapse || collapsePending -> playerLevels(mode, hasQueue = true, geometry.partialRest) + PlayerLevel.Hidden
+            collapse || collapsePending -> playerLevels(hasQueue = true) + PlayerLevel.Hidden
             reveal || revealPending -> allowed + PlayerLevel.Hidden
             else -> allowed
         }
@@ -161,37 +159,11 @@ class PlayerSheetState internal constructor(
         return true
     }
 
-    /** Drags the sheet with a nested-scroll delta. Returns the delta consumed. */
-    internal fun dispatchRawDelta(delta: Float): Float = draggable.dispatchRawDelta(delta)
-
-    internal val minOffset: Float get() = draggable.anchors.minPosition()
-
-    /** Flings the sheet to an anchor with [flingBehavior], returning the velocity consumed (M3's sheet pattern). */
-    internal suspend fun fling(
-        flingBehavior: FlingBehavior,
-        velocity: Float,
-    ): Float {
-        var consumed = 0f
-        draggable.anchoredDrag {
-            val scope = object : ScrollScope {
-                override fun scrollBy(pixels: Float): Float {
-                    val from = offset
-                    val to = (from + pixels).coerceIn(draggable.anchors.minPosition(), draggable.anchors.maxPosition())
-                    dragTo(to)
-                    return to - from
-                }
-            }
-            consumed = with(flingBehavior) { scope.performFling(velocity) }
-        }
-        return consumed
-    }
-
     companion object {
         /**
          * Stand-in anchors before the first layout and in the pane, where no gesture drives the offset.
-         * It rests partway, so a restored Expanded level stands until the sheet is measured.
          */
-        internal val NominalGeometry = PlayerSheetGeometry(height = 4f, navBarHeight = 0f, miniHeight = 1f, restOffset = 1f)
+        internal val NominalGeometry = PlayerSheetGeometry(height = 4f, navBarHeight = 0f, miniHeight = 1f)
     }
 }
 

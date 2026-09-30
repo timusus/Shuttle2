@@ -91,7 +91,6 @@ import com.simplecityapps.shuttle.ui.shell.player.PlayerSheet
 import com.simplecityapps.shuttle.ui.shell.player.PlayerSheetGeometry
 import com.simplecityapps.shuttle.ui.shell.player.PlayerSheetState
 import com.simplecityapps.shuttle.ui.shell.player.PlayerUiState
-import com.simplecityapps.shuttle.ui.shell.player.nowPlayingRest
 import com.simplecityapps.shuttle.ui.shell.player.playerPaneWidth
 import com.simplecityapps.shuttle.ui.shell.player.rememberPlayerSheetState
 import kotlin.math.roundToInt
@@ -220,7 +219,7 @@ private fun rememberContentBottomPadding(player: PlayerSheetState) = with(LocalD
     padding.toDp()
 }
 
-/** Below 600 dp: bottom bar, one pane, the sheet with a partial rest below full height. The bar draws over the sheet's foot. */
+/** Below 600 dp: bottom bar, one pane, and the player sheet, which opens to full screen as the bar slides away under it. */
 @Composable
 private fun CompactShell(
     player: PlayerSheetState,
@@ -230,10 +229,7 @@ private fun CompactShell(
     onSelectTab: (ShellTab) -> Unit,
     destinations: @Composable () -> Unit,
 ) {
-    val density = LocalDensity.current
-    val statusBarTop = WindowInsets.statusBars.getTop(density)
-    val navigationBarBottom = WindowInsets.navigationBars.getBottom(density)
-    val miniHeight = with(density) { MiniPlayerHeight.toPx() }
+    val miniHeight = with(LocalDensity.current) { MiniPlayerHeight.toPx() }
     val sheetVisible = rememberSheetVisible(player)
     val bottomPadding = rememberContentBottomPadding(player)
 
@@ -260,7 +256,6 @@ private fun CompactShell(
                 height = height.toFloat(),
                 navBarHeight = navBarHeight.toFloat(),
                 miniHeight = miniHeight,
-                restOffset = with(density) { nowPlayingRest(width.toFloat(), height.toFloat(), statusBarTop, navigationBarBottom, layout.horizontalFold).offset },
             ),
         )
         val fill = Constraints.fixed(width, height)
@@ -327,7 +322,7 @@ private fun RailSheetShell(
         measuredRailWidth = railWidth
         val contentWidth = width - railWidth
         player.onMeasured(
-            PlayerSheetGeometry(height = height.toFloat(), navBarHeight = navigationBarBottom.toFloat(), miniHeight = miniHeight, restOffset = 0f),
+            PlayerSheetGeometry(height = height.toFloat(), navBarHeight = navigationBarBottom.toFloat(), miniHeight = miniHeight),
         )
         val destinationPlaceables = destination.map { it.measure(Constraints.fixed(contentWidth, height)) }
         val scrimX = if (coversRail) 0 else railWidth
@@ -381,7 +376,7 @@ private fun PaneShell(
     destinations: @Composable () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val paneOpen = player.level == PlayerLevel.NowPlaying
+    val paneOpen = player.level == PlayerLevel.Full
     val docked = player.level == PlayerLevel.Mini
     val spec = MaterialTheme.motionScheme.slowSpatialSpec<IntSize>()
     Row(Modifier.fillMaxSize()) {
@@ -402,7 +397,7 @@ private fun PaneShell(
                             progress = content.progress,
                             actions = content.actions,
                             interactive = true,
-                            onClick = { scope.launch { player.moveTo(PlayerLevel.NowPlaying) } },
+                            onClick = { scope.launch { player.moveTo(PlayerLevel.Full) } },
                             modifier = Modifier.navigationBarsPadding(),
                         )
                     }

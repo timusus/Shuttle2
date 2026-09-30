@@ -72,7 +72,7 @@ internal fun QueueHeader(
     onClear: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val color = PlayerSheetColor
+    val color = PanelColor
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -100,14 +100,12 @@ internal class QueueListState(
     val items: List<PlayerSong> by items
 }
 
-/** [firstRowIndex] is the list index of the queue's first row, after whatever the list shows above it. */
 @Composable
 internal fun rememberQueueListState(
     listState: LazyListState,
     items: List<PlayerSong>,
-    firstRowIndex: Int = 0,
 ): QueueListState {
-    val reorder = remember(listState, firstRowIndex) { QueueReorderState(listState, firstRowIndex) }
+    val reorder = remember(listState) { QueueReorderState(listState) }
     val songActions = rememberSongActionsState()
     val currentItems = rememberUpdatedState(items)
     val density = LocalDensity.current
@@ -122,7 +120,7 @@ internal fun rememberQueueListState(
 /**
  * The queue's rows: tap a row to play it, drag its handle to reorder, swipe it away to remove it, or
  * long-press it for its song actions ([QueueSongActions] shows the menu). Rows are keyed by their
- * queue uid, so a list may hold them after items of its own.
+ * queue uid.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 internal fun LazyListScope.queueItems(
@@ -258,7 +256,7 @@ private fun QueueItem(
             title = row.title,
             subtitle = row.artist.orEmpty(),
             onClick = onClick,
-            modifier = Modifier.background(PlayerSheetColor),
+            modifier = Modifier.background(PanelColor),
             position = row.position,
             artwork = { SongArtwork(row.song) },
             duration = formatDuration(row.durationMs.toLong()),
@@ -283,8 +281,6 @@ private val AutoScrollMaxSpeed = 1200.dp
 @Stable
 internal class QueueReorderState(
     private val listState: LazyListState,
-    /** The list index of the queue's first row. */
-    private val firstRowIndex: Int = 0,
 ) {
     var draggingUid by mutableStateOf<Long?>(null)
         private set
@@ -352,7 +348,7 @@ internal class QueueReorderState(
         // The list keeps its first visible row in place across a reorder; when the dragged row is, or
         // passes, that row, keep the scroll position instead, so the list doesn't follow the drag.
         val first = listState.firstVisibleItemIndex
-        if (first - firstRowIndex in minOf(start, index)..maxOf(start, index)) {
+        if (first in minOf(start, index)..maxOf(start, index)) {
             listState.requestScrollToItem(first, listState.firstVisibleItemScrollOffset)
         }
         order = rows
