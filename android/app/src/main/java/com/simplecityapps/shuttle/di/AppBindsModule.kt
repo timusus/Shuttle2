@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.appinitializers.EntitlementInitializer
 import com.simplecityapps.shuttle.appinitializers.MediaProviderInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackReportingInitializer
+import com.simplecityapps.shuttle.appinitializers.SearchIndexInitializer
 import com.simplecityapps.shuttle.appinitializers.ShortcutInitializer
 import com.simplecityapps.shuttle.appinitializers.TelemetryInitializer
 import com.simplecityapps.shuttle.appinitializers.TimberInitializer
@@ -74,4 +75,8 @@ abstract class AppBindsModule {
     @Binds
     @IntoSet
     abstract fun provideAppearanceInitializer(bind: AppearanceInitializer): AppInitializer
+
+    @Binds
+    @IntoSet
+    abstract fun provideSearchIndexInitializer(bind: SearchIndexInitializer): AppInitializer
 }

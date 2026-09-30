@@ -25,32 +25,37 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 
 /**
  * The whole library as one [SearchIndex] of [AlbumArtist]s, [Album]s, [Song]s, [Playlist]s and [Genre]s, rebuilt off
  * the main thread whenever the library's content changes. Playing a song moves play counts and last-played times in
  * three repositories, which would rebuild the whole index mid-search (#677), so those changes alone don't: the play
  * counts that weight the ranking catch up at the next content change. Shared by every search screen; it stops
- * following the library a minute after the last one goes, so reopening search soon after reuses the index.
+ * following the library a minute after the last one goes, so reopening search soon after reuses the index, unless
+ * [warmUp] is holding it.
  */
 @SingleIn(AppScope::class)
 class LibrarySearchIndex @Inject constructor(
     albumArtistRepository: AlbumArtistRepository,
     albumRepository: AlbumRepository,
-    songRepository: SongRepository,
+    private val songRepository: SongRepository,
     genreRepository: GenreRepository,
     playlistRepository: PlaylistRepository,
-    @AppCoroutineScope scope: CoroutineScope,
-    @IoDispatcher dispatcher: CoroutineDispatcher,
+    @AppCoroutineScope private val scope: CoroutineScope,
+    @IoDispatcher private val dispatcher: CoroutineDispatcher,
 ) {
+    private var warming: Job? = null
     val index: Flow<SearchIndex<Any>> = combine(
         // Every artist, album artist or only credited (featured, on compilations), each once (#637)
         albumArtistRepository.getAlbumArtists(AlbumArtistQuery.Credited())
@@ -71,6 +76,19 @@ class LibrarySearchIndex @Inject constructor(
         .map { SearchIndex.build(it) }
         .flowOn(dispatcher)
         .shareIn(scope, SharingStarted.WhileSubscribed(stopTimeoutMillis = 60_000), replay = 1)
+
+    /**
+     * Builds the index ahead of the first search, and keeps it current for the process's life, so the first query
+     * doesn't wait for a build (0.34 s for 18k songs). Waits for the library to have songs, so an empty one builds
+     * nothing; runs off the main thread. Safe to call again; it does nothing while already warming.
+     */
+    fun warmUp() {
+        if (warming?.isActive == true) return
+        warming = scope.launch(dispatcher) {
+            songRepository.getSongs(SongQuery.All()).first { !it.isNullOrEmpty() }
+            index.collect {}
+        }
+    }
 
     private fun document(artist: AlbumArtist) = SearchDocument<Any>(
         artist,

@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListViewModel
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListViewModel
 import com.simplecityapps.shuttle.ui.screens.onboarding.SourceSetupViewModel
+import com.simplecityapps.shuttle.ui.screens.search.LibrarySearchIndex
 import com.simplecityapps.shuttle.ui.screens.search.SearchViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsViewModel
 import com.simplecityapps.shuttle.ui.screens.settings.about.LicencesViewModel
@@ -69,6 +70,9 @@ interface IosAppGraph : ViewModelGraph {
 
     /** Records each song's plays and pause positions from [playerController]'s events; Swift starts it once, at launch. */
     val recordPlays: RecordPlays
+
+    /** The search index; Swift warms it once, at launch, so the first search doesn't wait for the build. */
+    val librarySearchIndex: LibrarySearchIndex
 
     /** The library's providers and the import that fills it: the Library's pull-to-refresh and launch import. */
     val mediaSources: MediaSources

@@ -16,6 +16,7 @@ import kotlin.time.Instant
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 
@@ -28,12 +29,15 @@ class LibrarySearchIndexTest {
     private val petalArithmetic = createSong(id = 2, name = "Petal Arithmetic", albumArtist = "Juniper Static", album = "Phase Garden")
 
     /** Every index built from now on, starting with the first. */
-    private fun TestScope.recordIndexes(): List<SearchIndex<Any>> {
+    private fun TestScope.libraryIndex(): LibrarySearchIndex {
         songs.setSongs(listOf(chlorophyllLoop, petalArithmetic))
         albums.setAlbums(listOf(createAlbum("Phase Garden", "Juniper Static")))
         artists.setAlbumArtists(listOf(createAlbumArtist("Juniper Static")))
         val dispatcher = StandardTestDispatcher(testScheduler)
-        val index = LibrarySearchIndex(artists, albums, songs, FakeGenreRepository(), FakePlaylistRepository(), backgroundScope, dispatcher)
+        return LibrarySearchIndex(artists, albums, songs, FakeGenreRepository(), FakePlaylistRepository(), backgroundScope, dispatcher)
+    }
+
+    private fun TestScope.recordIndexes(index: LibrarySearchIndex = libraryIndex()): List<SearchIndex<Any>> {
         val built = mutableListOf<SearchIndex<Any>>()
         backgroundScope.launch { index.index.collect { built += it } }
         runCurrent()
@@ -74,5 +78,19 @@ class LibrarySearchIndexTest {
 
         built.size shouldBe 2
         built.last().songNames("moss") shouldBe listOf("Moss Protocol")
+    }
+
+    @Test
+    fun `the first search after warm-up doesn't build`() = runTest {
+        val index = libraryIndex()
+        index.warmUp()
+        runCurrent()
+        // Long after the last subscriber's stop timeout: only the warm-up is holding the index
+        advanceTimeBy(10 * 60_000L)
+
+        val built = recordIndexes(index)
+
+        built.size shouldBe 1
+        built.single().songNames("chlorophyll") shouldBe listOf("Chlorophyll Loop")
     }
 }

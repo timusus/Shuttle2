@@ -84,6 +84,10 @@
   ],
   "improvements": [
     {
+      "text": "Search is faster the first time you use it, because your library is prepared for searching as the app starts",
+      "commits": []
+    },
+    {
       "text": "Search stays quick while music plays, instead of re-reading your whole library each time a song finishes",
       "commits": []
     },
