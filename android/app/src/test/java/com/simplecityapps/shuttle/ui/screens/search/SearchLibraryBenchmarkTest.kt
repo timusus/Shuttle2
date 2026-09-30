@@ -7,7 +7,6 @@ import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -50,7 +49,7 @@ class SearchLibraryBenchmarkTest {
         val artists = FakeAlbumArtistRepository().apply { setAlbumArtists(artistNames.map { createAlbumArtist(it) }) }
         val albums = FakeAlbumRepository().apply { setAlbums(albumNames.map { (album, artist) -> createAlbum(album, artist) }) }
         val songs = FakeSongRepository().apply { setSongs(songList) }
-        val index = LibrarySearchIndex(artists, albums, songs, FakeGenreRepository(), FakePlaylistRepository(), backgroundScope, Dispatchers.Unconfined, FakeSongImportStateProvider())
+        val index = LibrarySearchIndex(artists, albums, songs, FakeGenreRepository(), FakePlaylistRepository(), backgroundScope, Dispatchers.Unconfined, testScheduler.timeSource)
         val search = SearchLibrary(index, Dispatchers.Unconfined)
         val categories = SearchCategory.entries.toSet()
 

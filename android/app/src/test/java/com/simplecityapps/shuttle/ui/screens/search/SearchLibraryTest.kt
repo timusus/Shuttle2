@@ -5,7 +5,6 @@ import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.ui.preview.toAlbum
@@ -40,7 +39,7 @@ class SearchLibraryTest {
     /** A [SearchLibrary] over the fakes, its index shared in the test's background scope, all on the test's scheduler. */
     private fun TestScope.searchLibrary(query: String, categories: Set<SearchCategory>): Flow<SearchResults> {
         val dispatcher = StandardTestDispatcher(testScheduler)
-        return SearchLibrary(LibrarySearchIndex(artists, albums, songs, genres, playlists, backgroundScope, dispatcher, FakeSongImportStateProvider()), dispatcher)(query, categories)
+        return SearchLibrary(LibrarySearchIndex(artists, albums, songs, genres, playlists, backgroundScope, dispatcher, testScheduler.timeSource), dispatcher)(query, categories)
     }
 
     @Before

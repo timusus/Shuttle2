@@ -6,7 +6,6 @@ import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
-import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -54,7 +53,7 @@ class SearchViewModelTest {
 
     private fun TestScope.viewModel(): SearchViewModel {
         val dispatcher = testDispatcher
-        val index = LibrarySearchIndex(FakeAlbumArtistRepository(), albums, songs, FakeGenreRepository(), FakePlaylistRepository(), backgroundScope, dispatcher, FakeSongImportStateProvider())
+        val index = LibrarySearchIndex(FakeAlbumArtistRepository(), albums, songs, FakeGenreRepository(), FakePlaylistRepository(), backgroundScope, dispatcher, testScheduler.timeSource)
         val searchLibrary = SearchLibrary(index, dispatcher)
         return SearchViewModel(searchLibrary, RecentSearches(preferenceManager), ReadSearchCategories(preferenceManager), SaveSearchCategories(preferenceManager)).also { viewModel ->
             backgroundScope.launch { viewModel.uiState.collect {} }
