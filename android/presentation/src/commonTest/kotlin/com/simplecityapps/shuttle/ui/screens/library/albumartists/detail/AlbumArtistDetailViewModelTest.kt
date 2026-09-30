@@ -35,10 +35,13 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -63,7 +66,11 @@ class AlbumArtistDetailViewModelTest {
     }
 
     private val seededAlbums = mutableListOf<String?>()
+
+    /** How long the fake artwork source takes to extract a seed, in virtual time. */
+    private var seedDelayMs = 0L
     private val seedSource = ArtworkSeedSource { song ->
+        delay(seedDelayMs)
         seededAlbums += song.album
         ArtworkSeed.Available(RED)
     }
@@ -311,6 +318,29 @@ class AlbumArtistDetailViewModelTest {
     }
 
     @Test
+    fun `a slow artwork seed doesn't hold up the content - the tint follows once it's extracted`() = runTest {
+        seedDelayMs = 5_000
+        fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
+        fakeAlbumRepository.setAlbums(listOf(looseChange))
+        fakeSongRepository.setSongs(listOf(song(1, "Arcade", "Loose Change")))
+        val viewModel = createViewModel()
+        var firstContentAt: Long? = null
+        backgroundScope.launch {
+            viewModel.uiState.collect { state ->
+                if (firstContentAt == null && state.loadingState == AlbumArtistDetailUiState.LoadingState.Ready) firstContentAt = currentTime
+            }
+        }
+        advanceTimeBy(1)
+
+        firstContentAt shouldBe 0L
+        viewModel.uiState.value.songs.map { it.name } shouldBe listOf("Arcade")
+        viewModel.uiState.value.seed shouldBe ArtworkSeed.Loading
+
+        advanceUntilIdle()
+        viewModel.uiState.value.seed shouldBe ArtworkSeed.Available(RED)
+    }
+
+    @Test
     fun `turning Colour from artwork off drops the tint`() = runTest {
         fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
         fakeAlbumRepository.setAlbums(listOf(createAlbum(name = "Loose Change", albumArtist = "The Tin Orchards", year = 1970)))
@@ -471,6 +501,35 @@ class AlbumArtistDetailViewModelTest {
         viewModel.onCollapseAll()
         advanceUntilIdle()
         viewModel.uiState.value.expandedAlbums shouldBe emptySet()
+    }
+
+    @Test
+    fun `the albums shelf hides while songs group by album - their headers are the albums`() = runTest {
+        val viewModel = loadedViewModel()
+
+        ArtistSongSortOrder.entries.forEach { order ->
+            viewModel.onSortOrderSelected(order)
+            advanceUntilIdle()
+            viewModel.uiState.value.showAlbumsShelf shouldBe !order.groupsByAlbum
+        }
+    }
+
+    @Test
+    fun `the albums shelf shows under an album order with no album sections`() = runTest {
+        // Songs crediting the artist on none of their own albums trail as other songs, so nothing else lists the albums
+        val viewModel = loadedViewModel(albums = listOf(cassetteSummer), songs = listOf(song(1, "Stray", "Loose Tracks")))
+
+        viewModel.uiState.value.sortOrder.groupsByAlbum shouldBe true
+        viewModel.uiState.value.showAlbumsShelf shouldBe true
+    }
+
+    @Test
+    fun `no albums, no shelf`() = runTest {
+        val viewModel = loadedViewModel(albums = emptyList(), songs = listOf(song(1, "Stray", "Loose Tracks")))
+
+        viewModel.onSortOrderSelected(ArtistSongSortOrder.SongTitle)
+        advanceUntilIdle()
+        viewModel.uiState.value.showAlbumsShelf shouldBe false
     }
 
     @Test

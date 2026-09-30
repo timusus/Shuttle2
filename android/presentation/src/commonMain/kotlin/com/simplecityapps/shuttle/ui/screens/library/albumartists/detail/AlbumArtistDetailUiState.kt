@@ -32,9 +32,15 @@ data class AlbumArtistDetailUiState(
     val expandedAlbums: Set<AlbumGroupKey> = emptySet(),
     val loadingState: LoadingState = LoadingState.Loading,
     val events: List<PendingEvent<AlbumArtistDetailEvent>> = emptyList(),
-    /** The newest album's artwork seed, which tints the screen when Colour from artwork is on. */
+    /** The newest album's artwork seed, which tints the screen when Colour from artwork is on; it never holds up the content, which shows at [ArtworkSeed.Loading] while it's extracted. */
     val seed: ArtworkSeed = ArtworkSeed.None,
 ) {
+    /**
+     * Whether the Albums shelf shows (#678): only while the song list has no album sections. Grouped by album, the
+     * section headers are the albums (each opens its album), so a shelf above them would list them twice.
+     */
+    val showAlbumsShelf: Boolean get() = albums.isNotEmpty() && sections.none { it.album != null }
+
     /** What playing this screen's songs starts the queue from (#633). */
     val playContext: PlayContext get() = albumArtist?.playContext ?: PlayContext.None
 
