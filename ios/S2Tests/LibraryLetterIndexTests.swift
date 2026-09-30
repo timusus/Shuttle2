@@ -144,6 +144,80 @@ struct LibraryLetterIndexTests {
         #expect(try strip.accessibilityIdentifier() == "library.sectionIndex")
     }
 
+    private let alphabet = ["#"] + (UnicodeScalar("A").value ... UnicodeScalar("Z").value).map { String(UnicodeScalar($0)!) }
+
+    @Test func everyLetterShowsWhenTheyFit() {
+        let entries = LetterIndexEntry.entries(alphabet, slots: 27)
+        #expect(entries.map(\.label) == alphabet)
+        #expect(entries.map(\.sections) == (0 ..< 27).map { $0 ..< $0 + 1 })
+        #expect(LetterIndexEntry.entries(alphabet, slots: .max).count == 27)
+    }
+
+    /// Too little height for every letter (landscape, an SE, a large text size): evenly spaced letters from the first
+    /// to the last with a dot for the ones between, as UIKit does, rather than letters too small to hit.
+    @Test func lettersThatDontFitAreThinnedToEveryOtherWithDots() {
+        let entries = LetterIndexEntry.entries(alphabet, slots: 19)
+        #expect(entries.count == 19)
+        #expect(entries.first?.label == "#")
+        #expect(entries.last?.label == "Z")
+        #expect(entries.enumerated().allSatisfy { ($0.offset.isMultiple(of: 2)) == ($0.element.label != LetterIndexEntry.skipped) })
+        // Together the rows stand for every section once, in order.
+        #expect(entries.flatMap { Array($0.sections) } == Array(0 ..< 27))
+        // An even number of slots leaves one empty rather than ending on a dot.
+        #expect(LetterIndexEntry.entries(alphabet, slots: 20) == entries)
+    }
+
+    @Test func thinningNeverGoesBelowFirstDotLast() {
+        let entries = LetterIndexEntry.entries(alphabet, slots: 1)
+        #expect(entries.map(\.label) == ["#", LetterIndexEntry.skipped, "Z"])
+        #expect(entries.map(\.sections) == [0 ..< 1, 1 ..< 26, 26 ..< 27])
+        #expect(LetterIndexEntry.entries(["A", "B"], slots: 0).map(\.label) == ["A", "B"])
+        #expect(LetterIndexEntry.entries([], slots: 0).isEmpty)
+    }
+
+    @Test func slotsKeepEachRowAtLeastTheMinimumHeight() {
+        #expect(LetterIndexStrip.slots(height: 0) == .max)
+        let height: CGFloat = 200
+        let slots = LetterIndexStrip.slots(height: height)
+        #expect((height - Spacing.small * 2) / CGFloat(slots) >= LetterIndexStrip.minimumLetterHeight)
+        #expect((height - Spacing.small * 2) / CGFloat(slots + 1) < LetterIndexStrip.minimumLetterHeight)
+    }
+
+    /// A drag over a dot passes through each letter it stands for.
+    @Test func aDragAcrossADotPassesThroughTheLettersItSkips() {
+        let entries = LetterIndexEntry.entries(["A", "B", "C", "D", "E"], slots: 3)
+        #expect(entries.map(\.label) == ["A", LetterIndexEntry.skipped, "E"])
+        let positions = stride(from: 0.0, through: 1.0, by: 0.01).compactMap { LetterIndexEntry.section(at: $0, in: entries) }
+        #expect(Array(Set(positions)).sorted() == [0, 1, 2, 3, 4])
+        #expect(positions == positions.sorted())
+        #expect(LetterIndexEntry.section(at: -1, in: entries) == 0)
+        #expect(LetterIndexEntry.section(at: 2, in: entries) == 4)
+        #expect(LetterIndexEntry.section(at: 0.5, in: []) == nil)
+    }
+
+    /// The strip's room below: the tallest bottom inset while holding, so the tab bar minimising (a smaller inset)
+    /// doesn't move it; the inset as it is while following, so the mini player going reserves nothing.
+    @Test func theClearanceHoldsTheTallestInsetUntilToldToFollow() {
+        var clearance = LetterIndexClearance()
+        clearance.measure(83)
+        #expect(clearance.value == 83)
+        clearance.measure(150)
+        clearance.hold()
+        clearance.measure(100)
+        #expect(clearance.value == 150)
+        clearance.measure(160)
+        #expect(clearance.value == 160)
+        clearance.follow()
+        #expect(clearance.value == 160)
+        clearance.measure(83)
+        #expect(clearance.value == 83)
+        clearance.hold()
+        clearance.measure(49)
+        #expect(clearance.value == 83)
+        clearance.follow()
+        #expect(clearance.value == 49)
+    }
+
     private func hasStrip(_ view: InspectableView<ViewType.ClassifiedView>) -> Bool {
         (try? view.find(LetterIndexStrip.self)) != nil
     }

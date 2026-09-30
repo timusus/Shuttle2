@@ -140,40 +140,148 @@ private struct IndexedItem<Item, ID: Hashable> {
 extension View {
     /// The index for `sections` down the trailing edge, a `LetterIndexStrip`, which calls `scrollTo` with the section
     /// picked. No index without sections.
-    ///
-    /// The list gives up the strip's width with a clear inset, and the strip itself is an overlay that ignores the
-    /// bottom safe area and hangs from the top, so it doesn't move when scrolling minimises the tab bar and the
-    /// bottom accessory (the mini player) changes placement (#674). `LetterIndexStrip.bottomClearance` keeps its
-    /// lowest letter above the accessory in its tallest, expanded placement.
     @ViewBuilder
     func letterIndex(_ sections: [LetterIndexSection]?, scrollTo: @escaping (LetterIndexSection) -> Void) -> some View {
         if let sections {
-            safeAreaInset(edge: .trailing, spacing: 0) {
-                Color.clear.frame(width: LetterIndexStrip.baseWidth).accessibilityHidden(true)
-            }
-            .overlay(alignment: .topTrailing) {
-                LetterIndexStrip(sections: sections.filter(\.isIndexed), onSelect: scrollTo)
-                    .padding(.bottom, LetterIndexStrip.bottomClearance)
-                    .ignoresSafeArea(.container, edges: .bottom)
-            }
+            modifier(LetterIndexModifier(sections: sections.filter(\.isIndexed), scrollTo: scrollTo))
         } else {
             self
         }
     }
 }
 
+/// `letterIndex`: the list gives up the strip's width with a clear inset, and the strip is an overlay hanging from
+/// the top that ignores the bottom safe area and keeps its own clearance above the bottom edge instead
+/// (`LetterIndexClearance`), so it doesn't move when scrolling minimises the iOS 26 tab bar and the bottom accessory
+/// (the mini player) moves in beside it (#674).
+private struct LetterIndexModifier: ViewModifier {
+    let sections: [LetterIndexSection]
+    let scrollTo: (LetterIndexSection) -> Void
+
+    @Environment(\.isMiniPlayerVisible) private var isMiniPlayerVisible
+    @State private var clearance = LetterIndexClearance()
+    @State private var size: CGSize = .zero
+
+    /// Long enough for the mini player to slide in or out, or the accessory to appear, before the clearance holds.
+    private static let settleDelay: Duration = .milliseconds(600)
+
+    func body(content: Content) -> some View {
+        content
+            .safeAreaInset(edge: .trailing, spacing: 0) {
+                Color.clear.frame(width: LetterIndexStrip.baseWidth).accessibilityHidden(true)
+            }
+            .onGeometryChange(for: Measure.self) { Measure(size: $0.size, bottomInset: $0.safeAreaInsets.bottom) } action: {
+                size = $0.size
+                clearance.measure($0.bottomInset)
+            }
+            // What sits below changes for real when the mini player comes or goes, or the screen rotates or resizes:
+            // follow it until it settles, then hold the tallest inset again.
+            .task(id: SettleKey(size: size, isMiniPlayerVisible: isMiniPlayerVisible)) {
+                clearance.follow()
+                try? await Task.sleep(for: Self.settleDelay)
+                clearance.hold()
+            }
+            .overlay(alignment: .topTrailing) {
+                LetterIndexStrip(sections: sections, onSelect: scrollTo)
+                    .padding(.bottom, clearance.value)
+                    .ignoresSafeArea(.container, edges: .bottom)
+            }
+    }
+
+    private struct Measure: Equatable {
+        let size: CGSize
+        let bottomInset: CGFloat
+    }
+
+    private struct SettleKey: Equatable {
+        let size: CGSize
+        let isMiniPlayerVisible: Bool
+    }
+}
+
+/// The room the letter strip keeps below itself: the list's bottom safe-area inset (the tab bar, and the mini player
+/// above it or in its bottom accessory), measured rather than guessed. While holding it's the tallest inset seen, so
+/// the strip keeps its frame as the iOS 26 tab bar minimises and expands under it and still clears both expanded;
+/// while following (the mini player coming or going, a rotation) it's the inset as it is, so it reserves only what's
+/// really there.
+struct LetterIndexClearance: Equatable {
+    private(set) var value: CGFloat = 0
+    private(set) var isFollowing = true
+    private var current: CGFloat = 0
+
+    mutating func measure(_ bottomInset: CGFloat) {
+        current = bottomInset
+        value = isFollowing ? bottomInset : max(value, bottomInset)
+    }
+
+    /// Track the inset as it changes, starting from the one there now.
+    mutating func follow() {
+        isFollowing = true
+        value = current
+    }
+
+    /// Keep the tallest inset from here on.
+    mutating func hold() {
+        isFollowing = false
+    }
+}
+
+/// One of the strip's rows: a letter standing for its own section, or, where there isn't room for every letter, a
+/// dot standing for the ones skipped between two letters, as UIKit's section index does.
+struct LetterIndexEntry: Equatable {
+    static let skipped = "•"
+
+    let label: String
+    /// The positions, in the strip's sections, this row stands for.
+    let sections: Range<Int>
+
+    /// The rows for `letters` in at most `slots` rows (never fewer than three, the first letter, a dot and the last):
+    /// all of them when they fit; otherwise evenly spaced letters from the first to the last, alternating with dots.
+    static func entries(_ letters: [String], slots: Int) -> [LetterIndexEntry] {
+        let count = letters.count
+        guard count > max(slots, 2) else {
+            return letters.indices.map { LetterIndexEntry(label: letters[$0], sections: $0 ..< $0 + 1) }
+        }
+        let rows = max(3, slots.isMultiple(of: 2) ? slots - 1 : slots)
+        let shown = (rows + 1) / 2
+        let picks = (0 ..< shown).map { Int((Double($0) * Double(count - 1) / Double(shown - 1)).rounded()) }
+        var entries: [LetterIndexEntry] = []
+        for (position, pick) in picks.enumerated() {
+            if position > 0, picks[position - 1] + 1 < pick {
+                entries.append(LetterIndexEntry(label: skipped, sections: picks[position - 1] + 1 ..< pick))
+            }
+            entries.append(LetterIndexEntry(label: letters[pick], sections: pick ..< pick + 1))
+        }
+        return entries
+    }
+
+    /// The section at `fraction` (0 at the top, 1 at the bottom) down `entries`: a dot's share of the strip is split
+    /// between the letters it skips, so a drag still passes through every section.
+    static func section(at fraction: CGFloat, in entries: [LetterIndexEntry]) -> Int? {
+        guard !entries.isEmpty else { return nil }
+        let scaled = min(max(fraction, 0), 1) * CGFloat(entries.count)
+        let row = min(Int(scaled), entries.count - 1)
+        let range = entries[row].sections
+        let within = min(max(scaled - CGFloat(row), 0), 1)
+        return min(range.lowerBound + Int(within * CGFloat(range.count)), range.upperBound - 1)
+    }
+}
+
 /// The right-edge letters: touch or drag along them to jump to a letter,
 /// with a selection tick as each one passes. VoiceOver reads it as one adjustable control: swipe up or down to step
-/// through the letters.
+/// through the letters. Where the height it's given can't fit every letter at `minimumLetterHeight`, it shows every
+/// other one with dots between (`LetterIndexEntry`).
 struct LetterIndexStrip: View {
     let sections: [LetterIndexSection]
     let onSelect: (LetterIndexSection) -> Void
 
-    /// The letter last jumped to: highlighted while a finger is on the strip, and VoiceOver's value.
-    @State private var current: String?
+    /// The section last jumped to: highlighted while a finger is on the strip, and VoiceOver's value.
+    @State private var current: Int?
     @State private var isDragging = false
     /// Where the letters sit in the strip's own space, the one the drag reports in.
     @State private var lettersFrame: CGRect = .zero
+    /// The height the strip is given, down to the clearance below it; zero until measured.
+    @State private var availableHeight: CGFloat = 0
     /// One letter's height at the current text size: caption2's line.
     @ScaledMetric(relativeTo: .caption2) private var letterHeight: CGFloat = 14
     @ScaledMetric(relativeTo: .caption2) private var width: CGFloat = LetterIndexStrip.letterWidth
@@ -183,22 +291,28 @@ struct LetterIndexStrip: View {
     /// The whole strip's width at the default text size, the letters and their padding: the width it takes from
     /// the content beside it (`LibraryGrid.columnCount`).
     static let baseWidth = letterWidth + Spacing.xsmall * 2
-    /// Room kept below the letters for the tab bar and the mini player above it, which the strip no longer
-    /// takes from the bottom safe area.
-    static let bottomClearance: CGFloat = 140
+    /// The shortest a letter's row gets, to stay legible and hittable, before the strip drops letters instead.
+    static let minimumLetterHeight: CGFloat = 11
+
+    /// How many rows fit in `height`, the strip's padding included; unlimited until the height is known.
+    static func slots(height: CGFloat) -> Int {
+        guard height > 0 else { return .max }
+        return max(0, Int(((height - Spacing.small * 2) / minimumLetterHeight).rounded(.down)))
+    }
 
     var body: some View {
+        let entries = LetterIndexEntry.entries(sections.map(\.letter), slots: Self.slots(height: availableHeight))
         VStack(spacing: 0) {
-            ForEach(sections) { section in
-                Text(section.letter)
+            ForEach(entries, id: \.sections.lowerBound) { entry in
+                Text(entry.label)
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(isDragging && section.letter == current ? AnyShapeStyle(.primary) : AnyShapeStyle(.tint))
+                    .foregroundStyle(isDragging && current.map(entry.sections.contains) == true ? AnyShapeStyle(.primary) : AnyShapeStyle(.tint))
                     .minimumScaleFactor(0.5)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .frame(width: width)
-        .frame(maxHeight: letterHeight * CGFloat(sections.count))
+        .frame(maxHeight: letterHeight * CGFloat(entries.count))
         .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(Self.space)) } action: { lettersFrame = $0 }
         .padding(.horizontal, Spacing.xsmall)
         .padding(.vertical, Spacing.small)
@@ -213,7 +327,7 @@ struct LetterIndexStrip: View {
                         isDragging = true
                         current = nil
                     }
-                    select(at: value.location.y)
+                    select(at: value.location.y, in: entries)
                 }
                 .onEnded { _ in isDragging = false }
         )
@@ -221,9 +335,9 @@ struct LetterIndexStrip: View {
         .dynamicTypeSize(...DynamicTypeSize.xxLarge)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Section index")
-        .accessibilityValue(current ?? "")
+        .accessibilityValue(current.flatMap { sections.indices.contains($0) ? sections[$0].letter : nil } ?? "")
         .accessibilityAdjustableAction { direction in
-            let position = sections.firstIndex { $0.letter == current } ?? -1
+            let position = current ?? -1
             switch direction {
             case .increment: pick(min(position + 1, sections.count - 1))
             case .decrement: pick(max(position - 1, 0))
@@ -231,22 +345,24 @@ struct LetterIndexStrip: View {
             }
         }
         .accessibilityIdentifier("library.sectionIndex")
+        // Hangs from the top of the height it's given, which it measures to know how many letters fit.
+        .frame(maxHeight: .infinity, alignment: .top)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { availableHeight = $0 }
     }
 
     private static let space = "letterIndexStrip"
 
-    /// The letter under `y` in the strip's space.
-    private func select(at y: CGFloat) {
-        guard lettersFrame.height > 0, !sections.isEmpty else { return }
-        let position = Int(((y - lettersFrame.minY) / lettersFrame.height * CGFloat(sections.count)).rounded(.down))
-        pick(min(max(position, 0), sections.count - 1))
+    /// The section under `y` in the strip's space.
+    private func select(at y: CGFloat, in entries: [LetterIndexEntry]) {
+        guard lettersFrame.height > 0 else { return }
+        if let position = LetterIndexEntry.section(at: (y - lettersFrame.minY) / lettersFrame.height, in: entries) {
+            pick(position)
+        }
     }
 
     private func pick(_ position: Int) {
-        guard sections.indices.contains(position) else { return }
-        let section = sections[position]
-        guard section.letter != current else { return }
-        current = section.letter
-        onSelect(section)
+        guard sections.indices.contains(position), position != current else { return }
+        current = position
+        onSelect(sections[position])
     }
 }

@@ -65,6 +65,9 @@ extension EnvironmentValues {
     /// Set by `AppShell` when the tab view's bottom accessory hosts the mini player (iOS 26.1, tab bar), so the
     /// per-screen insets draw nothing.
     @Entry var miniPlayerInAccessory = false
+    /// Whether the mini player shows, in a screen's inset or the accessory: set on each screen by `miniPlayerInset`,
+    /// for what keeps clear of it (the letter index, `LetterIndexClearance`).
+    @Entry var isMiniPlayerVisible = false
 }
 
 extension PlayerBinding {
@@ -355,6 +358,7 @@ private struct MiniPlayerInsetModifier: ViewModifier {
                 }
             }
             .animation(Motion.miniPlayerVisibility.reduced(reduceMotion), value: isShown)
+            .environment(\.isMiniPlayerVisible, binding.isMiniPlayerVisible)
     }
 }
 
