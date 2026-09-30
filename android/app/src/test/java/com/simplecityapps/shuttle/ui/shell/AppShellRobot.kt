@@ -403,6 +403,12 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
+    /** Opens [panel] from outside the player, as the view model would, leaving anything open in it open. */
+    fun showPanel(panel: NowPlayingPanel?) {
+        actions.showPanel(panel)
+        rule.waitForIdle()
+    }
+
     /** Swipes up on the Now Playing bar, which opens the queue. */
     fun swipeUpBar() {
         rule.onNodeWithTag(PlayerTestTags.Bar).performTouchInput { swipeUp(startY = bottom - 1f, endY = top - 200f) }

@@ -153,28 +153,34 @@ internal fun SideBySidePlayer(
     modifier: Modifier = Modifier,
 ) {
     val panel = player.panel
-    val playerColumn = @Composable {
-        Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars).windowInsetsPadding(WindowInsets.navigationBars)) {
-            DragHandle(onCollapse)
-            // Nothing pushes this player, so the song and transport centre together in the room above the bar.
-            Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
-                NowPlayingSong(player, actions, gap = SideBySideGap, fillHeight = false, modifier = Modifier.weight(1f, fill = false).fillMaxWidth())
-                Transport(player, progress, actions, gap = SideBySideGap)
+    // One FoldSplit whatever the panel, so the player keeps its place in the composition, and its
+    // menu, seek and artwork, as a panel opens or closes; with none open it takes the whole width.
+    FoldSplit(
+        fold = verticalFold,
+        orientation = Orientation.Horizontal,
+        split = panel != null,
+        modifier = modifier.fillMaxSize().testTag(PlayerTestTags.NowPlaying),
+        first = {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                Column(
+                    Modifier
+                        .widthIn(max = SideBySideMaxWidth)
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                        .windowInsetsPadding(WindowInsets.navigationBars),
+                ) {
+                    DragHandle(onCollapse)
+                    // Nothing pushes this player, so the song and transport centre together in the room above the bar.
+                    Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
+                        NowPlayingSong(player, actions, gap = SideBySideGap, fillHeight = false, modifier = Modifier.weight(1f, fill = false).fillMaxWidth())
+                        Transport(player, progress, actions, gap = SideBySideGap)
+                    }
+                    NowPlayingBar(player, actions, selected = panel, onPanel = actions::togglePanel)
+                }
             }
-            NowPlayingBar(player, actions, selected = panel, onPanel = actions::togglePanel)
-        }
-    }
-    if (panel == null) {
-        Box(modifier.fillMaxSize().testTag(PlayerTestTags.NowPlaying), contentAlignment = Alignment.TopCenter) {
-            Box(Modifier.widthIn(max = SideBySideMaxWidth)) { playerColumn() }
-        }
-    } else {
-        FoldSplit(
-            fold = verticalFold,
-            orientation = Orientation.Horizontal,
-            modifier = modifier.fillMaxSize().testTag(PlayerTestTags.NowPlaying),
-            first = playerColumn,
-            second = {
+        },
+        second = {
+            if (panel != null) {
                 Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars)) {
                     Spacer(Modifier.height(HandleHeight))
                     PanelSheet(
@@ -187,9 +193,9 @@ internal fun SideBySidePlayer(
                         contentPadding = WindowInsets.navigationBars.asPaddingValues(),
                     )
                 }
-            },
-        )
-    }
+            }
+        },
+    )
 }
 
 /** The widest the side-by-side player grows on its own, before a panel shares the width. */
@@ -201,6 +207,7 @@ private val SideBySideGap = 24.dp
 /**
  * Two slots split along [orientation] (Horizontal: side by side). A separating [fold], in window
  * pixels, is the boundary and nothing is laid out inside it; without one the slots split evenly.
+ * Unless [split], [first] takes the whole length and [second] none.
  */
 @Composable
 internal fun FoldSplit(
@@ -209,6 +216,7 @@ internal fun FoldSplit(
     first: @Composable () -> Unit,
     second: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    split: Boolean = true,
 ) {
     var origin by remember { mutableStateOf(Offset.Zero) }
     Layout(
@@ -218,13 +226,17 @@ internal fun FoldSplit(
         val horizontal = orientation == Orientation.Horizontal
         val total = if (horizontal) constraints.maxWidth else constraints.maxHeight
         val cross = if (horizontal) constraints.maxHeight else constraints.maxWidth
-        val (firstEnd, secondStart) = fold
-            ?.let { bounds ->
-                val start = (if (horizontal) bounds.left - origin.x else bounds.top - origin.y).roundToInt()
-                val end = (if (horizontal) bounds.right - origin.x else bounds.bottom - origin.y).roundToInt()
-                if (start in 1 until total && end <= total) start to end else null
-            }
-            ?: (total / 2 to total / 2)
+        val (firstEnd, secondStart) = if (!split) {
+            total to total
+        } else {
+            fold
+                ?.let { bounds ->
+                    val start = (if (horizontal) bounds.left - origin.x else bounds.top - origin.y).roundToInt()
+                    val end = (if (horizontal) bounds.right - origin.x else bounds.bottom - origin.y).roundToInt()
+                    if (start in 1 until total && end <= total) start to end else null
+                }
+                ?: (total / 2 to total / 2)
+        }
 
         fun slot(length: Int) = if (horizontal) Constraints.fixed(length, cross) else Constraints.fixed(cross, length)
         val firstPlaceables = firstMeasurables.map { it.measure(slot(firstEnd)) }

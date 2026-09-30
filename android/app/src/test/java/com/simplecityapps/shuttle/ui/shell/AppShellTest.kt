@@ -245,6 +245,18 @@ class AppShellTest {
 
     @Test
     @Config(qualifiers = "w840dp-h900dp")
+    fun `at Medium width a panel opening beside the player leaves the player's menu open`() {
+        robot.setContent(window = MediumWindow)
+        robot.tapMiniPlayer()
+        robot.tapDescription("More options")
+
+        robot.showPanel(NowPlayingPanel.Queue)
+        robot.tapText("Clear Queue")
+        robot.calls shouldBe listOf("clearQueue")
+    }
+
+    @Test
+    @Config(qualifiers = "w840dp-h900dp")
     fun `the compact full player keeps its open panel at Medium width`() {
         robot.setContent()
         robot.tapMiniPlayer()
