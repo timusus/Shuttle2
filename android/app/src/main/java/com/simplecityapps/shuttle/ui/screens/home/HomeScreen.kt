@@ -166,6 +166,7 @@ private fun HomeContent(
                             items = section.items,
                             covers = content.covers,
                             columns = columns,
+                            showPlayButton = wide || largeText,
                             callbacks = callbacks,
                             modifier = Modifier.padding(horizontal = S2Spacing.medium),
                         )

@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.screens.library.LibraryAvailability
 import com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen
 import com.simplecityapps.shuttle.ui.screens.sources.MusicAccess
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -127,7 +128,16 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `a cell's play button plays its item with the item's context`() {
+    fun `a phone cell has no play button, its long-press offers Play`() {
+        robot.setContent(HomeScenarios.content)
+
+        robot.assertDescriptionNotShown("Play Phase Garden")
+        robot.customActionLabels("Phase Garden") shouldContain "Play"
+    }
+
+    @Test
+    @Config(qualifiers = "w900dp-h1200dp-xhdpi")
+    fun `a wide cell's play button plays its item with the item's context`() {
         robot.setContent(HomeScenarios.content)
         val phaseGarden = HomeItem.AlbumItem(HomeScenarios.phaseGarden)
 

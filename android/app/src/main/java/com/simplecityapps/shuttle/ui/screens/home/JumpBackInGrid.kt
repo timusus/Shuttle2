@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
@@ -31,13 +32,15 @@ import com.simplecityapps.shuttle.model.Song
 /**
  * Jump back in (#633): the last things played as a compact grid of cells rather than a shelf, after Apple Music's and
  * Spotify's recents and the iOS app's `JumpBackInGrid`. [columns] wide ([jumpBackInColumns]) and at most two rows'
- * worth of [JUMP_BACK_IN_MAXIMUM_ITEMS]. A cell opens its item; its trailing button plays it.
+ * worth of [JUMP_BACK_IN_MAXIMUM_ITEMS]. A cell opens its item; its trailing button plays it where [showPlayButton]
+ * (there is room), otherwise long-press offers Play with the rest of the item's actions.
  */
 @Composable
 fun JumpBackInGrid(
     items: List<HomeItem>,
     covers: Map<String, List<Song>>,
     columns: Int,
+    showPlayButton: Boolean,
     callbacks: HomeCallbacks,
     modifier: Modifier = Modifier,
 ) {
@@ -45,7 +48,7 @@ fun JumpBackInGrid(
         items.take(JUMP_BACK_IN_MAXIMUM_ITEMS).chunked(columns).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(S2Spacing.small)) {
                 row.forEach { item ->
-                    JumpBackInCell(item, covers[item.key].orEmpty(), callbacks, Modifier.weight(1f))
+                    JumpBackInCell(item, covers[item.key].orEmpty(), showPlayButton, callbacks, Modifier.weight(1f))
                 }
                 // A short last row keeps its cells the width of the rows above.
                 repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
@@ -68,15 +71,16 @@ fun jumpBackInColumns(
 }
 
 /**
- * One cell, after Spotify's recents: the cover flush with the cell's leading edge, the title on one line and the kind
- * of item as a smaller label under it, on a tonal container, with a play button at the end (shuffle, for a genre).
- * One line each keeps every cell the cover's height at any font size, rather than wrapping (#660).
+ * One cell, after Spotify's recents: the cover at the cell's leading edge, the title on up to two lines and the kind
+ * of item as a one-line label under it, centred on a tonal container of a fixed height, with a play button at the end
+ * (shuffle, for a genre) when [showPlayButton]. A compact cell has none, so titles keep the room (#660).
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun JumpBackInCell(
     item: HomeItem,
     covers: List<Song>,
+    showPlayButton: Boolean,
     callbacks: HomeCallbacks,
     modifier: Modifier = Modifier,
 ) {
@@ -88,7 +92,7 @@ private fun JumpBackInCell(
             Row(
                 modifier = Modifier
                     .weight(1f)
-                    .heightIn(min = ArtworkSize.Medium.dp)
+                    .heightIn(min = CELL_HEIGHT)
                     .combinedClickable(onClick = { callbacks.onOpenItem(item) }, onLongClick = actions.showMenu)
                     .semantics { customActions = actions.accessibilityActions }
                     .testTag(JUMP_BACK_IN_CELL_TAG),
@@ -97,32 +101,37 @@ private fun JumpBackInCell(
                 HomeItemArtwork(item, covers, ArtworkSize.Medium)
                 Column(
                     modifier = Modifier.weight(1f).padding(horizontal = S2Spacing.small, vertical = S2Spacing.xsmall),
-                    verticalArrangement = Arrangement.spacedBy(S2Spacing.tiny),
+                    verticalArrangement = Arrangement.spacedBy(S2Spacing.tiny, Alignment.CenterVertically),
                 ) {
                     Text(
                         text = title,
                         style = MaterialTheme.typography.titleSmall,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         text = stringResource(item.kind.label),
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
-            S2IconButton(
-                icon = if (shuffles) Icons.Rounded.Shuffle else Icons.Rounded.PlayArrow,
-                contentDescription = stringResource(if (shuffles) R.string.home_shuffle_item else R.string.home_play_item, title),
-                onClick = { callbacks.onAction(item.playAction()) },
-                modifier = Modifier.testTag(JUMP_BACK_IN_PLAY_TAG),
-            )
+            if (showPlayButton) {
+                S2IconButton(
+                    icon = if (shuffles) Icons.Rounded.Shuffle else Icons.Rounded.PlayArrow,
+                    contentDescription = stringResource(if (shuffles) R.string.home_shuffle_item else R.string.home_play_item, title),
+                    onClick = { callbacks.onAction(item.playAction()) },
+                    modifier = Modifier.testTag(JUMP_BACK_IN_PLAY_TAG),
+                )
+            }
         }
     }
 }
+
+/** Room for a two-line title and the label under it; the cover, 56dp, is centred in it. */
+private val CELL_HEIGHT = 72.dp
 
 const val JUMP_BACK_IN_CELL_TAG = "homeGrid.cell"
 const val JUMP_BACK_IN_PLAY_TAG = "homeGrid.play"
