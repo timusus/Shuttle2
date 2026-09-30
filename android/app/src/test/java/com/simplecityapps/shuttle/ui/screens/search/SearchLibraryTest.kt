@@ -5,6 +5,7 @@ import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeAlbumRepository
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
+import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.shuttle.fixtures.SampleLibrary
 import com.simplecityapps.shuttle.ui.preview.toAlbum
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -38,7 +40,7 @@ class SearchLibraryTest {
     /** A [SearchLibrary] over the fakes, its index shared in the test's background scope, all on the test's scheduler. */
     private fun TestScope.searchLibrary(query: String, categories: Set<SearchCategory>): Flow<SearchResults> {
         val dispatcher = StandardTestDispatcher(testScheduler)
-        return SearchLibrary(LibrarySearchIndex(artists, albums, songs, genres, playlists, backgroundScope, dispatcher), dispatcher)(query, categories)
+        return SearchLibrary(LibrarySearchIndex(artists, albums, songs, genres, playlists, backgroundScope, dispatcher, FakeSongImportStateProvider()), dispatcher)(query, categories)
     }
 
     @Before
@@ -95,6 +97,7 @@ class SearchLibraryTest {
         results.last().songs.map { it.item.id } shouldNotContain 9L
 
         songs.setSongs(listOf(createSong(id = 9, name = "Brand New Song", albumArtist = "Juniper Static", album = "Phase Garden")))
+        advanceTimeBy(600)
         runCurrent()
 
         results.last().songs.map { it.item.id } shouldContainExactly listOf(9L)
