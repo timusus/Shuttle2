@@ -61,6 +61,16 @@ struct NavigatorTests {
         #expect(navigator.homePath.isEmpty)
     }
 
+    @Test func openingTheRouteAtTheTopOfThePathDoesNothing() {
+        let navigator = Navigator()
+        navigator.open(.albumArtist(albumArtistKey: "a1"))
+        navigator.open(.albumArtist(albumArtistKey: "a1"))
+        #expect(navigator.homePath == [.albumArtist(albumArtistKey: "a1")])
+        navigator.open(.genre(name: "Rock"))
+        navigator.open(.albumArtist(albumArtistKey: "a1"))
+        #expect(navigator.homePath.count == 3, "the same route deeper in the stack still pushes")
+    }
+
     @Test func selectingALibraryCategorySwitchesTheRootSelection() {
         let navigator = Navigator()
         navigator.selectLibraryCategory(.albums)

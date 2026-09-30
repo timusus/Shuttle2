@@ -145,16 +145,21 @@ final class Navigator {
     }
 
     /// Pushes `route` onto whichever path is currently selected: a tab's on compact, or (regular/wide) a
-    /// library category's own stack.
+    /// library category's own stack. A no-op when that stack already ends at `route`, so a double tap doesn't
+    /// push it twice.
     func open(_ route: Route) {
         if showsSettings {
+            guard settingsPath.last != route else { return }
             settingsPath.append(route)
             return
         }
         switch _selection {
         case .tab(let tab):
-            setPath(path(for: tab) + [route], for: tab)
+            let current = path(for: tab)
+            guard current.last != route else { return }
+            setPath(current + [route], for: tab)
         case .libraryCategory(let category):
+            guard libraryCategoryPaths[category]?.last != route else { return }
             libraryCategoryPaths[category, default: []].append(route)
         }
     }
