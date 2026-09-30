@@ -19,14 +19,14 @@ fun selectingChrome(selectedCount: Int = 2, selection: MediaSelection? = null) =
     selectedCount = selectedCount,
 )
 
-/** Chrome for a tab's controls row; a non-null [onPlay] / [onShuffle] shows that button. */
-fun libraryChrome(
+/** A tab's controls row; a non-null [onPlay] / [onShuffle] shows that button. */
+fun libraryControls(
     count: String? = null,
     sortOptions: List<S2Action> = emptyList(),
     viewMode: ViewMode? = null,
     onPlay: (() -> Unit)? = null,
     onShuffle: (() -> Unit)? = null,
-) = LibraryTabChrome(count = count, sortOptions = sortOptions, viewMode = viewMode, onPlay = onPlay, onShuffle = onShuffle)
+) = LibraryTabControls(count = count, sortOptions = sortOptions, viewMode = viewMode, onPlay = onPlay, onShuffle = onShuffle)
 
 /** Sort options named [labels], [selected] the current one. */
 fun sorts(vararg labels: String, selected: String = labels.first()) = labels.map { S2Action(it, {}, selected = it == selected) }

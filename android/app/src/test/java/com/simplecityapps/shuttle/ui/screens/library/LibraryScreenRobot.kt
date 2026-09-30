@@ -2,14 +2,18 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.activity.OnBackPressedDispatcher
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasAnyAncestor
@@ -18,15 +22,20 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.designsystem.theme.S2Theme
 import com.simplecityapps.shuttle.model.Album
@@ -101,17 +110,24 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         private set
 
     private var backDispatcher: OnBackPressedDispatcher? = null
+    private var layoutDirection = LayoutDirection.Ltr
 
     // -- Content setup --
 
+    /** The container on [uiState]; every page leads with [controls], and [chrome] carries the current tab's selection. */
     fun setContent(
         uiState: LibraryUiState,
-        chrome: LibraryTabChrome = LibraryTabChrome(),
+        controls: LibraryTabControls = LibraryTabControls(),
         pages: LibraryPageStates = LibraryPageStates(),
+        chrome: LibraryTabChrome = LibraryTabChrome(),
+        layoutDirection: LayoutDirection = LayoutDirection.Ltr,
     ) {
+        this.layoutDirection = layoutDirection
         rule.setContent {
             backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
-            S2Theme { Screen(uiState, chrome, pages) }
+            CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
+                S2Theme { Screen(uiState, chrome, controls, pages) }
+            }
         }
         rule.waitForIdle()
     }
@@ -126,7 +142,8 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
             S2Theme {
                 Screen(
                     libraryState(currentTab = LibraryTab.Albums),
-                    LibraryTabChrome(viewMode = viewMode, onViewModeChange = { viewMode = it }),
+                    LibraryTabChrome(),
+                    LibraryTabControls(viewMode = viewMode, onViewModeChange = { viewMode = it }),
                     LibraryPageStates(albums = albums.copy(viewMode = viewMode)),
                 )
             }
@@ -135,28 +152,30 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
     }
 
     @Composable
-    private fun Screen(uiState: LibraryUiState, chrome: LibraryTabChrome, pages: LibraryPageStates) {
+    private fun Screen(uiState: LibraryUiState, chrome: LibraryTabChrome, controls: LibraryTabControls, pages: LibraryPageStates) {
         val capturingChrome = LibraryTabChrome(
-            count = chrome.count,
             selection = chrome.selection,
             selectedCount = chrome.selectedCount,
             onClearSelection = {
                 selectionCleared = true
                 chrome.onClearSelection()
             },
-            sortOptions = chrome.sortOptions,
-            viewMode = chrome.viewMode,
+        )
+        val capturingControls = LibraryTabControls(
+            count = controls.count,
+            sortOptions = controls.sortOptions,
+            viewMode = controls.viewMode,
             onViewModeChange = {
                 lastViewModeChange = it
-                chrome.onViewModeChange(it)
+                controls.onViewModeChange(it)
             },
-            onPlay = chrome.onPlay?.let { play ->
+            onPlay = controls.onPlay?.let { play ->
                 {
                     playClicked = true
                     play()
                 }
             },
-            onShuffle = chrome.onShuffle?.let { shuffle ->
+            onShuffle = controls.onShuffle?.let { shuffle ->
                 {
                     shuffleClicked = true
                     shuffle()
@@ -170,26 +189,26 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
             onTabsChanged = { order, enabled -> lastTabsChanged = order to enabled },
             onSelectionAction = { lastSelectionAction = it },
             onOpenSettings = { settingsOpened = true },
-        ) { tab -> Page(tab, pages) }
+        ) { tab -> Page(tab, pages, capturingControls) }
     }
 
     @Composable
-    private fun Page(tab: LibraryTab, pages: LibraryPageStates) {
+    private fun Page(tab: LibraryTab, pages: LibraryPageStates, controls: LibraryTabControls) {
         when (tab) {
             LibraryTab.Songs -> pages.songs?.let {
-                SongsPage(it, onSongClick = { s -> lastSongClicked = s }, onSongLongClick = { s -> lastSongLongClicked = s }, onSongMore = { s -> lastMore = s })
+                SongsPage(it, onSongClick = { s -> lastSongClicked = s }, onSongLongClick = { s -> lastSongLongClicked = s }, onSongMore = { s -> lastMore = s }, controls = controls)
             }
 
             LibraryTab.Albums -> pages.albums?.let {
-                AlbumsPage(it, onAlbumClick = { a -> lastAlbumClicked = a }, onAlbumLongClick = {}, onAlbumMore = { a -> lastMore = a })
+                AlbumsPage(it, onAlbumClick = { a -> lastAlbumClicked = a }, onAlbumLongClick = {}, onAlbumMore = { a -> lastMore = a }, controls = controls)
             }
 
             LibraryTab.Artists -> pages.artists?.let {
-                ArtistsPage(it, onArtistClick = { a -> lastArtistClicked = a }, onArtistLongClick = {}, onArtistMore = { a -> lastMore = a })
+                ArtistsPage(it, onArtistClick = { a -> lastArtistClicked = a }, onArtistLongClick = {}, onArtistMore = { a -> lastMore = a }, controls = controls)
             }
 
             LibraryTab.Genres -> pages.genres?.let {
-                GenresPage(it, onGenreClick = { g -> lastGenreClicked = g }, onGenreMore = { g -> lastMore = g })
+                GenresPage(it, onGenreClick = { g -> lastGenreClicked = g }, onGenreMore = { g -> lastMore = g }, controls = controls)
             }
 
             LibraryTab.Playlists -> pages.playlists?.let {
@@ -199,13 +218,18 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
                     onPlaylistMore = { p -> lastMore = p },
                     onSmartPlaylistClick = { p -> lastSmartPlaylistClicked = p },
                     onNewPlaylist = { newPlaylistClicked = true },
+                    controls = controls,
                 )
             }
 
             LibraryTab.Folders -> pages.folders?.let {
                 FoldersPage(it, onFolderClick = { f -> lastFolderClicked = f }, onFolderMore = { f -> lastMore = f }, onSongClick = { s -> lastSongClicked = s }, onSongMore = { s -> lastMore = s }, onNavigateUp = {})
             }
-        } ?: Text("page:${tab.name}")
+        } ?: Column {
+            // A stand-in page still leads with the controls, as a real one does.
+            if (!controls.isEmpty) LibraryControlsRow(controls)
+            Text("page:${tab.name}")
+        }
     }
 
     // -- Assertions --
@@ -250,21 +274,53 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
         return a.top == b.top && a.left != b.left
     }
 
-    /** The section chip labels, in order. */
-    fun tabLabels(): List<String> = rule.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("library-sections")))
-        .fetchSemanticsNodes()
-        .map { node -> node.config.getOrElseNullable(SemanticsProperties.Text) { null }.orEmpty().joinToString { it.text } }
+    /** The section chip labels, in order: the row is lazy, so this scrolls it end to end and reads each window. */
+    fun tabLabels(): List<String> {
+        val labels = mutableListOf<String>()
+        var index = 0
+        while (runCatching { sections().performScrollToIndex(index) }.isSuccess) {
+            rule.onAllNodes(hasClickAction() and hasAnyAncestor(hasTestTag("library-sections")))
+                .fetchSemanticsNodes()
+                .sortedBy { node -> node.boundsInRoot.left }
+                .map { node -> node.config.getOrElseNullable(SemanticsProperties.Text) { null }.orEmpty().joinToString { it.text } }
+                .forEach { label -> if (label !in labels) labels += label }
+            index++
+        }
+        return labels
+    }
+
+    /** The sort button, found by what a screen reader announces for it, such as "Sort: Album name". */
+    fun assertSortAnnounced(description: String) {
+        rule.onNodeWithTag("library-sort").assertContentDescriptionEquals(description)
+    }
+
+    /** The sort button's touch target, which may be larger than what it draws. */
+    fun sortTouchTarget(): DpSize {
+        val bounds = rule.onNodeWithTag("library-sort").fetchSemanticsNode().touchBoundsInRoot
+        return with(rule.density) { DpSize(bounds.width.toDp(), bounds.height.toDp()) }
+    }
+
+    /** Whether the controls row is composed in the current page. */
+    fun controlsShown(): Boolean = rule.onAllNodesWithTag("library-controls").fetchSemanticsNodes().isNotEmpty()
+
+    /** Scrolls the page's list, tagged [listTag], so its item at [index] leads, as a fling would. */
+    fun scrollPageTo(listTag: String, index: Int) {
+        rule.onNodeWithTag(listTag).performScrollToIndex(index)
+        rule.waitForIdle()
+    }
 
     // -- Interactions --
 
+    /** Taps a section chip, first scrolling the chip row until it's on screen, as a finger would. */
     fun clickTab(label: String) {
+        sections().performScrollToNode(hasText(label))
         tab(label).performClick()
         rule.waitForIdle()
     }
 
-    /** Swipes the pager one page towards the end, as a finger would. */
+    /** Swipes the pager one page towards the end, as a finger would: leftwards, or rightwards in a right-to-left layout. */
     fun swipeToNextPage() {
-        rule.onNodeWithTag("library-pager").performTouchInput { swipeLeft() }
+        rule.onNodeWithTag("library-pager").performTouchInput { if (layoutDirection == LayoutDirection.Ltr) swipeLeft() else swipeRight() }
         rule.waitForIdle()
     }
 
@@ -351,4 +407,6 @@ class LibraryScreenRobot(private val rule: ComposeContentTestRule) {
     }
 
     private fun tab(label: String) = rule.onNode(hasText(label) and hasClickAction() and hasAnyAncestor(hasTestTag("library-sections")))
+
+    private fun sections() = rule.onNodeWithTag("library-sections")
 }

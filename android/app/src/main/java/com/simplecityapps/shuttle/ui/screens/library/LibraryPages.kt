@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.AlbumRow
@@ -72,14 +73,18 @@ import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceKey
 // tab ViewModels; LibraryScreen wires them.
 
 /**
- * Fills the page so the scroller's track sits at its end edge, as the legacy lists have it. Play and Shuffle sit in the
- * container's controls row above the page (#661), so the thumb has the page's whole height.
+ * Fills the page so the scroller's track sits at its end edge, as the legacy lists have it. The track starts below the
+ * page's [controls] row, the list's first item (#669), so the resting thumb never covers its Play or Shuffle button.
  */
-private val FastScrollerModifier = Modifier.fillMaxSize().padding(vertical = 8.dp).testTag("library-fast-scroller")
+private fun fastScrollerModifier(controls: LibraryTabControls?) = Modifier
+    .fillMaxSize()
+    .padding(top = 8.dp + controlsRowHeight(controls), bottom = 8.dp)
+    .testTag("library-fast-scroller")
 
 /**
  * The fast scroller for a page of [items]: by first letter over [sections] when the sort is by a name (#491), else a
- * plain thumb with [thumbLabel] in its popup, or none.
+ * plain thumb with [thumbLabel] in its popup, or none. The list leads with the
+ * page's [controls] row, which the scroller's indices skip.
  */
 @Composable
 private fun <T> LibraryFastScroller(
@@ -87,14 +92,16 @@ private fun <T> LibraryFastScroller(
     sections: List<LetterSection>?,
     scrollableState: FastScrollableState,
     thumbLabel: ((T) -> String?)? = null,
+    controls: LibraryTabControls? = null,
 ) {
+    val itemOffset = controlsItemCount(controls)
     if (sections != null) {
-        AlphabetFastScroller(sections, scrollableState, FastScrollerModifier)
+        AlphabetFastScroller(sections, scrollableState, fastScrollerModifier(controls), itemOffset)
     } else {
         FastScroller(
-            getPopupText = { index -> items.getOrNull(index)?.let { thumbLabel?.invoke(it) } },
+            getPopupText = { index -> items.getOrNull(index - itemOffset)?.let { thumbLabel?.invoke(it) } },
             scrollableState = scrollableState,
-            modifier = FastScrollerModifier,
+            modifier = fastScrollerModifier(controls),
             popup = if (thumbLabel == null) ::NoPopup else null,
         )
     }
@@ -112,6 +119,16 @@ internal val SmartPlaylist.placeholder: ArtworkPlaceholder
 /** The catalogue's compact grid: two columns of tiles on a phone, more as the width allows. */
 private val LibraryGridColumns = GridCells.Adaptive(minSize = 160.dp)
 
+private val GridHorizontalPadding = 16.dp
+
+/** A grid's padding: [top] above the first tiles, or none when the controls row leads the grid. */
+private fun gridPadding(controls: LibraryTabControls?, top: Dp) = PaddingValues(
+    start = GridHorizontalPadding,
+    end = GridHorizontalPadding,
+    top = if (controlsItemCount(controls) > 0) 0.dp else top,
+    bottom = 16.dp,
+)
+
 /** Songs: every song. Tap plays from that row; long-press selects. */
 @Composable
 fun SongsPage(
@@ -120,6 +137,7 @@ fun SongsPage(
     onSongLongClick: (Song) -> Unit,
     onSongMore: (Song) -> Unit,
     modifier: Modifier = Modifier,
+    controls: LibraryTabControls? = null,
 ) {
     val content = when (state.loadingState) {
         SongListUiState.LoadingState.Loading -> LibraryContentState.Loading
@@ -127,12 +145,13 @@ fun SongsPage(
         SongListUiState.LoadingState.Empty -> LibraryContentState.Empty
         SongListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
-    LibraryContent(content, stringResource(R.string.song_list_empty), modifier, state.scanProgress) {
+    LibraryContent(content, stringResource(R.string.song_list_empty), modifier, state.scanProgress, controls) {
         val listState = rememberLazyListState()
         val byAlbum = state.sortOrder == SongSortOrder.AlbumGroupKey || state.sortOrder == SongSortOrder.Default
         val entries = remember(state.songs, byAlbum) { songEntries(state.songs, byAlbum) }
         Box(modifier.fillMaxSize()) {
             LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-songs")) {
+                controlsItem(controls)
                 items(entries, key = SongEntry::key, contentType = { it::class }) { entry ->
                     when (entry) {
                         is SongEntry.AlbumHeader -> SongAlbumHeader(entry.song)
@@ -158,6 +177,7 @@ fun SongsPage(
                 sections = sections,
                 scrollableState = rememberFastScrollableState(listState),
                 thumbLabel = songThumbLabel(state.sortOrder)?.let { label -> { entry: SongEntry -> label(entry.song) } },
+                controls = controls,
             )
         }
     }
@@ -249,6 +269,7 @@ fun AlbumsPage(
     onAlbumLongClick: (Album) -> Unit,
     onAlbumMore: (Album) -> Unit,
     modifier: Modifier = Modifier,
+    controls: LibraryTabControls? = null,
 ) {
     val content = when (state.loadingState) {
         AlbumListUiState.LoadingState.Loading -> LibraryContentState.Loading
@@ -256,9 +277,9 @@ fun AlbumsPage(
         AlbumListUiState.LoadingState.Empty -> LibraryContentState.Empty
         AlbumListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
-    LibraryContent(content, stringResource(R.string.album_list_empty), modifier, state.scanProgress) {
+    LibraryContent(content, stringResource(R.string.album_list_empty), modifier, state.scanProgress, controls) {
         val fastScroller: @Composable (FastScrollableState) -> Unit = { scrollableState ->
-            LibraryFastScroller(state.albums, state.letterIndex, scrollableState, thumbLabel = albumThumbLabel(state.sortOrder))
+            LibraryFastScroller(state.albums, state.letterIndex, scrollableState, thumbLabel = albumThumbLabel(state.sortOrder), controls = controls)
         }
         Box(modifier.fillMaxSize()) {
             if (state.viewMode == ViewMode.Grid) {
@@ -266,11 +287,12 @@ fun AlbumsPage(
                 LazyVerticalGrid(
                     columns = LibraryGridColumns,
                     state = gridState,
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
+                    contentPadding = gridPadding(controls, top = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxSize().testTag("library-albums"),
                 ) {
+                    controlsItem(controls, GridHorizontalPadding)
                     items(state.albums, key = { it.groupKey.toString() }) { album ->
                         GridTile(
                             title = album.name.orEmpty(),
@@ -286,6 +308,7 @@ fun AlbumsPage(
             } else {
                 val listState = rememberLazyListState()
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-albums")) {
+                    controlsItem(controls)
                     items(state.albums, key = { it.groupKey.toString() }) { album ->
                         AlbumRow(
                             title = album.name.orEmpty(),
@@ -313,6 +336,7 @@ fun ArtistsPage(
     onArtistLongClick: (AlbumArtist) -> Unit,
     onArtistMore: (AlbumArtist) -> Unit,
     modifier: Modifier = Modifier,
+    controls: LibraryTabControls? = null,
 ) {
     val content = when (state.loadingState) {
         AlbumArtistListUiState.LoadingState.Loading -> LibraryContentState.Loading
@@ -320,7 +344,7 @@ fun ArtistsPage(
         AlbumArtistListUiState.LoadingState.Empty -> LibraryContentState.Empty
         AlbumArtistListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
-    LibraryContent(content, stringResource(R.string.artist_list_empty), modifier, state.scanProgress) {
+    LibraryContent(content, stringResource(R.string.artist_list_empty), modifier, state.scanProgress, controls) {
         val artists = state.albumArtists
         // Artists are always sorted by their group key, which drops a leading "The".
         val sections = state.letterIndex
@@ -330,11 +354,12 @@ fun ArtistsPage(
                 LazyVerticalGrid(
                     columns = LibraryGridColumns,
                     state = gridState,
-                    contentPadding = PaddingValues(16.dp),
+                    contentPadding = gridPadding(controls, top = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxSize().testTag("library-artists"),
                 ) {
+                    controlsItem(controls, GridHorizontalPadding)
                     items(artists, key = { it.groupKey.toString() }) { artist ->
                         GridTile(
                             title = artist.name ?: artist.friendlyArtistName.orEmpty(),
@@ -346,10 +371,11 @@ fun ArtistsPage(
                         )
                     }
                 }
-                AlphabetFastScroller(sections, rememberFastScrollableState(gridState), FastScrollerModifier)
+                AlphabetFastScroller(sections, rememberFastScrollableState(gridState), fastScrollerModifier(controls), controlsItemCount(controls))
             } else {
                 val listState = rememberLazyListState()
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-artists")) {
+                    controlsItem(controls)
                     items(artists, key = { it.groupKey.toString() }) { artist ->
                         ArtistRow(
                             name = artist.name ?: artist.friendlyArtistName.orEmpty(),
@@ -362,7 +388,7 @@ fun ArtistsPage(
                         )
                     }
                 }
-                AlphabetFastScroller(sections, rememberFastScrollableState(listState), FastScrollerModifier)
+                AlphabetFastScroller(sections, rememberFastScrollableState(listState), fastScrollerModifier(controls), controlsItemCount(controls))
             }
         }
     }
@@ -375,6 +401,7 @@ fun GenresPage(
     onGenreClick: (Genre) -> Unit,
     onGenreMore: (Genre) -> Unit,
     modifier: Modifier = Modifier,
+    controls: LibraryTabControls? = null,
 ) {
     val content = when (state.loadingState) {
         GenreListUiState.LoadingState.Loading -> LibraryContentState.Loading
@@ -382,10 +409,12 @@ fun GenresPage(
         GenreListUiState.LoadingState.Empty -> LibraryContentState.Empty
         GenreListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
-    LibraryContent(content, stringResource(R.string.genre_list_empty), modifier, state.scanProgress) {
+    LibraryContent(content, stringResource(R.string.genre_list_empty), modifier, state.scanProgress, controls) {
         val listState = rememberLazyListState()
+        val leadingItems = controlsItemCount(controls)
         Box(modifier.fillMaxSize()) {
             LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-genres")) {
+                controlsItem(controls)
                 items(state.genres, key = { it.name }) { genre ->
                     GenreRow(
                         name = genre.name,
@@ -396,7 +425,7 @@ fun GenresPage(
                     )
                 }
             }
-            FastScroller(modifier = FastScrollerModifier, getPopupText = { index -> state.genres.getOrNull(index)?.name?.firstOrNull()?.uppercase() }, state = listState)
+            FastScroller(modifier = fastScrollerModifier(controls), getPopupText = { index -> state.genres.getOrNull(index - leadingItems)?.name?.firstOrNull()?.uppercase() }, state = listState)
         }
     }
 }
@@ -410,6 +439,7 @@ fun PlaylistsPage(
     onSmartPlaylistClick: (SmartPlaylist) -> Unit,
     onNewPlaylist: () -> Unit,
     modifier: Modifier = Modifier,
+    controls: LibraryTabControls? = null,
 ) {
     val content = when (state.loadingState) {
         PlaylistListUiState.LoadingState.Loading -> LibraryContentState.Loading
@@ -419,11 +449,12 @@ fun PlaylistsPage(
         // Smart playlists are always there, so an empty list still shows them and "New playlist".
         PlaylistListUiState.LoadingState.Ready -> LibraryContentState.Ready
     }
-    LibraryContent(content, stringResource(R.string.playlist_list_empty), modifier, state.scanProgress) {
+    LibraryContent(content, stringResource(R.string.playlist_list_empty), modifier, state.scanProgress, controls) {
         val listState = rememberLazyListState()
-        val headerCount = 1 + state.smartPlaylists.size + 1
+        val headerCount = controlsItemCount(controls) + 1 + state.smartPlaylists.size + 1
         Box(modifier.fillMaxSize()) {
             LazyColumn(state = listState, modifier = Modifier.fillMaxSize().testTag("library-playlists")) {
+                controlsItem(controls)
                 item(key = "smart-header") { SectionHeader(title = stringResource(R.string.library_smart_playlists)) }
                 items(state.smartPlaylists, key = { "smart-${it.id}" }) { smartPlaylist ->
                     PlaylistRow(
@@ -449,7 +480,7 @@ fun PlaylistsPage(
                     )
                 }
             }
-            FastScroller(modifier = FastScrollerModifier, getPopupText = { index -> state.playlists.getOrNull(index - headerCount)?.name?.firstOrNull()?.uppercase() }, state = listState)
+            FastScroller(modifier = fastScrollerModifier(controls), getPopupText = { index -> state.playlists.getOrNull(index - headerCount)?.name?.firstOrNull()?.uppercase() }, state = listState)
         }
     }
 }

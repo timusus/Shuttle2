@@ -61,27 +61,39 @@ fun LibraryArtwork(
 /** What a library list is showing: its content, or why it has none yet. */
 enum class LibraryContentState { Loading, Scanning, Empty, Ready }
 
-/** Shows [content] once [state] is Ready; otherwise the matching loading, scan progress or [emptyTitle] state. */
+/**
+ * Shows [content] once [state] is Ready; otherwise the matching loading, scan progress or [emptyTitle] state, under the
+ * tab's [controls] row when it has one (the Ready content shows that row as its list's first item).
+ */
 @Composable
 fun LibraryContent(
     state: LibraryContentState,
     emptyTitle: String,
     modifier: Modifier = Modifier,
     scanProgress: Progress? = null,
+    controls: LibraryTabControls? = null,
     content: @Composable () -> Unit,
 ) {
-    when (state) {
-        LibraryContentState.Loading -> LoadingState(modifier = modifier.fillMaxSize())
+    if (state == LibraryContentState.Ready) {
+        content()
+        return
+    }
+    Column(modifier.fillMaxSize()) {
+        if (controls != null && !controls.isEmpty) LibraryControlsRow(controls)
+        val fill = Modifier.fillMaxWidth().weight(1f)
+        when (state) {
+            LibraryContentState.Loading -> LoadingState(modifier = fill)
 
-        LibraryContentState.Scanning -> LoadingState(
-            modifier = modifier.fillMaxSize(),
-            message = stringResource(R.string.library_scan_in_progress),
-            progress = scanProgress?.let { progress -> { progress.asFloat() } },
-        )
+            LibraryContentState.Scanning -> LoadingState(
+                modifier = fill,
+                message = stringResource(R.string.library_scan_in_progress),
+                progress = scanProgress?.let { progress -> { progress.asFloat() } },
+            )
 
-        LibraryContentState.Empty -> EmptyState(title = emptyTitle, modifier = modifier.fillMaxSize())
+            LibraryContentState.Empty -> EmptyState(title = emptyTitle, modifier = fill)
 
-        LibraryContentState.Ready -> content()
+            LibraryContentState.Ready -> Unit
+        }
     }
 }
 

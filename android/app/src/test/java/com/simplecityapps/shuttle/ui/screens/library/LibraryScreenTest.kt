@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import com.simplecityapps.createAlbum
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createGenre
@@ -18,6 +20,7 @@ import com.simplecityapps.shuttle.ui.screens.library.folders.readyFolderList
 import com.simplecityapps.shuttle.ui.screens.library.genres.readyGenreList
 import com.simplecityapps.shuttle.ui.screens.library.playlists.readyPlaylistList
 import com.simplecityapps.shuttle.ui.screens.library.songs.emptySongList
+import com.simplecityapps.shuttle.ui.screens.library.songs.loadingSongList
 import com.simplecityapps.shuttle.ui.screens.library.songs.readySongList
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -37,7 +40,7 @@ class LibraryScreenTest {
 
     @Test
     fun `shows the title, the enabled sections in order and the current tab's count`() {
-        robot.setContent(libraryState(), libraryChrome(count = "12 songs"))
+        robot.setContent(libraryState(), libraryControls(count = "12 songs"))
 
         robot.assertTextDisplayed("Library")
         robot.assertTextDisplayed("12 songs")
@@ -46,17 +49,36 @@ class LibraryScreenTest {
 
     @Test
     fun `the title shares a row with the settings action`() {
-        robot.setContent(libraryState(), libraryChrome(count = "12 songs"))
+        robot.setContent(libraryState(), libraryControls(count = "12 songs"))
 
         robot.titleSharesRowWithSettings() shouldBe true
     }
 
     @Test
     fun `the section row leaves the first chip fully visible and scrolls the last one into view`() {
-        robot.setContent(libraryState(currentTab = LibraryTab.Genres), libraryChrome(count = "1 genre"))
+        robot.setContent(libraryState(currentTab = LibraryTab.Genres), libraryControls(count = "1 genre"))
         robot.sectionChipIsFullyVisible("Genres") shouldBe true
 
-        robot.clickTab("Songs")
+        repeat(4) { robot.swipeToNextPage() }
+
+        robot.assertTabSelected("Songs")
+        robot.sectionChipIsFullyVisible("Songs") shouldBe true
+    }
+
+    @Test
+    fun `right to left, selecting the last section scrolls its chip fully into view`() {
+        robot.setContent(libraryState(currentTab = LibraryTab.Genres), layoutDirection = LayoutDirection.Rtl)
+        robot.sectionChipIsFullyVisible("Genres") shouldBe true
+
+        repeat(4) { robot.swipeToNextPage() }
+
+        robot.assertTabSelected("Songs")
+        robot.sectionChipIsFullyVisible("Songs") shouldBe true
+    }
+
+    @Test
+    fun `right to left, opening on the last section shows its chip fully`() {
+        robot.setContent(libraryState(currentTab = LibraryTab.Songs), layoutDirection = LayoutDirection.Rtl)
 
         robot.sectionChipIsFullyVisible("Songs") shouldBe true
     }
@@ -119,7 +141,7 @@ class LibraryScreenTest {
 
     @Test
     fun `the overflow holds only Edit tabs`() {
-        robot.setContent(libraryState(), libraryChrome(sortOptions = sorts("Song Name", "Year")))
+        robot.setContent(libraryState(), libraryControls(sortOptions = sorts("Song Name", "Year")))
 
         robot.openOverflow()
 
@@ -131,7 +153,7 @@ class LibraryScreenTest {
     fun `the sort button names the current sort and opens the tab's sorts`() {
         var sortedBy: String? = null
         val options = listOf("Song Name", "Year").map { label -> S2Action(label, { sortedBy = label }, selected = label == "Song Name") }
-        robot.setContent(libraryState(currentTab = LibraryTab.Songs), libraryChrome(count = "2 songs", sortOptions = options))
+        robot.setContent(libraryState(currentTab = LibraryTab.Songs), libraryControls(count = "2 songs", sortOptions = options))
 
         robot.assertTextDisplayed("Song Name")
         robot.openSort()
@@ -141,8 +163,53 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun `the sort button announces itself as the sort, with a full-size touch target`() {
+        robot.setContent(libraryState(currentTab = LibraryTab.Albums), libraryControls(count = "2 albums", sortOptions = sorts("Album name", "Year")))
+
+        robot.assertSortAnnounced("Sort: Album name")
+        (robot.sortTouchTarget().height >= 48.dp) shouldBe true
+    }
+
+    @Test
+    fun `the controls row scrolls away with the page and leaves the screen`() {
+        val songs = (1..60L).map { createSong(id = it, name = "Track $it") }
+        robot.setContent(
+            libraryState(currentTab = LibraryTab.Songs),
+            libraryControls(count = "60 songs", sortOptions = sorts("Song Name"), onPlay = {}, onShuffle = {}),
+            LibraryPageStates(songs = readySongList(songs, sortOrder = SongSortOrder.SongName)),
+        )
+        robot.controlsShown() shouldBe true
+
+        robot.scrollPageTo("library-songs", 40)
+
+        robot.controlsShown() shouldBe false
+        robot.assertContentDescriptionNotDisplayed("Play")
+        robot.assertTabSelected("Songs")
+    }
+
+    @Test
+    fun `an empty page still shows its controls above the empty state`() {
+        robot.setContent(
+            libraryState(currentTab = LibraryTab.Songs),
+            libraryControls(count = "0 songs", sortOptions = sorts("Song Name")),
+            LibraryPageStates(songs = emptySongList()),
+        )
+
+        robot.assertTextDisplayed("0 songs")
+        robot.assertTextDisplayed("Song Name")
+        robot.assertTextDisplayed("No songs")
+    }
+
+    @Test
+    fun `a loading page still shows its controls`() {
+        robot.setContent(libraryState(currentTab = LibraryTab.Songs), libraryControls(count = "0 songs"), LibraryPageStates(songs = loadingSongList))
+
+        robot.assertTextDisplayed("0 songs")
+    }
+
+    @Test
     fun `a tab without sorts, views or play has no controls`() {
-        robot.setContent(libraryState(currentTab = LibraryTab.Albums), libraryChrome(count = "1 album"))
+        robot.setContent(libraryState(currentTab = LibraryTab.Albums), libraryControls(count = "1 album"))
 
         robot.assertTextDisplayed("1 album")
         robot.assertContentDescriptionNotDisplayed("Show as list")
@@ -181,7 +248,7 @@ class LibraryScreenTest {
 
     @Test
     fun `a selection swaps the top bar for the selection toolbar`() {
-        robot.setContent(libraryState(), selectingChrome(selectedCount = 3))
+        robot.setContent(libraryState(), chrome = selectingChrome(selectedCount = 3))
 
         robot.assertTextDisplayed("3 selected")
         robot.assertTextNotDisplayed("Library")
@@ -189,7 +256,7 @@ class LibraryScreenTest {
 
     @Test
     fun `selection toolbar actions report their type`() {
-        robot.setContent(libraryState(), selectingChrome())
+        robot.setContent(libraryState(), chrome = selectingChrome())
 
         robot.clickSelectionAction("Add to Queue")
 
@@ -198,7 +265,7 @@ class LibraryScreenTest {
 
     @Test
     fun `clearing the selection reports it`() {
-        robot.setContent(libraryState(), selectingChrome())
+        robot.setContent(libraryState(), chrome = selectingChrome())
 
         robot.clearSelection()
 
@@ -207,7 +274,7 @@ class LibraryScreenTest {
 
     @Test
     fun `back with a selection clears it rather than leaving the Library`() {
-        robot.setContent(libraryState(), selectingChrome(selectedCount = 1))
+        robot.setContent(libraryState(), chrome = selectingChrome(selectedCount = 1))
 
         robot.pressBack()
 
@@ -228,7 +295,7 @@ class LibraryScreenTest {
         val song = createSong(id = 1, name = "Chlorophyll Loop")
         robot.setContent(
             libraryState(currentTab = LibraryTab.Songs),
-            libraryChrome(onPlay = {}, onShuffle = {}),
+            libraryControls(onPlay = {}, onShuffle = {}),
             LibraryPageStates(songs = readySongList(listOf(song, createSong(id = 2, name = "Lucky")))),
         )
 
@@ -246,7 +313,7 @@ class LibraryScreenTest {
     fun `the song count shows once, in the controls row (#491)`() {
         robot.setContent(
             libraryState(currentTab = LibraryTab.Songs),
-            libraryChrome(count = "2 songs"),
+            libraryControls(count = "2 songs"),
             LibraryPageStates(songs = readySongList(listOf(createSong(id = 1, name = "Chlorophyll Loop"), createSong(id = 2, name = "Lucky")))),
         )
 
@@ -258,7 +325,7 @@ class LibraryScreenTest {
         val albums = listOf(createAlbum(name = "Phase Garden", albumArtist = "Juniper Static"))
         robot.setContent(
             libraryState(currentTab = LibraryTab.Albums),
-            libraryChrome(count = "1 album", viewMode = ViewMode.Grid, onPlay = {}, onShuffle = {}),
+            libraryControls(count = "1 album", viewMode = ViewMode.Grid, onPlay = {}, onShuffle = {}),
             LibraryPageStates(albums = readyAlbumList(albums)),
         )
 

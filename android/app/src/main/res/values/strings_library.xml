@@ -58,6 +58,8 @@
     <string name="library_tab_move_down">Move down</string>
     <!-- Library controls row: the sort chip's label when the current sort isn't one of the tab's listed sorts -->
     <string name="library_sort">Sort</string>
+    <!-- Library controls row: content description of the sort button, naming the current sort, such as "Sort: Album name" -->
+    <string name="library_sort_current">Sort: %1$s</string>
     <!-- Library controls row: content description of the button that shows the tab as a grid -->
     <string name="library_show_as_grid">Show as grid</string>
     <!-- Library controls row: content description of the button that shows the tab as a list -->

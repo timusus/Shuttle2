@@ -44,7 +44,11 @@ fun S2LargeTopBar(
     )
 }
 
-/** The pinned one-row bar on artwork detail screens (album, artist, genre, playlist) and sub-screens, Settings' sub-pages among them. */
+/**
+ * The pinned one-row bar: on artwork detail screens (album, artist, genre, playlist), on sub-screens (Settings' sub-pages
+ * among them), and over the Library container's section chips, where only the chips stay pinned under it and each tab's
+ * controls row scrolls away with its page.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun S2TopBar(
