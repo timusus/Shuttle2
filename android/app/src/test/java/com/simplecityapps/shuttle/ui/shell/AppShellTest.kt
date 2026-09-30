@@ -147,6 +147,16 @@ class AppShellTest {
     }
 
     @Test
+    fun `dragging the bar down collapses the full player`() {
+        robot.setContent()
+        robot.tapMiniPlayer()
+
+        robot.swipeDownBar()
+        robot.assertLevel(PlayerLevel.Mini)
+        robot.panel shouldBe null
+    }
+
+    @Test
     fun `dragging the queue down closes it and leaves the full player`() {
         robot.setContent()
         robot.tapMiniPlayer()

@@ -9,8 +9,12 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitVerticalTouchSlopOrCancellation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.gestures.verticalDrag
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -60,6 +64,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -336,19 +342,14 @@ internal fun NowPlayingBar(
     modifier: Modifier = Modifier,
 ) {
     val songActions = rememberSongActionsState()
-    var swiped by remember { mutableFloatStateOf(0f) }
-    val swipeDistance = with(LocalDensity.current) { BarSwipeDistance.toPx() }
     val currentSelected by rememberUpdatedState(selected)
+    val currentOnPanel by rememberUpdatedState(onPanel)
     Row(
         modifier = modifier
             .fillMaxWidth()
             .height(PlayerBarHeight)
-            .draggable(
-                state = rememberDraggableState { delta -> swiped += delta },
-                orientation = Orientation.Vertical,
-                onDragStarted = { swiped = 0f },
-                onDragStopped = { if (swiped <= -swipeDistance && currentSelected == null) onPanel(NowPlayingPanel.Queue) },
-            ).padding(horizontal = 16.dp)
+            .swipeUpToOpen(enabled = { currentSelected == null }, onOpen = { currentOnPanel(NowPlayingPanel.Queue) })
+            .padding(horizontal = 16.dp)
             .testTag(PlayerTestTags.Bar),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -407,6 +408,32 @@ internal fun NowPlayingBar(
 
 /** How far a swipe up on the bar has to travel to open the queue. */
 private val BarSwipeDistance = 32.dp
+
+/**
+ * Calls [onOpen] when a swipe up travels [BarSwipeDistance], while [enabled]. Only a drag that starts
+ * upwards is taken: one that starts downwards is left unconsumed, so the sheet's own drag collapses it.
+ */
+private fun Modifier.swipeUpToOpen(
+    enabled: () -> Boolean,
+    onOpen: () -> Unit,
+): Modifier = pointerInput(Unit) {
+    val swipeDistance = BarSwipeDistance.toPx()
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        var swiped = 0f
+        val drag = awaitVerticalTouchSlopOrCancellation(down.id) { change, overSlop ->
+            if (overSlop < 0f && enabled()) {
+                change.consume()
+                swiped = overSlop
+            }
+        } ?: return@awaitEachGesture
+        val completed = verticalDrag(drag.id) { change ->
+            swiped += change.positionChange().y
+            change.consume()
+        }
+        if (completed && swiped <= -swipeDistance && enabled()) onOpen()
+    }
+}
 
 @Composable
 private fun BarButton(

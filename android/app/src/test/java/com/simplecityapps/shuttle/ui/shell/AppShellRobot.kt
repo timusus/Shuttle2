@@ -409,6 +409,12 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
+    /** Drags the full player down by its bar, which collapses it. */
+    fun swipeDownBar() {
+        rule.onNodeWithTag(PlayerTestTags.Bar).performTouchInput { swipeDown(startY = top + 1f, endY = bottom + 600f) }
+        rule.waitForIdle()
+    }
+
     /** Swipes up on the full player's artwork, as a finger trying to scroll it would. */
     fun swipeUpNowPlaying() {
         rule.onNodeWithTag(PlayerTestTags.NowPlayingArtwork).performTouchInput { swipeUp() }
