@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.settings.defaultSharedPreferences
 import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsDestination
+import com.simplecityapps.shuttle.ui.screens.settings.backup.FakeLibraryBackupFlow
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -39,6 +40,7 @@ class SettingsIntegrationTest {
 
     private val store = SettingsStore(SharedPreferencesKeyValueStore(RuntimeEnvironment.getApplication().defaultSharedPreferences().apply { edit().clear().commit() }))
     private val effects = FakeSettingsEffects()
+    private val backupFlow = FakeLibraryBackupFlow()
     private val robot = SettingsRobot(composeTestRule)
 
     private val preferences = GeneralPreferenceManager(InMemoryKeyValueStore())
@@ -50,7 +52,8 @@ class SettingsIntegrationTest {
         ReadLastScanDate(preferences),
         ObserveLastScanDate(preferences),
         effects,
-        AndroidSettingsCatalog
+        AndroidSettingsCatalog,
+        backupFlow
     )
 
     @Test

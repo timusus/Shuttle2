@@ -41,6 +41,8 @@ enum class SettingsLink {
 /** What a [SettingItem.Action] row does. The UI step maps each to a handler. */
 enum class SettingsAction {
     Rescan,
+    ExportBackup,
+    ImportBackup,
     ClearArtworkCache,
     DownloadAllArtwork,
     CopyDebugLogs

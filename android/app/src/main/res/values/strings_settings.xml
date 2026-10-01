@@ -42,6 +42,14 @@
     <string name="pref_media_rescan_title">Rescan</string>
     <!-- Settings: Description for the option to rescan the media library -->
     <string name="pref_media_rescan_summary">Rescan the selected media providers</string>
+    <!-- Settings: Title for the option to back up play counts, favourites and playlists to a file -->
+    <string name="pref_backup_export_title">Back up library</string>
+    <!-- Settings: Description for the option to back up play counts, favourites and playlists to a file -->
+    <string name="pref_backup_export_summary">Save play counts, favourites, exclusions and playlists to a JSON file</string>
+    <!-- Settings: Title for the option to restore a library backup from a file -->
+    <string name="pref_backup_import_title">Restore library backup</string>
+    <!-- Settings: Description for the option to restore a library backup from a file -->
+    <string name="pref_backup_import_summary">Merge stats and playlists from a backup file; newer on-device activity is kept</string>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">Excluded</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
@@ -167,6 +175,14 @@
     <string name="settings_version_title">Version</string>
     <!-- Settings: Snackbar shown when a library rescan starts -->
     <string name="settings_rescan_started">Scanning your library</string>
+    <!-- Settings: Snackbar shown once a library backup has been saved -->
+    <string name="settings_backup_export_saved">Library backup saved</string>
+    <!-- Settings: Snackbar shown when saving a library backup fails -->
+    <string name="settings_backup_export_failed">Library backup failed</string>
+    <!-- Settings: Snackbar shown when reading a library backup file fails -->
+    <string name="settings_backup_import_failed">Could not read that backup file</string>
+    <!-- Settings: Snackbar summarising a library backup restore; %1$d songs matched, %2$d playlists restored, %3$d backup songs found no match -->
+    <string name="settings_backup_import_done">Restored %1$d songs and %2$d playlists (%3$d unmatched)</string>
     <!-- Settings: Snackbar shown once the artwork cache has been cleared -->
     <string name="settings_artwork_cache_cleared">Artwork cache cleared</string>
     <!-- Settings: Snackbar shown when downloading all artwork starts -->

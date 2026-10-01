@@ -15,6 +15,7 @@ import com.simplecityapps.shuttle.settings.ThemeMode
 import com.simplecityapps.shuttle.ui.screens.settings.model.AndroidSettingsCatalog
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingItem
 import com.simplecityapps.shuttle.ui.screens.settings.model.SettingsAction
+import com.simplecityapps.shuttle.ui.screens.settings.backup.FakeLibraryBackupFlow
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
@@ -35,6 +36,7 @@ class SettingsViewModelTest {
 
     private val prefs = InMemoryKeyValueStore()
     private val effects = FakeSettingsEffects()
+    private val backupFlow = FakeLibraryBackupFlow()
     private val preferenceManager = GeneralPreferenceManager(prefs)
     private lateinit var store: SettingsStore
 
@@ -43,7 +45,7 @@ class SettingsViewModelTest {
         store = SettingsStore(prefs)
     }
 
-    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), ObserveLastScanDate(preferenceManager), effects, AndroidSettingsCatalog)
+    private fun viewModel() = SettingsViewModel(ObserveSetting(store), ReadSetting(store), SaveSetting(store), ReadLastScanDate(preferenceManager), ObserveLastScanDate(preferenceManager), effects, AndroidSettingsCatalog, backupFlow)
 
     private inline fun <reified T : SettingItem> item(key: String): T = AndroidSettingsCatalog.items.filterIsInstance<T>().first { it.key == key }
 

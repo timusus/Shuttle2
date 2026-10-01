@@ -120,6 +120,10 @@ val StringKey.resId: Int
         StringKey.PREF_STREAMING_QUALITY_METERED_TITLE -> R.string.pref_streaming_quality_metered_title
         StringKey.PREF_MEDIA_RESCAN_TITLE -> R.string.pref_media_rescan_title
         StringKey.PREF_MEDIA_RESCAN_SUMMARY -> R.string.pref_media_rescan_summary
+        StringKey.PREF_BACKUP_EXPORT_TITLE -> R.string.pref_backup_export_title
+        StringKey.PREF_BACKUP_EXPORT_SUMMARY -> R.string.pref_backup_export_summary
+        StringKey.PREF_BACKUP_IMPORT_TITLE -> R.string.pref_backup_import_title
+        StringKey.PREF_BACKUP_IMPORT_SUMMARY -> R.string.pref_backup_import_summary
         StringKey.PREF_RESCAN_FREQUENCY_TITLE -> R.string.pref_rescan_frequency_title
         StringKey.PREF_RESCAN_FREQUENCY_NEVER -> R.string.pref_rescan_frequency_never
         StringKey.PREF_RESCAN_FREQUENCY_DAILY -> R.string.pref_rescan_frequency_daily

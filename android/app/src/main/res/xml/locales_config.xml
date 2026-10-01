@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Per-app language preferences (API 33+). English-only for now; adding a
+     <locale> entry per res/values-<qualifier>/strings.xml as translations land. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+</locale-config>
