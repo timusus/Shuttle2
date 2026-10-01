@@ -23,12 +23,19 @@
 # itself with an internal --verify-only mode), over everything landed so far:
 # `unit-test --changed`, an assembleDebug, and — only if the picked commits touch ios/, shared/
 # or android/domain|presentation|core — a light iOS check: the framework build, an app build
-# (`xcodebuild build`), and `test.sh -only-testing:` for just the test classes mapped from the
+# (`xcodebuild build`, only when no test class maps), and `test.sh -only-testing:` for the test classes mapped from the
 # changed files (rule below; no mapped class = build only, no simulator lease). The whole iOS
 # suite and the full Android verify run less often, in support/scripts/full-verify.sh (watermark,
-# always before a Play release). iOS test mapping (`land.sh --print-ios-tests <files...>`): a
-# changed ios/S2Tests/Foo*Tests.swift runs S2Tests/Foo*Tests; a changed ios/S2/**/Foo.swift runs
-# every existing ios/S2Tests/Foo*Tests.swift; other files map to nothing. If the verify fails and more than one branch landed, branches are
+# always before a Play release).
+# iOS test mapping (`land.sh --print-ios-tests <files...>` prints it; deleted files are ignored):
+#   ios/S2Tests/*Tests.swift      runs itself
+#   other ios/S2*/ .swift         stem (and stem minus a View/Content/Model suffix): every
+#                                 S2Tests/*Tests.swift named <stem>* or mentioning <stem> as a word
+#   shared/, android/domain|presentation|core .kt   the same word match on the stem (and, for
+#                                 *ViewModel, <name>UiState)
+#   ios/Playback/                 also `ios/scripts/test.sh --package`
+#   nothing mapped                build only, no simulator lease
+# If the verify fails and more than one branch landed, branches are
 # dropped one at a time from the end (each drop retried once) until it passes or none remain;
 # each dropped branch is reported as having broken verify. On a pass: push (retrying network
 # failures up to 3 times), close --close issues, then unlock and worktree-clean.sh each landed
@@ -40,18 +47,31 @@ REPO_ROOT=$(git rev-parse --show-toplevel) || { echo "land.sh: not a git repo" >
 cd "$REPO_ROOT" || exit 2
 
 # ios_tests_for <file>...: print the S2Tests classes (one per line, sorted, unique) that the
-# changed files map to, per the rule in the header. Needs REPO_ROOT as the cwd.
+# changed files map to, per the rule in the header, plus "--package" when ios/Playback changed.
+# Needs REPO_ROOT as the cwd.
 ios_tests_for() {
-  local f stem t
+  local f stem s t
   for f in "$@"; do
     case "$f" in
-      ios/S2Tests/*Tests.swift) basename "${f%.swift}" ;;
-      ios/S2/*.swift)
-        stem=$(basename "${f%.swift}")
-        for t in ios/S2Tests/"$stem"*Tests.swift; do
-          [ -e "$t" ] && basename "${t%.swift}"
-        done ;;
+      ios/S2Tests/*Tests.swift) [ -e "$f" ] && basename "${f%.swift}"; continue ;;
+      ios/Playback/*) echo "--package"; continue ;;
+      ios/S2/*.swift|ios/S2Tests/*.swift) stem=$(basename "${f%.swift}") ;;
+      shared/*.kt|android/domain/*.kt|android/presentation/*.kt|android/core/*.kt)
+        stem=$(basename "${f%.kt}") ;;
+      *) continue ;;
     esac
+    local stems=("$stem")
+    case "$f" in
+      *.swift) s=${stem%View}; s=${s%Content}; s=${s%Model}
+               [ -n "$s" ] && [ "$s" != "$stem" ] && stems+=("$s") ;;
+      *.kt)    case "$stem" in *ViewModel) stems+=("${stem%ViewModel}UiState") ;; esac ;;
+    esac
+    for s in "${stems[@]}"; do
+      case "$f" in
+        *.swift) for t in ios/S2Tests/"$s"*Tests.swift; do [ -e "$t" ] && basename "${t%.swift}"; done ;;
+      esac
+      for t in $(grep -lw -- "$s" ios/S2Tests/*Tests.swift 2>/dev/null); do basename "${t%.swift}"; done
+    done
   done | sort -u
 }
 
@@ -72,19 +92,28 @@ if [ "${1:-}" = "--verify-only" ]; then
   support/scripts/remote-build.sh --local -q :android:app:assembleDebug || { echo "verify: assembleDebug failed"; exit 1; }
   if [ "$touches_ios" = 1 ]; then
     rc=0
+    classes=() pkg=0
+    for c in "$@"; do
+      if [ "$c" = "--package" ]; then pkg=1; else classes+=("$c"); fi
+    done
     (
       set -e
       cd ios
       xcodegen -q
       scripts/build-framework.sh
-      xcodebuild build -project S2.xcodeproj -scheme S2 \
-        -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData -quiet
-      if [ "$#" -gt 0 ]; then
+      if [ "${#classes[@]}" -gt 0 ]; then
+        echo "verify: ios test classes: ${classes[*]}"
         only=()
-        for c in "$@"; do only+=("-only-testing:S2Tests/$c"); done
+        for c in "${classes[@]}"; do only+=("-only-testing:S2Tests/$c"); done
         S2_SIM_HOLDER=land scripts/test.sh "${only[@]}"
       else
         echo "verify: no iOS test class maps to the changed files; build only"
+        xcodebuild build -project S2.xcodeproj -scheme S2 \
+          -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData -quiet
+      fi
+      if [ "$pkg" = 1 ]; then
+        echo "verify: ios Playback package tests"
+        scripts/test.sh --package
       fi
     ) || rc=$?
     # Release under the same holder lease-sim.sh leased as (suffixed when S2_SIM_PROFILE is set).
@@ -113,7 +142,7 @@ while [ $# -gt 0 ]; do
       CLOSE_ISSUES+=("$2"); shift 2 ;;
     --no-push) NO_PUSH=1; shift ;;
     --dry-run) NO_PUSH=1; shift ;;
-    -h|--help) sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,/^set -/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit 0 ;;
     -*) echo "land.sh: unknown option: $1" >&2; exit 2 ;;
     *) BRANCHES+=("$1"); shift ;;
   esac
@@ -213,7 +242,7 @@ run_verify() {
   fi
   local ios_tests=() changed=() t
   if [ "$touches_ios" = 1 ]; then
-    while IFS= read -r t; do changed+=("$t"); done < <(git diff --name-only "$ORIGIN_MAIN_SHA" HEAD)
+    while IFS= read -r -d '' t; do changed+=("$t"); done < <(git diff --name-only -z --diff-filter=d "$ORIGIN_MAIN_SHA" HEAD)
     while IFS= read -r t; do [ -n "$t" ] && ios_tests+=("$t"); done < <(ios_tests_for "${changed[@]}")
   fi
   log "verify: touches_ios=$touches_ios ios_tests=${ios_tests[*]-}"
