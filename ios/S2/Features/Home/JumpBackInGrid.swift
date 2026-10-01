@@ -16,7 +16,7 @@ struct JumpBackInGrid: View {
     var onTapped: (String) -> Void = { _ in }
     /// The item whose play is under way (`PendingPlay`), by key.
     var pendingKey: String?
-    var onPlayStarted: (HomeItem) -> Void = { _ in }
+    var onPlayStarted: (HomeItem, _ resumes: Bool) -> Void = { _, _ in }
 
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -64,7 +64,7 @@ struct JumpBackInCell: View {
     /// Its play is under way (`PendingPlay`): the play button shows a spinner.
     var pending = false
     /// Told of each action that starts playing the item, as it's performed.
-    var onPlayStarted: (HomeItem) -> Void = { _ in }
+    var onPlayStarted: (HomeItem, _ resumes: Bool) -> Void = { _, _ in }
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.homeCovers) private var covers
@@ -188,7 +188,7 @@ struct JumpBackInCell: View {
     /// Performs `action`, telling `onPlayStarted` first if it starts playing the item.
     private func performTracked(_ action: MediaAction) {
         if action is MediaActionResume || action is MediaActionPlay || action is MediaActionShuffle {
-            onPlayStarted(item)
+            onPlayStarted(item, action is MediaActionResume)
         }
         perform(action)
     }

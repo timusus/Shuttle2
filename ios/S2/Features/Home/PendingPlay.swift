@@ -11,6 +11,8 @@ final class PendingPlay {
     /// The pending item's `HomeItem.key`; nil when nothing is pending.
     private(set) var key: String?
     @ObservationIgnored private var context: PlayContext?
+    /// The queue content version a rebuilding play started at; nil for a resume.
+    @ObservationIgnored private var rebuiltAfter: Int64?
     @ObservationIgnored private var timeoutTask: Task<Void, Never>?
     @ObservationIgnored let timeout: Duration
 
@@ -18,16 +20,23 @@ final class PendingPlay {
         self.timeout = timeout
     }
 
-    /// A play of `item` was dispatched while the player was (or wasn't) `playing` the `current` context. One that's
-    /// already playing the item's context carries on as it is, so there's nothing to wait for.
-    func start(_ item: HomeItem, playing: Bool, current: PlayContext) {
+    /// A play of `item` was dispatched. `resumes` is a plain resume (carry on from where its queue was left); anything
+    /// else (Play, Play from Start, Shuffle) rebuilds the queue. A resume of the context that's already playing carries
+    /// on as it is, so there's nothing to wait for; the rest wait for the player.
+    ///
+    /// `playing` is whether the player is playing or buffering, `current` the queue's play context and `version` its
+    /// content version, as they stand now.
+    func start(_ item: HomeItem, resumes: Bool, playing: Bool, current: PlayContext, version: Int64) {
         timeoutTask?.cancel()
-        guard !(playing && Self.same(current, item.playContext)) else {
+        guard !(resumes && playing && Self.same(current, item.playContext)) else {
             settle()
             return
         }
         key = item.key
         context = item.playContext
+        // A rebuild is only done once the queue's content has changed: before that, the old queue may be the same
+        // context and still playing.
+        rebuiltAfter = resumes ? nil : version
         timeoutTask = Task { [weak self, timeout] in
             try? await Task.sleep(for: timeout)
             guard !Task.isCancelled else { return }
@@ -35,10 +44,19 @@ final class PendingPlay {
         }
     }
 
-    /// The player changed: playing the pending item's context settles it.
-    func playerChanged(playing: Bool, current: PlayContext) {
+    /// The player's state or its queue changed (call it for either, with both as they now stand): playing or buffering
+    /// the pending item's context settles it, whichever of the two changed last.
+    func playerChanged(playing: Bool, current: PlayContext, version: Int64) {
         guard playing, let context, Self.same(current, context) else { return }
+        if let rebuiltAfter, version == rebuiltAfter { return }
         settle()
+    }
+
+    /// Whether `result` of an action is a play that didn't happen. Anything else (a notice that something was queued,
+    /// a navigation) says nothing about the pending play.
+    static func isFailure(_ result: any MediaActionResult) -> Bool {
+        guard let message = (result as? MediaActionResultMessage)?.message else { return false }
+        return message is MediaActionMessagePlaybackFailed || message is MediaActionMessageNoSongs
     }
 
     /// Ends the wait: playback started, or the action failed.
@@ -47,6 +65,7 @@ final class PendingPlay {
         timeoutTask = nil
         key = nil
         context = nil
+        rebuiltAfter = nil
     }
 
     private static func same(_ lhs: PlayContext, _ rhs: PlayContext) -> Bool {
