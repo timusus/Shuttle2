@@ -5,13 +5,17 @@ import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryRepository
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
 import com.simplecityapps.shuttle.di.IoDispatcher
+import com.simplecityapps.shuttle.logging.Logger
 import com.simplecityapps.shuttle.ui.text.StringKey
 import dev.zacsweers.metro.Inject
 import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -181,7 +185,7 @@ internal const val GENRE_PICKS_MIN = 4
 internal const val GENRE_PICKS_MAX = 6
 
 /**
- * Loads every section's candidates and assembles Home's sections from them, with where each Jump back in item's queue
+ * Loads every section's candidates, side by side, and assembles Home's sections from them, with where each Jump back in item's queue
  * was left (#670): none for an item played through or never played from.
  */
 class LoadHomeSections @Inject constructor(
@@ -194,21 +198,39 @@ class LoadHomeSections @Inject constructor(
     private val playHistoryRepository: PlayHistoryRepository,
     private val homeTime: HomeTime,
 ) {
-    suspend operator fun invoke(hasHistory: Boolean): List<HomeSection> {
+    suspend operator fun invoke(hasHistory: Boolean): List<HomeSection> = coroutineScope {
+        val started = TimeSource.Monotonic.markNow()
         val now = homeTime.clock.now()
         val timeZone = homeTime.timeZone()
+        val jumpBackIn = async { timed("Jump back in") { jumpBackIn() } }
+        val aroundThisTime = async { if (hasHistory) timed("Around this time") { aroundThisTime(now, timeZone) } else emptyList() }
+        val heavyRotation = async { if (hasHistory) timed("Heavy rotation") { heavyRotation(now) } else emptyList() }
+        val rediscover = async { timed("Rediscover") { rediscover(now) } }
+        val recentlyAdded = async { timed("Recently added") { recentlyAdded() } }
+        val genrePicks = async { timed("Genre picks") { genrePicks(now) } }
         val candidates = HomeCandidates(
             hasHistory = hasHistory,
-            jumpBackIn = jumpBackIn(),
-            aroundThisTime = if (hasHistory) aroundThisTime(now, timeZone) else emptyList(),
-            heavyRotation = if (hasHistory) heavyRotation(now) else emptyList(),
-            rediscover = rediscover(now),
-            recentlyAdded = recentlyAdded(),
-            genrePicks = genrePicks(now),
+            jumpBackIn = jumpBackIn.await(),
+            aroundThisTime = aroundThisTime.await(),
+            heavyRotation = heavyRotation.await(),
+            rediscover = rediscover.await(),
+            recentlyAdded = recentlyAdded.await(),
+            genrePicks = genrePicks.await(),
         )
-        return assembleHomeSections(candidates, homeTime.clock, timeZone).map { section ->
-            if (section.id == HomeSectionId.JumpBackIn) section.copy(progress = progress(section.items)) else section
+        val sections = assembleHomeSections(candidates, homeTime.clock, timeZone).map { section ->
+            if (section.id == HomeSectionId.JumpBackIn) section.copy(progress = timed("Resume points") { progress(section.items) }) else section
         }
+        logger.debug { "Home's sections loaded in ${started.elapsedNow()}" }
+        sections
+    }
+
+    /** Runs [block], logging how long the stage of the load it is took. */
+    private inline fun <T> timed(
+        stage: String,
+        block: () -> T,
+    ): T {
+        val started = TimeSource.Monotonic.markNow()
+        return block().also { logger.debug { "$stage loaded in ${started.elapsedNow()}" } }
     }
 
     private suspend fun progress(items: List<HomeItem>): Map<String, HomeItemProgress> = items.mapNotNull { item ->
@@ -216,6 +238,10 @@ class LoadHomeSections @Inject constructor(
             ?.takeIf { !it.finished && it.trackCount > 0 }
             ?.let { item.key to HomeItemProgress(it.track.coerceIn(0, it.trackCount - 1) + 1, it.trackCount) }
     }.toMap()
+
+    private companion object {
+        val logger = Logger.tagged("LoadHomeSections")
+    }
 }
 
 /**
