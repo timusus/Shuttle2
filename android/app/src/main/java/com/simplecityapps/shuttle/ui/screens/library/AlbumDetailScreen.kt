@@ -51,7 +51,7 @@ fun AlbumDetailScreen(
     }
     val songs = uiState.songs
     val unknown = stringResource(com.simplecityapps.core.R.string.unknown)
-    val moreByTitle = stringResource(R.string.album_detail_more_by, album?.albumArtist ?: album?.friendlyArtistName.orEmpty())
+    val moreByTitle = stringResource(R.string.album_detail_more_by, album?.albumArtist.orEmpty())
     // The artwork tints the whole screen, as the player does, when Colour from artwork is on (#496).
     ArtworkTheme(uiState.seed) {
         LibraryDetailScaffold(
@@ -85,7 +85,7 @@ fun AlbumDetailScreen(
                     )
                 }
             }
-            if (uiState.moreByArtist.isNotEmpty()) {
+            if (uiState.moreByArtist.isNotEmpty() && !album?.albumArtist.isNullOrBlank()) {
                 albumShelf(
                     key = "album-more-by",
                     title = moreByTitle,
