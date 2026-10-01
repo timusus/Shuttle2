@@ -104,6 +104,7 @@ struct AlbumListContent: View {
                         }
                         .buttonStyle(.pressScale)
                         .contextMenu { menu(album) }
+                        .id(album.stableId)
                     }
                 }
             } else {

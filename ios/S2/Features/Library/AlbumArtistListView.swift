@@ -105,6 +105,7 @@ struct AlbumArtistListContent: View {
                         }
                         .buttonStyle(.pressScale)
                         .contextMenu { menu(artist) }
+                        .id(artist.stableId)
                     }
                 }
             } else {

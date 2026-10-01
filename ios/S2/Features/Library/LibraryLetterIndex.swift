@@ -141,9 +141,9 @@ extension View {
     }
 }
 
-/// `letterIndex`: the list gives up the strip's width with a clear inset, and the strip is an overlay hanging from
-/// the top that ignores the bottom safe area and keeps its own clearance above the bottom edge instead
-/// (`LetterIndexClearance`), so it doesn't move when scrolling minimises the iOS 26 tab bar and the bottom accessory
+/// `letterIndex`: the list gives up the strip's width with a clear inset, and the strip is an overlay centred in
+/// the visible height (below the navigation bar, above the clearance) that ignores the bottom safe area and keeps its
+/// own clearance above the bottom edge instead (`LetterIndexClearance`), so it doesn't move when scrolling minimises the iOS 26 tab bar and the bottom accessory
 /// (the mini player) moves in beside it (#674).
 private struct LetterIndexModifier: ViewModifier {
     let sections: [LetterIndexSection]
@@ -172,7 +172,7 @@ private struct LetterIndexModifier: ViewModifier {
                 try? await Task.sleep(for: Self.settleDelay)
                 clearance.hold()
             }
-            .overlay(alignment: .topTrailing) {
+            .overlay(alignment: .trailing) {
                 LetterIndexStrip(sections: sections, onSelect: scrollTo)
                     .padding(.bottom, clearance.value)
                     .ignoresSafeArea(.container, edges: .bottom)
@@ -336,8 +336,8 @@ struct LetterIndexStrip: View {
             }
         }
         .accessibilityIdentifier("library.sectionIndex")
-        // Hangs from the top of the height it's given, which it measures to know how many letters fit.
-        .frame(maxHeight: .infinity, alignment: .top)
+        // Centred in the height it's given, which it measures to know how many letters fit.
+        .frame(maxHeight: .infinity, alignment: .center)
         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { availableHeight = $0 }
     }
 

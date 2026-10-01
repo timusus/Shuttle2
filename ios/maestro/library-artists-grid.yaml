@@ -39,6 +39,12 @@ appId: com.simplecityapps.shuttle.dev
       - waitForAnimationToEnd:
           timeout: 5000
 - takeScreenshot: 3-albums-grid
+# The strip scrolls the grid too (#690): a tap on it picks the middle letter.
+- tapOn:
+    id: "library.sectionIndex"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 3b-albums-grid-scrubbed
 - tapOn:
     id: "libraryChip.albumArtists"
 - waitForAnimationToEnd:
