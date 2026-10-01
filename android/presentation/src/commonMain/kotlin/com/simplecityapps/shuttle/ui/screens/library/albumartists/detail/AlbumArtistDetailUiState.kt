@@ -25,8 +25,6 @@ data class AlbumArtistDetailUiState(
      * artist's albums in a trailing section with no album; a single section with no album for the flat orders.
      */
     val sections: List<SongSection> = emptyList(),
-    /** Songs played at least twice, most played first; at most [TOP_SONGS_LIMIT]. */
-    val topSongs: List<Song> = emptyList(),
     val currentSong: Song? = null,
     /** Albums whose track list is unfolded in place, keyed the same way songs are grouped. */
     val expandedAlbums: Set<AlbumGroupKey> = emptySet(),
@@ -56,10 +54,6 @@ data class AlbumArtistDetailUiState(
 
     /** A run of the song list: [album]'s songs in track order, or, with no album, songs listed flat or without an album. */
     data class SongSection(val album: Album?, val songs: List<Song>)
-
-    companion object {
-        const val TOP_SONGS_LIMIT = 10
-    }
 }
 
 sealed interface AlbumArtistDetailEvent {

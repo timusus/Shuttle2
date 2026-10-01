@@ -28,14 +28,14 @@ struct AlbumArtistDetailTests {
     private func flat(albums: [Album] = [], appearsOn: [Album] = []) -> AlbumArtistDetailUiState {
         AlbumArtistDetailUiState(
             albumArtist: artist(), albums: albums, appearsOn: appearsOn, songs: TestSongs.demo,
-            sortOrder: .songTitle, sections: [.init(album: nil, songs: TestSongs.demo)], topSongs: [],
+            sortOrder: .songTitle, sections: [.init(album: nil, songs: TestSongs.demo)],
             currentSong: nil, expandedAlbums: [], loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
         )
     }
 
     /// Two albums, Kid A (2000) holding the third and fourth demo songs and OK Computer (1997) the first two, then
     /// the fifth song with no album, in `order`; `expanded` names the unfolded albums.
-    private func sectioned(_ order: ArtistSongSortOrder, expanded: [String] = [], topSongs: [Song] = []) -> AlbumArtistDetailUiState {
+    private func sectioned(_ order: ArtistSongSortOrder, expanded: [String] = []) -> AlbumArtistDetailUiState {
         let ok = album("OK Computer", year: 1997)
         let kidA = album("Kid A", year: 2000)
         let songs = TestSongs.demo
@@ -45,13 +45,9 @@ struct AlbumArtistDetailTests {
         let expandedKeys = Set([ok, kidA].filter { expanded.contains($0.name ?? "") }.compactMap(\.groupKey))
         return AlbumArtistDetailUiState(
             albumArtist: artist(), albums: [kidA, ok], appearsOn: [], songs: sections.flatMap(\.songs), sortOrder: order, sections: sections,
-            topSongs: topSongs, currentSong: nil, expandedAlbums: expandedKeys, loadingState: .ready, events: [],
+            currentSong: nil, expandedAlbums: expandedKeys, loadingState: .ready, events: [],
             seed: ArtworkSeedNone.shared
         )
-    }
-
-    private func topSongRows(_ view: some View) throws -> Int {
-        try view.inspect().findAll(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "artistDetail.topSong" }).count
     }
 
     @Test func readyShowsHeroShelfAndSongs() throws {
@@ -66,7 +62,8 @@ struct AlbumArtistDetailTests {
     @Test func tappingAnAlbumTileOpensIt() throws {
         var opened: Album?
         let sut = AlbumArtistDetailContent(state: flat(albums: [album("OK Computer"), album("Kid A")]), onAlbumTap: { opened = $0 })
-        try sut.inspect().find(button: "OK Computer").tap()
+        // Song rows under it show the album name too, so the tile is found by its id
+        try sut.inspect().find(where: { (try? $0.accessibilityIdentifier()) == "detailTile.album" }).button().tap()
         #expect(opened?.name == "OK Computer")
     }
 
@@ -295,52 +292,20 @@ struct AlbumArtistDetailTests {
         #expect(shuffled)
     }
 
-    @Test func topSongsHiddenWhenNone() throws {
+    @Test func noTopSongsSectionSitsAboveTheAlbums() throws {
         let sut = AlbumArtistDetailContent(state: sectioned(.albumNewest))
         #expect((try? sut.inspect().find(text: "Top Songs")) == nil)
     }
 
-    @Test func topSongsShowFiveOnCompactWithSeeAll() throws {
-        let top = TestSongs.demo + [TestSongs.song(6, "Karma Police", artist: "Radiohead", album: "OK Computer", durationMs: 264_000)]
-        var selected: ArtistSongSortOrder?
-        // Compact is the default `\.layoutTier`
-        let sut = AlbumArtistDetailContent(state: sectioned(.albumNewest, topSongs: top), onSortOrderSelected: { selected = $0 })
-        #expect((try? sut.inspect().find(text: "Top Songs")) != nil)
-        #expect(try topSongRows(sut) == 5)
-        try sut.inspect().find(text: "See All").find(ViewType.Button.self, relation: .parent).tap()
-        #expect(selected == .mostPlayed)
-    }
-
-    @Test func topSongsWithinTheLimitHaveNoSeeAll() throws {
-        let sut = AlbumArtistDetailContent(state: sectioned(.albumNewest, topSongs: Array(TestSongs.demo.prefix(3))))
-        #expect(try topSongRows(sut) == 3)
-        #expect((try? sut.inspect().find(text: "See All")) == nil)
-    }
-
-    @Test func topSongsLimitIsFiveOnCompactAndTenOnRegular() {
-        #expect(AlbumArtistDetailContent.topSongsLimit(.compact) == 5)
-        #expect(AlbumArtistDetailContent.topSongsLimit(.regular) == 10)
-        #expect(AlbumArtistDetailContent.topSongsLimit(.wide) == 10)
-    }
-
-    @Test func tappingATopSongPlaysTheTopSongs() throws {
-        var played: (songs: [Song], index: Int, context: PlayContext)?
-        let top = [TestSongs.demo[3], TestSongs.demo[0]]
-        let sut = AlbumArtistDetailContent(state: sectioned(.albumNewest, topSongs: top), onPlay: { played = ($0, $1, $2) })
-        try sut.inspect().find(where: { (try? $0.accessibilityIdentifier()) == "artistDetail.topSong" }).button().tap()
-        #expect(played?.index == 0)
-        #expect(played?.songs.map(\.id) == top.map(\.id))
-    }
-
     @Test func placeholders() throws {
         let loading = AlbumArtistDetailUiState(
-            albumArtist: nil, albums: [], appearsOn: [], songs: [], sortOrder: .albumNewest, sections: [], topSongs: [],
+            albumArtist: nil, albums: [], appearsOn: [], songs: [], sortOrder: .albumNewest, sections: [],
             currentSong: nil, expandedAlbums: [], loadingState: .loading,
             events: [], seed: ArtworkSeedNone.shared
         )
         #expect((try? AlbumArtistDetailContent(state: loading).inspect().find(ViewType.ProgressView.self)) != nil)
         let notFound = AlbumArtistDetailUiState(
-            albumArtist: nil, albums: [], appearsOn: [], songs: [], sortOrder: .albumNewest, sections: [], topSongs: [],
+            albumArtist: nil, albums: [], appearsOn: [], songs: [], sortOrder: .albumNewest, sections: [],
             currentSong: nil, expandedAlbums: [], loadingState: .empty,
             events: [], seed: ArtworkSeedNone.shared
         )
@@ -356,17 +321,12 @@ struct AlbumArtistDetailTests {
         #expect(context is PlayContextAlbumArtist)
     }
 
-    @Test func heroAndTopSongsPassTheArtistsPlayContext() throws {
+    @Test func heroShufflePassesTheArtistsPlayContext() throws {
         var heroContext: PlayContext?
-        var topSongContext: PlayContext?
-        let top = [TestSongs.demo[0]]
         let sut = AlbumArtistDetailContent(
-            state: sectioned(.albumNewest, topSongs: top),
-            onPlay: { _, _, context in topSongContext = context },
+            state: sectioned(.albumNewest),
             onShuffle: { _, context in heroContext = context }
         )
-        try sut.inspect().find(where: { (try? $0.accessibilityIdentifier()) == "artistDetail.topSong" }).button().tap()
-        #expect(topSongContext is PlayContextAlbumArtist)
         try sut.inspect().find(button: "Shuffle").tap()
         #expect(heroContext is PlayContextAlbumArtist)
     }
@@ -391,7 +351,7 @@ struct AlbumArtistDetailTests {
     @Test func expandAllHiddenWithNoAlbumSections() throws {
         let state = AlbumArtistDetailUiState(
             albumArtist: artist(), albums: [], appearsOn: [], songs: TestSongs.demo, sortOrder: .albumNewest,
-            sections: [.init(album: nil, songs: TestSongs.demo)], topSongs: [], currentSong: nil,
+            sections: [.init(album: nil, songs: TestSongs.demo)], currentSong: nil,
             expandedAlbums: [], loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
         )
         let sut = AlbumArtistDetailContent(state: state)
@@ -412,7 +372,7 @@ struct AlbumArtistDetailTests {
         ]
         let state = AlbumArtistDetailUiState(
             albumArtist: artist(), albums: [kidA, ok], appearsOn: [], songs: sections.flatMap(\.songs), sortOrder: .albumNewest,
-            sections: sections, topSongs: [], currentSong: nil,
+            sections: sections, currentSong: nil,
             expandedAlbums: Set([kidA, ok].compactMap(\.groupKey)), loadingState: .ready, events: [], seed: ArtworkSeedNone.shared
         )
         var played: (songs: [Song], index: Int)?

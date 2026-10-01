@@ -3,8 +3,7 @@ import SwiftUI
 
 /// Album artist detail (P5-7, polished in #624, sectioned in #631): a hero tinted from the artist's picture (the
 /// artist's photo run full bleed behind the bars with the name over it when it's sharp enough, else a compact square
-/// hero, `ArtistHeroPhoto`; albums · songs, Play/Shuffle, and Shuffle by Album in the toolbar's menu), the artist's
-/// most played songs, a shelf of the artist's album tiles (each zooming into `Route.album`) while the songs are flat, an
+/// hero, `ArtistHeroPhoto`; albums · songs, Play/Shuffle, and Shuffle by Album in the toolbar's menu), a shelf of the artist's album tiles (each zooming into `Route.album`) while the songs are flat, an
 /// Appears On shelf of others' albums crediting them (#637, hidden when empty; a long press on any tile plays or queues
 /// it), then the artist's songs in the chosen `ArtistSongSortOrder`: under one sticky, foldable header per album for the
 /// album orders, where the headers stand in for the album shelf (#678), or as one flat list. Tapping a song plays every song in the visible order from it, folded albums included. Modeled on
@@ -67,8 +66,7 @@ final class AlbumArtistDetailModels: ViewModelGroup {
 }
 
 /// The Album Artist detail screen from an `AlbumArtistDetailUiState`, in a `DetailScaffold` tinted from the artist's
-/// picture. `onPlay` plays the given songs from an index: every song in the visible order for a song row, the top
-/// songs for a top song, an album's songs for its header's Play.
+/// picture. `onPlay` plays the given songs from an index: every song in the visible order for a song row, an album's songs for its header's Play.
 struct AlbumArtistDetailContent: View {
     let state: AlbumArtistDetailUiState
     var isPlaying: Bool = false
@@ -88,11 +86,10 @@ struct AlbumArtistDetailContent: View {
     /// tests and previews.
     var heroPhoto: ArtistHeroPhoto?
 
+    @State private var songInfo: SongInfoTarget?
+
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    /// The Songs header's row id, which Top Songs' See All scrolls to.
-    static let songsHeaderId = "artistDetail.songsHeader"
 
     var body: some View {
         switch state.loadingState {
@@ -114,101 +111,61 @@ struct AlbumArtistDetailContent: View {
         // An artist only credited on others' albums (#637) has none of their own to count
         let subtitle = eyebrow(state.albums.isEmpty ? nil : pluralized(state.albums.count, "album"), pluralized(state.songs.count, "song"))
         return ArtistHeroPhotoReader(source: .albumArtist(artist), preset: heroPhoto) { photo in
-            ScrollViewReader { proxy in
-                DetailScaffold(title: name, tintSource: .albumArtist(artist), backdrop: photo.isFullBleed ? ArtistBackdrop(image: photo.image) : nil) { layout in
-                    if case .bleed(let bleed) = layout {
-                        ArtistBleedHero(
-                            title: name,
-                            subtitle: subtitle,
-                            bleed: bleed,
-                            onPlay: { onPlay(state.songs, 0, state.playContext) },
-                            onShuffle: { onShuffle(state.songs, state.playContext) }
-                        )
-                    } else {
-                        DetailHero(
-                            title: name,
-                            subtitle: subtitle,
-                            layout: layout,
-                            onPlay: { onPlay(state.songs, 0, state.playContext) },
-                            onShuffle: { onShuffle(state.songs, state.playContext) }
-                        ) { points in
-                            RemoteArtwork(.albumArtist(artist), points: points) {
-                                ArtworkPlaceholder(symbol: "person.fill")
-                            }
-                            .artworkTile(points, shape: .artworkHero)
-                        }
-                    }
-                } rows: {
-                    if !state.topSongs.isEmpty {
-                        topSongs {
-                            onSortOrderSelected(.mostPlayed)
-                            withAnimation(Motion.disclosure.reduced(reduceMotion)) {
-                                proxy.scrollTo(Self.songsHeaderId, anchor: .top)
-                            }
-                        }
-                    }
-                    if state.showAlbumsShelf {
-                        DetailAlbumShelf(
-                            title: "Albums",
-                            albums: state.albums,
-                            subtitle: { $0.year.map { String($0.intValue) } },
-                            onAlbumTap: onAlbumTap,
-                            albumActions: albumActions
-                        )
-                    }
-                    if !state.appearsOn.isEmpty {
-                        DetailAlbumShelf(
-                            title: "Appears On",
-                            albums: state.appearsOn,
-                            // Whose album it is: the album artist, not the track artists friendlyArtistName joins
-                            subtitle: { $0.albumArtist ?? $0.friendlyArtistName },
-                            onAlbumTap: onAlbumTap,
-                            albumActions: albumActions,
-                            tileIdentifier: "detailTile.appearsOn"
-                        )
-                    }
-                    songs
-                }
-                .animation(Motion.disclosure.reduced(reduceMotion), value: state.expandedAlbums)
-                .toolbar {
-                    Menu {
-                        Button("Shuffle by Album", systemImage: "square.stack", action: onShuffleAlbums)
-                    } label: {
-                        Label("More", systemImage: "ellipsis.circle")
-                    }
-                    .accessibilityIdentifier("artistDetail.more")
-                }
-            }
-        }
-    }
-
-    // MARK: - Top Songs
-
-    /// How many top songs show before See All: five on compact, all of them (the ViewModel keeps ten) on regular.
-    static func topSongsLimit(_ tier: LayoutTier) -> Int {
-        tier == .compact ? 5 : Int(AlbumArtistDetailUiState.companion.TOP_SONGS_LIMIT)
-    }
-
-    private func topSongs(seeAll: @escaping () -> Void) -> some View {
-        let limit = Self.topSongsLimit(layoutTier)
-        let shown = Array(state.topSongs.prefix(limit))
-        return Section {
-            Group {
-                if state.topSongs.count > limit {
-                    SectionHeader("Top Songs", seeAllAction: seeAll)
+            DetailScaffold(title: name, tintSource: .albumArtist(artist), backdrop: photo.isFullBleed ? ArtistBackdrop(image: photo.image) : nil) { layout in
+                if case .bleed(let bleed) = layout {
+                    ArtistBleedHero(
+                        title: name,
+                        subtitle: subtitle,
+                        bleed: bleed,
+                        onPlay: { onPlay(state.songs, 0, state.playContext) },
+                        onShuffle: { onShuffle(state.songs, state.playContext) }
+                    )
                 } else {
-                    SectionHeader("Top Songs")
+                    DetailHero(
+                        title: name,
+                        subtitle: subtitle,
+                        layout: layout,
+                        onPlay: { onPlay(state.songs, 0, state.playContext) },
+                        onShuffle: { onShuffle(state.songs, state.playContext) }
+                    ) { points in
+                        RemoteArtwork(.albumArtist(artist), points: points) {
+                            ArtworkPlaceholder(symbol: "person.fill")
+                        }
+                        .artworkTile(points, shape: .artworkHero)
+                    }
                 }
+            } rows: {
+                if state.showAlbumsShelf {
+                    DetailAlbumShelf(
+                        title: "Albums",
+                        albums: state.albums,
+                        subtitle: { $0.year.map { String($0.intValue) } },
+                        onAlbumTap: onAlbumTap,
+                        albumActions: albumActions
+                    )
+                }
+                if !state.appearsOn.isEmpty {
+                    DetailAlbumShelf(
+                        title: "Appears On",
+                        albums: state.appearsOn,
+                        // Whose album it is: the album artist, not the track artists friendlyArtistName joins
+                        subtitle: { $0.albumArtist ?? $0.friendlyArtistName },
+                        onAlbumTap: onAlbumTap,
+                        albumActions: albumActions,
+                        tileIdentifier: "detailTile.appearsOn"
+                    )
+                }
+                songs
             }
-            .rowSeparator(.none)
-            ForEach(Array(shown.enumerated()), id: \.element.id) { index, song in
-                Button { onPlay(state.topSongs, index, state.playContext) } label: {
-                    DetailSongRow(song: song, playback: rowPlayback(song, current: state.currentSong, isPlaying: isPlaying))
+            .songInfoSheet($songInfo)
+            .animation(Motion.disclosure.reduced(reduceMotion), value: state.expandedAlbums)
+            .toolbar {
+                Menu {
+                    Button("Shuffle by Album", systemImage: "square.stack", action: onShuffleAlbums)
+                } label: {
+                    Label("More", systemImage: "ellipsis.circle")
                 }
-                .buttonStyle(.plain)
-                .songContextMenu(song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue)
-                .rowSeparator(.none)
-                .accessibilityIdentifier("artistDetail.topSong")
+                .accessibilityIdentifier("artistDetail.more")
             }
         }
     }
@@ -230,7 +187,6 @@ struct AlbumArtistDetailContent: View {
             // The content inset, as the rows under it; trailing less the expand button's touch padding, so its glyph
             // lines up with the rows' chevrons.
             .listRowInsets(EdgeInsets(top: 0, leading: inset, bottom: 0, trailing: max(0, inset - Spacing.smallMedium)))
-            .id(Self.songsHeaderId)
         }
         // No gap between the header and the first album or song under it: they read as one section.
         .listSectionSpacing(0)
@@ -313,11 +269,11 @@ struct AlbumArtistDetailContent: View {
                 if numbered {
                     TrackRow(number: song.track.map { Int($0.intValue) }, title: song.name ?? "Unknown", durationMs: Int64(song.duration), playback: playback)
                 } else {
-                    DetailSongRow(song: song, playback: playback)
+                    SongRow(song: song, playback: playback, key: SongRowKey(artistSortOrder: state.sortOrder), omittingArtist: state.albumArtist?.name)
                 }
             }
             .buttonStyle(.plain)
-            .songContextMenu(song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue)
+            .songContextMenu(song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) })
             .rowSeparator(numbered ? .system : .none)
         }
     }
@@ -333,7 +289,7 @@ struct AlbumArtistDetailContent: View {
     }
 }
 
-/// The song list's section header, also the anchor Top Songs' See All scrolls to: "Albums" while the album sections
+/// The song list's section header: "Albums" while the album sections
 /// stand in for the album shelf (#678), else "Songs"; then trailing, the sort menu, labelled with the current order
 /// (a checkmark on it in the menu), and for the album orders an Expand All / Collapse All icon button.
 struct SongsHeader: View {

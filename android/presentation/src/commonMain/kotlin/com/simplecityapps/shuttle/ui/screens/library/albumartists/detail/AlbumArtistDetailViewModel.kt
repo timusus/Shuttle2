@@ -86,9 +86,6 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
             order = order,
             sections = sections,
             songs = sections.flatMap { it.songs },
-            topSongs = songs.filter { it.playCount >= TOP_SONG_MIN_PLAYS }
-                .sortedWith(ArtistSongSortOrder.MostPlayed.songComparator)
-                .take(AlbumArtistDetailUiState.TOP_SONGS_LIMIT),
         )
     }
 
@@ -107,7 +104,6 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
             songs = songList.songs,
             sortOrder = songList.order,
             sections = songList.sections,
-            topSongs = songList.topSongs,
             currentSong = currentSong,
             expandedAlbums = expanded.orEmpty().intersect(albums.mapNotNullTo(HashSet()) { it.groupKey }),
             loadingState = if (albums.isEmpty() && songs.isEmpty()) {
@@ -158,12 +154,9 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
 
     fun onEventHandled(id: Long) = events.consume(id)
 
-    private data class SongList(val order: ArtistSongSortOrder, val sections: List<SongSection>, val songs: List<Song>, val topSongs: List<Song>)
+    private data class SongList(val order: ArtistSongSortOrder, val sections: List<SongSection>, val songs: List<Song>)
 
     private companion object {
-        /** A song needs this many plays to count as a top song. */
-        const val TOP_SONG_MIN_PLAYS = 2
-
         /** At most this many albums start expanded; more start collapsed so the list stays scannable. */
         const val MAX_ALBUMS_EXPANDED_BY_DEFAULT = 2
 

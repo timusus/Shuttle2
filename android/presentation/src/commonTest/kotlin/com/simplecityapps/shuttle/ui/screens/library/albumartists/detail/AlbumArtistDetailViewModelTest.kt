@@ -532,28 +532,6 @@ class AlbumArtistDetailViewModelTest {
         viewModel.uiState.value.showAlbumsShelf shouldBe false
     }
 
-    @Test
-    fun `top songs are those played at least twice - most played first`() = runTest {
-        val viewModel = loadedViewModel()
-
-        viewModel.uiState.value.topSongs.map { it.name } shouldBe listOf("Ember", "Rewind Button", "Pocket Lint")
-    }
-
-    @Test
-    fun `top songs stop at ten`() = runTest {
-        val songs = (1..12).map { song(it.toLong(), "Song $it", "Cassette Summer", track = it, playCount = it + 1) }
-        val viewModel = loadedViewModel(albums = listOf(cassetteSummer), songs = songs)
-
-        viewModel.uiState.value.topSongs.map { it.playCount } shouldBe (13 downTo 4).toList()
-    }
-
-    @Test
-    fun `no song played twice leaves top songs empty`() = runTest {
-        val viewModel = loadedViewModel(songs = discography.map { it.copy(playCount = 1) })
-
-        viewModel.uiState.value.topSongs shouldBe emptyList()
-    }
-
     private fun createViewModel(): AlbumArtistDetailViewModel {
         val testMediaActions = TestMediaActions(
             fakeSongRepository,
