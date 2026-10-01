@@ -100,7 +100,10 @@ struct EngineAudioPlayerTests {
 
     @Test func theSessionHooksRunBeforePlayingAndOnPausing() {
         var hooks: [String] = []
-        player.onWillPlay = { hooks.append("willPlay \(engine.commands.count)") }
+        player.onWillPlay = {
+            hooks.append("willPlay \(engine.commands.count)")
+            return true
+        }
         player.onPaused = { hooks.append("paused \(engine.commands.count)") }
 
         player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: false)
@@ -111,6 +114,17 @@ struct EngineAudioPlayerTests {
         // A load that plays and play() activate first; the pause is reported after the engine paused.
         #expect(hooks == ["willPlay 0", "willPlay 0", "paused 2"])
         #expect(engine.loads.count == 2)
+    }
+
+    @Test func aSessionThatWontActivateCancelsThePlay() {
+        player.onWillPlay = { false }
+
+        player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: true)
+        player.play()
+
+        // The load still happens, paused; the play never reaches the engine.
+        #expect(engine.loads.map(\.playWhenReady) == [false])
+        #expect(engine.commands.isEmpty)
     }
 
     @Test func positionAndDurationOnlyCountForTheTrackKotlinThinksIsCurrent() {

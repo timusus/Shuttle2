@@ -203,7 +203,8 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
   auto-resume (Android's becoming-noisy). Asks for an engine rebuild on a media-services reset. It ignores
   the route's sample rate: the engine renders at a fixed 48 kHz, the rate the shared EQ is designed at
   (`phase-6-playback.md`, step 8). `EngineAudioPlayer`'s `onWillPlay`/`onPaused` hooks call
-  `activate()` before any play and `playbackPaused()` on every pause.
+  `activate()` before any play and `playbackPaused()` on every pause; an activation that fails cancels the play
+  (the engine stays paused, as when its own start fails).
 - `NowPlayingController`: metadata on `setItem`, elapsed/rate through `updatePlayback`, which only writes
   on a state/speed change, a >1 s jump or every 10 s (safe per tick). Artwork via the `loadArtwork`
   closure, dropped if the item changed. `SkipMode.interval` swaps next/previous for skip ±N s.
@@ -219,7 +220,9 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
   a failure found in the adapter (an unparseable URL) is posted to main, never raised inside the
   Kotlin call. The engine sits behind the `AudioEngine` protocol so S2Tests use `FakeAudioEngine`.
 - The engine pauses its `AVAudioEngine` output on every paused, idle or ended state: iOS reads a running
-  output (even rendering silence) as playing, and the lock screen would show a pause button (#691).
+  output (even rendering silence) as playing, and the lock screen would show a pause button (#691). A play
+  that can't start it again (`engine.start()` throws) stays paused and reports paused; the node never plays
+  on a stopped engine.
 - Background audio is `UIBackgroundModes: [audio]` in project.yml's `info:`; nothing plays in the
   background without it.
 

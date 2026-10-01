@@ -53,8 +53,10 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
             MainActor.assumeIsolated {
                 do {
                     try session?.activate()
+                    return true
                 } catch {
-                    NSLog("S2: audio session activate failed: \(error)")
+                    NSLog("S2: audio session activate failed, not playing: \(error)")
+                    return false
                 }
             }
         }
@@ -68,7 +70,7 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         observers.forEach { $0.cancel() }
         observers = []
         nowPlaying.stop()
-        player.onWillPlay = {}
+        player.onWillPlay = { true }
         player.onPaused = {}
     }
 

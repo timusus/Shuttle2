@@ -321,6 +321,44 @@ final class MusicPlaybackControllerTests: XCTestCase {
         XCTAssertEqual(log.states.suffix(3), [.ended, .playing, .ended])
     }
 
+    // MARK: - Engine start
+
+    /// The engine is paused while nothing plays (#691), so every play starts it again; one it can't
+    /// start (the audio session didn't activate) must not play the node, which raises on a stopped
+    /// engine, nor report playing.
+    func testAPlayTheEngineCantStartStaysPaused() throws {
+        let (controller, log) = try makeController()
+        controller.load(current: track("A", TestSignal.noise(frames: 12_000, seed: 1)), next: nil, playWhenReady: false)
+        controller.syncForTesting()
+        controller.engine.stop()
+        controller.startEngine = { _ in throw TrackSourceError.failed("session not active") }
+
+        controller.play()
+        controller.syncForTesting()
+        XCTAssertEqual(log.states, [.loading, .paused])
+
+        controller.startEngine = { try $0.start() }
+        controller.play()
+        controller.syncForTesting()
+        XCTAssertEqual(log.states, [.loading, .paused, .playing])
+    }
+
+    func testALoadThatPlaysWhenTheEngineCantStartLoadsPausedAndStaysPaused() throws {
+        let (controller, log) = try makeController()
+        controller.engine.stop()
+        controller.startEngine = { _ in throw TrackSourceError.failed("session not active") }
+
+        controller.load(current: track("A", TestSignal.noise(frames: 12_000, seed: 1)), next: nil, playWhenReady: true)
+        controller.syncForTesting()
+        XCTAssertEqual(log.states, [.loading, .paused])
+
+        // The failed play is forgotten: a seek, which restarts the stream, doesn't try again.
+        controller.startEngine = { try $0.start() }
+        controller.seek(toMs: 100)
+        controller.syncForTesting()
+        XCTAssertEqual(log.states, [.loading, .paused])
+    }
+
     // MARK: - DSP
 
     func testFlatEqualizerIsIdentity() throws {

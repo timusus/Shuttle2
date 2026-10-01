@@ -12,10 +12,11 @@ import Shared
 ///
 /// **Audio session.** `onWillPlay` runs before anything plays (`play()`, or a load that plays) and `onPaused` on
 /// every pause; `PlaybackSystemCoordinator` points them at `AudioSessionController.activate()` and
-/// `playbackPaused()`.
+/// `playbackPaused()`. A session that won't activate (a call, another app holding the hardware) cancels the play:
+/// `play()` does nothing and a load loads paused, so the engine reports paused, as when the engine can't start.
 final class EngineAudioPlayer: NSObject, IosAudioPlayer {
-    /// Called on the main thread before playback starts.
-    var onWillPlay: () -> Void = {}
+    /// Called on the main thread before playback starts; false cancels it.
+    var onWillPlay: () -> Bool = { true }
     /// Called on the main thread on every pause.
     var onPaused: () -> Void = {}
 
@@ -77,8 +78,8 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
             engine.stop()
             return
         }
-        if playWhenReady { onWillPlay() }
-        engine.load(current: track, next: next.flatMap(engineTrack), startMs: startMs, playWhenReady: playWhenReady)
+        let plays = playWhenReady && onWillPlay()
+        engine.load(current: track, next: next.flatMap(engineTrack), startMs: startMs, playWhenReady: plays)
     }
 
     func setNext(next: IosAudioTrack?) {
@@ -86,7 +87,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     }
 
     func play() {
-        onWillPlay()
+        guard onWillPlay() else { return }
         engine.play()
     }
 

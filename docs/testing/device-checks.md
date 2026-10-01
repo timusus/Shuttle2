@@ -317,3 +317,5 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 - [ ] iPhone: scrub on the lock screen, playing and paused. The app jumps to the same place and the lock screen stays there.
 - [ ] iPhone: let the queue play to its end. The lock screen shows it paused at the end, not still playing.
 - [ ] iPhone: a song without a duration tag shows a scrubber with the stream's length, as the app does.
+- [ ] iPhone: pause a few seconds before the end of a song on a gapless album, wait, then play. The elapsed time carries on from where it paused (no jump), and the next song starts on time with the title, lock screen and elapsed time changing together. The engine's output is paused while paused, so this checks its clock survives the restart.
+- [ ] iPhone: start a phone call (or play in another app that takes the audio exclusively), then press play in S2 from the app and from the lock screen. Nothing plays, the app doesn't crash, and both the app and the lock screen stay paused; after the call, play works.

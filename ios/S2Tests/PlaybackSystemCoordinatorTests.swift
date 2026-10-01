@@ -12,6 +12,8 @@ struct PlaybackSystemCoordinatorTests {
     private final class FakeSession: AudioSession {
         private(set) var configured = 0
         private(set) var activations: [Bool] = []
+        var failActivation = false
+        private(set) var failedActivations = 0
 
         func setCategory(
             _ category: AVAudioSession.Category,
@@ -23,6 +25,10 @@ struct PlaybackSystemCoordinatorTests {
         }
 
         func setActive(_ active: Bool, options: AVAudioSession.SetActiveOptions) throws {
+            if active && failActivation {
+                failedActivations += 1
+                throw NSError(domain: "FakeSession", code: 1)
+            }
             activations.append(active)
         }
     }
@@ -187,6 +193,20 @@ struct PlaybackSystemCoordinatorTests {
         commands.fire(.play)
         #expect(await waitUntil { engine.commands.contains("play") })
         #expect(session.activations == [true])
+    }
+
+    @Test func aPlayTheSessionWontActivateForStaysPaused() async throws {
+        _ = try await loadQueue()
+        #expect(await waitUntil { title == "Paranoid Android" && info.playbackState == .paused })
+        session.failActivation = true
+
+        commands.fire(.play)
+        // The lock screen's play reaches the player, which asks for the session; the engine never plays.
+        #expect(await waitUntil { session.failedActivations == 1 })
+        #expect(!engine.commands.contains("play"))
+        #expect(graph.playerController.playbackStateFlow.value is PlaybackState.Paused)
+        #expect(info.playbackState == .paused)
+        #expect(rate == 0)
     }
 
     @Test func anInterruptionPausesThePlayer() async throws {

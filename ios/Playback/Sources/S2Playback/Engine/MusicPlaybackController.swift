@@ -149,6 +149,8 @@ public final class MusicPlaybackController {
     // MARK: Engine
 
     let engine = AVAudioEngine()
+    /// Starts the stopped engine. Tests replace it to fail a start.
+    var startEngine: (AVAudioEngine) throws -> Void = { try $0.start() }
     private let player = AVAudioPlayerNode()
     private let timePitch = AVAudioUnitTimePitch()
     let format: AVAudioFormat
@@ -398,7 +400,7 @@ public final class MusicPlaybackController {
         engineQueue.async { [self] in
             playWhenReady = true
             guard current != nil, state != .ended else { return }
-            startEngineIfNeeded()
+            guard startEngineIfNeeded() else { return stayPaused() }
             fill()
             player.play()
             releaseHold()
@@ -616,13 +618,26 @@ public final class MusicPlaybackController {
         engine.pause()
     }
 
-    private func startEngineIfNeeded() {
-        guard case .realtime = renderingMode, !engine.isRunning else { return }
+    /// False (logged) if the engine is stopped and won't start: the audio session couldn't be
+    /// activated, in a call or with another app holding the hardware. The node must not play then;
+    /// on a stopped engine it raises.
+    private func startEngineIfNeeded() -> Bool {
+        guard !engine.isRunning else { return true }
         do {
-            try engine.start()
+            try startEngine(engine)
+            return true
         } catch {
             log.error("engine start failed: \(String(describing: error), privacy: .public)")
+            return false
         }
+    }
+
+    /// A play the engine couldn't start: paused, as if it had been asked to pause, so the owner and
+    /// Now Playing show it paused. Nothing plays until the next play.
+    private func stayPaused() {
+        playWhenReady = false
+        stopTicker()
+        setState(.paused)
     }
 
     /// Opens `slot`'s source, or waits for the open already under way; false (after reporting it)
@@ -797,8 +812,9 @@ public final class MusicPlaybackController {
         }
         appendSegment(for: current, mediaStart: startFrame)
         fill()
-        if playWhenReady {
-            startEngineIfNeeded()
+        if playWhenReady, !startEngineIfNeeded() {
+            stayPaused()
+        } else if playWhenReady {
             player.play()
             releaseHold()
             setState(.playing)
