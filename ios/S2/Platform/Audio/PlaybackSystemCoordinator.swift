@@ -130,15 +130,17 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         }
     }
 
-    /// `current` as Now Playing shows it.
+    /// `current` as Now Playing shows it. Its duration is the song's, or the player's for a song without
+    /// one, as the in-app player has it.
     static func nowPlayingItem(_ current: QueueItem, progress: PlaybackProgress?) -> NowPlayingItem {
         let song = current.song
+        let durationMs = song.duration > 0 ? song.duration : (progress?.duration ?? 0)
         return NowPlayingItem(
             id: String(current.uid),
             title: song.name ?? "",
             artist: song.friendlyArtistName,
             album: song.album,
-            duration: TimeInterval(song.duration) / 1000,
+            duration: TimeInterval(max(0, durationMs)) / 1000,
             artwork: .song(song)
         )
     }

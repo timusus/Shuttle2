@@ -209,13 +209,17 @@ The app owns the session; `S2Playback` never touches `AVAudioSession`. Both cont
   closure, dropped if the item changed. `SkipMode.interval` swaps next/previous for skip ±N s.
 - `PlaybackSystemCoordinator` owns both and wires them to the Kotlin `IosPlayerController`
   (`AppGraph.shared.playerController`): session events and remote commands call `PlaybackOperations`; Now
-  Playing follows the controller's flows. `AppGraph.initialize()` (from `S2App.init`) builds the
-  engine, `EngineAudioPlayer`, `IosAppGraphKt.createIosAppGraph(audioPlayer:)` and the coordinator once.
+  Playing follows the controller's flows, republished from all four flows' current values whenever any of
+  them changes (never per-flow copies: the observer tasks resume in no particular order, #691).
+  `AppGraph.initialize()` (from `S2App.init`) builds the engine, `EngineAudioPlayer`,
+  `IosAppGraphKt.createIosAppGraph(audioPlayer:)` and the coordinator once.
 - `EngineAudioPlayer` is the Kotlin `IosAudioPlayer`: one engine call per method and no policy (the
   queue, next track and failure handling are Kotlin's). **Threading:** Kotlin calls it on main; the
   engine reports on the main queue and each report reaches the Kotlin listener synchronously there;
   a failure found in the adapter (an unparseable URL) is posted to main, never raised inside the
   Kotlin call. The engine sits behind the `AudioEngine` protocol so S2Tests use `FakeAudioEngine`.
+- The engine pauses its `AVAudioEngine` output on every paused, idle or ended state: iOS reads a running
+  output (even rendering silence) as playing, and the lock screen would show a pause button (#691).
 - Background audio is `UIBackgroundModes: [audio]` in project.yml's `info:`; nothing plays in the
   background without it.
 

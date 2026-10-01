@@ -168,6 +168,19 @@ struct PlaybackSystemCoordinatorTests {
         #expect(rate == 1)
     }
 
+    @Test func aSongWithoutADurationShowsThePlayers() async throws {
+        let song = TestSongs.song(9, "Untagged", artist: "Nobody", album: "Nothing", durationMs: 0)
+        let id = try await loadQueue([song])
+        #expect(await waitUntil { title == "Untagged" })
+        #expect(info.nowPlayingInfo?[MPMediaItemPropertyPlaybackDuration] == nil)
+
+        engine.position = (uid: id, ms: 1_000)
+        engine.durationMs = 200_000
+        engine.emit(.position(trackId: id, ms: 1_000))
+
+        #expect(await waitUntil { info.value(MPMediaItemPropertyPlaybackDuration) == 200.0 })
+    }
+
     @Test func playActivatesTheSessionBeforeTheEnginePlays() async throws {
         _ = try await loadQueue()
 

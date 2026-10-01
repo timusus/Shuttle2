@@ -307,3 +307,13 @@ Crossfade is not user-enabled yet; turn it on with a debug build's crossfade set
 - [ ] iPhone: tapping the artist or album line opens it; the heart is at the top; long-pressing the cover offers Add to Playlist, Go to and Exclude.
 - [ ] iPhone: the queue reads as one list with Now Playing, Up Next and Played headers.
 - [ ] iPhone: Search shows recent searches when empty; results group into Top result, Songs, Albums, Artists and more, with See all; type chips filter; tapping a song plays it and a result opens it.
+
+## iOS lock screen and Control Center in sync with the player (#691)
+
+- [ ] iPhone: pause in the app, then lock the phone. The lock screen shows a play button and a frozen elapsed time; Control Center shows the same. Play from the lock screen; the app's mini player shows it playing.
+- [ ] iPhone: pause from the lock screen, from AirPods (double-tap or stem) and by unplugging wired headphones. Each time the lock screen and the app agree it's paused, at the same position.
+- [ ] iPhone: during a phone call or Siri, playback pauses and the lock screen shows it paused; after a short interruption it resumes and both show it playing.
+- [ ] iPhone: skip next and previous from the lock screen, and let a song play into the next. The title, artist, album, artwork and duration change together, and elapsed time starts from 0:00 rather than the previous song's position.
+- [ ] iPhone: scrub on the lock screen, playing and paused. The app jumps to the same place and the lock screen stays there.
+- [ ] iPhone: let the queue play to its end. The lock screen shows it paused at the end, not still playing.
+- [ ] iPhone: a song without a duration tag shows a scrubber with the stream's length, as the app does.
