@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
+import com.simplecityapps.mediaprovider.repository.playhistory.ResumePoint
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Genre
@@ -10,7 +11,7 @@ import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.ui.actions.MediaAction
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
 import com.simplecityapps.shuttle.ui.text.StringKey
-import com.simplecityapps.shuttle.ui.text.UiText
+import kotlin.time.Instant
 
 /** One of Home's sections (#633), in the order Home shows them. */
 enum class HomeSectionId {
@@ -47,16 +48,39 @@ data class HomeSection(
     val title: HomeSectionTitle,
     val subtitle: StringKey?,
     val items: List<HomeItem>,
-    /** Where each item's queue was left, by [HomeItem.key]: Jump back in's items that can carry on (#670). */
+    /** Where each item's queue was left, by [HomeItem.key]: Jump back in's items played from before (#670). */
     val progress: Map<String, HomeItemProgress> = emptyMap(),
 )
 
-/** How far into an item its queue was left (#670): on [track] (from 1) of [trackCount], as "Track 5 of 12". */
+/**
+ * Where an item's queue was left (#670, #706): on the song [songName] (null once it's no longer in the library),
+ * [positionMs] into it, [fraction] of the way through the queue (0 to 1, in the shuffled order when [shuffled]), at
+ * [updatedAt]; or [finished], its last song played through, so playing it starts over.
+ */
 data class HomeItemProgress(
-    val track: Int,
-    val trackCount: Int,
+    val songName: String?,
+    val positionMs: Long,
+    val fraction: Float,
+    val shuffled: Boolean,
+    val finished: Boolean,
+    val updatedAt: Instant,
 ) {
-    val text: UiText get() = UiText.Resource(StringKey.HOME_ITEM_PROGRESS, listOf(track, trackCount))
+    companion object {
+        /** [point]'s progress: its song's place in the queue plus how far into the song it was left, over the queue's length. */
+        fun of(point: ResumePoint): HomeItemProgress {
+            val fraction = when {
+                point.finished -> 1f
+
+                point.trackCount <= 0 -> 0f
+
+                else -> {
+                    val intoSong = point.songDurationMs?.takeIf { it > 0 }?.let { (point.positionMs.toFloat() / it).coerceIn(0f, 1f) } ?: 0f
+                    (point.track.coerceIn(0, point.trackCount - 1) + intoSong) / point.trackCount
+                }
+            }
+            return HomeItemProgress(point.songName, point.positionMs, fraction, point.shuffled, point.finished, point.updatedAt)
+        }
+    }
 }
 
 /** Something a Home section suggests: what it shows, and what tapping play on it plays. */

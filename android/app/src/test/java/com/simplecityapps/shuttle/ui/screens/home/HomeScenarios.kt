@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.ui.preview.toGenre
 import com.simplecityapps.shuttle.ui.preview.toPlaylist
 import com.simplecityapps.shuttle.ui.preview.toSong
 import com.simplecityapps.shuttle.ui.text.StringKey
+import kotlin.time.Instant
 
 /** Home over the sample library, so its tiles load the generated covers under `SampleArtworkCoil`. */
 object HomeScenarios {
@@ -88,9 +89,22 @@ object HomeScenarios {
 
     val whatsNew = content.copy(showWhatsNew = true)
 
-    /** Phase Garden's queue left at its fifth track of twelve (#670). */
+    /** Phase Garden's queue left on its fifth track of twelve, "Glasshouse" (#670, #706). */
     val resuming = content.copy(
-        sections = listOf(jumpBackIn.copy(progress = mapOf(HomeItem.AlbumItem(phaseGarden).key to HomeItemProgress(track = 5, trackCount = 12)))) + content.sections.drop(1),
+        sections = listOf(
+            jumpBackIn.copy(
+                progress = mapOf(
+                    HomeItem.AlbumItem(phaseGarden).key to HomeItemProgress(
+                        songName = "Glasshouse",
+                        positionMs = 30_000,
+                        fraction = 4.5f / 12,
+                        shuffled = false,
+                        finished = false,
+                        updatedAt = Instant.fromEpochMilliseconds(0),
+                    ),
+                ),
+            ),
+        ) + content.sections.drop(1),
     )
 
     /** A library that's never been played (cold start): Recently added, Genre picks and Shuffle all. */

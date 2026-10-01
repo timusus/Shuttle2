@@ -30,7 +30,6 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.ui.text.stringResource as stringResourceText
 
 /**
  * Jump back in (#633): the last things played as a compact grid of cells rather than a shelf, after Apple Music's and
@@ -80,7 +79,7 @@ fun jumpBackInColumns(
 
 /**
  * One cell, after Spotify's recents: the cover at the cell's leading edge, the title on up to two lines and the kind
- * of item as a one-line label under it, then how far into it its queue was left ([progress], #670), centred on a tonal
+ * of item as a one-line label under it, then the song its queue was left on ([progress], #670, #706), centred on a tonal
  * container of a minimum height, with a play button at the end (shuffle, for a genre) when [showPlayButton]. A compact
  * cell has none, so titles keep the room (#660). Its play, and Play in its long-press sheet, carry on where the queue
  * was left; the sheet's Play from start starts over.
@@ -120,8 +119,8 @@ private fun JumpBackInCell(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    // The kind, then how far into it its queue was left on a line of its own: a phone cell is too narrow for both.
-                    listOfNotNull(stringResource(item.kind.label), progress?.let { stringResourceText(it.text) }).forEach { label ->
+                    // The kind, then the song its queue was left on, on a line of its own: a phone cell is too narrow for both.
+                    listOfNotNull(stringResource(item.kind.label), progress?.takeUnless { it.finished }?.songName).forEach { label ->
                         Text(
                             text = label,
                             style = MaterialTheme.typography.labelSmall,

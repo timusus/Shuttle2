@@ -164,7 +164,8 @@ class LocalPlayHistoryRepository(
     override suspend fun resumePoint(context: PlayContext): ResumePoint? {
         val current = current(context)
         val contextId = current.id ?: return null
-        return resumePointDao.get(current.type, contextId)?.let { row ->
+        return resumePointDao.get(current.type, contextId)?.let { found ->
+            val row = found.point
             ResumePoint(
                 context = context,
                 mediaProvider = row.mediaProvider,
@@ -174,7 +175,9 @@ class LocalPlayHistoryRepository(
                 trackCount = row.trackCount,
                 shuffled = row.shuffled,
                 finished = row.finished,
-                updatedAt = row.updatedAt
+                updatedAt = row.updatedAt,
+                songName = found.songName,
+                songDurationMs = found.songDuration?.toLong()
             )
         }
     }

@@ -139,17 +139,28 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `jump back in says how far into each item its queue was left, unless it played through`() = runTest(testDispatcher) {
+    fun `jump back in says where each item's queue was left, and which played through`() = runTest(testDispatcher) {
         suggestions.songCount.value = 2
         playHistory.eventCount.value = 1
         playHistory.recentContexts = twoRecentContexts
-        playHistory.resumePoints[phaseGarden.playContext] = resumePoint(phaseGarden.playContext, track = 4, trackCount = 12)
+        playHistory.resumePoints[phaseGarden.playContext] = resumePoint(phaseGarden.playContext, track = 4, trackCount = 12, songName = "Glasshouse", songDurationMs = 60_000)
         playHistory.resumePoints[dustChoir.playContext] = resumePoint(dustChoir.playContext, track = 9, trackCount = 10, finished = true)
 
         val content = viewModel().uiState.value.shouldBeInstanceOf<HomeUiState.Content>()
 
         val jumpBackIn = content.sections.single { it.id == HomeSectionId.JumpBackIn }
-        jumpBackIn.progress shouldBe mapOf(HomeItem.AlbumItem(phaseGarden).key to HomeItemProgress(track = 5, trackCount = 12))
+        jumpBackIn.progress shouldBe mapOf(
+            HomeItem.AlbumItem(phaseGarden).key to HomeItemProgress("Glasshouse", 30_000, 4.5f / 12, shuffled = false, finished = false, updatedAt = start),
+            HomeItem.AlbumItem(dustChoir).key to HomeItemProgress(null, 30_000, 1f, shuffled = false, finished = true, updatedAt = start),
+        )
+    }
+
+    @Test
+    fun `an item's progress is its song's place in the queue, without the song's own share when its length is unknown`() {
+        HomeItemProgress.of(resumePoint(phaseGarden.playContext, track = 3, trackCount = 4)).fraction shouldBe 0.75f
+        HomeItemProgress.of(resumePoint(phaseGarden.playContext, track = 7, trackCount = 4, songDurationMs = 60_000)).fraction shouldBe 0.875f
+        HomeItemProgress.of(resumePoint(phaseGarden.playContext, track = 0, trackCount = 0)).fraction shouldBe 0f
+        HomeItemProgress.of(resumePoint(phaseGarden.playContext, track = 1, trackCount = 2, shuffled = true)).shuffled shouldBe true
     }
 
     @Test
@@ -364,6 +375,21 @@ class HomeViewModelTest {
         context: PlayContext,
         track: Int,
         trackCount: Int,
-        finished: Boolean = false
-    ) = ResumePoint(context, MediaProviderType.Shuttle, "/music/$track.flac", 30_000, track, trackCount, shuffled = false, finished = finished, updatedAt = start)
+        finished: Boolean = false,
+        shuffled: Boolean = false,
+        songName: String? = null,
+        songDurationMs: Long? = null
+    ) = ResumePoint(
+        context,
+        MediaProviderType.Shuttle,
+        "/music/$track.flac",
+        30_000,
+        track,
+        trackCount,
+        shuffled = shuffled,
+        finished = finished,
+        updatedAt = start,
+        songName = songName,
+        songDurationMs = songDurationMs
+    )
 }

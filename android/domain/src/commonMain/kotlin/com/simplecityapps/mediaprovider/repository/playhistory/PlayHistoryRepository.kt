@@ -100,7 +100,9 @@ interface PlayHistoryRepository {
 /**
  * Where the queue started from [context] was left (#670): its current song, found again by [mediaProvider] and
  * [songPath], [positionMs] into it; the song's place in the queue as it played, [track] of [trackCount] from 0 (in the
- * shuffled order when [shuffled]); and whether the queue [finished], its last song played through.
+ * shuffled order when [shuffled]); and whether the queue [finished], its last song played through. [songName] and
+ * [songDurationMs] are the song's as the library has it when the point is read back (#706), null once it's gone; saving
+ * ignores them.
  */
 data class ResumePoint(
     val context: PlayContext,
@@ -111,7 +113,9 @@ data class ResumePoint(
     val trackCount: Int,
     val shuffled: Boolean,
     val finished: Boolean,
-    val updatedAt: Instant
+    val updatedAt: Instant,
+    val songName: String? = null,
+    val songDurationMs: Long? = null
 )
 
 data class RecentContext(

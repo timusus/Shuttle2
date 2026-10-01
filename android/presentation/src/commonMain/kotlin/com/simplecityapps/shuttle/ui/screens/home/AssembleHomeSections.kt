@@ -186,7 +186,7 @@ internal const val GENRE_PICKS_MAX = 6
 
 /**
  * Loads every section's candidates, side by side, and assembles Home's sections from them, with where each Jump back in item's queue
- * was left (#670): none for an item played through or never played from.
+ * was left (#670), finished or not (#706): none for an item never played from.
  */
 class LoadHomeSections @Inject constructor(
     private val jumpBackIn: JumpBackIn,
@@ -234,9 +234,7 @@ class LoadHomeSections @Inject constructor(
     }
 
     private suspend fun progress(items: List<HomeItem>): Map<String, HomeItemProgress> = items.mapNotNull { item ->
-        playHistoryRepository.resumePoint(item.playContext)
-            ?.takeIf { !it.finished && it.trackCount > 0 }
-            ?.let { item.key to HomeItemProgress(it.track.coerceIn(0, it.trackCount - 1) + 1, it.trackCount) }
+        playHistoryRepository.resumePoint(item.playContext)?.let { item.key to HomeItemProgress.of(it) }
     }.toMap()
 
     private companion object {

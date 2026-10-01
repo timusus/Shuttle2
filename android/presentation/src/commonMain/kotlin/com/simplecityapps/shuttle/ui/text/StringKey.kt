@@ -167,7 +167,6 @@ enum class StringKey {
     HOME_RECENTLY_ADDED_SUBTITLE,
     HOME_GENRE_PICKS_SUBTITLE,
     HOME_GENRE_PICKS_LARGEST_SUBTITLE,
-    HOME_ITEM_PROGRESS,
     ;
 
     /** The catalogue key: the Android resource name and the iOS Localizable key. */

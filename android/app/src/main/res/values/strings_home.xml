@@ -46,8 +46,6 @@
     <string name="home_recently_added">Recently added</string>
     <!-- Home: section of genre tiles; tapping one shuffles that genre -->
     <string name="home_genre_picks">Genre picks</string>
-    <!-- Home: under a Jump back in item, how far into it the user got last time, e.g. "Track 5 of 12" -->
-    <string name="home_item_progress">Track %1$s of %2$s</string>
     <!-- Home: long-press action on a Jump back in item, playing it from its first song rather than where the user left off -->
     <string name="home_play_from_start">Play from start</string>
     <!-- Home: one line under the Jump back in header -->

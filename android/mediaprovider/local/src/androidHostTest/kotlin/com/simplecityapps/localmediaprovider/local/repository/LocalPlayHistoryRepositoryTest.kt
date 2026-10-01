@@ -269,6 +269,16 @@ class LocalPlayHistoryRepositoryTest {
     }
 
     @Test
+    fun `a resume point is read back with its song's name and length while the song is in the library`() = runTest {
+        songDao.insert(listOf(createSongData(album = "Blue").copy(name = "River", path = "/music/2.flac", duration = 240_000)))
+        repository.saveResumePoint(resumePoint(albumContext, track = 2))
+        repository.saveResumePoint(resumePoint(playlistContext, track = 3))
+
+        repository.resumePoint(albumContext) shouldBe resumePoint(albumContext, track = 2).copy(songName = "River", songDurationMs = 240_000)
+        repository.resumePoint(playlistContext) shouldBe resumePoint(playlistContext, track = 3)
+    }
+
+    @Test
     fun `a queue from no context has no resume point`() = runTest {
         repository.saveResumePoint(resumePoint(PlayContext.None))
 

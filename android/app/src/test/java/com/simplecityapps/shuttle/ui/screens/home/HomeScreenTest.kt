@@ -154,10 +154,10 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `a jump back in cell says which track its queue was left at`() {
+    fun `a jump back in cell names the song its queue was left on`() {
         robot.setContent(HomeScenarios.resuming)
 
-        robot.assertTextDisplayed("Track 5 of 12")
+        robot.assertTextDisplayed("Glasshouse")
     }
 
     @Test
