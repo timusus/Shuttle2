@@ -72,7 +72,7 @@ struct AudioQuality: Equatable {
         subtype = subtype.trimmingCharacters(in: .whitespaces).lowercased()
         if subtype.hasPrefix("x-") { subtype.removeFirst(2) }
         switch subtype {
-        case "": return nil
+        case "", "*": return nil
         case "mpeg", "mp3": return "MP3"
         case "mp4", "m4a", "mp4a-latm": return "M4A"
         case "vorbis": return "OGG"

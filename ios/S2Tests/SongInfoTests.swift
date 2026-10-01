@@ -38,6 +38,8 @@ struct SongInfoTests {
         let unknown = TestSongs.song(4, "S", artist: "A", album: "B", durationMs: 1, mimeType: "")
         #expect(AudioQuality.sharedBadge(of: [unknown]) == nil)
         #expect(AudioQuality.sharedBadge(of: [flac(1), unknown]) == nil)
+        let wildcard = TestSongs.song(5, "S", artist: "A", album: "B", durationMs: 1, mimeType: "audio/*")
+        #expect(AudioQuality.sharedBadge(of: [wildcard]) == nil)
         #expect(AudioQuality.sharedBadge(of: []) == nil)
     }
 

@@ -1,0 +1,68 @@
+# Song and collection rows (#702): artist detail without Top Songs and under Most Played (play counts), an album's
+# quality badge, a smart playlist's sort key, Search's top-result kind label. Signed in already: run
+# sign-in-jellyfin.yaml first.
+#
+#   OUT=/tmp/s2-702 ios/scripts/maestro-sim.sh rows-702.yaml
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+- runFlow:
+    file: common/library-open.yaml
+    env:
+      CATEGORY: albumArtists
+- runFlow:
+    when:
+      visible: "Show as List"
+    commands:
+      - tapOn:
+          id: "library.viewMode"
+      - waitForAnimationToEnd:
+          timeout: 5000
+- scrollUntilVisible:
+    element:
+      text: "The Mars Volta"
+    direction: DOWN
+    timeout: 180000
+- tapOn: "The Mars Volta"
+- waitForAnimationToEnd:
+    timeout: 5000
+- scrollUntilVisible:
+    element:
+      id: "artistDetail.sortMenu"
+    direction: DOWN
+    centerElement: true
+- takeScreenshot: artist-default
+- tapOn:
+    id: "artistDetail.sortMenu"
+- tapOn: "Most Played"
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: artist-most-played
+# Flat orders keep the Albums shelf: open its first album for the quality badge.
+- scrollUntilVisible:
+    element:
+      id: "detailTile.album"
+    direction: UP
+- tapOn:
+    id: "detailTile.album"
+    index: 0
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: album
+- back
+- back
+- runFlow:
+    file: common/library-open.yaml
+    env:
+      CATEGORY: playlists
+- tapOn: "Most Played"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: smart-playlist
+- tapOn: "Search"
+- inputText: "Mars Volta"
+- extendedWaitUntil:
+    visible:
+      id: "search.topResult.kind"
+    timeout: 60000
+- takeScreenshot: search-top-result
