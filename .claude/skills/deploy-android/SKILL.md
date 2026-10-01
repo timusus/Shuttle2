@@ -39,13 +39,25 @@ REMOTE=$(git rev-parse origin/main)
 - Local behind remote → `git pull origin main`
 - Local ahead of remote → `git push origin main`
 
-### 2. Pre-flight: Unit tests
+### 2. Pre-flight: Full verify (watermark)
+
+Landings only run a light verify; the full one is recorded as a watermark. Before tagging, the
+watermark must be the commit being released:
 
 ```bash
-./support/scripts/unit-test
+support/scripts/full-verify.sh --status   # first line: "watermark: <sha> ..."
+git rev-parse --short HEAD
 ```
 
-**STOP if tests fail.** Investigate and report failures — do not skip.
+If the watermark isn't `HEAD`, run it (one wait; takes a while):
+
+```bash
+support/scripts/longjob.sh start full-verify -- support/scripts/full-verify.sh "$(git rev-parse HEAD)"
+support/scripts/longjob.sh wait full-verify
+```
+
+**STOP if it fails** — it files a `bug` issue naming the step; do not tag. (Only the changelog commit
+from step 5 may come after the verified sha.)
 
 ### 3. Pre-flight: Instrumented tests (skip by default)
 

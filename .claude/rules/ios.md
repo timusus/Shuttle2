@@ -59,11 +59,15 @@ runtime, so `test.sh`'s default when none is booted) `AppShellTests`' two TabVie
 `iPhone 16` (iOS 18.5) passes everything.
 
 **Verification split:** a worker's own brief only needs the Swift package build/tests for the files it
-touched, and gives up on a simulator lease after ~5 minutes rather than wait on it. The one full iOS
-verify (framework rebuild + `test.sh` on the whole `S2` scheme) happens once, in
+touched, and gives up on a simulator lease after ~5 minutes rather than wait on it. Landing is light:
 `support/scripts/land.sh`, gated on the picked commits touching `ios/`, `shared/`, or
-`android/domain|presentation|core`; it leases the simulator as `S2_SIM_HOLDER=land` and releases it
-when done, so it never collides with a worker's own lease.
+`android/domain|presentation|core`, rebuilds the framework, builds the app and runs `test.sh
+-only-testing:` for the `S2Tests` classes mapped from the changed files (`ios/S2Tests/Foo*Tests.swift`
+runs itself; `ios/S2/**/Foo.swift` runs the existing `S2Tests/Foo*Tests`; `land.sh --print-ios-tests
+<files>` dry-checks it); with no mapped class it builds only and takes no lease. The whole `S2` scheme
+runs in `support/scripts/full-verify.sh` (watermark; always before a Play release). Both lease as their
+own holder (`S2_SIM_HOLDER=land` / `full-verify`) and release when done, so they never collide with a
+worker's own lease.
 
 ## Running on a device
 

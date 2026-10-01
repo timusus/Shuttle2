@@ -45,6 +45,11 @@
             "type": "command",
             "command": "s=\"$(git rev-parse --show-toplevel 2>/dev/null)/.claude/hooks/review-reminder.sh\"; [ -x \"$s\" ] && \"$s\" || true",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "s=\"$(git rev-parse --show-toplevel 2>/dev/null)/.claude/hooks/full-verify-status.sh\"; [ -x \"$s\" ] && \"$s\" || true",
+            "timeout": 5
           }
         ]
       }

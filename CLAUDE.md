@@ -28,13 +28,17 @@ S2 Music Player — an Android app for local music playback and streaming via Je
 - `/note` a finding the moment it appears so it survives `/clear` and compaction. Then, if context is
   comfortably under ~150k, the fix is small and verifiable, and it does not touch files a running worker
   owns, fix it in the same session and close the issue in the landing commit.
-- **Workers verify narrowly; the landing queue verifies once.** A worker's brief asks for `unit-test
-  --changed` and nothing wider — no full suite, no emulator/simulator lease unless the brief needs a
-  screenshot. `support/scripts/land.sh <branch>... [--close N ...]` is where the one full, end-to-end
-  verify happens: it cherry-picks each approved branch onto `origin/main`, runs the verify once under
-  `machine-lock` (Android always; the iOS framework build + tests only when the picked commits touch
-  `ios/`, `shared/`, or `android/domain|presentation|core`), pushes, closes issues and cleans up the
-  landed worktrees. Run it as a `longjob.sh` batch, never twice for the same batch.
+- **Workers verify narrowly; the landing queue verifies lightly; a full verify runs behind a watermark.**
+  A worker's brief asks for `unit-test --changed` and nothing wider — no full suite, no emulator/simulator
+  lease unless the brief needs a screenshot. `support/scripts/land.sh <branch>... [--close N ...]`
+  cherry-picks each approved branch onto `origin/main`, runs a light verify once under `machine-lock`
+  (Android: `unit-test --changed` + assembleDebug; iOS, only when the picked commits touch `ios/`,
+  `shared/`, or `android/domain|presentation|core`: framework + app build and just the `S2Tests` classes
+  mapped from the changed files), pushes, closes issues and cleans up the landed worktrees. Run it as a
+  `longjob.sh` batch, never twice for the same batch. `support/scripts/full-verify.sh` (via `longjob.sh
+  start full-verify -- ...`) runs the whole suites at `origin/main` and records the sha as the watermark;
+  `--status` shows how far main is past it, SessionStart prints the same, and `/deploy-android` runs it
+  before tagging if the watermark isn't the release commit.
 - `support/scripts/worktree-report.sh` prints a one-line worktree count/size; `--prune` removes the
   ones that are safely disposable (merged, clean, unlocked, not mid-edit) via `worktree-clean.sh`.
 
@@ -71,11 +75,15 @@ back to plain `./gradlew` when it isn't installed.
 # (never queues for the box; --box / --local force one — see .claude/rules/android.md)
 ./support/scripts/remote-build.sh -q :android:app:assembleDebug
 
-# Landing: cherry-picks approved branches onto main, verifies once under machine-lock, pushes,
+# Landing: cherry-picks approved branches onto main, light-verifies once under machine-lock, pushes,
 # closes issues, cleans up worktrees. Run via longjob.sh, not a foreground call.
 support/scripts/longjob.sh start land -- support/scripts/land.sh <branch>... [--close N ...]
 
-# Full verify: on demand, or for build-config/cross-module changes. Each module's tests
+# Full verify (Android + iOS, temp worktree, records the watermark; before every Play release):
+support/scripts/longjob.sh start full-verify -- support/scripts/full-verify.sh
+support/scripts/full-verify.sh --status
+
+# Its Android half by hand, for build-config/cross-module changes. Each module's tests
 # run once, in Roborazzi verify mode (docs/testing/strategy.md)
 ./support/scripts/remote-build.sh --local -q testDebugUnitTest :android:app:assembleDebug :android:app:verifyRoborazziDebug :android:designsystem:verifyRoborazziDebug
 
