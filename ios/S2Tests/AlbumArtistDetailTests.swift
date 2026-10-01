@@ -95,14 +95,14 @@ struct AlbumArtistDetailTests {
         let sut = AlbumArtistDetailContent(state: sectioned(.albumNewest))
         #expect((try? sut.inspect().find(text: "Albums")) == nil)
         #expect(try sut.inspect().findAll(DetailAlbumShelf.self).isEmpty)
-        #expect((try? sut.inspect().find(text: "Albums & Songs")) != nil)
+        #expect((try? sut.inspect().find(text: "Albums & Songs")) == nil)
+        #expect((try? sut.inspect().find(button: "Collapse All")) != nil || (try? sut.inspect().find(button: "Expand All")) != nil)
     }
 
     @Test func flatOrdersKeepTheAlbumShelf() throws {
         let sut = AlbumArtistDetailContent(state: sectioned(.songTitle))
         #expect(try sut.inspect().findAll(DetailAlbumShelf.self).count == 1)
         #expect((try? sut.inspect().find(text: "Albums")) != nil)
-        #expect((try? sut.inspect().find(text: "Songs")) != nil)
         #expect((try? sut.inspect().find(text: "Albums & Songs")) == nil)
     }
 

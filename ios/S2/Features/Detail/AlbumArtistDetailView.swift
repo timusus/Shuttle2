@@ -120,7 +120,7 @@ struct AlbumArtistDetailContent: View {
                     RemoteArtwork(.albumArtist(artist), points: points) {
                         ArtworkPlaceholder(symbol: "person.fill")
                     }
-                    .artworkTile(points, shape: .artist)
+                    .artworkTile(points, shape: .artworkHero)
                 }
             } rows: {
                 if !state.topSongs.isEmpty {
@@ -254,8 +254,8 @@ struct AlbumArtistDetailContent: View {
     }
 
     /// One album's section. Collapsed, it's only its header, so the headers stack as a run of compact rows (#678):
-    /// no spacing after the section, and the header's own insets rather than the plain list's taller default. Expanded,
-    /// the section keeps the list's normal gap before the next header.
+    /// a small constant gap after the section, and the header's own insets rather than the plain list's taller default.
+    /// The gap is the same expanded or collapsed, so expanding never shifts what's above it.
     private func albumSection(_ album: Album, songs: [Song], startIndex: Int) -> some View {
         let expanded = isExpanded(album)
         let inset = AdaptiveLayout.contentInset(layoutTier)
@@ -278,7 +278,7 @@ struct AlbumArtistDetailContent: View {
             .pinnedHeader()
             .listRowInsets(EdgeInsets(top: Spacing.xsmall, leading: inset, bottom: Spacing.xsmall, trailing: inset))
         }
-        .listSectionSpacing(expanded ? .default : .custom(0))
+        .listSectionSpacing(Spacing.small)
     }
 
     /// [startIndex] is where [songs] begins in [state.songs] (its home section's offset), so tapping a row plays
@@ -310,8 +310,8 @@ struct AlbumArtistDetailContent: View {
     }
 }
 
-/// The Songs header: the title, the sort menu (a checkmark on the current order) and, for the album orders, Expand
-/// All or Collapse All. It reads "Albums & Songs" while its album sections stand in for the hidden album shelf.
+/// The Songs header: no title, just a trailing run of controls, the sort menu (a checkmark on the current order)
+/// and, for the album orders, Expand All or Collapse All. It's also the anchor Top Songs' See All scrolls to.
 struct SongsHeader: View {
     let sortOrder: ArtistSongSortOrder
     let allExpanded: Bool
@@ -323,11 +323,8 @@ struct SongsHeader: View {
     var onCollapseAll: () -> Void = {}
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Spacing.medium) {
-            Text(sortOrder.groupsByAlbum && hasAlbumSections ? "Albums & Songs" : "Songs")
-                .font(.s2SectionTitle)
-                .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: Spacing.small)
+        HStack(alignment: .center, spacing: Spacing.medium) {
+            Spacer(minLength: 0)
             if sortOrder.groupsByAlbum && hasAlbumSections {
                 Button(allExpanded ? "Collapse All" : "Expand All", action: allExpanded ? onCollapseAll : onExpandAll)
                     .font(.subheadline.weight(.medium))

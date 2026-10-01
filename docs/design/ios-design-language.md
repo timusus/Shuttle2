@@ -68,13 +68,13 @@ draws its hairline; `artworkTile(_:shape:)` frames a square first.
 | `artworkTile` | 16 pt | Shelf and grid tiles |
 | `artworkHero` | 20 pt | A detail screen's hero |
 | `artworkPlayer` | 20 pt | The Now Playing cover |
-| `artist` | circle | **Every** artist picture: rows, tiles, shelves, heroes, skeletons |
+| `artist` | circle | Artist pictures in rows, tiles, shelves and skeletons; the artist detail hero uses `artworkHero` like an album's |
 | `card` | 16 pt | Cards, notices, the floating mini player |
 | `control` | 10 pt | Text fields, icon containers, segmented choices |
 | `capsule` | capsule | Prominent buttons, chips, the scrubber, the player's bottom bar |
 
 `S2Shape.artwork(role, for: source)` returns `.artist` for an artist's `ArtworkSource`, so the circle rule
-lives in one place and a row given an artist draws a circle without being told.
+lives in one place (the artist detail hero opts out with `.artworkHero`) and a row given an artist draws a circle without being told.
 
 ### Colour (`Colors.swift`)
 
@@ -219,4 +219,5 @@ ticked component whose PNGs change. Screens build only from catalogued component
 | 2026-10-01 | owner | **SF Pro Expanded for display type only**: the large title, hero titles, the Now Playing song and the welcome. Everything else is SF Pro (the rounded design is gone). |
 | 2026-10-01 | owner | **Display type back to standard-width SF Pro bold**, dropping #685's Expanded: on device it read vertically squashed at large-title size. The navigation bar's large title reverts to the system's own bold. |
 | 2026-10-01 | owner | **Artists are circles** at every size, reversing 9703ba568 (#624), which had given them albums' corners. |
+| 2026-10-01 | owner | **Artist detail hero is the album hero's rounded square**, not a circle; artists elsewhere stay circles. Its songs header has no title, and album sections keep one constant `Spacing.small` gap, expanded or collapsed. |
 | 2026-10-01 | owner | **Dividers**: none between rows led by artwork; on text-only rows, the system separator inset to the title. `rowSeparator` (Phase 1) is applied on Library, Playlists, detail and track rows; grouped Forms (Settings, Sources) keep the system style. |
