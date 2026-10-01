@@ -103,7 +103,7 @@ struct GenreDetailContent: View {
                     }
                 }
             }
-                .songInfoSheet($songInfo)
+            .songInfoSheet($songInfo)
         } else {
             EmptyState("Genre Not Found", systemImage: "guitars")
         }

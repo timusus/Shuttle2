@@ -3,11 +3,12 @@ import SwiftUI
 
 /// Album artist detail (P5-7, polished in #624, sectioned in #631): a hero tinted from the artist's picture (the
 /// artist's photo run full bleed behind the bars with the name over it when it's sharp enough, else a compact square
-/// hero, `ArtistHeroPhoto`; albums · songs, Play/Shuffle, and Shuffle by Album in the toolbar's menu), a shelf of the artist's album tiles (each zooming into `Route.album`) while the songs are flat, an
-/// Appears On shelf of others' albums crediting them (#637, hidden when empty; a long press on any tile plays or queues
-/// it), then the artist's songs in the chosen `ArtistSongSortOrder`: under one sticky, foldable header per album for the
-/// album orders, where the headers stand in for the album shelf (#678), or as one flat list. Tapping a song plays every song in the visible order from it, folded albums included. Modeled on
-/// Android's `AlbumArtistDetailScreen.kt`.
+/// hero, `ArtistHeroPhoto`; albums · songs, Play/Shuffle, and Shuffle by Album in the toolbar's menu), a shelf of the
+/// artist's album tiles (each zooming into `Route.album`) while the songs are flat, an Appears On shelf of others'
+/// albums crediting them (#637, hidden when empty; a long press on any tile plays or queues it), then the artist's
+/// songs in the chosen `ArtistSongSortOrder`: under one sticky, foldable header per album for the album orders, where
+/// the headers stand in for the album shelf (#678), or as one flat list. Tapping a song plays every song in the
+/// visible order from it, folded albums included. Modeled on Android's `AlbumArtistDetailScreen.kt`.
 struct AlbumArtistDetailView: View {
     let albumArtistKey: String?
 
@@ -66,7 +67,8 @@ final class AlbumArtistDetailModels: ViewModelGroup {
 }
 
 /// The Album Artist detail screen from an `AlbumArtistDetailUiState`, in a `DetailScaffold` tinted from the artist's
-/// picture. `onPlay` plays the given songs from an index: every song in the visible order for a song row, an album's songs for its header's Play.
+/// picture. `onPlay` plays the given songs from an index: every song in the visible order for a song row, an album's
+/// songs for its header's Play.
 struct AlbumArtistDetailContent: View {
     let state: AlbumArtistDetailUiState
     var isPlaying: Bool = false

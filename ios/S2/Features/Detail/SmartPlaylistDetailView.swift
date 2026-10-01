@@ -89,7 +89,7 @@ struct SmartPlaylistDetailContent: View {
                     }
                 }
             }
-                .songInfoSheet($songInfo)
+            .songInfoSheet($songInfo)
         } else {
             EmptyState("Playlist Not Found", systemImage: "star")
         }

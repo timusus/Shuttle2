@@ -4,7 +4,7 @@ import Testing
 import ViewInspector
 @testable import S2
 
-/// Album artist detail from its UiState: the hero, the album shelf's links, Top Songs, the song sections per sort
+/// Album artist detail from its UiState: the hero, the album shelf's links, the song sections per sort
 /// order with their folding headers, the sort menu, and what tapping a song plays.
 @MainActor
 struct AlbumArtistDetailTests {
