@@ -165,6 +165,13 @@ struct DesignSystemTests {
         #expect(Self.luminance(.s2TextSecondary, dark: false) < Self.luminance(.s2TextSecondary, dark: true))
         #expect(Self.contrastRatio(.s2TextSecondary, on: .systemBackground, dark: false) >= 4.5)
         #expect(Self.contrastRatio(.s2TextSecondary, on: .systemBackground, dark: true) >= 4.5)
+        // The worst case: a card on a dark sheet, `secondarySystemBackground` elevated (#2C2C2E).
+        for surface in [UIColor.secondarySystemBackground, .systemBackground] {
+            for dark in [false, true] {
+                let ratio = Self.contrastRatio(.s2TextSecondary, on: surface, dark: dark, elevated: true)
+                #expect(ratio >= 4.5, "secondary text is \(ratio):1 on an elevated surface (dark: \(dark))")
+            }
+        }
         let error = Self.rgb(.s2Error, dark: false)
         #expect(error.red > error.green && error.red > error.blue)
         let success = Self.rgb(.s2Success, dark: true)
@@ -195,8 +202,12 @@ struct DesignSystemTests {
 
     // MARK: Helpers
 
-    private static func rgb(_ color: UIColor, dark: Bool) -> (red: CGFloat, green: CGFloat, blue: CGFloat) {
-        let resolved = color.resolvedColor(with: UITraitCollection(userInterfaceStyle: dark ? .dark : .light))
+    private static func rgb(_ color: UIColor, dark: Bool, elevated: Bool = false) -> (red: CGFloat, green: CGFloat, blue: CGFloat) {
+        let traits = UITraitCollection { mutable in
+            mutable.userInterfaceStyle = dark ? .dark : .light
+            mutable.userInterfaceLevel = elevated ? .elevated : .base
+        }
+        let resolved = color.resolvedColor(with: traits)
         var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
         resolved.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
         return (red, green, blue)
@@ -208,9 +219,9 @@ struct DesignSystemTests {
     }
 
     /// WCAG 2.x contrast ratio of `foreground` over an opaque `background`, both resolved for the scheme.
-    private static func contrastRatio(_ foreground: UIColor, on background: UIColor, dark: Bool) -> CGFloat {
+    private static func contrastRatio(_ foreground: UIColor, on background: UIColor, dark: Bool, elevated: Bool = false) -> CGFloat {
         func relative(_ color: UIColor) -> CGFloat {
-            let c = rgb(color, dark: dark)
+            let c = rgb(color, dark: dark, elevated: elevated)
             func linear(_ v: CGFloat) -> CGFloat { v <= 0.03928 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4) }
             return 0.2126 * linear(c.red) + 0.7152 * linear(c.green) + 0.0722 * linear(c.blue)
         }
