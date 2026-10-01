@@ -47,7 +47,7 @@ struct JumpBackInGrid: View {
 /// One cell, after Spotify's recents: the cover flush with the cell's leading edge, the title over up to two lines and
 /// the kind of item, then how far into it its queue was left, on a rounded fill, with a play button at the end that
 /// carries on from there. Long-press has the rest (Play from Start, Shuffle, queue, Go to).
-private struct JumpBackInCell: View {
+struct JumpBackInCell: View {
     let item: HomeItem
     let progress: HomeItemProgress?
     let tileKey: String
@@ -59,13 +59,23 @@ private struct JumpBackInCell: View {
 
     private static let accessibilityTitleLines = 6
 
+    /// An artist's circle is drawn this far in from the slot's edge.
+    private static let artistInset = Spacing.small
+
+    /// The side the item's artwork draws at within the `ArtworkSize.albumRow` slot.
+    static func artworkSide(for item: HomeItem) -> CGFloat {
+        item is HomeItemArtistItem ? ArtworkSize.albumRow - 2 * artistInset : ArtworkSize.albumRow
+    }
+
     var body: some View {
         let shape = S2Shape.artworkRow
         HStack(spacing: 0) {
             Button { open(item) } label: {
                 HStack(alignment: .center, spacing: Spacing.small) {
-                    // Square corners: the cell's own shape rounds the cover's outer ones.
-                    HomeItemArtwork(item: item, size: ArtworkSize.albumRow, shape: S2Shape(.rounded(0)))
+                    // Square corners: the cell's own shape rounds the cover's outer ones. An artist is a circle
+                    // inset and centred in the same slot, on the cell's background, so it stays a circle.
+                    HomeItemArtwork(item: item, size: Self.artworkSide(for: item), shape: S2Shape(.rounded(0)))
+                        .frame(width: ArtworkSize.albumRow, height: ArtworkSize.albumRow)
                         .frame(maxHeight: .infinity, alignment: .top)
                     VStack(alignment: .leading, spacing: Spacing.tiny) {
                         Text(item.title)
@@ -110,7 +120,7 @@ private struct JumpBackInCell: View {
         }
         .frame(minHeight: ArtworkSize.albumRow)
         .fixedSize(horizontal: false, vertical: true)
-        .background(Color(.secondarySystemBackground))
+        .background(.s2SurfaceContainer)
         .clipShape(shape)
     }
 }
