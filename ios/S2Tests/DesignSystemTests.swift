@@ -187,7 +187,7 @@ struct DesignSystemTests {
             name: "Mezzanine", albumArtist: "Massive Attack", artists: ["Massive Attack"], songCount: 10, duration: 0,
             year: nil, playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
             groupKey: AlbumGroupKey(key: "mezzanine", albumArtistGroupKey: AlbumArtistGroupKey(key: "massive attack"), identity: nil),
-            mediaProviders: [.jellyfin], artworkVersion: nil
+            mediaProviders: [.jellyfin], artworkVersion: nil, dateAdded: nil
         ))
         #expect(JumpBackInCell.artworkSide(for: album) == ArtworkSize.albumRow)
         #expect(JumpBackInCell.artworkSide(for: artist) < ArtworkSize.albumRow)

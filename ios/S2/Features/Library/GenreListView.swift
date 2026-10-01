@@ -25,7 +25,8 @@ struct GenreListView: View {
                 },
                 onShuffle: {
                     models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionGenres(genres: state.genres)))
-                }
+                },
+                onSortOrder: { models.genres.setSortOrder(sortOrder: $0) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }
@@ -63,12 +64,22 @@ struct GenreListContent: View {
     var onPlayNext: (Genre) -> Void = { _ in }
     var onAddToQueue: (Genre) -> Void = { _ in }
     var onShuffle: () -> Void = {}
+    var onSortOrder: (GenreSortOrder) -> Void = { _ in }
 
     var body: some View {
         content
             .toolbar {
                 if !state.genres.isEmpty {
                     ShuffleButton(identifier: "genres.shuffle", action: onShuffle)
+                }
+                if state.loadingState != .empty {
+                    LibrarySortMenu(
+                        identifier: "genres.sortMenu",
+                        orders: GenreSortOrder.libraryMenuOrder,
+                        sortOrder: state.sortOrder,
+                        title: \.libraryMenuTitle,
+                        onSelect: onSortOrder
+                    )
                 }
             }
     }

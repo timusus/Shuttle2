@@ -13,7 +13,7 @@ struct HomeViewTests {
             name: name, albumArtist: artist, artists: [artist], songCount: 10, duration: 0,
             year: nil, playCount: playCount, lastSongPlayed: nil, lastSongCompleted: nil,
             groupKey: AlbumGroupKey(key: name.lowercased(), albumArtistGroupKey: AlbumArtistGroupKey(key: artist.lowercased()), identity: nil),
-            mediaProviders: [.jellyfin], artworkVersion: nil
+            mediaProviders: [.jellyfin], artworkVersion: nil, dateAdded: nil
         )
     }
 

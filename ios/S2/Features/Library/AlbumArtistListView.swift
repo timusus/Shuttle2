@@ -28,7 +28,8 @@ struct AlbumArtistListView: View {
                     onShuffle: {
                         models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionAlbumArtists(albumArtists: state.albumArtists)))
                     },
-                    onViewMode: { models.albumArtists.setViewMode(mode: $0) }
+                    onViewMode: { models.albumArtists.setViewMode(mode: $0) },
+                    onSortOrder: { models.albumArtists.setSortOrder(sortOrder: $0) }
                 )
                 .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
             }
@@ -67,12 +68,22 @@ struct AlbumArtistListContent: View {
     var onAddToQueue: (AlbumArtist) -> Void = { _ in }
     var onShuffle: () -> Void = {}
     var onViewMode: (ViewMode) -> Void = { _ in }
+    var onSortOrder: (AlbumArtistSortOrder) -> Void = { _ in }
 
     var body: some View {
         content
             .toolbar {
                 if !state.albumArtists.isEmpty {
                     ShuffleButton(identifier: "albumArtists.shuffle", action: onShuffle)
+                }
+                if state.loadingState != .empty {
+                    LibrarySortMenu(
+                        identifier: "albumArtists.sortMenu",
+                        orders: AlbumArtistSortOrder.libraryMenuOrder,
+                        sortOrder: state.sortOrder,
+                        title: \.libraryMenuTitle,
+                        onSelect: onSortOrder
+                    )
                 }
                 if state.loadingState != .empty {
                     ViewModeToggle(mode: state.viewMode, onChange: onViewMode)

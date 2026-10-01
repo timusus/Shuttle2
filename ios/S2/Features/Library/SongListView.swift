@@ -28,7 +28,8 @@ struct SongListView: View {
                     },
                     onShuffle: {
                         models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs)))
-                    }
+                    },
+                    onSortOrder: { models.songs.setSortOrder(sortOrder: $0) }
                 )
                 .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.dispatch(action: $0) })
             }
@@ -60,12 +61,22 @@ struct SongListContent: View {
     var onAddToQueue: (Song) -> Void = { _ in }
     var onExclude: (Song) -> Void = { _ in }
     var onShuffle: () -> Void = {}
+    var onSortOrder: (SongSortOrder) -> Void = { _ in }
 
     var body: some View {
         content
             .toolbar {
                 if !state.songs.isEmpty {
                     ShuffleButton(identifier: "songs.shuffle", action: onShuffle)
+                }
+                if state.loadingState != .empty {
+                    LibrarySortMenu(
+                        identifier: "songs.sortMenu",
+                        orders: SongSortOrder.libraryMenuOrder,
+                        sortOrder: state.sortOrder,
+                        title: \.libraryMenuTitle,
+                        onSelect: onSortOrder
+                    )
                 }
             }
     }
@@ -86,7 +97,7 @@ struct SongListContent: View {
                 sections: LetterIndex.sections(state.letterIndex, items: state.songs, id: \.id)
             ) { index, song in
                 let playback = nowPlaying.playback(song: song)
-                Button { onPlay(index) } label: { SongRow(song: song, playback: playback) }
+                Button { onPlay(index) } label: { SongRow(song: song, playback: playback, sortOrder: state.sortOrder) }
                     .buttonStyle(.pressScale)
                     .contextMenu {
                         SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude)
@@ -116,11 +127,22 @@ struct SongRowMenu: View {
 struct SongRow: View {
     let song: Song
     var playback: MediaRowPlayback = .none
+    /// The Library's sort, which adds its key to the subtitle: a play count, or the date added.
+    var sortOrder: SongSortOrder?
+
+    private var subtitle: String {
+        let key: String? = switch sortOrder {
+        case .playCount: song.playCount == 1 ? "1 play" : "\(song.playCount) plays"
+        case .dateAdded: libraryDateAdded(song.dateAdded)
+        default: nil
+        }
+        return [song.friendlyArtistName, song.album, key].compactMap { $0 }.joined(separator: " · ")
+    }
 
     var body: some View {
         MediaRow(
             song.name ?? "Unknown",
-            subtitle: [song.friendlyArtistName, song.album].compactMap { $0 }.joined(separator: " · "),
+            subtitle: subtitle,
             artwork: .song(song),
             playback: playback,
             titleIdentifier: "songRow.title"

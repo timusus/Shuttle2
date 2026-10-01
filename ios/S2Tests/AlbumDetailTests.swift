@@ -28,7 +28,7 @@ struct AlbumDetailTests {
             name: "OK Computer", albumArtist: albumArtist, artists: artists, songCount: songCount, duration: 0,
             year: year.map { KotlinInt(int: $0) }, playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
             groupKey: AlbumGroupKey(key: "ok computer", albumArtistGroupKey: AlbumArtistGroupKey(key: artistKey), identity: nil),
-            mediaProviders: [.jellyfin], artworkVersion: nil
+            mediaProviders: [.jellyfin], artworkVersion: nil, dateAdded: nil
         )
     }
 

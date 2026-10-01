@@ -25,6 +25,7 @@ struct PlaylistListView: View {
                 onShuffle: {
                     models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionPlaylists(playlists: state.playlists)))
                 },
+                onSortOrder: { models.playlists.setSortOrder(sortOrder: $0) },
                 onCreate: { name in models.playlists.onCreatePlaylist(name: name) },
                 onRename: { playlist, name in models.playlists.onRename(playlist: playlist, name: name) },
                 onDelete: { playlist in models.playlists.onDelete(playlist: playlist) }
@@ -94,6 +95,7 @@ struct PlaylistListContent: View {
     var onPlayNext: (Playlist) -> Void = { _ in }
     var onAddToQueue: (Playlist) -> Void = { _ in }
     var onShuffle: () -> Void = {}
+    var onSortOrder: (PlaylistSortOrder) -> Void = { _ in }
     var onCreate: (String) -> Void = { _ in }
     var onRename: (Playlist, String) -> Void = { _, _ in }
     var onDelete: (Playlist) -> Void = { _ in }
@@ -107,7 +109,7 @@ struct PlaylistListContent: View {
         case .ready, .scanning:
             PlaylistListReadyView(
                 state: state, onPlay: onPlay, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue,
-                onShuffle: onShuffle, onCreate: onCreate, onRename: onRename, onDelete: onDelete
+                onShuffle: onShuffle, onSortOrder: onSortOrder, onCreate: onCreate, onRename: onRename, onDelete: onDelete
             )
         }
     }
@@ -121,6 +123,7 @@ private struct PlaylistListReadyView: View {
     let onPlayNext: (Playlist) -> Void
     let onAddToQueue: (Playlist) -> Void
     let onShuffle: () -> Void
+    let onSortOrder: (PlaylistSortOrder) -> Void
     let onCreate: (String) -> Void
     let onRename: (Playlist, String) -> Void
     let onDelete: (Playlist) -> Void
@@ -154,6 +157,13 @@ private struct PlaylistListReadyView: View {
         .toolbar {
             if !state.playlists.isEmpty {
                 ShuffleButton(identifier: "playlists.shuffle", action: onShuffle)
+                LibrarySortMenu(
+                    identifier: "playlists.sortMenu",
+                    orders: PlaylistSortOrder.libraryMenuOrder,
+                    sortOrder: state.sortOrder,
+                    title: \.libraryMenuTitle,
+                    onSelect: onSortOrder
+                )
             }
             Button("New Playlist", systemImage: "plus") {
                 newPlaylistName = ""

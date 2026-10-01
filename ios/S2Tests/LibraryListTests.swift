@@ -32,7 +32,7 @@ struct LibraryListTests {
             name: name, albumArtist: artist, artists: [artist], songCount: songs, duration: 0,
             year: year.map { KotlinInt(int: $0) }, playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
             groupKey: AlbumGroupKey(key: name.lowercased(), albumArtistGroupKey: AlbumArtistGroupKey(key: artist.lowercased()), identity: nil),
-            mediaProviders: [.jellyfin], artworkVersion: nil
+            mediaProviders: [.jellyfin], artworkVersion: nil, dateAdded: nil
         )
     }
 
@@ -146,8 +146,8 @@ struct LibraryListTests {
         for viewMode in [ViewMode.list, .grid] {
             var shuffled = false
             let state = AlbumArtistListUiState(
-                albumArtists: artists, selectedArtists: [], viewMode: viewMode, loadingState: .ready, scanProgress: nil,
-                letterIndex: LetterIndexKt.albumArtistLetterIndex(albumArtists: artists)
+                albumArtists: artists, selectedArtists: [], viewMode: viewMode, sortOrder: .`default`, loadingState: .ready, scanProgress: nil,
+                letterIndex: LetterIndexKt.albumArtistLetterIndex(albumArtists: artists, sortOrder: .`default`)
             )
             let button = try AlbumArtistListContent(state: state, onShuffle: { shuffled = true }).inspect()
                 .find(ViewType.Toolbar.self).find(viewWithAccessibilityIdentifier: "albumArtists.shuffle")

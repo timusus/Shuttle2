@@ -95,7 +95,7 @@ struct PlayerEventOutcomeTests {
             name: "OK Computer", albumArtist: "Radiohead", artists: ["Radiohead"], songCount: 1, duration: 0,
             year: nil, playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
             groupKey: AlbumGroupKey(key: "ok computer", albumArtistGroupKey: AlbumArtistGroupKey(key: "radiohead"), identity: nil),
-            mediaProviders: [.shuttle], artworkVersion: nil
+            mediaProviders: [.shuttle], artworkVersion: nil, dateAdded: nil
         )
         let artist = AlbumArtist(
             name: "Radiohead", artists: ["Radiohead"], albumCount: 1, songCount: 1, playCount: 0,

@@ -26,7 +26,8 @@ struct AlbumListView: View {
                         models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbums(album: album)))
                     },
                     onShuffle: { models.albums.onShuffle() },
-                    onViewMode: { models.albums.setViewMode(mode: $0) }
+                    onViewMode: { models.albums.setViewMode(mode: $0) },
+                    onSortOrder: { models.albums.setSortOrder(sortOrder: $0) }
                 )
                 .albumListEvents(state.events, handled: { models.albums.onEventHandled(id: $0) })
                 .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
@@ -66,12 +67,22 @@ struct AlbumListContent: View {
     var onAddToQueue: (Album) -> Void = { _ in }
     var onShuffle: () -> Void = {}
     var onViewMode: (ViewMode) -> Void = { _ in }
+    var onSortOrder: (AlbumSortOrder) -> Void = { _ in }
 
     var body: some View {
         content
             .toolbar {
                 if !state.albums.isEmpty {
                     ShuffleButton(identifier: "albums.shuffle", action: onShuffle)
+                }
+                if state.loadingState != .empty {
+                    LibrarySortMenu(
+                        identifier: "albums.sortMenu",
+                        orders: AlbumSortOrder.libraryMenuOrder,
+                        sortOrder: state.sortOrder,
+                        title: \.libraryMenuTitle,
+                        onSelect: onSortOrder
+                    )
                 }
                 if state.loadingState != .empty {
                     ViewModeToggle(mode: state.viewMode, onChange: onViewMode)
@@ -96,7 +107,7 @@ struct AlbumListContent: View {
                         NavigationLink(value: Route.album(album)) {
                             LibraryTile(
                                 title: album.name ?? "Unknown",
-                                subtitle: album.albumArtist,
+                                subtitle: AlbumRow.tileSubtitle(album, sortOrder: state.sortOrder),
                                 artwork: .album(album),
                                 playback: nowPlaying.playback(album: album)
                             )
@@ -110,7 +121,7 @@ struct AlbumListContent: View {
             } else {
                 LetterIndexedList(items: state.albums, id: \.stableId, sections: index) { _, album in
                     let playback = nowPlaying.playback(album: album)
-                    LibraryRowLink(route: Route.album(album)) { AlbumRow(album: album, playback: playback) }
+                    LibraryRowLink(route: Route.album(album)) { AlbumRow(album: album, playback: playback, sortOrder: state.sortOrder) }
                         .contextMenu { menu(album) }
                         .nowPlayingRowBackground(playback)
                 }
@@ -129,6 +140,8 @@ struct AlbumListContent: View {
 struct AlbumRow: View {
     let album: Album
     var playback: MediaRowPlayback = .none
+    /// The Library's sort, which adds the date to the subtitle under a date-added sort (the year is always there).
+    var sortOrder: AlbumSortOrder?
 
     var body: some View {
         MediaRow(album.name ?? "Unknown", subtitle: subtitle, artwork: .album(album), artworkSize: ArtworkSize.albumRow, playback: playback)
@@ -139,7 +152,19 @@ struct AlbumRow: View {
         if let artist = album.albumArtist { parts.append(artist) }
         if let year = album.year { parts.append(String(year.intValue)) }
         parts.append(album.songCount == 1 ? "1 song" : "\(album.songCount) songs")
+        if sortOrder == .dateAdded, let added = libraryDateAdded(album.dateAdded) { parts.append(added) }
         return parts.joined(separator: " · ")
+    }
+
+    /// A grid tile's secondary line: the artist, then the year or date the sort is by.
+    static func tileSubtitle(_ album: Album, sortOrder: AlbumSortOrder) -> String? {
+        let key: String? = switch sortOrder {
+        case .year: album.year.map { String($0.intValue) }
+        case .dateAdded: libraryDateAdded(album.dateAdded)
+        default: nil
+        }
+        let parts = [album.albumArtist, key].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }
 

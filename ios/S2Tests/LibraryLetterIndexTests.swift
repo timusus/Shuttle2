@@ -18,7 +18,7 @@ struct LibraryLetterIndexTests {
             name: name, albumArtist: "Artist", artists: ["Artist"], songCount: 1, duration: 0, year: nil, playCount: 0,
             lastSongPlayed: nil, lastSongCompleted: nil,
             groupKey: AlbumGroupKey(key: key, albumArtistGroupKey: AlbumArtistGroupKey(key: "artist"), identity: nil),
-            mediaProviders: [.jellyfin], artworkVersion: nil
+            mediaProviders: [.jellyfin], artworkVersion: nil, dateAdded: nil
         )
     }
 
@@ -109,8 +109,8 @@ struct LibraryLetterIndexTests {
             )
         }
         let state = AlbumArtistListUiState(
-            albumArtists: artists, selectedArtists: [], viewMode: .list, loadingState: .ready, scanProgress: nil,
-            letterIndex: LetterIndexKt.albumArtistLetterIndex(albumArtists: artists)
+            albumArtists: artists, selectedArtists: [], viewMode: .list, sortOrder: .`default`, loadingState: .ready, scanProgress: nil,
+            letterIndex: LetterIndexKt.albumArtistLetterIndex(albumArtists: artists, sortOrder: .`default`)
         )
         #expect(try AlbumArtistListContent(state: state).inspect().findAll(ViewType.Section.self).count == 2)
     }
