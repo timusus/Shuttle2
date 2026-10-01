@@ -224,6 +224,7 @@ struct AlbumArtistDetailContent: View {
                             .font(.headline)
                             .foregroundStyle(Color.primary)
                             .textCase(nil)
+                            .pinnedHeader()
                             .accessibilityAddTraits(.isHeader)
                     }
                 }
@@ -274,6 +275,7 @@ struct AlbumArtistDetailContent: View {
                 onAddToQueue: { onAddToQueue(songs) },
                 onOpenAlbum: { onAlbumTap(album) }
             )
+            .pinnedHeader()
             .listRowInsets(EdgeInsets(top: Spacing.xsmall, leading: inset, bottom: Spacing.xsmall, trailing: inset))
         }
         .listSectionSpacing(expanded ? .default : .custom(0))

@@ -137,10 +137,16 @@ struct SearchRecentList: View {
             Section {
                 ForEach(searches, id: \.self) { search in
                     Button { onSelect(search) } label: {
-                        Label(search, systemImage: "clock.arrow.circlepath")
-                            .foregroundStyle(.primary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
+                        HStack(spacing: Spacing.small) {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .frame(width: IconSize.large)
+                            // A text-only row: its separator starts at the title.
+                            Text(search)
+                                .rowSeparator(.insetToTitle)
+                        }
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("search.recent")
@@ -153,6 +159,7 @@ struct SearchRecentList: View {
             } header: {
                 SectionHeader("Recent Searches")
                     .textCase(nil)
+                    .pinnedHeader()
             }
         }
         .listStyle(.plain)
@@ -236,7 +243,7 @@ struct SearchResultList: View {
                 Section {
                     row(top, index: 0).rowSeparator(.none)
                 } header: {
-                    SectionHeader("Top Result").textCase(nil)
+                    SectionHeader("Top Result").textCase(nil).pinnedHeader()
                 }
             }
             ForEach(results.sections(expanded: expanded), id: \.category) { section in
@@ -245,7 +252,7 @@ struct SearchResultList: View {
                         row(section.category, index: index).rowSeparator(.none)
                     }
                 } header: {
-                    header(section).textCase(nil)
+                    header(section).textCase(nil).pinnedHeader()
                 }
             }
         }

@@ -792,6 +792,7 @@ struct NowPlayingQueueList: View {
                     Text("Nothing up next")
                         .font(.subheadline)
                         .foregroundStyle(.s2TextSecondary)
+                        .rowSeparator(.none)
                 } else {
                     ForEach(upNext) { item in
                         row(item)
@@ -825,6 +826,7 @@ struct NowPlayingQueueList: View {
         SectionHeader(title)
             .textCase(nil)
             .padding(.vertical, Spacing.xsmall)
+            .pinnedHeader()
     }
 
     /// A queue row; the playing song's cover carries the playing indicator and VoiceOver says it's playing.

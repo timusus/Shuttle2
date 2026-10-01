@@ -27,3 +27,13 @@ extension View {
         }
     }
 }
+
+extension View {
+    /// A pinned plain-list section header's own background: the screen's, so rows scrolling under it don't show
+    /// through (iOS 26's plain headers have none, and the glass bar above doesn't hide them). Apply it to every
+    /// header in a `.plain` `List`.
+    func pinnedHeader() -> some View {
+        frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(uiColor: .systemBackground))
+    }
+}

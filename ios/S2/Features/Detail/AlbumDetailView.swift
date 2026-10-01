@@ -94,6 +94,7 @@ struct AlbumDetailContent: View {
                                     .font(.s2GroupHeader)
                                     .foregroundStyle(.s2TextSecondary)
                                     .textCase(.uppercase)
+                                    .pinnedHeader()
                             }
                         }
                     }
