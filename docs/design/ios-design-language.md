@@ -118,6 +118,13 @@ takes `artworkTintInk`.
 | `rowSeparator(.insetToTitle)` | Text-only rows: the system separator, starting at the title |
 | `rowSeparator(.system)` | A row that insets its own title (`TrackRow`), where a list mixes it with artwork rows |
 
+`.insetToTitle` goes on the title view itself, not on a `Label` (it doesn't reach inside one): a text-only row with a
+leading glyph (Recent Searches) is an `HStack` of the glyph and a `Text`.
+
+**Pinned section headers.** A `.plain` `List` pins its headers, and on iOS 26 a pinned header has no background, so
+rows scroll visibly under it. Every pinned header takes `pinnedHeader()` (the screen's own surface behind it). A list
+on an elevated surface, like the queue sheet, sets the surface on itself and passes it in. Headers stay pinned.
+
 ### Icons, touch targets and rows (`Spacing.swift`)
 
 | Token | Value | Use |
