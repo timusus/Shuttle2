@@ -88,6 +88,7 @@
     <string name="artist_detail_open_album">Open <xliff:g example="Album name" id="album">%1$s</xliff:g></string>
     <!-- Artist detail: the section of other artists' albums crediting this artist (features, compilations) -->
     <string name="artist_detail_appears_on">Appears On</string>
+    <string name="album_detail_more_by">More by <xliff:g example="Artist name" id="artist">%1$s</xliff:g></string>
     <!-- Detail screen action: shuffle the artist's albums in album order -->
     <string name="detail_shuffle_albums">Shuffle albums</string>
     <!-- Snackbar shown when Shuffle albums couldn't start playback -->

@@ -77,6 +77,7 @@ fun AlbumArtistDetailScreen(
         else -> DetailContentState.Ready
     }
     val unknown = stringResource(com.simplecityapps.core.R.string.unknown)
+    val appearsOnTitle = stringResource(R.string.artist_detail_appears_on)
     // The artwork tints the whole screen, as the player does, when Colour from artwork is on (#496).
     ArtworkTheme(uiState.seed) {
         LibraryDetailScaffold(
@@ -107,26 +108,7 @@ fun AlbumArtistDetailScreen(
                 }
             }
             if (uiState.appearsOn.isNotEmpty()) {
-                item(key = "appears-on-header", contentType = "header") { SectionHeader(title = stringResource(R.string.artist_detail_appears_on)) }
-                item(key = "appears-on", contentType = "appears-on") {
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = S2Spacing.medium),
-                        horizontalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium),
-                        modifier = Modifier.testTag("artist-appears-on"),
-                    ) {
-                        items(uiState.appearsOn, key = { "appears-on-${it.groupKey}" }) { album ->
-                            GridTile(
-                                title = album.name ?: unknown,
-                                // Whose album it is: the album artist, not the track artists friendlyArtistName joins
-                                subtitle = album.albumArtist ?: album.friendlyArtistName,
-                                onClick = { onAppearsOnClick(album) },
-                                onLongClick = { onAlbumMore(album) },
-                                artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
-                                modifier = Modifier.width(AppearsOnTileWidth),
-                            )
-                        }
-                    }
-                }
+                albumShelf("artist-appears-on", appearsOnTitle, uiState.appearsOn, unknown, onAppearsOnClick, onAlbumMore)
             }
             if (uiState.songs.isNotEmpty()) {
                 val title = if (uiState.hasAlbumSections) R.string.artist_detail_albums_and_songs else R.string.artist_detail_songs
@@ -215,9 +197,6 @@ private fun LazyListScope.albumWithSongs(
         }
     }
 }
-
-/** An Appears On tile's width: Home's compact shelf tiles', so a phone shows two and a peek of the third. */
-private val AppearsOnTileWidth = 150.dp
 
 @Composable
 fun AlbumArtistDetailDestination(

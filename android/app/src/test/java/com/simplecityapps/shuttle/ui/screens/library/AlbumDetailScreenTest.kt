@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.simplecityapps.createAlbum
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
@@ -80,6 +81,27 @@ class AlbumDetailScreenTest {
         robot.setAlbum(readyAlbumDetail(songs = songs, currentSong = songs[0]))
 
         robot.assertNowPlayingShown()
+    }
+
+    @Test
+    fun `More by lists the artist's other albums, a tap opens one and a long press opens its actions`() {
+        val other = createAlbum(name = "Verdigris", albumArtist = "Juniper Static", year = 2019)
+        robot.setAlbum(readyAlbumDetail(moreByArtist = listOf(other)))
+
+        robot.scrollTo("More by Juniper Static")
+        robot.assertTextDisplayed("More by Juniper Static")
+        robot.clickText("Verdigris")
+        robot.lastAlbumClicked shouldBe other
+
+        robot.longClickText("Verdigris")
+        robot.lastMore shouldBe other
+    }
+
+    @Test
+    fun `without other albums by the artist there is no More by shelf`() {
+        robot.setAlbum(readyAlbumDetail())
+
+        robot.assertTextNotDisplayed("More by", substring = true)
     }
 
     @Test

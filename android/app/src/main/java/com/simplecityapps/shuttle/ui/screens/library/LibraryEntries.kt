@@ -24,7 +24,7 @@ fun EntryProviderScope<NavKey>.libraryEntries(navigator: AppNavigator) {
     }
     val detail = ListDetailSceneStrategy.detailPane()
     val onNavigateUp: () -> Unit = { navigator.back() }
-    entry<AlbumRoute>(metadata = detail) { route -> AlbumDetailDestination(route, onNavigateUp = onNavigateUp, onNavigate = onNavigate) }
+    entry<AlbumRoute>(metadata = detail) { route -> AlbumDetailDestination(route, onNavigateUp = onNavigateUp, onOpen = navigator::open, onNavigate = onNavigate) }
     entry<AlbumArtistRoute>(metadata = detail) { route -> AlbumArtistDetailDestination(route, onNavigateUp = onNavigateUp, onOpen = navigator::open, onNavigate = onNavigate) }
     entry<GenreRoute>(metadata = detail) { route -> GenreDetailDestination(route, onNavigateUp = onNavigateUp, onOpen = navigator::open, onNavigate = onNavigate) }
     entry<PlaylistRoute>(metadata = detail) { route -> PlaylistDetailDestination(route, onNavigateUp = onNavigateUp, onNavigate = onNavigate) }

@@ -2,6 +2,10 @@
   "since": "v26092301",
   "features": [
     {
+      "text": "Album pages now end with a More by shelf of the artist's other albums, so you can keep browsing",
+      "commits": []
+    },
+    {
       "text": "Artist pages now show the albums an artist appears on, like features and compilations, after their own albums, and search finds artists who only appear on other artists' songs",
       "commits": []
     },

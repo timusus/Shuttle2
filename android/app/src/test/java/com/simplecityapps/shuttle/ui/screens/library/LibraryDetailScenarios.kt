@@ -38,7 +38,8 @@ fun readyAlbumDetail(
     album: Album = createAlbum(name = "Phase Garden", albumArtist = "Juniper Static", songCount = 3, year = 2021),
     songs: List<Song> = phaseGardenSongs(),
     currentSong: Song? = null,
-) = AlbumDetailUiState(album = album, songs = songs, currentSong = currentSong, loadingState = AlbumDetailUiState.LoadingState.Ready)
+    moreByArtist: List<Album> = emptyList(),
+) = AlbumDetailUiState(album = album, songs = songs, currentSong = currentSong, loadingState = AlbumDetailUiState.LoadingState.Ready, moreByArtist = moreByArtist)
 
 val loadingAlbumDetail = AlbumDetailUiState(loadingState = AlbumDetailUiState.LoadingState.Loading)
 

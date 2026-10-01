@@ -3,11 +3,16 @@ package com.simplecityapps.shuttle.ui.screens.library
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MoreVert
@@ -26,10 +31,14 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
 import com.simplecityapps.shuttle.designsystem.component.ArtworkShape
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.EmptyState
+import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.LoadingState
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonGroup
 import com.simplecityapps.shuttle.designsystem.component.S2GroupAction
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
+import com.simplecityapps.shuttle.designsystem.component.SectionHeader
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 
 // The pieces every library detail screen shares, on DetailScaffold (app-shell.md, section 3): a centred hero,
@@ -119,5 +128,42 @@ private fun DetailHeader(
             )
         }
         extra()
+    }
+}
+
+/** A tile's width on an album shelf: Home's compact shelf tiles', so a phone shows two and a peek of the third. */
+private val AlbumShelfTileWidth = 150.dp
+
+/**
+ * A titled row of [albums] as grid tiles: a tap goes to [onClick], a long press to [onLongClick]. [key] names the
+ * section, keying its items apart from the page's others, and is the row's test tag.
+ */
+fun LazyListScope.albumShelf(
+    key: String,
+    title: String,
+    albums: List<Album>,
+    unknown: String,
+    onClick: (Album) -> Unit,
+    onLongClick: (Album) -> Unit,
+) {
+    item(key = "$key-header", contentType = "header") { SectionHeader(title = title) }
+    item(key = key, contentType = "album-shelf") {
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = S2Spacing.medium),
+            horizontalArrangement = Arrangement.spacedBy(S2Spacing.smallMedium),
+            modifier = Modifier.testTag(key),
+        ) {
+            items(albums, key = { "$key-${it.groupKey}" }) { album ->
+                GridTile(
+                    title = album.name ?: unknown,
+                    // Whose album it is: the album artist, not the track artists friendlyArtistName joins
+                    subtitle = album.albumArtist ?: album.friendlyArtistName,
+                    onClick = { onClick(album) },
+                    onLongClick = { onLongClick(album) },
+                    artwork = { LibraryArtwork(album, ArtworkPlaceholder.Album, Modifier.fillMaxSize(), size = ArtworkSize.Grid) },
+                    modifier = Modifier.width(AlbumShelfTileWidth),
+                )
+            }
+        }
     }
 }
