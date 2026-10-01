@@ -179,7 +179,7 @@ struct MiniPlayerBar: View {
             .padding(.leading, Spacing.small)
             .padding(.trailing, Spacing.xsmall)
             .padding(.vertical, Spacing.small)
-            .glassSurface(in: shape, fallback: GlassFallback.card)
+            .glassSurface(in: shape, fallback: .card)
             .clipShape(shape)
             .artworkShadow(Self.floatingShadow)
             .padding(.horizontal, Spacing.small)

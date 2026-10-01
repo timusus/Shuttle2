@@ -510,7 +510,7 @@ private extension View {
         font(.body.weight(.semibold))
             .foregroundStyle(ink)
             .frame(width: TouchTarget.disc, height: TouchTarget.disc)
-            .glassSurface(in: Circle())
+            .glassSurface(in: Circle(), fallback: .disc)
             .touchTarget()
     }
 
