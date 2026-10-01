@@ -5,12 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.AlbumIdentityRule
 import com.simplecityapps.shuttle.model.PlayContext
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.playContext
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.sorting.ArtistSongComparator
 import com.simplecityapps.shuttle.ui.actions.ObserveAlbums
-import com.simplecityapps.shuttle.ui.actions.ObserveArtistAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.actions.ObserveSongs
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
@@ -28,6 +29,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 
@@ -38,7 +40,7 @@ data class AlbumDetailUiState(
     val loadingState: LoadingState = LoadingState.Loading,
     /** The album artwork's seed, which tints the screen when Colour from artwork is on. */
     val seed: ArtworkSeed = ArtworkSeed.None,
-    /** The album artist's other albums, newest first, for the More by shelf; empty when the album has no album artist. */
+    /** The album artist's other albums, newest first, for the More by shelf; empty when the album has no album artist or is a compilation. */
     val moreByArtist: List<Album> = emptyList(),
 ) {
     /** What playing this screen's songs starts the queue from (#633). */
@@ -55,7 +57,6 @@ class AlbumDetailViewModel @AssistedInject constructor(
     @Assisted private val groupKey: AlbumGroupKey?,
     observeSongs: ObserveSongs,
     observeAlbums: ObserveAlbums,
-    observeArtistAlbums: ObserveArtistAlbums,
     observeCurrentSong: ObserveCurrentSong,
     observeArtworkSeed: ObserveArtworkSeed,
 ) : ViewModel() {
@@ -70,9 +71,17 @@ class AlbumDetailViewModel @AssistedInject constructor(
     private val songs = observeSongs(SongQuery.AlbumGroupKey(key = groupKey))
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
 
-    /** The album artist's own albums but this one, newest first; the Ready state doesn't wait on it. */
-    private val moreByArtist: Flow<List<Album>> = groupKey?.albumArtistGroupKey?.takeIf { it.key != null }
-        ?.let { artistKey -> observeArtistAlbums(artistKey).map { artist -> artist.albums.filter { it.groupKey != groupKey } } }
+    /**
+     * The album artist's own albums but this one, newest first. Starts empty so the Ready state never waits on it; it is
+     * empty for an album with no album artist, and for a compilation, whose "Various Artists" is nobody's catalogue.
+     */
+    private val moreByArtist: Flow<List<Album>> = groupKey?.albumArtistGroupKey
+        ?.takeIf { it.key != null && it.key != AlbumIdentityRule.artistKey(AlbumIdentityRule.VARIOUS_ARTISTS) }
+        ?.let { artistKey ->
+            observeAlbums(AlbumQuery.ArtistGroupKey(artistKey))
+                .map { albums -> albums.filter { it.groupKey != groupKey }.sortedWith(ArtistSongComparator.albumNewest) }
+                .onStart { emit(emptyList()) }
+        }
         ?: flowOf(emptyList())
 
     val uiState: StateFlow<AlbumDetailUiState> = combine(

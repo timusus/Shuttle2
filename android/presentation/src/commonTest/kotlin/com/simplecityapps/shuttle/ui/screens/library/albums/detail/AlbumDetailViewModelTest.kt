@@ -9,15 +9,17 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
+import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
+import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.model.AlbumIdentityRule
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
 import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
-import com.simplecityapps.shuttle.ui.actions.ObserveArtistAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
@@ -190,6 +192,34 @@ class AlbumDetailViewModelTest {
         viewModel.uiState.value.moreByArtist shouldBe emptyList()
     }
 
+    @Test
+    fun `the album is ready before more by has emitted`() = runTest {
+        fakeSongRepository.setSongs(listOf(createSong(id = 1)))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        fakeAlbumRepository.neverEmits = { it is AlbumQuery.ArtistGroupKey }
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.loadingState shouldBe AlbumDetailUiState.LoadingState.Ready
+        viewModel.uiState.value.moreByArtist shouldBe emptyList()
+    }
+
+    @Test
+    fun `more by is empty for a compilation`() = runTest {
+        val variousArtists = AlbumIdentityRule.VARIOUS_ARTISTS
+        val compilation = createAlbum(name = "Now 1", albumArtist = variousArtists, groupKey = AlbumGroupKey("Now 1", AlbumArtistGroupKey(AlbumIdentityRule.artistKey(variousArtists))))
+        val another = createAlbum(name = "Now 2", albumArtist = variousArtists, groupKey = AlbumGroupKey("Now 2", AlbumArtistGroupKey(AlbumIdentityRule.artistKey(variousArtists))))
+        fakeSongRepository.setSongs(listOf(createSong(id = 1)))
+        fakeAlbumRepository.applyQueryPredicates = true
+        fakeAlbumRepository.setAlbums(listOf(compilation, another))
+        val viewModel = createViewModel(compilation.groupKey)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.moreByArtist shouldBe emptyList()
+    }
+
     private fun createViewModel(groupKey: AlbumGroupKey? = testAlbum.groupKey): AlbumDetailViewModel {
         val testMediaActions = TestMediaActions(
             fakeSongRepository,
@@ -203,7 +233,6 @@ class AlbumDetailViewModelTest {
             groupKey = groupKey,
             observeSongs = testMediaActions.observeSongs,
             observeAlbums = testMediaActions.observeAlbums,
-            observeArtistAlbums = ObserveArtistAlbums(fakeAlbumRepository, fakeSongRepository),
             observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
             observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
         )
