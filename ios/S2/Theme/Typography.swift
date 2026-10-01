@@ -3,17 +3,16 @@ import UIKit
 
 /// S2's type scale (docs/design/ios-design-language.md §Type).
 ///
-/// The rule: SF Pro **Expanded** for display type only (the navigation bar's large title, a detail hero's title,
+/// The rule: SF Pro **bold** for display type (the navigation bar's large title, a detail hero's title,
 /// the Now Playing song, a first-run welcome), SF Pro for everything else, and monospaced digits for every time
 /// and count. Every style is relative to a Dynamic Type text style, so all of them follow the user's text size.
 extension Font {
-    // MARK: Display (SF Pro Expanded)
+    // MARK: Display
 
-    /// The largest in-content title, matching the navigation bar's large title (`NavigationBarType`): the
-    /// first-run welcome.
-    static let s2LargeTitle = Font.system(.largeTitle, weight: .bold).width(.expanded)
+    /// The largest in-content title, matching the navigation bar's large title: the first-run welcome.
+    static let s2LargeTitle = Font.system(.largeTitle, weight: .bold)
     /// A detail hero's title and the Now Playing song title (a `MarqueeText` line).
-    static let s2HeroTitle = Font.system(.title2, weight: .bold).width(.expanded)
+    static let s2HeroTitle = Font.system(.title2, weight: .bold)
 
     // MARK: Titles
 
@@ -61,17 +60,5 @@ extension Font {
     /// isn't scaled twice.
     static func s2ScaledGlyph(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
         .system(size: size, weight: weight)
-    }
-}
-
-/// The navigation bar's titles: the large title in SF Pro Expanded bold, as `Font.s2LargeTitle`; the inline title
-/// stays the system's. Applied once at launch (`S2App`), through `UINavigationBar.appearance()`, which keeps the
-/// bar's own background and iOS 26 glass.
-enum NavigationBarType {
-    static func apply() {
-        let metrics = UIFontMetrics(forTextStyle: .largeTitle)
-        let base = UIFont.preferredFont(forTextStyle: .largeTitle, compatibleWith: UITraitCollection(preferredContentSizeCategory: .large))
-        let expanded = UIFont.systemFont(ofSize: base.pointSize, weight: .bold, width: .expanded)
-        UINavigationBar.appearance().largeTitleTextAttributes = [.font: metrics.scaledFont(for: expanded)]
     }
 }

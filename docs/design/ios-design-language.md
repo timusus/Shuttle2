@@ -34,13 +34,14 @@ draws from: the tokens in `ios/S2/Theme`, what each is for, and the rules that p
 
 ### Type (`Typography.swift`)
 
-SF Pro throughout; **SF Pro Expanded for display type only**; monospaced digits for every time and count.
+SF Pro throughout; **bold weight marks display type**; monospaced digits for every time and count.
+SF Pro Expanded was tried for display type in #685 and dropped: it read squashed at large-title size,
+so the navigation bar's large title is the system's own bold.
 
 | Token | Value | Use |
 |---|---|---|
-| `NavigationBarType.apply()` | large title, bold, Expanded | Every navigation bar's large title (applied once in `S2App`) |
-| `s2LargeTitle` | `.largeTitle` bold Expanded | The first-run welcome |
-| `s2HeroTitle` | `.title2` bold Expanded | A detail hero's title, the Now Playing song |
+| `s2LargeTitle` | `.largeTitle` bold | The first-run welcome |
+| `s2HeroTitle` | `.title2` bold | A detail hero's title, the Now Playing song |
 | `s2Title` | `.title2` bold | Empty states, onboarding steps |
 | `s2Title3` | `.title3` semibold | A title's supporting line, a sign-in heading |
 | `s2SectionTitle` | `.title3` bold | In-content section headers (`SectionHeader`) |
@@ -180,7 +181,7 @@ board. System controls are listed where S2 wraps or configures them.
 - **Foundations**: `artwork` (tile, hairline, placeholder, artist circle), `cover-mosaic`, `skeleton`.
 - **Actions**: `capsule-button` (prominent, secondary; glass and fallback), `icon-button` (44 pt target),
   `menu` (song, album, artist context menus), `shuffle-all`.
-- **Navigation**: `tab-shell` (tab bar, sidebar-adaptable), `large-title` (Expanded), `letter-index`,
+- **Navigation**: `tab-shell` (tab bar, sidebar-adaptable), `large-title` (the system's bold), `letter-index`,
   `section-header`.
 - **Content**: `row-song`, `row-album`, `row-artist`, `row-text`, `tile` (shelf and grid, artist variant),
   `detail-hero` (album, artist, playlist, genre), `jump-back-in`, `empty-state`, `resume-card`.
@@ -216,5 +217,6 @@ ticked component whose PNGs change. Screens build only from catalogued component
 |---|---|---|
 | 2026-10-01 | owner | **Neutral accent.** `AccentColor` is near-black / near-white, as Android's neutral chrome; the artwork tint still overrides it in the player, mini player and heroes. Was blue #006AD1 / #3D9DFF. |
 | 2026-10-01 | owner | **SF Pro Expanded for display type only**: the large title, hero titles, the Now Playing song and the welcome. Everything else is SF Pro (the rounded design is gone). |
+| 2026-10-01 | owner | **Display type back to standard-width SF Pro bold**, dropping #685's Expanded: on device it read vertically squashed at large-title size. The navigation bar's large title reverts to the system's own bold. |
 | 2026-10-01 | owner | **Artists are circles** at every size, reversing 9703ba568 (#624), which had given them albums' corners. |
 | 2026-10-01 | owner | **Dividers**: none between rows led by artwork; on text-only rows, the system separator inset to the title. `rowSeparator` (Phase 1) is applied on Library, Playlists, detail and track rows; grouped Forms (Settings, Sources) keep the system style. |

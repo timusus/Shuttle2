@@ -8,7 +8,6 @@ struct S2App: App {
 
     init() {
         AppGraph.initialize()
-        NavigationBarType.apply()
         AccentTint.apply()
         startTab = AppTab(AppGraph.shared.shellViewModel.uiState.value.startTab)
     }
