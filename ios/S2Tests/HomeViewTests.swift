@@ -36,6 +36,19 @@ struct HomeViewTests {
         HomeSection(id: id, title: title, subtitle: subtitle, items: items, progress: progress)
     }
 
+    private func progress(
+        song: String? = "Airbag",
+        fraction: Float = 0.4,
+        shuffled: Bool = false,
+        finished: Bool = false,
+        updatedAt: Date = Date(timeIntervalSince1970: 1_000_000)
+    ) -> HomeItemProgress {
+        HomeItemProgress(
+            songName: song, positionMs: 30_000, fraction: fraction, shuffled: shuffled, finished: finished,
+            updatedAt: KotlinInstant.companion.fromEpochMilliseconds(epochMilliseconds: Int64(updatedAt.timeIntervalSince1970 * 1000))
+        )
+    }
+
     private func content(_ sections: [HomeSection] = []) -> HomeUiState {
         HomeUiStateContent(showWhatsNew: false, sections: sections, events: [], covers: [:], refreshing: false)
     }
@@ -68,37 +81,105 @@ struct HomeViewTests {
 
     /// ViewInspector doesn't hand `.environment` values to an inspected view's `@Environment`, so this is the default
     /// (compact) tier; `columnCount` covers the others.
-    @Test func theGridRendersTwoColumnsOfAtMostEightCellsOnAPhone() throws {
+    @Test func theMostRecentItemIsTheCardOverTwoColumnsOfAtMostSixTilesOnAPhone() throws {
         let items: [HomeItem] = (1...10).map { HomeItemAlbumItem(album: album("Album \($0)")) }
-        let lazyGrid = try JumpBackInGrid(items: items, perform: { _ in }, open: { _ in }).inspect().find(ViewType.LazyVGrid.self)
+        let grid = try JumpBackInGrid(items: items, perform: { _ in }, open: { _ in }).inspect()
+        #expect(try grid.find(viewWithAccessibilityIdentifier: "homeGrid.card").accessibilityLabel().string() == "Album 1, Album")
+        let lazyGrid = try grid.find(ViewType.LazyVGrid.self)
         #expect(try lazyGrid.columns().count == 2)
-        #expect(lazyGrid.findAll(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "homeGrid.cell" }).count == 8)
+        let tiles = lazyGrid.findAll(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "homeGrid.cell" })
+        #expect(try tiles.map { try $0.accessibilityLabel().string() } == (2...7).map { "Album \($0), Album" })
+        #expect(grid.findAll(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "homeGrid.play" }).count == 1)
     }
 
-    @Test func gridCellsNameTheirKindOnlyToVoiceOver() throws {
-        let progress = HomeItemProgress(track: 24, trackCount: 31)
+    @Test func tilesNameTheirKindAndWhereTheirQueueWasLeft() throws {
         let artist = HomeItemArtistItem(albumArtist: artist("Alice In Chains"))
+        let playlist = HomeItemSmartPlaylistItem(smartPlaylistId: .favourites)
+        let genre = HomeItemGenreItem(genre: genre("Trip Hop"))
         let sut = HomeContent(state: content([section(.jumpBackIn, .jumpBackIn, [
             HomeItemAlbumItem(album: album("OK Computer")),
+            HomeItemAlbumItem(album: album("Amnesiac")),
             artist,
-            HomeItemSmartPlaylistItem(smartPlaylistId: .favourites),
-            HomeItemGenreItem(genre: genre("Trip Hop")),
-        ], progress: [artist.key: progress])]))
+            playlist,
+            genre,
+        ], progress: [
+            artist.key: progress(song: "Rooster"),
+            playlist.key: progress(shuffled: true),
+            genre.key: progress(finished: true),
+        ])]))
         #expect((try? sut.inspect().find(text: "Jump Back In")) != nil)
-        for label in ["Album", "Artist", "Playlist", "Genre"] {
-            #expect((try? sut.inspect().find(text: label)) == nil, "a \(label) label is drawn")
+        for detail in ["Album", "Artist · Rooster", "Playlist · Shuffled", "Genre · Finished"] {
+            #expect((try? sut.inspect().find(text: detail)) != nil, "no \(detail)")
         }
         let labels = try sut.inspect().findAll(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "homeGrid.cell" })
             .map { try $0.accessibilityLabel().string() }
-        #expect(labels == ["OK Computer, Album", "Alice In Chains, Artist, Track 24 of 31", "Favourites, Playlist", "Trip Hop, Genre"])
+        #expect(labels == [
+            "Amnesiac, Album",
+            "Alice In Chains, Artist, on Rooster, 40% through",
+            "Favourites, Playlist, on Airbag, shuffled",
+            "Trip Hop, Genre, finished",
+        ])
+    }
+
+    @Test func jumpBackInHasNoSubtitle() throws {
+        let sut = HomeContent(state: content([
+            section(.jumpBackIn, .jumpBackIn, [HomeItemAlbumItem(album: album("OK Computer"))], subtitle: .homeJumpBackInSubtitle),
+        ]))
+        #expect((try? sut.inspect().find(text: "Jump Back In")) != nil)
+        #expect((try? sut.inspect().find(text: "Pick up where you left off")) == nil)
+    }
+
+    @Test func theCardSaysWhenAndOnWhichSongItsQueueWasLeft() throws {
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        let now = Date(timeIntervalSince1970: 1_000_000 + 26 * 3600)
+        let card = JumpBackInResumeCard(
+            item: item, progress: progress(), tileKey: "jumpBackIn|album", zoomSourceKey: nil, perform: { _ in }, open: { _ in }, now: now
+        )
+        let sut = try card.inspect()
+        #expect((try? sut.find(text: "Album · Yesterday")) != nil)
+        #expect((try? sut.find(text: "Airbag")) != nil)
+        #expect((try? sut.find(JumpBackInProgressBar.self)) != nil)
+        #expect(try sut.find(viewWithAccessibilityIdentifier: "homeGrid.card").accessibilityLabel().string()
+            == "OK Computer, Album, on Airbag, 40% through, Yesterday")
+        #expect(try sut.find(viewWithAccessibilityIdentifier: "homeGrid.play").accessibilityLabel().string() == "Resume OK Computer")
+    }
+
+    @Test func aShuffledCardShowsTheShuffleGlyphInPlaceOfTheBar() throws {
+        let card = JumpBackInResumeCard(
+            item: HomeItemAlbumItem(album: album("OK Computer")), progress: progress(shuffled: true),
+            tileKey: "a", zoomSourceKey: nil, perform: { _ in }, open: { _ in }
+        )
+        let sut = try card.inspect()
+        #expect((try? sut.find(viewWithAccessibilityIdentifier: "homeGrid.shuffled")) != nil)
+        #expect((try? sut.find(JumpBackInProgressBar.self)) == nil)
+        #expect((try? sut.find(text: "Airbag")) != nil)
+    }
+
+    @Test func aFinishedCardOffersToPlayAgain() throws {
+        let card = JumpBackInResumeCard(
+            item: HomeItemAlbumItem(album: album("OK Computer")), progress: progress(finished: true),
+            tileKey: "a", zoomSourceKey: nil, perform: { _ in }, open: { _ in }
+        )
+        let sut = try card.inspect()
+        #expect((try? sut.find(text: "Finished · Play again")) != nil)
+        #expect((try? sut.find(JumpBackInProgressBar.self)) == nil)
+        #expect(try sut.find(viewWithAccessibilityIdentifier: "homeGrid.play").accessibilityLabel().string() == "Play OK Computer")
+    }
+
+    @Test func aTileShowsTheBarOnlyWhileItsQueueIsUnderWayInOrder() {
+        #expect(JumpBackInText.showsBar(progress()))
+        #expect(!JumpBackInText.showsBar(progress(fraction: 0)))
+        #expect(!JumpBackInText.showsBar(progress(shuffled: true)))
+        #expect(!JumpBackInText.showsBar(progress(finished: true)))
+        #expect(!JumpBackInText.showsBar(nil))
     }
 
     @Test func aGridCellIsAsTallAsItsArtworkSlot() throws {
         let cell = JumpBackInCell(
-            item: HomeItemAlbumItem(album: album("OK Computer")), progress: HomeItemProgress(track: 5, trackCount: 12),
+            item: HomeItemAlbumItem(album: album("OK Computer")), progress: progress(),
             tileKey: "jumpBackIn|album", zoomSourceKey: nil, perform: { _ in }, open: { _ in }
         )
-        #expect(try cell.inspect().find(ViewType.HStack.self).fixedHeight() == ArtworkSize.albumRow)
+        #expect(try cell.inspect().find(ViewType.Button.self).fixedHeight() == ArtworkSize.albumRow)
         #expect(JumpBackInCell.artworkSide(for: HomeItemAlbumItem(album: album("OK Computer"))) == ArtworkSize.albumRow)
     }
 
@@ -286,16 +367,6 @@ struct HomeViewTests {
         let resume = try #require(actions.first as? MediaActionResume)
         #expect((resume.context as AnyObject).isEqual(item.playContext as AnyObject))
         #expect(resume.context is PlayContextAlbum)
-    }
-
-    @Test func aGridCellSaysWhichTrackItsQueueWasLeftAt() throws {
-        let item = HomeItemAlbumItem(album: album("OK Computer"))
-        let other = HomeItemAlbumItem(album: album("Amnesiac"))
-        let sut = HomeContent(state: content([section(.jumpBackIn, .jumpBackIn, [item, other], progress: [
-            item.key: HomeItemProgress(track: 5, trackCount: 12),
-        ])]))
-        #expect((try? sut.inspect().find(text: "Track 5 of 12")) != nil)
-        #expect(try sut.inspect().findAll(ViewType.Text.self, where: { (try? $0.string())?.hasPrefix("Track") == true }).count == 1)
     }
 
     @Test func aGridCellsPlayResumesWhereOtherTilesPlayFromTheStart() {

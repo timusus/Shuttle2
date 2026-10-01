@@ -68,6 +68,9 @@ enum ArtworkSize {
     /// An album row, whose cover carries more of the row.
     static let albumRow: CGFloat = 56
 
+    /// Home's Jump Back In resume card, the most recent item's (#706).
+    static let resumeCard: CGFloat = 88
+
     /// A Home shelf tile at compact width.
     static let shelf: CGFloat = 150
     /// A Home shelf tile at regular and wide width.
