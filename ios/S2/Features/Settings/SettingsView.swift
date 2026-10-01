@@ -8,13 +8,21 @@ import SwiftUI
 /// `EqualizerView` the same way. ReplayGain's pre-amp is its own section, labelled and explained apart from the
 /// Equalizer's Preamp (#645).
 struct SettingsView: View {
+    /// The shared view model's cache key, and the catalog screens to show (nil: all of them, with About). The Audio
+    /// sheet's Playback Settings screen is this same view over the Playback & Sound screen alone.
+    var cacheKey = Navigator.settingsCacheKey
+    var destinations: Set<SettingsDestination>?
+    var title = "Settings"
+
     var body: some View {
-        let viewModel = ViewModelCache.shared.viewModel(Navigator.settingsCacheKey) { AppGraph.shared.settingsViewModel }
+        let viewModel = ViewModelCache.shared.viewModel(cacheKey) { AppGraph.shared.settingsViewModel }
         let catalog = AppGraph.shared.settingsCatalog
         Observing(viewModel.uiState) { state in
             SettingsEventsHost(events: state.events, handled: { viewModel.onEventHandled(id: $0) }) { rescanStarted in
                 SettingsContent(
-                    sections: SettingsSection.sections(catalog: catalog, state: state, rescanStarted: rescanStarted),
+                    sections: SettingsSection.sections(catalog: catalog, state: state, rescanStarted: rescanStarted, destinations: destinations),
+                    title: title,
+                    showsAbout: destinations == nil,
                     onToggle: { key, isOn in
                         if let item = catalog.item(key: key) as? SettingItemSwitch {
                             viewModel.onSwitchChange(item: item, checked: isOn)
@@ -102,9 +110,15 @@ extension SettingsSection {
     /// group, if that group is untitled), and every titled group is a section of its own. The Sources screen's
     /// opening section leads with the row that pushes Sources. A Navigate row is a link when iOS has its screen (the
     /// Equalizer) and left out otherwise, rather than drawn as a row that does nothing.
-    static func sections(catalog: SettingsCatalog, state: SettingsUiState, rescanStarted: Bool = false) -> [SettingsSection] {
+    static func sections(
+        catalog: SettingsCatalog,
+        state: SettingsUiState,
+        rescanStarted: Bool = false,
+        destinations: Set<SettingsDestination>? = nil
+    ) -> [SettingsSection] {
         catalog.screens.flatMap { screen -> [SettingsSection] in
             let destination = screen.destination
+            guard destinations?.contains(destination) ?? true else { return [] }
             var opening = SettingsSection(id: destination.name, title: destination.title.localized(), rows: [])
             if destination == .sources {
                 opening.rows.append(.link(id: "settings.sources", title: "Sources", systemImage: "server.rack", route: .sources))
@@ -185,6 +199,8 @@ extension SettingsSection {
 /// Settings from plain values.
 struct SettingsContent: View {
     let sections: [SettingsSection]
+    var title = "Settings"
+    var showsAbout = true
     var onToggle: (String, Bool) -> Void = { _, _ in }
     var onChoose: (String, Int) -> Void = { _, _ in }
     var onSlide: (String, Float) -> Void = { _, _ in }
@@ -208,27 +224,29 @@ struct SettingsContent: View {
                     if let footer = section.footer { Text(footer) }
                 }
             }
-            Section {
-                LabeledContent {
-                    Text(Self.appVersion)
-                } label: {
-                    Label { Text("Version") } icon: { IconSquare(systemImage: "info", style: .filled(.gray)) }
+            if showsAbout {
+                Section {
+                    LabeledContent {
+                        Text(Self.appVersion)
+                    } label: {
+                        Label { Text("Version") } icon: { IconSquare(systemImage: "info", style: .filled(.gray)) }
+                    }
+                    .accessibilityIdentifier("settings.version")
+                    // The licences (FFmpeg's LGPL notice) live in the app's Settings bundle, the iOS place for them.
+                    Button {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                    } label: {
+                        Label { Text("Acknowledgements") } icon: { IconSquare(systemImage: "doc.text.fill", style: .filled(.gray)) }
+                    }
+                    .tint(.primary)
+                    .accessibilityIdentifier("settings.acknowledgements")
+                } header: {
+                    Text("About")
                 }
-                .accessibilityIdentifier("settings.version")
-                // The licences (FFmpeg's LGPL notice) live in the app's Settings bundle, the iOS place for them.
-                Button {
-                    if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
-                } label: {
-                    Label { Text("Acknowledgements") } icon: { IconSquare(systemImage: "doc.text.fill", style: .filled(.gray)) }
-                }
-                .tint(.primary)
-                .accessibilityIdentifier("settings.acknowledgements")
-            } header: {
-                Text("About")
             }
         }
         .formStyle(.grouped)
-        .navigationTitle("Settings")
+        .navigationTitle(title)
         .confirmationDialog(
             confirming?.confirmation.title ?? "",
             isPresented: Binding(get: { confirming != nil }, set: { if !$0 { confirming = nil } }),

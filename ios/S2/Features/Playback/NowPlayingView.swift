@@ -4,7 +4,7 @@ import SwiftUI
 /// with a blurred copy of it glowing through the top (`ArtworkBackground`), close and the favourite heart along the
 /// top, the title with the artist and the album under it in `MarqueeText` (tapping either opens its screen; a long
 /// press of the cover or the title opens the song's menu), a capsule scrubber, previous / play-pause / next in the
-/// cover's tint between shuffle and repeat, and Audio (speed and the equalizer), the sleep timer, AirPlay and the
+/// cover's tint between shuffle and repeat, and Audio (speed, then the equalizer and playback settings), the sleep timer, AirPlay and the
 /// queue in one glass capsule along the bottom. The cover's colour (`\.artworkTintSource`) comes from above
 /// (`playerArtworkTint`, in `ContentView`); the screen derives
 /// its ground, tint and captions from it (`PlayerPalette`), so they are measured on the ground they sit on. Presented by `nowPlayingPresentation` (a full-screen cover in
@@ -67,6 +67,7 @@ struct NowPlayingContent: View {
 
     @State private var showQueue = false
     @State private var showAudio = false
+    @State private var showSleepTimer = false
     /// VoiceOver's Add to Playlist action asks where in a dialog; the context menu has its own submenu.
     @State private var showPlaylistChoices = false
     @State private var showNewPlaylist = false
@@ -365,14 +366,14 @@ struct NowPlayingContent: View {
 
     // MARK: - Bottom capsule
 
-    /// Audio (speed and the equalizer), the sleep timer, AirPlay and the queue in one capsule: Liquid Glass on
+    /// Audio (speed, then the equalizer and playback settings), the sleep timer, AirPlay and the queue in one capsule: Liquid Glass on
     /// iOS 26, `.ultraThinMaterial` below. Neutral, each glyph taking the tint only while its mode is on.
     private var bottomCapsule: some View {
         HStack(spacing: 0) {
             audioButton
                 .frame(maxWidth: .infinity)
 
-            sleepTimerMenu
+            sleepTimerButton
                 .frame(maxWidth: .infinity)
 
             AirPlayButton(activeTint: playerTint, inactiveTint: chromeInk(isOn: false))
@@ -416,7 +417,8 @@ struct NowPlayingContent: View {
         .accessibilityIdentifier("nowPlaying.favourite")
     }
 
-    /// Opens the Audio sheet: the playback speed and the equalizer. Tinted while the speed isn't normal.
+    /// Opens the Audio sheet: the playback speed, and the Equalizer & Playback Settings screen it pushes. Tinted while
+    /// the speed isn't normal.
     private var audioButton: some View {
         Button { showAudio = true } label: {
             Image(systemName: "slider.vertical.3")
@@ -424,7 +426,7 @@ struct NowPlayingContent: View {
         }
         .buttonStyle(.pressScale)
         .accessibilityLabel("Audio")
-        .accessibilityValue("Speed \(Self.speedText(state.playbackSpeed))")
+        .accessibilityValue("Speed \(NowPlayingAudioSheet.format(state.playbackSpeed))")
         .accessibilityIdentifier("nowPlaying.audio")
         .playerSheet(isPresented: $showAudio, tier: tier) {
             NowPlayingAudioSheet(speed: state.playbackSpeed, setSpeed: actions.setSpeed)
@@ -432,33 +434,28 @@ struct NowPlayingContent: View {
         }
     }
 
-    /// The playback speeds offered, 1 being normal.
-    static let speeds: [Float] = [0.5, 0.75, 1, 1.25, 1.5, 2]
-
-    /// The sleep timer's durations, in minutes.
-    static let sleepTimerMinutes = [15, 30, 45, 60]
-
-    private var sleepTimerMenu: some View {
-        Menu {
-            ForEach(Self.sleepTimerMinutes, id: \.self) { minutes in
-                Button("\(minutes) Minutes") { actions.startSleepTimer(minutes) }
-            }
-            if state.sleepTimerActive {
-                Button("Turn Off Timer", role: .destructive, action: actions.stopSleepTimer)
-            }
-        } label: {
+    /// Opens the sleep timer sheet. Tinted while the timer is running.
+    private var sleepTimerButton: some View {
+        Button { showSleepTimer = true } label: {
             Image(systemName: state.sleepTimerActive ? "moon.zzz.fill" : "moon.zzz")
                 .capsuleGlyph(chromeInk(isOn: state.sleepTimerActive))
-                // The menu is the one element; the symbol's own label ("Snooze") would surface beside it (#650).
+                // The button is the one element; the symbol's own label ("Snooze") would surface beside it (#650).
                 .accessibilityHidden(true)
         }
+        .buttonStyle(.pressScale)
         .accessibilityLabel("Sleep Timer")
         .accessibilityValue(state.sleepTimerActive ? "On" : "Off")
         .accessibilityIdentifier("nowPlaying.sleepTimer")
-    }
-
-    static func speedText(_ speed: Float) -> String {
-        speed.formatted(.number.precision(.fractionLength(0...2))) + "×"
+        .playerSheet(isPresented: $showSleepTimer, tier: tier) {
+            NowPlayingSleepTimerSheet(
+                isActive: state.sleepTimerActive,
+                playToEnd: state.sleepTimerPlayToEnd,
+                startTimer: actions.startSleepTimer,
+                stopTimer: actions.stopSleepTimer,
+                remaining: actions.sleepTimerRemaining
+            )
+            .playerTinted(artworkTint, ink: artworkTintInk, isTinted: isArtworkTinted)
+        }
     }
 
     // MARK: - Swipe down to dismiss
@@ -944,66 +941,6 @@ struct NowPlayingPlaylistChoices: View {
     }
 }
 
-// MARK: - Audio
-
-/// The Audio sheet, from Now Playing's Audio button: the playback speed as a checked list, and the Equalizer, pushed
-/// inside the sheet (the same `EqualizerView` Settings pushes). One grouped form, as iOS lays out settings.
-struct NowPlayingAudioSheet: View {
-    let speed: Float
-    let setSpeed: (Float) -> Void
-
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section("Playback Speed") {
-                    ForEach(NowPlayingContent.speeds, id: \.self) { option in
-                        speedRow(option)
-                    }
-                }
-                Section {
-                    NavigationLink {
-                        EqualizerView()
-                    } label: {
-                        Label("Equalizer", systemImage: "slider.vertical.3")
-                    }
-                    .accessibilityIdentifier("audio.equalizer")
-                }
-            }
-            .navigationTitle("Audio")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                }
-            }
-        }
-    }
-
-    private func speedRow(_ option: Float) -> some View {
-        let isSelected = option == speed
-        let text = NowPlayingContent.speedText(option)
-        return Button { setSpeed(option) } label: {
-            HStack {
-                // The label's own colour, not the tint a form gives a button's label: only the checkmark marks the choice.
-                Text(option == 1 ? "\(text) (Normal)" : text)
-                    .foregroundStyle(Color(uiColor: .label))
-                Spacer()
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.tint)
-                }
-            }
-            .contentShape(Rectangle())
-        }
-        .accessibilityLabel(text)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityIdentifier("audio.speed.\(text)")
-    }
-}
-
 #Preview("Playing") {
     NowPlayingContent(
         state: NowPlayingState(
@@ -1035,10 +972,6 @@ struct NowPlayingAudioSheet: View {
         ],
         isPlaying: true
     )
-}
-
-#Preview("Audio") {
-    NowPlayingAudioSheet(speed: 1.25) { _ in }
 }
 
 #Preview("Empty queue") {

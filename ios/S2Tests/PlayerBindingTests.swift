@@ -200,7 +200,7 @@ struct PlayerBindingTests {
     @Test func theSleepTimerRunsUntilStopped() async throws {
         _ = try await loadQueue()
 
-        binding.actions.startSleepTimer(15)
+        binding.actions.startSleepTimer(15, false)
         #expect(await waitUntil { binding.nowPlaying.sleepTimerActive })
 
         binding.actions.stopSleepTimer()

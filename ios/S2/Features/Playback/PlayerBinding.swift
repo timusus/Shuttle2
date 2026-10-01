@@ -18,6 +18,8 @@ struct NowPlayingState: Equatable {
     /// 1 being normal speed.
     var playbackSpeed: Float = 1
     var sleepTimerActive = false
+    /// Whether Start also waits for the current track to end (the last choice made).
+    var sleepTimerPlayToEnd = false
     /// Whether the current song is a favourite.
     var isFavourite = false
     /// The song actions the current song's menu offers, in the shared ViewModel's order.
@@ -183,9 +185,12 @@ struct PlayerActions {
     var toggleRepeat: () -> Void = {}
     /// Sets the playback speed, 1 being normal.
     var setSpeed: (Float) -> Void = { _ in }
-    /// Starts the sleep timer, pausing playback after this many minutes.
-    var startSleepTimer: (Int) -> Void = { _ in }
+    /// Starts the sleep timer, pausing playback after this many minutes, and, when `playToEnd`, once the current
+    /// track has ended too (0 minutes: at the track's end).
+    var startSleepTimer: (_ minutes: Int, _ playToEnd: Bool) -> Void = { _, _ in }
     var stopSleepTimer: () -> Void = {}
+    /// The time left in milliseconds, ticking while collected: nil when off, 0 while it waits for the track to end.
+    var sleepTimerRemaining: () -> AsyncStream<Int?> = { AsyncStream { $0.finish() } }
 
     /// Does nothing: previews and tests.
     static let none = PlayerActions()
@@ -289,6 +294,7 @@ final class PlayerBinding {
             next.repeatMode = NowPlayingRepeat(player.repeatMode)
             next.playbackSpeed = player.playbackSpeed
             next.sleepTimerActive = player.sleepTimerActive
+            next.sleepTimerPlayToEnd = player.sleepTimerPlayToEnd
             next.isFavourite = player.favourite
             if current?.song.id != songActionsFor { next.songActions = [] }
             observeSongActions(for: current?.song)
@@ -344,10 +350,19 @@ final class PlayerBinding {
             toggleShuffle: { viewModel.toggleShuffle() },
             toggleRepeat: { viewModel.cycleRepeatMode() },
             setSpeed: { speed in viewModel.setPlaybackSpeed(speed: speed) },
-            startSleepTimer: { minutes in
-                viewModel.startSleepTimer(durationMs: Int64(minutes) * 60_000, playToEnd: false)
+            startSleepTimer: { minutes, playToEnd in
+                viewModel.startSleepTimer(durationMs: Int64(minutes) * 60_000, playToEnd: playToEnd)
             },
-            stopSleepTimer: { viewModel.stopSleepTimer() }
+            stopSleepTimer: { viewModel.stopSleepTimer() },
+            sleepTimerRemaining: {
+                AsyncStream { continuation in
+                    let task = Task {
+                        for await ms in viewModel.sleepTimerRemaining() { continuation.yield(ms?.intValue) }
+                        continuation.finish()
+                    }
+                    continuation.onTermination = { _ in task.cancel() }
+                }
+            }
         )
     }
 

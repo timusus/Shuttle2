@@ -120,7 +120,7 @@ struct NowPlayingViewTests {
         playing.sleepTimerActive = true
         let sut = NowPlayingContent(state: playing)
         let audio = try sut.inspect().find(viewWithAccessibilityLabel: "Audio")
-        #expect(try audio.accessibilityValue().string() == "Speed " + NowPlayingContent.speedText(1.5))
+        #expect(try audio.accessibilityValue().string() == "Speed " + NowPlayingAudioSheet.format(1.5))
         #expect((try? audio.button()) != nil)
         let sleepTimer = try sut.inspect().find(viewWithAccessibilityLabel: "Sleep Timer")
         #expect(try sleepTimer.accessibilityValue().string() == "On")
@@ -128,17 +128,44 @@ struct NowPlayingViewTests {
         #expect(try sleepTimer.find(ViewType.Image.self).accessibilityHidden())
     }
 
-    @Test func theAudioSheetSetsTheSpeedAndOffersTheEqualizer() throws {
+    @Test func theAudioSheetShowsTheSpeedAndSetsAPreset() throws {
         var set: [Float] = []
-        let sut = NowPlayingAudioSheet(speed: 1.25) { set.append($0) }
-        let selected = try sut.inspect().find(viewWithAccessibilityLabel: NowPlayingContent.speedText(1.25))
-        #expect(try selected.find(ViewType.Image.self).actualImage().name() == "checkmark")
-        let other = try sut.inspect().find(viewWithAccessibilityLabel: NowPlayingContent.speedText(2))
-        #expect((try? other.find(ViewType.Image.self)) == nil)
+        let sut = NowPlayingAudioSheet(speed: 1.2) { set.append($0) }
+        #expect((try? sut.inspect().find(text: "1.2×")) != nil)
+        #expect((try? sut.inspect().find(viewWithAccessibilityLabel: "1.2× speed")) != nil)
+        let other = try sut.inspect().find(viewWithAccessibilityLabel: "2× speed")
         try other.button().tap()
         #expect(set == [2])
+    }
+
+    @Test func theAudioSheetPushesEqualizerAndPlaybackSettings() throws {
+        let sut = NowPlayingAudioSheet(speed: 1) { _ in }
         #expect((try? sut.inspect().find(ViewType.NavigationLink.self)) != nil)
-        #expect((try? sut.inspect().find(text: "Equalizer")) != nil)
+        #expect((try? sut.inspect().find(text: "Equalizer & Playback Settings")) != nil)
+    }
+
+    @Test func speedAndTimerSnapToTheirSteps() {
+        #expect(abs(NowPlayingAudioSheet.snap(1.26) - 1.3) < 0.001)
+        #expect(NowPlayingAudioSheet.snap(0.1) == 0.5)
+        #expect(NowPlayingAudioSheet.snap(9) == 2)
+        #expect(NowPlayingAudioSheet.format(1) == "1×")
+        #expect(NowPlayingSleepTimerSheet.remainingText(ms: 754_000) == "12m 34s")
+        #expect(NowPlayingSleepTimerSheet.remainingText(ms: 5_000) == "5s")
+    }
+
+    @Test func theSleepTimerSheetStartsOrStops() throws {
+        var started: [(Int, Bool)] = []
+        let off = NowPlayingSleepTimerSheet(isActive: false, playToEnd: false, startTimer: { started.append(($0, $1)) }, stopTimer: {})
+        try off.inspect().find(viewWithAccessibilityIdentifier: "sleepTimer.start").button().tap()
+        try off.inspect().find(viewWithAccessibilityIdentifier: "sleepTimer.endOfTrack").button().tap()
+        #expect(started.map(\.0) == [30, 0])
+        #expect(started.map(\.1) == [false, true])
+
+        var stopped = 0
+        let on = NowPlayingSleepTimerSheet(isActive: true, playToEnd: false, startTimer: { _, _ in }, stopTimer: { stopped += 1 })
+        #expect((try? on.inspect().find(viewWithAccessibilityIdentifier: "sleepTimer.start")) == nil)
+        try on.inspect().find(viewWithAccessibilityIdentifier: "sleepTimer.stop").button().tap()
+        #expect(stopped == 1)
     }
 
     @Test func tappingTheArtistOrAlbumOpensIt() throws {

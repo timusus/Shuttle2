@@ -1,4 +1,4 @@
-# Now Playing, its Audio sheet and its queue against a real library (#644): sign in (sign-in-jellyfin.yaml), play
+# Now Playing, its Audio and sleep timer sheets and its queue against a real library (#644): sign in (sign-in-jellyfin.yaml), play
 # the first song, open Now Playing, turn shuffle on and repeat to One, then the Audio sheet and the queue. Run with
 # ios/scripts/maestro-sim.sh; set the simulator's appearance first for a light or dark pass:
 #
@@ -56,6 +56,17 @@ appId: com.simplecityapps.shuttle.dev
     timeout: 5000
 - takeScreenshot: 4-audio
 # Down by the grabber: Done isn't visible to Maestro either.
+- swipe:
+    start: "50%, 49%"
+    end: "50%, 95%"
+- waitForAnimationToEnd:
+    timeout: 3000
+# The sleep timer is a sheet too (the old menu is gone).
+- tapOn:
+    id: "nowPlaying.sleepTimer"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 4b-sleep-timer
 - swipe:
     start: "50%, 49%"
     end: "50%, 95%"
