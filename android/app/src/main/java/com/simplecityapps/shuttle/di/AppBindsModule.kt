@@ -16,6 +16,8 @@ import com.simplecityapps.shuttle.appinitializers.WidgetInitializer
 import com.simplecityapps.shuttle.entitlement.EntitledServerStreamPolicy
 import com.simplecityapps.shuttle.sources.DefaultMediaSources
 import com.simplecityapps.shuttle.sources.SafScannerFolderStore
+import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackupFlow
+import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackupManager
 import com.simplecityapps.shuttle.ui.screens.sources.MediaSources
 import com.simplecityapps.shuttle.ui.screens.sources.ScannerFolderStore
 import dev.zacsweers.metro.AppScope
@@ -27,6 +29,9 @@ import dev.zacsweers.metro.IntoSet
 @ContributesTo(AppScope::class)
 @BindingContainer
 abstract class AppBindsModule {
+    @Binds
+    abstract fun bindLibraryBackupFlow(impl: LibraryBackupManager): LibraryBackupFlow
+
     @Binds
     abstract fun bindServerStreamPolicy(impl: EntitledServerStreamPolicy): ServerStreamPolicy
 

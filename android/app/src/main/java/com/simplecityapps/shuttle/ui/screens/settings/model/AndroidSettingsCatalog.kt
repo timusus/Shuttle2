@@ -205,6 +205,18 @@ object AndroidSettingsCatalog : SettingsCatalog {
                             ChoiceOption(ImportFrequency.Weekly, StringKey.PREF_RESCAN_FREQUENCY_WEEKLY)
                         )
                     ),
+                    SettingItem.Action(
+                        action = SettingsAction.ExportBackup,
+                        title = StringKey.PREF_BACKUP_EXPORT_TITLE,
+                        summary = StringKey.PREF_BACKUP_EXPORT_SUMMARY,
+                        key = "pref_backup_export"
+                    ),
+                    SettingItem.Action(
+                        action = SettingsAction.ImportBackup,
+                        title = StringKey.PREF_BACKUP_IMPORT_TITLE,
+                        summary = StringKey.PREF_BACKUP_IMPORT_SUMMARY,
+                        key = "pref_backup_import"
+                    ),
                     SettingItem.Navigate(
                         target = SettingsLink.ExcludedSongs,
                         title = StringKey.PREF_EXCLUDE_TITLE,
