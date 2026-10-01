@@ -71,6 +71,7 @@ struct NowPlayingContent: View {
     /// VoiceOver's Add to Playlist action asks where in a dialog; the context menu has its own submenu.
     @State private var showPlaylistChoices = false
     @State private var showNewPlaylist = false
+    @State private var songInfo: SongInfoTarget?
     @State private var newPlaylistName = ""
     @State private var isScrubbing = false
     @State private var containerWidth: CGFloat = 0
@@ -121,6 +122,7 @@ struct NowPlayingContent: View {
         // On a player surface the artwork tint is the accent.
         .tint(playerTint)
         .playerNotice(showQueue ? .constant(nil) : notice)
+        .songInfoSheet($songInfo)
         .alert("New Playlist", isPresented: $showNewPlaylist) {
             TextField("Playlist Name", text: $newPlaylistName)
             Button("Cancel", role: .cancel) { newPlaylistName = "" }
@@ -236,6 +238,14 @@ struct NowPlayingContent: View {
             if let album = state.album {
                 detailLine(album, font: .body, opens: .goToAlbum, id: "nowPlaying.album")
             }
+            if let badge = state.qualityBadge {
+                Text(badge)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(secondaryInk)
+                    .padding(.top, Spacing.tiny)
+                    .accessibilityLabel("Audio quality, \(badge)")
+                    .accessibilityIdentifier("nowPlaying.quality")
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
@@ -254,7 +264,7 @@ struct NowPlayingContent: View {
             .font(font)
             .foregroundStyle(secondaryInk)
         if state.songActions.contains(action) {
-            Button { actions.songAction(action) } label: {
+            Button { perform(action) } label: {
                 line.contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -267,12 +277,21 @@ struct NowPlayingContent: View {
         }
     }
 
+    /// Song Info is this view's sheet; every other action goes to the ViewModel.
+    private func perform(_ action: NowPlayingSongAction) {
+        if action == .songInfo {
+            songInfo = state.songID.map { SongInfoTarget(songID: $0) }
+        } else {
+            actions.songAction(action)
+        }
+    }
+
     /// The song's menu, on a long press of the cover or the title.
     private var songMenu: some View {
         NowPlayingSongMenu(
             songActions: state.songActions,
             playlists: state.playlists,
-            onAction: actions.songAction,
+            onAction: perform,
             onNewPlaylist: { showNewPlaylist = true },
             onAddToPlaylist: actions.addToPlaylist
         )
@@ -285,7 +304,7 @@ struct NowPlayingContent: View {
             if action == .addToPlaylist {
                 Button(action.title) { showPlaylistChoices = true }
             } else {
-                Button(action.title) { actions.songAction(action) }
+                Button(action.title) { perform(action) }
             }
         }
     }

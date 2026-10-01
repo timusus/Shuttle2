@@ -5,10 +5,14 @@ import SwiftUI
 /// and `PlayerActions`, never the shared `PlayerViewModel` itself: `PlayerBinding` at the bottom of this file maps
 /// the ViewModel's state and actions onto them.
 struct NowPlayingState: Equatable {
+    /// The current song's id, for Song Info.
+    var songID: Int64?
     var title: String?
     var artist: String?
     var album: String?
     var artwork: ArtworkSource?
+    /// The current song's format, for the quality line under its title.
+    var quality: AudioQuality?
     var isPlaying = false
     var positionMs = 0
     var durationMs = 0
@@ -26,6 +30,9 @@ struct NowPlayingState: Equatable {
     var songActions: [NowPlayingSongAction] = []
     /// The playlists Add to Playlist offers.
     var playlists: [PlaylistOption] = []
+
+    /// The quality line, "FLAC 24/96" or "MP3 320"; nil when the format is unknown.
+    var qualityBadge: String? { quality?.badge() }
 
     /// Nothing queued.
     static let idle = NowPlayingState()
@@ -52,11 +59,12 @@ struct NowPlayingQueueRow: Identifiable, Equatable {
 }
 
 /// The shared song actions Now Playing's menu offers, of those the shared ViewModel allows the playing song
-/// (`PlayerViewModel.songActions`). Edit Tags has no iOS screen yet, and Song Info isn't in this menu yet, so both are left out.
+/// (`PlayerViewModel.songActions`). Edit Tags has no iOS screen yet, so it is left out. Song Info opens its sheet from the view, not the ViewModel.
 enum NowPlayingSongAction: Equatable, CaseIterable {
     case addToPlaylist
     case goToAlbum
     case goToArtist
+    case songInfo
     case exclude
 
     init?(_ type: MediaActionType) {
@@ -64,6 +72,7 @@ enum NowPlayingSongAction: Equatable, CaseIterable {
         case .addToPlaylist: self = .addToPlaylist
         case .goToAlbum: self = .goToAlbum
         case .goToArtist: self = .goToArtist
+        case .songInfo: self = .songInfo
         case .exclude: self = .exclude
         default: return nil
         }
@@ -74,6 +83,7 @@ enum NowPlayingSongAction: Equatable, CaseIterable {
         case .addToPlaylist: "Add to Playlist"
         case .goToAlbum: "Go to Album"
         case .goToArtist: "Go to Artist"
+        case .songInfo: "Song Info"
         case .exclude: "Exclude"
         }
     }
@@ -83,6 +93,7 @@ enum NowPlayingSongAction: Equatable, CaseIterable {
         case .addToPlaylist: "text.badge.plus"
         case .goToAlbum: "square.stack"
         case .goToArtist: "music.microphone"
+        case .songInfo: "info.circle"
         case .exclude: "nosign"
         }
     }
@@ -279,10 +290,12 @@ final class PlayerBinding {
         var next = nowPlaying
         if player !== lastPlayer {
             lastPlayer = player
+            next.songID = current?.song.id
             next.title = current?.song.name
             next.artist = current?.artist
             next.album = current?.album
             next.artwork = artwork
+            next.quality = current.map { AudioQuality(song: $0.song) }
             next.isPlaying = player.playing
             next.queue = player.items.map { item in
                 NowPlayingQueueRow(
@@ -378,7 +391,7 @@ final class PlayerBinding {
     private func perform(_ action: NowPlayingSongAction) {
         guard let selection = currentSelection else { return }
         let mediaAction: (any MediaAction)? = switch action {
-        case .addToPlaylist: nil
+        case .addToPlaylist, .songInfo: nil
         case .goToAlbum: MediaActionGoToAlbum(selection: selection)
         case .goToArtist: MediaActionGoToArtist(selection: selection)
         case .exclude: MediaActionExclude(selection: selection)

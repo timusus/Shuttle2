@@ -311,6 +311,23 @@ struct NowPlayingViewTests {
         #expect(time([30_000]) == nil)
     }
 
+    @Test func theQualityLineShowsTheFormatAndHidesWhenUnknown() throws {
+        var playing = state()
+        playing.quality = AudioQuality(codec: "flac", bitDepth: 24, sampleRate: 96_000)
+        let line = try NowPlayingContent(state: playing).inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.quality")
+        #expect(try line.text().string() == "FLAC 24/96")
+
+        playing.quality = AudioQuality(mimeType: "audio/mpeg", bitRate: 320)
+        #expect(playing.qualityBadge == "MP3 320")
+
+        for unknown in [nil, AudioQuality(), AudioQuality(bitDepth: 24, sampleRate: 96_000)] {
+            playing.quality = unknown
+            #expect(playing.qualityBadge == nil)
+            let sut = NowPlayingContent(state: playing)
+            #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "nowPlaying.quality")) == nil)
+        }
+    }
+
     @Test func swipingARowRemovesItByUid() throws {
         var removed: [Int64] = []
         var actions = PlayerActions()
@@ -388,7 +405,8 @@ struct NowPlayingViewTests {
         #expect(NowPlayingSongAction(.goToArtist) == .goToArtist)
         #expect(NowPlayingSongAction(.exclude) == .exclude)
         #expect(NowPlayingSongAction(.editTags) == nil)
-        #expect(NowPlayingSongAction(.songInfo) == nil)
+        #expect(NowPlayingSongAction(.songInfo) == .songInfo)
+        #expect(NowPlayingSongAction(.share) == nil)
     }
 
     @Test func aNewPlaylistNeedsANonBlankName() {
