@@ -219,6 +219,7 @@ struct SearchResultList: View {
     private let items: SearchResultItems
 
     @State private var expanded: SearchCategory?
+    @State private var songInfo: SongInfoTarget?
 
     init(
         query: String,
@@ -258,6 +259,7 @@ struct SearchResultList: View {
         }
         .listStyle(.plain)
         .onChange(of: query) { expanded = nil }
+        .songInfoSheet($songInfo)
         .accessibilityIdentifier("search.results")
     }
 
@@ -302,6 +304,7 @@ struct SearchResultList: View {
                         onAddToQueue: { onAction(MediaActionAddToQueue(selection: MediaSelectionSongs(song: $0))) },
                         onExclude: { onAction(MediaActionExclude(selection: MediaSelectionSongs(song: $0))) }
                     )
+                    Button("Song Info", systemImage: "info.circle") { songInfo = SongInfoTarget(songID: song.id) }
                 }
         case .genres:
             let genre = items.genres[index]
