@@ -79,3 +79,7 @@ tmp/
 support/reviews/
 __pycache__/
 .claude/longjobs/
+
+# iOS screenshot output (ios-simulator / ios-device skills)
+.ios-screenshots/
+.ios-device-screenshots/
