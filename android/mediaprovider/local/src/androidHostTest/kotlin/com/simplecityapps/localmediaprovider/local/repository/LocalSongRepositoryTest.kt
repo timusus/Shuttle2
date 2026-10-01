@@ -64,7 +64,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `artists' songs are read by id, not from the whole library`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         database.songDataDao().insert(listOf(songData("Song 1", "Blur"), songData("Song 2", "Blur"), songData("Song 3", "Oasis"), songData("Song 4", "Pulp")))
         val library = repository.loadSongs(SongQuery.All())
         val artists = listOf("Blur", "Oasis").map { artist -> SongQuery.ArtistGroupKey(library.first { it.albumArtist == artist }.albumArtistGroupKey) }
