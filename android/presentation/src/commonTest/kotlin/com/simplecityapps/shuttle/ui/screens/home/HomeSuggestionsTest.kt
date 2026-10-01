@@ -86,6 +86,7 @@ class HomeSuggestionsTest {
 
         JumpBackIn(playHistory, suggestions, resolve)() shouldBe
             JumpBackInCandidates(listOf(HomeItem.GenreItem(jazz), HomeItem.AlbumItem(blue)), listOf(HomeItem.AlbumItem(kidA)))
+        suggestions.calls shouldBe listOf("albums(2)", "genres()")
     }
 
     @Test
@@ -165,14 +166,19 @@ class HomeSuggestionsTest {
 
         Rediscover(suggestions, resolve)(now) shouldBe listOf(HomeItem.AlbumItem(blue))
         RecentlyAdded(suggestions, resolve)() shouldBe listOf(HomeItem.AlbumItem(kidA))
-        suggestions.calls shouldBe listOf("albumsToRediscover(3, ${now - 90.days})", "recentlyAddedAlbums(30)")
+        suggestions.calls shouldBe listOf("albumsToRediscover(3, ${now - 90.days})", "albums(1)", "recentlyAddedAlbums(30)", "albums(1)")
     }
 
     @Test
-    fun `genre picks resolve the played genres and the largest with twenty songs`() = runTest {
+    fun `genre picks resolve the played genres and the largest with twenty songs, from one read of the genres`() = runTest {
+        val soul = createGenre("Soul", songCount = 40)
+        suggestions.genres += listOf(soul, createGenre("Funk", songCount = 60))
         playHistory.genrePlays = listOf(GenrePlays("Polka", plays = 3, score = 2.0), GenrePlays("Gone", plays = 1, score = 1.0))
 
-        GenrePicks(playHistory, suggestions)(now) shouldBe
-            GenrePickCandidates(played = listOf(HomeItem.GenreItem(createGenre("Polka", songCount = 5))), largest = listOf(HomeItem.GenreItem(jazz)))
+        GenrePicks(playHistory, suggestions)(now) shouldBe GenrePickCandidates(
+            played = listOf(HomeItem.GenreItem(createGenre("Polka", songCount = 5))),
+            largest = listOf(HomeItem.GenreItem(createGenre("Funk", songCount = 60)), HomeItem.GenreItem(jazz), HomeItem.GenreItem(soul)),
+        )
+        suggestions.calls shouldBe listOf("genres()")
     }
 }

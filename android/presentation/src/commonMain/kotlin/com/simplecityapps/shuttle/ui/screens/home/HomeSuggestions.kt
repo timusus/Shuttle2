@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.repository.playhistory.PlayHistoryReposi
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.suggestions.SuggestionsRepository
+import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.PlayContext
 import dev.zacsweers.metro.Inject
 import kotlin.time.Clock
@@ -34,19 +35,21 @@ class ResolveHomeItems @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val playlistRepository: PlaylistRepository,
 ) {
-    suspend operator fun invoke(contexts: List<PlayContext>): List<HomeItem> {
+    suspend operator fun invoke(contexts: List<PlayContext>): List<HomeItem> = contexts.resolvedIn(byContext(contexts))
+
+    /** The item each of [contexts] resolves to, reading each kind once, for callers that resolve several lists in one go. */
+    suspend fun byContext(contexts: List<PlayContext>): Map<PlayContext, HomeItem> {
         val albums = contexts.filterIsInstance<PlayContext.Album>().map { it.groupKey }
             .takeIf { it.isNotEmpty() }?.let { suggestionsRepository.albums(it) }.orEmpty().associateBy { it.groupKey }
         val artists = contexts.filterIsInstance<PlayContext.AlbumArtist>().map { it.groupKey }
             .takeIf { it.isNotEmpty() }?.let { suggestionsRepository.albumArtists(it) }.orEmpty().associateBy { it.groupKey }
-        val genres = contexts.filterIsInstance<PlayContext.Genre>().map { it.name }
-            .takeIf { it.isNotEmpty() }?.let { suggestionsRepository.genres(it) }.orEmpty().associateBy { it.name }
+        val genres = if (contexts.any { it is PlayContext.Genre }) suggestionsRepository.genres().associateBy { it.name } else emptyMap()
         val playlists = if (contexts.any { it is PlayContext.Playlist }) {
             playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).first().associateBy { it.id }
         } else {
             emptyMap()
         }
-        return contexts.mapNotNull { context ->
+        return contexts.distinct().mapNotNull { context ->
             when (context) {
                 is PlayContext.Album -> albums[context.groupKey]?.let { HomeItem.AlbumItem(it) }
                 is PlayContext.AlbumArtist -> artists[context.groupKey]?.let { HomeItem.ArtistItem(it) }
@@ -54,10 +57,13 @@ class ResolveHomeItems @Inject constructor(
                 is PlayContext.Playlist -> playlists[context.playlistId]?.let { HomeItem.PlaylistItem(it) }
                 is PlayContext.SmartPlaylist -> HomeItem.SmartPlaylistItem(context.smartPlaylistId)
                 is PlayContext.UserSmartPlaylist, PlayContext.None -> null
-            }
-        }.distinctBy { it.key }
+            }?.let { context to it }
+        }.toMap()
     }
 }
+
+/** The items [items] resolves these contexts to, in order, each once. */
+fun List<PlayContext>.resolvedIn(items: Map<PlayContext, HomeItem>): List<HomeItem> = mapNotNull { items[it] }.distinctBy { it.key }
 
 /** Jump back in's candidates: the contexts last played from, and the albums last played through, its fallback. */
 data class JumpBackInCandidates(
@@ -70,10 +76,12 @@ class JumpBackIn @Inject constructor(
     private val suggestionsRepository: SuggestionsRepository,
     private val resolveHomeItems: ResolveHomeItems,
 ) {
-    suspend operator fun invoke(): JumpBackInCandidates = JumpBackInCandidates(
-        fromHistory = resolveHomeItems(playHistoryRepository.recentContexts(CANDIDATES).map { it.context }),
-        lastCompleted = resolveHomeItems(suggestionsRepository.recentlyCompletedAlbums(CANDIDATES).map { PlayContext.Album(it) }),
-    )
+    suspend operator fun invoke(): JumpBackInCandidates {
+        val fromHistory = playHistoryRepository.recentContexts(CANDIDATES).map { it.context }
+        val lastCompleted = suggestionsRepository.recentlyCompletedAlbums(CANDIDATES).map { PlayContext.Album(it) }
+        val items = resolveHomeItems.byContext(fromHistory + lastCompleted)
+        return JumpBackInCandidates(fromHistory.resolvedIn(items), lastCompleted.resolvedIn(items))
+    }
 
     private companion object {
         const val CANDIDATES = 16
@@ -97,7 +105,7 @@ class AroundThisTime @Inject constructor(
     ): List<AroundThisTimeCandidate> {
         val hour = now.toLocalDateTime(timeZone).hour
         val contexts = playHistoryRepository.contextsAroundHour(hour, WINDOW_MINUTES, since = now - WINDOW_DAYS.days, limit = CANDIDATES)
-        val items = resolveHomeItems(contexts.map { it.context }).associateBy { it.playContext }
+        val items = resolveHomeItems.byContext(contexts.map { it.context })
         return contexts.mapNotNull { context ->
             items[context.context]?.let { AroundThisTimeCandidate(it, context.days, context.weekendDays) }
         }
@@ -146,7 +154,7 @@ class HeavyRotation @Inject constructor(
             .filter { it.days > 0 }
             .sortedWith(compareByDescending<Tally> { it.days }.thenByDescending { it.lastPlayedAt })
             .take(CANDIDATES)
-        val items = resolveHomeItems(tallies.map { it.context }).associateBy { it.playContext }
+        val items = resolveHomeItems.byContext(tallies.map { it.context })
         return tallies.mapNotNull { tally -> items[tally.context]?.let { HeavyRotationCandidate(it, tally.days, tally.lastPlayedAt) } }
     }
 
@@ -202,9 +210,15 @@ class GenrePicks @Inject constructor(
 ) {
     suspend operator fun invoke(now: Instant): GenrePickCandidates {
         val played = playHistoryRepository.genrePlays(since = now - WINDOW_DAYS.days, halfLife = HALF_LIFE_DAYS.days, limit = CANDIDATES)
+        val genres = suggestionsRepository.genres()
+        val byName = genres.associateBy { it.name }
         return GenrePickCandidates(
-            played = played.takeIf { it.isNotEmpty() }?.let { plays -> suggestionsRepository.genres(plays.map { it.genre }) }.orEmpty().map { HomeItem.GenreItem(it) },
-            largest = suggestionsRepository.largestGenres(MIN_SONGS, CANDIDATES).map { HomeItem.GenreItem(it) },
+            played = played.map { it.genre }.distinct().mapNotNull { byName[it] }.map { HomeItem.GenreItem(it) },
+            largest = genres
+                .filter { it.songCount >= MIN_SONGS }
+                .sortedWith(compareByDescending<Genre> { it.songCount }.thenBy { it.name })
+                .take(CANDIDATES)
+                .map { HomeItem.GenreItem(it) },
         )
     }
 

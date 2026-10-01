@@ -79,7 +79,7 @@ class LocalSuggestionsRepositoryTest {
     }
 
     @Test
-    fun `genres sum each tagged song, and the largest need a minimum`() = runTest {
+    fun `genres sum each tagged song`() = runTest {
         insert(
             createSongData(album = "A", track = 1).copy(genres = listOf("Jazz", "Soul")),
             createSongData(album = "A", track = 2).copy(genres = listOf("Jazz")),
@@ -87,10 +87,7 @@ class LocalSuggestionsRepositoryTest {
             createSongData(album = "B", track = 2).copy(genres = listOf("Soul"))
         )
 
-        repository.genres(listOf("Soul", "Jazz", "Polka")).map { it.name to it.songCount } shouldBe listOf("Soul" to 3, "Jazz" to 2)
-        repository.largestGenres(minSongs = 2, limit = 10).map { it.name } shouldBe listOf("Soul", "Jazz")
-        repository.largestGenres(minSongs = 3, limit = 10).map { it.name } shouldBe listOf("Soul")
-        repository.largestGenres(minSongs = 2, limit = 1).map { it.name } shouldBe listOf("Soul")
+        repository.genres().map { it.name to it.songCount }.sortedBy { it.first } shouldBe listOf("Jazz" to 2, "Soul" to 3)
     }
 
     @Test

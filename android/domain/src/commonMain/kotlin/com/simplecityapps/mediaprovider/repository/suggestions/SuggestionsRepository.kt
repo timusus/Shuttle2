@@ -24,14 +24,11 @@ interface SuggestionsRepository {
     /** The album artists with [keys], in the order of [keys]; a key no artist has is left out. */
     suspend fun albumArtists(keys: List<AlbumArtistGroupKey>): List<AlbumArtist>
 
-    /** The genres named [names], in the order of [names]; a name no song carries is left out. */
-    suspend fun genres(names: List<String>): List<Genre>
-
-    /** The genres with at least [minSongs] songs, largest first; at most [limit]. */
-    suspend fun largestGenres(
-        minSongs: Int,
-        limit: Int
-    ): List<Genre>
+    /**
+     * Every genre the library's songs carry, each with the songs tagged with it (a song tagged with several counts for
+     * each), in no particular order. One read covers both a lookup of the played genres and the largest genres.
+     */
+    suspend fun genres(): List<Genre>
 
     /** The albums one of whose songs has played through, most recently first; at most [limit]. */
     suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumGroupKey>

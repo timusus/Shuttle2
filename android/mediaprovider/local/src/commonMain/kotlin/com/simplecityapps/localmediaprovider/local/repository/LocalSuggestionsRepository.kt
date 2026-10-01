@@ -45,18 +45,21 @@ class LocalSuggestionsRepository(
         return keys.mapNotNull { albumArtists[it] }.distinct()
     }
 
-    override suspend fun genres(names: List<String>): List<Genre> {
-        val genres = genreTotals()
-        return names.distinct().mapNotNull { genres[it] }
+    /** Each genre's songs, summed over the genre taggings: a song tagged with several genres counts for each. */
+    override suspend fun genres(): List<Genre> {
+        val totals = linkedMapOf<String, Genre>()
+        suggestionsDao.genreTaggings().forEach { row ->
+            row.genres.filter { it.isNotBlank() }.distinct().forEach { name ->
+                val genre = totals[name] ?: Genre(name, 0, 0, emptyList())
+                totals[name] = genre.copy(
+                    songCount = genre.songCount + row.songs,
+                    duration = genre.duration + row.duration.toInt(),
+                    mediaProviders = (genre.mediaProviders + row.mediaProvider).distinct()
+                )
+            }
+        }
+        return totals.values.toList()
     }
-
-    override suspend fun largestGenres(
-        minSongs: Int,
-        limit: Int
-    ): List<Genre> = genreTotals().values
-        .filter { it.songCount >= minSongs }
-        .sortedWith(compareByDescending<Genre> { it.songCount }.thenBy { it.name })
-        .take(limit)
 
     override suspend fun recentlyCompletedAlbums(limit: Int): List<AlbumGroupKey> = latestAlbums(suggestionsDao.completedSongs().map { it.id to it.at }, limit)
 
@@ -108,22 +111,6 @@ class LocalSuggestionsRepository(
             .sortedByDescending { it.value }
             .take(limit)
             .map { it.key }
-    }
-
-    /** Each genre's songs, summed over the genre taggings: a song tagged with several genres counts for each. */
-    private suspend fun genreTotals(): Map<String, Genre> {
-        val totals = linkedMapOf<String, Genre>()
-        suggestionsDao.genreTaggings().forEach { row ->
-            row.genres.filter { it.isNotBlank() }.distinct().forEach { name ->
-                val genre = totals[name] ?: Genre(name, 0, 0, emptyList())
-                totals[name] = genre.copy(
-                    songCount = genre.songCount + row.songs,
-                    duration = genre.duration + row.duration.toInt(),
-                    mediaProviders = (genre.mediaProviders + row.mediaProvider).distinct()
-                )
-            }
-        }
-        return totals
     }
 
     private companion object {

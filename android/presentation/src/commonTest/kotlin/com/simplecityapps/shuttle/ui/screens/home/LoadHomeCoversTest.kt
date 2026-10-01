@@ -9,6 +9,8 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
 import kotlin.test.Test
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 
 class LoadHomeCoversTest {
@@ -63,5 +65,20 @@ class LoadHomeCoversTest {
         loadHomeCovers(listOf(section(HomeItem.GenreItem(genre)), section(HomeItem.GenreItem(genre))))
 
         genreRepository.coverLimits.size shouldBe 1
+    }
+
+    @Test
+    fun `every tile's covers load side by side`() = runTest {
+        genreRepository.coverDelay = 100.milliseconds
+        val genres = listOf("Jazz", "Soul", "Funk").map { name ->
+            genreRepository.setSongsForGenre(name, songsOn(name.length * 10L, name))
+            HomeItem.GenreItem(createGenre(name = name))
+        }
+
+        val started = currentTime
+        val covers = loadHomeCovers(listOf(section(*genres.toTypedArray())))
+
+        currentTime - started shouldBe 100
+        covers.keys shouldBe genres.map { it.key }.toSet()
     }
 }
