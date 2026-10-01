@@ -821,21 +821,14 @@ struct NowPlayingQueueList: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Self.queueSurface)
+        .background(.s2SurfaceElevated)
     }
-
-    /// The queue sheet's surface, set on its list so the pinned headers can match it. The sheet is elevated, so a
-    /// system colour resolves differently in a header than in the list: dark is the base `secondarySystemBackground`
-    /// (#1C1C1E) spelled out.
-    private static let queueSurface = Color(uiColor: UIColor { traits in
-        traits.userInterfaceStyle == .dark ? UIColor(red: 28 / 255, green: 28 / 255, blue: 30 / 255, alpha: 1) : .systemBackground
-    })
 
     private func sectionHeader(_ title: String) -> some View {
         SectionHeader(title)
             .textCase(nil)
             .padding(.vertical, Spacing.xsmall)
-            .pinnedHeader(Self.queueSurface)
+            .pinnedHeader(.s2SurfaceElevated)
     }
 
     /// A queue row; the playing song's cover carries the playing indicator and VoiceOver says it's playing.

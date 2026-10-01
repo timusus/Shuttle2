@@ -20,6 +20,13 @@ extension UIColor {
     static let s2SurfaceContainer = UIColor.secondarySystemBackground
     /// A placeholder or skeleton fill.
     static let s2SurfaceFill = UIColor.systemGray5
+    /// A sheet's ground (the queue), pinned to the elevated level: a view the system doesn't treat as elevated,
+    /// like a pinned header, would otherwise resolve `systemBackground` to the base black in dark mode.
+    static let s2SurfaceElevated = UIColor { traits in
+        UIColor.systemBackground.resolvedColor(
+            with: UITraitCollection(traitsFrom: [traits, UITraitCollection(userInterfaceLevel: .elevated)])
+        )
+    }
 
     /// Captions and row subtitles that must meet WCAG AA (4.5:1) in light mode too: `secondaryLabel` is only
     /// 3.4:1 on white. Light `#66666B` (5.7:1 on white), dark `#9A9AA0` (5.0:1 on a sheet's `#2C2C2E`).
@@ -34,6 +41,7 @@ extension ShapeStyle where Self == Color {
     static var s2OnAccent: Color { Color(uiColor: .s2OnAccent) }
     static var s2SurfaceContainer: Color { Color(uiColor: .s2SurfaceContainer) }
     static var s2SurfaceFill: Color { Color(uiColor: .s2SurfaceFill) }
+    static var s2SurfaceElevated: Color { Color(uiColor: .s2SurfaceElevated) }
     static var s2TextSecondary: Color { Color(uiColor: .s2TextSecondary) }
     static var s2Success: Color { Color(uiColor: .s2Success) }
     static var s2Error: Color { Color(uiColor: .s2Error) }

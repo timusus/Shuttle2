@@ -87,6 +87,7 @@ Chrome is **neutral**; colour comes from artwork. Each role is a `UIColor` (for 
 | `artworkTint` / `artworkTintInk` | from the cover | Overrides the accent in the player, mini player and detail heroes |
 | `s2SurfaceContainer` | `secondarySystemBackground` | Cards and notices on the ground |
 | `s2SurfaceFill` | `systemGray5` | Placeholders, skeletons |
+| `s2SurfaceElevated` | `systemBackground` at the elevated level | A sheet's ground and its pinned headers (the queue) |
 | `s2TextSecondary` | `SecondaryText`: #66666B / #9A9AA0 | Subtitles and captions (AA 4.5:1; `secondaryLabel` is 3.4:1) |
 | `s2Success` / `s2Error` | system green / red | Status: connected, failed; `s2Success` is also every switch's on-track |
 
