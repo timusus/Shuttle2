@@ -39,8 +39,8 @@ struct AlbumDetailView: View {
                 },
                 onPlayAlbumNext: { models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0))) },
                 onAddAlbumToQueue: { models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0))) },
-                onGoToArtist: state.album?.groupKey?.albumArtistGroupKey.map { key in
-                    { navigator.openAsserting(.albumArtist(albumArtistKey: key.key)) }
+                onGoToArtist: state.album.flatMap(AlbumArtistLink.init).map { link in
+                    { navigator.openAsserting(link.route) }
                 }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
@@ -72,7 +72,7 @@ struct AlbumDetailContent: View {
     var onAddToQueue: ([Song]) -> Void = { _ in }
     var onPlayAlbumNext: (Album) -> Void = { _ in }
     var onAddAlbumToQueue: (Album) -> Void = { _ in }
-    /// Opens the album's artist; nil when the album has no artist key, which hides the menu item and the hero's link.
+    /// Opens the album's artist (`AlbumArtistLink`); nil, or an album without a usable link, hides the menu item and the hero's link.
     var onGoToArtist: (() -> Void)? = nil
 
     var body: some View {
@@ -87,7 +87,7 @@ struct AlbumDetailContent: View {
                     DetailHero(
                         title: album.name ?? "Unknown Album",
                         subtitle: subtitle(album),
-                        artist: artistName(album),
+                        artist: artistLink(album)?.name,
                         onArtist: onGoToArtist,
                         layout: layout,
                         onPlay: { onPlay(0) },
@@ -117,7 +117,7 @@ struct AlbumDetailContent: View {
                     Menu {
                         Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayAlbumNext(album) }
                         Button("Add to Queue", systemImage: "text.append") { onAddAlbumToQueue(album) }
-                        if let onGoToArtist {
+                        if let onGoToArtist, artistLink(album) != nil {
                             Button("Go to Artist", systemImage: "music.mic", action: onGoToArtist)
                         }
                     } label: {
@@ -170,13 +170,37 @@ struct AlbumDetailContent: View {
         album.friendlyArtistName ?? album.albumArtist
     }
 
+    /// The album artist's link, only when it's both openable and offered.
+    private func artistLink(_ album: Album) -> AlbumArtistLink? {
+        onGoToArtist == nil ? nil : AlbumArtistLink(album)
+    }
+
     /// With a tappable artist line above it the eyebrow leaves the artist out, else it leads with it.
     private func subtitle(_ album: Album) -> String {
         eyebrow(
-            onGoToArtist == nil ? artistName(album) : nil,
+            artistLink(album) == nil ? artistName(album) : nil,
             album.year.map { String($0.intValue) },
             pluralized(state.songs.count, "song"),
             totalDuration(state.songs)
         )
+    }
+}
+
+
+/// Where an album's artist line goes: the album artist, by name and group key. Nil unless both are real, so the
+/// link never opens `Route.albumArtist(nil)` or names someone other than the page it opens (the track artists
+/// of a compilation read "A, B, C" while it opens "Various Artists").
+struct AlbumArtistLink: Equatable {
+    let name: String
+    let route: Route
+
+    init?(_ album: Album) {
+        self.init(name: album.albumArtist, key: album.groupKey?.albumArtistGroupKey?.key)
+    }
+
+    init?(name: String?, key: String?) {
+        guard let key, let name = name?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return nil }
+        self.name = name
+        route = .albumArtist(albumArtistKey: key)
     }
 }

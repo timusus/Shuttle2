@@ -343,9 +343,14 @@ struct DetailHero<Artwork: View>: View {
                             .font(.s2Eyebrow)
                             .foregroundStyle(tint)
                             .multilineTextAlignment(textAlignment)
+                            .padding(.vertical, 12)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    // The label's padding grows the hit area toward 44 pt; this takes it back out of the layout.
+                    .padding(.vertical, -12)
                     .accessibilityLabel("Go to \(artist)")
+                    .accessibilityHint("Opens the artist")
                 }
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
