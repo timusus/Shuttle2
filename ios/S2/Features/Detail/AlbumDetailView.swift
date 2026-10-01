@@ -4,7 +4,8 @@ import SwiftUI
 /// Album detail (P5-7, polished in #624): a hero tinted from the cover (artwork, title, artist · year · songs ·
 /// duration, Play/Shuffle; the artist's name opens the artist), then the album's tracks, split into "Disc N" groups
 /// when it has more than one. A tap plays the album from that track; its context menu has the shared media actions.
-/// The toolbar's menu plays the whole album next, queues it, or goes to the artist. Modeled on Android's
+/// The toolbar's menu plays the whole album next, queues it, or goes to the artist. A "More by <album artist>" shelf
+/// of the artist's other albums ends the screen (#695; hidden when there are none). Modeled on Android's
 /// `AlbumDetailScreen.kt`.
 struct AlbumDetailView: View {
     let albumKey: String?
@@ -41,7 +42,13 @@ struct AlbumDetailView: View {
                 onAddAlbumToQueue: { models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0))) },
                 onGoToArtist: state.album.flatMap(AlbumArtistLink.init).map { link in
                     { navigator.openAsserting(link.route) }
-                }
+                },
+                onAlbumTap: { navigator.openAsserting(.album($0)) },
+                albumActions: DetailAlbumActions(
+                    onPlay: { models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionAlbums(album: $0), position: 0)) },
+                    onPlayNext: { models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0))) },
+                    onAddToQueue: { models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0))) }
+                )
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
         }
@@ -74,6 +81,9 @@ struct AlbumDetailContent: View {
     var onAddAlbumToQueue: (Album) -> Void = { _ in }
     /// Opens the album's artist (`AlbumArtistLink`); nil, or an album without a usable link, hides the menu item and the hero's link.
     var onGoToArtist: (() -> Void)? = nil
+    /// Opens an album of the More by shelf.
+    var onAlbumTap: (Album) -> Void = { _ in }
+    var albumActions = DetailAlbumActions()
 
     var body: some View {
         switch state.loadingState {
@@ -111,6 +121,16 @@ struct AlbumDetailContent: View {
                                     .pinnedHeader()
                             }
                         }
+                    }
+                    if let name = moreByName(album) {
+                        DetailAlbumShelf(
+                            title: "More by \(name)",
+                            albums: state.moreByArtist,
+                            subtitle: { $0.year.map { String($0.intValue) } },
+                            onAlbumTap: onAlbumTap,
+                            albumActions: albumActions,
+                            tileIdentifier: "detailTile.moreBy"
+                        )
                     }
                 }
                 .toolbar {
@@ -164,6 +184,12 @@ struct AlbumDetailContent: View {
     private func trackArtist(_ song: Song, album: Album) -> String? {
         guard let artist = song.friendlyArtistName, artist != (album.friendlyArtistName ?? album.albumArtist) else { return nil }
         return artist
+    }
+
+    /// The More by shelf's artist: the album artist, only when there are other albums to show.
+    private func moreByName(_ album: Album) -> String? {
+        guard !state.moreByArtist.isEmpty, let name = album.albumArtist?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else { return nil }
+        return name
     }
 
     private func artistName(_ album: Album) -> String? {
