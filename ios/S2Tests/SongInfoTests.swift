@@ -29,6 +29,18 @@ struct SongInfoTests {
 
     // MARK: - AudioQuality
 
+    @Test func anAlbumBadgeShowsOnlyWhenEverySongSharesAFormat() {
+        let flac = { (id: Int64) in TestSongs.song(id, "S", artist: "A", album: "B", durationMs: 1, mimeType: "audio/flac", bitDepth: 24, sampleRate: 96_000) }
+        #expect(AudioQuality.sharedBadge(of: [flac(1), flac(2)], locale: Locale(identifier: "en_US")) == "FLAC 24/96")
+        let mp3 = TestSongs.song(3, "S", artist: "A", album: "B", durationMs: 1, mimeType: "audio/mpeg", bitRate: 320)
+        #expect(AudioQuality.sharedBadge(of: [flac(1), mp3]) == nil)
+        #expect(AudioQuality.sharedBadge(of: [mp3], locale: Locale(identifier: "en_US")) == "MP3 320")
+        let unknown = TestSongs.song(4, "S", artist: "A", album: "B", durationMs: 1, mimeType: "")
+        #expect(AudioQuality.sharedBadge(of: [unknown]) == nil)
+        #expect(AudioQuality.sharedBadge(of: [flac(1), unknown]) == nil)
+        #expect(AudioQuality.sharedBadge(of: []) == nil)
+    }
+
     @Test func codecWinsOverContainer() {
         #expect(AudioQuality(codec: "alac", mimeType: "audio/mp4").format == "ALAC")
         #expect(AudioQuality(mimeType: "audio/mp4").format == "M4A")

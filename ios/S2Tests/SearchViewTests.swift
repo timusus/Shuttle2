@@ -91,7 +91,7 @@ struct SearchViewTests {
         for header in ["Top Result", "Artists", "Albums", "Songs"] {
             #expect((try? sut.inspect().find(text: header)) != nil)
         }
-        #expect((try? sut.inspect().find(text: "3 albums")) != nil)
+        #expect((try? sut.inspect().find(text: "3 albums · 42 songs")) != nil)
         // A track-only artist (#637) counts their songs.
         #expect((try? sut.inspect().find(text: "2 songs")) != nil)
         // Songs are capped at five, with a See All; the demo has exactly five, so none.

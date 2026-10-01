@@ -59,6 +59,8 @@ struct SmartPlaylistDetailContent: View {
     var onAddToQueue: (Song) -> Void = { _ in }
     var onExclude: (Song) -> Void = { _ in }
 
+    @State private var songInfo: SongInfoTarget?
+
     var body: some View {
         if state.loading {
             ProgressView()
@@ -78,15 +80,16 @@ struct SmartPlaylistDetailContent: View {
             } rows: {
                 ForEach(Array(state.songs.enumerated()), id: \.element.id) { index, song in
                     Button { onPlay(index) } label: {
-                        DetailSongRow(song: song, playback: rowPlayback(song, current: state.currentSong, isPlaying: isPlaying))
+                        SongRow(song: song, playback: rowPlayback(song, current: state.currentSong, isPlaying: isPlaying), key: SongRowKey(smartPlaylist: smartPlaylist.id))
                     }
                     .buttonStyle(.plain)
                     .rowSeparator(.none)
                     .contextMenu {
-                        SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude)
+                        SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) })
                     }
                 }
             }
+                .songInfoSheet($songInfo)
         } else {
             EmptyState("Playlist Not Found", systemImage: "star")
         }

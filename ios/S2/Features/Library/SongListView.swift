@@ -63,8 +63,11 @@ struct SongListContent: View {
     var onShuffle: () -> Void = {}
     var onSortOrder: (SongSortOrder) -> Void = { _ in }
 
+    @State private var songInfo: SongInfoTarget?
+
     var body: some View {
         content
+            .songInfoSheet($songInfo)
             .toolbar {
                 if !state.songs.isEmpty {
                     ShuffleButton(identifier: "songs.shuffle", action: onShuffle)
@@ -100,7 +103,7 @@ struct SongListContent: View {
                 Button { onPlay(index) } label: { SongRow(song: song, playback: playback, sortOrder: state.sortOrder) }
                     .buttonStyle(.pressScale)
                     .contextMenu {
-                        SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude)
+                        SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) })
                     }
                     .nowPlayingRowBackground(playback)
             }
@@ -108,49 +111,24 @@ struct SongListContent: View {
     }
 }
 
-/// A song row's context menu in the Library's song lists: Play Next, Add to Queue, and Exclude (#650), marked
-/// destructive as in Now Playing's menu, which hides the song from the library through the shared action.
+/// A song row's context menu in the song lists: Play Next, Add to Queue, Song Info (when the screen presents it) and
+/// Exclude (#650), marked destructive as in Now Playing's menu, which hides the song from the library through the
+/// shared action.
 struct SongRowMenu: View {
     let song: Song
     let onPlayNext: (Song) -> Void
     let onAddToQueue: (Song) -> Void
     let onExclude: (Song) -> Void
+    var onSongInfo: ((Song) -> Void)?
 
     var body: some View {
         Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
         Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
+        if let onSongInfo {
+            Button("Song Info", systemImage: "info.circle") { onSongInfo(song) }
+        }
         let exclude = NowPlayingSongAction.exclude
         Button(exclude.title, systemImage: exclude.systemImage, role: .destructive) { onExclude(song) }
-    }
-}
-
-struct SongRow: View {
-    let song: Song
-    var playback: MediaRowPlayback = .none
-    /// The Library's sort, which adds its key to the subtitle: a play count, or the date added.
-    var sortOrder: SongSortOrder?
-
-    private var subtitle: String {
-        let key: String? = switch sortOrder {
-        case .playCount: song.playCount == 1 ? "1 play" : "\(song.playCount) plays"
-        case .dateAdded: libraryDateAdded(song.dateAdded)
-        default: nil
-        }
-        return [song.friendlyArtistName, song.album, key].compactMap { $0 }.joined(separator: " · ")
-    }
-
-    var body: some View {
-        MediaRow(
-            song.name ?? "Unknown",
-            subtitle: subtitle,
-            artwork: .song(song),
-            playback: playback,
-            titleIdentifier: "songRow.title"
-        ) {
-            Text(Duration.milliseconds(Int64(song.duration)).formatted(.time(pattern: .minuteSecond)))
-                .font(.s2RowMeta)
-                .foregroundStyle(.s2TextSecondary)
-        }
     }
 }
 

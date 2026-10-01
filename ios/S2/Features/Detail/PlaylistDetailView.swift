@@ -82,6 +82,8 @@ struct PlaylistDetailContent: View {
     var onRename: (String) -> Void = { _ in }
     var onDelete: () -> Void = {}
 
+    @State private var songInfo: SongInfoTarget?
+
     @State private var editMode: EditMode = .inactive
     @State private var isRenaming = false
     @State private var renameText = ""
@@ -109,12 +111,12 @@ struct PlaylistDetailContent: View {
                         Button {
                             if let index = state.songs.firstIndex(where: { $0.id == entry.id }) { onPlay(index) }
                         } label: {
-                            DetailSongRow(song: entry.song, playback: rowPlayback(entry.song, current: state.currentSong, isPlaying: isPlaying))
+                            SongRow(song: entry.song, playback: rowPlayback(entry.song, current: state.currentSong, isPlaying: isPlaying))
                         }
                         .buttonStyle(.plain)
                         .rowSeparator(.none)
                         .contextMenu {
-                            SongRowMenu(song: entry.song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude)
+                            SongRowMenu(song: entry.song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) })
                             Button("Remove from Playlist", systemImage: "minus.circle", role: .destructive) { onRemove(entry) }
                         }
                         .swipeActions(edge: .trailing) {
@@ -126,6 +128,7 @@ struct PlaylistDetailContent: View {
                     .onMove { source, destination in move(source, to: destination) }
                 }
             }
+            .songInfoSheet($songInfo)
             .environment(\.editMode, $editMode)
             .toolbar {
                 if state.canReorder {

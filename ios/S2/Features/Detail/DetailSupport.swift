@@ -518,24 +518,6 @@ struct SongDurationText: View {
     }
 }
 
-/// A song as a detail screen's row with its own cover (artist, genre and playlist screens, whose songs come from
-/// many albums): `MediaRow` with the artist and album as the subtitle and the duration trailing.
-struct DetailSongRow: View {
-    let song: Song
-    var playback: MediaRowPlayback = .none
-
-    var body: some View {
-        MediaRow(
-            song.name ?? "Unknown",
-            subtitle: [song.friendlyArtistName ?? song.albumArtist, song.album].compactMap { $0 }.joined(separator: " · "),
-            artwork: .song(song),
-            playback: playback
-        ) {
-            SongDurationText(durationMs: Int64(song.duration))
-        }
-    }
-}
-
 /// Whether `song` is the one playing, as a row shows it: the `currentSong` a detail ViewModel reports, and whether
 /// the player is playing (`PlayerBinding`).
 func rowPlayback(_ song: Song, current: Song?, isPlaying: Bool) -> MediaRowPlayback {
@@ -550,7 +532,11 @@ func eyebrow(_ parts: String?...) -> String {
 
 /// The total running time of `songs`, "43 min" or "1 hr 3 min"; nil when unknown (zero).
 func totalDuration(_ songs: [Song]) -> String? {
-    let ms = songs.reduce(Int64(0)) { $0 + Int64($1.duration) }
+    runtime(ms: songs.reduce(Int64(0)) { $0 + Int64($1.duration) })
+}
+
+/// A running time of `ms` milliseconds as "43 min" or "1 hr 3 min"; nil under a minute (unknown or negligible).
+func runtime(ms: Int64) -> String? {
     guard ms >= 60_000 else { return nil }
     return Duration.milliseconds(ms).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
 }
@@ -565,11 +551,20 @@ extension PlayerBinding {
 }
 
 extension View {
-    /// The long-press menu on a song row: Play Next and Add to Queue for that one song.
-    func songContextMenu(_ song: Song, onPlayNext: @escaping ([Song]) -> Void, onAddToQueue: @escaping ([Song]) -> Void) -> some View {
+    /// The long-press menu on a song row: Play Next, Add to Queue and, when the screen presents it, Song Info for that
+    /// one song.
+    func songContextMenu(
+        _ song: Song,
+        onPlayNext: @escaping ([Song]) -> Void,
+        onAddToQueue: @escaping ([Song]) -> Void,
+        onSongInfo: ((Song) -> Void)? = nil
+    ) -> some View {
         contextMenu {
             Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext([song]) }
             Button("Add to Queue", systemImage: "text.append") { onAddToQueue([song]) }
+            if let onSongInfo {
+                Button("Song Info", systemImage: "info.circle") { onSongInfo(song) }
+            }
         }
     }
 }

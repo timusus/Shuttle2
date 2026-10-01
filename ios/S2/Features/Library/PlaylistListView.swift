@@ -264,8 +264,13 @@ struct PlaylistRow: View {
     var body: some View {
         MediaRow(
             playlist.name,
-            subtitle: playlist.songCount == 1 ? "1 song" : "\(playlist.songCount) songs",
+            subtitle: Self.subtitle(playlist),
             mosaic: .playlist(playlist.name, covers: covers)
         )
+    }
+
+    /// "12 songs · 43 min": the count and, from a minute up, the runtime.
+    static func subtitle(_ playlist: Playlist) -> String {
+        eyebrow(pluralized(Int(playlist.songCount), "song"), runtime(ms: Int64(playlist.duration)))
     }
 }

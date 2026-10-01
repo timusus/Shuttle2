@@ -195,6 +195,17 @@ struct SearchCategoryChips: View {
 }
 
 extension SearchCategory {
+    /// What one result of the group is, for the top result's label: "Artist", "Album", "Song", "Genre" or "Playlist".
+    var kindLabel: String {
+        switch self {
+        case .artists: "Artist"
+        case .albums: "Album"
+        case .songs: "Song"
+        case .genres: "Genre"
+        case .playlists: "Playlist"
+        }
+    }
+
     var title: String {
         switch self {
         case .artists: "Artists"
@@ -242,7 +253,15 @@ struct SearchResultList: View {
         List {
             if let top = results.top {
                 Section {
-                    row(top, index: 0).rowSeparator(.none)
+                    VStack(alignment: .leading, spacing: Spacing.xsmall) {
+                        Text(top.kindLabel)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.s2TextSecondary)
+                            .textCase(.uppercase)
+                            .accessibilityIdentifier("search.topResult.kind")
+                        row(top, index: 0)
+                    }
+                    .rowSeparator(.none)
                 } header: {
                     SectionHeader("Top Result").textCase(nil).pinnedHeader()
                 }
@@ -281,7 +300,7 @@ struct SearchResultList: View {
             resultLink(.albumArtist(artist), identifier: "search.result.artist") {
                 MediaRow(
                     AlbumArtistRow.title(artist),
-                    subtitle: SearchResultText.subtitle(artist),
+                    subtitle: AlbumArtistRow.subtitle(artist),
                     artwork: .albumArtist(artist),
                     placeholderSymbol: "music.mic",
                     playback: nowPlaying.playback(albumArtist: artist)
@@ -302,9 +321,9 @@ struct SearchResultList: View {
                         song: song,
                         onPlayNext: { onAction(MediaActionPlayNext(selection: MediaSelectionSongs(song: $0))) },
                         onAddToQueue: { onAction(MediaActionAddToQueue(selection: MediaSelectionSongs(song: $0))) },
-                        onExclude: { onAction(MediaActionExclude(selection: MediaSelectionSongs(song: $0))) }
+                        onExclude: { onAction(MediaActionExclude(selection: MediaSelectionSongs(song: $0))) },
+                        onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) }
                     )
-                    Button("Song Info", systemImage: "info.circle") { songInfo = SongInfoTarget(songID: song.id) }
                 }
         case .genres:
             let genre = items.genres[index]
@@ -356,16 +375,5 @@ struct SearchResultItems {
         songs = results.songs.map { $0.item! }
         genres = results.genres.map { $0.item! }
         playlists = results.playlists.map { $0.item! }
-    }
-}
-
-enum SearchResultText {
-    /// An album artist's album count; a track artist found by their credits (#637) has no albums of their own, so
-    /// their song count.
-    static func subtitle(_ artist: AlbumArtist) -> String {
-        if artist.isAlbumArtist {
-            return artist.albumCount == 1 ? "1 album" : "\(artist.albumCount) albums"
-        }
-        return artist.songCount == 1 ? "1 song" : "\(artist.songCount) songs"
     }
 }

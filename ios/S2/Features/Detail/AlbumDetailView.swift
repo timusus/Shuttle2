@@ -85,6 +85,8 @@ struct AlbumDetailContent: View {
     var onAlbumTap: (Album) -> Void = { _ in }
     var albumActions = DetailAlbumActions()
 
+    @State private var songInfo: SongInfoTarget?
+
     var body: some View {
         switch state.loadingState {
         case .loading:
@@ -133,6 +135,7 @@ struct AlbumDetailContent: View {
                         )
                     }
                 }
+                .songInfoSheet($songInfo)
                 .toolbar {
                     Menu {
                         Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayAlbumNext(album) }
@@ -163,7 +166,7 @@ struct AlbumDetailContent: View {
             )
         }
         .buttonStyle(.plain)
-        .songContextMenu(song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue)
+        .songContextMenu(song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onSongInfo: { songInfo = SongInfoTarget(songID: $0.id) })
     }
 
     /// Songs grouped by disc (falling back to disc 1) in the order the ViewModel already sorted them, as
@@ -207,7 +210,8 @@ struct AlbumDetailContent: View {
             artistLink(album) == nil ? artistName(album) : nil,
             album.year.map { String($0.intValue) },
             pluralized(state.songs.count, "song"),
-            totalDuration(state.songs)
+            totalDuration(state.songs),
+            AudioQuality.sharedBadge(of: state.songs)
         )
     }
 }

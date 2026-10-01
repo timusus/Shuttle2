@@ -52,6 +52,14 @@ struct AudioQuality: Equatable {
         return parts.isEmpty ? nil : parts.joined(separator: " ")
     }
 
+    /// The badge the songs share, for an album's header: nil when they're mixed (or any has no format), so a header
+    /// never claims a quality only some of the tracks have.
+    static func sharedBadge(of songs: [Song], locale: Locale = .current) -> String? {
+        let badges = Set(songs.map { AudioQuality(song: $0).badge(locale: locale) })
+        guard badges.count == 1, let badge = badges.first else { return nil }
+        return badge
+    }
+
     /// 44100 as "44.1", 22050 as "22.05", 96000 as "96".
     static func kilohertz(_ hertz: Int, locale: Locale = .current) -> String {
         (Double(hertz) / 1000).formatted(.number.precision(.fractionLength(0...2)).locale(locale))
