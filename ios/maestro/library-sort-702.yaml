@@ -1,0 +1,26 @@
+# The Library tabs' sort menus (#702): Library > Albums, open the sort menu, pick Year, and the list reorders newest
+# first. Signed in already: run sign-in-jellyfin.yaml first.
+#
+#   OUT=/tmp/s2-sort/maestro ios/scripts/maestro-sim.sh library-sort-702.yaml
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp
+- runFlow:
+    file: common/library-open.yaml
+    env:
+      CATEGORY: albums
+- extendedWaitUntil:
+    visible:
+      id: "albums.sortMenu"
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn:
+    id: "albums.sortMenu"
+- waitForAnimationToEnd:
+    timeout: 2000
+- takeScreenshot: 1-albums-sort-menu
+- tapOn: "Year"
+- waitForAnimationToEnd:
+    timeout: 5000
+- takeScreenshot: 2-albums-by-year
