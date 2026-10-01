@@ -30,7 +30,9 @@ object IdentityGenerationTriggers : RoomDatabase.Callback() {
     private val statements = listOf(
         "CREATE TRIGGER IF NOT EXISTS songs_identity_insert AFTER INSERT ON songs BEGIN $BUMP; END",
         "CREATE TRIGGER IF NOT EXISTS songs_identity_delete AFTER DELETE ON songs BEGIN $BUMP; END",
-        "CREATE TRIGGER IF NOT EXISTS songs_identity_update AFTER UPDATE OF ${identityColumns.joinToString { "`$it`" }} ON songs " +
+        // Recreated on every open: the trigger persists in the file, and its columns follow SONG_IDENTITY_QUERY.
+        "DROP TRIGGER IF EXISTS songs_identity_update",
+        "CREATE TRIGGER songs_identity_update AFTER UPDATE OF ${identityColumns.joinToString { "`$it`" }} ON songs " +
             "WHEN ${identityColumns.joinToString(" OR ") { "OLD.`$it` IS NOT NEW.`$it`" }} BEGIN $BUMP; END",
         "INSERT OR IGNORE INTO $IDENTITY_GENERATION_TABLE (id, generation) VALUES (0, 0)"
     )
