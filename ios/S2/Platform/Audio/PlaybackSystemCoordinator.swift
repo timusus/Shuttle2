@@ -6,6 +6,10 @@ import Shared
 /// Control Center's metadata, position and transport commands). It keeps no playback state of its own:
 /// it follows the Kotlin flows and calls `PlaybackOperations`, so every command goes through the same
 /// policy as the app's own buttons.
+///
+/// Any of the flows changing republishes Now Playing from all of their current values. Each flow is
+/// followed by its own task, and the tasks resume in no particular order: a copy of each flow's last
+/// value would pair a new song with the last one's position on a track change (#691).
 @MainActor
 final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     /// Audiobook and podcast songs skip by these (seconds) instead of between songs, as on Android.
@@ -19,12 +23,6 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     /// A new engine, for a media-services reset; nil if one can't be built.
     private let makeEngine: () -> AudioEngine?
     private var observers: [Task<Void, Never>] = []
-
-    /// As last published to Now Playing.
-    private var isPlaying = false
-    private var positionMs: Int32 = 0
-    private var speed: Float = 1
-    private var item: NowPlayingItem?
 
     init(
         playback: IosPlayerController,
@@ -83,23 +81,23 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         let playback = playback
         observers = [
             Task { [weak self] in
-                for await state in playback.playbackStateFlow {
-                    self?.playbackStateChanged(state)
+                for await _ in playback.playbackStateFlow {
+                    self?.publish()
                 }
             },
             Task { [weak self] in
-                for await progress in playback.progressFlow {
-                    self?.progressChanged(progress)
+                for await _ in playback.progressFlow {
+                    self?.publish()
                 }
             },
             Task { [weak self] in
-                for await speed in playback.playbackSpeedFlow {
-                    self?.speedChanged(speed.floatValue)
+                for await _ in playback.playbackSpeedFlow {
+                    self?.publish()
                 }
             },
             Task { [weak self] in
-                for await queue in playback.queueOperations.queueStateFlow {
-                    self?.queueChanged(queue)
+                for await _ in playback.queueOperations.queueStateFlow {
+                    self?.publish()
                 }
             },
         ]
@@ -107,32 +105,35 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
 
     // MARK: - Following the player
 
-    private func playbackStateChanged(_ state: PlaybackState) {
-        isPlaying = state is PlaybackState.Playing
-        publishPlayback()
-    }
-
-    private func progressChanged(_ progress: PlaybackProgress?) {
-        positionMs = progress?.position ?? 0
-        publishPlayback()
-    }
-
-    private func speedChanged(_ speed: Float) {
-        self.speed = speed
-        publishPlayback()
-    }
-
-    private func queueChanged(_ queue: QueueState) {
-        guard let current = queue.currentItem else {
-            guard item != nil else { return }
+    /// Publishes the player as it is now: the current song, its position and whether it plays.
+    private func publish() {
+        guard let current = playback.queueOperations.queueStateFlow.value.currentItem else {
+            guard nowPlaying.item != nil else { return }
             // The queue emptied: nothing is playing, so give the session back to other apps.
-            item = nil
-            nowPlaying.setItem(nil, position: 0, isPlaying: false, speed: speed)
+            nowPlaying.setItem(nil, position: 0, isPlaying: false, speed: 1)
             session.deactivate()
             return
         }
+        let progress = playback.progressFlow.value
+        let item = Self.nowPlayingItem(current, progress: progress)
+        let position = TimeInterval(progress?.position ?? 0) / 1000
+        let isPlaying = playerIsPlaying
+        let speed = playback.playbackSpeedFlow.value.floatValue
+        nowPlaying.setSkipMode(
+            current.song.type == .audio
+                ? .tracks : .interval(forward: Self.skipForwardSeconds, backward: Self.skipBackwardSeconds)
+        )
+        if item == nowPlaying.item {
+            nowPlaying.updatePlayback(position: position, isPlaying: isPlaying, speed: speed)
+        } else {
+            nowPlaying.setItem(item, position: position, isPlaying: isPlaying, speed: speed)
+        }
+    }
+
+    /// `current` as Now Playing shows it.
+    static func nowPlayingItem(_ current: QueueItem, progress: PlaybackProgress?) -> NowPlayingItem {
         let song = current.song
-        let newItem = NowPlayingItem(
+        return NowPlayingItem(
             id: String(current.uid),
             title: song.name ?? "",
             artist: song.friendlyArtistName,
@@ -140,20 +141,6 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
             duration: TimeInterval(song.duration) / 1000,
             artwork: .song(song)
         )
-        nowPlaying.setSkipMode(
-            song.type == .audio ? .tracks : .interval(forward: Self.skipForwardSeconds, backward: Self.skipBackwardSeconds)
-        )
-        guard newItem != item else { return }
-        item = newItem
-        nowPlaying.setItem(newItem, position: seconds(positionMs), isPlaying: isPlaying, speed: speed)
-    }
-
-    private func publishPlayback() {
-        nowPlaying.updatePlayback(position: seconds(positionMs), isPlaying: isPlaying, speed: speed)
-    }
-
-    private func seconds(_ ms: Int32) -> TimeInterval {
-        TimeInterval(ms) / 1000
     }
 
     /// Every audio object died with the media server: a new engine, and the current item loaded into it
@@ -194,7 +181,7 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     }
 
     func skip(by interval: TimeInterval) {
-        let now = TimeInterval(playback.getProgress()?.int32Value ?? positionMs) / 1000
+        let now = TimeInterval(playback.getProgress()?.int32Value ?? 0) / 1000
         seek(to: now + interval)
     }
 }

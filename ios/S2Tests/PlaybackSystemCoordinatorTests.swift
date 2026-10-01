@@ -28,8 +28,14 @@ struct PlaybackSystemCoordinatorTests {
     }
 
     private final class FakeInfoCenter: NowPlayingInfoCenter {
-        var nowPlayingInfo: [String: Any]?
+        var nowPlayingInfo: [String: Any]? {
+            didSet { history.append(nowPlayingInfo) }
+        }
         var playbackState: MPNowPlayingPlaybackState = .unknown
+        /// Every write, in order.
+        private(set) var history: [[String: Any]?] = []
+
+        func value<T>(_ key: String) -> T? { nowPlayingInfo?[key] as? T }
     }
 
     private final class FakeCommandCenter: RemoteCommandCenter {
@@ -74,10 +80,18 @@ struct PlaybackSystemCoordinatorTests {
         info.nowPlayingInfo?[MPMediaItemPropertyTitle] as? String
     }
 
-    /// Queues the demo songs and loads the first, as far as the engine reporting it ready.
-    private func loadQueue() async throws -> String {
+    private var elapsed: TimeInterval? {
+        info.value(MPNowPlayingInfoPropertyElapsedPlaybackTime)
+    }
+
+    private var rate: Double? {
+        info.value(MPNowPlayingInfoPropertyPlaybackRate)
+    }
+
+    /// Queues `songs` and loads the first, as far as the engine reporting it ready.
+    private func loadQueue(_ songs: [Song] = TestSongs.demo) async throws -> String {
         let controller = graph.playerController
-        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
+        _ = try await controller.queueOperations.setQueue(songs: songs, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
         controller.load(seekPosition: nil, skipUnloadable: false) { _ in }
         #expect(await waitUntil { !engine.loads.isEmpty })
         let id = try #require(engine.loads.first?.current.id)
@@ -100,6 +114,58 @@ struct PlaybackSystemCoordinatorTests {
         commands.fire(.nextTrack)
         #expect(await waitUntil { title == "Hyperballad" })
         #expect(engine.loads.last?.current.url.absoluteString == "demo://2")
+    }
+
+    /// Loads the queue and plays it, as far as the engine reporting it playing.
+    private func playQueue() async throws -> String {
+        let id = try await loadQueue()
+        commands.fire(.play)
+        #expect(await waitUntil { engine.commands.contains("play") })
+        engine.emit(.state(.playing, trackId: id))
+        return id
+    }
+
+    @Test func playAndPauseFromTheLockScreenReflectBack() async throws {
+        let id = try await playQueue()
+        #expect(await waitUntil { rate == 1 && info.playbackState == .playing })
+
+        engine.emit(.position(trackId: id, ms: 42_000))
+        commands.fire(.pause)
+        #expect(await waitUntil { engine.commands.last == "pause" })
+        engine.emit(.state(.paused, trackId: id))
+
+        #expect(await waitUntil { rate == 0 && info.playbackState == .paused })
+        #expect(elapsed == 42)
+        #expect(title == "Paranoid Android")
+    }
+
+    @Test func aRemoteSeekMovesThePlayerAndReflectsBack() async throws {
+        _ = try await loadQueue()
+        #expect(await waitUntil { title != nil })
+
+        commands.fire(.changePlaybackPosition, .position(90))
+
+        #expect(await waitUntil { engine.commands.contains("seek 90000") })
+        #expect(await waitUntil { elapsed == 90 })
+        #expect(rate == 0)
+    }
+
+    /// The new song's metadata is never published with the last one's position, whichever of the queue
+    /// and progress flows Swift hears about first.
+    @Test func aTrackChangePublishesTheNewSongFromItsStart() async throws {
+        let id = try await playQueue()
+        engine.emit(.position(trackId: id, ms: 200_000))
+        #expect(await waitUntil { elapsed == 200 })
+        #expect(await waitUntil { engine.nexts.last??.id != nil })
+        let nextId = try #require(engine.nexts.last??.id)
+
+        engine.emit(.transition(trackId: nextId))
+
+        #expect(await waitUntil { title == "Hyperballad" })
+        let published = info.history.compactMap { $0 }.filter { $0[MPMediaItemPropertyTitle] as? String == "Hyperballad" }
+        #expect(published.allSatisfy { ($0[MPNowPlayingInfoPropertyElapsedPlaybackTime] as? TimeInterval) == 0 })
+        #expect(info.value(MPMediaItemPropertyPlaybackDuration) == 321.0)
+        #expect(rate == 1)
     }
 
     @Test func playActivatesTheSessionBeforeTheEnginePlays() async throws {
