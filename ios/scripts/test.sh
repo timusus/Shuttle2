@@ -76,5 +76,5 @@ fi
 cd "$ios_dir"
 echo "==> xcodebuild test -scheme S2 -destination id=$udid ${args[*]+"${args[*]}"}"
 xcodebuild test -project S2.xcodeproj -scheme S2 -destination "id=$udid" \
-  -derivedDataPath build/DerivedData -quiet ${args[@]+"${args[@]}"}
+  -derivedDataPath build/DerivedData -collect-test-diagnostics never -quiet ${args[@]+"${args[@]}"}
 echo "==> S2 tests passed"
