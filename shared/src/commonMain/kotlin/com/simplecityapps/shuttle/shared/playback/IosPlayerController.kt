@@ -677,7 +677,8 @@ class IosPlayerController(
 
             else -> {
                 if (isNearEnd(getProgress() ?: 0, item.song)) seekNow(0)
-                playCallPending = true
+                // A playing engine has nothing to answer: the play changes nothing and is never refused.
+                if (engineState != IosAudioPlayerState.Playing) playCallPending = true
                 // A session that refuses a track that's already ready reports paused even though the engine never moves.
                 callEngine { player.play() }
             }
@@ -703,6 +704,8 @@ class IosPlayerController(
         clearPlayRequest()
         // Still told to the engine while the state stays [PlaybackState.Loading], so a load that was going to play stops.
         if (current != null) player.pause()
+        // Its paused report follows; until then a play is not one to a playing engine.
+        if (engineState == IosAudioPlayerState.Playing) engineState = IosAudioPlayerState.Paused
     }
 
     override fun togglePlayback() = onMain {

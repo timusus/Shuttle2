@@ -16,7 +16,8 @@ import Shared
 /// `play()` does nothing and a load loads paused. Both report paused for that track, on the calling thread, so Kotlin
 /// can drop the intent. A refused load's report is not the track becoming ready — the engine's own loading and paused
 /// reports, afterwards and in order, are. A refused play of a track that's already ready has no engine transition, so
-/// the paused report is the only one.
+/// the paused report is the only one. A play while the engine is already playing is no change, so it asks nothing of
+/// the session and is never refused.
 final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     /// Called on the main thread before playback starts; false cancels it.
     var onWillPlay: () -> Bool = { true }
@@ -29,6 +30,8 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     /// The track the engine is playing as far as Kotlin knows: the last loaded, or transitioned to. The engine's
     /// position only counts for it, as a load or a transition reaches the engine queue after the call returns.
     private var currentId: String?
+    /// The engine's last report for `currentId` was playing, and nothing asked it to pause, load or stop since.
+    private var isPlaying = false
     /// The equalizer Kotlin last set, handed to a replacement engine too.
     private var equalizer: EngineEqualizer?
 
@@ -44,6 +47,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
         engine.setEventHandler(nil)
         engine.stop()
         currentId = nil
+        isPlaying = false
         engine = newEngine
         attach(newEngine)
         equalizer?.apply(to: newEngine)
@@ -56,6 +60,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     private func forward(_ event: EngineEvent) {
         switch event {
         case let .state(state, trackId):
+            isPlaying = state == .playing && trackId == currentId
             listener?.onStateChanged(trackId: trackId ?? "", state: IosAudioPlayerState(state))
         case let .transition(trackId):
             currentId = trackId
@@ -77,6 +82,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
 
     func load(current: IosAudioTrack, next: IosAudioTrack?, startMs: Int64, playWhenReady: Bool) {
         currentId = current.id
+        isPlaying = false
         guard let track = engineTrack(current) else {
             engine.stop()
             return
@@ -91,6 +97,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     }
 
     func play() {
+        guard !isPlaying else { return }
         guard onWillPlay() else {
             if let currentId { reportPaused(currentId) }
             return
@@ -105,6 +112,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     }
 
     func pause() {
+        isPlaying = false
         engine.pause()
         onPaused()
     }
@@ -115,6 +123,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
 
     func stop() {
         currentId = nil
+        isPlaying = false
         engine.stop()
     }
 

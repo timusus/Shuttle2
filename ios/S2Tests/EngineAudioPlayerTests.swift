@@ -129,6 +129,28 @@ struct EngineAudioPlayerTests {
         #expect(listener.calls == ["state a paused", "state a paused"])
     }
 
+    @Test func aPlayWhileTheEngineIsPlayingIsNotAskedOfTheSessionNorRefused() {
+        var asked = 0
+        player.onWillPlay = {
+            asked += 1
+            return false
+        }
+        player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: false)
+        engine.emit(.state(.playing, trackId: "a"))
+
+        player.play()
+
+        #expect(asked == 0)
+        #expect(engine.commands.isEmpty)
+        #expect(listener.calls == ["state a playing"])
+
+        // Once paused, a play is the session's to refuse again.
+        player.pause()
+        player.play()
+        #expect(asked == 1)
+        #expect(listener.calls == ["state a playing", "state a paused"])
+    }
+
     @Test func positionAndDurationOnlyCountForTheTrackKotlinThinksIsCurrent() {
         engine.position = (uid: "a", ms: 500)
         engine.durationMs = 3_000
@@ -320,6 +342,23 @@ struct EngineAudioPlayerTests {
         #expect(!engine.commands.contains("play"))
         #expect(!intendsToPlay(controller))
         #expect(controller.playbackStateFlow.value is PlaybackState.Paused)
+    }
+
+    @Test func aPlayWhileTheSongIsPlayingKeepsItPlayingWhenTheSessionWouldRefuse() async throws {
+        let graph = makeTestGraph(audioPlayer: player)
+        let controller = graph.playerController
+        try await queueDemoSongs(on: graph, skipUnloadable: false)
+        #expect(await waitUntil { !engine.loads.isEmpty })
+        let id = try #require(engine.loads.first?.current.id)
+        controller.play()
+        engine.emit(.state(.playing, trackId: id))
+        #expect(await waitUntil { controller.playbackStateFlow.value is PlaybackState.Playing })
+
+        player.onWillPlay = { false }
+        controller.play()
+
+        #expect(intendsToPlay(controller))
+        #expect(controller.playbackStateFlow.value is PlaybackState.Playing)
     }
 
     @Test func aPausedReportForTheSongASkipReplacedIsIgnored() async throws {

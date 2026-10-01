@@ -36,8 +36,8 @@ class FakeIosAudioPlayer : IosAudioPlayer {
     private var playWhenReady = false
 
     /**
-     * When false, [play] and a load that asked to play are refused: the track is still prepared, ending paused, and a
-     * paused state is reported for its id. [deferRefusal] posts that play refusal for [settle], as an engine that
+     * When false, [play] (unless already playing, which changes nothing) and a load that asked to play are refused:
+     * the track is still prepared, ending paused, and a paused state is reported for its id. [deferRefusal] posts that play refusal for [settle], as an engine that
      * can't start does; otherwise it is reported inside the call, as a session that won't activate. A refused load
      * always ends with the engine's own paused report (what makes the load ready); the in-call report, when not
      * deferred, only cancels the intent early.
@@ -87,6 +87,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     override fun play() {
         calls += "play"
+        if (state == IosAudioPlayerState.Playing) return
         if (!acceptsPlay) {
             current?.id?.let(::refuse)
             return
