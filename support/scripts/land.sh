@@ -187,6 +187,20 @@ if ! git reset --hard origin/main >> "$LOG" 2>&1; then
   exit 1
 fi
 
+# --- environment guard (#699): the Gradle verify needs the gitignored local.properties (sdk.dir) ---
+# Copy it from the primary checkout if this tree lacks it; if it is still missing the verify can't
+# run, which is an environment fault, not a branch's: stop before picking so nothing gets blamed.
+if [ "${LAND_SKIP_VERIFY:-0}" != 1 ] && [ ! -f local.properties ]; then
+  primary=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
+  if [ -n "$primary" ] && [ "$primary" != "$REPO_ROOT" ] && [ -f "$primary/local.properties" ]; then
+    cp "$primary/local.properties" local.properties && log "copied local.properties from $primary"
+  fi
+  if [ ! -f local.properties ]; then
+    say "land.sh: ENVIRONMENT error: local.properties is missing in $REPO_ROOT and could not be copied from the primary checkout (${primary:-unknown}); no branch was blamed"
+    exit 3
+  fi
+fi
+
 # --- cherry-pick each branch, tracking where it started so it can be dropped later ---------
 STATUS=()       # landed | conflict | dropped, one per BRANCHES index
 REASON=()
