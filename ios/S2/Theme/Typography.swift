@@ -42,8 +42,6 @@ extension Font {
 
     // MARK: Body
 
-    /// Running text: descriptions, sheet copy.
-    static let s2Body = Font.body
     /// Hints and footers under a control or section: Home's cold-start line, a sign-in hint.
     static let s2Caption = Font.footnote
     /// A button's label where the style doesn't set one: Shuffle All, Get Started.

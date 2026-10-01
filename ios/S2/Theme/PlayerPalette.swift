@@ -111,7 +111,7 @@ struct PlayerPalette: Equatable {
 extension PlayerPalette {
     /// The palette for the environment's cover colour and scheme.
     static func resolve(extracted: ContrastSafeTint.RGB?, isDarkScheme: Bool) -> PlayerPalette {
-        let accent = ContrastSafeTint.rgb(from: UIColor(named: "AccentColor") ?? .systemBlue, isDarkScheme: isDarkScheme)
+        let accent = ContrastSafeTint.rgb(from: UIColor.s2Accent, isDarkScheme: isDarkScheme)
         return PlayerPalette(extracted: extracted, accent: accent, isDarkScheme: isDarkScheme)
     }
 }

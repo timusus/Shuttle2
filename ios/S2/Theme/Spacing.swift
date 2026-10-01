@@ -59,16 +59,6 @@ extension View {
     }
 }
 
-/// Standard row heights, the minimum a row of each kind lays out at (it grows with Dynamic Type).
-enum RowHeight {
-    /// A text-only row: a tracklist song, a Settings item.
-    static let text: CGFloat = TouchTarget.minimum
-    /// A row with `ArtworkSize.row` artwork.
-    static let media: CGFloat = ArtworkSize.row + Spacing.medium
-    /// A row with `ArtworkSize.albumRow` artwork.
-    static let albumMedia: CGFloat = ArtworkSize.albumRow + Spacing.medium
-}
-
 /// The artwork sizes rows, tiles and heroes draw at, in points (also the decode size `ArtworkImage` requests).
 /// A size that grows on an iPad is a compact / regular pair plus a function of the `LayoutTier`: call the
 /// function (`ArtworkSize.shelf(tier)`) so the breakpoint lives here.

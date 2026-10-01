@@ -50,7 +50,6 @@ SF Pro throughout; **SF Pro Expanded for display type only**; monospaced digits 
 | `s2RowTitle` | `.body` | A list row's title (`MediaRow`, text rows) |
 | `s2RowSubtitle` | `.subheadline` | A row's second line |
 | `s2RowMeta` | `.subheadline`, mono digits | A row's trailing duration or count |
-| `s2Body` | `.body` | Running text |
 | `s2Caption` | `.footnote` | Hints and footers |
 | `s2Button` | `.headline` | A button label where the style sets none |
 | `s2Time` | `.caption`, mono digits | Scrubber times |
@@ -71,7 +70,6 @@ draws its hairline; `artworkTile(_:shape:)` frames a square first.
 | `artist` | circle | **Every** artist picture: rows, tiles, shelves, heroes, skeletons |
 | `card` | 16 pt | Cards, notices, the floating mini player |
 | `control` | 10 pt | Text fields, icon containers, segmented choices |
-| `sheet` | 28 pt | A custom sheet's top corners (system sheets keep theirs) |
 | `capsule` | capsule | Prominent buttons, chips, the scrubber, the player's bottom bar |
 
 `S2Shape.artwork(role, for: source)` returns `.artist` for an artist's `ArtworkSource`, so the circle rule
@@ -84,23 +82,19 @@ Chrome is **neutral**; colour comes from artwork. Each role is a `UIColor` (for 
 
 | Token | Value (light / dark) | Use |
 |---|---|---|
-| `s2Accent` | `AccentColor`: #1C1C1E / #F2F2F7 | The app tint: selection, tab bar, toggles, prominent fills |
+| `s2Accent` | `AccentColor`: #1C1C1E / #F2F2F7 | The app tint: selection, tab bar, slider tracks, prominent fills |
 | `s2OnAccent` | `systemBackground` | A label or glyph on an accent fill |
 | `artworkTint` / `artworkTintInk` | from the cover | Overrides the accent in the player, mini player and detail heroes |
-| `s2Surface` | `systemBackground` | The screen's ground |
 | `s2SurfaceContainer` | `secondarySystemBackground` | Cards and notices on the ground |
-| `s2SurfaceContainerHigh` | `tertiarySystemBackground` | A control on a card |
 | `s2SurfaceFill` | `systemGray5` | Placeholders, skeletons |
-| `s2Separator` | `separator` | Row and section dividers |
-| `s2TextPrimary` | `label` | Titles, body |
 | `s2TextSecondary` | `SecondaryText`: #66666B / #9A9AA0 | Subtitles and captions (AA 4.5:1; `secondaryLabel` is 3.4:1) |
-| `s2TextTertiary` | `tertiaryLabel` | Placeholders, disabled labels, never text to read |
-| `s2Success` / `s2Warning` / `s2Error` | system green / orange / red | Status: connected, degraded, failed |
-| `s2NowPlaying` | `s2Accent` | The playing row where no artwork tint is in scope |
+| `s2Success` / `s2Error` | system green / red | Status: connected, failed; `s2Success` is also every switch's on-track |
 
 The system ignores a neutral asset as the global accent and falls back to system blue, so `S2App` applies
 `.tint(.s2Accent)` at the root and `AccentTint.apply()` sets UIKit's window tint; draw with `.s2Accent`, never
-`Color.accentColor`. A prominent button on the plain accent sets `.foregroundStyle(.s2OnAccent)`; `.borderedProminent` otherwise
+`Color.accentColor`. Switches are the HIG green (`s2Success`), set once through `UISwitch.appearance()` in
+`AccentTint.apply()`: a near-white on-track under the white knob has no contrast in dark mode. Sliders keep the
+accent (a near-white track against the grey remainder reads); steppers draw no tint. A prominent button on the plain accent sets `.foregroundStyle(.s2OnAccent)`; `.borderedProminent` otherwise
 draws white, which vanishes on the near-white dark-mode accent. Tinted buttons use `capsuleButton`, which
 takes `artworkTintInk`.
 
@@ -128,15 +122,12 @@ takes `artworkTintInk`.
 
 | Token | Value | Use |
 |---|---|---|
-| `IconSize.small` | 17 | Inline glyphs, a row's accessory |
-| `IconSize.medium` | 20 | Toolbar and list-icon glyphs |
-| `IconSize.large` | 24 | Transport secondaries, large icon squares |
-| `IconSize.hero` | 44 | Empty-state and onboarding symbols |
+| `IconSize.small` | 17 | A glyph in a list icon container (Settings' squares) or beside a row title |
+| `IconSize.medium` | 20 | A toolbar or card glyph: a source card's icon |
+| `IconSize.large` | 24 | A prominent glyph in a large container: a server's icon in Sources |
+| `IconSize.hero` | 44 | An empty state's or a first-run step's symbol |
 | `TouchTarget.minimum` | 44 | Every tappable control's hit area (`.touchTarget()`) |
 | `TouchTarget.disc` | 36 | A visible disc inside a 44 pt target (top-bar buttons, the progress ring) |
-| `RowHeight.text` | 44 | A text-only row |
-| `RowHeight.media` | 64 | A 48 pt artwork row |
-| `RowHeight.albumMedia` | 72 | A 56 pt album row |
 | `ArtworkSize.*` | 48 … 420 | Row, shelf, grid, hero and player artwork |
 
 `.touchTarget(visible)` frames a control at `max(visible, 44)` with a full content shape, so a small glyph
@@ -146,8 +137,13 @@ still takes a full target.
 
 | Token | iOS 26 | iOS 17–18 | Use |
 |---|---|---|---|
-| `glassSurface(in:)` | `glassEffect(.regular, in:)` | `GlassFallback.chrome` (`.regularMaterial`) + hairline | Floating chrome: the player's bottom bar, top-bar discs |
-| `glassSurface(in:fallback: GlassFallback.card)` | `glassEffect(.regular, in:)` | `.thickMaterial` + hairline | The floating mini player |
+| `glassSurface(in:)` | `glassEffect(.regular, in:)` | `GlassFallback.chrome`: `.ultraThinMaterial`, no edge | The player's bottom bar |
+| `glassSurface(in:fallback: .disc)` | `glassEffect(.regular, in:)` | `.regularMaterial`, no edge | The player's top-bar discs |
+| `glassSurface(in:fallback: .card)` | `glassEffect(.regular, in:)` | `.thickMaterial` + hairline | The floating mini player |
+
+The player's fallbacks reproduce its pre-#685 look (ultra-thin bar, regular discs, no hairline): the backdrop is a
+dark, artwork-tinted ground, so the material is legible without an edge, and a hairline there only adds noise. The
+mini player floats over a pale list, so it keeps the thick material and hairline.
 | `capsuleButton(prominent:)` | `.glassProminent` / `.glass` | `.borderedProminent` / `.bordered` capsule | Hero and player actions |
 
 System bars (tab bar, navigation bar, toolbars) get their glass from the system; never paint over them.
@@ -213,4 +209,4 @@ ticked component whose PNGs change. Screens build only from catalogued component
 | 2026-10-01 | owner | **Neutral accent.** `AccentColor` is near-black / near-white, as Android's neutral chrome; the artwork tint still overrides it in the player, mini player and heroes. Was blue #006AD1 / #3D9DFF. |
 | 2026-10-01 | owner | **SF Pro Expanded for display type only**: the large title, hero titles, the Now Playing song and the welcome. Everything else is SF Pro (the rounded design is gone). |
 | 2026-10-01 | owner | **Artists are circles** at every size, reversing 9703ba568 (#624), which had given them albums' corners. |
-| 2026-10-01 | owner | **Dividers**: none between rows led by artwork; on text-only rows, the system separator inset to the title. Phase 1 adds the helper; screens adopt it in phase 3. |
+| 2026-10-01 | owner | **Dividers**: none between rows led by artwork; on text-only rows, the system separator inset to the title. `rowSeparator` (Phase 1) is applied on Library, Playlists, detail and track rows; grouped Forms (Settings, Sources) keep the system style. |

@@ -195,7 +195,7 @@ struct LibraryGridSkeleton: View {
                     artworkShape.fill(.s2SurfaceFill)
                         .aspectRatio(1, contentMode: .fit)
                     VStack(alignment: .leading, spacing: Spacing.tiny) {
-                        Capsule().fill(Color(.systemGray5)).frame(height: titleHeight).padding(.trailing, Spacing.large)
+                        Capsule().fill(Color(uiColor: .s2SurfaceFill)).frame(height: titleHeight).padding(.trailing, Spacing.large)
                             .frame(height: titleLine)
                         Capsule().fill(Color(.systemGray6)).frame(height: subtitleHeight).padding(.trailing, Spacing.xlarge * 2)
                             .frame(height: subtitleLine)

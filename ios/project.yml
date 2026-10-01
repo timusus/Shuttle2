@@ -68,7 +68,7 @@ targets:
         MARKETING_VERSION: "2026.09.27"
         CURRENT_PROJECT_VERSION: "1"
         GENERATE_INFOPLIST_FILE: true
-        # The app's tint: Assets.xcassets' AccentColor, S2's accent split light/dark for contrast (Theme/Typography.swift).
+        # The neutral accent: Assets.xcassets' AccentColor (near-black / near-white). The system ignores a neutral asset as the global tint, so S2App applies .tint(.s2Accent) and AccentTint sets UIKit's (Theme/Colors.swift).
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         # Assets.xcassets/AppIcon.appiconset, rendered from ios/design/*.svg by scripts/render-app-icon.sh.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

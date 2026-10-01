@@ -51,7 +51,7 @@ struct MediaRowSkeleton: View {
                 .fill(.s2SurfaceFill)
                 .frame(width: artworkSize, height: artworkSize)
             VStack(alignment: .leading, spacing: Spacing.small) {
-                Capsule().fill(Color(.systemGray5))
+                Capsule().fill(Color(uiColor: .s2SurfaceFill))
                     .frame(maxWidth: 200)
                     .frame(height: titleHeight)
                 Capsule().fill(Color(.systemGray6))

@@ -5,7 +5,7 @@ import UIKit
 /// loading, and the muted tones of `GeneratedArtwork` for a genre or playlist, which have no cover of their own.
 enum ArtworkPalette {
     /// The placeholder's fill: a system grey, the same quiet tone whatever the screen's tint.
-    static let placeholderFill = Color(.systemGray5)
+    static let placeholderFill = Color(uiColor: .s2SurfaceFill)
     /// The placeholder's glyph: a step darker (lighter in dark mode) than the fill, so it reads without shouting.
     static let placeholderGlyph = Color(.systemGray2)
     /// A generated artwork's glyph: secondary ink over its muted tone, as Android's `onSurfaceVariant`.

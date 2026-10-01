@@ -1,4 +1,5 @@
 import SwiftUI
+import Shared
 import Testing
 import ViewInspector
 @testable import S2
@@ -134,32 +135,55 @@ struct DesignSystemTests {
 
     @Test func anArtistRowDrawsACircle() throws {
         let sut = MediaRow("Radiohead", artwork: ArtworkSource(id: "radiohead", isArtist: true) { [] })
-        #expect(try sut.inspect().find(ViewType.Group.self).clipShape(S2Shape.self) == .artist)
+        #expect(try sut.inspect().find(viewWithAccessibilityIdentifier: "mediaRow.artwork").clipShape(S2Shape.self) == .artist)
     }
 
-    @Test func accentIsNeutralDarkInLightModeAndLightInDarkMode() {
-        let accentLight = Self.luminance(.s2Accent, dark: false)
-        let accentDark = Self.luminance(.s2Accent, dark: true)
-        #expect(accentLight < 0.15)
-        #expect(accentDark > 0.8)
+    @Test func accentIsNeutralDarkInLightModeAndLightInDarkMode() throws {
+        // The asset must load: `s2Accent` falls back to `.label`, which would pass the checks below by accident.
+        #expect(UIColor(named: "AccentColor") != nil)
+        let accent = UIColor.s2Accent
+        #expect(accent != UIColor.label)
+        #expect(Self.luminance(accent, dark: false) < 0.15)
+        #expect(Self.luminance(accent, dark: true) > 0.8)
         // Neutral: no hue of its own.
-        #expect(Self.chroma(.s2Accent, dark: false) < 0.03)
-        #expect(Self.chroma(.s2Accent, dark: true) < 0.03)
+        #expect(Self.chroma(accent, dark: false) < 0.03)
+        #expect(Self.chroma(accent, dark: true) < 0.03)
         // A label on the accent is the opposite end of the scale.
         #expect(Self.luminance(.s2OnAccent, dark: false) > 0.9)
         #expect(Self.luminance(.s2OnAccent, dark: true) < 0.1)
     }
 
+    @Test func onAccentInkClearsAAOnTheAccentInBothSchemes() {
+        for dark in [false, true] {
+            let ratio = Self.contrastRatio(.s2OnAccent, on: .s2Accent, dark: dark)
+            #expect(ratio >= 4.5, "on-accent ink is \(ratio):1 on the accent (dark: \(dark))")
+        }
+    }
+
     @Test func textAndStatusRolesFollowTheScheme() {
-        #expect(Self.luminance(.s2TextPrimary, dark: false) < 0.1)
-        #expect(Self.luminance(.s2TextPrimary, dark: true) > 0.9)
+        #expect(UIColor(named: "SecondaryText") != nil)
         #expect(Self.luminance(.s2TextSecondary, dark: false) < Self.luminance(.s2TextSecondary, dark: true))
-        #expect(Self.luminance(.s2Surface, dark: false) > 0.9)
-        #expect(Self.luminance(.s2Surface, dark: true) < 0.1)
+        #expect(Self.contrastRatio(.s2TextSecondary, on: .systemBackground, dark: false) >= 4.5)
+        #expect(Self.contrastRatio(.s2TextSecondary, on: .systemBackground, dark: true) >= 4.5)
         let error = Self.rgb(.s2Error, dark: false)
         #expect(error.red > error.green && error.red > error.blue)
         let success = Self.rgb(.s2Success, dark: true)
         #expect(success.green > success.red && success.green > success.blue)
+    }
+
+    @Test func aJumpBackInArtistIsInsetInItsSlotAndOtherItemsFillIt() {
+        let artist = HomeItemArtistItem(albumArtist: AlbumArtist(
+            name: "Massive Attack", artists: ["Massive Attack"], albumCount: 3, songCount: 30, playCount: 0,
+            groupKey: AlbumArtistGroupKey(key: "massive attack"), mediaProviders: [.jellyfin], artworkVersion: nil, appearsOnCount: 0
+        ))
+        let album = HomeItemAlbumItem(album: Album(
+            name: "Mezzanine", albumArtist: "Massive Attack", artists: ["Massive Attack"], songCount: 10, duration: 0,
+            year: nil, playCount: 0, lastSongPlayed: nil, lastSongCompleted: nil,
+            groupKey: AlbumGroupKey(key: "mezzanine", albumArtistGroupKey: AlbumArtistGroupKey(key: "massive attack"), identity: nil),
+            mediaProviders: [.jellyfin], artworkVersion: nil
+        ))
+        #expect(JumpBackInCell.artworkSide(for: album) == ArtworkSize.albumRow)
+        #expect(JumpBackInCell.artworkSide(for: artist) < ArtworkSize.albumRow)
     }
 
     @Test func touchTargetsAreNeverBelowTheMinimum() {
@@ -167,7 +191,6 @@ struct DesignSystemTests {
         #expect(TouchTarget.side(TouchTarget.disc) == 44)
         #expect(TouchTarget.side(20) == 44)
         #expect(TouchTarget.side(60) == 60)
-        #expect(RowHeight.text >= TouchTarget.minimum)
     }
 
     // MARK: Helpers
@@ -182,6 +205,17 @@ struct DesignSystemTests {
     private static func luminance(_ color: UIColor, dark: Bool) -> CGFloat {
         let c = rgb(color, dark: dark)
         return 0.2126 * c.red + 0.7152 * c.green + 0.0722 * c.blue
+    }
+
+    /// WCAG 2.x contrast ratio of `foreground` over an opaque `background`, both resolved for the scheme.
+    private static func contrastRatio(_ foreground: UIColor, on background: UIColor, dark: Bool) -> CGFloat {
+        func relative(_ color: UIColor) -> CGFloat {
+            let c = rgb(color, dark: dark)
+            func linear(_ v: CGFloat) -> CGFloat { v <= 0.03928 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4) }
+            return 0.2126 * linear(c.red) + 0.7152 * linear(c.green) + 0.0722 * linear(c.blue)
+        }
+        let a = relative(foreground), b = relative(background)
+        return (max(a, b) + 0.05) / (min(a, b) + 0.05)
     }
 
     private static func chroma(_ color: UIColor, dark: Bool) -> CGFloat {

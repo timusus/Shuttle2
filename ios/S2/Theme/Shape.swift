@@ -65,8 +65,6 @@ struct S2Shape: InsettableShape, Equatable {
     static let card = S2Shape(.rounded(16))
     /// A small control or icon container: a text field, a source card's icon, a segmented choice.
     static let control = S2Shape(.rounded(10))
-    /// The top corners of a custom sheet or panel. System sheets keep their own.
-    static let sheet = S2Shape(.rounded(28))
     /// Prominent buttons (Play, Shuffle), chips, the scrubber and the player's bottom bar.
     static let capsule = S2Shape(.capsule)
 }
