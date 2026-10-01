@@ -74,9 +74,14 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         player.onPaused = {}
     }
 
-    /// Read from the flow's value, not `isPlaying`, which lags it by a hop through the observer task.
+    /// Read from the flows' values, not `isPlaying`, which lags them by a hop through the observer task.
+    /// Playing, or loading with the intent to play. An idle, ended or failed track is paused and must not
+    /// advertise playback — including to an interruption, which resumes only when this was true.
     private var playerIsPlaying: Bool {
-        playback.playbackStateFlow.value is PlaybackState.Playing
+        let state = playback.playbackStateFlow.value
+        if state is PlaybackState.Playing { return true }
+        if state is PlaybackState.Loading { return playback.playWhenReadyFlow.value.boolValue }
+        return false
     }
 
     private func observe() {
@@ -84,6 +89,11 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         observers = [
             Task { [weak self] in
                 for await _ in playback.playbackStateFlow {
+                    self?.publish()
+                }
+            },
+            Task { [weak self] in
+                for await _ in playback.playWhenReadyFlow {
                     self?.publish()
                 }
             },
@@ -108,7 +118,8 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     // MARK: - Following the player
 
     /// Publishes the player as it is now: the current song, its position and whether it plays.
-    private func publish() {
+    /// `force` writes the item again, artwork included, instead of `updatePlayback`'s throttled position update.
+    private func publish(force: Bool = false) {
         guard let current = playback.queueOperations.queueStateFlow.value.currentItem else {
             guard nowPlaying.item != nil else { return }
             // The queue emptied: nothing is playing, so give the session back to other apps.
@@ -125,7 +136,7 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
             current.song.type == .audio
                 ? .tracks : .interval(forward: Self.skipForwardSeconds, backward: Self.skipBackwardSeconds)
         )
-        if item == nowPlaying.item {
+        if !force, item == nowPlaying.item {
             nowPlaying.updatePlayback(position: position, isPlaying: isPlaying, speed: speed)
         } else {
             nowPlaying.setItem(item, position: position, isPlaying: isPlaying, speed: speed)
@@ -148,14 +159,19 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     }
 
     /// Every audio object died with the media server: a new engine, and the current item loaded into it
-    /// where it was, playing on if it was.
+    /// where it was. Playing — or still loading with the intent to play — resumes; paused stays paused.
+    /// Now Playing is written in full even when the item and state didn't change: the system copy was wiped
+    /// with the server, and `updatePlayback` would throttle an unchanged paused or loading item.
     private func rebuildEngine() {
         guard let engine = makeEngine() else { return }
-        let wasPlaying = playerIsPlaying
+        let resume = playerIsPlaying
         let position = playback.getProgress()
         player.replaceEngine(engine)
-        playback.load(seekPosition: position, skipUnloadable: false) { _ in }
-        if wasPlaying { playback.play() }
+        playback.load(seekPosition: position, skipUnloadable: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.publish(force: true) }
+        }
+        if resume { playback.play() }
+        publish(force: true)
     }
 
     // MARK: - NowPlayingCommandHandler

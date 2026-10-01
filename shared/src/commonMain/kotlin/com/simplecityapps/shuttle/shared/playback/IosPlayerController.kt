@@ -122,7 +122,36 @@ class IosPlayerController(
     /** The engine's last reported state for [current]. */
     private var engineState = IosAudioPlayerState.Idle
 
-    private var playWhenReady = false
+    /**
+     * Whether the user wants playback to run. This is the value [load]s, [play], [pause], failures and queue changes
+     * actually use — not a copy beside it. Distinct from [playbackStateFlow]: a track can be loading either way, and an
+     * idle, ended or failed track does not keep the intent.
+     */
+    private val _playWhenReady = MutableStateFlow(false)
+
+    /** [playWhenReady], for system surfaces. Collectors read this flow; they don't keep their own copy. */
+    val playWhenReadyFlow: StateFlow<Boolean> = _playWhenReady.asStateFlow()
+
+    private var playWhenReady: Boolean
+        get() = _playWhenReady.value
+        set(value) {
+            _playWhenReady.value = value
+        }
+
+    /** Non-zero while a [player] call is on the stack, so a paused report it makes is its refusal of that call. */
+    private var engineCallDepth = 0
+
+    /** The current load was handed to the engine asking to play. */
+    private var loadAskedToPlay = false
+
+    /** [player.play] was called and the engine has not yet reported what came of it. */
+    private var playCallPending = false
+
+    /**
+     * The load's own ready-paused arrived while [playCallPending]: the play is still in flight, and a further paused
+     * report is that play being refused (the engine was already paused, so the report repeats).
+     */
+    private var playAwaitingRejection = false
 
     /** The completion of the last [load] (or skip), called once its item is ready or nothing could load. */
     private var pendingLoad: PendingLoad? = null
@@ -287,7 +316,11 @@ class IosPlayerController(
         feed.sent = true
         feed.opensAtPosition = stream.opensAtPosition
         val handedBack = engineNext?.takeIf { !it.failed }?.handedOver
-        player.load(feed.track(stream), handedBack, (startMs - feed.offsetMs).toLong(), playWhenReady)
+        loadAskedToPlay = playWhenReady
+        playCallPending = false
+        playAwaitingRejection = false
+        // A session that refuses this load reports paused inside the call, before the engine is ready.
+        callEngine { player.load(feed.track(stream), handedBack, (startMs - feed.offsetMs).toLong(), playWhenReady) }
         feedNext()
     }
 
@@ -362,6 +395,7 @@ class IosPlayerController(
         engineNext = null
         engineState = IosAudioPlayerState.Idle
         playWhenReady = false
+        clearPlayRequest()
         completePending(Result.failure(IllegalStateException("Queue empty")))
     }
 
@@ -372,14 +406,38 @@ class IosPlayerController(
         state: IosAudioPlayerState
     ) {
         val currentFeed = current ?: return
-        // A failed track has been dealt with: skipped, or stopped at.
+        // A failed track has been dealt with: skipped, or stopped at. So has a report for a track already replaced.
         if (trackId != currentFeed.id || currentFeed.failed) return
+        // A refusal delivered inside load or play, before the engine has become ready. Cancelling the intent here must
+        // not complete the load: the engine's own loading and paused reports, still to come, are what make it ready.
+        if (state == IosAudioPlayerState.Paused && engineCallDepth > 0 && !currentFeed.ready) {
+            if (playWhenReady) playWhenReady = false
+            clearPlayRequest()
+            publishState()
+            return
+        }
         engineState = state
         when (state) {
-            IosAudioPlayerState.Playing, IosAudioPlayerState.Paused -> if (!currentFeed.failed && !currentFeed.ready) {
-                currentFeed.ready = true
-                loadFailures = 0
-                completePending(Result.success(pendingLoad?.attempt == 1))
+            IosAudioPlayerState.Paused -> {
+                // Reconcile before the load completion: it may ask to play, and that newer intent has to survive.
+                when {
+                    playCallPending && !currentFeed.ready -> {
+                        // The load's ready-paused, queued before a play that hasn't been answered yet.
+                        playCallPending = false
+                        playAwaitingRejection = true
+                    }
+
+                    playWhenReady && (loadAskedToPlay || playCallPending || playAwaitingRejection) -> {
+                        playWhenReady = false
+                        clearPlayRequest()
+                    }
+                }
+                markReady(currentFeed)
+            }
+
+            IosAudioPlayerState.Playing -> {
+                clearPlayRequest()
+                markReady(currentFeed)
             }
 
             IosAudioPlayerState.Ended -> {
@@ -390,6 +448,29 @@ class IosPlayerController(
             else -> Unit
         }
         publishState()
+    }
+
+    /** The engine can play [feed]: the first playing or paused report after it was handed over, not a refusal before that. */
+    private fun markReady(feed: Feed) {
+        if (feed.failed || feed.ready) return
+        feed.ready = true
+        loadFailures = 0
+        completePending(Result.success(pendingLoad?.attempt == 1))
+    }
+
+    private fun clearPlayRequest() {
+        loadAskedToPlay = false
+        playCallPending = false
+        playAwaitingRejection = false
+    }
+
+    private inline fun callEngine(block: () -> Unit) {
+        engineCallDepth++
+        try {
+            block()
+        } finally {
+            engineCallDepth--
+        }
     }
 
     /** The engine moved on to its next track: the queue's current item follows. */
@@ -485,6 +566,7 @@ class IosPlayerController(
         next = null
         engineNext = null
         playWhenReady = false
+        clearPlayRequest()
         player.stop()
         engineState = IosAudioPlayerState.Idle
     }
@@ -511,6 +593,7 @@ class IosPlayerController(
         }
         completePending(Result.failure(IllegalStateException("Nothing to load")))
         playWhenReady = false
+        clearPlayRequest()
         engineState = IosAudioPlayerState.Ended
         publishState()
     }
@@ -594,7 +677,9 @@ class IosPlayerController(
 
             else -> {
                 if (isNearEnd(getProgress() ?: 0, item.song)) seekNow(0)
-                player.play()
+                playCallPending = true
+                // A session that refuses a track that's already ready reports paused even though the engine never moves.
+                callEngine { player.play() }
             }
         }
         publishState()
@@ -615,6 +700,8 @@ class IosPlayerController(
 
     private fun pauseNow() {
         playWhenReady = false
+        clearPlayRequest()
+        // Still told to the engine while the state stays [PlaybackState.Loading], so a load that was going to play stops.
         if (current != null) player.pause()
     }
 
@@ -875,6 +962,7 @@ class IosPlayerController(
                 val playedOut = queue.remove(uids)
                 if (playedOut && current != null) {
                     playWhenReady = false
+                    clearPlayRequest()
                 }
                 sync()
                 if (playedOut && current != null) {

@@ -695,4 +695,246 @@ class IosPlayerControllerTest {
         controller.currentSong shouldBe b
         controller.playbackState() shouldBe PlaybackState.Playing
     }
+
+    // Play intent, kept apart from the engine's state
+
+    @Test
+    fun `play intent follows play, pause and toggle - and a load does not assume it`() = test { controller ->
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+        controller.playWhenReadyFlow.value shouldBe false
+
+        controller.load { }
+        controller.playWhenReadyFlow.value shouldBe false
+        engine.settle()
+
+        controller.play()
+        engine.settle()
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+
+        controller.pause()
+        engine.settle()
+        controller.playWhenReadyFlow.value shouldBe false
+
+        controller.togglePlayback()
+        engine.settle()
+        controller.playWhenReadyFlow.value shouldBe true
+
+        controller.togglePlayback()
+        engine.settle()
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.playbackState() shouldBe PlaybackState.Paused
+    }
+
+    @Test
+    fun `play, pause and toggle while a song is still loading update intent without leaving loading`() = test { controller ->
+        controller.queueOperations.setQueue(listOf(a), null, 0)
+
+        controller.load { }
+        controller.playbackState() shouldBe PlaybackState.Loading
+        controller.playWhenReadyFlow.value shouldBe false
+
+        controller.play()
+        controller.pause()
+        controller.togglePlayback()
+
+        // The engine hasn't reported ready, so the state is still loading; the intent moved with each call.
+        controller.playbackState() shouldBe PlaybackState.Loading
+        controller.playWhenReadyFlow.value shouldBe true
+        engine.calls shouldContain "play"
+        engine.calls shouldContain "pause"
+        engine.settle()
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `a play asked before the engine settles survives its queued paused report - and a stale track does not`() = test { controller ->
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+        controller.load { }
+        controller.play()
+        controller.pause()
+        controller.play()
+        engine.emitState(IosAudioPlayerState.Paused, "stale")
+
+        engine.settle()
+
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+        controller.currentSong shouldBe a
+    }
+
+    @Test
+    fun `a paused load's completion that plays keeps that newer intent`() = test { controller ->
+        controller.queueOperations.setQueue(listOf(a), null, 0)
+
+        controller.load { result ->
+            result.onSuccess { controller.play() }
+        }
+        engine.settle()
+
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `a session that refuses a playing load cancels the intent without finishing early or skipping`() = test { controller ->
+        engine.acceptsPlay = false
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+        var result: Result<Any?>? = null
+
+        controller.skipToNext { result = it }
+
+        // Reported inside the load, before the engine's paused report has made the song ready.
+        result shouldBe null
+        controller.playbackState() shouldBe PlaybackState.Loading
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.currentSong shouldBe b
+
+        engine.settle()
+        result?.isSuccess shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Paused
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.currentSong shouldBe b
+    }
+
+    @Test
+    fun `an engine that pauses a playing load clears intent when it becomes ready and does not skip`() = test { controller ->
+        engine.acceptsPlay = false
+        engine.deferRefusal = true
+        controller.queueOperations.setQueue(listOf(a, b, c), null, 0)
+        var result: Result<Any?>? = null
+
+        controller.skipToNext { result = it }
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Loading
+        result shouldBe null
+
+        engine.settle()
+
+        result?.isSuccess shouldBe true
+        controller.currentSong shouldBe b
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.playbackState() shouldBe PlaybackState.Paused
+        engine.calls.none { it.startsWith("load song:3") } shouldBe true
+    }
+
+    @Test
+    fun `a refusal's load completion that plays keeps the new intent`() = test { controller ->
+        engine.acceptsPlay = false
+        engine.deferRefusal = true
+        controller.queueOperations.setQueue(listOf(a, b), null, 0)
+
+        controller.skipToNext {
+            engine.acceptsPlay = true
+            controller.play()
+        }
+        engine.settle()
+
+        controller.currentSong shouldBe b
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `a refused play of a ready song clears intent - a queue change stays paused - and an explicit next plays`() = test { controller ->
+        controller.start(listOf(a, b, c))
+        engine.acceptsPlay = false
+        engine.clearCalls()
+
+        controller.play()
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.currentSong shouldBe a
+
+        controller.queueOperations.setCurrentItem(controller.queueOperations.getQueue()[1])
+        engine.settle()
+        engine.calls.first { it.startsWith("load") } shouldBe "load song:2@0"
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.playbackState() shouldBe PlaybackState.Paused
+
+        engine.acceptsPlay = true
+        engine.clearCalls()
+        controller.skipToNext()
+        engine.settle()
+        engine.calls.first() shouldBe "load song:3@0 playing"
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `an engine that is already paused and can't start reports it again and the queue stays put`() = test { controller ->
+        controller.start(listOf(a, b), play = false)
+        engine.acceptsPlay = false
+        engine.deferRefusal = true
+        engine.clearCalls()
+
+        controller.play()
+        controller.playWhenReadyFlow.value shouldBe true
+        engine.settle()
+
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.currentSong shouldBe a
+        controller.playbackState() shouldBe PlaybackState.Paused
+        engine.calls shouldBe listOf("play")
+    }
+
+    @Test
+    fun `a paused report for the song a skip replaced is ignored`() = test { controller ->
+        controller.start(listOf(a, b, c))
+        controller.skipToNext()
+        engine.settle()
+
+        engine.emitState(IosAudioPlayerState.Paused, "stale")
+        engine.settle()
+
+        controller.currentSong shouldBe b
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `reaching the end, exhausting failures, or emptying the queue clears intent - a gapless move keeps it`() = test { controller ->
+        controller.start(listOf(a, b))
+        engine.finishTrack()
+        controller.currentSong shouldBe b
+        controller.playWhenReadyFlow.value shouldBe true
+
+        controller.start(listOf(a))
+        engine.finishTrack()
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.playbackState() shouldBe PlaybackState.Paused
+
+        engine.failing += listOf(url(b), url(c))
+        controller.start(listOf(a, b, c))
+        controller.skipToNext()
+        engine.settle()
+        controller.currentSong shouldBe c
+        controller.playWhenReadyFlow.value shouldBe false
+
+        controller.start(listOf(a, b), play = false)
+        controller.clearQueue()
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.queueOperations.getSize() shouldBe 0
+
+        controller.start(listOf(a, b))
+        controller.clearQueue()
+        controller.playWhenReadyFlow.value shouldBe true
+        controller.playbackState() shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `removing the current song keeps a playing intent and removing the rest of the queue clears it`() = test { controller ->
+        controller.start(listOf(a, b, c))
+
+        controller.removeQueueItem(controller.queueOperations.getQueue()[0])
+        engine.settle()
+        controller.currentSong shouldBe b
+        controller.playWhenReadyFlow.value shouldBe true
+
+        val rest = controller.queueOperations.getQueue()
+        controller.queueOperations.remove(rest)
+        engine.settle()
+        controller.playWhenReadyFlow.value shouldBe false
+        controller.playbackState() shouldBe PlaybackState.Paused
+    }
 }

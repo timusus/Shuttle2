@@ -13,7 +13,10 @@ import Shared
 /// **Audio session.** `onWillPlay` runs before anything plays (`play()`, or a load that plays) and `onPaused` on
 /// every pause; `PlaybackSystemCoordinator` points them at `AudioSessionController.activate()` and
 /// `playbackPaused()`. A session that won't activate (a call, another app holding the hardware) cancels the play:
-/// `play()` does nothing and a load loads paused, so the engine reports paused, as when the engine can't start.
+/// `play()` does nothing and a load loads paused. Both report paused for that track, on the calling thread, so Kotlin
+/// can drop the intent. A refused load's report is not the track becoming ready — the engine's own loading and paused
+/// reports, afterwards and in order, are. A refused play of a track that's already ready has no engine transition, so
+/// the paused report is the only one.
 final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     /// Called on the main thread before playback starts; false cancels it.
     var onWillPlay: () -> Bool = { true }
@@ -80,6 +83,7 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
         }
         let plays = playWhenReady && onWillPlay()
         engine.load(current: track, next: next.flatMap(engineTrack), startMs: startMs, playWhenReady: plays)
+        if playWhenReady && !plays { reportPaused(current.id) }
     }
 
     func setNext(next: IosAudioTrack?) {
@@ -87,8 +91,17 @@ final class EngineAudioPlayer: NSObject, IosAudioPlayer {
     }
 
     func play() {
-        guard onWillPlay() else { return }
+        guard onWillPlay() else {
+            if let currentId { reportPaused(currentId) }
+            return
+        }
         engine.play()
+    }
+
+    /// The session refused playback of `trackId`. Synchronous, on the call's thread (the main thread): Kotlin is still
+    /// inside the load or play and can tell this from the engine's later ready-paused.
+    private func reportPaused(_ trackId: String) {
+        listener?.onStateChanged(trackId: trackId, state: .paused)
     }
 
     func pause() {

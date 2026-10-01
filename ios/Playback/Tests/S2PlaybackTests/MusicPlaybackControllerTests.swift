@@ -335,12 +335,24 @@ final class MusicPlaybackControllerTests: XCTestCase {
 
         controller.play()
         controller.syncForTesting()
-        XCTAssertEqual(log.states, [.loading, .paused])
+        // Already paused, so the state didn't change — the refusal is reported again anyway, for this track.
+        XCTAssertEqual(log.states, [.loading, .paused, .paused])
+        XCTAssertEqual(log.failures, [])
 
         controller.startEngine = { try $0.start() }
         controller.play()
         controller.syncForTesting()
-        XCTAssertEqual(log.states, [.loading, .paused, .playing])
+        XCTAssertEqual(log.states, [.loading, .paused, .paused, .playing])
+    }
+
+    func testPausingWhileAlreadyPausedDoesNotRepeatTheReport() throws {
+        let (controller, log) = try makeController()
+        controller.load(current: track("A", TestSignal.noise(frames: 12_000, seed: 1)), next: nil, playWhenReady: false)
+        controller.syncForTesting()
+
+        controller.pause()
+        controller.syncForTesting()
+        XCTAssertEqual(log.states, [.loading, .paused])
     }
 
     func testALoadThatPlaysWhenTheEngineCantStartLoadsPausedAndStaysPaused() throws {
@@ -351,6 +363,7 @@ final class MusicPlaybackControllerTests: XCTestCase {
         controller.load(current: track("A", TestSignal.noise(frames: 12_000, seed: 1)), next: nil, playWhenReady: true)
         controller.syncForTesting()
         XCTAssertEqual(log.states, [.loading, .paused])
+        XCTAssertEqual(log.failures, [], "a start failure is not a song that failed to decode")
 
         // The failed play is forgotten: a seek, which restarts the stream, doesn't try again.
         controller.startEngine = { try $0.start() }

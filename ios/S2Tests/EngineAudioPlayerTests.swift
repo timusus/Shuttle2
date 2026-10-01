@@ -122,9 +122,11 @@ struct EngineAudioPlayerTests {
         player.load(current: track("a"), next: nil, startMs: 0, playWhenReady: true)
         player.play()
 
-        // The load still happens, paused; the play never reaches the engine.
+        // The load still happens, paused; the play never reaches the engine. Each refusal is a paused
+        // report for that track, delivered on the call so it stays ahead of the engine's own events.
         #expect(engine.loads.map(\.playWhenReady) == [false])
         #expect(engine.commands.isEmpty)
+        #expect(listener.calls == ["state a paused", "state a paused"])
     }
 
     @Test func positionAndDurationOnlyCountForTheTrackKotlinThinksIsCurrent() {
@@ -260,5 +262,104 @@ struct EngineAudioPlayerTests {
         #expect(await waitUntil { engine.loads.count == 2 })
         #expect(engine.loads.last?.current.url.absoluteString == "demo://2")
         #expect(graph.playerController.queueOperations.queueStateFlow.value.currentItem?.song.name == "Hyperballad")
+    }
+
+    private func intendsToPlay(_ controller: IosPlayerController) -> Bool {
+        controller.playWhenReadyFlow.value.boolValue
+    }
+
+    @Test func aSessionRefusalClearsIntentWithoutFinishingTheLoadEarly() async throws {
+        player.onWillPlay = { false }
+        let graph = makeTestGraph(audioPlayer: player)
+        let controller = graph.playerController
+        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
+        var completed = false
+        controller.skipToNext(ignoreRepeat: true) { _ in completed = true }
+
+        #expect(await waitUntil { engine.loads.count == 1 })
+        #expect(engine.loads.last?.playWhenReady == false)
+        #expect(!engine.commands.contains("play"))
+        #expect(!intendsToPlay(controller))
+        #expect(!completed)
+        #expect(controller.playbackStateFlow.value is PlaybackState.Loading)
+
+        let id = try #require(engine.loads.last?.current.id)
+        engine.emit(.state(.loading, trackId: id))
+        #expect(controller.playbackStateFlow.value is PlaybackState.Loading)
+        engine.emit(.state(.paused, trackId: id))
+        #expect(await waitUntil { controller.playbackStateFlow.value is PlaybackState.Paused })
+        #expect(completed)
+        #expect(!intendsToPlay(controller))
+        #expect(controller.queueOperations.queueStateFlow.value.currentItem?.song.name == "Hyperballad")
+
+        // The cancelled intent is what a later queue change preserves: the new song loads paused.
+        let next = try #require(controller.queueOperations.getNext(ignoreRepeat: true))
+        controller.queueOperations.setCurrentItem(currentItem: next)
+        #expect(await waitUntil { engine.loads.count == 2 })
+        #expect(engine.loads.last?.playWhenReady == false)
+        #expect(!intendsToPlay(controller))
+
+        player.onWillPlay = { true }
+        controller.play()
+        #expect(await waitUntil { engine.commands.contains("play") })
+        #expect(intendsToPlay(controller))
+    }
+
+    @Test func aRefusedPlayOfAReadySongClearsIntentWithNoEngineTransition() async throws {
+        let graph = makeTestGraph(audioPlayer: player)
+        let controller = graph.playerController
+        try await queueDemoSongs(on: graph, skipUnloadable: false)
+        #expect(await waitUntil { !engine.loads.isEmpty })
+        let id = try #require(engine.loads.first?.current.id)
+        engine.emit(.state(.paused, trackId: id))
+        #expect(await waitUntil { controller.playbackStateFlow.value is PlaybackState.Paused })
+
+        player.onWillPlay = { false }
+        controller.play()
+
+        #expect(!engine.commands.contains("play"))
+        #expect(!intendsToPlay(controller))
+        #expect(controller.playbackStateFlow.value is PlaybackState.Paused)
+    }
+
+    @Test func aPausedReportForTheSongASkipReplacedIsIgnored() async throws {
+        let graph = makeTestGraph(audioPlayer: player)
+        let controller = graph.playerController
+        try await queueDemoSongs(on: graph, skipUnloadable: false)
+        #expect(await waitUntil { !engine.loads.isEmpty })
+        let first = try #require(engine.loads.first?.current.id)
+        controller.play()
+        engine.emit(.state(.playing, trackId: first))
+        #expect(await waitUntil { controller.playbackStateFlow.value is PlaybackState.Playing })
+        #expect(intendsToPlay(controller))
+        #expect(await waitUntil { engine.nexts.last??.id != nil })
+
+        controller.skipToNext(ignoreRepeat: true, completion: nil)
+        #expect(await waitUntil { engine.loads.count == 2 })
+        engine.emit(.state(.paused, trackId: first))
+
+        #expect(intendsToPlay(controller))
+        #expect(controller.queueOperations.queueStateFlow.value.currentItem?.song.name == "Hyperballad")
+        #expect(controller.playbackStateFlow.value is PlaybackState.Loading)
+    }
+
+    @Test func aLoadCompletionThatPlaysKeepsTheNewIntent() async throws {
+        player.onWillPlay = { false }
+        let graph = makeTestGraph(audioPlayer: player)
+        let controller = graph.playerController
+        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: PlayContextNone.shared)
+        controller.skipToNext(ignoreRepeat: true) { _ in
+            player.onWillPlay = { true }
+            controller.play()
+        }
+
+        #expect(await waitUntil { engine.loads.count == 1 })
+        #expect(!intendsToPlay(controller))
+        let id = try #require(engine.loads.last?.current.id)
+        engine.emit(.state(.loading, trackId: id))
+        engine.emit(.state(.paused, trackId: id))
+
+        #expect(await waitUntil { intendsToPlay(controller) && engine.commands.contains("play") })
+        #expect(controller.queueOperations.queueStateFlow.value.currentItem?.song.name == "Hyperballad")
     }
 }

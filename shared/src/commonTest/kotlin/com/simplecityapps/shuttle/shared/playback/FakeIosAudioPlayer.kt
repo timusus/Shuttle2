@@ -35,6 +35,18 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     private var playWhenReady = false
 
+    /**
+     * When false, [play] and a load that asked to play are refused: the track is still prepared, ending paused, and a
+     * paused state is reported for its id. [deferRefusal] posts that play refusal for [settle], as an engine that
+     * can't start does; otherwise it is reported inside the call, as a session that won't activate. A refused load
+     * always ends with the engine's own paused report (what makes the load ready); the in-call report, when not
+     * deferred, only cancels the intent early.
+     */
+    var acceptsPlay = true
+
+    /** See [acceptsPlay]. A refused load is deferred by the engine's own paused report either way. */
+    var deferRefusal = false
+
     override fun setListener(listener: IosAudioPlayerListener?) {
         this.listener = listener
     }
@@ -48,8 +60,10 @@ class FakeIosAudioPlayer : IosAudioPlayer {
         calls += "load ${current.url}@$startMs${if (playWhenReady) " playing" else ""}${next?.let { " next ${it.url}" } ?: ""}"
         this.current = current
         this.next = next
-        this.playWhenReady = playWhenReady
+        val starts = playWhenReady && acceptsPlay
+        this.playWhenReady = starts
         position = startMs
+        if (playWhenReady && !starts && !deferRefusal) listener?.onStateChanged(current.id, IosAudioPlayerState.Paused)
         setState(IosAudioPlayerState.Loading)
         if (startMs > 0 && current.isUnseekable()) {
             // The engine starts it at its beginning instead, and says so before its state.
@@ -62,7 +76,7 @@ class FakeIosAudioPlayer : IosAudioPlayer {
             // A failed current track counts as ended, and the engine carries on into its next.
             if (next != null) transition() else setState(IosAudioPlayerState.Ended)
         } else {
-            setState(if (playWhenReady) IosAudioPlayerState.Playing else IosAudioPlayerState.Paused)
+            setState(if (starts) IosAudioPlayerState.Playing else IosAudioPlayerState.Paused)
         }
     }
 
@@ -73,6 +87,10 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     override fun play() {
         calls += "play"
+        if (!acceptsPlay) {
+            current?.id?.let(::refuse)
+            return
+        }
         playWhenReady = true
         if (current != null && state == IosAudioPlayerState.Paused) setState(IosAudioPlayerState.Playing)
     }
@@ -163,6 +181,19 @@ class FakeIosAudioPlayer : IosAudioPlayer {
 
     /** Clears [calls], so a test sees only what's asked of the engine after this. */
     fun clearCalls() = calls.clear()
+
+    /** Queues a state report for [trackId], delivered by [settle]. An id the controller has replaced is ignored by it. */
+    fun emitState(
+        state: IosAudioPlayerState,
+        trackId: String
+    ) {
+        post { listener?.onStateChanged(trackId, state) }
+    }
+
+    private fun refuse(trackId: String) {
+        val report: () -> Unit = { listener?.onStateChanged(trackId, IosAudioPlayerState.Paused) }
+        if (deferRefusal) post(report) else report()
+    }
 
     private fun transition() {
         val arrived = checkNotNull(next)
