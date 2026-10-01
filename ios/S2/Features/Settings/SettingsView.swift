@@ -256,6 +256,7 @@ struct SettingsContent: View {
             Toggle(isOn: Binding(get: { isOn }, set: { onToggle(key, $0) })) {
                 Label { RowLabel(title: title, summary: summary) } icon: { icon.square }
             }
+            .s2Switch()
             .disabled(!isEnabled)
             .accessibilityIdentifier("settings.\(key)")
         case .choice(let key, let title, let options, let selected, let isEnabled):

@@ -190,6 +190,7 @@ struct AlbumArtistDetailContent: View {
                 }
                 .buttonStyle(.plain)
                 .songContextMenu(song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue)
+                .rowSeparator(.none)
                 .accessibilityIdentifier("artistDetail.topSong")
             }
         }
@@ -292,6 +293,7 @@ struct AlbumArtistDetailContent: View {
             }
             .buttonStyle(.plain)
             .songContextMenu(song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue)
+            .rowSeparator(numbered ? .system : .none)
         }
     }
 

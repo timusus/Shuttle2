@@ -234,7 +234,7 @@ struct SearchResultList: View {
         List {
             if let top = results.top {
                 Section {
-                    row(top, index: 0)
+                    row(top, index: 0).rowSeparator(.none)
                 } header: {
                     SectionHeader("Top Result").textCase(nil)
                 }
@@ -242,7 +242,7 @@ struct SearchResultList: View {
             ForEach(results.sections(expanded: expanded), id: \.category) { section in
                 Section {
                     ForEach(Int(section.from)..<Int(section.until), id: \.self) { index in
-                        row(section.category, index: index)
+                        row(section.category, index: index).rowSeparator(.none)
                     }
                 } header: {
                     header(section).textCase(nil)

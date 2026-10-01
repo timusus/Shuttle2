@@ -80,6 +80,7 @@ struct EqualizerContent: View {
                 Toggle(isOn: Binding(get: { state.enabled }, set: onEnabledChange)) {
                     Label { Text("Equalizer") } icon: { IconSquare(systemImage: "slider.vertical.3", style: .filled(.pink)) }
                 }
+                .s2Switch()
                 .accessibilityIdentifier("equalizer.enabled")
                 Picker(selection: Binding(get: { state.selectedPreset }, set: onPresetSelect)) {
                     ForEach(state.presets.indices, id: \.self) { index in

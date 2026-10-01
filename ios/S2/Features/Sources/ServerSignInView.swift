@@ -272,6 +272,7 @@ struct ServerSignInContent: View {
                 .onSubmit(signIn)
                 .accessibilityIdentifier("serverSignIn.password")
             Toggle("Remember Password", isOn: $rememberPassword)
+                .s2Switch()
                 .accessibilityIdentifier("serverSignIn.rememberPassword")
         } header: {
             Text(state.quickConnectEnabled ? "Or With a Password" : "Account")

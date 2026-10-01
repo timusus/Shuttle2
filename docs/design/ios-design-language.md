@@ -92,8 +92,7 @@ Chrome is **neutral**; colour comes from artwork. Each role is a `UIColor` (for 
 
 The system ignores a neutral asset as the global accent and falls back to system blue, so `S2App` applies
 `.tint(.s2Accent)` at the root and `AccentTint.apply()` sets UIKit's window tint; draw with `.s2Accent`, never
-`Color.accentColor`. Switches are the HIG green (`s2Success`), set once through `UISwitch.appearance()` in
-`AccentTint.apply()`: a near-white on-track under the white knob has no contrast in dark mode. Sliders keep the
+`Color.accentColor`. Switches are the HIG green (`s2Success`), applied through `.s2Switch()` on each `Toggle` (a root `toggleStyle` or `UISwitch.appearance()` does not reach the iOS 26 switch): a near-white on-track under the white knob has no contrast in dark mode. Sliders keep the
 accent (a near-white track against the grey remainder reads); steppers draw no tint. A prominent button on the plain accent sets `.foregroundStyle(.s2OnAccent)`; `.borderedProminent` otherwise
 draws white, which vanishes on the near-white dark-mode accent. Tinted buttons use `capsuleButton`, which
 takes `artworkTintInk`.
@@ -117,6 +116,7 @@ takes `artworkTintInk`.
 |---|---|
 | `rowSeparator(.none)` | Rows led by artwork: the artwork already separates them |
 | `rowSeparator(.insetToTitle)` | Text-only rows: the system separator, starting at the title |
+| `rowSeparator(.system)` | A row that insets its own title (`TrackRow`), where a list mixes it with artwork rows |
 
 ### Icons, touch targets and rows (`Spacing.swift`)
 

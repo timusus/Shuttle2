@@ -8,6 +8,8 @@ enum RowSeparator {
     case none
     /// A text-only row: the separator starts at the view this is applied to, the row's title.
     case insetToTitle
+    /// The row sets `insetToTitle` on its own title (`TrackRow`), so the list leaves its separator alone.
+    case system
 }
 
 extension View {
@@ -20,6 +22,8 @@ extension View {
             listRowSeparator(.hidden)
         case .insetToTitle:
             alignmentGuide(.listRowSeparatorLeading) { $0[.leading] }
+        case .system:
+            self
         }
     }
 }

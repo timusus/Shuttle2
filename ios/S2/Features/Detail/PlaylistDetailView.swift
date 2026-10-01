@@ -112,6 +112,7 @@ struct PlaylistDetailContent: View {
                             DetailSongRow(song: entry.song, playback: rowPlayback(entry.song, current: state.currentSong, isPlaying: isPlaying))
                         }
                         .buttonStyle(.plain)
+                        .rowSeparator(.none)
                         .contextMenu {
                             SongRowMenu(song: entry.song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude)
                             Button("Remove from Playlist", systemImage: "minus.circle", role: .destructive) { onRemove(entry) }

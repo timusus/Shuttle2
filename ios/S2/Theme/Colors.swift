@@ -44,8 +44,12 @@ extension ShapeStyle where Self == Color {
 enum AccentTint {
     static func apply() {
         UIWindow.appearance().tintColor = .s2Accent
-        // A switch is the HIG green, not the accent: a near-white on-track under the white knob has no contrast
-        // in dark mode. Sliders and steppers keep the accent (their thumb and track differ from it).
-        UISwitch.appearance().onTintColor = .s2Success
     }
+}
+
+extension View {
+    /// A switch is the HIG green, not the accent: a near-white on-track under the white knob has no contrast in dark
+    /// mode. Apply it to every `Toggle`. (A root `toggleStyle` and `UISwitch.appearance()` don't reach SwiftUI's
+    /// iOS 26 switch.) Sliders and steppers keep the accent, whose track differs from the knob.
+    func s2Switch() -> some View { tint(.s2Success) }
 }

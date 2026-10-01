@@ -94,6 +94,7 @@ struct GenreDetailContent: View {
                             DetailSongRow(song: song, playback: rowPlayback(song, current: state.currentSong, isPlaying: isPlaying))
                         }
                         .buttonStyle(.plain)
+                        .rowSeparator(.none)
                         .contextMenu {
                             SongRowMenu(song: song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue, onExclude: onExclude)
                         }

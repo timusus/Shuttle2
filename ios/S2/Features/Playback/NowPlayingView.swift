@@ -838,6 +838,7 @@ struct NowPlayingQueueList: View {
             )
         }
         .buttonStyle(.plain)
+        .rowSeparator(.none)
         .accessibilityLabel(item.isCurrent ? "\(item.title), now playing" : item.title)
         .accessibilityIdentifier(item.isCurrent ? "queue.nowPlaying" : "queue.row")
         .contextMenu {
