@@ -330,4 +330,21 @@ struct NavigatorTests {
         #expect(setupVM.clearCount == 0)
         #expect(Navigator.sourceSetupSignInCacheKey(.emby) == "sourceSetup.signIn:Emby")
     }
+
+    // MARK: - Song Info (#702)
+
+    @Test func aPresentedSongInfosViewModelSurvivesPathChangesAndClearsWhenItCloses() {
+        let cache = ViewModelCache()
+        let navigator = Navigator(viewModelCache: cache)
+        let key = Navigator.songInfoCacheKey(7)
+        let vm = cache.viewModel(key) { FakeViewModel() }
+        navigator.songInfoPresented.insert(7)
+
+        navigator.open(.genre(name: "Jazz"))
+        #expect(vm.clearCount == 0, "a path change while the sheet is up keeps its view model")
+
+        navigator.songInfoPresented.remove(7)
+        #expect(vm.clearCount == 1)
+        #expect(key == "songInfo:7")
+    }
 }

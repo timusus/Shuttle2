@@ -95,6 +95,13 @@ final class Navigator {
     /// cached while it is, and clear (cancelling a Quick Connect poll) once it closes.
     var sourceSetupLive = false { didSet { retainViewModels() } }
 
+    /// The songs whose Song Info sheet is up (`SongInfoSheet`): their view models stay cached while it is, so a path
+    /// change under the sheet (rotation, tier change) doesn't clear the one it's showing, and clear once it closes.
+    var songInfoPresented = Set<Int64>() { didSet { retainViewModels() } }
+
+    /// The `ViewModelCache` key for `songID`'s Song Info view model.
+    static func songInfoCacheKey(_ songID: Int64) -> String { "songInfo:\(songID)" }
+
     /// The `ViewModelCache` key for the source setup's view model: always live, since `ContentView` asks it at launch
     /// whether to open the first run, and the setup follows the import after its sign-in has gone.
     static let sourceSetupCacheKey = "sourceSetup"
@@ -206,6 +213,7 @@ final class Navigator {
             liveKeys.insert(Self.settingsCacheKey)
             liveKeys.formUnion(settingsPath.map(\.cacheKey))
         }
+        liveKeys.formUnion(songInfoPresented.map(Self.songInfoCacheKey))
         liveKeys.insert(Self.sourceSetupCacheKey)
         if sourceSetupLive {
             liveKeys.formUnion(MediaProviderType.signInTypes.map(Self.sourceSetupSignInCacheKey))

@@ -20,9 +20,11 @@ extension View {
 struct SongInfoSheet: View {
     let songID: Int64
     @Environment(\.dismiss) private var dismiss
+    /// Keeps the view model live while the sheet is up (`Navigator.songInfoPresented`); nil in previews.
+    @Environment(Navigator.self) private var navigator: Navigator?
 
     var body: some View {
-        let key = "songInfo:\(songID)"
+        let key = Navigator.songInfoCacheKey(songID)
         let viewModel = ViewModelCache.shared.viewModel(key) {
             AppGraph.shared.songInfoViewModelFactory.create(songId: songID)
         }
@@ -41,7 +43,11 @@ struct SongInfoSheet: View {
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
-        .onDisappear { ViewModelCache.shared.remove(key) }
+        .onAppear { navigator?.songInfoPresented.insert(songID) }
+        .onDisappear {
+            navigator?.songInfoPresented.remove(songID)
+            ViewModelCache.shared.remove(key)
+        }
     }
 }
 
