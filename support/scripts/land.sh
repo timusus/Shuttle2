@@ -11,8 +11,11 @@
 #                 (repeatable)
 #   --no-push     do everything except `git push`, issue close and worktree cleanup
 #   --dry-run     implies --no-push, and also skips issue close / worktree cleanup
+#   --no-device-install
+#                 skip the best-effort iPhone install after the push (see below)
 #
 # Env:
+#   LAND_SKIP_DEVICE_INSTALL=1   same as --no-device-install.
 #   LAND_SKIP_VERIFY=1   skip the machine-lock verify step entirely. Plumbing tests only —
 #                        never use this to land real work.
 #
@@ -132,6 +135,8 @@ log()  { printf '%s\n' "$*" >> "$LOG"; }
 say()  { printf '%s\n' "$*"; printf '%s\n' "$*" >> "$LOG"; }
 
 NO_PUSH=0
+DEVICE_INSTALL=1
+[ "${LAND_SKIP_DEVICE_INSTALL:-0}" = 1 ] && DEVICE_INSTALL=0
 BRANCHES=()
 CLOSE_ISSUES=()
 
@@ -142,6 +147,7 @@ while [ $# -gt 0 ]; do
       CLOSE_ISSUES+=("$2"); shift 2 ;;
     --no-push) NO_PUSH=1; shift ;;
     --dry-run) NO_PUSH=1; shift ;;
+    --no-device-install) DEVICE_INSTALL=0; shift ;;
     -h|--help) sed -n '2,/^set -/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit 0 ;;
     -*) echo "land.sh: unknown option: $1" >&2; exit 2 ;;
     *) BRANCHES+=("$1"); shift ;;
@@ -355,5 +361,25 @@ for i in "${LANDED_IDX[@]}"; do
   [ -n "$wt_path" ] && { git worktree unlock "$wt_path" >> "$LOG" 2>&1 || true; }
   support/scripts/worktree-clean.sh "$b" >> "$LOG" 2>&1 || true
 done
+
+# --- best-effort install on the owner's iPhone --------------------------------------------------
+# After a push that touches the iOS app or what it links (same paths as the iOS verify), build and
+# install the pushed tree with ios/scripts/install-device.sh, so the phone always runs the latest
+# landed build. Skipped when the phone isn't reachable (USB or Wi-Fi); a failure is reported and
+# never fails the landing. Takes the same machine-lock as verify, since it's an Xcode build.
+IOS_DEVICE_ID=00008140-000539602E90401C
+if [ "$DEVICE_INSTALL" = 1 ] \
+   && git diff --name-only "$ORIGIN_MAIN_SHA" HEAD | grep -Eq '^(ios/|shared/|android/domain/|android/presentation/|android/core/)'; then
+  if xcrun devicectl list devices 2>/dev/null | grep -F "$IOS_DEVICE_ID" | grep -Eq 'available|connected'; then
+    say "land.sh: installing $SHA on the iPhone"
+    if LAUNCH=0 machine-lock --name verify -- ios/scripts/install-device.sh "$IOS_DEVICE_ID" >> "$LOG" 2>&1; then
+      say "land.sh: iPhone install done"
+    else
+      say "land.sh: iPhone install failed (see log; retry with ios/scripts/install-device.sh)"
+    fi
+  else
+    say "land.sh: iPhone not reachable, skipping device install"
+  fi
+fi
 
 say "land.sh: done (log: $LOG)"
