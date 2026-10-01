@@ -115,7 +115,7 @@ struct AlbumArtistDetailContent: View {
         let subtitle = eyebrow(state.albums.isEmpty ? nil : pluralized(state.albums.count, "album"), pluralized(state.songs.count, "song"))
         return ArtistHeroPhotoReader(source: .albumArtist(artist), preset: heroPhoto) { photo in
             ScrollViewReader { proxy in
-                DetailScaffold(title: name, tintSource: .albumArtist(artist), backdrop: photo.image.map(ArtistBackdrop.init)) { layout in
+                DetailScaffold(title: name, tintSource: .albumArtist(artist), backdrop: photo.isFullBleed ? ArtistBackdrop(image: photo.image) : nil) { layout in
                     if case .bleed(let bleed) = layout {
                         ArtistBleedHero(
                             title: name,
@@ -396,12 +396,14 @@ struct SongsHeader: View {
 
 // MARK: - Hero
 
-/// The artist's photo as the hero uses it, decided once per visit so the layout never jumps: full bleed when the photo
-/// is sharp enough to run edge to edge, else the compact square hero (no photo, or a low-resolution one, which full
-/// bleed would blow up and blur).
+/// The artist's photo as the hero uses it, decided once per visit: full bleed when the photo is sharp enough to run edge
+/// to edge, else the compact square hero (no photo, or a low-resolution one, which full bleed would blow up and blur).
+/// Until an uncached photo decides it, `pending` draws the full-bleed layout over a neutral placeholder, so the name and
+/// Play/Shuffle show at once; most artists that make the wait have a photo, and those without settle quickly.
 enum ArtistHeroPhoto: Equatable {
     case fullBleed(UIImage)
     case compact
+    case pending
 
     /// The shortest side, in pixels, a photo needs to run full bleed. A 393 pt iPhone hero is ~1180 px at 3x, so under
     /// 600 px the photo would be scaled up more than 2x and look soft. Measured on the decoded image (`decodePoints`),
@@ -418,10 +420,13 @@ enum ArtistHeroPhoto: Equatable {
     /// visit skips the wait.
     @MainActor static var compactKeys = Set<String>()
 
-    /// The full-bleed photo, nil for the compact hero.
+    /// The full-bleed photo, nil for the compact hero and the placeholder.
     var image: UIImage? {
         if case .fullBleed(let image) = self { image } else { nil }
     }
+
+    /// Whether the hero runs full bleed: over the photo, or over the placeholder while it's pending.
+    var isFullBleed: Bool { self != .compact }
 
     /// `image`'s layout: full bleed if its shortest side reaches `minimumPixels`.
     static func resolve(_ image: UIImage?) -> ArtistHeroPhoto {
@@ -432,8 +437,7 @@ enum ArtistHeroPhoto: Equatable {
 }
 
 /// Decides the hero's `ArtistHeroPhoto` for `source`, then draws `content` with it. A photo already in memory decides
-/// in the first frame; otherwise the screen stays blank (the page background) until the photo arrives or
-/// `ArtistHeroPhoto.wait` passes, rather than drawing one layout and swapping to the other.
+/// in the first frame; otherwise `content` draws `.pending` until the photo arrives or `ArtistHeroPhoto.wait` passes.
 struct ArtistHeroPhotoReader<Content: View>: View {
     let source: ArtworkSource
     var preset: ArtistHeroPhoto?
@@ -452,13 +456,7 @@ struct ArtistHeroPhotoReader<Content: View>: View {
     }
 
     var body: some View {
-        let photo = known
-        content(photo ?? .compact)
-            .overlay {
-                if photo == nil {
-                    Color(uiColor: .systemBackground).ignoresSafeArea()
-                }
-            }
+        content(known ?? .pending)
             .task(id: "\(source.cacheKey)@\(maxPixelSize)") {
                 guard known == nil else { return }
                 let timeout = Task {
@@ -475,21 +473,37 @@ struct ArtistHeroPhotoReader<Content: View>: View {
 }
 
 /// The full-bleed hero's backdrop: the photo filling the frame, anchored to its top so a portrait photo keeps the
-/// faces, under a scrim at the top for the status bar and the bar buttons and one at the bottom for the name.
+/// faces (a neutral fill while it's pending), under a scrim at the top for the status bar and the bar buttons and one
+/// at the bottom for the name. Its last `fadeHeight` fades out into whatever is behind it, so the photo melts into the
+/// page rather than ending in a hard line; the name sits above the fade.
 struct ArtistBackdrop: View {
-    let image: UIImage
+    /// The photo; nil draws the placeholder.
+    let image: UIImage?
+
+    /// The height of the fade at the bottom, which the hero keeps its name above.
+    static let fadeHeight: CGFloat = Spacing.xlarge
+    /// The top scrim's height: past the status and navigation bars on every iPhone.
+    static let topScrimHeight: CGFloat = 120
 
     var body: some View {
         Color.clear
             .overlay(alignment: .top) {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
+                if let image {
+                    Image(uiImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    Color(uiColor: .systemGray3)
+                }
             }
             .clipped()
             .overlay(alignment: .top) {
-                LinearGradient(colors: [.black.opacity(0.45), .black.opacity(0)], startPoint: .top, endPoint: .bottom)
-                    .frame(height: 140)
+                LinearGradient(
+                    stops: [.init(color: .black.opacity(0.35), location: 0), .init(color: .black.opacity(0.15), location: 0.5), .init(color: .black.opacity(0), location: 1)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(height: Self.topScrimHeight)
             }
             .overlay {
                 LinearGradient(
@@ -497,6 +511,17 @@ struct ArtistBackdrop: View {
                     startPoint: .top,
                     endPoint: .bottom
                 )
+            }
+            .mask {
+                VStack(spacing: 0) {
+                    Rectangle()
+                    LinearGradient(
+                        stops: [.init(color: .black, location: 0), .init(color: .black.opacity(0.45), location: 0.5), .init(color: .black.opacity(0), location: 1)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: Self.fadeHeight)
+                }
             }
             .accessibilityHidden(true)
     }
@@ -533,7 +558,8 @@ struct ArtistBleedHero: View {
             }
             .shadow(color: .black.opacity(0.3), radius: 6, y: 1)
             .padding(.horizontal, inset)
-            .padding(.bottom, Spacing.medium)
+            // Clear of the backdrop's fade, so the name stays on the darkest part of the scrim.
+            .padding(.bottom, ArtistBackdrop.fadeHeight)
             .frame(maxWidth: .infinity, minHeight: bleed.visibleHeight, alignment: .bottomLeading)
             HeroActions(onPlay: onPlay, onShuffle: onShuffle)
                 .padding(.horizontal, inset)

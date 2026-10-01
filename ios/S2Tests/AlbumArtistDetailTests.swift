@@ -234,6 +234,53 @@ struct AlbumArtistDetailTests {
         #expect((try? sut.inspect().find(text: "Radiohead")) != nil)
     }
 
+    @Test func aPendingPhotoShowsTheNameAndActionsOverAPlaceholderAtOnce() throws {
+        let sut = AlbumArtistDetailContent(state: flat(), heroPhoto: .pending)
+        let hero = try sut.inspect().find(ArtistBleedHero.self)
+        #expect((try? hero.find(text: "Radiohead")) != nil)
+        #expect((try? hero.find(button: "Play")) != nil)
+        let backdrop = try sut.inspect().find(ArtistBackdrop.self).actualView()
+        #expect(backdrop.image == nil)
+        #expect(ArtistHeroPhoto.pending.isFullBleed)
+        #expect(!ArtistHeroPhoto.compact.isFullBleed)
+    }
+
+    /// The backdrop over a white photo: darkened at the top for the bars, and faded out at the bottom into whatever is
+    /// behind it rather than ending in a hard edge.
+    @Test func theBackdropDarkensTheTopAndFadesOutAtTheBottom() throws {
+        let size = CGSize(width: 300, height: 400)
+        let renderer = ImageRenderer(content: ArtistBackdrop(image: whiteImage()).frame(width: size.width, height: size.height))
+        renderer.scale = 1
+        let cgImage = try #require(renderer.cgImage)
+        let top = try pixel(cgImage, x: 150, y: 1)
+        let middle = try pixel(cgImage, x: 150, y: 160)
+        let bottom = try pixel(cgImage, x: 150, y: 399)
+        #expect(middle.alpha > 0.99 && middle.white > 0.99, "untouched between the scrims")
+        #expect(top.white < 0.7 && top.white > 0.55, "the top scrim, about 35% black")
+        #expect(bottom.alpha < 0.1, "faded out at the bottom edge")
+    }
+
+    private func whiteImage() -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: CGSize(width: 800, height: 800), format: format).image { context in
+            UIColor.white.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 800, height: 800))
+        }
+    }
+
+    /// The un-premultiplied grey level and alpha of one pixel.
+    private func pixel(_ image: CGImage, x: Int, y: Int) throws -> (white: CGFloat, alpha: CGFloat) {
+        var data = [UInt8](repeating: 0, count: 4)
+        let context = try #require(CGContext(
+            data: &data, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        context.draw(image, in: CGRect(x: -x, y: -(image.height - 1 - y), width: image.width, height: image.height))
+        let alpha = CGFloat(data[3]) / 255
+        return (alpha > 0 ? CGFloat(data[0]) / 255 / alpha : 0, alpha)
+    }
+
     @Test func aFullBleedHeroPlaysAndShufflesTheArtist() throws {
         var played = false
         var shuffled = false

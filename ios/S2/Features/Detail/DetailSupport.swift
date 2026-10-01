@@ -153,9 +153,7 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { listSize = $0 }
-        // A white status bar and bar buttons over the photo, until the title has scrolled under the bar.
-        .toolbarColorScheme(backdrop != nil && heroVisible ? .dark : nil, for: .navigationBar)
-        .background(NavigationBarTint(color: backdrop != nil && heroVisible ? .white : nil))
+        .modifier(BleedNavigationBar(isActive: backdrop != nil, isOverBackdrop: heroVisible))
     }
 
     @ViewBuilder private var stackedHero: some View {
@@ -227,40 +225,23 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
 
 }
 
-/// Tints the navigation bar's buttons `color` while set, and puts the bar's own tint back when cleared or when the
-/// screen goes. Below iOS 26 the back button and bar items are plain glyphs in the app accent (near-black in light
-/// mode), which a full-bleed photo swallows; `toolbarColorScheme` turns only the status bar white. iOS 26's glass
-/// buttons carry their own backing, so they're left alone.
-private struct NavigationBarTint: UIViewControllerRepresentable {
-    let color: UIColor?
+/// Light bar chrome over a full-bleed backdrop: while the hero's title is still below the bar, the navigation bar
+/// draws no background of its own and runs in the dark scheme, so the status bar, the back button and the bar
+/// buttons are white over the photo in both appearances; once the title has scrolled under the bar, the bar takes
+/// back its usual material and scheme. `toolbarColorScheme` only takes on a bar whose background is visible, hence
+/// the clear one rather than a hidden one. Inactive (no backdrop), the bar is left alone.
+private struct BleedNavigationBar: ViewModifier {
+    let isActive: Bool
+    let isOverBackdrop: Bool
 
-    func makeUIViewController(context: Context) -> Controller { Controller() }
-
-    func updateUIViewController(_ controller: Controller, context: Context) {
-        if #available(iOS 26.0, *) { return }
-        controller.color = color
-    }
-
-    final class Controller: UIViewController {
-        var color: UIColor? { didSet { if isVisible { apply() } } }
-        private var isVisible = false
-        private var original: UIColor?
-
-        override func viewWillAppear(_ animated: Bool) {
-            super.viewWillAppear(animated)
-            isVisible = true
-            original = navigationController?.navigationBar.tintColor
-            apply()
-        }
-
-        override func viewWillDisappear(_ animated: Bool) {
-            super.viewWillDisappear(animated)
-            isVisible = false
-            navigationController?.navigationBar.tintColor = original
-        }
-
-        private func apply() {
-            navigationController?.navigationBar.tintColor = color ?? original
+    func body(content: Content) -> some View {
+        if isActive {
+            content
+                .toolbarBackground(isOverBackdrop ? AnyShapeStyle(Color.clear) : AnyShapeStyle(.bar), for: .navigationBar)
+                .toolbarBackground(isOverBackdrop ? .visible : .automatic, for: .navigationBar)
+                .toolbarColorScheme(isOverBackdrop ? .dark : nil, for: .navigationBar)
+        } else {
+            content
         }
     }
 }
