@@ -147,9 +147,17 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
             rows()
         }
         .listStyle(.plain)
-        .onGeometryChange(for: CGFloat.self) { proxy in
-            proxy.frame(in: .global).minY + proxy.safeAreaInsets.top
-        } action: { barBottom = $0 }
+        // The bar's bottom is the top of the list's safe area. Measured on a view laid out inside it rather than as
+        // the list's own minY plus its top inset: the list's frame already starts below the bar while still
+        // reporting the bar as its top inset, so that sum counted the bar twice (#700), cropping the backdrop's top,
+        // lifting the hero's title off its bottom and naming the screen in the bar while the title still showed.
+        .overlay(alignment: .top) {
+            Color.clear
+                .frame(height: 0)
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.frame(in: .global).minY
+                } action: { barBottom = $0 }
+        }
         .onGeometryChange(for: CGSize.self) { proxy in
             proxy.size
         } action: { listSize = $0 }
