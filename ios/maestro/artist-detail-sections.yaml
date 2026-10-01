@@ -1,5 +1,5 @@
 # The artist detail's song sections (#631): opens an artist with many albums (The Mars Volta, 8 on the Jellyfin test
-# server) from Library > Artists, then shoots the hero, the collapsed album sections (no Albums shelf above them,
+# server) from Library > Artists, then shoots the hero (the photo full bleed when the artist has a sharp one), the collapsed album sections (no Albums shelf above them,
 # #678), the sections expanded, the sort menu open, and the flat Song Title order with the Albums shelf back. Ends
 # back on the default sort (Album, Newest First). iPhone only (the chip rail); signed in
 # already: run sign-in-jellyfin.yaml first. Run it again with the simulator in dark mode for the dark shots.
@@ -30,7 +30,8 @@ appId: com.simplecityapps.shuttle.dev
 - waitForAnimationToEnd:
     timeout: 5000
 - takeScreenshot: 1-hero
-# The Songs header with the sort menu, and the album sections under it, collapsed by default past two albums.
+# The "Albums" header with the sort menu (labelled with the current order) and the expand/collapse icon, and the
+# album sections under it, collapsed by default past two albums.
 - scrollUntilVisible:
     element:
       id: "artistDetail.sortMenu"
@@ -39,11 +40,15 @@ appId: com.simplecityapps.shuttle.dev
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 2-collapsed
+# Expand All / Collapse All is an icon button in the header, named by its accessibility label.
 - runFlow:
     when:
-      visible: "Expand All"
+      visible:
+        id: "artistDetail.expandAll"
+        text: "Expand All"
     commands:
-      - tapOn: "Expand All"
+      - tapOn:
+          id: "artistDetail.expandAll"
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: 3-expanded
@@ -70,4 +75,6 @@ appId: com.simplecityapps.shuttle.dev
 - tapOn: "Album, Newest First"
 - waitForAnimationToEnd:
     timeout: 3000
-- tapOn: "Collapse All"
+- tapOn:
+    id: "artistDetail.expandAll"
+    text: "Collapse All"

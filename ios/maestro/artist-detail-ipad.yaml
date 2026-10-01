@@ -31,12 +31,18 @@ appId: com.simplecityapps.shuttle.dev
 - tapOn: "The Mars Volta"
 - waitForAnimationToEnd:
     timeout: 5000
+# Expand All / Collapse All is an icon button in the header, named by its accessibility label.
 - runFlow:
     when:
-      visible: "Expand All"
+      visible:
+        id: "artistDetail.expandAll"
+        text: "Expand All"
     commands:
-      - tapOn: "Expand All"
+      - tapOn:
+          id: "artistDetail.expandAll"
 - waitForAnimationToEnd:
     timeout: 3000
 - takeScreenshot: ipad-artist-detail
-- tapOn: "Collapse All"
+- tapOn:
+    id: "artistDetail.expandAll"
+    text: "Collapse All"

@@ -90,4 +90,15 @@ extension ArtistSongSortOrder {
         case .mostPlayed: "Most Played"
         }
     }
+
+    /// The sort menu's label: the current order in a word or two.
+    var shortTitle: String {
+        switch self {
+        case .albumNewest: "Newest"
+        case .albumOldest: "Oldest"
+        case .albumTitle: "Album A–Z"
+        case .songTitle: "Title A–Z"
+        case .mostPlayed: "Most Played"
+        }
+    }
 }

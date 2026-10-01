@@ -93,17 +93,18 @@ struct AlbumArtistDetailTests {
 
     @Test func albumOrdersDropTheAlbumShelfForTheirHeaders() throws {
         let sut = AlbumArtistDetailContent(state: sectioned(.albumNewest))
-        #expect((try? sut.inspect().find(text: "Albums")) == nil)
         #expect(try sut.inspect().findAll(DetailAlbumShelf.self).isEmpty)
-        #expect((try? sut.inspect().find(text: "Albums & Songs")) == nil)
+        // The one "Albums" is the song list's header, titling the album sections
+        #expect(try sut.inspect().findAll(ViewType.Text.self, where: { try $0.string() == "Albums" }).count == 1)
+        #expect((try? sut.inspect().find(SongsHeader.self).find(text: "Albums")) != nil)
         #expect((try? sut.inspect().find(button: "Collapse All")) != nil || (try? sut.inspect().find(button: "Expand All")) != nil)
     }
 
     @Test func flatOrdersKeepTheAlbumShelf() throws {
         let sut = AlbumArtistDetailContent(state: sectioned(.songTitle))
         #expect(try sut.inspect().findAll(DetailAlbumShelf.self).count == 1)
-        #expect((try? sut.inspect().find(text: "Albums")) != nil)
-        #expect((try? sut.inspect().find(text: "Albums & Songs")) == nil)
+        #expect((try? sut.inspect().find(DetailAlbumShelf.self).find(text: "Albums")) != nil)
+        #expect((try? sut.inspect().find(SongsHeader.self).find(text: "Songs")) != nil)
     }
 
     @Test func flatOrdersShowOnePlainList() throws {
@@ -178,6 +179,73 @@ struct AlbumArtistDetailTests {
         }
         try picker.select(value: ArtistSongSortOrder.mostPlayed)
         #expect(selected == .mostPlayed)
+    }
+
+    @Test func sortMenuIsLabelledWithTheCurrentOrder() throws {
+        let newest = SongsHeader(sortOrder: .albumNewest, allExpanded: false)
+        #expect((try? newest.inspect().find(text: "Newest")) != nil)
+        #expect((try? newest.inspect().find(text: "Albums")) != nil)
+        let title = SongsHeader(sortOrder: .songTitle, allExpanded: false)
+        #expect((try? title.inspect().find(text: "Title A–Z")) != nil)
+        #expect((try? title.inspect().find(text: "Songs")) != nil)
+    }
+
+    @Test func expandAllIsAnIconButtonNamedForVoiceOver() throws {
+        let collapsed = SongsHeader(sortOrder: .albumNewest, allExpanded: false)
+        let expand = try collapsed.inspect().find(viewWithAccessibilityIdentifier: "artistDetail.expandAll")
+        #expect(try expand.accessibilityLabel().string() == "Expand All")
+        let expanded = SongsHeader(sortOrder: .albumNewest, allExpanded: true)
+        let collapse = try expanded.inspect().find(viewWithAccessibilityIdentifier: "artistDetail.expandAll")
+        #expect(try collapse.accessibilityLabel().string() == "Collapse All")
+    }
+
+    // MARK: - Hero
+
+    private func image(width: Int, height: Int) -> UIImage {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        return UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format).image { context in
+            UIColor.gray.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+        }
+    }
+
+    @Test func aPhotoRunsFullBleedOnlyWhenItsShortestSideIsSharpEnough() {
+        #expect(ArtistHeroPhoto.resolve(nil) == .compact)
+        #expect(ArtistHeroPhoto.resolve(image(width: 599, height: 1200)) == .compact)
+        #expect(ArtistHeroPhoto.resolve(image(width: 400, height: 400)) == .compact)
+        #expect(ArtistHeroPhoto.resolve(image(width: 600, height: 600)).image != nil)
+        #expect(ArtistHeroPhoto.resolve(image(width: 1200, height: 800)).image != nil)
+    }
+
+    @Test func aFullBleedHeroPutsTheNameOverThePhotoAndDropsTheSquare() throws {
+        let sut = AlbumArtistDetailContent(state: flat(albums: [album("OK Computer", year: 1997)]), heroPhoto: .resolve(image(width: 800, height: 800)))
+        let hero = try sut.inspect().find(ArtistBleedHero.self)
+        #expect((try? hero.find(text: "Radiohead")) != nil)
+        #expect((try? hero.find(text: "1 album · 5 songs")) != nil)
+        #expect((try? hero.find(button: "Shuffle")) != nil)
+        #expect((try? sut.inspect().find(ArtistBackdrop.self)) != nil)
+    }
+
+    @Test func noPhotoKeepsTheCompactHero() throws {
+        let sut = AlbumArtistDetailContent(state: flat(), heroPhoto: .compact)
+        #expect(try sut.inspect().findAll(ArtistBleedHero.self).isEmpty)
+        #expect(try sut.inspect().findAll(ArtistBackdrop.self).isEmpty)
+        #expect((try? sut.inspect().find(text: "Radiohead")) != nil)
+    }
+
+    @Test func aFullBleedHeroPlaysAndShufflesTheArtist() throws {
+        var played = false
+        var shuffled = false
+        let sut = AlbumArtistDetailContent(
+            state: flat(), onPlay: { _, _, _ in played = true }, onShuffle: { _, _ in shuffled = true },
+            heroPhoto: .resolve(image(width: 800, height: 800))
+        )
+        let hero = try sut.inspect().find(ArtistBleedHero.self)
+        try hero.find(button: "Play").tap()
+        try hero.find(button: "Shuffle").tap()
+        #expect(played)
+        #expect(shuffled)
     }
 
     @Test func topSongsHiddenWhenNone() throws {

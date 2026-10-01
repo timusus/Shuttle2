@@ -14,29 +14,73 @@ import SwiftUI
 ///   filling it) beside the list, with the larger `ArtworkSize.heroRegular` cover; the bar never shows the title,
 ///   since the hero is always on screen.
 ///
+/// - Given a `backdrop` (an artist's photo), the hero runs full bleed: the backdrop is drawn edge to edge from the
+///   top of the screen, under the status and navigation bars, `DetailBleed.backdropHeight` tall, and the hero is
+///   handed `.bleed` to lay its text over the backdrop's bottom. In the two-column layout it fills the top of the
+///   hero column the same way.
+///
 /// The screen's own modifiers (`toolbar`, `\.editMode`, alerts) go outside; `rows` are `List` content.
-struct DetailScaffold<Hero: View, Rows: View>: View {
+struct DetailScaffold<Hero: View, Backdrop: View, Rows: View>: View {
     let title: String
     let tintSource: ArtworkSource?
+    let backdrop: Backdrop?
     @ViewBuilder let hero: (DetailHeroLayout) -> Hero
     @ViewBuilder let rows: () -> Rows
 
+    init(
+        title: String,
+        tintSource: ArtworkSource?,
+        backdrop: Backdrop?,
+        @ViewBuilder hero: @escaping (DetailHeroLayout) -> Hero,
+        @ViewBuilder rows: @escaping () -> Rows
+    ) {
+        self.title = title
+        self.tintSource = tintSource
+        self.backdrop = backdrop
+        self.hero = hero
+        self.rows = rows
+    }
+
     var body: some View {
-        DetailScaffoldBody(title: title, hero: hero, rows: rows)
+        DetailScaffoldBody(title: title, backdrop: backdrop, hero: hero, rows: rows)
             .artworkTint(from: tintSource)
     }
 }
 
-/// How a `DetailHero` lays out: centred over the list, or as the leading column of the two-column layout.
+extension DetailScaffold where Backdrop == EmptyView {
+    /// The usual inset hero, under the wash.
+    init(title: String, tintSource: ArtworkSource?, @ViewBuilder hero: @escaping (DetailHeroLayout) -> Hero, @ViewBuilder rows: @escaping () -> Rows) {
+        self.init(title: title, tintSource: tintSource, backdrop: nil, hero: hero, rows: rows)
+    }
+}
+
+/// How a `DetailHero` lays out: centred over the list, as the leading column of the two-column layout, or over a
+/// full-bleed backdrop (`DetailScaffold`'s `backdrop`), in either.
 enum DetailHeroLayout: Equatable {
     case stacked
     case column(width: CGFloat)
+    case bleed(DetailBleed)
 
     var artworkSize: CGFloat {
         switch self {
-        case .stacked: ArtworkSize.hero
+        case .stacked, .bleed: ArtworkSize.hero
         case .column(let width): min(ArtworkSize.heroRegular, width)
         }
+    }
+}
+
+/// A full-bleed hero's geometry: how much of the backdrop shows below the bars, where the hero's title sits along the
+/// bottom, and whether the hero is the two-column layout's leading column (whose width it fills) or the list's first row.
+struct DetailBleed: Equatable {
+    let visibleHeight: CGFloat
+    let isColumn: Bool
+
+    /// The backdrop's height for a `width`-wide hero in a `containerHeight`-tall screen: square on compact, 4:3 on
+    /// regular (a wide hero gets a landscape frame rather than one taller than the screen), and never more than 60% of
+    /// the screen, so the first rows always show under it (an iPhone in landscape, an iPad in a short window).
+    static func backdropHeight(width: CGFloat, containerHeight: CGFloat, tier: LayoutTier) -> CGFloat {
+        let aspect: CGFloat = tier == .compact ? 1 : 0.75
+        return max(0, min(width * aspect, containerHeight * 0.6))
     }
 }
 
@@ -55,8 +99,9 @@ enum DetailColumns: Equatable {
 }
 
 /// `DetailScaffold` inside its tint, so it can read `\.artworkTint`.
-private struct DetailScaffoldBody<Hero: View, Rows: View>: View {
+private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View {
     let title: String
+    let backdrop: Backdrop?
     let hero: (DetailHeroLayout) -> Hero
     let rows: () -> Rows
 
@@ -66,6 +111,8 @@ private struct DetailScaffoldBody<Hero: View, Rows: View>: View {
     /// Where the navigation bar ends, in global coordinates: the single-column list's top plus the safe area it
     /// scrolls under. The hero's title hides under the bar above this line, and the wash reaches up past it.
     @State private var barBottom: CGFloat = 0
+    /// The single-column list's size, which a full-bleed backdrop's height follows.
+    @State private var listSize: CGSize = .zero
 
     var body: some View {
         Group {
@@ -75,7 +122,7 @@ private struct DetailScaffoldBody<Hero: View, Rows: View>: View {
                 GeometryReader { proxy in
                     switch DetailColumns.resolve(tier: layoutTier, containerWidth: proxy.size.width) {
                     case .single: singleColumn
-                    case .two(let heroColumnWidth): twoColumn(columnWidth: heroColumnWidth)
+                    case .two(let heroColumnWidth): twoColumn(columnWidth: heroColumnWidth, containerHeight: proxy.size.height)
                     }
                 }
             }
@@ -85,20 +132,16 @@ private struct DetailScaffoldBody<Hero: View, Rows: View>: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    private var titleProbe: DetailTitleProbe {
+        DetailTitleProbe(barBottom: barBottom) { isVisible in
+            if heroVisible != isVisible { heroVisible = isVisible }
+        }
+    }
+
     private var singleColumn: some View {
         List {
             Section {
-                hero(.stacked)
-                    .environment(\.detailTitleProbe, DetailTitleProbe(barBottom: barBottom) { isVisible in
-                        if heroVisible != isVisible { heroVisible = isVisible }
-                    })
-                    .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
-                    .padding(.top, Spacing.small)
-                    .padding(.bottom, Spacing.large)
-                    .listRowInsets(EdgeInsets())
-                    // Up past the row's top under the navigation bar (and the status bar), so the bar sits on the
-                    // wash rather than on a plain band above it.
-                    .listRowBackground(DetailWash(style: .fading).padding(.top, -barBottom))
+                stackedHero
             }
             .rowSeparator(.none)
             rows()
@@ -107,15 +150,69 @@ private struct DetailScaffoldBody<Hero: View, Rows: View>: View {
         .onGeometryChange(for: CGFloat.self) { proxy in
             proxy.frame(in: .global).minY + proxy.safeAreaInsets.top
         } action: { barBottom = $0 }
+        .onGeometryChange(for: CGSize.self) { proxy in
+            proxy.size
+        } action: { listSize = $0 }
+        // A white status bar and bar buttons over the photo, until the title has scrolled under the bar.
+        .toolbarColorScheme(backdrop != nil && heroVisible ? .dark : nil, for: .navigationBar)
+        .background(NavigationBarTint(color: backdrop != nil && heroVisible ? .white : nil))
     }
 
-    private func twoColumn(columnWidth: CGFloat) -> some View {
+    @ViewBuilder private var stackedHero: some View {
+        if let backdrop {
+            let height = DetailBleed.backdropHeight(width: listSize.width, containerHeight: listSize.height, tier: layoutTier)
+            hero(.bleed(DetailBleed(visibleHeight: max(height - barBottom, 0), isColumn: false)))
+                .environment(\.detailTitleProbe, titleProbe)
+                .padding(.bottom, Spacing.small)
+                .listRowInsets(EdgeInsets())
+                // Up past the row's top to the top of the screen, as the wash does, so the photo runs behind the
+                // status and navigation bars.
+                .listRowBackground(
+                    VStack(spacing: 0) {
+                        backdrop
+                            .frame(height: height)
+                            .clipped()
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.top, -barBottom)
+                )
+        } else {
+            hero(.stacked)
+                .environment(\.detailTitleProbe, titleProbe)
+                .padding(.horizontal, AdaptiveLayout.contentInset(layoutTier))
+                .padding(.top, Spacing.small)
+                .padding(.bottom, Spacing.large)
+                .listRowInsets(EdgeInsets())
+                // Up past the row's top under the navigation bar (and the status bar), so the bar sits on the
+                // wash rather than on a plain band above it.
+                .listRowBackground(DetailWash(style: .fading).padding(.top, -barBottom))
+        }
+    }
+
+    private func twoColumn(columnWidth: CGFloat, containerHeight: CGFloat) -> some View {
         let inset = AdaptiveLayout.contentInset(layoutTier)
         return HStack(spacing: 0) {
-            ScrollView {
-                hero(.column(width: columnWidth - inset * 2))
-                    .padding(.horizontal, inset)
-                    .padding(.vertical, Spacing.large)
+            Group {
+                if let backdrop {
+                    // The column's scroll view runs up under the bars, so the backdrop starts at the top of the screen.
+                    let height = DetailBleed.backdropHeight(width: columnWidth, containerHeight: containerHeight, tier: .compact)
+                    ScrollView {
+                        hero(.bleed(DetailBleed(visibleHeight: height, isColumn: true)))
+                            .padding(.bottom, Spacing.large)
+                            .background(alignment: .top) {
+                                backdrop
+                                    .frame(height: height)
+                                    .clipped()
+                            }
+                    }
+                    .ignoresSafeArea(edges: .top)
+                } else {
+                    ScrollView {
+                        hero(.column(width: columnWidth - inset * 2))
+                            .padding(.horizontal, inset)
+                            .padding(.vertical, Spacing.large)
+                    }
+                }
             }
             .frame(width: columnWidth)
             .background(DetailWash(style: .panel).ignoresSafeArea())
@@ -128,6 +225,44 @@ private struct DetailScaffoldBody<Hero: View, Rows: View>: View {
         .onAppear { heroVisible = true }
     }
 
+}
+
+/// Tints the navigation bar's buttons `color` while set, and puts the bar's own tint back when cleared or when the
+/// screen goes. Below iOS 26 the back button and bar items are plain glyphs in the app accent (near-black in light
+/// mode), which a full-bleed photo swallows; `toolbarColorScheme` turns only the status bar white. iOS 26's glass
+/// buttons carry their own backing, so they're left alone.
+private struct NavigationBarTint: UIViewControllerRepresentable {
+    let color: UIColor?
+
+    func makeUIViewController(context: Context) -> Controller { Controller() }
+
+    func updateUIViewController(_ controller: Controller, context: Context) {
+        if #available(iOS 26.0, *) { return }
+        controller.color = color
+    }
+
+    final class Controller: UIViewController {
+        var color: UIColor? { didSet { if isVisible { apply() } } }
+        private var isVisible = false
+        private var original: UIColor?
+
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            isVisible = true
+            original = navigationController?.navigationBar.tintColor
+            apply()
+        }
+
+        override func viewWillDisappear(_ animated: Bool) {
+            super.viewWillDisappear(animated)
+            isVisible = false
+            navigationController?.navigationBar.tintColor = original
+        }
+
+        private func apply() {
+            navigationController?.navigationBar.tintColor = color ?? original
+        }
+    }
 }
 
 /// How the stacked hero's title tells `DetailScaffold` whether it's still below the navigation bar, so the bar names
@@ -147,6 +282,14 @@ struct DetailTitleProbe {
 extension EnvironmentValues {
     /// Set on the single-column hero only; the two-column hero is always on screen.
     @Entry var detailTitleProbe: DetailTitleProbe?
+}
+
+extension View {
+    /// Marks the hero's title for `DetailScaffold`, which names the screen in the navigation bar once it has scrolled
+    /// under the bar.
+    func detailTitleProbe() -> some View {
+        modifier(DetailTitleProbeModifier())
+    }
 }
 
 private struct DetailTitleProbeModifier: ViewModifier {
@@ -208,7 +351,7 @@ struct DetailHero<Artwork: View>: View {
                     .multilineTextAlignment(textAlignment)
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                     .accessibilityAddTraits(.isHeader)
-                    .modifier(DetailTitleProbeModifier())
+                    .detailTitleProbe()
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.s2Eyebrow)
@@ -223,8 +366,9 @@ struct DetailHero<Artwork: View>: View {
     }
 }
 
-/// Play and Shuffle as two capsules sharing the width, in the tint in scope: glass on iOS 26, bordered below.
-/// Stacked at the accessibility sizes, where side by side they'd truncate.
+/// Play and Shuffle as two capsules sharing the width, in the tint in scope: Play filled with the tint, Shuffle a
+/// tonal capsule (a light wash of the tint); glass on iOS 26, bordered below. Stacked at the accessibility sizes,
+/// where side by side they'd truncate.
 struct HeroActions: View {
     let onPlay: () -> Void
     let onShuffle: () -> Void
@@ -252,9 +396,10 @@ struct HeroActions: View {
 }
 
 extension View {
-    /// A capsule button in the tint in scope: `.glassProminent` / `.glass` on iOS 26, `.borderedProminent` /
-    /// `.bordered` in a capsule below. A prominent button's label takes `\.artworkTintInk`, which clears AA on the
-    /// tint fill whatever the cover.
+    /// A capsule button in the tint in scope: `.glassProminent` on iOS 26, `.borderedProminent` in a capsule below.
+    /// A prominent button is filled with the tint, its label in `\.artworkTintInk`, which clears AA on the tint fill
+    /// whatever the cover; the other is tonal, a light wash of the tint with the label in the tint itself, so it
+    /// stands off the page in either scheme (a white or grey capsule all but vanished on the light page).
     func capsuleButton(prominent: Bool) -> some View {
         modifier(CapsuleButtonModifier(prominent: prominent))
     }
@@ -262,20 +407,25 @@ extension View {
 
 private struct CapsuleButtonModifier: ViewModifier {
     let prominent: Bool
+    @Environment(\.artworkTint) private var tint
     @Environment(\.artworkTintInk) private var ink
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// The tonal capsule's fill: the tint over the page, a little stronger in dark mode, where a faint wash reads as grey.
+    private var tonalFill: Color { tint.opacity(colorScheme == .dark ? 0.26 : 0.16) }
 
     func body(content: Content) -> some View {
         if #available(iOS 26.0, *) {
             if prominent {
                 content.foregroundStyle(ink).buttonStyle(.glassProminent)
             } else {
-                content.buttonStyle(.glass)
+                content.foregroundStyle(tint).buttonStyle(.glassProminent).tint(tonalFill)
             }
         } else {
             if prominent {
                 content.foregroundStyle(ink).buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
             } else {
-                content.buttonStyle(.bordered).buttonBorderShape(.capsule)
+                content.foregroundStyle(tint).buttonStyle(.borderedProminent).buttonBorderShape(.capsule).tint(tonalFill)
             }
         }
     }

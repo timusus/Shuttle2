@@ -2,7 +2,8 @@ import Shared
 import SwiftUI
 
 /// Album artist detail (P5-7, polished in #624, sectioned in #631): a hero tinted from the artist's picture (the
-/// artist's picture, name, albums · songs, Play/Shuffle, and Shuffle by Album in the toolbar's menu), the artist's
+/// artist's photo run full bleed behind the bars with the name over it when it's sharp enough, else a compact square
+/// hero, `ArtistHeroPhoto`; albums · songs, Play/Shuffle, and Shuffle by Album in the toolbar's menu), the artist's
 /// most played songs, a shelf of the artist's album tiles (each zooming into `Route.album`) while the songs are flat, an
 /// Appears On shelf of others' albums crediting them (#637, hidden when empty; a long press on any tile plays or queues
 /// it), then the artist's songs in the chosen `ArtistSongSortOrder`: under one sticky, foldable header per album for the
@@ -83,6 +84,9 @@ struct AlbumArtistDetailContent: View {
     var onCollapseAll: () -> Void = {}
     /// A shelf tile's long-press actions, on the whole album.
     var albumActions = DetailAlbumActions()
+    /// The hero's photo, already decided; nil decides it from the artist's artwork (`ArtistHeroPhotoReader`). For
+    /// tests and previews.
+    var heroPhoto: ArtistHeroPhoto?
 
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -107,60 +111,73 @@ struct AlbumArtistDetailContent: View {
 
     private func ready(_ artist: AlbumArtist) -> some View {
         let name = artist.name ?? artist.friendlyArtistName ?? "Unknown Artist"
-        return ScrollViewReader { proxy in
-            DetailScaffold(title: name, tintSource: .albumArtist(artist)) { layout in
-                DetailHero(
-                    title: name,
-                    // An artist only credited on others' albums (#637) has none of their own to count
-                    subtitle: eyebrow(state.albums.isEmpty ? nil : pluralized(state.albums.count, "album"), pluralized(state.songs.count, "song")),
-                    layout: layout,
-                    onPlay: { onPlay(state.songs, 0, state.playContext) },
-                    onShuffle: { onShuffle(state.songs, state.playContext) }
-                ) { points in
-                    RemoteArtwork(.albumArtist(artist), points: points) {
-                        ArtworkPlaceholder(symbol: "person.fill")
-                    }
-                    .artworkTile(points, shape: .artworkHero)
-                }
-            } rows: {
-                if !state.topSongs.isEmpty {
-                    topSongs {
-                        onSortOrderSelected(.mostPlayed)
-                        withAnimation(Motion.disclosure.reduced(reduceMotion)) {
-                            proxy.scrollTo(Self.songsHeaderId, anchor: .top)
+        // An artist only credited on others' albums (#637) has none of their own to count
+        let subtitle = eyebrow(state.albums.isEmpty ? nil : pluralized(state.albums.count, "album"), pluralized(state.songs.count, "song"))
+        return ArtistHeroPhotoReader(source: .albumArtist(artist), preset: heroPhoto) { photo in
+            ScrollViewReader { proxy in
+                DetailScaffold(title: name, tintSource: .albumArtist(artist), backdrop: photo.image.map(ArtistBackdrop.init)) { layout in
+                    if case .bleed(let bleed) = layout {
+                        ArtistBleedHero(
+                            title: name,
+                            subtitle: subtitle,
+                            bleed: bleed,
+                            onPlay: { onPlay(state.songs, 0, state.playContext) },
+                            onShuffle: { onShuffle(state.songs, state.playContext) }
+                        )
+                    } else {
+                        DetailHero(
+                            title: name,
+                            subtitle: subtitle,
+                            layout: layout,
+                            onPlay: { onPlay(state.songs, 0, state.playContext) },
+                            onShuffle: { onShuffle(state.songs, state.playContext) }
+                        ) { points in
+                            RemoteArtwork(.albumArtist(artist), points: points) {
+                                ArtworkPlaceholder(symbol: "person.fill")
+                            }
+                            .artworkTile(points, shape: .artworkHero)
                         }
                     }
+                } rows: {
+                    if !state.topSongs.isEmpty {
+                        topSongs {
+                            onSortOrderSelected(.mostPlayed)
+                            withAnimation(Motion.disclosure.reduced(reduceMotion)) {
+                                proxy.scrollTo(Self.songsHeaderId, anchor: .top)
+                            }
+                        }
+                    }
+                    if state.showAlbumsShelf {
+                        DetailAlbumShelf(
+                            title: "Albums",
+                            albums: state.albums,
+                            subtitle: { $0.year.map { String($0.intValue) } },
+                            onAlbumTap: onAlbumTap,
+                            albumActions: albumActions
+                        )
+                    }
+                    if !state.appearsOn.isEmpty {
+                        DetailAlbumShelf(
+                            title: "Appears On",
+                            albums: state.appearsOn,
+                            // Whose album it is: the album artist, not the track artists friendlyArtistName joins
+                            subtitle: { $0.albumArtist ?? $0.friendlyArtistName },
+                            onAlbumTap: onAlbumTap,
+                            albumActions: albumActions,
+                            tileIdentifier: "detailTile.appearsOn"
+                        )
+                    }
+                    songs
                 }
-                if state.showAlbumsShelf {
-                    DetailAlbumShelf(
-                        title: "Albums",
-                        albums: state.albums,
-                        subtitle: { $0.year.map { String($0.intValue) } },
-                        onAlbumTap: onAlbumTap,
-                        albumActions: albumActions
-                    )
+                .animation(Motion.disclosure.reduced(reduceMotion), value: state.expandedAlbums)
+                .toolbar {
+                    Menu {
+                        Button("Shuffle by Album", systemImage: "square.stack", action: onShuffleAlbums)
+                    } label: {
+                        Label("More", systemImage: "ellipsis.circle")
+                    }
+                    .accessibilityIdentifier("artistDetail.more")
                 }
-                if !state.appearsOn.isEmpty {
-                    DetailAlbumShelf(
-                        title: "Appears On",
-                        albums: state.appearsOn,
-                        // Whose album it is: the album artist, not the track artists friendlyArtistName joins
-                        subtitle: { $0.albumArtist ?? $0.friendlyArtistName },
-                        onAlbumTap: onAlbumTap,
-                        albumActions: albumActions,
-                        tileIdentifier: "detailTile.appearsOn"
-                    )
-                }
-                songs
-            }
-            .animation(Motion.disclosure.reduced(reduceMotion), value: state.expandedAlbums)
-            .toolbar {
-                Menu {
-                    Button("Shuffle by Album", systemImage: "square.stack", action: onShuffleAlbums)
-                } label: {
-                    Label("More", systemImage: "ellipsis.circle")
-                }
-                .accessibilityIdentifier("artistDetail.more")
             }
         }
     }
@@ -199,6 +216,7 @@ struct AlbumArtistDetailContent: View {
     // MARK: - Songs
 
     @ViewBuilder private var songs: some View {
+        let inset = AdaptiveLayout.contentInset(layoutTier)
         Section {
             SongsHeader(
                 sortOrder: state.sortOrder,
@@ -209,8 +227,13 @@ struct AlbumArtistDetailContent: View {
                 onCollapseAll: onCollapseAll
             )
             .rowSeparator(.none)
+            // The content inset, as the rows under it; trailing less the expand button's touch padding, so its glyph
+            // lines up with the rows' chevrons.
+            .listRowInsets(EdgeInsets(top: 0, leading: inset, bottom: 0, trailing: max(0, inset - Spacing.smallMedium)))
             .id(Self.songsHeaderId)
         }
+        // No gap between the header and the first album or song under it: they read as one section.
+        .listSectionSpacing(0)
         if state.sortOrder.groupsByAlbum {
             ForEach(indexedSections) { indexed in
                 let section = indexed.section
@@ -310,8 +333,9 @@ struct AlbumArtistDetailContent: View {
     }
 }
 
-/// The Songs header: no title, just a trailing run of controls, the sort menu (a checkmark on the current order)
-/// and, for the album orders, Expand All or Collapse All. It's also the anchor Top Songs' See All scrolls to.
+/// The song list's section header, also the anchor Top Songs' See All scrolls to: "Albums" while the album sections
+/// stand in for the album shelf (#678), else "Songs"; then trailing, the sort menu, labelled with the current order
+/// (a checkmark on it in the menu), and for the album orders an Expand All / Collapse All icon button.
 struct SongsHeader: View {
     let sortOrder: ArtistSongSortOrder
     let allExpanded: Bool
@@ -322,16 +346,14 @@ struct SongsHeader: View {
     var onExpandAll: () -> Void = {}
     var onCollapseAll: () -> Void = {}
 
+    private var showsAlbums: Bool { sortOrder.groupsByAlbum && hasAlbumSections }
+
     var body: some View {
-        HStack(alignment: .center, spacing: Spacing.medium) {
-            Spacer(minLength: 0)
-            if sortOrder.groupsByAlbum && hasAlbumSections {
-                Button(allExpanded ? "Collapse All" : "Expand All", action: allExpanded ? onCollapseAll : onExpandAll)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.tint)
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("artistDetail.expandAll")
-            }
+        HStack(alignment: .center, spacing: Spacing.smallMedium) {
+            Text(showsAlbums ? "Albums" : "Songs")
+                .font(.s2SectionTitle)
+                .accessibilityAddTraits(.isHeader)
+            Spacer(minLength: Spacing.small)
             Menu {
                 Picker("Sort By", selection: Binding(get: { sortOrder }, set: onSortOrderSelected)) {
                     ForEach(ArtistSongSortOrder.menuOrder, id: \.self) { order in
@@ -339,16 +361,185 @@ struct SongsHeader: View {
                     }
                 }
             } label: {
-                Label("Sort", systemImage: "arrow.up.arrow.down")
-                    .labelStyle(.iconOnly)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.tint)
-                    .contentShape(Rectangle())
+                HStack(spacing: Spacing.xsmall) {
+                    Text(sortOrder.shortTitle)
+                    Image(systemName: "chevron.down")
+                        .font(.caption.weight(.bold))
+                        .imageScale(.small)
+                }
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.tint)
+                .contentShape(Rectangle())
             }
             .accessibilityLabel("Sort Songs")
             .accessibilityValue(sortOrder.menuTitle)
             .accessibilityIdentifier("artistDetail.sortMenu")
+            if showsAlbums {
+                Button(action: allExpanded ? onCollapseAll : onExpandAll) {
+                    Label(
+                        allExpanded ? "Collapse All" : "Expand All",
+                        systemImage: allExpanded ? "rectangle.compress.vertical" : "rectangle.expand.vertical"
+                    )
+                    .labelStyle(.iconOnly)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.tint)
+                    .frame(minWidth: TouchTarget.minimum, minHeight: TouchTarget.minimum)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(allExpanded ? "Collapse All" : "Expand All")
+                .accessibilityIdentifier("artistDetail.expandAll")
+            }
         }
+    }
+}
+
+// MARK: - Hero
+
+/// The artist's photo as the hero uses it, decided once per visit so the layout never jumps: full bleed when the photo
+/// is sharp enough to run edge to edge, else the compact square hero (no photo, or a low-resolution one, which full
+/// bleed would blow up and blur).
+enum ArtistHeroPhoto: Equatable {
+    case fullBleed(UIImage)
+    case compact
+
+    /// The shortest side, in pixels, a photo needs to run full bleed. A 393 pt iPhone hero is ~1180 px at 3x, so under
+    /// 600 px the photo would be scaled up more than 2x and look soft. Measured on the decoded image (`decodePoints`),
+    /// so a very wide panorama (over ~2.6:1) whose long side the decode clamps also falls back, which suits it: a
+    /// square or 4:3 crop of it would show a sliver.
+    static let minimumPixels: CGFloat = 600
+    /// The longest side the photo is decoded at, in points: past the widest iPhone and the iPad hero column, without
+    /// decoding a server's full-size original.
+    static let decodePoints: CGFloat = 520
+    /// How long the screen waits for an uncached photo before settling on the compact hero for this visit. A photo
+    /// that arrives later still fills the compact hero's square, and the next visit finds it cached.
+    static let wait: Duration = .milliseconds(800)
+    /// Artists (by artwork cache key) already found to have no photo, or a low-resolution one, this run: the next
+    /// visit skips the wait.
+    @MainActor static var compactKeys = Set<String>()
+
+    /// The full-bleed photo, nil for the compact hero.
+    var image: UIImage? {
+        if case .fullBleed(let image) = self { image } else { nil }
+    }
+
+    /// `image`'s layout: full bleed if its shortest side reaches `minimumPixels`.
+    static func resolve(_ image: UIImage?) -> ArtistHeroPhoto {
+        guard let image else { return .compact }
+        let shortest = min(image.size.width, image.size.height) * image.scale
+        return shortest >= minimumPixels ? .fullBleed(image) : .compact
+    }
+}
+
+/// Decides the hero's `ArtistHeroPhoto` for `source`, then draws `content` with it. A photo already in memory decides
+/// in the first frame; otherwise the screen stays blank (the page background) until the photo arrives or
+/// `ArtistHeroPhoto.wait` passes, rather than drawing one layout and swapping to the other.
+struct ArtistHeroPhotoReader<Content: View>: View {
+    let source: ArtworkSource
+    var preset: ArtistHeroPhoto?
+    @ViewBuilder let content: (ArtistHeroPhoto) -> Content
+
+    @Environment(\.displayScale) private var displayScale
+    @State private var loaded: ArtistHeroPhoto?
+
+    private var maxPixelSize: Int { Int((ArtistHeroPhoto.decodePoints * displayScale).rounded(.up)) }
+
+    /// The decision without waiting: given, already made, or from a photo already decoded.
+    private var known: ArtistHeroPhoto? {
+        if let decided = preset ?? loaded { return decided }
+        if ArtistHeroPhoto.compactKeys.contains(source.cacheKey) { return .compact }
+        return ArtworkLoader.shared.cached(source, maxPixelSize: maxPixelSize).map(ArtistHeroPhoto.resolve)
+    }
+
+    var body: some View {
+        let photo = known
+        content(photo ?? .compact)
+            .overlay {
+                if photo == nil {
+                    Color(uiColor: .systemBackground).ignoresSafeArea()
+                }
+            }
+            .task(id: "\(source.cacheKey)@\(maxPixelSize)") {
+                guard known == nil else { return }
+                let timeout = Task {
+                    try? await Task.sleep(for: ArtistHeroPhoto.wait)
+                    if !Task.isCancelled, loaded == nil { loaded = .compact }
+                }
+                let image = await ArtworkLoader.shared.image(for: source, maxPixelSize: maxPixelSize)
+                timeout.cancel()
+                let resolved = ArtistHeroPhoto.resolve(image)
+                if resolved == .compact { ArtistHeroPhoto.compactKeys.insert(source.cacheKey) }
+                if loaded == nil { loaded = resolved }
+            }
+    }
+}
+
+/// The full-bleed hero's backdrop: the photo filling the frame, anchored to its top so a portrait photo keeps the
+/// faces, under a scrim at the top for the status bar and the bar buttons and one at the bottom for the name.
+struct ArtistBackdrop: View {
+    let image: UIImage
+
+    var body: some View {
+        Color.clear
+            .overlay(alignment: .top) {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            }
+            .clipped()
+            .overlay(alignment: .top) {
+                LinearGradient(colors: [.black.opacity(0.45), .black.opacity(0)], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 140)
+            }
+            .overlay {
+                LinearGradient(
+                    stops: [.init(color: .black.opacity(0), location: 0.45), .init(color: .black.opacity(0.7), location: 1)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+            .accessibilityHidden(true)
+    }
+}
+
+/// The full-bleed hero's foreground: the artist's name, large and leading, and the albums · songs line, in white over
+/// the bottom of the backdrop's scrim; then Play/Shuffle under the photo, on the page.
+struct ArtistBleedHero: View {
+    let title: String
+    let subtitle: String?
+    let bleed: DetailBleed
+    var onPlay: () -> Void = {}
+    var onShuffle: () -> Void = {}
+
+    @Environment(\.layoutTier) private var layoutTier
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
+        let inset = AdaptiveLayout.contentInset(layoutTier)
+        VStack(alignment: .leading, spacing: Spacing.medium) {
+            VStack(alignment: .leading, spacing: Spacing.xsmall) {
+                Text(title)
+                    .font(.s2LargeTitle)
+                    .foregroundStyle(.white)
+                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                    .minimumScaleFactor(0.75)
+                    .accessibilityAddTraits(.isHeader)
+                    .detailTitleProbe()
+                if let subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.white.opacity(0.85))
+                }
+            }
+            .shadow(color: .black.opacity(0.3), radius: 6, y: 1)
+            .padding(.horizontal, inset)
+            .padding(.bottom, Spacing.medium)
+            .frame(maxWidth: .infinity, minHeight: bleed.visibleHeight, alignment: .bottomLeading)
+            HeroActions(onPlay: onPlay, onShuffle: onShuffle)
+                .padding(.horizontal, inset)
+                .frame(maxWidth: bleed.isColumn || layoutTier == .compact ? .infinity : ArtworkSize.heroRegular + Spacing.xlarge + inset * 2, alignment: .leading)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
