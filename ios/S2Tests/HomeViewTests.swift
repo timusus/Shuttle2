@@ -75,17 +75,112 @@ struct HomeViewTests {
         #expect(lazyGrid.findAll(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "homeGrid.cell" }).count == 8)
     }
 
-    @Test func gridCellsCarryATypeLabel() throws {
+    @Test func gridCellsNameTheirKindOnlyToVoiceOver() throws {
+        let progress = HomeItemProgress(track: 24, trackCount: 31)
+        let artist = HomeItemArtistItem(albumArtist: artist("Alice In Chains"))
         let sut = HomeContent(state: content([section(.jumpBackIn, .jumpBackIn, [
             HomeItemAlbumItem(album: album("OK Computer")),
-            HomeItemArtistItem(albumArtist: artist("Massive Attack")),
+            artist,
             HomeItemSmartPlaylistItem(smartPlaylistId: .favourites),
             HomeItemGenreItem(genre: genre("Trip Hop")),
-        ])]))
+        ], progress: [artist.key: progress])]))
         #expect((try? sut.inspect().find(text: "Jump Back In")) != nil)
         for label in ["Album", "Artist", "Playlist", "Genre"] {
-            #expect((try? sut.inspect().find(text: label)) != nil, "no \(label) label")
+            #expect((try? sut.inspect().find(text: label)) == nil, "a \(label) label is drawn")
         }
+        let labels = try sut.inspect().findAll(ViewType.Button.self, where: { (try? $0.accessibilityIdentifier()) == "homeGrid.cell" })
+            .map { try $0.accessibilityLabel().string() }
+        #expect(labels == ["OK Computer, Album", "Alice In Chains, Artist, Track 24 of 31", "Favourites, Playlist", "Trip Hop, Genre"])
+    }
+
+    @Test func aGridCellIsAsTallAsItsArtworkSlot() throws {
+        let cell = JumpBackInCell(
+            item: HomeItemAlbumItem(album: album("OK Computer")), progress: HomeItemProgress(track: 5, trackCount: 12),
+            tileKey: "jumpBackIn|album", zoomSourceKey: nil, perform: { _ in }, open: { _ in }
+        )
+        #expect(try cell.inspect().find(ViewType.HStack.self).fixedHeight() == ArtworkSize.albumRow)
+        #expect(JumpBackInCell.artworkSide(for: HomeItemAlbumItem(album: album("OK Computer"))) == ArtworkSize.albumRow)
+    }
+
+    @Test func aPlaylistsOrGenresCoversCarryItsGlyph() throws {
+        let genreItem = HomeItemGenreItem(genre: genre("Trip Hop"))
+        let cell = JumpBackInCell(item: genreItem, progress: nil, tileKey: "jumpBackIn|genre", zoomSourceKey: nil, perform: { _ in }, open: { _ in })
+        let covered = try cell.environment(\.homeCovers, [genreItem.key: [TestSongs.demo[0]]]).inspect()
+        #expect((try? covered.find(ViewType.Image.self, where: { (try? $0.actualImage().name()) == GeneratedArtwork.genreSymbol })) != nil)
+        let album = JumpBackInCell(item: HomeItemAlbumItem(album: album("OK Computer")), progress: nil, tileKey: "a", zoomSourceKey: nil, perform: { _ in }, open: { _ in })
+        #expect((try? album.inspect().find(ViewType.Image.self, where: { (try? $0.actualImage().name()) == GeneratedArtwork.playlistSymbol })) == nil)
+    }
+
+    @Test func aPendingPlayShowsASpinnerInPlaceOfThePlayGlyph() throws {
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        let idle = HomeContent(state: content([section(.jumpBackIn, .jumpBackIn, [item])]))
+        let play = try idle.inspect().find(viewWithAccessibilityIdentifier: "homeGrid.play")
+        #expect((try? play.find(ViewType.ProgressView.self)) == nil)
+        #expect((try? play.find(ViewType.Image.self)) != nil)
+
+        let pending = HomeContent(state: content([section(.jumpBackIn, .jumpBackIn, [item])]), pendingPlayKey: item.key)
+        let spinning = try pending.inspect().find(viewWithAccessibilityIdentifier: "homeGrid.play")
+        #expect((try? spinning.find(ViewType.ProgressView.self)) != nil)
+        #expect((try? spinning.find(ViewType.Image.self)) == nil)
+        #expect(try spinning.accessibilityValue().string() == "Starting")
+    }
+
+    @Test func aGridCellsPlayReportsItStartedAndIgnoresTapsWhilePending() throws {
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        var started: [String] = []
+        var actions: [MediaAction] = []
+        let sut = HomeContent(
+            state: content([section(.jumpBackIn, .jumpBackIn, [item])]),
+            onAction: { actions.append($0) },
+            onPlayStarted: { started.append($0.key) }
+        )
+        try sut.inspect().find(viewWithAccessibilityLabel: "Play OK Computer").button().tap()
+        #expect(started == [item.key])
+        #expect(actions.count == 1)
+
+        let pending = HomeContent(
+            state: content([section(.jumpBackIn, .jumpBackIn, [item])]),
+            onAction: { actions.append($0) },
+            pendingPlayKey: item.key,
+            onPlayStarted: { started.append($0.key) }
+        )
+        try pending.inspect().find(viewWithAccessibilityLabel: "Play OK Computer").button().tap()
+        #expect(started == [item.key])
+        #expect(actions.count == 1)
+    }
+
+    // MARK: Pending play
+
+    @Test func aPendingPlaySettlesWhenThePlayerPlaysItsContext() {
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        let other = HomeItemAlbumItem(album: album("Amnesiac"))
+        let pending = PendingPlay()
+        pending.start(item, playing: true, current: other.playContext)
+        #expect(pending.key == item.key)
+        pending.playerChanged(playing: true, current: other.playContext)
+        #expect(pending.key == item.key)
+        pending.playerChanged(playing: false, current: item.playContext)
+        #expect(pending.key == item.key)
+        pending.playerChanged(playing: true, current: item.playContext)
+        #expect(pending.key == nil)
+    }
+
+    @Test func aPlayOfWhatsAlreadyPlayingIsNeverPending() {
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        let pending = PendingPlay()
+        pending.start(item, playing: true, current: item.playContext)
+        #expect(pending.key == nil)
+        pending.start(item, playing: false, current: item.playContext)
+        #expect(pending.key == item.key)
+        pending.settle()
+        #expect(pending.key == nil)
+    }
+
+    @Test func aPendingPlayGivesUpAfterItsTimeout() async {
+        let pending = PendingPlay(timeout: .milliseconds(50))
+        pending.start(HomeItemAlbumItem(album: album("OK Computer")), playing: false, current: PlayContextNone.shared)
+        #expect(pending.key != nil)
+        #expect(await waitUntil { pending.key == nil })
     }
 
     @Test func tappingAGridCellOpensItsItem() throws {

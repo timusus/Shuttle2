@@ -4,7 +4,7 @@ import SwiftUI
 /// Jump Back In (#633): the last things played, as a compact grid of cells rather than a shelf, after Apple Music's
 /// and Spotify's recents. Two columns by four rows on an iPhone, four by two on an iPad; one full-width column at
 /// the accessibility text sizes. A cell opens its item; its trailing button plays it on from where its queue was left
-/// (#670), and says how far in that was.
+/// (#670), and says how far in that was, showing a spinner until it plays.
 struct JumpBackInGrid: View {
     let items: [HomeItem]
     /// How far into each item, by key, its queue was left.
@@ -14,6 +14,9 @@ struct JumpBackInGrid: View {
     /// The tile the last tap came from, so only it is the zoom source for the screen it opens.
     var zoomSourceKey: String?
     var onTapped: (String) -> Void = { _ in }
+    /// The item whose play is under way (`PendingPlay`), by key.
+    var pendingKey: String?
+    var onPlayStarted: (HomeItem) -> Void = { _ in }
 
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -37,16 +40,20 @@ struct JumpBackInGrid: View {
                     tileKey: "jumpBackIn|\(item.key)",
                     zoomSourceKey: zoomSourceKey,
                     perform: perform,
-                    open: { onTapped("jumpBackIn|\($0.key)"); open($0) }
+                    open: { onTapped("jumpBackIn|\($0.key)"); open($0) },
+                    pending: item.key == pendingKey,
+                    onPlayStarted: onPlayStarted
                 )
             }
         }
     }
 }
 
-/// One cell, after Spotify's recents: the cover flush with the cell's leading edge, the title over up to two lines and
-/// the kind of item, then how far into it its queue was left, on a rounded fill, with a play button at the end that
-/// carries on from there. Long-press has the rest (Play from Start, Shuffle, queue, Go to).
+/// One cell, after Spotify's recents: the artwork in a square slot flush with the cell's top, bottom and leading edges,
+/// the title over up to two lines and how far into the item its queue was left, centred beside it, on a rounded fill,
+/// with a play button at the end that carries on from there. The artwork's shape says what the item is (an artist is a
+/// circle centred in the slot; a playlist's or genre's covers carry its glyph), so no line names the kind; VoiceOver
+/// says it. Long-press has the rest (Play from Start, Shuffle, queue, Go to).
 struct JumpBackInCell: View {
     let item: HomeItem
     let progress: HomeItemProgress?
@@ -54,41 +61,50 @@ struct JumpBackInCell: View {
     let zoomSourceKey: String?
     let perform: (MediaAction) -> Void
     let open: (HomeItem) -> Void
+    /// Its play is under way (`PendingPlay`): the play button shows a spinner.
+    var pending = false
+    /// Told of each action that starts playing the item, as it's performed.
+    var onPlayStarted: (HomeItem) -> Void = { _ in }
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.homeCovers) private var covers
+    /// The artwork slot's side, which is the cell's height: `ArtworkSize.albumRow`, growing with the text beside it.
+    @ScaledMetric(relativeTo: .footnote) private var scaledSlot = ArtworkSize.albumRow
 
     private static let accessibilityTitleLines = 6
 
     /// An artist's circle is drawn this far in from the slot's edge.
     private static let artistInset = Spacing.small
 
-    /// The side the item's artwork draws at within the `ArtworkSize.albumRow` slot.
-    static func artworkSide(for item: HomeItem) -> CGFloat {
-        item is HomeItemArtistItem ? ArtworkSize.albumRow - 2 * artistInset : ArtworkSize.albumRow
+    /// At the accessibility sizes the text can outgrow any slot, so the slot stops growing here and the cell grows
+    /// with the text instead.
+    private static let largestSlot = ArtworkSize.albumRow * 1.5
+
+    /// The side the item's artwork draws at within a slot of side `slot`.
+    static func artworkSide(for item: HomeItem, slot: CGFloat = ArtworkSize.albumRow) -> CGFloat {
+        item is HomeItemArtistItem ? slot - 2 * artistInset : slot
     }
 
+    /// What VoiceOver reads for the cell: its title, kind and progress ("Alice In Chains, Artist, Track 24 of 31").
+    static func accessibilityLabel(item: HomeItem, progress: HomeItemProgress?) -> String {
+        [item.title, item.typeLabel, progress?.localized()].compactMap { $0 }.joined(separator: ", ")
+    }
+
+    private var accessibilitySize: Bool { dynamicTypeSize.isAccessibilitySize }
+
+    private var slot: CGFloat { accessibilitySize ? min(scaledSlot, Self.largestSlot) : scaledSlot }
+
     var body: some View {
-        let shape = S2Shape.artworkRow
+        let slot = slot
         HStack(spacing: 0) {
             Button { open(item) } label: {
-                HStack(alignment: .center, spacing: Spacing.small) {
-                    // Square corners: the cell's own shape rounds the cover's outer ones. An artist is a circle
-                    // inset and centred in the same slot, on the cell's background, so it stays a circle.
-                    HomeItemArtwork(item: item, size: Self.artworkSide(for: item), shape: S2Shape(.rounded(0)))
-                        .frame(width: ArtworkSize.albumRow, height: ArtworkSize.albumRow)
-                        .frame(maxHeight: .infinity, alignment: .top)
+                HStack(alignment: accessibilitySize ? .top : .center, spacing: Spacing.small) {
+                    artwork(slot: slot)
                     VStack(alignment: .leading, spacing: Spacing.tiny) {
                         Text(item.title)
                             .font(.footnote.weight(.semibold))
                             .foregroundStyle(.primary)
-                            // Two lines reserved, so every cell in a row is as tall as the others; at the
-                            // accessibility sizes (one column) the title takes what it needs.
-                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? Self.accessibilityTitleLines : 2, reservesSpace: !dynamicTypeSize.isAccessibilitySize)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text(item.typeLabel)
-                            .font(.caption2)
-                            .foregroundStyle(.s2TextSecondary)
-                            .lineLimit(1)
+                            .lineLimit(accessibilitySize ? Self.accessibilityTitleLines : 2)
                         if let progress {
                             Text(progress.localized())
                                 .font(.caption2)
@@ -96,32 +112,94 @@ struct JumpBackInCell: View {
                                 .lineLimit(1)
                         }
                     }
-                    .padding(.vertical, Spacing.xsmall)
+                    // At the accessibility sizes (one column) the cell is as tall as its text, which needs room.
+                    .padding(.vertical, accessibilitySize ? Spacing.small : 0)
+                    .fixedSize(horizontal: false, vertical: accessibilitySize)
                     Spacer(minLength: 0)
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.pressScale)
+            .accessibilityLabel(Self.accessibilityLabel(item: item, progress: progress))
             .accessibilityIdentifier("homeGrid.cell")
             .zoomSource(for: item, tileKey: tileKey, activeKey: zoomSourceKey)
-            .homeItemActions(HomeItemActions(item: item, perform: perform, open: open, resumes: true))
+            .homeItemActions(HomeItemActions(item: item, perform: performTracked, open: open, resumes: true))
 
-            Button { perform(item.resumeAction()) } label: {
-                Image(systemName: item is HomeItemGenreItem ? "shuffle" : "play.fill")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.tint)
-                    .frame(width: Spacing.xlarge + Spacing.xsmall)
-                    .frame(maxHeight: .infinity)
-                    .contentShape(Rectangle())
+            Button {
+                guard !pending else { return }
+                performTracked(item.resumeAction())
+            } label: {
+                ZStack {
+                    if pending {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Image(systemName: item is HomeItemGenreItem ? "shuffle" : "play.fill")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.tint)
+                    }
+                }
+                .frame(width: Spacing.xlarge + Spacing.xsmall)
+                .frame(maxHeight: .infinity)
+                .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(JumpBackInPlayButtonStyle())
             .accessibilityLabel(item is HomeItemGenreItem ? "Shuffle \(item.title)" : "Play \(item.title)")
+            .accessibilityValue(pending ? "Starting" : "")
             .accessibilityIdentifier("homeGrid.play")
         }
-        .frame(minHeight: ArtworkSize.albumRow)
-        .fixedSize(horizontal: false, vertical: true)
+        // Every cell is the slot's height, so the artwork sits the same in each; at the accessibility sizes the text
+        // sets it.
+        .frame(height: accessibilitySize ? nil : slot)
+        .frame(minHeight: slot)
         .background(.s2SurfaceContainer)
-        .clipShape(shape)
+        .clipShape(S2Shape.artworkRow)
+    }
+
+    /// The artwork in its slot: a cover flush with it (square corners: the cell's own shape rounds the outer ones),
+    /// an artist's circle inset and centred, on the cell's fill.
+    private func artwork(slot: CGFloat) -> some View {
+        HomeItemArtwork(item: item, size: Self.artworkSide(for: item, slot: slot), shape: S2Shape(.rounded(0)))
+            .frame(width: slot, height: slot)
+            .overlay(alignment: .bottomTrailing) { kindBadge }
+    }
+
+    /// A playlist's or genre's covers could pass for an album's, so they carry its glyph; its generated artwork
+    /// already does.
+    @ViewBuilder
+    private var kindBadge: some View {
+        let symbol: String? = switch onEnum(of: item) {
+        case .playlistItem: GeneratedArtwork.playlistSymbol
+        case .genreItem: GeneratedArtwork.genreSymbol
+        default: nil
+        }
+        if let symbol, !(covers[item.key] ?? []).isEmpty {
+            Image(systemName: symbol)
+                .font(.caption2.weight(.semibold))
+                .imageScale(.small)
+                .foregroundStyle(.white)
+                .padding(Spacing.xsmall)
+                .background(.black.opacity(0.55), in: Circle())
+                .padding(Spacing.xsmall)
+                .accessibilityHidden(true)
+        }
+    }
+
+    /// Performs `action`, telling `onPlayStarted` first if it starts playing the item.
+    private func performTracked(_ action: MediaAction) {
+        if action is MediaActionResume || action is MediaActionPlay || action is MediaActionShuffle {
+            onPlayStarted(item)
+        }
+        perform(action)
+    }
+}
+
+/// The cell's play button: its strip of the cell darkens while pressed, as a list row's highlight does.
+struct JumpBackInPlayButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(configuration.isPressed ? Color.primary.opacity(0.12) : .clear)
+            .animation(Motion.press, value: configuration.isPressed)
     }
 }
 
