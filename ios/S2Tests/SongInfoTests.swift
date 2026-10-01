@@ -3,23 +3,24 @@ import Shared
 import Testing
 @testable import S2
 
-/// The audio-quality labels and Song Info's sections: what shows, in what order, and what is left out.
+/// The audio badge label and Song Info's sections: what shows, in what order, and what is left out.
 struct SongInfoTests {
     private let en = Locale(identifier: "en_US")
 
     private func song(
         name: String? = "Teardrop", mimeType: String = "audio/flac", codec: String? = nil, bitDepth: Int32? = nil,
         sampleRate: Int32? = nil, bitRate: Int32? = nil, path: String = "/Music/Teardrop.flac", size: Int64 = 0,
-        playCount: Int32 = 0, provider: MediaProviderType = .shuttle
+        playCount: Int32 = 0, provider: MediaProviderType = .shuttle, track: Int32? = nil, disc: Int32? = nil,
+        channels: Int32? = nil
     ) -> Song {
         Song(
-            id: 1, name: name, albumArtist: nil, artists: ["Massive Attack"], album: "Mezzanine", track: nil, disc: nil,
+            id: 1, name: name, albumArtist: nil, artists: ["Massive Attack"], album: "Mezzanine", track: track.map { KotlinInt(int: $0) }, disc: disc.map { KotlinInt(int: $0) },
             duration: 330_000, date: nil, genres: [], path: path, size: size, mimeType: mimeType,
             lastModified: nil, lastPlayed: nil, lastCompleted: nil, playCount: playCount, playbackPosition: 0,
             blacklisted: false, externalId: nil, mediaProvider: provider, replayGainTrack: nil,
             replayGainAlbum: nil, lyrics: nil, grouping: nil, bitRate: bitRate.map { KotlinInt(int: $0) },
             bitDepth: bitDepth.map { KotlinInt(int: $0) }, sampleRate: sampleRate.map { KotlinInt(int: $0) },
-            channelCount: nil, audioCodec: codec, artworkVersion: nil, dateAdded: nil, favouritedAt: nil,
+            channelCount: channels.map { KotlinInt(int: $0) }, audioCodec: codec, artworkVersion: nil, dateAdded: nil, favouritedAt: nil,
             albumArtists: nil, artistsTag: nil, artistDisplay: nil, compilation: nil, mbTrackId: nil, mbAlbumId: nil,
             mbReleaseGroupId: nil, mbArtistIds: nil, mbAlbumArtistIds: nil, serverAlbumId: nil, serverArtistIds: nil,
             serverAlbumArtistIds: nil, albumIdentity: nil
@@ -28,69 +29,81 @@ struct SongInfoTests {
 
     // MARK: - AudioQuality
 
-    @Test func summaryJoinsFormatResolutionAndBitRate() {
-        let quality = AudioQuality(mimeType: "audio/flac", bitDepth: 24, sampleRate: 96_000, bitRate: 2_304)
-        #expect(quality.summary(locale: en) == "FLAC · 24-bit / 96 kHz · 2,304 kbps")
-    }
-
-    @Test func summaryKeepsFractionalKilohertzAndSkipsMissingParts() {
-        #expect(AudioQuality(mimeType: "audio/mpeg", sampleRate: 44_100, bitRate: 320).summary(locale: en) == "MP3 · 44.1 kHz · 320 kbps")
-        #expect(AudioQuality(mimeType: "audio/flac").summary(locale: en) == "FLAC")
-        #expect(AudioQuality(mimeType: "").summary(locale: en) == nil)
-    }
-
     @Test func codecWinsOverContainer() {
         #expect(AudioQuality(codec: "alac", mimeType: "audio/mp4").format == "ALAC")
         #expect(AudioQuality(mimeType: "audio/mp4").format == "M4A")
         #expect(AudioQuality(mimeType: "audio/x-ogg; codecs=vorbis").format == "OGG")
     }
 
-    @Test func badgeIsDepthOverKilohertzOrBitRate() {
+    @Test func badgeIsDepthOverKilohertzForLosslessAndBitRateForLossy() {
         #expect(AudioQuality(mimeType: "audio/flac", bitDepth: 24, sampleRate: 96_000).badge(locale: en) == "FLAC 24/96")
         #expect(AudioQuality(mimeType: "audio/flac", bitDepth: 16, sampleRate: 44_100).badge(locale: en) == "FLAC 16/44.1")
+        #expect(AudioQuality(codec: "ALAC", mimeType: "audio/mp4", bitDepth: 24, sampleRate: 48_000, bitRate: 1_400).badge(locale: en) == "ALAC 24/48")
         #expect(AudioQuality(mimeType: "audio/mpeg", bitRate: 320).badge(locale: en) == "MP3 320")
         #expect(AudioQuality(mimeType: "audio/mpeg").badge(locale: en) == "MP3")
     }
 
-    @Test func zeroValuesCountAsMissing() {
-        #expect(AudioQuality(mimeType: "audio/flac", bitDepth: 0, sampleRate: 0, bitRate: 0).summary(locale: en) == "FLAC")
+    @Test func aLossyFormatIgnoresTagLibsBitDepth() {
+        #expect(AudioQuality(codec: "AAC", mimeType: "audio/mp4", bitDepth: 16, sampleRate: 44_100, bitRate: 256).badge(locale: en) == "AAC 256")
+        #expect(AudioQuality(mimeType: "audio/mp4", bitDepth: 16, sampleRate: 44_100, bitRate: 256).badge(locale: en) == "M4A 256")
+        #expect(!AudioQuality(mimeType: "audio/mpeg", bitDepth: 16).isLossless)
     }
 
-    // MARK: - Sections
+    @Test func losslessFormatsAreRecognised() {
+        for mime in ["audio/flac", "audio/x-wav", "audio/x-aiff", "audio/x-ape", "audio/x-wavpack"] {
+            #expect(AudioQuality(mimeType: mime).isLossless, "\(mime)")
+        }
+        #expect(AudioQuality(codec: "DSD64").isLossless)
+    }
 
-    @Test func sectionsAreTrackAudioLibraryThenSource() {
-        let sections = SongInfoSections.make(for: song(bitDepth: 24, sampleRate: 96_000, bitRate: 2_304, size: 5_000_000), locale: en)
-        #expect(sections.map(\.title) == ["Track", "Audio", "Library", "Source"])
-        #expect(sections[0].rows.map(\.label) == ["Title", "Artist", "Album", "Duration"])
-        #expect(sections[1].rows.first?.value == "FLAC · 24-bit / 96 kHz · 2,304 kbps")
-        #expect(sections[0].rows.last?.value == "5:30")
+    @Test func kilohertzKeepsTwoDecimalsAndFollowsTheLocale() {
+        #expect(AudioQuality.kilohertz(22_050, locale: en) == "22.05")
+        #expect(AudioQuality.kilohertz(44_100, locale: en) == "44.1")
+        #expect(AudioQuality.kilohertz(96_000, locale: en) == "96")
+        #expect(AudioQuality.kilohertz(44_100, locale: Locale(identifier: "de_DE")) == "44,1")
+        #expect(AudioQuality(mimeType: "audio/flac", bitDepth: 16, sampleRate: 44_100).badge(locale: Locale(identifier: "de_DE")) == "FLAC 16/44,1")
+    }
+
+    @Test func zeroValuesCountAsMissing() {
+        #expect(AudioQuality(mimeType: "audio/flac", bitDepth: 0, sampleRate: 0, bitRate: 0).badge(locale: en) == "FLAC")
+    }
+
+    // MARK: - Sections (the shared infoSections(), localised)
+
+    @Test func sectionsAreTheSharedTagsFileThenPlayback() {
+        let sections = SongInfoSections.make(for: song(bitDepth: 24, sampleRate: 96_000, bitRate: 2_304, size: 5 * 1024 * 1024))
+        #expect(sections.map(\.title) == ["Tags", "File", "Playback"])
+        #expect(sections[0].rows.map(\.label) == ["Title", "Artists", "Album"])
+        #expect(sections[1].rows.map(\.label) == ["Path", "MIME Type", "Size", "Duration", "Bit rate", "Bit depth", "Sample rate"])
+        #expect(sections[1].rows.map(\.value) == ["/Music/Teardrop.flac", "audio/flac", "5.00 MB", "5:30", "2304 kb/s", "24-bit", "96 kHz"])
+        #expect(sections[2].rows == [SongInfoRow(label: "Play count", value: "0")])
     }
 
     @Test func emptyFieldsAreHidden() {
-        let sections = SongInfoSections.make(for: song(name: nil, mimeType: ""), locale: en)
-        let labels = sections.flatMap(\.rows).map(\.label)
+        let labels = SongInfoSections.make(for: song(name: nil, mimeType: "")).flatMap(\.rows).map(\.label)
         #expect(!labels.contains("Title"))
-        #expect(!labels.contains("Format"))
-        #expect(!labels.contains("Last Played"))
-        #expect(!labels.contains("Date Added"))
-        #expect(!sections.map(\.title).contains("Audio"))
+        #expect(!labels.contains("MIME Type"))
+        #expect(!labels.contains("Bit rate"))
     }
 
-    @Test func aLocalSongShowsItsPathAndARemoteOneItsServer() {
-        let local = SongInfoSections.make(for: song(), locale: en).last
-        #expect(local?.rows == [SongInfoRow(label: "Path", value: "/Music/Teardrop.flac")])
-        let remote = SongInfoSections.make(for: song(provider: .jellyfin), locale: en).last
-        #expect(remote?.rows == [SongInfoRow(label: "Server", value: "Jellyfin")])
+    @Test func zeroTrackDiscAndChannelsAreHidden() {
+        let labels = SongInfoSections.make(for: song(track: 0, disc: 0, channels: 0)).flatMap(\.rows).map(\.label)
+        #expect(!labels.contains("Track #"))
+        #expect(!labels.contains("Disc"))
+        #expect(!labels.contains("Channel count"))
+        let shown = SongInfoSections.make(for: song(track: 3, disc: 1, channels: 2)).flatMap(\.rows)
+        #expect(shown.first { $0.label == "Track #" }?.value == "3")
+        #expect(shown.first { $0.label == "Channel count" }?.value == "2")
     }
 
     @Test func aDocumentURIShowsThePathInsideItsVolume() {
         let uri = "content://com.android.externalstorage.documents/document/primary%3AMusic%2FAlbum%2F01%20Song.flac"
-        #expect(SongInfoSections.displayPath(uri) == "Music/Album/01 Song.flac")
-        #expect(SongInfoSections.displayPath("") == nil)
+        let path = SongInfoSections.make(for: song(path: uri)).flatMap(\.rows).first { $0.label == "Path" }
+        #expect(path?.value == "Music/Album/01 Song.flac")
     }
 
-    @Test func playCountAlwaysShows() {
-        let library = SongInfoSections.make(for: song(playCount: 0), locale: en).first { $0.title == "Library" }
-        #expect(library?.rows == [SongInfoRow(label: "Plays", value: "0")])
+    @Test func aFractionalSampleRateShowsTwoDecimals() {
+        let rate = SongInfoSections.make(for: song(sampleRate: 22_050)).flatMap(\.rows).first { $0.label == "Sample rate" }
+        #expect(rate?.value == "22.05 kHz")
     }
 }

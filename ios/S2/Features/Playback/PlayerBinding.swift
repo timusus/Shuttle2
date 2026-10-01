@@ -47,7 +47,7 @@ struct NowPlayingQueueRow: Identifiable, Equatable {
 }
 
 /// The shared song actions Now Playing's menu offers, of those the shared ViewModel allows the playing song
-/// (`PlayerViewModel.songActions`). Edit Tags and Song Info have no iOS screen yet, so they're left out.
+/// (`PlayerViewModel.songActions`). Edit Tags has no iOS screen yet, and Song Info isn't in this menu yet, so both are left out.
 enum NowPlayingSongAction: Equatable, CaseIterable {
     case addToPlaylist
     case goToAlbum
