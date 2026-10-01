@@ -28,6 +28,11 @@ struct SongRowTests {
         #expect(SongRow.subtitle(song, omittingArtist: "Radiohead") == "Thom Yorke · In Rainbows")
     }
 
+    @Test func aLeadingTheDoesNotMakeADifferentArtist() {
+        let song = TestSongs.song(8, "Inertiatic ESP", artist: "The Mars Volta", album: "De-Loused", durationMs: 1, artists: ["The Mars Volta"])
+        #expect(SongRow.credit(song, omitting: "Mars Volta") == nil)
+    }
+
     @Test func anotherArtistsSongKeepsItsCredit() {
         #expect(SongRow.subtitle(TestSongs.demo[1], omittingArtist: "Radiohead") == "Björk · Post")
     }
@@ -40,6 +45,12 @@ struct SongRowTests {
         #expect(SongRowKey.plays.text(for: one) == "1 play")
         #expect(SongRowKey.plays.text(for: many) == "12 plays")
         #expect(SongRow.subtitle(many, key: .plays, omittingArtist: "X") == "Y · 12 plays")
+    }
+
+    @Test func aSongWithNoPlaysShowsNoPlayCount() {
+        let none = TestSongs.song(3, "C", artist: "X", album: "Y", durationMs: 1, playCount: 0)
+        #expect(SongRowKey.plays.text(for: none) == nil)
+        #expect(SongRow.subtitle(none, key: .plays, omittingArtist: "X") == "Y")
     }
 
     @Test func lastPlayedReadsRelativeToNow() {
@@ -149,9 +160,10 @@ struct RowTextTests {
 
     @Test func playlistSubtitleCarriesTheRuntimeFromAMinute() {
         func playlist(songs: Int32, ms: Int32) -> Playlist {
-            Playlist(id: 1, name: "P", songCount: songs, duration: ms, sortOrder: .`default`, sortDescending: false, mediaProvider: .shuttle, externalId: nil)
+            Playlist(id: 1, name: "P", songCount: songs, duration: ms, sortOrder: .position, sortDescending: false, mediaProvider: .shuttle, externalId: nil)
         }
-        #expect(PlaylistRow.subtitle(playlist(songs: 12, ms: 43 * 60_000)) == "12 songs · 43 min")
+        // The abbreviation's punctuation ("min" / "min.") follows the locale, so only the prefix is pinned.
+        #expect(PlaylistRow.subtitle(playlist(songs: 12, ms: 43 * 60_000)).hasPrefix("12 songs · 43 min"))
         #expect(PlaylistRow.subtitle(playlist(songs: 1, ms: 20_000)) == "1 song")
     }
 

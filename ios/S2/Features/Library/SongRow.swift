@@ -38,6 +38,7 @@ enum SongRowKey: Equatable {
     func text(for song: Song, now: Date = .now) -> String? {
         switch self {
         case .plays:
+            guard song.playCount > 0 else { return nil }
             return song.playCount == 1 ? "1 play" : "\(song.playCount) plays"
         case .lastPlayed:
             guard let played = song.lastCompleted ?? song.lastPlayed else { return nil }
@@ -116,10 +117,16 @@ struct SongRow: View {
     /// (nil when they're the only one).
     static func credit(_ song: Song, omitting: String?) -> String? {
         let all = song.friendlyArtistName ?? song.albumArtist
-        guard let omitting = omitting?.trimmingCharacters(in: .whitespaces).lowercased(), !omitting.isEmpty else { return all }
-        let others = song.artists.filter { $0.trimmingCharacters(in: .whitespaces).lowercased() != omitting }
-        if others.count == song.artists.count { return all?.trimmingCharacters(in: .whitespaces).lowercased() == omitting ? nil : all }
+        guard let omitting = omitting.map(sameArtistKey), !omitting.isEmpty else { return all }
+        let others = song.artists.filter { sameArtistKey($0) != omitting }
+        if others.count == song.artists.count { return all.map(sameArtistKey) == omitting ? nil : all }
         return others.isEmpty ? nil : others.joined(separator: ", ")
+    }
+
+    /// An artist name as `friendlyArtistName` compares it: trimmed, lower-cased, without a leading "The ".
+    private static func sameArtistKey(_ name: String) -> String {
+        let key = name.trimmingCharacters(in: .whitespaces).lowercased()
+        return key.hasPrefix("the ") ? String(key.dropFirst(4)).trimmingCharacters(in: .whitespaces) : key
     }
 
     /// "Jellyfin", "Emby" or "Plex" for a song from a server; nil for local ones.
