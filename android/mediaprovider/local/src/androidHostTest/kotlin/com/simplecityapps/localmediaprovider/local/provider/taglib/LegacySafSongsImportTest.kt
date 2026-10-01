@@ -8,6 +8,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.migrations.ALL_MIGRATIONS
 import com.simplecityapps.localmediaprovider.local.repository.LocalPlaylistRepository
@@ -100,7 +101,7 @@ class LegacySafSongsImportTest {
             close()
         }
         database =
-            Room.databaseBuilder(context, MediaDatabase::class.java, TEST_DB)
+            Room.databaseBuilder(context, MediaDatabase::class.java, TEST_DB).trackingIdentityChanges()
                 .addMigrations(*ALL_MIGRATIONS)
                 .allowMainThreadQueries()
                 .build()
@@ -177,7 +178,7 @@ class LegacySafSongsImportTest {
                 SongPathRemap(songId = 4, path = "$MUSIC_TREE/document/primary%3AMusic%2FAlbum%2FPrimary.mp3")
             )
 
-        LocalSongRepository(scope, database.songDataDao(), database.libraryAlbumIndex(scope)).remapPaths(remaps, MediaProviderType.Shuttle) shouldBe listOf(remaps[0], remaps[1])
+        LocalSongRepository(scope, database.songDataDao(), database.libraryAlbumIndex()).remapPaths(remaps, MediaProviderType.Shuttle) shouldBe listOf(remaps[0], remaps[1])
 
         database.songDataDao().get().single { song -> song.id == 2L }.path shouldBe "/storage/emulated/0/Music/Other.mp3"
         database.songDataDao().get().single { song -> song.id == 4L }.path shouldBe "$MUSIC_TREE/document/primary%3AMusic%2FDeleted.mp3"
@@ -187,8 +188,8 @@ class LegacySafSongsImportTest {
         val importer =
             MediaImporter(
                 strings = ResourceMediaImportStrings(context),
-                songRepository = LocalSongRepository(scope, database.songDataDao(), database.libraryAlbumIndex(scope)),
-                playlistStore = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex(scope)),
+                songRepository = LocalSongRepository(scope, database.songDataDao(), database.libraryAlbumIndex()),
+                playlistStore = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex()),
                 preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore()),
                 afterImport = {}
             )

@@ -53,6 +53,8 @@ internal class FakeSongDataDao(private val songs: Flow<List<SongData>>) : SongDa
 
     override suspend fun identityData(): List<SongIdentityData> = throw NotImplementedError()
 
+    override suspend fun identityGeneration(): Long? = throw NotImplementedError()
+
     override suspend fun get(): List<SongData> = throw NotImplementedError()
 
     override suspend fun songDataByIds(ids: List<Long>): List<SongData> = throw NotImplementedError()

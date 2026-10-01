@@ -2,6 +2,7 @@ package com.simplecityapps.localmediaprovider.local.data.room
 
 import androidx.room.RoomDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
 import com.simplecityapps.localmediaprovider.local.data.room.migrations.ALL_MIGRATIONS
 
 /** The database's file name, the same on every platform. */
@@ -18,6 +19,7 @@ class DatabaseProvider(
     val database: MediaDatabase by lazy {
         builder
             .addMigrations(*ALL_MIGRATIONS)
+            .trackingIdentityChanges()
             .apply {
                 if (!isDebug) {
                     fallbackToDestructiveMigration(dropAllTables = false)

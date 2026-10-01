@@ -56,6 +56,10 @@ abstract class SongDataDao {
     @Query(SONG_IDENTITY_QUERY)
     abstract suspend fun identityData(): List<SongIdentityData>
 
+    /** The library's identity generation, or null in a database opened without its triggers (see `IdentityGenerationTriggers`). */
+    @Query("SELECT generation FROM identity_generation WHERE id = 0")
+    abstract suspend fun identityGeneration(): Long?
+
     @Transaction
     @Query("SELECT * FROM songs WHERE id IN (:ids)")
     abstract fun getSongDataByIds(ids: List<Long>): Flow<List<SongData>>

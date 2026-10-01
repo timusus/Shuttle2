@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
@@ -44,7 +45,7 @@ private const val SHARED_PATH = "/storage/emulated/0/Music/Song.mp3"
 class ConflictingProviderImportTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java).allowMainThreadQueries().build()
+    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java).trackingIdentityChanges().allowMainThreadQueries().build()
 
     @Before
     fun setUp() {
@@ -63,8 +64,8 @@ class ConflictingProviderImportTest {
         val importer =
             MediaImporter(
                 strings = ResourceMediaImportStrings(context),
-                songRepository = LocalSongRepository(scope, database.songDataDao(), database.libraryAlbumIndex(scope)),
-                playlistStore = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex(scope)),
+                songRepository = LocalSongRepository(scope, database.songDataDao(), database.libraryAlbumIndex()),
+                playlistStore = LocalPlaylistRepository(scope, database.playlistDataDao(), database.playlistSongJoinDataDao(), SafPlaylistFileSync(context, database.songDataDao()), database.libraryAlbumIndex()),
                 preferenceManager = GeneralPreferenceManager(InMemoryKeyValueStore()),
                 afterImport = {}
             )

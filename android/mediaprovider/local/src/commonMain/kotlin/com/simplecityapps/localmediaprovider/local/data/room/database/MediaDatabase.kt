@@ -14,6 +14,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.dao.ResumePointDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SmartPlaylistDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SuggestionsDao
+import com.simplecityapps.localmediaprovider.local.data.room.entity.IdentityGenerationData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PendingFavouriteData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PinnedCollectionData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlayEventData
@@ -32,9 +33,10 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
         SmartPlaylistData::class,
         PendingFavouriteData::class,
         PlayEventData::class,
-        ResumePointData::class
+        ResumePointData::class,
+        IdentityGenerationData::class
     ],
-    version = 51,
+    version = 52,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

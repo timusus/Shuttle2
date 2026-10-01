@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongData
@@ -27,7 +28,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class LocalPlaylistRepositoryM3uSyncTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
+    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java).trackingIdentityChanges()
         .allowMainThreadQueries()
         .build()
     private val repository = LocalPlaylistRepository(
@@ -35,7 +36,7 @@ class LocalPlaylistRepositoryM3uSyncTest {
         playlistDataDao = database.playlistDataDao(),
         playlistSongJoinDao = database.playlistSongJoinDataDao(),
         fileSync = SafPlaylistFileSync(context, database.songDataDao()),
-        albumIndex = database.libraryAlbumIndex(CoroutineScope(Dispatchers.Unconfined))
+        albumIndex = database.libraryAlbumIndex()
     )
 
     @After

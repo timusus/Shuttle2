@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.database.trackingIdentityChanges
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SONG_IDENTITY_QUERY
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.mediaprovider.SongDiff
@@ -37,7 +38,7 @@ import org.junit.runner.RunWith
 class LocalSongRepositoryTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val songQueries = CopyOnWriteArrayList<String>()
-    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java)
+    private val database = Room.inMemoryDatabaseBuilder(context, MediaDatabase::class.java).trackingIdentityChanges()
         .allowMainThreadQueries()
         .setQueryCallback(RoomDatabase.QueryCallback { sql, _ -> if (sql.contains("FROM songs") || sql.contains("UPDATE songs")) songQueries += sql }, Executor(Runnable::run))
         .build()
@@ -49,7 +50,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `songs by id are read by id, not from the whole library`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val songs = insertSongs((1..5).map { index -> "Song $index" })
         songQueries.clear()
 
@@ -78,7 +79,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `more ids than SQLite binds in one statement are all read`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val songs = insertSongs((1..1_500).map { index -> "Song $index" })
 
         val restored = repository.getSongs(SongQuery.SongIds(songs.map(Song::id))).first()
@@ -88,7 +89,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `excluded songs are left out of songs by id`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val (kept, excluded) = insertSongs(listOf("Kept", "Excluded"))
         repository.setExcluded(listOf(excluded), true)
 
@@ -97,7 +98,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `no ids reads nothing`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         insertSongs(listOf("Song"))
         songQueries.clear()
 
@@ -107,7 +108,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `a library query comes in its sort order`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         insertSongs(listOf("Cherry", "Apple", "Banana"))
 
         val sorted = repository.getSongs(SongQuery.All(sortOrder = SongSortOrder.SongName)).filterNotNull().first()
@@ -117,7 +118,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `a new song's date added is its modification time, and later updates keep it`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val modified = Instant.fromEpochMilliseconds(1_700_000_000_000)
         val template = songData("Template").toSong()
         repository.insert(listOf(template.copy(lastModified = modified, dateAdded = null)), MediaProviderType.Shuttle)
@@ -133,7 +134,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `a remote song's server date is kept on insert and replaces an older import stamp on update`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val importStamp = Instant.fromEpochMilliseconds(1_750_000_000_000)
         val serverDate = Instant.fromEpochMilliseconds(1_600_000_000_000)
         val template = songData("Template").toSong()
@@ -154,7 +155,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `a re-import fills the raw tags of songs stored before they were read, in place, keeping each id`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val stored = insertSongs(listOf("First", "Second"))
         stored.map(Song::albumArtists) shouldBe listOf(null, null)
 
@@ -193,7 +194,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `a track played through updates its position and play count in one write`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val song = insertSongs(listOf("Song")).single()
         songQueries.clear()
 
@@ -207,7 +208,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `a metadata write reports the songs it updated, and a play count or position write doesn't`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val (first, second, third) = insertSongs(listOf("First", "Second", "Third"))
         val updates = mutableListOf<Set<Long>>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repository.updatedSongIds.toList(updates) }
@@ -224,7 +225,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `a modification time in the future counts as added now`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val template = songData("Template").toSong()
         repository.insert(listOf(template.copy(lastModified = Clock.System.now() + 365.days, dateAdded = null)), MediaProviderType.Shuttle)
 
@@ -233,7 +234,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `a favourite keeps the time it was first made one, and unfavouriting clears it`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val (first, second) = insertSongs(listOf("First", "Second"))
 
         repository.setFavourite(listOf(first), true)
@@ -252,7 +253,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `undoing a remove restores the song's original favourited time, not now (#564)`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val song = insertSongs(listOf("Song")).single()
 
         repository.setFavourite(listOf(song), true)
@@ -267,7 +268,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `more favourites than SQLite binds in one statement are all set`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val songs = insertSongs((1..1_500).map { index -> "Song $index" })
 
         repository.setFavourite(songs, true)
@@ -277,7 +278,7 @@ class LocalSongRepositoryTest {
 
     @Test
     fun `a rescan or retag keeps a song a favourite`() = runTest {
-        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex())
         val song = insertSongs(listOf("Song")).single()
         repository.setFavourite(listOf(song), true)
 

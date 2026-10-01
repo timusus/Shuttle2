@@ -35,6 +35,9 @@ import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
 
 /**
  * The library both platforms share: the repositories over the [MediaDatabase] and the [MediaImporter] that fills it.
@@ -50,13 +53,16 @@ abstract class LibraryModule {
     abstract fun bindAlbumIndexProvider(impl: LibraryAlbumIndex): AlbumIndexProvider
 
     companion object {
-        /** The library's one album index, rebuilt only when Room says the songs table changed. */
+        /**
+         * The library's one album index, rebuilt only when the library's album identities change. Built in the
+         * background as soon as it's made, at app start, so Home's first load doesn't wait for it.
+         */
         @Provides
         @SingleIn(AppScope::class)
         fun provideLibraryAlbumIndex(
             database: MediaDatabase,
             @AppCoroutineScope appCoroutineScope: CoroutineScope
-        ): LibraryAlbumIndex = database.libraryAlbumIndex(appCoroutineScope)
+        ): LibraryAlbumIndex = database.libraryAlbumIndex().also { index -> appCoroutineScope.launch(Dispatchers.IO) { index.albumIndex() } }
 
         @Provides
         @SingleIn(AppScope::class)
