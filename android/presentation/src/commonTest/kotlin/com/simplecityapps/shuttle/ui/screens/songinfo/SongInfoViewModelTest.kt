@@ -100,6 +100,21 @@ class SongInfoViewModelTest {
     }
 
     @Test
+    fun `a fractional kHz sample rate keeps its second decimal`() {
+        formatSampleRate(44100) shouldBe "44.1 kHz"
+        formatSampleRate(22050) shouldBe "22.05 kHz"
+    }
+
+    @Test
+    fun `zero track - disc and channel count are missing`() {
+        val rows = createSong().copy(track = 0, disc = 0, channelCount = 0).infoSections().flatMap { it.rows }.associate { it.label to it.value }
+
+        rows[StringKey.SONG_INFO_TRACK_NUMBER] shouldBe null
+        rows[StringKey.SONG_INFO_DISC] shouldBe null
+        rows[StringKey.SONG_INFO_CHANNEL_COUNT] shouldBe null
+    }
+
+    @Test
     fun `a document path shows the path inside its volume`() {
         val song = createSong(path = "content://com.android.externalstorage.documents/tree/primary%3AMusic/document/primary%3AMusic%2FAlbum%2F01%20Song.flac")
 

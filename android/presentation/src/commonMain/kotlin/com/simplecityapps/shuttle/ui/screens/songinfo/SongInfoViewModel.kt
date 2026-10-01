@@ -66,8 +66,8 @@ fun Song.infoSections(): List<SongInfoSection> = listOf(
             SongInfoRow(StringKey.SONG_INFO_ALBUM, album),
             SongInfoRow(StringKey.SONG_INFO_ALBUM_ARTIST, albumArtist),
             SongInfoRow(StringKey.SONG_INFO_YEAR, date?.year?.toString()),
-            SongInfoRow(StringKey.SONG_INFO_TRACK_NUMBER, track?.toString()),
-            SongInfoRow(StringKey.SONG_INFO_DISC, disc?.toString()),
+            SongInfoRow(StringKey.SONG_INFO_TRACK_NUMBER, track?.takeIf { it > 0 }?.toString()),
+            SongInfoRow(StringKey.SONG_INFO_DISC, disc?.takeIf { it > 0 }?.toString()),
             SongInfoRow(StringKey.SONG_INFO_GENRES, genres.takeIf { it.isNotEmpty() }?.joinToString(", ")),
             SongInfoRow(StringKey.SONG_INFO_LYRICS, lyrics),
         ),
@@ -82,7 +82,7 @@ fun Song.infoSections(): List<SongInfoSection> = listOf(
             SongInfoRow(StringKey.SONG_INFO_BIT_RATE, bitRate?.let(::formatBitRate)),
             SongInfoRow(StringKey.SONG_INFO_BIT_DEPTH, bitDepth?.let { "$it-bit" }),
             SongInfoRow(StringKey.SONG_INFO_SAMPLE_RATE, sampleRate?.let(::formatSampleRate)),
-            SongInfoRow(StringKey.SONG_INFO_CHANNEL_COUNT, channelCount?.toString()),
+            SongInfoRow(StringKey.SONG_INFO_CHANNEL_COUNT, channelCount?.takeIf { it > 0 }?.toString()),
         ),
     ),
     SongInfoSection(
@@ -112,8 +112,8 @@ val Song.displayPath: String
         return runCatching { path.decodePercentEncoding().substringAfterLast(':') }.getOrDefault(path)
     }
 
-/** A sample rate in Hz as kHz: 44100 as "44.1 kHz", 48000 as "48 kHz". */
-internal fun formatSampleRate(hz: Int): String = if (hz % 1000 == 0) "${hz / 1000} kHz" else "${formatDecimal(hz / 1000.0, 1)} kHz"
+/** A sample rate in Hz as kHz: 44100 as "44.1 kHz", 22050 as "22.05 kHz", 48000 as "48 kHz". */
+internal fun formatSampleRate(hz: Int): String = if (hz % 1000 == 0) "${hz / 1000} kHz" else "${formatDecimal(hz / 1000.0, 2).trimEnd('0')} kHz"
 
 internal fun formatBitRate(kbps: Int): String = "$kbps kb/s"
 
