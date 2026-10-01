@@ -553,6 +553,7 @@ public final class MusicPlaybackController {
     private func setState(_ newState: State) {
         guard newState != state else { return }
         state = newState
+        if newState == .paused || newState == .idle || newState == .ended { pauseEngine() }
         let uid = current?.track.uid
         let callback = callbackLock.withLock { callbacks.state }
         if let callback { callbackQueue.async { callback(newState, uid) } }
@@ -604,6 +605,15 @@ public final class MusicPlaybackController {
         reading = slot
         let source = slot?.preparing == nil ? slot?.source : nil
         activeSourceLock.withLock { activeSource = source }
+    }
+
+    /// Stops the output while nothing plays. A running engine renders silence, and iOS takes an app
+    /// whose output runs for one that is playing: the lock screen and Control Center would show it
+    /// playing, with a pause button, after it paused or stopped (#691). `startEngineIfNeeded` starts
+    /// it again before the node plays.
+    private func pauseEngine() {
+        guard case .realtime = renderingMode, engine.isRunning else { return }
+        engine.pause()
     }
 
     private func startEngineIfNeeded() {
