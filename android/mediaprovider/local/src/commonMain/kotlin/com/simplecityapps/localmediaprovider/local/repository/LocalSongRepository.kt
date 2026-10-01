@@ -85,6 +85,7 @@ class LocalSongRepository(
         is SongQuery.AlbumGroupKey -> query.key?.let(::songIds).orEmpty()
         is SongQuery.AlbumGroupKeys -> query.albumGroupKeys.flatMap { album -> album.key?.let(::songIds).orEmpty() }
         is SongQuery.ArtistGroupKey -> query.key?.let(::songIds).orEmpty()
+        is SongQuery.ArtistGroupKeys -> query.artistGroupKeys.flatMap { artist -> artist.key?.let(::songIds).orEmpty() }
         else -> null
     }
 

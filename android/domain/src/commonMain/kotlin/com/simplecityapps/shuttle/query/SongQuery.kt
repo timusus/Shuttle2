@@ -39,7 +39,7 @@ sealed class SongQuery(
     )
 
     data class ArtistGroupKeys(
-        private val artistGroupKeys: List<ArtistGroupKey>
+        val artistGroupKeys: List<ArtistGroupKey>
     ) : SongQuery(
         predicate = { song -> artistGroupKeys.any { albumArtist -> albumArtist.predicate(song) } },
         sortOrder = SongSortOrder.Track

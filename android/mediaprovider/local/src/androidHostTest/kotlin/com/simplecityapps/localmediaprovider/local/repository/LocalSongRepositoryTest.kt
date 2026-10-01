@@ -62,6 +62,21 @@ class LocalSongRepositoryTest {
     }
 
     @Test
+    fun `artists' songs are read by id, not from the whole library`() = runTest {
+        val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
+        database.songDataDao().insert(listOf(songData("Song 1", "Blur"), songData("Song 2", "Blur"), songData("Song 3", "Oasis"), songData("Song 4", "Pulp")))
+        val library = repository.loadSongs(SongQuery.All())
+        val artists = listOf("Blur", "Oasis").map { artist -> SongQuery.ArtistGroupKey(library.first { it.albumArtist == artist }.albumArtistGroupKey) }
+        songQueries.clear()
+
+        val songs = repository.loadSongs(SongQuery.ArtistGroupKeys(artists))
+
+        songs.map(Song::name) shouldContainExactlyInAnyOrder listOf("Song 1", "Song 2", "Song 3")
+        // Besides the album identity columns the index is built from
+        songQueries.filterNot { sql -> sql.contains("WHERE id IN") || sql == SONG_IDENTITY_QUERY } shouldBe emptyList()
+    }
+
+    @Test
     fun `more ids than SQLite binds in one statement are all read`() = runTest {
         val repository = LocalSongRepository(backgroundScope, database.songDataDao(), database.libraryAlbumIndex(backgroundScope))
         val songs = insertSongs((1..1_500).map { index -> "Song $index" })
@@ -280,7 +295,10 @@ class LocalSongRepositoryTest {
         return database.songDataDao().get().map { songData -> songData.toSong() }.sortedBy(Song::id)
     }
 
-    private fun songData(name: String) = SongData(
+    private fun songData(
+        name: String,
+        artist: String = "Artist"
+    ) = SongData(
         name = name,
         track = 1,
         disc = 1,
@@ -288,8 +306,8 @@ class LocalSongRepositoryTest {
         year = null,
         genres = emptyList(),
         path = "/music/$name.mp3",
-        albumArtist = "Artist",
-        artists = listOf("Artist"),
+        albumArtist = artist,
+        artists = listOf(artist),
         album = "Album",
         size = 0,
         mimeType = "audio/mpeg",

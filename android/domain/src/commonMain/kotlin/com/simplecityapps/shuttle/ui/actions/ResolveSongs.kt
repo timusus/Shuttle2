@@ -10,7 +10,6 @@ import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import dev.zacsweers.metro.Inject
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 
 /**
@@ -28,18 +27,16 @@ class ResolveSongs(
     suspend operator fun invoke(selection: MediaSelection): List<Song> = when (selection) {
         is MediaSelection.Songs -> selection.songs
 
+        // Read by id through the album index (loadSongs) rather than filtered out of the whole library's song list,
+        // which the first play after launch would otherwise wait for the database to read in full.
         is MediaSelection.Albums ->
             songRepository
-                .getSongs(SongQuery.AlbumGroupKeys(selection.albums.map { SongQuery.AlbumGroupKey(it.groupKey) }))
-                .filterNotNull()
-                .firstOrNull().orEmpty()
+                .loadSongs(SongQuery.AlbumGroupKeys(selection.albums.map { SongQuery.AlbumGroupKey(it.groupKey) }))
                 .sortedWith(SongSortOrder.Default.comparator)
 
         is MediaSelection.AlbumArtists ->
             songRepository
-                .getSongs(SongQuery.ArtistGroupKeys(selection.albumArtists.map { SongQuery.ArtistGroupKey(it.groupKey) }))
-                .filterNotNull()
-                .firstOrNull().orEmpty()
+                .loadSongs(SongQuery.ArtistGroupKeys(selection.albumArtists.map { SongQuery.ArtistGroupKey(it.groupKey) }))
                 .sortedWith(SongSortOrder.Default.comparator)
 
         is MediaSelection.Genres ->
