@@ -556,6 +556,12 @@ public final class MusicPlaybackController {
         guard newState != state else { return }
         state = newState
         if newState == .paused || newState == .idle || newState == .ended { pauseEngine() }
+        reportState(newState)
+    }
+
+    /// The current track's state, on the callback queue. Repeated by ``stayPaused()`` when a play fails and the
+    /// engine was already paused: `setState` would otherwise drop it, and the owner would never hear the refusal.
+    private func reportState(_ newState: State) {
         let uid = current?.track.uid
         let callback = callbackLock.withLock { callbacks.state }
         if let callback { callbackQueue.async { callback(newState, uid) } }
@@ -633,11 +639,17 @@ public final class MusicPlaybackController {
     }
 
     /// A play the engine couldn't start: paused, as if it had been asked to pause, so the owner and
-    /// Now Playing show it paused. Nothing plays until the next play.
+    /// Now Playing show it paused. Nothing plays until the next play. Reported again when already
+    /// paused — the state didn't change, but the owner still has to hear that this play was refused.
+    /// Not a decode failure: the track stays put.
     private func stayPaused() {
         playWhenReady = false
         stopTicker()
-        setState(.paused)
+        if state == .paused {
+            reportState(.paused)
+        } else {
+            setState(.paused)
+        }
     }
 
     /// Opens `slot`'s source, or waits for the open already under way; false (after reporting it)
