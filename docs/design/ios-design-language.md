@@ -140,11 +140,11 @@ still takes a full target.
 | `glassSurface(in:)` | `glassEffect(.regular, in:)` | `GlassFallback.chrome`: `.ultraThinMaterial`, no edge | The player's bottom bar |
 | `glassSurface(in:fallback: .disc)` | `glassEffect(.regular, in:)` | `.regularMaterial`, no edge | The player's top-bar discs |
 | `glassSurface(in:fallback: .card)` | `glassEffect(.regular, in:)` | `.thickMaterial` + hairline | The floating mini player |
+| `capsuleButton(prominent:)` | `.glassProminent` / `.glass` | `.borderedProminent` / `.bordered` capsule | Hero and player actions |
 
 The player's fallbacks reproduce its pre-#685 look (ultra-thin bar, regular discs, no hairline): the backdrop is a
 dark, artwork-tinted ground, so the material is legible without an edge, and a hairline there only adds noise. The
 mini player floats over a pale list, so it keeps the thick material and hairline.
-| `capsuleButton(prominent:)` | `.glassProminent` / `.glass` | `.borderedProminent` / `.bordered` capsule | Hero and player actions |
 
 System bars (tab bar, navigation bar, toolbars) get their glass from the system; never paint over them.
 Glass is for chrome floating over content, never for content itself (rows, cards in a list).
