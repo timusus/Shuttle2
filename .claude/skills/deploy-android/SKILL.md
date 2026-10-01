@@ -42,22 +42,22 @@ REMOTE=$(git rev-parse origin/main)
 ### 2. Pre-flight: Full verify (watermark)
 
 Landings only run a light verify; the full one is recorded as a watermark. Before tagging, the
-watermark must be the commit being released:
+watermark must cover the commit being released:
 
 ```bash
-support/scripts/full-verify.sh --status   # first line: "watermark: <sha> ..."
-git rev-parse --short HEAD
+support/scripts/full-verify.sh --covers "$(git rev-parse HEAD)"   # exit 0 = covered
 ```
 
-If the watermark isn't `HEAD`, run it (one wait; takes a while):
+It passes when the watermark is `HEAD`, or an ancestor of it with only the changelog files from
+step 5 changed since. If it exits non-zero, run the full verify (one wait; takes a while):
 
 ```bash
 support/scripts/longjob.sh start full-verify -- support/scripts/full-verify.sh "$(git rev-parse HEAD)"
 support/scripts/longjob.sh wait full-verify
 ```
 
-**STOP if it fails** — it files a `bug` issue naming the step; do not tag. (Only the changelog commit
-from step 5 may come after the verified sha.)
+**STOP if it fails** — it files (or comments on) a `bug` issue naming the step; do not tag. Exit 3 means an
+infrastructure problem (lock, worktree, `local.properties`), not a test failure: fix it and rerun.
 
 ### 3. Pre-flight: Instrumented tests (skip by default)
 
