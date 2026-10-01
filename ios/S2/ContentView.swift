@@ -14,7 +14,7 @@ struct ContentView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     /// Measured here, never read from `UIScreen`: Split View and Stage Manager resize the window
     /// without touching the screen.
-    @State private var containerWidth: CGFloat = 0
+    @State private var containerSize: CGSize = .zero
     /// The first run's source setup is up (`openFirstRunIfNeeded`).
     @State private var showsFirstRun = false
     /// Whether it covers the screen (compact) or sits in a form sheet (regular and wide), fixed when it opens.
@@ -30,9 +30,10 @@ struct ContentView: View {
     }
 
     var body: some View {
-        let tier = LayoutTier.resolve(horizontalSizeClass: horizontalSizeClass, containerWidth: containerWidth)
+        let tier = LayoutTier.resolve(horizontalSizeClass: horizontalSizeClass, containerWidth: containerSize.width)
         AppShell(tier: tier, navigator: navigator, showNowPlaying: $showNowPlaying)
             .environment(\.layoutTier, tier)
+            .environment(\.rootContainerSize, containerSize)
             .environment(\.nowPlayingNamespace, nowPlayingNamespace)
             // For screens that push without a `NavigationLink`, such as Sources after its type picker closes.
             .environment(navigator)
@@ -46,10 +47,10 @@ struct ContentView: View {
                 SettingsSheet(navigator: navigator, showNowPlaying: $showNowPlaying)
             }
             .sourceSetupPresentation(isPresented: $showsFirstRun, fullScreen: firstRunFullScreen, navigator: navigator)
-            .onGeometryChange(for: CGFloat.self) { proxy in
-                proxy.size.width
-            } action: { width in
-                containerWidth = width
+            .onGeometryChange(for: CGSize.self) { proxy in
+                proxy.size
+            } action: { size in
+                containerSize = size
             }
             .onChange(of: tier) { _, newTier in
                 navigator.normalizeSelection(for: newTier)

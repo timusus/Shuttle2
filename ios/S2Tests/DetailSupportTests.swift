@@ -46,6 +46,24 @@ struct DetailSupportTests {
         #expect(DetailHeroLayout.stacked.artworkSize == ArtworkSize.hero)
     }
 
+    // MARK: - Full-bleed backdrop
+
+    @Test func theBackdropIsSquareOnCompactWhileTheAppIsTallEnough() {
+        // An iPhone 16 in portrait.
+        #expect(DetailBleed.backdropHeight(width: 393, containerHeight: 852, tier: .compact) == 393)
+    }
+
+    @Test func theBackdropIsFourByThreeOnRegular() {
+        #expect(DetailBleed.backdropHeight(width: 600, containerHeight: 1_200, tier: .regular) == 450)
+    }
+
+    @Test func theBackdropNeverTakesMoreThanHalfTheApp() {
+        // An iPhone in landscape: the first rows still show under it.
+        #expect(DetailBleed.backdropHeight(width: 852, containerHeight: 393, tier: .compact) == 196.5)
+        // Nothing measured yet.
+        #expect(DetailBleed.backdropHeight(width: 0, containerHeight: 0, tier: .compact) == 0)
+    }
+
     // MARK: - The bar's title
 
     @Test func theBarTakesTheTitleOnlyOnceTheHeroTitleIsUnderIt() {

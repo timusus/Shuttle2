@@ -560,7 +560,7 @@ struct ArtistBleedHero: View {
             .padding(.horizontal, inset)
             // Clear of the backdrop's fade, so the name stays on the darkest part of the scrim.
             .padding(.bottom, ArtistBackdrop.fadeHeight)
-            .frame(maxWidth: .infinity, minHeight: bleed.visibleHeight, alignment: .bottomLeading)
+            .frame(maxWidth: .infinity, minHeight: bleed.height, alignment: .bottomLeading)
             HeroActions(onPlay: onPlay, onShuffle: onShuffle)
                 .padding(.horizontal, inset)
                 .frame(maxWidth: bleed.isColumn || layoutTier == .compact ? .infinity : ArtworkSize.heroRegular + Spacing.xlarge + inset * 2, alignment: .leading)

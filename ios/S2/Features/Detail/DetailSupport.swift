@@ -14,10 +14,9 @@ import SwiftUI
 ///   filling it) beside the list, with the larger `ArtworkSize.heroRegular` cover; the bar never shows the title,
 ///   since the hero is always on screen.
 ///
-/// - Given a `backdrop` (an artist's photo), the hero runs full bleed: the backdrop is drawn edge to edge from the
-///   top of the screen, under the status and navigation bars, `DetailBleed.backdropHeight` tall, and the hero is
-///   handed `.bleed` to lay its text over the backdrop's bottom. In the two-column layout it fills the top of the
-///   hero column the same way.
+/// - Given a `backdrop` (an artist's photo), the hero runs full bleed: the list (or the hero column) runs up under the
+///   status and navigation bars, the backdrop is drawn edge to edge from the top of the screen,
+///   `DetailBleed.backdropHeight` tall, and the hero is handed `.bleed` to lay its text over the backdrop's bottom.
 ///
 /// The screen's own modifiers (`toolbar`, `\.editMode`, alerts) go outside; `rows` are `List` content.
 struct DetailScaffold<Hero: View, Backdrop: View, Rows: View>: View {
@@ -69,18 +68,19 @@ enum DetailHeroLayout: Equatable {
     }
 }
 
-/// A full-bleed hero's geometry: how much of the backdrop shows below the bars, where the hero's title sits along the
-/// bottom, and whether the hero is the two-column layout's leading column (whose width it fills) or the list's first row.
+/// A full-bleed hero's geometry: the backdrop's height from the top of the screen, along whose bottom the hero's title
+/// sits, and whether the hero is the two-column layout's leading column (whose width it fills) or the list's first row.
 struct DetailBleed: Equatable {
-    let visibleHeight: CGFloat
+    let height: CGFloat
     let isColumn: Bool
 
-    /// The backdrop's height for a `width`-wide hero in a `containerHeight`-tall screen: square on compact, 4:3 on
-    /// regular (a wide hero gets a landscape frame rather than one taller than the screen), and never more than 60% of
-    /// the screen, so the first rows always show under it (an iPhone in landscape, an iPad in a short window).
+    /// The backdrop's height for a `width`-wide hero in a `containerHeight`-tall app (`\.rootContainerSize`): square
+    /// on compact, 4:3 on regular (a wide hero gets a landscape frame rather than one taller than the screen), and
+    /// never more than half the app's height, so the first rows always show under it (an iPhone in landscape, an iPad
+    /// in a short window).
     static func backdropHeight(width: CGFloat, containerHeight: CGFloat, tier: LayoutTier) -> CGFloat {
         let aspect: CGFloat = tier == .compact ? 1 : 0.75
-        return max(0, min(width * aspect, containerHeight * 0.6))
+        return max(0, min(width * aspect, containerHeight * 0.5))
     }
 }
 
@@ -107,12 +107,13 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
 
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.artworkTint) private var tint
+    @Environment(\.rootContainerSize) private var rootContainerSize
     @State private var heroVisible = true
-    /// Where the navigation bar ends, in global coordinates: the single-column list's top plus the safe area it
-    /// scrolls under. The hero's title hides under the bar above this line, and the wash reaches up past it.
+    /// Where the navigation bar ends, in global coordinates. The hero's title hides under the bar above this line,
+    /// and the inset hero's wash reaches up past it. It never sizes a row: see `singleColumn`.
     @State private var barBottom: CGFloat = 0
-    /// The single-column list's size, which a full-bleed backdrop's height follows.
-    @State private var listSize: CGSize = .zero
+    /// The single-column list's width, which a full-bleed backdrop's height follows.
+    @State private var listWidth: CGFloat = 0
 
     var body: some View {
         Group {
@@ -122,7 +123,7 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
                 GeometryReader { proxy in
                     switch DetailColumns.resolve(tier: layoutTier, containerWidth: proxy.size.width) {
                     case .single: singleColumn
-                    case .two(let heroColumnWidth): twoColumn(columnWidth: heroColumnWidth, containerHeight: proxy.size.height)
+                    case .two(let heroColumnWidth): twoColumn(columnWidth: heroColumnWidth)
                     }
                 }
             }
@@ -147,10 +148,16 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
             rows()
         }
         .listStyle(.plain)
-        // The bar's bottom is the top of the list's safe area. Measured on a view laid out inside it rather than as
-        // the list's own minY plus its top inset: the list's frame already starts below the bar while still
-        // reporting the bar as its top inset, so that sum counted the bar twice (#700), cropping the backdrop's top,
-        // lifting the hero's title off its bottom and naming the screen in the bar while the title still showed.
+        // A full-bleed list runs up under the bars itself, so its first row starts at the top of the screen and the
+        // hero is exactly as tall as the backdrop. No row's height may follow the screen's own geometry (#700): the
+        // zoom push lays the screen out in a transition container of its own, without the bars' safe area and in
+        // shifted global coordinates (the bar's bottom read -426 on an iPhone 16), and a hero row sized from that
+        // stayed oversized in its cell after the push, its title and Play row 286 pt down the page. So the backdrop's
+        // height comes from the list's width and the app's height, neither of which a push changes.
+        .modifier(UnderTheBars(isActive: backdrop != nil))
+        // The bar's bottom, on a view laid out inside the list's safe area: the title probe's line and how far the
+        // inset hero's wash reaches up. Its own minY, not the list's minY plus its top inset, which counted the bar
+        // twice (#700).
         .overlay(alignment: .top) {
             Color.clear
                 .frame(height: 0)
@@ -158,21 +165,21 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
                     proxy.frame(in: .global).minY
                 } action: { barBottom = $0 }
         }
-        .onGeometryChange(for: CGSize.self) { proxy in
-            proxy.size
-        } action: { listSize = $0 }
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.width
+        } action: { listWidth = $0 }
         .modifier(BleedNavigationBar(isActive: backdrop != nil, isOverBackdrop: heroVisible))
     }
 
     @ViewBuilder private var stackedHero: some View {
         if let backdrop {
-            let height = DetailBleed.backdropHeight(width: listSize.width, containerHeight: listSize.height, tier: layoutTier)
-            hero(.bleed(DetailBleed(visibleHeight: max(height - barBottom, 0), isColumn: false)))
+            let height = DetailBleed.backdropHeight(width: listWidth, containerHeight: rootContainerSize.height, tier: layoutTier)
+            hero(.bleed(DetailBleed(height: height, isColumn: false)))
                 .environment(\.detailTitleProbe, titleProbe)
                 .padding(.bottom, Spacing.small)
                 .listRowInsets(EdgeInsets())
-                // Up past the row's top to the top of the screen, as the wash does, so the photo runs behind the
-                // status and navigation bars.
+                // The row starts at the top of the screen (`UnderTheBars`), so the photo runs behind the status and
+                // navigation bars from there.
                 .listRowBackground(
                     VStack(spacing: 0) {
                         backdrop
@@ -180,7 +187,6 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
                             .clipped()
                         Spacer(minLength: 0)
                     }
-                    .padding(.top, -barBottom)
                 )
         } else {
             hero(.stacked)
@@ -191,19 +197,19 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
                 .listRowInsets(EdgeInsets())
                 // Up past the row's top under the navigation bar (and the status bar), so the bar sits on the
                 // wash rather than on a plain band above it.
-                .listRowBackground(DetailWash(style: .fading).padding(.top, -barBottom))
+                .listRowBackground(DetailWash(style: .fading).padding(.top, -max(barBottom, 0)))
         }
     }
 
-    private func twoColumn(columnWidth: CGFloat, containerHeight: CGFloat) -> some View {
+    private func twoColumn(columnWidth: CGFloat) -> some View {
         let inset = AdaptiveLayout.contentInset(layoutTier)
         return HStack(spacing: 0) {
             Group {
                 if let backdrop {
                     // The column's scroll view runs up under the bars, so the backdrop starts at the top of the screen.
-                    let height = DetailBleed.backdropHeight(width: columnWidth, containerHeight: containerHeight, tier: .compact)
+                    let height = DetailBleed.backdropHeight(width: columnWidth, containerHeight: rootContainerSize.height, tier: .compact)
                     ScrollView {
-                        hero(.bleed(DetailBleed(visibleHeight: height, isColumn: true)))
+                        hero(.bleed(DetailBleed(height: height, isColumn: true)))
                             .padding(.bottom, Spacing.large)
                             .background(alignment: .top) {
                                 backdrop
@@ -231,6 +237,20 @@ private struct DetailScaffoldBody<Hero: View, Backdrop: View, Rows: View>: View 
         .onAppear { heroVisible = true }
     }
 
+}
+
+/// A full-bleed list's safe area: it ignores the top one, running up under the status and navigation bars so its
+/// first row (the hero, the backdrop its background) starts at the top of the screen.
+private struct UnderTheBars: ViewModifier {
+    let isActive: Bool
+
+    func body(content: Content) -> some View {
+        if isActive {
+            content.ignoresSafeArea(edges: .top)
+        } else {
+            content
+        }
+    }
 }
 
 /// Light bar chrome over a full-bleed backdrop: while the hero's title is still below the bar, the navigation bar
