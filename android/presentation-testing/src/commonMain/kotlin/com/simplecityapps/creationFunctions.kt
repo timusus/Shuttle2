@@ -92,6 +92,7 @@ fun createAlbum(
     playCount: Int = 0,
     groupKey: AlbumGroupKey? = AlbumGroupKey(name, AlbumArtistGroupKey(albumArtist)),
     mediaProviders: List<MediaProviderType> = listOf(MediaProviderType.Shuttle),
+    dateAdded: Instant? = null,
 ) = Album(
     name = name,
     albumArtist = albumArtist,
@@ -104,6 +105,7 @@ fun createAlbum(
     lastSongCompleted = null,
     groupKey = groupKey,
     mediaProviders = mediaProviders,
+    dateAdded = dateAdded,
 )
 
 fun createGenre(

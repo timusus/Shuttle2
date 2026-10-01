@@ -1,6 +1,7 @@
 package com.simplecityapps.fakes
 
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
+import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.sorting.ArtistSongSortOrder
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
@@ -12,5 +13,6 @@ class FakeSortPreferences : SortPreferences {
     override var sortOrderAlbumList: AlbumSortOrder = AlbumSortOrder.Default
     override var sortOrderPlaylistList: PlaylistSortOrder = PlaylistSortOrder.Default
     override var sortOrderGenreList: GenreSortOrder = GenreSortOrder.Default
+    override var sortOrderArtistList: AlbumArtistSortOrder = AlbumArtistSortOrder.Default
     override var sortOrderArtistDetail: ArtistSongSortOrder = ArtistSongSortOrder.Default
 }

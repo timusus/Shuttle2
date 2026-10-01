@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums
 
+import com.simplecityapps.createAlbum
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeAlbumListPreferences
 import com.simplecityapps.fakes.FakeAlbumRepository
@@ -14,6 +15,7 @@ import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.fakes.fakeLibraryViewPreferences
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.playback.queue.ShuffleMode
+import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.ui.actions.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
@@ -22,6 +24,7 @@ import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -136,6 +139,27 @@ class AlbumListViewModelTest {
         advanceUntilIdle()
 
         viewModel.uiState.value.events shouldBe emptyList()
+    }
+
+    @Test
+    fun `sorting by date added lists the most recently added album first and saves the choice`() = runTest {
+        fakeAlbumRepository.setAlbums(
+            listOf(
+                createAlbum(name = "Old", dateAdded = Instant.fromEpochSeconds(100)),
+                createAlbum(name = "New", dateAdded = Instant.fromEpochSeconds(300)),
+                createAlbum(name = "Undated", dateAdded = null),
+                createAlbum(name = "Mid", dateAdded = Instant.fromEpochSeconds(200)),
+            )
+        )
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+
+        viewModel.setSortOrder(AlbumSortOrder.DateAdded)
+        advanceUntilIdle()
+
+        viewModel.uiState.value.albums.map { it.name } shouldBe listOf("New", "Mid", "Old", "Undated")
+        viewModel.uiState.value.letterIndex shouldBe null
+        fakeSortPreferences.sortOrderAlbumList shouldBe AlbumSortOrder.DateAdded
     }
 
     private fun createViewModel(random: Random = Random.Default): AlbumListViewModel {

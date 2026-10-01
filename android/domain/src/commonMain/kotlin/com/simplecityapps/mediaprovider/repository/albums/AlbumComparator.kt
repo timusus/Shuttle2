@@ -16,6 +16,7 @@ fun AlbumSortOrder.comparator(seed: Long): Comparator<Album> = when (this) {
     AlbumSortOrder.PlayCount -> AlbumComparator.playCountComparator
     AlbumSortOrder.Year -> AlbumComparator.yearComparator
     AlbumSortOrder.RecentlyPlayed -> AlbumComparator.recentlyPlayedComparator
+    AlbumSortOrder.DateAdded -> AlbumComparator.dateAddedComparator
     AlbumSortOrder.Random -> AlbumComparator.random(seed)
 }
 
@@ -49,6 +50,11 @@ object AlbumComparator {
 
     val recentlyPlayedComparator: Comparator<Album> by lazy {
         compareByDescending<Album> { album -> album.lastSongCompleted }
+            .then(defaultComparator)
+    }
+
+    val dateAddedComparator: Comparator<Album> by lazy {
+        compareByDescending<Album> { album -> album.dateAdded }
             .then(defaultComparator)
     }
 

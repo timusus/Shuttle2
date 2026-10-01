@@ -346,8 +346,8 @@ fun ArtistsPage(
     }
     LibraryContent(content, stringResource(R.string.artist_list_empty), modifier, state.scanProgress, controls) {
         val artists = state.albumArtists
-        // Artists are always sorted by their group key, which drops a leading "The".
-        val sections = state.letterIndex
+        // Android offers only the name sort, which orders by group key and so drops a leading "The".
+        val sections = state.letterIndex.orEmpty()
         Box(modifier.fillMaxSize()) {
             if (state.viewMode == ViewMode.Grid) {
                 val gridState = rememberLazyGridState()

@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.sorting.albumArtistLetterIndex
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 
@@ -14,7 +15,7 @@ fun readyAlbumArtistList(
     albumArtists = albumArtists,
     selectedArtists = selectedArtists,
     viewMode = viewMode,
-    letterIndex = albumArtistLetterIndex(albumArtists),
+    letterIndex = albumArtistLetterIndex(albumArtists, AlbumArtistSortOrder.Default),
     loadingState = if (albumArtists.isEmpty()) AlbumArtistListUiState.LoadingState.Empty else AlbumArtistListUiState.LoadingState.Ready,
 )
 

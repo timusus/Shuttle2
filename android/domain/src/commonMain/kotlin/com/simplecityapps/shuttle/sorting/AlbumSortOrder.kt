@@ -7,5 +7,8 @@ enum class AlbumSortOrder {
     Year,
     PlayCount,
     RecentlyPlayed,
+
+    /** Most recently added first: by the newest song added to each album. */
+    DateAdded,
     Random
 }

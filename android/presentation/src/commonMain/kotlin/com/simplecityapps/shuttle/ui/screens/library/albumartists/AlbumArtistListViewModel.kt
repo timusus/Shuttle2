@@ -6,10 +6,13 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.mediaprovider.repository.artists.comparator
+import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.sorting.LetterSection
 import com.simplecityapps.shuttle.sorting.albumArtistLetterIndex
 import com.simplecityapps.shuttle.ui.actions.ObserveArtists
 import com.simplecityapps.shuttle.ui.common.SelectionState
+import com.simplecityapps.shuttle.ui.screens.library.IndexedList
 import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
@@ -22,17 +25,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 data class AlbumArtistListUiState(
     val albumArtists: List<AlbumArtist> = emptyList(),
     val selectedArtists: Set<AlbumArtist> = emptySet(),
     val viewMode: ViewMode = ViewMode.List,
+    val sortOrder: AlbumArtistSortOrder = AlbumArtistSortOrder.Default,
     val loadingState: LoadingState = LoadingState.Loading,
     val scanProgress: Progress? = null,
-    /** The artists' letter sections ([albumArtistLetterIndex]): every artists sort compares the name first. */
-    val letterIndex: List<LetterSection> = emptyList(),
+    /** The artists' letter sections for a name-first sort ([albumArtistLetterIndex]); null for any other sort. */
+    val letterIndex: List<LetterSection>? = null,
 ) {
     /** [Scanning] while an import runs; the list still carries what's already imported, for a screen that keeps showing it. */
     enum class LoadingState { Loading, Scanning, Ready, Empty }
@@ -53,18 +56,25 @@ class AlbumArtistListViewModel @Inject constructor(
 
     private val _viewMode = MutableStateFlow(readSetting(LibraryViewSetting.ArtistViewMode))
 
-    // Indexed as the library changes, not on each import progress tick (#627).
-    private val indexedArtists = observeArtists().map { albumArtists -> albumArtists to albumArtistLetterIndex(albumArtists) }
+    private val _sortOrder = MutableStateFlow(readSetting(LibraryViewSetting.ArtistSort))
+
+    // Sorted and indexed as the library or the sort changes, not on each import progress tick (#627).
+    private val sortedArtists = combine(observeArtists(), _sortOrder) { albumArtists, sortOrder ->
+        val sorted = albumArtists.sortedWith(sortOrder.comparator)
+        IndexedList(sorted, sortOrder, albumArtistLetterIndex(sorted, sortOrder))
+    }
 
     val uiState: StateFlow<AlbumArtistListUiState> = combine(
-        indexedArtists,
+        sortedArtists,
         mediaImportObserver.songImportState,
         selectionState.selectedItems,
         _viewMode,
-    ) { (albumArtists, letterIndex), songImportState, selectedArtists, viewMode ->
+    ) { sorted, songImportState, selectedArtists, viewMode ->
+        val albumArtists = sorted.items
         AlbumArtistListUiState(
             albumArtists = albumArtists,
-            letterIndex = letterIndex,
+            sortOrder = sorted.sortOrder,
+            letterIndex = sorted.letterIndex,
             selectedArtists = selectedArtists,
             viewMode = viewMode,
             loadingState = when {
@@ -86,6 +96,11 @@ class AlbumArtistListViewModel @Inject constructor(
 
     fun onArtistLongClick(albumArtist: AlbumArtist) {
         selectionState.toggle(albumArtist)
+    }
+
+    fun setSortOrder(sortOrder: AlbumArtistSortOrder) {
+        saveSetting(LibraryViewSetting.ArtistSort, sortOrder)
+        _sortOrder.value = sortOrder
     }
 
     fun setViewMode(mode: ViewMode) {

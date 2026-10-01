@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
+import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.SongSortOrder
@@ -17,6 +18,7 @@ sealed class LibraryViewSetting<T>(
     data object AlbumSort : LibraryViewSetting<AlbumSortOrder>({ sort.sortOrderAlbumList }, { sort.sortOrderAlbumList = it })
     data object PlaylistSort : LibraryViewSetting<PlaylistSortOrder>({ sort.sortOrderPlaylistList }, { sort.sortOrderPlaylistList = it })
     data object GenreSort : LibraryViewSetting<GenreSortOrder>({ sort.sortOrderGenreList }, { sort.sortOrderGenreList = it })
+    data object ArtistSort : LibraryViewSetting<AlbumArtistSortOrder>({ sort.sortOrderArtistList }, { sort.sortOrderArtistList = it })
     data object AlbumViewMode : LibraryViewSetting<ViewMode>({ albumList.albumListViewMode }, { albumList.albumListViewMode = it })
     data object ArtistViewMode : LibraryViewSetting<ViewMode>({ artistList.artistListViewMode }, { artistList.artistListViewMode = it })
 }

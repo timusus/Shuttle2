@@ -10,6 +10,7 @@ val AlbumArtistSortOrder.comparator: Comparator<AlbumArtist>
         return when (this) {
             AlbumArtistSortOrder.Default -> AlbumArtistComparator.defaultComparator
             AlbumArtistSortOrder.PlayCount -> AlbumArtistComparator.playCountComparator
+            AlbumArtistSortOrder.AlbumCount -> AlbumArtistComparator.albumCountComparator
         }
     }
 
@@ -22,5 +23,9 @@ object AlbumArtistComparator {
 
     val playCountComparator: Comparator<AlbumArtist> by lazy {
         defaultComparator.then(compareByDescending { albumArtist -> albumArtist.playCount })
+    }
+
+    val albumCountComparator: Comparator<AlbumArtist> by lazy {
+        compareByDescending<AlbumArtist> { albumArtist -> albumArtist.albumCount }.then(defaultComparator)
     }
 }

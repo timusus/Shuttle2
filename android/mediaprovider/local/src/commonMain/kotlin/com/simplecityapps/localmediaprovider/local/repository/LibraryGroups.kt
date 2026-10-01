@@ -22,7 +22,8 @@ internal fun List<Song>.toAlbum(key: AlbumGroupKey): Album = Album(
     lastSongCompleted = mapNotNull { it.lastCompleted }.maxOrNull(),
     groupKey = key,
     mediaProviders = map { it.mediaProvider }.distinct(),
-    artworkVersion = combinedArtworkVersion()
+    artworkVersion = combinedArtworkVersion(),
+    dateAdded = mapNotNull { it.dateAdded }.maxOrNull()
 )
 
 /** The album artist [key] names, made of their own albums' songs, as [toAlbum] makes an album (Home's suggestions). */
