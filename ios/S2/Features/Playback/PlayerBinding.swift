@@ -38,13 +38,16 @@ struct NowPlayingQueueRow: Identifiable, Equatable {
     let artist: String?
     let artwork: ArtworkSource?
     let isCurrent: Bool
+    /// The song's length in milliseconds; 0 when unknown.
+    let durationMs: Int
 
-    init(id: Int64, title: String, artist: String?, artwork: ArtworkSource? = nil, isCurrent: Bool) {
+    init(id: Int64, title: String, artist: String?, artwork: ArtworkSource? = nil, isCurrent: Bool, durationMs: Int = 0) {
         self.id = id
         self.title = title
         self.artist = artist
         self.artwork = artwork
         self.isCurrent = isCurrent
+        self.durationMs = durationMs
     }
 }
 
@@ -287,7 +290,8 @@ final class PlayerBinding {
                     title: item.title.isEmpty ? "Unknown" : item.title,
                     artist: item.artist,
                     artwork: .song(item.song),
-                    isCurrent: item.position == .current
+                    isCurrent: item.position == .current,
+                    durationMs: Int(item.song.duration)
                 )
             }
             next.shuffleOn = player.shuffle

@@ -277,6 +277,40 @@ struct NowPlayingViewTests {
         #expect((try? current.find(MediaRow<EmptyView>.self)) != nil)
     }
 
+    @Test func theQueueRowsShowTheirDurationsAndUpNextItsSummary() throws {
+        let timed = [
+            NowPlayingQueueRow(id: 1, title: "Now", artist: nil, isCurrent: true, durationMs: 200_000),
+            NowPlayingQueueRow(id: 2, title: "Next", artist: nil, isCurrent: false, durationMs: 125_000),
+            NowPlayingQueueRow(id: 3, title: "Unknown Length", artist: nil, isCurrent: false),
+        ]
+        let sut = NowPlayingQueueList(queue: timed)
+        #expect((try? sut.inspect().find(text: "3:20")) != nil)
+        #expect((try? sut.inspect().find(text: "2:05")) != nil)
+        #expect((try? sut.inspect().find(text: "0:00")) == nil)
+        let summary = try #require(NowPlayingQueueList.upNextSummary(Array(timed.dropFirst())))
+        #expect(summary.hasPrefix("2 songs · "))
+        let subtitles = try sut.inspect().findAll(SectionHeader.self).map { try $0.actualView().subtitle }
+        #expect(subtitles == [nil, summary])
+    }
+
+    @Test func upNextSummaryCountsSongsAndTotalsTheirTime() {
+        func rows(_ durations: [Int]) -> [NowPlayingQueueRow] {
+            durations.enumerated().map { .init(id: Int64($0), title: "S", artist: nil, isCurrent: false, durationMs: $1) }
+        }
+        let en = Locale(identifier: "en_US")
+        func time(_ durations: [Int]) -> String? {
+            NowPlayingQueueList.remainingTime(rows(durations), locale: en)?.replacingOccurrences(of: ",", with: "")
+                .trimmingCharacters(in: CharacterSet(charactersIn: "."))
+        }
+        #expect(NowPlayingQueueList.upNextSummary([]) == nil)
+        #expect(NowPlayingQueueList.upNextSummary(rows([240_000]), locale: en)?.hasPrefix("1 song · 4 min") == true)
+        #expect(time([2_400_000, 1_920_000]) == "1 hr 12 min")
+        #expect(time([2_580_000]) == "43 min")
+        // Unknown or sub-minute totals leave the time out.
+        #expect(NowPlayingQueueList.upNextSummary(rows([0, 0])) == "2 songs")
+        #expect(time([30_000]) == nil)
+    }
+
     @Test func swipingARowRemovesItByUid() throws {
         var removed: [Int64] = []
         var actions = PlayerActions()

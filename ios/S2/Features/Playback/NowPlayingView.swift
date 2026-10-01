@@ -800,7 +800,7 @@ struct NowPlayingQueueList: View {
                     }
                 }
             } header: {
-                sectionHeader("Up Next")
+                sectionHeader("Up Next", subtitle: Self.upNextSummary(Array(upNext)))
             }
 
             if !played.isEmpty {
@@ -821,8 +821,8 @@ struct NowPlayingQueueList: View {
         .background(.s2SurfaceElevated)
     }
 
-    private func sectionHeader(_ title: String) -> some View {
-        SectionHeader(title)
+    private func sectionHeader(_ title: String, subtitle: String? = nil) -> some View {
+        SectionHeader(title, subtitle: subtitle)
             .textCase(nil)
             .padding(.vertical, Spacing.xsmall)
             .pinnedHeader(.s2SurfaceElevated)
@@ -836,7 +836,13 @@ struct NowPlayingQueueList: View {
                 subtitle: item.artist,
                 artwork: item.artwork,
                 playback: item.isCurrent ? (isPlaying ? .playing : .paused) : .none
-            )
+            ) {
+                if item.durationMs > 0 {
+                    Text(Duration.milliseconds(item.durationMs).formatted(.time(pattern: .minuteSecond)))
+                        .font(.s2RowMeta)
+                        .foregroundStyle(.s2TextSecondary)
+                }
+            }
         }
         .buttonStyle(.plain)
         .rowSeparator(.none)
@@ -845,6 +851,23 @@ struct NowPlayingQueueList: View {
         .contextMenu {
             NowPlayingQueueRowMenu(item: item, playNext: actions.playNext, remove: remove, exclude: actions.excludeQueueItem)
         }
+    }
+
+    // MARK: - Up Next summary
+
+    /// The time the songs in `rows` run for, in the locale's abbreviated units like every hero's total ("43 min", "1 hr, 12 min" in
+    /// English); nil under a minute or when durations are unknown.
+    static func remainingTime(_ rows: [NowPlayingQueueRow], locale: Locale = .current) -> String? {
+        let ms = rows.reduce(0) { $0 + $1.durationMs }
+        guard ms >= 60_000 else { return nil }
+        return Duration.milliseconds(ms).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated).locale(locale))
+    }
+
+    /// Up Next's header line, "3 songs · 12 min": the count, then the time left when known; nil with nothing up next.
+    /// The playing song's remainder is left out, so the line doesn't change with every progress tick.
+    static func upNextSummary(_ rows: [NowPlayingQueueRow], locale: Locale = .current) -> String? {
+        guard !rows.isEmpty else { return nil }
+        return eyebrow(pluralized(rows.count, "song"), remainingTime(rows, locale: locale))
     }
 
     // MARK: - Editing
