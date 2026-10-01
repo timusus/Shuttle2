@@ -33,21 +33,16 @@ struct HomeView: View {
                 onOpen: { item in navigator.open(Self.route(item)) },
                 onAction: { models.actions.dispatch(action: $0) },
                 pendingPlayKey: pendingPlay.key,
-                onPlayStarted: { item, resumes in
-                    pendingPlay.start(
-                        item,
-                        resumes: resumes,
-                        playing: Self.isPlaying(player.playbackStateFlow.value),
-                        current: player.queueOperations.playContext,
-                        version: player.queueOperations.queueStateFlow.value.contentVersion
-                    )
+                onPlay: { item, action in
+                    let ticket = pendingPlay.start(item)
+                    // Kotlin hands the result back on the main thread.
+                    models.actions.dispatch(action: action) { result in
+                        MainActor.assumeIsolated {
+                            pendingPlay.finished(ticket, result: result, playing: Self.isPlaying(player.playbackStateFlow.value))
+                        }
+                    }
                 }
             )
-            // A play that worked posts nothing; a failure ends the wait. Events don't say which item they're for, so
-            // any failure does; a notice (such as "Added to queue") from another cell doesn't.
-            .onChange(of: actions.events.map(\.id)) { _, _ in
-                if actions.events.contains(where: { $0.value.map(PendingPlay.isFailure) ?? false }) { pendingPlay.settle() }
-            }
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
             .consumeEvents((state as? HomeUiStateContent)?.events ?? [], handled: { models.home.onEventHandled(id: $0) }) { _ in }
         }
@@ -67,20 +62,9 @@ struct HomeView: View {
             models.home.onVisibilityChanged(visible: appeared && phase != .background)
         }
         .task {
-            for await _ in player.playbackStateFlow { playerChanged(player) }
-        }
-        .task {
-            for await _ in player.queueOperations.queueStateFlow { playerChanged(player) }
+            for await state in player.playbackStateFlow { pendingPlay.playbackChanged(playing: Self.isPlaying(state)) }
         }
         .navigationTitle(AppTab.home.title)
-    }
-
-    private func playerChanged(_ player: IosPlayerController) {
-        pendingPlay.playerChanged(
-            playing: Self.isPlaying(player.playbackStateFlow.value),
-            current: player.queueOperations.playContext,
-            version: player.queueOperations.queueStateFlow.value.contentVersion
-        )
     }
 
     /// Playing or buffering: either way the player has the queue it was given.
@@ -130,8 +114,9 @@ struct HomeContent: View {
     var onAction: (MediaAction) -> Void = { _ in }
     /// The item whose play is under way (`PendingPlay`), by key: its Jump Back In cell shows a spinner.
     var pendingPlayKey: String?
-    /// Told when a Jump Back In cell starts playing its item.
-    var onPlayStarted: (HomeItem, _ resumes: Bool) -> Void = { _, _ in }
+    /// Plays a Jump Back In item with the action given, following it through (`PendingPlay`); nil dispatches it through
+    /// `onAction`.
+    var onPlay: ((HomeItem, MediaAction) -> Void)?
 
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -213,7 +198,7 @@ struct HomeContent: View {
                     zoomSourceKey: zoomSourceKey,
                     onTapped: { zoomSourceKey = $0 },
                     pendingKey: pendingPlayKey,
-                    onPlayStarted: onPlayStarted
+                    play: onPlay ?? { onAction($1) }
                 )
                 .padding(.horizontal, inset)
             } else {

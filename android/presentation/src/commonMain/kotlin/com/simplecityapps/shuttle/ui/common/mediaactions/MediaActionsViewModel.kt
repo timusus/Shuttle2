@@ -58,10 +58,17 @@ class MediaActionsViewModel @Inject constructor(
     ) { playlists, events -> MediaActionsUiState(playlists, events) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MediaActionsUiState())
 
-    fun dispatch(action: MediaAction) {
+    fun dispatch(action: MediaAction) = dispatch(action) {}
+
+    /**
+     * As [dispatch], then tells [onResult] this action's own result, [MediaActionResult.None] included, on the main
+     * thread: how a screen follows one action through, which the shared [MediaActionsUiState.events] can't say.
+     */
+    fun dispatch(action: MediaAction, onResult: (MediaActionResult) -> Unit) {
         viewModelScope.launch {
             val result = handler.handle(action)
             if (result != MediaActionResult.None) events.post(result)
+            onResult(result)
         }
     }
 

@@ -64,6 +64,18 @@ class MediaActionsViewModelTest {
     }
 
     @Test
+    fun `a dispatched action's own result is handed to its caller, None included`() = runTest {
+        val viewModel = viewModel()
+        val results = mutableListOf<MediaActionResult>()
+
+        viewModel.dispatch(MediaAction.AddToQueue(MediaSelection.Songs(createSong(id = 1)))) { results += it }
+        viewModel.dispatch(MediaAction.Play(MediaSelection.Songs(createSong(id = 2)))) { results += it }
+        advanceUntilIdle()
+
+        results shouldBe listOf(MediaActionResult.Message(MediaActionMessage.AddedToQueue(1)), MediaActionResult.None)
+    }
+
+    @Test
     fun `playlists are offered only while the picker shows`() = runTest {
         val playlist = createPlaylist(id = 3)
         playlistRepository.setPlaylists(listOf(playlist))

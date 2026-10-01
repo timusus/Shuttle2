@@ -16,7 +16,8 @@ struct JumpBackInGrid: View {
     var onTapped: (String) -> Void = { _ in }
     /// The item whose play is under way (`PendingPlay`), by key.
     var pendingKey: String?
-    var onPlayStarted: (HomeItem, _ resumes: Bool) -> Void = { _, _ in }
+    /// Performs an action that plays an item, following it through; nil performs it as any other.
+    var play: ((HomeItem, MediaAction) -> Void)?
 
     @Environment(\.layoutTier) private var layoutTier
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -42,7 +43,7 @@ struct JumpBackInGrid: View {
                     perform: perform,
                     open: { onTapped("jumpBackIn|\($0.key)"); open($0) },
                     pending: item.key == pendingKey,
-                    onPlayStarted: onPlayStarted
+                    play: play
                 )
             }
         }
@@ -63,8 +64,8 @@ struct JumpBackInCell: View {
     let open: (HomeItem) -> Void
     /// Its play is under way (`PendingPlay`): the play button shows a spinner.
     var pending = false
-    /// Told of each action that starts playing the item, as it's performed.
-    var onPlayStarted: (HomeItem, _ resumes: Bool) -> Void = { _, _ in }
+    /// Performs an action that plays the item, following it through; nil performs it as any other.
+    var play: ((HomeItem, MediaAction) -> Void)?
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.homeCovers) private var covers
@@ -126,7 +127,6 @@ struct JumpBackInCell: View {
             .homeItemActions(HomeItemActions(item: item, perform: performTracked, open: open, resumes: true))
 
             Button {
-                guard !pending else { return }
                 performTracked(item.resumeAction())
             } label: {
                 ZStack {
@@ -147,6 +147,7 @@ struct JumpBackInCell: View {
             .accessibilityLabel(item is HomeItemGenreItem ? "Shuffle \(item.title)" : "Play \(item.title)")
             .accessibilityValue(pending ? "Starting" : "")
             .accessibilityIdentifier("homeGrid.play")
+            .disabled(pending)
         }
         // Every cell is the slot's height, so the artwork sits the same in each; at the accessibility sizes the text
         // sets it.
@@ -185,12 +186,13 @@ struct JumpBackInCell: View {
         }
     }
 
-    /// Performs `action`, telling `onPlayStarted` first if it starts playing the item.
+    /// Performs `action`, through `play` if it plays the item.
     private func performTracked(_ action: MediaAction) {
-        if action is MediaActionResume || action is MediaActionPlay || action is MediaActionShuffle {
-            onPlayStarted(item, action is MediaActionResume)
+        if let play, action is MediaActionResume || action is MediaActionPlay || action is MediaActionShuffle {
+            play(item, action)
+        } else {
+            perform(action)
         }
-        perform(action)
     }
 }
 

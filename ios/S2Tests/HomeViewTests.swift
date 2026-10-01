@@ -125,89 +125,139 @@ struct HomeViewTests {
         #expect(try spinning.accessibilityValue().string() == "Starting")
     }
 
-    @Test func aGridCellsPlayReportsItStartedAndIgnoresTapsWhilePending() throws {
+    @Test func aGridCellsPlayGoesThroughPlayAndIsDisabledWhilePending() throws {
         let item = HomeItemAlbumItem(album: album("OK Computer"))
-        var started: [String] = []
+        var played: [(String, MediaAction)] = []
         var actions: [MediaAction] = []
         let sut = HomeContent(
             state: content([section(.jumpBackIn, .jumpBackIn, [item])]),
             onAction: { actions.append($0) },
-            onPlayStarted: { item, _ in started.append(item.key) }
+            onPlay: { item, action in played.append((item.key, action)) }
         )
         try sut.inspect().find(viewWithAccessibilityLabel: "Play OK Computer").button().tap()
-        #expect(started == [item.key])
-        #expect(actions.count == 1)
+        #expect(played.map(\.0) == [item.key])
+        #expect(played.first?.1 is MediaActionResume)
+        #expect(actions.isEmpty)
 
         let pending = HomeContent(
             state: content([section(.jumpBackIn, .jumpBackIn, [item])]),
             onAction: { actions.append($0) },
             pendingPlayKey: item.key,
-            onPlayStarted: { item, _ in started.append(item.key) }
+            onPlay: { item, action in played.append((item.key, action)) }
         )
-        try pending.inspect().find(viewWithAccessibilityLabel: "Play OK Computer").button().tap()
-        #expect(started == [item.key])
-        #expect(actions.count == 1)
+        let button = try pending.inspect().find(viewWithAccessibilityLabel: "Play OK Computer").button()
+        #expect(button.isDisabled())
+        #expect(throws: (any Error).self) { try button.tap() }
+        #expect(played.count == 1)
     }
 
     // MARK: Pending play
 
-    @Test func aPendingPlaySettlesWhenThePlayerPlaysItsContext() {
+    private let noSongs = MediaActionResultMessage(message: MediaActionMessageNoSongs.shared, action: nil)
+
+    /// Resuming what's already playing can still start over (`ResumeContext` gives StartOver and the queue is rebuilt),
+    /// so the spinner shows from the tap however the player stands, until the action's result.
+    @Test func aPlayIsPendingFromTheTapEvenOfWhatsAlreadyPlaying() {
         let item = HomeItemAlbumItem(album: album("OK Computer"))
-        let other = HomeItemAlbumItem(album: album("Amnesiac"))
         let pending = PendingPlay()
-        pending.start(item, resumes: true, playing: true, current: other.playContext, version: 1)
+        let ticket = pending.start(item)
         #expect(pending.key == item.key)
-        pending.playerChanged(playing: true, current: other.playContext, version: 1)
-        #expect(pending.key == item.key)
-        pending.playerChanged(playing: false, current: item.playContext, version: 2)
-        #expect(pending.key == item.key)
-        pending.playerChanged(playing: true, current: item.playContext, version: 2)
+        pending.playbackChanged(playing: true)
+        #expect(pending.key == item.key, "playing before the result is the old queue")
+        pending.finished(ticket, result: MediaActionResultNone.shared, playing: true)
         #expect(pending.key == nil)
     }
 
-    /// Already playing something, the state never changes: the queue's new context is the only thing that does.
-    @Test func aPendingPlaySettlesOnTheContextChangingWhileAlreadyPlaying() {
+    @Test func aSucceededPlaySettlesOnTheNextPlayingState() {
         let item = HomeItemAlbumItem(album: album("OK Computer"))
-        let other = HomeItemAlbumItem(album: album("Amnesiac"))
         let pending = PendingPlay()
-        pending.start(item, resumes: true, playing: true, current: other.playContext, version: 1)
-        pending.playerChanged(playing: true, current: item.playContext, version: 2)
+        let ticket = pending.start(item)
+        pending.finished(ticket, result: MediaActionResultNone.shared, playing: false)
+        #expect(pending.key == item.key)
+        pending.playbackChanged(playing: false)
+        #expect(pending.key == item.key)
+        pending.playbackChanged(playing: true)
         #expect(pending.key == nil)
     }
 
-    @Test func aResumeOfWhatsAlreadyPlayingIsNeverPending() {
+    @Test func aPlaysOwnFailureSettlesIt() {
         let item = HomeItemAlbumItem(album: album("OK Computer"))
         let pending = PendingPlay()
-        pending.start(item, resumes: true, playing: true, current: item.playContext, version: 1)
+        pending.finished(pending.start(item), result: noSongs, playing: false)
         #expect(pending.key == nil)
-        pending.start(item, resumes: true, playing: false, current: item.playContext, version: 1)
-        #expect(pending.key == item.key)
-        pending.settle()
+        let failed = MediaActionResultMessage(message: MediaActionMessagePlaybackFailed(reason: nil), action: nil)
+        pending.finished(pending.start(item), result: failed, playing: true)
         #expect(pending.key == nil)
     }
 
-    @Test func aRebuildOfWhatsAlreadyPlayingWaitsForTheNewQueue() {
-        let item = HomeItemAlbumItem(album: album("OK Computer"))
+    @Test func anotherActionsFailureDoesNotSettleThisOne() {
+        let first = HomeItemAlbumItem(album: album("OK Computer"))
+        let second = HomeItemAlbumItem(album: album("Amnesiac"))
         let pending = PendingPlay()
-        pending.start(item, resumes: false, playing: true, current: item.playContext, version: 1)
-        #expect(pending.key == item.key)
-        pending.playerChanged(playing: true, current: item.playContext, version: 1)
-        #expect(pending.key == item.key)
-        pending.playerChanged(playing: true, current: item.playContext, version: 2)
+        let superseded = pending.start(first)
+        let ticket = pending.start(second)
+        pending.finished(superseded, result: noSongs, playing: false)
+        #expect(pending.key == second.key)
+        pending.finished(superseded, result: MediaActionResultNone.shared, playing: true)
+        #expect(pending.key == second.key)
+        pending.finished(ticket, result: noSongs, playing: false)
         #expect(pending.key == nil)
     }
 
-    @Test func onlyAFailureOfAPlayEndsAPendingPlay() {
-        #expect(PendingPlay.isFailure(MediaActionResultMessage(message: MediaActionMessageNoSongs.shared, action: nil)))
-        #expect(PendingPlay.isFailure(MediaActionResultMessage(message: MediaActionMessagePlaybackFailed(reason: nil), action: nil)))
+    @Test func aNoticeIsNotAFailure() {
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        let pending = PendingPlay()
+        let added = MediaActionResultMessage(message: MediaActionMessageAddedToQueue(songCount: 1), action: nil)
+        #expect(!PendingPlay.isFailure(added))
         #expect(!PendingPlay.isFailure(MediaActionResultNone.shared))
+        pending.finished(pending.start(item), result: added, playing: false)
+        #expect(pending.key == item.key)
     }
 
     @Test func aPendingPlayGivesUpAfterItsTimeout() async {
         let pending = PendingPlay(timeout: .milliseconds(50))
-        pending.start(HomeItemAlbumItem(album: album("OK Computer")), resumes: true, playing: false, current: PlayContextNone.shared, version: 0)
+        pending.start(HomeItemAlbumItem(album: album("OK Computer")))
         #expect(pending.key != nil)
         #expect(await waitUntil { pending.key == nil })
+    }
+
+    /// Playing the context that's already playing, with the same songs, keeps the queue's entries (its content version
+    /// doesn't move), so only the action's own result can say it's done: through the real graph and its state flow.
+    @Test func playingWhatsAlreadyQueuedSettlesThroughTheRealPlayer() async throws {
+        let engine = FakeAudioEngine()
+        let graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: engine))
+        let controller = graph.playerController
+        let item = HomeItemAlbumItem(album: album("OK Computer"))
+        _ = try await controller.queueOperations.setQueue(songs: TestSongs.demo, shuffleSongs: nil, position: 0, context: item.playContext)
+        controller.load(seekPosition: nil, skipUnloadable: false) { _ in }
+        #expect(await waitUntil { !engine.loads.isEmpty })
+        let id = try #require(engine.loads.first?.current.id)
+        engine.emit(.state(.playing, trackId: id))
+        #expect(await waitUntil { HomeView.isPlaying(controller.playbackStateFlow.value) })
+        let version = controller.queueOperations.queueStateFlow.value.contentVersion
+
+        let pending = PendingPlay()
+        let follow = Task { for await state in controller.playbackStateFlow { pending.playbackChanged(playing: HomeView.isPlaying(state)) } }
+        defer { follow.cancel() }
+        let actions = graph.mediaActionsViewModel
+        var result: (any MediaActionResult)?
+        let ticket = pending.start(item)
+        let play = MediaActionPlay(selection: MediaSelectionSongs(songs: TestSongs.demo), position: 0, context: item.playContext)
+        actions.dispatch(action: play) { actionResult in
+            MainActor.assumeIsolated {
+                result = actionResult
+                pending.finished(ticket, result: actionResult, playing: HomeView.isPlaying(controller.playbackStateFlow.value))
+            }
+        }
+        // The play reloads the engine and returns once it reports the load.
+        #expect(await waitUntil { engine.loads.count > 1 })
+        #expect(pending.key == item.key)
+        let reload = try #require(engine.loads.last?.current.id)
+        engine.emit(.state(.playing, trackId: reload))
+        #expect(await waitUntil { result != nil })
+        #expect(result is MediaActionResultNone)
+        #expect(await waitUntil { pending.key == nil })
+        #expect(controller.queueOperations.queueStateFlow.value.contentVersion == version)
     }
 
     @Test func tappingAGridCellOpensItsItem() throws {
