@@ -22,8 +22,13 @@
 # a chance. Verify runs once, in a single `machine-lock --name verify` hold (land.sh re-invokes
 # itself with an internal --verify-only mode), over everything landed so far:
 # `unit-test --changed`, an assembleDebug, and — only if the picked commits touch ios/, shared/
-# or android/domain|presentation|core — the iOS framework build + tests (releasing its
-# simulator lease afterwards). If the verify fails and more than one branch landed, branches are
+# or android/domain|presentation|core — a light iOS check: the framework build, an app build
+# (`xcodebuild build`), and `test.sh -only-testing:` for just the test classes mapped from the
+# changed files (rule below; no mapped class = build only, no simulator lease). The whole iOS
+# suite and the full Android verify run less often, in support/scripts/full-verify.sh (watermark,
+# always before a Play release). iOS test mapping (`land.sh --print-ios-tests <files...>`): a
+# changed ios/S2Tests/Foo*Tests.swift runs S2Tests/Foo*Tests; a changed ios/S2/**/Foo.swift runs
+# every existing ios/S2Tests/Foo*Tests.swift; other files map to nothing. If the verify fails and more than one branch landed, branches are
 # dropped one at a time from the end (each drop retried once) until it passes or none remain;
 # each dropped branch is reported as having broken verify. On a pass: push (retrying network
 # failures up to 3 times), close --close issues, then unlock and worktree-clean.sh each landed
@@ -34,11 +39,35 @@ SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 REPO_ROOT=$(git rev-parse --show-toplevel) || { echo "land.sh: not a git repo" >&2; exit 2; }
 cd "$REPO_ROOT" || exit 2
 
+# ios_tests_for <file>...: print the S2Tests classes (one per line, sorted, unique) that the
+# changed files map to, per the rule in the header. Needs REPO_ROOT as the cwd.
+ios_tests_for() {
+  local f stem t
+  for f in "$@"; do
+    case "$f" in
+      ios/S2Tests/*Tests.swift) basename "${f%.swift}" ;;
+      ios/S2/*.swift)
+        stem=$(basename "${f%.swift}")
+        for t in ios/S2Tests/"$stem"*Tests.swift; do
+          [ -e "$t" ] && basename "${t%.swift}"
+        done ;;
+    esac
+  done | sort -u
+}
+
+# Dry-check of the mapping: land.sh --print-ios-tests <files...>
+if [ "${1:-}" = "--print-ios-tests" ]; then
+  shift
+  ios_tests_for "$@"
+  exit 0
+fi
+
 # Internal mode: the Android and iOS verify phases, run by run_verify below under one
 # `machine-lock --name verify` hold. Not for direct use.
-#   land.sh --verify-only <origin-main-sha> <touches_ios 0|1>
+#   land.sh --verify-only <origin-main-sha> <touches_ios 0|1> [<S2Tests class>...]
 if [ "${1:-}" = "--verify-only" ]; then
   base_sha=${2:?} touches_ios=${3:-0}
+  shift 3 || true
   support/scripts/unit-test --changed --base "$base_sha" || { echo "verify: android unit tests failed"; exit 1; }
   support/scripts/remote-build.sh --local -q :android:app:assembleDebug || { echo "verify: assembleDebug failed"; exit 1; }
   if [ "$touches_ios" = 1 ]; then
@@ -48,7 +77,15 @@ if [ "${1:-}" = "--verify-only" ]; then
       cd ios
       xcodegen -q
       scripts/build-framework.sh
-      S2_SIM_HOLDER=land scripts/test.sh
+      xcodebuild build -project S2.xcodeproj -scheme S2 \
+        -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData -quiet
+      if [ "$#" -gt 0 ]; then
+        only=()
+        for c in "$@"; do only+=("-only-testing:S2Tests/$c"); done
+        S2_SIM_HOLDER=land scripts/test.sh "${only[@]}"
+      else
+        echo "verify: no iOS test class maps to the changed files; build only"
+      fi
     ) || rc=$?
     # Release under the same holder lease-sim.sh leased as (suffixed when S2_SIM_PROFILE is set).
     CLAUDE_CODE_SESSION_ID="$(S2_SIM_HOLDER=land ios/scripts/lease-sim.sh --holder)" \
@@ -174,9 +211,14 @@ run_verify() {
   if git diff --name-only "$ORIGIN_MAIN_SHA" HEAD | grep -Eq '^(ios/|shared/|android/domain/|android/presentation/|android/core/)'; then
     touches_ios=1
   fi
-  log "verify: touches_ios=$touches_ios"
+  local ios_tests=() changed=() t
+  if [ "$touches_ios" = 1 ]; then
+    while IFS= read -r t; do changed+=("$t"); done < <(git diff --name-only "$ORIGIN_MAIN_SHA" HEAD)
+    while IFS= read -r t; do [ -n "$t" ] && ios_tests+=("$t"); done < <(ios_tests_for "${changed[@]}")
+  fi
+  log "verify: touches_ios=$touches_ios ios_tests=${ios_tests[*]-}"
 
-  if ! machine-lock --name verify -- "$SELF" --verify-only "$ORIGIN_MAIN_SHA" "$touches_ios" >> "$LOG" 2>&1; then
+  if ! machine-lock --name verify -- "$SELF" --verify-only "$ORIGIN_MAIN_SHA" "$touches_ios" ${ios_tests[@]+"${ios_tests[@]}"} >> "$LOG" 2>&1; then
     log "verify: failed (see above)"
     return 1
   fi
