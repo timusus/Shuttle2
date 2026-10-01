@@ -88,7 +88,7 @@ struct GenreDetailContent: View {
                 }
                 Section {
                     SectionHeader("Songs")
-                        .listRowSeparator(.hidden)
+                        .rowSeparator(.none)
                     ForEach(Array(state.songs.enumerated()), id: \.element.id) { index, song in
                         Button { onPlay(index) } label: {
                             DetailSongRow(song: song, playback: rowPlayback(song, current: state.currentSong, isPlaying: isPlaying))

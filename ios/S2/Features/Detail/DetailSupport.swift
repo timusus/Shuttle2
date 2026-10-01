@@ -100,7 +100,7 @@ private struct DetailScaffoldBody<Hero: View, Rows: View>: View {
                     // wash rather than on a plain band above it.
                     .listRowBackground(DetailWash(style: .fading).padding(.top, -barBottom))
             }
-            .listRowSeparator(.hidden)
+            .rowSeparator(.none)
             rows()
         }
         .listStyle(.plain)
@@ -320,6 +320,8 @@ struct TrackRow: View {
                         .lineLimit(1)
                 }
             }
+            // A text-only row: its separator starts at the title.
+            .rowSeparator(.insetToTitle)
             Spacer(minLength: Spacing.small)
             SongDurationText(durationMs: durationMs)
         }

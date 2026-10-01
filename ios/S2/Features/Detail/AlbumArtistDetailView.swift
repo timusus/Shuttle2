@@ -183,7 +183,7 @@ struct AlbumArtistDetailContent: View {
                     SectionHeader("Top Songs")
                 }
             }
-            .listRowSeparator(.hidden)
+            .rowSeparator(.none)
             ForEach(Array(shown.enumerated()), id: \.element.id) { index, song in
                 Button { onPlay(state.topSongs, index, state.playContext) } label: {
                     DetailSongRow(song: song, playback: rowPlayback(song, current: state.currentSong, isPlaying: isPlaying))
@@ -207,7 +207,7 @@ struct AlbumArtistDetailContent: View {
                 onExpandAll: onExpandAll,
                 onCollapseAll: onCollapseAll
             )
-            .listRowSeparator(.hidden)
+            .rowSeparator(.none)
             .id(Self.songsHeaderId)
         }
         if state.sortOrder.groupsByAlbum {
@@ -439,7 +439,7 @@ struct DetailAlbumShelf: View {
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)
         }
-        .listRowSeparator(.hidden)
+        .rowSeparator(.none)
     }
 }
 

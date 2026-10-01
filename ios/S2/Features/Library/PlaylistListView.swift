@@ -136,17 +136,17 @@ private struct PlaylistListReadyView: View {
             Section("Auto Playlists") {
                 ForEach(state.smartPlaylists, id: \.id.id) { smartPlaylist in
                     SmartPlaylistRow(smartPlaylist: smartPlaylist)
-                        .listRowSeparator(.hidden)
+                        .rowSeparator(.none)
                 }
             }
             Section("Playlists") {
                 if state.playlists.isEmpty {
                     Text("No playlists yet. Tap + to create one.").foregroundStyle(.secondary)
-                        .listRowSeparator(.hidden)
+                        .rowSeparator(.none)
                 }
                 ForEach(state.playlists, id: \.id) { playlist in
                     playlistRow(playlist)
-                        .listRowSeparator(.hidden)
+                        .rowSeparator(.none)
                 }
             }
         }

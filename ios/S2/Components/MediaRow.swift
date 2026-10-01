@@ -107,8 +107,10 @@ struct MediaRow<Trailing: View>: View {
         if mosaic != nil {
             // The mosaic draws its own corners and hairline.
             image.frame(width: artworkSize, height: artworkSize)
+                .accessibilityIdentifier("mediaRow.artwork")
         } else {
             image.artworkTile(artworkSize, shape: .artwork(.artworkRow, for: artwork))
+                .accessibilityIdentifier("mediaRow.artwork")
         }
     }
 }

@@ -72,7 +72,7 @@ struct LetterIndexedList<Item, ID: Hashable, Row: View>: View {
                         Section {
                             ForEach(section.rows.map { IndexedItem(index: $0, item: items[$0], id: items[$0][keyPath: id]) }, id: \.id) {
                                 row($0.index, $0.item)
-                                    .listRowSeparator(.hidden)
+                                    .rowSeparator(.none)
                             }
                         }
                     }
@@ -84,7 +84,7 @@ struct LetterIndexedList<Item, ID: Hashable, Row: View>: View {
             List {
                 ForEach(items.indices.map { IndexedItem(index: $0, item: items[$0], id: items[$0][keyPath: id]) }, id: \.id) {
                     row($0.index, $0.item)
-                        .listRowSeparator(.hidden)
+                        .rowSeparator(.none)
                 }
             }
             .listStyle(.plain)
