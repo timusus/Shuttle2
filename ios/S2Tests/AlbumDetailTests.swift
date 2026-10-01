@@ -66,6 +66,52 @@ struct AlbumDetailTests {
         #expect(played == 1)
     }
 
+    @Test func artistLineGoesToTheArtist() throws {
+        var opened = 0
+        let songs = [song(1, "Airbag", track: 1, disc: 1)]
+        let state = AlbumDetailUiState(album: album(songCount: 1), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared)
+        let sut = AlbumDetailContent(state: state, onGoToArtist: { opened += 1 })
+        try sut.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityLabel().string()) == "Go to Radiohead" }).tap()
+        #expect(opened == 1)
+        // The eyebrow no longer repeats the artist.
+        #expect((try? sut.inspect().find(ViewType.Text.self, where: { try $0.string().hasPrefix("1997 · 1 song") })) != nil)
+    }
+
+    @Test func noArtistKeyMeansNoArtistButton() throws {
+        let songs = [song(1, "Airbag", track: 1, disc: 1)]
+        let state = AlbumDetailUiState(album: album(songCount: 1), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared)
+        let sut = AlbumDetailContent(state: state)
+        #expect((try? sut.inspect().find(ViewType.Button.self, where: { (try? $0.accessibilityLabel().string()) == "Go to Radiohead" })) == nil)
+    }
+
+    @Test func moreMenuActsOnTheWholeAlbum() throws {
+        var next: String?
+        var queued: String?
+        var artist = 0
+        let songs = [song(1, "Airbag", track: 1, disc: 1)]
+        let state = AlbumDetailUiState(album: album(songCount: 1), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared)
+        let sut = AlbumDetailContent(
+            state: state,
+            onPlayAlbumNext: { next = $0.name },
+            onAddAlbumToQueue: { queued = $0.name },
+            onGoToArtist: { artist += 1 }
+        )
+        let menu = try sut.inspect().find(ViewType.Menu.self)
+        try menu.find(button: "Play Next").tap()
+        try menu.find(button: "Add to Queue").tap()
+        try menu.find(button: "Go to Artist").tap()
+        #expect(next == "OK Computer")
+        #expect(queued == "OK Computer")
+        #expect(artist == 1)
+    }
+
+    @Test func moreMenuHidesGoToArtistWithoutAKey() throws {
+        let songs = [song(1, "Airbag", track: 1, disc: 1)]
+        let state = AlbumDetailUiState(album: album(songCount: 1), songs: songs, currentSong: nil, loadingState: .ready, seed: ArtworkSeedNone.shared)
+        let menu = try AlbumDetailContent(state: state).inspect().find(ViewType.Menu.self)
+        #expect((try? menu.find(button: "Go to Artist")) == nil)
+    }
+
     @Test func placeholders() throws {
         let empty = AlbumDetailUiState(album: nil, songs: [], currentSong: nil, loadingState: .loading, seed: ArtworkSeedNone.shared)
         #expect((try? AlbumDetailContent(state: empty).inspect().find(ViewType.ProgressView.self)) != nil)

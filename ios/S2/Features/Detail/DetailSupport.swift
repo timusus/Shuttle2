@@ -311,12 +311,16 @@ struct DetailWash: View {
 struct DetailHero<Artwork: View>: View {
     let title: String
     let subtitle: String?
+    /// An artist line above the subtitle that opens the artist (a text button in the tint); nil leaves it out.
+    var artist: String? = nil
+    var onArtist: (() -> Void)? = nil
     var layout: DetailHeroLayout = .stacked
     var onPlay: () -> Void = {}
     var onShuffle: () -> Void = {}
     @ViewBuilder let artwork: (CGFloat) -> Artwork
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.artworkTint) private var tint
 
     private var alignment: HorizontalAlignment { layout == .stacked ? .center : .leading }
     private var textAlignment: TextAlignment { layout == .stacked ? .center : .leading }
@@ -333,6 +337,16 @@ struct DetailHero<Artwork: View>: View {
                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                     .accessibilityAddTraits(.isHeader)
                     .detailTitleProbe()
+                if let artist, let onArtist {
+                    Button(action: onArtist) {
+                        Text(artist)
+                            .font(.s2Eyebrow)
+                            .foregroundStyle(tint)
+                            .multilineTextAlignment(textAlignment)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Go to \(artist)")
+                }
                 if let subtitle, !subtitle.isEmpty {
                     Text(subtitle)
                         .font(.s2Eyebrow)
@@ -515,4 +529,14 @@ extension PlayerBinding {
     /// Whether the player is playing, for a detail screen's playing row. Reads only the mini player's state, so a
     /// progress tick doesn't redraw the screen.
     var isPlaying: Bool { miniPlayer.isPlaying }
+}
+
+extension View {
+    /// The long-press menu on a song row: Play Next and Add to Queue for that one song.
+    func songContextMenu(_ song: Song, onPlayNext: @escaping ([Song]) -> Void, onAddToQueue: @escaping ([Song]) -> Void) -> some View {
+        contextMenu {
+            Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext([song]) }
+            Button("Add to Queue", systemImage: "text.append") { onAddToQueue([song]) }
+        }
+    }
 }

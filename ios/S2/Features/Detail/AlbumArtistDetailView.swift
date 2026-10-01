@@ -574,15 +574,6 @@ private extension AlbumArtistDetailUiState.SongSection {
     var sectionId: String { album.map { "album|\($0.stableId)" } ?? "other" }
 }
 
-private extension View {
-    func songContextMenu(_ song: Song, onPlayNext: @escaping ([Song]) -> Void, onAddToQueue: @escaping ([Song]) -> Void) -> some View {
-        contextMenu {
-            Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext([song]) }
-            Button("Add to Queue", systemImage: "text.append") { onAddToQueue([song]) }
-        }
-    }
-}
-
 extension View {
     /// `AlbumArtistDetailViewModel`'s own events: a Shuffle by Album that couldn't start.
     func albumArtistDetailEvents(_ events: [PendingEvent<any AlbumArtistDetailEvent>], handled: @escaping (Int64) -> Void) -> some View {

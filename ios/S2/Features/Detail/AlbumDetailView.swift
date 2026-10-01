@@ -2,13 +2,16 @@ import Shared
 import SwiftUI
 
 /// Album detail (P5-7, polished in #624): a hero tinted from the cover (artwork, title, artist · year · songs ·
-/// duration, Play/Shuffle), then the album's tracks, split into "Disc N" groups when it has more than one. A tap
-/// plays the album from that track; its context menu has the shared media actions. Modeled on Android's
+/// duration, Play/Shuffle; the artist's name opens the artist), then the album's tracks, split into "Disc N" groups
+/// when it has more than one. A tap plays the album from that track; its context menu has the shared media actions.
+/// The toolbar's menu plays the whole album next, queues it, or goes to the artist. Modeled on Android's
 /// `AlbumDetailScreen.kt`.
 struct AlbumDetailView: View {
     let albumKey: String?
     let albumArtistKey: String?
     var albumIdentity: String? = nil
+
+    @Environment(Navigator.self) private var navigator: Navigator?
 
     var body: some View {
         let route = Route.album(albumKey: albumKey, albumArtistKey: albumArtistKey, albumIdentity: albumIdentity)
@@ -28,11 +31,16 @@ struct AlbumDetailView: View {
                 onShuffle: {
                     models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs), context: state.playContext))
                 },
-                onPlayNext: { song in
-                    models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionSongs(song: song)))
+                onPlayNext: { songs in
+                    models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionSongs(songs: songs)))
                 },
-                onAddToQueue: { song in
-                    models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
+                onAddToQueue: { songs in
+                    models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(songs: songs)))
+                },
+                onPlayAlbumNext: { models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0))) },
+                onAddAlbumToQueue: { models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0))) },
+                onGoToArtist: state.album?.groupKey?.albumArtistGroupKey.map { key in
+                    { navigator.openAsserting(.albumArtist(albumArtistKey: key.key)) }
                 }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
@@ -60,8 +68,12 @@ struct AlbumDetailContent: View {
     var isPlaying: Bool = false
     var onPlay: (Int) -> Void = { _ in }
     var onShuffle: () -> Void = {}
-    var onPlayNext: (Song) -> Void = { _ in }
-    var onAddToQueue: (Song) -> Void = { _ in }
+    var onPlayNext: ([Song]) -> Void = { _ in }
+    var onAddToQueue: ([Song]) -> Void = { _ in }
+    var onPlayAlbumNext: (Album) -> Void = { _ in }
+    var onAddAlbumToQueue: (Album) -> Void = { _ in }
+    /// Opens the album's artist; nil when the album has no artist key, which hides the menu item and the hero's link.
+    var onGoToArtist: (() -> Void)? = nil
 
     var body: some View {
         switch state.loadingState {
@@ -75,6 +87,8 @@ struct AlbumDetailContent: View {
                     DetailHero(
                         title: album.name ?? "Unknown Album",
                         subtitle: subtitle(album),
+                        artist: artistName(album),
+                        onArtist: onGoToArtist,
                         layout: layout,
                         onPlay: { onPlay(0) },
                         onShuffle: onShuffle
@@ -99,6 +113,18 @@ struct AlbumDetailContent: View {
                         }
                     }
                 }
+                .toolbar {
+                    Menu {
+                        Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayAlbumNext(album) }
+                        Button("Add to Queue", systemImage: "text.append") { onAddAlbumToQueue(album) }
+                        if let onGoToArtist {
+                            Button("Go to Artist", systemImage: "music.mic", action: onGoToArtist)
+                        }
+                    } label: {
+                        Label("More", systemImage: "ellipsis.circle")
+                    }
+                    .accessibilityIdentifier("albumDetail.more")
+                }
             } else {
                 EmptyState("Album Not Found", systemImage: "square.stack")
             }
@@ -117,10 +143,7 @@ struct AlbumDetailContent: View {
             )
         }
         .buttonStyle(.plain)
-        .contextMenu {
-            Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") { onPlayNext(song) }
-            Button("Add to Queue", systemImage: "text.append") { onAddToQueue(song) }
-        }
+        .songContextMenu(song, onPlayNext: onPlayNext, onAddToQueue: onAddToQueue)
     }
 
     /// Songs grouped by disc (falling back to disc 1) in the order the ViewModel already sorted them, as
@@ -143,9 +166,14 @@ struct AlbumDetailContent: View {
         return artist
     }
 
+    private func artistName(_ album: Album) -> String? {
+        album.friendlyArtistName ?? album.albumArtist
+    }
+
+    /// With a tappable artist line above it the eyebrow leaves the artist out, else it leads with it.
     private func subtitle(_ album: Album) -> String {
         eyebrow(
-            album.friendlyArtistName ?? album.albumArtist,
+            onGoToArtist == nil ? artistName(album) : nil,
             album.year.map { String($0.intValue) },
             pluralized(state.songs.count, "song"),
             totalDuration(state.songs)
