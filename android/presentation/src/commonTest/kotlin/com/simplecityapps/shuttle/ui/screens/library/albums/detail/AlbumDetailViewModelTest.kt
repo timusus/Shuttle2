@@ -16,6 +16,8 @@ import com.simplecityapps.shuttle.settings.AppearanceSettings
 import com.simplecityapps.shuttle.settings.ObserveSetting
 import com.simplecityapps.shuttle.settings.SaveSetting
 import com.simplecityapps.shuttle.settings.SettingsStore
+import com.simplecityapps.shuttle.model.AlbumGroupKey
+import com.simplecityapps.shuttle.ui.actions.ObserveArtistAlbums
 import com.simplecityapps.shuttle.ui.actions.ObserveCurrentSong
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
@@ -148,7 +150,47 @@ class AlbumDetailViewModelTest {
         seededAlbums shouldBe emptyList()
     }
 
-    private fun createViewModel(): AlbumDetailViewModel {
+    @Test
+    fun `more by the artist excludes this album and lists the rest newest first`() = runTest {
+        val older = createAlbum(name = "Tape Hiss", albumArtist = "The Tin Orchards", year = 1965)
+        val newer = createAlbum(name = "Porch Light", albumArtist = "The Tin Orchards", year = 1975)
+        val someoneElses = createAlbum(name = "Other", albumArtist = "Someone Else", year = 1980)
+        fakeSongRepository.setSongs(listOf(createSong(id = 1)))
+        fakeAlbumRepository.applyQueryPredicates = true
+        fakeAlbumRepository.setAlbums(listOf(older, testAlbum, newer, someoneElses))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.moreByArtist shouldBe listOf(newer, older)
+    }
+
+    @Test
+    fun `more by the artist is empty when the album is their only one`() = runTest {
+        fakeSongRepository.setSongs(listOf(createSong(id = 1)))
+        fakeAlbumRepository.applyQueryPredicates = true
+        fakeAlbumRepository.setAlbums(listOf(testAlbum, createAlbum(name = "Other", albumArtist = "Someone Else")))
+        val viewModel = createViewModel()
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.moreByArtist shouldBe emptyList()
+    }
+
+    @Test
+    fun `more by the artist is empty when the album has no album artist`() = runTest {
+        val unknownArtist = createAlbum(name = "Orphan", albumArtist = null, groupKey = AlbumGroupKey("Orphan", null))
+        fakeSongRepository.setSongs(listOf(createSong(id = 1)))
+        fakeAlbumRepository.applyQueryPredicates = true
+        fakeAlbumRepository.setAlbums(listOf(unknownArtist, createAlbum(name = "Another Orphan", albumArtist = null, groupKey = AlbumGroupKey("Another Orphan", null))))
+        val viewModel = createViewModel(unknownArtist.groupKey)
+        backgroundScope.launch { viewModel.uiState.collect {} }
+        advanceUntilIdle()
+
+        viewModel.uiState.value.moreByArtist shouldBe emptyList()
+    }
+
+    private fun createViewModel(groupKey: AlbumGroupKey? = testAlbum.groupKey): AlbumDetailViewModel {
         val testMediaActions = TestMediaActions(
             fakeSongRepository,
             FakeGenreRepository(),
@@ -158,9 +200,10 @@ class AlbumDetailViewModelTest {
             albumRepository = fakeAlbumRepository,
         )
         return AlbumDetailViewModel(
-            groupKey = testAlbum.groupKey,
+            groupKey = groupKey,
             observeSongs = testMediaActions.observeSongs,
             observeAlbums = testMediaActions.observeAlbums,
+            observeArtistAlbums = ObserveArtistAlbums(fakeAlbumRepository, fakeSongRepository),
             observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
             observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
         )
