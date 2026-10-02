@@ -1,24 +1,24 @@
-// Copied from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Playback/Sources/Playback/StartupTiming.swift — see ios/Playback/README.md.
+// Adapted from Shuttle Podcasts (podcasts@9ee6e0954) mobile/ios/Playback/Sources/Playback/StartupTiming.swift — see ios/Playback/README.md.
 import Foundation
 
-/// **Where the time between the tap and the first audible sample went.**
+/// **Where the time between a play and the first audible sample went.**
 ///
-/// One record per `play(url:...)`, stamped at each stage of the start and folded into ONE
-/// `engine: ttfa` log line when the node first renders (#193). It exists because a slow start on
-/// the phone had no number attached to any of its suspects — the redirect chain, FFmpeg's
-/// blocking probe, the seek a resume needs — and the rule is to measure before changing anything.
+/// S2: one record per start of ``MusicPlaybackController`` — a load that plays, or a play of a
+/// paused track — stamped on the engine queue at each stage and folded into ONE `engine: ttfa` log
+/// line when the player node first renders (#687, after Podcasts' #193). It exists so a slow start
+/// on the phone has a number attached to each suspect: the server's first response, FFmpeg's
+/// blocking probe, the seek a resume needs, the audio session, the engine start.
 ///
 /// Every timestamp is `ProcessInfo.systemUptime`: monotonic, so a clock adjustment mid-start
 /// cannot produce a negative stage, and the deltas are what the line reports. Stages that did not
-/// happen (no HTTP on a download, no seek on a fresh start) print as `-`, never as 0, so a missing
-/// stage cannot be read as a fast one.
+/// happen (no HTTP on a file, no seek on a fresh start, no open on a pre-opened track) print as
+/// `-`, never as 0, so a missing stage cannot be read as a fast one.
 ///
-/// The record is plain data with no lock of its own: ``AVAudioEnginePlaybackController`` owns it
-/// under its `stateLock`, because the stamps arrive from main, the load task and the decode queue.
+/// The record is plain data with no lock of its own: the controller owns it on its engine queue.
 struct StartupTiming: Equatable {
 
     enum Source: String, Equatable {
-        case downloaded, streamed
+        case file, streamed
     }
 
     enum Start: Equatable {
@@ -26,6 +26,28 @@ struct StartupTiming: Equatable {
         /// A start away from zero, which on a stream is a head probe AND a second range
         /// transaction at the offset.
         case resume(seconds: TimeInterval)
+    }
+
+    /// Whether this start paid for the open.
+    enum Open: String, Equatable {
+        /// Opened for this start.
+        case opened
+        /// Already open, or opening, when the start was asked for: a pre-opened next track a skip
+        /// landed on, or a paused track being played. Its open stages print as `-`.
+        case preopened
+    }
+
+    /// What a source's open learned and cost, read off it by the controller (S2).
+    struct OpenStats: Equatable {
+        /// The decoder's `open()` began.
+        var startedAt: TimeInterval
+        var finishedAt: TimeInterval?
+        var probe: Probe?
+        var requestIssuedAt: TimeInterval?
+        var firstResponseAt: TimeInterval?
+        var firstResponse: FirstResponse?
+        var transactions: Int?
+        var tail: Tail?
     }
 
     /// The first HTTP response body of the source: what the tap paid before a byte of media arrived.
@@ -94,77 +116,43 @@ struct StartupTiming: Equatable {
         /// Source bytes the decoder had consumed when `open()` returned: the probe's real cost,
         /// bounded by `probesize` only after any ID3 tag has been stepped over.
         let bytes: Int64
-        /// The decoder's fixed probe budget (`stream_decode.c`): reported so the line says what the
-        /// number above was bounded by. Neither is tunable from this package.
-        static let probeSizeBytes: Int64 = 64 * 1024
-        static let analyzeSeconds: Double = 1
     }
 
     let source: Source
     let start: Start
+    let open: Open
     let playRequestedAt: TimeInterval
-    /// `AVAudioSession.setActive(true)` returned, off main. Since #225 the activation runs
-    /// concurrently with the load rather than first on the tap's thread, so this is wall-clock
-    /// from the tap and is only inside `total` when the load had to wait for it: see
-    /// ``sessionAwaitedAt`` and ``sessionWaitMs``.
+    /// A paused load's start: the play arrived this long after the load was ready, and the record
+    /// is still the load's, timed from the load. Nil when the start played as it loaded.
+    var playAfterReadyMs: Int?
+    /// `AVAudioSession.setActive(true)` returned, off main and concurrently with the open: only
+    /// inside `total` when the engine start had to wait for it (``sessionWaitMs``).
     var sessionActivatedAt: TimeInterval?
-    /// The load task, its probe done, began waiting for the session to be active — the one
-    /// point the activation is on the path, because the engine must not start before it.
+    /// The engine start began waiting for the session to be active.
     var sessionAwaitedAt: TimeInterval?
-    /// The previous episode's player node was swapped for a fresh one, on main: attached,
-    /// connected in its place and handed to the retire queue to be stopped. The stamps from here
-    /// to ``teardownFinishedAt`` split the teardown that the tap pays before the new load is even
-    /// queued (#193): each call in it has, on the phone, been the one that blocked main.
-    var nodeRetiredAt: TimeInterval?
-    /// `reader.cancel()` returned, on main: the previous episode's decoder and byte source are
-    /// told to stop.
-    var readerCancelledAt: TimeInterval?
-    /// `skipCueMixer.reset()` returned, on main.
-    var mixerResetAt: TimeInterval?
-    /// The end of what the tap pays synchronously before the load is queued.
-    var teardownFinishedAt: TimeInterval?
-    /// The app's byte tee for the new load was built, on main. Everything ad-skip owns for the
-    /// previous episode is torn down inside that call.
-    var teeCreatedAt: TimeInterval?
-    /// The detached load task began running, off main.
-    var loadTaskStartedAt: TimeInterval?
-    /// What the retired node's `stop()` took on the retire queue, stamped from there once it
-    /// returned. Not a stamp pair: the stop runs off main, concurrently with the load, and is on
-    /// nobody's critical path, so a delta against the main-thread stamps would say nothing about
-    /// it. Nil when it had not returned by the time the line was written: a start behind a parked
-    /// engine holds the stop until `engine.start()`, which is after the probe.
-    var nodeStopMs: Int?
-    /// The decoder's `open()` began, on the reader's queue. Everything between the tap and this —
-    /// the session, the node stop, the tee, the task hop, the credential lookup, the reader's init
-    /// with its sidecar reads — is ``preOpenMs``, and is NOT the probe.
+    /// The decoder's `open()` began. Everything between the play and this is ``preOpenMs``: the
+    /// engine queue's own backlog and the previous track's teardown.
     var probeStartedAt: TimeInterval?
-    /// The moment the request that led to ``firstResponse`` called `resume()`, on the reader's
-    /// queue. Measurement only (#193): with ``preOpenMs`` this splits what the tap paid before a
-    /// byte of the response arrived into "before the decoder asked" and "waiting on the request".
+    /// When the request that led to ``firstResponse`` called `resume()`.
     var requestIssuedAt: TimeInterval?
     var firstResponseAt: TimeInterval?
     var firstResponse: FirstResponse?
     var probeFinishedAt: TimeInterval?
     var probe: Probe?
-    /// What `connectChain` took on main once the format landed, measured there rather than
-    /// stamped as a pair: it is inside ``seekMs`` and used to be most of it. Zero when the chain
-    /// was already wired for the episode's format; a rewire of the player node's hop onto the
-    /// mixer otherwise (#248). Nil when the load never reached the engine.
-    var chainMs: Int?
-    /// What `engine.start()` took on main, the other half of the engine's share of ``seekMs``.
-    /// Nil when the engine was already running, so a start into a running engine reads `-`.
-    var engineStartMs: Int?
-    /// `reader.start(at:)` returned: the decoder is positioned, which on a resume means the seek
-    /// and the range transaction it opened are done.
-    var readerStartedAt: TimeInterval?
+    /// The source is positioned at the start frame: on a resume, its seek is done.
+    var positionedAt: TimeInterval?
     var firstBufferScheduledAt: TimeInterval?
+    /// What `engine.start()` took. Nil when the engine was already running.
+    var engineStartMs: Int?
+    /// The player node was told to play.
+    var nodePlayedAt: TimeInterval?
     var firstRenderedAt: TimeInterval?
     /// The render watch gave up before the node's clock moved.
     var renderTimedOut = false
     /// Response bodies the byte source had opened when the first buffer was scheduled. A fresh
     /// stream is 1; a resume is 2 unless the head probe's window already covered the offset.
     var transactions: Int?
-    /// How the footer look was answered, stamped with ``transactions``. Nil for a download.
+    /// How the footer look was answered, stamped with ``transactions``. Nil for a file.
     var tail: Tail?
 
     /// Above this the line is repeated at `.error`, so a slow start is one grep away.
@@ -173,64 +161,60 @@ struct StartupTiming: Equatable {
     /// Monotonic seconds. The only clock the record should ever be stamped with.
     static func now() -> TimeInterval { ProcessInfo.processInfo.systemUptime }
 
-    init(source: Source, start: Start, playRequestedAt: TimeInterval = StartupTiming.now()) {
+    init(source: Source, start: Start, open: Open, playRequestedAt: TimeInterval = StartupTiming.now()) {
         self.source = source
         self.start = start
+        self.open = open
         self.playRequestedAt = playRequestedAt
+    }
+
+    /// Takes the open's stages from `stats`, unless the open began before this start: a pre-opened
+    /// track's open was paid ahead, and its stamps would read as negative stages.
+    mutating func apply(_ stats: OpenStats) {
+        probe = stats.probe
+        transactions = stats.transactions
+        tail = stats.tail
+        guard open == .opened, stats.startedAt >= playRequestedAt else { return }
+        probeStartedAt = stats.startedAt
+        probeFinishedAt = stats.finishedAt
+        requestIssuedAt = stats.requestIssuedAt
+        firstResponseAt = stats.firstResponseAt
+        firstResponse = stats.firstResponse
     }
 
     // MARK: - Deltas
 
     var totalMs: Int? { delta(playRequestedAt, firstRenderedAt) }
-    /// Tap → the audio session active. Concurrent with everything below since #225: a big
-    /// number here costs the start nothing unless ``sessionWaitMs`` is also nonzero.
+    /// Play → the audio session active. Concurrent with the open: a big number here costs the
+    /// start nothing unless ``sessionWaitMs`` is also nonzero.
     var sessionMs: Int? { delta(playRequestedAt, sessionActivatedAt) }
-    /// How long the probed load sat waiting for the session: zero when the activation had
-    /// already returned by the time the probe finished, which is the whole point of running it
-    /// concurrently. Nil until the load reaches the wait.
+    /// How long the engine start sat waiting for the session: zero when the activation had already
+    /// returned, which is the whole point of running it concurrently.
     var sessionWaitMs: Int? { delta(sessionAwaitedAt, sessionActivatedAt).map { max($0, 0) } }
-    /// Tap → the player node swapped for a fresh one.
-    var swapMs: Int? { delta(playRequestedAt, nodeRetiredAt) }
-    /// Node swapped → the previous reader cancelled.
-    var cancelMs: Int? { delta(nodeRetiredAt, readerCancelledAt) }
-    /// Reader cancelled → the skip-cue mixer reset.
-    var mixerMs: Int? { delta(readerCancelledAt, mixerResetAt) }
-    /// Tap → the load about to be queued: the whole synchronous teardown, ``swapMs`` through
-    /// ``mixerMs``. ``nodeStopMs`` is NOT inside it: on the phone the node stop was 11–48 s of
-    /// main-thread time when it ran here (#193), and it now runs on the retire queue, so a
-    /// teardown of more than a few ms is main blocked in something else. Nor is the session
-    /// activation, since #225.
-    var teardownMs: Int? { delta(playRequestedAt, teardownFinishedAt) }
-    /// Teardown done → the app's tee built: the skip layer's own teardown for the old episode.
-    var teeMs: Int? { delta(teardownFinishedAt, teeCreatedAt) }
-    /// Tee built → the load task running: the hop off main.
-    var hopMs: Int? { delta(teeCreatedAt, loadTaskStartedAt) }
-    /// Tap → `open()` began: everything the start paid before the decoder saw a byte.
+    /// Play → `open()` began.
     var preOpenMs: Int? { delta(playRequestedAt, probeStartedAt) }
-    /// Tap → the request that led to ``firstResponse`` called `resume()`. Nil for a download.
-    /// Chronologically after ``preOpenMs`` — `open()` is what triggers the first fetch — so the
-    /// gap between the two is FFmpeg's own work before it ever touches the byte source.
+    /// Play → the request that led to ``firstResponse`` called `resume()`. Nil for a file.
     var preRequestMs: Int? { delta(playRequestedAt, requestIssuedAt) }
-    /// Tap → first response. Nil for a download, which never opens a transaction.
+    /// Play → first response. Nil for a file, which never opens a transaction.
     var firstResponseMs: Int? { delta(playRequestedAt, firstResponseAt) }
     /// Joins this line's `first-response` instant to the `engine: ttfa-net` line
-    /// ``HTTPRangeByteSource`` logs once its ``NetMetrics`` land — see that type's note on why
-    /// they are never on this line. Nil for a download, or a line with no first response at all.
+    /// ``HTTPRangeByteSource`` logs once its ``NetMetrics`` land. Nil for a file, or a line with
+    /// no first response at all.
     var netKey: Int? { firstResponseAt.map { Int(($0 * 1000).rounded()) } }
-    /// First response → `open()` returned; with no response (a download, or a stream served from
-    /// the run on disk) from the moment `open()` began, so a disk-served probe is the probe alone
-    /// and not the tap-to-open path in front of it. The tap is the fallback for a record with no
-    /// open stamp at all.
-    var probeMs: Int? { delta(firstResponseAt ?? probeStartedAt ?? playRequestedAt, probeFinishedAt) }
-    /// `open()` returned → the decoder positioned. Part of ``firstBufferMs``, separated because it
-    /// is the resume-only cost. Not only the decoder's seek: the chain wiring and the engine
-    /// start sit on main between the probe landing and the producer being queued, and are
-    /// broken out as ``chainMs`` and ``engineStartMs`` so a slow `seek` can be read.
-    var seekMs: Int? { delta(probeFinishedAt, readerStartedAt) }
-    /// `open()` returned → first PCM buffer at the node. Includes the seek and the first decode.
-    var firstBufferMs: Int? { delta(probeFinishedAt, firstBufferScheduledAt) }
-    /// First buffer scheduled → the node's clock first advanced.
-    var renderMs: Int? { delta(firstBufferScheduledAt, firstRenderedAt) }
+    /// First response → `open()` returned; with no response (a file, or a stream served from the
+    /// run on disk) from the moment `open()` began.
+    var probeMs: Int? {
+        guard let probeFinishedAt else { return nil }
+        return delta(firstResponseAt ?? probeStartedAt, probeFinishedAt)
+    }
+    /// `open()` returned (or, pre-opened, the play) → the source positioned: the resume's seek.
+    var seekMs: Int? { delta(probeFinishedAt ?? playRequestedAt, positionedAt) }
+    /// Positioned → the first PCM buffer at the node: the first decode and processing.
+    var firstBufferMs: Int? { delta(positionedAt, firstBufferScheduledAt) }
+    /// Play → the node told to play.
+    var playMs: Int? { delta(playRequestedAt, nodePlayedAt) }
+    /// The node told to play → its clock first advanced.
+    var renderMs: Int? { delta(nodePlayedAt, firstRenderedAt) }
 
     var isSlow: Bool { (totalMs ?? 0) > Self.slowThresholdMs }
 
@@ -248,15 +232,10 @@ struct StartupTiming: Equatable {
             "engine: ttfa total=\(ms(totalMs))",
             "source=\(source.rawValue)",
             "start=\(startDescription)",
+            "open=\(open.rawValue)",
+            "play-after-ready=\(ms(playAfterReadyMs))",
             "session=\(ms(sessionMs))",
             "session-wait=\(ms(sessionWaitMs))",
-            "teardown=\(ms(teardownMs))",
-            "swap=\(ms(swapMs))",
-            "cancel=\(ms(cancelMs))",
-            "mixer=\(ms(mixerMs))",
-            "node-stop=\(ms(nodeStopMs))",
-            "tee=\(ms(teeMs))",
-            "hop=\(ms(hopMs))",
             "pre-open=\(ms(preOpenMs))",
         ]
         if source == .streamed {
@@ -274,21 +253,18 @@ struct StartupTiming: Equatable {
             default: resolved = "direct"
             }
             fields.append("resolved=\(resolved)")
-        }
-        fields.append("pre-request=\(ms(preRequestMs))")
-        fields.append("first-response=\(ms(firstResponseMs))")
-        if source == .streamed {
+            fields.append("pre-request=\(ms(preRequestMs))")
+            fields.append("first-response=\(ms(firstResponseMs))")
             fields.append("net-key=\(netKey.map(String.init) ?? "-")")
         }
         fields.append("probe=\(ms(probeMs))")
         fields.append("probe-bytes=\(probe.map { String($0.bytes) } ?? "-")")
-        fields.append("probe-budget=\(Probe.probeSizeBytes)B/\(Int(Probe.analyzeSeconds))s")
         fields.append("codec=\(probe?.codec ?? "-")")
         fields.append("container=\(probe?.container ?? "-")")
-        fields.append("chain=\(ms(chainMs))")
-        fields.append("engine-start=\(ms(engineStartMs))")
         fields.append("seek=\(ms(seekMs))")
         fields.append("first-buffer=\(ms(firstBufferMs))")
+        fields.append("engine-start=\(ms(engineStartMs))")
+        fields.append("play=\(ms(playMs))")
         fields.append("render=\(renderTimedOut ? "timeout" : ms(renderMs))")
         if source == .streamed {
             fields.append("transactions=\(transactions.map(String.init) ?? "-")")
@@ -306,8 +282,7 @@ struct StartupTiming: Equatable {
 
     private func ms(_ value: Int?) -> String { Self.formatMs(value) }
 
-    /// `Nms`, or `-` for a stage that did not happen. Shared with the seek path's node-stop
-    /// field, so a `restart decode` line reads like the `ttfa` line it sits next to.
+    /// `Nms`, or `-` for a stage that did not happen.
     static func formatMs(_ value: Int?) -> String {
         value.map { "\($0)ms" } ?? "-"
     }

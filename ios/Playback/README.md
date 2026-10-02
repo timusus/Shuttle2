@@ -105,6 +105,14 @@ source until it's done. A seek or stop first interrupts a read stalled on the ne
 open in flight). Callbacks arrive on
 `callbackQueue` (main by default).
 
+**Start timing.** Every start — a load that plays, or a play of a paused track — logs one
+`engine: ttfa` line (category `MusicPlayback`) when the player node first renders: the total from
+the call, and the stages in between (session, pre-open, first response, probe, seek, first buffer,
+engine start, play, render), `-` for one that didn't happen (#687). A play within 0.5 s of a paused
+load being ready is that load's start (`play-after-ready`). Over 3 s it is logged at error level.
+On a device: Console.app, filter `engine: ttfa`, or `log stream --predicate 'eventMessage CONTAINS
+"engine: ttfa"'` with the phone attached.
+
 ## Provenance: copied, adapted, new
 
 Copied from Shuttle Podcasts at `podcasts@9ee6e0954`. Each file's first line names its upstream
@@ -113,8 +121,7 @@ path. The only edits are these renames: the log subsystem becomes `com.simplecit
 change. They are kept diffable so a later shared AudioCore can take them back.
 
 - **Copied**:
-  - `Decode/`: `StreamByteReader`, `FileByteReader`, `ReadAheadTunables`, `StreamingPCMReader`,
-    `StartupTiming`.
+  - `Decode/`: `StreamByteReader`, `FileByteReader`, `ReadAheadTunables`, `StreamingPCMReader`.
   - `Streaming/`: `HTTPRangeByteSource`, `CachedRunStore`, `ResolvedURLCache`, `ReadAheadPolicy`,
     `ReadAheadControl`, `AudioByteTee`. The tee and appetite hooks are nil by default.
   - `Engine/`: `ClockStallDetector`, `PlayerStallRecovery`.
@@ -127,6 +134,9 @@ change. They are kept diffable so a later shared AudioCore can take them back.
     - a resampler rebuilt on a mid-stream format change;
     - frame timestamps after a byte-estimate seek for FLAC and PCM.
   - `FFmpegStreamDecoder` adds `setOutputFormat` and `read(into:maxFrames:)`.
+  - `StartupTiming` keeps Podcasts' nested types and its `ttfa-net` line, but its record is the
+    controller's start (#687): the Podcasts-only teardown, swap, tee and chain stages are gone, and
+    it adds `open` (pre-opened or not), `play-after-ready` and `play`.
   - `Biquad` adds `adoptState`; its factories were dropped, as the shared Kotlin EQ designs the bands.
   - `LookaheadLimiter` is now stereo-linked and frame-interleaved, and its window includes the
     emitted frame.

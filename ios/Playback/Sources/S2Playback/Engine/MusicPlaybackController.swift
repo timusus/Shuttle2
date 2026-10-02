@@ -264,6 +264,14 @@ public final class MusicPlaybackController {
     private var scratch: [Float]
     private var ticker: DispatchSourceTimer?
     private var timePitchInGraph = false
+    /// The start being timed: from a load or play to the node's first rendered frame (#687).
+    private var startTiming: StartupTiming?
+    /// Tells a render watch for an earlier start to stop.
+    private var startTimingSerial = 0
+    /// When the current load was ready, paused: a play close behind it is still the load's start.
+    private var readyPausedAt: TimeInterval?
+    /// The last start's record, once its line was logged.
+    private var lastStartTiming: StartupTiming?
 
     // MARK: Shared state (any thread, under `timelineLock`)
 
@@ -330,11 +338,14 @@ public final class MusicPlaybackController {
         private let done = DispatchGroup()
         /// Written before `done` is left.
         private var activated = true
+        /// When `activate` returned (``StartupTiming/now()``). Written before `done` is left.
+        private(set) var activatedAt: TimeInterval?
 
         init(on queue: DispatchQueue, _ activate: @escaping () -> Bool) {
             done.enter()
             queue.async { [self] in
                 activated = activate()
+                activatedAt = StartupTiming.now()
                 done.leave()
             }
         }
@@ -401,6 +412,7 @@ public final class MusicPlaybackController {
     /// its stream (``PlaybackTrack/streamIdentity``): a skip onto it starts on what was already
     /// opened, and a stream re-opened for a seek hands its next back.
     public func load(current track: PlaybackTrack, next nextTrack: PlaybackTrack?, startMs: Int64 = 0, playWhenReady: Bool) {
+        let requestedAt = StartupTiming.now()
         interruptActiveRead()
         let activation = playWhenReady ? beginActivation() : nil
         engineQueue.async { [self] in
@@ -415,6 +427,15 @@ public final class MusicPlaybackController {
             next = nextTrack.map { take(&reusable, for: $0) ?? Slot(track: $0) }
             reusable.map(release)
             self.playWhenReady = playWhenReady
+            readyPausedAt = nil
+            beginStartTiming(
+                StartupTiming(
+                    source: timingSource(slot),
+                    start: startMs > 0 ? .resume(seconds: Double(startMs) / 1000) : .fresh,
+                    open: slot.opened || slot.preparing != nil ? .preopened : .opened,
+                    playRequestedAt: requestedAt
+                )
+            )
             setState(.loading)
             openIfNeeded(slot)
             restart(atFrame: frames(ms: startMs))
@@ -483,6 +504,7 @@ public final class MusicPlaybackController {
 
     public func play() {
         let activation = beginActivation()
+        let requestedAt = StartupTiming.now()
         engineQueue.async { [self] in
             log.notice("play: \(self.state.rawValue, privacy: .public)")
             commandsTaken += 1
@@ -490,6 +512,7 @@ public final class MusicPlaybackController {
             playWhenReady = true
             pendingActivation = activation
             guard current != nil, state != .ended else { return }
+            if state != .playing { timePlay(requestedAt: requestedAt) }
             guard startPlaying() else { return stayPaused() }
         }
     }
@@ -501,6 +524,7 @@ public final class MusicPlaybackController {
             defer { answerCommand() }
             playWhenReady = false
             pendingActivation = nil
+            dropStartTiming()
             let held = playedStreamIndex()
             player.pause()
             timelineLock.withLock { timeline.held = held }
@@ -630,6 +654,9 @@ public final class MusicPlaybackController {
         engineQueue.sync(execute: body)
     }
 
+    /// The last start's `ttfa` record, once its line was logged.
+    var lastStartTimingForTesting: StartupTiming? { engineQueue.sync { lastStartTiming } }
+
     /// Wait for everything already asked of the controller, a next track's open included.
     func syncForTesting() {
         engineQueue.sync {}
@@ -742,14 +769,19 @@ public final class MusicPlaybackController {
     private func startEngineIfNeeded() -> Bool {
         if let activation = pendingActivation {
             pendingActivation = nil
-            guard activation.wait() else {
+            if startTiming?.nodePlayedAt == nil { startTiming?.sessionAwaitedAt = StartupTiming.now() }
+            let activated = activation.wait()
+            if startTiming?.nodePlayedAt == nil { startTiming?.sessionActivatedAt = activation.activatedAt }
+            guard activated else {
                 log.error("output not activated; paused")
                 return false
             }
         }
         guard !engine.isRunning else { return true }
         do {
+            let started = StartupTiming.now()
             try startEngine(engine)
+            if startTiming?.nodePlayedAt == nil { startTiming?.engineStartMs = Int(((StartupTiming.now() - started) * 1000).rounded()) }
             return true
         } catch {
             log.error("engine start failed: \(String(describing: error), privacy: .public)")
@@ -762,7 +794,7 @@ public final class MusicPlaybackController {
     private func startPlaying() -> Bool {
         guard startEngineIfNeeded() else { return false }
         fill(aheadFrames: Self.startFrames)
-        player.play()
+        playNode()
         releaseHold()
         setState(.playing)
         startTicker()
@@ -797,6 +829,7 @@ public final class MusicPlaybackController {
     /// Not a decode failure: the track stays put.
     private func stayPaused() {
         playWhenReady = false
+        dropStartTiming()
         stopTicker()
         setState(.paused)
     }
@@ -975,9 +1008,11 @@ public final class MusicPlaybackController {
             }
         }
         appendSegment(for: current, mediaStart: startFrame)
+        if startTiming?.positionedAt == nil { startTiming?.positionedAt = StartupTiming.now() }
         if !playWhenReady {
             pendingActivation = nil
             fill()
+            readyPausedAt = StartupTiming.now()
             setState(.paused)
         } else if !startPlaying() {
             if retryingStart { retryStart() } else { stayPaused() }
@@ -1022,6 +1057,7 @@ public final class MusicPlaybackController {
 
     private func teardown() {
         generation += 1
+        dropStartTiming()
         player.stop()
         stopTicker()
         current.map(release)
@@ -1135,6 +1171,7 @@ public final class MusicPlaybackController {
                 timelineLock.withLock { timeline.anchors.append(anchor) }
             }
         }
+        noteFirstBuffer()
         let generation = self.generation
         buffersInFlight += 1
         player.scheduleBuffer(buffer, at: nil, options: [], completionCallbackType: .dataConsumed) { [weak self] _ in
@@ -1153,6 +1190,7 @@ public final class MusicPlaybackController {
     /// Follow the playhead: promote the next track once it is being heard, notice the end.
     private func updateTimeline(concludingEnd: Bool = true) {
         guard current != nil else { return }
+        noteFirstRender()
         let stream = playedStreamIndex()
         // Recorded on the engine queue only, where a restart can't replace the timeline meanwhile.
         let segment = timelineLock.withLock {
@@ -1177,6 +1215,98 @@ public final class MusicPlaybackController {
             setState(.ended)
         }
         if state == .playing { emitPosition() }
+    }
+
+    // MARK: - Start timing (engine queue)
+
+    private func timingSource(_ slot: Slot) -> StartupTiming.Source {
+        (slot.source as? FFmpegTrackSource)?.isStreamed == true ? .streamed : .file
+    }
+
+    private func beginStartTiming(_ timing: StartupTiming) {
+        startTimingSerial += 1
+        startTiming = timing
+    }
+
+    /// A start that won't reach the ear (paused, refused, torn down) has no line.
+    private func dropStartTiming() {
+        startTimingSerial += 1
+        startTiming = nil
+    }
+
+    /// A play of a paused track. Close behind its load being ready (a load made paused, then played
+    /// as it completes) it's still the load's start, timed from the load; otherwise a start of its
+    /// own, of a track already open.
+    private func timePlay(requestedAt: TimeInterval) {
+        if let ready = readyPausedAt, startTiming?.nodePlayedAt == nil, startTiming != nil,
+           requestedAt - ready < Self.playAfterReadyWindow {
+            startTiming?.playAfterReadyMs = Int((max(requestedAt - ready, 0) * 1000).rounded())
+            return
+        }
+        guard let current else { return }
+        let ms = position?.ms ?? 0
+        beginStartTiming(
+            StartupTiming(
+                source: timingSource(current),
+                start: ms > 0 ? .resume(seconds: Double(ms) / 1000) : .fresh,
+                open: .preopened,
+                playRequestedAt: requestedAt
+            )
+        )
+    }
+
+    /// How soon after a paused load's ready a play still counts as that load's start.
+    private static let playAfterReadyWindow: TimeInterval = 0.5
+    /// How long the render watch polls the node's clock before giving up.
+    private static let renderWatchSeconds: TimeInterval = 2
+
+    private func noteFirstBuffer() {
+        guard startTiming != nil, startTiming?.firstBufferScheduledAt == nil else { return }
+        startTiming?.firstBufferScheduledAt = StartupTiming.now()
+        if let stats = (current?.source as? FFmpegTrackSource)?.openStats { startTiming?.apply(stats) }
+    }
+
+    private func playNode() {
+        player.play()
+        guard startTiming != nil, startTiming?.nodePlayedAt == nil else { return }
+        let now = StartupTiming.now()
+        startTiming?.nodePlayedAt = now
+        watchFirstRender(serial: startTimingSerial, deadline: now + Self.renderWatchSeconds)
+    }
+
+    /// Polls the node's clock until it moves, so `render` is the output's own latency and not the
+    /// position tick's. Offline rendering is noticed by ``updateTimeline(concludingEnd:)``.
+    private func watchFirstRender(serial: Int, deadline: TimeInterval) {
+        guard case .realtime = renderingMode else { return }
+        engineQueue.asyncAfter(deadline: .now() + .milliseconds(5)) { [weak self] in
+            guard let self, serial == startTimingSerial, startTiming != nil else { return }
+            noteFirstRender()
+            guard startTiming != nil else { return }
+            if StartupTiming.now() > deadline {
+                startTiming?.renderTimedOut = true
+                logStartTiming()
+            } else {
+                watchFirstRender(serial: serial, deadline: deadline)
+            }
+        }
+    }
+
+    private func noteFirstRender() {
+        guard startTiming?.nodePlayedAt != nil, let sampleTime = nodeSampleTime(), sampleTime > 0 else { return }
+        startTiming?.firstRenderedAt = StartupTiming.now()
+        logStartTiming()
+    }
+
+    private func logStartTiming() {
+        guard let timing = startTiming else { return }
+        startTiming = nil
+        lastStartTiming = timing
+        let line = timing.logLine
+        if timing.isSlow {
+            log.error("\(line, privacy: .public)")
+        } else {
+            log.info("\(line, privacy: .public)")
+        }
     }
 
     private func emitPosition() {

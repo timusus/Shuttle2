@@ -60,6 +60,9 @@ public final class FFmpegTrackSource: TrackPCMSource {
     private var outputRate: Double = 0
     private var outputChannels = 2
     private var cancelled = false
+    private var openStartedAt: TimeInterval?
+    private var openFinishedAt: TimeInterval?
+    private var probe: StartupTiming.Probe?
 
     public init(url: URL, headers: [String: String] = [:]) {
         self.url = url
@@ -80,10 +83,15 @@ public final class FFmpegTrackSource: TrackPCMSource {
         let wasCancelled = cancelled
         self.reader = reader
         self.decoder = decoder
+        openStartedAt = StartupTiming.now()
         lock.unlock()
         if wasCancelled { decoder.cancel() }
         do {
             let format = try decoder.open()
+            lock.withLock {
+                openFinishedAt = StartupTiming.now()
+                probe = StartupTiming.Probe(codec: format.codec, container: format.container, bytes: decoder.bytesConsumed)
+            }
             try decoder.setOutputFormat(sampleRate: sampleRate, channelCount: channelCount)
             outputRate = sampleRate
             outputChannels = channelCount
@@ -121,6 +129,25 @@ public final class FFmpegTrackSource: TrackPCMSource {
             if got == 0 { return }
             skip -= Int64(got)
         }
+    }
+
+    /// Whether it plays over HTTP, for the start timing.
+    var isStreamed: Bool { !url.isFileURL }
+
+    /// What the open learned and cost, for the start timing (#687); nil until it began. The
+    /// byte source's figures are read as of now.
+    var openStats: StartupTiming.OpenStats? {
+        let (reader, startedAt, finishedAt, probe) = lock.withLock { (reader, openStartedAt, openFinishedAt, probe) }
+        guard let startedAt else { return nil }
+        var stats = StartupTiming.OpenStats(startedAt: startedAt, finishedAt: finishedAt, probe: probe)
+        if let http = reader as? HTTPRangeByteSource {
+            stats.requestIssuedAt = http.requestIssuedAt
+            stats.firstResponseAt = http.firstResponseAt
+            stats.firstResponse = http.firstResponse
+            stats.transactions = http.transactionCount
+            stats.tail = http.tailStatus
+        }
+        return stats
     }
 
     /// A file, or an HTTP stream whose length the host gave (`Content-Range` or `Content-Length`).
