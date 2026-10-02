@@ -13,7 +13,10 @@ struct NowPlayingState: Equatable {
     var artwork: ArtworkSource?
     /// The current song's format, for the quality line under its title.
     var quality: AudioQuality?
+    /// Play is intended (`PlayIntent`): the transport shows pause from the tap, not once audio starts.
     var isPlaying = false
+    /// Play is intended but no audio is out yet: the play button spins.
+    var isLoading = false
     var positionMs = 0
     var durationMs = 0
     var queue: [NowPlayingQueueRow] = []
@@ -124,7 +127,10 @@ struct MiniPlayerState: Equatable {
     var title: String?
     var artist: String?
     var artwork: ArtworkSource?
+    /// Play is intended (`PlayIntent`): the button shows pause from the tap, not once audio starts.
     var isPlaying = false
+    /// Play is intended but no audio is out yet: the button spins.
+    var isLoading = false
 }
 
 /// Holds a seek's target as the displayed position until the player reports a position near it, so the
@@ -214,7 +220,8 @@ struct PlayerActions {
 
 /// The mini player's and Now Playing's state and commands, off the shared `PlayerViewModel` (#586, #587, #621): its
 /// `uiState` mapped onto `MiniPlayerState` and `NowPlayingState`, its actions onto `PlayerActions`, and its one-shot
-/// events handed to Now Playing as `events`, which `outcome(for:)` turns into a notice or a route to open.
+/// events handed to Now Playing as `events`, which `outcome(for:)` turns into a notice or a route to open. Whether it
+/// plays is the listener's intent (`PlayIntent`), not the player's state, and play/pause goes through the intent.
 ///
 /// Each state is replaced only when it changes, so the mini player, which reads `miniPlayer` alone, isn't
 /// redrawn on every progress tick. The displayed position holds a seek's target until the player catches up
@@ -223,6 +230,7 @@ struct PlayerActions {
 @Observable
 final class PlayerBinding {
     private let viewModel: PlayerViewModel
+    private let intent: PlayIntent
     /// `nonisolated(unsafe)`: only `deinit` touches them off the main actor, and by then no other access
     /// can be concurrent (deinit runs once the last reference is gone).
     @ObservationIgnored private nonisolated(unsafe) var observer: Task<Void, Never>?
@@ -246,10 +254,12 @@ final class PlayerBinding {
     @ObservationIgnored private var songActionsFor: Int64?
     @ObservationIgnored private var playlistsById: [Int64: Playlist] = [:]
 
-    init(viewModel: PlayerViewModel) {
+    init(viewModel: PlayerViewModel, intent: PlayIntent) {
         self.viewModel = viewModel
+        self.intent = intent
         update(viewModel.uiState.value)
         observe()
+        intent.addListener { [weak self] in self?.updateIntent() }
     }
 
     deinit {
@@ -282,7 +292,8 @@ final class PlayerBinding {
             title: current?.song.name,
             artist: current?.artist,
             artwork: artwork,
-            isPlaying: player.playing
+            isPlaying: intent.isPlayIntended,
+            isLoading: intent.isLoading
         )
         if mini != miniPlayer { miniPlayer = mini }
         if (current != nil) != isMiniPlayerVisible { isMiniPlayerVisible = current != nil }
@@ -296,7 +307,6 @@ final class PlayerBinding {
             next.album = current?.album
             next.artwork = artwork
             next.quality = current.map { AudioQuality(song: $0.song) }
-            next.isPlaying = player.playing
             next.queue = player.items.map { item in
                 NowPlayingQueueRow(
                     id: item.uid,
@@ -319,9 +329,23 @@ final class PlayerBinding {
         reportedPositionMs = Int(state.progress.positionMs)
         next.positionMs = seekHold.displayed(reportedMs: reportedPositionMs)
         next.durationMs = Int(state.progress.durationMs)
+        next.isPlaying = intent.isPlayIntended
+        next.isLoading = intent.isLoading
         if next != nowPlaying { nowPlaying = next }
 
         if state.events.map(\.id) != events.map(\.id) { events = state.events }
+    }
+
+    /// The intent changed: only the play state of each surface moves.
+    private func updateIntent() {
+        if miniPlayer.isPlaying != intent.isPlayIntended || miniPlayer.isLoading != intent.isLoading {
+            miniPlayer.isPlaying = intent.isPlayIntended
+            miniPlayer.isLoading = intent.isLoading
+        }
+        if nowPlaying.isPlaying != intent.isPlayIntended || nowPlaying.isLoading != intent.isLoading {
+            nowPlaying.isPlaying = intent.isPlayIntended
+            nowPlaying.isLoading = intent.isLoading
+        }
     }
 
     /// Follows the actions the shared ViewModel allows `song`, restarting when the current song changes.
@@ -348,8 +372,9 @@ final class PlayerBinding {
 
     var actions: PlayerActions {
         let viewModel = viewModel
+        let intent = intent
         return PlayerActions(
-            playPause: { viewModel.togglePlayback() },
+            playPause: { intent.toggle() },
             next: { viewModel.skipToNext() },
             previous: { viewModel.skipToPrevious() },
             seek: { [weak self] ms in self?.seek(toMs: ms) },

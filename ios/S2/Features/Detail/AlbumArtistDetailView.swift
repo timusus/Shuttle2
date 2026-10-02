@@ -24,17 +24,17 @@ struct AlbumArtistDetailView: View {
                 state: state,
                 isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
                 onPlay: { songs, index, context in
-                    models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: songs), position: Int32(index), context: context))
+                    models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: songs), position: Int32(index), context: context))
                 },
                 onShuffle: { songs, context in
-                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: songs), context: context))
+                    models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: songs), context: context))
                 },
                 onShuffleAlbums: { models.artist.onShuffleAlbums() },
                 onPlayNext: { songs in
-                    models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionSongs(songs: songs)))
+                    models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(songs: songs)))
                 },
                 onAddToQueue: { songs in
-                    models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(songs: songs)))
+                    models.actions.send(MediaActionAddToQueue(selection: MediaSelectionSongs(songs: songs)))
                 },
                 onAlbumTap: { navigator.openAsserting(.album($0)) },
                 onToggleAlbum: { models.artist.onToggleAlbum(album: $0) },
@@ -42,9 +42,9 @@ struct AlbumArtistDetailView: View {
                 onExpandAll: { models.artist.onExpandAll() },
                 onCollapseAll: { models.artist.onCollapseAll() },
                 albumActions: DetailAlbumActions(
-                    onPlay: { models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionAlbums(album: $0), position: 0)) },
-                    onPlayNext: { models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0))) },
-                    onAddToQueue: { models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0))) }
+                    onPlay: { models.actions.send(MediaActionPlay(selection: MediaSelectionAlbums(album: $0), position: 0)) },
+                    onPlayNext: { models.actions.send(MediaActionPlayNext(selection: MediaSelectionAlbums(album: $0))) },
+                    onAddToQueue: { models.actions.send(MediaActionAddToQueue(selection: MediaSelectionAlbums(album: $0))) }
                 )
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })

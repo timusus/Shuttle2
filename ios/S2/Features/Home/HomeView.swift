@@ -16,32 +16,23 @@ struct HomeView: View {
 
     @Environment(\.scenePhase) private var scenePhase
     @State private var appeared = false
-    @State private var pendingPlay = PendingPlay()
 
     var body: some View {
         let models = ViewModelCache.shared.viewModel(AppTab.home.cacheKey) {
             HomeModels(graph: AppGraph.shared)
         }
-        let player = AppGraph.shared.playerController
+        let intent = AppGraph.dependencies.playIntent
         Observing(models.home.uiState, models.actions.uiState, models.importState) { state, actions, importState in
             HomeContent(
                 state: state,
                 importStatus: ImportStatus(importState),
                 onShuffleAll: {
-                    if let action = models.home.shuffleAll() { models.actions.dispatch(action: action) }
+                    if let action = models.home.shuffleAll() { models.actions.send(action) }
                 },
                 onOpen: { item in navigator.open(Self.route(item)) },
-                onAction: { models.actions.dispatch(action: $0) },
-                pendingPlayKey: pendingPlay.key,
-                onPlay: { item, action in
-                    let ticket = pendingPlay.start(item)
-                    // Kotlin hands the result back on the main thread.
-                    models.actions.dispatch(action: action) { result in
-                        MainActor.assumeIsolated {
-                            pendingPlay.finished(ticket, result: result, playing: Self.isPlaying(player.playbackStateFlow.value))
-                        }
-                    }
-                }
+                onAction: { models.actions.send($0) },
+                pendingPlayKey: intent.loadingKey,
+                onPlay: { item, action in models.actions.send(action, key: item.key) }
             )
             .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) })
             .consumeEvents((state as? HomeUiStateContent)?.events ?? [], handled: { models.home.onEventHandled(id: $0) }) { _ in }
@@ -61,15 +52,7 @@ struct HomeView: View {
         .onChange(of: scenePhase) { _, phase in
             models.home.onVisibilityChanged(visible: appeared && phase != .background)
         }
-        .task {
-            for await state in player.playbackStateFlow { pendingPlay.playbackChanged(playing: Self.isPlaying(state)) }
-        }
         .navigationTitle(AppTab.home.title)
-    }
-
-    /// Playing or buffering: either way the player has the queue it was given.
-    static func isPlaying(_ state: PlaybackState) -> Bool {
-        state is PlaybackState.Playing || state is PlaybackState.Loading
     }
 
     /// The screen an item opens.
@@ -112,9 +95,9 @@ struct HomeContent: View {
     var onOpen: (HomeItem) -> Void = { _ in }
     /// Dispatches a play or queue action.
     var onAction: (MediaAction) -> Void = { _ in }
-    /// The item whose play is under way (`PendingPlay`), by key: its Jump Back In cell shows a spinner.
+    /// The item whose play is under way (`PlayIntent.loadingKey`), by key: its Jump Back In cell shows a spinner.
     var pendingPlayKey: String?
-    /// Plays a Jump Back In item with the action given, following it through (`PendingPlay`); nil dispatches it through
+    /// Plays a Jump Back In item with the action given, following it through (`PlayIntent`); nil dispatches it through
     /// `onAction`.
     var onPlay: ((HomeItem, MediaAction) -> Void)?
 

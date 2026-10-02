@@ -192,7 +192,7 @@ struct NowPlayingContent: View {
             HStack(spacing: 0) {
                 shuffleButton
                     .frame(maxWidth: .infinity)
-                NowPlayingTransport(isPlaying: state.isPlaying, actions: actions)
+                NowPlayingTransport(isPlaying: state.isPlaying, isLoading: state.isLoading, actions: actions)
                 repeatButton
                     .frame(maxWidth: .infinity)
             }
@@ -654,9 +654,12 @@ struct NowPlayingScrubber: View {
 
 /// Previous, play/pause and next as one family: a 72 pt tint-filled play circle whose glyph swaps with a replace
 /// transition, and previous and next as glyphs of the same weight in the same tint, each in a 60 pt target. All
-/// scale with Dynamic Type up to a cap and press down on touch.
+/// scale with Dynamic Type up to a cap and press down on touch. While play is intended but no audio is out yet, a
+/// spinner takes the glyph's place in the circle, and a tap pauses.
 struct NowPlayingTransport: View {
+    /// Play is intended (`PlayIntent`).
     let isPlaying: Bool
+    var isLoading = false
     let actions: PlayerActions
 
     @Environment(\.artworkTint) private var tint
@@ -684,16 +687,25 @@ struct NowPlayingTransport: View {
                 actions.playPause()
                 playTrigger.toggle()
             } label: {
-                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                    .font(.s2ScaledGlyph(diameter * Self.playGlyphRatio, weight: Self.weight))
-                    .foregroundStyle(tintInk)
-                    .contentTransition(.symbolEffect(.replace))
-                    .frame(width: diameter, height: diameter)
-                    .background(Circle().fill(tint))
-                    .contentShape(Circle())
+                Group {
+                    if isLoading {
+                        ProgressView()
+                            .controlSize(.large)
+                            .tint(tintInk)
+                    } else {
+                        Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                            .font(.s2ScaledGlyph(diameter * Self.playGlyphRatio, weight: Self.weight))
+                            .foregroundStyle(tintInk)
+                            .contentTransition(.symbolEffect(.replace))
+                    }
+                }
+                .frame(width: diameter, height: diameter)
+                .background(Circle().fill(tint))
+                .contentShape(Circle())
             }
             .buttonStyle(.pressScale)
             .accessibilityLabel(isPlaying ? "Pause" : "Play")
+            .accessibilityValue(isLoading ? "Loading" : "")
             .accessibilityIdentifier("nowPlaying.playPause")
 
             skipButton("forward.fill", size: skip, label: "Next", action: actions.next)

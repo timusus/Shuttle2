@@ -21,32 +21,32 @@ struct PlaylistDetailView: View {
                 covers: covers,
                 isPlaying: AppGraph.dependencies.playerBinding.isPlaying,
                 onPlay: { index in
-                    models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), position: Int32(index), context: state.playContext))
+                    models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), position: Int32(index), context: state.playContext))
                 },
                 onShuffle: {
-                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), context: state.playContext))
+                    models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs.map(\.song)), context: state.playContext))
                 },
                 onPlayNext: { song in
-                    models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionSongs(song: song)))
+                    models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(song: song)))
                 },
                 onAddToQueue: { song in
-                    models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
+                    models.actions.send(MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
                 },
                 onExclude: { song in
-                    models.actions.dispatch(action: MediaActionExclude(selection: MediaSelectionSongs(song: song)))
+                    models.actions.send(MediaActionExclude(selection: MediaSelectionSongs(song: song)))
                 },
                 onMove: { from, to in models.playlist.onMove(fromId: from, toId: to) },
                 onMoveFinished: { models.playlist.onMoveFinished() },
                 onRemove: { entry in
                     guard let playlist = state.playlist else { return }
-                    models.actions.dispatch(action: MediaActionRemoveFromPlaylist(
+                    models.actions.send(MediaActionRemoveFromPlaylist(
                         playlist: playlist, entries: [entry], before: state.songs
                     ))
                 },
                 onRename: { name in models.playlist.onRename(name: name) },
                 onDelete: { models.playlist.onDelete() }
             )
-            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.dispatch(action: $0) })
+            .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0) })
             .playlistDetailEvents(state.events, handled: { models.playlist.onEventHandled(id: $0) })
         }
     }

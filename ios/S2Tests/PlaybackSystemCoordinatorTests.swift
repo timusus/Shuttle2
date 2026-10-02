@@ -74,6 +74,7 @@ struct PlaybackSystemCoordinatorTests {
     private let commands = FakeCommandCenter()
     private let graph: IosAppGraph
     private let coordinator: PlaybackSystemCoordinator
+    private let intent: PlayIntent
     private let engineSource: EngineSource
     private var rebuiltEngines: [FakeAudioEngine] = []
 
@@ -84,8 +85,10 @@ struct PlaybackSystemCoordinatorTests {
         rebuiltEngines = [rebuilt]
         let source = EngineSource(rebuilt)
         engineSource = source
+        intent = PlayIntent(following: graph.playerController)
         coordinator = PlaybackSystemCoordinator(
             playback: graph.playerController,
+            intent: intent,
             player: player,
             session: AudioSessionController(session: session, notificationCenter: center),
             nowPlaying: NowPlayingController(infoCenter: info, commandCenter: commands),
@@ -163,6 +166,19 @@ struct PlaybackSystemCoordinatorTests {
         #expect(await waitUntil { rate == 0 && info.playbackState == .paused })
         #expect(elapsed == 42)
         #expect(title == "Paranoid Android")
+    }
+
+    /// A play still being prepared (a `MediaAction` reading its songs) shows on the lock screen as playing from the tap,
+    /// and its failure as paused again.
+    @Test func aPendingPlayShowsAsPlayingOnTheLockScreen() async throws {
+        _ = try await loadQueue()
+        #expect(await waitUntil { title == "Paranoid Android" && rate == 0 })
+
+        let ticket = intent.begin()
+        #expect(rate == 1 && info.playbackState == .playing)
+
+        intent.finished(ticket, result: MediaActionResultMessage(message: MediaActionMessageNoSongs.shared, action: nil))
+        #expect(rate == 0 && info.playbackState == .paused)
     }
 
     @Test func aRemoteSeekMovesThePlayerAndReflectsBack() async throws {
@@ -424,7 +440,8 @@ struct PlaybackSystemCoordinatorTests {
 
     @Test func aResetWhoseEngineCannotBeBuiltDoesNotRestartOrPublish() async throws {
         _ = try await playQueue()
-        #expect(await waitUntil { info.playbackState == .playing })
+        // The lock screen shows playing from the tap; wait for the audio too, so nothing republishes later.
+        #expect(await waitUntil { info.playbackState == .playing && !intent.isLoading })
         let plays = engine.commands.filter { $0 == "play" }.count
         engineSource.make = { nil }
         info.nowPlayingInfo = nil

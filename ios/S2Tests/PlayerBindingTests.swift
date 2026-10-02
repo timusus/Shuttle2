@@ -13,7 +13,7 @@ struct PlayerBindingTests {
 
     init() {
         graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: engine))
-        binding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph))
+        binding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: PlayIntent(following: graph.playerController))
     }
 
     /// Queues the demo songs and loads the first, as far as the engine reporting it ready.
@@ -70,6 +70,26 @@ struct PlayerBindingTests {
 
         binding.actions.playPause()
         #expect(await waitUntil { engine.commands.contains("play") })
+    }
+
+    /// The transport draws the listener's intent: pause and the spinner from the tap, before the engine has played,
+    /// and a second tap during the load pauses at once.
+    @Test func playPauseShowsTheIntentFromTheTap() async throws {
+        let id = try await loadQueue()
+        #expect(await waitUntil { binding.isMiniPlayerVisible })
+        #expect(!binding.miniPlayer.isPlaying)
+
+        binding.actions.playPause()
+        #expect(binding.miniPlayer.isPlaying && binding.miniPlayer.isLoading)
+        #expect(binding.nowPlaying.isPlaying && binding.nowPlaying.isLoading)
+
+        engine.emit(.state(.playing, trackId: id))
+        #expect(await waitUntil { !binding.miniPlayer.isLoading })
+        #expect(binding.miniPlayer.isPlaying)
+
+        binding.actions.playPause()
+        #expect(!binding.miniPlayer.isPlaying && !binding.miniPlayer.isLoading)
+        #expect(!binding.nowPlaying.isPlaying)
     }
 
     @Test func nextAndPreviousForwardToTheEngineAndUpdateTheQueue() async throws {

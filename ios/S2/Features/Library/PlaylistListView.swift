@@ -14,16 +14,16 @@ struct PlaylistListView: View {
             PlaylistListContent(
                 state: state,
                 onPlay: { playlist in
-                    models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionPlaylists(playlist: playlist), position: 0))
+                    models.actions.send(MediaActionPlay(selection: MediaSelectionPlaylists(playlist: playlist), position: 0))
                 },
                 onPlayNext: { playlist in
-                    models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionPlaylists(playlist: playlist)))
+                    models.actions.send(MediaActionPlayNext(selection: MediaSelectionPlaylists(playlist: playlist)))
                 },
                 onAddToQueue: { playlist in
-                    models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionPlaylists(playlist: playlist)))
+                    models.actions.send(MediaActionAddToQueue(selection: MediaSelectionPlaylists(playlist: playlist)))
                 },
                 onShuffle: {
-                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionPlaylists(playlists: state.playlists)))
+                    models.actions.send(MediaActionShuffle(selection: MediaSelectionPlaylists(playlists: state.playlists)))
                 },
                 onSortOrder: { models.playlists.setSortOrder(sortOrder: $0) },
                 onCreate: { name in models.playlists.onCreatePlaylist(name: name) },

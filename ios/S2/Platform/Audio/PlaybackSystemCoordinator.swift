@@ -7,6 +7,9 @@ import Shared
 /// it follows the Kotlin flows and calls `PlaybackOperations`, so every command goes through the same
 /// policy as the app's own buttons.
 ///
+/// Whether it plays, for Now Playing's rate and an interruption's resume, is the listener's intent (`PlayIntent`), so
+/// the lock screen shows pause from the tap; the transport commands and the session's pauses go through the intent too.
+///
 /// Any of the flows changing republishes Now Playing from all of their current values. Each flow is
 /// followed by its own task, and the tasks resume in no particular order: a copy of each flow's last
 /// value would pair a new song with the last one's position on a track change (#691).
@@ -17,21 +20,25 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     static let skipBackwardSeconds: TimeInterval = 10
 
     private let playback: IosPlayerController
+    private let intent: PlayIntent
     private let player: EngineAudioPlayer
     private let session: AudioSessionController
     private let nowPlaying: NowPlayingController
     /// A new engine, for a media-services reset; nil if one can't be built.
     private let makeEngine: () -> AudioEngine?
     private var observers: [Task<Void, Never>] = []
+    private var intentListener: Int?
 
     init(
         playback: IosPlayerController,
+        intent: PlayIntent,
         player: EngineAudioPlayer,
         session: AudioSessionController,
         nowPlaying: NowPlayingController,
         makeEngine: @escaping () -> AudioEngine?
     ) {
         self.playback = playback
+        self.intent = intent
         self.player = player
         self.session = session
         self.nowPlaying = nowPlaying
@@ -46,8 +53,8 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
             NSLog("S2: audio session configure failed: \(error)")
         }
         session.isPlaying = { [weak self] in self?.playerIsPlaying ?? false }
-        session.onPause = { [weak self] _ in self?.playback.pause() }
-        session.onResume = { [weak self] in self?.playback.play() }
+        session.onPause = { [weak self] _ in self?.intent.pause() }
+        session.onResume = { [weak self] in self?.intent.play() }
         session.onMediaServicesReset = { [weak self] in self?.rebuildEngine() }
         player.onWillPlay = { [weak session] in
             MainActor.assumeIsolated {
@@ -62,6 +69,7 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         }
         player.onPaused = { [weak session] in MainActor.assumeIsolated { session?.playbackPaused() } }
         nowPlaying.start(handler: self)
+        intentListener = intent.addListener { [weak self] in self?.publish() }
         observe()
     }
 
@@ -69,19 +77,19 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     func stop() {
         observers.forEach { $0.cancel() }
         observers = []
+        if let intentListener { intent.removeListener(intentListener) }
+        intentListener = nil
         nowPlaying.stop()
         player.onWillPlay = { true }
         player.onPaused = {}
     }
 
-    /// Read from the flows' values, not `isPlaying`, which lags them by a hop through the observer task.
-    /// Playing, or loading with the intent to play. An idle, ended or failed track is paused and must not
-    /// advertise playback — including to an interruption, which resumes only when this was true.
+    /// The listener's intent, read straight from the player (`PlayIntent.wantsPlayback`), not `isPlaying`, which lags
+    /// it by a hop through an observer task. Playing, loading or being prepared with the intent to play. An idle, ended
+    /// or failed track is paused and must not advertise playback — including to an interruption, which resumes only
+    /// when this was true.
     private var playerIsPlaying: Bool {
-        let state = playback.playbackStateFlow.value
-        if state is PlaybackState.Playing { return true }
-        if state is PlaybackState.Loading { return playback.playWhenReadyFlow.value.boolValue }
-        return false
+        intent.wantsPlayback
     }
 
     private func observe() {
@@ -170,22 +178,22 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         playback.load(seekPosition: position, skipUnloadable: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.publish(force: true) }
         }
-        if resume { playback.play() }
+        if resume { intent.play() }
         publish(force: true)
     }
 
     // MARK: - NowPlayingCommandHandler
 
     func play() {
-        playback.play()
+        intent.play()
     }
 
     func pause() {
-        playback.pause()
+        intent.pause()
     }
 
     func togglePlayPause() {
-        playback.togglePlayback()
+        intent.toggle()
     }
 
     func skipToNext() {

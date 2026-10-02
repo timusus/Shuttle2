@@ -15,16 +15,16 @@ struct GenreListView: View {
                 state: state,
                 covers: covers,
                 onPlay: { genre in
-                    models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionGenres(genre: genre), position: 0))
+                    models.actions.send(MediaActionPlay(selection: MediaSelectionGenres(genre: genre), position: 0))
                 },
                 onPlayNext: { genre in
-                    models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionGenres(genre: genre)))
+                    models.actions.send(MediaActionPlayNext(selection: MediaSelectionGenres(genre: genre)))
                 },
                 onAddToQueue: { genre in
-                    models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionGenres(genre: genre)))
+                    models.actions.send(MediaActionAddToQueue(selection: MediaSelectionGenres(genre: genre)))
                 },
                 onShuffle: {
-                    models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionGenres(genres: state.genres)))
+                    models.actions.send(MediaActionShuffle(selection: MediaSelectionGenres(genres: state.genres)))
                 },
                 onSortOrder: { models.genres.setSortOrder(sortOrder: $0) }
             )

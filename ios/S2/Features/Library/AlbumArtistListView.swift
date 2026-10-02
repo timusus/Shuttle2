@@ -17,16 +17,16 @@ struct AlbumArtistListView: View {
                     state: state,
                     nowPlaying: nowPlaying,
                     onPlay: { artist in
-                        models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionAlbumArtists(albumArtist: artist), position: 0))
+                        models.actions.send(MediaActionPlay(selection: MediaSelectionAlbumArtists(albumArtist: artist), position: 0))
                     },
                     onPlayNext: { artist in
-                        models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionAlbumArtists(albumArtist: artist)))
+                        models.actions.send(MediaActionPlayNext(selection: MediaSelectionAlbumArtists(albumArtist: artist)))
                     },
                     onAddToQueue: { artist in
-                        models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbumArtists(albumArtist: artist)))
+                        models.actions.send(MediaActionAddToQueue(selection: MediaSelectionAlbumArtists(albumArtist: artist)))
                     },
                     onShuffle: {
-                        models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionAlbumArtists(albumArtists: state.albumArtists)))
+                        models.actions.send(MediaActionShuffle(selection: MediaSelectionAlbumArtists(albumArtists: state.albumArtists)))
                     },
                     onViewMode: { models.albumArtists.setViewMode(mode: $0) },
                     onSortOrder: { models.albumArtists.setSortOrder(sortOrder: $0) }

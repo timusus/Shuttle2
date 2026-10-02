@@ -14,7 +14,7 @@ struct JumpBackInGrid: View {
     /// The tile the last tap came from, so only it is the zoom source for the screen it opens.
     var zoomSourceKey: String?
     var onTapped: (String) -> Void = { _ in }
-    /// The item whose play is under way (`PendingPlay`), by key.
+    /// The item whose play is under way (`PlayIntent.loadingKey`), by key.
     var pendingKey: String?
     /// Performs an action that plays an item, following it through; nil performs it as any other.
     var play: ((HomeItem, MediaAction) -> Void)?
@@ -134,7 +134,7 @@ struct JumpBackInResumeCard: View {
     let zoomSourceKey: String?
     let perform: (MediaAction) -> Void
     let open: (HomeItem) -> Void
-    /// Its play is under way (`PendingPlay`): the play button shows a spinner.
+    /// Its play is under way (`PlayIntent.loadingKey`): the play button shows a spinner.
     var pending = false
     /// Performs an action that plays the item, following it through; nil performs it as any other.
     var play: ((HomeItem, MediaAction) -> Void)?

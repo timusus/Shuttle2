@@ -15,23 +15,23 @@ struct SongListView: View {
                     state: state,
                     nowPlaying: nowPlaying,
                     onPlay: { index in
-                        models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index)))
+                        models.actions.send(MediaActionPlay(selection: MediaSelectionSongs(songs: state.songs), position: Int32(index)))
                     },
                     onPlayNext: { song in
-                        models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionSongs(song: song)))
+                        models.actions.send(MediaActionPlayNext(selection: MediaSelectionSongs(song: song)))
                     },
                     onAddToQueue: { song in
-                        models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
+                        models.actions.send(MediaActionAddToQueue(selection: MediaSelectionSongs(song: song)))
                     },
                     onExclude: { song in
-                        models.actions.dispatch(action: MediaActionExclude(selection: MediaSelectionSongs(song: song)))
+                        models.actions.send(MediaActionExclude(selection: MediaSelectionSongs(song: song)))
                     },
                     onShuffle: {
-                        models.actions.dispatch(action: MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs)))
+                        models.actions.send(MediaActionShuffle(selection: MediaSelectionSongs(songs: state.songs)))
                     },
                     onSortOrder: { models.songs.setSortOrder(sortOrder: $0) }
                 )
-                .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.dispatch(action: $0) })
+                .mediaActionResults(actions.events, handled: { models.actions.onEventHandled(id: $0) }, send: { models.actions.send($0) })
             }
         }
         .refreshable { LibraryImport.refresh() }

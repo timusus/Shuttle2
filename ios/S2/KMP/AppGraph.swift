@@ -42,6 +42,8 @@ final class IosAppDependencies {
     let audioSession: AudioSessionController
     let nowPlaying: NowPlayingController
     let playbackSystem: PlaybackSystemCoordinator
+    /// Whether the listener wants playback running, which every play/pause control draws (`PlayIntent`).
+    let playIntent: PlayIntent
     /// The mini player and Now Playing screens' shared state, off the shared `PlayerViewModel` (#588, #587).
     /// Built here, not lazily behind a cache key, so there is exactly one ViewModel and one subscription to
     /// its state for the app's lifetime.
@@ -52,14 +54,16 @@ final class IosAppDependencies {
         graph = IosAppGraphKt.createIosAppGraph(audioPlayer: audioPlayer)
         audioSession = AudioSessionController()
         nowPlaying = NowPlayingController()
+        playIntent = PlayIntent(following: graph.playerController)
         playbackSystem = PlaybackSystemCoordinator(
             playback: graph.playerController,
+            intent: playIntent,
             player: audioPlayer,
             session: audioSession,
             nowPlaying: nowPlaying,
             makeEngine: { try? MusicPlaybackController() }
         )
-        playerBinding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph))
+        playerBinding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: playIntent)
     }
 
     /// The engine only fails to build without a stereo float format, which every device has.

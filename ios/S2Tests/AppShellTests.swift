@@ -14,7 +14,7 @@ struct AppShellTests {
 
     init() {
         graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: engine))
-        playerBinding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph))
+        playerBinding = PlayerBinding(viewModel: IosAppGraphKt.createPlayerViewModel(graph), intent: PlayIntent(following: graph.playerController))
     }
 
     private func makeShell(tier: LayoutTier, container: ShellContainer? = nil) -> AppShell {

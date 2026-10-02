@@ -17,13 +17,13 @@ struct AlbumListView: View {
                     state: state,
                     nowPlaying: nowPlaying,
                     onPlay: { album in
-                        models.actions.dispatch(action: MediaActionPlay(selection: MediaSelectionAlbums(album: album), position: 0))
+                        models.actions.send(MediaActionPlay(selection: MediaSelectionAlbums(album: album), position: 0))
                     },
                     onPlayNext: { album in
-                        models.actions.dispatch(action: MediaActionPlayNext(selection: MediaSelectionAlbums(album: album)))
+                        models.actions.send(MediaActionPlayNext(selection: MediaSelectionAlbums(album: album)))
                     },
                     onAddToQueue: { album in
-                        models.actions.dispatch(action: MediaActionAddToQueue(selection: MediaSelectionAlbums(album: album)))
+                        models.actions.send(MediaActionAddToQueue(selection: MediaSelectionAlbums(album: album)))
                     },
                     onShuffle: { models.albums.onShuffle() },
                     onViewMode: { models.albums.setViewMode(mode: $0) },

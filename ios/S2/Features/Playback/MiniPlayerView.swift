@@ -42,6 +42,7 @@ struct MiniPlayerView: View {
             artist: state.artist,
             artwork: state.artwork,
             isPlaying: state.isPlaying,
+            isLoading: state.isLoading,
             style: placement == .accessory ? .accessory : .floating,
             isCoverHidden: showNowPlaying,
             progress: { binding.progressFraction },
@@ -103,7 +104,10 @@ struct MiniPlayerBar: View {
     let title: String
     let artist: String?
     let artwork: ArtworkSource?
+    /// Play is intended (`PlayIntent`): the button shows pause from the tap.
     let isPlaying: Bool
+    /// Play is intended but no audio is out yet: a spinner takes the glyph's place inside the ring, and a tap pauses.
+    var isLoading = false
     var style: Style = .floating
     /// True while Now Playing is up: the cover hands its place to Now Playing's (matched geometry).
     var isCoverHidden = false
@@ -136,6 +140,7 @@ struct MiniPlayerBar: View {
         artist: String?,
         artwork: ArtworkSource?,
         isPlaying: Bool,
+        isLoading: Bool = false,
         style: Style = .floating,
         isCoverHidden: Bool = false,
         progress: @escaping () -> Double = { 0 },
@@ -147,6 +152,7 @@ struct MiniPlayerBar: View {
         self.artist = artist
         self.artwork = artwork
         self.isPlaying = isPlaying
+        self.isLoading = isLoading
         self.style = style
         self.isCoverHidden = isCoverHidden
         self.progress = progress
@@ -223,15 +229,23 @@ struct MiniPlayerBar: View {
             .accessibilityIdentifier("miniPlayer.open")
 
             Button(action: onPlayPause) {
-                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .contentTransition(.symbolEffect(.replace))
-                    .background { MiniPlayerProgressRing(progress: progress) }
-                    .touchTarget()
+                Group {
+                    if isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.primary)
+                            .contentTransition(.symbolEffect(.replace))
+                    }
+                }
+                .background { MiniPlayerProgressRing(progress: progress) }
+                .touchTarget()
             }
             .buttonStyle(.pressScale)
             .accessibilityLabel(isPlaying ? "Pause" : "Play")
+            .accessibilityValue(isLoading ? "Loading" : "")
             .accessibilityIdentifier("miniPlayer.playPause")
 
             if showsNext {
@@ -364,6 +378,16 @@ struct MiniPlayerAccessoryModifier: ViewModifier {
         Spacer()
         MiniPlayerBar(
             title: "Paranoid Android", artist: "Radiohead", artwork: nil, isPlaying: true, progress: { 0.3 },
+            onTap: {}, onPlayPause: {}, onNext: {}
+        )
+    }
+}
+
+#Preview("Loading") {
+    VStack {
+        Spacer()
+        MiniPlayerBar(
+            title: "Glue", artist: "Bicep", artwork: nil, isPlaying: true, isLoading: true,
             onTap: {}, onPlayPause: {}, onNext: {}
         )
     }
