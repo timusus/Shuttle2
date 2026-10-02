@@ -54,7 +54,7 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         }
         session.isPlaying = { [weak self] in self?.playerIsPlaying ?? false }
         session.onPause = { [weak self] _ in self?.intent.pause() }
-        session.onResume = { [weak self] in self?.intent.play() }
+        session.onResume = { [weak self] in self?.intent.resume() }
         session.onMediaServicesReset = { [weak self] in self?.rebuildEngine() }
         player.onWillPlay = { [weak session] in
             MainActor.assumeIsolated {
@@ -178,7 +178,7 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
         playback.load(seekPosition: position, skipUnloadable: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.publish(force: true) }
         }
-        if resume { intent.play() }
+        if resume { intent.resume() }
         publish(force: true)
     }
 
@@ -197,10 +197,12 @@ final class PlaybackSystemCoordinator: NowPlayingCommandHandler {
     }
 
     func skipToNext() {
+        intent.listenerPlayed()
         playback.skipToNext(ignoreRepeat: true, completion: nil)
     }
 
     func skipToPrevious() {
+        intent.listenerPlayed()
         playback.skipToPrev(force: false, completion: nil)
     }
 

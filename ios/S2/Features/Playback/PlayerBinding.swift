@@ -375,10 +375,19 @@ final class PlayerBinding {
         let intent = intent
         return PlayerActions(
             playPause: { intent.toggle() },
-            next: { viewModel.skipToNext() },
-            previous: { viewModel.skipToPrevious() },
+            next: {
+                intent.listenerPlayed()
+                viewModel.skipToNext()
+            },
+            previous: {
+                intent.listenerPlayed()
+                viewModel.skipToPrevious()
+            },
             seek: { [weak self] ms in self?.seek(toMs: ms) },
-            selectQueueItem: { uid in viewModel.skipToQueueItem(uid: uid) },
+            selectQueueItem: { uid in
+                intent.listenerPlayed()
+                viewModel.skipToQueueItem(uid: uid)
+            },
             moveQueueItem: { uid, afterUid in
                 viewModel.moveQueueItem(uid: uid, afterUid: afterUid.map { KotlinLong(value: $0) })
             },

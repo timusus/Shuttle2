@@ -187,6 +187,100 @@ struct PlayIntentTests {
         #expect(player.commands == ["pause"])
     }
 
+    /// A shuffle's action comes back once its load starts, before the player plays: the play stays pending until the
+    /// player takes it up.
+    @Test func aPlayStartingAfterItsResultStaysPendingUntilThePlayerTakesItUp() {
+        let sut = makeSut()
+        let ticket = sut.begin(key: "shuffle")
+        sut.finished(ticket, result: MediaActionResultNone.shared)
+        #expect(sut.isPlayIntended)
+        #expect(sut.loadingKey == "shuffle")
+
+        player.play()
+        sut.playerChanged()
+        #expect(sut.isPlayIntended && sut.isLoading)
+        player.isAudible = true
+        sut.playerChanged()
+        #expect(sut.isPlayIntended && !sut.isLoading)
+        #expect(player.commands == ["play"])
+    }
+
+    /// Paused after the action came back but before the player took the play up: the pause stands when it does.
+    @Test func pausingAPlayStartingAfterItsResultStands() {
+        let sut = makeSut()
+        let ticket = sut.begin()
+        sut.finished(ticket, result: MediaActionResultNone.shared)
+        sut.toggle()
+        #expect(!sut.isPlayIntended)
+        #expect(player.commands == ["pause"])
+
+        player.play()
+        sut.playerChanged()
+        #expect(player.commands == ["pause", "play", "pause"])
+        #expect(!sut.isPlayIntended && !player.playsWhenReady)
+
+        // Settled: a later play is the listener's own.
+        sut.play()
+        #expect(sut.isPlayIntended)
+        #expect(player.commands == ["pause", "play", "pause", "play"])
+    }
+
+    /// The action's screen went, cancelling it, so no result comes: audio after the player stopped for the play ends it.
+    @Test func aPlayWhoseResultNeverComesEndsOnceItsAudioIsOut() {
+        player.playsWhenReady = true
+        player.isAudible = true
+        let sut = makeSut()
+        sut.begin(key: "a")
+        player.playsWhenReady = false
+        player.isAudible = false
+        sut.playerChanged()
+        #expect(sut.isPlayIntended && sut.isLoading)
+
+        player.play()
+        player.isAudible = true
+        sut.playerChanged()
+        #expect(sut.isPlayIntended)
+        #expect(!sut.isLoading)
+        #expect(sut.loadingKey == nil)
+    }
+
+    /// A skip or a queue row after pausing a pending play: that play's late start doesn't pause the new one.
+    @Test func aPlayTheListenerStartsElsewhereSupersedesAPausedPendingOne() {
+        let sut = makeSut()
+        let ticket = sut.begin()
+        sut.pause()
+        sut.listenerPlayed()
+        player.play()
+        sut.playerChanged()
+        #expect(sut.isPlayIntended)
+
+        sut.finished(ticket, result: MediaActionResultNone.shared)
+        #expect(player.commands == ["pause", "play"])
+        #expect(sut.isPlayIntended)
+    }
+
+    /// An interruption ending or a rebuilt engine resumes for the system: a pending play the listener paused stays so.
+    @Test func aSystemResumeKeepsTheListenersPause() {
+        let sut = makeSut()
+        let ticket = sut.begin()
+        sut.pause()
+        sut.resume()
+        #expect(player.commands == ["pause"])
+        #expect(!sut.isPlayIntended)
+
+        player.playsWhenReady = true
+        sut.finished(ticket, result: MediaActionResultNone.shared)
+        #expect(player.commands == ["pause", "pause"])
+        #expect(!sut.isPlayIntended)
+    }
+
+    @Test func aSystemResumePlays() {
+        let sut = makeSut()
+        sut.resume()
+        #expect(player.commands == ["play"])
+        #expect(sut.isPlayIntended)
+    }
+
     @Test func aPendingPlayGivesUpAfterItsTimeout() async {
         let sut = makeSut(timeout: .milliseconds(50))
         sut.begin(key: "a")
@@ -260,5 +354,37 @@ struct PlayIntentTests {
         #expect(await waitUntil { !sut.isLoading })
         #expect(sut.isPlayIntended)
         #expect(sut.loadingKey == nil)
+    }
+
+    /// A shuffle's action returns once its load starts; the player plays when that load is ready. Pending until then,
+    /// and a pause in between stands.
+    @Test func aShuffleThroughSendIsIntendedUntilThePlayerPlaysIt() async throws {
+        for pauses in [false, true] {
+            let engine = FakeAudioEngine()
+            let graph = makeTestGraph(audioPlayer: EngineAudioPlayer(engine: engine))
+            let controller = graph.playerController
+            let sut = PlayIntent(following: controller)
+            let shuffle = MediaActionShuffle(selection: MediaSelectionSongs(songs: TestSongs.demo), context: PlayContextNone.shared)
+            graph.mediaActionsViewModel.send(shuffle, key: "demo", intent: sut)
+            #expect(await waitUntil { !engine.loads.isEmpty })
+            await drainMainQueue()
+            #expect(sut.isPlayIntended, "the result is in, the load isn't ready")
+            #expect(!controller.playWhenReadyFlow.value.boolValue)
+            if pauses { sut.toggle() }
+
+            let id = try #require(engine.loads.last?.current.id)
+            engine.emit(.state(.paused, trackId: id))
+            #expect(await waitUntil { engine.commands.contains("play") })
+            if pauses {
+                #expect(await waitUntil { engine.commands.last == "pause" && !controller.playWhenReadyFlow.value.boolValue })
+                await drainMainQueue()
+                #expect(!sut.isPlayIntended)
+            } else {
+                #expect(sut.isPlayIntended && sut.isLoading)
+                engine.emit(.state(.playing, trackId: id))
+                #expect(await waitUntil { !sut.isLoading })
+                #expect(sut.isPlayIntended)
+            }
+        }
     }
 }

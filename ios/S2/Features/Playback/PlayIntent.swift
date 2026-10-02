@@ -25,9 +25,10 @@ extension IosPlayerController: PlayIntentPlayer {
 /// The Kotlin player's `playWhenReady` is the intent once it holds the queue, and audio playing always counts. What it
 /// can't see is a play still being prepared in Swift's hands: a `MediaAction` that reads its songs and builds the
 /// queue before it loads and plays (`load` even clears `playWhenReady` first). So such a play is pending from the tap
-/// (`begin`) until the action's own result comes back (`finished`), when the player has either taken it up or the
-/// play failed; `timeout` is the fallback if no result does. A pause clears the intent at once, a pending play's
-/// included; if that play goes on to start anyway, it's paused as it does.
+/// (`begin`) until the player takes it up: it intends to play after the action's own result (`finished`), which for a
+/// shuffle comes before its load does, or audio is out once the player has stopped for it, which also settles a play
+/// whose result never comes (its screen went, cancelling it). A failed result or `timeout` ends it too. A pause clears
+/// the intent at once, a pending play's included; if that play goes on to start anyway, it's paused as it does.
 @MainActor
 @Observable
 final class PlayIntent {
@@ -38,14 +39,22 @@ final class PlayIntent {
     /// The key `begin` was given for the play under way (Home's `HomeItem.key`), while it's loading; nil otherwise.
     private(set) var loadingKey: String?
 
+    /// A play `begin` dispatched that the player hasn't taken up yet.
+    private struct Pending {
+        let ticket: Int
+        /// The listener paused it: if it starts after all, it's paused again.
+        var isPaused = false
+        /// Its action came back successfully, so the player's next play is this one.
+        var succeeded = false
+        /// The player has been seen neither intending nor playing since the tap, so audio from here on is this play's.
+        var playerStopped = false
+    }
+
     @ObservationIgnored private let player: any PlayIntentPlayer
     @ObservationIgnored let timeout: Duration
     /// The last `begin`'s ticket: a result for any other is a superseded action's.
     @ObservationIgnored private var ticket = 0
-    /// The ticket of the play that's pending; nil when none is.
-    @ObservationIgnored private var pending: Int?
-    /// The ticket of a pending play the listener paused: if it starts after all, it's paused again.
-    @ObservationIgnored private var cancelled: Int?
+    @ObservationIgnored private var pending: Pending?
     @ObservationIgnored private var key: String?
     @ObservationIgnored private var timeoutTask: Task<Void, Never>?
     @ObservationIgnored private var listeners: [Int: () -> Void] = [:]
@@ -81,24 +90,29 @@ final class PlayIntent {
     /// Whether the listener wants playback running, read straight from the player rather than from
     /// `isPlayIntended`, which trails it by a hop through the flow observers: for the system surfaces (#691).
     var wantsPlayback: Bool {
-        pending != nil || player.playsWhenReady || player.isAudible
+        pending?.isPaused == false || player.playsWhenReady || player.isAudible
     }
 
     // MARK: - Commands
 
-    /// Plays (or resumes) the current item.
+    /// Plays (or resumes) the current item, as the listener asked: a pending play they paused no longer stands.
     func play() {
-        cancelled = nil
+        listenerPlayed()
+        player.play()
+        refresh()
+    }
+
+    /// Resumes for the system (an interruption ending, a rebuilt engine), not the listener: a pending play they paused
+    /// stays paused.
+    func resume() {
+        guard pending?.isPaused != true else { return }
         player.play()
         refresh()
     }
 
     /// Pauses, cancelling a pending play.
     func pause() {
-        if let pending {
-            cancelled = pending
-            endPending()
-        }
+        pending?.isPaused = true
         player.pause()
         refresh()
     }
@@ -108,18 +122,25 @@ final class PlayIntent {
         if wantsPlayback { pause() } else { play() }
     }
 
+    /// The listener started a play some other way (a skip, a queue row): a pending play they paused, should it start
+    /// later, is no longer paused over this one.
+    func listenerPlayed() {
+        guard pending?.isPaused == true else { return }
+        endPending()
+        refresh()
+    }
+
     /// A play is about to be dispatched that Swift prepares before the player has it (a `MediaAction`); pass the
     /// returned ticket to `finished` with its result. `key` names what it plays, for `loadingKey`.
     @discardableResult
     func begin(key: String? = nil) -> Int {
         ticket += 1
-        pending = ticket
-        cancelled = nil
+        pending = Pending(ticket: ticket)
         self.key = key
         timeoutTask?.cancel()
         timeoutTask = Task { [weak self, ticket, timeout] in
             try? await Task.sleep(for: timeout)
-            guard !Task.isCancelled, let self, pending == ticket else { return }
+            guard !Task.isCancelled, let self, pending?.ticket == ticket else { return }
             endPending()
             refresh()
         }
@@ -127,14 +148,14 @@ final class PlayIntent {
         return ticket
     }
 
-    /// The action `begin` handed out `ticket` for came back with `result`: the player has the play now, or it failed.
+    /// The action `begin` handed out `ticket` for came back with `result`: the player has the play, or will once it's
+    /// loaded (a shuffle), or the play failed.
     func finished(_ ticket: Int, result: any MediaActionResult) {
-        if ticket == cancelled {
-            // Paused while pending, and started anyway: the pause stands.
-            cancelled = nil
-            if !Self.isFailure(result) { player.pause() }
-        } else if ticket == pending {
+        guard pending?.ticket == ticket else { return }
+        if Self.isFailure(result) {
             endPending()
+        } else {
+            pending?.succeeded = true
         }
         refresh()
     }
@@ -176,7 +197,23 @@ final class PlayIntent {
         timeoutTask = nil
     }
 
+    /// Ends a pending play the player has taken up: it intends to play after the action's result, or audio is out
+    /// after it stopped for the play. One the listener paused is paused again as it starts.
+    private func settlePending() {
+        guard var pending else { return }
+        let starting = player.playsWhenReady || player.isAudible
+        if !starting { pending.playerStopped = true }
+        self.pending = pending
+        let takenUp = pending.isPaused
+            ? starting && (pending.succeeded || pending.playerStopped)
+            : (starting && pending.succeeded) || (player.isAudible && pending.playerStopped)
+        guard takenUp else { return }
+        endPending()
+        if pending.isPaused { player.pause() }
+    }
+
     private func refresh() {
+        settlePending()
         let intended = wantsPlayback
         let loading = intended && (pending != nil || !player.isAudible)
         if !loading { key = nil }
@@ -190,8 +227,8 @@ final class PlayIntent {
 }
 
 extension MediaActionsViewModel {
-    /// Dispatches `action`. One that plays (`PlayIntent.plays`) is the listener's intent from this call, until its own
-    /// result (`PlayIntent.begin`); `key` names what it plays, for a spinner on that item.
+    /// Dispatches `action`. One that plays (`PlayIntent.plays`) is the listener's intent from this call, until the
+    /// player takes it up (`PlayIntent.begin`); `key` names what it plays, for a spinner on that item.
     @MainActor
     func send(_ action: any MediaAction, key: String? = nil, intent: PlayIntent? = nil) {
         guard PlayIntent.plays(action) else {
