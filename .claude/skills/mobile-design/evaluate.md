@@ -16,11 +16,24 @@ Capture before judging. Use the cheapest source that shows the thing.
 | Text | default; 200% / AX5 |
 | State | populated; empty; loading; error/offline; long text |
 
-Sources, cheapest first:
+Default source for a screen audit: **`design-shots.sh`**, one background call that leases an
+emulator and/or simulator, applies the matrix outside the flows and writes the whole set:
+
+```bash
+support/scripts/longjob.sh start design-shots -- support/scripts/design-shots.sh --platform both [--screens home,now-playing] [--matrix quick|full] [--contact-sheet]
+support/scripts/longjob.sh wait design-shots
+```
+
+`quick` is phone only, light + dark, default text; `full` adds Android tablet/foldable (`wm size` overrides,
+not AVDs), iPad and large text (font scale 2.0 / AX5). Output lands in `shots/<run>/<platform>/<screen>__<device>__<theme>__<text>.png`
+with `shots/<run>/manifest.md` (every shot, and every failed flow with its step and last error). Read
+manifest.md first, then Read only the PNGs the audit needs. `--help` lists the screen names.
+
+Other sources, cheapest first:
 1. **Goldens** — Android Roborazzi in `docs/design/**` (record on the Mac via `verify-ui` /
    `recordRoborazziDebug`); compare with `git diff` of the PNGs or side by side.
 2. **Previews** — `@Preview` / `#Preview` matrices for components.
-3. **Emulator / simulator** — `emulator-check` (Maestro `takeScreenshot`) and `ios/scripts/maestro-sim.sh`.
+3. **Emulator / simulator, ad hoc** — `emulator-check` (Maestro `takeScreenshot`) and `ios/scripts/maestro-sim.sh`, for a state `design-shots.sh` has no flow for.
    Motion, predictive back, sheets and transitions need this or a recording.
 4. **Device** — `android-device` / `ios-device` skills, for haptics, real colour, performance.
 
