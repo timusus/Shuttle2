@@ -43,6 +43,30 @@ class SeedColorCacheTest {
     }
 
     @Test
+    fun `a stray light speck on a dark teal cover doesn't take the seed from the teal`() {
+        // Night Bus Frequencies: a dark teal band on near-black, with a 2.5% patch of pink type in one corner (#735)
+        val teal = Color(0xFF042A2C)
+        val cover = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888).apply {
+            for (x in 0 until 100) {
+                for (y in 0 until 100) {
+                    val shade = (x + y) % 6
+                    setPixel(
+                        x,
+                        y,
+                        when {
+                            x >= 84 && y >= 84 -> android.graphics.Color.rgb(250, 90, 170)
+                            y in 30 until 70 -> android.graphics.Color.rgb(4 + shade, 42, 44 + shade)
+                            else -> android.graphics.Color.rgb(6, 8, 8 + shade)
+                        },
+                    )
+                }
+            }
+        }
+        val seed = extractSeedColor(cover)!!.toHct()
+        seed.hue shouldBe (teal.toHct().hue plusOrMinus 30.0)
+    }
+
+    @Test
     fun `an all-dark cover still has a seed`() {
         val navy = Color(0xFF1A1740)
         extractSeedColor(solidBitmap(navy))!!.toHct().hue shouldBe (navy.toHct().hue plusOrMinus 5.0)

@@ -23,10 +23,16 @@ private const val MAX_SWATCHES = 128
 const val MIN_PREFERRED_SEED_TONE = 20.0
 
 /**
+ * The share of the artwork a lighter swatch must cover to take over from a near-black one: a stray speck on a dark
+ * cover (a highlight, a few letters of type) isn't its colour (#735).
+ */
+const val MIN_PREFERRED_SEED_SHARE = 0.03
+
+/**
  * The seed colour of [bitmap], or null when it has no colour worth theming with. Of the swatches
- * ranked by chroma and population, the first that isn't near-black (see [MIN_PREFERRED_SEED_TONE]),
- * else the first. Quantises a downscaled copy, so call it off the main thread (see
- * [SeedColorCache.getOrExtract]).
+ * ranked by chroma and population, the first that isn't near-black (see [MIN_PREFERRED_SEED_TONE])
+ * and covers at least [MIN_PREFERRED_SEED_SHARE] of the image, else the first. Quantises a downscaled
+ * copy, so call it off the main thread (see [SeedColorCache.getOrExtract]).
  */
 fun extractSeedColor(bitmap: Bitmap): Color? {
     val sample = if (bitmap.width > SAMPLE_SIZE || bitmap.height > SAMPLE_SIZE) {
@@ -36,10 +42,13 @@ fun extractSeedColor(bitmap: Bitmap): Color? {
     }
     val pixels = IntArray(sample.width * sample.height)
     sample.getPixels(pixels, 0, sample.width, 0, 0, sample.width, sample.height)
-    val swatches = Score.score(QuantizerCelebi.quantize(pixels, MAX_SWATCHES), fallbackColorArgb = null)
-        .map(::Color)
-        .filter(::isUsableSeed)
-    return swatches.firstOrNull { it.toHct().tone >= MIN_PREFERRED_SEED_TONE } ?: swatches.firstOrNull()
+    val populations = QuantizerCelebi.quantize(pixels, MAX_SWATCHES)
+    val minPreferredPopulation = pixels.size * MIN_PREFERRED_SEED_SHARE
+    val swatches = Score.score(populations, fallbackColorArgb = null).filter { isUsableSeed(Color(it)) }
+    val preferred = swatches.firstOrNull { argb ->
+        Color(argb).toHct().tone >= MIN_PREFERRED_SEED_TONE && (populations[argb] ?: 0) >= minPreferredPopulation
+    }
+    return (preferred ?: swatches.firstOrNull())?.let(::Color)
 }
 
 /**

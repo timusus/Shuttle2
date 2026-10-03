@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.designsystem.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import com.materialkolor.PaletteStyle
 import com.materialkolor.ktx.contrastRatio
 import com.materialkolor.ktx.toHct
 import io.kotest.matchers.doubles.plusOrMinus
@@ -97,10 +98,17 @@ class ColorSchemesTest {
     }
 
     @Test
-    fun `the player style carries more of the seed into containers than the detail style`() {
-        val detail = artworkColorScheme(warm, isDark = false, style = ArtworkSchemeStyle.Detail)!!
-        val player = artworkColorScheme(warm, isDark = false, style = ArtworkSchemeStyle.Player)!!
-        player.primaryContainer.toHct().chroma shouldBeGreaterThan detail.primaryContainer.toHct().chroma
+    fun `the detail style keeps a deep cover's hue at more chroma than tonal spot`() {
+        // A deep cobalt cover, whose tonal spot Play read as dusty slate (#736)
+        val cobalt = Color(0xFF1F3FA8)
+        for (isDark in listOf(true, false)) {
+            val detail = artworkColorScheme(cobalt, isDark, style = ArtworkSchemeStyle.Detail)!!
+            val tonalSpot = seedColorScheme(cobalt, isDark, PaletteStyle.TonalSpot)
+            detail.primary.toHct().hue shouldBe (cobalt.toHct().hue plusOrMinus 15.0)
+            detail.primary.toHct().chroma shouldBeGreaterThan tonalSpot.primary.toHct().chroma
+            detail.primaryContainer.toHct().chroma shouldBeGreaterThan tonalSpot.primaryContainer.toHct().chroma
+            detail.onPrimary.contrastRatio(detail.primary) shouldBeGreaterThan 4.5
+        }
     }
 
     @Test

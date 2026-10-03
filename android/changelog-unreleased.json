@@ -78,7 +78,7 @@
       "commits": ["0852f1db", "89175fc6a"]
     },
     {
-      "text": "Album and artist pages take their colours from the album artwork when Colour from artwork is on in Appearance settings",
+      "text": "Album and artist pages take vivid colours from the artwork at the top of the page, with a soft wash of its colour behind it, when Colour from artwork is on in Appearance settings",
       "commits": []
     },
     {

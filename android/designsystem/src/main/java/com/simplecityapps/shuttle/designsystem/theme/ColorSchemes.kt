@@ -9,15 +9,16 @@ import com.materialkolor.ktx.toColor
 import com.materialkolor.ktx.toHct
 
 /**
- * How an artwork seed is turned into a scheme. Detail screens keep the seed to the accent roles;
- * the player lets the seed hue carry into the containers.
+ * How an artwork seed is turned into a scheme. Detail screens use Vibrant, which holds the seed's hue in the accent
+ * roles at full chroma, so Play reads as the cover's colour rather than TonalSpot's muted version of it (#736), while
+ * the surfaces stay near neutral under the list; the player lets the seed's own chroma carry into the containers.
  *
  * [minSeedTone] lifts a darker seed to that tone first. The player's Content palette builds its
  * containers at the seed's own tone, so an all-dark cover's seed (tone 5 to 15) would give
  * near-black containers, and a black primary on a light scheme; lifted, it keeps its hue and chroma.
  */
 enum class ArtworkSchemeStyle(internal val paletteStyle: PaletteStyle, internal val minSeedTone: Double) {
-    Detail(PaletteStyle.TonalSpot, minSeedTone = 0.0),
+    Detail(PaletteStyle.Vibrant, minSeedTone = 0.0),
 
     /** Lifted to 30, M3's dark-scheme container tone. */
     Player(PaletteStyle.Content, minSeedTone = 30.0),
