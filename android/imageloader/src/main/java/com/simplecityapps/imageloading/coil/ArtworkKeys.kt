@@ -14,7 +14,7 @@ fun Song.artworkCacheKey(): String = "song:${albumArtist ?: friendlyArtistName}_
 
 internal fun Album.artworkCacheKey(): String = "album:${albumArtist ?: friendlyArtistName}_$name".withArtworkVersion(artworkVersion)
 
-internal fun AlbumArtist.artworkCacheKey(): String = "artist:${name ?: friendlyArtistName ?: "Unknown"}".withArtworkVersion(artworkVersion)
+fun AlbumArtist.artworkCacheKey(): String = "artist:${name ?: friendlyArtistName ?: "Unknown"}".withArtworkVersion(artworkVersion)
 
 /**
  * Appends the provider's artwork version, so the key changes exactly when the artwork does. Without a version

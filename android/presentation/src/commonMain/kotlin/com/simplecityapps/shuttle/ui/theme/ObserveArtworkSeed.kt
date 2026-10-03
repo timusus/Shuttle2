@@ -22,17 +22,25 @@ class ObserveArtworkSeed @Inject constructor(
     private val seedSource: ArtworkSeedSource,
     private val observeSetting: ObserveSetting,
 ) {
-    operator fun invoke(song: Flow<Song?>): Flow<ArtworkSeed> = combine(song, observeSetting(AppearanceSettings.ColourFromArtwork)) { song, enabled -> song?.takeIf { enabled } }
-        .distinctUntilChanged(::sameArtwork)
-        .mapLatest { song -> song?.let { seedSource.seedFor(it) } ?: ArtworkSeed.None }
-        .onStart { emit(ArtworkSeed.Loading) }
+    operator fun invoke(song: Flow<Song?>): Flow<ArtworkSeed> = observeSeed(song, observeSetting, ::sameArtwork) { seedSource.seedFor(it) }
 
-    private fun sameArtwork(old: Song?, new: Song?): Boolean = if (old == null || new == null) {
-        old == new
-    } else {
-        (old.albumArtist ?: old.friendlyArtistName) == (new.albumArtist ?: new.friendlyArtistName) &&
-            old.album == new.album &&
-            old.name == new.name &&
-            old.artworkVersion == new.artworkVersion
-    }
+    private fun sameArtwork(old: Song, new: Song): Boolean = (old.albumArtist ?: old.friendlyArtistName) == (new.albumArtist ?: new.friendlyArtistName) &&
+        old.album == new.album &&
+        old.name == new.name &&
+        old.artworkVersion == new.artworkVersion
 }
+
+/**
+ * [model]'s artwork seed while the Colour from artwork setting is on, else [ArtworkSeed.None]: [ArtworkSeed.Loading]
+ * first, then extracted again only when [sameArtwork] says the artwork changed.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+internal fun <T : Any> observeSeed(
+    model: Flow<T?>,
+    observeSetting: ObserveSetting,
+    sameArtwork: (T, T) -> Boolean,
+    seedFor: suspend (T) -> ArtworkSeed,
+): Flow<ArtworkSeed> = combine(model, observeSetting(AppearanceSettings.ColourFromArtwork)) { model, enabled -> model?.takeIf { enabled } }
+    .distinctUntilChanged { old, new -> if (old == null || new == null) old == new else sameArtwork(old, new) }
+    .mapLatest { model -> model?.let { seedFor(it) } ?: ArtworkSeed.None }
+    .onStart { emit(ArtworkSeed.Loading) }

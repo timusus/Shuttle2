@@ -11,6 +11,7 @@ import coil3.toBitmap
 import com.simplecityapps.imageloading.coil.artworkCacheKey
 import com.simplecityapps.shuttle.designsystem.theme.SeedColorCache
 import com.simplecityapps.shuttle.di.ApplicationContext
+import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -20,19 +21,21 @@ import dev.zacsweers.metro.SingleIn
 import timber.log.Timber
 
 /**
- * Extracts seeds from a small Coil bitmap of the song's artwork, cached under the song's artwork cache key: the
- * identity of the image the player shows, so a track with its own artwork gets its own seed.
+ * Extracts seeds from a small Coil bitmap of the song's or artist's artwork, cached under its artwork cache key: the
+ * identity of the image the player or the artist page's hero shows, so a track with its own artwork gets its own seed.
  */
 class CoilArtworkSeedSource(
     private val context: Context,
     private val imageLoader: ImageLoader,
     private val cache: SeedColorCache = SeedColorCache(),
 ) : ArtworkSeedSource {
-    override suspend fun seedFor(song: Song): ArtworkSeed = cache.getOrExtract(song.artworkCacheKey()) { loadBitmap(song) }
+    override suspend fun seedFor(song: Song): ArtworkSeed = cache.getOrExtract(song.artworkCacheKey()) { loadBitmap(song, song.name) }
 
-    private suspend fun loadBitmap(song: Song): Bitmap? {
+    override suspend fun seedFor(artist: AlbumArtist): ArtworkSeed = cache.getOrExtract(artist.artworkCacheKey()) { loadBitmap(artist, artist.name) }
+
+    private suspend fun loadBitmap(model: Any, name: String?): Bitmap? {
         val request = ImageRequest.Builder(context)
-            .data(song)
+            .data(model)
             .size(SEED_BITMAP_SIZE)
             // Extraction reads the pixels, which a hardware bitmap doesn't allow
             .allowHardware(false)
@@ -41,7 +44,7 @@ class CoilArtworkSeedSource(
             is SuccessResult -> result.image.toBitmap()
 
             is ErrorResult -> {
-                Timber.v(result.throwable, "No artwork seed for ${song.name}")
+                Timber.v(result.throwable, "No artwork seed for $name")
                 null
             }
         }

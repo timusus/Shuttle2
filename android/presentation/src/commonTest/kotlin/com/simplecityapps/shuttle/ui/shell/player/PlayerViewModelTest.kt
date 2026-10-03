@@ -19,6 +19,7 @@ import com.simplecityapps.playback.queue.ShuffleMode
 import com.simplecityapps.playback.queue.clone
 import com.simplecityapps.playback.settings.PlaybackSettings
 import com.simplecityapps.playback.sleeptimer.SleepTimer
+import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.persistence.InMemoryKeyValueStore
@@ -73,9 +74,13 @@ class PlayerViewModelTest {
     private val preferenceManager = GeneralPreferenceManager(preferences)
     private val settingsEffects = FakeSettingsEffects()
     private val seededSongs = mutableListOf<Song>()
-    private val seedSource = ArtworkSeedSource { song ->
-        seededSongs += song
-        ArtworkSeed.Available(RED)
+    private val seedSource = object : ArtworkSeedSource {
+        override suspend fun seedFor(song: Song): ArtworkSeed {
+            seededSongs += song
+            return ArtworkSeed.Available(RED)
+        }
+
+        override suspend fun seedFor(artist: AlbumArtist): ArtworkSeed = error("The player seeds from songs")
     }
     private val gatedSongs = MutableSharedFlow<Song>()
     private val replayGainModeSetting = ReplayGainModeSetting { PlaybackSettings.ReplayGain }

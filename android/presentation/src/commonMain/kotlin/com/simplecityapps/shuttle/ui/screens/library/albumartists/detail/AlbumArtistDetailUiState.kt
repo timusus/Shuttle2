@@ -30,7 +30,7 @@ data class AlbumArtistDetailUiState(
     val expandedAlbums: Set<AlbumGroupKey> = emptySet(),
     val loadingState: LoadingState = LoadingState.Loading,
     val events: List<PendingEvent<AlbumArtistDetailEvent>> = emptyList(),
-    /** The newest album's artwork seed, which tints the screen when Colour from artwork is on; it never holds up the content, which shows at [ArtworkSeed.Loading] while it's extracted. */
+    /** The artist's own artwork seed (the hero's image), which tints the screen when Colour from artwork is on; it never holds up the content, which shows at [ArtworkSeed.Loading] while it's extracted. */
     val seed: ArtworkSeed = ArtworkSeed.None,
 ) {
     /**

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.shuttle.model.Album
+import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Song
@@ -20,7 +21,7 @@ import com.simplecityapps.shuttle.ui.screens.library.LibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.ReadLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailUiState.SongSection
-import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
+import com.simplecityapps.shuttle.ui.theme.ObserveArtistArtworkSeed
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -51,7 +52,7 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
     observeArtistAlbums: ObserveArtistAlbums,
     observeSongs: ObserveSongs,
     observeCurrentSong: ObserveCurrentSong,
-    observeArtworkSeed: ObserveArtworkSeed,
+    observeArtistArtworkSeed: ObserveArtistArtworkSeed,
     private val shuffleAlbums: ShuffleAlbums,
     readSetting: ReadLibraryViewSetting,
     private val saveSetting: SaveLibraryViewSetting,
@@ -70,7 +71,7 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
     private val expandedAlbums = MutableStateFlow<Set<AlbumGroupKey>?>(null)
     private val events = PendingEvents<AlbumArtistDetailEvent>()
 
-    /** The artist's own albums, newest first, and their songs (theirs and those crediting them) in that order; the lead song's artwork seeds the tint. */
+    /** The artist's own albums, newest first, and their songs (theirs and those crediting them) in that order. */
     private val artistAlbums = observeArtistAlbums(groupKey).shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
 
     private val albumsAndSongs: Flow<Pair<List<Album>, List<Song>>> = combine(
@@ -92,16 +93,21 @@ class AlbumArtistDetailViewModel @AssistedInject constructor(
         )
     }
 
+    private val artist: Flow<AlbumArtist?> = observeArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = groupKey))
+        .map { it.firstOrNull() }
+        .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), replay = 1)
+
     val uiState: StateFlow<AlbumArtistDetailUiState> = combine(
-        observeArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = groupKey)),
+        artist,
         combine(albumsAndSongs, songList, artistAlbums) { albumsAndSongs, songList, artistAlbums -> Triple(albumsAndSongs, songList, artistAlbums.appearsOn) },
         observeCurrentSong(),
         combine(expandedAlbums, events.flow, ::Pair),
-        observeArtworkSeed(albumsAndSongs.map { (_, songs) -> songs.firstOrNull() }),
-    ) { artists, (albumsAndSongs, songList, appearsOn), currentSong, (expanded, events), seed ->
+        // The hero shows the artist's own artwork, so that's what seeds the tint (#735)
+        observeArtistArtworkSeed(artist),
+    ) { albumArtist, (albumsAndSongs, songList, appearsOn), currentSong, (expanded, events), seed ->
         val (albums, songs) = albumsAndSongs
         AlbumArtistDetailUiState(
-            albumArtist = artists.firstOrNull(),
+            albumArtist = albumArtist,
             albums = albums,
             appearsOn = appearsOn,
             songs = songList.songs,

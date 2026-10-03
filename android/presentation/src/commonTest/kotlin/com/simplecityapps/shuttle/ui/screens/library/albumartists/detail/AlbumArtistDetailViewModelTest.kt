@@ -14,6 +14,7 @@ import com.simplecityapps.fakes.FakeQueueOperations
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.TestMediaActions
 import com.simplecityapps.shuttle.model.Album
+import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.AlbumIdentityRule
 import com.simplecityapps.shuttle.model.Song
@@ -32,7 +33,7 @@ import com.simplecityapps.shuttle.ui.screens.library.SaveLibraryViewSetting
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeedSource
-import com.simplecityapps.shuttle.ui.theme.ObserveArtworkSeed
+import com.simplecityapps.shuttle.ui.theme.ObserveArtistArtworkSeed
 import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.shouldBe
 import kotlin.test.AfterTest
@@ -70,14 +71,17 @@ class AlbumArtistDetailViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private val seededAlbums = mutableListOf<String?>()
-
     /** How long the fake artwork source takes to extract a seed, in virtual time. */
     private var seedDelayMs = 0L
-    private val seedSource = ArtworkSeedSource { song ->
-        delay(seedDelayMs)
-        seededAlbums += song.album
-        ArtworkSeed.Available(RED)
+    private val seededArtists = mutableListOf<String?>()
+    private val seedSource = object : ArtworkSeedSource {
+        override suspend fun seedFor(song: Song): ArtworkSeed = error("An artist page seeds from the artist's own artwork, which its hero shows")
+
+        override suspend fun seedFor(artist: AlbumArtist): ArtworkSeed {
+            delay(seedDelayMs)
+            seededArtists += artist.name
+            return ArtworkSeed.Available(RED)
+        }
     }
     private val settingsStore = SettingsStore(InMemoryKeyValueStore())
     private val sortStore = InMemoryKeyValueStore()
@@ -303,7 +307,7 @@ class AlbumArtistDetailViewModelTest {
     }
 
     @Test
-    fun `the newest album's artwork tints the screen`() = runTest {
+    fun `the artist's own artwork, which the hero shows, tints the screen`() = runTest {
         val lanternHours = createSong(id = 1, album = "Lantern Hours", albumArtist = "The Tin Orchards")
         val looseChange = createSong(id = 2, album = "Loose Change", albumArtist = "The Tin Orchards")
         fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
@@ -319,7 +323,7 @@ class AlbumArtistDetailViewModelTest {
         advanceUntilIdle()
 
         viewModel.uiState.value.seed shouldBe ArtworkSeed.Available(RED)
-        seededAlbums shouldBe listOf("Loose Change")
+        seededArtists shouldBe listOf("The Tin Orchards")
     }
 
     @Test
@@ -553,7 +557,7 @@ class AlbumArtistDetailViewModelTest {
             observeArtistAlbums = testMediaActions.observeArtistAlbums,
             observeSongs = testMediaActions.observeSongs,
             observeCurrentSong = ObserveCurrentSong(fakeQueueOperations),
-            observeArtworkSeed = ObserveArtworkSeed(seedSource, ObserveSetting(settingsStore)),
+            observeArtistArtworkSeed = ObserveArtistArtworkSeed(seedSource, ObserveSetting(settingsStore)),
             shuffleAlbums = ShuffleAlbums(shuffleQueueOperations, shufflePlaybackOperations),
             readSetting = ReadLibraryViewSetting(libraryViewPreferences),
             saveSetting = SaveLibraryViewSetting(libraryViewPreferences),
