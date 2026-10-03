@@ -1,2 +1,2 @@
 # No new View subclasses, RecyclerView adapters/view holders or ViewBinders; write a composable
-# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
+# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.

@@ -7,14 +7,15 @@ still import raw Material3 components.
 Enforced by `DesignSystemRules` in `:android:architecture-tests`, deny by default (#794): outside
 `:android:designsystem`, every `androidx.compose.material3.*` import fails the build unless it is a token or
 state holder on the rule's allowlist (`DesignSystemMatching`: `MaterialTheme`, `ColorScheme`, `Typography`,
-`Shapes`, `LocalContentColor`, `LocalTextStyle`, `*Defaults`, `*State` / `remember*State`, `Experimental*Api`,
-`*Value`, `*Shapes` / `*Colors`, `material3.adaptive.*`). A new M3 component is flagged without anyone
+`Shapes`, `LocalContentColor`, `LocalTextStyle`, `*Defaults`, `*State`, `Experimental*Api`,
+`*Value`, `*Shapes` / `*Colors`, an explicit list of `material3.adaptive` layout, window and navigation3 helpers). A new M3 component is flagged without anyone
 listing it. The baseline
 (`android/architecture-tests/src/test/baselines/raw-material3-components.txt`) has one `path|Symbol|count`
-line per file and symbol, where count is how often the name appears outside import lines. A new raw usage in
+line per file and symbol, where count is how often the name appears in code (comments, strings and imports excluded; fully qualified uses count). A new raw usage in
 an already-baselined file raises the count and fails. Migrate a screen, then regenerate the baseline
 (`./gradlew :android:architecture-tests:test -PupdateArchitectureBaselines`) and tick its row here; a count
-that has dropped also fails until the baseline is regenerated, so counts only go down.
+that has dropped also fails until the baseline is regenerated. Counts are expected to only fall; review
+enforces that regenerating never raises one.
 
 ## Components
 

@@ -1,2 +1,2 @@
 # Subclasses and annotated declarations carry their conventional suffix (*ViewModel, *Worker, *Service, *Module, *Dao, ...)
-# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
+# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.

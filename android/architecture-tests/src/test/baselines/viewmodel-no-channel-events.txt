@@ -1,2 +1,2 @@
 # ViewModels model events whose loss is a bug as consumable UiState, not Channel.receiveAsFlow()/consumeAsFlow() (UDF 4)
-# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
+# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.

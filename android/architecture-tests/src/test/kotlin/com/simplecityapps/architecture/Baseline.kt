@@ -32,7 +32,7 @@ object Baseline {
             file.writeText(
                 buildString {
                     appendLine("# $description")
-                    appendLine("# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.")
+                    appendLine("# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.")
                     found.forEach { appendLine(it) }
                 },
             )
@@ -46,19 +46,25 @@ object Baseline {
         }
         val (new, fixed) = diff(baseline, found)
         if (new.isEmpty() && fixed.isEmpty()) return
+        val (changes, newOnly, fixedOnly) = splitCountChanges(new, fixed)
 
         fail(
             buildString {
                 appendLine("Architecture rule '$rule': $description")
-                if (new.isNotEmpty()) {
+                if (changes.isNotEmpty()) {
                     appendLine()
-                    appendLine("${new.size} new violations. Fix them rather than adding them to ${file.name}:")
-                    new.forEach { appendLine("  $it") }
+                    appendLine("${changes.size} entries changed count:")
+                    changes.forEach { appendLine("  ${it.message()}") }
                 }
-                if (fixed.isNotEmpty()) {
+                if (newOnly.isNotEmpty()) {
                     appendLine()
-                    appendLine("${fixed.size} baseline entries no longer violate. Delete them from ${file.name}:")
-                    fixed.forEach { appendLine("  $it") }
+                    appendLine("${newOnly.size} new violations. Fix them rather than adding them to ${file.name}:")
+                    newOnly.forEach { appendLine("  $it") }
+                }
+                if (fixedOnly.isNotEmpty()) {
+                    appendLine()
+                    appendLine("${fixedOnly.size} baseline entries no longer violate. Delete them from ${file.name}:")
+                    fixedOnly.forEach { appendLine("  $it") }
                 }
             },
         )
@@ -69,6 +75,26 @@ object Baseline {
      * (`path|Symbol|3`) gets a ratchet for free: a changed count is a new entry plus a fixed one.
      */
     fun diff(baseline: Set<String>, found: Set<String>): Pair<Set<String>, Set<String>> = (found - baseline) to (baseline - found)
+
+    /** An entry `path|Symbol|count` whose count differs between baseline and code. */
+    data class CountChange(val key: String, val from: Int, val to: Int) {
+        fun message(): String = "$key: count went from $from to $to; " +
+            if (to < from) "regenerate the baseline" else "remove the new usage"
+    }
+
+    /** Pairs [new] and [fixed] entries that differ only in a trailing numeric count. */
+    fun splitCountChanges(new: Set<String>, fixed: Set<String>): Triple<List<CountChange>, Set<String>, Set<String>> {
+        fun key(e: String) = e.substringBeforeLast('|')
+        fun count(e: String) = e.substringAfterLast('|').toIntOrNull()
+        val fixedByKey = fixed.filter { count(it) != null }.associateBy { key(it) }
+        val changes = new.mapNotNull { n ->
+            val old = fixedByKey[key(n)] ?: return@mapNotNull null
+            val to = count(n) ?: return@mapNotNull null
+            CountChange(key(n), count(old)!!, to)
+        }
+        val changed = changes.map { it.key }.toSet()
+        return Triple(changes, new.filterNot { count(it) != null && key(it) in changed }.toSet(), fixed.filterNot { count(it) != null && key(it) in changed }.toSet())
+    }
 
     /** Writes `build/reports/architecture/<rule>.tsv` (module, entry, path) for the audit's per-module counts. */
     private fun writeReport(rule: String, violations: Collection<Violation>) {

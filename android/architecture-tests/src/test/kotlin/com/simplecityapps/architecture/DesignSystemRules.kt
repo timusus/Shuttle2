@@ -5,14 +5,15 @@ import org.junit.Test
 /**
  * Enforces design-language.md §5, deny by default (#794): outside `:android:designsystem`, every
  * `androidx.compose.material3.*` import is a violation unless [DesignSystemMatching.isAllowed] says it is a
- * token or state holder (theme, colour scheme, `*Defaults`, `*State`, opt-in markers, adaptive layout APIs).
+ * token or state holder (theme, colour scheme, `*Defaults`, `*State`, opt-in markers, adaptive layout and window helpers).
  * A new M3 component is therefore flagged without anyone listing it.
  *
  * Konsist sees imports and text, not resolved call-site types, so the baseline entry is
- * `path|Symbol|count`: the file, the imported symbol, and how many times its name appears outside import
- * lines (word match, so comments count). Adding a raw usage to an already-baselined file raises the count,
- * which fails as a new entry; lowering it fails as a stale one until the baseline is regenerated, so the
- * count can only go down. docs/design/component-migration.md tracks the baseline by screen.
+ * `path|Symbol|count`: the file, the symbol, and how many times its name appears in code (comments, KDoc,
+ * string literals and import lines are stripped first; a fully qualified use with no import counts too).
+ * Adding a raw usage to an already-baselined file raises the count and fails; lowering it fails until the
+ * baseline is regenerated. Counts are expected to only fall, and review enforces that regenerating never
+ * raises one. docs/design/component-migration.md tracks the baseline by screen.
  */
 class DesignSystemRules {
 
@@ -42,8 +43,17 @@ class DesignSystemRules {
 object DesignSystemMatching {
     const val M3_PREFIX = "androidx.compose.material3."
 
-    /** Subpackages of material3 that are layout/window APIs rather than components. */
-    private const val ADAPTIVE_PREFIX = "adaptive."
+    /**
+     * Layout, window and navigation3 helpers from `material3.adaptive`, relative to [M3_PREFIX]. Adaptive
+     * components (NavigationSuiteScaffold, ListDetailPaneScaffold, AnimatedPane, ...) are deliberately absent.
+     */
+    private val ALLOWED_ADAPTIVE = setOf(
+        "adaptive.ExperimentalMaterial3AdaptiveApi", "adaptive.HingeInfo", "adaptive.Posture",
+        "adaptive.WindowAdaptiveInfo", "adaptive.currentWindowAdaptiveInfoV2",
+        "adaptive.separatingHorizontalHingeBounds", "adaptive.separatingVerticalHingeBounds",
+        "adaptive.layout.PaneScaffoldDirective", "adaptive.layout.calculatePaneScaffoldDirective",
+        "adaptive.navigation3.ListDetailSceneStrategy", "adaptive.navigation3.rememberListDetailSceneStrategy",
+    )
 
     /** Symbols that are theme, tokens or modifiers, not components. */
     private val ALLOWED_NAMES = setOf(
@@ -54,38 +64,103 @@ object DesignSystemMatching {
         "SnackbarResult", "SnackbarDuration", "TopAppBarScrollBehavior", "ModalBottomSheetProperties",
     )
 
-    /** Name patterns for token and state holders, which have no S2 counterpart to migrate to. */
+    /**
+     * Name patterns for token and state holders, which have no S2 counterpart to migrate to. `.+Value` and
+     * `.+(Shapes|Colors)` are accepted risk: a future component named like that would slip through.
+     */
     private val ALLOWED_PATTERNS = listOf(
         Regex(".+Defaults"), // ButtonDefaults, TopAppBarDefaults, ...
-        Regex(".+State"), // SnackbarHostState, SliderState, SheetState, ...
-        Regex("remember.+State"),
+        Regex(".+State"), // SnackbarHostState, SliderState, rememberModalBottomSheetState, ...
         Regex("Experimental\\w+Api"), // opt-in markers
         Regex(".+Value"), // WideNavigationRailValue, SwipeToDismissBoxValue, ...
         Regex(".+(Shapes|Colors)"), // ListItemShapes, ListItemColors, ...
     )
 
+    private val QUALIFIED = Regex("androidx\\.compose\\.material3\\.([A-Za-z0-9_]+(?:\\.[A-Za-z0-9_]+)*)")
+
     /** [import] is the full import name, e.g. `androidx.compose.material3.Text`. */
     fun isAllowed(import: String): Boolean {
         val name = import.removePrefix(M3_PREFIX)
-        if (name.startsWith(ADAPTIVE_PREFIX)) return true
+        if (name.startsWith("adaptive.")) return name in ALLOWED_ADAPTIVE
         val simple = name.substringAfterLast('.')
         return simple in ALLOWED_NAMES || ALLOWED_PATTERNS.any { it.matches(simple) }
     }
 
     /**
      * Baseline entries `path|Symbol|count` for one file. [imports] are (import name, alias) pairs; [text] is the
-     * file source, searched for the symbol (or its alias) outside import lines.
+     * file source. Comments, string literals and import lines are stripped, then the symbol (or its alias) is
+     * counted. Fully qualified `androidx.compose.material3.X` uses with no import are counted too.
      */
     fun entries(path: String, imports: List<Pair<String, String?>>, text: String): List<String> {
-        val body = text.lineSequence().filterNot { it.trimStart().startsWith("import ") }.joinToString("\n")
-        return imports
+        val body = stripNonCode(text)
+        val counts = linkedMapOf<String, Int>()
+        imports
             .filter { (name, _) -> name.startsWith(M3_PREFIX) && !isAllowed(name) }
-            .map { (name, alias) ->
+            .forEach { (name, alias) ->
                 val symbol = name.removePrefix(M3_PREFIX)
                 val used = alias ?: symbol.substringAfterLast('.')
-                val count = Regex("\\b${Regex.escape(used)}\\b").findAll(body).count().coerceAtLeast(1)
-                "$path|$symbol|$count"
+                counts[symbol] = Regex("\\b${Regex.escape(used)}\\b").findAll(body).count().coerceAtLeast(1)
             }
-            .distinct()
+        QUALIFIED.findAll(body).forEach { match ->
+            val segments = match.groupValues[1].split('.')
+            val end = segments.indexOfFirst { it.first().isUpperCase() }.let { if (it < 0) segments.size else it + 1 }
+            val symbol = segments.take(end).joinToString(".")
+            if (symbol !in counts && !isAllowed(M3_PREFIX + symbol)) {
+                val qualified = Regex.escape(M3_PREFIX + symbol) + "\\b"
+                counts[symbol] = Regex(qualified).findAll(body).count()
+            }
+        }
+        return counts.map { (symbol, count) -> "$path|$symbol|$count" }
+    }
+
+    /** [text] without line and block comments (nested, KDoc included), string and char literals, and imports. */
+    fun stripNonCode(text: String): String {
+        val out = StringBuilder()
+        var i = 0
+        while (i < text.length) {
+            val c = text[i]
+            when {
+                text.startsWith("//", i) -> while (i < text.length && text[i] != '\n') i++
+
+                text.startsWith("/*", i) -> {
+                    var depth = 0
+                    do {
+                        when {
+                            text.startsWith("/*", i) -> {
+                                depth++
+                                i += 2
+                            }
+
+                            text.startsWith("*/", i) -> {
+                                depth--
+                                i += 2
+                            }
+
+                            else -> i++
+                        }
+                    } while (i < text.length && depth > 0)
+                    out.append(' ')
+                }
+
+                text.startsWith("\"\"\"", i) -> {
+                    val close = text.indexOf("\"\"\"", i + 3)
+                    i = if (close < 0) text.length else close + 3
+                    out.append(' ')
+                }
+
+                c == '"' || c == '\'' -> {
+                    i++
+                    while (i < text.length && text[i] != c && text[i] != '\n') i += if (text[i] == '\\') 2 else 1
+                    i++
+                    out.append(' ')
+                }
+
+                else -> {
+                    out.append(c)
+                    i++
+                }
+            }
+        }
+        return out.lineSequence().filterNot { it.trimStart().startsWith("import ") }.joinToString("\n")
     }
 }

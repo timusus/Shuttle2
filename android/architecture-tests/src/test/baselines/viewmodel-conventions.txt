@@ -1,2 +1,2 @@
 # ViewModels are named *ViewModel, are contributed to the Metro ViewModel maps, and have no Android framework dependencies (UDF 8b)
-# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
+# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.

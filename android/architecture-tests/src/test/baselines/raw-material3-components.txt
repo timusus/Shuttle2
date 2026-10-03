@@ -1,5 +1,5 @@
 # Outside :android:designsystem, use the S2 component instead of a raw androidx.compose.material3 component (design-language.md §5, docs/design/component-migration.md); if none exists yet, add it to the designsystem first. Entries are path|Symbol|usages; the count may only go down
-# Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
+# Baseline of existing violations (#443), one `path|Symbol|count` per line. Counts only fall; see Baseline.kt.
 android/app/src/debug/java/com/simplecityapps/shuttle/debug/livelog/LiveLogScreen.kt|Scaffold|1
 android/app/src/debug/java/com/simplecityapps/shuttle/debug/livelog/LiveLogScreen.kt|Text|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/DetailScaffold.kt|Scaffold|1
@@ -13,7 +13,7 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/Loadin
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/LoadingStatusIndicator.kt|Text|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/mediaactions/MediaActionsHost.kt|OutlinedTextField|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/common/mediaactions/MediaActionsHost.kt|Text|2
-android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/equalizer/FrequencyResponseChart.kt|Text|3
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/equalizer/FrequencyResponseChart.kt|Text|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|ElevatedCard|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|Icon|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|Scaffold|1
@@ -69,7 +69,7 @@ android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEdi
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|Surface|3
 android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|Text|6
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/AppShell.kt|Surface|2
-android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/ShellSheetSceneStrategy.kt|ModalBottomSheet|3
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/ShellSheetSceneStrategy.kt|ModalBottomSheet|1
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/FullPlayer.kt|Text|2
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/NowPlaying.kt|Text|3
 android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/NowPlayingPanels.kt|Icon|1
