@@ -96,7 +96,7 @@ changes the app's signing identity, and iOS refuses to upgrade an install across
 ## Running the POC
 
 The app signs in only through its own screen: Library's empty state (or the Settings gear) > Sources > Connect a
-Server > Jellyfin or Emby (`ServerSignInView` on the shared `ServerSignInViewModel`). The address needs its
+Server > Jellyfin, Emby or Plex (`ServerSignInView` on the shared `ServerSignInViewModel`). The address needs its
 scheme; plain `http://` LAN servers work, ATS allows them. The session is saved in the Keychain, so later
 launches import without signing in again.
 

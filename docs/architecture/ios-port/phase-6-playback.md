@@ -228,7 +228,9 @@ Done. The module (commonMain + commonTest, targets android/iosArm64/iosSimulator
 
 ### Status of step 2 (`StreamProfile`)
 
-Done for Jellyfin and Emby (#603); Plex's `start.m3u8` transcode is still to do. `StreamProfile`
+Done for Jellyfin and Emby (#603) and Plex. Plex serves a part file as it is, so `StreamProfile` also carries
+the platform's `DirectPlayFormats`, and `PlexStreamUrlProvider` picks HLS (`start.m3u8`, Android) or one
+progressive MP3 (`start.mp3` with `offset`, iOS) from `TranscodingProtocol`. `StreamProfile`
 (`:android:mediaprovider:server`) carries the universal endpoint's `Container=`,
 `TranscodingContainer=`, `TranscodingProtocol=` and `AudioCodec=` values and is injected into
 `JellyfinAuthenticationManager`/`EmbyAuthenticationManager`. Android binds `StreamProfile.Android`
@@ -374,8 +376,8 @@ and `IosAppGraphTest`/`EngineAudioPlayerTests` (the saved EQ reaches the engine 
    device.
 2. **Transcode fallback without HLS**: progressive transcodes differ per server (Plex especially), are
    not range-seekable, and report no duration up front; seek restarts must reconcile positions.
-   Handled for Jellyfin and Emby by re-opening at the offset (#606); Plex and network-loss recovery
-   remain.
+   Handled for Jellyfin, Emby and Plex by re-opening at the offset (#606; Plex's `offset` takes seconds to
+   the millisecond, checked against the test server); network-loss recovery remains.
 3. **Queue parity drift**: iOS `QueueModel` vs Android's Media3 playlist semantics; the shared
    contract suite (step 3) is the guard.
 4. **FFmpeg LGPL in an App Store build and binary size.** Resolved by linking dynamically: the four

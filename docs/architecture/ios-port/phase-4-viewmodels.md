@@ -244,8 +244,8 @@ commonMain. The real blocker was the layering (presentation sees only core and d
   `ReadServerLogin`, `ForgetServerLogin`) are in `presentation`'s `commonMain`, and the analytics call is the
   `ServerSignInAnalytics` port, bound to `MonetisationAnalytics` in app's `di/ServerSignInAnalyticsModule`.
 
-iOS builds it from `IosAppGraph.serverSignInViewModelFactory` for Jellyfin (with Quick Connect) and Emby; Plex
-joins when `:shared` depends on the Plex provider. Until entitlements (phase 9) and StoreKit (#609) there is no
+iOS builds it from `IosAppGraph.serverSignInViewModelFactory` for Jellyfin (with Quick Connect), Emby and
+Plex (with its optional 2FA code). Until entitlements (phase 9) and StoreKit (#609) there is no
 Pro disclosure and no sign-in analytics on iOS.
 
 **`PaywallViewModel` (S5) is deferred to StoreKit (#609).** It needs `Billing`, `Entitlement` and
