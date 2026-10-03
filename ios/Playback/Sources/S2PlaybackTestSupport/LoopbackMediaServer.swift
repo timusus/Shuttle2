@@ -34,6 +34,8 @@ public final class LoopbackMediaServer: @unchecked Sendable {
     private var _delayForEveryRange: TimeInterval = 0
     private var _stallsAfterBodyBytes: Int?
     private var _redirectsToAlternateHost = false
+    private var _holdsOffsetZero = false
+    private var _heldOffsetZeroSends: [() -> Void] = []
     private var connections: [NWConnection] = []
 
     /// How long a request whose range starts at byte 0 is held before its response is written.
@@ -56,6 +58,24 @@ public final class LoopbackMediaServer: @unchecked Sendable {
     public var stallsAfterBodyBytes: Int? {
         get { lock.lock(); defer { lock.unlock() }; return _stallsAfterBodyBytes }
         set { lock.lock(); _stallsAfterBodyBytes = newValue; lock.unlock() }
+    }
+
+    /// Hold every response to a range starting at byte 0, headers and all, until
+    /// ``releaseOffsetZero()``: a slow server whose answer comes when the test says, not after a
+    /// wall-clock delay a loaded machine stretches.
+    public var holdsOffsetZero: Bool {
+        get { lock.lock(); defer { lock.unlock() }; return _holdsOffsetZero }
+        set { lock.lock(); _holdsOffsetZero = newValue; lock.unlock() }
+    }
+
+    /// Write the responses ``holdsOffsetZero`` held, and answer later ones at once.
+    public func releaseOffsetZero() {
+        lock.lock()
+        _holdsOffsetZero = false
+        let sends = _heldOffsetZeroSends
+        _heldOffsetZeroSends = []
+        lock.unlock()
+        queue.async { sends.forEach { $0() } }
     }
 
     /// The start byte of every range served, in order. The restart is visible here as a second
@@ -401,6 +421,11 @@ public final class LoopbackMediaServer: @unchecked Sendable {
                 if !stalls { connection.cancel() }
             })
         }
+        lock.lock()
+        let held = _holdsOffsetZero && range.lowerBound == 0
+        if held { _heldOffsetZeroSends.append(send) }
+        lock.unlock()
+        if held { return }
         if delay > 0 {
             queue.asyncAfter(deadline: .now() + delay, execute: send)
         } else {

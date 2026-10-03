@@ -557,6 +557,9 @@ public final class MusicPlaybackController {
         callbackQueue.sync {}
     }
 
+    /// Whether a track's open (or its first chunk's decode) is still running on the prepare queue.
+    var hasOpenInFlightForTesting: Bool { opening.wait(timeout: .now()) == .timedOut }
+
     /// An open queues its result on the engine queue before it leaves `opening`.
     private func awaitOpensForTesting() {
         opening.wait()
