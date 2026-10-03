@@ -52,7 +52,7 @@ private const val SelectedArtworkScale = 0.88f
  * the title and [subtitle] under it, no card behind them. The caller sizes the tile; the artwork
  * fills the slot (`Artwork(modifier = Modifier.fillMaxSize())`) and clips itself to its own shape.
  *
- * The title wraps to at most [titleLines] lines (two; more at the largest font sizes) and the subtitle takes one; both
+ * The title wraps to at most [titleLines] lines (two; more at the largest font sizes) and the subtitle takes [subtitleLines] (one); both
  * truncate with an ellipsis, and the subtitle sits right under the title however many lines it takes.
  *
  * [selected] shrinks the artwork inside a `secondaryContainer` tile and badges it with a check;
@@ -69,6 +69,7 @@ fun GridTile(
     selected: Boolean = false,
     playing: Boolean = false,
     titleLines: Int = 2,
+    subtitleLines: Int = 1,
     onLongClick: (() -> Unit)? = null,
     interactionSource: MutableInteractionSource? = null,
 ) {
@@ -133,7 +134,7 @@ fun GridTile(
                     text = subtitle,
                     style = MaterialTheme.typography.tileSubtitle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
+                    maxLines = subtitleLines,
                     overflow = TextOverflow.Ellipsis,
                 )
             }

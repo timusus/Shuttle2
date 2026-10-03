@@ -1,13 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
@@ -18,18 +12,14 @@ import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.LibraryAdd
 import androidx.compose.material.icons.rounded.LibraryMusic
 import androidx.compose.material.icons.rounded.Replay
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
@@ -37,7 +27,6 @@ import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
 import com.simplecityapps.shuttle.designsystem.component.GeneratedArtwork
 import com.simplecityapps.shuttle.designsystem.component.GridTile
 import com.simplecityapps.shuttle.designsystem.component.S2Action
-import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.model.SmartPlaylistId
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.actions.MediaAction
@@ -243,6 +232,7 @@ fun HomeShelfTile(
         onClick = { if (item is HomeItem.GenreItem) callbacks.onAction(item.playAction()) else callbacks.onOpenItem(item) },
         onLongClick = actions.showMenu,
         titleLines = if (largeText) LARGE_TEXT_TILE_LINES else 2,
+        subtitleLines = if (largeText) LARGE_TEXT_TILE_LINES else 1,
         artwork = { HomeItemArtwork(item, covers, ArtworkSize.Grid, Modifier.fillMaxSize()) },
         modifier = modifier
             .width(width)
@@ -251,5 +241,5 @@ fun HomeShelfTile(
     )
 }
 
-/** How many lines a tile's title may take at the largest font sizes, where one would cut off nearly every title. */
+/** How many lines a tile's title and subtitle may take at the largest font sizes, where one would cut off nearly every title. */
 internal const val LARGE_TEXT_TILE_LINES = 3

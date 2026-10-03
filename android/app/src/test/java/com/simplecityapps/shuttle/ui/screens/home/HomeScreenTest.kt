@@ -152,6 +152,22 @@ class HomeScreenTest {
     }
 
     @Test
+    fun `a finished jump back in item shows no song`() {
+        robot.setContent(HomeScenarios.finished)
+
+        robot.assertTextNotShown("Glasshouse")
+    }
+
+    @Test
+    fun `a jump back in cell exposes its kind in semantics`() {
+        robot.setContent(HomeScenarios.content)
+
+        robot.assertDescriptionShown("Phase Garden, Album")
+        robot.assertDescriptionShown("Saltmarsh Choir, Artist")
+        robot.assertDescriptionShown("Road Trip, Playlist")
+    }
+
+    @Test
     fun `a jump back in cell's Play resumes, and Play from start plays it in order`() {
         robot.setContent(HomeScenarios.content)
         val phaseGarden = HomeItem.AlbumItem(HomeScenarios.phaseGarden)

@@ -21,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -80,11 +81,11 @@ fun jumpBackInColumns(
 }
 
 /**
- * One cell, after Spotify's recents: the cover at the cell's leading edge, the title on up to two lines and the kind
- * of the title, then the song its queue was left on if any ([progress], #670, #706), centred on a tonal
- * container of a minimum height, with a play button at the end (shuffle, for a genre) when [showPlayButton]. A compact
- * cell has none, so titles keep the room (#660). Its play, and Play in its long-press sheet, carry on where the queue
- * was left; the sheet's Play from start starts over.
+ * One cell, after Spotify's recents: the cover at the cell's leading edge, the title on up to two lines and under it
+ * the song its queue was left on if any ([progress], #670, #706), centred on a tonal container of a minimum height,
+ * with a play button at the end (shuffle, for a genre) when [showPlayButton]. A compact cell has none, so titles keep
+ * the room (#660). Its play, and Play in its long-press sheet, carry on where the queue was left; the sheet's Play from start starts over. The kind (Album, Artist, Playlist) isn't printed, but the cell's
+ * content description carries it so TalkBack can tell an artist from an album of the same name.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -98,6 +99,7 @@ private fun JumpBackInCell(
 ) {
     val actions = homeItemActions(item, callbacks, resumes = true)
     val title = item.title()
+    val kind = stringResource(item.kind.label)
     val shuffles = item is HomeItem.GenreItem
     Surface(modifier = modifier, shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -106,7 +108,10 @@ private fun JumpBackInCell(
                     .weight(1f)
                     .heightIn(min = CELL_HEIGHT)
                     .combinedClickable(onClick = { callbacks.onOpenItem(item) }, onLongClick = actions.showMenu)
-                    .semantics { customActions = actions.accessibilityActions }
+                    .semantics {
+                        contentDescription = "$title, $kind"
+                        customActions = actions.accessibilityActions
+                    }
                     .testTag(JUMP_BACK_IN_CELL_TAG),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -122,7 +127,7 @@ private fun JumpBackInCell(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    // The song its queue was left on, if any; the cover and title say what kind of item it is.
+                    // The song its queue was left on, if any; the kind is in the cell's content description.
                     progress?.takeUnless { it.finished }?.songName?.let { songName ->
                         Text(
                             text = songName,
@@ -146,7 +151,7 @@ private fun JumpBackInCell(
     }
 }
 
-/** Room for a two-line title and the label under it; the cover, 56dp, is centred in it. */
+/** Room for a two-line title and the song under it; the cover, 56dp, is centred in it. */
 private val CELL_HEIGHT = 72.dp
 
 const val JUMP_BACK_IN_CELL_TAG = "homeGrid.cell"

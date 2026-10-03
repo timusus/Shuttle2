@@ -142,6 +142,10 @@ class HomeRobot(private val rule: ComposeContentTestRule) {
         rule.onNodeWithContentDescription(description).assertIsDisplayed()
     }
 
+    fun assertDescriptionShown(description: String) {
+        rule.onAllNodesWithContentDescription(description).fetchSemanticsNodes().size shouldBe 1
+    }
+
     fun assertDescriptionNotShown(description: String) {
         rule.onAllNodesWithContentDescription(description).fetchSemanticsNodes().size shouldBe 0
     }

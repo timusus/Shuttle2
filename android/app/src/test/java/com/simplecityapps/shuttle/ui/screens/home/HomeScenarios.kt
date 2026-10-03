@@ -107,6 +107,24 @@ object HomeScenarios {
         ) + content.sections.drop(1),
     )
 
+    /** Phase Garden played to the end: nothing left to resume, so its cell names no song. */
+    val finished = content.copy(
+        sections = listOf(
+            jumpBackIn.copy(
+                progress = mapOf(
+                    HomeItem.AlbumItem(phaseGarden).key to HomeItemProgress(
+                        songName = "Glasshouse",
+                        positionMs = 0,
+                        fraction = 1f,
+                        shuffled = false,
+                        finished = true,
+                        updatedAt = Instant.fromEpochMilliseconds(0),
+                    ),
+                ),
+            ),
+        ) + content.sections.drop(1),
+    )
+
     /** A library that's never been played (cold start): Recently added, Genre picks and Shuffle all. */
     val unplayed = content.copy(
         sections = listOf(
