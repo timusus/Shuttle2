@@ -1,84 +1,84 @@
-# Outside :android:designsystem, import the S2 component instead of a raw androidx.compose.material3 component (design-language.md §5, docs/design/component-migration.md); if none exists yet, add it to the designsystem first
+# Outside :android:designsystem, use the S2 component instead of a raw androidx.compose.material3 component (design-language.md §5, docs/design/component-migration.md); if none exists yet, add it to the designsystem first. Entries are path|Symbol|usages; the count may only go down
 # Baseline of existing violations (#443). Only remove lines; see Baseline.kt.
-com.simplecityapps.shuttle.debug.livelog.LiveLogScreen -> androidx.compose.material3.Scaffold
-com.simplecityapps.shuttle.debug.livelog.LiveLogScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.common.components.DetailScaffold -> androidx.compose.material3.Scaffold
-com.simplecityapps.shuttle.ui.common.components.FastScroller -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.common.components.LinearProgressIndicatorWithText -> androidx.compose.material3.LinearProgressIndicator
-com.simplecityapps.shuttle.ui.common.components.LinearProgressIndicatorWithText -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator -> androidx.compose.material3.CircularProgressIndicator
-com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator -> androidx.compose.material3.HorizontalDivider
-com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator -> androidx.compose.material3.Icon
-com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator -> androidx.compose.material3.OutlinedButton
-com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost -> androidx.compose.material3.OutlinedTextField
-com.simplecityapps.shuttle.ui.common.mediaactions.MediaActionsHost -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.equalizer.FrequencyResponseChart -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.home.HomeScreen -> androidx.compose.material3.ElevatedCard
-com.simplecityapps.shuttle.ui.screens.home.HomeScreen -> androidx.compose.material3.Icon
-com.simplecityapps.shuttle.ui.screens.home.HomeScreen -> androidx.compose.material3.Scaffold
-com.simplecityapps.shuttle.ui.screens.home.HomeScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.home.HomeScreen -> androidx.compose.material3.pulltorefresh.PullToRefreshBox
-com.simplecityapps.shuttle.ui.screens.home.JumpBackInGrid -> androidx.compose.material3.Surface
-com.simplecityapps.shuttle.ui.screens.home.JumpBackInGrid -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.library.AddToPlaylistSubmenu -> androidx.compose.material3.DropdownMenu
-com.simplecityapps.shuttle.ui.screens.library.AddToPlaylistSubmenu -> androidx.compose.material3.DropdownMenuItem
-com.simplecityapps.shuttle.ui.screens.library.AddToPlaylistSubmenu -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen -> androidx.compose.material3.LinearWavyProgressIndicator
-com.simplecityapps.shuttle.ui.screens.library.LibraryEmptyScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.library.LibraryOverflowMenu -> androidx.compose.material3.DropdownMenu
-com.simplecityapps.shuttle.ui.screens.library.LibraryOverflowMenu -> androidx.compose.material3.DropdownMenuItem
-com.simplecityapps.shuttle.ui.screens.library.LibraryOverflowMenu -> androidx.compose.material3.Icon
-com.simplecityapps.shuttle.ui.screens.library.LibraryOverflowMenu -> androidx.compose.material3.IconButton
-com.simplecityapps.shuttle.ui.screens.library.LibraryOverflowMenu -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.library.LibraryScreen -> androidx.compose.material3.ListItem
-com.simplecityapps.shuttle.ui.screens.library.LibraryScreen -> androidx.compose.material3.ModalBottomSheet
-com.simplecityapps.shuttle.ui.screens.library.LibraryScreen -> androidx.compose.material3.Scaffold
-com.simplecityapps.shuttle.ui.screens.library.LibraryScreen -> androidx.compose.material3.Switch
-com.simplecityapps.shuttle.ui.screens.library.PlaylistDetailScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.library.PlaylistDialogs -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.library.songs.ShuffleListItem -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> androidx.compose.material3.Card
-com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> androidx.compose.material3.Icon
-com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> androidx.compose.material3.OutlinedCard
-com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> androidx.compose.material3.RadioButton
-com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> androidx.compose.material3.Scaffold
-com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> androidx.compose.material3.Surface
-com.simplecityapps.shuttle.ui.screens.paywall.PaywallScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.settings.SettingsScreens -> androidx.compose.material3.Scaffold
-com.simplecityapps.shuttle.ui.screens.settings.SettingsScreens -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewScreen -> androidx.compose.material3.Surface
-com.simplecityapps.shuttle.ui.screens.settings.about.WhatsNewScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerScreen -> androidx.compose.material3.Surface
-com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.settings.equalizer.EqualizerScreen -> androidx.compose.material3.VerticalDivider
-com.simplecityapps.shuttle.ui.screens.settings.excluded.ExcludedSongsScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoScreen -> androidx.compose.material3.Scaffold
-com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.sources.FolderRulesScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.sources.SourcesScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInScreen -> androidx.compose.material3.BasicAlertDialog
-com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInScreen -> androidx.compose.material3.CircularProgressIndicator
-com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInScreen -> androidx.compose.material3.Icon
-com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInScreen -> androidx.compose.material3.IconButton
-com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInScreen -> androidx.compose.material3.OutlinedTextField
-com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInScreen -> androidx.compose.material3.Switch
-com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorScreen -> androidx.compose.material3.OutlinedTextField
-com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorScreen -> androidx.compose.material3.Scaffold
-com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorScreen -> androidx.compose.material3.Surface
-com.simplecityapps.shuttle.ui.screens.tageditor.TagEditorScreen -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.shell.AppShell -> androidx.compose.material3.Surface
-com.simplecityapps.shuttle.ui.shell.ShellSheetSceneStrategy -> androidx.compose.material3.ModalBottomSheet
-com.simplecityapps.shuttle.ui.shell.player.FullPlayer -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.shell.player.NowPlaying -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanels -> androidx.compose.material3.Icon
-com.simplecityapps.shuttle.ui.shell.player.NowPlayingPanels -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.shell.player.PlayerPane -> androidx.compose.material3.Surface
-com.simplecityapps.shuttle.ui.shell.player.PlayerSheet -> androidx.compose.material3.Surface
-com.simplecityapps.shuttle.ui.shell.player.QueueList -> androidx.compose.material3.Icon
-com.simplecityapps.shuttle.ui.shell.player.QueueList -> androidx.compose.material3.SwipeToDismissBox
-com.simplecityapps.shuttle.ui.shell.player.QueueList -> androidx.compose.material3.Text
-com.simplecityapps.shuttle.ui.shell.player.SongActions -> androidx.compose.material3.BasicAlertDialog
-com.simplecityapps.shuttle.ui.shell.player.SongActions -> androidx.compose.material3.OutlinedTextField
-com.simplecityapps.shuttle.ui.shell.player.SongActions -> androidx.compose.material3.Text
+android/app/src/debug/java/com/simplecityapps/shuttle/debug/livelog/LiveLogScreen.kt|Scaffold|1
+android/app/src/debug/java/com/simplecityapps/shuttle/debug/livelog/LiveLogScreen.kt|Text|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/DetailScaffold.kt|Scaffold|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/FastScroller.kt|Text|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/LinearProgressIndicatorWithText.kt|LinearProgressIndicator|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/LinearProgressIndicatorWithText.kt|Text|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/LoadingStatusIndicator.kt|CircularProgressIndicator|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/LoadingStatusIndicator.kt|HorizontalDivider|3
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/LoadingStatusIndicator.kt|Icon|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/LoadingStatusIndicator.kt|OutlinedButton|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/components/LoadingStatusIndicator.kt|Text|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/mediaactions/MediaActionsHost.kt|OutlinedTextField|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/common/mediaactions/MediaActionsHost.kt|Text|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/equalizer/FrequencyResponseChart.kt|Text|3
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|ElevatedCard|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|Icon|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|Scaffold|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|Text|4
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/HomeScreen.kt|pulltorefresh.PullToRefreshBox|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/JumpBackInGrid.kt|Surface|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/home/JumpBackInGrid.kt|Text|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/AddToPlaylistSubmenu.kt|DropdownMenuItem|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/AddToPlaylistSubmenu.kt|DropdownMenu|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/AddToPlaylistSubmenu.kt|Text|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryEmptyScreen.kt|LinearWavyProgressIndicator|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryEmptyScreen.kt|Text|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryOverflowMenu.kt|DropdownMenuItem|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryOverflowMenu.kt|DropdownMenu|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryOverflowMenu.kt|IconButton|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryOverflowMenu.kt|Icon|3
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryOverflowMenu.kt|Text|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryScreen.kt|ListItem|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryScreen.kt|ModalBottomSheet|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryScreen.kt|Scaffold|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/LibraryScreen.kt|Switch|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/PlaylistDetailScreen.kt|Text|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/PlaylistDialogs.kt|Text|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/library/songs/ShuffleListItem.kt|Text|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|Card|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|Icon|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|OutlinedCard|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|RadioButton|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|Scaffold|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|Surface|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/paywall/PaywallScreen.kt|Text|10
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/SettingsScreens.kt|Scaffold|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/SettingsScreens.kt|Text|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/about/WhatsNewScreen.kt|Surface|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/about/WhatsNewScreen.kt|Text|5
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/equalizer/EqualizerScreen.kt|Surface|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/equalizer/EqualizerScreen.kt|Text|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/equalizer/EqualizerScreen.kt|VerticalDivider|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/settings/excluded/ExcludedSongsScreen.kt|Text|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/songinfo/SongInfoScreen.kt|Scaffold|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/songinfo/SongInfoScreen.kt|Text|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/FolderRulesScreen.kt|Text|4
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/SourcesScreen.kt|Text|3
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|BasicAlertDialog|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|CircularProgressIndicator|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|IconButton|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Icon|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|OutlinedTextField|4
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Switch|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/sources/servers/ServerSignInScreen.kt|Text|14
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|OutlinedTextField|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|Scaffold|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|Surface|3
+android/app/src/main/java/com/simplecityapps/shuttle/ui/screens/tageditor/TagEditorScreen.kt|Text|6
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/AppShell.kt|Surface|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/ShellSheetSceneStrategy.kt|ModalBottomSheet|3
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/FullPlayer.kt|Text|2
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/NowPlaying.kt|Text|3
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/NowPlayingPanels.kt|Icon|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/NowPlayingPanels.kt|Text|4
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/PlayerPane.kt|Surface|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/PlayerSheet.kt|Surface|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/QueueList.kt|Icon|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/QueueList.kt|SwipeToDismissBox|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/QueueList.kt|Text|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/SongActions.kt|BasicAlertDialog|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/SongActions.kt|OutlinedTextField|1
+android/app/src/main/java/com/simplecityapps/shuttle/ui/shell/player/SongActions.kt|Text|1

@@ -4,11 +4,17 @@ Tracks the move from raw `androidx.compose.material3` components to `:android:de
 (design-language.md §5, #757). Two parts: which components exist and are approved, and which screens
 still import raw Material3 components.
 
-Enforced by `DesignSystemRules` in `:android:architecture-tests`: a new raw component import outside
-`:android:designsystem` fails the build. The call sites below are its baseline
-(`android/architecture-tests/src/test/baselines/raw-material3-components.txt`). Migrate a screen, then
-delete its lines from the baseline (`./gradlew :android:architecture-tests:test -PupdateArchitectureBaselines`
-rewrites it) and tick its row here; the test also fails if a baseline line no longer violates.
+Enforced by `DesignSystemRules` in `:android:architecture-tests`, deny by default (#794): outside
+`:android:designsystem`, every `androidx.compose.material3.*` import fails the build unless it is a token or
+state holder on the rule's allowlist (`DesignSystemMatching`: `MaterialTheme`, `ColorScheme`, `Typography`,
+`Shapes`, `LocalContentColor`, `LocalTextStyle`, `*Defaults`, `*State` / `remember*State`, `Experimental*Api`,
+`*Value`, `*Shapes` / `*Colors`, `material3.adaptive.*`). A new M3 component is flagged without anyone
+listing it. The baseline
+(`android/architecture-tests/src/test/baselines/raw-material3-components.txt`) has one `path|Symbol|count`
+line per file and symbol, where count is how often the name appears outside import lines. A new raw usage in
+an already-baselined file raises the count and fails. Migrate a screen, then regenerate the baseline
+(`./gradlew :android:architecture-tests:test -PupdateArchitectureBaselines`) and tick its row here; a count
+that has dropped also fails until the baseline is regenerated, so counts only go down.
 
 ## Components
 

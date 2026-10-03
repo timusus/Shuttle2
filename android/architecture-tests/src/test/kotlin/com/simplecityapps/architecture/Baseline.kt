@@ -44,8 +44,7 @@ object Baseline {
         } else {
             emptySet()
         }
-        val new = found - baseline
-        val fixed = baseline - found
+        val (new, fixed) = diff(baseline, found)
         if (new.isEmpty() && fixed.isEmpty()) return
 
         fail(
@@ -64,6 +63,12 @@ object Baseline {
             },
         )
     }
+
+    /**
+     * Entries only in [found] (new) and only in [baseline] (fixed). A rule whose entries carry a count
+     * (`path|Symbol|3`) gets a ratchet for free: a changed count is a new entry plus a fixed one.
+     */
+    fun diff(baseline: Set<String>, found: Set<String>): Pair<Set<String>, Set<String>> = (found - baseline) to (baseline - found)
 
     /** Writes `build/reports/architecture/<rule>.tsv` (module, entry, path) for the audit's per-module counts. */
     private fun writeReport(rule: String, violations: Collection<Violation>) {
