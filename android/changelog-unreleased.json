@@ -79,7 +79,7 @@
     },
     {
       "text": "Album and artist pages take vivid colours from the artwork at the top of the page, with a soft wash of its colour behind it, when Colour from artwork is on in Appearance settings",
-      "commits": []
+      "commits": ["8ed3203d9", "79ae1e9c1", "abbd60800"]
     },
     {
       "text": "Choose a streaming quality for Jellyfin, Emby and Plex in Sources settings, separately for Wi-Fi and mobile data, to save data on the go",
