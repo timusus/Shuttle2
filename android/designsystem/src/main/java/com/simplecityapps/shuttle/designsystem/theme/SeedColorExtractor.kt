@@ -7,6 +7,7 @@ import com.materialkolor.ktx.toHct
 import com.materialkolor.quantize.QuantizerCelebi
 import com.materialkolor.score.Score
 import com.simplecityapps.shuttle.ui.theme.ArtworkSeed
+import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -23,15 +24,22 @@ private const val MAX_SWATCHES = 128
 const val MIN_PREFERRED_SEED_TONE = 20.0
 
 /**
- * The share of the artwork a lighter swatch must cover to take over from a near-black one: a stray speck on a dark
- * cover (a highlight, a few letters of type) isn't its colour (#735).
+ * The share of the artwork a lighter swatch's hue must cover to take over from a near-black one: a stray speck on a dark
+ * cover (a highlight, a few letters of type) isn't its colour (#735). Counted over the hue's whole family, since thin
+ * line art or a halftone splits one colour into many small anti-aliased swatches.
  */
 const val MIN_PREFERRED_SEED_SHARE = 0.03
+
+/** Swatches within this many degrees of hue count towards the same colour's share. */
+private const val HUE_FAMILY_RANGE = 20.0
+
+/** Swatches below this chroma are greys, with no hue to share. */
+private const val HUE_FAMILY_MIN_CHROMA = 8.0
 
 /**
  * The seed colour of [bitmap], or null when it has no colour worth theming with. Of the swatches
  * ranked by chroma and population, the first that isn't near-black (see [MIN_PREFERRED_SEED_TONE])
- * and covers at least [MIN_PREFERRED_SEED_SHARE] of the image, else the first. Quantises a downscaled
+ * and whose hue covers at least [MIN_PREFERRED_SEED_SHARE] of the image, else the first. Quantises a downscaled
  * copy, so call it off the main thread (see [SeedColorCache.getOrExtract]).
  */
 fun extractSeedColor(bitmap: Bitmap): Color? {
@@ -44,9 +52,18 @@ fun extractSeedColor(bitmap: Bitmap): Color? {
     sample.getPixels(pixels, 0, sample.width, 0, 0, sample.width, sample.height)
     val populations = QuantizerCelebi.quantize(pixels, MAX_SWATCHES)
     val minPreferredPopulation = pixels.size * MIN_PREFERRED_SEED_SHARE
+    val chromatic = populations.mapNotNull { (argb, population) ->
+        Color(argb).toHct().takeIf { it.chroma >= HUE_FAMILY_MIN_CHROMA }?.let { it.hue to population }
+    }
+
+    fun hueShare(hue: Double): Int = chromatic.sumOf { (other, population) ->
+        val distance = abs(other - hue) % 360.0
+        if (minOf(distance, 360.0 - distance) <= HUE_FAMILY_RANGE) population else 0
+    }
     val swatches = Score.score(populations, fallbackColorArgb = null).filter { isUsableSeed(Color(it)) }
     val preferred = swatches.firstOrNull { argb ->
-        Color(argb).toHct().tone >= MIN_PREFERRED_SEED_TONE && (populations[argb] ?: 0) >= minPreferredPopulation
+        val hct = Color(argb).toHct()
+        hct.tone >= MIN_PREFERRED_SEED_TONE && hueShare(hct.hue) >= minPreferredPopulation
     }
     return (preferred ?: swatches.firstOrNull())?.let(::Color)
 }
