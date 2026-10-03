@@ -21,7 +21,7 @@ Same as deploy-android: on `main`, clean tree, `HEAD == origin/main` after `git 
 The Mac must be free; take the build through a longjob, never a long foreground call.
 
 ```bash
-support/scripts/longjob.sh start ios-preflight -- sh -c 'ios/scripts/build-framework.sh --release --device -q && cd ios && xcodegen generate && xcodebuild build -project S2.xcodeproj -scheme S2 -destination "generic/platform=iOS Simulator" -derivedDataPath build/DerivedData -quiet'
+support/scripts/longjob.sh start ios-preflight -- sh -c 'ios/scripts/build-framework.sh -q && cd ios && xcodegen generate && xcodebuild build -project S2.xcodeproj -scheme S2 -configuration Debug -destination "generic/platform=iOS Simulator" -derivedDataPath build/DerivedData -quiet'
 support/scripts/longjob.sh wait ios-preflight
 ```
 
