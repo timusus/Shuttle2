@@ -31,12 +31,16 @@ cd "$(dirname "$SELF")/../.." || exit 2
 
 # No /usr/sbin or ssh-agent in sessions that skip ~/.zshrc (#718): see land.sh.
 export PATH="/usr/sbin:/sbin:$PATH"
-if ! git ls-remote -q origin HEAD >/dev/null 2>&1 && command -v gh >/dev/null 2>&1; then
-  export GIT_CONFIG_COUNT=2
-  export GIT_CONFIG_KEY_0="url.https://github.com/.insteadOf" GIT_CONFIG_VALUE_0="git@github.com:"
-  export GIT_CONFIG_KEY_1="credential.https://github.com.helper" GIT_CONFIG_VALUE_1="!gh auth git-credential"
+https_fallback() {
+  local n=${GIT_CONFIG_COUNT:-0}
+  git ls-remote -q origin HEAD >/dev/null 2>&1 && return 0
+  command -v gh >/dev/null 2>&1 || return 0
+  export "GIT_CONFIG_KEY_$n=url.https://github.com/.insteadOf" "GIT_CONFIG_VALUE_$n=git@github.com:"
+  export "GIT_CONFIG_KEY_$((n+1))=url.https://github.com/.insteadOf" "GIT_CONFIG_VALUE_$((n+1))=ssh://git@github.com/"
+  export "GIT_CONFIG_KEY_$((n+2))=credential.https://github.com.helper" "GIT_CONFIG_VALUE_$((n+2))=!gh auth git-credential"
+  export GIT_CONFIG_COUNT=$((n+3))
   echo "full-verify.sh: SSH to origin failed, using HTTPS via gh for this run" >&2
-fi
+}
 REPO_ROOT=$(git rev-parse --show-toplevel) || { echo "full-verify.sh: not a git repo" >&2; exit 2; }
 COMMON_DIR=$(git rev-parse --path-format=absolute --git-common-dir)
 WATERMARK_FILE="$COMMON_DIR/s2-full-verified"
@@ -122,6 +126,8 @@ case "${1:-}" in
   -h|--help) sed -n '2,/^set -/p' "$0" | sed '$d; s/^# \{0,1\}//'; exit 0 ;;
   -*) echo "full-verify.sh: unknown option: $1" >&2; exit 2 ;;
 esac
+
+https_fallback
 
 if [ -n "${1:-}" ]; then
   SHA=$(git rev-parse --verify "$1^{commit}") || { echo "full-verify.sh: bad sha: $1" >&2; exit 2; }

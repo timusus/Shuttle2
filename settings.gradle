@@ -12,7 +12,7 @@ pluginManagement {
     }
 }
 plugins {
-    // Lets Gradle download the JDK named in gradle/gradle-daemon-jvm.properties on a machine without it
+    // Resolves JDK toolchains for builds; the daemon JVM download itself uses the toolchainUrl.* entries in gradle/gradle-daemon-jvm.properties
     id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 

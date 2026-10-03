@@ -54,13 +54,16 @@ export PATH="/usr/sbin:/sbin:$PATH"
 
 # No ssh-agent in those sessions either: when SSH to origin fails, use HTTPS through gh for this run
 # only, via env-var git config (nothing written to any config file). Children inherit it.
-if [ "${1:-}" != "--verify-only" ] && ! git ls-remote -q origin HEAD >/dev/null 2>&1 \
-   && command -v gh >/dev/null 2>&1; then
-  export GIT_CONFIG_COUNT=2
-  export GIT_CONFIG_KEY_0="url.https://github.com/.insteadOf" GIT_CONFIG_VALUE_0="git@github.com:"
-  export GIT_CONFIG_KEY_1="credential.https://github.com.helper" GIT_CONFIG_VALUE_1="!gh auth git-credential"
+https_fallback() {
+  local n=${GIT_CONFIG_COUNT:-0}
+  git ls-remote -q origin HEAD >/dev/null 2>&1 && return 0
+  command -v gh >/dev/null 2>&1 || return 0
+  export "GIT_CONFIG_KEY_$n=url.https://github.com/.insteadOf" "GIT_CONFIG_VALUE_$n=git@github.com:"
+  export "GIT_CONFIG_KEY_$((n+1))=url.https://github.com/.insteadOf" "GIT_CONFIG_VALUE_$((n+1))=ssh://git@github.com/"
+  export "GIT_CONFIG_KEY_$((n+2))=credential.https://github.com.helper" "GIT_CONFIG_VALUE_$((n+2))=!gh auth git-credential"
+  export GIT_CONFIG_COUNT=$((n+3))
   echo "land.sh: SSH to origin failed, using HTTPS via gh for this run" >&2
-fi
+}
 
 # ios_tests_for <file>...: print the S2Tests classes (one per line, sorted, unique) that the
 # changed files map to, per the rule in the header, plus "--package" when ios/Playback changed.
@@ -169,6 +172,8 @@ done
 
 [ "${#BRANCHES[@]}" -gt 0 ] || { echo "land.sh: no branches given (see --help)" >&2; exit 2; }
 
+https_fallback
+
 if [ -n "$(git status --porcelain)" ]; then
   echo "land.sh: working tree is dirty; commit or stash before landing" >&2
   exit 1
@@ -264,6 +269,17 @@ drop_branch() {  # $1 = index; resets HEAD back to before this branch's picks
 }
 
 # --- verify (once, one machine-lock hold for both phases) ------------------------------------------------------
+# verify_env_failure <log> <from-byte>: succeed when the verify output after <from-byte> shows Gradle
+# dying on the machine (JDK image transform, jlink, missing JDK/toolchain/SDK, #717) and no compiler
+# error, i.e. it says nothing about the branch. Config-cache and resolution errors alone stay "code":
+# with problems=fail they can be genuine branch bugs.
+verify_env_failure() {
+  local out
+  out=$(tail -c +"$2" "$1")
+  if printf '%s\n' "$out" | grep -Eq '^e: file://|\.java:[0-9]+: error:'; then return 1; fi
+  printf '%s\n' "$out" | grep -Eq 'JdkImageTransform|jlink|No matching toolchain|Cannot find a Java installation|Cannot find a (Java|JDK)|daemon JVM|SDK location not found|Failed to install the following Android SDK|No installed JDK'
+}
+
 run_verify() {
   if [ "${LAND_SKIP_VERIFY:-0}" = 1 ]; then
     log "verify: LAND_SKIP_VERIFY=1, skipping"
@@ -283,8 +299,7 @@ run_verify() {
   local from
   from=$(( $(wc -c < "$LOG") + 1 ))
   if ! machine-lock --name verify -- "$SELF" --verify-only "$ORIGIN_MAIN_SHA" "$touches_ios" ${ios_tests[@]+"${ios_tests[@]}"} >> "$LOG" 2>&1; then
-    # Gradle dying in configuration or a transform says nothing about the branch (#717).
-    if tail -c +"$from" "$LOG" | grep -Eq 'Configuration cache state could not be cached|Failed to transform|Could not resolve all files for configuration|Execution failed for JdkImageTransform'; then
+    if verify_env_failure "$LOG" "$from"; then
       log "verify: environment failure (see above)"
       return 2
     fi
@@ -301,8 +316,9 @@ if [ "${#LANDED_IDX[@]}" -gt 0 ]; then
   say "land.sh: running verify over ${#LANDED_IDX[@]} landed branch(es)"
   run_verify; vrc=$?
   if [ "$vrc" -eq 2 ]; then
-    say "land.sh: verify environment failure, branch kept (log: $LOG)"
-    exit 1
+    git reset -q --hard "$ORIGIN_MAIN_SHA"
+    say "land.sh: verify environment failure, nothing landed, branch kept (log: $LOG)"
+    exit 3
   fi
   if [ "$vrc" -ne 0 ]; then
     if [ "${#LANDED_IDX[@]}" -eq 1 ]; then
@@ -319,8 +335,9 @@ if [ "${#LANDED_IDX[@]}" -gt 0 ]; then
         remaining=("${remaining[@]}")
         run_verify; vrc=$?
         if [ "$vrc" -eq 2 ]; then
-          say "land.sh: verify environment failure, branch kept (log: $LOG)"
-          exit 1
+          git reset -q --hard "$ORIGIN_MAIN_SHA"
+          say "land.sh: verify environment failure, nothing landed, branch kept (log: $LOG)"
+          exit 3
         fi
         if [ "$vrc" -eq 0 ]; then passed=1; break; fi
       done
