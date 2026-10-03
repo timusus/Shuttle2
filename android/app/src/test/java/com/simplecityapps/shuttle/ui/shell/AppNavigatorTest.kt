@@ -46,6 +46,48 @@ class AppNavigatorTest {
     }
 
     @Test
+    fun `leaving a tab pops its utility routes and whatever was opened from them, keeping the tab's own screens`() {
+        val navigator = navigator()
+        navigator.selectTab(ShellTab.Library)
+        navigator.open(album)
+        navigator.open(SettingsRoute)
+        navigator.open(EqualizerRoute)
+        navigator.open(album)
+
+        navigator.selectTab(ShellTab.Search)
+        navigator.stack(ShellTab.Library) shouldBe listOf(LibraryRoute, album)
+
+        navigator.selectTab(ShellTab.Library)
+        navigator.showsNavigation shouldBe true
+    }
+
+    @Test
+    fun `leaving the start tab pops its utility routes too, and re-selecting the current tab pops it to its root`() {
+        val navigator = navigator()
+        navigator.open(SettingsRoute)
+        navigator.selectTab(ShellTab.Search)
+        navigator.stack(ShellTab.Home) shouldBe listOf(HomeRoute)
+
+        navigator.open(SettingsRoute)
+        navigator.selectTab(ShellTab.Search)
+        navigator.stack(ShellTab.Search) shouldBe listOf(SearchRoute)
+        navigator.showsNavigation shouldBe true
+    }
+
+    @Test
+    fun `back from another tab's utility route closes it before returning to the start tab`() {
+        val navigator = navigator()
+        navigator.selectTab(ShellTab.Library)
+        navigator.open(SettingsRoute)
+
+        navigator.back() shouldBe true
+        navigator.selectedTab shouldBe ShellTab.Library
+        navigator.back() shouldBe true
+        navigator.selectedTab shouldBe ShellTab.Home
+        navigator.stack(ShellTab.Library) shouldBe listOf(LibraryRoute)
+    }
+
+    @Test
     fun `the display shows the start tab followed by the selected tab`() {
         val navigator = navigator()
         navigator.visibleTabs shouldBe listOf(ShellTab.Home)

@@ -15,7 +15,9 @@ import androidx.navigation3.runtime.rememberNavBackStack
  * One back stack per top-level tab plus the selected tab (docs/architecture/app-shell.md,
  * "Back stacks and the navigator"). The display shows the start tab's stack followed by the
  * selected tab's, so back at the root of another tab returns to the start tab; re-selecting a
- * tab restores its stack, and re-selecting the current tab pops it to its root.
+ * tab restores its stack, and re-selecting the current tab pops it to its root. Leaving a tab
+ * dismisses any utility destinations ([UtilityRoute]) open on it, so coming back shows the tab's
+ * own screens with the navigation in place.
  *
  * Plain list code over snapshot state, so the rules are unit tested without Compose UI.
  */
@@ -52,6 +54,7 @@ class AppNavigator(
             val stack = stacks.getValue(tab)
             while (stack.size > 1) stack.removeAt(stack.lastIndex)
         } else {
+            leave(selectedTab)
             selectedTab = tab
         }
     }
@@ -66,12 +69,20 @@ class AppNavigator(
             }
 
             selectedTab != startTab -> {
+                leave(selectedTab)
                 selectedTab = startTab
                 true
             }
 
             else -> false
         }
+    }
+
+    /** Pops [tab]'s stack from its first [UtilityRoute] up, dropping the utility destinations and anything opened from them. */
+    private fun leave(tab: ShellTab) {
+        val stack = stacks.getValue(tab)
+        val first = stack.indexOfFirst { it is UtilityRoute }
+        if (first > 0) while (stack.size > first) stack.removeAt(stack.lastIndex)
     }
 }
 
