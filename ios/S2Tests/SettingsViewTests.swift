@@ -161,7 +161,9 @@ struct SettingsViewTests {
         let sut = SettingsContent(sections: [])
         #expect((try? sut.inspect().find(text: "Version")) != nil)
         #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "settings.acknowledgements")) != nil)
-        #expect((try? sut.inspect().find(viewWithAccessibilityIdentifier: "settings.ffmpegSource")) != nil)
+        let link = try sut.inspect().find(ViewType.Link.self) { try $0.accessibilityIdentifier() == "settings.ffmpegSource" }
+        #expect(try link.url() == SettingsContent.ffmpegSourceURL)
+        #expect(SettingsContent.ffmpegSourceURL.absoluteString == "https://github.com/timusus/Shuttle2/releases/tag/ffmpeg-n7.1.5-source")
     }
 
     @Test func eachRowLeadsWithItsIconSquare() throws {
