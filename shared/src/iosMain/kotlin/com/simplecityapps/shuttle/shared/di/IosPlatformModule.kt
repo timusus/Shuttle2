@@ -5,6 +5,8 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.platform.PlatformFeatures
 import com.simplecityapps.shuttle.ui.actions.SongDownloader
 import com.simplecityapps.shuttle.ui.actions.SongFileDeleter
+import com.simplecityapps.shuttle.ui.screens.settings.backup.LibraryBackupFlow
+import com.simplecityapps.shuttle.ui.screens.settings.backup.RestoreReport
 import com.simplecityapps.shuttle.ui.screens.sources.servers.ServerSignInAnalytics
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -65,4 +67,14 @@ class IosPlatformModule {
     /** No playlist files are imported on iOS, so none needs rewriting. */
     @Provides
     fun providePlaylistFileSync(): PlaylistFileSync = PlaylistFileSync.None
+
+    /** iOS has no backup export or import yet, so the Library backup rows (which iOS doesn't list) report failure. */
+    @Provides
+    fun provideLibraryBackupFlow(): LibraryBackupFlow = object : LibraryBackupFlow {
+        override suspend fun buildBackupJson(): String? = null
+
+        override suspend fun writeBackup(destinationUri: String, backupJson: String): Boolean = false
+
+        override suspend fun readAndRestore(sourceUri: String): RestoreReport? = null
+    }
 }
