@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.util.lerp
 import androidx.navigation3.runtime.NavKey
+import com.simplecityapps.shuttle.designsystem.component.S2SheetDefaults
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkSchemeStyle
 import com.simplecityapps.shuttle.designsystem.theme.ArtworkTheme
 import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
@@ -65,7 +66,7 @@ internal fun PlayerSheet(
     val levelDescription = state.settledLevel.description
     val nowPlayingShown by remember(state) { derivedStateOf { state.geometry.nowPlayingAlpha(state.offset) > 0f } }
     val statusBarTop = WindowInsets.statusBars.getTop(LocalDensity.current).toFloat()
-    val corner = with(LocalDensity.current) { SheetCorner.toPx() }
+    val corner = with(LocalDensity.current) { S2SheetDefaults.corner.toPx() }
     val collapse = { scope.launch { state.moveTo(PlayerLevel.Mini) } }
 
     PanelResetEffect(state, player, actions)

@@ -40,6 +40,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
@@ -447,9 +448,9 @@ class AppShellRobot(
         rule.waitForIdle()
     }
 
-    /** Drags the full player down by the song header over an open panel, which collapses it. */
-    fun swipeDownNowPlayingHeader() {
-        rule.onNodeWithTag(PlayerTestTags.NowPlayingHeader).performTouchInput { swipeDown(startY = top + 1f, endY = bottom + 600f) }
+    /** Drags the full player down by its transport, pushed up above an open panel, which collapses it. */
+    fun swipeDownTransport() {
+        rule.onNodeWithTag(PlayerTestTags.Transport).performTouchInput { swipeDown(startY = top + 1f, endY = bottom + 600f) }
         rule.waitForIdle()
     }
 
@@ -470,6 +471,12 @@ class AppShellRobot(
 
     fun tapText(text: String) {
         rule.onNodeWithText(text).performClick()
+        rule.waitForIdle()
+    }
+
+    /** Scrolls [text] into view inside its scrolling panel, which takes only part of the player's height, then taps it. */
+    fun scrollToAndTapText(text: String) {
+        rule.onNodeWithText(text).performScrollTo().performClick()
         rule.waitForIdle()
     }
 
@@ -626,14 +633,9 @@ class AppShellRobot(
         }
     }
 
-    /** The compact now-playing header stands in for the artwork and transport while a panel is open. */
-    fun assertNowPlayingHeader(shown: Boolean) {
-        val node = rule.onNodeWithTag(PlayerTestTags.NowPlayingHeader)
-        if (shown) node.assertIsDisplayed() else node.assertDoesNotExist()
-    }
-
-    fun assertNowPlayingArtwork(shown: Boolean) {
-        rule.onAllNodesWithTag(PlayerTestTags.NowPlayingArtwork).assertCountEquals(if (shown) 1 else 0)
+    /** The seek bar and transport, which stay in view above an open panel. */
+    fun assertTransportDisplayed() {
+        rule.onNodeWithTag(PlayerTestTags.Transport).assertIsDisplayed()
     }
 
     fun assertPaneShown() {

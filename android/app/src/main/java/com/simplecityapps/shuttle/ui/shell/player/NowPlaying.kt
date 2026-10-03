@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import android.view.ContextThemeWrapper
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,25 +12,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Bedtime
-import androidx.compose.material.icons.rounded.ClearAll
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Forward30
-import androidx.compose.material.icons.rounded.GraphicEq
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.Replay10
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
@@ -43,17 +32,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.mediarouter.app.MediaRouteButton
-import androidx.navigation3.runtime.NavKey
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.designsystem.R as DesignR
 import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
-import com.simplecityapps.shuttle.designsystem.component.S2Action
-import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2IconToggleButton
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControls
 import com.simplecityapps.shuttle.designsystem.component.S2PlayerControlsSize
 import com.simplecityapps.shuttle.designsystem.component.S2SeekBar
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 
 /** The Cast framework's route button, themed to the player's scheme. Only shown where Cast can start. */
 @Composable
@@ -74,7 +62,7 @@ internal fun CastButton(modifier: Modifier = Modifier) {
                 button.setRemoteIndicatorDrawable(drawable)
             }
         },
-        modifier = modifier.size(48.dp),
+        modifier = modifier.size(S2TouchTarget.minimum),
     )
 }
 
@@ -86,7 +74,7 @@ internal fun NowPlayingArtwork(
     gap: Dp,
     modifier: Modifier = Modifier,
 ) {
-    var boxModifier = modifier.fillMaxWidth().padding(horizontal = NowPlayingMargin, vertical = gap).testTag(PlayerTestTags.NowPlayingArtwork)
+    var boxModifier = modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium, vertical = gap).testTag(PlayerTestTags.NowPlayingArtwork)
     if (player.current != null) boxModifier = boxModifier.skipSwipe(onNext = actions::skipToNext, onPrevious = actions::skipToPrevious)
     Box(boxModifier, contentAlignment = Alignment.Center) {
         player.current?.let { current ->
@@ -103,7 +91,7 @@ internal fun NowPlayingTitle(
     modifier: Modifier = Modifier,
 ) {
     val current = player.current
-    Row(modifier.fillMaxWidth().padding(start = NowPlayingMargin + 4.dp, end = 8.dp, bottom = TitleSeekGap), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.fillMaxWidth().padding(start = S2Spacing.medium + S2Spacing.xsmall, end = S2Spacing.small, bottom = S2Spacing.small), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(text = current?.title.orEmpty(), style = MaterialTheme.typography.headlineMediumEmphasized, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text(
@@ -145,8 +133,8 @@ internal fun NowPlayingSong(
 }
 
 /**
- * The seek bar over the transport controls, [gap] below them ([transportHeight]). The Large
- * controls sit closer to the edges than the seek bar, and scale down where even that doesn't fit.
+ * The seek bar over the transport controls, [gap] below them. The Large controls sit closer to the
+ * edges than the seek bar, and scale down where even that doesn't fit.
  */
 @Composable
 internal fun Transport(
@@ -157,11 +145,11 @@ internal fun Transport(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().height(transportHeight(gap)),
+        modifier = modifier.fillMaxWidth().padding(bottom = gap).testTag(PlayerTestTags.Transport),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         SeekBar(player, progress, actions)
-        Box(Modifier.weight(1f).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.padding(horizontal = S2Spacing.small), contentAlignment = Alignment.Center) {
             val seekable = player.current?.song?.type?.isSeekable == true
             S2PlayerControls(
                 playing = player.playing,
@@ -214,7 +202,8 @@ private fun SeekBar(
         durationMs = current.durationMs,
         onSeek = actions::seekTo,
         enabled = player.current != null,
-        modifier = Modifier.fillMaxWidth().height(SeekBarHeight).padding(horizontal = NowPlayingMargin),
+        buffering = player.buffering,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = S2Spacing.medium),
     )
 }
 

@@ -1,32 +1,19 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
 import android.text.format.DateUtils
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.EnterExitState
-import androidx.compose.animation.core.animate
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitVerticalTouchSlopOrCancellation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.gestures.verticalDrag
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -34,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
@@ -43,40 +29,23 @@ import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.ClearAll
 import androidx.compose.material.icons.rounded.GraphicEq
 import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.Pause
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavKey
 import com.simplecityapps.shuttle.R
@@ -85,22 +54,22 @@ import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2Button
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonSize
 import com.simplecityapps.shuttle.designsystem.component.S2ButtonStyle
+import com.simplecityapps.shuttle.designsystem.component.S2ExpandableSheetScaffold
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.S2IconButtonStyle
 import com.simplecityapps.shuttle.designsystem.component.S2IconToggleButton
-import com.simplecityapps.shuttle.designsystem.component.S2PlayPauseButton
-import com.simplecityapps.shuttle.designsystem.theme.ContinuousRoundedCornerShape
+import com.simplecityapps.shuttle.designsystem.component.S2PanelSheet
+import com.simplecityapps.shuttle.designsystem.component.S2SheetHandle
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.ui.actions.MediaSelection
-import kotlinx.coroutines.launch
 
 /**
  * The full-screen player of a compact sheet and the pane (docs/architecture/app-shell.md, section 1):
  * the handle, the artwork, the title, the transport and the bar, fixed to the screen. Nothing in it
- * scrolls, so no gesture opens a panel; the bar's buttons do. With a panel open
- * ([PlayerUiState.panel]) the song shrinks to [NowPlayingHeader] and the panel fills a
- * [PanelSheet] below it, over the bar, and the handle goes, leaving the sheet's grip the only one.
- * On a [tabletopFold] the song sits above the fold, and the
- * transport, or the open panel, below it.
+ * scrolls, so no gesture opens a panel; the bar's buttons do. A panel open ([PlayerUiState.panel])
+ * slides up from the bar in a [PlayerPanel], pushing the song and transport up so the transport stays
+ * in view above it ([S2ExpandableSheetScaffold]). On a [tabletopFold] the song sits above the fold,
+ * and the transport, or the open panel, below it.
  */
 @Composable
 internal fun FullPlayer(
@@ -113,51 +82,7 @@ internal fun FullPlayer(
     tabletopFold: Rect? = null,
 ) {
     val closePanel = { actions.showPanel(null) }
-    Column(modifier.fillMaxSize().testTag(PlayerTestTags.NowPlaying).windowInsetsPadding(WindowInsets.statusBars)) {
-        if (tabletopFold != null) {
-            FoldSplit(
-                fold = tabletopFold,
-                orientation = Orientation.Vertical,
-                modifier = Modifier.weight(1f),
-                first = {
-                    Column(Modifier.fillMaxSize()) {
-                        DragHandle(onCollapse)
-                        NowPlayingSong(player, actions, gap = NowPlayingGap, fillHeight = true, modifier = Modifier.weight(1f))
-                    }
-                },
-                second = {
-                    val panel = player.panel
-                    if (panel == null) {
-                        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) { Transport(player, progress, actions, gap = NowPlayingGap) }
-                    } else {
-                        PanelSheet(panel, player, actions, onOpenRoute, onClose = closePanel, modifier = Modifier.fillMaxSize())
-                    }
-                },
-            )
-        } else {
-            // Keyed on whether a panel is open, so switching panels swaps only the sheet's content. The
-            // handle goes with the song: the panel sheet's own grip is the one handle while a panel is open.
-            AnimatedContent(
-                targetState = player.panel,
-                contentKey = { it != null },
-                transitionSpec = { fadeIn() togetherWith fadeOut() },
-                modifier = Modifier.weight(1f),
-                label = "panel",
-            ) { panel ->
-                // The outgoing state stays composed while it fades, so it leaves the semantics tree at once.
-                Column(Modifier.fillMaxSize().hiddenFromSemantics(transition.targetState != EnterExitState.Visible)) {
-                    if (panel == null) {
-                        DragHandle(onCollapse)
-                        NowPlayingSong(player, actions, gap = NowPlayingGap, fillHeight = true, modifier = Modifier.weight(1f))
-                        Transport(player, progress, actions, gap = NowPlayingGap)
-                    } else {
-                        Spacer(Modifier.height(HeaderTopGap))
-                        NowPlayingHeader(player, actions, onClick = closePanel)
-                        PanelSheet(panel, player, actions, onOpenRoute, onClose = closePanel, modifier = Modifier.weight(1f))
-                    }
-                }
-            }
-        }
+    val bar = @Composable {
         NowPlayingBar(
             player = player,
             actions = actions,
@@ -166,16 +91,61 @@ internal fun FullPlayer(
             modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom)),
         )
     }
+    Column(modifier.fillMaxSize().testTag(PlayerTestTags.NowPlaying).windowInsetsPadding(WindowInsets.statusBars)) {
+        if (tabletopFold != null) {
+            FoldSplit(
+                fold = tabletopFold,
+                orientation = Orientation.Vertical,
+                modifier = Modifier.weight(1f),
+                first = {
+                    Column(Modifier.fillMaxSize()) {
+                        CollapseHandle(onCollapse)
+                        NowPlayingSong(player, actions, gap = S2Spacing.medium, fillHeight = true, modifier = Modifier.weight(1f))
+                    }
+                },
+                second = {
+                    val panel = player.panel
+                    if (panel == null) {
+                        Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) { Transport(player, progress, actions, gap = S2Spacing.medium) }
+                    } else {
+                        PlayerPanel(panel, player, actions, onOpenRoute, onClose = closePanel, modifier = Modifier.fillMaxSize())
+                    }
+                },
+            )
+            bar()
+        } else {
+            // The closing panel keeps its content while it slides away.
+            val lastPanel = remember { LastPanel() }
+            player.panel?.let { lastPanel.value = it }
+            S2ExpandableSheetScaffold(
+                expanded = player.panel != null,
+                bottomBar = bar,
+                expandedContent = {
+                    lastPanel.value?.let { panel -> PlayerPanel(panel, player, actions, onOpenRoute, onClose = closePanel, modifier = Modifier.fillMaxSize()) }
+                },
+                handle = { CollapseHandle(onCollapse) },
+                modifier = Modifier.weight(1f),
+            ) {
+                NowPlayingSong(player, actions, gap = S2Spacing.medium, fillHeight = true, modifier = Modifier.weight(1f))
+                Transport(player, progress, actions, gap = S2Spacing.medium)
+            }
+        }
+    }
+}
+
+/** The panel [FullPlayer] last showed, read only while it slides away. */
+private class LastPanel {
+    var value: NowPlayingPanel? = null
 }
 
 /**
- * The open panel, in a sheet of its own inside the player: the queue under its header, or the sleep
- * timer or Playback & sound, scrolling. Dragging the sheet down by its handle, or pulling its list
- * down past the top, closes it ([onClose]) once it has moved a quarter of its height or is flung.
- * [contentPadding] pads the scrolling content, for a sheet that runs down to the navigation bar.
+ * The open panel in a [S2PanelSheet] inside the player: the queue under its header, or the sleep
+ * timer or Playback & sound, scrolling. Dragging it down by its grip or the queue's header, or
+ * pulling its content down past the top, closes it ([onClose]). [contentPadding] pads the
+ * scrolling content, for a sheet that runs down to the navigation bar.
  */
 @Composable
-internal fun PanelSheet(
+internal fun PlayerPanel(
     panel: NowPlayingPanel,
     player: PlayerUiState,
     actions: PlayerActions,
@@ -184,162 +154,31 @@ internal fun PanelSheet(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
 ) {
-    val scope = rememberCoroutineScope()
-    val currentOnClose by rememberUpdatedState(onClose)
-    var offset by remember { mutableFloatStateOf(0f) }
-    var height by remember { mutableIntStateOf(0) }
-    val closeVelocity = with(LocalDensity.current) { PanelCloseVelocity.toPx() }
-    val settle: (Float) -> Unit = remember(scope, closeVelocity) {
-        { velocity ->
-            if (offset > height / 4f || velocity > closeVelocity) {
-                currentOnClose()
-            } else {
-                scope.launch { animate(offset, 0f) { value, _ -> offset = value } }
-            }
-        }
-    }
-    val pullToClose = remember(settle) {
-        object : NestedScrollConnection {
-            override fun onPreScroll(
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset {
-                if (available.y >= 0f || offset <= 0f) return Offset.Zero
-                val consumed = maxOf(available.y, -offset)
-                offset += consumed
-                return Offset(0f, consumed)
+    S2PanelSheet(onDismiss = onClose, modifier = modifier.testTag(PlayerTestTags.PanelSheet), color = PanelColor) { grip ->
+        val scrolling = Modifier.verticalScroll(rememberScrollState()).padding(contentPadding)
+        when (panel) {
+            NowPlayingPanel.Queue -> {
+                QueueHeader(onClear = actions::clearQueue, modifier = grip)
+                QueueList(player.items, actions, Modifier.weight(1f), contentPadding = contentPadding)
             }
 
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset {
-                if (available.y <= 0f || source != NestedScrollSource.UserInput) return Offset.Zero
-                offset += available.y
-                return Offset(0f, available.y)
-            }
+            NowPlayingPanel.SleepTimer -> SleepTimerPanel(player, actions, scrolling)
 
-            override suspend fun onPreFling(available: Velocity): Velocity {
-                if (offset <= 0f) return Velocity.Zero
-                settle(available.y)
-                return available
-            }
-        }
-    }
-    val grip = Modifier.draggable(
-        state = rememberDraggableState { delta -> offset = (offset + delta).coerceAtLeast(0f) },
-        orientation = Orientation.Vertical,
-        onDragStopped = { velocity -> settle(velocity) },
-    )
-    Surface(
-        modifier = modifier
-            .onSizeChanged { height = it.height }
-            .graphicsLayer { translationY = offset }
-            .nestedScroll(pullToClose)
-            .testTag(PlayerTestTags.PanelSheet),
-        shape = ContinuousRoundedCornerShape(topStart = SheetCorner, topEnd = SheetCorner),
-        color = PanelColor,
-    ) {
-        Column(Modifier.fillMaxSize()) {
-            SheetGrip(grip)
-            val scrolling = Modifier.verticalScroll(rememberScrollState()).padding(contentPadding)
-            when (panel) {
-                NowPlayingPanel.Queue -> {
-                    QueueHeader(onClear = actions::clearQueue, modifier = grip)
-                    QueueList(player.items, actions, Modifier.weight(1f), contentPadding = contentPadding)
-                }
-
-                NowPlayingPanel.SleepTimer -> SleepTimerPanel(player, actions, scrolling)
-
-                NowPlayingPanel.PlaybackSound -> PlaybackSoundPanel(player, actions, onOpenRoute, scrolling)
-            }
+            NowPlayingPanel.PlaybackSound -> PlaybackSoundPanel(player, actions, onOpenRoute, scrolling)
         }
     }
 }
 
-/** The play/pause button in [NowPlayingHeader]. */
-private val HeaderPlayPauseSize = 48.dp
-
-/** The gap above [NowPlayingHeader], where the player's handle sits while no panel is open. */
-private val HeaderTopGap = 8.dp
-
-/** How fast a downward fling closes a [PanelSheet] however little it has moved, per second. */
-private val PanelCloseVelocity = 800.dp
-
-/** The pill at the top of a [PanelSheet], which drags it. */
+/** The player's [S2SheetHandle]: tapping it collapses the player. */
 @Composable
-private fun SheetGrip(modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().height(16.dp), contentAlignment = Alignment.BottomCenter) {
-        Box(
-            Modifier
-                .size(width = 32.dp, height = 4.dp)
-                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), RoundedCornerShape(2.dp)),
-        )
-    }
-}
-
-/** A centred pill over the artwork. Tapping it collapses the player. */
-@Composable
-internal fun DragHandle(
-    onCollapse: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val collapse = stringResource(R.string.player_collapse)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(HandleHeight)
-            .clickable(onClickLabel = collapse, onClick = onCollapse)
-            .semantics { contentDescription = collapse },
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            Modifier
-                .size(width = 32.dp, height = 4.dp)
-                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f), RoundedCornerShape(2.dp)),
-        )
-    }
-}
-
-/**
- * The song and play/pause, which stand in for the artwork, title and transport while a panel is
- * open. Tapping it closes the panel.
- */
-@Composable
-internal fun NowPlayingHeader(
-    player: PlayerUiState,
-    actions: PlayerActions,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val current = player.current ?: return
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(NowPlayingHeaderHeight)
-            .testTag(PlayerTestTags.NowPlayingHeader)
-            .clickable(onClickLabel = stringResource(R.string.player_now_playing), onClick = onClick)
-            .padding(horizontal = NowPlayingMargin),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        SongArtwork(current.song, Modifier.size(48.dp))
-        Column(Modifier.weight(1f)) {
-            Text(text = current.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            current.artist?.let { artist ->
-                Text(text = artist, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
-        }
-        // The full player's play button, scaled to the header.
-        S2PlayPauseButton(player.playing, actions::togglePlayback, buffering = player.buffering, size = HeaderPlayPauseSize)
-    }
+internal fun CollapseHandle(onCollapse: () -> Unit) {
+    S2SheetHandle(onClickLabel = stringResource(R.string.player_collapse), onClick = onCollapse)
 }
 
 /**
  * The player's bar: Playback & sound (the speed when it isn't normal), the sleep timer (its time
  * left while one runs), Cast where it can start, the labelled Queue button, and the overflow with
- * the song's actions and Clear queue. The [selected] panel's button is marked. Swiping up on the bar
+ * the song's actions and Clear queue. The [selected] panel's button takes a tonal container. Swiping up on the bar
  * opens the queue, when no panel is open.
  */
 @Composable
@@ -356,9 +195,8 @@ internal fun NowPlayingBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(PlayerBarHeight)
             .swipeUpToOpen(enabled = { currentSelected == null }, onOpen = { currentOnPanel(NowPlayingPanel.Queue) })
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = S2Spacing.medium, vertical = S2Spacing.small)
             .testTag(PlayerTestTags.Bar),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -393,7 +231,8 @@ internal fun NowPlayingBar(
         S2Button(
             text = stringResource(R.string.player_queue),
             onClick = { onPanel(NowPlayingPanel.Queue) },
-            style = if (queueOpen) S2ButtonStyle.Filled else S2ButtonStyle.Tonal,
+            // The same roles as the bar's other buttons: no container until its panel is open (#783).
+            style = if (queueOpen) S2ButtonStyle.Tonal else S2ButtonStyle.Text,
             size = S2ButtonSize.Small,
             icon = Icons.AutoMirrored.Rounded.QueueMusic,
             modifier = Modifier.semantics { this.selected = queueOpen },

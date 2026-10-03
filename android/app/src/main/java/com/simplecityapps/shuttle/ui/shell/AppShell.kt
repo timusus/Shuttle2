@@ -68,6 +68,7 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.designsystem.component.S2MiniPlayerHeight
 import com.simplecityapps.shuttle.designsystem.component.S2NavItem
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationBar
 import com.simplecityapps.shuttle.designsystem.component.S2NavigationRail
@@ -80,7 +81,6 @@ import com.simplecityapps.shuttle.ui.shell.adaptive.ShellLayout
 import com.simplecityapps.shuttle.ui.shell.adaptive.ShellWidth
 import com.simplecityapps.shuttle.ui.shell.adaptive.listDetailDirective
 import com.simplecityapps.shuttle.ui.shell.player.MiniPlayer
-import com.simplecityapps.shuttle.ui.shell.player.MiniPlayerHeight
 import com.simplecityapps.shuttle.ui.shell.player.PlayerActions
 import com.simplecityapps.shuttle.ui.shell.player.PlayerLevel
 import com.simplecityapps.shuttle.ui.shell.player.PlayerMode
@@ -178,7 +178,7 @@ private class PlayerContent(
 @Composable
 private fun rememberSnackbarBottomPadding(player: PlayerSheetState): Dp = if (player.mode == PlayerMode.Pane) {
     val navigationBars = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    if (player.level == PlayerLevel.Mini) navigationBars + MiniPlayerHeight else navigationBars
+    if (player.level == PlayerLevel.Mini) navigationBars + S2MiniPlayerHeight else navigationBars
 } else {
     rememberContentBottomPadding(player)
 }
@@ -232,7 +232,7 @@ private fun CompactShell(
     onSelectTab: (ShellTab) -> Unit,
     destinations: @Composable () -> Unit,
 ) {
-    val miniHeight = with(LocalDensity.current) { MiniPlayerHeight.toPx() }
+    val miniHeight = with(LocalDensity.current) { S2MiniPlayerHeight.toPx() }
     val sheetVisible = rememberSheetVisible(player)
     val bottomPadding = rememberContentBottomPadding(player)
 
@@ -291,7 +291,7 @@ private fun RailSheetShell(
 ) {
     val density = LocalDensity.current
     val navigationBarBottom = WindowInsets.navigationBars.getBottom(density)
-    val miniHeight = with(density) { MiniPlayerHeight.toPx() }
+    val miniHeight = with(density) { S2MiniPlayerHeight.toPx() }
     val sheetVisible = rememberSheetVisible(player)
     val bottomPadding = rememberContentBottomPadding(player)
     val coversRail = layout.width == ShellWidth.Expanded

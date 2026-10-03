@@ -90,14 +90,14 @@ class AppShellTest {
         robot.tapMiniPlayer()
         robot.assertLevel(PlayerLevel.Full)
         robot.assertPanel(null)
-        robot.assertNowPlayingHeader(shown = false)
+        robot.assertTransportDisplayed()
 
         robot.swipeDownNowPlaying()
         robot.assertLevel(PlayerLevel.Mini)
     }
 
     @Test
-    fun `the queue button opens the queue under a compact now playing header`() {
+    fun `the queue button opens the queue under the pushed-up transport`() {
         robot.setContent()
         robot.tapMiniPlayer()
 
@@ -105,7 +105,7 @@ class AppShellTest {
         robot.assertLevel(PlayerLevel.Full)
         robot.panel shouldBe NowPlayingPanel.Queue
         robot.assertPanel(NowPlayingPanel.Queue)
-        robot.assertNowPlayingHeader(shown = true)
+        robot.assertTransportDisplayed()
     }
 
     @Test
@@ -185,7 +185,7 @@ class AppShellTest {
         robot.setContent()
         robot.tapMiniPlayer()
         robot.tapPanelButton(NowPlayingPanel.SleepTimer)
-        robot.swipeDownNowPlayingHeader()
+        robot.swipeDownTransport()
 
         robot.assertLevel(PlayerLevel.Mini)
         robot.panel shouldBe null
@@ -562,13 +562,13 @@ class AppShellTest {
     }
 
     @Test
-    fun `while the player fades to a panel only the panel is in the semantics tree`() {
+    fun `while a panel slides up its rows are already reachable and the handle is not`() {
         robot.setContent()
         robot.tapMiniPlayer()
 
         robot.tapPanelButtonMidAnimation(NowPlayingPanel.Queue)
-        robot.assertNowPlayingArtwork(shown = false)
-        robot.assertNowPlayingHeader(shown = true)
+        robot.assertReachable("Second song", reachable = true)
+        robot.assertReachable("Collapse player", reachable = false)
         robot.settle()
     }
 
@@ -828,7 +828,7 @@ class AppShellTest {
 
         robot.tapMiniPlayer()
         robot.tapPanelButton(NowPlayingPanel.PlaybackSound)
-        robot.tapText("More sound settings")
+        robot.scrollToAndTapText("More sound settings")
         robot.assertLevel(PlayerLevel.Mini)
         robot.assertTextDisplayed("Settings: PlaybackAndSound")
     }

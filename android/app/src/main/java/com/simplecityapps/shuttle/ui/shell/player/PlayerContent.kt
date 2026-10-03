@@ -3,10 +3,7 @@ package com.simplecityapps.shuttle.ui.shell.player
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -18,86 +15,29 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.SkipNext
-import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation3.runtime.NavKey
-import com.simplecityapps.shuttle.designsystem.component.Artwork
-import com.simplecityapps.shuttle.designsystem.component.ArtworkPlaceholder
-import com.simplecityapps.shuttle.designsystem.component.ArtworkSize
-import com.simplecityapps.shuttle.designsystem.component.S2IconButton
-import com.simplecityapps.shuttle.designsystem.component.S2IconButtonSize
-import com.simplecityapps.shuttle.designsystem.component.S2IconButtonStyle
-import com.simplecityapps.shuttle.designsystem.component.SectionHeader
-import com.simplecityapps.shuttle.designsystem.component.SongRow
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
+import com.simplecityapps.shuttle.designsystem.theme.S2TouchTarget
 import kotlin.math.roundToInt
-
-/** Height of the mini player row; the sheet's Mini anchor sits this far above the nav bar. */
-val MiniPlayerHeight = 72.dp
-
-/** Height of the seek bar: the slider over its times. */
-internal val SeekBarHeight = 60.dp
-
-/** Height of the Large transport controls, whose play button is the tallest. */
-internal val ControlsHeight = 96.dp
-
-/** The step from the title block down to the seek bar, which belongs with it. */
-internal val TitleSeekGap = 8.dp
-
-/** The side margin of the artwork, title and seek bar. */
-internal val NowPlayingMargin = 16.dp
-
-/** The gap above and below the artwork, and below the transport. */
-internal val NowPlayingGap = 16.dp
-
-/** Height of the drag handle over the artwork: the sheet's only chrome above it. */
-internal val HandleHeight = 24.dp
-
-/** Height of the player's bar of buttons, along its bottom edge. */
-internal val PlayerBarHeight = 64.dp
-
-/** Height of the song row that heads the player while a panel is open. */
-internal val NowPlayingHeaderHeight = 64.dp
-
-/** The top corners of the sheet while it moves, and of the panel sheet inside it. */
-internal val SheetCorner = 28.dp
-
-/** Height of the seek bar and controls with [gap] below them. */
-internal fun transportHeight(gap: Dp): Dp = SeekBarHeight + ControlsHeight + gap
 
 /**
  * The sheet's colour: the player scheme's container, one tonal step up in dark mode, where the
@@ -122,8 +62,8 @@ internal object PlayerTestTags {
     const val Sheet = "player_sheet"
     const val MiniPlayer = "player_mini"
     const val NowPlaying = "player_now_playing"
-    const val NowPlayingHeader = "player_now_playing_header"
     const val NowPlayingArtwork = "player_now_playing_artwork"
+    const val Transport = "player_transport"
     const val QueueList = "player_queue_list"
     const val QueueHeader = "player_queue_header"
     const val QueueRow = "player_queue_row"
@@ -169,11 +109,11 @@ internal fun SideBySidePlayer(
                         .windowInsetsPadding(WindowInsets.statusBars)
                         .windowInsetsPadding(WindowInsets.navigationBars),
                 ) {
-                    DragHandle(onCollapse)
+                    CollapseHandle(onCollapse)
                     // Nothing pushes this player, so the song and transport centre together in the room above the bar.
                     Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
-                        NowPlayingSong(player, actions, gap = SideBySideGap, fillHeight = false, modifier = Modifier.weight(1f, fill = false).fillMaxWidth())
-                        Transport(player, progress, actions, gap = SideBySideGap)
+                        NowPlayingSong(player, actions, gap = S2Spacing.large, fillHeight = false, modifier = Modifier.weight(1f, fill = false).fillMaxWidth())
+                        Transport(player, progress, actions, gap = S2Spacing.large)
                     }
                     NowPlayingBar(player, actions, selected = panel, onPanel = actions::togglePanel)
                 }
@@ -182,14 +122,15 @@ internal fun SideBySidePlayer(
         second = {
             if (panel != null) {
                 Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars)) {
-                    Spacer(Modifier.height(HandleHeight))
-                    PanelSheet(
+                    // The panel starts level with the player's handle.
+                    Spacer(Modifier.height(S2TouchTarget.minimum))
+                    PlayerPanel(
                         panel = panel,
                         player = player,
                         actions = actions,
                         onOpenRoute = onOpenRoute,
                         onClose = { actions.showPanel(null) },
-                        modifier = Modifier.weight(1f).padding(end = 8.dp),
+                        modifier = Modifier.weight(1f).padding(end = S2Spacing.small),
                         contentPadding = WindowInsets.navigationBars.asPaddingValues(),
                     )
                 }
@@ -200,9 +141,6 @@ internal fun SideBySidePlayer(
 
 /** The widest the side-by-side player grows on its own, before a panel shares the width. */
 private val SideBySideMaxWidth = 560.dp
-
-/** The gap between the side-by-side player's groups, which centre together rather than share the height. */
-private val SideBySideGap = 24.dp
 
 /**
  * Two slots split along [orientation] (Horizontal: side by side). A separating [fold], in window

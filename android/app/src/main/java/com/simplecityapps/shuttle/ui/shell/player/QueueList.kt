@@ -58,6 +58,7 @@ import com.simplecityapps.shuttle.designsystem.component.QueueRow
 import com.simplecityapps.shuttle.designsystem.component.S2Action
 import com.simplecityapps.shuttle.designsystem.component.S2IconButton
 import com.simplecityapps.shuttle.designsystem.component.SectionHeader
+import com.simplecityapps.shuttle.designsystem.theme.S2Spacing
 import com.simplecityapps.shuttle.format.formatDuration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
@@ -79,7 +80,7 @@ internal fun QueueHeader(
             .height(QueueHeaderHeight)
             .background(color)
             .testTag(PlayerTestTags.QueueHeader)
-            .padding(end = 8.dp),
+            .padding(end = S2Spacing.small),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SectionHeader(title = stringResource(R.string.playback_up_next), modifier = Modifier.weight(1f), containerColor = color)

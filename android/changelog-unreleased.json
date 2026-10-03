@@ -22,7 +22,7 @@
       "commits": ["b9f88bcf4", "976314a51"]
     },
     {
-      "text": "A new full screen Now Playing with a bigger seek bar. Your queue sits behind its own Queue button, and the sleep timer and playback speed and sound settings open from the bar along the bottom",
+      "text": "A new full screen Now Playing with a bigger seek bar and a round play button. Your queue sits behind its own Queue button, and the sleep timer and playback speed and sound settings open from the bar along the bottom, sliding up under the controls so you can still see the song and skip while they are open. The seek bar shows when a song is buffering",
       "commits": []
     },
     {
