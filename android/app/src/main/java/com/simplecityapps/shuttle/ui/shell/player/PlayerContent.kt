@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.shell.player
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
